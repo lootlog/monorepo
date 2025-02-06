@@ -25,7 +25,21 @@ services:
     ports:
       - "5432:5432"
 
+  meilisearch:
+    image: "getmeili/meilisearch:v1.10.0"
+    env_file:
+      - ./.env.docker-compose
+    ports:
+      - 7700:7700
+    volumes:
+      - "meilisearch:/meili_data"
+    healthcheck:
+      test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
+      retries: 3
+      timeout: 5s
+
 volumes:
   rabbitdata:
   rabbitlog:
   postgres:
+  meilisearch:
