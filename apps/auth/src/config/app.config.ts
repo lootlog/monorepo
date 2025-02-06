@@ -9,6 +9,8 @@ const configSchema = z.object({
   POSTGRESQL_USER: z.string(),
   POSTGRESQL_PASSWORD: z.string(),
   POSTGRESQL_DATABASE: z.string(),
+  DISCORD_CLIENT_ID: z.string(),
+  DISCORD_CLIENT_SECRET: z.string(),
 });
 
 const {
@@ -19,6 +21,8 @@ const {
   POSTGRESQL_PASSWORD,
   POSTGRESQL_PORT,
   POSTGRESQL_USER,
+  DISCORD_CLIENT_ID,
+  DISCORD_CLIENT_SECRET,
 } = configSchema.parse(process.env);
 
 export const APP_CONFIG = {
@@ -30,5 +34,9 @@ export const APP_CONFIG = {
     user: POSTGRESQL_USER,
     password: POSTGRESQL_PASSWORD,
     database: POSTGRESQL_DATABASE,
+  },
+  discord: {
+    clientId: DISCORD_CLIENT_ID,
+    clientSecret: DISCORD_CLIENT_SECRET,
   },
 };

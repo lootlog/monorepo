@@ -7,6 +7,7 @@ import pg from "pg";
 import { bearer, jwt } from "better-auth/plugins";
 
 const { user, password, port, host, database } = APP_CONFIG.postgres;
+const { clientId, clientSecret } = APP_CONFIG.discord;
 
 const dialect = new PostgresDialect({
   pool: new pg.Pool({
@@ -24,6 +25,15 @@ export const auth = betterAuth({
     dialect,
     type: "postgres",
   },
+  user: {
+    additionalFields: {
+      discordId: {
+        type: "string",
+        required: true,
+        input: false,
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 1,
@@ -35,11 +45,32 @@ export const auth = betterAuth({
       secure: true,
     },
   },
-  plugins: [jwt(), bearer()],
-  // socialProviders: {
-  // 	discord: {
-  // 		clientId: process.env.DISCORD_CLIENT_ID || "",
-  // 		clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
-  // 	},
-  // },
+  plugins: [
+    jwt({
+      jwt: {
+        definePayload: ({ user }) => {
+          return {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            discordId: user.discordId,
+          };
+        },
+      },
+    }),
+    bearer(),
+  ],
+  socialProviders: {
+    discord: {
+      clientId,
+      clientSecret,
+      mapProfileToUser: (profile) => {
+        return {
+          firstName: profile.given_name,
+          lastName: profile.family_name,
+          discordId: profile.id,
+        };
+      },
+    },
+  },
 });

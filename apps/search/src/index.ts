@@ -4,13 +4,16 @@ import { cors } from "hono/cors";
 import { APP_CONFIG } from "./config/app.config.js";
 import { verifyTokenMiddleware } from "./lib/middleware/bearer-auth.js";
 import { players } from "./players/players.controller.js";
+import { logger } from "hono/logger";
 
 const app = new Hono<{
   Variables: {
     userId: string | null;
+    discordId: string | null;
   };
 }>();
 
+app.use("*", logger());
 app.use("*", cors());
 app.use("*", verifyTokenMiddleware);
 

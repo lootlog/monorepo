@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { APP_CONFIG } from "./config/app.config.js";
 import { cors } from "hono/cors";
 import { auth } from "./lib/auth.js";
+import { logger } from "hono/logger";
 
 const app = new Hono<{
   Variables: {
@@ -11,6 +12,7 @@ const app = new Hono<{
   };
 }>();
 
+app.use("*", logger());
 app.use(
   "*", // or replace with "*" to enable cors for all routes
   cors({
