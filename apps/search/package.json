@@ -8,9 +8,11 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
+    "amqplib": "^0.10.5",
     "dotenv": "^16.4.7",
     "hono": "^4.6.20",
-    "jwks-rsa": "^3.1.0"
+    "jwks-rsa": "^3.1.0",
+    "meilisearch": "^0.48.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
