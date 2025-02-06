@@ -16,6 +16,7 @@ export const verifyToken = async (token: string, c: Context) => {
     const userId = decodedToken.payload.sub;
 
     c.set("userId", userId);
+    c.set("discordId", decodedToken.payload.discordId);
 
     return true;
   } catch (e) {
