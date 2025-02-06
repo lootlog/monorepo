@@ -1,0 +1,31 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: "rabbitmq-lootlog"
+    env_file:
+      - ./.env.docker-compose
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+      - rabbitlog:/var/log/rabbitmq
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: "postgres-lootlog-auth"
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    env_file:
+      - ./.env.docker-compose
+    ports:
+      - "5432:5432"
+
+volumes:
+  rabbitdata:
+  rabbitlog:
+  postgres:
