@@ -1,4 +1,3 @@
 {
-  "extends": "@workspace/typescript-config/base.json"
+  "extends": "@lootlog/typescript-config/base.json"
 }
-

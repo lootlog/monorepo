@@ -1,0 +1,22 @@
+{
+  "name": "@lootlog/auth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "better-auth": "^1.1.16",
+    "dotenv": "^16.4.7",
+    "hono": "^4.6.20",
+    "pg": "^8.13.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "@types/pg": "^8.11.11",
+    "tsx": "^4.7.1"
+  }
+}
