@@ -38,7 +38,7 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 1,
   },
-  trustedOrigins: ["http://localhost:5173"],
+  trustedOrigins: ["http://localhost"],
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",

@@ -14,9 +14,9 @@ const app = new Hono<{
 
 app.use("*", logger());
 app.use(
-  "*", // or replace with "*" to enable cors for all routes
+  "*",
   cors({
-    origin: "http://localhost:5173", // replace with your origin
+    origin: "http://localhost", // replace with your origin
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
@@ -36,6 +36,7 @@ app.use("*", async (c, next) => {
 
   c.set("user", session.user);
   c.set("session", session.session);
+
   return next();
 });
 
@@ -48,6 +49,9 @@ app.get("/session", async (c) => {
   const user = c.get("user");
 
   if (!user) return c.body(null, 401);
+
+  c.res.headers.set("X-Auth-Discord-Id", user.discordId);
+  c.res.headers.set("X-Auth-User-Id", user.id);
 
   return c.json({
     session,

@@ -13,9 +13,13 @@ const app = new Hono<{
   };
 }>();
 
+app.use("*", async (c, next) => {
+  console.log(c.req.raw.headers);
+  await next();
+});
 app.use("*", logger());
 app.use("*", cors());
-app.use("*", verifyTokenMiddleware);
+// app.use("*", verifyTokenMiddleware);
 
 app.route("/players", players);
 

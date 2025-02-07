@@ -1,0 +1,56 @@
+http:
+  routers:
+    web-client:
+      rule: "PathPrefix(`/`)"
+      service: "web-client"
+      middlewares:
+        - "apiCompress"
+      entryPoints:
+        - "web"
+    auth:
+      rule: "PathPrefix(`/api/auth`)"
+      service: "auth"
+      middlewares:
+        - "apiCompress"
+      entryPoints:
+        - "web"
+    search:
+      rule: "PathPrefix(`/api/search`)"
+      service: "search"
+      middlewares:
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      entryPoints:
+        - "web"
+  services:
+    web-client:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:5173"
+    auth:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:4001"
+    search:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:4002"
+  middlewares:
+    apiStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/api/auth"
+          - "/api/search"
+    apiForwardAuth:
+      forwardAuth:
+        address: "http://host.docker.internal:4001/session"
+        authResponseHeaders:
+          - "X-Auth-User-Id"
+          - "X-Auth-Discord-Id"
+    apiCompress:
+      compress:
+        includedContentTypes:
+          - application/json
+          - text/html
+          - text/plain
