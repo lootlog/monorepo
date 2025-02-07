@@ -34,14 +34,14 @@ function App() {
   };
 
   const getData = async () => {
-    const res = await fetch("http://localhost:4001/api/auth/token", {
+    const res = await fetch("http://localhost/api/auth/token", {
       headers: {
         Authorization: `Bearer ${session?.session?.token}`,
       },
     });
     const data = (await res.json()) as { token: string };
 
-    const res2 = await fetch("http://localhost:4002/players", {
+    const res2 = await fetch("http://localhost/api/search/players", {
       headers: { Authorization: `Bearer ${data.token}` },
     });
   };

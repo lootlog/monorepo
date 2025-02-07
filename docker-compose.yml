@@ -38,6 +38,25 @@ services:
       retries: 3
       timeout: 5s
 
+  traefik:
+    image: "traefik:v3.3"
+    container_name: "traefik"
+    # network_mode: "host"
+    command:
+      #- "--log.level=DEBUG"
+      # - "--api.insecure=true"
+      # - "--providers.docker=true"
+      # - "--providers.docker.exposedbydefault=false"
+      # - "--entryPoints.web.address=:80"
+      # - "--configFile=/etc/traefik/traefik_dynamic.yml"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+
 volumes:
   rabbitdata:
   rabbitlog:
