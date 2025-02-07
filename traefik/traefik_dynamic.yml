@@ -27,7 +27,7 @@ http:
     web-client:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:5173"
+        - url: "http://host.docker.internal:3000"
     auth:
       loadBalancer:
         servers:
