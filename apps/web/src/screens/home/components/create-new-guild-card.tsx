@@ -3,14 +3,14 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { Button } from "components/ui/button";
+import { Button } from "@lootlog/ui/components/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "components/ui/card";
+} from "@lootlog/ui/components/card";
 import { useGlobalContext } from "hooks/use-global-context";
 
 export const CreateNewGuildCard: React.FC = () => {

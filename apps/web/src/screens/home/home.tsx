@@ -1,6 +1,6 @@
 import { authClient } from "@/lib/auth-client";
 import { PageHeader } from "components/layout/page-header";
-import { Button } from "components/ui/button";
+import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "components/ui/scroll-area";
 import { usePlayers } from "hooks/api/use-players";
 import { useSession } from "hooks/auth/use-session";

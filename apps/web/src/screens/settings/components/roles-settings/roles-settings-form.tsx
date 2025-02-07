@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
-import { Button } from "components/ui/button";
+import { Button } from "@lootlog/ui/components/button";
 import {
   Form,
   FormControl,
@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
 } from "components/ui/form";
-import { Checkbox } from "components/ui/checkbox";
+import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FC } from "react";
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogTrigger,
-} from "components/ui/dialog";
+} from "@lootlog/ui/components/dialog";
 import { useTranslation } from "react-i18next";
 import { useDisclosure } from "hooks/use-disclosure";
 import { useToast } from "components/ui/use-toast";

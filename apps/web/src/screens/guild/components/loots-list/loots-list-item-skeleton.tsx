@@ -1,4 +1,9 @@
-import { Card, CardContent, CardFooter, CardHeader } from "components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@lootlog/ui/components/card";
 import { Skeleton } from "components/ui/skeleton";
 import { useRef } from "react";
 

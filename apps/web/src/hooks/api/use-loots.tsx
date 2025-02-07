@@ -108,7 +108,7 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
     },
     getNextPageParam: (lastPage) =>
       lastPage.data.length === limit
-        ? lastPage.data[lastPage.data.length - 1].id
+        ? lastPage.data[lastPage.data.length - 1]?.id
         : undefined,
     initialPageParam: 0,
     enabled: !!guildId && isAuthenticated && !!world,

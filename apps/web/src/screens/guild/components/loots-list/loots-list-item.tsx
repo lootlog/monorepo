@@ -1,4 +1,9 @@
-import { Card, CardContent, CardFooter, CardHeader } from "components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@lootlog/ui/components/card";
 import { Loot } from "hooks/api/use-loots";
 import { ItemTile } from "screens/guild/components/loots-list/item-tile";
 import { PlayerTile } from "screens/guild/components/loots-list/player-tile";

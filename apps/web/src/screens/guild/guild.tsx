@@ -23,8 +23,8 @@ import {
   DrawerFooter,
   DrawerTitle,
   DrawerTrigger,
-} from "components/ui/drawer";
-import { Button } from "components/ui/button";
+} from "@lootlog/ui/components/drawer";
+import { Button } from "@lootlog/ui/components/button";
 import {
   Sheet,
   SheetContent,
