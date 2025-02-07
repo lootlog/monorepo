@@ -8,8 +8,8 @@ export const parseItemStats = (stats: string): ItemStat[] => {
     const [key, value] = stat.split("=");
 
     return {
-      key,
-      value: value ? value : true,
+      key: key ?? "undefined",
+      value: value ?? true,
     };
   });
 };

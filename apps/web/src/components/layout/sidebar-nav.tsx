@@ -1,4 +1,4 @@
-import { Button } from "components/ui/button";
+import { Button } from "@lootlog/ui/components/button";
 import { Separator } from "components/ui/separator";
 import { useSidebar } from "components/ui/sidebar";
 import {

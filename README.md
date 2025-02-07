@@ -27,5 +27,5 @@ Your `tailwind.config.ts` and `globals.css` are already set up to use the compon
 To use the components in your app, import them from the `ui` package.
 
 ```tsx
-import { Button } from "@lootlog/ui/components/ui/button";
+import { Button } from "@lootlog/ui/@lootlog/ui/components/button";
 ```

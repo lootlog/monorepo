@@ -1,5 +1,5 @@
-import { Button } from "components/ui/button";
-import { Card, CardContent } from "components/ui/card";
+import { Button } from "@lootlog/ui/components/button";
+import { Card, CardContent } from "@lootlog/ui/components/card";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "components/ui/dialog";
+} from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "components/ui/scroll-area";
 import { SearchInput } from "components/ui/search-input";
 import { useManageableGuilds } from "hooks/api/use-manageable-guilds";

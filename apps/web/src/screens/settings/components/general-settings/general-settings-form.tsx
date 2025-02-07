@@ -12,7 +12,7 @@ import {
 } from "components/ui/form";
 import { Input } from "components/ui/input";
 import { useToast } from "components/ui/use-toast";
-import { Button } from "components/ui/button";
+import { Button } from "@lootlog/ui/components/button";
 import { useGuild } from "hooks/api/use-guild";
 import { generateSlug } from "utils/generate-slug";
 import { cn } from "utils/cn";

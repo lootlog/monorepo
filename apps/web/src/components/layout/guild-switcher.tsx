@@ -1,7 +1,7 @@
 import * as React from "react";
 import { CaretSortIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { Popover, PopoverContent, PopoverTrigger } from "components/ui/popover";
-import { Button } from "components/ui/button";
+import { Button } from "@lootlog/ui/components/button";
 import {
   Avatar,
   AvatarFallback,
@@ -15,7 +15,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "components/ui/command";
+} from "@lootlog/ui/components/command";
 import { cn } from "utils/cn";
 import { useGuilds } from "hooks/api/use-guilds";
 import { useGuild } from "hooks/api/use-guild";
