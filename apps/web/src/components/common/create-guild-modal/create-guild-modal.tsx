@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar";
 import { Button } from "components/ui/button";
 import { Card, CardContent } from "components/ui/card";
 import {
@@ -17,6 +16,11 @@ import { getGuildIconById } from "utils/get-guild-icon-by-id";
 import { useDebounceValue } from "usehooks-ts";
 import { DISCORD_BOT_PERMISSIONS, DISCORD_CLIENT_ID } from "config/discord";
 import { useGlobalContext } from "hooks/use-global-context";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");

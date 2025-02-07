@@ -19,7 +19,7 @@ export default defineConfig({
       hooks: path.resolve(__dirname, "./src/hooks"),
       i18n: path.resolve(__dirname, "./src/i18n"),
       layout: path.resolve(__dirname, "./src/layout"),
-      lib: path.resolve(__dirname, "./src/lib"),
+      "@/lib": path.resolve(__dirname, "./src/lib"),
       navigation: path.resolve(__dirname, "./src/navigation"),
       providers: path.resolve(__dirname, "./src/providers"),
       screens: path.resolve(__dirname, "./src/screens"),
