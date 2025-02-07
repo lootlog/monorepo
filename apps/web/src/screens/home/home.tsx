@@ -1,9 +1,10 @@
+import { authClient } from "@/lib/auth-client";
 import { PageHeader } from "components/layout/page-header";
 import { Button } from "components/ui/button";
 import { ScrollArea } from "components/ui/scroll-area";
 import { usePlayers } from "hooks/api/use-players";
 import { useSession } from "hooks/auth/use-session";
-import { authClient } from "lib/auth-client";
+
 import { GuildsList } from "screens/home/components/guilds-list";
 
 export const Home: React.FC = () => {

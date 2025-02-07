@@ -1,7 +1,14 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "extends": "@lootlog/typescript-config/vite.json",
+  "compilerOptions": {
+    "baseUrl": "src",
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@/*": ["./*"],
+      "@lootlog/ui/*": ["../../packages/ui/src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }

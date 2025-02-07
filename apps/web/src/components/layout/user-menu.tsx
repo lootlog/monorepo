@@ -1,4 +1,8 @@
-import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,

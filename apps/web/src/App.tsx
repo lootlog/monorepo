@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Navigation } from "./navigation/navigation";
 
-import "./App.css";
+import "@lootlog/ui/globals.css";
 import "i18n/config";
 import { BrowserRouter } from "react-router-dom";
 import { GlobalContextProvider } from "contexts/global-context";

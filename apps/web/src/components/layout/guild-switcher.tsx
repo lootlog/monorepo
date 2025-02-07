@@ -2,7 +2,11 @@ import * as React from "react";
 import { CaretSortIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { Popover, PopoverContent, PopoverTrigger } from "components/ui/popover";
 import { Button } from "components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import {
   Command,
   CommandEmpty,

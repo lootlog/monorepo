@@ -22,6 +22,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
+    "paths": {
+      "@/*": ["./src/*"],
+      "@lootlog/ui/*": ["../../packages/ui/src/*"]
+    },
     "baseUrl": "src"
   },
   "include": ["src"]
