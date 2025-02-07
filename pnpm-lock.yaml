@@ -92,33 +92,14 @@ importers:
         specifier: ^4.7.1
         version: 4.19.2
 
-  apps/test:
-    dependencies:
-      '@hono/node-server':
-        specifier: ^1.13.8
-        version: 1.13.8(hono@4.6.20)
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      hono:
-        specifier: ^4.6.20
-        version: 4.6.20
-      jwks-rsa:
-        specifier: ^3.1.0
-        version: 3.1.0
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.17
-        version: 20.17.10
-      tsx:
-        specifier: ^4.7.1
-        version: 4.19.2
-
   apps/web:
     dependencies:
       '@lootlog/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      better-auth:
+        specifier: ^1.1.16
+        version: 1.1.16
       lucide-react:
         specifier: 0.456.0
         version: 0.456.0(react@19.0.0)
