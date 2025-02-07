@@ -1,0 +1,222 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+import { Button } from "components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "components/ui/form";
+import { Checkbox } from "components/ui/checkbox";
+import { FC } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from "components/ui/dialog";
+import { useTranslation } from "react-i18next";
+import { LootlogConfigNpc } from "hooks/api/use-guild-lootlog-settings";
+import { ItemRarity } from "hooks/api/use-loots";
+import { cn } from "utils/cn";
+import { useUpdateGuildLootlogNpc } from "hooks/api/use-update-guild-lootlog-npc";
+import { useDisclosure } from "hooks/use-disclosure";
+import { useToast } from "components/ui/use-toast";
+
+type LootlogSettingsFormProps = {
+  npc: LootlogConfigNpc;
+};
+
+const formSchema = z.object({
+  LEGENDARY: z.boolean().default(true),
+  UPGRADED: z.boolean().default(true),
+  HEROIC: z.boolean().default(true),
+  UNIQUE: z.boolean().default(true),
+  COMMON: z.boolean().default(true),
+});
+
+export const LootlogSettingsForm: FC<LootlogSettingsFormProps> = ({ npc }) => {
+  const { onToggle, isOpen, onClose } = useDisclosure();
+  const { toast } = useToast();
+  const { mutate: updateGuildLootlogNpc } = useUpdateGuildLootlogNpc();
+
+  const { t } = useTranslation();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      LEGENDARY: npc.allowedRarities.includes(ItemRarity.LEGENDARY),
+      UPGRADED: npc.allowedRarities.includes(ItemRarity.UPGRADED),
+      HEROIC: npc.allowedRarities.includes(ItemRarity.HEROIC),
+      UNIQUE: npc.allowedRarities.includes(ItemRarity.UNIQUE),
+      COMMON: npc.allowedRarities.includes(ItemRarity.COMMON),
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    updateGuildLootlogNpc(
+      {
+        allowedRarities: Object.keys(values).filter(
+          (key) => values[key as keyof typeof values]
+        ) as ItemRarity[],
+        npcId: npc.id,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            variant: "default",
+            description: "Zaktualizowano ustawienia",
+          });
+          onClose();
+        },
+        onError: () => {
+          toast({
+            variant: "destructive",
+            description: "Nie udało się zaktualizować ustawień",
+          });
+        },
+      }
+    );
+  }
+
+  const getRarityCn = (rarity: ItemRarity) => {
+    return cn({
+      "text-amber-700": rarity === "LEGENDARY",
+      "text-blue-500": rarity === "HEROIC",
+      "text-amber-300": rarity === "UNIQUE",
+      "text-gray-500": rarity === "COMMON",
+      "text-pink-700": rarity === "UPGRADED",
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onToggle}>
+      <DialogTrigger asChild>
+        <Button className="h-6" size="sm">
+          Edytuj
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogTitle>
+          Edytuj konfigurację dla potwora - {t(`npcType.${npc.npcType}`)}
+        </DialogTitle>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 pt-4"
+          >
+            <FormField
+              control={form.control}
+              name={ItemRarity.LEGENDARY}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className={getRarityCn(ItemRarity.LEGENDARY)}>
+                      {t(`itemRarity.${ItemRarity.LEGENDARY}`)}
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={ItemRarity.UPGRADED}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className={getRarityCn(ItemRarity.UPGRADED)}>
+                      {t(`itemRarity.${ItemRarity.UPGRADED}`)}
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={ItemRarity.HEROIC}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className={getRarityCn(ItemRarity.HEROIC)}>
+                      {t(`itemRarity.${ItemRarity.HEROIC}`)}
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={ItemRarity.UNIQUE}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className={getRarityCn(ItemRarity.UNIQUE)}>
+                      {t(`itemRarity.${ItemRarity.UNIQUE}`)}
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={ItemRarity.COMMON}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className={getRarityCn(ItemRarity.COMMON)}>
+                      {t(`itemRarity.${ItemRarity.COMMON}`)}
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="p-0 m-0">
+              <Button type="submit">Zapisz</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};

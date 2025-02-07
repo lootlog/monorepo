@@ -1,0 +1,53 @@
+{
+  "ac": "Pancerz {{value}}",
+  "act": "Odporność na truciznę {{value}}%",
+  "crit": "Cios krytyczny {{value}}%",
+  "critval": "Moc ciosu krytycznego fizycznego +{{value}}%",
+  "da": "",
+  "ds": "Siła +{{value}}",
+  "energybon": "Energia +{{value}}",
+  "evade": "Unik +{{value}}",
+  "heal": "Przywraca {{value}} punktów życia podczas walki",
+  "hp": "Życie +{{value}}",
+  "lowevade": "Podczas ataku unik przeciwnika jest mniejszy o {{value}}",
+  "ammo": "Ilość: {{value}}",
+  "cansplit": "Można dzielić",
+  "fire": "Obrażenia od ognia ~{{value}}",
+  "lvl": "Wymagany poziom: {{value}}",
+  "sa": "Szybkość ataku +{{value}}",
+  "resdmg": "Niszczenie odporności magicznych o {{value}}% podczas ciosu",
+  "resfire": "Odporność na ogień +{{value}}%",
+  "reslight": "Odporność na błyskawice +{{value}}%",
+  "reqp": {
+    "b": "Tancerz ostrzy",
+    "h": "Łowca"
+  },
+  "capacity": "Maksimum {{value}} sztuk razem",
+  "amount": "Ilość: {{value}}",
+  "curse": "Legendarne bonusy {{value}}",
+  "nodepo": "Przedmiotu nie można przechowywać w depozycie",
+  "nodesc": "Przedmiot niezydentyfikowany",
+  "bag": "Mieści {{value}} przedmiotów",
+  "opis": "{{value}}",
+  "permbound": "Związany z właścicielem na stałe",
+  "legbon": {
+    "curse": "Klątwa: podczas udanego ataku 9% szans na aktywację klątwy, która zablokuje najbliższą wykonywaną przez przeciwnika akcję.",
+    "lastheal": "Ostatni ratunek: kiedy po otrzymanym ataku zostanie graczowi mniej niż 18% życia, zostaje jednorazowo znacznie uleczony.",
+    "dmgred": "Fizyczna osłona: przyjmowane obrażenia fizyczne zmniejszone o 16%.",
+    "verycrit": "Cios bardzo krytyczny: 13% szansy na podwojenie mocy ciosu krytycznego.",
+    "not-supported": "Nieznany bonus legendarny"
+  },
+  "rarity": {
+    "common": "Pospolity",
+    "unique": "Unikatowy",
+    "heroic": "Heroiczny",
+    "upgraded": "Ulepszony",
+    "legendary": "Legendarny"
+  },
+  "rkeydesc": "Otwiera: {{value}}",
+  "slow": "Obniża szybkość ataku przeciwnika o {{value}}",
+  "soulbound": "Związany z właścicielem",
+  "timelimit": "Można używać co {{value}} min",
+  "timelimit_upgmax": "Minimalny czas odnawiania: {{value}} min",
+  "ttl": "Działa {{value}} min"
+}
