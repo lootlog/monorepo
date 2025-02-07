@@ -42,7 +42,7 @@ function App() {
     const data = (await res.json()) as { token: string };
 
     const res2 = await fetch("http://localhost/api/search/players", {
-      headers: { Authorization: `Bearer ${data.token}` },
+      // headers: { Authorization: `Bearer ${data.token}` },
     });
   };
 
