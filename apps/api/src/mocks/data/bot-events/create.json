@@ -1,0 +1,154 @@
+{
+  "guildId": "1157304827546718218",
+  "name": "wilds server",
+  "icon": "https://cdn.discordapp.com/icons/1157304827546718218/5f405c34adb7d05bef2f8a64e3a086e1.webp",
+  "ownerId": "362907135824101376",
+  "roles": [
+    {
+      "id": "1157304827546718218",
+      "name": "@everyone",
+      "color": 0,
+      "admin": false,
+      "position": 0
+    },
+    {
+      "id": "1198937873806803008",
+      "name": "presence-bot",
+      "color": 15277667,
+      "admin": false,
+      "position": 10
+    },
+    {
+      "id": "1205041008425963522",
+      "name": "MEE6",
+      "color": 0,
+      "admin": true,
+      "position": 9
+    },
+    {
+      "id": "1209081750018596945",
+      "name": "lootlog",
+      "color": 0,
+      "admin": false,
+      "position": 8
+    },
+    {
+      "id": "1209081751373352970",
+      "name": "lootlog-mod",
+      "color": 15158332,
+      "admin": false,
+      "position": 7
+    },
+    {
+      "id": "1294489840850702339",
+      "name": "margo-lootlog-prod",
+      "color": 0,
+      "admin": true,
+      "position": 6
+    },
+    {
+      "id": "1304108843730735114",
+      "name": "new role",
+      "color": 0,
+      "admin": false,
+      "position": 5
+    },
+    {
+      "id": "1304108940602380390",
+      "name": "new role",
+      "color": 0,
+      "admin": false,
+      "position": 4
+    },
+    {
+      "id": "1304109512424165377",
+      "name": "asdasdasdaasdasd",
+      "color": 0,
+      "admin": false,
+      "position": 3
+    },
+    {
+      "id": "1304985823346688080",
+      "name": "chujwdUPIE1",
+      "color": 7419530,
+      "admin": false,
+      "position": 2
+    },
+    {
+      "id": "1316164480077402218",
+      "name": "margo-lootlog-local",
+      "color": 0,
+      "admin": false,
+      "position": 1
+    }
+  ],
+  "members": [
+    {
+      "id": "159985870458322944",
+      "roleIds": ["1205041008425963522", "1157304827546718218"],
+      "type": "BOT",
+      "discriminator": "4876",
+      "globalName": null,
+      "username": "MEE6",
+      "avatar": "b50adff099924dd5e6b72d13f77eb9d7",
+      "displayName": "MEE6"
+    },
+    {
+      "id": "362907135824101376",
+      "roleIds": [
+        "1209081750018596945",
+        "1209081751373352970",
+        "1304108843730735114",
+        "1157304827546718218"
+      ],
+      "type": "OWNER",
+      "discriminator": "0",
+      "banner": null,
+      "globalName": "mi casa es su casa",
+      "username": "wroniarz9",
+      "avatar": "d0520f49ea757d506876fb227899a29d",
+      "displayName": "bbb"
+    },
+    {
+      "id": "1050385869284048926",
+      "roleIds": ["1209081751373352970", "1157304827546718218"],
+      "type": "USER",
+      "discriminator": "0",
+      "globalName": "Wildstylez",
+      "username": "wildstylez8812",
+      "avatar": "9bc62ca415e3c3c9bd7f0dc325560bae",
+      "displayName": "asdascxxx"
+    },
+    {
+      "id": "1198935360286236714",
+      "roleIds": ["1198937873806803008", "1157304827546718218"],
+      "type": "BOT",
+      "discriminator": "8854",
+      "globalName": null,
+      "username": "Bramkarz",
+      "avatar": null,
+      "displayName": "Bramkarz"
+    },
+    {
+      "id": "1208853174602043505",
+      "roleIds": ["1316164480077402218", "1157304827546718218"],
+      "type": "BOT",
+      "discriminator": "4002",
+      "banner": null,
+      "globalName": null,
+      "username": "margo-lootlog-local",
+      "avatar": null,
+      "displayName": "margo-lootlog-local"
+    },
+    {
+      "id": "1209464156361719828",
+      "roleIds": ["1294489840850702339", "1157304827546718218"],
+      "type": "BOT",
+      "discriminator": "8964",
+      "globalName": null,
+      "username": "Lootlog",
+      "avatar": null,
+      "displayName": "Lootlog"
+    }
+  ]
+}

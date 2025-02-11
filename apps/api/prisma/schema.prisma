@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["tracing"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRESQL_CONNECTION_URI")
+}
+
+model User {
+  id                   String                @id
+  username             String
+  avatar               String?
+  discriminator        String
+  banner               String?
+  globalName           String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  members              Member[]
+  playerLootlogConfigs PlayerLootlogConfig[]
+}
+
+model PlayerLootlogConfig {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  playerId    String
+  guildId     String
+  canAddLoot  Boolean  @default(true)
+  canAddTimer Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, playerId, guildId])
+}
+
+model Guild {
+  id        String   @id
+  name      String
+  icon      String?
+  ownerId   String
+  vanityUrl String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  roles     Role[]
+  members   Member[]
+  timers    Timer[]
+  loots     Loot[]
+
+  @@index([vanityUrl])
+}
+
+enum Permission {
+  OWNER
+  ADMIN
+  LOOTLOG_MANAGE
+  LOOTLOG_READ
+  LOOTLOG_WRITE
+  LOOTLOG_READ_TIMERS_TITANS
+  LOOTLOG_READ_LOOTS_TITANS
+}
+
+model Role {
+  id          String       @id
+  guildId     String
+  name        String
+  color       Int?
+  position    Int?
+  permissions Permission[] @default([])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  guild   Guild    @relation(fields: [guildId], references: [id])
+  members Member[]
+
+  @@unique([id, guildId])
+  @@index([id, guildId])
+}
+
+enum MemberType {
+  OWNER
+  ADMIN
+  USER
+  BOT
+}
+
+model Member {
+  id        Int        @id @default(autoincrement())
+  userId    String
+  guildId   String
+  type      MemberType @default(USER)
+  name      String
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  guild     Guild      @relation(fields: [guildId], references: [id])
+  roles     Role[]
+  loots     Loot[]
+  timers    Timer[]
+
+  @@unique(name: "memberId", [userId, guildId])
+  @@index([id, guildId])
+}
+
+enum NpcType {
+  COMMON
+  ELITE
+  ELITE2
+  ELITE3
+  HERO
+  EVENT_HERO
+  TITAN
+  COLOSSUS
+  NPC
+}
+
+model Timer {
+  createdById  Int
+  guildId      String
+  npcId        Int
+  world        String
+  minSpawnTime DateTime
+  maxSpawnTime DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  member Member @relation(fields: [createdById], references: [id])
+  guild  Guild  @relation(fields: [guildId], references: [id])
+  npc    Json
+
+  @@id(name: "timerId", [guildId, world, npcId])
+  @@index([npcId, guildId])
+}
+
+enum ItemType {
+  ONE_HAND_WEAPON
+  TWO_HAND_WEAPON
+  ONE_AND_HALF_HAND_WEAPON
+  DISTANCE_WEAPON
+  HELP_WEAPON
+  WAND_WEAPON
+  ORB_WEAPON
+  ARMOR
+  HELMET
+  BOOTS
+  GLOVES
+  RING
+  NECKLACE
+  SHIELD
+  NEUTRAL
+  CONSUME
+  GOLD
+  KEYS
+  QUEST
+  RENEWABLE
+  ARROWS
+  TALISMAN
+  BOOK
+  BAG
+  BLESS
+  UPGRADE
+  RECIPE
+  COINAGE
+  QUIVER
+  OUTFITS
+  PETS
+  TELEPORTS
+}
+
+enum ItemRarity {
+  UNIQUE
+  HEROIC
+  LEGENDARY
+  UPGRADED
+}
+
+enum Profession {
+  WARRIOR
+  PALADIN
+  HUNTER
+  MAGE
+  BLADE_DANCER
+  TRACKER
+}
+
+enum LootSource {
+  LOOTBOX
+  DIALOG
+  FIGHT
+}
+
+model Loot {
+  id        Int        @id @default(autoincrement())
+  uniqueId  String
+  guildId   String
+  memberId  Int
+  loots     Json
+  world     String
+  source    LootSource
+  location  String
+  players   Json
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  npcs      Json
+
+  guild  Guild  @relation(fields: [guildId], references: [id])
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@unique([uniqueId])
+}
+
+model LootlogConfigNpc {
+  id              Int          @id @default(autoincrement())
+  lootlogConfigId String
+  npcType         NpcType
+  allowedRarities ItemRarity[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  lootlogConfig LootlogConfig @relation(fields: [lootlogConfigId], references: [id])
+}
+
+model LootlogConfig {
+  id        String             @id
+  npcs      LootlogConfigNpc[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}

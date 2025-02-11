@@ -1,0 +1,3 @@
+export enum ErrorKey {
+  PAGINATION_LIMIT_TOO_HIGH = 'PAGINATION_LIMIT_TOO_HIGH',
+}
