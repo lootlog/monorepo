@@ -1,0 +1,1 @@
+export const MAX_RESPAWN_TIME_MULTIPLIER = 0.25;

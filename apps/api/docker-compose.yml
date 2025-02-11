@@ -1,0 +1,45 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: 'rabbitmq'
+    env_file:
+      - ./.env
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+      - rabbitlog:/var/log/rabbitmq
+
+  postgres:
+    image: postgres
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    ports:
+      - '5432:5432'
+
+  meilisearch:
+    image: 'getmeili/meilisearch:v1.10.0'
+    environment:
+      MEILI_MASTER_KEY: '${MEILISEARCH_MASTER_KEY}'
+    ports:
+      - 7700:7700
+    volumes:
+      - 'meilisearch:/meili_data'
+    healthcheck:
+      test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
+      retries: 3
+      timeout: 5s
+
+volumes:
+  rabbitdata:
+  rabbitlog:
+  postgres:
+  meilisearch:

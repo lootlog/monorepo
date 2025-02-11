@@ -1,0 +1,50 @@
+{
+  "killedNpcs": [
+    {
+      "originalId": 63628,
+      "prof": "b",
+      "name": "Zorin",
+      "icon": "e2/wl-mrozu01.gif",
+      "hpp": 0,
+      "wt": 27,
+      "lvl": 300,
+      "type": 2
+    }
+  ],
+  "partyMembers": [
+    {
+      "originalId": 171971,
+      "prof": "h",
+      "name": "Poduszeczka",
+      "icon": "/noob/hm.gif",
+      "hpp": 83,
+      "lvl": 300
+    }
+  ],
+  "loots": [
+    {
+      "hid": "c639cc39362efaf73def7c40cdd53bd327c2fce33a973b29c74e19ea27a5adc5",
+      "icon": "zlo/kam05.gif",
+      "name": "Drogocenne kryształki",
+      "pr": 0,
+      "prc": "zl",
+      "st": 0,
+      "stat": "gold=438517;rarity=common",
+      "own": 171971
+    }
+  ],
+  "creator": {
+    "id": 171971,
+    "lvl": 300,
+    "account": 5210672,
+    "prof": "h",
+    "img": "/noob/hm.gif",
+    "nick": "Poduszeczka"
+  },
+  "world": "experimental",
+  "source": "fight",
+  "location": {
+    "name": "Sala Mroźnych Szeptów",
+    "id": 2354
+  }
+}
