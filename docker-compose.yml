@@ -2,8 +2,9 @@ services:
   rabbitmq:
     image: rabbitmq:4-management-alpine
     container_name: "rabbitmq-lootlog"
-    env_file:
-      - ./.env.docker-compose
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     ports:
       - 5672:5672
       - 15672:15672
@@ -11,24 +12,44 @@ services:
       - rabbitdata:/var/lib/rabbitmq
       - rabbitlog:/var/log/rabbitmq
 
-  postgres:
+  lootlog-users-db:
     image: postgres:17-alpine
-    container_name: "postgres-lootlog-auth"
+    container_name: "lootlog-users-db"
     restart: always
     # set shared memory limit when using docker-compose
     shm_size: 128mb
     # or set shared memory limit when deploy via swarm stack
     volumes:
       - postgres:/var/lib/postgresql/data
-    env_file:
-      - ./.env.docker-compose
+    environment:
+      POSTGRES_DB: ${USERS_DB_USER}
+      POSTGRES_USER: ${USERS_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${USERS_DB_NAME}
     ports:
       - "5432:5432"
+
+  lootlog-db:
+    image: postgres:17-alpine
+    container_name: "lootlog-db"
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${LOOTLOG_DB_USER}
+      POSTGRES_USER: ${LOOTLOG_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${LOOTLOG_DB_DB}
+    ports:
+      - "5433:5432"
 
   meilisearch:
     image: "getmeili/meilisearch:v1.10.0"
     env_file:
       - ./.env.docker-compose
+    environment:
+      - MEILISEARCH_MASTER_KEY=${MEILISEARCH_MASTER_KEY}
     ports:
       - 7700:7700
     volumes:
