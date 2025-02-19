@@ -23,6 +23,15 @@ http:
         - "apiCompress"
       entryPoints:
         - "web"
+    api:
+      rule: "PathPrefix(`/api/lootlog`)"
+      service: "search"
+      middlewares:
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      entryPoints:
+        - "web"
   services:
     web-client:
       loadBalancer:
@@ -36,12 +45,17 @@ http:
       loadBalancer:
         servers:
         - url: "http://host.docker.internal:4002"
+    api:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:4003"
   middlewares:
     apiStripPrefix:
       stripPrefix:
         prefixes:
           - "/api/auth"
           - "/api/search"
+          - "/api/lootlog"
     apiForwardAuth:
       forwardAuth:
         address: "http://host.docker.internal:4001/session"

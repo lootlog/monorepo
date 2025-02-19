@@ -22,9 +22,6 @@ declare global {
       POSTGRESQL_CONNECTION_URI: string;
 
       RABBITMQ_URI: string;
-
-      MEILISEARCH_HOST: string;
-      MEILISEARCH_MASTER_KEY: string;
     }
   }
 }
