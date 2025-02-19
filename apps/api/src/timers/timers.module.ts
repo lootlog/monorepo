@@ -16,7 +16,7 @@ import { ConfigKey } from 'src/config/config-key.enum';
     DiscordModule,
     NpcsModule,
     GuildsModule,
-    RabbitMQModule.forRootAsync(RabbitMQModule, {
+    RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const config = configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ);

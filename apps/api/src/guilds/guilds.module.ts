@@ -20,7 +20,7 @@ import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
     forwardRef(() => RolesModule),
     forwardRef(() => UsersModule),
     forwardRef(() => LootlogConfigModule),
-    RabbitMQModule.forRootAsync(RabbitMQModule, {
+    RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const config = configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ);

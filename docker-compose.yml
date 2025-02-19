@@ -38,9 +38,9 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: ${LOOTLOG_DB_USER}
-      POSTGRES_USER: ${LOOTLOG_DB_PASSWORD}
-      POSTGRES_PASSWORD: ${LOOTLOG_DB_DB}
+      POSTGRES_DB: ${LOOTLOG_DB_DB}
+      POSTGRES_USER: ${LOOTLOG_DB_USER}
+      POSTGRES_PASSWORD: ${LOOTLOG_DB_PASSWORD}
     ports:
       - "5433:5432"
 

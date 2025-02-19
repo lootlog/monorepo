@@ -202,19 +202,64 @@ model Loot {
   uniqueId  String
   guildId   String
   memberId  Int
-  loots     Json
+  items     Item[]
   world     String
   source    LootSource
   location  String
-  players   Json
+  players   Player[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  npcs      Json
+  npcs      Npc[]
 
   guild  Guild  @relation(fields: [guildId], references: [id])
   member Member @relation(fields: [memberId], references: [id])
 
   @@unique([uniqueId])
+}
+
+model Item {
+  id     String     @id
+  name   String
+  rarity ItemRarity
+  icon   String
+  type   ItemType
+  prof   Profession
+  lvl    Int
+  pr     Int
+  prc    Int
+  stat   String
+  lootId Int?
+  loot   Loot?      @relation(fields: [lootId], references: [id])
+}
+
+model Player {
+  id          String     @id
+  characterId Int
+  accountId   Int
+  name        String
+  icon        String
+  prof        Profession
+  lvl         Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  loot        Loot?      @relation(fields: [lootId], references: [id])
+  lootId      Int?
+}
+
+model Npc {
+  id           Int        @id
+  name         String
+  lvl          Int
+  prof         Profession
+  type         NpcType
+  margonemType Int
+  location     String
+  wt           Int
+  icon         String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  loot         Loot?      @relation(fields: [lootId], references: [id])
+  lootId       Int?
 }
 
 model LootlogConfigNpc {
