@@ -8,7 +8,8 @@
     "start": "turbo start",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "api:migrate:dev": "turbo run api:migrate:dev"
+    "api:migrate:dev": "turbo run api:migrate:dev",
+    "auth:migrate:dev": "turbo run auth:migrate:dev"
   },
   "devDependencies": {
     "@lootlog/eslint-config": "workspace:*",

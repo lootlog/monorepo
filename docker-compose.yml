@@ -20,11 +20,11 @@ services:
     shm_size: 128mb
     # or set shared memory limit when deploy via swarm stack
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - lootlog-users-db:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: ${USERS_DB_USER}
-      POSTGRES_USER: ${USERS_DB_PASSWORD}
-      POSTGRES_PASSWORD: ${USERS_DB_NAME}
+      POSTGRES_DB: ${USERS_DB_NAME}
+      POSTGRES_USER: ${USERS_DB_USER}
+      POSTGRES_PASSWORD: ${USERS_DB_PASSWORD}
     ports:
       - "5432:5432"
 
@@ -36,7 +36,7 @@ services:
     shm_size: 128mb
     # or set shared memory limit when deploy via swarm stack
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - lootlog-db:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${LOOTLOG_DB_DB}
       POSTGRES_USER: ${LOOTLOG_DB_USER}
@@ -81,5 +81,6 @@ services:
 volumes:
   rabbitdata:
   rabbitlog:
-  postgres:
+  lootlog-db:
+  lootlog-users-db:
   meilisearch:
