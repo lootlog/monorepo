@@ -22,6 +22,9 @@
     },
     "api:migrate:dev": {
       "cache": false
+    },
+    "auth:migrate:dev": {
+      "cache": false
     }
   }
 }
