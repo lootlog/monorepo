@@ -4,8 +4,6 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AUTH0_USER_ID_PREFIX } from 'src/config/auth0.config';
-import { decodeJwtPayload } from 'src/shared/utils/decode-jwt-payload';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -13,20 +11,15 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
     try {
-      const token = request.headers.authorization;
+      const discordId = request.headers['x-auth-discord-id'];
+      const userId = request.headers['x-auth-user-id'];
 
-      if (!token) {
-        throw new UnauthorizedException();
-      }
-
-      const parsedPayload = decodeJwtPayload(token);
-      const userId = parsedPayload.sub?.replace(AUTH0_USER_ID_PREFIX, '');
-
-      if (!userId) {
+      if (!discordId || !userId) {
         throw new UnauthorizedException();
       }
 
       request.userId = userId;
+      request.discordId = discordId;
 
       return true;
     } catch (error) {

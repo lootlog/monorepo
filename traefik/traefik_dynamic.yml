@@ -25,7 +25,7 @@ http:
         - "web"
     api:
       rule: "PathPrefix(`/api/lootlog`)"
-      service: "search"
+      service: "api"
       middlewares:
         - "apiStripPrefix"
         - "apiForwardAuth"
