@@ -1,6 +1,5 @@
 import { ConfigModuleOptions } from '@nestjs/config';
 import * as Joi from 'joi';
-import auth0Config from 'src/config/auth0.config';
 import discordConfig from 'src/config/discord.config';
 import rabbitmqConfig from 'src/config/rabbitmq.config';
 import serviceConfig from 'src/config/service.config';
@@ -10,13 +9,7 @@ import { RuntimeEnvironment } from 'src/types/common.types';
 export const APP_CONFIG: ConfigModuleOptions = {
   envFilePath: `.env`,
   isGlobal: true,
-  load: [
-    serviceConfig,
-    auth0Config,
-    discordConfig,
-    rabbitmqConfig,
-    winstonConfig,
-  ],
+  load: [serviceConfig, discordConfig, rabbitmqConfig, winstonConfig],
   cache: true,
   validationSchema: Joi.object({
     ENV: Joi.string()
@@ -28,11 +21,6 @@ export const APP_CONFIG: ConfigModuleOptions = {
       )
       .default(RuntimeEnvironment.LOCAL),
     PORT: Joi.number().required(),
-    AUTH0_CLIENT_ID: Joi.string().required(),
-    AUTH0_CLIENT_SECRET: Joi.string().required(),
-    AUTH0_DOMAIN: Joi.string().required(),
-    AUTH0_AUDIENCE: Joi.string().required(),
-    AUTH0_ISSUER_URL: Joi.string().required(),
     DISCORD_API_VERSION: Joi.string().required(),
     DISCORD_API_AUTH_PREFIX: Joi.string().required(),
     POSTGRESQL_CONNECTION_URI: Joi.string(),

@@ -1,7 +1,6 @@
 import { REST, RESTOptions } from '@discordjs/rest';
 import { Injectable } from '@nestjs/common';
-import { Auth0Service } from 'src/auth0/auth0.service';
-import { Auth0Connection } from 'src/auth0/types/auth0-api.types';
+
 import {
   APIGuild,
   APIGuildMember,
@@ -12,10 +11,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DiscordService {
-  constructor(
-    private readonly auth0Service: Auth0Service,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   async getDiscordProfile(userId: string): Promise<APIUser> {
     const restClient = await this.getDiscordRestClient(userId);
@@ -61,12 +57,8 @@ export class DiscordService {
   }
 
   async getDiscordRestClient(userId: string) {
-    const token = await this.auth0Service.getIDPAccessToken(
-      userId,
-      Auth0Connection.DISCORD,
-    );
     const discordConfig = this.configService.get<RESTOptions>('discord');
 
-    return new REST(discordConfig).setToken(token.access_token);
+    return new REST(discordConfig).setToken('temp');
   }
 }

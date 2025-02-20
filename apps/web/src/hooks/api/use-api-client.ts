@@ -4,5 +4,5 @@ import { useSession } from "hooks/auth/use-session";
 export const useApiClient = () => {
   const { data: session } = useSession();
 
-  return { client: apiClient, isAuthenticated: false };
+  return { client: apiClient, isAuthenticated: !!session };
 };

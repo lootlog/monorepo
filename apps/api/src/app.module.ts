@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WinstonModule, WinstonModuleOptions } from 'nest-winston';
 import { APP_CONFIG } from 'src/config/app.config';
 import { DiscordModule } from './discord/discord.module';
-import { Auth0Module } from './auth0/auth0.module';
 import { UsersModule } from './users/users.module';
 import { TimersModule } from './timers/timers.module';
 import { LootsModule } from './loots/loots.module';
@@ -28,7 +27,6 @@ import { LoggerMiddleware } from 'src/middleware/logger.middleware';
     }),
     ConfigModule.forRoot(APP_CONFIG),
     DiscordModule,
-    Auth0Module,
     UsersModule,
     TimersModule,
     LootsModule,

@@ -7,12 +7,6 @@ declare global {
       PORT: number;
       ENV: RuntimeEnvironment;
 
-      AUTH0_CLIENT_SECRET: string;
-      AUTH0_CLIENT_ID: string;
-      AUTH0_DOMAIN: string;
-      AUTH0_AUDIENCE: string;
-      AUTH0_ISSUER_URL: string;
-
       DISCORD_API_VERSION: RESTOptions.version;
       DISCORD_API_AUTH_PREFIX: RESTOptions.authPrefix;
 
