@@ -56,7 +56,9 @@ export const LootsList: FC = () => {
         </ul>
       )}
       {!loots ||
-        (loots.pages[0].data.length <= 0 && (
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        (loots?.pages[0].data.length <= 0 && (
           <div className="flex flex-col justify-center gap-8 items-center mt-48">
             <Frown size="72" />
             <span className="font-semibold">

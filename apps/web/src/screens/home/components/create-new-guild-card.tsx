@@ -1,8 +1,4 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
+import { Avatar, AvatarFallback } from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Card,
