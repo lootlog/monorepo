@@ -9,7 +9,8 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "api:migrate:dev": "turbo run api:migrate:dev",
-    "auth:migrate:dev": "turbo run auth:migrate:dev"
+    "auth:migrate:dev": "turbo run auth:migrate:dev",
+    "generate": "turbo run generate"
   },
   "devDependencies": {
     "@lootlog/eslint-config": "workspace:*",
@@ -18,7 +19,7 @@
     "turbo": "^2.4.0",
     "typescript": "5.7.3"
   },
-  "packageManager": "pnpm@10.2.1",
+  "packageManager": "pnpm@9.1.1",
   "engines": {
     "node": ">=20"
   }

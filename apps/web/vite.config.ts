@@ -29,6 +29,7 @@ export default defineConfig({
     },
   },
   plugins: [react()],
+  base: "/",
   // test: {
   //   globals: true,
   //   environment: "jsdom",
