@@ -58,7 +58,7 @@ http:
           - "/api/lootlog"
     apiForwardAuth:
       forwardAuth:
-        address: "http://host.docker.internal:4001/session"
+        address: "http://host.docker.internal:4001/verify-auth"
         authResponseHeaders:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"

@@ -1,0 +1,12 @@
+{
+  "name": "@lootlog/api-helpers",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./lib/*": "./src/lib/*.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  }
+}

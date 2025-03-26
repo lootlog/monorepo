@@ -4,6 +4,7 @@ import { APP_CONFIG } from "./config/app.config.js";
 import { cors } from "hono/cors";
 import { auth } from "./lib/auth.js";
 import { logger } from "hono/logger";
+import { verifyToken } from "./lib/middleware/bearer-jwt-auth.js";
 
 const app = new Hono<{
   Variables: {
@@ -57,6 +58,31 @@ app.get("/session", async (c) => {
     session,
     user,
   });
+});
+
+app.get("/verify-auth", async (c) => {
+  const authorizationHeader = c.req.raw.headers.get("authorization");
+
+  if (authorizationHeader) {
+    const token = authorizationHeader.replace("Bearer ", "");
+    const { discordId, userId } = await verifyToken(token);
+
+    if (!userId || !discordId) return c.body(null, 401);
+
+    c.res.headers.set("X-Auth-Discord-Id", discordId);
+    c.res.headers.set("X-Auth-User-Id", userId);
+
+    return c.json({ status: "OK" });
+  }
+
+  const user = c.get("user");
+
+  if (!user) return c.body(null, 401);
+
+  c.res.headers.set("X-Auth-Discord-Id", user.discordId);
+  c.res.headers.set("X-Auth-User-Id", user.id);
+
+  return c.json({ status: "OK" });
 });
 
 app.on(["POST", "GET"], "/api/auth/**", (c) => {

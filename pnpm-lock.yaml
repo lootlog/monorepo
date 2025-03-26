@@ -219,6 +219,9 @@ importers:
       hono:
         specifier: ^4.7.0
         version: 4.7.0
+      jwks-rsa:
+        specifier: ^3.1.0
+        version: 3.1.0
       kysely:
         specifier: ^0.27.5
         version: 0.27.5
@@ -229,6 +232,9 @@ importers:
         specifier: ^3.24.1
         version: 3.24.1
     devDependencies:
+      '@lootlog/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^22.13.1
         version: 22.13.1
@@ -266,6 +272,9 @@ importers:
         specifier: ^3.24.1
         version: 3.24.1
     devDependencies:
+      '@lootlog/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@types/node':
         specifier: ^22.13.1
         version: 22.13.1
@@ -520,6 +529,12 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
+
+  packages/api-helpers:
+    dependencies:
+      hono:
+        specifier: ^4.7.0
+        version: 4.7.0
 
   packages/eslint-config:
     devDependencies:

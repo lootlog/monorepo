@@ -15,11 +15,13 @@
     "better-auth": "^1.1.16",
     "dotenv": "^16.4.7",
     "hono": "^4.7.0",
+    "jwks-rsa": "^3.1.0",
     "kysely": "^0.27.5",
     "pg": "^8.13.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
     "@types/node": "^22.13.1",
     "@types/pg": "^8.11.11",
     "pkgroll": "^2.8.2",

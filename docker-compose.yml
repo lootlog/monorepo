@@ -46,8 +46,6 @@ services:
 
   meilisearch:
     image: "getmeili/meilisearch:v1.10.0"
-    env_file:
-      - ./.env.docker-compose
     environment:
       - MEILISEARCH_MASTER_KEY=${MEILISEARCH_MASTER_KEY}
     ports:
@@ -75,8 +73,8 @@ services:
       - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
-      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./traefik/dev/traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
+      - "./traefik/dev/traefik.yml:/etc/traefik/traefik.yml:ro"
 
 volumes:
   rabbitdata:
