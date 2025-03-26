@@ -73,8 +73,26 @@ services:
       - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/dev/traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
-      - "./traefik/dev/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./traefik/traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+
+  auth:
+    build:
+      target: auth
+      context: .
+    container_name: "auth"
+    restart: always
+    environment:
+      - PORT=4000
+
+  search:
+    build:
+      target: search
+      context: .
+    container_name: "search"
+    restart: always
+    environment:
+      - PORT=4000
 
 volumes:
   rabbitdata:

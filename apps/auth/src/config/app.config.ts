@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const configSchema = z.object({
   PORT: z.string().transform(Number),
-  BETTER_AUTH_URL: z.string(),
+  APP_URL: z.string(),
   POSTGRESQL_HOST: z.string(),
   POSTGRESQL_PORT: z.string().transform(Number),
   POSTGRESQL_USER: z.string(),
@@ -15,7 +15,7 @@ const configSchema = z.object({
 
 const {
   PORT,
-  BETTER_AUTH_URL,
+  APP_URL,
   POSTGRESQL_DATABASE,
   POSTGRESQL_HOST,
   POSTGRESQL_PASSWORD,
@@ -27,7 +27,6 @@ const {
 
 export const APP_CONFIG = {
   port: PORT,
-  betterAuthUrl: BETTER_AUTH_URL,
   postgres: {
     host: POSTGRESQL_HOST,
     port: POSTGRESQL_PORT,
@@ -38,5 +37,9 @@ export const APP_CONFIG = {
   discord: {
     clientId: DISCORD_CLIENT_ID,
     clientSecret: DISCORD_CLIENT_SECRET,
+  },
+  auth: {
+    jwksUrl: `${APP_URL}/api/auth/jwks`,
+    appUrl: APP_URL,
   },
 };
