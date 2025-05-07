@@ -4,7 +4,7 @@ import { cors } from "hono/cors";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
 import { logger } from "hono/logger";
-import { userMetadataFromHeaders } from "./lib/middleware/user-data.js";
+import { userMetadataFromHeaders } from "@lootlog/api-helpers/lib/auth/middleware/user-metadata.middleware";
 
 const app = new Hono<{
   Variables: {
@@ -16,7 +16,6 @@ const app = new Hono<{
 app.use("*", logger());
 app.use("*", cors());
 app.use("*", userMetadataFromHeaders);
-// app.use("*", verifyTokenMiddleware);
 
 app.route("/players", players);
 

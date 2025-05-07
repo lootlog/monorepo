@@ -70,6 +70,7 @@ export const auth = betterAuth({
     discord: {
       clientId,
       clientSecret,
+      redirectURI: "http://localhost/api/auth/callback/discord",
       mapProfileToUser: (profile) => {
         return {
           firstName: profile.given_name,

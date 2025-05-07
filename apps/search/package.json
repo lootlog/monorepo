@@ -10,6 +10,7 @@
     "build": "pkgroll"
   },
   "dependencies": {
+    "@lootlog/api-helpers": "workspace:*",
     "@hono/node-server": "^1.13.8",
     "amqplib": "^0.10.5",
     "dotenv": "^16.4.7",

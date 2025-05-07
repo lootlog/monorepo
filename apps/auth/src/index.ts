@@ -4,7 +4,8 @@ import { APP_CONFIG } from "./config/app.config.js";
 import { cors } from "hono/cors";
 import { auth } from "./lib/auth.js";
 import { logger } from "hono/logger";
-import { verifyToken } from "./lib/middleware/bearer-jwt-auth.js";
+import type { JwksKeys } from "@lootlog/api-helpers/lib/auth/utils/verify-jwt.types";
+import { validateToken } from "@lootlog/api-helpers/lib/auth/utils/verify-jwt";
 
 const app = new Hono<{
   Variables: {
@@ -14,17 +15,17 @@ const app = new Hono<{
 }>();
 
 app.use("*", logger());
-app.use(
-  "*",
-  cors({
-    origin: "http://localhost", // replace with your origin
-    allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["POST", "GET", "OPTIONS"],
-    exposeHeaders: ["Content-Length"],
-    maxAge: 600,
-    credentials: true,
-  })
-);
+// app.use(
+//   "*",
+//   cors({
+//     origin: "http://localhost", // replace with your origin
+//     allowHeaders: ["Content-Type", "Authorization"],
+//     allowMethods: ["POST", "GET", "OPTIONS"],
+//     exposeHeaders: ["Content-Length"],
+//     maxAge: 600,
+//     credentials: true,
+//   })
+// );
 
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -61,26 +62,39 @@ app.get("/session", async (c) => {
 });
 
 app.get("/verify-auth", async (c) => {
-  const authorizationHeader = c.req.raw.headers.get("authorization");
+  const user = c.get("user");
 
-  if (authorizationHeader) {
-    const token = authorizationHeader.replace("Bearer ", "");
-    const { discordId, userId } = await verifyToken(token);
-
-    if (!userId || !discordId) return c.body(null, 401);
-
-    c.res.headers.set("X-Auth-Discord-Id", discordId);
-    c.res.headers.set("X-Auth-User-Id", userId);
+  if (user) {
+    c.res.headers.set("X-Auth-Discord-Id", user.discordId);
+    c.res.headers.set("X-Auth-User-Id", user.id);
 
     return c.json({ status: "OK" });
   }
 
-  const user = c.get("user");
+  const authorizationHeader = c.req.raw.headers.get("authorization");
+  if (!authorizationHeader) return c.body(null, 401);
 
-  if (!user) return c.body(null, 401);
+  const token = authorizationHeader.replace("Bearer ", "");
+  const jwks = (await auth.api.getJwks()) as JwksKeys;
 
-  c.res.headers.set("X-Auth-Discord-Id", user.discordId);
-  c.res.headers.set("X-Auth-User-Id", user.id);
+  let discordId, userId;
+
+  try {
+    ({ discordId, userId } = await validateToken({
+      token,
+      jwks,
+      issuer: APP_CONFIG.auth.appUrl,
+      audience: APP_CONFIG.auth.appUrl,
+    }));
+  } catch (e) {
+    console.error("Error validating token", (e as Error)?.message || e);
+    return c.body(null, 401);
+  }
+
+  if (!userId || !discordId) return c.body(null, 401);
+
+  c.res.headers.set("X-Auth-Discord-Id", discordId);
+  c.res.headers.set("X-Auth-User-Id", userId);
 
   return c.json({ status: "OK" });
 });
