@@ -210,6 +210,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.13.8
         version: 1.13.8(hono@4.7.0)
+      '@lootlog/api-helpers':
+        specifier: workspace:*
+        version: link:../../packages/api-helpers
       better-auth:
         specifier: ^1.1.16
         version: 1.1.16
@@ -253,6 +256,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.13.8
         version: 1.13.8(hono@4.7.0)
+      '@lootlog/api-helpers':
+        specifier: workspace:*
+        version: link:../../packages/api-helpers
       amqplib:
         specifier: ^0.10.5
         version: 0.10.5
@@ -535,6 +541,12 @@ importers:
       hono:
         specifier: ^4.7.0
         version: 4.7.0
+      jose:
+        specifier: ^6.0.11
+        version: 6.0.11
+      jwks-rsa:
+        specifier: ^3.1.0
+        version: 3.1.0
 
   packages/eslint-config:
     devDependencies:
@@ -5198,6 +5210,9 @@ packages:
 
   jose@5.9.6:
     resolution: {integrity: sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ==}
+
+  jose@6.0.11:
+    resolution: {integrity: sha512-QxG7EaliDARm1O1S8BGakqncGT9s25bKL1WSf6/oa17Tkqwi8D2ZNglqCF+DsYF88/rV66Q/Q2mFAy697E1DUg==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -12837,6 +12852,8 @@ snapshots:
   jose@4.15.9: {}
 
   jose@5.9.6: {}
+
+  jose@6.0.11: {}
 
   js-tokens@4.0.0: {}
 
