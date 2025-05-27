@@ -1,0 +1,69 @@
+{
+  "world": "experimental",
+  "source": "fight",
+  "location": "Grobowiec Seta",
+  "npcs": [
+    {
+      "icon": "e2/szkiel_set.gif",
+      "id": 60538,
+      "prof": "w",
+      "hpp": 0,
+      "wt": 20,
+      "lvl": 274,
+      "name": "Neferkar Set",
+      "location": "Grobowiec Seta"
+    },
+    {
+      "icon": "hum/katakumby05.gif",
+      "id": 308564,
+      "prof": "b",
+      "hpp": 0,
+      "wt": 7,
+      "lvl": 270,
+      "name": "Imperialny gwardzista",
+      "location": "Grobowiec Seta"
+    },
+    {
+      "icon": "hum/katakumby06.gif",
+      "id": 308565,
+      "prof": "b",
+      "hpp": 0,
+      "wt": 7,
+      "lvl": 270,
+      "name": "Imperialny gwardzista",
+      "location": "Grobowiec Seta"
+    }
+  ],
+  "loots": [
+    {
+      "hid": "0df60bab37b3fa313c2c4da90397e4e7e5f0023952abf74061dbc05033963303",
+      "icon": "bro/wloczniaobus.gif",
+      "name": "Sovnya",
+      "pr": 357573,
+      "prc": "zl",
+      "st": 0,
+      "stat": "binds;dmg=8729,10669;ds=155;lvl=271;rarity=common;reqp=w",
+      "own": 171971
+    },
+    {
+      "hid": "fd513972ff40ca9367816bef9666e21e71eae4f880d5377aa3a624efa445e9b8",
+      "icon": "pie/pierscien164.gif",
+      "name": "Pierścień chluby imperium",
+      "pr": 241462,
+      "prc": "zl",
+      "st": 0,
+      "stat": "binds;heal=659;hp=4372;lvl=271;rarity=common;reqp=bpw;resfire=-6;resfrost=9;reslight=-6;sa=211",
+      "own": 171971
+    }
+  ],
+  "players": [
+    {
+      "originalId": 171971,
+      "prof": "h",
+      "name": "Poduszeczka",
+      "icon": "/noob/hm.gif",
+      "hpp": 85,
+      "lvl": 300
+    }
+  ]
+}
