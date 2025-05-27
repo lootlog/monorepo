@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": ["RABBITMQ_URI"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
