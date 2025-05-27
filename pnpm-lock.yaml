@@ -723,6 +723,18 @@ importers:
         specifier: 3.0.6
         version: 3.0.6(@types/node@22.13.1)(jiti@2.4.2)(jsdom@26.0.0)(lightningcss@1.29.1)(terser@5.38.1)(tsx@4.19.2)(yaml@2.7.0)
 
+  packages/api-helpers:
+    dependencies:
+      hono:
+        specifier: ^4.7.0
+        version: 4.7.0
+      jose:
+        specifier: ^6.0.11
+        version: 6.0.11
+      jwks-rsa:
+        specifier: ^3.1.0
+        version: 3.1.0
+
   packages/cli:
     dependencies:
       zx:
@@ -735,18 +747,6 @@ importers:
       tsx:
         specifier: ^4.19.2
         version: 4.19.2
-
-  packages/api-helpers:
-    dependencies:
-      hono:
-        specifier: ^4.7.0
-        version: 4.7.0
-      jose:
-        specifier: ^6.0.11
-        version: 6.0.11
-      jwks-rsa:
-        specifier: ^3.1.0
-        version: 3.1.0
 
   packages/eslint-config:
     devDependencies:
@@ -5782,6 +5782,9 @@ packages:
 
   jose@5.9.6:
     resolution: {integrity: sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ==}
+
+  jose@6.0.11:
+    resolution: {integrity: sha512-QxG7EaliDARm1O1S8BGakqncGT9s25bKL1WSf6/oa17Tkqwi8D2ZNglqCF+DsYF88/rV66Q/Q2mFAy697E1DUg==}
 
   js-cookie@2.2.1:
     resolution: {integrity: sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ==}
@@ -14777,6 +14780,8 @@ snapshots:
   jose@4.15.9: {}
 
   jose@5.9.6: {}
+
+  jose@6.0.11: {}
 
   js-cookie@2.2.1: {}
 
