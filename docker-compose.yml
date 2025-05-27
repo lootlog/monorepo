@@ -46,10 +46,8 @@ services:
 
   meilisearch:
     image: "getmeili/meilisearch:v1.10.0"
-    env_file:
-      - ./.env.docker-compose
     environment:
-      - MEILISEARCH_MASTER_KEY=${MEILISEARCH_MASTER_KEY}
+      MEILISEARCH_MASTER_KEY: ${MEILISEARCH_MASTER_KEY}
     ports:
       - 7700:7700
     volumes:
