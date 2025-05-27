@@ -1,0 +1,18 @@
+{
+  "name": "@lootlog/cli",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "module": "ESNext",
+  "exports": "./dist/index.mjs",
+  "scripts": {
+    "configure:env": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "zx": "^8.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "tsx": "^4.19.2"
+  }
+}

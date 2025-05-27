@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Navigation } from "./navigation/navigation";
 
 import "@lootlog/ui/globals.css";
@@ -22,7 +22,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <Navigation />
-            <ReactQueryDevtools initialIsOpen={false} />
+            {/* <ReactQueryDevtools initialIsOpen={false} /> */}
           </BrowserRouter>
         </QueryClientProvider>
       </GlobalContextProvider>

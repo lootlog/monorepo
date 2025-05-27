@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.mjs",
     "build": "pkgroll",
-    "migrate": "pnpm dlx @better-auth/cli migrate --config ./src/lib/auth.ts"
+    "auth:migrate:dev": "pnpm dlx @better-auth/cli migrate"
   },
   "dependencies": {
     "@lootlog/api-helpers": "workspace:*",

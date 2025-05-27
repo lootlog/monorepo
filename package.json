@@ -8,8 +8,10 @@
     "start": "turbo start",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "migrate": "turbo run migrate",
-    "generate": "turbo run generate"
+    "api:migrate:dev": "turbo run api:migrate:dev",
+    "api:generate": "turbo run api:generate",
+    "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
+    "configure:env": "turbo run configure:env"
   },
   "devDependencies": {
     "@lootlog/eslint-config": "workspace:*",
