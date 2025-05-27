@@ -1,10 +1,8 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": ["RABBITMQ_URI"],
   "tasks": {
-    "generate": {
-      "dependsOn": ["^generate"]
-    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
@@ -23,8 +21,20 @@
     "start": {
       "dependsOn": ["^start"]
     },
-    "migrate": {
+    "api:migrate:dev": {
+      "cache": false,
+      "interactive": true
+    },
+    "api:generate": {
       "cache": false
+    },
+    "auth:migrate:dev": {
+      "cache": false,
+      "interactive": true
+    },
+    "configure:env": {
+      "cache": false,
+      "interactive": true
     }
   }
 }
