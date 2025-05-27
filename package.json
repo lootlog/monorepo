@@ -9,8 +9,9 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "api:migrate:dev": "turbo run api:migrate:dev",
-    "auth:migrate:dev": "turbo run auth:migrate:dev",
-    "generate": "turbo run generate"
+    "api:generate": "turbo run api:generate",
+    "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
+    "configure:env": "turbo run configure:env"
   },
   "devDependencies": {
     "@lootlog/eslint-config": "workspace:*",
