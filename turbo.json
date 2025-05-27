@@ -2,9 +2,6 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
-    "generate": {
-      "dependsOn": ["^generate"]
-    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
@@ -24,10 +21,19 @@
       "dependsOn": ["^start"]
     },
     "api:migrate:dev": {
+      "cache": false,
+      "interactive": true
+    },
+    "api:generate": {
       "cache": false
     },
     "auth:migrate:dev": {
-      "cache": false
+      "cache": false,
+      "interactive": true
+    },
+    "configure:env": {
+      "cache": false,
+      "interactive": true
     }
   }
 }

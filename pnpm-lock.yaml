@@ -572,6 +572,19 @@ importers:
         specifier: 3.0.6
         version: 3.0.6(@types/node@22.13.1)(jiti@2.4.2)(jsdom@26.0.0)(lightningcss@1.29.1)(terser@5.38.1)(tsx@4.19.2)(yaml@2.7.0)
 
+  packages/cli:
+    dependencies:
+      zx:
+        specifier: ^8.5.4
+        version: 8.5.4
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.13.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.19.2
+
   packages/eslint-config:
     devDependencies:
       '@next/eslint-plugin-next':
@@ -7326,6 +7339,7 @@ packages:
   tsx@4.19.2:
     resolution: {integrity: sha512-pOUl6Vo2LUq/bSa8S5q7b91cgNSjctn9ugq/+Mvow99qW6x/UZYwzxy/3NmqoT66eHYfCVvFvACC58UBPFf28g==}
     engines: {node: '>=18.0.0'}
+    hasBin: true
 
   turbo-darwin-64@2.4.0:
     resolution: {integrity: sha512-kVMScnPUa3R4n7woNmkR15kOY0aUwCLJcUyH5UC59ggKqr5HIHwweKYK8N1pwBQso0LQF4I9i93hIzfJguCcwQ==}
@@ -7850,6 +7864,11 @@ packages:
 
   zod@3.24.1:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
+
+  zx@8.5.4:
+    resolution: {integrity: sha512-44oKea9Sa8ZnOkTnS6fRJpg3quzgnbB43nLrVfYnqE86J4sxgZMUDLezzKET/FdOAVkF4X+Alm9Bume+W+RW9Q==}
+    engines: {node: '>= 12.17.0'}
+    hasBin: true
 
 snapshots:
 
@@ -16037,3 +16056,5 @@ snapshots:
   zod@3.23.8: {}
 
   zod@3.24.1: {}
+
+  zx@8.5.4: {}
