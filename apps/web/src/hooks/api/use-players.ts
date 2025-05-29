@@ -7,7 +7,7 @@ export const usePlayers = () => {
 
   const query = useQuery({
     queryKey: ["players"],
-    queryFn: () => client.get(`/search/players`),
+    queryFn: () => client.get(`/lootlog/search/players`),
     enabled: isAuthenticated,
     select: (response) => response.data,
   });

@@ -29,7 +29,7 @@ export const useGuildPlayers = ({ search }: UseGuildPlayersOptions) => {
     queryKey: ["guild-players", guildId, search],
     queryFn: () =>
       client.get<Player[]>(
-        `${API_URL}/guilds/${guildId}/players?${new URLSearchParams(
+        `${API_URL}/lootlog/guilds/${guildId}/players?${new URLSearchParams(
           queryParams
         ).toString()}`
       ),
