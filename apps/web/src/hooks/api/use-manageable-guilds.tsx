@@ -1,6 +1,7 @@
+import { useDiscordIdpToken } from "hooks/api/use-discord-idp-token";
+import { REST, RESTOptions } from "@discordjs/rest";
 import { useQuery } from "@tanstack/react-query";
-import { API_URL } from "config/api";
-import { useApiClient } from "hooks/api/use-api-client";
+import { Routes } from "discord-api-types/v10";
 
 type GetManageableUserGuildsParams = {
   skipConfigured: boolean;
@@ -17,16 +18,22 @@ export type ManageableGuild = {
 };
 
 export const useManageableGuilds = (params: GetManageableUserGuildsParams) => {
-  const { client, isAuthenticated } = useApiClient();
+  const { data: token } = useDiscordIdpToken();
+
+  const restClient = new REST({
+    version: "10",
+    authPrefix: "Bearer",
+  } as RESTOptions);
+
+  restClient.setToken(token!);
 
   const query = useQuery({
-    queryKey: ["manageable-guilds", params.skipConfigured],
+    queryKey: ["manageable-guilds"],
     queryFn: () =>
-      client.get<ManageableGuild[]>(
-        `${API_URL}/users/@me/guilds/manageable?skipConfigured=${params.skipConfigured}`
-      ),
-    enabled: isAuthenticated && !!params.enabled,
-    select: (response) => response.data,
+      restClient.get(Routes.userGuilds()) as Promise<ManageableGuild[]>,
+    enabled: !!token && params.enabled,
+    select: (response) =>
+      response.filter((guild) => parseInt(guild.permissions, 10) & 0x8),
   });
 
   return query;

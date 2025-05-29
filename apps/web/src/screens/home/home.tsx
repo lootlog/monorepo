@@ -2,37 +2,13 @@ import { authClient } from "@/lib/auth-client";
 import { PageHeader } from "components/layout/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "components/ui/scroll-area";
-import { usePlayers } from "hooks/api/use-players";
 import { useSession } from "hooks/auth/use-session";
 
 import { GuildsList } from "screens/home/components/guilds-list";
-import { useEffect } from "react";
 
 export const Home: React.FC = () => {
   const { data: session, isPending } = useSession();
   const isAuthenticated = !!session;
-
-  const { data } = usePlayers();
-
-  useEffect(() => {
-    if (session) {
-      fetch("/api/auth/token", {
-        headers: {
-          Authorization: `Bearer ${session.session.token}`,
-        },
-      }).then((response) => {
-        if (response.ok) {
-          response.json().then((data) => {
-            console.log("Token data:", data);
-          });
-        } else {
-          throw new Error("Failed to fetch token");
-        }
-      });
-    }
-  }, [session]);
-
-  console.log(session, data);
 
   const handleAuthAction = async () => {
     if (isAuthenticated) {
@@ -41,6 +17,7 @@ export const Home: React.FC = () => {
       await authClient.signIn.social({
         provider: "discord",
         callbackURL: window.location.href,
+        scopes: ["identify", "email", "guilds"],
       });
     }
   };

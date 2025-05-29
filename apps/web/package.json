@@ -14,6 +14,7 @@
     "nginx.conf"
   ],
   "dependencies": {
+    "@discordjs/rest": "^2.4.0",
     "@hookform/resolvers": "^3.10.0",
     "@lootlog/ui": "workspace:*",
     "@radix-ui/react-avatar": "^1.1.3",
@@ -35,11 +36,12 @@
     "@tanstack/react-query": "^5.66.0",
     "@tanstack/react-query-devtools": "^5.66.0",
     "axios": "^1.7.9",
-    "better-auth": "^1.1.16",
+    "better-auth": "^1.2.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
     "date-fns": "^4.1.0",
+    "discord-api-types": "^0.37.110",
     "i18next": "^24.2.2",
     "lodash": "^4.17.21",
     "lucide-react": "^0.475.0",
