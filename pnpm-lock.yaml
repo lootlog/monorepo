@@ -389,6 +389,9 @@ importers:
       axios:
         specifier: ^1.7.7
         version: 1.7.9
+      better-auth:
+        specifier: ^1.2.8
+        version: 1.2.8
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1

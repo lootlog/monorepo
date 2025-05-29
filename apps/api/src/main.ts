@@ -37,11 +37,11 @@ async function bootstrap() {
   const { port, env } = configService.get<ServiceConfig>('service', {
     infer: true,
   });
-  // app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   if (env === RuntimeEnvironment.LOCAL) {
     app.enableCors();
   }
+  // app.enableCors();
 
   app.useGlobalPipes(new ValidationPipe());
 

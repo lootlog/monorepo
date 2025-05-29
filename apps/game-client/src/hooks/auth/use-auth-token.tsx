@@ -1,18 +1,24 @@
-import { useAuth0 } from "@auth0/auth0-react";
+import { useSession } from "@/hooks/auth/use-session";
 import { useEffect, useState } from "react";
 
 export const useAuthToken = () => {
   const [token, setToken] = useState<string | null>(null);
 
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const session = useSession();
+  const isAuthenticated = !!session.data;
+  const sessionToken = session.data?.session.token;
 
   useEffect(() => {
     if (isAuthenticated) {
-      getAccessTokenSilently().then((token) => {
-        setToken(token);
-      });
+      fetch("http://localhost/api/auth/idp/token", {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => setToken(data.token));
     }
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated]);
 
   return token;
 };

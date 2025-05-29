@@ -18,17 +18,26 @@ app.use("*", logger());
 // app.use(
 //   "*",
 //   cors({
-//     origin: "http://localhost", // replace with your origin
-//     allowHeaders: ["Content-Type", "Authorization"],
-//     allowMethods: ["POST", "GET", "OPTIONS"],
-//     exposeHeaders: ["Content-Length"],
-//     maxAge: 600,
-//     credentials: true,
+//     origin: ["https://gordion.margonem.pl"],
 //   })
 // );
+app.use(
+  "*",
+  cors({
+    origin: ["http://localhost", "https://gordion.margonem.pl"], // replace with your origin
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "OPTIONS"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 600,
+    credentials: true,
+  })
+);
 
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  console.log(c.req.raw.headers, "headers");
+  console.log(session, "seszyn");
 
   if (!session) {
     c.set("user", null);
@@ -63,6 +72,8 @@ app.get("/session", async (c) => {
 
 app.get("/verify-auth", async (c) => {
   const user = c.get("user");
+
+  console.log(user);
 
   if (user) {
     c.res.headers.set("X-Auth-Discord-Id", user.discordId);
