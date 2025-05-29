@@ -1,0 +1,23 @@
+import { Module } from '@nestjs/common';
+import { BotService } from './bot.service';
+import { BotDiscordEventsHandler } from 'src/bot/bot-discord-events.handler';
+import { BotQueueEventsHandler } from 'src/bot/bot-queue-events.handler';
+import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { ConfigService } from '@nestjs/config';
+import { ConfigKey } from 'src/config/config-key.enum';
+
+@Module({
+  imports: [
+    RabbitMQModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const config = configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ);
+
+        return config;
+      },
+    }),
+  ],
+  controllers: [],
+  providers: [BotService, BotQueueEventsHandler, BotDiscordEventsHandler],
+})
+export class BotModule {}

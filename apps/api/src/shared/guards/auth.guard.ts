@@ -14,6 +14,8 @@ export class AuthGuard implements CanActivate {
       const discordId = request.headers['x-auth-discord-id'];
       const userId = request.headers['x-auth-user-id'];
 
+      console.log(request.headers);
+
       if (!discordId || !userId) {
         throw new UnauthorizedException();
       }

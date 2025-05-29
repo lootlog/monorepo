@@ -1,0 +1,274 @@
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  Client,
+  Guild,
+  GuildMember,
+  PartialGuildMember,
+  Role,
+} from 'discord.js';
+import { MemberType } from 'src/bot/enums/member-type.enum';
+import { RoutingKey } from 'src/bot/enums/routing-key.enum';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { getDiscordMemberName } from 'src/utils/get-discord-member-name';
+import { getMemberType } from 'src/utils/get-member-type';
+
+@Injectable()
+export class BotService {
+  private readonly logger = new Logger(BotService.name);
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly client: Client,
+    private readonly amqpConnection: AmqpConnection,
+  ) {}
+
+  public async handleGuildMemberAdd(member: GuildMember) {
+    this.logger.log(`Member ${member.user.username} has joined the guild`);
+
+    const roleIds = member.roles.cache.map((role) => role.id);
+
+    const payload = {
+      guildId: member.guild.id,
+      id: member.id,
+      username: member.user.username,
+      avatar: member.user.avatarURL(),
+      discriminator: member.user.discriminator,
+      banner: member.user.banner,
+      globalName: member.user.globalName,
+      name: getDiscordMemberName(member),
+      roleIds,
+      type: getMemberType(member),
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_MEMBERS_ADD,
+      payload,
+    );
+  }
+
+  public async handleGuildMemberUpdate(
+    oldMember: GuildMember | PartialGuildMember,
+    newMember: GuildMember,
+  ) {
+    this.logger.log(
+      `Member ${getDiscordMemberName(oldMember as GuildMember)} has been updated to ${getDiscordMemberName(newMember)}`,
+    );
+    const isOwner = newMember.guild.ownerId === newMember.id;
+
+    const payload = {
+      guildId: newMember.guild.id,
+      id: newMember.id,
+      username: newMember.user.username,
+      avatar: newMember.user.avatarURL(),
+      discriminator: newMember.user.discriminator,
+      banner: newMember.user.banner,
+      globalName: newMember.user.globalName,
+      name: getDiscordMemberName(newMember),
+      roleIds: newMember.roles.cache.map((role) => role.id),
+      type: isOwner ? MemberType.OWNER : getMemberType(newMember),
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_MEMBERS_UPDATE,
+      payload,
+    );
+  }
+
+  public async handleGuildMemberDelete(
+    member: GuildMember | PartialGuildMember,
+  ) {
+    this.logger.log(`Member ${member.user.username} has left the guild`);
+
+    const payload = {
+      guildId: member.guild.id,
+      id: member.id,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_MEMBERS_REMOVE,
+      payload,
+    );
+  }
+
+  public async handleGuildMemberRoleAdd(member: GuildMember, role: Role) {
+    this.logger.log(
+      `Role ${role.name} has been added to ${member.user.username}`,
+    );
+
+    const payload = {
+      roleId: role.id,
+      guildId: role.guild.id,
+      id: member.id,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_MEMBERS_ADD_ROLE,
+      payload,
+    );
+  }
+
+  public async handleGuildMemberRoleRemove(
+    member: GuildMember | PartialGuildMember,
+    role: Role,
+  ) {
+    this.logger.log(
+      `Role ${role.name} has been removed from ${member.user.username}`,
+    );
+
+    const payload = {
+      roleId: role.id,
+      guildId: role.guild.id,
+      id: member.id,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
+      payload,
+    );
+  }
+
+  public async handleGuildCreate(guild: Guild) {
+    this.logger.log(`Bot is added to the new guild`, guild.name);
+
+    const payload = {
+      guildId: guild.id,
+      name: guild.name,
+      icon: guild.iconURL(),
+      ownerId: guild.ownerId,
+      roles: guild.roles.cache.map((role) => {
+        const isAdministrativeUser =
+          (Number(role.permissions.bitfield) & 0x8) === 0x8;
+
+        return {
+          id: role.id,
+          name: role.name,
+          color: role.color,
+          admin: isAdministrativeUser,
+          position: role.position,
+        };
+      }),
+      members: guild.members.cache.map((member) => {
+        const isOwner = guild.ownerId === member.id;
+
+        const memberRoleIds = member.roles.cache.map((role) => {
+          return role.id;
+        });
+
+        return {
+          id: member.id,
+          roleIds: memberRoleIds,
+          type: isOwner ? MemberType.OWNER : getMemberType(member),
+          discriminator: member.user.discriminator,
+          banner: member.user.banner,
+          globalName: member.user.globalName,
+          username: member.user.username,
+          avatar: member.user.avatar,
+          displayName: member.displayName,
+        };
+      }),
+    };
+
+    console.log(payload);
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_CREATE,
+      payload,
+    );
+  }
+
+  public async handleGuildUpdate(oldGuild: Guild, newGuild: Guild) {
+    this.logger.log(
+      `Guild ${oldGuild.name} has been updated to ${newGuild.name}`,
+    );
+
+    const payload = {
+      guildId: newGuild.id,
+      name: newGuild.name,
+      icon: newGuild.iconURL(),
+      ownerId: newGuild.ownerId,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_UPDATE,
+      payload,
+    );
+  }
+
+  async handleGuildDelete(guild: Guild) {
+    this.logger.log(`Bot has been removed from guild ${guild.name}`);
+
+    const payload = {
+      guildId: guild.id,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_DELETE,
+      payload,
+    );
+  }
+
+  async handleGuildRoleCreate(role: Role) {
+    this.logger.log(`Role ${role.name} has been created.`);
+
+    const payload = {
+      guildId: role.guild.id,
+      id: role.id,
+      name: role.name,
+      color: role.color,
+      position: role.position,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_CREATE_ROLE,
+      payload,
+    );
+  }
+
+  async handleGuildRoleUpdate(oldRole: Role, newRole: Role) {
+    this.logger.log(`Role ${oldRole.name} has been updated to ${newRole.name}`);
+
+    const isAdministrativeUser =
+      (Number(newRole.permissions.bitfield) & 0x8) === 0x8;
+
+    const payload = {
+      guildId: newRole.guild.id,
+      id: newRole.id,
+      name: newRole.name,
+      color: newRole.color,
+      position: newRole.position,
+      admin: isAdministrativeUser,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_UPDATE_ROLE,
+      payload,
+    );
+  }
+
+  async handleGuildRoleDelete(role: Role) {
+    this.logger.log(`Role ${role.name} has been deleted.`);
+
+    const payload = {
+      guildId: role.guild.id,
+      id: role.id,
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_DELETE_ROLE,
+      payload,
+    );
+  }
+}

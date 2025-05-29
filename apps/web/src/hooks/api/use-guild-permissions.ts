@@ -17,7 +17,8 @@ export const useGuildPermissions = () => {
 
   const query = useQuery({
     queryKey: ["guild-permissions", guildId],
-    queryFn: () => client.get<Permission[]>(`/guilds/${guildId}/permissions`),
+    queryFn: () =>
+      client.get<Permission[]>(`/lootlog/guilds/${guildId}/permissions`),
     enabled: isAuthenticated && !!guildId,
     select: (response) => response.data,
   });

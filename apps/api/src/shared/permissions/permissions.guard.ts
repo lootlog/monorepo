@@ -26,6 +26,7 @@ export class PermissionsGuard implements CanActivate {
 
     const {
       userId,
+      discordId,
       params: { guildId },
     } = request;
 
@@ -35,7 +36,7 @@ export class PermissionsGuard implements CanActivate {
 
     return this.verifyPermissions(
       requiredPermissions,
-      userId,
+      discordId,
       guildId,
       request,
     );

@@ -43,7 +43,7 @@ export const useNpcs = ({ search }: UseGuildNpcsOptions) => {
     queryKey: ["guild-npcs", guildId, search],
     queryFn: () =>
       client.get<Npc[]>(
-        `${API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`
+        `${API_URL}/lootlog/npcs?${new URLSearchParams(queryParams).toString()}`
       ),
     enabled: isAuthenticated && !!guildId,
     select: (response) => response.data,
