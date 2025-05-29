@@ -10,8 +10,10 @@ export const useGuilds = () => {
   const query = useQuery({
     queryKey: ["user-guilds"],
     queryFn: () =>
-      axios.get<Guild[]>(`${API_URL}/users/@me/guilds`, {
-        headers: { Authorization: `Bearer ${token}` },
+      axios.get<Guild[]>(`${API_URL}/lootlog/users/@me/guilds`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }),
     enabled: !!token,
     select: (response) => response.data,

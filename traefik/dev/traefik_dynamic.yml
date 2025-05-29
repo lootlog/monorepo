@@ -60,6 +60,7 @@ http:
     apiForwardAuth:
       forwardAuth:
         address: "http://host.docker.internal:4001/verify-auth"
+        trustForwardHeader: true
         authResponseHeaders:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"

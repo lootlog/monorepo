@@ -1,23 +1,27 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { Button } from "@/components/ui/button";
 import { useGlobalContext } from "@/contexts/global-context";
-import { useAuth0 } from "@auth0/auth0-react";
+import { useSession } from "@/hooks/auth/use-session";
+import { authClient } from "@/lib/auth-client";
 import { useState, useEffect, useRef, useCallback } from "react";
 
 export const Settings = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { isAuthenticated, loginWithPopup, loginWithRedirect, logout } =
-    useAuth0();
   const { timersOpen, setTimersOpen, newInterface } = useGlobalContext();
   const [isWidgetLoaded, setisWidgetLoaded] = useState(false);
+  const session = useSession();
+  const isAuthenticated = !!session.data;
 
-  const handleLogin = () => {
-    loginWithPopup();
-    // loginWithRedirect();
+  const handleLogin = async () => {
+    await authClient.signIn.social({
+      provider: "discord",
+      callbackURL: window.location.href,
+      scopes: ["identify", "email", "guilds"],
+    });
   };
 
   const handleLogout = () => {
-    logout();
+    authClient.signOut({});
   };
 
   const handleTimersToggle = () => {

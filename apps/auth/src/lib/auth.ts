@@ -45,7 +45,7 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 1,
   },
-  trustedOrigins: ["http://localhost"],
+  trustedOrigins: ["http://localhost", "https://gordion.margonem.pl"],
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",
