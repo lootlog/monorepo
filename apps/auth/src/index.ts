@@ -99,7 +99,7 @@ app.get("/verify-auth", async (c) => {
   return c.json({ status: "OK" });
 });
 
-app.on(["POST", "GET"], "/api/auth/**", (c) => {
+app.on(["POST", "GET"], "/idp/**", async (c) => {
   return auth.handler(c.req.raw);
 });
 

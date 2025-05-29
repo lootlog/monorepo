@@ -21,6 +21,7 @@ const dialect = new PostgresDialect({
 
 export const auth = betterAuth({
   appName: "@lootlog/auth",
+  basePath: "/idp",
   database: {
     dialect,
     type: "postgres",
@@ -54,6 +55,8 @@ export const auth = betterAuth({
   plugins: [
     jwt({
       jwt: {
+        issuer: APP_CONFIG.auth.appUrl,
+        audience: APP_CONFIG.auth.appUrl,
         definePayload: ({ user }) => {
           return {
             id: user.id,
@@ -70,7 +73,8 @@ export const auth = betterAuth({
     discord: {
       clientId,
       clientSecret,
-      redirectURI: "http://localhost/api/auth/callback/discord",
+      redirectURI: "http://localhost/api/auth/idp/callback/discord",
+      scopes: ["identify", "email", "guilds"],
       mapProfileToUser: (profile) => {
         return {
           firstName: profile.given_name,

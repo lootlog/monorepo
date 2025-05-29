@@ -19,7 +19,7 @@ export const useGuild = ({ retry = true }: UseGuildOptions) => {
 
   const query = useQuery({
     queryKey: ["guilds", guildId],
-    queryFn: () => client.get<Guild>(`/guilds/${guildId}`),
+    queryFn: () => client.get<Guild>(`/lootlog/guilds/${guildId}`),
     enabled: isAuthenticated && !!guildId,
     select: (response) => response.data,
     retry,
