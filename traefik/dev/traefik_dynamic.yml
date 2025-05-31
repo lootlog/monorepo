@@ -13,6 +13,7 @@ http:
       middlewares:
         - "apiStripPrefix"
         - "apiCompress"
+        - "cors"
       entryPoints:
         - "web"
     search:
@@ -22,6 +23,7 @@ http:
         - "apiStripPrefix"
         - "apiForwardAuth"
         - "apiCompress"
+        - "cors"
       entryPoints:
         - "web"
     api:
@@ -31,6 +33,7 @@ http:
         - "apiStripPrefix"
         - "apiForwardAuth"
         - "apiCompress"
+        - "cors"
       entryPoints:
         - "web"
   services:
@@ -70,3 +73,23 @@ http:
           - application/json
           - text/html
           - text/plain
+    cors:
+      headers:
+        accessControlAllowOriginList:
+          - "https://fobos.margonem.pl"
+          - "http://localhost"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "X-Auth-User-Id"
+          - "X-Auth-Discord-Id"
+        accessControlExposeHeaders:
+          - "X-Auth-User-Id"
+          - "X-Auth-Discord-Id"
+        accessControlMaxAge: 86400

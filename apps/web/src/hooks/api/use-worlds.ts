@@ -8,7 +8,7 @@ export const useWorlds = () => {
 
   const query = useQuery({
     queryKey: ["worlds", guildId],
-    queryFn: () => client.get<string[]>(`/lootlog/guilds/${guildId}/worlds`),
+    queryFn: () => client.get<string[]>(`/guilds/${guildId}/worlds`),
     enabled: isAuthenticated && !!guildId,
     select: (response) => response.data,
   });
