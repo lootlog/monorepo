@@ -24,7 +24,11 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: ["http://localhost", "https://gordion.margonem.pl"], // replace with your origin
+    origin: [
+      "http://localhost",
+      "https://gordion.margonem.pl",
+      "https://fobos.margonem.pl",
+    ], // replace with your origin
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
@@ -35,9 +39,6 @@ app.use(
 
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
-
-  console.log(c.req.raw.headers, "headers");
-  console.log(session, "seszyn");
 
   if (!session) {
     c.set("user", null);
@@ -73,8 +74,6 @@ app.get("/session", async (c) => {
 app.get("/verify-auth", async (c) => {
   const user = c.get("user");
 
-  console.log(user);
-
   if (user) {
     c.res.headers.set("X-Auth-Discord-Id", user.discordId);
     c.res.headers.set("X-Auth-User-Id", user.id);
@@ -83,6 +82,7 @@ app.get("/verify-auth", async (c) => {
   }
 
   const authorizationHeader = c.req.raw.headers.get("authorization");
+
   if (!authorizationHeader) return c.body(null, 401);
 
   const token = authorizationHeader.replace("Bearer ", "");
@@ -121,4 +121,11 @@ console.log(`Server is running on http://localhost:${port}`);
 serve({
   fetch: app.fetch,
   port,
+});
+
+fetch("http://localhost/api/lootlog/users/@me", {
+  headers: {
+    Authorization:
+      "Bearer eyJhbGciOiJFZERTQSIsImtpZCI6Imd4ZVd3MVhLMEFNUDQwYW45QmlhbzlabjhlYXhweno5In0.eyJpZCI6ImV1SzRiWjlSSTN3aFJmcVV1WUNQR1N3Mm9jeWNlZ0hwIiwiZW1haWwiOiJrYW1pbHdyb25rYTdAZ21haWwuY29tIiwiZGlzY29yZElkIjoiMzYyOTA3MTM1ODI0MTAxMzc2IiwiaWF0IjoxNzQ4NzI2NDYxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0L2FwaS9hdXRoIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9hcGkvYXV0aCIsImV4cCI6MTc0ODcyNzM2MSwic3ViIjoiZXVLNGJaOVJJM3doUmZxVXVZQ1BHU3cyb2N5Y2VnSHAifQ.0xl0eo0-3w4AVKP9MYpgLUEZjWb1M19LaKJyofTWS0KmhC5yV27K5qiAcTT-Oa6Bnh6ZAqDOXufcuhixtm_WAA",
+  },
 });
