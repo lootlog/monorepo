@@ -8,23 +8,25 @@ import { replaceEnvWithValues } from "./replace-env-with-values.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const SERVICES_SAMPLE_ENV_PATH = "../../../../.env.sample";
-const SERVICE_ENV_PATH = "../../../../.env";
+const BASE_PATH = "/../../..";
 
-const AUTH_SERVICE_SAMPLE_ENV_PATH = "../../../../apps/auth/.env.sample";
-const AUTH_SERVICE_ENV_PATH = "../../../../apps/auth/.env";
+const SERVICES_SAMPLE_ENV_PATH = `${BASE_PATH}/.env.sample`;
+const SERVICE_ENV_PATH = `${BASE_PATH}/.env`;
 
-const SEARCH_SERVICE_SAMPLE_ENV_PATH = "../../../../apps/search/.env.sample";
-const SEARCH_SERVICE_ENV_PATH = "../../../../apps/search/.env";
+const AUTH_SERVICE_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/auth/.env.sample`;
+const AUTH_SERVICE_ENV_PATH = `${BASE_PATH}/apps/auth/.env`;
 
-const API_SERVICE_SAMPLE_ENV_PATH = "../../../../apps/api/.env.sample";
-const API_SERVICE_ENV_PATH = "../../../../apps/api/.env";
+const SEARCH_SERVICE_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/search/.env.sample`;
+const SEARCH_SERVICE_ENV_PATH = `${BASE_PATH}/apps/search/.env`;
 
-const WEB_CLIENT_SAMPLE_ENV_PATH = "../../../../apps/web/.env.sample";
-const WEB_CLIENT_ENV_PATH = "../../../../apps/web/.env";
+const API_SERVICE_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/api/.env.sample`;
+const API_SERVICE_ENV_PATH = `${BASE_PATH}/apps/api/.env`;
 
-const GAME_CLIENT_SAMPLE_ENV_PATH = "../../../../apps/game-client/.env.sample";
-const GAME_CLIENT_ENV_PATH = "../../../../apps/game-client/.env";
+const WEB_CLIENT_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/web/.env.sample`;
+const WEB_CLIENT_ENV_PATH = `${BASE_PATH}/apps/web/.env`;
+
+const GAME_CLIENT_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/game-client/.env.sample`;
+const GAME_CLIENT_ENV_PATH = `${BASE_PATH}/apps/game-client/.env`;
 
 const servicesSampleEnv = readFileSync(
   __dirname + SERVICES_SAMPLE_ENV_PATH,
