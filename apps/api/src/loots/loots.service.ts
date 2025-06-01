@@ -108,7 +108,7 @@ export class LootsService {
         memberId: member.id,
         npcs,
         players,
-        loots: calculatedLoot,
+        items: calculatedLoot,
       });
 
       return acc;
@@ -116,8 +116,8 @@ export class LootsService {
 
     if (data.length === 0) return;
 
-    this.playersService.bulkIndexPlayers(players);
-    this.npcsService.bulkIndexNpcs(npcs);
+    // this.playersService.bulkIndexPlayers(players);
+    // this.npcsService.bulkIndexNpcs(npcs);
 
     try {
       await this.prisma.loot.createMany({
@@ -187,7 +187,7 @@ export class LootsService {
         ? Prisma.sql`
         AND EXISTS (
         SELECT 1
-        FROM jsonb_array_elements("loots") AS loot
+        FROM jsonb_array_elements("items") AS loot
         WHERE loot->>'rarity' = ANY(ARRAY[${Prisma.join(rarities)}]::text[])
         )`
         : Prisma.sql``;

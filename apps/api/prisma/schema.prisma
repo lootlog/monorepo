@@ -175,14 +175,14 @@ model Loot {
   uniqueId  String
   guildId   String
   memberId  Int
-  items     Item[]
+  items     Json
   world     String
   source    LootSource
   location  String
-  players   Player[]
+  players   Json
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  npcs      Npc[]
+  npcs      Json
 
   guild  Guild  @relation(fields: [guildId], references: [id])
   member Member @relation(fields: [memberId], references: [id])
@@ -202,7 +202,6 @@ model Item {
   prc    Int
   stat   String
   lootId Int?
-  loot   Loot?      @relation(fields: [lootId], references: [id])
 }
 
 model Player {
@@ -215,7 +214,6 @@ model Player {
   lvl         Int
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  loot        Loot?      @relation(fields: [lootId], references: [id])
   lootId      Int?
 }
 
@@ -231,7 +229,6 @@ model Npc {
   icon         String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  loot         Loot?      @relation(fields: [lootId], references: [id])
   lootId       Int?
 }
 

@@ -48,7 +48,7 @@ export type Loot = {
   updatedAt: string;
   npcs: Npc[];
   players: Player[];
-  loots: Item[];
+  items: Item[];
   member: GuildMember;
 };
 
