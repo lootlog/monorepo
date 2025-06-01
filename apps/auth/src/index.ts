@@ -72,8 +72,8 @@ app.get("/verify-auth", async (c) => {
     ({ discordId, userId } = await validateToken({
       token,
       jwks,
-      issuer: APP_CONFIG.auth.appUrl,
-      audience: APP_CONFIG.auth.appUrl,
+      issuer: APP_CONFIG.appUrl,
+      audience: APP_CONFIG.appUrl,
     }));
   } catch (e) {
     console.error("Error validating token", (e as Error)?.message || e);
@@ -94,7 +94,7 @@ app.on(["POST", "GET"], "/idp/**", async (c) => {
 
 const port = APP_CONFIG.port;
 
-console.log(`Server is running on http://localhost:${port}`);
+console.log(`Server is running on ${APP_CONFIG.appUrl}`);
 
 serve({
   fetch: app.fetch,

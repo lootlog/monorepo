@@ -20,6 +20,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@lootlog/types": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "^22.13.1",
     "pkgroll": "^2.8.2",

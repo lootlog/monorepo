@@ -1,16 +1,13 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
+    "module": "NodeNext",
     "strict": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
     "types": ["node"],
-    "lib": ["esnext"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+    "esModuleInterop": true
   }
 }
