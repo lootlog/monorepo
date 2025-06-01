@@ -1,6 +1,5 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
 import { logger } from "hono/logger";
@@ -14,7 +13,6 @@ const app = new Hono<{
 }>();
 
 app.use("*", logger());
-app.use("*", cors());
 app.use("*", userMetadataFromHeaders);
 
 app.route("/players", players);
