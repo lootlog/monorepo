@@ -78,16 +78,10 @@ export class GuildsService {
   async getGuildPermissions(userId: string, guildId: string) {
     const guild = await this.getGuildById(guildId);
 
-    console.log('Guild found:', guild, userId);
-
-    const xdtest = await this.prisma.member.findMany();
-
     const member = await this.prisma.member.findUnique({
       where: { memberId: { userId, guildId: guild.id } },
       include: { roles: true, guild: true },
     });
-
-    console.log(xdtest);
 
     const permissions = member.roles.reduce((acc: Permission[], role) => {
       return acc.concat(role.permissions);

@@ -5,7 +5,7 @@ import { Guild } from "@/hooks/api/use-guild";
 import { API_URL } from "@/config/api";
 
 export const useGuilds = () => {
-  const token = useAuthToken();
+  const { data: token } = useAuthToken();
 
   const query = useQuery({
     queryKey: ["user-guilds"],

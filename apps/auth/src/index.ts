@@ -1,7 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { APP_CONFIG } from "./config/app.config.js";
-import { cors } from "hono/cors";
 import { auth } from "./lib/auth.js";
 import { logger } from "hono/logger";
 import type { JwksKeys } from "@lootlog/api-helpers/lib/auth/utils/verify-jwt.types";
@@ -15,41 +14,6 @@ const app = new Hono<{
 }>();
 
 app.use("*", logger());
-
-// app.use(
-//   "*",
-//   cors({
-//     origin: (origin, c) => {
-//       return origin.endsWith(".margonem.pl") ? origin : "http://localhost";
-//     },
-//     allowHeaders: ["Content-Type", "Authorization"],
-//     allowMethods: ["POST", "GET", "OPTIONS"],
-//     exposeHeaders: ["Content-Length"],
-//     maxAge: 600,
-//     credentials: true,
-//   })
-// );
-
-app.use(
-  "*",
-  cors({
-    origin: (origin) => {
-      if (!origin) return "";
-      const hostname = new URL(origin).hostname;
-      console.log("CORS Origin:", hostname);
-      if (
-        hostname.endsWith(".margonem.pl") ||
-        hostname.endsWith(".margonem.com")
-      ) {
-        return origin;
-      }
-      return "";
-    },
-    allowHeaders: ["Authorization", "Content-Type"],
-    allowMethods: ["GET", "POST", "OPTIONS"],
-    credentials: true,
-  })
-);
 
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
