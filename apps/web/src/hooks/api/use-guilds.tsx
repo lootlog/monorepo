@@ -5,11 +5,9 @@ import { Guild } from "hooks/api/use-guild";
 export const useGuilds = () => {
   const { client, isAuthenticated } = useApiClient();
 
-  console.log("isAuthenticated", isAuthenticated);
-
   const query = useQuery({
     queryKey: ["user-guilds"],
-    queryFn: () => client.get<Guild[]>(`/users/@me/guilds`),
+    queryFn: () => client.get<Guild[]>(`/guilds/@me`),
     enabled: isAuthenticated,
     select: (response) => response.data,
   });

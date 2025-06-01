@@ -26,10 +26,37 @@ export class GuildsService {
     @Inject(forwardRef(() => LootlogConfigService))
     private lootlogConfigService: LootlogConfigService,
     @Inject(forwardRef(() => UsersService))
-    private usersService: UsersService,
     private readonly amqpConnection: AmqpConnection,
     private readonly prisma: PrismaService,
   ) {}
+
+  async getUserGuilds(discordId: string) {
+    const guilds = await this.prisma.guild.findMany({
+      where: {
+        OR: [
+          {
+            ownerId: discordId,
+          },
+          {
+            members: {
+              some: {
+                userId: discordId,
+                roles: {
+                  some: {
+                    permissions: {
+                      has: Permission.LOOTLOG_READ,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    return guilds;
+  }
 
   async getGuildById(idOrVanityURL: string) {
     const guild = await this.prisma.guild.findFirst({
@@ -74,11 +101,11 @@ export class GuildsService {
     return guilds;
   }
 
-  async getGuildPermissions(userId: string, guildId: string) {
+  async getGuildPermissions(discordId: string, guildId: string) {
     const guild = await this.getGuildById(guildId);
 
     const member = await this.prisma.member.findUnique({
-      where: { memberId: { userId, guildId: guild.id } },
+      where: { memberId: { userId: discordId, guildId: guild.id } },
       include: { roles: true, guild: true },
     });
 
@@ -86,7 +113,7 @@ export class GuildsService {
       return acc.concat(role.permissions);
     }, []);
 
-    if (userId === member.guild.ownerId) {
+    if (discordId === member.guild.ownerId) {
       return { data: Object.values(Permission), guild };
     }
 
@@ -138,22 +165,8 @@ export class GuildsService {
       console.log(error);
     }
 
-    // const users: APIUser[] = data.members.map((member) => {
-    //   return {
-    //     id: member.id,
-    //     avatar: member.avatar,
-    //     discriminator: member.discriminator,
-    //     banner: member.banner,
-    //     global_name: member.globalName,
-    //     username: member.username,
-    //   };
-    // });
-
-    // await this.usersService.bulkCreateUsers(users);
-
     await this.rolesService.bulkCreateRoles(data.guildId, data.roles);
     await this.membersService.bulkCreateMembers(data.guildId, data.members);
-
     await this.lootlogConfigService.createLootlogConfig(data.guildId);
 
     return guild;

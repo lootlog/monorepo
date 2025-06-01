@@ -8,8 +8,8 @@ import { UsersService } from 'src/users/users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('/@me/guilds')
-  async getUserGuilds(@DiscordId() discordId: string) {
-    return this.usersService.getUserGuilds(discordId);
-  }
+  // @Get('/@me/guilds')
+  // async getUserGuilds(@DiscordId() discordId: string) {
+  //   return this.usersService.getUserGuilds(discordId);
+  // }
 }

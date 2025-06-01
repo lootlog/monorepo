@@ -2,6 +2,7 @@ import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { Guild, Permission } from '@prisma/client';
 import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
 import { GuildsService } from 'src/guilds/guilds.service';
+import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -12,6 +13,11 @@ import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 @Controller('guilds')
 export class GuildsController {
   constructor(private readonly guildsService: GuildsService) {}
+
+  @Get('/@me')
+  async getUserGuilds(@DiscordId() discordId: string) {
+    return this.guildsService.getUserGuilds(discordId);
+  }
 
   @Permissions(Permission.LOOTLOG_READ)
   @UseGuards(PermissionsGuard)

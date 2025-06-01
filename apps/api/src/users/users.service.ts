@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { Permission, User } from '@prisma/client';
+import { Permission } from '@prisma/client';
 import { PrismaService } from 'src/db/prisma.service';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getUserById(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
+  // async getUserById(userId: string) {
+  //   const user = await this.prisma.user.findUnique({
+  //     where: {
+  //       id: userId,
+  //     },
+  //   });
 
-    return user;
-  }
+  //   return user;
+  // }
 
   // async createUser(discordUser: User) {
   //   const user = await this.prisma.user.create({
@@ -73,38 +73,38 @@ export class UsersService {
   //   return updatedUser;
   // }
 
-  async getUserGuilds(discordId: string) {
-    console.log(discordId);
-    const guilds = await this.prisma.guild.findMany({
-      where: {
-        OR: [
-          {
-            ownerId: discordId,
-          },
-          {
-            members: {
-              some: {
-                userId: discordId,
-                roles: {
-                  some: {
-                    permissions: {
-                      has: Permission.LOOTLOG_READ,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        ],
-      },
-    });
+  // async getUserGuilds(discordId: string) {
+  //   console.log(discordId);
+  //   const guilds = await this.prisma.guild.findMany({
+  //     where: {
+  //       OR: [
+  //         {
+  //           ownerId: discordId,
+  //         },
+  //         {
+  //           members: {
+  //             some: {
+  //               userId: discordId,
+  //               roles: {
+  //                 some: {
+  //                   permissions: {
+  //                     has: Permission.LOOTLOG_READ,
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       ],
+  //     },
+  //   });
 
-    return guilds;
-  }
+  //   return guilds;
+  // }
 
-  getUserAvatarURL(user: User) {
-    return user.avatar
-      ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`
-      : null;
-  }
+  // getUserAvatarURL(user: User) {
+  //   return user.avatar
+  //     ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.webp`
+  //     : null;
+  // }
 }

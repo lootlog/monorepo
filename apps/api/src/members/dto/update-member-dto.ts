@@ -2,13 +2,10 @@ import { MemberType } from '@prisma/client';
 
 export class UpdateMemberDto {
   id: string;
-  username: string;
-  avatar: string | null;
-  discriminator: string;
-  banner: string | null;
-  globalName: string | null;
-  guildId: string;
   name: string;
+  avatar: string | null;
+  banner: string | null;
+  guildId: string;
   roleIds: string[];
   type: MemberType;
 }
