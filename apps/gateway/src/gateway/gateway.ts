@@ -1,9 +1,4 @@
-import {
-  UseFilters,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -13,22 +8,21 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket as SocketIOSocket } from 'socket.io';
-import { WsAuthzGuard } from 'src/authz/ws-authz.guard';
 import { InitDto } from 'src/gateway/dto/init.dto';
 import { JoinDto } from 'src/gateway/dto/join.dto';
 import { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
 import { WsUserId } from 'src/shared/decorators/user-id.decorator';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 
 type Socket = SocketIOSocket & { user: any };
 
-@WebSocketGateway()
+@WebSocketGateway({ namespace: 'gateway', path: '/socket.io' })
 export class Gateway {
   @WebSocketServer()
   server: Server;
 
-  @UseGuards(WsAuthzGuard)
   handleConnection(client: Socket) {
     console.log('client connected');
 
@@ -44,18 +38,26 @@ export class Gateway {
     });
   }
 
-  @UseGuards(WsAuthzGuard)
   @SubscribeMessage(GatewayEvent.INIT)
-  handleInit(
+  async handleInit(
     @ConnectedSocket() client: Socket,
-    @MessageBody() { user }: InitDto,
-  ): any {
-    if (!user.sub) {
+    @MessageBody() { token }: InitDto,
+  ): Promise<any> {
+    const keyset = createRemoteJWKSet(
+      new URL('http://localhost/api/auth/idp/jwks'),
+    );
+    const { payload } = await jwtVerify(token, keyset, {
+      issuer: 'http://localhost/api/auth',
+      audience: 'http://localhost/api/auth',
+    });
+    console.log(payload);
+
+    if (!payload.discordId) {
       return client.disconnect();
     }
 
     client.user = {
-      id: user.sub,
+      id: payload.discordId,
       sessionId: client.id,
       status: UserPresenceStatus.ONLINE,
     };

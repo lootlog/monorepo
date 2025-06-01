@@ -28,7 +28,7 @@ type Props = {
 };
 
 export const GatewayProvider: React.FC<Props> = (props) => {
-  const token = useAuthToken();
+  const { data: token } = useAuthToken();
   const { initialized } = useGlobalContext();
   const { data: guilds } = useGuilds();
   // const { data: servers } = useServers();
@@ -48,6 +48,7 @@ export const GatewayProvider: React.FC<Props> = (props) => {
   const setupBaseListeners = useCallback(() => {
     if (token && guildIds && initialized) {
       socketRef.current.on(GatewayEvent.CONNECT, async () => {
+        console.log("Connected to gateway");
         const response = await socketRef.current.emitWithAck(
           GatewayEvent.INIT,
           { token }
@@ -87,7 +88,9 @@ export const GatewayProvider: React.FC<Props> = (props) => {
     if (token) {
       const socket = io(GATEWAY_URL, {
         transports: ["websocket"],
+        path: "/gateway/socket.io",
       });
+      console.log(GATEWAY_URL);
       socketRef.current = socket;
 
       setupBaseListeners();
