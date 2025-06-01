@@ -1,8 +1,6 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { useAuthToken } from "../auth/use-auth-token";
-import { API_URL } from "@/config/api";
+import { useMutation } from "@tanstack/react-query";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type UseCreateTimerOptions = {
   respawnRandomness?: number;
@@ -21,17 +19,15 @@ export type UseCreateTimerOptions = {
 };
 
 export const useCreateTimer = () => {
-  const token = useAuthToken();
   const { data: guilds } = useGuilds();
+  const { client } = useAuthenticatedApiClient();
 
   const mutation = useMutation({
     mutationKey: ["create-timer"],
     mutationFn: (options: UseCreateTimerOptions) => {
       const promiseArr =
         guilds?.forEach((guild) => {
-          return axios.post(`${API_URL}/guilds/${guild.id}/timers`, options, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          return client.post(`/guilds/${guild.id}/timers`, options);
         }) ?? [];
 
       return Promise.all(promiseArr);

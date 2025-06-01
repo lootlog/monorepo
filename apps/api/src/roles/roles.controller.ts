@@ -2,8 +2,8 @@ import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { Guild, Permission } from '@prisma/client';
 import { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
 import { RolesService } from 'src/roles/roles.service';
+import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
-import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -26,11 +26,11 @@ export class RolesController {
   async updateGuildRole(
     @GuildData() guild: Guild,
     @Param('roleId') roleId: string,
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Body() data: UpdateRolePermissionsDto,
   ) {
     return this.rolesService.updateRolePermissions(
-      userId,
+      discordId,
       guild.id,
       roleId,
       data,

@@ -17,7 +17,7 @@ export class TimersService {
     private readonly amqpConnection: AmqpConnection,
   ) {}
 
-  async createTimer(userId: string, guildId: string, data: CreateTimerDto) {
+  async createTimer(discordId: string, guildId: string, data: CreateTimerDto) {
     const now = new Date();
 
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
@@ -57,7 +57,7 @@ export class TimersService {
           member: {
             connect: {
               memberId: {
-                userId,
+                userId: discordId,
                 guildId,
               },
             },
@@ -91,7 +91,7 @@ export class TimersService {
         member: {
           connect: {
             memberId: {
-              userId,
+              userId: discordId,
               guildId,
             },
           },
@@ -114,7 +114,7 @@ export class TimersService {
         member: {
           connect: {
             memberId: {
-              userId,
+              userId: discordId,
               guildId,
             },
           },

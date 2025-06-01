@@ -1,9 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
-import { useAuthToken } from "../auth/use-auth-token";
-import { API_URL } from "@/config/api";
 import { Item } from "@/types/margonem/game-events/item";
 import { KilledNpc, PartyMember } from "@/utils/game/get-battle-participants";
+import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type LootDto = {
   id: number;
@@ -28,14 +26,12 @@ export type UseCreateLootOptions = {
 };
 
 export const useCreateLoot = () => {
-  const token = useAuthToken();
+  const { client } = useAuthenticatedApiClient();
 
   const mutation = useMutation({
     mutationKey: ["create-loot"],
     mutationFn: (options: UseCreateLootOptions) => {
-      return axios.post(`${API_URL}/loots`, options, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      return client.post("/loots", options);
     },
     onSuccess: () => {
       console.log("onSuccess");

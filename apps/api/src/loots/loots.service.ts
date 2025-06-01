@@ -2,13 +2,11 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { createHash } from 'crypto';
 import { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
 import {
-  DEFAULT_OFFSET,
   DEFAULT_PAGE_LIMIT,
   MAX_PAGE_LIMIT,
 } from 'src/loots/config/pagination';
@@ -22,16 +20,11 @@ import { Prisma } from '@prisma/client';
 import {
   ItemRarity,
   Profession,
-  ItemType,
-  NpcType,
   Permission,
-  // Item,
-  LootlogConfig,
   LootlogConfigNpc,
 } from '@prisma/client';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
-import { UsersService } from 'src/users/users.service';
 import { GuildsService } from 'src/guilds/guilds.service';
 
 @Injectable()

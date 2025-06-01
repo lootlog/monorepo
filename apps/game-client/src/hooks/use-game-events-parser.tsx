@@ -1,6 +1,6 @@
 import { useGlobalContext } from "@/contexts/global-context";
-import { useCreateLoot } from "@/hooks/api/useCreateLoot";
-import { useCreateTimer } from "@/hooks/api/useCreateTimer";
+import { useCreateLoot } from "@/hooks/api/use-create-loot";
+import { useCreateTimer } from "@/hooks/api/use-create-timer";
 import { W } from "@/types/margonem/game-events/f";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
 import { HeroD } from "@/types/margonem/hero";
