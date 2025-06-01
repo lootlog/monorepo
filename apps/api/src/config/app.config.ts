@@ -1,10 +1,10 @@
+import { RuntimeEnvironment } from '@lootlog/types';
 import { ConfigModuleOptions } from '@nestjs/config';
 import * as Joi from 'joi';
 import discordConfig from 'src/config/discord.config';
 import rabbitmqConfig from 'src/config/rabbitmq.config';
 import serviceConfig from 'src/config/service.config';
 import winstonConfig from 'src/config/winston.config';
-import { RuntimeEnvironment } from 'src/types/common.types';
 
 export const APP_CONFIG: ConfigModuleOptions = {
   envFilePath: `.env`,

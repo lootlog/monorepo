@@ -3,7 +3,7 @@ import { registerAs } from '@nestjs/config';
 import { WinstonModuleOptions } from 'nest-winston';
 import { WinstonTransport as AxiomTransport } from '@axiomhq/winston';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { RuntimeEnvironment } from 'src/types/common.types';
+import { RuntimeEnvironment } from '@lootlog/types';
 
 export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
   const { ENV, HOSTNAME, AXIOM_DATASET, AXIOM_TOKEN } = process.env;

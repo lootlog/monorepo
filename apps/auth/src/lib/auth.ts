@@ -45,11 +45,7 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 1,
   },
-  trustedOrigins: [
-    "http://localhost",
-    "https://*.margonem.pl",
-    "https://*.margonem.com",
-  ],
+  trustedOrigins: APP_CONFIG.trustedOrigins,
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",
@@ -59,8 +55,9 @@ export const auth = betterAuth({
   plugins: [
     jwt({
       jwt: {
-        issuer: APP_CONFIG.auth.appUrl,
-        audience: APP_CONFIG.auth.appUrl,
+        issuer: APP_CONFIG.appUrl,
+        audience: APP_CONFIG.appUrl,
+        expirationTime: "24h",
         definePayload: ({ user }) => {
           return {
             id: user.id,
@@ -77,7 +74,7 @@ export const auth = betterAuth({
     discord: {
       clientId,
       clientSecret,
-      redirectURI: "http://localhost/api/auth/idp/callback/discord",
+      redirectURI: `${APP_CONFIG.appUrl}/idp/callback/discord`,
       scopes: ["identify", "email", "guilds"],
       mapProfileToUser: (profile) => {
         return {

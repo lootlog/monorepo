@@ -1,8 +1,11 @@
 import "dotenv/config";
 import { z } from "zod";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 const configSchema = z.object({
   PORT: z.string().transform(Number),
+  ENV: z.nativeEnum(RuntimeEnvironment),
+  TRUSTED_ORIGINS: z.string().transform((val) => val.split(",")),
   APP_URL: z.string(),
   POSTGRESQL_HOST: z.string(),
   POSTGRESQL_PORT: z.string().transform(Number),
@@ -15,6 +18,7 @@ const configSchema = z.object({
 
 const {
   PORT,
+  ENV,
   APP_URL,
   POSTGRESQL_DATABASE,
   POSTGRESQL_HOST,
@@ -23,10 +27,15 @@ const {
   POSTGRESQL_USER,
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
+  TRUSTED_ORIGINS,
 } = configSchema.parse(process.env);
 
 export const APP_CONFIG = {
   port: PORT,
+  env: ENV,
+  trustedOrigins: TRUSTED_ORIGINS,
+  appUrl: APP_URL,
+  jwksUrl: `${APP_URL}/api/auth/idp/jwks`,
   postgres: {
     host: POSTGRESQL_HOST,
     port: POSTGRESQL_PORT,
@@ -37,9 +46,5 @@ export const APP_CONFIG = {
   discord: {
     clientId: DISCORD_CLIENT_ID,
     clientSecret: DISCORD_CLIENT_SECRET,
-  },
-  auth: {
-    jwksUrl: `${APP_URL}/api/auth/jwks`,
-    appUrl: APP_URL,
   },
 };
