@@ -45,7 +45,7 @@ export const LootsListItem: React.FC<Props> = ({ loot }) => {
         </CardHeader>
         <CardContent className="flex flex-row justify-between items-center flex-wrap px-4 py-0 gap-4">
           <div className="flex flex-row gap-2 flex-wrap">
-            {loot.loots.map((item) => {
+            {loot.items.map((item) => {
               return <ItemTile key={item.hid} item={item} />;
             })}
           </div>
