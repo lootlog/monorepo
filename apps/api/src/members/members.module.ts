@@ -4,15 +4,10 @@ import { MembersService } from './members.service';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
 import { RolesModule } from 'src/roles/roles.module';
-import { DiscordModule } from 'src/discord/discord.module';
 import { PrismaService } from 'src/db/prisma.service';
 
 @Module({
-  imports: [
-    forwardRef(() => GuildsModule),
-    forwardRef(() => RolesModule),
-    forwardRef(() => DiscordModule),
-  ],
+  imports: [forwardRef(() => GuildsModule), forwardRef(() => RolesModule)],
   controllers: [MembersController],
   providers: [MembersService, MembersEventsHandler, PrismaService],
   exports: [MembersService],

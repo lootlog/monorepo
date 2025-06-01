@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TimersService } from './timers.service';
 import { TimersController } from './timers.controller';
 import { MembersModule } from 'src/members/members.module';
-import { DiscordModule } from 'src/discord/discord.module';
 import { NpcsModule } from 'src/npcs/npcs.module';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { PrismaService } from 'src/db/prisma.service';
@@ -13,7 +12,6 @@ import { ConfigKey } from 'src/config/config-key.enum';
 @Module({
   imports: [
     MembersModule,
-    DiscordModule,
     NpcsModule,
     GuildsModule,
     RabbitMQModule.forRootAsync({

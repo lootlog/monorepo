@@ -6,7 +6,6 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { Permission } from '@prisma/client';
-import { APIUser } from 'discord-api-types/v10';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
 import { DeleteGuildDto } from 'src/guilds/dto/delete-guild.dto';
@@ -139,18 +138,18 @@ export class GuildsService {
       console.log(error);
     }
 
-    const users: APIUser[] = data.members.map((member) => {
-      return {
-        id: member.id,
-        avatar: member.avatar,
-        discriminator: member.discriminator,
-        banner: member.banner,
-        global_name: member.globalName,
-        username: member.username,
-      };
-    });
+    // const users: APIUser[] = data.members.map((member) => {
+    //   return {
+    //     id: member.id,
+    //     avatar: member.avatar,
+    //     discriminator: member.discriminator,
+    //     banner: member.banner,
+    //     global_name: member.globalName,
+    //     username: member.username,
+    //   };
+    // });
 
-    await this.usersService.bulkCreateUsers(users);
+    // await this.usersService.bulkCreateUsers(users);
 
     await this.rolesService.bulkCreateRoles(data.guildId, data.roles);
     await this.membersService.bulkCreateMembers(data.guildId, data.members);
