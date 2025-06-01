@@ -48,7 +48,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost",
     "https://gordion.margonem.pl",
-    "https://fobos.margonem.pl",
+    "https://arkantes.margonem.pl",
   ],
   advanced: {
     defaultCookieAttributes: {

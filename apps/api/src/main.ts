@@ -34,14 +34,9 @@ async function bootstrap() {
   );
   const configService = app.get<ConfigService>(ConfigService);
 
-  const { port, env } = configService.get<ServiceConfig>('service', {
+  const { port } = configService.get<ServiceConfig>('service', {
     infer: true,
   });
-
-  if (env === RuntimeEnvironment.LOCAL) {
-    app.enableCors();
-  }
-  // app.enableCors();
 
   app.useGlobalPipes(new ValidationPipe());
 
