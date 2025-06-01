@@ -32,15 +32,14 @@ export class BotService {
     const payload = {
       guildId: member.guild.id,
       id: member.id,
-      username: member.user.username,
-      avatar: member.user.avatarURL(),
-      discriminator: member.user.discriminator,
       banner: member.user.banner,
-      globalName: member.user.globalName,
+      avatar: member.user.avatarURL(),
       name: getDiscordMemberName(member),
       roleIds,
       type: getMemberType(member),
     };
+
+    console.log('member added', JSON.stringify(payload));
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
@@ -57,19 +56,20 @@ export class BotService {
       `Member ${getDiscordMemberName(oldMember as GuildMember)} has been updated to ${getDiscordMemberName(newMember)}`,
     );
     const isOwner = newMember.guild.ownerId === newMember.id;
+    const roleIds = newMember.roles.cache.map((role) => role.id);
+    const type = isOwner ? MemberType.OWNER : getMemberType(newMember);
 
     const payload = {
       guildId: newMember.guild.id,
       id: newMember.id,
-      username: newMember.user.username,
-      avatar: newMember.user.avatarURL(),
-      discriminator: newMember.user.discriminator,
-      banner: newMember.user.banner,
-      globalName: newMember.user.globalName,
       name: getDiscordMemberName(newMember),
-      roleIds: newMember.roles.cache.map((role) => role.id),
-      type: isOwner ? MemberType.OWNER : getMemberType(newMember),
+      avatar: newMember.user.avatarURL(),
+      banner: newMember.user.banner,
+      roleIds,
+      type,
     };
+
+    console.log('member updated', JSON.stringify(payload));
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
@@ -87,6 +87,8 @@ export class BotService {
       guildId: member.guild.id,
       id: member.id,
     };
+
+    console.log('member deleted', JSON.stringify(payload));
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
@@ -160,22 +162,20 @@ export class BotService {
         const memberRoleIds = member.roles.cache.map((role) => {
           return role.id;
         });
+        const type = isOwner ? MemberType.OWNER : getMemberType(member);
 
         return {
           id: member.id,
           roleIds: memberRoleIds,
-          type: isOwner ? MemberType.OWNER : getMemberType(member),
-          discriminator: member.user.discriminator,
+          type,
           banner: member.user.banner,
-          globalName: member.user.globalName,
-          username: member.user.username,
           avatar: member.user.avatar,
-          displayName: member.displayName,
+          name: getDiscordMemberName(member),
         };
       }),
     };
 
-    console.log(payload);
+    console.log(JSON.stringify(payload));
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,

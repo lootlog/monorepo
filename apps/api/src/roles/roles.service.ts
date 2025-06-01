@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Permission } from '@prisma/client';
+import { Permission, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { GuildRoleDto } from 'src/guilds/dto/create-guild.dto';
 import { CreateRoleDto } from 'src/roles/dto/create-role.dto';
@@ -24,9 +24,12 @@ export class RolesService {
     return roles;
   }
 
-  async bulkCreateRoles(guildId: string, roles: GuildRoleDto[]) {
+  async bulkCreateRoles(
+    guildId: string,
+    roles: GuildRoleDto[],
+  ): Promise<Prisma.BatchPayload> {
     try {
-      await this.prisma.role.createMany({
+      return this.prisma.role.createMany({
         data: roles.map(({ id, name, color, admin, position }) => {
           return {
             id,

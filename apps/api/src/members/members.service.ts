@@ -34,7 +34,7 @@ export class MembersService {
   async getGuildMembers(guildId: string) {
     const members = await this.prisma.member.findMany({
       where: { guildId },
-      include: { user: true, roles: true, loots: true, guild: true },
+      include: { roles: true, loots: true, guild: true },
     });
 
     return members;
@@ -56,12 +56,14 @@ export class MembersService {
   async bulkCreateMembers(guildId: string, members: GuildMemberDto[]) {
     try {
       await Promise.all(
-        members.map(({ id, username, displayName, roleIds, type }) => {
+        members.map(({ id, name, roleIds, type, banner, avatar }) => {
           const member = {
             userId: id,
             guildId,
             type,
-            name: displayName ?? username,
+            name,
+            banner,
+            avatar,
             roles: {
               connect: roleIds.map((id) => ({ id })),
             },
@@ -78,37 +80,7 @@ export class MembersService {
   }
 
   async addMember(data: AddMemberDto) {
-    const {
-      id,
-      roleIds,
-      avatar,
-      guildId,
-      type,
-      name,
-      globalName,
-      username,
-      discriminator,
-      banner,
-    } = data;
-
-    await this.prisma.user.upsert({
-      where: { id },
-      update: {
-        avatar,
-        username,
-        discriminator,
-        banner,
-        globalName,
-      },
-      create: {
-        id,
-        avatar,
-        username,
-        discriminator,
-        banner,
-        globalName,
-      },
-    });
+    const { id, roleIds, avatar, guildId, type, name, banner } = data;
 
     const roles = await this.prisma.role.findMany({
       where: {
@@ -121,8 +93,10 @@ export class MembersService {
     const member = await this.prisma.member.upsert({
       where: { memberId: { userId: id, guildId } },
       update: {
-        name,
+        avatar,
+        banner,
         type,
+        name,
         active: true,
         roles: {
           set: roles.map(({ id }) => ({ id })),
@@ -131,7 +105,9 @@ export class MembersService {
       create: {
         userId: id,
         guildId,
+        avatar,
         name,
+        banner,
         type,
         roles: {
           connect: roles.map(({ id }) => ({ id })),
@@ -145,26 +121,12 @@ export class MembersService {
   async updateMember({
     id,
     guildId,
-    name,
     avatar,
-    globalName,
-    username,
-    discriminator,
+    name,
     banner,
     roleIds,
     type,
   }: UpdateMemberDto) {
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        avatar,
-        username,
-        discriminator,
-        banner,
-        globalName,
-      },
-    });
-
     await this.prisma.member.update({
       where: {
         memberId: {
@@ -173,6 +135,8 @@ export class MembersService {
         },
       },
       data: {
+        avatar,
+        banner,
         name,
         type,
         roles: {

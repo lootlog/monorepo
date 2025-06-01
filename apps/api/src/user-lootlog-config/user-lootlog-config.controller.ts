@@ -27,16 +27,16 @@ export class UserLootlogConfigController {
   //     );
   //   }
 
-  @Get('/@me/lootlog-config/player/:playerId')
-  async getUserLootlogConfigByPlayerId(
-    @UserId() userId: string,
-    @Param('playerId') playerId: string,
-  ) {
-    return this.userLootlogConfigService.getUserLootlogConfigByPlayerId(
-      userId,
-      playerId,
-    );
-  }
+  // @Get('/@me/lootlog-config/player/:playerId')
+  // async getUserLootlogConfigByPlayerId(
+  //   @UserId() userId: string,
+  //   @Param('playerId') playerId: string,
+  // ) {
+  //   return this.userLootlogConfigService.getUserLootlogConfigByPlayerId(
+  //     userId,
+  //     playerId,
+  //   );
+  // }
 
   @Post('/@me/lootlog-config')
   async createUserLootlogConfig(

@@ -13,34 +13,6 @@ datasource db {
   url      = env("POSTGRESQL_CONNECTION_URI")
 }
 
-model User {
-  id                   String                @id
-  username             String
-  avatar               String?
-  discriminator        String
-  banner               String?
-  globalName           String?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  members              Member[]
-  playerLootlogConfigs PlayerLootlogConfig[]
-}
-
-model PlayerLootlogConfig {
-  id          Int      @id @default(autoincrement())
-  userId      String
-  playerId    String
-  guildId     String
-  canAddLoot  Boolean  @default(true)
-  canAddTimer Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@unique([userId, playerId, guildId])
-}
-
 model Guild {
   id        String   @id
   name      String
@@ -97,10 +69,11 @@ model Member {
   guildId   String
   type      MemberType @default(USER)
   name      String
+  avatar    String?
+  banner    String?
   active    Boolean    @default(true)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  user      User       @relation(fields: [userId], references: [id])
   guild     Guild      @relation(fields: [guildId], references: [id])
   roles     Role[]
   loots     Loot[]

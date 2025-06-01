@@ -22,7 +22,7 @@ export class MembersEventsHandler {
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
   async handleAddMember(data: AddMemberDto) {
-    return this.membersService.addMember(data);
+    // return this.membersService.addMember(data);
   }
 
   @RabbitSubscribe({

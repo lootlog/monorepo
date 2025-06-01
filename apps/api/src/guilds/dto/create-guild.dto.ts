@@ -4,12 +4,9 @@ export class GuildMemberDto {
   id: string;
   roleIds: string[];
   type: MemberType;
-  discriminator: string;
-  banner: string;
-  globalName: string;
-  username: string;
-  avatar: string;
-  displayName: string;
+  banner?: string;
+  avatar?: string;
+  name: string;
 }
 
 export class GuildRoleDto {

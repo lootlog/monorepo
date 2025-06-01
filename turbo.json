@@ -35,6 +35,10 @@
     "api:generate": {
       "cache": false
     },
+    "api:studio": {
+      "cache": false,
+      "interactive": false
+    },
     "auth:migrate:dev": {
       "cache": false,
       "interactive": true
