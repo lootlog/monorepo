@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { UserId } from 'src/shared/decorators/user-id.decorator';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { CreateUserLootlogConfigDto } from 'src/user-lootlog-config/dto/create-user-lootlog-config.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
@@ -12,37 +12,18 @@ export class UserLootlogConfigController {
   ) {}
 
   @Get('/@me/lootlog-config')
-  async getUserLootlogConfig(@UserId() userId: string) {
-    return this.userLootlogConfigService.getUserLootlogConfig(userId);
+  async getUserLootlogConfig(@DiscordId() discordId: string) {
+    return this.userLootlogConfigService.getUserLootlogConfig(discordId);
   }
-
-  //   @Get('/@me/lootlog-config/account/:accountId')
-  //   async getUserLootlogConfigByAccountId(
-  //     @UserId() userId: string,
-  //     @Param('accountId') accountId: string,
-  //   ) {
-  //     return this.userLootlogConfigService.getUserLootlogConfigByAccountId(
-  //       userId,
-  //       +accountId,
-  //     );
-  //   }
-
-  // @Get('/@me/lootlog-config/player/:playerId')
-  // async getUserLootlogConfigByPlayerId(
-  //   @UserId() userId: string,
-  //   @Param('playerId') playerId: string,
-  // ) {
-  //   return this.userLootlogConfigService.getUserLootlogConfigByPlayerId(
-  //     userId,
-  //     playerId,
-  //   );
-  // }
 
   @Post('/@me/lootlog-config')
   async createUserLootlogConfig(
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
     @Body() data: CreateUserLootlogConfigDto,
   ) {
-    return this.userLootlogConfigService.createUserLootlogConfig(userId, data);
+    return this.userLootlogConfigService.createUserLootlogConfig(
+      discordId,
+      data,
+    );
   }
 }

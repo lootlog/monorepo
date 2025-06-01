@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { Guild, Permission } from '@prisma/client';
+import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
-import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -31,8 +31,8 @@ export class TimersController {
   async createTimer(
     @Body() data: CreateTimerDto,
     @GuildData() guild: Guild,
-    @UserId() userId: string,
+    @DiscordId() discordId: string,
   ) {
-    return this.timersService.createTimer(userId, guild.id, data);
+    return this.timersService.createTimer(discordId, guild.id, data);
   }
 }

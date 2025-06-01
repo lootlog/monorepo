@@ -66,7 +66,7 @@ export class RolesService {
   }
 
   async updateRolePermissions(
-    userId: string,
+    discordId: string,
     guildId: string,
     roleId: string,
     data: UpdateRolePermissionsDto,
@@ -83,7 +83,7 @@ export class RolesService {
       where: { id: guildId },
     });
 
-    const isOwner = guild.ownerId === userId;
+    const isOwner = guild.ownerId === discordId;
 
     if (
       (role.permissions.includes(Permission.ADMIN) ||
