@@ -29,6 +29,15 @@ http:
         - "apiCompress"
       entryPoints:
         - "web"
+    gateway:
+      rule: "PathPrefix(`/gateway`)"
+      service: "gateway"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiCompress"
+      entryPoints:
+        - "web"
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
@@ -53,6 +62,10 @@ http:
       loadBalancer:
         servers:
         - url: "http://host.docker.internal:4003"
+    gateway:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:4004"
   middlewares:
     apiStripPrefix:
       stripPrefix:
@@ -60,6 +73,7 @@ http:
           - "/api/auth"
           - "/api/search"
           - "/api/lootlog"
+          - "/gateway"
     apiForwardAuth:
       forwardAuth:
         address: "http://host.docker.internal:4001/verify-auth"
