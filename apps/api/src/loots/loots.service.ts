@@ -46,7 +46,6 @@ export class LootsService {
 
   async createLoot(userId: string, body: CreateLootDto) {
     if (body.loots.length > 10) {
-      console.log('too many loots', JSON.stringify(body));
       throw new BadRequestException('TOO MANY LOOTS');
     }
 
@@ -116,8 +115,6 @@ export class LootsService {
     }, []);
 
     if (data.length === 0) return;
-
-    console.log(data);
 
     this.playersService.bulkIndexPlayers(players);
     this.npcsService.bulkIndexNpcs(npcs);

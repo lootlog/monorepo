@@ -71,7 +71,3 @@ const scrapItems = () => {
 };
 
 scrapItems();
-
-// scrapItems().then(console.log);
-
-// scrapIte;

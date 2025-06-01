@@ -7,7 +7,6 @@ http:
         - "cors"
         - "apiStripPrefix"
         - "apiCompress"
-        
       entryPoints:
         - "web"
     search:
@@ -18,24 +17,16 @@ http:
         - "apiStripPrefix"
         - "apiForwardAuth"
         - "apiCompress"
-        
       entryPoints:
         - "web"
-    preflight:
-      rule: "PathPrefix(`/api/lootlog`) && Method(`OPTIONS`)"
-      entryPoints:
-        - web
-      service: noop@internal
-      middlewares:
-        - cors
     api:
       rule: "PathPrefix(`/api/lootlog`)"
       service: "api"
       middlewares:
+        - "cors"
         - "apiStripPrefix"
         - "apiForwardAuth"
         - "apiCompress"
-        - "cors"
       entryPoints:
         - "web"
     web-client:
@@ -88,7 +79,8 @@ http:
     cors:
       headers:
         accessControlAllowOriginListRegex:
-          - '^https:\\/\\/([a-z0-9-]+\\.)?margonem\\.(pl|com)$'
+          - "^(.+)\\.margonem\\.(pl|com)$"
+          - "^http://localhost$"
         accessControlAllowMethods:
           - "GET"
           - "POST"
@@ -99,3 +91,5 @@ http:
           - "Content-Type"
           - "Authorization"
         accessControlMaxAge: 86400
+        addVaryHeader: true
+        accessControlAllowCredentials: true

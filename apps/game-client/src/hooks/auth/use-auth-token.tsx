@@ -1,24 +1,29 @@
 import { useSession } from "@/hooks/auth/use-session";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export const useAuthToken = () => {
-  const [token, setToken] = useState<string | null>(null);
-
   const session = useSession();
   const isAuthenticated = !!session.data;
   const sessionToken = session.data?.session.token;
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetch("http://localhost/api/auth/idp/token", {
+  const query = useQuery({
+    queryKey: ["auth-token"],
+    enabled: isAuthenticated && !!sessionToken,
+    select: (data: { token: string }) => data.token,
+    queryFn: async () => {
+      const response = await fetch("http://localhost/api/auth/idp/token", {
         headers: {
           Authorization: `Bearer ${sessionToken}`,
         },
-      })
-        .then((response) => response.json())
-        .then((data) => setToken(data.token));
-    }
-  }, [isAuthenticated]);
+      });
 
-  return token;
+      if (!response.ok) {
+        throw new Error("Failed to fetch auth token");
+      }
+
+      return response.json();
+    },
+  });
+
+  return query;
 };
