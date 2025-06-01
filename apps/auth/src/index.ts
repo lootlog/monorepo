@@ -15,24 +15,38 @@ const app = new Hono<{
 }>();
 
 app.use("*", logger());
+
 // app.use(
 //   "*",
 //   cors({
-//     origin: ["https://gordion.margonem.pl"],
+//     origin: (origin, c) => {
+//       return origin.endsWith(".margonem.pl") ? origin : "http://localhost";
+//     },
+//     allowHeaders: ["Content-Type", "Authorization"],
+//     allowMethods: ["POST", "GET", "OPTIONS"],
+//     exposeHeaders: ["Content-Length"],
+//     maxAge: 600,
+//     credentials: true,
 //   })
 // );
+
 app.use(
   "*",
   cors({
-    origin: [
-      "http://localhost",
-      "https://gordion.margonem.pl",
-      "https://fobos.margonem.pl",
-    ], // replace with your origin
-    allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["POST", "GET", "OPTIONS"],
-    exposeHeaders: ["Content-Length"],
-    maxAge: 600,
+    origin: (origin) => {
+      if (!origin) return "";
+      const hostname = new URL(origin).hostname;
+      console.log("CORS Origin:", hostname);
+      if (
+        hostname.endsWith(".margonem.pl") ||
+        hostname.endsWith(".margonem.com")
+      ) {
+        return origin;
+      }
+      return "";
+    },
+    allowHeaders: ["Authorization", "Content-Type"],
+    allowMethods: ["GET", "POST", "OPTIONS"],
     credentials: true,
   })
 );
@@ -121,11 +135,4 @@ console.log(`Server is running on http://localhost:${port}`);
 serve({
   fetch: app.fetch,
   port,
-});
-
-fetch("http://localhost/api/lootlog/users/@me", {
-  headers: {
-    Authorization:
-      "Bearer eyJhbGciOiJFZERTQSIsImtpZCI6Imd4ZVd3MVhLMEFNUDQwYW45QmlhbzlabjhlYXhweno5In0.eyJpZCI6ImV1SzRiWjlSSTN3aFJmcVV1WUNQR1N3Mm9jeWNlZ0hwIiwiZW1haWwiOiJrYW1pbHdyb25rYTdAZ21haWwuY29tIiwiZGlzY29yZElkIjoiMzYyOTA3MTM1ODI0MTAxMzc2IiwiaWF0IjoxNzQ4NzI2NDYxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0L2FwaS9hdXRoIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9hcGkvYXV0aCIsImV4cCI6MTc0ODcyNzM2MSwic3ViIjoiZXVLNGJaOVJJM3doUmZxVXVZQ1BHU3cyb2N5Y2VnSHAifQ.0xl0eo0-3w4AVKP9MYpgLUEZjWb1M19LaKJyofTWS0KmhC5yV27K5qiAcTT-Oa6Bnh6ZAqDOXufcuhixtm_WAA",
-  },
 });

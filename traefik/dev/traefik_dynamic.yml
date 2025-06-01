@@ -1,31 +1,33 @@
 http:
   routers:
-    web-client:
-      rule: "PathPrefix(`/`)"
-      service: "web-client"
-      middlewares:
-        - "apiCompress"
-      entryPoints:
-        - "web"
     auth:
       rule: "PathPrefix(`/api/auth`)"
       service: "auth"
       middlewares:
+        - "cors"
         - "apiStripPrefix"
         - "apiCompress"
-        - "cors"
+        
       entryPoints:
         - "web"
     search:
       rule: "PathPrefix(`/api/search`)"
       service: "search"
       middlewares:
+        - "cors"
         - "apiStripPrefix"
         - "apiForwardAuth"
         - "apiCompress"
-        - "cors"
+        
       entryPoints:
         - "web"
+    preflight:
+      rule: "PathPrefix(`/api/lootlog`) && Method(`OPTIONS`)"
+      entryPoints:
+        - web
+      service: noop@internal
+      middlewares:
+        - cors
     api:
       rule: "PathPrefix(`/api/lootlog`)"
       service: "api"
@@ -34,6 +36,13 @@ http:
         - "apiForwardAuth"
         - "apiCompress"
         - "cors"
+      entryPoints:
+        - "web"
+    web-client:
+      rule: "PathPrefix(`/`)"
+      service: "web-client"
+      middlewares:
+        - "apiCompress"
       entryPoints:
         - "web"
   services:
@@ -67,6 +76,9 @@ http:
         authResponseHeaders:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"
+        authRequestHeaders:
+        - "Authorization"
+        - "Cookie"
     apiCompress:
       compress:
         includedContentTypes:
@@ -75,9 +87,8 @@ http:
           - text/plain
     cors:
       headers:
-        accessControlAllowOriginList:
-          - "https://fobos.margonem.pl"
-          - "http://localhost"
+        accessControlAllowOriginListRegex:
+          - '^https:\\/\\/([a-z0-9-]+\\.)?margonem\\.(pl|com)$'
         accessControlAllowMethods:
           - "GET"
           - "POST"
@@ -87,9 +98,4 @@ http:
         accessControlAllowHeaders:
           - "Content-Type"
           - "Authorization"
-          - "X-Auth-User-Id"
-          - "X-Auth-Discord-Id"
-        accessControlExposeHeaders:
-          - "X-Auth-User-Id"
-          - "X-Auth-Discord-Id"
         accessControlMaxAge: 86400
