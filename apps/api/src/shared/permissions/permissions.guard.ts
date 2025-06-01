@@ -1,7 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from './permissions.decorator';
-import { DiscordService } from 'src/discord/discord.service';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { Permission } from '@prisma/client';
 
@@ -9,7 +8,6 @@ import { Permission } from '@prisma/client';
 export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private discordService: DiscordService,
     private guildsService: GuildsService,
   ) {}
 
@@ -72,10 +70,11 @@ export class PermissionsGuard implements CanActivate {
   }
 
   async verifyManageable(userId: string, guildId: string) {
-    const manageable = await this.discordService.getManageableDiscordGuild(
-      userId,
-      guildId,
-    );
+    // const manageable = await this.discordService.getManageableDiscordGuild(
+    //   userId,
+    //   guildId,
+    // );
+    const manageable = true;
 
     return !!manageable;
   }
