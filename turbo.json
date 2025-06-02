@@ -43,6 +43,10 @@
       "cache": false,
       "interactive": true
     },
+    "auth:migrate:prod": {
+      "cache": false,
+      "interactive": false
+    },
     "configure:env": {
       "cache": false,
       "interactive": true

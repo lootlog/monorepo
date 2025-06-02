@@ -12,6 +12,7 @@
     "api:generate": "turbo run api:generate",
     "api:studio": "turbo run api:studio",
     "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
+    "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
     "configure:env": "turbo run configure:env"
   },
   "devDependencies": {
