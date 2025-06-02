@@ -14,15 +14,13 @@ export type Timer = {
   member: GuildMember;
 };
 
-type UseTimersOptions = {
-  guildId?: string;
-};
-
-export const useTimers = ({ guildId }: UseTimersOptions) => {
+export const useTimers = () => {
   const { client, hasToken } = useAuthenticatedApiClient();
   const { newInterface } = useGlobalContext();
 
-  const world = newInterface ? window.Engine?.worldConfig?.getWorldName() : window.g?.worldConfig?.getWorldName();
+  const world = newInterface
+    ? window.Engine?.worldConfig?.getWorldName()
+    : window.g?.worldConfig?.getWorldName();
 
   const queryParams = {
     world,
@@ -31,10 +29,9 @@ export const useTimers = ({ guildId }: UseTimersOptions) => {
   const queryString = stringify(queryParams);
 
   const query = useQuery({
-    queryKey: ["guild-timers", guildId, world],
-    queryFn: () =>
-      client.get<Timer[]>(`${API_URL}/guilds/${guildId}/timers?${queryString}`),
-    enabled: !!hasToken && !!guildId && !!world,
+    queryKey: ["guild-timers", world],
+    queryFn: () => client.get<Timer[]>(`${API_URL}/timers?${queryString}`),
+    enabled: !!hasToken && !!world,
     select: (response) => response.data,
   });
 

@@ -4,19 +4,34 @@ import { useGameEventsParser } from "@/hooks/use-game-events-parser";
 import { useGlobalContext } from "./contexts/global-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createWidgetButton } from "@/utils/game/create-widget-button";
+import { Chat } from "@/features/chat/chat";
 
 function App() {
   useGameEventsParser();
   const { initialized } = useGlobalContext();
-  const { lootlogWindowOpen, setLootlogWindowOpen, newInterface } =
-    useGlobalContext();
+  const {
+    lootlogWindowOpen,
+    setLootlogWindowOpen,
+    setChatWindowOpen,
+    newInterface,
+    chatWindowOpen,
+  } = useGlobalContext();
   const [isWidgetLoaded, setisWidgetLoaded] = useState(false);
-  const openRef = useRef(lootlogWindowOpen);
-  openRef.current = lootlogWindowOpen;
+
+  const lootlogWindowOpenRef = useRef(lootlogWindowOpen);
+  lootlogWindowOpenRef.current = lootlogWindowOpen;
+
+  const chatWindowOpenRef = useRef(chatWindowOpen);
+  chatWindowOpenRef.current = chatWindowOpen;
 
   const handleLootlogWindowToggle = useCallback(() => {
-    setLootlogWindowOpen(!openRef.current);
-    openRef.current = !openRef.current;
+    setLootlogWindowOpen(!lootlogWindowOpenRef.current);
+    lootlogWindowOpenRef.current = !lootlogWindowOpenRef.current;
+  }, []);
+
+  const handleChatWindowToggle = useCallback(() => {
+    setChatWindowOpen(!chatWindowOpenRef.current);
+    chatWindowOpenRef.current = !chatWindowOpenRef.current;
   }, []);
 
   useEffect(() => {
@@ -29,6 +44,14 @@ function App() {
         callback: handleLootlogWindowToggle,
         type: "violet",
       });
+
+      createWidgetButton({
+        id: "lootlog-chat chat",
+        tooltip: "Lootlog Chat",
+        type: "violet",
+        callback: handleChatWindowToggle,
+        keyName: "chat",
+      });
     }
   }, [newInterface, isWidgetLoaded]);
 
@@ -37,6 +60,7 @@ function App() {
       <>
         <Timers />
         <Settings />
+        <Chat />
       </>
     )
   );

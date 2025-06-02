@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "config/api";
-import { useGuildId } from "hooks/use-guild-id";
 import { Npc } from "hooks/api/use-npcs";
 import { GuildMember } from "hooks/api/use-guild-members";
 import { stringify } from "qs";
@@ -16,7 +15,6 @@ export type Timer = {
 
 export const useTimers = () => {
   const { client, isAuthenticated } = useApiClient();
-  const guildId = useGuildId();
   const { world } = useGuildContext();
 
   const queryParams = {
@@ -26,10 +24,9 @@ export const useTimers = () => {
   const queryString = stringify(queryParams);
 
   const query = useQuery({
-    queryKey: ["guild-timers", guildId, world],
-    queryFn: () =>
-      client.get<Timer[]>(`${API_URL}/guilds/${guildId}/timers?${queryString}`),
-    enabled: isAuthenticated && !!guildId && !!world,
+    queryKey: ["guild-timers", world],
+    queryFn: () => client.get<Timer[]>(`${API_URL}/timers?${queryString}`),
+    enabled: isAuthenticated && !!world,
     select: (response) => response.data,
   });
 
