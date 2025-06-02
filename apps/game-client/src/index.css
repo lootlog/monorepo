@@ -78,6 +78,45 @@ body {
   background-color: #000;
 }
 
-#lootlog-root>* {
+#lootlog-root > * {
   pointer-events: auto;
+}
+
+.ll-custom-cursor-pointer {
+  cursor:
+    url(../img/gui/cursor/5n.png?v=1747722915506) 4 0,
+    url(../img/gui/cursor/5n.cur?v=1747722915506) 4 0,
+    auto;
+}
+
+.ll-close-button {
+  background: url(../img/gui/buttony.png?v=1747722915506) -624px -117px;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: none;
+  pointer-events: auto;
+}
+
+.ll-draggable-window {
+  border-image: none;
+  width: 191px;
+  border-style: solid;
+  border-width: 40px 26px 9px;
+  color: transparent;
+  border-radius: 7px;
+  text-shadow: 1px 1px 1px #000;
+}
+
+.ll-settings-button {
+  width: 13px;
+  height: 13px;
+  background: url(../img/gui/buttony.png?v=1747722915506)
+    no-repeat -607px -117px;
+}
+
+.ll-opacity-button {
+  width: 16px;
+  height: 14px;
+  background: url(../img/gui/buttony.png?v=1747722915506) -725px -131px;
 }

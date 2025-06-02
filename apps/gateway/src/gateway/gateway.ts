@@ -93,8 +93,6 @@ export class Gateway {
       source,
     };
 
-    // if (client.rooms.has(guildId)) return;
-
     client.join(guildIds);
 
     return { status: 'ok' };
