@@ -1,5 +1,6 @@
+import { AUTH_SERVICE_URL } from "config/auth";
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  baseURL: "http://localhost/api/auth/idp",
+  baseURL: AUTH_SERVICE_URL,
 });
