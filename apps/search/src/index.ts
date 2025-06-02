@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
 import { logger } from "hono/logger";
-import { userMetadataFromHeaders } from "@lootlog/api-helpers/lib/auth/middleware/user-metadata.middleware";
+import { userMetadataFromHeaders } from "@lootlog/api-helpers";
 
 const app = new Hono<{
   Variables: {
