@@ -39,5 +39,5 @@ CMD [ "pnpm", "start" ]
 FROM base AS api
 COPY --from=build /prod/api /prod/api
 WORKDIR /prod/api
-EXPOSE 8001
+EXPOSE 4000
 CMD [ "pnpm", "start" ]
