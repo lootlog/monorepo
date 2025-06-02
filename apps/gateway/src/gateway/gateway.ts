@@ -1,4 +1,4 @@
-import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Inject, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -14,12 +14,25 @@ import { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presenc
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
 import { WsUserId } from 'src/shared/decorators/user-id.decorator';
-import { jwtVerify, createRemoteJWKSet } from 'jose';
+import { JWK, jwtVerify } from 'jose';
+import { ConfigService } from '@nestjs/config';
+import { ConfigKey } from 'src/config/config-key.enum';
+import { AuthConfig } from 'src/config/auth.config';
 
 type Socket = SocketIOSocket & { user: any };
 
-@WebSocketGateway({ namespace: 'gateway', path: '/socket.io' })
+@WebSocketGateway({
+  namespace: 'gateway',
+  path: '/socket.io',
+  pingInterval: 25000,
+  pingTimeout: 60000,
+})
 export class Gateway {
+  constructor(
+    @Inject('JOSE') private jose: { keyset: JWK },
+    private configService: ConfigService,
+  ) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -43,14 +56,14 @@ export class Gateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() { token }: InitDto,
   ): Promise<any> {
-    const keyset = createRemoteJWKSet(
-      new URL('http://localhost/api/auth/idp/jwks'),
+    const { authAudience, authIssuer } = this.configService.get<AuthConfig>(
+      ConfigKey.AUTH,
     );
-    const { payload } = await jwtVerify(token, keyset, {
-      issuer: 'http://localhost/api/auth',
-      audience: 'http://localhost/api/auth',
+
+    const { payload } = await jwtVerify(token, this.jose.keyset, {
+      issuer: authIssuer,
+      audience: authAudience,
     });
-    console.log(payload);
 
     if (!payload.discordId) {
       return client.disconnect();
