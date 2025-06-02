@@ -4,6 +4,9 @@ export type WidgetButtonOptions = {
   type: "violet" | "green" | "red" | "blue";
   id: string;
   iconUrl?: string;
+  top?: number;
+  left?: number;
+  keyName?: string;
 };
 
 export const createWidgetButton = ({
@@ -11,6 +14,7 @@ export const createWidgetButton = ({
   tooltip,
   type,
   id,
+  keyName,
   iconUrl = "https://i.imgur.com/BUCxHlv.png",
 }: WidgetButtonOptions) => {
   const serverStoragePos = window.Engine.serverStorage.get(
@@ -19,14 +23,14 @@ export const createWidgetButton = ({
 
   const emptySlot = window.Engine.widgetManager.getFirstEmptyWidgetSlot();
   const emptyWidgetSlot = [emptySlot.slot, emptySlot.container];
-  const lootlog_WidgetPosition = serverStoragePos?.lootlog
-    ? serverStoragePos.lootlog
+  const position = serverStoragePos?.[id]
+    ? serverStoragePos[id]
     : emptyWidgetSlot;
 
-  window.Engine.widgetManager.getDefaultWidgetSet().lootlog = {
-    keyName: id,
-    index: lootlog_WidgetPosition[0],
-    pos: lootlog_WidgetPosition[1],
+  window.Engine.widgetManager.getDefaultWidgetSet()[id] = {
+    keyName: keyName ?? id,
+    index: position[0],
+    pos: position[1],
     txt: tooltip,
     type,
     alwaysExist: true,
@@ -35,15 +39,17 @@ export const createWidgetButton = ({
   };
 
   const storeData: Record<string, (string | number)[]> = {};
-  storeData[id] = lootlog_WidgetPosition;
+  storeData[id] = position;
 
   window.Engine.widgetManager.createOneWidget(id, storeData, true, []);
   window.Engine.widgetManager.setEnableDraggingButtonsWidget(false);
 
-  const iconStyle = document.createElement("style");
-  iconStyle.innerHTML = `.main-buttons-container .widget-button .icon.lootlog {
+  if (!keyName) {
+    const iconStyle = document.createElement("style");
+    iconStyle.innerHTML = `.main-buttons-container .widget-button .icon.${id} {
             background-image: url(${iconUrl});
             background-position: 50% 50%;
         }`;
-  document.head.appendChild(iconStyle);
+    document.head.appendChild(iconStyle);
+  }
 };

@@ -9,12 +9,15 @@ import { MIN_SPAWN_OFFSET } from 'src/timers/constants/min-spawn-offset.constant
 import { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
 import { ErrorKey } from 'src/timers/enum/error-key.enum';
 import { RoutingKey } from 'src/timers/enum/routing-key.enum';
+import { omit } from 'lodash';
+import { GuildsService } from 'src/guilds/guilds.service';
 
 @Injectable()
 export class TimersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly guildsService: GuildsService,
   ) {}
 
   async createTimer(discordId: string, guildId: string, data: CreateTimerDto) {
@@ -127,12 +130,18 @@ export class TimersService {
     return newTimer;
   }
 
-  async getTimers(guildId: string, world: string, permissions: Permission[]) {
+  async getTimers(discordId: string, world: string) {
     const now = new Date();
+    const guilds = await this.guildsService.getGuildsForRequiredPermissions(
+      discordId,
+      [Permission.LOOTLOG_READ],
+    );
 
     const timers = await this.prisma.timer.findMany({
       where: {
-        guildId,
+        guildId: {
+          in: guilds.map((guild) => guild.id),
+        },
         maxSpawnTime: { gt: now.toISOString() },
         world,
         // ...(permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS)
@@ -153,7 +162,21 @@ export class TimersService {
       },
     });
 
-    return timers;
+    const mergedTimers = timers.reduce((acc, timer) => {
+      const existing = acc.find((t) => t.npc.id === timer.npcId);
+
+      if (existing) {
+        existing.members.push(timer.member);
+      } else {
+        const newTimer = { ...timer, members: [timer.member] };
+
+        acc.push(omit(newTimer, ['member', 'createdById']));
+      }
+
+      return acc;
+    }, []);
+
+    return mergedTimers;
   }
 
   async emitTimer(payload: Timer) {

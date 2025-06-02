@@ -10,6 +10,8 @@ export type GlobalContextType = {
   setSelectedGuild: (guild: string | undefined) => void;
   settingsWindowOpen: boolean | undefined;
   setSettingsWindowOpen: (open: boolean | undefined) => void;
+  chatWindowOpen: boolean | undefined;
+  setChatWindowOpen: (open: boolean | undefined) => void;
 };
 
 export const GlobalContext = createContext<GlobalContextType>(
@@ -21,15 +23,23 @@ export const GlobalContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const charId = window.Engine?.hero?.d?.id;
   const [initialized, setInitialized] = useState(false);
   const [newInterface, setNewInterface] = useState(false);
   const [lootlogWindowOpen, setLootlogWindowOpen] = useLocalStorage(
-    "lootlog",
+    `lootlog-${charId}`,
     false
   );
-  const [selectedGuild, setSelectedGuild] = useLocalStorage("guild", "");
+  const [selectedGuild, setSelectedGuild] = useLocalStorage(
+    `guild-${charId}`,
+    ""
+  );
   const [settingsWindowOpen, setSettingsWindowOpen] = useLocalStorage(
-    "settings",
+    `settings-${charId}`,
+    false
+  );
+  const [chatWindowOpen, setChatWindowOpen] = useLocalStorage(
+    `chat-${charId}`,
     false
   );
 
@@ -69,6 +79,8 @@ export const GlobalContextProvider = ({
     setSettingsWindowOpen,
     selectedGuild,
     setSelectedGuild,
+    chatWindowOpen,
+    setChatWindowOpen,
   };
 
   return (

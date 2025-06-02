@@ -14,15 +14,12 @@ import { TimersService } from 'src/timers/timers.service';
 export class TimersController {
   constructor(private readonly timersService: TimersService) {}
 
-  @Permissions(Permission.LOOTLOG_READ)
-  @UseGuards(PermissionsGuard)
-  @Get('/guilds/:guildId/timers')
+  @Get('/timers')
   async getTimers(
     @Query('world') world: string,
-    @MemberPermissions() permissions: Permission[],
-    @GuildData() guild: Guild,
+    @DiscordId() discordId: string,
   ) {
-    return this.timersService.getTimers(guild.id, world, permissions);
+    return this.timersService.getTimers(discordId, world);
   }
 
   @Permissions(Permission.LOOTLOG_WRITE)

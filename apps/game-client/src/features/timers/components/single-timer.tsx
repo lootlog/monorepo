@@ -38,12 +38,13 @@ const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
 };
 
 const THRESHOLD = 30000;
+const ZERO_SHOW_THRESHOLD = 15000;
 
-export const SingleTimer: FC<SingleTimerProps> = ({ timer, guildId }) => {
+export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
 
-  const { refetch } = useTimers({ guildId });
+  const { refetch } = useTimers();
   const [timeLeft, setTimeLeft] = useState(maxSpawnTime - Date.now());
 
   useEffect(() => {
@@ -51,8 +52,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer, guildId }) => {
       const time = maxSpawnTime - Date.now();
 
       if (time <= 0) {
-        clearInterval(interval);
         setTimeLeft(0);
+      }
+
+      if (time <= -ZERO_SHOW_THRESHOLD) {
+        clearInterval(interval);
         refetch();
 
         return;
