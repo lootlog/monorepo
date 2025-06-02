@@ -27,12 +27,20 @@ const SORT_ORDER = [
 
 export const Timers = () => {
   const { data: guilds } = useGuilds();
-  const { newInterface, timersOpen, setTimersOpen, selectedGuild, setSelectedGuild } = useGlobalContext();
+  const {
+    newInterface,
+    timersOpen,
+    setTimersOpen,
+    selectedGuild,
+    setSelectedGuild,
+  } = useGlobalContext();
   const { socket } = useGateway();
   const queryClient = useQueryClient();
   const { data: timers } = useTimers({ guildId: selectedGuild });
-  const world = newInterface ? window.Engine?.worldConfig?.getWorldName() : window.g?.worldConfig?.getWorldName();
-      
+  const world = newInterface
+    ? window.Engine?.worldConfig?.getWorldName()
+    : window.g?.worldConfig?.getWorldName();
+
   const sorted = timers?.sort((a, b) => {
     return (
       new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
@@ -46,7 +54,7 @@ export const Timers = () => {
         queryClient.setQueryData(
           ["guild-timers", selectedGuild, world],
           (old: AxiosResponse<Timer[]>) => {
-            const exists = old.data.find(
+            const exists = old?.data.find(
               (timer) => timer.npc.id === data.npc.id
             );
 

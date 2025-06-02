@@ -72,6 +72,22 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
         </div>
       </span>
       <div className="flex flex-col items-end">
+        {!isMinSpawnTime && (
+          <Tooltip>
+            <TooltipTrigger>
+              <span className="text-xs flex flex-row items-center gap-1">
+                <ClockArrowDown size="14px" />
+                {parseMsToTime(minTimeLeft)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="flex flex-col">
+              <span className="text-sm">Min. czas spawnu:</span>
+              <span className="text-sm font-semibold">
+                {format(new Date(minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+              </span>
+            </TooltipContent>
+          </Tooltip>
+        )}
         <Tooltip>
           <TooltipTrigger>
             <span
@@ -94,22 +110,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
             </span>
           </TooltipContent>
         </Tooltip>
-        {!isMinSpawnTime && (
-          <Tooltip>
-            <TooltipTrigger>
-              <span className="text-xs flex flex-row items-center gap-1">
-                <ClockArrowDown size="14px" />
-                {parseMsToTime(minTimeLeft)}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="flex flex-col">
-              <span className="text-sm">Min. czas spawnu:</span>
-              <span className="text-sm font-semibold">
-                {format(new Date(minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
-              </span>
-            </TooltipContent>
-          </Tooltip>
-        )}
       </div>
     </div>
   );

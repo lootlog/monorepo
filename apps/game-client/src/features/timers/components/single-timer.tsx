@@ -74,12 +74,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer, guildId }) => {
       </span>
       <i>${NPC_NAMES[timer.npc.type].longname}</i>
       <br />
-      <span className="elite_timer_tip_date">
-       Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
-        </span>
-        <br />
         <span className="elite_timer_tip_date">
        Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+        </span>
+        <br />
+              <span className="elite_timer_tip_date">
+       Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
         </span>
       `
     );
