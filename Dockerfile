@@ -1,4 +1,4 @@
-FROM node:20-slim AS base
+FROM node:22-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -6,9 +6,10 @@ RUN corepack prepare pnpm@9.1.1 --activate
 
 FROM base AS build
 COPY . /usr/src/app
+RUN ls
 WORKDIR /usr/src/app
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run generate
+RUN pnpm run api:generate
 RUN pnpm run -r build
 
 RUN pnpm deploy --filter=@lootlog/web --prod /prod/web
