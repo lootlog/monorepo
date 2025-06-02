@@ -1,14 +1,27 @@
 {
   "name": "@lootlog/api-helpers",
   "version": "0.0.1",
-  "type": "module",
   "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
   "exports": {
-    "./lib/*": "./src/lib/*.ts"
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "pkgroll"
   },
   "dependencies": {
     "hono": "^4.7.0",
     "jose": "^6.0.11",
     "jwks-rsa": "^3.1.0"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "pkgroll": "^2.8.2"
   }
 }

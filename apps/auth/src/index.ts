@@ -3,8 +3,8 @@ import { Hono } from "hono";
 import { APP_CONFIG } from "./config/app.config.js";
 import { auth } from "./lib/auth.js";
 import { logger } from "hono/logger";
-import type { JwksKeys } from "@lootlog/api-helpers/lib/auth/utils/verify-jwt.types";
-import { validateToken } from "@lootlog/api-helpers/lib/auth/utils/verify-jwt";
+import type { JwksKeys } from "@lootlog/api-helpers";
+import { validateToken } from "@lootlog/api-helpers";
 
 const app = new Hono<{
   Variables: {
