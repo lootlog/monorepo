@@ -505,8 +505,8 @@ importers:
         specifier: ^17.12.1
         version: 17.13.3
       jose:
-        specifier: ^6.0.11
-        version: 6.0.11
+        specifier: ^5.10.0
+        version: 5.10.0
       jwks-rsa:
         specifier: ^3.1.0
         version: 3.1.0
@@ -5931,6 +5931,9 @@ packages:
 
   jose@4.15.9:
     resolution: {integrity: sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==}
+
+  jose@5.10.0:
+    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   jose@5.9.6:
     resolution: {integrity: sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ==}
@@ -14749,6 +14752,8 @@ snapshots:
       '@sideway/pinpoint': 2.0.0
 
   jose@4.15.9: {}
+
+  jose@5.10.0: {}
 
   jose@5.9.6: {}
 

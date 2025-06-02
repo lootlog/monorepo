@@ -7,6 +7,19 @@ import React, {
   useState,
 } from "react";
 
+const socket = io("http://localhost", {
+  transports: ["websocket"],
+  path: "/gateway/socket.io",
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  timeout: 20000,
+});
+
+socket.on("disconnect", (reason) => {
+  console.log("Disconnected from gateway:", reason);
+});
+
 //   import { emitter } from 'eventEmitter';
 import io, { Socket } from "socket.io-client";
 
@@ -47,6 +60,20 @@ export const GatewayProvider: React.FC<Props> = (props) => {
 
   const setupBaseListeners = useCallback(() => {
     if (token && guildIds && initialized) {
+      socketRef.current.on("connect_error", (err) => {
+        // the reason of the error, for example "xhr poll error"
+        console.log(err.message);
+
+        // // some additional description, for example the status code of the initial HTTP response
+        // console.log(err.description);
+
+        // // some additional context, for example the XMLHttpRequest object
+        // console.log(err.context);
+      });
+      socketRef.current.on("reconnect_attempt", (attempt) => {
+        console.log("[TM] Attempting to reconnect...", attempt);
+      });
+
       socketRef.current.on(GatewayEvent.CONNECT, async () => {
         console.log("Connected to gateway");
         const response = await socketRef.current.emitWithAck(
@@ -78,17 +105,24 @@ export const GatewayProvider: React.FC<Props> = (props) => {
       //   });
       // });
 
-      socketRef.current.on(GatewayEvent.DISCONNECT, () => {
-        setConnected(false);
+      socketRef.current.on(GatewayEvent.DISCONNECT, (w, x) => {
+        console.log(w, x);
+        console.log("Disconnected from gateway");
+        // socketRef.current.connect();
+        // setConnected(false);
       });
     }
   }, [token, guildIds, initialized]);
 
   useEffect(() => {
-    if (token) {
+    if (token && !socketRef.current && initialized && false) {
       const socket = io(GATEWAY_URL, {
         transports: ["websocket"],
         path: "/gateway/socket.io",
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        timeout: 20000,
       });
       console.log(GATEWAY_URL);
       socketRef.current = socket;
@@ -97,6 +131,7 @@ export const GatewayProvider: React.FC<Props> = (props) => {
     }
 
     return () => {
+      "unmount";
       socketRef.current?.close?.();
     };
   }, [token, setupBaseListeners]);
