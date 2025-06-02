@@ -35,7 +35,8 @@
     "lastheal": "Ostatni ratunek: kiedy po otrzymanym ataku zostanie graczowi mniej niż 18% życia, zostaje jednorazowo znacznie uleczony.",
     "dmgred": "Fizyczna osłona: przyjmowane obrażenia fizyczne zmniejszone o 16%.",
     "verycrit": "Cios bardzo krytyczny: 13% szansy na podwojenie mocy ciosu krytycznego.",
-    "not-supported": "Nieznany bonus legendarny"
+    "not-supported": "Nieznany bonus legendarny",
+    "test": "Test"
   },
   "rarity": {
     "common": "Pospolity",
