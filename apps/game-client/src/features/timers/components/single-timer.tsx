@@ -1,3 +1,4 @@
+import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
@@ -86,26 +87,22 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer, guildId }) => {
   }, []);
 
   return (
-    <div
-      className={cn("row tw-list-item do-action-cursor", {
-        short: isMinSpawnTime,
-        pass: hasPassedRedThreshold,
-      })}
-      id={timer.npc.id.toString()}
-    >
-      <div className="col">
-        <div className="name cell">
-          <div className="name-val">
-            [{NPC_NAMES[timer.npc.type].shortname}] {timer.npc.name}
-          </div>
+    <TimerTile id={timer.npc.id.toString()}>
+      <div
+        className={cn(
+          "ll-flex ll-justify-between ll-w-full ll-text-[11px]  ll-px-1",
+          {
+            "ll-text-red-500": hasPassedRedThreshold,
+            "ll-text-orange-400": isMinSpawnTime,
+            "ll-text-white": !hasPassedRedThreshold && !isMinSpawnTime,
+          }
+        )}
+      >
+        <div>
+          [{NPC_NAMES[timer.npc.type].shortname}] {timer.npc.name}
         </div>
+        <div>{parseMsToTime(timeLeft)}</div>
       </div>
-
-      <div className="col">
-        <div className="time cell">
-          <div className="time-val">{parseMsToTime(timeLeft)}</div>
-        </div>
-      </div>
-    </div>
+    </TimerTile>
   );
 };
