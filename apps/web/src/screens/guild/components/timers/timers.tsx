@@ -24,7 +24,12 @@ const NPC_NAMES: { [key: string]: string } = {
 export const Timers = () => {
   const { data: timers, isPending } = useTimers();
 
-  const sorted = timers?.sort((a, b) => {
+  const sortedByTime = timers?.sort((a, b) => {
+    return (
+      new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
+    );
+  });
+  const sorted = sortedByTime?.sort((a, b) => {
     return SORT_ORDER.indexOf(a.npc.type) - SORT_ORDER.indexOf(b.npc.type);
   });
 
