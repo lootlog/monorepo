@@ -1,3 +1,4 @@
+import { AUTH_SERVICE_URL } from "@/config/auth";
 import { useSession } from "@/hooks/auth/use-session";
 import { useQuery } from "@tanstack/react-query";
 
@@ -11,7 +12,7 @@ export const useAuthToken = () => {
     enabled: isAuthenticated && !!sessionToken,
     select: (data: { token: string }) => data.token,
     queryFn: async () => {
-      const response = await fetch("http://localhost/api/auth/idp/token", {
+      const response = await fetch(`${AUTH_SERVICE_URL}/idp/token`, {
         headers: {
           Authorization: `Bearer ${sessionToken}`,
         },
