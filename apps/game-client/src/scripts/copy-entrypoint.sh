@@ -7,7 +7,7 @@ default_env="prod"
 # Use provided ENVIRONMENT variable or default to 'develop'
 env=${ENVIRONMENT:-$default_env}
 
-echo "Using environment: $env";
+echo "Using environment x: $env";
 
 # Copy the template file to the dist directory
 cp src/templates/entrypoint.js dist/entrypoint.user.js;
