@@ -40,7 +40,7 @@ export const ItemTile: FC<ItemTileProps> = ({
       return (
         <div
           key={key}
-          className={cn("pb-2", {
+          className={cn("pb-2 gap-0.5 flex flex-col", {
             "border-b": i < Object.entries(values).length - 1,
           })}
         >
@@ -87,7 +87,7 @@ export const ItemTile: FC<ItemTileProps> = ({
         <TooltipTrigger>
           <ItemImage rarity={rarity} icon={icon} />
         </TooltipTrigger>
-        <TooltipContent className="max-w-72 p-2 pb-0">
+        <TooltipContent className="w-72 p-2 pb-0">
           <div className="flex flex-row border-b items-center justify-between pb-2">
             <div className="flex flex-col justify-between">
               <p className="font-heading mt-12 scroll-m-20 mr-8 text-md font-semibold tracking-tight first:mt-0">

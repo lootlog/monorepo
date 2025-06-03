@@ -36,10 +36,12 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "absorb":
       case "absorbm":
       case "acdmg":
+      case "afterheal":
       case "amount":
       case "blok":
       case "capacity":
       case "cansplit":
+      case "contra":
       case "crit":
       case "critmval":
       case "critval":
@@ -59,6 +61,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "manabon":
       case "manafatig":
       case "pierce":
+      case "pierceb":
       case "resdmg":
       case "sa":
       case "slow":
@@ -82,6 +85,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "fire":
       case "frost":
       case "poison":
+      case "light":
         acc.baseStatsBlock.unshift(displayValue);
         return acc;
       case "opis":
@@ -92,6 +96,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
         return acc;
       case "nodepo":
       case "permbound":
+      case "binds":
         acc.metadataBlock.push(displayValue);
         return acc;
       case "created":
@@ -128,6 +133,7 @@ const mapStatDisplayValue = (
         value: false,
       };
     case "dmg":
+    case "light":
       return {
         key,
         value: isString(value) ? value.split(",").join(" - ") : "",
@@ -150,6 +156,7 @@ const mapStatDisplayValue = (
     case "rkey":
       return { key: undefined };
     case "wound":
+    case "afterheal":
     case "manafatig":
     case "enfatig":
     case "teleport":
