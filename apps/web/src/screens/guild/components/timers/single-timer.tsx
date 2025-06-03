@@ -1,3 +1,4 @@
+import { useGuild } from "hooks/api/use-guild";
 import { Tooltip, TooltipContent, TooltipTrigger } from "components/ui/tooltip";
 import { MARGONEM_CDN_NPCS_URL } from "constants/margonem";
 import { format } from "date-fns";
@@ -14,6 +15,7 @@ type SingleTimerProps = {
 const THRESHOLD = 30000;
 
 export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
+  const { data: guild } = useGuild({});
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
 
@@ -44,6 +46,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const isMinSpawnTime = minSpawnTime - Date.now() < 0;
   const hasPassedRedThreshold = timeLeft < THRESHOLD;
 
+  const member = timer.members.find((member) => member.guildId === guild?.id);
+
   return (
     <div className="flex flex-row justify-between px-2 py-2 gap-3 min-h-12 items-center hover:bg-accent cursor-pointer">
       <span
@@ -67,7 +71,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
         <div className="flex flex-col">
           <span className="text-sm">{timer.npc.name}</span>
           <span className="text-muted-foreground text-xs">
-            Dodane przez: //tbd
+            Dodane przez: {member?.name || "nieznany"}
           </span>
         </div>
       </span>

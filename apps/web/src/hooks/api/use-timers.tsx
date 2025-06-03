@@ -10,7 +10,7 @@ export type Timer = {
   minSpawnTime: Date;
   maxSpawnTime: Date;
   npc: Npc;
-  member: GuildMember;
+  members: GuildMember[];
 };
 
 export const useTimers = () => {
