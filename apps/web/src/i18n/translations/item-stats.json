@@ -1,14 +1,18 @@
 {
   "absorb": "Absorbuje do <value>{{value}}</value> obrażeń fizycznych",
   "absorbm": "Absorbuje do <value>{{value}}</value> obrażeń magicznych",
+  "afterheal": "<value>{{value1}}%</value> szans na wyleczenie <value>{{value2}}</value> obrażeń po walce",
   "ac": "Pancerz <value>{{value}}</value>",
   "act": "Odporność na truciznę <value>{{value}}%</value>",
   "blok": "Blok <value>+{{value}}</value>",
   "dmg": "Obrażenia fizyczne <value>{{value}}</value>",
+  "light": "Obrażenia od błyskawic <value>{{value}}</value>",
   "wound": "Głęboka rana, <value>{{value1}}%</value> szans na <value>+{{value2}}</value> obrażeń",
   "crit": "Cios krytyczny <value>+{{value}}%</value>",
   "critval": "Moc ciosu krytycznego fizycznego <value>+{{value}}%</value>",
   "critmval": "Moc ciosu krytycznego magicznego <value>+{{value}}%</value>",
+  "pierceb": "<value>{{value}}%</value> szans na zablokowanie przebicia",
+  "contra": "<value>+{{value}}%</value> szans na kontratak po ciosie krytycznym",
   "da": "Wszystkie cechy <value>+{{value}}</value>",
   "ds": "Siła <value>+{{value}}</value>",
   "di": "Intelekt <value>+{{value}}</value",
@@ -75,5 +79,6 @@
   "soulbound": "Związany z właścicielem",
   "timelimit": "Można używać co <value>{{value}}</value> min",
   "timelimit_upgmax": "Minimalny czas odnawiania: <value>{{value}}</value> min",
-  "ttl": "Działa <value>{{value}}</value> min"
+  "ttl": "Działa <value>{{value}}</value> min",
+  "binds": "Wiąże po założeniu"
 }
