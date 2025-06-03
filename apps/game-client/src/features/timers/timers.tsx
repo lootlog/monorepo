@@ -38,7 +38,7 @@ export const Timers = () => {
 
     socket.on("timers-create", (data: Timer) => {
       queryClient.setQueryData(
-        ["guild-timers", selectedGuild, world],
+        ["guild-timers", world],
         (old: AxiosResponse<Timer[]>) => {
           const exists = old?.data.find(
             (timer) => timer.npc.id === data.npc.id
