@@ -52,8 +52,6 @@ app.get("/session", async (c) => {
 app.get("/verify-auth", async (c) => {
   const user = c.get("user");
 
-  console.log(user, "user verify-auth");
-
   if (user) {
     c.res.headers.set("X-Auth-Discord-Id", user.discordId);
     c.res.headers.set("X-Auth-User-Id", user.id);
@@ -63,17 +61,10 @@ app.get("/verify-auth", async (c) => {
 
   const authorizationHeader = c.req.raw.headers.get("authorization");
 
-  console.log("Authorization header", authorizationHeader);
-
   if (!authorizationHeader) return c.body(null, 401);
 
   const token = authorizationHeader.replace("Bearer ", "");
   const jwks = (await auth.api.getJwks()) as JwksKeys;
-
-  console.log("Validating token", token);
-  console.log(jwks.keys);
-  console.log("Issuer", APP_CONFIG.appUrl);
-  console.log("Audience", APP_CONFIG.appUrl);
 
   let discordId, userId;
 
