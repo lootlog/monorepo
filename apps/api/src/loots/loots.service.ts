@@ -109,7 +109,7 @@ export class LootsService {
 
     if (data.length === 0) return;
 
-    // this.playersService.bulkIndexPlayers(players);
+    this.playersService.bulkIndexPlayers(players);
     // this.npcsService.bulkIndexNpcs(npcs);
 
     try {

@@ -4,6 +4,7 @@ import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
 import { logger } from "hono/logger";
 import { userMetadataFromHeaders } from "@lootlog/api-helpers";
+import { setupAMQP } from "./lib/rabbitmq.js";
 
 const app = new Hono<{
   Variables: {
@@ -11,6 +12,8 @@ const app = new Hono<{
     discordId: string | null;
   };
 }>();
+
+await setupAMQP();
 
 app.use("*", logger());
 app.use("*", userMetadataFromHeaders);

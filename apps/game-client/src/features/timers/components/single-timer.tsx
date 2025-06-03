@@ -37,7 +37,6 @@ const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
   },
 };
 
-const THRESHOLD = 30000;
 const ZERO_SHOW_THRESHOLD = 15000;
 
 export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
@@ -50,10 +49,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       const time = maxSpawnTime - Date.now();
-
-      if (time <= 0) {
-        setTimeLeft(0);
-      }
 
       if (time <= -ZERO_SHOW_THRESHOLD) {
         clearInterval(interval);
@@ -69,7 +64,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   }, [maxSpawnTime, refetch]);
 
   const isMinSpawnTime = minSpawnTime - Date.now() < 0;
-  const hasPassedRedThreshold = timeLeft < THRESHOLD;
+  const hasPassedRedThreshold = timeLeft < 0;
 
   useEffect(() => {
     // @ts-ignore
@@ -105,7 +100,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
         <div>
           [{NPC_NAMES[timer.npc.type].shortname}] {timer.npc.name}
         </div>
-        <div>{parseMsToTime(timeLeft)}</div>
+        <div>{parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}</div>
       </div>
     </TimerTile>
   );
