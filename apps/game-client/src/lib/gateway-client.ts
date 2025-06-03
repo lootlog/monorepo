@@ -1,9 +1,9 @@
-import { GATEWAY_URL } from "@/config/gateway";
+import { GATEWAY_SOCKET_PATH, GATEWAY_URL } from "@/config/gateway";
 import { io } from "socket.io-client";
 
 export const socket = io(GATEWAY_URL, {
   transports: ["websocket"],
-  path: "/gateway/socket.io",
+  path: `${GATEWAY_SOCKET_PATH ?? ""}/socket.io`,
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,
