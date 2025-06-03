@@ -40,6 +40,8 @@ export const Timers = () => {
       queryClient.setQueryData(
         ["guild-timers", world],
         (old: AxiosResponse<Timer[]>) => {
+          if (data.world !== world) return old;
+
           const exists = old?.data.find(
             (timer) => timer.npc.id === data.npc.id
           );
