@@ -52,6 +52,8 @@ app.get("/session", async (c) => {
 app.get("/verify-auth", async (c) => {
   const user = c.get("user");
 
+  console.log(user, "user verify-auth");
+
   if (user) {
     c.res.headers.set("X-Auth-Discord-Id", user.discordId);
     c.res.headers.set("X-Auth-User-Id", user.id);
@@ -60,6 +62,8 @@ app.get("/verify-auth", async (c) => {
   }
 
   const authorizationHeader = c.req.raw.headers.get("authorization");
+
+  console.log("Authorization header", authorizationHeader);
 
   if (!authorizationHeader) return c.body(null, 401);
 
