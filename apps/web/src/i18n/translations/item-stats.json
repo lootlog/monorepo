@@ -61,10 +61,11 @@
   "opis": "<description>{{value}}</description",
   "permbound": "Związany z właścicielem na stałe",
   "legbon": {
-    "curse": "Klątwa: podczas udanego ataku 9% szans na aktywację klątwy, która zablokuje najbliższą wykonywaną przez przeciwnika akcję.",
-    "lastheal": "Ostatni ratunek: kiedy po otrzymanym ataku zostanie graczowi mniej niż 18% życia, zostaje jednorazowo znacznie uleczony.",
+    "curse": "<legbon>Klątwa: podczas udanego ataku 9% szans na aktywację klątwy, która zablokuje najbliższą wykonywaną przez przeciwnika akcję.</legbon>",
+    "lastheal": "<legbon>Ostatni ratunek: kiedy po otrzymanym ataku zostanie graczowi mniej niż 18% życia, zostaje jednorazowo znacznie uleczony.</legbon>",
     "dmgred": "Fizyczna osłona: przyjmowane obrażenia fizyczne zmniejszone o 16%.",
-    "verycrit": "Cios bardzo krytyczny: 13% szansy na podwojenie mocy ciosu krytycznego.",
+    "verycrit": "<legbon>Cios bardzo krytyczny: 13% szansy na podwojenie mocy ciosu krytycznego.</legbon>",
+    "holytouch": "<legbon>Dotyk anioła: podczas ataku 7% szansy na leczenie ran w ciągu trzech najbliższych tur.</legbon>",
     "not-supported": "Nieznany bonus legendarny"
   },
   "rarity": {

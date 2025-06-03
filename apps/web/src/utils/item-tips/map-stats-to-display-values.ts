@@ -103,6 +103,9 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "expires":
       case "rarity":
         return acc;
+      case "legbon":
+        acc.legendaryBonusBlock.push(displayValue);
+        return acc;
       default:
         console.warn("Unrecognized stat key:", stat.key);
         acc.unrecognizedBlock.push(displayValue);

@@ -77,21 +77,22 @@ export const Timers = () => {
       >
         <div className="ll-pt-2">
           <div className="ll-flex ll-flex-col ll-gap-1">
-            <ScrollArea className="ll-h-72 ll-py-1">
-              <div className="ll-flex ll-items-center ll-flex-col ll-gap-1">
-                {sorted?.length === 0 && (
-                  <div className="ll-text-white">----</div>
-                )}
-                {sorted?.map((timer) => {
-                  return (
-                    <SingleTimer
-                      key={timer.npc.id}
-                      timer={timer}
-                      guildId={selectedGuild}
-                    />
-                  );
-                })}
-              </div>
+            <ScrollArea
+              className="ll-max-h-72 ll-py-1 ll-flex ll-items-center ll-flex-col ll-gap-1"
+              type="scroll"
+            >
+              {sorted?.length === 0 && (
+                <div className="ll-text-white">----</div>
+              )}
+              {sorted?.map((timer) => {
+                return (
+                  <SingleTimer
+                    key={timer.npc.id}
+                    timer={timer}
+                    guildId={selectedGuild}
+                  />
+                );
+              })}
             </ScrollArea>
             <TimerTile>
               <PlusIcon color="white" height={16} width={16} />

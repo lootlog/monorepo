@@ -69,6 +69,7 @@ export const ItemTile: FC<ItemTileProps> = ({
                   components={{
                     value: <span className="font-bold text-orange-500" />,
                     description: <div className="text-center text-gray-400" />,
+                    legbon: <span className="text-green-500" />,
                   }}
                 >
                   {v.value}
@@ -87,7 +88,7 @@ export const ItemTile: FC<ItemTileProps> = ({
         <TooltipTrigger>
           <ItemImage rarity={rarity} icon={icon} />
         </TooltipTrigger>
-        <TooltipContent className="w-72 p-2 pb-0">
+        <TooltipContent className="w-80 p-3 pb-0" side="right">
           <div className="flex flex-row border-b items-center justify-between pb-2">
             <div className="flex flex-col justify-between">
               <p className="font-heading mt-12 scroll-m-20 mr-8 text-md font-semibold tracking-tight first:mt-0">

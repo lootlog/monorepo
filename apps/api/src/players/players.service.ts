@@ -11,6 +11,7 @@ export class PlayersService {
   }
 
   async bulkIndexPlayers(players: CreatePlayerDto[]) {
+    console.log(players);
     return undefined;
   }
 }
