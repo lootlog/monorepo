@@ -66,6 +66,11 @@ app.get("/verify-auth", async (c) => {
   const token = authorizationHeader.replace("Bearer ", "");
   const jwks = (await auth.api.getJwks()) as JwksKeys;
 
+  console.log("Validating token", token);
+  console.log(jwks.keys);
+  console.log("Issuer", APP_CONFIG.appUrl);
+  console.log("Audience", APP_CONFIG.appUrl);
+
   let discordId, userId;
 
   try {
