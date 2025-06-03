@@ -17,6 +17,7 @@ RUN pnpm deploy --filter=@lootlog/api /prod/api
 RUN pnpm deploy --filter=@lootlog/auth --prod /prod/auth
 RUN pnpm deploy --filter=@lootlog/search --prod /prod/search
 RUN pnpm deploy --filter=@lootlog/discord-bot /prod/discord-bot
+RUN pnpm deploy --filter=@lootlog/gateway /prod/gateway
 
 FROM nginx:1.27.4-alpine AS web
 
@@ -46,5 +47,11 @@ CMD [ "pnpm", "start" ]
 FROM base AS discord-bot
 COPY --from=build /prod/discord-bot /prod/discord-bot
 WORKDIR /prod/discord-bot
+EXPOSE 4000
+CMD [ "pnpm", "start" ]
+
+FROM base AS gateway
+COPY --from=build /prod/gateway /prod/gateway
+WORKDIR /prod/gateway
 EXPOSE 4000
 CMD [ "pnpm", "start" ]

@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { GatewayQueueHandler } from 'src/gateway/gateway-queue.handler';
 import { createRemoteJWKSet } from 'jose';
+import { AuthConfig } from 'src/config/auth.config';
 
 @Module({
   imports: [
@@ -22,10 +23,10 @@ import { createRemoteJWKSet } from 'jose';
 
     {
       provide: 'JOSE',
-      useFactory: async () => {
-        const keyset = createRemoteJWKSet(
-          new URL('http://localhost/api/auth/idp/jwks'),
-        );
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const { jwksUrl } = configService.get<AuthConfig>(ConfigKey.AUTH);
+        const keyset = createRemoteJWKSet(new URL(jwksUrl));
 
         return { keyset };
       },

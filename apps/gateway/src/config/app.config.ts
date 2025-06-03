@@ -23,6 +23,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     RABBITMQ_URI: Joi.string().required(),
     AUTH_ISSUER: Joi.string().uri().required(),
     AUTH_AUDIENCE: Joi.string().uri().required(),
+    JWKS_URL: Joi.string().uri().required(),
   }),
   validationOptions: {
     allowUnknown: true,
