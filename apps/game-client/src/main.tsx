@@ -3,10 +3,9 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { GlobalContextProvider } from "./contexts/global-context";
-import { Auth0ProviderWithConfig } from "./providers/auth0-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
-import { GatewayContext, GatewayProvider } from "@/contexts/gateway-context";
+import { GatewayProvider } from "@/contexts/gateway-context";
 
 const queryClient = new QueryClient();
 
@@ -23,13 +22,11 @@ ReactDOM.createRoot(
   <React.StrictMode>
     <ThemeProvider defaultTheme="dark-theme" storageKey="lootlog-theme">
       <QueryClientProvider client={queryClient}>
-        <Auth0ProviderWithConfig>
-          <GlobalContextProvider>
-            <GatewayProvider>
-              <App />
-            </GatewayProvider>
-          </GlobalContextProvider>
-        </Auth0ProviderWithConfig>
+        <GlobalContextProvider>
+          <GatewayProvider>
+            <App />
+          </GatewayProvider>
+        </GlobalContextProvider>
       </QueryClientProvider>
     </ThemeProvider>
   </React.StrictMode>
