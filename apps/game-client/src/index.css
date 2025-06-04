@@ -79,8 +79,12 @@ body.si {
   color: #fff;
 }
 
+body.si > #lootlog-root {
+  z-index: 499 !important;
+}
+
 #lootlog-root {
-  z-index: 9999;
+  z-index: 300;
 }
 
 #lootlog-root > * {
