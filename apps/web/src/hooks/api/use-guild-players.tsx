@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { API_URL } from "config/api";
+import { SEARCH_API_URL } from "config/api";
 import { useApiClient } from "hooks/api/use-api-client";
-import { useGuildId } from "hooks/use-guild-id";
 
 export type Player = {
   id: number;
@@ -15,25 +14,28 @@ export type Player = {
 
 export type UseGuildPlayersOptions = {
   search?: string;
+  selectedPlayers?: string;
 };
 
-export const useGuildPlayers = ({ search }: UseGuildPlayersOptions) => {
+export const useGuildPlayers = ({
+  search,
+  selectedPlayers,
+}: UseGuildPlayersOptions) => {
   const { client, isAuthenticated } = useApiClient();
-  const guildId = useGuildId();
 
   const queryParams = {
-    search: search ?? "",
+    search: search || selectedPlayers || "",
   };
 
   const query = useQuery({
-    queryKey: ["guild-players", guildId, search],
+    queryKey: ["guild-players", search, selectedPlayers],
     queryFn: () =>
       client.get<Player[]>(
-        `${API_URL}/guilds/${guildId}/players?${new URLSearchParams(
+        `${SEARCH_API_URL}/players?${new URLSearchParams(
           queryParams
         ).toString()}`
       ),
-    enabled: isAuthenticated && !!guildId,
+    enabled: isAuthenticated,
     select: (response) => response.data,
   });
 

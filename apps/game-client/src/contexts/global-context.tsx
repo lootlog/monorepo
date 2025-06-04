@@ -28,7 +28,7 @@ export const GlobalContextProvider = ({
   const [newInterface, setNewInterface] = useState(false);
   const [lootlogWindowOpen, setLootlogWindowOpen] = useLocalStorage(
     `lootlog-${charId}`,
-    false
+    true
   );
   const [selectedGuild, setSelectedGuild] = useLocalStorage(
     `guild-${charId}`,

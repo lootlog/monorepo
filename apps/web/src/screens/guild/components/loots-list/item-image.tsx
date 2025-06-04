@@ -11,15 +11,12 @@ export const ItemImage: FC<ItemImageProps> = ({ rarity, icon }) => {
       className={cn(
         "w-[32px] h-[32px] relative cursor-pointer border-2 box-content",
         {
-          "shadow-[inset_0_0_6px_0.5px_rgba(255,138,0,1)]":
+          "shadow-[inset_0_0_6px_0.5px_rgba(255,138,0,1)] border-amber-700 bg-amber-700/30":
             rarity === ItemRarity.LEGENDARY,
-          "border-amber-700": rarity === ItemRarity.LEGENDARY,
-          "shadow-[inset_0_0_8px_0.5px_rgba(59,130,246,1)]":
+          "shadow-[inset_0_0_8px_0.5px_rgba(59,130,246,1)] border-blue-500 bg-blue-500/30":
             rarity === ItemRarity.HEROIC,
-          "border-blue-500": rarity === ItemRarity.HEROIC,
-          "shadow-[inset_0_0_6px_0.5px_rgb(252,211,77,1)]":
+          "shadow-[inset_0_0_6px_0.5px_rgb(252,211,77,1)] border-amber-300 bg-amber-300/30":
             rarity === ItemRarity.UNIQUE,
-          "border-amber-300": rarity === ItemRarity.UNIQUE,
         }
       )}
       style={{

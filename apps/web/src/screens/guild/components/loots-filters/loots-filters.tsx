@@ -34,9 +34,11 @@ export const LootsFilters: React.FC = () => {
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
   const { data: playersData, isLoading: playersDataLoading } = useGuildPlayers({
     search: debouncedPlayersSearchValue,
+    selectedPlayers: players,
   });
   const { data: npcsData, isLoading: npcsDataLoading } = useNpcs({
     search: debouncedNpcsSearchValue,
+    selectedNpcs: npcs,
   });
 
   const handleSelect = async (name: string, options: string[]) => {
@@ -53,7 +55,7 @@ export const LootsFilters: React.FC = () => {
 
   const playersOptions =
     playersData?.map((player) => ({
-      value: player.id.toString(),
+      value: player.name,
       label: player.name,
     })) ?? [];
 

@@ -2,7 +2,7 @@ import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { FC, useEffect, useState } from "react";
 
 type SingleTimerProps = {
@@ -89,11 +89,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
     <TimerTile id={timer.npc.id.toString()}>
       <div
         className={cn(
-          "ll-flex ll-justify-between ll-w-full ll-text-[11px]  ll-px-1",
+          "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1",
           {
             "ll-text-red-500": hasPassedRedThreshold,
             "ll-text-orange-400": isMinSpawnTime,
             "ll-text-white": !hasPassedRedThreshold && !isMinSpawnTime,
+            "ll-py-1": document.body.classList.contains("si"),
           }
         )}
       >

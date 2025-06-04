@@ -16,7 +16,7 @@
     "dotenv": "^16.4.7",
     "hono": "^4.7.0",
     "jwks-rsa": "^3.1.0",
-    "meilisearch": "^0.48.2",
+    "meilisearch": "^0.50.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

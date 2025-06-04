@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { API_URL } from "config/api";
+import { SEARCH_API_URL } from "config/api";
 import { useApiClient } from "hooks/api/use-api-client";
-import { useGuildId } from "hooks/use-guild-id";
 
 export enum NpcType {
   COMMON = "COMMON",
@@ -29,23 +28,23 @@ export type Npc = {
 
 export type UseGuildNpcsOptions = {
   search?: string;
+  selectedNpcs?: string;
 };
 
-export const useNpcs = ({ search }: UseGuildNpcsOptions) => {
-  const guildId = useGuildId();
+export const useNpcs = ({ search, selectedNpcs }: UseGuildNpcsOptions) => {
   const { client, isAuthenticated } = useApiClient();
 
   const queryParams = {
-    search: search ?? "",
+    search: search || selectedNpcs || "",
   };
 
   const query = useQuery({
-    queryKey: ["guild-npcs", guildId, search],
+    queryKey: ["guild-npcs", search],
     queryFn: () =>
       client.get<Npc[]>(
-        `${API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`
+        `${SEARCH_API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`
       ),
-    enabled: isAuthenticated && !!guildId,
+    enabled: isAuthenticated,
     select: (response) => response.data,
   });
 

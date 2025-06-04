@@ -8,6 +8,7 @@ export type ItemDisplayValue = {
 
 export type StatBlocks = {
   baseStatsBlock: ItemDisplayValue[];
+  usageStatsBlock: ItemDisplayValue[];
   legendaryBonusBlock: ItemDisplayValue[];
   descriptionBlock: ItemDisplayValue[];
   metadataBlock: ItemDisplayValue[];
@@ -22,6 +23,7 @@ function isString(x: unknown): x is string {
 export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
   const blocks: StatBlocks = {
     baseStatsBlock: [],
+    usageStatsBlock: [],
     legendaryBonusBlock: [],
     descriptionBlock: [],
     metadataBlock: [],
@@ -37,10 +39,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "absorbm":
       case "acdmg":
       case "afterheal":
-      case "amount":
       case "blok":
-      case "capacity":
-      case "cansplit":
       case "contra":
       case "crit":
       case "critmval":
@@ -65,6 +64,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "resdmg":
       case "sa":
       case "slow":
+      case "runes":
       case "wound":
         acc.baseStatsBlock.push(displayValue);
         return acc;
@@ -105,6 +105,12 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
         return acc;
       case "legbon":
         acc.legendaryBonusBlock.push(displayValue);
+        return acc;
+      case "amount":
+      case "capacity":
+      case "cansplit":
+      case "ttl":
+        acc.usageStatsBlock.push(displayValue);
         return acc;
       default:
         console.warn("Unrecognized stat key:", stat.key);

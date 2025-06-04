@@ -30,5 +30,6 @@ export const APP_CONFIG = {
   },
   rabbitmq: {
     uri: RABBITMQ_URI,
+    exchange: "default",
   },
 };

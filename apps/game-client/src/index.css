@@ -74,12 +74,17 @@
   }
 }
 
-body {
+body.si {
   background-color: #000;
+  color: #fff;
 }
 
 #lootlog-root > * {
   pointer-events: auto;
+}
+
+#lootlog-root * {
+  font-family: Arimo, Calibri, Segoe;
 }
 
 .ll-custom-cursor-pointer {
