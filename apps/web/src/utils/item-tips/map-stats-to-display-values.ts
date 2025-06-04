@@ -86,6 +86,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "frost":
       case "poison":
       case "light":
+      case "pdmg":
         acc.baseStatsBlock.unshift(displayValue);
         return acc;
       case "opis":
@@ -113,7 +114,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
         acc.usageStatsBlock.push(displayValue);
         return acc;
       default:
-        console.warn("Unrecognized stat key:", stat.key);
+        console.warn("Unrecognized stat key:", stat.key, stat.value);
         acc.unrecognizedBlock.push(displayValue);
         return acc;
     }

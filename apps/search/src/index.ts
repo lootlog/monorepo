@@ -21,6 +21,10 @@ await setupAMQP();
 app.use("*", logger());
 app.use("*", userMetadataFromHeaders);
 
+app.get("/healthz", (c) => {
+  return c.text("Healthy");
+});
+
 app.route("/players", players);
 await setupPlayersHandlers();
 
