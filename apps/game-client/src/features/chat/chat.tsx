@@ -27,10 +27,9 @@ import { cn } from "@/lib/utils";
 import { useLocalStorage } from "react-use";
 
 export const Chat = () => {
-  const charId = window.Engine?.hero?.d?.id;
   const { chatWindowOpen, setChatWindowOpen } = useGlobalContext();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    `chat-selected-guild-${charId}`,
+    `chat-selected-guild`,
     ""
   );
   const { data: guilds } = useGuilds();

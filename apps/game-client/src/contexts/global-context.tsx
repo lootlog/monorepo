@@ -27,24 +27,16 @@ export const GlobalContextProvider = ({
   const [gameInterface, setGameInterface] = useState<"si" | "ni" | undefined>(
     undefined
   );
-  const charId =
-    gameInterface === "ni" ? window.Engine?.hero?.d?.id : window.hero.id;
   const [lootlogWindowOpen, setLootlogWindowOpen] = useLocalStorage(
-    `lootlog-${charId}`,
+    `lootlog`,
     true
   );
-  const [selectedGuild, setSelectedGuild] = useLocalStorage(
-    `guild-${charId}`,
-    ""
-  );
+  const [selectedGuild, setSelectedGuild] = useLocalStorage(`guild`, "");
   const [settingsWindowOpen, setSettingsWindowOpen] = useLocalStorage(
-    `settings-${charId}`,
+    `settings`,
     false
   );
-  const [chatWindowOpen, setChatWindowOpen] = useLocalStorage(
-    `chat-${charId}`,
-    true
-  );
+  const [chatWindowOpen, setChatWindowOpen] = useLocalStorage(`chat`, true);
 
   const init = async () => {
     const started = typeof window._g == "function";
