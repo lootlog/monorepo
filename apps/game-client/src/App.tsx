@@ -61,6 +61,12 @@ function App() {
           callback: handleLootlogWindowToggle,
           tooltip: "Lootlog",
         });
+
+        createSIWidgetButton({
+          callback: handleChatWindowToggle,
+          tooltip: "Lootlog chat",
+          left: 88,
+        });
       }
     }
   }, [gameInterface, isWidgetLoaded]);

@@ -79,6 +79,10 @@ body.si {
   color: #fff;
 }
 
+#lootlog-root {
+  z-index: 9999;
+}
+
 #lootlog-root > * {
   pointer-events: auto;
 }

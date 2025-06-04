@@ -57,6 +57,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       style={{
         top: position.y,
         left: position.x,
+        zIndex: 9999,
       }}
       onMouseDown={handleMouseDown}
       onWheel={(e) => e.stopPropagation()}

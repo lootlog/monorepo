@@ -77,7 +77,12 @@ export const Chat = () => {
   selectedGuildIdRef.current = selectedGuildId ?? "";
 
   useEffect(() => {
-    if (selectedGuildId && messages && scrollAreaRef.current) {
+    if (
+      selectedGuildId &&
+      messages &&
+      scrollAreaRef.current &&
+      chatWindowOpen
+    ) {
       if (initialRef.current) {
         initialRef.current = false;
         scrollAreaRef.current.scrollTop =
@@ -91,7 +96,7 @@ export const Chat = () => {
         behavior: "smooth",
       });
     }
-  }, [selectedGuildId, messages]);
+  }, [selectedGuildId, messages, chatWindowOpen]);
 
   return (
     chatWindowOpen && (
@@ -108,7 +113,7 @@ export const Chat = () => {
                 className="ll-h-4 ll-text-sm ll-text-white"
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent style={{ zIndex: 99999 }} className="ll-font-sans">
               {guilds?.map((guild) => {
                 return (
                   <SelectItem key={guild.id} value={guild.id}>
