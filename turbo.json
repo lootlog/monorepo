@@ -7,7 +7,10 @@
     "PORT",
     "HOSTNAME",
     "AXIOM_DATASET",
-    "AXIOM_TOKEN"
+    "AXIOM_TOKEN",
+    "REDIS_HOST",
+    "REDIS_PASSWORD",
+    "REDIS_PORT"
   ],
   "tasks": {
     "build": {

@@ -57,6 +57,17 @@ services:
       retries: 3
       timeout: 5s
 
+  redis:
+    image: "redis:7.2"
+    container_name: "redis-lootlog"
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - "redis:/data"
+
   traefik:
     image: "traefik:v3.3"
     container_name: "traefik"
@@ -82,3 +93,4 @@ volumes:
   lootlog-db:
   lootlog-users-db:
   meilisearch:
+  redis:

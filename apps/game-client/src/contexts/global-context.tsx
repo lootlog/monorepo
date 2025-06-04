@@ -3,7 +3,7 @@ import { useLocalStorage } from "react-use";
 
 export type GlobalContextType = {
   initialized: boolean;
-  newInterface: boolean;
+  gameInterface: "si" | "ni" | undefined;
   lootlogWindowOpen: boolean | undefined;
   setLootlogWindowOpen: (open: boolean | undefined) => void;
   selectedGuild: string | undefined;
@@ -25,7 +25,9 @@ export const GlobalContextProvider = ({
 }) => {
   const charId = window.Engine?.hero?.d?.id;
   const [initialized, setInitialized] = useState(false);
-  const [newInterface, setNewInterface] = useState(false);
+  const [gameInterface, setGameInterface] = useState<"si" | "ni" | undefined>(
+    undefined
+  );
   const [lootlogWindowOpen, setLootlogWindowOpen] = useLocalStorage(
     `lootlog-${charId}`,
     true
@@ -51,7 +53,7 @@ export const GlobalContextProvider = ({
     }
 
     const isNI = typeof window.Engine == "object";
-    setNewInterface(isNI);
+    setGameInterface(isNI ? "ni" : "si");
 
     const initialized = isNI
       ? window.Engine?.interface?.alreadyInitialised ||
@@ -71,7 +73,7 @@ export const GlobalContextProvider = ({
   }, []);
 
   const value: GlobalContextType = {
-    newInterface,
+    gameInterface,
     initialized,
     lootlogWindowOpen,
     setLootlogWindowOpen,

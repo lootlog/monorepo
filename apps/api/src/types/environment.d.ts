@@ -16,6 +16,11 @@ declare global {
       POSTGRESQL_CONNECTION_URI: string;
 
       RABBITMQ_URI: string;
+
+      REDIS_PASSWORD: string;
+      REDIS_HOST: string;
+      REDIS_PORT: string;
+      REDIS_USERNAME: string;
     }
   }
 }
