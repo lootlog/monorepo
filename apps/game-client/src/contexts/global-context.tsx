@@ -23,11 +23,12 @@ export const GlobalContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const charId = window.Engine?.hero?.d?.id;
   const [initialized, setInitialized] = useState(false);
   const [gameInterface, setGameInterface] = useState<"si" | "ni" | undefined>(
     undefined
   );
+  const charId =
+    gameInterface === "ni" ? window.Engine?.hero?.d?.id : window.hero.id;
   const [lootlogWindowOpen, setLootlogWindowOpen] = useLocalStorage(
     `lootlog-${charId}`,
     true
@@ -42,7 +43,7 @@ export const GlobalContextProvider = ({
   );
   const [chatWindowOpen, setChatWindowOpen] = useLocalStorage(
     `chat-${charId}`,
-    false
+    true
   );
 
   const init = async () => {

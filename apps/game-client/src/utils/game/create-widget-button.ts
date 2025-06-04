@@ -12,6 +12,8 @@ export type WidgetButtonOptions = {
 export type SIWidgetButtonOptions = {
   callback: () => void;
   tooltip: string;
+  left?: number;
+  top?: number;
 };
 
 export const createWidgetButton = ({
@@ -62,6 +64,8 @@ export const createWidgetButton = ({
 export const createSIWidgetButton = ({
   callback,
   tooltip,
+  top = 512,
+  left = 164,
 }: SIWidgetButtonOptions) => {
   const container = document.querySelector("#panel");
   if (!container) return;
@@ -70,8 +74,8 @@ export const createSIWidgetButton = ({
   button.onclick = callback;
 
   button.classList.add("b_buttons");
-  button.style.left = "164px";
-  button.style.top = "512px";
+  button.style.left = `${left}px`;
+  button.style.top = `${top}px`;
   button.setAttribute("tip", tooltip);
 
   container.appendChild(button);
