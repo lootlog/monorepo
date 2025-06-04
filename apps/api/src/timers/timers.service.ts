@@ -22,6 +22,10 @@ export class TimersService {
 
   async createTimer(discordId: string, guildId: string, data: CreateTimerDto) {
     const now = new Date();
+    if (data.npc.wt < 19)
+      throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
+
+    console.log(data);
 
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
       data.respBaseSeconds,
