@@ -55,10 +55,6 @@ function App() {
         callback: handleChatWindowToggle,
         keyName: "chat",
       });
-    }
-
-    if (!newInterface && !isWidgetLoaded) {
-      setisWidgetLoaded(true);
 
       createSIWidgetButton({
         callback: handleLootlogWindowToggle,
