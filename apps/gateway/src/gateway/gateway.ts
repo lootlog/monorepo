@@ -18,12 +18,15 @@ import { JWK, jwtVerify } from 'jose';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { AuthConfig } from 'src/config/auth.config';
+import { RuntimeEnvironment } from 'src/types/common.types';
 
 type Socket = SocketIOSocket & { user: any };
 
+console.log(process.env.ENV);
+
 @WebSocketGateway({
-  // namespace: 'gateway',
-  // path: '/socket.io',
+  namespace:
+    process.env.ENV === RuntimeEnvironment.LOCAL ? '/gateway' : undefined,
   pingInterval: 25000,
   pingTimeout: 60000,
 })

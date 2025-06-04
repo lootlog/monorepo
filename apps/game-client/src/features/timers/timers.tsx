@@ -12,7 +12,7 @@ import { useEffect } from "react";
 
 export const Timers = () => {
   const {
-    newInterface,
+    gameInterface,
     lootlogWindowOpen,
     setLootlogWindowOpen,
     selectedGuild,
@@ -22,9 +22,10 @@ export const Timers = () => {
   const queryClient = useQueryClient();
   const { data: timers } = useTimers();
 
-  const world = newInterface
-    ? window.Engine?.worldConfig?.getWorldName()
-    : window.g?.worldConfig?.getWorldName();
+  const world =
+    gameInterface === "ni"
+      ? window.Engine?.worldConfig?.getWorldName()
+      : window.g?.worldConfig?.getWorldName();
   const { socket, connected } = useGateway();
 
   const sorted = timers?.sort((a, b) => {

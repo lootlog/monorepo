@@ -17,11 +17,12 @@ export type Timer = {
 
 export const useTimers = () => {
   const { client, hasToken } = useAuthenticatedApiClient();
-  const { newInterface } = useGlobalContext();
+  const { gameInterface } = useGlobalContext();
 
-  const world = newInterface
-    ? window.Engine?.worldConfig?.getWorldName()
-    : window.g?.worldConfig?.getWorldName();
+  const world =
+    gameInterface === "ni"
+      ? window.Engine?.worldConfig?.getWorldName()
+      : window.g?.worldConfig?.getWorldName();
 
   const queryParams = {
     world,

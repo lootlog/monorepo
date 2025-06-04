@@ -6,4 +6,6 @@ export enum RoutingKey {
   GUILDS_TIMERS_CREATE = 'guilds.timers.create',
   GUILDS_TIMERS_UPDATE = 'guilds.timers.update',
   GUILDS_TIMERS_DELETE = 'guilds.timers.delete',
+
+  GUILDS_SEND_MESSAGE = 'guilds.send.message',
 }

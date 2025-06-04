@@ -16,7 +16,7 @@ function App() {
     lootlogWindowOpen,
     setLootlogWindowOpen,
     setChatWindowOpen,
-    newInterface,
+    gameInterface,
     chatWindowOpen,
   } = useGlobalContext();
   const [isWidgetLoaded, setisWidgetLoaded] = useState(false);
@@ -38,30 +38,32 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (newInterface && !isWidgetLoaded) {
+    if (!isWidgetLoaded && gameInterface) {
       setisWidgetLoaded(true);
 
-      createWidgetButton({
-        id: "lootlog",
-        tooltip: "Lootlog",
-        callback: handleLootlogWindowToggle,
-        type: "violet",
-      });
+      if (gameInterface === "ni") {
+        createWidgetButton({
+          id: "lootlog",
+          tooltip: "Lootlog",
+          callback: handleLootlogWindowToggle,
+          type: "violet",
+        });
 
-      createWidgetButton({
-        id: "lootlog-chat chat",
-        tooltip: "Lootlog Chat",
-        type: "violet",
-        callback: handleChatWindowToggle,
-        keyName: "chat",
-      });
-
-      createSIWidgetButton({
-        callback: handleLootlogWindowToggle,
-        tooltip: "Lootlog",
-      });
+        createWidgetButton({
+          id: "lootlog-chat chat",
+          tooltip: "Lootlog Chat",
+          type: "violet",
+          callback: handleChatWindowToggle,
+          keyName: "chat",
+        });
+      } else {
+        createSIWidgetButton({
+          callback: handleLootlogWindowToggle,
+          tooltip: "Lootlog",
+        });
+      }
     }
-  }, [newInterface, isWidgetLoaded]);
+  }, [gameInterface, isWidgetLoaded]);
 
   return (
     initialized && (

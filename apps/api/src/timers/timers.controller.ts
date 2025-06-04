@@ -2,7 +2,6 @@ import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { Guild, Permission } from '@prisma/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
-import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
