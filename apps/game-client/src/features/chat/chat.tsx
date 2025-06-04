@@ -62,9 +62,13 @@ export const Chat = () => {
     socket.on("chat-message", (data: ChatMessage) => {
       if (!selectedGuildIdRef.current) return;
 
+      console.log("Received chat message:", data.guildId, selectedGuildId);
+
       queryClient.setQueryData(
         [QUERY_KEY, selectedGuildIdRef.current],
         (old: AxiosResponse<ChatMessage[]>) => {
+          if (data.guildId !== selectedGuildIdRef.current) return old;
+
           return {
             data: [...old.data, data],
           };
