@@ -82,5 +82,6 @@
   "timelimit": "Można używać co <value>{{value}}</value> min",
   "timelimit_upgmax": "Minimalny czas odnawiania: <value>{{value}}</value> min",
   "ttl": "Działa <value>{{value}}</value> min",
-  "binds": "Wiąże po założeniu"
+  "binds": "Wiąże po założeniu",
+  "pdmg": "Atak fizyczny: <value>{{value}}</value>"
 }
