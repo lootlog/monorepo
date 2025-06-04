@@ -39,6 +39,8 @@ const formSchema = z.object({
   LOOTLOG_WRITE: z.boolean().default(true),
   LOOTLOG_READ_LOOTS_TITANS: z.boolean().default(true),
   LOOTLOG_READ_TIMERS_TITANS: z.boolean().default(true),
+  LOOTLOG_CHAT_READ: z.boolean().default(true),
+  LOOTLOG_CHAT_WRITE: z.boolean().default(true),
 });
 
 export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
@@ -59,6 +61,12 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
       ),
       LOOTLOG_READ_TIMERS_TITANS: role.permissions.includes(
         Permission.LOOTLOG_READ_TIMERS_TITANS
+      ),
+      LOOTLOG_CHAT_READ: role.permissions.includes(
+        Permission.LOOTLOG_CHAT_READ
+      ),
+      LOOTLOG_CHAT_WRITE: role.permissions.includes(
+        Permission.LOOTLOG_CHAT_WRITE
       ),
     },
   });
@@ -236,6 +244,52 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
                       )}
                     </FormLabel>
                     <FormDescription>Dostęp do timerów tytanów</FormDescription>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={Permission.LOOTLOG_CHAT_READ}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      {t(`permissions.${Permission.LOOTLOG_CHAT_READ}`)}
+                    </FormLabel>
+                    <FormDescription>
+                      Pozwala na czytanie wiadomości z lootloga
+                    </FormDescription>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={Permission.LOOTLOG_CHAT_WRITE}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      {t(`permissions.${Permission.LOOTLOG_CHAT_WRITE}`)}
+                    </FormLabel>
+                    <FormDescription>
+                      Pozwala na pisanie wiadomości do lootloga
+                    </FormDescription>
                     <FormMessage />
                   </div>
                 </FormItem>

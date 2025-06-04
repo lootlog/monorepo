@@ -4,5 +4,7 @@
   "LOOTLOG_READ": "Dostęp do lootloga",
   "LOOTLOG_WRITE": "Zapis do lootloga",
   "LOOTLOG_READ_LOOTS_TITANS": "Looty z tytanów",
-  "LOOTLOG_READ_TIMERS_TITANS": "Timery tytanów"
+  "LOOTLOG_READ_TIMERS_TITANS": "Timery tytanów",
+  "LOOTLOG_CHAT_READ": "Odczyt wiadomości na czacie",
+  "LOOTLOG_CHAT_WRITE": "Wysyłanie wiadomości na czacie"
 }
