@@ -110,7 +110,7 @@ export class LootsService {
     if (data.length === 0) return;
 
     this.playersService.bulkIndexPlayers(players);
-    // this.npcsService.bulkIndexNpcs(npcs);
+    this.npcsService.bulkIndexNpcs(npcs);
 
     try {
       await this.prisma.loot.createMany({
@@ -151,7 +151,7 @@ export class LootsService {
     AND EXISTS (
         SELECT 1
         FROM jsonb_array_elements("players") AS player
-        WHERE player->>'id' = ANY(ARRAY[${Prisma.join(players)}]::text[])
+        WHERE player->>'name' = ANY(ARRAY[${Prisma.join(players)}]::text[])
     )`
         : Prisma.sql``;
 

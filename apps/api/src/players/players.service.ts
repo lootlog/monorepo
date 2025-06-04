@@ -1,17 +1,20 @@
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { CreatePlayerDto } from 'src/players/dto/create-player.dto';
-import { FetchGuildPlayersDto } from 'src/players/dto/fetch-guild-players.dto';
+import { RoutingKey } from 'src/players/enum/routing-key.enum';
 
 @Injectable()
 export class PlayersService {
-  constructor() {}
-
-  async getPlayers(query: FetchGuildPlayersDto) {
-    return [];
-  }
+  constructor(private readonly amqpConnection: AmqpConnection) {}
 
   async bulkIndexPlayers(players: CreatePlayerDto[]) {
-    console.log(players);
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.SEARCH_PLAYERS_INDEX,
+      players,
+    );
+
     return undefined;
   }
 }

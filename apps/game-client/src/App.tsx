@@ -3,7 +3,10 @@ import { Settings } from "@/features/settings/settings";
 import { useGameEventsParser } from "@/hooks/use-game-events-parser";
 import { useGlobalContext } from "./contexts/global-context";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createWidgetButton } from "@/utils/game/create-widget-button";
+import {
+  createSIWidgetButton,
+  createWidgetButton,
+} from "@/utils/game/create-widget-button";
 import { Chat } from "@/features/chat/chat";
 
 function App() {
@@ -51,6 +54,15 @@ function App() {
         type: "violet",
         callback: handleChatWindowToggle,
         keyName: "chat",
+      });
+    }
+
+    if (!newInterface && !isWidgetLoaded) {
+      setisWidgetLoaded(true);
+
+      createSIWidgetButton({
+        callback: handleLootlogWindowToggle,
+        tooltip: "Lootlog",
       });
     }
   }, [newInterface, isWidgetLoaded]);

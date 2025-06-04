@@ -1,20 +1,20 @@
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { meilisearchClient } from "../lib/meilisearch.js";
-import type { GetPlayersDto } from "./dto/get-players.dto.js";
-import { PLAYERS_INDEX } from "./constants/meilisearch.js";
-import type { IndexPlayersDto } from "./dto/index-players.dto.js";
+import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
+import { NPCS_INDEX } from "./constants/meilisearch.js";
+import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
 
-export class PlayersService {
+export class NpcsService {
   meilisearch: Meilisearch;
 
   constructor() {
     this.meilisearch = meilisearchClient;
-    const index = this.meilisearch.index(PLAYERS_INDEX);
+    const index = this.meilisearch.index(NPCS_INDEX);
     index.updateFilterableAttributes(["name"]);
   }
 
-  async getPlayers({ limit, search }: GetPlayersDto) {
-    const index = this.meilisearch.index(PLAYERS_INDEX);
+  async getNpcs({ limit, search }: GetNpcsDto) {
+    const index = this.meilisearch.index(NPCS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : search;
 
@@ -27,8 +27,6 @@ export class PlayersService {
       query.filter = `name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
     }
 
-    console.log(searchTerm, query);
-
     try {
       const data = await index.search(searchTerm as string, query);
 
@@ -39,13 +37,13 @@ export class PlayersService {
     }
   }
 
-  async indexPlayers(data: IndexPlayersDto) {
-    const index = this.meilisearch.index(PLAYERS_INDEX);
+  async indexNpcs(data: IndexNpcsDto) {
+    const index = this.meilisearch.index(NPCS_INDEX);
 
     try {
-      return index.addDocuments(data.players, { primaryKey: "id" });
+      return index.addDocuments(data.npcs, { primaryKey: "id" });
     } catch (error) {
-      console.error("Error indexing players:", error);
+      console.error("Error indexing npcs:", error);
       return;
     }
   }

@@ -78,11 +78,13 @@ export const Timers = () => {
         <div className="ll-pt-2">
           <div className="ll-flex ll-flex-col ll-gap-1">
             <ScrollArea
-              className="ll-max-h-72 ll-py-1 ll-flex ll-items-center ll-flex-col ll-gap-1"
+              className="ll-max-h-72 ll-py-1 ll-flex ll-items-center ll-justify-center ll-flex-col"
               type="scroll"
             >
               {sorted?.length === 0 && (
-                <div className="ll-text-white">----</div>
+                <div className="ll-text-white ll-w-full ll-flex ll-justify-center">
+                  ----
+                </div>
               )}
               {sorted?.map((timer) => {
                 return (

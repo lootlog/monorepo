@@ -9,6 +9,11 @@ export type WidgetButtonOptions = {
   keyName?: string;
 };
 
+export type SIWidgetButtonOptions = {
+  callback: () => void;
+  tooltip: string;
+};
+
 export const createWidgetButton = ({
   callback,
   tooltip,
@@ -52,4 +57,22 @@ export const createWidgetButton = ({
         }`;
     document.head.appendChild(iconStyle);
   }
+};
+
+export const createSIWidgetButton = ({
+  callback,
+  tooltip,
+}: SIWidgetButtonOptions) => {
+  const container = document.querySelector("#panel");
+  if (!container) return;
+
+  const button = document.createElement("div");
+  button.onclick = callback;
+
+  button.classList.add("b_buttons");
+  button.style.left = "164px";
+  button.style.top = "512px";
+  button.setAttribute("tip", tooltip);
+
+  container.appendChild(button);
 };

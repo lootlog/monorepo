@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-export type GetPlayersDto = {
+export type GetNpcsDto = {
   limit: number;
   search?: string | string[];
 };
 
-export const getPlayersQuerySchema = z.object({
+export const getNpcsQuerySchema = z.object({
   limit: z.string().optional().default("10").transform(Number),
   search: z
     .string()

@@ -5,6 +5,7 @@
   "ac": "Pancerz <value>{{value}}</value>",
   "act": "Odporność na truciznę <value>{{value}}%</value>",
   "blok": "Blok <value>+{{value}}</value>",
+  "runes": "Dodaje <value>+{{value}}</value> Smoczych Run",
   "dmg": "Obrażenia fizyczne <value>{{value}}</value>",
   "light": "Obrażenia od błyskawic <value>{{value}}</value>",
   "wound": "Głęboka rana, <value>{{value1}}%</value> szans na <value>+{{value2}}</value> obrażeń",
