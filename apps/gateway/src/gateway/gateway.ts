@@ -22,8 +22,8 @@ import { AuthConfig } from 'src/config/auth.config';
 type Socket = SocketIOSocket & { user: any };
 
 @WebSocketGateway({
-  namespace: 'gateway',
-  path: '/socket.io',
+  // namespace: 'gateway',
+  // path: '/socket.io',
   pingInterval: 25000,
   pingTimeout: 60000,
 })
