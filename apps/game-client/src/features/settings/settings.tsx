@@ -11,10 +11,6 @@ export const Settings = () => {
   } = useWindowsStore();
   const { data: characterList } = useCharacterList();
 
-  console.log(open);
-
-  console.log("characterList", characterList);
-
   return (
     open && (
       <DraggableWindow
