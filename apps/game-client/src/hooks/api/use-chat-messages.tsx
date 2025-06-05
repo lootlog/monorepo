@@ -17,13 +17,13 @@ export type GetChatMessagesOptions = {
 export const QUERY_KEY = "guild-messages";
 
 export const useChatMessages = ({ guildId }: GetChatMessagesOptions) => {
-  const { client, hasToken } = useAuthenticatedApiClient();
+  const { client } = useAuthenticatedApiClient();
 
   const query = useQuery({
     queryKey: [QUERY_KEY, guildId],
     queryFn: () =>
       client.get<ChatMessage[]>(`${API_URL}/guilds/${guildId}/chat-messages`),
-    enabled: !!hasToken && !!guildId,
+    enabled: !!guildId,
     select: (response) => response.data,
   });
 

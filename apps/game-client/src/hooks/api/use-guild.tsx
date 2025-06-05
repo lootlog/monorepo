@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { useAuthToken } from "../auth/use-auth-token";
 import { API_URL } from "@/config/api";
+import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type Guild = {
   id: string;
@@ -16,15 +15,12 @@ type UseGuildOptions = {
 };
 
 export const useGuild = ({ guildId, retry = true }: UseGuildOptions) => {
-  const token = useAuthToken();
+  const { client } = useAuthenticatedApiClient();
 
   const query = useQuery({
     queryKey: ["guilds", guildId],
-    queryFn: () =>
-      axios.get<Guild>(`${API_URL}/guilds/${guildId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-    enabled: !!token && !!guildId,
+    queryFn: () => client.get<Guild>(`${API_URL}/guilds/${guildId}`),
+    enabled: !!guildId,
     select: (response) => response.data,
     retry,
   });

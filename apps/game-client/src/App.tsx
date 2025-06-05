@@ -8,15 +8,19 @@ import {
   createWidgetButton,
 } from "@/utils/game/create-widget-button";
 import { Chat } from "@/features/chat/chat";
+import { useGlobalStore } from "@/store/global.store";
+import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 
 function App() {
   useGameEventsParser();
-  const { initialized } = useGlobalContext();
+  useInitialConfiguration();
+
+  const { gameInitialized, gameInterface } = useGlobalStore();
+
   const {
     lootlogWindowOpen,
     setLootlogWindowOpen,
     setChatWindowOpen,
-    gameInterface,
     chatWindowOpen,
   } = useGlobalContext();
   const [isWidgetLoaded, setisWidgetLoaded] = useState(false);
@@ -38,7 +42,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isWidgetLoaded && gameInterface) {
+    if (!isWidgetLoaded && gameInterface && gameInitialized) {
       setisWidgetLoaded(true);
 
       if (gameInterface === "ni") {
@@ -69,10 +73,10 @@ function App() {
         });
       }
     }
-  }, [gameInterface, isWidgetLoaded]);
+  }, [gameInterface, isWidgetLoaded, gameInitialized]);
 
   return (
-    initialized && (
+    gameInitialized && (
       <>
         <Timers />
         <Settings />

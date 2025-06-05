@@ -1,6 +1,6 @@
-import { useGlobalContext } from "@/contexts/global-context";
 import { useCreateLoot } from "@/hooks/api/use-create-loot";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
+import { useGlobalStore } from "@/store/global.store";
 import { W } from "@/types/margonem/game-events/f";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
 import { HeroD } from "@/types/margonem/hero";
@@ -13,7 +13,7 @@ import { getLoot } from "@/utils/game/get-loots";
 import { useEffect, useRef, useState } from "react";
 
 export const useGameEventsParser = () => {
-  const { initialized, gameInterface } = useGlobalContext();
+  const { gameInitialized, gameInterface } = useGlobalStore();
   const [gameEventsParserInitialized, setGameEventsParserInitialized] =
     useState(false);
   const pendingBattle = useRef<W | null>(null);
@@ -306,12 +306,12 @@ export const useGameEventsParser = () => {
   };
 
   useEffect(() => {
-    if (!initialized || gameEventsParserInitialized) return;
+    if (!gameInitialized || gameEventsParserInitialized) return;
 
     setupGameEventsHandler();
 
     return () => {
       removeGameEventsHandler();
     };
-  }, [initialized]);
+  }, [gameInitialized]);
 };

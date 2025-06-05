@@ -1,7 +1,7 @@
-import { useGlobalContext } from "@/contexts/global-context";
+import { useGlobalStore } from "@/store/global.store";
 
 export const getLootCreator = () => {
-  const { gameInterface } = useGlobalContext();
+  const { gameInterface } = useGlobalStore();
   const { id, lvl, account, prof, img, nick } =
     gameInterface === "ni" ? window.Engine.hero.d : window.hero.d;
 
