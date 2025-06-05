@@ -1,4 +1,5 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { useGlobalStore } from "@/store/global.store";
 import { useQuery } from "@tanstack/react-query";
 
 const MARGONEM_CHARTACTER_LIST_URL =
@@ -18,11 +19,12 @@ export type MargonemCharacter = {
 };
 
 export const useCharacterList = () => {
+  const { world } = useGlobalStore((state) => state.gameState);
   const { client } = useApiClient();
   const hs3 = window.getCookie("hs3");
 
   const query = useQuery({
-    queryKey: ["characters"],
+    queryKey: ["characters", world],
     queryFn: async () =>
       client.get<MargonemCharacter[]>(
         `${MARGONEM_CHARTACTER_LIST_URL}?hs3=${hs3}`,
@@ -31,7 +33,11 @@ export const useCharacterList = () => {
         }
       ),
     select: (response) =>
-      response.data.filter((char) => char.world === "arkantes"),
+      response.data
+        .filter((char) => char.world === world)
+        .sort((a, b) => {
+          return b.lvl - a.lvl; // Sort by level descending
+        }),
   });
 
   return query;
