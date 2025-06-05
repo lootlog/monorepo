@@ -61,12 +61,18 @@
   "bag": "Mieści <value>{{value}}</value> przedmiotów",
   "opis": "<description>{{value}}</description",
   "permbound": "Związany z właścicielem na stałe",
+  "respred": "Przyśpiesza wracanie do siebie o <value>{{value}}%</value>",
   "legbon": {
     "curse": "<legbon>Klątwa: podczas udanego ataku 9% szans na aktywację klątwy, która zablokuje najbliższą wykonywaną przez przeciwnika akcję.</legbon>",
     "lastheal": "<legbon>Ostatni ratunek: kiedy po otrzymanym ataku zostanie graczowi mniej niż 18% życia, zostaje jednorazowo znacznie uleczony.</legbon>",
-    "dmgred": "Fizyczna osłona: przyjmowane obrażenia fizyczne zmniejszone o 16%.",
-    "verycrit": "<legbon>Cios bardzo krytyczny: 13% szansy na podwojenie mocy ciosu krytycznego.</legbon>",
-    "holytouch": "<legbon>Dotyk anioła: podczas ataku 7% szansy na leczenie ran w ciągu trzech najbliższych tur.</legbon>",
+    "facade": "Fasada opieki: przyjmowane ciosy są o 13% słabsze.",
+    "verycrit": "<legbon>Cios bardzo krytyczny: 17% szansy na zwiększenie mocy ciosu krytycznego o 75%.</legbon>",
+    "holytouch": "<legbon>Dotyk anioła: podczas ataku 7% szansy na regenerację po 6% życia przez trzy najbliższe tury.</legbon>",
+    "glare": "<legbon>Oślepienie: podczas przyjmowania ataku 9% szansy na oślepienie przeciwnika i zablokowanie jego najbliższej akcji.</legbon>",
+    "critred": "<legbon>Krytyczna osłona: przyjmowane ciosy krytyczne są o 25% słabsze.</legbon>",
+    "cleanse": "<legbon>Płomienne oczyszczenie: podczas otrzymywania celnego ataku 12% szans na usunięcie z postaci efektów obezwładnienia, spowolnienia i obrażeń warunkowych.</legbon>",
+    "anguish": "<legbon>Krwawa udręka: trafiony atak ma 8% szansy na wywołanie u przeciwnika krwawienia na pięć tur.</legbon>",
+    "puncture": "<legbon>Przeszywająca skuteczność: cel ataku ma obniżone o 12% zdolności defensywne.</legbon>",
     "not-supported": "Nieznany bonus legendarny"
   },
   "rarity": {
@@ -76,6 +82,7 @@
     "upgraded": "Ulepszony",
     "legendary": "Legendarny"
   },
+  "abdest": "Niszczenie <value>{{value}}</value> absorpcji przed atakiem",
   "rkeydesc": "Otwiera: <value>{{value}}</value>",
   "slow": "Obniża szybkość ataku przeciwnika o <value>{{value}}</value>",
   "soulbound": "Związany z właścicielem",
