@@ -57,7 +57,7 @@ http:
     search:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:4005"
+        - url: "http://host.docker.internal:4002"
     api:
       loadBalancer:
         servers:

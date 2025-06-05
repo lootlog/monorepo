@@ -14,11 +14,23 @@ export class TimersController {
   constructor(private readonly timersService: TimersService) {}
 
   @Get('/timers')
-  async getTimers(
+  async getTimersMerged(
     @Query('world') world: string,
     @DiscordId() discordId: string,
   ) {
-    return this.timersService.getTimers(discordId, world);
+    return this.timersService.getTimersMerged(discordId, {
+      world,
+    });
+  }
+
+  @Permissions(Permission.LOOTLOG_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/timers')
+  async getTimers(@Query('world') world: string, @GuildData() guild: Guild) {
+    return this.timersService.getTimers({
+      world,
+      guildId: guild.id,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_WRITE)

@@ -22,8 +22,6 @@ import { RuntimeEnvironment } from 'src/types/common.types';
 
 type Socket = SocketIOSocket & { user: any };
 
-console.log(process.env.ENV);
-
 @WebSocketGateway({
   namespace:
     process.env.ENV === RuntimeEnvironment.LOCAL ? '/gateway' : undefined,
