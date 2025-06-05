@@ -53,6 +53,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "evade":
       case "gold":
       case "heal":
+      case "abdest":
       case "hp":
       case "hpbon":
       case "lowcrit":
@@ -63,8 +64,11 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "pierceb":
       case "resdmg":
       case "sa":
+      case "nodesc":
+      case "respred":
       case "slow":
       case "runes":
+      case "bag":
       case "wound":
         acc.baseStatsBlock.push(displayValue);
         return acc;
