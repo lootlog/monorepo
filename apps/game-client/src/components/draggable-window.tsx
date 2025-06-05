@@ -5,7 +5,7 @@ import {
   WindowId,
   WindowOpacity,
 } from "@/store/windows.store";
-import { FC, useRef } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 
 export type DraggableWindowProps = {
   children: React.ReactNode;
