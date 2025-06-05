@@ -13,7 +13,9 @@ import { getLoot } from "@/utils/game/get-loots";
 import { useEffect, useRef, useState } from "react";
 
 export const useGameEventsParser = () => {
-  const { gameInitialized, gameInterface } = useGlobalStore();
+  const { gameInitialized, gameInterface } = useGlobalStore(
+    (state) => state.gameState
+  );
   const [gameEventsParserInitialized, setGameEventsParserInitialized] =
     useState(false);
   const pendingBattle = useRef<W | null>(null);

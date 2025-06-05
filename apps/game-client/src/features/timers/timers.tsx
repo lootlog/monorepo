@@ -1,11 +1,11 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useGlobalContext } from "@/contexts/global-context";
 import { SingleTimer } from "@/features/timers/components/single-timer";
 import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { PlusIcon } from "lucide-react";
@@ -13,12 +13,11 @@ import { useEffect } from "react";
 
 export const Timers = () => {
   const {
-    lootlogWindowOpen,
-    setLootlogWindowOpen,
-    selectedGuild,
-    setSettingsWindowOpen,
-  } = useGlobalContext();
-  const { world } = useGlobalStore();
+    timers: { open },
+    setOpen,
+  } = useWindowsStore();
+
+  const { world } = useGlobalStore((state) => state.gameState);
 
   const queryClient = useQueryClient();
   const { data: timers } = useTimers({ world });
@@ -60,7 +59,7 @@ export const Timers = () => {
   }, [connected]);
 
   return (
-    lootlogWindowOpen && (
+    open && (
       <DraggableWindow
         id="timers"
         title="Lootlog"
@@ -68,10 +67,10 @@ export const Timers = () => {
           <div
             className="ll-settings-button ll-custom-cursor-pointer"
             key="settings"
-            onClick={() => setSettingsWindowOpen(true)}
+            onClick={() => setOpen("settings", true)}
           />,
         ]}
-        onClose={() => setLootlogWindowOpen(false)}
+        onClose={() => setOpen("timers", false)}
       >
         <div className="ll-pt-2">
           <div className="ll-flex ll-flex-col ll-gap-1">
@@ -85,13 +84,7 @@ export const Timers = () => {
                 </div>
               )}
               {sorted?.map((timer) => {
-                return (
-                  <SingleTimer
-                    key={timer.npc.id}
-                    timer={timer}
-                    guildId={selectedGuild}
-                  />
-                );
+                return <SingleTimer key={timer.npc.id} timer={timer} />;
               })}
             </ScrollArea>
             <TimerTile>

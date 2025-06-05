@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGlobalContext } from "@/contexts/global-context";
 import {
   ChatMessage,
   QUERY_KEY,
@@ -20,14 +19,19 @@ import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
-import { FormEvent, useEffect, useState, useRef } from "react";
+import { FormEvent, useEffect, useState, useRef, useLayoutEffect } from "react";
 import { Viewport } from "@radix-ui/react-scroll-area";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "react-use";
+import { useWindowsStore } from "@/store/windows.store";
+import { GatewayEvent } from "@/config/gateway";
 
 export const Chat = () => {
-  const { chatWindowOpen, setChatWindowOpen } = useGlobalContext();
+  const {
+    chat: { open },
+    setOpen,
+  } = useWindowsStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     `chat-selected-guild`,
     ""
@@ -42,7 +46,9 @@ export const Chat = () => {
   const { socket, connected } = useGateway();
   const scrollAreaRef = useRef<React.ElementRef<typeof Viewport>>(null);
   const selectedGuildIdRef = useRef<string>("");
-  const initialRef = useRef(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  selectedGuildIdRef.current = selectedGuildId ?? "";
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -57,12 +63,10 @@ export const Chat = () => {
   };
 
   useEffect(() => {
-    if (socket.hasListeners("chat-message") || !connected) return;
+    if (socket.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
 
-    socket.on("chat-message", (data: ChatMessage) => {
+    socket.on(GatewayEvent.CHAT_MESSAGE, (data: ChatMessage) => {
       if (!selectedGuildIdRef.current) return;
-
-      console.log("Received chat message:", data.guildId, selectedGuildId);
 
       queryClient.setQueryData(
         [QUERY_KEY, selectedGuildIdRef.current],
@@ -77,36 +81,16 @@ export const Chat = () => {
     });
   }, [connected, selectedGuildId]);
 
-  selectedGuildIdRef.current = selectedGuildId ?? "";
-
-  useEffect(() => {
-    if (
-      selectedGuildId &&
-      messages &&
-      scrollAreaRef.current &&
-      chatWindowOpen
-    ) {
-      if (initialRef.current) {
-        initialRef.current = false;
-        scrollAreaRef.current.scrollTop =
-          scrollAreaRef.current.scrollHeight + 2000;
-
-        return;
-      }
-
-      scrollAreaRef.current?.scrollTo({
-        top: scrollAreaRef.current.scrollHeight + 2000,
-        behavior: "smooth",
-      });
-    }
-  }, [selectedGuildId, messages, chatWindowOpen]);
+  useLayoutEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+  }, [messages, open]);
 
   return (
-    chatWindowOpen && (
+    open && (
       <DraggableWindow
         id="chat"
         title="Chat"
-        onClose={() => setChatWindowOpen(false)}
+        onClose={() => setOpen("chat", false)}
       >
         <div className="ll-pt-2 ll-w-full">
           <Select value={selectedGuildId} onValueChange={setSelectedGuildId}>
@@ -157,6 +141,7 @@ export const Chat = () => {
                   </div>
                 );
               })}
+              <div ref={messagesEndRef} />
             </ScrollArea>
           </div>
           <form

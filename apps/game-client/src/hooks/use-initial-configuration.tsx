@@ -5,7 +5,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { useEffect } from "react";
 
 export const useInitialConfiguration = () => {
-  const { setGameInitialized, setGameInterface, setWorld } = useGlobalStore();
+  const { setGameState } = useGlobalStore();
 
   const init = async () => {
     const started = typeof window._g == "function";
@@ -24,9 +24,11 @@ export const useInitialConfiguration = () => {
 
     const world = getWorldName(interfaceName);
 
-    setWorld(world);
-    setGameInterface(interfaceName);
-    setGameInitialized(true);
+    setGameState({
+      gameInitialized: true,
+      gameInterface: interfaceName,
+      world: world,
+    });
   };
 
   useEffect(() => {
