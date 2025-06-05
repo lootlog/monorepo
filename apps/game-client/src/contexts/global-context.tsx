@@ -1,8 +1,8 @@
+import { useGlobalStore } from "@/store/global.store";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useLocalStorage } from "react-use";
 
 export type GlobalContextType = {
-  initialized: boolean;
   gameInterface: "si" | "ni" | undefined;
   lootlogWindowOpen: boolean | undefined;
   setLootlogWindowOpen: (open: boolean | undefined) => void;
@@ -23,7 +23,8 @@ export const GlobalContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [initialized, setInitialized] = useState(false);
+  const { gameInitialized, setGameInitialized } = useGlobalStore();
+
   const [gameInterface, setGameInterface] = useState<"si" | "ni" | undefined>(
     undefined
   );
@@ -38,36 +39,8 @@ export const GlobalContextProvider = ({
   );
   const [chatWindowOpen, setChatWindowOpen] = useLocalStorage(`chat`, true);
 
-  const init = async () => {
-    const started = typeof window._g == "function";
-    if (!started) {
-      setTimeout(init, 500);
-      return;
-    }
-
-    const isNI = typeof window.Engine == "object";
-    setGameInterface(isNI ? "ni" : "si");
-
-    const initialized = isNI
-      ? window.Engine?.interface?.alreadyInitialised ||
-        window.Engine?.interface?.getAlreadyInitialised?.()
-      : window.g?.init === 5;
-
-    if (!initialized) {
-      setTimeout(init, 500);
-      return;
-    }
-
-    setInitialized(true);
-  };
-
-  useEffect(() => {
-    init();
-  }, []);
-
   const value: GlobalContextType = {
     gameInterface,
-    initialized,
     lootlogWindowOpen,
     setLootlogWindowOpen,
     settingsWindowOpen,

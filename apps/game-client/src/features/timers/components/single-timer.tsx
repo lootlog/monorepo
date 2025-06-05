@@ -1,6 +1,7 @@
 import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
+import { useGlobalStore } from "@/store/global.store";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { format } from "date-fns";
 import { FC, useEffect, useState } from "react";
@@ -40,10 +41,12 @@ const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
 const ZERO_SHOW_THRESHOLD = 15000;
 
 export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
+  const { world } = useGlobalStore();
+
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
 
-  const { refetch } = useTimers();
+  const { refetch } = useTimers({ world });
   const [timeLeft, setTimeLeft] = useState(maxSpawnTime - Date.now());
 
   useEffect(() => {
@@ -68,21 +71,20 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
 
   useEffect(() => {
     // @ts-ignore
-    $(`#${timer.npc.id}`).tip(
-      `<span className="elite_timer_tip_name">
-         <b>${timer.npc.name}</b>
+    $(`#${timer.npc.id}`).tip(`
+      <span class="elite_timer_tip_name">
+      <b>${timer.npc.name}</b>
       </span>
       <i>${NPC_NAMES[timer.npc.type].longname}</i>
       <br />
-        <span className="elite_timer_tip_date">
-       Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
-        </span>
-        <br />
-              <span className="elite_timer_tip_date">
-       Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
-        </span>
-      `
-    );
+      <span class="elite_timer_tip_date">
+      Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+      </span>
+      <br />
+      <span class="elite_timer_tip_date">
+      Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+      </span>
+    `);
   }, []);
 
   return (

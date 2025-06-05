@@ -5,6 +5,7 @@ import { SingleTimer } from "@/features/timers/components/single-timer";
 import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
+import { useGlobalStore } from "@/store/global.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { PlusIcon } from "lucide-react";
@@ -12,20 +13,16 @@ import { useEffect } from "react";
 
 export const Timers = () => {
   const {
-    gameInterface,
     lootlogWindowOpen,
     setLootlogWindowOpen,
     selectedGuild,
     setSettingsWindowOpen,
   } = useGlobalContext();
+  const { world } = useGlobalStore();
 
   const queryClient = useQueryClient();
-  const { data: timers } = useTimers();
+  const { data: timers } = useTimers({ world });
 
-  const world =
-    gameInterface === "ni"
-      ? window.Engine?.worldConfig?.getWorldName()
-      : window.g?.worldConfig?.getWorldName();
   const { socket, connected } = useGateway();
 
   const sorted = timers?.sort((a, b) => {

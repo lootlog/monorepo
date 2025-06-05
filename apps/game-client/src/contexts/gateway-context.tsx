@@ -10,8 +10,8 @@ import { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { useAuthToken } from "@/hooks/auth/use-auth-token";
 import { useGuilds } from "@/hooks/api/use-guilds";
-import { useGlobalContext } from "@/contexts/global-context";
 import { socket } from "@/lib/gateway-client";
+import { useGlobalStore } from "@/store/global.store";
 
 export type GatewayProviderValue = {
   connected: boolean;
@@ -24,7 +24,7 @@ type Props = {
 
 export const GatewayProvider: React.FC<Props> = (props) => {
   const { data: token } = useAuthToken();
-  const { initialized } = useGlobalContext();
+  const { gameInitialized } = useGlobalStore();
   const { data: guilds } = useGuilds();
 
   const [connected, setConnected] = useState(false);
@@ -46,17 +46,17 @@ export const GatewayProvider: React.FC<Props> = (props) => {
       guildIds,
     });
     setConnected(true);
-  }, [token, guildIds, initialized]);
+  }, [token, guildIds, gameInitialized]);
 
   useEffect(() => {
     console.log("Connected to gateway: ", connected);
   }, [connected]);
 
   useEffect(() => {
-    if (initialized && token && !connected && guildIds) {
+    if (gameInitialized && token && !connected && guildIds) {
       setupBaseListeners();
     }
-  }, [initialized, token, connected, guildIds]);
+  }, [gameInitialized, token, connected, guildIds]);
 
   const value: GatewayProviderValue = {
     socket,

@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useGlobalContext } from "@/contexts/global-context";
+import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useGuilds } from "@/hooks/api/use-guilds";
 
 export const Settings = () => {
@@ -17,6 +18,9 @@ export const Settings = () => {
     setSelectedGuild,
   } = useGlobalContext();
   const { data: guilds } = useGuilds();
+  const { data: characterList } = useCharacterList();
+
+  console.log("characterList", characterList);
 
   return (
     settingsWindowOpen && (
