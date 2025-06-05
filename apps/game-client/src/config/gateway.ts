@@ -12,4 +12,7 @@ export enum GatewayEvent {
 
   //rooms
   JOIN = "join",
+
+  // chat
+  CHAT_MESSAGE = "chat-message",
 }

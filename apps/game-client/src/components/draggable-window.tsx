@@ -1,19 +1,22 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDrag } from "@/hooks/ui/useDrag";
 import { cn } from "@/lib/utils";
-import { FC, useEffect, useRef } from "react";
-import { useLocalStorage } from "react-use";
+import {
+  useWindowsStore,
+  WindowId,
+  WindowOpacity,
+} from "@/store/windows.store";
+import { FC, useRef } from "react";
 
 export type DraggableWindowProps = {
   children: React.ReactNode;
-  id: string;
+  id: WindowId;
   actions?: React.ReactNode;
   title: string;
   onClose?: () => void;
+  variant?: "default" | "small";
 };
 
-const DEFAULT_OPACITY_LVL = 4;
-const OPACITY_LEVELS = [1, 2, 3, 4];
+const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4];
 
 export const DraggableWindow: FC<DraggableWindowProps> = ({
   children,
@@ -21,33 +24,25 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   actions,
   title,
   onClose,
+  variant = "small",
 }) => {
-  const [opacityLvl, setOpacityLvl] = useLocalStorage(
-    `draggable-window-opacity-${id}`,
-    DEFAULT_OPACITY_LVL
-  );
-  const [localStoragePosition, setLocalStoragePosition] = useLocalStorage(
-    `draggable-window-${id}`,
-    {
-      x: 0,
-      y: 0,
-    }
-  );
+  const state = useWindowsStore();
+  const opacity = state[id].opacity;
+  const defaultPosition = state[id].position;
+
   const draggableRef = useRef(null);
   const { position, handleMouseDown } = useDrag({
     ref: draggableRef,
-    defaultState: localStoragePosition,
+    defaultState: defaultPosition,
     onDragStop: (position) => {
-      setLocalStoragePosition(position);
+      state.setPosition(id, position);
     },
   });
 
   const handleOpacityChange = () => {
-    const currentIndex = OPACITY_LEVELS.indexOf(
-      opacityLvl ?? DEFAULT_OPACITY_LVL
-    );
+    const currentIndex = OPACITY_LEVELS.indexOf(opacity);
     const nextIndex = (currentIndex + 1) % OPACITY_LEVELS.length;
-    setOpacityLvl(OPACITY_LEVELS[nextIndex]);
+    state.setOpacity(id, OPACITY_LEVELS[nextIndex]);
   };
 
   return (
@@ -65,12 +60,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     >
       <div
         className={cn(
-          "ll-w-[242px]  ll-rounded-lg ll-border-solid ll-border ll-border-white/50 ll-p-1 !ll-relative ll-box-border ll-text-white",
+          "ll-w-[242px] ll-rounded-lg ll-border-solid ll-border ll-border-white/50 ll-p-1 !ll-relative ll-box-border ll-text-white",
           {
-            "ll-bg-black/0": opacityLvl === 1,
-            "ll-bg-black/25": opacityLvl === 2,
-            "ll-bg-black/50": opacityLvl === 3,
-            "ll-bg-black/75": opacityLvl === 4,
+            "ll-bg-black/0": opacity === 1,
+            "ll-bg-black/25": opacity === 2,
+            "ll-bg-black/50": opacity === 3,
+            "ll-bg-black/75": opacity === 4,
+            "ll-w-[400px]": variant === "default",
           }
         )}
       >

@@ -1,8 +1,7 @@
 import { Timers } from "@/features/timers/timers";
 import { Settings } from "@/features/settings/settings";
 import { useGameEventsParser } from "@/hooks/use-game-events-parser";
-import { useGlobalContext } from "./contexts/global-context";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createSIWidgetButton,
   createWidgetButton,
@@ -10,36 +9,17 @@ import {
 import { Chat } from "@/features/chat/chat";
 import { useGlobalStore } from "@/store/global.store";
 import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
+import { useWindowsStore } from "@/store/windows.store";
 
 function App() {
   useGameEventsParser();
   useInitialConfiguration();
 
-  const { gameInitialized, gameInterface } = useGlobalStore();
-
-  const {
-    lootlogWindowOpen,
-    setLootlogWindowOpen,
-    setChatWindowOpen,
-    chatWindowOpen,
-  } = useGlobalContext();
+  const { gameInitialized, gameInterface } = useGlobalStore(
+    (state) => state.gameState
+  );
+  const { toggleOpen } = useWindowsStore();
   const [isWidgetLoaded, setisWidgetLoaded] = useState(false);
-
-  const lootlogWindowOpenRef = useRef(lootlogWindowOpen);
-  lootlogWindowOpenRef.current = lootlogWindowOpen;
-
-  const chatWindowOpenRef = useRef(chatWindowOpen);
-  chatWindowOpenRef.current = chatWindowOpen;
-
-  const handleLootlogWindowToggle = useCallback(() => {
-    setLootlogWindowOpen(!lootlogWindowOpenRef.current);
-    lootlogWindowOpenRef.current = !lootlogWindowOpenRef.current;
-  }, []);
-
-  const handleChatWindowToggle = useCallback(() => {
-    setChatWindowOpen(!chatWindowOpenRef.current);
-    chatWindowOpenRef.current = !chatWindowOpenRef.current;
-  }, []);
 
   useEffect(() => {
     if (!isWidgetLoaded && gameInterface && gameInitialized) {
@@ -47,9 +27,9 @@ function App() {
 
       if (gameInterface === "ni") {
         createWidgetButton({
-          id: "lootlog",
+          id: "timers",
           tooltip: "Lootlog",
-          callback: handleLootlogWindowToggle,
+          callback: () => toggleOpen("timers"),
           type: "violet",
         });
 
@@ -57,17 +37,17 @@ function App() {
           id: "lootlog-chat chat",
           tooltip: "Lootlog Chat",
           type: "violet",
-          callback: handleChatWindowToggle,
+          callback: () => toggleOpen("chat"),
           keyName: "chat",
         });
       } else {
         createSIWidgetButton({
-          callback: handleLootlogWindowToggle,
+          callback: () => toggleOpen("timers"),
           tooltip: "Lootlog",
         });
 
         createSIWidgetButton({
-          callback: handleChatWindowToggle,
+          callback: () => toggleOpen("chat"),
           tooltip: "Lootlog chat",
           left: 88,
         });

@@ -2,20 +2,68 @@ import { create } from "zustand";
 
 export type GameInterface = "si" | "ni" | undefined;
 
-interface GlobalState {
+interface GameState {
   gameInitialized: boolean;
-  setGameInitialized: (initialized: boolean) => void;
   gameInterface: "si" | "ni" | undefined;
-  setGameInterface: (interfaceType: GameInterface) => void;
   world: string | undefined;
-  setWorld: (world: string) => void;
+}
+
+interface WindowPositionState {
+  x: number;
+  y: number;
+}
+
+interface WindowSizeState {
+  width: number;
+  height: number;
+}
+
+interface WindowsState {
+  settings: {
+    open: boolean;
+    position: WindowPositionState;
+    size: WindowSizeState;
+  };
+  timers: {
+    open: boolean;
+    position: WindowPositionState;
+    size: WindowSizeState;
+  };
+  chat: {
+    open: boolean;
+    position: WindowPositionState;
+    size: WindowSizeState;
+  };
+}
+
+interface GlobalState {
+  gameState: GameState;
+  setGameState: (game: GameState) => void;
+  windows: WindowsState;
 }
 
 export const useGlobalStore = create<GlobalState>((set) => ({
-  gameInitialized: false,
-  setGameInitialized: (initialized) => set({ gameInitialized: initialized }),
-  gameInterface: undefined,
-  setGameInterface: (interfaceType) => set({ gameInterface: interfaceType }),
-  world: undefined,
-  setWorld: (world) => set({ world }),
+  gameState: {
+    gameInitialized: false,
+    gameInterface: undefined,
+    world: undefined,
+  },
+  windows: {
+    settings: {
+      open: false,
+      position: { x: 0, y: 0 },
+      size: { width: 400, height: 300 },
+    },
+    timers: {
+      open: false,
+      position: { x: 0, y: 0 },
+      size: { width: 400, height: 300 },
+    },
+    chat: {
+      open: false,
+      position: { x: 0, y: 0 },
+      size: { width: 400, height: 300 },
+    },
+  },
+  setGameState: (gameState) => set({ gameState }),
 }));

@@ -1,4 +1,3 @@
-import { useGlobalStore } from "@/store/global.store";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useLocalStorage } from "react-use";
 
@@ -23,8 +22,6 @@ export const GlobalContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { gameInitialized, setGameInitialized } = useGlobalStore();
-
   const [gameInterface, setGameInterface] = useState<"si" | "ni" | undefined>(
     undefined
   );

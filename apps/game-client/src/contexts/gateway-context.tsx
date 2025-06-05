@@ -24,7 +24,7 @@ type Props = {
 
 export const GatewayProvider: React.FC<Props> = (props) => {
   const { data: token } = useAuthToken();
-  const { gameInitialized } = useGlobalStore();
+  const { gameInitialized } = useGlobalStore((state) => state.gameState);
   const { data: guilds } = useGuilds();
 
   const [connected, setConnected] = useState(false);

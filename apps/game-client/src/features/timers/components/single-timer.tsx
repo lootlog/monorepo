@@ -41,7 +41,7 @@ const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
 const ZERO_SHOW_THRESHOLD = 15000;
 
 export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
-  const { world } = useGlobalStore();
+  const { world } = useGlobalStore((state) => state.gameState);
 
   const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
