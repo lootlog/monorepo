@@ -28,7 +28,21 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 }) => {
   const state = useWindowsStore();
   const opacity = state[id].opacity;
-  const defaultPosition = state[id].position;
+  const rawDefaultPosition = state[id].position;
+
+  const getClampedPosition = (pos: { x: number; y: number }) => {
+    if (typeof window === "undefined") return pos;
+    const width = variant === "default" ? 400 : 242;
+    const height = 400; // Adjust if you know the window's height
+    const maxX = window.innerWidth - width;
+    const maxY = window.innerHeight - height;
+    return {
+      x: Math.max(0, Math.min(pos.x, maxX)),
+      y: Math.max(0, Math.min(pos.y, maxY)),
+    };
+  };
+
+  const defaultPosition = getClampedPosition(rawDefaultPosition);
 
   const draggableRef = useRef(null);
   const { position, handleMouseDown } = useDrag({

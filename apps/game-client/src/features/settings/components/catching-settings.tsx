@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { CatchingSettingsForm } from "@/features/settings/components/catching-settings-form";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useGuilds } from "@/hooks/api/use-guilds";
 
@@ -38,37 +40,7 @@ export const CatchingSettings = () => {
             value={`${character.id}`}
             className="ll-py-2"
           >
-            <div className="ll-grid ll-grid-cols-2">
-              <div>
-                <h4 className="ll-mb-2">Łapanie timerów</h4>
-                <div className="ll-flex ll-flex-col ll-gap-1">
-                  {guilds?.map((guild) => {
-                    return (
-                      <div key={guild.id} className="ll-flex ll-gap-2">
-                        <Checkbox /> <p>{guild.name}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <h4 className="ll-mb-2">Łapanie lootu</h4>
-                <div className="ll-flex ll-flex-col ll-gap-1">
-                  {guilds?.map((guild) => {
-                    return (
-                      <div key={guild.id} className="ll-flex ll-gap-2">
-                        <Checkbox /> <p>{guild.name}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-            <div className="ll-w-full ll-flex ll-justify-center ll-mt-4">
-              <Button className="ll-h-1 ll-text-[12px] ll-border ll-border-gray-400 ll-bg-gray-400/30 hover:ll-bg-gray-400/50 ll-rounded-sm">
-                Zapisz
-              </Button>
-            </div>
+            <CatchingSettingsForm />
           </TabsContent>
         ))}
       </Tabs>
