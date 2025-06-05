@@ -60,7 +60,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
           <div className="w-8">
             <img
               className={"relative cursor-pointer rounded-lg max-h-10 max-w-8"}
-              src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}/${timer.npc.icon}`}
+              src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${timer.npc.icon}`}
               alt={timer.npc.name}
             />
           </div>
