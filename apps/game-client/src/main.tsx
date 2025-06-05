@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { GlobalContextProvider } from "./contexts/global-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GatewayProvider } from "@/contexts/gateway-context";
@@ -22,11 +21,9 @@ ReactDOM.createRoot(
   <React.StrictMode>
     <ThemeProvider defaultTheme="dark-theme" storageKey="lootlog-theme">
       <QueryClientProvider client={queryClient}>
-        <GlobalContextProvider>
-          <GatewayProvider>
-            <App />
-          </GatewayProvider>
-        </GlobalContextProvider>
+        <GatewayProvider>
+          <App />
+        </GatewayProvider>
       </QueryClientProvider>
     </ThemeProvider>
   </React.StrictMode>
