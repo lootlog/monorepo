@@ -21,7 +21,7 @@ export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
   return {
     level: 'info',
     format: winston.format.json(),
-    defaultMeta: { service: `${ENV}-${HOSTNAME ?? 'hostname'}` },
+    defaultMeta: { service: `${ENV}-api-service-${HOSTNAME}` },
     transports,
   };
 });

@@ -27,8 +27,6 @@ export class PlayersService {
       query.filter = `name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
     }
 
-    console.log(searchTerm, query);
-
     try {
       const data = await index.search(searchTerm as string, query);
 
