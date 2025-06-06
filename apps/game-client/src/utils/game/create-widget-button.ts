@@ -12,7 +12,8 @@ export type WidgetButtonOptions = {
 export type SIWidgetButtonOptions = {
   callback: () => void;
   tooltip: string;
-  left?: number;
+  letter: string;
+  right?: number;
   top?: number;
 };
 
@@ -64,19 +65,25 @@ export const createWidgetButton = ({
 export const createSIWidgetButton = ({
   callback,
   tooltip,
-  top = 512,
-  left = 164,
+  top = 0,
+  right = 0,
+  letter = "L",
 }: SIWidgetButtonOptions) => {
-  const container = document.querySelector("#panel");
+  const container = document.querySelector("#bground");
   if (!container) return;
 
   const button = document.createElement("div");
   button.onclick = callback;
 
-  button.classList.add("b_buttons");
-  button.style.left = `${left}px`;
+  button.style.left = `${right}px`;
+  button.style.position = "absolute";
   button.style.top = `${top}px`;
+  button.style.zIndex = "500";
   button.setAttribute("tip", tooltip);
+  button.className =
+    "ll-custom-cursor-pointer ll-h-[24px] ll-w-[24px] ll-bg-gray-600/50 ll-border-solid ll-border ll-border-gray-300/50 ll-flex ll-items-center ll-justify-center ll-font-sans ll-text-sm";
+
+  button.innerHTML = letter;
 
   container.appendChild(button);
 };

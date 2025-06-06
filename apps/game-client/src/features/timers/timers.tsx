@@ -63,15 +63,13 @@ export const Timers = () => {
       <DraggableWindow
         id="timers"
         title="Lootlog"
-        actions={
-          [
-            // <div
-            //   className="ll-settings-button ll-custom-cursor-pointer"
-            //   key="settings"
-            //   onClick={() => setOpen("settings", true)}
-            // />,
-          ]
-        }
+        actions={[
+          <div
+            className="ll-settings-button ll-custom-cursor-pointer"
+            key="settings"
+            onClick={() => setOpen("settings", true)}
+          />,
+        ]}
         onClose={() => setOpen("timers", false)}
       >
         <div className="ll-pt-2">

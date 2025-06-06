@@ -52,11 +52,19 @@ function App() {
         createSIWidgetButton({
           callback: () => toggleOpen("timers"),
           tooltip: "Lootlog",
+          letter: "L",
         });
         createSIWidgetButton({
           callback: () => toggleOpen("chat"),
           tooltip: "Lootlog chat",
-          left: 88,
+          top: 30,
+          letter: "C",
+        });
+        createSIWidgetButton({
+          callback: () => toggleOpen("settings"),
+          tooltip: "Ustawienia lootloga",
+          top: 60,
+          letter: "U",
         });
       }
     }
