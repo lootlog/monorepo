@@ -114,13 +114,13 @@ export const Timers = () => {
         onClose={() => setOpen("timers", false)}
         minHeight={120}
       >
-        <div
+        <span
           ref={containerRef}
-          className="ll-h-full ll-flex ll-flex-1 ll-flex-col"
+          className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1"
         >
           <ScrollArea className="ll-h-full ll-py-1" type="scroll">
             <span
-              className="ll-grid ll-gap-1"
+              className="ll-grid ll-gap-0.5 ll-box-border"
               style={{
                 gridTemplateColumns: `repeat(${columns}, 1fr)`,
               }}
@@ -138,7 +138,7 @@ export const Timers = () => {
           <TimerTile>
             <PlusIcon color="white" height={16} width={16} />
           </TimerTile>
-        </div>
+        </span>
       </DraggableWindow>
     )
   );
