@@ -40,6 +40,14 @@ function App() {
           callback: () => toggleOpen("chat"),
           keyName: "chat",
         });
+
+        createWidgetButton({
+          id: "lootlog-settings config",
+          tooltip: "Ustawienia lootloga",
+          type: "violet",
+          callback: () => toggleOpen("settings"),
+          keyName: "settings",
+        });
       } else {
         createSIWidgetButton({
           callback: () => toggleOpen("timers"),
