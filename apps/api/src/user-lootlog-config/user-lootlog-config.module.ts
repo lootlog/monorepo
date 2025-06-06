@@ -8,5 +8,6 @@ import { UsersModule } from 'src/users/users.module';
   controllers: [UserLootlogConfigController],
   providers: [UserLootlogConfigService, PrismaService],
   imports: [UsersModule],
+  exports: [UserLootlogConfigService],
 })
 export class UserLootlogConfigModule {}

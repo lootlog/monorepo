@@ -150,4 +150,12 @@ export class CreateLootDto {
   @IsNotEmpty()
   @IsString()
   location: string;
+
+  @IsNotEmpty()
+  @IsString()
+  accountId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  characterId: string;
 }

@@ -6,8 +6,8 @@ interface GameState {
   gameInitialized: boolean;
   gameInterface: "si" | "ni" | undefined;
   world: string | undefined;
-  accountId: number | undefined;
-  characterId?: number | undefined; // Optional, as it may not be set initially
+  accountId: string | undefined;
+  characterId?: string | undefined; // Optional, as it may not be set initially
 }
 interface GlobalState {
   gameState: GameState;

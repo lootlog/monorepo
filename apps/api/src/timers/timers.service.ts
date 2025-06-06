@@ -12,6 +12,7 @@ import { RoutingKey } from 'src/timers/enum/routing-key.enum';
 import { omit } from 'lodash';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GetTimersDto } from 'src/timers/dto/get-timers.dto';
+import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 
 @Injectable()
 export class TimersService {
@@ -19,10 +20,22 @@ export class TimersService {
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
+    private readonly userLootlogConfigService: UserLootlogConfigService,
   ) {}
 
   async createTimer(discordId: string, guildId: string, data: CreateTimerDto) {
     const now = new Date();
+    const config =
+      await this.userLootlogConfigService.getLootlogCharacterConfig(
+        discordId,
+        data.accountId,
+        data.characterId,
+      );
+
+    if (config?.addTimersBlacklistGuildIds?.includes(guildId)) {
+      return { message: ErrorKey.BLACKLISTED_GUILD };
+    }
+
     if (data.npc.wt < 19)
       throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
 

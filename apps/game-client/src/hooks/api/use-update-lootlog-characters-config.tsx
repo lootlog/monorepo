@@ -26,6 +26,7 @@ export const useUpdateLootlogCharactersConfig = () => {
       queryClient.invalidateQueries({
         queryKey: ["lootlog-characters-config"],
       });
+      window.message("Zaktualizowano konfigurację postaci w Lootlogu");
     },
     onError: () => {
       console.log("onError");
