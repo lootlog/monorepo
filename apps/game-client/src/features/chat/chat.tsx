@@ -97,16 +97,20 @@ export const Chat = () => {
       >
         <div className="ll-pt-2 ll-w-full">
           <Select value={selectedGuildId} onValueChange={setSelectedGuildId}>
-            <SelectTrigger className="w-[180px] ll-text-white ll-text-xs ll-border-white ll-rounded-sm ll-h-4 ll-my-1">
+            <SelectTrigger className="w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2">
               <SelectValue
                 placeholder="Wybierz kanał..."
                 className="ll-h-4 ll-text-sm ll-text-white"
               />
             </SelectTrigger>
-            <SelectContent style={{ zIndex: 99999 }} className="ll-font-sans">
+            <SelectContent className="ll-font-sans ll-z-[500] ll-w-[232px] ll-py-1">
               {guilds?.map((guild) => {
                 return (
-                  <SelectItem key={guild.id} value={guild.id}>
+                  <SelectItem
+                    key={guild.id}
+                    value={guild.id}
+                    className="ll-text-xs ll-font-semibold ll-w-[222px] ll-h-5"
+                  >
                     {guild.name}
                   </SelectItem>
                 );
