@@ -26,6 +26,8 @@ interface WindowsState {
   settings: WindowData;
   timers: WindowData;
   chat: WindowData;
+  currentWindowFocus?: WindowId;
+  setCurrentWindowFocus: (key: WindowId) => void;
   setOpen: (window: WindowId, open: boolean) => void;
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
   setSize: (window: WindowId, size: WindowSizeState) => void;
@@ -59,7 +61,9 @@ export const useWindowsStore = create<WindowsState>()(
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
       },
-
+      currentWindowFocus: undefined,
+      setCurrentWindowFocus: (key: WindowId) =>
+        set({ currentWindowFocus: key }),
       setOpen: (key: WindowId, open) =>
         set((state) => ({ [key]: { ...state[key], open } })),
       setPosition: (key: WindowId, pos) =>
