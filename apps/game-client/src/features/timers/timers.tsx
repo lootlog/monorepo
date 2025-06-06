@@ -112,7 +112,7 @@ export const Timers = () => {
           />,
         ]}
         onClose={() => setOpen("timers", false)}
-        minHeight={120}
+        minHeight={108}
       >
         <span
           ref={containerRef}
