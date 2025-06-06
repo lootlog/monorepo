@@ -79,7 +79,7 @@ body.si > #lootlog-root {
 }
 
 #lootlog-root {
-  z-index: 9999;
+  z-index: 500;
 }
 
 #lootlog-root > * {

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
-import { CreateUserLootlogConfigDto } from 'src/user-lootlog-config/dto/create-user-lootlog-config.dto';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -11,34 +10,8 @@ export class UserLootlogConfigService {
     private readonly usersService: UsersService,
   ) {}
 
-  async getUserLootlogConfig(userId: string) {
-    return [];
-  }
-
-  // async getUserLootlogConfigByPlayerId(userId: string, playerId: string) {
-  //   const userGuilds = await this.usersService.getUserGuilds(userId);
-
-  //   const configurations = await this.prisma.playerLootlogConfig.findMany({
-  //     where: {
-  //       playerId,
-  //       guildId: {
-  //         in: userGuilds.map(({ id }) => id),
-  //       },
-  //     },
-  //   });
-
-  //   return configurations;
-  // }
-
-  async createUserLootlogConfig(
-    userId: string,
-    data: CreateUserLootlogConfigDto,
-  ) {
-    return [];
-  }
-
-  async getLootlogCharacterConfig(discordId: string, accountId: string) {
-    const charactersConfig =
+  async getLootlogAccountConfig(discordId: string, accountId: string) {
+    const accountConfig =
       await this.prisma.userCharactersLootlogSettings.findMany({
         where: {
           userId: discordId,
@@ -49,13 +22,33 @@ export class UserLootlogConfigService {
         },
       });
 
-    return charactersConfig.reduce((acc, config) => {
+    return accountConfig.reduce((acc, config) => {
       const { characterId } = config;
       return {
         ...acc,
         [characterId]: config,
       };
     }, {});
+  }
+
+  async getLootlogCharacterConfig(
+    discordId: string,
+    accountId: string,
+    characterId: string,
+  ) {
+    const characterConfig =
+      await this.prisma.userCharactersLootlogSettings.findFirst({
+        where: {
+          userId: discordId,
+          accountId,
+          characterId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+    return characterConfig;
   }
 
   async createOrUpdateLootlogCharacterConfig(
@@ -65,9 +58,11 @@ export class UserLootlogConfigService {
   ) {
     const config = await this.prisma.userCharactersLootlogSettings.upsert({
       where: {
-        userId: discordId,
-        accountId,
-        characterId: data.characterId,
+        userId_accountId_characterId: {
+          userId: discordId,
+          accountId,
+          characterId: data.characterId,
+        },
       },
       update: {
         collectLootBlaclistGuildIds: data.lootGuildIds,

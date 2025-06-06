@@ -23,4 +23,12 @@ export class CreateTimerDto {
   @ValidateNested()
   @Type(() => NpcDto)
   npc: NpcDto;
+
+  @IsNotEmpty()
+  @IsString()
+  characterId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  accountId: string;
 }

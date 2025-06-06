@@ -23,6 +23,8 @@ export type UseCreateLootOptions = {
   players: PartyMember[];
   loots: Partial<Item>[];
   world: string;
+  accountId: string;
+  characterId: string;
 };
 
 export const useCreateLoot = () => {

@@ -11,5 +11,6 @@ declare global {
     ogSuccessData: ((event: string) => void) | null;
     successData: (event: string) => void;
     getCookie: (name: string) => string | null;
+    message: (text: string) => void;
   }
 }

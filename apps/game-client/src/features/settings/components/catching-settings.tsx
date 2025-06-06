@@ -1,15 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { CatchingSettingsForm } from "@/features/settings/components/catching-settings-form";
+import { CharacterTile } from "@/features/settings/components/character-tile";
 import { useCharacterList } from "@/hooks/api/use-character-list";
-import { useGuilds } from "@/hooks/api/use-guilds";
+
+import { useGlobalStore } from "@/store/global.store";
 
 export const CatchingSettings = () => {
   const { data: characterList } = useCharacterList();
-  const { data: guilds } = useGuilds();
+  const { characterId } = useGlobalStore((state) => state.gameState);
 
   return (
     <div className="ll-flex ll-flex-col ll-gap-1 ll-pt-2">
@@ -19,18 +17,11 @@ export const CatchingSettings = () => {
         każdej z postaci.
       </p>
       <label className="ll-mt-1 ll-font-semibold">Wybierz postać:</label>
-      <Tabs defaultValue={`${characterList?.[0].id}`} className="w-full">
+      <Tabs defaultValue={characterId} className="w-full">
         <TabsList>
           {characterList?.map((character) => (
             <TabsTrigger key={character.id} value={`${character.id}`}>
-              <div
-                className={
-                  "ll-w-[32px] ll-h-[48px] ll-relative ll-cursor-pointer ll-rounded-lg"
-                }
-                style={{
-                  backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${character.icon})`,
-                }}
-              />
+              <CharacterTile character={character} />
             </TabsTrigger>
           ))}
         </TabsList>

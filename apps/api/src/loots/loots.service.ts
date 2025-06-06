@@ -26,6 +26,7 @@ import {
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { GuildsService } from 'src/guilds/guilds.service';
+import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 
 @Injectable()
 export class LootsService {
@@ -35,6 +36,7 @@ export class LootsService {
     private readonly guildsService: GuildsService,
     private readonly prisma: PrismaService,
     private readonly lootlogConfigService: LootlogConfigService,
+    private readonly userLootlogConfigService: UserLootlogConfigService,
   ) {}
 
   async createLoot(discordId: string, body: CreateLootDto) {
@@ -50,17 +52,39 @@ export class LootsService {
       throw new ForbiddenException();
     }
 
-    const guildIds = guilds.map(({ id }) => id);
-    const lootlogConfigs =
-      await this.lootlogConfigService.getMultipleLootlogConfigs(guildIds);
-    const members = await this.prisma.member.findMany({
-      where: {
-        guildId: {
-          in: guildIds,
-        },
-        userId: discordId,
+    const config =
+      await this.userLootlogConfigService.getLootlogCharacterConfig(
+        discordId,
+        body.accountId,
+        body.characterId,
+      );
+
+    const { filteredGuildIds, filteredGuilds } = guilds.reduce(
+      (acc, guild) => {
+        const isOnBlacklist = config?.collectLootBlaclistGuildIds?.includes(
+          guild.id,
+        );
+        if (!isOnBlacklist) {
+          acc.filteredGuilds.push(guild);
+          acc.filteredGuildIds.push(guild.id);
+        }
+
+        return acc;
       },
-    });
+      { filteredGuilds: [], filteredGuildIds: [] },
+    );
+
+    const [lootlogConfigs, members] = await Promise.all([
+      this.lootlogConfigService.getMultipleLootlogConfigs(filteredGuildIds),
+      this.prisma.member.findMany({
+        where: {
+          guildId: {
+            in: filteredGuildIds,
+          },
+          userId: discordId,
+        },
+      }),
+    ]);
 
     const highestWtNpc = body.npcs.reduce((prev, current) => {
       return prev && prev.wt > current.wt ? prev : current;
@@ -76,7 +100,7 @@ export class LootsService {
     const npcs = this.mapNpcs(sortedNpcsByWt);
     const players = this.mapPlayers(body.players);
 
-    const data = guilds.reduce((acc, guild) => {
+    const data = filteredGuilds.reduce((acc, guild) => {
       const config = lootlogConfigs.find((config) => config.id === guild.id);
       const calculatedLoot = this.getLootForGivenConfig(
         body.loots,

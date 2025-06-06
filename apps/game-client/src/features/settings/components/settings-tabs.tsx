@@ -10,7 +10,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
       <Tabs defaultValue="general" className="w-full">
         <TabsList>
           <TabsTrigger value="general">Ogólne</TabsTrigger>
-          <TabsTrigger value="catching">Łapanie</TabsTrigger>
+          <TabsTrigger value="catching">Zbieranie lootu i timerów</TabsTrigger>
         </TabsList>
         <TabsContent value="general">Ogólne ustawienia dodatku</TabsContent>
         <TabsContent value="catching">

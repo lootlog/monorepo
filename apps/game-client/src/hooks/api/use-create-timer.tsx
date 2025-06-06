@@ -5,6 +5,8 @@ import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 export type UseCreateTimerOptions = {
   respawnRandomness?: number;
   respBaseSeconds: number;
+  characterId: string;
+  accountId: string;
   npc: {
     id: number;
     name: string;

@@ -13,9 +13,8 @@ import { getLoot } from "@/utils/game/get-loots";
 import { useEffect, useRef, useState } from "react";
 
 export const useGameEventsParser = () => {
-  const { gameInitialized, gameInterface } = useGlobalStore(
-    (state) => state.gameState
-  );
+  const { gameInitialized, gameInterface, characterId, accountId, world } =
+    useGlobalStore((state) => state.gameState);
   const [gameEventsParserInitialized, setGameEventsParserInitialized] =
     useState(false);
   const pendingBattle = useRef<W | null>(null);
@@ -76,6 +75,8 @@ export const useGameEventsParser = () => {
   };
 
   const handleEvent = (event: GameEvent) => {
+    if (!world || !characterId || !accountId) return;
+
     const keys = Object.keys(event);
 
     if (keys.length <= 2) return;
@@ -109,14 +110,14 @@ export const useGameEventsParser = () => {
         );
 
         const payload = {
-          world: isNewInterface
-            ? window.Engine?.worldConfig?.getWorldName()
-            : window.g?.worldConfig?.getWorldName(),
+          world,
           source: event.loot.source.toUpperCase(),
           location: isNewInterface ? window.Engine.map.d.name : window.map.name,
           npcs,
           loots,
           players: party,
+          accountId,
+          characterId,
         };
 
         createLoot(payload);
@@ -180,9 +181,7 @@ export const useGameEventsParser = () => {
           ];
 
           const payload = {
-            world: isNewInterface
-              ? window.Engine?.worldConfig?.getWorldName()
-              : window.g?.worldConfig?.getWorldName(),
+            world,
             source: event.loot.source.toUpperCase(),
             location: isNewInterface
               ? window.Engine.map.d.name
@@ -190,6 +189,8 @@ export const useGameEventsParser = () => {
             loots,
             npcs,
             players,
+            accountId,
+            characterId,
           };
 
           createLoot(payload);
@@ -228,9 +229,7 @@ export const useGameEventsParser = () => {
           ];
 
           const payload = {
-            world: isNewInterface
-              ? window.Engine?.worldConfig?.getWorldName()
-              : window.g?.worldConfig?.getWorldName(),
+            world,
             source: event.loot.source.toUpperCase(),
             location: isNewInterface
               ? window.Engine.map.d.name
@@ -252,6 +251,8 @@ export const useGameEventsParser = () => {
               },
             ],
             players,
+            accountId,
+            characterId,
           };
 
           createLoot(payload);
@@ -284,9 +285,9 @@ export const useGameEventsParser = () => {
         const payload = {
           respawnRandomness,
           respBaseSeconds: npc.respBaseSeconds,
-          world: isNewInterface
-            ? window.Engine?.worldConfig?.getWorldName()
-            : window.g?.worldConfig?.getWorldName(),
+          world,
+          characterId,
+          accountId,
           npc: {
             icon: npcData.icon,
             id: npcData.id,
