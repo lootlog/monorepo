@@ -95,7 +95,7 @@ export const Chat = () => {
         onClose={() => setOpen("chat", false)}
       >
         <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
-          <div className="ll-flex-shrink-0 ll-pt-2 ll-px-1">
+          <div className="ll-flex-shrink-0 ll-pt-2">
             <Select value={selectedGuildId} onValueChange={setSelectedGuildId}>
               <SelectTrigger className="w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2">
                 <SelectValue
@@ -118,9 +118,9 @@ export const Chat = () => {
               </SelectContent>
             </Select>
           </div>
-          <div id="pizda" className="ll-flex-1 ll-px-1 ll-overflow-hidden">
+          <div className="ll-flex-1 ll-overflow-hidden">
             <ScrollArea
-              className="ll-h-full ll-w-full ll-box-border ll-pr-4"
+              className="ll-h-full ll-w-full ll-box-border"
               ref={scrollAreaRef}
               type="auto"
             >
@@ -159,7 +159,7 @@ export const Chat = () => {
               </div>
             </ScrollArea>
           </div>
-          <div className="ll-flex-shrink-0 ll-pt-2 ll-px-1 ll-pb-2">
+          <div className="ll-flex-shrink-0 ll-pt-2 ll-pb-1">
             <form
               onSubmit={handleSubmit}
               className="ll-flex ll-items-center ll-justify-center"
