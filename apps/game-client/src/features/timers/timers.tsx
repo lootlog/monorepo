@@ -5,6 +5,7 @@ import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
+import { useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
@@ -16,6 +17,9 @@ export const Timers = () => {
     timers: { open },
     setOpen,
   } = useWindowsStore();
+  const { addHiddenTimer, addPinnedTimer, hiddenTimers, pinnedTimers } =
+    useTimersStore();
+  const { characterId, accountId } = useGlobalStore((state) => state.gameState);
 
   const { world } = useGlobalStore((state) => state.gameState);
 
@@ -25,9 +29,23 @@ export const Timers = () => {
   const { socket, connected } = useGateway();
 
   const sorted = timers?.sort((a, b) => {
+    const key = `${accountId}${characterId}`;
+    const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
+    const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
+
+    if (isPinnedA && !isPinnedB) return -1;
+    if (!isPinnedA && isPinnedB) return 1;
+
     return (
       new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
     );
+  });
+
+  const filtered = sorted?.filter((timer) => {
+    const key = `${accountId}${characterId}`;
+    const isHidden = hiddenTimers[key]?.includes?.(timer.npc.name);
+
+    return !isHidden;
   });
 
   useEffect(() => {
@@ -78,12 +96,12 @@ export const Timers = () => {
               className="ll-max-h-72 ll-py-1 ll-flex ll-items-center ll-justify-center ll-flex-col"
               type="scroll"
             >
-              {sorted?.length === 0 && (
+              {filtered?.length === 0 && (
                 <div className="ll-text-white ll-w-full ll-flex ll-justify-center">
                   ----
                 </div>
               )}
-              {sorted?.map((timer) => {
+              {filtered?.map((timer) => {
                 return <SingleTimer key={timer.npc.id} timer={timer} />;
               })}
             </ScrollArea>
