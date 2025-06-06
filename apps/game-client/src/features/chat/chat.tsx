@@ -83,7 +83,7 @@ export const Chat = () => {
 
   useLayoutEffect(() => {
     scrollAreaRef.current?.scrollTo({
-      top: scrollAreaRef.current.scrollHeight,
+      top: scrollAreaRef.current.scrollHeight + 2000,
       behavior: "instant",
     });
   }, [messages, open]);
