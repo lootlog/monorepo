@@ -55,10 +55,10 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="ll-grid ll-grid-cols-2">
+      <div className="ll-grid ll-grid-cols-2 ll-gap-2">
         <div>
           <h4 className="ll-mb-2">Nie łap timerów na:</h4>
-          <ScrollArea className="ll-flex ll-flex-col ll-h-24" type="always">
+          <ScrollArea className="ll-flex ll-flex-col ll-h-24" type="auto">
             {guilds?.map((guild) => {
               const id = `${guild.id}-timers`;
 
@@ -82,7 +82,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
         </div>
         <div>
           <h4 className="ll-mb-2">Nie łap lootu na:</h4>
-          <ScrollArea className="ll-flex ll-flex-col ll-h-24" type="always">
+          <ScrollArea className="ll-flex ll-flex-col ll-h-24" type="auto">
             {guilds?.map((guild) => {
               const id = `${guild.id}-loots`;
 
