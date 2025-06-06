@@ -11,7 +11,6 @@ import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { format } from "date-fns";
-import { XIcon } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 
 type SingleTimerProps = {
@@ -50,7 +49,7 @@ const ZERO_SHOW_THRESHOLD = 15000;
 export const COLORS = {
   red: { bg: "ll-bg-red-500", border: "ll-border-red-500" },
   green: { bg: "ll-bg-green-500", border: "ll-border-green-500" },
-  blue: { bg: "ll-bg-blue-500", border: "ll-border-blue-500" },
+  blue: { bg: "ll-bg-indigo-800", border: "ll-border-indigo-800" },
   yellow: { bg: "ll-bg-yellow-500", border: "ll-border-yellow-500" },
   purple: { bg: "ll-bg-purple-500", border: "ll-border-purple-500" },
   orange: { bg: "ll-bg-orange-500", border: "ll-border-orange-500" },
