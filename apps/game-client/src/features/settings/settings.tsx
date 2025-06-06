@@ -1,7 +1,6 @@
 import { DraggableWindow } from "@/components/draggable-window";
 
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
-import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useWindowsStore } from "@/store/windows.store";
 
 export const Settings = () => {
@@ -9,7 +8,6 @@ export const Settings = () => {
     settings: { open },
     setOpen,
   } = useWindowsStore();
-  const { data: characterList } = useCharacterList();
 
   return (
     open && (
@@ -18,6 +16,8 @@ export const Settings = () => {
         title="Ustawienia"
         onClose={() => setOpen("settings", false)}
         variant="default"
+        minHeight={440}
+        minWidth={420}
       >
         <SettingsTabs />
       </DraggableWindow>

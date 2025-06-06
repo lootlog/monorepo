@@ -14,6 +14,11 @@ export type DraggableWindowProps = {
   title: string;
   onClose?: () => void;
   variant?: "default" | "small";
+  resizable?: boolean;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
 };
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4];
@@ -25,17 +30,27 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   title,
   onClose,
   variant = "small",
+  resizable = true,
+  minWidth = 242,
+  minHeight = 240,
+  maxWidth,
+  maxHeight,
 }) => {
   const state = useWindowsStore();
   const opacity = state[id].opacity;
   const rawDefaultPosition = state[id].position;
+  const defaulSize = state[id].size;
+
+  const [size, setSize] = useState({
+    width: defaulSize.width || 300,
+    height: defaulSize.height || 200,
+  });
+  const [isResizing, setIsResizing] = useState(false);
 
   const getClampedPosition = (pos: { x: number; y: number }) => {
     if (typeof window === "undefined") return pos;
-    const width = variant === "default" ? 400 : 242;
-    const height = 400; // Adjust if you know the window's height
-    const maxX = window.innerWidth - width;
-    const maxY = window.innerHeight - height;
+    const maxX = window.innerWidth - size.width;
+    const maxY = window.innerHeight - size.height;
     return {
       x: Math.max(0, Math.min(pos.x, maxX)),
       y: Math.max(0, Math.min(pos.y, maxY)),
@@ -51,7 +66,49 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     onDragStop: (position) => {
       state.setPosition(id, position);
     },
+    // disabled: isResizing,
   });
+
+  const handleResize = (e: React.MouseEvent) => {
+    if (!resizable) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = size.width;
+    const startHeight = size.height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(
+        minWidth,
+        Math.min(
+          maxWidth || window.innerWidth,
+          startWidth + (e.clientX - startX)
+        )
+      );
+      const newHeight = Math.max(
+        minHeight,
+        Math.min(
+          maxHeight || window.innerHeight,
+          startHeight + (e.clientY - startY)
+        )
+      );
+
+      setSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
 
   const handleOpacityChange = () => {
     const currentIndex = OPACITY_LEVELS.indexOf(opacity);
@@ -68,6 +125,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
   };
 
+  useEffect(() => {
+    if (isResizing) return;
+    state.setSize(id, { height: size.height, width: size.width });
+  }, [size.height, size.width, isResizing]);
+
   return (
     <div
       className="ll-pointer-events-auto ll-absolute"
@@ -75,6 +137,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       style={{
         top: position.y,
         left: position.x,
+        width: size.width,
+        height: size.height,
         zIndex: state.currentWindowFocus === id ? 1 : 0,
       }}
       onMouseDown={onMouseDown}
@@ -83,17 +147,16 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     >
       <div
         className={cn(
-          "ll-w-[242px] ll-rounded-lg ll-border-solid ll-border ll-border-white/50 ll-p-1 !ll-relative ll-box-border ll-text-white",
+          "ll-w-full ll-h-full ll-rounded-lg ll-border-solid ll-border ll-border-white/50 ll-p-1 !ll-relative ll-box-border ll-text-white ll-flex ll-flex-col",
           {
             "ll-bg-black/0": opacity === 1,
             "ll-bg-black/25": opacity === 2,
             "ll-bg-black/50": opacity === 3,
             "ll-bg-black/75": opacity === 4,
-            "ll-w-[400px]": variant === "default",
           }
         )}
       >
-        <div className="ll-flex ll-items-center ll-justify-between ll-px-1">
+        <div className="ll-flex ll-items-center ll-justify-between ll-px-1 ll-flex-shrink-0">
           <div className="ll-flex ll-items-center ll-gap-1">
             <div
               className="ll-opacity-button ll-custom-cursor-pointer ll-mt-0.5"
@@ -110,7 +173,17 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             onClick={onClose}
           />
         </div>
-        {children}
+        <div className="ll-flex-1 ll-overflow-auto">{children}</div>
+        {resizable && (
+          <div
+            className="ll-absolute ll-bottom-0 ll-right-0 ll-w-4 ll-h-4 ll-cursor-se-resize ll-bg-transparent"
+            onMouseDown={handleResize}
+            style={{
+              background:
+                "linear-gradient(-45deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
+            }}
+          />
+        )}
       </div>
     </div>
   );
