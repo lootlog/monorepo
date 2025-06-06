@@ -111,9 +111,6 @@ export const useDrag = ({
   };
 
   const handleMouseDown = (evt: ReactMouseEvent<HTMLElement>) => {
-    evt.preventDefault();
-    evt.stopPropagation();
-
     if (!(evt.target instanceof HTMLElement)) return;
     if (evt.target.getAttribute("data-state") === "visible") return;
 
