@@ -22,24 +22,24 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
   };
 
   return (
-    <ScrollArea className="ll-h-48 ll-w-full" type="auto">
+    <ScrollArea className="ll-h-full ll-w-full" type="auto">
       {hiddenTimersForAccount && hiddenTimersForAccount.length > 0 && (
-        <div className="ll-grid ll-grid-cols-2 ll-gap-1">
+        <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full">
           {hiddenTimersForAccount.map((timer) => {
             return (
               <TimerTile key={timer}>
-                <div className="ll-flex ll-justify-between ll-items-center ll-w-full ll-px-1">
+                <span className="ll-flex ll-justify-between ll-items-center ll-w-full ll-px-1 ll-box-border">
                   {timer}
                   <button
                     type="button"
                     className="ll-close-button ll-custom-cursor-pointer ll-mb-0.5"
                     onClick={() => handleRemoveTimer(timer)}
                   />
-                </div>
+                </span>
               </TimerTile>
             );
           })}
-        </div>
+        </span>
       )}
       {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0
         ? "Brak ukrytych timerów dla wybranej postaci."

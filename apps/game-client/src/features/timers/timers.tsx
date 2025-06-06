@@ -10,15 +10,14 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { PlusIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const Timers = () => {
   const {
     timers: { open },
     setOpen,
   } = useWindowsStore();
-  const { addHiddenTimer, addPinnedTimer, hiddenTimers, pinnedTimers } =
-    useTimersStore();
+  const { hiddenTimers, pinnedTimers } = useTimersStore();
   const { characterId, accountId } = useGlobalStore((state) => state.gameState);
 
   const { world } = useGlobalStore((state) => state.gameState);
@@ -75,6 +74,30 @@ export const Timers = () => {
       );
     });
   }, [connected]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(1);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const width = entry.contentRect.width;
+        const breakpoints = [220, 380, 540, 800];
+
+        const newColumns = breakpoints.reduce((acc, breakpoint) => {
+          return width >= breakpoint ? acc + 1 : acc;
+        }, 0);
+        setColumns(newColumns || 1);
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   return (
     open && (
@@ -89,26 +112,32 @@ export const Timers = () => {
           />,
         ]}
         onClose={() => setOpen("timers", false)}
+        minHeight={120}
       >
-        <div className="ll-pt-2">
-          <div className="ll-flex ll-flex-col">
-            <ScrollArea
-              className="ll-max-h-72 ll-py-1 ll-flex ll-items-center ll-justify-center ll-flex-col"
-              type="scroll"
+        <div
+          ref={containerRef}
+          className="ll-h-full ll-flex ll-flex-1 ll-flex-col"
+        >
+          <ScrollArea className="ll-h-full ll-py-1" type="scroll">
+            <span
+              className="ll-grid ll-gap-1"
+              style={{
+                gridTemplateColumns: `repeat(${columns}, 1fr)`,
+              }}
             >
               {filtered?.length === 0 && (
                 <div className="ll-text-white ll-w-full ll-flex ll-justify-center">
                   ----
                 </div>
               )}
-              {filtered?.map((timer) => {
-                return <SingleTimer key={timer.npc.id} timer={timer} />;
-              })}
-            </ScrollArea>
-            <TimerTile>
-              <PlusIcon color="white" height={16} width={16} />
-            </TimerTile>
-          </div>
+              {filtered?.map((timer) => (
+                <SingleTimer key={timer.npc.id} timer={timer} />
+              ))}
+            </span>
+          </ScrollArea>
+          <TimerTile>
+            <PlusIcon color="white" height={16} width={16} />
+          </TimerTile>
         </div>
       </DraggableWindow>
     )

@@ -15,6 +15,13 @@ const ScrollArea = React.forwardRef<
       className="ll-h-full ll-w-full ll-rounded-[inherit]"
       ref={ref}
     >
+      <style>
+        {`
+        [data-radix-scroll-area-viewport] div {
+            display:block !important;
+        }
+        `}
+      </style>
       {children}
     </ScrollAreaPrimitive.Viewport>
     <ScrollBar />

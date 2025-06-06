@@ -148,9 +148,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof COLORS}
         >
-          <div
+          <span
             className={cn(
-              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1",
+              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border",
               {
                 "ll-text-red-500": hasPassedRedThreshold,
                 "ll-text-orange-400": isMinSpawnTime,
@@ -163,7 +163,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
               [{NPC_NAMES[timer.npc.type].shortname}] {timer.npc.name}
             </div>
             <div>{parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}</div>
-          </div>
+          </span>
         </TimerTile>
       </ContextMenuTrigger>
       <ContextMenuContent className="ll-w-32 ll-flex">
