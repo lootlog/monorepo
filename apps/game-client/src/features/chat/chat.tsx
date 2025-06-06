@@ -117,6 +117,7 @@ export const Chat = () => {
             <ScrollArea
               className="ll-flex ll-flex-col ll-gap-1 ll-min-h-40 ll-max-h-48 ll-w-full"
               ref={scrollAreaRef}
+              type="always"
             >
               {messages?.map((message) => {
                 const guildMember = guildMembers?.[message.senderId];
