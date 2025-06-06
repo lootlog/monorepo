@@ -12,6 +12,7 @@ export const useGuilds = () => {
       client.get<Guild[]>(`${API_URL}/guilds/@me`, { withCredentials: true }),
     select: (response) => response.data,
     enabled: hasToken,
+    refetchOnMount: false,
   });
 
   return query;

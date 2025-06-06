@@ -253,14 +253,15 @@ model LootlogConfig {
 }
 
 model UserCharactersLootlogSettings {
-  userId      String   @id
+  id          Int      @id @default(autoincrement())
+  userId      String
   accountId   String
-  characterId Int
+  characterId String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   collectLootBlaclistGuildIds String[] @default([])
   addTimersBlacklistGuildIds  String[] @default([])
 
-  @@unique([userId, accountId])
+  @@unique([userId, accountId, characterId])
 }

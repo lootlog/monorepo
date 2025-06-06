@@ -21,7 +21,7 @@ export type MargonemCharacter = {
 export const useCharacterList = () => {
   const { world } = useGlobalStore((state) => state.gameState);
   const { client } = useApiClient();
-  const hs3 = window.getCookie("hs3");
+  const hs3 = window.getCookie?.("hs3");
 
   const query = useQuery({
     queryKey: ["characters", world],
@@ -32,6 +32,7 @@ export const useCharacterList = () => {
           withCredentials: true,
         }
       ),
+    enabled: !!hs3,
     select: (response) =>
       response.data
         .filter((char) => char.world === world)

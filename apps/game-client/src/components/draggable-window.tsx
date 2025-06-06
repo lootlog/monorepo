@@ -75,7 +75,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       style={{
         top: position.y,
         left: position.x,
-        zIndex: state.currentWindowFocus === id ? 2 : 1,
+        zIndex: state.currentWindowFocus === id ? 9999 : 9998,
       }}
       onMouseDown={onMouseDown}
       onWheel={(e) => e.stopPropagation()}
