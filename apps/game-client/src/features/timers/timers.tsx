@@ -91,7 +91,7 @@ export const Timers = () => {
         onClose={() => setOpen("timers", false)}
       >
         <div className="ll-pt-2">
-          <div className="ll-flex ll-flex-col ll-gap-1">
+          <div className="ll-flex ll-flex-col">
             <ScrollArea
               className="ll-max-h-72 ll-py-1 ll-flex ll-items-center ll-justify-center ll-flex-col"
               type="scroll"
