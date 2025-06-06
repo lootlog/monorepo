@@ -71,11 +71,13 @@ function App() {
   }, [gameInterface, isWidgetLoaded, gameInitialized]);
 
   return (
-    <>
-      <Timers />
-      <Settings />
-      <Chat />
-    </>
+    gameInitialized && (
+      <>
+        <Timers />
+        <Settings />
+        <Chat />
+      </>
+    )
   );
 }
 
