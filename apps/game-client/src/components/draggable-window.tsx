@@ -59,6 +59,15 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     state.setOpacity(id, OPACITY_LEVELS[nextIndex]);
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    state.setCurrentWindowFocus(id);
+    handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
+  };
+
   return (
     <div
       className="ll-pointer-events-auto ll-absolute"
@@ -66,10 +75,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       style={{
         top: position.y,
         left: position.x,
+        zIndex: state.currentWindowFocus === id ? 2 : 1,
       }}
-      onMouseDown={handleMouseDown}
+      onMouseDown={onMouseDown}
       onWheel={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleClick}
     >
       <div
         className={cn(
