@@ -22,9 +22,9 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
   };
 
   return (
-    <ScrollArea className="ll-h-full ll-w-full" type="auto">
+    <ScrollArea className="ll-h-64 ll-w-full" type="auto">
       {hiddenTimersForAccount && hiddenTimersForAccount.length > 0 && (
-        <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full">
+        <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-pr-4 ll-box-border">
           {hiddenTimersForAccount.map((timer) => {
             return (
               <TimerTile key={timer}>
