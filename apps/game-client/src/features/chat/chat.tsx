@@ -82,7 +82,10 @@ export const Chat = () => {
   }, [connected, selectedGuildId]);
 
   useLayoutEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    scrollAreaRef.current?.scrollTo({
+      top: scrollAreaRef.current.scrollHeight,
+      behavior: "instant",
+    });
   }, [messages, open]);
 
   return (
@@ -141,7 +144,6 @@ export const Chat = () => {
                   </div>
                 );
               })}
-              <div ref={messagesEndRef} />
             </ScrollArea>
           </div>
           <form

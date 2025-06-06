@@ -45,7 +45,6 @@ function App() {
           callback: () => toggleOpen("timers"),
           tooltip: "Lootlog",
         });
-
         createSIWidgetButton({
           callback: () => toggleOpen("chat"),
           tooltip: "Lootlog chat",
@@ -56,13 +55,11 @@ function App() {
   }, [gameInterface, isWidgetLoaded, gameInitialized]);
 
   return (
-    gameInitialized && (
-      <>
-        <Timers />
-        <Settings />
-        <Chat />
-      </>
-    )
+    <>
+      <Timers />
+      <Settings />
+      <Chat />
+    </>
   );
 }
 

@@ -84,7 +84,7 @@ body.si > #lootlog-root {
 }
 
 #lootlog-root {
-  z-index: 300;
+  z-index: 14;
 }
 
 #lootlog-root > * {
