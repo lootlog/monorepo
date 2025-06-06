@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
+import { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
 import { CreateUserLootlogConfigDto } from 'src/user-lootlog-config/dto/create-user-lootlog-config.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 
@@ -23,6 +32,30 @@ export class UserLootlogConfigController {
   ) {
     return this.userLootlogConfigService.createUserLootlogConfig(
       discordId,
+      data,
+    );
+  }
+
+  @Get('/@me/lootlog-config/accounts/:accountId')
+  async getUserLootlogConfigByAccountId(
+    @DiscordId() discordId: string,
+    @Param('accountId') accountId: string,
+  ) {
+    return this.userLootlogConfigService.getLootlogCharacterConfig(
+      discordId,
+      accountId,
+    );
+  }
+
+  @Put('/@me/lootlog-config/accounts/:accountId')
+  async createOrUpdateLootlogCharacterConfig(
+    @DiscordId() discordId: string,
+    @Param('accountId') accountId: string,
+    @Body() data: CreateOrUpdateLootlogCharacterConfigDto,
+  ) {
+    return this.userLootlogConfigService.createOrUpdateLootlogCharacterConfig(
+      discordId,
+      accountId,
       data,
     );
   }

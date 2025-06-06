@@ -65,15 +65,6 @@
   }
 }
 
-@layer base {
-  * {
-    @apply ll-border-border;
-  }
-  body {
-    @apply ll-bg-background ll-text-foreground;
-  }
-}
-
 body {
   background-color: #000;
 }
@@ -88,7 +79,7 @@ body.si > #lootlog-root {
 }
 
 #lootlog-root {
-  z-index: 14;
+  z-index: 9999;
 }
 
 #lootlog-root > * {

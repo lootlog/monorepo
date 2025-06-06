@@ -40,7 +40,7 @@ export const CatchingSettings = () => {
             value={`${character.id}`}
             className="ll-py-2"
           >
-            <CatchingSettingsForm />
+            <CatchingSettingsForm characterId={character.id.toString()} />
           </TabsContent>
         ))}
       </Tabs>
