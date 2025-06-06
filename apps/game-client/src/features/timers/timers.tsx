@@ -97,7 +97,7 @@ export const Timers = () => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [open]);
 
   return (
     open && (
