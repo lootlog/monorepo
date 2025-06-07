@@ -1,0 +1,52 @@
+name: Build and Deploy Lootlog API to dev
+
+on:
+  push:
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/deploy-api.yml"
+    branches:
+      - dev
+
+env:
+  IMAGE_NAME: kamilwronka7/lootlog-api
+  IMAGE_TAG: dev-${{ github.sha }}
+  DOCKER_CONTEXT: ./apps/api
+  KUSTOMIZE_PATH: infra/k8s/dev/api/kustomization.yaml
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Registry
+        env:
+          REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+          REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+          REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+        run: echo "$REGISTRY_PASSWORD" | docker login $REGISTRY_URL -u $REGISTRY_USERNAME --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG $DOCKER_CONTEXT
+          docker push $IMAGE_NAME:$IMAGE_TAG
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Update kustomization.yaml image tag
+        run: |
+          yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i $KUSTOMIZE_PATH
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add $KUSTOMIZE_PATH
+          git commit -m "ci: update service-a image to $IMAGE_TAG"
+          git push
