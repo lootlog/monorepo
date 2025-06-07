@@ -1,0 +1,10 @@
+namespace: dev
+
+resources:
+  - ../../base/api
+
+images:
+  - name: my-registry/api
+    newTag: dev-latest
+
+namePrefix: dev-

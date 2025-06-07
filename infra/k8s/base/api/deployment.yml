@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      serviceAccountName: api
+      containers:
+        - name: api
+          image: lootlog
+          command: ['sh', '-c']
+          args: ['pnpm run start']
+          resources:
+            requests:
+              memory: '384Mi'
+              cpu: '500m'
+            limits:
+              memory: '768Mi'
+              cpu: '500m'
+          ports:
+            - name: container-port
+              containerPort: 4000
+          env:
+            - name: PORT
+              value: '4000'
+            - name: ENV
+              value: dev
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-dev-secret
+                  key: rabbitmqUri
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+          readinessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 20
+            periodSeconds: 20
