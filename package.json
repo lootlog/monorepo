@@ -26,7 +26,8 @@
   "packageManager": "pnpm@9.1.1",
   "pnpm": {
     "overrides": {
-      "discord-api-types": "^0.38.8"
+      "discord-api-types": "^0.38.8",
+      "multer": "^2.0.1"
     }
   },
   "engines": {

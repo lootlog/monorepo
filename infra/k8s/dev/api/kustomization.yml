@@ -1,4 +1,4 @@
-namespace: dev
+namespace: lootlog-dev
 
 resources:
   - ../../base/api
