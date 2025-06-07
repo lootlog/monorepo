@@ -64,7 +64,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: lootlog-api-secrets
-                  key: jwtSecret
+                  key: redisPassword
             - name: REDIS_HOST
               value: redis-master
             - name: REDIS_PORT
