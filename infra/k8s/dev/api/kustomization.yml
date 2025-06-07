@@ -4,7 +4,7 @@ resources:
   - ../../base/api
 
 images:
-  - name: my-registry/api
+  - name: kamilwronka7/lootlog-api
     newTag: dev-latest
 
 namePrefix: dev-
