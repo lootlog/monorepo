@@ -26,9 +26,8 @@ jobs:
       - name: Log in to Docker Registry
         env:
           REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-          REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
           REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
-        run: echo "$REGISTRY_PASSWORD" | docker login $REGISTRY_URL -u $REGISTRY_USERNAME --password-stdin
+        run: echo "$REGISTRY_PASSWORD" | docker login -u $REGISTRY_USERNAME --password-stdin
 
       - name: Build and push Docker image
         run: |
