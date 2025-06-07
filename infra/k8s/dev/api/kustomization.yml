@@ -1,10 +1,7 @@
 namespace: dev
-
 resources:
   - ../../base/api
-
 images:
   - name: kamilwronka7/lootlog-api
-    newTag: dev-latest
-
+    newTag: dev-5e1bd8045fc06665d1ebc8a161168ace4eca21dd
 namePrefix: dev-
