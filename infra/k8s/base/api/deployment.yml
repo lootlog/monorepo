@@ -70,12 +70,12 @@ spec:
             - name: REDIS_PORT
               value: '6379'
 
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 4000
-          readinessProbe:
-            tcpSocket:
-              port: 4000
-            initialDelaySeconds: 50
-            periodSeconds: 20
+          # livenessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: 4000
+          # readinessProbe:
+          #   tcpSocket:
+          #     port: 4000
+          #   initialDelaySeconds: 50
+          #   periodSeconds: 20
