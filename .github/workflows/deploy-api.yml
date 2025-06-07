@@ -8,6 +8,8 @@ on:
     branches:
       - dev
 
+  workflow_dispatch:
+
 env:
   IMAGE_NAME: kamilwronka7/lootlog-api
   IMAGE_TAG: dev-${{ github.sha }}
@@ -31,7 +33,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t $IMAGE_NAME:$IMAGE_TAG $DOCKER_CONTEXT
+          docker build --target api -t $IMAGE_NAME:$IMAGE_TAG $DOCKER_CONTEXT
           docker push $IMAGE_NAME:$IMAGE_TAG
 
       - name: Install yq
