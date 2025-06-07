@@ -12,7 +12,6 @@ on:
 env:
   IMAGE_NAME: kamilwronka7/lootlog-api
   IMAGE_TAG: dev-${{ github.sha }}
-  DOCKER_CONTEXT: .
   KUSTOMIZE_PATH: infra/k8s/dev/api/kustomization.yaml
 
 jobs:
@@ -31,7 +30,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build --target api -t $IMAGE_NAME:$IMAGE_TAG $DOCKER_CONTEXT
+          docker build --target api --build-arg GITHUB_SHA="$GITHUB_SHA" --build-arg GITHUB_REF="$GITHUB_REF" -t $IMAGE_NAME:$IMAGE_TAG .
           docker push $IMAGE_NAME:$IMAGE_TAG
 
       - name: Install yq

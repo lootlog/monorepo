@@ -6,7 +6,7 @@ on:
 env:
   IMAGE_NAME: kamilwronka7/lootlog-api
   IMAGE_TAG: prod-${{ github.sha }}
-  DOCKER_CONTEXT: .
+  DOCKER_CONTEXT: ./
   KUSTOMIZE_PATH: infra/k8s/prod/api/kustomization.yaml
 
 jobs:
