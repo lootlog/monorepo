@@ -20,7 +20,7 @@ spec:
           resources:
             requests:
               memory: '384Mi'
-              cpu: '200m'
+              cpu: '300m'
             limits:
               memory: '512Mi'
               cpu: '400m'
@@ -77,5 +77,5 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 4000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 50
             periodSeconds: 20
