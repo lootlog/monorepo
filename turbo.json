@@ -16,7 +16,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": []
     },
     "build:game-client": {},
     "lint": {
@@ -26,6 +26,7 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
+      "dependsOn": [],
       "cache": false,
       "persistent": true
     },

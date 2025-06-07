@@ -1,4 +1,4 @@
-FROM node:22 AS base
+FROM node:22-alpine3.22 AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -12,14 +12,14 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run api:generate
 RUN pnpm run -r build
 
-RUN pnpm deploy --filter=@lootlog/web --prod /prod/web
+# RUN pnpm deploy --filter=@lootlog/web --prod /prod/web
 RUN pnpm deploy --filter=@lootlog/api /prod/api
-RUN pnpm deploy --filter=@lootlog/auth --prod /prod/auth
-RUN pnpm deploy --filter=@lootlog/search --prod /prod/search
-RUN pnpm deploy --filter=@lootlog/discord-bot /prod/discord-bot
-RUN pnpm deploy --filter=@lootlog/gateway /prod/gateway
+# RUN pnpm deploy --filter=@lootlog/auth --prod /prod/auth
+# RUN pnpm deploy --filter=@lootlog/search --prod /prod/search
+# RUN pnpm deploy --filter=@lootlog/discord-bot /prod/discord-bot
+# RUN pnpm deploy --filter=@lootlog/gateway /prod/gateway
 
-FROM nginx:1.27.4-alpine AS web
+FROM nginx:1.27.3-alpine AS web
 
 COPY --from=build /prod/web/dist /usr/share/nginx/html
 COPY --from=build /prod/web/nginx.conf /etc/nginx/nginx.conf

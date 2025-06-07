@@ -15,15 +15,13 @@ spec:
       containers:
         - name: api
           image: kamilwronka7/lootlog-api:latest
-          command: ['sh', '-c']
-          args: ['pnpm run start']
           resources:
             requests:
-              memory: '384Mi'
-              cpu: '300m'
+              memory: '768Mi'
+              cpu: '500m'
             limits:
-              memory: '512Mi'
-              cpu: '400m'
+              memory: '1024Mi'
+              cpu: '900m'
           ports:
             - name: container-port
               containerPort: 4000
