@@ -12,7 +12,7 @@ on:
 env:
   IMAGE_NAME: kamilwronka7/lootlog-api
   IMAGE_TAG: dev-${{ github.sha }}
-  KUSTOMIZE_PATH: infra/k8s/dev/api/kustomization.yaml
+  KUSTOMIZE_PATH: infra/k8s/dev/api/kustomization.yml
 
 jobs:
   build-and-push:
