@@ -14,7 +14,7 @@ spec:
       serviceAccountName: api
       containers:
         - name: api
-          image: lootlog
+          image: kamilwronka7/lootlog-api:latest
           command: ['sh', '-c']
           args: ['pnpm run start']
           resources:
