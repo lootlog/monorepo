@@ -74,6 +74,7 @@ export const Timers = () => {
       );
     });
   }, [connected]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(1);
 
