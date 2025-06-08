@@ -14,6 +14,7 @@ const configSchema = z.object({
   POSTGRESQL_DATABASE: z.string(),
   DISCORD_CLIENT_ID: z.string(),
   DISCORD_CLIENT_SECRET: z.string(),
+  POSTGRESQL_SSL_CA: z.string().optional(),
 });
 
 const {
@@ -28,6 +29,7 @@ const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
   TRUSTED_ORIGINS,
+  POSTGRESQL_SSL_CA,
 } = configSchema.parse(process.env);
 
 export const APP_CONFIG = {
@@ -42,6 +44,7 @@ export const APP_CONFIG = {
     user: POSTGRESQL_USER,
     password: POSTGRESQL_PASSWORD,
     database: POSTGRESQL_DATABASE,
+    sslCa: POSTGRESQL_SSL_CA || undefined, // Optional SSL CA
   },
   discord: {
     clientId: DISCORD_CLIENT_ID,
