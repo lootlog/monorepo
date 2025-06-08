@@ -1,4 +1,4 @@
-name: Deploy Auth Service to Dev Environment
+name: Deploy Auth to dev
 
 on:
   push:

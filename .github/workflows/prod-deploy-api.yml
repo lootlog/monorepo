@@ -1,4 +1,4 @@
-name: Build and Deploy Lootlog API to prod
+name: Deploy API to prod
 
 on:
   workflow_dispatch:
