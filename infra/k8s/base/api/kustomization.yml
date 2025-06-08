@@ -2,4 +2,3 @@ resources:
   - deployment.yml
   - service.yml
   - service-account.yml
-  - ingress.yml
