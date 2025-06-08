@@ -1,0 +1,7 @@
+namespace: lootlog-prod
+resources:
+  - ../../base/auth
+images:
+  - name: kamilwronka7/lootlog-auth
+    newTag: prod-latest
+namePrefix: prod-
