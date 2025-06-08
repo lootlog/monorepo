@@ -4,6 +4,10 @@ metadata:
   name: api
 
 spec:
+  tls:
+    - hosts:
+        - dev-api.lootlog.pl
+      secretName: cloudflare-origin-cert
   rules:
     - host: dev-api.lootlog.pl
       http:
