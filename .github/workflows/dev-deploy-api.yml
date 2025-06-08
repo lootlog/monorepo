@@ -1,4 +1,4 @@
-name: Build and Deploy Lootlog API to dev
+name: Deploy API to dev
 
 on:
   push:

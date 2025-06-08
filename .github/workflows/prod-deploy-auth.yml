@@ -1,4 +1,4 @@
-name: Deploy Auth service to Production
+name: Deploy Auth to prod
 
 on:
   workflow_dispatch:
