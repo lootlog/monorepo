@@ -17,11 +17,11 @@ spec:
           image: kamilwronka7/lootlog-api:latest
           resources:
             requests:
-              memory: '768Mi'
-              cpu: '1000m'
+              memory: '512Mi'
+              cpu: '500m'
             limits:
-              memory: '1024Mi'
-              cpu: '1000m'
+              memory: '768Mi'
+              cpu: '700m'
           ports:
             - name: container-port
               containerPort: 4000
