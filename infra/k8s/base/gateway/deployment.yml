@@ -48,7 +48,7 @@ spec:
                 secretKeyRef:
                   name: lootlog-gateway-secrets
                   key: authAudience
-            - name: AUTH_JWKS_URI
+            - name: JWKS_URI
               valueFrom:
                 secretKeyRef:
                   name: lootlog-gateway-secrets
