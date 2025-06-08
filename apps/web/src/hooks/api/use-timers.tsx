@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { API_URL } from "config/api";
 import { Npc } from "hooks/api/use-npcs";
 import { GuildMember } from "hooks/api/use-guild-members";
 import { stringify } from "qs";
