@@ -52,7 +52,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: lootlog-auth-secrets
-                  key: postgresqlUser
+                  key: postgresqlUsername
             - name: POSTGRESQL_PASSWORD
               valueFrom:
                 secretKeyRef:
