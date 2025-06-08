@@ -12,8 +12,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     const config = this.configService.get<RedisConfig>(ConfigKey.REDIS);
-    console.log(config);
-
     this.client = new Redis(config);
   }
 
