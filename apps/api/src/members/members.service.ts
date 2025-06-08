@@ -34,7 +34,7 @@ export class MembersService {
   async getGuildMembers(guildId: string) {
     const members = await this.prisma.member.findMany({
       where: { guildId },
-      include: { roles: true, loots: true, guild: true },
+      include: { roles: true },
     });
 
     return members;
