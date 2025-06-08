@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from './permissions.decorator';
 import { GuildsService } from 'src/guilds/guilds.service';
-import { Permission } from '@prisma/client';
+import { Permission } from 'generated/client';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {

@@ -13,7 +13,7 @@ RUN pnpm run api:generate
 RUN pnpm run -r build
 
 # RUN pnpm deploy --filter=@lootlog/web --prod /prod/web
-RUN pnpm deploy --filter=@lootlog/api /prod/api
+RUN pnpm deploy --filter=@lootlog/api --prod /prod/api
 # RUN pnpm deploy --filter=@lootlog/auth --prod /prod/auth
 # RUN pnpm deploy --filter=@lootlog/search --prod /prod/search
 # RUN pnpm deploy --filter=@lootlog/discord-bot /prod/discord-bot

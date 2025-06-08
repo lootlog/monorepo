@@ -1,4 +1,4 @@
-import { MemberType } from '@prisma/client';
+import { MemberType } from 'generated/client';
 
 export class AddMemberDto {
   id: string;

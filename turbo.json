@@ -14,7 +14,7 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "api:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": []
     },

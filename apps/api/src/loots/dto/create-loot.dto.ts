@@ -1,4 +1,4 @@
-import { LootSource } from '@prisma/client';
+import { LootSource } from 'generated/client';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,

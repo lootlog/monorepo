@@ -1,4 +1,4 @@
-import { NpcType } from '@prisma/client';
+import { NpcType } from 'generated/client';
 
 export const getNpcTypeByWt = (
   wt: number,
