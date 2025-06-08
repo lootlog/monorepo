@@ -33,40 +33,21 @@ spec:
                 secretKeyRef:
                   key: env
                   name: lootlog-search-secrets
-            - name: POSTGRESQL_CONNECTION_URI
-              valueFrom:
-                secretKeyRef:
-                  name: lootlog-search-secrets
-                  key: postgresqlConnectionUri
-            - name: AXIOM_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: lootlog-search-secrets
-                  key: axiomToken
-            - name: AXIOM_DATASET
-              valueFrom:
-                secretKeyRef:
-                  name: lootlog-search-secrets
-                  key: axiomDataset
             - name: RABBITMQ_URI
               valueFrom:
                 secretKeyRef:
                   name: lootlog-search-secrets
                   key: rabbitmqUri
-            - name: REDIS_USERNAME
+            - name: MEILISEARCH_HOST
               valueFrom:
                 secretKeyRef:
                   name: lootlog-search-secrets
-                  key: redisUsername
-            - name: REDIS_PASSWORD
+                  key: meilisearchHost
+            - name: MEILISEARCH_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: lootlog-search-secrets
-                  key: redisPassword
-            - name: REDIS_HOST
-              value: redis-master
-            - name: REDIS_PORT
-              value: '6379'
+                  key: meilisearchApiKey
 
           livenessProbe:
             httpGet:
