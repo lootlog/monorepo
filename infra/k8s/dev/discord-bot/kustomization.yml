@@ -1,0 +1,7 @@
+namespace: lootlog-dev
+resources:
+  - ../../base/discord-bot
+images:
+  - name: kamilwronka7/lootlog-discord-bot
+    newTag: dev-latest
+namePrefix: dev-
