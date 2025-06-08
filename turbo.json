@@ -10,7 +10,8 @@
     "AXIOM_TOKEN",
     "REDIS_HOST",
     "REDIS_PASSWORD",
-    "REDIS_PORT"
+    "REDIS_PORT",
+    "REDIS_USERNAME"
   ],
   "tasks": {
     "build": {
