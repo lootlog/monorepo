@@ -28,7 +28,7 @@ export const useTimers = () => {
   const query = useQuery({
     queryKey: ["guild-timers", world, guildId],
     queryFn: () =>
-      client.get<Timer[]>(`${API_URL}/guilds/${guildId}/timers?${queryString}`),
+      client.get<Timer[]>(`/guilds/${guildId}/timers?${queryString}`),
     enabled: isAuthenticated && !!world,
     select: (response) => response.data,
   });
