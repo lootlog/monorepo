@@ -58,6 +58,11 @@ spec:
                 secretKeyRef:
                   name: lootlog-auth-secrets
                   key: postgresqlPassword
+            - name: POSTGRESQL_SSL_CA
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: postgresqlSslCa
             - name: DISCORD_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:

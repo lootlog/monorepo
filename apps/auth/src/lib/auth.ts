@@ -9,14 +9,21 @@ import { bearer, jwt } from "better-auth/plugins";
 const { user, password, port, host, database } = APP_CONFIG.postgres;
 const { clientId, clientSecret } = APP_CONFIG.discord;
 
+const poolConfig = {
+  user,
+  password,
+  host,
+  port,
+  database,
+  ssl: APP_CONFIG.postgres.sslCa
+    ? {
+        ca: APP_CONFIG.postgres.sslCa,
+      }
+    : undefined,
+};
+
 const dialect = new PostgresDialect({
-  pool: new pg.Pool({
-    user,
-    password,
-    host,
-    port,
-    database,
-  }),
+  pool: new pg.Pool(poolConfig),
 });
 
 export const auth = betterAuth({
