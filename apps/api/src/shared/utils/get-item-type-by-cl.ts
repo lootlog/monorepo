@@ -1,4 +1,4 @@
-import { ItemType } from '@prisma/client';
+import { ItemType } from 'generated/client';
 
 const ITEM_TYPES = {
   1: ItemType.ONE_HAND_WEAPON,

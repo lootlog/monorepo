@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { Guild, Permission } from '@prisma/client';
+import { Guild, Permission } from 'generated/client';
 import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';

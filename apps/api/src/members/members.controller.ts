@@ -3,7 +3,7 @@ import { MembersService } from './members.service';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { Guild, Permission } from '@prisma/client';
+import { Guild, Permission } from 'generated/client';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 
 @UseGuards(AuthGuard)

@@ -16,13 +16,13 @@ import { NpcsService } from 'src/npcs/npcs.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 import { PrismaService } from 'src/db/prisma.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'generated/client';
 import {
   ItemRarity,
   Profession,
   Permission,
   LootlogConfigNpc,
-} from '@prisma/client';
+} from 'generated/client';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { GuildsService } from 'src/guilds/guilds.service';

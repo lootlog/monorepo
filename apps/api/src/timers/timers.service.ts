@@ -1,6 +1,6 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Permission, Timer } from '@prisma/client';
+import { Permission, Timer } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { PrismaService } from 'src/db/prisma.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
