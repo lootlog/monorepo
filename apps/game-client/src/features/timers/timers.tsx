@@ -116,8 +116,6 @@ export const Timers = () => {
     return () => clearInterval(interval);
   }, [filtered, handleTimerRemove, removeTimerAfterMs]);
 
-  console.log(calculatedTimers);
-
   useEffect(() => {
     if (socket.hasListeners("timers-create") || !connected) return;
 
