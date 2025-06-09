@@ -14,16 +14,23 @@ import { useEffect, useRef, useState } from "react";
 
 type TimerWithTimeLeft = Timer & { timeLeft: number };
 
+const normalModeBreakpoints = [220, 380, 540, 800];
+const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
+
 export const Timers = () => {
   const {
     timers: { open },
     setOpen,
   } = useWindowsStore();
-  const { hiddenTimers, pinnedTimers, removeTimerAfterMs } = useTimersStore();
+  const { hiddenTimers, pinnedTimers, removeTimerAfterMs, compactMode } =
+    useTimersStore();
   const { characterId, accountId } = useGlobalStore((state) => state.gameState);
   const [calculatedTimers, setCalculatedTimers] = useState<TimerWithTimeLeft[]>(
     []
   );
+  const breakpoints = compactMode
+    ? compactModeBreakpoints
+    : normalModeBreakpoints;
 
   const { world } = useGlobalStore((state) => state.gameState);
 
@@ -113,7 +120,6 @@ export const Timers = () => {
     const resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
         const width = entry.contentRect.width;
-        const breakpoints = [220, 380, 540, 800];
 
         const newColumns = breakpoints.reduce((acc, breakpoint) => {
           return width >= breakpoint ? acc + 1 : acc;
@@ -127,7 +133,7 @@ export const Timers = () => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [open]);
+  }, [open, compactMode]);
 
   const sorted = calculatedTimers?.sort((a, b) => {
     const key = `${accountId}${characterId}`;
@@ -176,15 +182,16 @@ export const Timers = () => {
               }}
             >
               {filtered?.length === 0 && (
-                <div className="ll-text-white ll-w-full ll-flex ll-justify-center">
+                <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
                   ----
-                </div>
+                </span>
               )}
               {filtered?.map((timer) => (
                 <SingleTimer
                   key={timer.npc.id}
                   timer={timer}
                   timeLeft={timer.timeLeft}
+                  compactMode={compactMode}
                 />
               ))}
             </span>

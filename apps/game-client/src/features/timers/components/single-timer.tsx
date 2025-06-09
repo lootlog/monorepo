@@ -17,6 +17,7 @@ type SingleTimerProps = {
   timer: Timer;
   guildId?: string;
   timeLeft?: number;
+  compactMode?: boolean;
 };
 
 const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
@@ -57,7 +58,11 @@ export const COLORS = {
   white: { bg: "ll-bg-gray-400", border: "ll-border-gray-400" },
 };
 
-export const SingleTimer: FC<SingleTimerProps> = ({ timer, timeLeft = 0 }) => {
+export const SingleTimer: FC<SingleTimerProps> = ({
+  timer,
+  timeLeft = 0,
+  compactMode,
+}) => {
   const { world, accountId, characterId } = useGlobalStore(
     (state) => state.gameState
   );
@@ -119,6 +124,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer, timeLeft = 0 }) => {
     timer.npc.name
   );
 
+  const shortname = compactMode
+    ? ""
+    : `[${NPC_NAMES[timer.npc.type].shortname}]`;
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
@@ -128,19 +137,30 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer, timeLeft = 0 }) => {
         >
           <span
             className={cn(
-              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border",
+              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border  ll-text-nowrap",
               {
                 "ll-text-red-500": hasPassedRedThreshold,
                 "ll-text-orange-400": isMinSpawnTime,
                 "ll-text-white": !hasPassedRedThreshold && !isMinSpawnTime,
                 "ll-py-1": document.body.classList.contains("si"),
+                "ll-flex-col ll-py-0 ll-leading-tight": compactMode,
               }
             )}
           >
-            <div>
-              [{NPC_NAMES[timer.npc.type].shortname}] {timer.npc.name}
+            <div
+              className={cn({
+                "ll-text-[10px] ll-text-center": compactMode,
+              })}
+            >
+              {shortname} {timer.npc.name}
             </div>
-            <div>{parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}</div>
+            <div
+              className={cn({
+                "ll-text-[10px] ll-text-center": compactMode,
+              })}
+            >
+              {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
+            </div>
           </span>
         </TimerTile>
       </ContextMenuTrigger>
