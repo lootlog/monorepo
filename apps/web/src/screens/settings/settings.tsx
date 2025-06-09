@@ -66,7 +66,7 @@ export const Settings: React.FC = () => {
         </PageHeader>
         <Tabs defaultValue={TabKey.GENERAL} className="w-full">
           <div className="border-b p-2">
-            <TabsList className="gap-4">
+            <TabsList className="gap-4 bg-transparent">
               {TABS_LIST.map((tab) => {
                 return tab.trigger;
               })}
