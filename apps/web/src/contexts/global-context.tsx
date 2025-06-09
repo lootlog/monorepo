@@ -14,10 +14,24 @@ type CreateGuildModalState = {
   isOpen: boolean;
 };
 
+type InstallAddonModalAction =
+  | {
+      type: "OPEN";
+    }
+  | { type: "CLOSE" };
+
+type InstallAddonModalState = {
+  isOpen: boolean;
+};
+
 export type GlobalContextProviderValue = {
   createGuildModal: {
     state: CreateGuildModalState;
     dispatch: React.Dispatch<CreateGuildModalAction>;
+  };
+  installAddonModal: {
+    state: InstallAddonModalState;
+    dispatch: React.Dispatch<InstallAddonModalAction>;
   };
 };
 
@@ -43,16 +57,42 @@ const createGuildModalReducer = (
   }
 };
 
+const installAddonModalReducer = (
+  state: InstallAddonModalState,
+  action: InstallAddonModalAction
+): InstallAddonModalState => {
+  switch (action.type) {
+    case "OPEN":
+      return {
+        isOpen: true,
+      };
+    case "CLOSE":
+      return {
+        isOpen: false,
+      };
+    default:
+      return state;
+  }
+};
+
 export const GlobalContextProvider: React.FC<Props> = ({ children }) => {
   const [reservationsModalState, reservationsModalDispatch] = useReducer(
     createGuildModalReducer,
     CREATE_GUILD_MODAL_INITIAL_STATE
+  );
+  const [installAddonModalState, installAddonModalDispatch] = useReducer(
+    installAddonModalReducer,
+    { isOpen: false }
   );
 
   const value = {
     createGuildModal: {
       state: reservationsModalState,
       dispatch: reservationsModalDispatch,
+    },
+    installAddonModal: {
+      state: installAddonModalState,
+      dispatch: installAddonModalDispatch,
     },
   };
 
