@@ -1,5 +1,5 @@
-import { AUTH_SERVICE_URL } from "config/auth";
-import { useSession } from "hooks/auth/use-session";
+import { AUTH_SERVICE_URL } from "@/config/auth";
+import { useSession } from "@/hooks/auth/use-session";
 import { useQuery } from "@tanstack/react-query";
 
 export const useAuthToken = () => {

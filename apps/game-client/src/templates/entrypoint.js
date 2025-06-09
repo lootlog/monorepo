@@ -21,9 +21,7 @@
   "use strict";
 
   const script = document.createElement("script");
-  script.src = `https://${
-    env === "develop" ? "develop." : ""
-  }lootlog-game-client.pages.dev/game-client.user.js?ts=${Date.now()}`;
+  script.src = `https://dev-addon.lootlog.pl/game-client.user.js?ts=${Date.now()}`;
 
   document.head.appendChild(script);
 })();

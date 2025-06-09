@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { GuildContext } from "contexts/guild.context";
+import { GuildContext } from "@/contexts/guild.context";
 
 export const useGuildContext = () => {
   const context = useContext(GuildContext);

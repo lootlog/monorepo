@@ -1,4 +1,4 @@
-import { ItemRarity } from '@prisma/client';
+import { ItemRarity } from 'generated/client';
 import { IsEnum } from 'class-validator';
 
 export class UpdateLootlogConfigNpcDto {

@@ -1,6 +1,6 @@
-import { GuildSwitcher } from "components/layout/guild-switcher";
-import { SidebarNav } from "components/layout/sidebar-nav";
-import { UserMenu } from "components/layout/user-menu";
+import { GuildsNav } from "@/components/layout/guilds-nav";
+import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { UserMenu } from "@/components/layout/user-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -8,25 +8,23 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-} from "components/ui/sidebar";
+} from "@/components/ui/sidebar";
 import { FC } from "react";
 
 export const AppSidebar: FC = () => {
   return (
     <Sidebar>
-      <SidebarContent className="bg-background">
-        <SidebarGroup className="p-0">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <div className="flex items-center justify-center w-full p-2 border-b h-16">
-                <GuildSwitcher />
-              </div>
+      <SidebarContent className="bg-background h-full">
+        <SidebarGroup className="p-0 h-full">
+          <SidebarGroupContent className="h-full">
+            <SidebarMenu className="flex flex-row h-full gap-0">
+              <GuildsNav />
               <SidebarNav />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="bg-background p-0 py-1">
+      <SidebarFooter className="bg-background p-0">
         <UserMenu />
       </SidebarFooter>
     </Sidebar>

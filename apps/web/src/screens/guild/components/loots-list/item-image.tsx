@@ -1,7 +1,7 @@
-import { MARGONEM_CDN_ITEMS_URL } from "constants/margonem";
-import { ItemRarity } from "hooks/api/use-loots";
+import { MARGONEM_CDN_ITEMS_URL } from "@/constants/margonem";
+import { ItemRarity } from "@/hooks/api/use-loots";
 import { FC } from "react";
-import { cn } from "utils/cn";
+import { cn } from "@/utils/cn";
 
 type ItemImageProps = { rarity: ItemRarity; icon: string };
 

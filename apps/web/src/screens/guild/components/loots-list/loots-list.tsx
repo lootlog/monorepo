@@ -1,11 +1,11 @@
-import { ScrollArea } from "components/ui/scroll-area";
-import { Separator } from "components/ui/separator";
-import { useLoots } from "hooks/api/use-loots";
-import { useGuildContext } from "hooks/use-guild-context";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useLoots } from "@/hooks/api/use-loots";
+import { useGuildContext } from "@/hooks/use-guild-context";
 import { Frown, Loader2 } from "lucide-react";
 import { FC, Fragment, useEffect } from "react";
-import { LootsListItem } from "screens/guild/components/loots-list/loots-list-item";
-import { LootsListItemSkeleton } from "screens/guild/components/loots-list/loots-list-item-skeleton";
+import { LootsListItem } from "@/screens/guild/components/loots-list/loots-list-item";
+import { LootsListItemSkeleton } from "@/screens/guild/components/loots-list/loots-list-item-skeleton";
 import { useDebounceValue, useIntersectionObserver } from "usehooks-ts";
 
 export const LootsList: FC = () => {

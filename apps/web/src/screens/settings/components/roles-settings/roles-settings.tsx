@@ -1,8 +1,8 @@
-import { SearchInput } from "components/ui/search-input";
-import { useGuildRoles } from "hooks/api/use-guild-roles";
+import { SearchInput } from "@/components/ui/search-input";
+import { useGuildRoles } from "@/hooks/api/use-guild-roles";
 import { useState } from "react";
-import { RolesSettingsForm } from "screens/settings/components/roles-settings/roles-settings-form";
-import { cn } from "utils/cn";
+import { RolesSettingsForm } from "@/screens/settings/components/roles-settings/roles-settings-form";
+import { cn } from "@/utils/cn";
 
 export const RolesSettings = () => {
   const { data: roles } = useGuildRoles();

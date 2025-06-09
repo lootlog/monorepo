@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Permission, Prisma } from '@prisma/client';
+import { Permission, Prisma } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { GuildRoleDto } from 'src/guilds/dto/create-guild.dto';
 import { CreateRoleDto } from 'src/roles/dto/create-role.dto';

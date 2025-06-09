@@ -1,5 +1,5 @@
-import { FullScreenLoading } from "components/ui/full-screen-loading";
-import { useSession } from "hooks/auth/use-session";
+import { FullScreenLoading } from "@/components/ui/full-screen-loading";
+import { useSession } from "@/hooks/auth/use-session";
 import { useNavigate } from "react-router-dom";
 
 type Props = {

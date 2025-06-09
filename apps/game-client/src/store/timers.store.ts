@@ -5,6 +5,10 @@ interface TimersState {
   hiddenTimers: Record<string, string[]>;
   pinnedTimers: Record<string, string[]>;
   timersColors: Record<string, string | undefined>;
+  removeTimerAfterMs: number;
+  compactMode?: boolean;
+  toggleCompactMode?: () => void;
+  setRemoveTimerAfterMs: (ms: number) => void;
   addHiddenTimer: (
     accountId: string,
     characterId: string,
@@ -28,6 +32,8 @@ interface TimersState {
   setTimerColor: (npcName: string, color?: string) => void;
 }
 
+const DEFAULT_REMOVE_TIMER_AFTER_MS = 30000;
+
 export const useTimersStore = create<TimersState>()(
   // @ts-ignore
   persist(
@@ -35,6 +41,14 @@ export const useTimersStore = create<TimersState>()(
       hiddenTimers: {},
       pinnedTimers: {},
       timersColors: {},
+      removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
+      compactMode: false,
+      setRemoveTimerAfterMs: (ms: number) => {
+        set({ removeTimerAfterMs: ms });
+      },
+      toggleCompactMode: () => {
+        set((state) => ({ compactMode: !state.compactMode }));
+      },
       addHiddenTimer: (
         accountId: string,
         characterId: string,
@@ -112,6 +126,8 @@ export const useTimersStore = create<TimersState>()(
         hiddenTimers: state.hiddenTimers,
         pinnedTimers: state.pinnedTimers,
         timersColors: state.timersColors,
+        removeTimerAfterMs: state.removeTimerAfterMs,
+        compactMode: state.compactMode,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,

@@ -1,0 +1,7 @@
+namespace: lootlog-dev
+resources:
+  - ../../base/search
+images:
+  - name: kamilwronka7/lootlog-search
+    newTag: dev-6dda52b19896b5d536f555b730c2cd76ecf44ed5
+namePrefix: dev-

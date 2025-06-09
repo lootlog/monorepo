@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { Guild } from '@prisma/client';
+import { Guild } from 'generated/client';
 
 export const GuildData = createParamDecorator(function (
   data: unknown,

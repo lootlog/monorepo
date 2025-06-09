@@ -1,4 +1,4 @@
-import { MultiSelect } from "components/ui/multi-select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { FC, useState } from "react";
 
 type FilterComboboxProps = {

@@ -1,5 +1,5 @@
-import { PageHeader } from "components/layout/page-header";
-import { SidebarTrigger } from "components/ui/sidebar";
+import { PageHeader } from "@/components/layout/page-header";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export const Stats: React.FC = () => {
   console.log("Stats");

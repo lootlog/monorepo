@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+spec:
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      serviceAccountName: auth
+      containers:
+        - name: auth
+          image: kamilwronka7/lootlog-auth:latest
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '500m'
+            limits:
+              memory: '768Mi'
+              cpu: '700m'
+          ports:
+            - name: container-port
+              containerPort: 4000
+          env:
+            - name: PORT
+              value: '4000'
+            - name: ENV
+              valueFrom:
+                secretKeyRef:
+                  key: env
+                  name: lootlog-auth-secrets
+            - name: POSTGRESQL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: postgresqlPort
+            - name: POSTGRESQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: postgresqlHost
+            - name: POSTGRESQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: postgresqlDatabase
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: postgresqlUsername
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: postgresqlPassword
+            - name: DISCORD_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: discordClientSecret
+            - name: DISCORD_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: discordClientId
+            - name: TRUSTED_ORIGINS
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: trustedOrigins
+            - name: APP_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: appUrl
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+          readinessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 20

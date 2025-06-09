@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { Guild, Permission } from '@prisma/client';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ChatService } from 'src/chat/chat.service';
 import { SendMessageDto } from 'src/chat/dto/send-message.dto';
+import { Guild, Permission } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';

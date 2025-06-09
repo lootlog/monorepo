@@ -1,9 +1,8 @@
 export type Map = {
-  d: {
-    visibility: number;
-    name: string;
-    id: number;
-  };
+  d: GameMap;
+};
+
+export type GameMap = {
   visibility: number;
   name: string;
   id: number;

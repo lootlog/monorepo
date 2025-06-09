@@ -1,4 +1,4 @@
-import { useDiscordIdpToken } from "hooks/api/use-discord-idp-token";
+import { useDiscordIdpToken } from "@/hooks/api/use-discord-idp-token";
 import { REST, RESTOptions } from "@discordjs/rest";
 import { useQuery } from "@tanstack/react-query";
 import { Routes } from "discord-api-types/v10";

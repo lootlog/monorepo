@@ -1,9 +1,9 @@
-import { AuthenticationGuard } from "components/auth/authentication-guard";
-import { AppSidebar } from "components/layout/app-sidebar";
-import { PageContainer } from "components/ui/page-container";
-import { SidebarProvider } from "components/ui/sidebar";
-import { Toaster } from "components/ui/toaster";
-import { GuildContextProvider } from "contexts/guild.context";
+import { AuthenticationGuard } from "@/components/auth/authentication-guard";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { PageContainer } from "@/components/ui/page-container";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/toaster";
+import { GuildContextProvider } from "@/contexts/guild.context";
 import { FC } from "react";
 import { Outlet } from "react-router-dom";
 

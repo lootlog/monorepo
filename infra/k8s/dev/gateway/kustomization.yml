@@ -1,0 +1,7 @@
+namespace: lootlog-dev
+resources:
+  - ../../base/gateway
+images:
+  - name: kamilwronka7/lootlog-gateway
+    newTag: dev-7895bad451eeac78605214f4341144131e5af0f7
+namePrefix: dev-
