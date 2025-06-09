@@ -5,12 +5,19 @@ import { FC, useState } from "react";
 const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 
 export const GeneralSettingsTab: FC = () => {
-  const { removeTimerAfterMs, setRemoveTimerAfterMs } = useTimersStore();
+  const {
+    removeTimerAfterMs,
+    setRemoveTimerAfterMs,
+    compactMode,
+    toggleCompactMode,
+  } = useTimersStore();
   const [inputValue, setInputValue] = useState<string>(
     (removeTimerAfterMs / 1000).toString()
   );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRemoveTimerAfterMsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const value = e.target.value;
     setInputValue(value);
 
@@ -41,6 +48,19 @@ export const GeneralSettingsTab: FC = () => {
         Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.
       </p>
       <div className="ll-mb-4 ll-mt-4">
+        <label className="ll-font-semibold">Ustawienia widoku</label>
+        <div className="checkbox-custom c-checkbox">
+          <input
+            id="compact-mode-toggle"
+            type="checkbox"
+            value={compactMode ? "1" : "0"}
+            checked={compactMode}
+            onChange={toggleCompactMode}
+          />
+          <label htmlFor="compact-mode-toggle">Tryb kompaktowy</label>
+        </div>
+      </div>
+      <div className="ll-mb-4 ll-mt-4">
         <label className="ll-font-semibold">
           Czas usunięcia timera po wyzerowaniu (w sekundach):
         </label>
@@ -48,7 +68,7 @@ export const GeneralSettingsTab: FC = () => {
           type="text"
           value={inputValue}
           max={120}
-          onChange={handleInputChange}
+          onChange={handleRemoveTimerAfterMsChange}
           className="ll-input ll-w-8 ll-h-[13px] ll-px-1 ll-mt-1"
         />
       </div>
