@@ -67,31 +67,11 @@ export const Timers = () => {
     );
   };
 
-  const sorted = timers?.sort((a, b) => {
-    const key = `${accountId}${characterId}`;
-    const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
-    const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
-
-    if (isPinnedA && !isPinnedB) return -1;
-    if (!isPinnedA && isPinnedB) return 1;
-
-    return (
-      new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
-    );
-  });
-
-  const filtered = sorted?.filter((timer) => {
-    const key = `${accountId}${characterId}`;
-    const isHidden = hiddenTimers[key]?.includes?.(timer.npc.name);
-
-    return !isHidden;
-  });
-
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!filtered || filtered.length === 0) return;
+      if (!timers || timers.length === 0) return;
 
-      const newTimers = filtered.reduce((acc: TimerWithTimeLeft[], timer) => {
+      const newTimers = timers.reduce((acc: TimerWithTimeLeft[], timer) => {
         const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
         const timeLeft = maxSpawnTime - Date.now();
 
@@ -114,7 +94,7 @@ export const Timers = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [filtered, handleTimerRemove, removeTimerAfterMs]);
+  }, [timers, handleTimerRemove, removeTimerAfterMs]);
 
   useEffect(() => {
     if (socket.hasListeners("timers-create") || !connected) return;
@@ -149,6 +129,26 @@ export const Timers = () => {
     };
   }, [open]);
 
+  const sorted = calculatedTimers?.sort((a, b) => {
+    const key = `${accountId}${characterId}`;
+    const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
+    const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
+
+    if (isPinnedA && !isPinnedB) return -1;
+    if (!isPinnedA && isPinnedB) return 1;
+
+    return (
+      new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
+    );
+  });
+
+  const filtered = sorted?.filter((timer) => {
+    const key = `${accountId}${characterId}`;
+    const isHidden = hiddenTimers[key]?.includes?.(timer.npc.name);
+
+    return !isHidden;
+  });
+
   return (
     open && (
       <DraggableWindow
@@ -175,12 +175,12 @@ export const Timers = () => {
                 gridTemplateColumns: `repeat(${columns}, 1fr)`,
               }}
             >
-              {calculatedTimers?.length === 0 && (
+              {filtered?.length === 0 && (
                 <div className="ll-text-white ll-w-full ll-flex ll-justify-center">
                   ----
                 </div>
               )}
-              {calculatedTimers?.map((timer) => (
+              {filtered?.map((timer) => (
                 <SingleTimer
                   key={timer.npc.id}
                   timer={timer}
