@@ -36,7 +36,7 @@
     "axios": "^1.7.9",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "fastify": "^5.1.0",
+    "fastify": "^5.3.2",
     "ioredis": "^5.6.1",
     "joi": "^17.13.3",
     "lodash": "^4.17.21",
