@@ -85,7 +85,7 @@ export const SidebarNav: FC = () => {
 
   return (
     <div className="flex flex-col w-full gap-1 flex-1">
-      <div className="h-16 min-h-16 text-lg font-semibold flex flex-row items-center border-b mb-2 px-2">
+      <div className="h-14 min-h-14 font-semibold flex flex-row items-center border-b mb-2 px-2">
         <Avatar className={cn("size-8")}>
           <AvatarImage src={guild?.icon as string} alt={guild?.name} />
           <AvatarFallback className="rounded-none">
