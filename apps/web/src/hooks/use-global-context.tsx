@@ -1,4 +1,4 @@
-import { GlobalContext } from "contexts/global-context";
+import { GlobalContext } from "@/contexts/global-context";
 import { useContext } from "react";
 
 export const useGlobalContext = () => {

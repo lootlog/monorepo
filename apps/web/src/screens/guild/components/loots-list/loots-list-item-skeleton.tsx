@@ -4,7 +4,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@lootlog/ui/components/card";
-import { Skeleton } from "components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRef } from "react";
 
 export const LootsListItemSkeleton: React.FC = () => {

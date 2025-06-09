@@ -8,14 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { ScrollArea } from "components/ui/scroll-area";
-import { SearchInput } from "components/ui/search-input";
-import { useManageableGuilds } from "hooks/api/use-manageable-guilds";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchInput } from "@/components/ui/search-input";
+import { useManageableGuilds } from "@/hooks/api/use-manageable-guilds";
 import { FC, useState } from "react";
-import { getGuildIconById } from "utils/get-guild-icon-by-id";
+import { getGuildIconById } from "@/utils/get-guild-icon-by-id";
 import { useDebounceValue } from "usehooks-ts";
-import { DISCORD_BOT_PERMISSIONS, DISCORD_CLIENT_ID } from "config/discord";
-import { useGlobalContext } from "hooks/use-global-context";
+import { DISCORD_BOT_PERMISSIONS, DISCORD_CLIENT_ID } from "@/config/discord";
+import { useGlobalContext } from "@/hooks/use-global-context";
 import {
   Avatar,
   AvatarFallback,

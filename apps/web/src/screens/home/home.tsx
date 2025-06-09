@@ -1,10 +1,10 @@
 import { authClient } from "@/lib/auth-client";
-import { PageHeader } from "components/layout/page-header";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@lootlog/ui/components/button";
-import { ScrollArea } from "components/ui/scroll-area";
-import { useSession } from "hooks/auth/use-session";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSession } from "@/hooks/auth/use-session";
 
-import { GuildsList } from "screens/home/components/guilds-list";
+import { GuildsList } from "@/screens/home/components/guilds-list";
 
 export const Home: React.FC = () => {
   const { data: session, isPending } = useSession();

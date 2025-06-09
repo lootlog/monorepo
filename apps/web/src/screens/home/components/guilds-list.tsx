@@ -1,6 +1,6 @@
-import { useGuilds } from "hooks/api/use-guilds";
-import { CreateNewGuildCard } from "screens/home/components/create-new-guild-card";
-import { GuildCard } from "screens/home/components/guild-card";
+import { useGuilds } from "@/hooks/api/use-guilds";
+import { CreateNewGuildCard } from "@/screens/home/components/create-new-guild-card";
+import { GuildCard } from "@/screens/home/components/guild-card";
 
 export const GuildsList: React.FC = () => {
   const { data: guilds } = useGuilds();

@@ -4,11 +4,11 @@ import {
   CardFooter,
   CardHeader,
 } from "@lootlog/ui/components/card";
-import { Loot } from "hooks/api/use-loots";
-import { ItemTile } from "screens/guild/components/loots-list/item-tile";
-import { PlayerTile } from "screens/guild/components/loots-list/player-tile";
-import { cn } from "utils/cn";
-import { timestampToDate } from "utils/date/parse-timestamp-to-date";
+import { Loot } from "@/hooks/api/use-loots";
+import { ItemTile } from "@/screens/guild/components/loots-list/item-tile";
+import { PlayerTile } from "@/screens/guild/components/loots-list/player-tile";
+import { cn } from "@/utils/cn";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type Props = {
   loot: Loot;

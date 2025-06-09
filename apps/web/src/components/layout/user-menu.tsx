@@ -8,8 +8,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "components/ui/dropdown-menu";
-import { useUser } from "hooks/api/use-user";
+} from "@/components/ui/dropdown-menu";
+import { useUser } from "@/hooks/api/use-user";
 import { Loader2, PlusIcon, Settings, User2 } from "lucide-react";
 
 export const UserMenu = () => {

@@ -1,9 +1,9 @@
-import { NpcType, useNpcs } from "hooks/api/use-npcs";
-import { useGuildPlayers } from "hooks/api/use-guild-players";
+import { NpcType, useNpcs } from "@/hooks/api/use-npcs";
+import { useGuildPlayers } from "@/hooks/api/use-guild-players";
 import { useSearchParams } from "react-router-dom";
-import { FilterCombobox } from "screens/guild/components/loots-filters/filter-combobox";
+import { FilterCombobox } from "@/screens/guild/components/loots-filters/filter-combobox";
 import { useDebounceValue } from "usehooks-ts";
-import { ItemRarity } from "hooks/api/use-loots";
+import { ItemRarity } from "@/hooks/api/use-loots";
 
 const raritiesData = [
   { value: ItemRarity.LEGENDARY, label: "Legendarny" },

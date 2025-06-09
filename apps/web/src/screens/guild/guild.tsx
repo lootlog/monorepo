@@ -1,21 +1,21 @@
-import { PageHeader } from "components/layout/page-header";
+import { PageHeader } from "@/components/layout/page-header";
 import { useState } from "react";
-import { Timers } from "screens/guild/components/timers/timers";
-import { LootsFilters } from "screens/guild/components/loots-filters/loots-filters";
+import { Timers } from "@/screens/guild/components/timers/timers";
+import { LootsFilters } from "@/screens/guild/components/loots-filters/loots-filters";
 import { Filter, TimerIcon } from "lucide-react";
-import { cn } from "utils/cn";
+import { cn } from "@/utils/cn";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "components/ui/tooltip";
-import { LootsList } from "screens/guild/components/loots-list/loots-list";
-import { useTimers } from "hooks/api/use-timers";
+} from "@/components/ui/tooltip";
+import { LootsList } from "@/screens/guild/components/loots-list/loots-list";
+import { useTimers } from "@/hooks/api/use-timers";
 import { noop } from "lodash";
-import { SidebarTrigger } from "components/ui/sidebar";
-import { WorldSwitcher } from "components/common/world-switcher";
-import { useIsMobile } from "hooks/use-mobile";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { WorldSwitcher } from "@/components/common/world-switcher";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
   DrawerClose,
@@ -30,8 +30,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "components/ui/sheet";
-import { useLg } from "hooks/use-lg";
+} from "@/components/ui/sheet";
+import { useLg } from "@/hooks/use-lg";
 
 export const Guild: React.FC = () => {
   const [timersVisible, setTimersVisible] = useState(false);

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { SEARCH_API_URL } from "config/api";
-import { useApiClient } from "hooks/api/use-api-client";
+import { SEARCH_API_URL } from "@/config/api";
+import { useApiClient } from "@/hooks/api/use-api-client";
 
 export type Player = {
   id: number;

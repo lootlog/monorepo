@@ -1,10 +1,10 @@
-import { PageHeader } from "components/layout/page-header";
-import { ScrollArea } from "components/ui/scroll-area";
-import { SidebarTrigger } from "components/ui/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "components/ui/tabs";
-import { GeneralSettings } from "screens/settings/components/general-settings/general-settings";
-import { LootlogSettings } from "screens/settings/components/lootlog-settings/lootlog-settings";
-import { RolesSettings } from "screens/settings/components/roles-settings/roles-settings";
+import { PageHeader } from "@/components/layout/page-header";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GeneralSettings } from "@/screens/settings/components/general-settings/general-settings";
+import { LootlogSettings } from "@/screens/settings/components/lootlog-settings/lootlog-settings";
+import { RolesSettings } from "@/screens/settings/components/roles-settings/roles-settings";
 
 enum TabKey {
   GENERAL = "general",
