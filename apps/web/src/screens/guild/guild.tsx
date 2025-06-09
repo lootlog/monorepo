@@ -60,7 +60,7 @@ export const Guild: React.FC = () => {
         <SidebarTrigger />
         <div className="flex justify-between w-full pl-2 items-center">
           <div className="flex flex-row items-center gap-4">
-            <h1 className="font-semibold text-xl p-0">Lootlog</h1>
+            <h1 className="font-semibold p-0">Lootlog</h1>
             <WorldSwitcher />
           </div>
           <div className="flex flex-row gap-4 items-center justify-end">

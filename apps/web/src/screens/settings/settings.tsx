@@ -61,7 +61,7 @@ export const Settings: React.FC = () => {
         <PageHeader>
           <div className="flex flex-row gap-2">
             <SidebarTrigger />
-            <h1 className="font-semibold text-xl p-0">Ustawienia</h1>
+            <h1 className="font-semibold p-0">Ustawienia</h1>
           </div>
         </PageHeader>
         <Tabs defaultValue={TabKey.GENERAL} className="w-full">
