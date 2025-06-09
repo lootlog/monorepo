@@ -64,14 +64,14 @@ export const CreateGuildModal: FC = () => {
             Utwórz nowy lootlog dla swojego klanu
           </DialogDescription>
         </DialogHeader>
-        <div className="px-4">
+        <div>
           <SearchInput
             placeholder="Szukaj serwera..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
           />
         </div>
-        <ScrollArea className="min-h-80 max-h-80 p-4">
+        <ScrollArea className="min-h-80 max-h-80">
           <div className="flex flex-col gap-4">
             {filteredGuilds?.map((guild) => {
               const avatarSrc = getGuildIconById(guild.id, guild.icon);
