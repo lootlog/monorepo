@@ -16,6 +16,7 @@ import { FC, useEffect, useState } from "react";
 type SingleTimerProps = {
   timer: Timer;
   guildId?: string;
+  timeLeft?: number;
 };
 
 const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
@@ -45,7 +46,6 @@ const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
   },
 };
 
-const ZERO_SHOW_THRESHOLD = 15000;
 export const COLORS = {
   red: { bg: "ll-bg-red-500", border: "ll-border-red-500" },
   green: { bg: "ll-bg-green-500", border: "ll-border-green-500" },
@@ -57,7 +57,7 @@ export const COLORS = {
   white: { bg: "ll-bg-gray-400", border: "ll-border-gray-400" },
 };
 
-export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
+export const SingleTimer: FC<SingleTimerProps> = ({ timer, timeLeft = 0 }) => {
   const { world, accountId, characterId } = useGlobalStore(
     (state) => state.gameState
   );
@@ -65,34 +65,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
     addHiddenTimer,
     addPinnedTimer,
     removePinnedTimer,
-    hiddenTimers,
     pinnedTimers,
     setTimerColor,
     timersColors,
   } = useTimersStore();
 
-  const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-
-  const { refetch } = useTimers({ world });
-  const [timeLeft, setTimeLeft] = useState(maxSpawnTime - Date.now());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const time = maxSpawnTime - Date.now();
-
-      if (time <= -ZERO_SHOW_THRESHOLD) {
-        clearInterval(interval);
-        refetch();
-
-        return;
-      }
-
-      setTimeLeft(time);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [maxSpawnTime, refetch]);
 
   const isMinSpawnTime = minSpawnTime - Date.now() < 0;
   const hasPassedRedThreshold = timeLeft < 0;
