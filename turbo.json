@@ -20,6 +20,10 @@
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "build:game-client": {},
+    "build:cloudflare": {
+      "dependsOn": ["^build:cloudflare"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
+    },
     "lint": {
       "dependsOn": ["^lint"]
     },
