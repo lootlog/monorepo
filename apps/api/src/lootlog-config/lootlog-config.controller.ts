@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
-import { Guild, Permission } from '@prisma/client';
+import { Guild, Permission } from 'generated/client';
 import { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';

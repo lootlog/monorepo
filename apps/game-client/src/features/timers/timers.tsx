@@ -12,13 +12,25 @@ import { AxiosResponse } from "axios";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+type TimerWithTimeLeft = Timer & { timeLeft: number };
+
+const normalModeBreakpoints = [220, 300, 440, 580];
+const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
+
 export const Timers = () => {
   const {
     timers: { open },
     setOpen,
   } = useWindowsStore();
-  const { hiddenTimers, pinnedTimers } = useTimersStore();
+  const { hiddenTimers, pinnedTimers, removeTimerAfterMs, compactMode } =
+    useTimersStore();
   const { characterId, accountId } = useGlobalStore((state) => state.gameState);
+  const [calculatedTimers, setCalculatedTimers] = useState<TimerWithTimeLeft[]>(
+    []
+  );
+  const breakpoints = compactMode
+    ? compactModeBreakpoints
+    : normalModeBreakpoints;
 
   const { world } = useGlobalStore((state) => state.gameState);
 
@@ -27,7 +39,103 @@ export const Timers = () => {
 
   const { socket, connected } = useGateway();
 
-  const sorted = timers?.sort((a, b) => {
+  const handleTimerMessage = (data: Timer) => {
+    queryClient.setQueryData(
+      ["guild-timers", world],
+      (old: AxiosResponse<Timer[]>) => {
+        if (data.world !== world) return old;
+
+        const exists = old?.data.find((timer) => timer.npc.id === data.npc.id);
+
+        if (exists) {
+          return {
+            data: old.data.map((timer) =>
+              timer.npc.id === data.npc.id ? data : timer
+            ),
+          };
+        }
+        return {
+          data: [...old.data, data],
+        };
+      }
+    );
+  };
+
+  const handleTimerRemove = (data: Timer) => {
+    queryClient.setQueryData(
+      ["guild-timers", world],
+      (old: AxiosResponse<Timer[]>) => {
+        if (data.world !== world) return old;
+
+        return {
+          data: old?.data.filter((timer) => timer.npc.id !== data.npc.id) || [],
+        };
+      }
+    );
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!timers || timers.length === 0) return;
+
+      const newTimers = timers.reduce((acc: TimerWithTimeLeft[], timer) => {
+        const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
+        const timeLeft = maxSpawnTime - Date.now();
+
+        if (timeLeft <= -removeTimerAfterMs) {
+          handleTimerRemove(timer);
+          return acc;
+        }
+
+        const newTimer = {
+          ...timer,
+          timeLeft,
+        };
+
+        acc.push(newTimer);
+
+        return acc;
+      }, []);
+
+      setCalculatedTimers(newTimers);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timers, handleTimerRemove, removeTimerAfterMs]);
+
+  useEffect(() => {
+    if (socket.hasListeners("timers-create") || !connected) return;
+
+    socket.on("timers-create", (data: Timer) => {
+      handleTimerMessage(data);
+    });
+  }, [connected]);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(1);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const width = entry.contentRect.width;
+
+        const newColumns = breakpoints.reduce((acc, breakpoint) => {
+          return width >= breakpoint ? acc + 1 : acc;
+        }, 0);
+        setColumns(newColumns || 1);
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [open, compactMode]);
+
+  const sorted = calculatedTimers?.sort((a, b) => {
     const key = `${accountId}${characterId}`;
     const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
     const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
@@ -47,58 +155,6 @@ export const Timers = () => {
     return !isHidden;
   });
 
-  useEffect(() => {
-    if (socket.hasListeners("timers-create") || !connected) return;
-
-    socket.on("timers-create", (data: Timer) => {
-      queryClient.setQueryData(
-        ["guild-timers", world],
-        (old: AxiosResponse<Timer[]>) => {
-          if (data.world !== world) return old;
-
-          const exists = old?.data.find(
-            (timer) => timer.npc.id === data.npc.id
-          );
-
-          if (exists) {
-            return {
-              data: old.data.map((timer) =>
-                timer.npc.id === data.npc.id ? data : timer
-              ),
-            };
-          }
-          return {
-            data: [...old.data, data],
-          };
-        }
-      );
-    });
-  }, [connected]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [columns, setColumns] = useState(1);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const width = entry.contentRect.width;
-        const breakpoints = [220, 380, 540, 800];
-
-        const newColumns = breakpoints.reduce((acc, breakpoint) => {
-          return width >= breakpoint ? acc + 1 : acc;
-        }, 0);
-        setColumns(newColumns || 1);
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [open]);
-
   return (
     open && (
       <DraggableWindow
@@ -116,25 +172,31 @@ export const Timers = () => {
       >
         <span
           ref={containerRef}
-          className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1"
+          className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
         >
-          <ScrollArea className="ll-h-full ll-py-1" type="scroll">
+          {filtered?.length === 0 && (
+            <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
+              ----
+            </span>
+          )}
+          <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
             <span
               className="ll-grid ll-gap-0.5 ll-box-border"
               style={{
                 gridTemplateColumns: `repeat(${columns}, 1fr)`,
               }}
             >
-              {filtered?.length === 0 && (
-                <div className="ll-text-white ll-w-full ll-flex ll-justify-center">
-                  ----
-                </div>
-              )}
               {filtered?.map((timer) => (
-                <SingleTimer key={timer.npc.id} timer={timer} />
+                <SingleTimer
+                  key={timer.npc.id}
+                  timer={timer}
+                  timeLeft={timer.timeLeft}
+                  compactMode={compactMode}
+                />
               ))}
             </span>
           </ScrollArea>
+
           <TimerTile>
             <PlusIcon color="white" height={16} width={16} />
           </TimerTile>

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useApiClient } from "hooks/api/use-api-client";
-import { ItemRarity } from "hooks/api/use-loots";
-import { useGuildId } from "hooks/use-guild-id";
+import { useApiClient } from "@/hooks/api/use-api-client";
+import { ItemRarity } from "@/hooks/api/use-loots";
+import { useGuildId } from "@/hooks/use-guild-id";
 
 type UpdateGuildLootlogNpcOptions = {
   npcId: number;

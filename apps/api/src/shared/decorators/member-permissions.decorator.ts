@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { Permission } from '@prisma/client';
+import { Permission } from 'generated/client';
 
 export const MemberPermissions = createParamDecorator(function (
   data: unknown,

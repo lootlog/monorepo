@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search
+spec:
+  selector:
+    matchLabels:
+      app: search
+  template:
+    metadata:
+      labels:
+        app: search
+    spec:
+      serviceAccountName: search
+      containers:
+        - name: search
+          image: kamilwronka7/lootlog-search:latest
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '200m'
+            limits:
+              memory: '384Mi'
+              cpu: '300m'
+          ports:
+            - name: container-port
+              containerPort: 4000
+          env:
+            - name: PORT
+              value: '4000'
+            - name: ENV
+              valueFrom:
+                secretKeyRef:
+                  key: env
+                  name: lootlog-search-secrets
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-search-secrets
+                  key: rabbitmqUri
+            - name: MEILISEARCH_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-search-secrets
+                  key: meilisearchHost
+            - name: MEILISEARCH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-search-secrets
+                  key: meilisearchApiKey
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+          readinessProbe:
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 20

@@ -1,0 +1,7 @@
+namespace: lootlog-dev
+resources:
+  - ../../base/auth
+images:
+  - name: kamilwronka7/lootlog-auth
+    newTag: dev-ae9117b0728166653ce2c77873d3c9c30b910e33
+namePrefix: dev-

@@ -1,10 +1,10 @@
-import { PageHeader } from "components/layout/page-header";
-import { ScrollArea } from "components/ui/scroll-area";
-import { SidebarTrigger } from "components/ui/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "components/ui/tabs";
-import { GeneralSettings } from "screens/settings/components/general-settings/general-settings";
-import { LootlogSettings } from "screens/settings/components/lootlog-settings/lootlog-settings";
-import { RolesSettings } from "screens/settings/components/roles-settings/roles-settings";
+import { PageHeader } from "@/components/layout/page-header";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GeneralSettings } from "@/screens/settings/components/general-settings/general-settings";
+import { LootlogSettings } from "@/screens/settings/components/lootlog-settings/lootlog-settings";
+import { RolesSettings } from "@/screens/settings/components/roles-settings/roles-settings";
 
 enum TabKey {
   GENERAL = "general",
@@ -61,12 +61,12 @@ export const Settings: React.FC = () => {
         <PageHeader>
           <div className="flex flex-row gap-2">
             <SidebarTrigger />
-            <h1 className="font-semibold text-xl p-0">Ustawienia</h1>
+            <h1 className="font-semibold p-0">Ustawienia</h1>
           </div>
         </PageHeader>
         <Tabs defaultValue={TabKey.GENERAL} className="w-full">
           <div className="border-b p-2">
-            <TabsList className="gap-4">
+            <TabsList className="gap-4 bg-transparent">
               {TABS_LIST.map((tab) => {
                 return tab.trigger;
               })}

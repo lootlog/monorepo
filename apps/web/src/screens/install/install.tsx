@@ -1,6 +1,6 @@
-import { ADDON_INSTALL_URL } from "config/addon";
-import { PageHeader } from "components/layout/page-header";
-import { SidebarTrigger } from "components/ui/sidebar";
+import { ADDON_INSTALL_URL } from "@/config/addon";
+import { PageHeader } from "@/components/layout/page-header";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export const Install: React.FC = () => {
   return (

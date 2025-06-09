@@ -1,15 +1,15 @@
 import { Routes, Route } from "react-router-dom";
-import { Home } from "../screens/home/home";
-import { Guild } from "../screens/guild/guild";
-import { GuildLayout } from "components/layout/guild-layout";
-import { Init } from "screens/init/init";
-import { Timers } from "screens/timers/timers";
-import { Reservations } from "screens/reservations/reservations";
-import { Stats } from "screens/stats/stats";
-import { Install } from "screens/install/install";
-import { Settings } from "screens/settings/settings";
-import { Layout } from "components/layout/layout";
-import { SignIn } from "screens/signin/signin";
+import { GuildLayout } from "@/components/layout/guild-layout";
+import { Init } from "@/screens/init/init";
+import { Timers } from "@/screens/timers/timers";
+import { Reservations } from "@/screens/reservations/reservations";
+import { Stats } from "@/screens/stats/stats";
+import { Install } from "@/screens/install/install";
+import { Settings } from "@/screens/settings/settings";
+import { Layout } from "@/components/layout/layout";
+import { SignIn } from "@/screens/signin/signin";
+import { Home } from "@/screens/home/home";
+import { Guild } from "@/screens/guild/guild";
 
 export const Navigation = () => {
   return (

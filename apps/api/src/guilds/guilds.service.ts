@@ -5,7 +5,7 @@ import {
   NotFoundException,
   forwardRef,
 } from '@nestjs/common';
-import { Permission } from '@prisma/client';
+import { Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
 import { DeleteGuildDto } from 'src/guilds/dto/delete-guild.dto';

@@ -4,11 +4,11 @@ import {
   CardFooter,
   CardHeader,
 } from "@lootlog/ui/components/card";
-import { Loot } from "hooks/api/use-loots";
-import { ItemTile } from "screens/guild/components/loots-list/item-tile";
-import { PlayerTile } from "screens/guild/components/loots-list/player-tile";
-import { cn } from "utils/cn";
-import { timestampToDate } from "utils/date/parse-timestamp-to-date";
+import { Loot } from "@/hooks/api/use-loots";
+import { ItemTile } from "@/screens/guild/components/loots-list/item-tile";
+import { PlayerTile } from "@/screens/guild/components/loots-list/player-tile";
+import { cn } from "@/utils/cn";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 
 type Props = {
   loot: Loot;
@@ -19,8 +19,8 @@ export const LootsListItem: React.FC<Props> = ({ loot }) => {
   const sortedNpcs = loot.npcs.sort((a, b) => b.wt - a.wt);
 
   return (
-    <li className="py-2 hover:bg-accent group hover:cursor-pointer">
-      <Card className="rounded-none border-none group-hover:bg-accent group-hover:cursor-pointer">
+    <li className="py-2 hover:bg-[#181C25] group hover:cursor-pointer">
+      <Card className="rounded-none border-none group-hover:bg-[#181C25] group-hover:cursor-pointer bg-transparent">
         <CardHeader className="space-y-0 px-4 py-1 flex-wrap flex-col">
           <div className="w-full ">
             {sortedNpcs.map((npc, index) => {

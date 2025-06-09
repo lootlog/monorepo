@@ -1,8 +1,8 @@
 export interface Hero {
-  d: HeroD;
+  d: GameHero;
 }
 
-export interface HeroD {
+export interface GameHero {
   whoIsHere: string;
   opt: number;
   credits: number;

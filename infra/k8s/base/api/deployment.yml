@@ -11,21 +11,17 @@ spec:
       labels:
         app: api
     spec:
-      imagePullSecrets:
-        - name: regcred
       serviceAccountName: api
       containers:
         - name: api
-          image: lootlog
-          command: ['sh', '-c']
-          args: ['pnpm run start']
+          image: kamilwronka7/lootlog-api:latest
           resources:
             requests:
-              memory: '384Mi'
+              memory: '512Mi'
               cpu: '500m'
             limits:
               memory: '768Mi'
-              cpu: '500m'
+              cpu: '700m'
           ports:
             - name: container-port
               containerPort: 4000
@@ -33,12 +29,44 @@ spec:
             - name: PORT
               value: '4000'
             - name: ENV
-              value: dev
+              valueFrom:
+                secretKeyRef:
+                  key: env
+                  name: lootlog-api-secrets
+            - name: POSTGRESQL_CONNECTION_URI
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-api-secrets
+                  key: postgresqlConnectionUri
+            - name: AXIOM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-api-secrets
+                  key: axiomToken
+            - name: AXIOM_DATASET
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-api-secrets
+                  key: axiomDataset
             - name: RABBITMQ_URI
               valueFrom:
                 secretKeyRef:
-                  name: lootlog-dev-secret
+                  name: lootlog-api-secrets
                   key: rabbitmqUri
+            - name: REDIS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-api-secrets
+                  key: redisUsername
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-api-secrets
+                  key: redisPassword
+            - name: REDIS_HOST
+              value: redis-master
+            - name: REDIS_PORT
+              value: '6379'
 
           livenessProbe:
             httpGet:
@@ -47,5 +75,5 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 4000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 20

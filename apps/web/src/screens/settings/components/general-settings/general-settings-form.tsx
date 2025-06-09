@@ -9,14 +9,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "components/ui/form";
-import { Input } from "components/ui/input";
-import { useToast } from "components/ui/use-toast";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@lootlog/ui/components/button";
-import { useGuild } from "hooks/api/use-guild";
-import { generateSlug } from "utils/generate-slug";
-import { cn } from "utils/cn";
-import { useUpdateGuild } from "hooks/api/use-update-guild";
+import { useGuild } from "@/hooks/api/use-guild";
+import { generateSlug } from "@/utils/generate-slug";
+import { cn } from "@/utils/cn";
+import { useUpdateGuild } from "@/hooks/api/use-update-guild";
 import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({

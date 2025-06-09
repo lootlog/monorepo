@@ -11,7 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "components/ui/form";
+} from "@/components/ui/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FC } from "react";
 import {
@@ -22,11 +22,11 @@ import {
   DialogTrigger,
 } from "@lootlog/ui/components/dialog";
 import { useTranslation } from "react-i18next";
-import { useDisclosure } from "hooks/use-disclosure";
-import { useToast } from "components/ui/use-toast";
-import { GuildRole } from "hooks/api/use-guild-roles";
-import { useUpdateGuildRole } from "hooks/api/use-update-guild-role";
-import { Permission } from "hooks/api/use-guild-permissions";
+import { useDisclosure } from "@/hooks/use-disclosure";
+import { useToast } from "@/components/ui/use-toast";
+import { GuildRole } from "@/hooks/api/use-guild-roles";
+import { useUpdateGuildRole } from "@/hooks/api/use-update-guild-role";
+import { Permission } from "@/hooks/api/use-guild-permissions";
 
 type RolesSettingsFormProps = {
   role: GuildRole;

@@ -1,0 +1,7 @@
+namespace: lootlog-prod
+resources:
+  - ../../base/discord-bot
+images:
+  - name: kamilwronka7/lootlog-discord-bot
+    newTag: prod-latest
+namePrefix: prod-

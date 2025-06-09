@@ -1,4 +1,4 @@
-import { useGuildId } from "hooks/use-guild-id";
+import { useGuildId } from "@/hooks/use-guild-id";
 import React, { createContext } from "react";
 import { useLocalStorage } from "usehooks-ts";
 

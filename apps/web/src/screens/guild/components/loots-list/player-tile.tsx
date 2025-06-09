@@ -3,9 +3,9 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "components/ui/tooltip";
-import { MARGONEM_CDN_CHARACTERS_URL } from "constants/margonem";
-import { Player } from "hooks/api/use-guild-players";
+} from "@/components/ui/tooltip";
+import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { Player } from "@/hooks/api/use-guild-players";
 
 import { FC } from "react";
 

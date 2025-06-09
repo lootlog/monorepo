@@ -1,16 +1,16 @@
-import { parseItemStats } from "utils/item-tips/parse-item-stats";
+import { parseItemStats } from "@/utils/item-tips/parse-item-stats";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "components/ui/tooltip";
-import { Item, ItemRarity } from "hooks/api/use-loots";
+} from "@/components/ui/tooltip";
+import { Item, ItemRarity } from "@/hooks/api/use-loots";
 import { FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { ItemImage } from "screens/guild/components/loots-list/item-image";
-import { cn } from "utils/cn";
-import { mapStatsToDisplayValues } from "utils/item-tips/map-stats-to-display-values";
+import { ItemImage } from "@/screens/guild/components/loots-list/item-image";
+import { cn } from "@/utils/cn";
+import { mapStatsToDisplayValues } from "@/utils/item-tips/map-stats-to-display-values";
 
 type ItemTileProps = {
   item: Item;
