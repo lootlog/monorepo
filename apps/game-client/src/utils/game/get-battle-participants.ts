@@ -1,3 +1,4 @@
+import { Game } from "@/lib/game";
 import { W } from "@/types/margonem/game-events/f";
 
 export type PartyMember = {
@@ -24,29 +25,21 @@ export type KilledNpc = {
 
 export const getBattleParticipants = (
   initialParticipants: W | null,
-  endParticipants: W | null,
-  newInterface: boolean
+  endParticipants: W | null
 ) => {
   if (!initialParticipants) return { party: [], npcs: [] };
 
   const { party, npcs } = Object.entries(initialParticipants).reduce(
     (acc: { npcs: KilledNpc[]; party: PartyMember[] }, [key, value]) => {
-      if (
-        key ===
-        (newInterface
-          ? window.Engine.hero.d.id.toString()
-          : window.hero.id.toString())
-      ) {
+      if (key === Game.hero.id.toString()) {
         acc.party.push({
-          id: newInterface ? window.Engine.hero.d.id : window.hero.id,
-          name: newInterface ? window.Engine.hero.d.nick : window.hero.nick,
-          icon: newInterface ? window.Engine.hero.d.img : window.hero.img,
+          id: Game.hero.id,
+          name: Game.hero.nick,
+          icon: Game.hero.img,
           hpp: value.hpp,
-          prof: newInterface ? window.Engine.hero.d.prof : window.hero.prof,
-          lvl: newInterface ? window.Engine.hero.d.lvl : window.hero.lvl,
-          accountId: newInterface
-            ? window.Engine.hero.d.account
-            : window.hero.account,
+          prof: Game.hero.prof,
+          lvl: Game.hero.lvl,
+          accountId: Game.hero.account,
         });
 
         return acc;
@@ -54,9 +47,7 @@ export const getBattleParticipants = (
 
       if (key.startsWith("-")) {
         const hpp = endParticipants?.[key.replace("-", "")]?.hpp ?? 0;
-        const npcData = newInterface
-          ? window.Engine.npcs.getById(value.originalId).d
-          : window.g.npc[value.originalId];
+        const npcData = Game.getNpc(value.originalId);
 
         if (!npcData) {
           acc.npcs.push({
@@ -67,7 +58,7 @@ export const getBattleParticipants = (
             prof: value.prof,
             lvl: value.lvl,
             wt: value.wt,
-            location: newInterface ? window.Engine.map.d.name : window.map.name,
+            location: Game.map.name,
             type: value.type ?? 2,
           });
 
@@ -82,21 +73,14 @@ export const getBattleParticipants = (
           prof: npcData.prof,
           lvl: npcData.lvl,
           wt: npcData.wt,
-          location: newInterface ? window.Engine.map.d.name : window.map.name,
+          location: Game.map.name,
           type: npcData.type,
         });
 
         return acc;
       }
 
-      let other;
-      if (newInterface) {
-        const othersData = window.Engine.others.check();
-        other = othersData[key]?.d;
-      } else {
-        other = window.g.other[key];
-      }
-
+      let other = Game.getOther(key);
       if (other) {
         acc.party.push({
           id: +other.id,

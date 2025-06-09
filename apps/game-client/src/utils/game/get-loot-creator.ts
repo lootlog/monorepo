@@ -1,9 +1,7 @@
-import { useGlobalStore } from "@/store/global.store";
+import { Game } from "@/lib/game";
 
 export const getLootCreator = () => {
-  const { gameInterface } = useGlobalStore((state) => state.gameState);
-  const { id, lvl, account, prof, img, nick } =
-    gameInterface === "ni" ? window.Engine.hero.d : window.hero.d;
+  const { id, lvl, account, prof, img, nick } = Game.hero;
 
   return {
     id,

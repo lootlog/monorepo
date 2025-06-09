@@ -1,4 +1,4 @@
-export type OtherD = {
+export type GameOther = {
   account: number;
   icon: string;
   id: string;
@@ -8,11 +8,11 @@ export type OtherD = {
 };
 
 export type Other = {
-  d: OtherD;
+  d: GameOther;
 };
 
 export type OldOtherMap = {
-  [key: string]: OtherD;
+  [key: string]: GameOther;
 };
 
 export type OtherMap = {
