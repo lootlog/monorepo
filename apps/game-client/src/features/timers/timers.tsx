@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 
 type TimerWithTimeLeft = Timer & { timeLeft: number };
 
-const normalModeBreakpoints = [220, 380, 540, 800];
+const normalModeBreakpoints = [220, 300, 440, 580];
 const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
 
 export const Timers = () => {
@@ -172,20 +172,20 @@ export const Timers = () => {
       >
         <span
           ref={containerRef}
-          className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1"
+          className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
         >
-          <ScrollArea className="ll-h-full ll-py-1" type="scroll">
+          {filtered?.length === 0 && (
+            <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
+              ----
+            </span>
+          )}
+          <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
             <span
               className="ll-grid ll-gap-0.5 ll-box-border"
               style={{
                 gridTemplateColumns: `repeat(${columns}, 1fr)`,
               }}
             >
-              {filtered?.length === 0 && (
-                <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
-                  ----
-                </span>
-              )}
               {filtered?.map((timer) => (
                 <SingleTimer
                   key={timer.npc.id}
@@ -196,6 +196,7 @@ export const Timers = () => {
               ))}
             </span>
           </ScrollArea>
+
           <TimerTile>
             <PlusIcon color="white" height={16} width={16} />
           </TimerTile>
