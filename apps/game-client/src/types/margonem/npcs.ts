@@ -1,8 +1,8 @@
 export type Npc = {
-  d: NpcD;
+  d: GameNpc;
 };
 
-export type NpcD = {
+export type GameNpc = {
   icon: string;
   id: number;
   tpl: number;
@@ -23,7 +23,7 @@ export type NpcMap = {
 };
 
 export type OldNpcMap = {
-  [key: string]: NpcD;
+  [key: string]: GameNpc;
 };
 
 export type Npcs = {

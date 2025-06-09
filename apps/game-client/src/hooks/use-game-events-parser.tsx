@@ -1,9 +1,10 @@
 import { useCreateLoot } from "@/hooks/api/use-create-loot";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
+import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
 import { W } from "@/types/margonem/game-events/f";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { HeroD } from "@/types/margonem/hero";
+import { GameHero } from "@/types/margonem/hero";
 import { checkIfNpcIsWithinRange } from "@/utils/game/check-if-npc-within-range";
 import {
   getBattleParticipants,
@@ -105,14 +106,13 @@ export const useGameEventsParser = () => {
       if (loots.length > 0) {
         const { npcs, party } = getBattleParticipants(
           pendingBattle.current,
-          event.f.w,
-          isNewInterface
+          event.f.w
         );
 
         const payload = {
           world,
           source: event.loot.source.toUpperCase(),
-          location: isNewInterface ? window.Engine.map.d.name : window.map.name,
+          location: Game.map.name,
           npcs,
           loots,
           players: party,
@@ -133,9 +133,7 @@ export const useGameEventsParser = () => {
       const loots = getLoot(event.item);
       if (loots.length > 0) {
         const npcs = event.npcs_del.reduce((acc: KilledNpc[], npc) => {
-          const npcData = isNewInterface
-            ? window.Engine.npcs.getById(npc.id)?.d
-            : window.g.npc[npc.id];
+          const npcData = Game.getNpc(npc.id);
           if (!npcData) return acc;
 
           if (npcData) {
@@ -148,9 +146,7 @@ export const useGameEventsParser = () => {
               wt: npcData.wt,
               lvl: npcData.lvl,
               name: npcData.nick,
-              location: isNewInterface
-                ? window.Engine.map.d.name
-                : window.map.name,
+              location: Game.map.name,
             });
           }
 
@@ -166,7 +162,7 @@ export const useGameEventsParser = () => {
             warrior_stats: { hp, maxhp },
             lvl,
             account,
-          } = isNewInterface ? window.Engine.hero.d : window.hero;
+          } = Game.hero;
 
           const players = [
             {
@@ -183,9 +179,7 @@ export const useGameEventsParser = () => {
           const payload = {
             world,
             source: event.loot.source.toUpperCase(),
-            location: isNewInterface
-              ? window.Engine.map.d.name
-              : window.map.name,
+            location: Game.map.name,
             loots,
             npcs,
             players,
@@ -201,9 +195,7 @@ export const useGameEventsParser = () => {
     if (event.item && event.loot && event.loot.source === "dialog") {
       const loots = getLoot(event.item);
       if (loots.length > 0 && talkingNpcId.current) {
-        const npcData = isNewInterface
-          ? window.Engine.npcs.getById(+talkingNpcId.current)?.d
-          : window.g.npc[+talkingNpcId.current];
+        const npcData = Game.getNpc(+talkingNpcId.current);
 
         if (npcData) {
           const {
@@ -214,7 +206,7 @@ export const useGameEventsParser = () => {
             warrior_stats: { hp, maxhp },
             lvl,
             account,
-          } = isNewInterface ? window.Engine.hero.d : window.hero;
+          } = Game.hero;
 
           const players = [
             {
@@ -231,9 +223,7 @@ export const useGameEventsParser = () => {
           const payload = {
             world,
             source: event.loot.source.toUpperCase(),
-            location: isNewInterface
-              ? window.Engine.map.d.name
-              : window.map.name,
+            location: Game.map.name,
             loots,
             npcs: [
               {
@@ -245,9 +235,7 @@ export const useGameEventsParser = () => {
                 wt: npcData.wt,
                 lvl: npcData.lvl,
                 name: npcData.nick,
-                location: isNewInterface
-                  ? window.Engine.map.d.name
-                  : window.map.name,
+                location: Game.map.name,
               },
             ],
             players,
@@ -262,14 +250,11 @@ export const useGameEventsParser = () => {
 
     if (event.npcs_del) {
       event.npcs_del.forEach((npc) => {
-        const npcData = isNewInterface
-          ? window.Engine.npcs.getById(npc.id)?.d
-          : window.g.npc[npc.id];
+        const npcData = Game.getNpc(npc.id);
         if (!npcData) return;
 
         const isWithinRange = checkIfNpcIsWithinRange(
-          npcData as unknown as HeroD,
-          isNewInterface
+          npcData as unknown as GameHero
         );
 
         if (!isWithinRange) {
@@ -297,9 +282,7 @@ export const useGameEventsParser = () => {
             type: npcData.type,
             lvl: npcData.lvl,
             name: npcData.nick,
-            location: isNewInterface
-              ? window.Engine.map.d.name
-              : window.map.name,
+            location: Game.map.name,
           },
         };
 
