@@ -5,13 +5,13 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { TimerTile } from "@/features/timers/components/timer-tile";
-import { Timer, useTimers } from "@/hooks/api/use-timers";
+import { Timer } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { format } from "date-fns";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect } from "react";
 
 type SingleTimerProps = {
   timer: Timer;
@@ -21,30 +21,12 @@ type SingleTimerProps = {
 };
 
 const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
-  TITAN: {
-    shortname: "T",
-    longname: "tytan",
-  },
-  COLOSSUS: {
-    shortname: "K",
-    longname: "kolos",
-  },
-  HERO: {
-    shortname: "H",
-    longname: "heros",
-  },
-  ELITE3: {
-    shortname: "E3",
-    longname: "elita III",
-  },
-  ELITE2: {
-    shortname: "E2",
-    longname: "elita II",
-  },
-  ELITE: {
-    shortname: "E",
-    longname: "elita",
-  },
+  TITAN: { shortname: "T", longname: "tytan" },
+  COLOSSUS: { shortname: "K", longname: "kolos" },
+  HERO: { shortname: "H", longname: "heros" },
+  ELITE3: { shortname: "E3", longname: "elita III" },
+  ELITE2: { shortname: "E2", longname: "elita II" },
+  ELITE: { shortname: "E", longname: "elita" },
 };
 
 export const COLORS = {
@@ -84,23 +66,22 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     // @ts-ignore
     $(`#${timer.npc.id}`).tip(`
       <span class="elite_timer_tip_name">
-      <b>${timer.npc.name}</b>
+        <b>${timer.npc.name}</b>
       </span>
       <i>${NPC_NAMES[timer.npc.type].longname}</i>
       <br />
       <span class="elite_timer_tip_date">
-      Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+        Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
       <br />
       <span class="elite_timer_tip_date">
-      Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+        Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
     `);
-  }, []);
+  }, [timer.npc.id, timer.npc.name, timer.minSpawnTime, timer.maxSpawnTime]);
 
   const handleHideTimer = () => {
     if (!accountId || !characterId) return;
-
     addHiddenTimer(accountId, characterId, timer.npc.name);
   };
 
@@ -111,7 +92,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       removePinnedTimer(accountId, characterId, timer.npc.name);
       return;
     }
-
     addPinnedTimer(accountId, characterId, timer.npc.name);
   };
 
@@ -130,14 +110,15 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger>
+      <ContextMenuTrigger className="ll-h-full">
         <TimerTile
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof COLORS}
+          className="ll-h-full"
         >
           <span
             className={cn(
-              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border  ll-text-nowrap",
+              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border ll-h-full",
               {
                 "ll-text-red-500": hasPassedRedThreshold,
                 "ll-text-orange-400": isMinSpawnTime,
@@ -147,40 +128,38 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               }
             )}
           >
-            <div
+            <span
               className={cn({
-                "ll-text-[10px] ll-text-center": compactMode,
+                "ll-text-[10px] ll-text-center ll-h-full ll-flex ll-justify-center ll-items-center":
+                  compactMode,
               })}
             >
               {shortname} {timer.npc.name}
-            </div>
+            </span>
             <div
-              className={cn({
-                "ll-text-[10px] ll-text-center": compactMode,
-              })}
+              className={cn({ "ll-text-[10px] ll-text-center": compactMode })}
             >
               {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
             </div>
           </span>
         </TimerTile>
       </ContextMenuTrigger>
-      <ContextMenuContent className="ll-w-32 ll-flex">
+
+      <ContextMenuContent className="ll-w-32 ll-flex ll-flex-col">
         <div className="ll-flex ll-gap-1 ll-my-1.5 ll-w-full ll-justify-center">
-          {Object.entries(COLORS).map(([id, color]) => {
-            return (
-              <div
-                key={id}
-                className={cn(
-                  "ll-size-3 ll-rounded-full ll-border-2 ll-box-border ll-border-transparent ll-custom-cursor-pointer",
-                  color.bg,
-                  {
-                    "ll-border-solid ll-border-gray-50": selectedColor === id,
-                  }
-                )}
-                onClick={() => handleTimerColorChange(id)}
-              />
-            );
-          })}
+          {Object.entries(COLORS).map(([id, color]) => (
+            <div
+              key={id}
+              className={cn(
+                "ll-size-3 ll-rounded-full ll-border-2 ll-box-border ll-border-transparent ll-custom-cursor-pointer",
+                color.bg,
+                {
+                  "ll-border-solid ll-border-gray-50": selectedColor === id,
+                }
+              )}
+              onClick={() => handleTimerColorChange(id)}
+            />
+          ))}
         </div>
         <ContextMenuItem onClick={handlePinTimer}>
           {isPinned ? "Odepnij" : "Przypnij"}
