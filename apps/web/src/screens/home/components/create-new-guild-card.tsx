@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@lootlog/ui/components/card";
-import { useGlobalContext } from "hooks/use-global-context";
+import { useGlobalContext } from "@/hooks/use-global-context";
 
 export const CreateNewGuildCard: React.FC = () => {
   const { createGuildModal } = useGlobalContext();

@@ -1,9 +1,9 @@
-import { ScrollArea } from "components/ui/scroll-area";
-import { Skeleton } from "components/ui/skeleton";
-import { NpcType } from "hooks/api/use-npcs";
-import { useTimers } from "hooks/api/use-timers";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { NpcType } from "@/hooks/api/use-npcs";
+import { useTimers } from "@/hooks/api/use-timers";
 import { groupBy } from "lodash";
-import { SingleTimer } from "screens/guild/components/timers/single-timer";
+import { SingleTimer } from "@/screens/guild/components/timers/single-timer";
 
 const SORT_ORDER = [
   NpcType.TITAN,

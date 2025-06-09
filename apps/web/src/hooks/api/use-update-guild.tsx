@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
-import { useApiClient } from "hooks/api/use-api-client";
-import { Guild } from "hooks/api/use-guild";
-import { useGuildId } from "hooks/use-guild-id";
+import { useApiClient } from "@/hooks/api/use-api-client";
+import { Guild } from "@/hooks/api/use-guild";
+import { useGuildId } from "@/hooks/use-guild-id";
 
 type UpdateGuildConfigOptions = {
   vanityUrl: string | null;

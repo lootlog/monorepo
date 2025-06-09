@@ -10,7 +10,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "components/ui/form";
+} from "@/components/ui/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FC } from "react";
 import {
@@ -21,12 +21,12 @@ import {
   DialogTrigger,
 } from "@lootlog/ui/components/dialog";
 import { useTranslation } from "react-i18next";
-import { LootlogConfigNpc } from "hooks/api/use-guild-lootlog-settings";
-import { ItemRarity } from "hooks/api/use-loots";
-import { cn } from "utils/cn";
-import { useUpdateGuildLootlogNpc } from "hooks/api/use-update-guild-lootlog-npc";
-import { useDisclosure } from "hooks/use-disclosure";
-import { useToast } from "components/ui/use-toast";
+import { LootlogConfigNpc } from "@/hooks/api/use-guild-lootlog-settings";
+import { ItemRarity } from "@/hooks/api/use-loots";
+import { cn } from "@/utils/cn";
+import { useUpdateGuildLootlogNpc } from "@/hooks/api/use-update-guild-lootlog-npc";
+import { useDisclosure } from "@/hooks/use-disclosure";
+import { useToast } from "@/components/ui/use-toast";
 
 type LootlogSettingsFormProps = {
   npc: LootlogConfigNpc;

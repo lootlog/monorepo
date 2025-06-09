@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useApiClient } from "hooks/api/use-api-client";
-import { Permission } from "hooks/api/use-guild-permissions";
+import { useApiClient } from "@/hooks/api/use-api-client";
+import { Permission } from "@/hooks/api/use-guild-permissions";
 
-import { useGuildId } from "hooks/use-guild-id";
+import { useGuildId } from "@/hooks/use-guild-id";
 
 type UpdateGuildRoleOptions = {
   roleId: string;

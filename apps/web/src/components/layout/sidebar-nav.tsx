@@ -1,11 +1,11 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Separator } from "components/ui/separator";
-import { useSidebar } from "components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   Permission,
   useGuildPermissions,
-} from "hooks/api/use-guild-permissions";
-import { useGuildId } from "hooks/use-guild-id";
+} from "@/hooks/api/use-guild-permissions";
+import { useGuildId } from "@/hooks/use-guild-id";
 import {
   BarChart4,
   CalendarClock,
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { FC, Fragment, ReactElement, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "utils/cn";
+import { cn } from "@/utils/cn";
 
 type MenuItem = {
   label: string;
@@ -99,7 +99,7 @@ export const SidebarNav: FC = () => {
                   to={url}
                   key={path}
                   onClick={(e) => {
-                    !available && e.preventDefault();
+                    if (!available) e.preventDefault();
                     setOpenMobile(false);
                   }}
                   className={cn({

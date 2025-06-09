@@ -1,5 +1,5 @@
-import { useGuild } from "hooks/api/use-guild";
-import { GeneralSettingsForm } from "screens/settings/components/general-settings/general-settings-form";
+import { useGuild } from "@/hooks/api/use-guild";
+import { GeneralSettingsForm } from "@/screens/settings/components/general-settings/general-settings-form";
 
 export const GeneralSettings = () => {
   const { data: guild } = useGuild({});

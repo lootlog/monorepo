@@ -1,5 +1,5 @@
-import { FullScreenLoading } from "components/ui/full-screen-loading";
-import { useGuild } from "hooks/api/use-guild";
+import { FullScreenLoading } from "@/components/ui/full-screen-loading";
+import { useGuild } from "@/hooks/api/use-guild";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 

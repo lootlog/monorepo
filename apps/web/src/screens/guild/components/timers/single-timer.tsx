@@ -1,11 +1,15 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "components/ui/tooltip";
-import { MARGONEM_CDN_NPCS_URL } from "constants/margonem";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { format } from "date-fns";
-import { Timer, useTimers } from "hooks/api/use-timers";
+import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { FC, useEffect, useState } from "react";
-import { cn } from "utils/cn";
-import { parseMsToTime } from "utils/date/parse-ms-to-time";
+import { cn } from "@/utils/cn";
+import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 
 type SingleTimerProps = {
   timer: Timer;

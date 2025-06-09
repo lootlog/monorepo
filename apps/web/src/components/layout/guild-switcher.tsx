@@ -1,6 +1,10 @@
 import * as React from "react";
 import { CaretSortIcon, PlusCircledIcon } from "@radix-ui/react-icons";
-import { Popover, PopoverContent, PopoverTrigger } from "components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Avatar,
@@ -16,13 +20,13 @@ import {
   CommandList,
   CommandSeparator,
 } from "@lootlog/ui/components/command";
-import { cn } from "utils/cn";
-import { useGuilds } from "hooks/api/use-guilds";
-import { useGuild } from "hooks/api/use-guild";
-import { useGuildId } from "hooks/use-guild-id";
+import { cn } from "@/utils/cn";
+import { useGuilds } from "@/hooks/api/use-guilds";
+import { useGuild } from "@/hooks/api/use-guild";
+import { useGuildId } from "@/hooks/use-guild-id";
 import { useNavigate } from "react-router-dom";
-import { CreateGuildModal } from "components/common/create-guild-modal/create-guild-modal";
-import { useGlobalContext } from "hooks/use-global-context";
+import { CreateGuildModal } from "@/components/common/create-guild-modal/create-guild-modal";
+import { useGlobalContext } from "@/hooks/use-global-context";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger

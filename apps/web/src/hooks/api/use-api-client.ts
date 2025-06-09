@@ -1,5 +1,5 @@
-import { API_URL } from "config/api";
-import { useAuthToken } from "hooks/auth/use-auth-token";
+import { API_URL } from "@/config/api";
+import { useAuthToken } from "@/hooks/auth/use-auth-token";
 import axios from "axios";
 
 export const useApiClient = () => {

@@ -1,10 +1,14 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { CheckIcon, XCircle, ChevronDown, XIcon, Loader2 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@lootlog/ui/components/button";
-import { Badge } from "components/ui/badge";
-import { Separator } from "components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Command,
   CommandEmpty,
@@ -15,8 +19,8 @@ import {
   CommandList,
   CommandSeparator,
 } from "@lootlog/ui/components/command";
-import { ScrollArea } from "components/ui/scroll-area";
-import { cn } from "utils/cn";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/utils/cn";
 
 /**
  * Variants for the multi-select component to handle different styles.

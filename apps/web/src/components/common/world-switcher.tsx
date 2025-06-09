@@ -4,9 +4,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "components/ui/select";
-import { useWorlds } from "hooks/api/use-worlds";
-import { useGuildContext } from "hooks/use-guild-context";
+} from "@/components/ui/select";
+import { useWorlds } from "@/hooks/api/use-worlds";
+import { useGuildContext } from "@/hooks/use-guild-context";
 
 export const WorldSwitcher: React.FC = () => {
   const { data: worlds } = useWorlds();

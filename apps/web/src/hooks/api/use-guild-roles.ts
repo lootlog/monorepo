@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useGuildId } from "hooks/use-guild-id";
-import { Permission } from "hooks/api/use-guild-permissions";
-import { useApiClient } from "hooks/api/use-api-client";
+import { useGuildId } from "@/hooks/use-guild-id";
+import { Permission } from "@/hooks/api/use-guild-permissions";
+import { useApiClient } from "@/hooks/api/use-api-client";
 
 export type GuildRole = {
   id: string;
