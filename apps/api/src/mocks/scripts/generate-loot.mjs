@@ -1,4 +1,5 @@
 import { v6 } from 'uuid';
+import crypto from 'crypto';
 
 import npcs from '../data/npcs.json' with { type: 'json' };
 import items from '../data/items.json' with { type: 'json' };
@@ -16,9 +17,9 @@ const worlds = [
 const sources = ['FIGHT', 'DIALOG'];
 
 const getRandomLootItems = (desiredAmount) => {
-  const amount = Math.floor(Math.random() * desiredAmount) + 1;
+  const amount = crypto.randomInt(1, desiredAmount + 1);
   const loots = Array.from({ length: amount }, () => {
-    const item = items[Math.floor(Math.random() * items.length)];
+    const item = items[crypto.randomInt(0, items.length)];
 
     return {
       ...item,
@@ -30,25 +31,25 @@ const getRandomLootItems = (desiredAmount) => {
 };
 
 const getRandomNpc = () => {
-  return npcs[Math.floor(Math.random() * npcs.length)];
+  return npcs[crypto.randomInt(0, npcs.length)];
 };
 
 const getRandomPlayers = (desiredAmount = 10) => {
-  const amount = Math.floor(Math.random() * desiredAmount) + 1;
+  const amount = crypto.randomInt(1, desiredAmount + 1);
   return Array.from({ length: amount }, () => {
-    return players[Math.floor(Math.random() * players.length)];
+    return players[crypto.randomInt(0, players.length)];
   });
 };
 
 const generateLootPayload = () => {
-  const source = sources[Math.floor(Math.random() * sources.length)];
+  const source = sources[crypto.randomInt(0, sources.length)];
   const loots =
     source === 'FIGHT' ? getRandomLootItems(10) : getRandomLootItems(1);
 
   const npc = getRandomNpc();
   const players =
     source === 'FIGHT' ? getRandomPlayers(10) : getRandomPlayers(1);
-  const world = worlds[Math.floor(Math.random() * worlds.length)];
+  const world = worlds[crypto.randomInt(0, worlds.length)];
 
   return {
     npcs: [{ ...npc, location: npc.location ?? 'random location' }],
@@ -69,7 +70,7 @@ const generateLootPayload = () => {
       prof: player.prof,
       icon: player.icon,
       accountId: player.originalId,
-      hpp: Math.floor(Math.random() * 100),
+      hpp: crypto.randomInt(0, 100),
     })),
     world,
     source,
