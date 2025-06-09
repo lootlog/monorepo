@@ -17,7 +17,7 @@
     "build": {
       "dependsOn": ["^build", "api:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": []
+      "outputs": [".next/**", "!.next/cache/**"]
     },
     "build:game-client": {},
     "lint": {
