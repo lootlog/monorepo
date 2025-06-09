@@ -20,7 +20,7 @@ export const LootsListItem: React.FC<Props> = ({ loot }) => {
 
   return (
     <li className="py-2 hover:bg-accent group hover:cursor-pointer">
-      <Card className="rounded-none border-none group-hover:bg-accent group-hover:cursor-pointer">
+      <Card className="rounded-none border-none group-hover:bg-accent group-hover:cursor-pointer bg-transparent">
         <CardHeader className="space-y-0 px-4 py-1 flex-wrap flex-col">
           <div className="w-full ">
             {sortedNpcs.map((npc, index) => {
