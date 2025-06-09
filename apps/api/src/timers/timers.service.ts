@@ -1,11 +1,14 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Permission, Timer } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { PrismaService } from 'src/db/prisma.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
-import { MIN_SPAWN_OFFSET } from 'src/timers/constants/min-spawn-offset.constant';
 import { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
 import { ErrorKey } from 'src/timers/enum/error-key.enum';
 import { RoutingKey } from 'src/timers/enum/routing-key.enum';
@@ -23,21 +26,33 @@ export class TimersService {
     private readonly userLootlogConfigService: UserLootlogConfigService,
   ) {}
 
-  async createTimer(discordId: string, guildId: string, data: CreateTimerDto) {
+  async createTimer(discordId: string, data: CreateTimerDto) {
     const now = new Date();
-    const config =
-      await this.userLootlogConfigService.getLootlogCharacterConfig(
-        discordId,
-        data.accountId,
-        data.characterId,
-      );
-
-    if (config?.addTimersBlacklistGuildIds?.includes(guildId)) {
-      return { message: ErrorKey.BLACKLISTED_GUILD };
-    }
 
     if (data.npc.wt < 19)
       throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
+
+    const [guilds, config] = await Promise.all([
+      this.guildsService.getGuildsForRequiredPermissions(discordId, [
+        Permission.LOOTLOG_WRITE,
+      ]),
+      this.userLootlogConfigService.getLootlogCharacterConfig(
+        discordId,
+        data.accountId,
+        data.characterId,
+      ),
+    ]);
+
+    if (guilds.length === 0) {
+      throw new ForbiddenException();
+    }
+
+    const filteredGuilds = guilds.filter((guild) => {
+      const isOnBlacklist = config?.addTimersBlacklistGuildIds?.includes(
+        guild.id,
+      );
+      return !isOnBlacklist;
+    });
 
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
       data.respBaseSeconds,
@@ -45,105 +60,69 @@ export class TimersService {
       now,
     );
 
-    const existingTimer = await this.prisma.timer.findFirst({
-      where: {
-        guildId,
-        world: data.world,
-        npcId: data.npc.id,
-        maxSpawnTime: { gt: now.toISOString() },
-      },
-    });
-
-    if (existingTimer) {
-      if (
-        existingTimer.minSpawnTime.getTime() >=
-        now.getTime() + MIN_SPAWN_OFFSET
-      ) {
-        throw new BadRequestException({ message: ErrorKey.EXISTING_TIMER });
-      }
-
-      const updatedTimer = await this.prisma.timer.update({
+    const newTimers = filteredGuilds.map((guild) => {
+      return {
         where: {
           timerId: {
-            guildId,
-            world: existingTimer.world,
-            npcId: existingTimer.npcId,
+            guildId: guild.id,
+            world: data.world,
+            npcId: data.npc.id,
           },
         },
-        data: {
-          minSpawnTime,
+        create: {
           maxSpawnTime,
+          minSpawnTime,
+          world: data.world,
+          npcId: data.npc.id,
+          guild: {
+            connect: {
+              id: guild.id,
+            },
+          },
           member: {
             connect: {
               memberId: {
                 userId: discordId,
-                guildId,
+                guildId: guild.id,
+              },
+            },
+          },
+          npc: {
+            id: data.npc.id,
+            name: data.npc.name,
+            prof: getProfByShortname(data.npc.prof),
+            location: data.npc.location,
+            wt: data.npc.wt,
+            lvl: data.npc.lvl,
+            type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
+            icon: data.npc.icon,
+            margonemType: data.npc.type,
+          },
+        },
+        update: {
+          maxSpawnTime,
+          minSpawnTime,
+          member: {
+            connect: {
+              memberId: {
+                userId: discordId,
+                guildId: guild.id,
               },
             },
           },
         },
-      });
-
-      this.emitTimer(updatedTimer);
-
-      return updatedTimer;
-    }
-
-    const newTimer = await this.prisma.timer.upsert({
-      where: {
-        timerId: {
-          guildId,
-          world: data.world,
-          npcId: data.npc.id,
-        },
-      },
-      create: {
-        maxSpawnTime,
-        minSpawnTime,
-        world: data.world,
-        npcId: data.npc.id,
-        guild: {
-          connect: {
-            id: guildId,
-          },
-        },
-        member: {
-          connect: {
-            memberId: {
-              userId: discordId,
-              guildId,
-            },
-          },
-        },
-        npc: {
-          id: data.npc.id,
-          name: data.npc.name,
-          prof: getProfByShortname(data.npc.prof),
-          location: data.npc.location,
-          wt: data.npc.wt,
-          lvl: data.npc.lvl,
-          type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
-          icon: data.npc.icon,
-          margonemType: data.npc.type,
-        },
-      },
-      update: {
-        maxSpawnTime,
-        minSpawnTime,
-        member: {
-          connect: {
-            memberId: {
-              userId: discordId,
-              guildId,
-            },
-          },
-        },
-      },
+      };
     });
 
-    this.emitTimer(newTimer);
+    const newTimersUpsert = await Promise.all(
+      newTimers.map((timer) => this.prisma.timer.upsert(timer)),
+    );
 
-    return newTimer;
+    newTimersUpsert.forEach((newTimer) => {
+      this.emitTimer(newTimer);
+    });
+
+    return;
   }
 
   async getTimers({ world, guildId }: GetTimersDto) {

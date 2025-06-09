@@ -33,14 +33,11 @@ export class TimersController {
     });
   }
 
-  @Permissions(Permission.LOOTLOG_WRITE)
-  @UseGuards(PermissionsGuard)
-  @Post('/guilds/:guildId/timers')
+  @Post('/timers')
   async createTimer(
     @Body() data: CreateTimerDto,
-    @GuildData() guild: Guild,
     @DiscordId() discordId: string,
   ) {
-    return this.timersService.createTimer(discordId, guild.id, data);
+    return this.timersService.createTimer(discordId, data);
   }
 }
