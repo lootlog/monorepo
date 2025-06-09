@@ -64,13 +64,15 @@ export const GeneralSettingsTab: FC = () => {
         <label className="ll-font-semibold">
           Czas usunięcia timera po wyzerowaniu (w sekundach):
         </label>
-        <Input
-          type="text"
-          value={inputValue}
-          max={120}
-          onChange={handleRemoveTimerAfterMsChange}
-          className="ll-input ll-w-8 ll-h-[13px] ll-px-1 ll-mt-1"
-        />
+        <div className="ll-w-8">
+          <Input
+            type="text"
+            value={inputValue}
+            max={120}
+            onChange={handleRemoveTimerAfterMsChange}
+            className="ll-input ll-w-8 ll-h-[13px] ll-px-1 ll-mt-1"
+          />
+        </div>
       </div>
     </div>
   );
