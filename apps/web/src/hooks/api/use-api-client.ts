@@ -10,6 +10,7 @@ export const useApiClient = () => {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    withCredentials: true,
   });
 
   return { client: client, isAuthenticated: !!token };
