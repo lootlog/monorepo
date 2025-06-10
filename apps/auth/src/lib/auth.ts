@@ -58,6 +58,10 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
       sameSite: "none",
       secure: true,
     },
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: APP_CONFIG.cookieDomain,
+    },
   },
   plugins: [
     jwt({
