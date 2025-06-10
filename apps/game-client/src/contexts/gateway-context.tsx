@@ -1,15 +1,7 @@
-import React, {
-  createContext,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useEffect, useState } from "react";
 
 import { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
-import { useAuthToken } from "@/hooks/auth/use-auth-token";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { socket } from "@/lib/gateway-client";
 import { useGlobalStore } from "@/store/global.store";
 
@@ -23,40 +15,41 @@ type Props = {
 };
 
 export const GatewayProvider: React.FC<Props> = (props) => {
-  const { data: token } = useAuthToken();
-  const { gameInitialized } = useGlobalStore((state) => state.gameState);
-  const { data: guilds } = useGuilds();
-
-  const [connected, setConnected] = useState(false);
-  const guildIds = useMemo(
-    () => (guilds ? guilds?.map((server) => server.id) : null),
-    [guilds]
+  const { gameInitialized, world, characterName } = useGlobalStore(
+    (state) => state.gameState
   );
 
+  const [connected, setConnected] = useState(false);
+
   const setupBaseListeners = useCallback(async () => {
+    socket.on(GatewayEvent.CONNECT, () => {
+      setConnected(true);
+    });
+
     socket.on(GatewayEvent.DISCONNECT, () => {
       setConnected(false);
     });
+  }, [gameInitialized]);
 
-    await socket.emitWithAck(GatewayEvent.INIT, { token });
-
+  const emitJoin = useCallback(() => {
     socket.emit(GatewayEvent.JOIN, {
-      name: "twoj stary",
-      source: "game",
-      guildIds,
+      name: characterName,
+      world,
     });
-    setConnected(true);
-  }, [token, guildIds, gameInitialized]);
+  }, [world, characterName]);
+
+  useEffect(() => {
+    if (gameInitialized) {
+      setupBaseListeners();
+    }
+  }, [gameInitialized]);
 
   useEffect(() => {
     console.log("Connected to gateway: ", connected);
-  }, [connected]);
-
-  useEffect(() => {
-    if (gameInitialized && token && !connected && guildIds) {
-      setupBaseListeners();
+    if (connected) {
+      emitJoin();
     }
-  }, [gameInitialized, token, connected, guildIds]);
+  }, [connected]);
 
   const value: GatewayProviderValue = {
     socket,

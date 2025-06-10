@@ -1,4 +1,4 @@
-import { Inject, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -8,17 +8,15 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket as SocketIOSocket } from 'socket.io';
-import { InitDto } from 'src/gateway/dto/init.dto';
 import { JoinDto } from 'src/gateway/dto/join.dto';
 import { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
-import { WsUserId } from 'src/shared/decorators/user-id.decorator';
-import { JWK, jwtVerify } from 'jose';
+import { WsDiscordId } from 'src/shared/decorators/user-id.decorator';
 import { ConfigService } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { AuthConfig } from 'src/config/auth.config';
 import { RuntimeEnvironment } from 'src/types/common.types';
+import { GuildsService } from 'src/guilds/guilds.service';
+import { IncomingHttpHeaders } from 'http';
 
 type Socket = SocketIOSocket & { user: any };
 
@@ -30,15 +28,26 @@ type Socket = SocketIOSocket & { user: any };
 })
 export class Gateway {
   constructor(
-    @Inject('JOSE') private jose: { keyset: JWK },
     private configService: ConfigService,
+    private guildsService: GuildsService,
   ) {}
 
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: Socket) {
-    console.log('client connected');
+  async handleConnection(client: Socket) {
+    const { userId } = this.getConnectionMetadata(client.request.headers);
+    console.log('client connected', userId);
+
+    if (!userId) {
+      console.log('No userId found in headers, disconnecting client');
+      return client.disconnect();
+    }
+
+    client.user = {
+      id: userId,
+      sessionId: client.id,
+    };
 
     client.on(GatewayEvent.DISCONNECTING, () => {
       if (client.user) {
@@ -52,49 +61,36 @@ export class Gateway {
     });
   }
 
-  @SubscribeMessage(GatewayEvent.INIT)
-  async handleInit(
+  @SubscribeMessage(GatewayEvent.JOIN)
+  async handleJoin(
+    @WsDiscordId() discordId: string,
     @ConnectedSocket() client: Socket,
-    @MessageBody() { token }: InitDto,
+    @MessageBody() { world, name }: JoinDto,
   ): Promise<any> {
-    const { authAudience, authIssuer } = this.configService.get<AuthConfig>(
-      ConfigKey.AUTH,
-    );
+    const guildIds = await this.guildsService.getUserGuilds(discordId);
 
-    const { payload } = await jwtVerify(token, this.jose.keyset, {
-      issuer: authIssuer,
-      audience: authAudience,
-    });
-
-    if (!payload.discordId) {
-      return client.disconnect();
+    if (guildIds.length === 0) {
+      console.log('No guilds found for user', discordId);
+      return { status: 'error', message: 'No guilds found for user' };
     }
 
-    client.user = {
-      id: payload.discordId,
-      sessionId: client.id,
-      status: UserPresenceStatus.ONLINE,
-    };
-
-    return { status: 'ok' };
-  }
-
-  @SubscribeMessage(GatewayEvent.JOIN)
-  handleJoin(
-    @WsUserId() userId: string,
-    @ConnectedSocket() client: Socket,
-    @MessageBody() { guildIds, source, name }: JoinDto,
-  ): any {
-    console.log('join');
-    console.log('execute can join guild room');
+    console.log('userId', discordId);
+    console.log('guildIds', guildIds);
 
     client.user = {
       ...client.user,
-      name,
-      source,
+      status: UserPresenceStatus.ONLINE,
+      world: world || null,
+      name: name || null,
     };
 
     client.join(guildIds);
+    client.to([...client.rooms]).emit('user-presence-update', {
+      id: client.user.id,
+      status: UserPresenceStatus.ONLINE,
+      world: client.user.world,
+      name: client.user.name,
+    });
 
     return { status: 'ok' };
   }
@@ -102,38 +98,26 @@ export class Gateway {
   @UseFilters(new BaseWsExceptionFilter())
   @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.REQUEST_SERVER_PRESENCE)
-  handlePresenceFetch(
-    @WsUserId() userId: string,
+  async handlePresenceFetch(
     @ConnectedSocket() client: any,
     @MessageBody() { guildId }: RequestServerPresenceDto,
-  ): any {
-    const users = [];
-
-    console.log(client.rooms);
-
+  ): Promise<any> {
     if (!client.rooms.has(guildId)) {
-      return users;
+      return [];
     }
 
-    const clients = this.server.sockets.adapter.rooms.get(guildId);
+    const socketsInRoom = await this.server.in(guildId).fetchSockets();
+    // @ts-ignore
+    return socketsInRoom?.map((s) => s.user) || [];
+  }
 
-    if (clients) {
-      clients.forEach((id) => {
-        const user = this.server.sockets.sockets.get(id)['user'];
+  getConnectionMetadata(headers: IncomingHttpHeaders): {
+    userId: string | null;
+  } {
+    const id = (headers['x-auth-discord-id'] as string) || null;
 
-        console.log(user);
-
-        users.push({
-          id: user.id,
-          status: user.status,
-          source: user.source,
-          name: user.name,
-        });
-      });
-    }
-
-    console.log(users);
-
-    return users;
+    return {
+      userId: id,
+    };
   }
 }

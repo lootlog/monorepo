@@ -1,11 +1,8 @@
 import { Module } from '@nestjs/common';
-import { GatewayService } from './gateway.service';
-import { Gateway } from './gateway';
 import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { GatewayQueueHandler } from 'src/gateway/gateway-queue.handler';
-import { GuildsModule } from 'src/guilds/guilds.module';
+import { GuildsService } from 'src/guilds/guilds.service';
 
 @Module({
   imports: [
@@ -14,8 +11,8 @@ import { GuildsModule } from 'src/guilds/guilds.module';
       useFactory: async (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
-    GuildsModule,
   ],
-  providers: [GatewayService, Gateway, GatewayQueueHandler],
+  providers: [GuildsService],
+  exports: [GuildsService],
 })
-export class GatewayModule {}
+export class GuildsModule {}

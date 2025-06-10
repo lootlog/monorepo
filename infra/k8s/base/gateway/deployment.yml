@@ -33,26 +33,27 @@ spec:
                 secretKeyRef:
                   key: env
                   name: lootlog-gateway-secrets
+            - name: SERVICE_NAME
+              value: 'gateway'
             - name: RABBITMQ_URI
               valueFrom:
                 secretKeyRef:
                   name: lootlog-gateway-secrets
                   key: rabbitmqUri
-            - name: AUTH_ISSUER
+            - name: REDIS_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: lootlog-gateway-secrets
-                  key: authIssuer
-            - name: AUTH_AUDIENCE
+                  key: redisUsername
+            - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: lootlog-gateway-secrets
-                  key: authAudience
-            - name: JWKS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: lootlog-gateway-secrets
-                  key: jwksUri
+                  key: redisPassword
+            - name: REDIS_HOST
+              value: redis-master
+            - name: REDIS_PORT
+              value: '6379'
 
           livenessProbe:
             httpGet:

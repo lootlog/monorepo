@@ -36,29 +36,37 @@ http:
         - "cors"
         - "apiStripPrefix"
         - "apiCompress"
+        - "apiForwardAuth"
       entryPoints:
         - "web"
-    landing:
-      rule: "Path(`/`) || PathPrefix(`/_next/`)"
-      service: "landing"
-      middlewares:
-        - "apiCompress"
-      entryPoints:
-        - "web"
+    # landing:
+    #   rule: "Path(`/`) || PathPrefix(`/_next/`)"
+    #   service: "landing"
+    #   middlewares:
+    #     - "apiCompress"
+    #   entryPoints:
+    #     - "web"
+    # web-client:
+    #   rule: "PathRegexp(`/(.+)`)"
+    #   service: "web-client"
+    #   middlewares:
+    #     - "apiCompress"
+    #   entryPoints:
+    #     - "web"
     web-client:
-      rule: "PathRegexp(`/(.+)`)"
+      rule: "PathPrefix(`/`)"
       service: "web-client"
       middlewares:
         - "apiCompress"
       entryPoints:
         - "web"
-    web-client-ws:
-      rule: "HeaderRegexp(`Upgrade`, `(?i)^websocket$`)"
-      service: "web-client"
-      middlewares:
-        - "apiCompress"
-      entryPoints:
-        - "web"
+    # web-client-ws:
+    #   rule: "Path(`/`) && HeaderRegexp(`Upgrade`, `(?i)^websocket$`)"
+    #   service: "web-client"
+    #   middlewares:
+    #     - "apiCompress"
+    #   entryPoints:
+    #     - "web"
         
   services:
     web-client:
