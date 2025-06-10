@@ -62,9 +62,9 @@ export const Chat = () => {
   };
 
   useEffect(() => {
-    if (socket.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
+    if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
 
-    socket.on(GatewayEvent.CHAT_MESSAGE, (data: ChatMessage) => {
+    socket?.on(GatewayEvent.CHAT_MESSAGE, (data: ChatMessage) => {
       if (!selectedGuildIdRef.current) return;
 
       queryClient.setQueryData(

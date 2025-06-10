@@ -104,9 +104,9 @@ export const Timers = () => {
   }, [timers, handleTimerRemove, removeTimerAfterMs]);
 
   useEffect(() => {
-    if (socket.hasListeners("timers-create") || !connected) return;
+    if (socket?.hasListeners("timers-create") || !connected) return;
 
-    socket.on("timers-create", (data: Timer) => {
+    socket?.on("timers-create", (data: Timer) => {
       handleTimerMessage(data);
     });
   }, [connected]);
