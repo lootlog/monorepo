@@ -120,6 +120,7 @@ export class Gateway {
   getConnectionMetadata(headers: IncomingHttpHeaders): {
     userId: string | null;
   } {
+    console.log(headers);
     const id = (headers['x-auth-discord-id'] as string) || null;
 
     return {
