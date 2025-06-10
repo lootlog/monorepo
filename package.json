@@ -14,7 +14,8 @@
     "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
     "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
     "configure:env": "turbo run configure:env",
-    "build:game-client": "turbo run build:game-client"
+    "build:game-client": "turbo run build:game-client",
+    "copy-entrypoint": "turbo run copy-entrypoint"
   },
   "devDependencies": {
     "@lootlog/eslint-config": "workspace:*",
