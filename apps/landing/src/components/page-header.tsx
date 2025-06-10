@@ -9,7 +9,7 @@ export const PageHeader: React.FC = () => {
   const isAuthenticated = !!session.data;
 
   const handleLoginAction = async () => {
-    const url = `${window.location.href}/@me`;
+    const url = `${window.location.href}@me`;
 
     await authClient.signIn.social({
       provider: "discord",
