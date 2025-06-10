@@ -1,5 +1,4 @@
 import React, { createContext, useCallback, useEffect, useState } from "react";
-
 import { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
@@ -14,14 +13,19 @@ type Props = {
   children: React.ReactNode;
 };
 
-export const GatewayProvider: React.FC<Props> = (props) => {
+// 1. Najpierw zdefiniuj kontekst
+export const GatewayContext = createContext<GatewayProviderValue | undefined>(
+  undefined
+);
+GatewayContext.displayName = "GatewayContext";
+
+export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const { gameInitialized, world, characterName } = useGlobalStore(
     (state) => state.gameState
   );
+  const [connected, setConnected] = useState<boolean>(false);
 
-  const [connected, setConnected] = useState(false);
-
-  const setupBaseListeners = useCallback(async () => {
+  const setupBaseListeners = useCallback(() => {
     socket.on(GatewayEvent.CONNECT, () => {
       setConnected(true);
     });
@@ -29,44 +33,45 @@ export const GatewayProvider: React.FC<Props> = (props) => {
     socket.on(GatewayEvent.DISCONNECT, () => {
       setConnected(false);
     });
+
+    // Czyścimy eventy po odmontowaniu komponentu
+    return () => {
+      socket.off(GatewayEvent.CONNECT);
+      socket.off(GatewayEvent.DISCONNECT);
+    };
   }, []);
 
   const emitJoin = useCallback(() => {
-    if (world) {
+    if (connected && world) {
       socket.emit(GatewayEvent.JOIN, {
         name: characterName,
         world,
       });
     }
-  }, [world, characterName]);
+  }, [connected, world]);
 
   useEffect(() => {
-    if (!connected) {
-      setupBaseListeners();
+    const cleanup = setupBaseListeners();
+    if (!socket.connected) {
       socket.connect();
     }
-  }, [connected]);
+
+    return cleanup; // Clean up event listeners when component unmounts
+  }, []);
 
   useEffect(() => {
-    console.log("Connected to gateway: ", connected);
     if (connected) {
       emitJoin();
+      console.log("Connected to gateway:", connected);
     }
-  }, [connected]);
+  }, [connected, emitJoin]);
 
   const value: GatewayProviderValue = {
-    socket,
     connected,
+    socket,
   };
 
   return (
-    <GatewayContext.Provider value={value} {...props}>
-      {props.children}
-    </GatewayContext.Provider>
+    <GatewayContext.Provider value={value}>{children}</GatewayContext.Provider>
   );
 };
-
-export const GatewayContext = createContext<GatewayProviderValue>(
-  {} as GatewayProviderValue
-);
-GatewayContext.displayName = "GatewayContext";
