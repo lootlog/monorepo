@@ -17,13 +17,17 @@
     "build": {
       "dependsOn": ["^build", "api:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "env": ["GAME_CLIENT_URL"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "out/**",
+        "generated/**"
+      ]
     },
     "build:game-client": {},
-    "build:cloudflare": {
-      "dependsOn": ["^build:cloudflare"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"]
-    },
+    "copy-entrypoint": {},
     "lint": {
       "dependsOn": ["^lint"]
     },

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "build:cloudflare": "opennextjs-cloudflare build",
+    "export:landing": "next export",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",

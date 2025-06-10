@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name       lootlog-client
+// @name       @lootlog/game-client
 // @namespace  npm/vite-plugin-monkey
 // @version    0.0.1
-// @author     monkey
+// @author     Wildstylez & friends
 // @icon       https://vitejs.dev/logo.svg
 // @match      https://*.margonem.pl
 // @match      https://*.margonem.com
@@ -20,8 +20,10 @@
 (function () {
   "use strict";
 
+  const url = "$GAME_CLIENT_URL$";
+
   const script = document.createElement("script");
-  script.src = `https://dev-addon.lootlog.pl/game-client.user.js?ts=${Date.now()}`;
+  script.src = `${url}?ts=${Date.now()}`;
 
   document.head.appendChild(script);
 })();
