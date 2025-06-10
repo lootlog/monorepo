@@ -95,7 +95,7 @@ http:
         accessControlAllowOriginListRegex:
           - "^(.+)\\.margonem\\.(pl|com)$"
           - "^http://localhost$"
-          - "^http://localhost:3000$"
+          - "^http://localhost:3001$"
         accessControlAllowMethods:
           - "GET"
           - "POST"

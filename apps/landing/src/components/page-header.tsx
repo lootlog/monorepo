@@ -9,9 +9,11 @@ export const PageHeader: React.FC = () => {
   const isAuthenticated = !!session.data;
 
   const handleLoginAction = async () => {
+    const url = `${window.location.href}/@me`;
+
     await authClient.signIn.social({
       provider: "discord",
-      callbackURL: `${window.location.href}/@me`,
+      callbackURL: url,
       scopes: ["identify", "email", "guilds"],
     });
   };
@@ -22,9 +24,7 @@ export const PageHeader: React.FC = () => {
       <div className="flex flex-row gap-4">
         {isAuthenticated ? (
           <a href="/@me">
-            <Button onClick={() => authClient.signOut({})}>
-              Przejdź do lootloga
-            </Button>
+            <Button>Przejdź do lootloga</Button>
           </a>
         ) : (
           <Button onClick={handleLoginAction}>Zaloguj się</Button>
