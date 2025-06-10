@@ -78,6 +78,11 @@ spec:
                 secretKeyRef:
                   name: lootlog-auth-secrets
                   key: appUrl
+            - name: COOKIE_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: cookieDomain
 
           livenessProbe:
             httpGet:
