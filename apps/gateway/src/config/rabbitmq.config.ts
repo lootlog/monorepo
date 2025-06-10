@@ -3,6 +3,7 @@ import { registerAs } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 
 export const DEFAULT_EXCHANGE_NAME = 'default';
+export const DEFAULT_RPC_TIMEOUT = 5000;
 
 export default registerAs(ConfigKey.RABBITMQ, (): RabbitMQConfig => {
   const { RABBITMQ_URI } = process.env;

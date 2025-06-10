@@ -10,11 +10,8 @@ import { ConfigKey } from 'src/config/config-key.enum';
   imports: [
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
-        const config = configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ);
-
-        return config;
-      },
+      useFactory: async (configService: ConfigService) =>
+        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
   ],
   controllers: [],

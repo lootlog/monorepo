@@ -8,7 +8,7 @@ export const UserId = createParamDecorator(
   },
 );
 
-export const WsUserId = createParamDecorator(
+export const WsDiscordId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
     const wsCtx = ctx.switchToWs();
     const client = wsCtx.getClient();
@@ -18,6 +18,6 @@ export const WsUserId = createParamDecorator(
       throw new WsException('Unauthorized');
     }
 
-    return client.user.sub;
+    return client.user.id;
   },
 );
