@@ -4,7 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@workspace/ui/*": ["../../packages/ui/src/*"]
+      "@lootlog/ui/*": ["../../packages/ui/src/*"]
     },
     "plugins": [
       {
