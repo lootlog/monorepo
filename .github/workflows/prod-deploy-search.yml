@@ -3,6 +3,9 @@ name: Deploy Search to prod
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   IMAGE_NAME: kamilwronka7/lootlog-search
   IMAGE_TAG: prod-${{ github.sha }}
