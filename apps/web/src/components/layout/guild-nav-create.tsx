@@ -15,7 +15,7 @@ export const GuildNavCreate: FC = () => {
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <Button
           className="size-10 0"
           variant="secondary"

@@ -1,5 +1,6 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
@@ -17,6 +18,7 @@ import { RolesService } from 'src/roles/roles.service';
 import { generateSlug } from 'src/shared/utils/generate-slug';
 import { UsersService } from 'src/users/users.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
+import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
 
 @Injectable()
 export class GuildsService {
@@ -121,6 +123,12 @@ export class GuildsService {
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
+    if (RESTRICTED_VANITY_URLS.includes(data.vanityUrl)) {
+      throw new BadRequestException({
+        message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
+      });
+    }
+
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
       data: {
