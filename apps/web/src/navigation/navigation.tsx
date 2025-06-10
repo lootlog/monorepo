@@ -15,7 +15,7 @@ export const Navigation = () => {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/@me" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/init" element={<Init />} />
         <Route path="/:guildId" element={<GuildLayout />}>
