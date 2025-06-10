@@ -37,7 +37,7 @@ export const useCharacterList = () => {
       response.data
         .filter((char) => char.world === world)
         .sort((a, b) => {
-          return b.lvl - a.lvl; // Sort by level descending
+          return b.lvl - a.lvl;
         }),
   });
 
