@@ -29,20 +29,23 @@ export const GatewayProvider: React.FC<Props> = (props) => {
     socket.on(GatewayEvent.DISCONNECT, () => {
       setConnected(false);
     });
-  }, [gameInitialized]);
+  }, []);
 
   const emitJoin = useCallback(() => {
-    socket.emit(GatewayEvent.JOIN, {
-      name: characterName,
-      world,
-    });
+    if (world) {
+      socket.emit(GatewayEvent.JOIN, {
+        name: characterName,
+        world,
+      });
+    }
   }, [world, characterName]);
 
   useEffect(() => {
-    if (gameInitialized) {
+    if (!connected) {
       setupBaseListeners();
+      socket.connect();
     }
-  }, [gameInitialized]);
+  }, [connected]);
 
   useEffect(() => {
     console.log("Connected to gateway: ", connected);
