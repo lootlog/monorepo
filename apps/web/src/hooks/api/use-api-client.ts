@@ -1,17 +1,5 @@
-import { API_URL } from "@/config/api";
-import { useAuthToken } from "@/hooks/auth/use-auth-token";
-import axios from "axios";
+import { apiClient } from "@/lib/api-client";
 
 export const useApiClient = () => {
-  const { data: token } = useAuthToken();
-
-  const client = axios.create({
-    baseURL: API_URL,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    withCredentials: true,
-  });
-
-  return { client: client, isAuthenticated: !!token };
+  return { client: apiClient };
 };

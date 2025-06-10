@@ -20,13 +20,13 @@ export type LootlogConfig = {
 
 export const useGuildLootlogConfig = () => {
   const guildId = useGuildId();
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const query = useQuery({
     queryKey: ["guild-lootlog-config", guildId],
     queryFn: () =>
       client.get<LootlogConfig>(`/guilds/${guildId}/lootlog-config`),
-    enabled: isAuthenticated && !!guildId,
+    enabled: !!guildId,
     select: (response) => response.data,
   });
 
