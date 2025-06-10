@@ -32,7 +32,7 @@ export type UseGuildNpcsOptions = {
 };
 
 export const useNpcs = ({ search, selectedNpcs }: UseGuildNpcsOptions) => {
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const queryParams = {
     search: search || selectedNpcs || "",
@@ -44,7 +44,6 @@ export const useNpcs = ({ search, selectedNpcs }: UseGuildNpcsOptions) => {
       client.get<Npc[]>(
         `${SEARCH_API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`
       ),
-    enabled: isAuthenticated,
     select: (response) => response.data,
   });
 

@@ -16,12 +16,12 @@ export enum Permission {
 
 export const useGuildPermissions = () => {
   const guildId = useGuildId();
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const query = useQuery({
     queryKey: ["guild-permissions", guildId],
     queryFn: () => client.get<Permission[]>(`/guilds/${guildId}/permissions`),
-    enabled: isAuthenticated && !!guildId,
+    enabled: !!guildId,
     select: (response) => response.data,
   });
 

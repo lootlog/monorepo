@@ -21,7 +21,7 @@ export const useGuildPlayers = ({
   search,
   selectedPlayers,
 }: UseGuildPlayersOptions) => {
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const queryParams = {
     search: search || selectedPlayers || "",
@@ -35,7 +35,6 @@ export const useGuildPlayers = ({
           queryParams
         ).toString()}`
       ),
-    enabled: isAuthenticated,
     select: (response) => response.data,
   });
 

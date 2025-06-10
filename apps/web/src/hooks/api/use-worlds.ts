@@ -4,12 +4,12 @@ import { useGuildId } from "@/hooks/use-guild-id";
 
 export const useWorlds = () => {
   const guildId = useGuildId();
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const query = useQuery({
     queryKey: ["worlds", guildId],
     queryFn: () => client.get<string[]>(`/guilds/${guildId}/worlds`),
-    enabled: isAuthenticated && !!guildId,
+    enabled: !!guildId,
     select: (response) => response.data,
   });
 
