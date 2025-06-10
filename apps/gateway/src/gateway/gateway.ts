@@ -25,6 +25,12 @@ type Socket = SocketIOSocket & { user: any };
     process.env.ENV === RuntimeEnvironment.LOCAL ? '/gateway' : undefined,
   pingInterval: 25000,
   pingTimeout: 60000,
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['x-auth-discord-id'],
+    credentials: true,
+  },
 })
 export class Gateway {
   constructor(
