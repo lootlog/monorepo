@@ -9,7 +9,7 @@ COPY . /usr/src/app
 RUN ls
 WORKDIR /usr/src/app
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run build
+RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client
 
 RUN pnpm deploy --filter=@lootlog/api --prod /prod/api
 RUN pnpm deploy --filter=@lootlog/auth --prod /prod/auth
