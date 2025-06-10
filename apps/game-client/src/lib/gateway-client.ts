@@ -8,4 +8,5 @@ export const socket = io(GATEWAY_URL, {
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,
   timeout: 20000,
+  withCredentials: true,
 });
