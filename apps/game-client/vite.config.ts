@@ -24,6 +24,8 @@ export default defineConfig({
       userscript: {
         icon: "https://vitejs.dev/logo.svg",
         namespace: "npm/vite-plugin-monkey",
+        author: "Wildstylez & friends",
+        name: "@lootlog/game-client",
         match: [
           "https://*.margonem.pl",
           "https://*.margonem.com",
