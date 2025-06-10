@@ -8,14 +8,13 @@ type Props = {
 
 export const AuthenticationGuard: React.FC<Props> = ({ component }) => {
   const { data: session, isPending } = useSession();
-  const navigate = useNavigate();
 
   if (isPending) {
     return <FullScreenLoading />;
   }
 
   if (!session) {
-    navigate("/");
+    window.location.href = "/";
   }
 
   const Component = component;
