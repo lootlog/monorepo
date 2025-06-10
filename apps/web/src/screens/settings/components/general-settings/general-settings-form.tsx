@@ -19,6 +19,8 @@ import { cn } from "@/utils/cn";
 import { useUpdateGuild } from "@/hooks/api/use-update-guild";
 import { useNavigate } from "react-router-dom";
 
+const RESTRICTED_NAMES = ["@me"];
+
 const formSchema = z.object({
   vanityUrl: z.string(),
 });
@@ -38,6 +40,14 @@ export const GeneralSettingsForm = () => {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (RESTRICTED_NAMES.includes(values.vanityUrl)) {
+      toast({
+        variant: "destructive",
+        description: "Ta nazwa jest zarezerwowana i nie może być użyta.",
+      });
+      return;
+    }
+
     updateGuildConfig(
       { vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null },
       {

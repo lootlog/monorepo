@@ -26,7 +26,7 @@ const dialect = new PostgresDialect({
   pool: new pg.Pool(poolConfig),
 });
 
-export const auth: ReturnType<typeof betterAuth> = betterAuth({
+export const auth: any = betterAuth({
   appName: "@lootlog/auth",
   basePath: "/idp",
   database: {

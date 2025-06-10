@@ -15,7 +15,7 @@ export const InstallButton: FC = () => {
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <Button
           variant="ghost"
           className="size-10"
