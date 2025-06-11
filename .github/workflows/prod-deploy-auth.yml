@@ -3,6 +3,9 @@ name: Deploy Auth to prod
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   IMAGE_NAME: kamilwronka7/lootlog-auth
   IMAGE_TAG: prod-${{ github.sha }}
