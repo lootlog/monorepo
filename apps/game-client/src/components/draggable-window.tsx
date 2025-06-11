@@ -59,14 +59,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const defaultPosition = getClampedPosition(rawDefaultPosition);
 
-  const draggableRef = useRef(null);
+  const draggableRef = useRef<HTMLDivElement>(null!);
   const { position, handleMouseDown } = useDrag({
     ref: draggableRef,
     defaultState: defaultPosition,
     onDragStop: (position) => {
       state.setPosition(id, position);
     },
-    // disabled: isResizing,
   });
 
   const handleResize = (e: React.MouseEvent) => {
