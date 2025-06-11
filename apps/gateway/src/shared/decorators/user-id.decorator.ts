@@ -1,5 +1,6 @@
 import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
+import { Socket } from 'src/gateway/types/socket-user.type';
 
 export const UserId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
@@ -11,13 +12,13 @@ export const UserId = createParamDecorator(
 export const WsDiscordId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): string => {
     const wsCtx = ctx.switchToWs();
-    const client = wsCtx.getClient();
+    const client = wsCtx.getClient() as Socket;
 
-    if (!client.user) {
+    if (!client.data) {
       client.disconnect();
       throw new WsException('Unauthorized');
     }
 
-    return client.user.id;
+    return client.data.discordId;
   },
 );
