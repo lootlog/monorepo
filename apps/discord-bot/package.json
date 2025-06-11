@@ -20,14 +20,14 @@
   },
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^6.0.1",
-    "@nestjs/common": "^11.1.2",
+    "@nestjs/common": "^10.4.16",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.2",
     "@nestjs/microservices": "^11.1.2",
     "@nestjs/platform-express": "^11.1.2",
     "discord.js": "^14.19.3",
     "joi": "^17.13.3",
-    "nanoid": "^5.0.7",
+    "nanoid": "^5.0.9",
     "necord": "^6.8.14",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
