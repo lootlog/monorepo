@@ -3,6 +3,9 @@ name: Deploy Gateway to prod
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   IMAGE_NAME: kamilwronka7/lootlog-gateway
   IMAGE_TAG: prod-${{ github.sha }}
