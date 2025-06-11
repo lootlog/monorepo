@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@lootlog/ui/globals.css";
-import React from "react";
+import { JSX } from "react";
 import { LayoutProps } from "@/.next/types/app/page";
 import { PageHeader } from "@/src/components/page-header";
 
