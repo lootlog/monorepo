@@ -119,6 +119,7 @@ export class TimersService {
     );
 
     newTimersUpsert.forEach((newTimer) => {
+      console.log('New timer created:', newTimer);
       this.emitTimer(newTimer);
     });
 

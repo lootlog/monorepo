@@ -24,7 +24,8 @@ export const Timers = () => {
   } = useWindowsStore();
   const { hiddenTimers, pinnedTimers, removeTimerAfterMs, compactMode } =
     useTimersStore();
-  const { characterId, accountId } = useGlobalStore((state) => state.gameState);
+  const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
+
   const [calculatedTimers, setCalculatedTimers] = useState<TimerWithTimeLeft[]>(
     []
   );
@@ -32,31 +33,35 @@ export const Timers = () => {
     ? compactModeBreakpoints
     : normalModeBreakpoints;
 
-  const { world } = useGlobalStore((state) => state.gameState);
-
   const queryClient = useQueryClient();
   const { data: timers } = useTimers({ world });
-
   const { socket, connected } = useGateway();
+
+  const updateCalculatedTimers = (timers: Timer[]) => {
+    const now = Date.now();
+    const newTimers = timers.reduce((acc: TimerWithTimeLeft[], timer) => {
+      const timeLeft = new Date(timer.maxSpawnTime).getTime() - now;
+      if (timeLeft > -removeTimerAfterMs) {
+        acc.push({ ...timer, timeLeft });
+      } else {
+        handleTimerRemove(timer);
+      }
+      return acc;
+    }, []);
+    setCalculatedTimers(newTimers);
+  };
 
   const handleTimerMessage = (data: Timer) => {
     queryClient.setQueryData(
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
+        const updatedTimers = old?.data.find((t) => t.npc.id === data.npc.id)
+          ? old.data.map((t) => (t.npc.id === data.npc.id ? data : t))
+          : [...old.data, data];
 
-        const exists = old?.data.find((timer) => timer.npc.id === data.npc.id);
-
-        if (exists) {
-          return {
-            data: old.data.map((timer) =>
-              timer.npc.id === data.npc.id ? data : timer
-            ),
-          };
-        }
-        return {
-          data: [...old.data, data],
-        };
+        updateCalculatedTimers(updatedTimers);
+        return { data: updatedTimers };
       }
     );
   };
@@ -66,49 +71,33 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-
-        return {
-          data: old?.data.filter((timer) => timer.npc.id !== data.npc.id) || [],
-        };
+        const filtered =
+          old?.data.filter((t) => t.npc.id !== data.npc.id) || [];
+        updateCalculatedTimers(filtered);
+        return { data: filtered };
       }
     );
   };
 
   useEffect(() => {
+    if (timers && timers.length > 0) {
+      updateCalculatedTimers(timers);
+    }
+  }, [timers]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
-      if (!timers || timers.length === 0) return;
-
-      const newTimers = timers.reduce((acc: TimerWithTimeLeft[], timer) => {
-        const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-        const timeLeft = maxSpawnTime - Date.now();
-
-        if (timeLeft <= -removeTimerAfterMs) {
-          handleTimerRemove(timer);
-          return acc;
-        }
-
-        const newTimer = {
-          ...timer,
-          timeLeft,
-        };
-
-        acc.push(newTimer);
-
-        return acc;
-      }, []);
-
-      setCalculatedTimers(newTimers);
+      if (timers && timers.length > 0) {
+        updateCalculatedTimers(timers);
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timers, handleTimerRemove, removeTimerAfterMs]);
+  }, [timers, removeTimerAfterMs]);
 
   useEffect(() => {
     if (socket?.hasListeners("timers-create") || !connected) return;
-
-    socket?.on("timers-create", (data: Timer) => {
-      handleTimerMessage(data);
-    });
+    socket?.on("timers-create", handleTimerMessage);
   }, [connected]);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -120,11 +109,11 @@ export const Timers = () => {
     const resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
         const width = entry.contentRect.width;
-
-        const newColumns = breakpoints.reduce((acc, breakpoint) => {
-          return width >= breakpoint ? acc + 1 : acc;
-        }, 0);
-        setColumns(newColumns || 1);
+        const newCols = breakpoints.reduce(
+          (acc, bp) => (width >= bp ? acc + 1 : acc),
+          0
+        );
+        setColumns(newCols || 1);
       }
     });
 
@@ -135,24 +124,21 @@ export const Timers = () => {
     };
   }, [open, compactMode]);
 
-  const sorted = calculatedTimers?.sort((a, b) => {
+  const sorted = calculatedTimers.sort((a, b) => {
     const key = `${accountId}${characterId}`;
     const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
     const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
 
     if (isPinnedA && !isPinnedB) return -1;
     if (!isPinnedA && isPinnedB) return 1;
-
     return (
       new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
     );
   });
 
-  const filtered = sorted?.filter((timer) => {
+  const filtered = sorted.filter((timer) => {
     const key = `${accountId}${characterId}`;
-    const isHidden = hiddenTimers[key]?.includes?.(timer.npc.name);
-
-    return !isHidden;
+    return !hiddenTimers[key]?.includes?.(timer.npc.name);
   });
 
   return (
@@ -174,19 +160,18 @@ export const Timers = () => {
           ref={containerRef}
           className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
         >
-          {filtered?.length === 0 && (
+          {filtered.length === 0 && (
             <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
               ----
             </span>
           )}
+
           <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
             <span
               className="ll-grid ll-gap-0.5 ll-box-border"
-              style={{
-                gridTemplateColumns: `repeat(${columns}, 1fr)`,
-              }}
+              style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
-              {filtered?.map((timer) => (
+              {filtered.map((timer) => (
                 <SingleTimer
                   key={timer.npc.id}
                   timer={timer}
