@@ -9,6 +9,9 @@ on:
       - develop
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   IMAGE_NAME: kamilwronka7/lootlog-search
   IMAGE_TAG: dev-${{ github.sha }}
