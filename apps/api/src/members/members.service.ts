@@ -6,10 +6,14 @@ import { DeleteMemberDto } from 'src/members/dto/delete-member.dto';
 import { GuildMemberDto } from 'src/guilds/dto/create-guild.dto';
 import { PrismaService } from 'src/db/prisma.service';
 import { UpdateMemberDto } from 'src/members/dto/update-member-dto';
+import { EventProcessingService } from 'src/event-processing/event-processing.service';
 
 @Injectable()
 export class MembersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventProcessingService: EventProcessingService,
+  ) {}
 
   async getGuildMemberById(memberId: string, guildId: string) {
     const member = await this.prisma.member.findUnique({
@@ -177,7 +181,15 @@ export class MembersService {
     return;
   }
 
-  async deleteMemberRole({ roleId, guildId, id }: DeleteMemberRoleDto) {
+  async deleteMemberRole({
+    roleId,
+    guildId,
+    id,
+    eventId,
+  }: DeleteMemberRoleDto) {
+    const isProcessed = await this.eventProcessingService.getEventById(eventId);
+    if (isProcessed) return;
+
     await this.prisma.member.update({
       where: { memberId: { userId: id, guildId } },
       data: {
