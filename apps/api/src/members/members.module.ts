@@ -5,9 +5,14 @@ import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
 import { RolesModule } from 'src/roles/roles.module';
 import { PrismaService } from 'src/db/prisma.service';
+import { EventProcessingModule } from 'src/event-processing/event-processing.module';
 
 @Module({
-  imports: [forwardRef(() => GuildsModule), forwardRef(() => RolesModule)],
+  imports: [
+    forwardRef(() => GuildsModule),
+    forwardRef(() => RolesModule),
+    EventProcessingModule,
+  ],
   controllers: [MembersController],
   providers: [MembersService, MembersEventsHandler, PrismaService],
   exports: [MembersService],
