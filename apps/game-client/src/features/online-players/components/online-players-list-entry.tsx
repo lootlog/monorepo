@@ -40,7 +40,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   const color = roleColor === 0 ? "FFF" : roleColor?.toString(16);
 
   return (
-    <Tile className="ll-px-1 ll-flex ll-flex-row ll-justify-between ll-mb-1">
+    <Tile className="ll-px-1 ll-flex ll-flex-row ll-justify-between ll-mb-0.5">
       <div
         className={cn(
           "ll-font-semibold ll-text-[11px] ll-min-w-16 ll-max-w-32 ll-whitespace-nowrap ll-truncate"
