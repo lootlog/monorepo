@@ -1,7 +1,12 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type WindowId = "settings" | "timers" | "chat" | "online-players";
+export type WindowId =
+  | "settings"
+  | "timers"
+  | "chat"
+  | "online-players"
+  | "add-timer";
 
 interface WindowPositionState {
   x: number;
@@ -27,6 +32,7 @@ interface WindowsState {
   timers: WindowData;
   chat: WindowData;
   "online-players": WindowData;
+  "add-timer": WindowData;
   currentWindowFocus?: WindowId;
   setCurrentWindowFocus: (key: WindowId) => void;
   setOpen: (window: WindowId, open: boolean) => void;
@@ -68,6 +74,12 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
       },
+      "add-timer": {
+        open: true,
+        position: DEFAULT_POSITION,
+        size: { width: 242, height: 240 },
+        opacity: DEFAULT_OPACITY,
+      },
       currentWindowFocus: undefined,
       setCurrentWindowFocus: (key: WindowId) =>
         set({ currentWindowFocus: key }),
@@ -91,6 +103,7 @@ export const useWindowsStore = create<WindowsState>()(
         timers: state.timers,
         chat: state.chat,
         "online-players": state["online-players"],
+        "add-timer": state["add-timer"],
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,

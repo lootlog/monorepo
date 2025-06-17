@@ -129,6 +129,7 @@ http:
           - "PUT"
           - "DELETE"
           - "OPTIONS"
+          - "PATCH"
         accessControlAllowHeaders:
           - "Content-Type"
           - "Authorization"
