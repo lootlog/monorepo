@@ -112,6 +112,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     });
   };
 
+  const handleDeleteTimer = () => {};
+
   const selectedColor = timersColors[timer.npc.name] ?? "white";
   const isPinned = pinnedTimers[`${accountId}${characterId}`]?.includes(
     timer.npc.name
