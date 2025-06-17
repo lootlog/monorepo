@@ -16,6 +16,8 @@ import { omit } from 'lodash';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GetTimersDto } from 'src/timers/dto/get-timers.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
+import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
+import { DEFAULT_RESPAWN_RANDOMNESS } from 'src/timers/constants/respawn';
 
 @Injectable()
 export class TimersService {
@@ -74,6 +76,8 @@ export class TimersService {
           minSpawnTime,
           world: data.world,
           npcId: data.npc.id,
+          latestRespBaseSeconds: data.respBaseSeconds,
+          latestRespawnRandomness: data.respawnRandomness,
           guild: {
             connect: {
               id: guild.id,
@@ -102,6 +106,9 @@ export class TimersService {
         update: {
           maxSpawnTime,
           minSpawnTime,
+          latestRespBaseSeconds: data.respBaseSeconds,
+          latestRespawnRandomness:
+            data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
           member: {
             connect: {
               memberId: {
@@ -203,6 +210,80 @@ export class TimersService {
     return mergedTimers;
   }
 
+  async resetTimer(discordId: string, data: ResetTimerDto) {
+    const now = new Date();
+
+    const [guilds, config] = await Promise.all([
+      this.guildsService.getGuildsForRequiredPermissions(discordId, [
+        Permission.LOOTLOG_WRITE,
+      ]),
+      this.userLootlogConfigService.getLootlogCharacterConfig(
+        discordId,
+        data.accountId,
+        data.characterId,
+      ),
+    ]);
+
+    if (guilds.length === 0) {
+      throw new ForbiddenException();
+    }
+
+    const filteredGuilds = guilds.filter((guild) => {
+      const isOnBlacklist = config?.addTimersBlacklistGuildIds?.includes(
+        guild.id,
+      );
+      return !isOnBlacklist;
+    });
+
+    const timers = await this.prisma.timer.findMany({
+      where: {
+        guildId: {
+          in: filteredGuilds.map((guild) => guild.id),
+        },
+        world: data.world,
+        npcId: data.npcId,
+      },
+    });
+
+    const updatedTimers = timers.map((timer) => {
+      const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
+        timer.latestRespBaseSeconds,
+        timer.latestRespawnRandomness,
+        now,
+      );
+
+      return {
+        ...timer,
+        memberId: discordId,
+        maxSpawnTime,
+        minSpawnTime,
+      };
+    });
+
+    const updatedTimersUpsert = await Promise.all(
+      updatedTimers.map((timer) =>
+        this.prisma.timer.update({
+          where: {
+            timerId: {
+              guildId: timer.guildId,
+              world: timer.world,
+              npcId: timer.npcId,
+            },
+          },
+          data: {
+            maxSpawnTime: timer.maxSpawnTime,
+            minSpawnTime: timer.minSpawnTime,
+          },
+        }),
+      ),
+    );
+
+    updatedTimersUpsert.forEach((newTimer) => {
+      console.log('New timer created:', newTimer);
+      this.emitTimer(newTimer);
+    });
+  }
+
   async emitTimer(payload: Timer) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
@@ -213,7 +294,7 @@ export class TimersService {
 
   calculateRespawnTime(
     respBaseSeconds: number,
-    respawnRandomness: number = 10,
+    respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
     now: Date,
   ) {
     const date = new Date(now).getTime();
