@@ -11,6 +11,7 @@ import { useGlobalStore } from "@/store/global.store";
 import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 import { useWindowsStore } from "@/store/windows.store";
 import { OnlinePlayers } from "@/features/online-players/online-players";
+import { AddTimer } from "@/features/timers/add-timer";
 
 function App() {
   useGameEventsParser();
@@ -75,6 +76,7 @@ function App() {
     gameInitialized && (
       <>
         <Timers />
+        <AddTimer />
         <Settings />
         <Chat />
         <OnlinePlayers />

@@ -261,7 +261,7 @@ export const useGameEventsParser = () => {
           return;
         }
 
-        if (!npc.respBaseSeconds) {
+        if (!npc.respBaseSeconds || npc.respBaseSeconds < 2) {
           return;
         }
 

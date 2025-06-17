@@ -99,14 +99,16 @@ enum NpcType {
 }
 
 model Timer {
-  createdById  Int
-  guildId      String
-  npcId        Int
-  world        String
-  minSpawnTime DateTime
-  maxSpawnTime DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdById             Int
+  guildId                 String
+  npcId                   Int
+  world                   String
+  minSpawnTime            DateTime
+  maxSpawnTime            DateTime
+  latestRespBaseSeconds   Int      @default(0)
+  latestRespawnRandomness Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   member Member @relation(fields: [createdById], references: [id])
   guild  Guild  @relation(fields: [guildId], references: [id])
@@ -265,9 +267,4 @@ model UserCharactersLootlogSettings {
   addTimersBlacklistGuildIds  String[] @default([])
 
   @@unique([userId, accountId, characterId])
-}
-
-model ProcessedEvents {
-  id          String   @id
-  processedAt DateTime @default(now())
 }

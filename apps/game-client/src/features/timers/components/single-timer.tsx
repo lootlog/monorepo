@@ -5,6 +5,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Tile } from "@/components/ui/tile";
+import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import { Timer } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/global.store";
@@ -45,7 +46,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timeLeft = 0,
   compactMode,
 }) => {
-  const { world, accountId, characterId } = useGlobalStore(
+  const { accountId, characterId, world } = useGlobalStore(
     (state) => state.gameState
   );
   const {
@@ -56,6 +57,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     setTimerColor,
     timersColors,
   } = useTimersStore();
+  const { mutate: resetTimer } = useResetTimer();
 
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
 
@@ -97,6 +99,17 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const handleTimerColorChange = (color?: string) => {
     setTimerColor(timer.npc.name, color);
+  };
+
+  const handleRestartTimer = () => {
+    if (!accountId || !characterId || !world) return;
+
+    resetTimer({
+      world,
+      npcId: timer.npc.id,
+      characterId,
+      accountId,
+    });
   };
 
   const selectedColor = timersColors[timer.npc.name] ?? "white";
@@ -165,6 +178,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           {isPinned ? "Odepnij" : "Przypnij"}
         </ContextMenuItem>
         <ContextMenuItem onClick={handleHideTimer}>Ukryj timer</ContextMenuItem>
+        <ContextMenuItem onClick={handleRestartTimer}>
+          Odliczaj od początku
+        </ContextMenuItem>
         <ContextMenuItem disabled>Usuń timer</ContextMenuItem>
         <ContextMenuItem disabled>Włącz dźwięk</ContextMenuItem>
       </ContextMenuContent>

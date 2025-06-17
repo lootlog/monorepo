@@ -188,7 +188,7 @@ export const Timers = () => {
             </span>
           </ScrollArea>
 
-          <Tile>
+          <Tile onClick={() => toggleOpen("add-timer")}>
             <PlusIcon color="white" height={16} width={16} />
           </Tile>
         </span>

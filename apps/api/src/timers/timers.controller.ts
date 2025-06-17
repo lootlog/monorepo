@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Guild, Permission } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
@@ -6,6 +14,7 @@ import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
+import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
 import { TimersService } from 'src/timers/timers.service';
 
 @UseGuards(AuthGuard)
@@ -31,6 +40,14 @@ export class TimersController {
       world,
       guildId: guild.id,
     });
+  }
+
+  @Patch('/timers')
+  async resetTimer(
+    @Body() data: ResetTimerDto,
+    @DiscordId() discordId: string,
+  ) {
+    return this.timersService.resetTimer(discordId, data);
   }
 
   @Post('/timers')

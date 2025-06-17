@@ -7,6 +7,7 @@ export type TileProps = {
   id?: string;
   color?: keyof typeof COLORS;
   className?: string;
+  onClick?: () => void;
 };
 
 export const Tile: FC<TileProps> = ({
@@ -14,6 +15,7 @@ export const Tile: FC<TileProps> = ({
   id,
   color,
   className = "",
+  onClick = () => {},
 }) => {
   const borderColor = COLORS[color ?? "white"].border;
 
@@ -25,6 +27,7 @@ export const Tile: FC<TileProps> = ({
         borderColor,
         className
       )}
+      onClick={onClick}
     >
       {children}
     </span>
