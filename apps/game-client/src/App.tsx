@@ -10,6 +10,7 @@ import { Chat } from "@/features/chat/chat";
 import { useGlobalStore } from "@/store/global.store";
 import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 import { useWindowsStore } from "@/store/windows.store";
+import { OnlinePlayers } from "@/features/online-players/online-players";
 
 function App() {
   useGameEventsParser();
@@ -76,6 +77,7 @@ function App() {
         <Timers />
         <Settings />
         <Chat />
+        <OnlinePlayers />
       </>
     )
   );
