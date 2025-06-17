@@ -10,29 +10,36 @@ export const OnlinePlayersList: FC = () => {
     `ll-online-players-selected-guild`,
     ""
   );
-  const [onlinePlayers, setOnlinePlayers] = usePlayersPresence(selectedGuildId);
+  const [onlinePlayers] = usePlayersPresence(selectedGuildId);
+
+  const onlinePlayersList = Object.entries(onlinePlayers);
 
   return (
-    <div>
-      <div className="ll-py-2">
-        <GuildSelector
-          selectedGuildId={selectedGuildId}
-          setSelectedGuildId={setSelectedGuildId}
-        />
+    <div className="ll-h-full ll-w-full">
+      <div className="ll-flex ll-flex-col ll-h-full ll-overflow-hidden">
+        <div className="ll-py-1">
+          <GuildSelector
+            selectedGuildId={selectedGuildId}
+            setSelectedGuildId={setSelectedGuildId}
+          />
+        </div>
+        <ScrollArea className="ll-flex-1 ll-box-border" type="hover">
+          {onlinePlayersList.length > 0 ? (
+            onlinePlayersList.map(([discordId, presences]) => (
+              <OnlinePlayersListEntry
+                key={discordId}
+                discordId={discordId}
+                presences={presences}
+                guildId={selectedGuildId}
+              />
+            ))
+          ) : (
+            <p className="ll-text-gray-500 ll-w-full ll-flex ll-items-center ll-justify-center">
+              Brak graczy online.
+            </p>
+          )}
+        </ScrollArea>
       </div>
-      <ScrollArea className="ll-h-full ll-w-full ll-p-2">
-        {Object.entries(onlinePlayers).length > 0 ? (
-          Object.entries(onlinePlayers).map(([discordId, players]) => (
-            <OnlinePlayersListEntry
-              discordId={discordId}
-              players={players}
-              guildId={selectedGuildId}
-            />
-          ))
-        ) : (
-          <p className="ll-text-gray-500">No players online.</p>
-        )}
-      </ScrollArea>
     </div>
   );
 };

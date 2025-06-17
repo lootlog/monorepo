@@ -21,7 +21,7 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
 
   return (
     <Select value={selectedGuildId} onValueChange={setSelectedGuildId}>
-      <SelectTrigger className="w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2">
+      <SelectTrigger className="w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2 ll-custom-cursor-pointer">
         <SelectValue
           placeholder="Wybierz serwer..."
           className="ll-h-4 ll-text-sm ll-text-white"

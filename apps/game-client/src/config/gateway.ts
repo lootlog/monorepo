@@ -15,4 +15,8 @@ export enum GatewayEvent {
 
   // chat
   CHAT_MESSAGE = "chat-message",
+
+  // presence
+  REQUEST_SERVER_PRESENCE = "request-server-presence",
+  UPDATE_SERVER_PRESENCE = "update-server-presence",
 }

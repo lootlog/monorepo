@@ -19,7 +19,7 @@ import { GuildsService } from 'src/guilds/guilds.service';
 import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
 import { Platform } from 'src/gateway/enums/platform.enum';
 import { Socket } from 'src/gateway/types/socket-user.type';
-import { groupBy } from 'lodash';
+import { groupBy, omit } from 'lodash';
 import { RedisService } from 'src/lib/redis/redis.service';
 
 @WebSocketGateway({
@@ -62,10 +62,13 @@ export class Gateway {
 
     client.on(GatewayEvent.DISCONNECTING, () => {
       if (client.data) {
-        client.to([...client.rooms]).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
-          discordId: client.data.discordId,
-          player: client.data.player,
-          status: UserPresenceStatus.OFFLINE,
+        client.rooms.forEach((room) => {
+          client.to(room).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
+            discordId: client.data.discordId,
+            player: client.data.player,
+            status: UserPresenceStatus.OFFLINE,
+            guildId: room,
+          });
         });
 
         console.log('client disconnected', client.data.discordId);
@@ -97,24 +100,22 @@ export class Gateway {
       return { status: 'error', message: 'No guilds found for user' };
     }
 
-    console.log('userId', discordId);
-    console.log('guildIds', guildIds);
-
     const user = {
       ...client.data,
       status: UserPresenceStatus.ONLINE,
       player,
     };
-    const presenceEventMessage = user;
 
     client.data = user;
 
     client.join(guildIds);
-    client
-      .to([...client.rooms])
-      .emit(GatewayEvent.UPDATE_SERVER_PRESENCE, presenceEventMessage);
 
-    console.log('xdd');
+    client.rooms.forEach((room) => {
+      client.to(room).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
+        ...user,
+        guildId: room,
+      });
+    });
 
     return client.emit(GatewayEvent.JOIN, {
       status: 'success',
@@ -126,14 +127,20 @@ export class Gateway {
   @SubscribeMessage(GatewayEvent.REQUEST_SERVER_PRESENCE)
   async handlePresenceFetch(
     @ConnectedSocket() client: any,
-    @MessageBody() { guildId }: RequestServerPresenceDto,
+    @MessageBody() { guildId, world }: RequestServerPresenceDto,
   ): Promise<any> {
     if (!client.rooms.has(guildId)) {
       return {};
     }
 
     const socketsInRoom = await this.server.in(guildId).fetchSockets();
-    const users = socketsInRoom.map((s) => s.data);
+    const users = socketsInRoom
+      .filter((s) => s.data.player.world === world)
+      .map((s) => omit(s.data, 'sessionId'))
+      .sort((a, b) => {
+        return b.player.lvl - a.player.lvl;
+      });
+
     const groupedUsers = groupBy(users, 'discordId');
 
     return groupedUsers;
