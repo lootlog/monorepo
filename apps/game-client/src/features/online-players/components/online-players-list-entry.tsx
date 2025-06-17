@@ -40,7 +40,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   const color = roleColor === 0 ? "FFF" : roleColor?.toString(16);
 
   return (
-    <Tile className="ll-px-2 ll-flex ll-flex-row ll-justify-between ll-mb-1">
+    <Tile className="ll-px-1 ll-flex ll-flex-row ll-justify-between ll-mb-1">
       <div
         className={cn(
           "ll-font-semibold ll-text-xs ll-min-w-16 ll-max-w-32 ll-whitespace-nowrap ll-truncate"
@@ -54,7 +54,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
           <CharacterTile
             key={`${presence.player?.accountId}-${presence.player?.characterId}`}
             character={getCharacterData(presence)}
-            className="ll-scale-75 ll-max-h-7 -ll-mt-1 -ll-ml-1.5"
+            className="ll-scale-75 ll-max-h-6 -ll-mt-1 -ll-ml-2"
           />
         ))}
       </span>
