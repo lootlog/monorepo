@@ -75,7 +75,7 @@ export const useWindowsStore = create<WindowsState>()(
         opacity: DEFAULT_OPACITY,
       },
       "add-timer": {
-        open: true,
+        open: false,
         position: DEFAULT_POSITION,
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
