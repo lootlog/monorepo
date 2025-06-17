@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "ProcessedEvents" ALTER COLUMN "processedAt" SET DEFAULT CURRENT_TIMESTAMP;

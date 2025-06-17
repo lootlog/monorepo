@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { GatewayQueueHandler } from 'src/gateway/gateway-queue.handler';
 import { GuildsModule } from 'src/guilds/guilds.module';
+import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { GuildsModule } from 'src/guilds/guilds.module';
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
     GuildsModule,
+    RedisModule,
   ],
   providers: [GatewayService, Gateway, GatewayQueueHandler],
 })

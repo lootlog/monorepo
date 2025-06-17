@@ -4,7 +4,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { TimerTile } from "@/features/timers/components/timer-tile";
+import { Tile } from "@/components/ui/tile";
 import { Timer } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/global.store";
@@ -111,7 +111,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   return (
     <ContextMenu>
       <ContextMenuTrigger className="ll-h-full">
-        <TimerTile
+        <Tile
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof COLORS}
           className="ll-h-full"
@@ -142,7 +142,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
             </div>
           </span>
-        </TimerTile>
+        </Tile>
       </ContextMenuTrigger>
 
       <ContextMenuContent className="ll-w-32 ll-flex ll-flex-col">

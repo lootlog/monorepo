@@ -1,12 +1,17 @@
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { MargonemCharacter } from "@/hooks/api/use-character-list";
+import { cn } from "@/lib/utils";
 import { FC, useEffect } from "react";
 
 export type CharacterTileProps = {
   character: MargonemCharacter;
+  className?: string;
 };
 
-export const CharacterTile: FC<CharacterTileProps> = ({ character }) => {
+export const CharacterTile: FC<CharacterTileProps> = ({
+  character,
+  className,
+}) => {
   useEffect(() => {
     // @ts-ignore
     $(`#${character.id}`).tip(`
@@ -19,9 +24,10 @@ export const CharacterTile: FC<CharacterTileProps> = ({ character }) => {
   return (
     <div
       id={character.id.toString()}
-      className={
-        "ll-w-[32px] ll-h-[48px] ll-relative ll-cursor-pointer ll-rounded-lg"
-      }
+      className={cn(
+        "ll-w-[32px] ll-h-[48px] ll-relative ll-custom-cursor-pointer ll-rounded-lg",
+        className
+      )}
       style={{
         backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${character.icon})`,
       }}

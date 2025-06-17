@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CatchingSettingsForm } from "@/features/settings/components/catching-settings-form";
-import { CharacterTile } from "@/features/settings/components/character-tile";
+import { CharacterTile } from "@/components/character-tile";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 
 import { useGlobalStore } from "@/store/global.store";

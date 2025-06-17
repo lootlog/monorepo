@@ -3,9 +3,11 @@ import { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useGlobalStore } from "@/store/global.store";
+import { Game } from "@/lib/game";
 
 export type GatewayProviderValue = {
   connected: boolean;
+  joined: boolean;
   socket: Socket;
 };
 
@@ -13,17 +15,15 @@ type Props = {
   children: React.ReactNode;
 };
 
-// 1. Najpierw zdefiniuj kontekst
 export const GatewayContext = createContext<GatewayProviderValue | undefined>(
   undefined
 );
 GatewayContext.displayName = "GatewayContext";
 
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
-  const { gameInitialized, world, characterName } = useGlobalStore(
-    (state) => state.gameState
-  );
-  const [connected, setConnected] = useState<boolean>(false);
+  const { gameState } = useGlobalStore((state) => state);
+  const [connected, setConnected] = useState(false);
+  const [joined, setJoined] = useState(false);
 
   const setupBaseListeners = useCallback(() => {
     socket.on(GatewayEvent.CONNECT, () => {
@@ -34,7 +34,10 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       setConnected(false);
     });
 
-    // Czyścimy eventy po odmontowaniu komponentu
+    socket.on(GatewayEvent.JOIN, () => {
+      setJoined(true);
+    });
+
     return () => {
       socket.off(GatewayEvent.CONNECT);
       socket.off(GatewayEvent.DISCONNECT);
@@ -42,13 +45,27 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   }, []);
 
   const emitJoin = useCallback(() => {
-    if (connected && world) {
+    const { world, gameInitialized, characterId, accountId } = gameState;
+
+    if (connected && gameInitialized) {
       socket.emit(GatewayEvent.JOIN, {
-        name: characterName,
-        world,
+        data: {
+          world,
+          name: Game.hero.nick,
+          lvl: Game.hero.lvl,
+          icon: Game.hero.img,
+          prof: Game.hero.prof,
+          characterId,
+          accountId,
+          location: {
+            x: Game.hero.x,
+            y: Game.hero.y,
+            map: Game.map.name,
+          },
+        },
       });
     }
-  }, [connected, world]);
+  }, [connected, gameState]);
 
   useEffect(() => {
     const cleanup = setupBaseListeners();
@@ -56,7 +73,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       socket.connect();
     }
 
-    return cleanup; // Clean up event listeners when component unmounts
+    return cleanup;
   }, []);
 
   useEffect(() => {
@@ -69,6 +86,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const value: GatewayProviderValue = {
     connected,
     socket,
+    joined,
   };
 
   return (

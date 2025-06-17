@@ -1,7 +1,7 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tile } from "@/components/ui/tile";
 import { SingleTimer } from "@/features/timers/components/single-timer";
-import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
@@ -20,6 +20,7 @@ const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
 export const Timers = () => {
   const {
     timers: { open },
+    toggleOpen,
     setOpen,
   } = useWindowsStore();
   const { hiddenTimers, pinnedTimers, removeTimerAfterMs, compactMode } =
@@ -150,7 +151,12 @@ export const Timers = () => {
           <div
             className="ll-settings-button ll-custom-cursor-pointer"
             key="settings"
-            onClick={() => setOpen("settings", true)}
+            onClick={() => toggleOpen("settings")}
+          />,
+          <div
+            className="ll-players-button ll-custom-cursor-pointer ll-ml-1"
+            key="online-players"
+            onClick={() => toggleOpen("online-players")}
           />,
         ]}
         onClose={() => setOpen("timers", false)}
@@ -182,9 +188,9 @@ export const Timers = () => {
             </span>
           </ScrollArea>
 
-          <TimerTile>
+          <Tile>
             <PlusIcon color="white" height={16} width={16} />
-          </TimerTile>
+          </Tile>
         </span>
       </DraggableWindow>
     )

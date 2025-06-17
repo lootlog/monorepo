@@ -8,7 +8,6 @@ interface GameState {
   world?: string;
   accountId?: string;
   characterId?: string;
-  characterName?: string;
 }
 interface GlobalState {
   gameState: GameState;

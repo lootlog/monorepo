@@ -266,3 +266,8 @@ model UserCharactersLootlogSettings {
 
   @@unique([userId, accountId, characterId])
 }
+
+model ProcessedEvents {
+  id          String   @id
+  processedAt DateTime @default(now())
+}
