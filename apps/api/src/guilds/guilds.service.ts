@@ -140,7 +140,7 @@ export class GuildsService {
   }
 
   async getWorldsByGuildId(guildId: string) {
-    const worlds = await this.prisma.loot.findMany({
+    const worlds = await this.prisma.timer.findMany({
       where: { guildId },
       select: { world: true },
       distinct: ['world'],
