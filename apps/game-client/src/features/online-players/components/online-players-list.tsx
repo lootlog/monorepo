@@ -17,7 +17,7 @@ export const OnlinePlayersList: FC = () => {
   return (
     <div className="ll-h-full ll-w-full">
       <div className="ll-flex ll-flex-col ll-h-full ll-overflow-hidden">
-        <div className="ll-py-1">
+        <div className="ll-pt-1">
           <GuildSelector
             selectedGuildId={selectedGuildId}
             setSelectedGuildId={setSelectedGuildId}
