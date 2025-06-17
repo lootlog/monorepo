@@ -3,7 +3,11 @@ import {
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
+import { AddMemberRoleDto } from 'src/gateway/dto/add-member-role.dto';
+import { AddMemberDto } from 'src/gateway/dto/add-member.dto';
 import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
+import { DeleteMemberRoleDto } from 'src/gateway/dto/delete-member-role.dto';
+import { DeleteMemberDto } from 'src/gateway/dto/delete-member.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { Queue } from 'src/gateway/enums/queue.enum';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
@@ -31,5 +35,55 @@ export class GatewayQueueHandler {
   })
   async handleGuildMessageSend(data: SendMessageDto) {
     this.gatewayService.handleGuildMessageSend(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: 'default',
+    routingKey: RoutingKey.GUILDS_MEMBERS_ADD,
+    queue: Queue.GUILDS_MEMBERS_ADD,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  async handleAddMember(data: AddMemberDto) {
+    return this.gatewayService.invalidatePlayerCache(data.id);
+  }
+
+  @RabbitSubscribe({
+    exchange: 'default',
+    routingKey: RoutingKey.GUILDS_MEMBERS_UPDATE,
+    queue: Queue.GUILDS_MEMBERS_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  async handleUpdateMember(data: AddMemberDto) {
+    return this.gatewayService.invalidatePlayerCache(data.id);
+  }
+
+  @RabbitSubscribe({
+    exchange: 'default',
+    routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE,
+    queue: Queue.GUILDS_MEMBERS_REMOVE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  async handleDeleteMember(data: DeleteMemberDto) {
+    return this.gatewayService.invalidatePlayerCache(data.id);
+  }
+
+  @RabbitSubscribe({
+    exchange: 'default',
+    routingKey: RoutingKey.GUILDS_MEMBERS_ADD_ROLE,
+    queue: Queue.GUILDS_MEMBERS_ADD_ROLE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  async handleAddMemberRole(data: AddMemberRoleDto) {
+    return this.gatewayService.invalidatePlayerCache(data.id);
+  }
+
+  @RabbitSubscribe({
+    exchange: 'default',
+    routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
+    queue: Queue.GUILDS_MEMBERS_REMOVE_ROLE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  async handleDeleteMemberRole(data: DeleteMemberRoleDto) {
+    return this.gatewayService.invalidatePlayerCache(data.id);
   }
 }

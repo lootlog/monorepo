@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { TimerTile } from "@/features/timers/components/timer-tile";
+import { Tile } from "@/components/ui/tile";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { FC } from "react";
@@ -27,7 +27,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
         <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-pr-4 ll-box-border">
           {hiddenTimersForAccount.map((timer) => {
             return (
-              <TimerTile key={timer}>
+              <Tile key={timer}>
                 <span className="ll-flex ll-justify-between ll-items-center ll-w-full ll-px-1 ll-box-border">
                   {timer}
                   <button
@@ -36,7 +36,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
                     onClick={() => handleRemoveTimer(timer)}
                   />
                 </span>
-              </TimerTile>
+              </Tile>
             );
           })}
         </span>

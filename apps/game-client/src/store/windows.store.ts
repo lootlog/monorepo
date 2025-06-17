@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type WindowId = "settings" | "timers" | "chat";
+export type WindowId = "settings" | "timers" | "chat" | "online-players";
 
 interface WindowPositionState {
   x: number;
@@ -26,6 +26,7 @@ interface WindowsState {
   settings: WindowData;
   timers: WindowData;
   chat: WindowData;
+  "online-players": WindowData;
   currentWindowFocus?: WindowId;
   setCurrentWindowFocus: (key: WindowId) => void;
   setOpen: (window: WindowId, open: boolean) => void;
@@ -37,7 +38,7 @@ interface WindowsState {
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
 const DEFAULT_POSITION: WindowPositionState = { x: 0, y: 0 };
-const DEFAULT_SIZE: WindowSizeState = { width: 300, height: 200 };
+const DEFAULT_SIZE: WindowSizeState = { width: 242, height: 240 };
 
 export const useWindowsStore = create<WindowsState>()(
   // @ts-ignore
@@ -46,7 +47,7 @@ export const useWindowsStore = create<WindowsState>()(
       settings: {
         open: false,
         position: DEFAULT_POSITION,
-        size: DEFAULT_SIZE,
+        size: { width: 420, height: 440 },
         opacity: DEFAULT_OPACITY,
       },
       timers: {
@@ -59,6 +60,12 @@ export const useWindowsStore = create<WindowsState>()(
         open: true,
         position: DEFAULT_POSITION,
         size: DEFAULT_SIZE,
+        opacity: DEFAULT_OPACITY,
+      },
+      "online-players": {
+        open: true,
+        position: DEFAULT_POSITION,
+        size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
       },
       currentWindowFocus: undefined,
@@ -83,6 +90,7 @@ export const useWindowsStore = create<WindowsState>()(
         settings: state.settings,
         timers: state.timers,
         chat: state.chat,
+        "online-players": state["online-players"],
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
