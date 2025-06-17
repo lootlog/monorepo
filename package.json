@@ -32,7 +32,19 @@
       "cross-spawn": "^7.0.5",
       "body-parser": "^1.20.3",
       "undici": "^6.21.2"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "@swc/core",
+      "@tailwindcss/oxide",
+      "core-js-pure",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "workerd"
+    ]
   },
   "engines": {
     "node": ">=20"

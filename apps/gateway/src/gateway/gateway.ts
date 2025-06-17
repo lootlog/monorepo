@@ -64,6 +64,7 @@ export class Gateway {
       if (client.data) {
         client.to([...client.rooms]).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
           discordId: client.data.discordId,
+          player: client.data.player,
           status: UserPresenceStatus.OFFLINE,
         });
 
@@ -89,7 +90,7 @@ export class Gateway {
       guildIds = await this.guildsService.getUserGuilds(discordId);
     }
 
-    this.redis.set(key, JSON.stringify(guildIds));
+    this.redis.set(key, JSON.stringify(guildIds), 30000);
 
     if (guildIds.length === 0) {
       console.log('No guilds found for user', discordId);
@@ -113,7 +114,11 @@ export class Gateway {
       .to([...client.rooms])
       .emit(GatewayEvent.UPDATE_SERVER_PRESENCE, presenceEventMessage);
 
-    return { status: 'ok' };
+    console.log('xdd');
+
+    return client.emit(GatewayEvent.JOIN, {
+      status: 'success',
+    });
   }
 
   @UseFilters(new BaseWsExceptionFilter())
@@ -124,7 +129,7 @@ export class Gateway {
     @MessageBody() { guildId }: RequestServerPresenceDto,
   ): Promise<any> {
     if (!client.rooms.has(guildId)) {
-      return [];
+      return {};
     }
 
     const socketsInRoom = await this.server.in(guildId).fetchSockets();
@@ -145,6 +150,7 @@ export class Gateway {
   }
 
   determineUserPlatform(requestOrigin: string) {
+    console.log('Request Origin:', requestOrigin);
     if (!requestOrigin) return Platform.UNKNOWN;
     const result = GAME_URL_REGEX.test(requestOrigin);
 

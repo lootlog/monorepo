@@ -39,11 +39,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const state = useWindowsStore();
   const opacity = state[id].opacity;
   const rawDefaultPosition = state[id].position;
-  const defaulSize = state[id].size;
+  const defaultSize = state[id].size;
 
   const [size, setSize] = useState({
-    width: defaulSize.width || 300,
-    height: defaulSize.height || 200,
+    width: defaultSize.width || minWidth,
+    height: defaultSize.height || minHeight,
   });
   const [isResizing, setIsResizing] = useState(false);
 

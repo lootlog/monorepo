@@ -20,6 +20,7 @@ const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
 export const Timers = () => {
   const {
     timers: { open },
+    toggleOpen,
     setOpen,
   } = useWindowsStore();
   const { hiddenTimers, pinnedTimers, removeTimerAfterMs, compactMode } =
@@ -150,7 +151,12 @@ export const Timers = () => {
           <div
             className="ll-settings-button ll-custom-cursor-pointer"
             key="settings"
-            onClick={() => setOpen("settings", true)}
+            onClick={() => toggleOpen("settings")}
+          />,
+          <div
+            className="ll-players-button ll-custom-cursor-pointer ll-ml-1"
+            key="online-players"
+            onClick={() => toggleOpen("online-players")}
           />,
         ]}
         onClose={() => setOpen("timers", false)}

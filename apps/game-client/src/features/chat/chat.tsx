@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
 import { GatewayEvent } from "@/config/gateway";
+import { GuildSelector } from "@/components/guild-selector";
 
 export const Chat = () => {
   const {
@@ -36,7 +37,6 @@ export const Chat = () => {
     `chat-selected-guild`,
     ""
   );
-  const { data: guilds } = useGuilds();
   const { data: messages } = useChatMessages({
     guildId: selectedGuildId ?? "",
   });
@@ -96,27 +96,10 @@ export const Chat = () => {
       >
         <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
           <div className="ll-flex-shrink-0 ll-pt-2">
-            <Select value={selectedGuildId} onValueChange={setSelectedGuildId}>
-              <SelectTrigger className="w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2">
-                <SelectValue
-                  placeholder="Wybierz kanał..."
-                  className="ll-h-4 ll-text-sm ll-text-white"
-                />
-              </SelectTrigger>
-              <SelectContent className="ll-font-sans ll-z-[500] ll-w-[232px] ll-py-1">
-                {guilds?.map((guild) => {
-                  return (
-                    <SelectItem
-                      key={guild.id}
-                      value={guild.id}
-                      className="ll-text-xs ll-font-semibold ll-w-[222px] ll-h-5"
-                    >
-                      {guild.name}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <GuildSelector
+              selectedGuildId={selectedGuildId}
+              setSelectedGuildId={setSelectedGuildId}
+            />
           </div>
           <div className="ll-flex-1 ll-overflow-hidden">
             <ScrollArea

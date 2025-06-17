@@ -9,12 +9,10 @@ export class GatewayService {
   constructor(private readonly gateway: Gateway) {}
 
   async handleGuildsTimerUpdate(data: CreateTimerDto) {
-    console.log('create timer ', data);
     this.gateway.server.to(data.guildId).emit(GatewayEvent.TIMERS_CREATE, data);
   }
 
   async handleGuildMessageSend(data: SendMessageDto) {
-    console.log('send message ', data);
     this.gateway.server.to(data.guildId).emit(GatewayEvent.CHAT_MESSAGE, data);
   }
 }
