@@ -10,7 +10,11 @@ export const AddTimer = () => {
 
   return (
     open && (
-      <DraggableWindow id="add-timer" title="Dodaj timer">
+      <DraggableWindow
+        id="add-timer"
+        title="Dodaj timer"
+        onClose={() => setOpen("add-timer", false)}
+      >
         xdd
       </DraggableWindow>
     )
