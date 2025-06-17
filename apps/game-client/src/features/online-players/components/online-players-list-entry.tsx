@@ -1,18 +1,20 @@
 import { CharacterTile } from "@/components/character-tile";
+import { Tile } from "@/components/ui/tile";
 import { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 import { MargonemCharacter } from "@/hooks/api/use-character-list";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
+import { cn } from "@/lib/utils";
 import { FC } from "react";
 
 export type OnlinePlayersListEntryProps = {
   discordId: string;
-  players: PlayerPresence[];
+  presences: PlayerPresence[];
   guildId?: string;
 };
 
 export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   discordId,
-  players,
+  presences,
   guildId,
 }) => {
   const { data: guildMembers } = useGuildMembers(guildId);
@@ -30,24 +32,32 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
     };
   };
 
+  const guildMember = guildMembers?.[discordId];
+  const roleWithTopPosition = guildMember?.roles.sort(
+    (a, b) => b.position - a.position
+  );
+  const roleColor = roleWithTopPosition?.[0]?.color;
+  const color = roleColor === 0 ? "FFF" : roleColor?.toString(16);
+
   return (
-    <div key={discordId} className="ll-mb-4">
-      <h3 className="ll-text-lg ll-font-semibold ll-mb-2">
-        {guildMembers?.[discordId].name}
-      </h3>
-      <ul className="ll-list-none ll-p-0">
-        {players.map((player) => (
-          <li
-            key={player.sessionId}
-            className="ll-flex ll-items-center ll-gap-2 ll-py-1"
-          >
-            <CharacterTile character={getCharacterData(player)} />
-            <span className="ll-text-sm ll-font-medium">
-              {player.player?.name || "Nieznany"} ({player.player?.world})
-            </span>
-          </li>
+    <Tile className="ll-px-2 ll-flex ll-flex-row ll-justify-between ll-mb-1">
+      <div
+        className={cn(
+          "ll-font-semibold ll-text-xs ll-min-w-16 ll-max-w-16 ll-whitespace-nowrap ll-truncate"
+        )}
+        style={{ color: `#${color}` }}
+      >
+        {guildMember?.name} ({presences.length})
+      </div>
+      <span className="ll-flex ll-flex-row ll-flex-wrap ll-justify-end -ll-mr-2">
+        {presences.map((presence) => (
+          <CharacterTile
+            key={`${presence.player?.accountId}-${presence.player?.characterId}`}
+            character={getCharacterData(presence)}
+            className="ll-scale-75 ll-max-h-7 -ll-mt-1 -ll-ml-1.5"
+          />
         ))}
-      </ul>
-    </div>
+      </span>
+    </Tile>
   );
 };

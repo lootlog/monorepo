@@ -1,7 +1,7 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tile } from "@/components/ui/tile";
 import { SingleTimer } from "@/features/timers/components/single-timer";
-import { TimerTile } from "@/features/timers/components/timer-tile";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
@@ -188,9 +188,9 @@ export const Timers = () => {
             </span>
           </ScrollArea>
 
-          <TimerTile>
+          <Tile>
             <PlusIcon color="white" height={16} width={16} />
-          </TimerTile>
+          </Tile>
         </span>
       </DraggableWindow>
     )
