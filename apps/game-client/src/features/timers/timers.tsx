@@ -107,17 +107,24 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-        const updatedTimers = old?.data.find(
-          (t) => t.npc.id === data.npc.id && t.guildId === data.guildId
-        )
+        const exists = old?.data.some(
+          (t) =>
+            t.npc.id === data.npc.id &&
+            t.guildId === data.guildId &&
+            t.world === data.world
+        );
+
+        const updatedTimers = exists
           ? old.data.map((t) =>
-              t.npc.id === data.npc.id && t.guildId === data.guildId ? data : t
+              t.npc.id === data.npc.id &&
+              t.guildId === data.guildId &&
+              data.world === t.world
+                ? data
+                : t
             )
           : [...old.data, data];
 
-        updateCalculatedTimers(
-          timersGrouping ? mergeTimers(updatedTimers) : updatedTimers
-        );
+        updateCalculatedTimers(updatedTimers);
         return { data: updatedTimers };
       }
     );
@@ -129,6 +136,15 @@ export const Timers = () => {
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
 
+        const exists = old?.data.some(
+          (t) =>
+            t.npcId === data.npcId &&
+            t.world === data.world &&
+            t.guildId === data.guildId
+        );
+
+        if (!exists) return old;
+
         const filtered =
           old?.data.filter(
             (t) =>
@@ -139,9 +155,7 @@ export const Timers = () => {
               )
           ) || [];
 
-        updateCalculatedTimers(
-          timersGrouping ? mergeTimers(filtered) : filtered
-        );
+        updateCalculatedTimers(filtered);
         return { data: filtered };
       }
     );
