@@ -1,28 +1,31 @@
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useLocalStorage } from "react-use";
+import { useQueryClient } from "@tanstack/react-query";
+import { PlusIcon } from "lucide-react";
+import { AxiosResponse } from "axios";
+
 import { DraggableWindow } from "@/components/draggable-window";
 import { GuildSelector } from "@/components/guild-selector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tile } from "@/components/ui/tile";
-import { GatewayEvent } from "@/config/gateway";
 import { SingleTimer } from "@/features/timers/components/single-timer";
 import {
-  Permission,
   useGuildPermissions,
+  Permission,
 } from "@/hooks/api/use-guild-permissions";
-import { Timer, useTimers } from "@/hooks/api/use-timers";
+import { useTimers, Timer } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { useQueryClient } from "@tanstack/react-query";
-import { AxiosResponse } from "axios";
-import { PlusIcon } from "lucide-react";
-import { useEffect, useRef, useState, useMemo } from "react";
-import { useLocalStorage } from "react-use";
+import { GatewayEvent } from "@/config/gateway";
 
 type TimerWithTimeLeft = Timer & { timeLeft: number };
 
-const normalModeBreakpoints = [220, 300, 440, 580];
-const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
+const BREAKPOINTS = {
+  normal: [220, 300, 440, 580],
+  compact: [110, 220, 330, 440, 550, 660],
+};
 
 const REQUIRED_DELETE_PERMISSIONS = [
   Permission.LOOTLOG_MANAGE,
@@ -30,23 +33,21 @@ const REQUIRED_DELETE_PERMISSIONS = [
   Permission.ADMIN,
 ];
 
-const mergeTimers = (timers: Timer[] = []) => {
-  return timers.reduce((acc: Timer[], timer) => {
-    const existing = acc.find(
-      (t) => t.npcId === timer.npcId && t.guildId === timer.guildId
-    );
-    if (existing) {
-      existing.members
-        ? existing.members.push(timer.member)
-        : (existing.members = [timer.member]);
+const mergeTimers = (timers: Timer[]): Timer[] => {
+  const map = new Map<string, Timer>();
+  timers.forEach((timer) => {
+    const key = `${timer.npcId}-${timer.guildId}`;
+    if (!map.has(key)) {
+      map.set(key, { ...timer, members: [timer.member] });
     } else {
-      acc.push({ ...timer, members: [timer.member] });
+      map.get(key)!.members?.push(timer.member);
     }
-    return acc;
-  }, []);
+  });
+  return Array.from(map.values());
 };
 
 export const Timers = () => {
+  const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
   const {
     timers: { open },
     "add-timer": { open: addTimerOpen },
@@ -60,24 +61,22 @@ export const Timers = () => {
     compactMode,
     timersGrouping,
   } = useTimersStore();
-  const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    `timers-selected-guild`,
+    "timers-selected-guild",
     ""
   );
   const { data: guildPermissions } = useGuildPermissions({
     guildId: selectedGuildId,
   });
+  const { data: timers } = useTimers({ world });
+  const { socket, connected } = useGateway();
+  const queryClient = useQueryClient();
+
   const [calculatedTimers, setCalculatedTimers] = useState<TimerWithTimeLeft[]>(
     []
   );
-  const breakpoints = compactMode
-    ? compactModeBreakpoints
-    : normalModeBreakpoints;
-
-  const queryClient = useQueryClient();
-  const { data: timers } = useTimers({ world });
-  const { socket, connected } = useGateway();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(1);
 
   const canDeleteTimers = useMemo(
     () =>
@@ -87,22 +86,21 @@ export const Timers = () => {
     [guildPermissions]
   );
 
-  const mergedOrSeparatedTimers = useMemo((): Timer[] => {
-    return timersGrouping ? mergeTimers(timers) : (timers ?? []);
-  }, [timers, selectedGuildId, timersGrouping]);
+  const activeTimers = useMemo(
+    () => (timersGrouping ? mergeTimers(timers ?? []) : (timers ?? [])),
+    [timers, timersGrouping]
+  );
 
-  const updateCalculatedTimers = (timers: Timer[]) => {
+  const updateCalculatedTimers = (inputTimers: Timer[]) => {
     const now = Date.now();
-    const newTimers = timers.reduce((acc: TimerWithTimeLeft[], timer) => {
-      const timeLeft = new Date(timer.maxSpawnTime).getTime() - now;
-      if (timeLeft > -removeTimerAfterMs) {
-        acc.push({ ...timer, timeLeft });
-      } else {
-        handleTimerRemove(timer);
-      }
-      return acc;
-    }, []);
-    setCalculatedTimers(newTimers);
+    const updated = inputTimers
+      .map((timer) => ({
+        ...timer,
+        timeLeft: new Date(timer.maxSpawnTime).getTime() - now,
+      }))
+      .filter((t) => t.timeLeft > -removeTimerAfterMs);
+
+    setCalculatedTimers(updated);
   };
 
   const handleTimerMessage = (data: Timer) => {
@@ -110,22 +108,16 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-        const updatedTimers = [...(old?.data || [])];
-        const index = updatedTimers.findIndex(
+        const updated = [...(old?.data || [])];
+        const index = updated.findIndex(
           (t) =>
             t.npcId === data.npcId &&
             t.guildId === data.guildId &&
             t.world === data.world
         );
-
-        if (index !== -1) {
-          updatedTimers[index] = data;
-        } else {
-          updatedTimers.push(data);
-        }
-
-        updateCalculatedTimers(updatedTimers);
-        return { data: updatedTimers };
+        index !== -1 ? (updated[index] = data) : updated.push(data);
+        updateCalculatedTimers(updated);
+        return { data: updated };
       }
     );
   };
@@ -135,7 +127,6 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-
         const filtered =
           old?.data.filter(
             (t) =>
@@ -145,7 +136,6 @@ export const Timers = () => {
                 t.guildId === data.guildId
               )
           ) || [];
-
         updateCalculatedTimers(filtered);
         return { data: filtered };
       }
@@ -153,77 +143,61 @@ export const Timers = () => {
   };
 
   useEffect(() => {
-    if (mergedOrSeparatedTimers.length > 0) {
-      updateCalculatedTimers(mergedOrSeparatedTimers);
-    }
-  }, [mergedOrSeparatedTimers]);
+    if (activeTimers.length) updateCalculatedTimers(activeTimers);
+  }, [activeTimers]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (mergedOrSeparatedTimers.length > 0) {
-        updateCalculatedTimers(mergedOrSeparatedTimers);
-      }
-    }, 1000);
+    const interval = setInterval(
+      () => updateCalculatedTimers(activeTimers),
+      1000
+    );
     return () => clearInterval(interval);
-  }, [mergedOrSeparatedTimers, removeTimerAfterMs]);
+  }, [activeTimers, removeTimerAfterMs]);
 
   useEffect(() => {
     if (!connected) return;
     socket?.on(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
     socket?.on(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
-
     return () => {
       socket?.off(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
       socket?.off(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
     };
   }, [connected]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [columns, setColumns] = useState(1);
-
   useEffect(() => {
     if (!containerRef.current) return;
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const width = entry.contentRect.width;
-        const newCols = breakpoints.reduce(
-          (acc, bp) => (width >= bp ? acc + 1 : acc),
-          0
-        );
-        setColumns(newCols || 1);
-      }
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width;
+      const bps = compactMode ? BREAKPOINTS.compact : BREAKPOINTS.normal;
+      const cols = bps.reduce((acc, bp) => (width >= bp ? acc + 1 : acc), 0);
+      setColumns(cols || 1);
     });
-    resizeObserver.observe(containerRef.current);
-    return () => {
-      resizeObserver.disconnect();
-    };
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, [open, compactMode]);
 
   const key = `${accountId}${characterId}`;
-  const sorted = calculatedTimers
-    .sort((a, b) => {
-      const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
-      const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
-      if (isPinnedA && !isPinnedB) return -1;
-      if (!isPinnedA && isPinnedB) return 1;
-      return (
-        new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
-      );
-    })
-    .filter((timer) => {
-      if (!timersGrouping && timer.guildId !== selectedGuildId) return false;
-      return !hiddenTimers[key]?.includes?.(timer.npc.name);
-    });
-
-  const uniqueTimers = useMemo(() => {
-    const map = new Map<number, TimerWithTimeLeft>();
-    for (const timer of sorted) {
-      if (!map.has(timer.npcId)) {
-        map.set(timer.npcId, timer);
-      }
-    }
-    return Array.from(map.values());
-  }, [sorted]);
+  const sortedTimers = useMemo(() => {
+    return calculatedTimers
+      .filter((t) => timersGrouping || t.guildId === selectedGuildId)
+      .filter((t) => !hiddenTimers[key]?.includes?.(t.npc.name))
+      .sort((a, b) => {
+        const pinA = pinnedTimers[key]?.includes?.(a.npc.name);
+        const pinB = pinnedTimers[key]?.includes?.(b.npc.name);
+        if (pinA && !pinB) return -1;
+        if (!pinA && pinB) return 1;
+        return (
+          new Date(a.maxSpawnTime).getTime() -
+          new Date(b.maxSpawnTime).getTime()
+        );
+      });
+  }, [
+    calculatedTimers,
+    selectedGuildId,
+    hiddenTimers,
+    pinnedTimers,
+    timersGrouping,
+  ]);
 
   return (
     open && (
@@ -232,13 +206,13 @@ export const Timers = () => {
         title="Lootlog"
         actions={[
           <div
-            className="ll-settings-button ll-custom-cursor-pointer"
             key="settings"
+            className="ll-settings-button ll-custom-cursor-pointer"
             onClick={() => toggleOpen("settings")}
           />,
           <div
-            className="ll-players-button ll-custom-cursor-pointer ll-ml-1"
             key="online-players"
+            className="ll-players-button ll-custom-cursor-pointer ll-ml-1"
             onClick={() => toggleOpen("online-players")}
           />,
         ]}
@@ -249,33 +223,34 @@ export const Timers = () => {
           ref={containerRef}
           className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
         >
-          {!timersGrouping && (
-            <GuildSelector
-              setSelectedGuildId={setSelectedGuildId}
-              selectedGuildId={selectedGuildId}
-              disabled={addTimerOpen}
-            />
-          )}
           <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
-            {uniqueTimers.length === 0 && (
+            {!timersGrouping && (
+              <GuildSelector
+                selectedGuildId={selectedGuildId}
+                setSelectedGuildId={setSelectedGuildId}
+                disabled={addTimerOpen}
+              />
+            )}
+            {sortedTimers.length === 0 ? (
               <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
                 ----
               </span>
+            ) : (
+              <span
+                className="ll-grid ll-gap-0.5 ll-box-border"
+                style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+              >
+                {sortedTimers.map((timer) => (
+                  <SingleTimer
+                    key={`${timer.npcId}-${timer.guildId}`}
+                    timer={timer}
+                    timeLeft={timer.timeLeft}
+                    compactMode={compactMode}
+                    canDelete={canDeleteTimers}
+                  />
+                ))}
+              </span>
             )}
-            <span
-              className="ll-grid ll-gap-0.5 ll-box-border"
-              style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
-            >
-              {uniqueTimers.map((timer) => (
-                <SingleTimer
-                  key={`${timer.npcId}-${timer.guildId}`}
-                  timer={timer}
-                  timeLeft={timer.timeLeft}
-                  compactMode={compactMode}
-                  canDelete={canDeleteTimers}
-                />
-              ))}
-            </span>
           </ScrollArea>
 
           {!timersGrouping && (
