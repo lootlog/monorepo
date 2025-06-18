@@ -19,8 +19,9 @@ import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { GatewayEvent } from "@/config/gateway";
+import { GuildMember } from "@/hooks/api/use-guild-members";
 
-type TimerWithTimeLeft = Timer & { timeLeft: number };
+type TimerWithTimeLeft = Timer & { timeLeft: number; members?: GuildMember[] };
 
 const BREAKPOINTS = {
   normal: [220, 300, 440, 580],
@@ -33,16 +34,37 @@ const REQUIRED_DELETE_PERMISSIONS = [
   Permission.ADMIN,
 ];
 
-const mergeTimers = (timers: Timer[]): Timer[] => {
-  const map = new Map<string, Timer>();
-  timers.forEach((timer) => {
-    const key = `${timer.npcId}-${timer.guildId}`;
-    if (!map.has(key)) {
-      map.set(key, { ...timer, members: [timer.member] });
+const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
+  const map = new Map<number, TimerWithTimeLeft>();
+
+  for (const timer of timers) {
+    const existing = map.get(timer.npcId);
+
+    if (!existing) {
+      map.set(timer.npcId, {
+        ...timer,
+        members: timer.member ? [timer.member] : [],
+        timeLeft: 0, // placeholder
+      });
     } else {
-      map.get(key)!.members?.push(timer.member);
+      if (new Date(timer.maxSpawnTime) > new Date(existing.maxSpawnTime)) {
+        map.set(timer.npcId, {
+          ...timer,
+          members: [
+            ...(existing.members || []),
+            ...(timer.member ? [timer.member] : []),
+          ],
+          timeLeft: 0,
+        });
+      } else {
+        existing.members = [
+          ...(existing.members || []),
+          ...(timer.member ? [timer.member] : []),
+        ];
+      }
     }
-  });
+  }
+
   return Array.from(map.values());
 };
 
@@ -86,22 +108,22 @@ export const Timers = () => {
     [guildPermissions]
   );
 
-  const activeTimers = useMemo(
-    () => (timersGrouping ? mergeTimers(timers ?? []) : (timers ?? [])),
-    [timers, timersGrouping]
-  );
-
-  const updateCalculatedTimers = (inputTimers: Timer[]) => {
+  const activeTimers = useMemo(() => {
+    const rawTimers = timers ?? [];
+    const merged = timersGrouping ? mergeTimers(rawTimers) : rawTimers;
     const now = Date.now();
-    const updated = inputTimers
+
+    return merged
       .map((timer) => ({
         ...timer,
         timeLeft: new Date(timer.maxSpawnTime).getTime() - now,
       }))
       .filter((t) => t.timeLeft > -removeTimerAfterMs);
+  }, [timers, timersGrouping, removeTimerAfterMs]);
 
-    setCalculatedTimers(updated);
-  };
+  useEffect(() => {
+    setCalculatedTimers(activeTimers);
+  }, [activeTimers]);
 
   const handleTimerMessage = (data: Timer) => {
     queryClient.setQueryData(
@@ -116,7 +138,6 @@ export const Timers = () => {
             t.world === data.world
         );
         index !== -1 ? (updated[index] = data) : updated.push(data);
-        updateCalculatedTimers(updated);
         return { data: updated };
       }
     );
@@ -136,23 +157,25 @@ export const Timers = () => {
                 t.guildId === data.guildId
               )
           ) || [];
-        updateCalculatedTimers(filtered);
         return { data: filtered };
       }
     );
   };
 
   useEffect(() => {
-    if (activeTimers.length) updateCalculatedTimers(activeTimers);
-  }, [activeTimers]);
-
-  useEffect(() => {
-    const interval = setInterval(
-      () => updateCalculatedTimers(activeTimers),
-      1000
-    );
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setCalculatedTimers((prev) =>
+        prev
+          .map((timer) => ({
+            ...timer,
+            timeLeft: new Date(timer.maxSpawnTime).getTime() - now,
+          }))
+          .filter((t) => t.timeLeft > -removeTimerAfterMs)
+      );
+    }, 1000);
     return () => clearInterval(interval);
-  }, [activeTimers, removeTimerAfterMs]);
+  }, [removeTimerAfterMs]);
 
   useEffect(() => {
     if (!connected) return;
