@@ -21,7 +21,7 @@ export type DraggableWindowProps = {
   maxHeight?: number;
 };
 
-const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4];
+const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
 
 export const DraggableWindow: FC<DraggableWindowProps> = ({
   children,
@@ -152,6 +152,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             "ll-bg-black/25": opacity === 2,
             "ll-bg-black/50": opacity === 3,
             "ll-bg-black/75": opacity === 4,
+            "ll-bg-black": opacity === 5,
           }
         )}
       >
