@@ -1,4 +1,4 @@
-import { useDrag } from "@/hooks/ui/useDrag";
+import { useDrag } from "@/hooks/ui/use-drag";
 import { cn } from "@/lib/utils";
 import {
   useWindowsStore,

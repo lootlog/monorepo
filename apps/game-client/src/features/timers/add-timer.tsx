@@ -1,10 +1,10 @@
 import { DraggableWindow } from "@/components/draggable-window";
+import { AddTimerForm } from "@/features/timers/components/add-timer-form";
 import { useWindowsStore } from "@/store/windows.store";
 
 export const AddTimer = () => {
   const {
     "add-timer": { open },
-    toggleOpen,
     setOpen,
   } = useWindowsStore();
 
@@ -14,8 +14,9 @@ export const AddTimer = () => {
         id="add-timer"
         title="Dodaj timer"
         onClose={() => setOpen("add-timer", false)}
+        resizable={false}
       >
-        xdd
+        <AddTimerForm />
       </DraggableWindow>
     )
   );

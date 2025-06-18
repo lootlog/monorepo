@@ -6,4 +6,5 @@ export enum GatewayEvent {
   UPDATE_SERVER_PRESENCE = 'update-server-presence',
   CHAT_MESSAGE = 'chat-message',
   TIMERS_CREATE = 'timers-create',
+  TIMERS_DELETE = 'timers-delete',
 }
