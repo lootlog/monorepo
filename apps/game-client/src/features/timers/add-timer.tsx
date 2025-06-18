@@ -14,7 +14,7 @@ export const AddTimer = () => {
         id="add-timer"
         title="Dodaj timer"
         onClose={() => setOpen("add-timer", false)}
-        resizable={false}
+        minHeight={300}
       >
         <AddTimerForm />
       </DraggableWindow>
