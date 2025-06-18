@@ -32,7 +32,9 @@ const REQUIRED_DELETE_PERMISSIONS = [
 
 const mergeTimers = (timers: Timer[] = []) => {
   return timers.reduce((acc: Timer[], timer) => {
-    const existing = acc.find((t) => t.npc.id === timer.npc.id);
+    const existing = acc.find(
+      (t) => t.npcId === timer.npcId && t.guildId === timer.guildId
+    );
     if (existing) {
       existing.members
         ? existing.members.push(timer.member)
@@ -76,6 +78,7 @@ export const Timers = () => {
   const queryClient = useQueryClient();
   const { data: timers } = useTimers({ world });
   const { socket, connected } = useGateway();
+
   const canDeleteTimers = useMemo(
     () =>
       REQUIRED_DELETE_PERMISSIONS.some((perm) =>
@@ -107,22 +110,19 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-        const exists = old?.data.some(
+        const updatedTimers = [...(old?.data || [])];
+        const index = updatedTimers.findIndex(
           (t) =>
-            t.npc.id === data.npc.id &&
+            t.npcId === data.npcId &&
             t.guildId === data.guildId &&
             t.world === data.world
         );
 
-        const updatedTimers = exists
-          ? old.data.map((t) =>
-              t.npc.id === data.npc.id &&
-              t.guildId === data.guildId &&
-              data.world === t.world
-                ? data
-                : t
-            )
-          : [...old.data, data];
+        if (index !== -1) {
+          updatedTimers[index] = data;
+        } else {
+          updatedTimers.push(data);
+        }
 
         updateCalculatedTimers(updatedTimers);
         return { data: updatedTimers };
@@ -135,15 +135,6 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-
-        const exists = old?.data.some(
-          (t) =>
-            t.npcId === data.npcId &&
-            t.world === data.world &&
-            t.guildId === data.guildId
-        );
-
-        if (!exists) return old;
 
         const filtered =
           old?.data.filter(
@@ -221,9 +212,18 @@ export const Timers = () => {
     })
     .filter((timer) => {
       if (!timersGrouping && timer.guildId !== selectedGuildId) return false;
-
       return !hiddenTimers[key]?.includes?.(timer.npc.name);
     });
+
+  const uniqueTimers = useMemo(() => {
+    const map = new Map<number, TimerWithTimeLeft>();
+    for (const timer of sorted) {
+      if (!map.has(timer.npcId)) {
+        map.set(timer.npcId, timer);
+      }
+    }
+    return Array.from(map.values());
+  }, [sorted]);
 
   return (
     open && (
@@ -249,15 +249,15 @@ export const Timers = () => {
           ref={containerRef}
           className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
         >
+          {!timersGrouping && (
+            <GuildSelector
+              setSelectedGuildId={setSelectedGuildId}
+              selectedGuildId={selectedGuildId}
+              disabled={addTimerOpen}
+            />
+          )}
           <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
-            {!timersGrouping && (
-              <GuildSelector
-                setSelectedGuildId={setSelectedGuildId}
-                selectedGuildId={selectedGuildId}
-                disabled={addTimerOpen}
-              />
-            )}
-            {sorted.length === 0 && (
+            {uniqueTimers.length === 0 && (
               <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
                 ----
               </span>
@@ -266,21 +266,15 @@ export const Timers = () => {
               className="ll-grid ll-gap-0.5 ll-box-border"
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
-              {sorted.map((timer) => {
-                if (!timer?.npc?.id) {
-                  console.warn("⛔️ Invalid timer data", timer);
-                  return null;
-                }
-                return (
-                  <SingleTimer
-                    key={timer.npc.id}
-                    timer={timer}
-                    timeLeft={timer.timeLeft}
-                    compactMode={compactMode}
-                    canDelete={canDeleteTimers}
-                  />
-                );
-              })}
+              {uniqueTimers.map((timer) => (
+                <SingleTimer
+                  key={`${timer.npcId}-${timer.guildId}`}
+                  timer={timer}
+                  timeLeft={timer.timeLeft}
+                  compactMode={compactMode}
+                  canDelete={canDeleteTimers}
+                />
+              ))}
             </span>
           </ScrollArea>
 
