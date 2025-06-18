@@ -122,6 +122,40 @@ export class GuildsService {
     return { data: permissions, guild };
   }
 
+  async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
+    const guilds = await this.prisma.guild.findMany({
+      where: { id: { in: guildIds } },
+    });
+
+    const members = await this.prisma.member.findMany({
+      where: {
+        userId: discordId,
+        guildId: { in: guildIds },
+      },
+      include: { roles: true, guild: true },
+    });
+
+    const result = guilds.map((guild) => {
+      const member = members.find((m) => m.guildId === guild.id);
+
+      if (!member) {
+        return { guild, data: [] };
+      }
+
+      let permissions = member.roles.reduce((acc: Permission[], role) => {
+        return acc.concat(role.permissions);
+      }, []);
+
+      if (discordId === guild.ownerId) {
+        permissions = Object.values(Permission);
+      }
+
+      return { guild, data: permissions };
+    });
+
+    return result;
+  }
+
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
     if (RESTRICTED_VANITY_URLS.includes(data.vanityUrl)) {
       throw new BadRequestException({

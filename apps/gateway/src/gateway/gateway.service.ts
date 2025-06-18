@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
+import { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
@@ -14,6 +15,10 @@ export class GatewayService {
 
   async handleGuildsTimerUpdate(data: CreateTimerDto) {
     this.gateway.server.to(data.guildId).emit(GatewayEvent.TIMERS_CREATE, data);
+  }
+
+  async handleGuildsTimerDelete(data: DeleteTimerDto) {
+    this.gateway.server.to(data.guildId).emit(GatewayEvent.TIMERS_DELETE, data);
   }
 
   async handleGuildMessageSend(data: SendMessageDto) {

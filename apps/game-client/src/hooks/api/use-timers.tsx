@@ -14,8 +14,11 @@ export type Timer = {
   minSpawnTime: Date;
   maxSpawnTime: Date;
   npc: Npc;
+  npcId: number;
   member: GuildMember;
+  members?: GuildMember[];
   world: string;
+  guildId: string;
 };
 
 export const useTimers = ({ world }: UseTimersOptions) => {

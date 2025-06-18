@@ -1,0 +1,1 @@
+export const DEFAULT_RESPAWN_RANDOMNESS = 0;
