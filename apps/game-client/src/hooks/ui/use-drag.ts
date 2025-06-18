@@ -1,5 +1,6 @@
 import {
   MouseEvent as ReactMouseEvent,
+  TouchEvent as ReactTouchEvent,
   useCallback,
   useEffect,
   useState,
@@ -32,45 +33,6 @@ export const useDrag = ({
   const [finalPosition, setFinalPosition] = useState(defaultState);
   const [isDragging, setIsDragging] = useState(false);
 
-  useEffect(() => {
-    if (isDragging === false) {
-      onDragStop(finalPosition);
-    }
-  }, [isDragging]);
-
-  useEffect(() => {
-    let timeoutId: number | undefined;
-
-    const handleResize = () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = window.setTimeout(() => {
-        const { current: draggableElement } = ref;
-        if (!draggableElement) return;
-        const { width, height } = draggableElement.getBoundingClientRect();
-        setFinalPosition((prev) => {
-          const x = Math.min(Math.max(0, prev.x), window.innerWidth - width);
-          const y = Math.min(Math.max(0, prev.y), window.innerHeight - height);
-          onDragStop({ x, y });
-
-          return {
-            x,
-            y,
-          };
-        });
-      }, 100); // 100ms debounce
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [ref]);
-
   const updateFinalPosition = useCallback(
     (width: number, height: number, x: number, y: number) => {
       if (calculateFor === "bottomRight") {
@@ -90,7 +52,6 @@ export const useDrag = ({
             0
           ),
         });
-
         return;
       }
 
@@ -102,97 +63,106 @@ export const useDrag = ({
     [calculateFor]
   );
 
-  const handleMouseUp = (evt: MouseEvent) => {
-    if (!(evt.target instanceof HTMLElement)) return;
+  const startDrag = (x: number, y: number) => {
+    const { current } = ref;
+    if (!current) return;
+    const { top, left, width, height } = current.getBoundingClientRect();
 
-    setIsDragging(false);
+    setIsDragging(true);
+    setDragInfo({ startX: x, startY: y, top, left, width, height });
   };
+
+  const dragTo = (x: number, y: number) => {
+    if (!isDragging) return;
+    const { startX, startY, top, left, width, height } = dragInfo;
+    const deltaX = startX - x;
+    const deltaY = startY - y;
+
+    updateFinalPosition(width, height, left - deltaX, top - deltaY);
+  };
+
+  const endDrag = () => setIsDragging(false);
 
   const handleMouseDown = (evt: ReactMouseEvent<HTMLElement>) => {
     evt.stopPropagation();
     if (!(evt.target instanceof HTMLElement)) return;
     if (evt.target.getAttribute("data-state") === "input") return;
     if (evt.target.getAttribute("data-slot") === "hidden") return;
-    if (evt.currentTarget.tagName === "INPUT") {
-      evt.preventDefault();
-    }
 
-    const { clientX, clientY } = evt;
-    const { current: draggableElement } = ref;
+    startDrag(evt.clientX, evt.clientY);
+  };
 
-    if (!draggableElement) {
-      return;
-    }
-
-    const { top, left, width, height } =
-      draggableElement.getBoundingClientRect();
-
-    setIsDragging(true);
-    setDragInfo({
-      startX: clientX,
-      startY: clientY,
-      top,
-      left,
-      width,
-      height,
-    });
+  const handleTouchStart = (evt: ReactTouchEvent<HTMLElement>) => {
+    if (evt.touches.length > 1) return;
+    const touch = evt.touches[0];
+    startDrag(touch.clientX, touch.clientY);
   };
 
   const handleMouseMove = useCallback(
     (evt: MouseEvent) => {
-      const { current: draggableElement } = ref;
-
-      if (!isDragging || !draggableElement) return;
-
+      if (!isDragging) return;
       evt.preventDefault();
-
-      const { clientX, clientY } = evt;
-
-      const position = {
-        x: dragInfo.startX - clientX,
-        y: dragInfo.startY - clientY,
-      };
-
-      const { top, left, width, height } = dragInfo;
-
-      updateFinalPosition(width, height, left - position.x, top - position.y);
+      dragTo(evt.clientX, evt.clientY);
     },
-    [isDragging, dragInfo, ref, updateFinalPosition]
+    [isDragging, dragInfo]
   );
 
-  const recalculate = (width: number, height: number) => {
-    const { current: draggableElement } = ref;
+  const handleTouchMove = useCallback(
+    (evt: TouchEvent) => {
+      if (!isDragging || evt.touches.length > 1) return;
+      evt.preventDefault();
+      dragTo(evt.touches[0].clientX, evt.touches[0].clientY);
+    },
+    [isDragging, dragInfo]
+  );
 
-    if (!draggableElement) return;
+  const handleMouseUp = () => endDrag();
+  const handleTouchEnd = () => endDrag();
 
-    const {
-      top,
-      left,
-      width: boundingWidth,
-      height: boundingHeight,
-    } = draggableElement.getBoundingClientRect();
-
-    updateFinalPosition(
-      width ?? boundingWidth,
-      height ?? boundingHeight,
-      left,
-      top
-    );
-  };
+  useEffect(() => {
+    if (!isDragging) {
+      onDragStop(finalPosition);
+    }
+  }, [isDragging]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [handleMouseMove]);
+  }, [handleMouseMove, handleTouchMove]);
+
+  useEffect(() => {
+    const { current } = ref;
+    if (!current) return;
+    const { width, height } = current.getBoundingClientRect();
+
+    setFinalPosition((prev) => {
+      const x = Math.min(Math.max(0, prev.x), window.innerWidth - width);
+      const y = Math.min(Math.max(0, prev.y), window.innerHeight - height);
+      onDragStop({ x, y });
+      return { x, y };
+    });
+  }, [ref]);
+
+  const recalculate = (width: number, height: number) => {
+    const { current } = ref;
+    if (!current) return;
+    const { top, left, width: w, height: h } = current.getBoundingClientRect();
+    updateFinalPosition(width ?? w, height ?? h, left, top);
+  };
 
   return {
     position: finalPosition,
     handleMouseDown,
+    handleTouchStart,
     recalculate,
   };
 };

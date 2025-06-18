@@ -60,7 +60,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const defaultPosition = getClampedPosition(rawDefaultPosition);
 
   const draggableRef = useRef<HTMLDivElement>(null!);
-  const { position, handleMouseDown } = useDrag({
+  const { position, handleMouseDown, handleTouchStart } = useDrag({
     ref: draggableRef,
     defaultState: defaultPosition,
     onDragStop: (position) => {
@@ -124,6 +124,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    state.setCurrentWindowFocus(id);
+    handleTouchStart(e as React.TouchEvent<HTMLElement>);
+  };
+
   useEffect(() => {
     if (isResizing) return;
     state.setSize(id, { height: size.height, width: size.width });
@@ -141,6 +146,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         zIndex: state.currentWindowFocus === id ? 1 : 0,
       }}
       onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
       onWheel={(e) => e.stopPropagation()}
       onClick={handleClick}
     >
