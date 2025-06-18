@@ -13,7 +13,7 @@ interface WindowPositionState {
   y: number;
 }
 
-export type WindowOpacity = 1 | 2 | 3 | 4;
+export type WindowOpacity = 1 | 2 | 3 | 4 | 5;
 
 interface WindowSizeState {
   width: number;
