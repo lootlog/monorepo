@@ -19,6 +19,8 @@ async function bootstrap() {
     infer: true,
   });
 
+  console.log(`Starting service on port ${port}`);
+
   app.useGlobalPipes(new ValidationPipe());
 
   await app.startAllMicroservices();
