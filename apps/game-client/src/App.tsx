@@ -12,6 +12,7 @@ import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 import { useWindowsStore } from "@/store/windows.store";
 import { OnlinePlayers } from "@/features/online-players/online-players";
 import { AddTimer } from "@/features/timers/add-timer";
+import { ErrorBoundary } from "react-error-boundary";
 
 function App() {
   useGameEventsParser();
@@ -75,7 +76,17 @@ function App() {
   return (
     gameInitialized && (
       <>
-        <Timers />
+        <ErrorBoundary
+          FallbackComponent={() => <div>xasd</div>}
+          onError={(error, info) => {
+            console.log("asdasdasd", error, info);
+            console.error("❌ Caught error in Timers:", error, info);
+          }}
+        >
+          {/* <Timers /> */}
+
+          <Timers />
+        </ErrorBoundary>
         <AddTimer />
         <Settings />
         <Chat />

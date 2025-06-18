@@ -103,16 +103,19 @@ export const useDrag = ({
   );
 
   const handleMouseUp = (evt: MouseEvent) => {
-    // evt.preventDefault();
-    evt.stopPropagation();
     if (!(evt.target instanceof HTMLElement)) return;
 
     setIsDragging(false);
   };
 
   const handleMouseDown = (evt: ReactMouseEvent<HTMLElement>) => {
+    evt.stopPropagation();
     if (!(evt.target instanceof HTMLElement)) return;
-    if (evt.target.getAttribute("data-state") === "visible") return;
+    if (evt.target.getAttribute("data-state") === "input") return;
+    if (evt.target.getAttribute("data-slot") === "hidden") return;
+    if (evt.currentTarget.tagName === "INPUT") {
+      evt.preventDefault();
+    }
 
     const { clientX, clientY } = evt;
     const { current: draggableElement } = ref;

@@ -8,6 +8,7 @@ import { AddMemberDto } from 'src/gateway/dto/add-member.dto';
 import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
 import { DeleteMemberRoleDto } from 'src/gateway/dto/delete-member-role.dto';
 import { DeleteMemberDto } from 'src/gateway/dto/delete-member.dto';
+import { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { Queue } from 'src/gateway/enums/queue.enum';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
@@ -25,6 +26,16 @@ export class GatewayQueueHandler {
   })
   async handleGuildsTimerUpdate(data: CreateTimerDto) {
     this.gatewayService.handleGuildsTimerUpdate(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: 'default',
+    routingKey: RoutingKey.GUILDS_TIMERS_DELETE,
+    queue: Queue.GUILDS_TIMERS_DELETE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  async handleGuildsTimerDelete(data: DeleteTimerDto) {
+    this.gatewayService.handleGuildsTimerDelete(data);
   }
 
   @RabbitSubscribe({

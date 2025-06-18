@@ -1,7 +1,13 @@
 import { DraggableWindow } from "@/components/draggable-window";
+import { GuildSelector } from "@/components/guild-selector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tile } from "@/components/ui/tile";
+import { GatewayEvent } from "@/config/gateway";
 import { SingleTimer } from "@/features/timers/components/single-timer";
+import {
+  Permission,
+  useGuildPermissions,
+} from "@/hooks/api/use-guild-permissions";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
@@ -10,12 +16,33 @@ import { useWindowsStore } from "@/store/windows.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 import { PlusIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useLocalStorage } from "react-use";
 
 type TimerWithTimeLeft = Timer & { timeLeft: number };
 
 const normalModeBreakpoints = [220, 300, 440, 580];
 const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
+
+const REQUIRED_DELETE_PERMISSIONS = [
+  Permission.LOOTLOG_MANAGE,
+  Permission.OWNER,
+  Permission.ADMIN,
+];
+
+const mergeTimers = (timers: Timer[] = []) => {
+  return timers.reduce((acc: Timer[], timer) => {
+    const existing = acc.find((t) => t.npc.id === timer.npc.id);
+    if (existing) {
+      existing.members
+        ? existing.members.push(timer.member)
+        : (existing.members = [timer.member]);
+    } else {
+      acc.push({ ...timer, members: [timer.member] });
+    }
+    return acc;
+  }, []);
+};
 
 export const Timers = () => {
   const {
@@ -23,10 +50,21 @@ export const Timers = () => {
     toggleOpen,
     setOpen,
   } = useWindowsStore();
-  const { hiddenTimers, pinnedTimers, removeTimerAfterMs, compactMode } =
-    useTimersStore();
+  const {
+    hiddenTimers,
+    pinnedTimers,
+    removeTimerAfterMs,
+    compactMode,
+    timersGrouping,
+  } = useTimersStore();
   const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
-
+  const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
+    `timers-selected-guild`,
+    ""
+  );
+  const { data: guildPermissions } = useGuildPermissions({
+    guildId: selectedGuildId,
+  });
   const [calculatedTimers, setCalculatedTimers] = useState<TimerWithTimeLeft[]>(
     []
   );
@@ -37,6 +75,17 @@ export const Timers = () => {
   const queryClient = useQueryClient();
   const { data: timers } = useTimers({ world });
   const { socket, connected } = useGateway();
+  const canDeleteTimers = useMemo(
+    () =>
+      REQUIRED_DELETE_PERMISSIONS.some((perm) =>
+        guildPermissions?.includes(perm)
+      ),
+    [guildPermissions]
+  );
+
+  const mergedOrSeparatedTimers = useMemo((): Timer[] => {
+    return timersGrouping ? mergeTimers(timers) : (timers ?? []);
+  }, [timers, selectedGuildId, timersGrouping]);
 
   const updateCalculatedTimers = (timers: Timer[]) => {
     const now = Date.now();
@@ -57,11 +106,17 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-        const updatedTimers = old?.data.find((t) => t.npc.id === data.npc.id)
-          ? old.data.map((t) => (t.npc.id === data.npc.id ? data : t))
+        const updatedTimers = old?.data.find(
+          (t) => t.npc.id === data.npc.id && t.guildId === data.guildId
+        )
+          ? old.data.map((t) =>
+              t.npc.id === data.npc.id && t.guildId === data.guildId ? data : t
+            )
           : [...old.data, data];
 
-        updateCalculatedTimers(updatedTimers);
+        updateCalculatedTimers(
+          timersGrouping ? mergeTimers(updatedTimers) : updatedTimers
+        );
         return { data: updatedTimers };
       }
     );
@@ -72,33 +127,49 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
+
         const filtered =
-          old?.data.filter((t) => t.npc.id !== data.npc.id) || [];
-        updateCalculatedTimers(filtered);
+          old?.data.filter(
+            (t) =>
+              !(
+                t.npcId === data.npcId &&
+                t.world === data.world &&
+                t.guildId === data.guildId
+              )
+          ) || [];
+
+        updateCalculatedTimers(
+          timersGrouping ? mergeTimers(filtered) : filtered
+        );
         return { data: filtered };
       }
     );
   };
 
   useEffect(() => {
-    if (timers && timers.length > 0) {
-      updateCalculatedTimers(timers);
+    if (mergedOrSeparatedTimers.length > 0) {
+      updateCalculatedTimers(mergedOrSeparatedTimers);
     }
-  }, [timers]);
+  }, [mergedOrSeparatedTimers]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (timers && timers.length > 0) {
-        updateCalculatedTimers(timers);
+      if (mergedOrSeparatedTimers.length > 0) {
+        updateCalculatedTimers(mergedOrSeparatedTimers);
       }
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [timers, removeTimerAfterMs]);
+  }, [mergedOrSeparatedTimers, removeTimerAfterMs]);
 
   useEffect(() => {
-    if (socket?.hasListeners("timers-create") || !connected) return;
-    socket?.on("timers-create", handleTimerMessage);
+    if (!connected) return;
+    socket?.on(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
+    socket?.on(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+
+    return () => {
+      socket?.off(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
+      socket?.off(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+    };
   }, [connected]);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -106,7 +177,6 @@ export const Timers = () => {
 
   useEffect(() => {
     if (!containerRef.current) return;
-
     const resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
         const width = entry.contentRect.width;
@@ -117,30 +187,28 @@ export const Timers = () => {
         setColumns(newCols || 1);
       }
     });
-
     resizeObserver.observe(containerRef.current);
-
     return () => {
       resizeObserver.disconnect();
     };
   }, [open, compactMode]);
 
-  const sorted = calculatedTimers.sort((a, b) => {
-    const key = `${accountId}${characterId}`;
-    const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
-    const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
+  const key = `${accountId}${characterId}`;
+  const sorted = calculatedTimers
+    .sort((a, b) => {
+      const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
+      const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
+      if (isPinnedA && !isPinnedB) return -1;
+      if (!isPinnedA && isPinnedB) return 1;
+      return (
+        new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
+      );
+    })
+    .filter((timer) => {
+      if (!timersGrouping && timer.guildId !== selectedGuildId) return false;
 
-    if (isPinnedA && !isPinnedB) return -1;
-    if (!isPinnedA && isPinnedB) return 1;
-    return (
-      new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
-    );
-  });
-
-  const filtered = sorted.filter((timer) => {
-    const key = `${accountId}${characterId}`;
-    return !hiddenTimers[key]?.includes?.(timer.npc.name);
-  });
+      return !hiddenTimers[key]?.includes?.(timer.npc.name);
+    });
 
   return (
     open && (
@@ -166,31 +234,45 @@ export const Timers = () => {
           ref={containerRef}
           className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
         >
-          {filtered.length === 0 && (
-            <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
-              ----
-            </span>
-          )}
-
           <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
+            {!timersGrouping && (
+              <GuildSelector
+                setSelectedGuildId={setSelectedGuildId}
+                selectedGuildId={selectedGuildId}
+              />
+            )}
+            {sorted.length === 0 && (
+              <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
+                ----
+              </span>
+            )}
             <span
               className="ll-grid ll-gap-0.5 ll-box-border"
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
-              {filtered.map((timer) => (
-                <SingleTimer
-                  key={timer.npc.id}
-                  timer={timer}
-                  timeLeft={timer.timeLeft}
-                  compactMode={compactMode}
-                />
-              ))}
+              {sorted.map((timer) => {
+                if (!timer?.npc?.id) {
+                  console.warn("⛔️ Invalid timer data", timer);
+                  return null;
+                }
+                return (
+                  <SingleTimer
+                    key={timer.npc.id}
+                    timer={timer}
+                    timeLeft={timer.timeLeft}
+                    compactMode={compactMode}
+                    canDelete={canDeleteTimers}
+                  />
+                );
+              })}
             </span>
           </ScrollArea>
 
-          <Tile onClick={() => toggleOpen("add-timer")}>
-            <PlusIcon color="white" height={16} width={16} />
-          </Tile>
+          {!timersGrouping && (
+            <Tile onClick={() => toggleOpen("add-timer")}>
+              <PlusIcon color="white" height={16} width={16} />
+            </Tile>
+          )}
         </span>
       </DraggableWindow>
     )

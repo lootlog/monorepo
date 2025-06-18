@@ -1,19 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
-export type UseResetTimerOptions = {
-  world: string;
+export type UseDeleteTimerOptions = {
   npcId: number;
   guildId: string;
+  world?: string;
 };
 
-export const useResetTimer = () => {
+export const useDeleteTimer = () => {
   const { client } = useAuthenticatedApiClient();
 
   const mutation = useMutation({
-    mutationKey: ["reset-timer"],
-    mutationFn: ({ guildId, npcId, ...rest }: UseResetTimerOptions) =>
-      client.patch(`/guilds/${guildId}/timers/${npcId}/reset`, rest),
+    mutationKey: ["delete-timer"],
+    mutationFn: ({ guildId, npcId, world }: UseDeleteTimerOptions) =>
+      client.delete(`/guilds/${guildId}/timers/${npcId}?world=${world}`),
     onSuccess: () => {
       console.log("onSuccess");
     },
