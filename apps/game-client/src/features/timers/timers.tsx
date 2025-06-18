@@ -47,6 +47,7 @@ const mergeTimers = (timers: Timer[] = []) => {
 export const Timers = () => {
   const {
     timers: { open },
+    "add-timer": { open: addTimerOpen },
     toggleOpen,
     setOpen,
   } = useWindowsStore();
@@ -239,6 +240,7 @@ export const Timers = () => {
               <GuildSelector
                 setSelectedGuildId={setSelectedGuildId}
                 selectedGuildId={selectedGuildId}
+                disabled={addTimerOpen}
               />
             )}
             {sorted.length === 0 && (
