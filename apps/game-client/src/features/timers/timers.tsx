@@ -246,14 +246,14 @@ export const Timers = () => {
           ref={containerRef}
           className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
         >
+          {!timersGrouping && (
+            <GuildSelector
+              selectedGuildId={selectedGuildId}
+              setSelectedGuildId={setSelectedGuildId}
+              disabled={addTimerOpen}
+            />
+          )}
           <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
-            {!timersGrouping && (
-              <GuildSelector
-                selectedGuildId={selectedGuildId}
-                setSelectedGuildId={setSelectedGuildId}
-                disabled={addTimerOpen}
-              />
-            )}
             {sortedTimers.length === 0 ? (
               <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
                 ----
