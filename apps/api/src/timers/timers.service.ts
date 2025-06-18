@@ -20,6 +20,7 @@ import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
 import { DEFAULT_RESPAWN_RANDOMNESS } from 'src/timers/constants/respawn';
 import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
 import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
+import { ELIGIBLE_TITAN_READ_ACL } from 'src/timers/constants/required-titan-acls';
 
 @Injectable()
 export class TimersService {
@@ -190,23 +191,21 @@ export class TimersService {
     return;
   }
 
-  async getTimers({ world }: GetTimersDto, guild: Guild) {
+  async getTimers(
+    { world }: GetTimersDto,
+    guild: Guild,
+    permissions: Permission[],
+  ) {
     const now = new Date();
+    const canReadTitans = ELIGIBLE_TITAN_READ_ACL.some((acl) =>
+      permissions.includes(acl),
+    );
 
     const timers = await this.prisma.timer.findMany({
       where: {
         guildId: guild.id,
         maxSpawnTime: { gt: now.toISOString() },
         world,
-        // ...(permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS)
-        //   ? {}
-        //   : {
-        //       npc: {
-        //         type: {
-        //           not: NpcType.TITAN,
-        //         },
-        //       },
-        //     }),
       },
       orderBy: {
         maxSpawnTime: 'desc',
@@ -216,7 +215,15 @@ export class TimersService {
       },
     });
 
-    return timers;
+    const filteredTimers = canReadTitans
+      ? timers
+      : timers.filter((timer) => {
+          const npc =
+            typeof timer.npc === 'string' ? JSON.parse(timer.npc) : timer.npc;
+          return npc.type !== NpcType.TITAN;
+        });
+
+    return filteredTimers;
   }
 
   async getAllTimers(discordId: string, { world }: GetTimersDto) {
@@ -246,8 +253,8 @@ export class TimersService {
       const guildPermissions =
         permissionsPerGuild.find((p) => p.guild.id === guildId)?.data || [];
 
-      const canReadTitans = guildPermissions.includes(
-        Permission.LOOTLOG_READ_TIMERS_TITANS,
+      const canReadTitans = ELIGIBLE_TITAN_READ_ACL.some((acl) =>
+        guildPermissions.includes(acl),
       );
 
       const where: any = {
@@ -282,55 +289,6 @@ export class TimersService {
     }
 
     return results;
-  }
-
-  async getTimersMerged(discordId: string, { world }: GetTimersDto) {
-    const now = new Date();
-    const guilds = await this.guildsService.getGuildsForRequiredPermissions(
-      discordId,
-      [Permission.LOOTLOG_READ],
-    );
-
-    const timers = await this.prisma.timer.findMany({
-      where: {
-        guildId: {
-          in: guilds.map((guild) => guild.id),
-        },
-        maxSpawnTime: { gt: now.toISOString() },
-        world,
-        // ...(permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS)
-        //   ? {}
-        //   : {
-        //       npc: {
-        //         type: {
-        //           not: NpcType.TITAN,
-        //         },
-        //       },
-        //     }),
-      },
-      orderBy: {
-        maxSpawnTime: 'desc',
-      },
-      include: {
-        member: true,
-      },
-    });
-
-    const mergedTimers = timers.reduce((acc, timer) => {
-      const existing = acc.find((t) => t.npc.id === timer.npcId);
-
-      if (existing) {
-        existing.members.push(timer.member);
-      } else {
-        const newTimer = { ...timer, members: [timer.member] };
-
-        acc.push(omit(newTimer, ['member', 'createdById']));
-      }
-
-      return acc;
-    }, []);
-
-    return mergedTimers;
   }
 
   async resetTimer(
