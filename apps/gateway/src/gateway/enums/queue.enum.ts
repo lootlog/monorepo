@@ -1,6 +1,7 @@
 export enum Queue {
   GUILDS_TIMERS_CREATE = 'gateway-guilds-timers-create',
   GUILDS_TIMERS_UPDATE = 'gateway-guilds-timers-update',
+  GUILDS_TIMERS_DELETE = 'gateway-guilds-timers-delete',
   GUILDS_SEND_MESSAGE = 'gateway-guilds-send-message',
 
   GUILDS_MEMBERS_ADD = 'gateway-guilds-members-add',
