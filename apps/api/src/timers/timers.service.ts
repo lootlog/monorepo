@@ -254,21 +254,6 @@ export class TimersService {
         maxSpawnTime: { gt: now.toISOString() },
         world,
       };
-      if (!canReadTitans) {
-        where.AND = [
-          ...(where.AND || []),
-          {
-            NOT: [
-              {
-                npc: {
-                  path: ['type'],
-                  equals: NpcType.TITAN,
-                },
-              },
-            ],
-          },
-        ];
-      }
 
       const timers = await this.prisma.timer.findMany({
         where,
@@ -280,7 +265,18 @@ export class TimersService {
         },
       });
 
-      results.push(...timers);
+      const timersReduce = timers.reduce((acc, timer) => {
+        const npc =
+          typeof timer.npc === 'string' ? JSON.parse(timer.npc) : timer.npc;
+        if (!canReadTitans && npc.type === NpcType.TITAN) {
+          return acc;
+        }
+
+        acc.push(timer);
+        return acc;
+      }, []);
+
+      results.push(...timersReduce);
     }
 
     return results;
