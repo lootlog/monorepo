@@ -243,7 +243,8 @@ export class TimersService {
 
     for (const guild of guilds) {
       const guildId = guild.id;
-      const guildPermissions = permissionsPerGuild[guildId] || [];
+      const guildPermissions =
+        permissionsPerGuild.find((p) => p.guild.id === guildId)?.data || [];
 
       const canReadTitans = guildPermissions.includes(
         Permission.LOOTLOG_READ_TIMERS_TITANS,
@@ -268,6 +269,7 @@ export class TimersService {
       const timersReduce = timers.reduce((acc, timer) => {
         const npc =
           typeof timer.npc === 'string' ? JSON.parse(timer.npc) : timer.npc;
+
         if (!canReadTitans && npc.type === NpcType.TITAN) {
           return acc;
         }
