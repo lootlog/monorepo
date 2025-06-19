@@ -126,6 +126,45 @@ export const useDrag = ({
   }, [isDragging]);
 
   useEffect(() => {
+    if (isDragging === false) {
+      onDragStop(finalPosition);
+    }
+  }, [isDragging]);
+
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    const handleResize = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = window.setTimeout(() => {
+        const { current: draggableElement } = ref;
+        if (!draggableElement) return;
+        const { width, height } = draggableElement.getBoundingClientRect();
+        setFinalPosition((prev) => {
+          const x = Math.min(Math.max(0, prev.x), window.innerWidth - width);
+          const y = Math.min(Math.max(0, prev.y), window.innerHeight - height);
+          onDragStop({ x, y });
+
+          return {
+            x,
+            y,
+          };
+        });
+      }, 100); // 100ms debounce
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [ref]);
+
+  useEffect(() => {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("touchmove", handleTouchMove, { passive: false });
