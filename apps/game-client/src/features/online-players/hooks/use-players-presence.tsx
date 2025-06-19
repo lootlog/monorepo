@@ -1,7 +1,7 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type PlayerPresenceResponse = Record<string, PlayerPresence[]>;
 
@@ -39,12 +39,15 @@ export const usePlayersPresence = (selectedGuildId?: string) => {
     {}
   );
   const { socket, joined } = useGateway();
+  const selectedGuildIdRef = useRef(selectedGuildId);
+
+  selectedGuildIdRef.current = selectedGuildId;
 
   useEffect(() => {
-    if (joined && socket && selectedGuildId && world) {
+    if (joined && socket && selectedGuildIdRef.current && world) {
       socket
         .emitWithAck(GatewayEvent.REQUEST_SERVER_PRESENCE, {
-          guildId: selectedGuildId,
+          guildId: selectedGuildIdRef.current,
           world,
         })
         .then((data) => {
@@ -54,8 +57,10 @@ export const usePlayersPresence = (selectedGuildId?: string) => {
         });
 
       socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, (data: PlayerPresence) => {
-        console.log(data.player?.world, world);
-        if (data.guildId !== selectedGuildId || data.player?.world !== world)
+        if (
+          data.guildId !== selectedGuildIdRef.current ||
+          data.player?.world !== world
+        )
           return;
 
         if (data && data.status === "offline") {
@@ -104,7 +109,7 @@ export const usePlayersPresence = (selectedGuildId?: string) => {
         }
       });
     }
-  }, [joined, socket, selectedGuildId, world]);
+  }, [joined, socket, world]);
 
   return [onlinePlayers, setOnlinePlayers];
 };
