@@ -93,7 +93,7 @@ export class Gateway {
       guildIds = await this.guildsService.getUserGuilds(discordId);
     }
 
-    this.redis.set(key, JSON.stringify(guildIds), 30000);
+    this.redis.set(key, JSON.stringify(guildIds), 2000);
 
     if (guildIds.length === 0) {
       console.log('No guilds found for user', discordId);
