@@ -148,7 +148,6 @@ export const Chat = () => {
               className="ll-flex ll-items-center ll-justify-center"
             >
               <Input
-                className="!ll-w-full ll-bg-transparent ll-text-white !ll-text-[12px] ll-border-white ll-rounded-sm !ll-h-6 !ll-px-1 ll-box-border"
                 name="message"
                 autoComplete="off"
                 placeholder="Wiadomość..."
