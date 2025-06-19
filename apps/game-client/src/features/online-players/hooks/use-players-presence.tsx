@@ -29,87 +29,95 @@ export type PlayerPresence = {
 
 const getPresenceKey = (presence: PlayerPresence) => {
   if (!presence.player) return "web-app";
-
-  return `${presence.player?.accountId}-${presence.player?.characterId}`;
+  return `${presence.player.accountId}-${presence.player.characterId}`;
 };
 
-export const usePlayersPresence = (selectedGuildId?: string) => {
+export const usePlayersPresence = (
+  selectedGuildId?: string
+): [
+  PlayerPresenceResponse,
+  boolean,
+  React.Dispatch<React.SetStateAction<PlayerPresenceResponse>>,
+] => {
   const { world } = useGlobalStore((state) => state.gameState);
   const [onlinePlayers, setOnlinePlayers] = useState<PlayerPresenceResponse>(
     {}
   );
+  const [loading, setLoading] = useState(false);
   const { socket, joined } = useGateway();
-  const selectedGuildIdRef = useRef(selectedGuildId);
 
-  selectedGuildIdRef.current = selectedGuildId;
+  const selectedGuildIdRef = useRef(selectedGuildId);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    if (joined && socket && selectedGuildIdRef.current && world) {
-      socket
-        .emitWithAck(GatewayEvent.REQUEST_SERVER_PRESENCE, {
-          guildId: selectedGuildIdRef.current,
-          world,
-        })
-        .then((data) => {
-          if (data) {
-            setOnlinePlayers(data);
-          }
-        });
+    selectedGuildIdRef.current = selectedGuildId;
+  }, [selectedGuildId]);
 
-      socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, (data: PlayerPresence) => {
-        if (
-          data.guildId !== selectedGuildIdRef.current ||
-          data.player?.world !== world
-        )
-          return;
+  useEffect(() => {
+    if (!joined || !socket || !selectedGuildIdRef.current || !world) return;
 
-        if (data && data.status === "offline") {
-          setOnlinePlayers((prev) => {
-            const updatedPlayers = { ...prev };
-            const updatedPlayerList = updatedPlayers[data.discordId]?.filter(
-              (presence) => {
-                const key = getPresenceKey(presence);
-                const updatedKey = getPresenceKey(data);
+    const currentRequestId = ++requestIdRef.current;
+    setLoading(true);
 
-                return key !== updatedKey;
-              }
-            );
-            if (updatedPlayerList && updatedPlayerList.length > 0) {
-              updatedPlayers[data.discordId] = updatedPlayerList;
-            } else {
-              delete updatedPlayers[data.discordId];
-            }
+    socket
+      .emitWithAck(GatewayEvent.REQUEST_SERVER_PRESENCE, {
+        guildId: selectedGuildIdRef.current,
+        world,
+      })
+      .then((data) => {
+        // ignore stale responses
+        if (requestIdRef.current !== currentRequestId) return;
 
-            return updatedPlayers;
-          });
+        if (data) {
+          setOnlinePlayers(data);
         }
-
-        if (data && data.status === "online") {
-          setOnlinePlayers((prev) => {
-            const updatedPlayers = { ...prev };
-
-            if (!updatedPlayers[data.discordId]) {
-              updatedPlayers[data.discordId] = [];
-            }
-
-            const key = getPresenceKey(data);
-            const existingIndex = updatedPlayers[data.discordId].findIndex(
-              (presence) => {
-                const existingKey = getPresenceKey(presence);
-                return existingKey === key;
-              }
-            );
-            if (existingIndex === -1) {
-              updatedPlayers[data.discordId].push(data);
-              return updatedPlayers;
-            }
-
-            return updatedPlayers;
-          });
+      })
+      .finally(() => {
+        if (requestIdRef.current === currentRequestId) {
+          setLoading(false);
         }
       });
-    }
-  }, [joined, socket, world]);
+  }, [joined, socket, world, selectedGuildId]);
 
-  return [onlinePlayers, setOnlinePlayers];
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePresenceUpdate = (data: PlayerPresence) => {
+      if (
+        data.guildId !== selectedGuildIdRef.current ||
+        data.player?.world !== world
+      )
+        return;
+
+      setOnlinePlayers((prev) => {
+        const updated = structuredClone(prev);
+        const key = getPresenceKey(data);
+        const list = updated[data.discordId] || [];
+
+        if (data.status === "offline") {
+          const newList = list.filter((p) => getPresenceKey(p) !== key);
+          if (newList.length > 0) {
+            updated[data.discordId] = newList;
+          } else {
+            delete updated[data.discordId];
+          }
+        } else if (data.status === "online") {
+          const exists = list.some((p) => getPresenceKey(p) === key);
+          if (!exists) {
+            updated[data.discordId] = [...list, data];
+          }
+        }
+
+        return updated;
+      });
+    };
+
+    socket.on(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
+
+    return () => {
+      socket.off(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
+    };
+  }, [socket, world]);
+
+  return [onlinePlayers, loading, setOnlinePlayers];
 };
