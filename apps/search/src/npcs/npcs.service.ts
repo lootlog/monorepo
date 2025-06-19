@@ -30,7 +30,10 @@ export class NpcsService {
     try {
       const data = await index.search(searchTerm as string, query);
 
-      return data.hits;
+      const uniqueHits = Array.from(
+        new Map(data.hits.map((npc: any) => [npc.name, npc])).values()
+      );
+      return uniqueHits;
     } catch (error) {
       console.log(error);
       return [];
