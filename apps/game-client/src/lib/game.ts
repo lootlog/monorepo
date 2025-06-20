@@ -1,5 +1,6 @@
 import { GameHero } from "@/types/margonem/hero";
 import { GameMap } from "@/types/margonem/map";
+import { NpcTpl } from "@/types/margonem/npc-tpl-manager";
 import { GameNpc } from "@/types/margonem/npcs";
 import { GameOther } from "@/types/margonem/others";
 
@@ -16,6 +17,14 @@ export class Game {
     return this.interface == "ni" ? window.Engine.map.d : window.map;
   }
 
+  static get npcs(): GameNpc[] {
+    if (this.interface == "ni") {
+      return window.Engine.npcs.getDrawableList().map((npc) => npc.d);
+    } else {
+      return Object.values(window.g.npc);
+    }
+  }
+
   static getOther(key: string): GameOther {
     if (this.interface == "ni") {
       const othersData = window.Engine.others.check();
@@ -25,9 +34,21 @@ export class Game {
     }
   }
 
-  static getNpc(key: number): GameNpc {
+  static getNpc(key: number): GameNpc | undefined {
     return this.interface == "ni"
-      ? window.Engine.npcs.getById(key).d
+      ? window.Engine.npcs.getById(key)?.d
       : window.g.npc[key];
+  }
+
+  static getNpcTpl(key: number): NpcTpl | undefined {
+    return this.interface == "ni"
+      ? window.Engine.npcTplManager.getNpcTpl(key)
+      : window.g.npcTplManager.getNpcTpl(key);
+  }
+
+  static getNpcIcon(key: number): string | undefined {
+    return this.interface == "ni"
+      ? window.Engine.npcIconManager.getNpcIcon(key)
+      : window.g.npcIconManager.getNpcIcon(key);
   }
 }

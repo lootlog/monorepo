@@ -37,7 +37,6 @@ interface TimersState {
 const DEFAULT_REMOVE_TIMER_AFTER_MS = 30000;
 
 export const useTimersStore = create<TimersState>()(
-  // @ts-ignore
   persist(
     (set, get) => ({
       hiddenTimers: {},

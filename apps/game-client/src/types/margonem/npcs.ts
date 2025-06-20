@@ -12,8 +12,8 @@ export type GameNpc = {
   prof: string;
   type: number;
   wt: number;
-  actions: number;
-  grp: number;
+  actions?: number;
+  grp?: number;
   lvl: number;
   resp_rand?: number;
 };
