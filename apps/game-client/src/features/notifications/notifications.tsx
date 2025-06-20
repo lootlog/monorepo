@@ -31,6 +31,7 @@ export const Notifications = () => {
             onClose={handleClose}
             minWidth={300}
             minHeight={300}
+            resizable={false}
             dynamicHeight
           >
             <div className="ll-flex ll-flex-col ll-h-full ll-max-h-[300px] ll-w-full">
