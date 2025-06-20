@@ -46,7 +46,7 @@ export const NpcsList: FC = () => {
                 className={cn(
                   "ll-absolute ll-top-2 ll-right-1 ll-custom-cursor-pointer ll-text-gray-400 hover:ll-text-gray-300",
                   {
-                    "-ll-top-[4px]": i === 0,
+                    "-ll-top-1": i === 0,
                     "ll-hidden": npcs.length === 1,
                   }
                 )}
