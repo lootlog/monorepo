@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
 import { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
+import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
 import { RedisService } from 'src/lib/redis/redis.service';
@@ -23,6 +24,12 @@ export class GatewayService {
 
   async handleGuildMessageSend(data: SendMessageDto) {
     this.gateway.server.to(data.guildId).emit(GatewayEvent.CHAT_MESSAGE, data);
+  }
+
+  async handleGuildNotificationSend(data: SendNotificationDto) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.NOTIFICATIONS_SEND, data);
   }
 
   async invalidatePlayerCache(discordId: string) {

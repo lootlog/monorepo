@@ -13,6 +13,7 @@ export const GeneralSettingsTab: FC = () => {
     toggleCompactMode,
     toggleTimersGrouping,
   } = useTimersStore();
+
   const [inputValue, setInputValue] = useState<string>(
     (removeTimerAfterMs / 1000).toString()
   );
@@ -74,6 +75,7 @@ export const GeneralSettingsTab: FC = () => {
           </label>
         </div>
       </div>
+
       <div className="ll-mb-4 ll-mt-4">
         <label className="ll-font-semibold">
           Czas usunięcia timera po wyzerowaniu (w sekundach):
