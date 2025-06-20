@@ -10,6 +10,7 @@ export type Notification = {
   discordId: string;
   guildId: string;
   notificationId: string;
+  world: string;
 };
 
 export const useNotifications = () => {
