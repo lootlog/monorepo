@@ -36,7 +36,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     <Fragment key={notification.notificationId}>
       <span
         className={cn(
-          "ll-flex ll-flex-row ll-gap-8 ll-w-full ll-justify-start ll-py-3 ll-relative",
+          "ll-flex ll-flex-row ll-gap-8 ll-w-full ll-justify-start ll-py-2 ll-relative",
           {
             "ll-pt-0": index === 0,
           }
@@ -46,7 +46,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           className={cn(
             "ll-absolute ll-top-2 ll-right-1 ll-custom-cursor-pointer ll-text-gray-400 hover:ll-text-gray-300",
             {
-              "-ll-top-0.5": index === 0,
+              "-ll-top-1": index === 0,
               "ll-hidden": notifications.length === 1,
             }
           )}
@@ -78,6 +78,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
               <span className="ll-mb-2 ll-text-xs">
                 {notification.npc.location} ({notification.npc.x},{" "}
                 {notification.npc.y})
+              </span>
+              <span className="ll-text-xs">
+                <span>Świat:</span>{" "}
+                <span className="ll-font-semibold">{notification.world}</span>
               </span>
               <span className="ll-mb-2 ll-text-xs">
                 <span>Dodane przez: </span>
