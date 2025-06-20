@@ -30,9 +30,9 @@ export const NpcDetector = () => {
             id="npc-detector"
             title="Wykrywacz"
             onClose={handleClose}
-            resizable={false}
+            resizable={true}
             minHeight={300}
-            minWidth={300}
+            minWidth={400}
             dynamicHeight
           >
             <div className="ll-flex ll-flex-col ll-h-full ll-max-h-[300px] ll-w-full">

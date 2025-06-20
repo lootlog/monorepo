@@ -31,10 +31,10 @@ export const Notifications = () => {
             onClose={handleClose}
             minWidth={300}
             minHeight={300}
-            resizable={false}
+            resizable={true}
             dynamicHeight
           >
-            <div className="ll-flex ll-flex-col ll-h-full ll-max-h-[300px] ll-w-full">
+            <div className="ll-flex ll-flex-col ll-h-full ll-max-h-[400px] ll-w-full">
               <NotificationsList />
             </div>
           </DraggableWindow>
