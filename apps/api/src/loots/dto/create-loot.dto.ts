@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   ValidateIf,
   ValidateNested,
@@ -119,6 +120,14 @@ export class NpcDto {
   @IsNotEmpty()
   @IsNumber()
   type: number;
+
+  @IsOptional()
+  @IsNumber()
+  x: number;
+
+  @IsOptional()
+  @IsNumber()
+  y: number;
 }
 export class CreateLootDto {
   @IsArray()

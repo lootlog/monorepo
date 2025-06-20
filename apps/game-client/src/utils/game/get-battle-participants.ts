@@ -11,7 +11,7 @@ export type PartyMember = {
   accountId: number;
 };
 
-export type KilledNpc = {
+export type Npc = {
   id: number;
   name: string;
   icon: string;
@@ -30,7 +30,7 @@ export const getBattleParticipants = (
   if (!initialParticipants) return { party: [], npcs: [] };
 
   const { party, npcs } = Object.entries(initialParticipants).reduce(
-    (acc: { npcs: KilledNpc[]; party: PartyMember[] }, [key, value]) => {
+    (acc: { npcs: Npc[]; party: PartyMember[] }, [key, value]) => {
       if (key === Game.hero.id.toString()) {
         acc.party.push({
           id: Game.hero.id,

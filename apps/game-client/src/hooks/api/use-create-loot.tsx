@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { Item } from "@/types/margonem/game-events/item";
-import { KilledNpc, PartyMember } from "@/utils/game/get-battle-participants";
+import { Npc, PartyMember } from "@/utils/game/get-battle-participants";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type LootDto = {
@@ -19,12 +19,14 @@ export type CreateLootOptions = {
 };
 
 export type UseCreateLootOptions = {
-  npcs: KilledNpc[];
+  npcs: Npc[];
   players: PartyMember[];
   loots: Partial<Item>[];
+  source: string;
   world: string;
   accountId: string;
   characterId: string;
+  location: string;
 };
 
 export const useCreateLoot = () => {
