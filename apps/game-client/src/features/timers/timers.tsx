@@ -3,6 +3,7 @@ import { useLocalStorage } from "react-use";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { AxiosResponse } from "axios";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { DraggableWindow } from "@/components/draggable-window";
 import { GuildSelector } from "@/components/guild-selector";
@@ -223,66 +224,76 @@ export const Timers = () => {
   ]);
 
   return (
-    open && (
-      <DraggableWindow
-        id="timers"
-        title="Lootlog"
-        actions={[
-          <div
-            key="settings"
-            className="ll-settings-button ll-custom-cursor-pointer"
-            onClick={() => toggleOpen("settings")}
-          />,
-          <div
-            key="online-players"
-            className="ll-players-button ll-custom-cursor-pointer ll-ml-1"
-            onClick={() => toggleOpen("online-players")}
-          />,
-        ]}
-        onClose={() => setOpen("timers", false)}
-        minHeight={108}
-      >
-        <span
-          ref={containerRef}
-          className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="timers"
+          initial={{ opacity: 0, scaleY: 1.01 }}
+          animate={{ opacity: 1, scaleY: 1 }}
+          exit={{ opacity: 0, scaleY: 1.01 }}
+          transition={{ duration: 0.1 }}
         >
-          {!timersGrouping && (
-            <GuildSelector
-              selectedGuildId={selectedGuildId}
-              setSelectedGuildId={setSelectedGuildId}
-              disabled={addTimerOpen}
-            />
-          )}
-          <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
-            {sortedTimers.length === 0 ? (
-              <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
-                ----
-              </span>
-            ) : (
-              <span
-                className="ll-grid ll-gap-0.5 ll-box-border"
-                style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
-              >
-                {sortedTimers.map((timer) => (
-                  <SingleTimer
-                    key={`${timer.npcId}-${timer.guildId}`}
-                    timer={timer}
-                    timeLeft={timer.timeLeft}
-                    compactMode={compactMode}
-                    canDelete={canDeleteTimers}
-                  />
-                ))}
-              </span>
-            )}
-          </ScrollArea>
+          <DraggableWindow
+            id="timers"
+            title="Lootlog"
+            actions={[
+              <div
+                key="settings"
+                className="ll-settings-button ll-custom-cursor-pointer"
+                onClick={() => toggleOpen("settings")}
+              />,
+              <div
+                key="online-players"
+                className="ll-players-button ll-custom-cursor-pointer ll-ml-1"
+                onClick={() => toggleOpen("online-players")}
+              />,
+            ]}
+            onClose={() => setOpen("timers", false)}
+            minHeight={108}
+          >
+            <span
+              ref={containerRef}
+              className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
+            >
+              {!timersGrouping && (
+                <GuildSelector
+                  selectedGuildId={selectedGuildId}
+                  setSelectedGuildId={setSelectedGuildId}
+                  disabled={addTimerOpen}
+                />
+              )}
+              <ScrollArea className="ll-h-full ll-pb-1 ll-w-full" type="scroll">
+                {sortedTimers.length === 0 ? (
+                  <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
+                    ----
+                  </span>
+                ) : (
+                  <span
+                    className="ll-grid ll-gap-0.5 ll-box-border"
+                    style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+                  >
+                    {sortedTimers.map((timer) => (
+                      <SingleTimer
+                        key={`${timer.npcId}-${timer.guildId}`}
+                        timer={timer}
+                        timeLeft={timer.timeLeft}
+                        compactMode={compactMode}
+                        canDelete={canDeleteTimers}
+                      />
+                    ))}
+                  </span>
+                )}
+              </ScrollArea>
 
-          {!timersGrouping && (
-            <Tile onClick={() => toggleOpen("add-timer")}>
-              <PlusIcon color="white" height={16} width={16} />
-            </Tile>
-          )}
-        </span>
-      </DraggableWindow>
-    )
+              {!timersGrouping && (
+                <Tile onClick={() => toggleOpen("add-timer")}>
+                  <PlusIcon color="white" height={16} width={16} />
+                </Tile>
+              )}
+            </span>
+          </DraggableWindow>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

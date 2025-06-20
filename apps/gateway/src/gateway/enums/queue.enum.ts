@@ -10,4 +10,6 @@ export enum Queue {
 
   GUILDS_MEMBERS_ADD_ROLE = 'gateway-guilds-members-add-role',
   GUILDS_MEMBERS_REMOVE_ROLE = 'gateway-guilds-members-remove-role',
+
+  GUILDS_SEND_NOTIFICATION = 'gateway-guilds-send-notification',
 }

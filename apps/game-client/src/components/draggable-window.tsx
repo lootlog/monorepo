@@ -19,6 +19,7 @@ export type DraggableWindowProps = {
   minHeight?: number;
   maxWidth?: number;
   maxHeight?: number;
+  dynamicHeight?: boolean;
 };
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
@@ -35,6 +36,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   minHeight = 240,
   maxWidth,
   maxHeight,
+  dynamicHeight = false,
 }) => {
   const state = useWindowsStore();
   const opacity = state[id].opacity;
@@ -134,15 +136,25 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     state.setSize(id, { height: size.height, width: size.width });
   }, [size.height, size.width, isResizing]);
 
+  const style = dynamicHeight
+    ? {
+        height: "auto",
+        width: size.width,
+      }
+    : {
+        width: size.width,
+        height: size.height,
+      };
+
   return (
     <div
       className="ll-pointer-events-auto ll-absolute"
       ref={draggableRef}
       style={{
+        ...style,
+        maxHeight,
         top: position.y,
         left: position.x,
-        width: size.width,
-        height: size.height,
         zIndex: state.currentWindowFocus === id ? 1 : 0,
       }}
       onMouseDown={onMouseDown}

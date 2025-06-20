@@ -10,6 +10,7 @@ import { DeleteMemberRoleDto } from 'src/gateway/dto/delete-member-role.dto';
 import { DeleteMemberDto } from 'src/gateway/dto/delete-member.dto';
 import { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
+import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { Queue } from 'src/gateway/enums/queue.enum';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
 import { GatewayService } from 'src/gateway/gateway.service';
@@ -96,5 +97,15 @@ export class GatewayQueueHandler {
   })
   async handleDeleteMemberRole(data: DeleteMemberRoleDto) {
     return this.gatewayService.invalidatePlayerCache(data.id);
+  }
+
+  @RabbitSubscribe({
+    exchange: 'default',
+    routingKey: RoutingKey.GUILDS_NOTIFICATIONS_SEND,
+    queue: Queue.GUILDS_SEND_NOTIFICATION,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+  })
+  async handleSendNotification(data: SendNotificationDto) {
+    return this.gatewayService.handleGuildNotificationSend(data);
   }
 }
