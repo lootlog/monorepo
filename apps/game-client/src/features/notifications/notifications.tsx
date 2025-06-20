@@ -30,7 +30,7 @@ export const Notifications = () => {
             title="Powiadomienia"
             onClose={handleClose}
             minWidth={300}
-            minHeight={200}
+            minHeight={100}
             resizable={true}
           >
             <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
