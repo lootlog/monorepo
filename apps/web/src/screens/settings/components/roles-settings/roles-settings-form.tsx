@@ -27,6 +27,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { GuildRole } from "@/hooks/api/use-guild-roles";
 import { useUpdateGuildRole } from "@/hooks/api/use-update-guild-role";
 import { Permission } from "@/hooks/api/use-guild-permissions";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type RolesSettingsFormProps = {
   role: GuildRole;
@@ -41,6 +42,8 @@ const formSchema = z.object({
   LOOTLOG_READ_TIMERS_TITANS: z.boolean().default(true),
   LOOTLOG_CHAT_READ: z.boolean().default(true),
   LOOTLOG_CHAT_WRITE: z.boolean().default(true),
+  LOOTLOG_NOTIFICATIONS_SEND: z.boolean().default(true),
+  LOOTLOG_NOTIFICATIONS_READ: z.boolean().default(true),
 });
 
 export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
@@ -67,6 +70,12 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
       ),
       LOOTLOG_CHAT_WRITE: role.permissions.includes(
         Permission.LOOTLOG_CHAT_WRITE
+      ),
+      LOOTLOG_NOTIFICATIONS_SEND: role.permissions.includes(
+        Permission.LOOTLOG_NOTIFICATIONS_SEND
+      ),
+      LOOTLOG_NOTIFICATIONS_READ: role.permissions.includes(
+        Permission.LOOTLOG_NOTIFICATIONS_READ
       ),
     },
   });
@@ -107,194 +116,254 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
 
       <DialogContent>
         <DialogTitle>Edytuj konfigurację dla roli - {role.name}</DialogTitle>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 pt-4"
           >
-            <FormField
-              control={form.control}
-              name={Permission.ADMIN}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(`permissions.${Permission.ADMIN}`)}
-                    </FormLabel>
-                    <FormDescription>
-                      Pozwala zarządzać całym lootlogiem np. nadawanie uprawnień
-                    </FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={Permission.LOOTLOG_MANAGE}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(`permissions.${Permission.LOOTLOG_MANAGE}`)}
-                    </FormLabel>
-                    <FormDescription>
-                      Pozwala zarządzać lootlogiem np. usuwanie lub edycja
-                      lootów
-                    </FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={Permission.LOOTLOG_READ}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(`permissions.${Permission.LOOTLOG_READ}`)}
-                    </FormLabel>
-                    <FormDescription>
-                      Pozwala na dostęp do lootloga i przeglądanie go
-                    </FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={Permission.LOOTLOG_WRITE}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(`permissions.${Permission.LOOTLOG_WRITE}`)}
-                    </FormLabel>
-                    <FormDescription>
-                      Pozwala na zapisywanie lootów i timerów w lootlogu
-                    </FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={Permission.LOOTLOG_READ_LOOTS_TITANS}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(`permissions.${Permission.LOOTLOG_READ_LOOTS_TITANS}`)}
-                    </FormLabel>
-                    <FormDescription>Dostęp do lootów tytanów</FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={Permission.LOOTLOG_READ_TIMERS_TITANS}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(
-                        `permissions.${Permission.LOOTLOG_READ_TIMERS_TITANS}`
-                      )}
-                    </FormLabel>
-                    <FormDescription>Dostęp do timerów tytanów</FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={Permission.LOOTLOG_CHAT_READ}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(`permissions.${Permission.LOOTLOG_CHAT_READ}`)}
-                    </FormLabel>
-                    <FormDescription>
-                      Pozwala na czytanie wiadomości z lootloga
-                    </FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name={Permission.LOOTLOG_CHAT_WRITE}
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      {t(`permissions.${Permission.LOOTLOG_CHAT_WRITE}`)}
-                    </FormLabel>
-                    <FormDescription>
-                      Pozwala na pisanie wiadomości do lootloga
-                    </FormDescription>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
+            <ScrollArea className="max-h-[600px] flex flex-col gap-4">
+              <FormField
+                control={form.control}
+                name={Permission.ADMIN}
+                render={({ field }) => (
+                  <FormItem className=" mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(`permissions.${Permission.ADMIN}`)}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala zarządzać całym lootlogiem np. nadawanie
+                        uprawnień
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_MANAGE}
+                render={({ field }) => (
+                  <FormItem className=" mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(`permissions.${Permission.LOOTLOG_MANAGE}`)}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala zarządzać lootlogiem np. usuwanie lub edycja
+                        lootów
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_READ}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(`permissions.${Permission.LOOTLOG_READ}`)}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala na dostęp do lootloga i przeglądanie go
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_WRITE}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(`permissions.${Permission.LOOTLOG_WRITE}`)}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala na zapisywanie lootów i timerów w lootlogu
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_READ_LOOTS_TITANS}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(
+                          `permissions.${Permission.LOOTLOG_READ_LOOTS_TITANS}`
+                        )}
+                      </FormLabel>
+                      <FormDescription>
+                        Dostęp do lootów tytanów
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_READ_TIMERS_TITANS}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(
+                          `permissions.${Permission.LOOTLOG_READ_TIMERS_TITANS}`
+                        )}
+                      </FormLabel>
+                      <FormDescription>
+                        Dostęp do timerów tytanów
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_CHAT_READ}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(`permissions.${Permission.LOOTLOG_CHAT_READ}`)}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala na czytanie wiadomości z lootloga
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_CHAT_WRITE}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(`permissions.${Permission.LOOTLOG_CHAT_WRITE}`)}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala na pisanie wiadomości do lootloga
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_NOTIFICATIONS_SEND}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(
+                          `permissions.${Permission.LOOTLOG_NOTIFICATIONS_SEND}`
+                        )}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala na wysyłanie powiadomień z lootloga
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={Permission.LOOTLOG_NOTIFICATIONS_READ}
+                render={({ field }) => (
+                  <FormItem className="mb-2 flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        {t(
+                          `permissions.${Permission.LOOTLOG_NOTIFICATIONS_READ}`
+                        )}
+                      </FormLabel>
+                      <FormDescription>
+                        Pozwala na czytanie powiadomień z lootloga
+                      </FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </ScrollArea>
 
             <DialogFooter className="p-0 m-0">
               <Button type="submit">Zapisz</Button>
