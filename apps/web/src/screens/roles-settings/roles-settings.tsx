@@ -100,6 +100,7 @@ export const RolesSettings = () => {
             ) : (
               <div className="border-l">
                 <RolePanelContent
+                  key={selectedRole.id}
                   selectedRole={selectedRole}
                   setSelectedRole={setSelectedRole}
                   selectedRoleColor={selectedRoleColor}
