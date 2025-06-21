@@ -803,6 +803,9 @@ importers:
       discord-api-types:
         specifier: ^0.38.8
         version: 0.38.11
+      framer-motion:
+        specifier: ^12.18.1
+        version: 12.18.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       i18next:
         specifier: ^24.2.2
         version: 24.2.3(typescript@5.7.3)

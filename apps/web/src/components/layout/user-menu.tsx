@@ -16,9 +16,9 @@ export const UserMenu = () => {
   const { user, isPending } = useUser();
 
   return (
-    <div className="flex border-t w-full h-16 items-center p-4 justify-between">
+    <div className="flex border-t w-full h-16 items-center p-3 justify-between">
       {isPending && (
-        <Avatar className="cursor-pointer h-10 w-10 rounded-lg">
+        <Avatar className="cursor-pointer size-10 rounded-lg">
           <AvatarImage src={undefined} />
           <AvatarFallback>
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -30,7 +30,7 @@ export const UserMenu = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex flex-row gap-4 items-center">
-                <Avatar className="cursor-pointer h-10 w-10 rounded-full">
+                <Avatar className="cursor-pointer size-10 rounded-lg">
                   <AvatarImage src={user?.image ?? undefined} />
                   <AvatarFallback>
                     <User2 className="h-4 w-4" />

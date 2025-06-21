@@ -1,6 +1,6 @@
 import { GuildsNav } from "@/components/layout/guilds-nav";
-import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { UserMenu } from "@/components/layout/user-menu";
+import { UserSidebarNav } from "@/components/layout/user-sidebar-nav";
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { FC } from "react";
 
-export const AppSidebar: FC = () => {
+export const UserSidebar: FC = () => {
   return (
     <Sidebar>
       <SidebarContent className="bg-background h-full">
@@ -19,7 +19,8 @@ export const AppSidebar: FC = () => {
           <SidebarGroupContent className="h-full">
             <SidebarMenu className="flex flex-row h-full gap-0">
               <GuildsNav />
-              <SidebarNav />
+              {/* <SidebarNav /> */}
+              <UserSidebarNav />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
