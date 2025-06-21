@@ -17,11 +17,6 @@ import { FC, Fragment, ReactElement, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/utils/cn";
 import { useGuild } from "@/hooks/api/use-guild";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@lootlog/ui/components/avatar";
 
 type MenuItem = {
   label: string;
@@ -85,20 +80,17 @@ export const SidebarNav: FC = () => {
 
   return (
     <div className="flex flex-col w-full gap-1 flex-1">
-      <div className="h-14 min-h-14 font-semibold flex flex-row items-center border-b mb-2 px-4">
-        <Avatar className={cn("size-8")}>
-          <AvatarImage src={guild?.icon as string} alt={guild?.name} />
-          <AvatarFallback className="rounded-none">
-            {guild?.name[0]}
-          </AvatarFallback>
-        </Avatar>
+      <div className="h-14 min-h-14 font-semibold flex flex-row items-center border-b mb-2 px-2">
         <span className="ml-3 max-w-44 text-nowrap text-ellipsis overflow-hidden">
           {guild?.name}
         </span>
       </div>
       {menuItems.map(({ divided, icon, path, label, available, enabled }) => {
         const url = `/${guildId}${path}`;
-        const isActive = pathname === url;
+        const isActive =
+          path === ""
+            ? pathname === `/${guildId}`
+            : pathname === url || pathname.startsWith(`${url}/`);
 
         return (
           enabled && (
