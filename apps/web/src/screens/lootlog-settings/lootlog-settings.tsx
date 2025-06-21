@@ -1,7 +1,7 @@
 import { useGuildLootlogConfig } from "@/hooks/api/use-guild-lootlog-settings";
 import { useTranslation } from "react-i18next";
-import { LootlogSettingsForm } from "@/screens/settings/components/lootlog-settings/lootlog-settings-form";
 import { cn } from "@/utils/cn";
+import { LootlogSettingsForm } from "@/screens/lootlog-settings/lootlog-settings-form";
 
 export const LootlogSettings = () => {
   const { data: config } = useGuildLootlogConfig();
