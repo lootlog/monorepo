@@ -1,0 +1,42 @@
+{
+  "world": "experimental",
+  "source": "DIALOG",
+  "location": "Kopalnia Krwawej Pychy",
+  "loots": [
+    {
+      "id": 49748,
+      "hid": "5bf7cee7bd05394d96552157de9d260e2d70866bb5c5184bb83f4da06f04e497",
+      "icon": "neu/lod_kopalnia_06.gif",
+      "name": "Esencja magicznej runy",
+      "pr": 324303,
+      "prc": "zl",
+      "stat": "amount=1;cansplit=1;capacity=1000;lvl=300;opis=Niezwykle cenna zdobycz, konkurenci mogą ci pozazdrościć.[br][br]Pochodzi z Kopalni Krwawej Pychy.;rarity=unique",
+      "cl": 28
+    }
+  ],
+  "npcs": [
+    {
+      "icon": "tru/lod_kopalnia_03.gif",
+      "id": 279099,
+      "hpp": 0,
+      "type": 0,
+      "wt": 11,
+      "lvl": 0,
+      "name": "Zamrożony czarodziej",
+      "location": "Kopalnia Krwawej Pychy"
+    }
+  ],
+  "players": [
+    {
+      "id": 183612,
+      "name": "kek kek maka maka",
+      "icon": "/noob/hm.gif",
+      "prof": "h",
+      "hpp": 64,
+      "lvl": 300,
+      "accountId": 1234
+    }
+  ],
+  "accountId": "redacted",
+  "characterId": "redacted"
+}

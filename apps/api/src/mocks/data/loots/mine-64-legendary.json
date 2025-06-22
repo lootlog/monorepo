@@ -1,0 +1,42 @@
+{
+  "world": "experimental",
+  "source": "DIALOG",
+  "location": "Kopalnia Krwawego Szaleństwa",
+  "loots": [
+    {
+      "id": 53220,
+      "hid": "dd5890fde40f849a837cef8cd21fb67ddd6d0919515309cc50c605ae6b61f037",
+      "icon": "neu/64_kopalnia_15.gif",
+      "name": "Menitowe serce",
+      "pr": 22814,
+      "prc": "zl",
+      "stat": "amount=1;cansplit=1;capacity=10;lvl=64;opis=Delikatne stuknięcie kilofu o rudę odsłoniło połyskujący kryształ o kształcie tak idealnym, jakby wyszedł spod ręki najwybitniejszego rzemieślnika. Czy to możliwe, aby natura sama z siebie uformowała takie cacko?[br][br]Pochodzi z Kopalni Krwawego Szaleństwa.;rarity=legendary",
+      "cl": 28
+    }
+  ],
+  "npcs": [
+    {
+      "icon": "obj/interakcja_01.gif",
+      "id": 311393,
+      "hpp": 0,
+      "type": 0,
+      "wt": 10,
+      "lvl": 0,
+      "name": "Naładowany kryształ",
+      "location": "Kopalnia Krwawego Szaleństwa"
+    }
+  ],
+  "players": [
+    {
+      "id": 167051,
+      "name": "sdadsa",
+      "icon": "/spec/invisiblem.gif",
+      "prof": "b",
+      "hpp": 100,
+      "lvl": 64,
+      "accountId": 1234
+    }
+  ],
+  "accountId": "redacted",
+  "characterId": "redacted"
+}

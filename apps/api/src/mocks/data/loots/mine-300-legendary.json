@@ -1,0 +1,42 @@
+{
+  "world": "experimental",
+  "source": "DIALOG",
+  "location": "Kopalnia Krwawej Pychy",
+  "loots": [
+    {
+      "id": 56696,
+      "hid": "92df7f05b4c05b011d2bcd190ae36b52072b9544516f054516f60f820d76c3cc",
+      "icon": "neu/lod_kopalnia_08.gif",
+      "name": "Czarodziejska runa",
+      "pr": 486455,
+      "prc": "zl",
+      "stat": "amount=1;cansplit=1;capacity=10;lvl=300;opis=Trzymasz w dłoniach doskonale zachowaną runę, która niegdyś należała do pochodzącego z Thuzal śmiałka. Chroniąca ją lodowa pokrywa pozwoliła utrzymać drzemiącą w niej moc magiczną.[br][br]Pochodzi z Kopalni Krwawej Pychy.;rarity=legendary",
+      "cl": 28
+    }
+  ],
+  "npcs": [
+    {
+      "icon": "tru/lod_kopalnia_03.gif",
+      "id": 279062,
+      "hpp": 0,
+      "type": 0,
+      "wt": 11,
+      "lvl": 0,
+      "name": "Zamrożony czarodziej",
+      "location": "Kopalnia Krwawej Pychy"
+    }
+  ],
+  "players": [
+    {
+      "id": 183612,
+      "name": "kek kek maka maka",
+      "icon": "/noob/hm.gif",
+      "prof": "h",
+      "hpp": 54,
+      "lvl": 300,
+      "accountId": 1234
+    }
+  ],
+  "accountId": "redacted",
+  "characterId": "redacted"
+}

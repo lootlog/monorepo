@@ -1,0 +1,42 @@
+{
+  "world": "experimental",
+  "source": "DIALOG",
+  "location": "Kopalnia Krwawego Szaleństwa",
+  "loots": [
+    {
+      "id": 53216,
+      "hid": "a9887a0f1b5d14743c4a9e5becb44c63bc4d6affabb59714b39548435af9c18c",
+      "icon": "neu/64_kopalnia_16.gif",
+      "name": "Doskonały kryształ menitu",
+      "pr": 19011,
+      "prc": "zl",
+      "stat": "amount=1;cansplit=1;capacity=1000;lvl=64;opis=Duża bryłka menitu o geometrycznym kształcie. Wystarczą niewielkie szlify, aby kryształ ten nabrał znacznej wartości w rzemiośle.[br][br]Pochodzi z Kopalni Krwawego Szaleństwa.;rarity=heroic",
+      "cl": 28
+    }
+  ],
+  "npcs": [
+    {
+      "icon": "obj/interakcja_01.gif",
+      "id": 311556,
+      "hpp": 0,
+      "type": 0,
+      "wt": 10,
+      "lvl": 0,
+      "name": "Naładowany kryształ",
+      "location": "Kopalnia Krwawego Szaleństwa"
+    }
+  ],
+  "players": [
+    {
+      "id": 167051,
+      "name": "sdadsa",
+      "icon": "/noob/bm.gif",
+      "prof": "b",
+      "hpp": 100,
+      "lvl": 64,
+      "accountId": 1234
+    }
+  ],
+  "accountId": "redacted",
+  "characterId": "redacted"
+}

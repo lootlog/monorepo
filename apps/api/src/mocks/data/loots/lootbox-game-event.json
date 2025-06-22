@@ -1,0 +1,109 @@
+{
+  "loot": {
+    "endTs": 1750448446,
+    "init": 1,
+    "source": "lootbox",
+    "states": {
+      "1074453801": 1,
+      "1074453802": 1,
+      "1074453803": 1,
+      "1074453804": 1,
+      "1074453805": 1,
+      "1074453806": 1
+    }
+  },
+  "ev": 1750448416.730523,
+  "item": {
+    "1074453801": {
+      "hid": "95d0901c1fa34c729749e93be6fa8f688d83ee4397235b39a7c4e98d61cb2c2a",
+      "tpl": 53215,
+      "name": "Wielofunkcyjny kilof",
+      "icon": "neu/64_kopalnia_01.gif",
+      "cl": 15,
+      "pr": 5,
+      "prc": "zl",
+      "loc": "l",
+      "st": 0,
+      "own": 167051,
+      "x": 0,
+      "y": 0,
+      "stat": "amount=1;cansplit=0;capacity=1000;lvl=57;nodepo;opis=Nada się do wielu typów skał. Służy do wydobywania menitu w Kopalni Krwawego Szaleństwa.;permbound;rarity=common"
+    },
+    "1074453802": {
+      "hid": "d62a1831933be7322cb325ade90a8c736d2e617e63a67f420ca1d880e8fa1a68",
+      "tpl": 53215,
+      "name": "Wielofunkcyjny kilof",
+      "icon": "neu/64_kopalnia_01.gif",
+      "cl": 15,
+      "pr": 5,
+      "prc": "zl",
+      "loc": "l",
+      "st": 0,
+      "own": 167051,
+      "x": 0,
+      "y": 0,
+      "stat": "amount=1;cansplit=0;capacity=1000;lvl=57;nodepo;opis=Nada się do wielu typów skał. Służy do wydobywania menitu w Kopalni Krwawego Szaleństwa.;permbound;rarity=common"
+    },
+    "1074453803": {
+      "hid": "0f4c74d55f96cb3b9b587c74009549f1db6c7ca322d3c8e8dfff9b0bb85dcfc5",
+      "tpl": 53215,
+      "name": "Wielofunkcyjny kilof",
+      "icon": "neu/64_kopalnia_01.gif",
+      "cl": 15,
+      "pr": 5,
+      "prc": "zl",
+      "loc": "l",
+      "st": 0,
+      "own": 167051,
+      "x": 0,
+      "y": 0,
+      "stat": "amount=1;cansplit=0;capacity=1000;lvl=57;nodepo;opis=Nada się do wielu typów skał. Służy do wydobywania menitu w Kopalni Krwawego Szaleństwa.;permbound;rarity=common"
+    },
+    "1074453804": {
+      "hid": "7b629415bd6355c4b3c8f58050f217f06aabce319ecfb13855c481db54b32b25",
+      "tpl": 53215,
+      "name": "Wielofunkcyjny kilof",
+      "icon": "neu/64_kopalnia_01.gif",
+      "cl": 15,
+      "pr": 5,
+      "prc": "zl",
+      "loc": "l",
+      "st": 0,
+      "own": 167051,
+      "x": 0,
+      "y": 0,
+      "stat": "amount=1;cansplit=0;capacity=1000;lvl=57;nodepo;opis=Nada się do wielu typów skał. Służy do wydobywania menitu w Kopalni Krwawego Szaleństwa.;permbound;rarity=common"
+    },
+    "1074453805": {
+      "hid": "c92463a0c0499015db6fff9b3a1ae100636f5b0e0302880d85f3e320a0d65208",
+      "tpl": 53218,
+      "name": "Drobne odłamki menitu",
+      "icon": "neu/64_kopalnia_18.gif",
+      "cl": 28,
+      "pr": 11407,
+      "prc": "zl",
+      "loc": "l",
+      "st": 0,
+      "own": 167051,
+      "x": 0,
+      "y": 0,
+      "stat": "amount=1;cansplit=1;capacity=1000;lvl=64;opis=Kryształowe odpryski o nieznacznej wartości.[br][br]Pochodzą z Kopalni Krwawego Szaleństwa.;rarity=common"
+    },
+    "1074453806": {
+      "hid": "633f231ff59932ded598dd709c53fbba9e9ad177642b327ac18739139e938d4f",
+      "tpl": 53216,
+      "name": "Doskonały kryształ menitu",
+      "icon": "neu/64_kopalnia_16.gif",
+      "cl": 28,
+      "pr": 19011,
+      "prc": "zl",
+      "loc": "l",
+      "st": 0,
+      "own": 167051,
+      "x": 0,
+      "y": 0,
+      "stat": "amount=1;cansplit=1;capacity=1000;lvl=64;opis=Duża bryłka menitu o geometrycznym kształcie. Wystarczą niewielkie szlify, aby kryształ ten nabrał znacznej wartości w rzemiośle.[br][br]Pochodzi z Kopalni Krwawego Szaleństwa.;rarity=heroic"
+    }
+  },
+  "e": "ok"
+}

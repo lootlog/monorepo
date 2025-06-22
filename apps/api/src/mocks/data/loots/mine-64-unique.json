@@ -1,0 +1,42 @@
+{
+  "world": "experimental",
+  "source": "DIALOG",
+  "location": "Kopalnia Krwawego Szaleństwa",
+  "loots": [
+    {
+      "id": 53217,
+      "hid": "4bb98277292fdeef54c6a2f7cea9b836e65c4fec393dcf0d007accf53ca09695",
+      "icon": "neu/64_kopalnia_17.gif",
+      "name": "Menitowa bryłka",
+      "pr": 15209,
+      "prc": "zl",
+      "stat": "amount=1;cansplit=1;capacity=1000;lvl=64;opis=Odłamek zabrudzony antymenitem, jednak z przeważającą ilością pożądanego surowca.[br][br]Pochodzi z Kopalni Krwawego Szaleństwa.;rarity=unique",
+      "cl": 28
+    }
+  ],
+  "npcs": [
+    {
+      "icon": "obj/interakcja_01.gif",
+      "id": 311551,
+      "hpp": 0,
+      "type": 0,
+      "wt": 10,
+      "lvl": 0,
+      "name": "Naładowany kryształ",
+      "location": "Kopalnia Krwawego Szaleństwa"
+    }
+  ],
+  "players": [
+    {
+      "id": 167051,
+      "name": "sdadsa",
+      "icon": "/noob/bm.gif",
+      "prof": "b",
+      "hpp": 100,
+      "lvl": 64,
+      "accountId": 1234
+    }
+  ],
+  "accountId": "redacted",
+  "characterId": "redacted"
+}
