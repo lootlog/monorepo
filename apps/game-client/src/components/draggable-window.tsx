@@ -44,8 +44,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const defaultSize = state[id].size;
 
   const [size, setSize] = useState({
-    width: defaultSize.width || minWidth,
-    height: defaultSize.height || minHeight,
+    width: resizable ? defaultSize.width : minWidth,
+    height: resizable ? defaultSize.height : minHeight,
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -191,7 +191,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             onClick={onClose}
           />
         </div>
-        <div className="ll-flex-1 ll-overflow-auto">{children}</div>
+        <div className="ll-flex-1 ll-overflow-hidden">{children}</div>
         {resizable && (
           <div
             className="ll-absolute ll-bottom-0 ll-right-0 ll-w-4 ll-h-4 ll-cursor-se-resize ll-bg-transparent"
