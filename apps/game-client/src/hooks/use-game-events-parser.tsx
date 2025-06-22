@@ -2,7 +2,11 @@ import { useCreateLoot } from "@/hooks/api/use-create-loot";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
 import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
-import { useNpcDetectorStore } from "@/store/npc-detector.store";
+import {
+  GameNpcWithLocation,
+  PickedNpcType,
+  useNpcDetectorStore,
+} from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { W } from "@/types/margonem/game-events/f";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
@@ -25,12 +29,12 @@ export const useGameEventsParser = () => {
   const isNI = gameInterface === "ni";
   const { mutate: createLoot } = useCreateLoot();
   const { mutate: createTimer } = useCreateTimer();
-  const { detectTypes } = useNpcDetectorStore();
-  const detectTypesRef = useRef(detectTypes);
+  const { settings } = useNpcDetectorStore();
+  const settingsRef = useRef(settings);
 
   useEffect(() => {
-    detectTypesRef.current = detectTypes;
-  }, [detectTypes]);
+    settingsRef.current = settings;
+  }, [settings]);
 
   const setupGameEventsHandler = () => {
     const wrap =
@@ -69,19 +73,19 @@ export const useGameEventsParser = () => {
   };
 
   const handleNpcDetection = (event: GameEvent) => {
+    if (event.f?.init === "1" || !characterId) return;
+    console.log("handleNpcDetection", event);
+
     const npcs =
-      event.npcs?.reduce<GameNpc[]>((acc, npc) => {
+      event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
         const tpl =
           getNpcTplFromEvent(event, npc.tpl) || Game.getNpcTpl(npc.tpl);
         if (!tpl) return acc;
 
         const npcType = getNpcTypeByWt(tpl.wt);
-        const isNpcTypeDetected = Object.prototype.hasOwnProperty.call(
-          detectTypesRef.current,
-          npcType
-        )
-          ? detectTypesRef.current[npcType as keyof typeof detectTypes]
-          : false;
+        const settings =
+          settingsRef.current[characterId][npcType as PickedNpcType];
+        const isNpcTypeDetected = settings?.detect ?? false;
 
         if (!isNpcTypeDetected) return acc;
 
@@ -97,6 +101,7 @@ export const useGameEventsParser = () => {
           wt: tpl.wt,
           lvl: tpl.lvl,
           type: tpl.type,
+          location: Game.map.name,
         });
         return acc;
       }, []) ?? [];
@@ -219,18 +224,18 @@ export const useGameEventsParser = () => {
   };
 
   const handleInitialNpcsDetection = () => {
+    if (!characterId) return;
+
     const npcs = Game.npcs;
     const calculatedNpcs =
-      npcs?.reduce<GameNpc[]>((acc, npc) => {
+      npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
         if (!npc) return acc;
 
         const npcType = getNpcTypeByWt(npc.wt);
-        const isNpcTypeDetected = Object.prototype.hasOwnProperty.call(
-          detectTypesRef.current,
-          npcType
-        )
-          ? detectTypesRef.current[npcType as keyof typeof detectTypes]
-          : false;
+
+        const settings =
+          settingsRef.current[characterId][npcType as PickedNpcType];
+        const isNpcTypeDetected = settings?.detect ?? false;
 
         if (!isNpcTypeDetected) return acc;
 
@@ -242,6 +247,7 @@ export const useGameEventsParser = () => {
           wt: npc.wt,
           lvl: npc.lvl,
           type: npc.type,
+          location: Game.map.name,
         });
         return acc;
       }, []) ?? [];
