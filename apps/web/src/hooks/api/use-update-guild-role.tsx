@@ -3,13 +3,15 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { Permission } from "@/hooks/api/use-guild-permissions";
 
 import { useGuildId } from "@/hooks/use-guild-id";
+import { AxiosResponse } from "axios";
+import { GuildRole } from "@/hooks/api/use-guild-roles";
 
 type UpdateGuildRoleOptions = {
   roleId: string;
   permissions: Permission[];
 };
 
-type UpdateGuildRoleResponse = unknown;
+type UpdateGuildRoleResponse = AxiosResponse<GuildRole>;
 
 export const useUpdateGuildRole = () => {
   const guildId = useGuildId();
@@ -27,10 +29,11 @@ export const useUpdateGuildRole = () => {
       });
     },
     mutationKey: ["update-guild-role"],
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["guild-roles", guildId],
-      });
+    onSuccess: (response) => {
+      // queryClient.invalidateQueries({
+      //   queryKey: ["guild-roles", guildId],
+      // });
+      queryClient.setQueryData(["guild-role", guildId], response.data);
     },
   });
 

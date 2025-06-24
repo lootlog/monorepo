@@ -17,6 +17,7 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { LoggerMiddleware } from 'src/middleware/logger.middleware';
 import { ChatModule } from 'src/chat/chat.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { RedisModule } from 'src/lib/redis/redis.module';
     UserLootlogConfigModule,
     ChatModule,
     RedisModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [],

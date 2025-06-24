@@ -6,6 +6,7 @@ export type UseCreateTimerOptions = {
   respBaseSeconds: number;
   characterId: string;
   accountId: string;
+  world: string;
   npc: {
     id: number;
     name: string;

@@ -26,7 +26,7 @@ const dialect = new PostgresDialect({
   pool: new pg.Pool(poolConfig),
 });
 
-export const auth: ReturnType<typeof betterAuth> = betterAuth({
+export const auth: any = betterAuth({
   appName: "@lootlog/auth",
   basePath: "/idp",
   database: {
@@ -45,8 +45,10 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // Cache duration in seconds
+      maxAge: 5 * 60,
     },
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60,
   },
   emailAndPassword: {
     enabled: true,
@@ -57,6 +59,10 @@ export const auth: ReturnType<typeof betterAuth> = betterAuth({
     defaultCookieAttributes: {
       sameSite: "none",
       secure: true,
+    },
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: APP_CONFIG.cookieDomain,
     },
   },
   plugins: [

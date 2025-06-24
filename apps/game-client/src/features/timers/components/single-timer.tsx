@@ -4,7 +4,9 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { TimerTile } from "@/features/timers/components/timer-tile";
+import { Tile } from "@/components/ui/tile";
+import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
+import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import { Timer } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/global.store";
@@ -18,6 +20,7 @@ type SingleTimerProps = {
   guildId?: string;
   timeLeft?: number;
   compactMode?: boolean;
+  canDelete?: boolean;
 };
 
 const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
@@ -44,8 +47,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   timeLeft = 0,
   compactMode,
+  canDelete = false,
 }) => {
-  const { world, accountId, characterId } = useGlobalStore(
+  const { accountId, characterId, world } = useGlobalStore(
     (state) => state.gameState
   );
   const {
@@ -55,7 +59,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     pinnedTimers,
     setTimerColor,
     timersColors,
+    timersGrouping,
   } = useTimersStore();
+  const { mutate: resetTimer } = useResetTimer();
+  const { mutate: deleteTimer } = useDeleteTimer();
 
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
 
@@ -68,12 +75,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       <span class="elite_timer_tip_name">
         <b>${timer.npc.name}</b>
       </span>
-      <i>${NPC_NAMES[timer.npc.type].longname}</i>
+      <i>${NPC_NAMES[timer.npc.type]?.longname ?? ""}</i>
       <br />
       <span class="elite_timer_tip_date">
         Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
-      <br />
       <span class="elite_timer_tip_date">
         Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
@@ -99,6 +105,26 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     setTimerColor(timer.npc.name, color);
   };
 
+  const handleRestartTimer = () => {
+    if (!accountId || !characterId || !world) return;
+
+    resetTimer({
+      world,
+      npcId: timer.npc.id,
+      guildId: timer.guildId,
+    });
+  };
+
+  const handleDeleteTimer = () => {
+    if (!accountId || !characterId || !world) return;
+
+    deleteTimer({
+      world,
+      npcId: timer.npc.id,
+      guildId: timer.guildId,
+    });
+  };
+
   const selectedColor = timersColors[timer.npc.name] ?? "white";
   const isPinned = pinnedTimers[`${accountId}${characterId}`]?.includes(
     timer.npc.name
@@ -106,12 +132,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const shortname = compactMode
     ? ""
-    : `[${NPC_NAMES[timer.npc.type].shortname}]`;
+    : `[${NPC_NAMES[timer.npc.type]?.shortname ?? "M"}]`;
 
   return (
     <ContextMenu>
       <ContextMenuTrigger className="ll-h-full">
-        <TimerTile
+        <Tile
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof COLORS}
           className="ll-h-full"
@@ -142,7 +168,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
             </div>
           </span>
-        </TimerTile>
+        </Tile>
       </ContextMenuTrigger>
 
       <ContextMenuContent className="ll-w-32 ll-flex ll-flex-col">
@@ -165,7 +191,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           {isPinned ? "Odepnij" : "Przypnij"}
         </ContextMenuItem>
         <ContextMenuItem onClick={handleHideTimer}>Ukryj timer</ContextMenuItem>
-        <ContextMenuItem disabled>Usuń timer</ContextMenuItem>
+        {!timersGrouping && (
+          <ContextMenuItem onClick={handleRestartTimer}>
+            Odliczaj od początku
+          </ContextMenuItem>
+        )}
+        {!timersGrouping && canDelete && (
+          <ContextMenuItem onClick={handleDeleteTimer}>
+            Usuń timer
+          </ContextMenuItem>
+        )}
         <ContextMenuItem disabled>Włącz dźwięk</ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

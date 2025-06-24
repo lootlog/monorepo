@@ -128,3 +128,10 @@ body.si > #lootlog-root {
   height: 14px;
   background: url(../img/gui/buttony.png?v=1747722915506) -725px -131px;
 }
+
+.ll-players-button {
+  background: url(../img/gui/buttony.png?v=1749646232913)
+    no-repeat -872px -687px;
+  width: 14px;
+  height: 14px;
+}

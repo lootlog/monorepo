@@ -1,5 +1,6 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
@@ -17,6 +18,7 @@ import { RolesService } from 'src/roles/roles.service';
 import { generateSlug } from 'src/shared/utils/generate-slug';
 import { UsersService } from 'src/users/users.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
+import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
 
 @Injectable()
 export class GuildsService {
@@ -120,7 +122,47 @@ export class GuildsService {
     return { data: permissions, guild };
   }
 
+  async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
+    const guilds = await this.prisma.guild.findMany({
+      where: { id: { in: guildIds } },
+    });
+
+    const members = await this.prisma.member.findMany({
+      where: {
+        userId: discordId,
+        guildId: { in: guildIds },
+      },
+      include: { roles: true, guild: true },
+    });
+
+    const result = guilds.map((guild) => {
+      const member = members.find((m) => m.guildId === guild.id);
+
+      if (!member) {
+        return { guild, data: [] };
+      }
+
+      let permissions = member.roles.reduce((acc: Permission[], role) => {
+        return acc.concat(role.permissions);
+      }, []);
+
+      if (discordId === guild.ownerId) {
+        permissions = Object.values(Permission);
+      }
+
+      return { guild, data: permissions };
+    });
+
+    return result;
+  }
+
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
+    if (RESTRICTED_VANITY_URLS.includes(data.vanityUrl)) {
+      throw new BadRequestException({
+        message: ErrorKey.GUILDS_VANITY_URL_RESTRICTED,
+      });
+    }
+
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
       data: {
@@ -132,7 +174,7 @@ export class GuildsService {
   }
 
   async getWorldsByGuildId(guildId: string) {
-    const worlds = await this.prisma.loot.findMany({
+    const worlds = await this.prisma.timer.findMany({
       where: { guildId },
       select: { world: true },
       distinct: ['world'],

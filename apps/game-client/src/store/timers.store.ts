@@ -7,7 +7,9 @@ interface TimersState {
   timersColors: Record<string, string | undefined>;
   removeTimerAfterMs: number;
   compactMode?: boolean;
+  timersGrouping?: boolean;
   toggleCompactMode?: () => void;
+  toggleTimersGrouping?: () => void;
   setRemoveTimerAfterMs: (ms: number) => void;
   addHiddenTimer: (
     accountId: string,
@@ -35,7 +37,6 @@ interface TimersState {
 const DEFAULT_REMOVE_TIMER_AFTER_MS = 30000;
 
 export const useTimersStore = create<TimersState>()(
-  // @ts-ignore
   persist(
     (set, get) => ({
       hiddenTimers: {},
@@ -43,11 +44,15 @@ export const useTimersStore = create<TimersState>()(
       timersColors: {},
       removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
       compactMode: false,
+      timersGrouping: true,
       setRemoveTimerAfterMs: (ms: number) => {
         set({ removeTimerAfterMs: ms });
       },
       toggleCompactMode: () => {
         set((state) => ({ compactMode: !state.compactMode }));
+      },
+      toggleTimersGrouping: () => {
+        set((state) => ({ timersGrouping: !state.timersGrouping }));
       },
       addHiddenTimer: (
         accountId: string,
@@ -128,6 +133,7 @@ export const useTimersStore = create<TimersState>()(
         timersColors: state.timersColors,
         removeTimerAfterMs: state.removeTimerAfterMs,
         compactMode: state.compactMode,
+        timersGrouping: state.timersGrouping,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,

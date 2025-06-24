@@ -1,0 +1,83 @@
+{
+  "eventId": "xxx",
+  "guildId": "1317554700853444709",
+  "name": "dev lootlog",
+  "icon": null,
+  "ownerId": "362907135824101376",
+  "roles": [
+    {
+      "id": "1317554700853444709",
+      "name": "@everyone",
+      "color": 0,
+      "admin": false,
+      "position": 0
+    },
+    {
+      "id": "1317554850128597032",
+      "name": "bbbb",
+      "color": 15844367,
+      "admin": true,
+      "position": 4
+    },
+    {
+      "id": "1317556514206126213",
+      "name": "margo-lootlog-local",
+      "color": 0,
+      "admin": false,
+      "position": 3
+    },
+    {
+      "id": "1319467599293059249",
+      "name": "margo-lootlog-prod",
+      "color": 0,
+      "admin": true,
+      "position": 2
+    },
+    {
+      "id": "1378798229172387984",
+      "name": "better-auth-test",
+      "color": 0,
+      "admin": false,
+      "position": 1
+    }
+  ],
+  "members": [
+    {
+      "id": "287975660872400898",
+      "roleIds": ["1317554850128597032", "1317554700853444709"],
+      "type": "ADMIN",
+      "avatar": "4c5dba4729cd957658d19bea8c8bde1b",
+      "name": "Rokkiit"
+    },
+    {
+      "id": "362907135824101376",
+      "roleIds": ["1317554850128597032", "1317554700853444709"],
+      "type": "OWNER",
+      "banner": null,
+      "avatar": "9f9553b87d5e8b65ab46883291827c1a",
+      "name": "wild"
+    },
+    {
+      "id": "1208853174602043505",
+      "roleIds": ["1317556514206126213", "1317554700853444709"],
+      "type": "BOT",
+      "avatar": null,
+      "name": "margo-lootlog-local"
+    },
+    {
+      "id": "1209464156361719828",
+      "roleIds": ["1319467599293059249", "1317554700853444709"],
+      "type": "BOT",
+      "avatar": null,
+      "name": "Lootlog"
+    },
+    {
+      "id": "1337108729753112697",
+      "roleIds": ["1378798229172387984", "1317554700853444709"],
+      "type": "BOT",
+      "banner": null,
+      "avatar": null,
+      "name": "better-auth-test"
+    }
+  ]
+}

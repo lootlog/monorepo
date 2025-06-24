@@ -40,6 +40,8 @@ enum Permission {
   LOOTLOG_READ_LOOTS_TITANS
   LOOTLOG_CHAT_READ
   LOOTLOG_CHAT_WRITE
+  LOOTLOG_NOTIFICATIONS_SEND
+  LOOTLOG_NOTIFICATIONS_READ
 }
 
 model Role {
@@ -99,14 +101,16 @@ enum NpcType {
 }
 
 model Timer {
-  createdById  Int
-  guildId      String
-  npcId        Int
-  world        String
-  minSpawnTime DateTime
-  maxSpawnTime DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdById             Int
+  guildId                 String
+  npcId                   Int
+  world                   String
+  minSpawnTime            DateTime
+  maxSpawnTime            DateTime
+  latestRespBaseSeconds   Int      @default(0)
+  latestRespawnRandomness Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   member Member @relation(fields: [createdById], references: [id])
   guild  Guild  @relation(fields: [guildId], references: [id])

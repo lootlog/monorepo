@@ -1,13 +1,13 @@
 import { create } from "zustand";
 
-export type GameInterface = "si" | "ni" | undefined;
+export type GameInterface = "si" | "ni";
 
 interface GameState {
   gameInitialized: boolean;
-  gameInterface: "si" | "ni" | undefined;
-  world: string | undefined;
-  accountId: string | undefined;
-  characterId?: string | undefined; // Optional, as it may not be set initially
+  gameInterface?: GameInterface;
+  world?: string;
+  accountId?: string;
+  characterId?: string;
 }
 interface GlobalState {
   gameState: GameState;

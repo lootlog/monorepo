@@ -6,12 +6,12 @@ const MARGONEM_CHARTACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
 
 export type MargonemCharacter = {
-  clan: number;
-  clan_rank: number;
-  gender: "m" | "f";
+  clan?: number;
+  clan_rank?: number;
+  gender?: "m" | "f";
   icon: string;
   id: number;
-  last: number;
+  last?: number;
   lvl: number;
   nick: string;
   prof: string;
@@ -37,7 +37,7 @@ export const useCharacterList = () => {
       response.data
         .filter((char) => char.world === world)
         .sort((a, b) => {
-          return b.lvl - a.lvl; // Sort by level descending
+          return b.lvl - a.lvl;
         }),
   });
 

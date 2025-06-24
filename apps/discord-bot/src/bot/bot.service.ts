@@ -11,6 +11,7 @@ import {
 import { MemberType } from 'src/bot/enums/member-type.enum';
 import { RoutingKey } from 'src/bot/enums/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { generateEventId } from 'src/utils/generate-event-id';
 import { getDiscordMemberName } from 'src/utils/get-discord-member-name';
 import { getMemberType } from 'src/utils/get-member-type';
 
@@ -128,11 +129,13 @@ export class BotService {
       guildId: role.guild.id,
       id: member.id,
     };
+    const eventId = generateEventId(payload);
+    const payloadWithEventId = { ...payload, eventId };
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_MEMBERS_REMOVE_ROLE,
-      payload,
+      payloadWithEventId,
     );
   }
 

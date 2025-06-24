@@ -10,6 +10,12 @@ import { Chat } from "@/features/chat/chat";
 import { useGlobalStore } from "@/store/global.store";
 import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 import { useWindowsStore } from "@/store/windows.store";
+import { OnlinePlayers } from "@/features/online-players/online-players";
+import { AddTimer } from "@/features/timers/add-timer";
+import { ErrorBoundary } from "react-error-boundary";
+import { NpcDetector } from "@/features/npc-detector/npc-detector";
+import { Notifications } from "@/features/notifications/notifications";
+import { CreateNotification } from "@/features/notifications/create-notification";
 
 function App() {
   useGameEventsParser();
@@ -73,9 +79,22 @@ function App() {
   return (
     gameInitialized && (
       <>
-        <Timers />
+        <ErrorBoundary
+          FallbackComponent={() => <div>xasd</div>}
+          onError={(error, info) => {
+            console.log("asdasdasd", error, info);
+            console.error("❌ Caught error in Timers:", error, info);
+          }}
+        >
+          <Timers />
+        </ErrorBoundary>
+        <AddTimer />
         <Settings />
         <Chat />
+        <OnlinePlayers />
+        <NpcDetector />
+        <Notifications />
+        <CreateNotification />
       </>
     )
   );

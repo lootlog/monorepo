@@ -1,4 +1,4 @@
-import { Inject, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -7,20 +7,20 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Server, Socket as SocketIOSocket } from 'socket.io';
-import { InitDto } from 'src/gateway/dto/init.dto';
-import { JoinDto } from 'src/gateway/dto/join.dto';
+import { Server } from 'socket.io';
+import { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
 import { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
-import { WsUserId } from 'src/shared/decorators/user-id.decorator';
-import { JWK, jwtVerify } from 'jose';
+import { WsDiscordId } from 'src/shared/decorators/user-id.decorator';
 import { ConfigService } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { AuthConfig } from 'src/config/auth.config';
 import { RuntimeEnvironment } from 'src/types/common.types';
-
-type Socket = SocketIOSocket & { user: any };
+import { GuildsService } from 'src/guilds/guilds.service';
+import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
+import { Platform } from 'src/gateway/enums/platform.enum';
+import { Socket } from 'src/gateway/types/socket-user.type';
+import { groupBy, omit } from 'lodash';
+import { RedisService } from 'src/lib/redis/redis.service';
 
 @WebSocketGateway({
   namespace:
@@ -30,110 +30,137 @@ type Socket = SocketIOSocket & { user: any };
 })
 export class Gateway {
   constructor(
-    @Inject('JOSE') private jose: { keyset: JWK },
     private configService: ConfigService,
+    private guildsService: GuildsService,
+    private redis: RedisService,
   ) {}
 
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
+    const { discordId, platform } = this.getConnectionMetadata(client.request);
     console.log('client connected');
+    console.log('discord id: ', discordId);
+    console.log('platform: ', platform);
+
+    if (!discordId) {
+      console.log('No discordId found in headers, disconnecting client');
+      return client.disconnect();
+    }
+
+    if (platform === Platform.UNKNOWN) {
+      console.log('Unrecognized platform, disconnecting...');
+      return client.disconnect();
+    }
+
+    client.data = {
+      discordId,
+      sessionId: client.id,
+      platform,
+    };
 
     client.on(GatewayEvent.DISCONNECTING, () => {
-      if (client.user) {
-        client.to([...client.rooms]).emit('user-presence-update', {
-          id: client.user.id,
-          status: UserPresenceStatus.OFFLINE,
+      if (client.data) {
+        client.rooms.forEach((room) => {
+          client.to(room).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
+            discordId: client.data.discordId,
+            player: client.data.player,
+            status: UserPresenceStatus.OFFLINE,
+            guildId: room,
+          });
         });
 
-        console.log('client disconnected', client.user.id);
+        console.log('client disconnected', client.data.discordId);
       }
     });
   }
 
-  @SubscribeMessage(GatewayEvent.INIT)
-  async handleInit(
+  @SubscribeMessage(GatewayEvent.JOIN)
+  async handleJoin(
+    @WsDiscordId() discordId: string,
     @ConnectedSocket() client: Socket,
-    @MessageBody() { token }: InitDto,
+    @MessageBody() { data: player }: JoinGatewayDto,
   ): Promise<any> {
-    const { authAudience, authIssuer } = this.configService.get<AuthConfig>(
-      ConfigKey.AUTH,
-    );
+    let guildIds: string[] = [];
 
-    const { payload } = await jwtVerify(token, this.jose.keyset, {
-      issuer: authIssuer,
-      audience: authAudience,
-    });
+    const key = client.data.discordId;
+    const cachedUserGuilds = await this.redis.get(key);
 
-    if (!payload.discordId) {
-      return client.disconnect();
+    if (cachedUserGuilds) {
+      guildIds = JSON.parse(cachedUserGuilds) as string[];
+    } else {
+      guildIds = await this.guildsService.getUserGuilds(discordId);
     }
 
-    client.user = {
-      id: payload.discordId,
-      sessionId: client.id,
+    this.redis.set(key, JSON.stringify(guildIds), 2000);
+
+    if (guildIds.length === 0) {
+      console.log('No guilds found for user', discordId);
+      return { status: 'error', message: 'No guilds found for user' };
+    }
+
+    const user = {
+      ...client.data,
       status: UserPresenceStatus.ONLINE,
+      player,
     };
 
-    return { status: 'ok' };
-  }
-
-  @SubscribeMessage(GatewayEvent.JOIN)
-  handleJoin(
-    @WsUserId() userId: string,
-    @ConnectedSocket() client: Socket,
-    @MessageBody() { guildIds, source, name }: JoinDto,
-  ): any {
-    console.log('join');
-    console.log('execute can join guild room');
-
-    client.user = {
-      ...client.user,
-      name,
-      source,
-    };
+    client.data = user;
 
     client.join(guildIds);
 
-    return { status: 'ok' };
+    client.rooms.forEach((room) => {
+      client.to(room).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
+        ...user,
+        guildId: room,
+      });
+    });
+
+    return client.emit(GatewayEvent.JOIN, {
+      status: 'success',
+    });
   }
 
   @UseFilters(new BaseWsExceptionFilter())
   @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.REQUEST_SERVER_PRESENCE)
-  handlePresenceFetch(
-    @WsUserId() userId: string,
+  async handlePresenceFetch(
     @ConnectedSocket() client: any,
-    @MessageBody() { guildId }: RequestServerPresenceDto,
-  ): any {
-    const users = [];
-
-    console.log(client.rooms);
-
+    @MessageBody() { guildId, world }: RequestServerPresenceDto,
+  ): Promise<any> {
     if (!client.rooms.has(guildId)) {
-      return users;
+      return {};
     }
 
-    const clients = this.server.sockets.adapter.rooms.get(guildId);
-
-    if (clients) {
-      clients.forEach((id) => {
-        const user = this.server.sockets.sockets.get(id)['user'];
-
-        console.log(user);
-
-        users.push({
-          id: user.id,
-          status: user.status,
-          source: user.source,
-          name: user.name,
-        });
+    const socketsInRoom = await this.server.in(guildId).fetchSockets();
+    const users = socketsInRoom
+      .filter((s) => s.data.player.world === world)
+      .map((s) => omit(s.data, 'sessionId'))
+      .sort((a, b) => {
+        return b.player.lvl - a.player.lvl;
       });
-    }
 
-    console.log(users);
+    const groupedUsers = groupBy(users, 'discordId');
 
-    return users;
+    return groupedUsers;
+  }
+
+  getConnectionMetadata(request: Socket['request']) {
+    const id = (request.headers['x-auth-discord-id'] as string) || null;
+    const platform = this.determineUserPlatform(request.headers.origin);
+
+    return {
+      discordId: id,
+      platform,
+    };
+  }
+
+  determineUserPlatform(requestOrigin: string) {
+    console.log('Request Origin:', requestOrigin);
+    if (!requestOrigin) return Platform.UNKNOWN;
+    const result = GAME_URL_REGEX.test(requestOrigin);
+
+    return result ? Platform.GAME : Platform.WEB_APP;
   }
 }

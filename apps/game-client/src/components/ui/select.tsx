@@ -20,7 +20,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "ll-flex ll-h-6 ll-w-full ll-items-center ll-justify-between ll-whitespace-nowrap ll-rounded-md ll-box-border ll-border ll-bg-transparent ll-px-1.5 ll-py-2 ll-text-sm placeholder:ll-text-muted-foreground disabled:ll-cursor-not-allowed disabled:ll-opacity-50 [&>span]:ll-line-clamp-1 ll-border-gray-400",
+      "ll-flex ll-h-6 ll-w-full ll-items-center ll-justify-between ll-whitespace-nowrap ll-rounded-md ll-box-border ll-border ll-bg-transparent ll-px-1.5 ll-py-2 ll-text-sm placeholder:ll-text-muted-foreground disabled:ll-cursor-not-allowed disabled:ll-opacity-50 [&>span]:ll-line-clamp-1 ll-border-gray-400 ll-outline-none",
       className
     )}
     {...props}
@@ -87,7 +87,7 @@ const SelectContent = React.forwardRef<
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
         className={cn(
-          "ll-box-border ll-flex ll-flex-col ll-gap-1 ll-shadow-lg",
+          "ll-box-border ll-flex ll-flex-col ll-gap-1 ll-shadow-lg ll-px-1.5 -ll-ml-1.5",
           position === "popper" &&
             "ll-h-[var(--radix-select-trigger-height)] ll-w-full ll-min-w-[var(--radix-select-trigger-width)]"
         )}
@@ -122,7 +122,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "ll-relative data-[state=checked]:ll-bg-gray-400/30 ll-h-6 ll-transition-all hover:ll-bg-gray-400/30 ll-flex ll-w-full ll-cursor-default ll-select-none ll-box-border ll-border-gray-400 ll-border-solid ll-border ll-items-center ll-text-white ll-text-[11px] ll-bg-transparent ll-rounded-sm ll-py-1.5 ll-pl-2 ll-pr-8 ll-text-sm ll-outline-none data-[disabled]:ll-pointer-events-none data-[disabled]:ll-opacity-50",
+      "ll-relative data-[state=checked]:ll-bg-gray-400/30 ll-h-6 ll-transition-all hover:ll-bg-gray-400/30 ll-flex ll-cursor-default ll-select-none ll-box-border ll-border-gray-400 ll-border-solid ll-border ll-items-center ll-text-white ll-text-[11px] ll-bg-transparent ll-rounded-sm ll-py-1.5 ll-pl-2 ll-pr-8 ll-text-sm ll-outline-none data-[disabled]:ll-pointer-events-none data-[disabled]:ll-opacity-50",
       className
     )}
     {...props}

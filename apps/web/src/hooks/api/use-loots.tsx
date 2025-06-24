@@ -68,7 +68,7 @@ export type UseLootsErrorResponse = {
 
 export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
   const guildId = useGuildId();
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
   const [searchParams] = useSearchParams();
   const { world } = useGuildContext();
 
@@ -111,7 +111,7 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
         ? lastPage.data[lastPage.data.length - 1]?.id
         : undefined,
     initialPageParam: 0,
-    enabled: !!guildId && isAuthenticated && !!world,
+    enabled: !!guildId && !!world,
   });
 
   return query;

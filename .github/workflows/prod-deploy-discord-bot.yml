@@ -3,6 +3,9 @@ name: Deploy discord bot to prod
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   IMAGE_NAME: kamilwronka7/lootlog-discord-bot
   IMAGE_TAG: prod-${{ github.sha }}
