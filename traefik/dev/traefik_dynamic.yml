@@ -36,20 +36,47 @@ http:
         - "cors"
         - "apiStripPrefix"
         - "apiCompress"
+        - "apiForwardAuth"
+      entryPoints:
+        - "web"
+    landing:
+      rule: "Path(`/`) || PathPrefix(`/_next/`)"
+      service: "landing"
+      middlewares:
+        - "apiCompress"
       entryPoints:
         - "web"
     web-client:
-      rule: "PathPrefix(`/`)"
+      rule: "PathRegexp(`/(.+)`)"
       service: "web-client"
       middlewares:
         - "apiCompress"
       entryPoints:
         - "web"
+    # web-client:
+    #   rule: "PathPrefix(`/`)"
+    #   service: "web-client"
+    #   middlewares:
+    #     - "apiCompress"
+    #   entryPoints:
+    #     - "web"
+    web-client-ws:
+      rule: "Path(`/`) && HeaderRegexp(`Upgrade`, `(?i)^websocket$`)"
+      service: "web-client"
+      middlewares:
+        - "apiCompress"
+      entryPoints:
+        - "web"
+        
   services:
     web-client:
       loadBalancer:
         servers:
         - url: "http://host.docker.internal:3000"
+    landing:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:3001"
     auth:
       loadBalancer:
         servers:
@@ -95,12 +122,14 @@ http:
         accessControlAllowOriginListRegex:
           - "^(.+)\\.margonem\\.(pl|com)$"
           - "^http://localhost$"
+          - "^http://localhost:3001$"
         accessControlAllowMethods:
           - "GET"
           - "POST"
           - "PUT"
           - "DELETE"
           - "OPTIONS"
+          - "PATCH"
         accessControlAllowHeaders:
           - "Content-Type"
           - "Authorization"

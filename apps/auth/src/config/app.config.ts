@@ -15,6 +15,7 @@ const configSchema = z.object({
   DISCORD_CLIENT_ID: z.string(),
   DISCORD_CLIENT_SECRET: z.string(),
   POSTGRESQL_SSL_CA: z.string().optional(),
+  COOKIE_DOMAIN: z.string(),
 });
 
 const {
@@ -30,6 +31,7 @@ const {
   DISCORD_CLIENT_SECRET,
   TRUSTED_ORIGINS,
   POSTGRESQL_SSL_CA,
+  COOKIE_DOMAIN,
 } = configSchema.parse(process.env);
 
 export const APP_CONFIG = {
@@ -38,6 +40,7 @@ export const APP_CONFIG = {
   trustedOrigins: TRUSTED_ORIGINS,
   appUrl: APP_URL,
   jwksUrl: `${APP_URL}/api/auth/idp/jwks`,
+  cookieDomain: COOKIE_DOMAIN,
   postgres: {
     host: POSTGRESQL_HOST,
     port: POSTGRESQL_PORT,

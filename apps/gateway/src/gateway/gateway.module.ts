@@ -5,8 +5,8 @@ import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { GatewayQueueHandler } from 'src/gateway/gateway-queue.handler';
-import { createRemoteJWKSet } from 'jose';
-import { AuthConfig } from 'src/config/auth.config';
+import { GuildsModule } from 'src/guilds/guilds.module';
+import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
@@ -15,22 +15,9 @@ import { AuthConfig } from 'src/config/auth.config';
       useFactory: async (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
+    GuildsModule,
+    RedisModule,
   ],
-  providers: [
-    GatewayService,
-    Gateway,
-    GatewayQueueHandler,
-
-    {
-      provide: 'JOSE',
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
-        const { jwksUrl } = configService.get<AuthConfig>(ConfigKey.AUTH);
-        const keyset = createRemoteJWKSet(new URL(jwksUrl));
-
-        return { keyset };
-      },
-    },
-  ],
+  providers: [GatewayService, Gateway, GatewayQueueHandler],
 })
 export class GatewayModule {}

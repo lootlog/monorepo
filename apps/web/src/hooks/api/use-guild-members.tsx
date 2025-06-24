@@ -11,13 +11,13 @@ export type GuildMember = {
 };
 
 export const useGuildMembers = (guildId?: string) => {
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const query = useQuery({
     queryKey: ["guild-members", guildId],
     queryFn: () =>
       client.get<GuildMember[]>(`${API_URL}/guilds/${guildId}/members`),
-    enabled: isAuthenticated && !!guildId,
+    enabled: !!guildId,
     select: (response) => response.data,
   });
 

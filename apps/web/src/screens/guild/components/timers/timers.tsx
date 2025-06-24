@@ -42,7 +42,7 @@ export const Timers = () => {
           return (
             <div key={key} className="border-b">
               <p className="text-sm capitalize font-semibold px-4 py-2 border-b">
-                {NPC_NAMES[key]} - {groups[key]?.length}
+                {NPC_NAMES[key] ?? "Dodane ręcznie"} - {groups[key]?.length}
               </p>
               <div>
                 {groups[key]?.map((timer) => {

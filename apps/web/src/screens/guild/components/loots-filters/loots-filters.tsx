@@ -66,7 +66,10 @@ export const LootsFilters: React.FC = () => {
     })) ?? [];
 
   return (
-    <div className="p-4 w-full grid grid-cols-1 xs:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4  gap-2 items-center border-b">
+    <div
+      className="p-4 w-full grid grid-cols-1 xs:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4  gap-2 items-center border-b"
+      key={searchParams.toString()}
+    >
       <FilterCombobox
         name="players"
         placeholder="Wybierz graczy"

@@ -15,12 +15,12 @@ type UseGuildOptions = {
 
 export const useGuild = ({ retry = true }: UseGuildOptions) => {
   const guildId = useGuildId();
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const query = useQuery({
     queryKey: ["guilds", guildId],
     queryFn: () => client.get<Guild>(`/guilds/${guildId}`),
-    enabled: isAuthenticated && !!guildId,
+    enabled: !!guildId,
     select: (response) => response.data,
     retry,
   });

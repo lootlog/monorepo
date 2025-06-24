@@ -1,6 +1,6 @@
 {
-  "name": "shadcn-ui-monorepo",
-  "version": "0.0.1",
+  "name": "@lootlog/app",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "turbo build",
@@ -24,15 +24,27 @@
     "turbo": "^2.4.0",
     "typescript": "5.7.3"
   },
-  "packageManager": "pnpm@9.1.1",
+  "packageManager": "pnpm@10.12.1",
   "pnpm": {
     "overrides": {
       "discord-api-types": "^0.38.8",
       "multer": "^2.0.1",
-      "path-to-regexp": "^3.3.0",
       "cross-spawn": "^7.0.5",
-      "body-parser": "^1.20.3"
-    }
+      "body-parser": "^1.20.3",
+      "undici": "^6.21.2"
+    },
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "@swc/core",
+      "@tailwindcss/oxide",
+      "core-js-pure",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "workerd"
+    ]
   },
   "engines": {
     "node": ">=20"

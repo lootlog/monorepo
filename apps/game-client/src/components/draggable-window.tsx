@@ -1,4 +1,4 @@
-import { useDrag } from "@/hooks/ui/useDrag";
+import { useDrag } from "@/hooks/ui/use-drag";
 import { cn } from "@/lib/utils";
 import {
   useWindowsStore,
@@ -19,9 +19,10 @@ export type DraggableWindowProps = {
   minHeight?: number;
   maxWidth?: number;
   maxHeight?: number;
+  dynamicHeight?: boolean;
 };
 
-const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4];
+const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
 
 export const DraggableWindow: FC<DraggableWindowProps> = ({
   children,
@@ -35,15 +36,16 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   minHeight = 240,
   maxWidth,
   maxHeight,
+  dynamicHeight = false,
 }) => {
   const state = useWindowsStore();
   const opacity = state[id].opacity;
   const rawDefaultPosition = state[id].position;
-  const defaulSize = state[id].size;
+  const defaultSize = state[id].size;
 
   const [size, setSize] = useState({
-    width: defaulSize.width || 300,
-    height: defaulSize.height || 200,
+    width: defaultSize.width || minWidth,
+    height: defaultSize.height || minHeight,
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -59,14 +61,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const defaultPosition = getClampedPosition(rawDefaultPosition);
 
-  const draggableRef = useRef(null);
-  const { position, handleMouseDown } = useDrag({
+  const draggableRef = useRef<HTMLDivElement>(null!);
+  const { position, handleMouseDown, handleTouchStart } = useDrag({
     ref: draggableRef,
     defaultState: defaultPosition,
     onDragStop: (position) => {
       state.setPosition(id, position);
     },
-    // disabled: isResizing,
   });
 
   const handleResize = (e: React.MouseEvent) => {
@@ -125,23 +126,39 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    state.setCurrentWindowFocus(id);
+    handleTouchStart(e as React.TouchEvent<HTMLElement>);
+  };
+
   useEffect(() => {
     if (isResizing) return;
     state.setSize(id, { height: size.height, width: size.width });
   }, [size.height, size.width, isResizing]);
+
+  const style = dynamicHeight
+    ? {
+        height: "auto",
+        width: size.width,
+      }
+    : {
+        width: size.width,
+        height: size.height,
+      };
 
   return (
     <div
       className="ll-pointer-events-auto ll-absolute"
       ref={draggableRef}
       style={{
+        ...style,
+        maxHeight,
         top: position.y,
         left: position.x,
-        width: size.width,
-        height: size.height,
         zIndex: state.currentWindowFocus === id ? 1 : 0,
       }}
       onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
       onWheel={(e) => e.stopPropagation()}
       onClick={handleClick}
     >
@@ -153,6 +170,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             "ll-bg-black/25": opacity === 2,
             "ll-bg-black/50": opacity === 3,
             "ll-bg-black/75": opacity === 4,
+            "ll-bg-black": opacity === 5,
           }
         )}
       >

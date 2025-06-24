@@ -14,12 +14,15 @@ export type Timer = {
   minSpawnTime: Date;
   maxSpawnTime: Date;
   npc: Npc;
+  npcId: number;
   member: GuildMember;
+  members?: GuildMember[];
   world: string;
+  guildId: string;
 };
 
 export const useTimers = ({ world }: UseTimersOptions) => {
-  const { client, hasToken } = useAuthenticatedApiClient();
+  const { client } = useAuthenticatedApiClient();
 
   const queryParams = {
     world,
@@ -30,7 +33,7 @@ export const useTimers = ({ world }: UseTimersOptions) => {
   const query = useQuery({
     queryKey: ["guild-timers", world],
     queryFn: () => client.get<Timer[]>(`${API_URL}/timers?${queryString}`),
-    enabled: !!world && hasToken,
+    enabled: !!world,
     select: (response) => response.data,
   });
 

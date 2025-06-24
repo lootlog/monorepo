@@ -9,8 +9,11 @@ export const GeneralSettingsTab: FC = () => {
     removeTimerAfterMs,
     setRemoveTimerAfterMs,
     compactMode,
+    timersGrouping,
     toggleCompactMode,
+    toggleTimersGrouping,
   } = useTimersStore();
+
   const [inputValue, setInputValue] = useState<string>(
     (removeTimerAfterMs / 1000).toString()
   );
@@ -48,8 +51,8 @@ export const GeneralSettingsTab: FC = () => {
         Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.
       </p>
       <div className="ll-mb-4 ll-mt-4">
-        <label className="ll-font-semibold">Ustawienia widoku</label>
-        <div className="checkbox-custom c-checkbox">
+        <label className="ll-font-semibold ll-mb-4">Ustawienia widoku</label>
+        <div className="checkbox-custom c-checkbox ll-mt-2">
           <input
             id="compact-mode-toggle"
             type="checkbox"
@@ -59,18 +62,30 @@ export const GeneralSettingsTab: FC = () => {
           />
           <label htmlFor="compact-mode-toggle">Tryb kompaktowy</label>
         </div>
+        <div className="checkbox-custom c-checkbox">
+          <input
+            id="timers-grouping-toggle"
+            type="checkbox"
+            value={timersGrouping ? "1" : "0"}
+            checked={timersGrouping}
+            onChange={toggleTimersGrouping}
+          />
+          <label htmlFor="timers-grouping-toggle">
+            Grupowanie timerów (łączy timery z różnych lootlogów w jeden)
+          </label>
+        </div>
       </div>
+
       <div className="ll-mb-4 ll-mt-4">
         <label className="ll-font-semibold">
           Czas usunięcia timera po wyzerowaniu (w sekundach):
         </label>
-        <div className="ll-w-8">
+        <div className="ll-w-8 ll-mt-2">
           <Input
             type="text"
             value={inputValue}
             max={120}
             onChange={handleRemoveTimerAfterMsChange}
-            className="ll-input ll-w-8 ll-h-[13px] ll-px-1 ll-mt-1"
           />
         </div>
       </div>

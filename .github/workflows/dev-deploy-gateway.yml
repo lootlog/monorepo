@@ -6,8 +6,11 @@ on:
       - "apps/gateway/**"
       - ".github/workflows/dev-deploy-gateway.yml"
     branches:
-      - dev
+      - develop
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 env:
   IMAGE_NAME: kamilwronka7/lootlog-gateway
@@ -42,10 +45,16 @@ jobs:
         run: |
           yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i $KUSTOMIZE_PATH
 
-      - name: Commit and push changes
+      - name: Commit and push with retry
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
+
           git add $KUSTOMIZE_PATH
-          git commit -m "ci: update service-a image to $IMAGE_TAG"
-          git push
+          git commit -m "ci: update service-a image to $IMAGE_TAG" || echo "No changes to commit"
+
+          for i in {1..5}; do
+            git fetch origin develop
+            git rebase origin/develop || { echo "Rebase failed"; exit 1; }
+            git push origin HEAD:develop && break || sleep 5
+          done

@@ -4,12 +4,12 @@ import { useApiClient } from "hooks/api/use-api-client";
 import { Guild } from "hooks/api/use-guild";
 
 export const useGuildStatus = (guildId?: string, isSubmitted = false) => {
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const query = useQuery({
     queryKey: ["guild-status", guildId],
     queryFn: () => client.get<Guild>(`${API_URL}/guilds/${guildId}`),
-    enabled: isAuthenticated && !!guildId && isSubmitted,
+    enabled: !!guildId && isSubmitted,
     select: (response) => response.data,
     refetchInterval: 2000,
   });

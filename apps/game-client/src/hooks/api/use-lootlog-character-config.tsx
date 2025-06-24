@@ -22,7 +22,7 @@ export type LootlogCharacterConfigResponse = Record<
 
 export const useLootlogCharactersConfig = () => {
   const accountId = useGlobalStore((state) => state.gameState.accountId);
-  const { client, hasToken } = useAuthenticatedApiClient();
+  const { client } = useAuthenticatedApiClient();
 
   const query = useQuery({
     queryKey: ["lootlog-characters-config", accountId],
@@ -32,7 +32,7 @@ export const useLootlogCharactersConfig = () => {
         { withCredentials: true }
       ),
     select: (response) => response.data,
-    enabled: hasToken && !!accountId,
+    enabled: !!accountId,
     refetchOnMount: false,
   });
 

@@ -14,7 +14,7 @@ export type Timer = {
 };
 
 export const useTimers = () => {
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
   const { world } = useGuildContext();
   const guildId = useGuildId();
 
@@ -28,7 +28,7 @@ export const useTimers = () => {
     queryKey: ["guild-timers", world, guildId],
     queryFn: () =>
       client.get<Timer[]>(`/guilds/${guildId}/timers?${queryString}`),
-    enabled: isAuthenticated && !!world,
+    enabled: !!world,
     select: (response) => response.data,
   });
 

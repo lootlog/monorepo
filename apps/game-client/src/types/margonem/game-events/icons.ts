@@ -1,4 +1,4 @@
-export type Icons = {
+export type Icon = {
   icon: string;
   id: number;
-}[];
+};

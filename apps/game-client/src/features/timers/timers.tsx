@@ -1,62 +1,145 @@
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useLocalStorage } from "react-use";
+import { useQueryClient } from "@tanstack/react-query";
+import { PlusIcon } from "lucide-react";
+import { AxiosResponse } from "axios";
+import { AnimatePresence, motion } from "framer-motion";
+
 import { DraggableWindow } from "@/components/draggable-window";
+import { GuildSelector } from "@/components/guild-selector";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tile } from "@/components/ui/tile";
 import { SingleTimer } from "@/features/timers/components/single-timer";
-import { TimerTile } from "@/features/timers/components/timer-tile";
-import { Timer, useTimers } from "@/hooks/api/use-timers";
+import {
+  useGuildPermissions,
+  Permission,
+} from "@/hooks/api/use-guild-permissions";
+import { useTimers, Timer } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { useQueryClient } from "@tanstack/react-query";
-import { AxiosResponse } from "axios";
-import { PlusIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { GatewayEvent } from "@/config/gateway";
+import { GuildMember } from "@/hooks/api/use-guild-members";
 
-type TimerWithTimeLeft = Timer & { timeLeft: number };
+type TimerWithTimeLeft = Timer & { timeLeft: number; members?: GuildMember[] };
 
-const normalModeBreakpoints = [220, 300, 440, 580];
-const compactModeBreakpoints = [110, 220, 330, 440, 550, 660];
+const BREAKPOINTS = {
+  normal: [220, 300, 440, 580],
+  compact: [110, 220, 330, 440, 550, 660],
+};
+
+const REQUIRED_DELETE_PERMISSIONS = [
+  Permission.LOOTLOG_MANAGE,
+  Permission.OWNER,
+  Permission.ADMIN,
+];
+
+const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
+  const map = new Map<number, TimerWithTimeLeft>();
+
+  for (const timer of timers) {
+    const existing = map.get(timer.npcId);
+
+    if (!existing) {
+      map.set(timer.npcId, {
+        ...timer,
+        members: timer.member ? [timer.member] : [],
+        timeLeft: 0, // placeholder
+      });
+    } else {
+      if (new Date(timer.maxSpawnTime) > new Date(existing.maxSpawnTime)) {
+        map.set(timer.npcId, {
+          ...timer,
+          members: [
+            ...(existing.members || []),
+            ...(timer.member ? [timer.member] : []),
+          ],
+          timeLeft: 0,
+        });
+      } else {
+        existing.members = [
+          ...(existing.members || []),
+          ...(timer.member ? [timer.member] : []),
+        ];
+      }
+    }
+  }
+
+  return Array.from(map.values());
+};
 
 export const Timers = () => {
+  const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
   const {
     timers: { open },
+    "add-timer": { open: addTimerOpen },
+    toggleOpen,
     setOpen,
   } = useWindowsStore();
-  const { hiddenTimers, pinnedTimers, removeTimerAfterMs, compactMode } =
-    useTimersStore();
-  const { characterId, accountId } = useGlobalStore((state) => state.gameState);
+  const {
+    hiddenTimers,
+    pinnedTimers,
+    removeTimerAfterMs,
+    compactMode,
+    timersGrouping,
+  } = useTimersStore();
+  const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
+    "timers-selected-guild",
+    ""
+  );
+  const { data: guildPermissions } = useGuildPermissions({
+    guildId: selectedGuildId,
+  });
+  const { data: timers } = useTimers({ world });
+  const { socket, connected } = useGateway();
+  const queryClient = useQueryClient();
+
   const [calculatedTimers, setCalculatedTimers] = useState<TimerWithTimeLeft[]>(
     []
   );
-  const breakpoints = compactMode
-    ? compactModeBreakpoints
-    : normalModeBreakpoints;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(1);
 
-  const { world } = useGlobalStore((state) => state.gameState);
+  const canDeleteTimers = useMemo(
+    () =>
+      REQUIRED_DELETE_PERMISSIONS.some((perm) =>
+        guildPermissions?.includes(perm)
+      ),
+    [guildPermissions]
+  );
 
-  const queryClient = useQueryClient();
-  const { data: timers } = useTimers({ world });
+  const activeTimers = useMemo(() => {
+    const rawTimers = timers ?? [];
+    const merged = timersGrouping ? mergeTimers(rawTimers) : rawTimers;
+    const now = Date.now();
 
-  const { socket, connected } = useGateway();
+    return merged
+      .map((timer) => ({
+        ...timer,
+        timeLeft: new Date(timer.maxSpawnTime).getTime() - now,
+      }))
+      .filter((t) => t.timeLeft > -removeTimerAfterMs);
+  }, [timers, timersGrouping, removeTimerAfterMs]);
+
+  useEffect(() => {
+    setCalculatedTimers(activeTimers);
+  }, [activeTimers]);
 
   const handleTimerMessage = (data: Timer) => {
     queryClient.setQueryData(
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-
-        const exists = old?.data.find((timer) => timer.npc.id === data.npc.id);
-
-        if (exists) {
-          return {
-            data: old.data.map((timer) =>
-              timer.npc.id === data.npc.id ? data : timer
-            ),
-          };
-        }
-        return {
-          data: [...old.data, data],
-        };
+        const updated = [...(old?.data || [])];
+        const index = updated.findIndex(
+          (t) =>
+            t.npcId === data.npcId &&
+            t.guildId === data.guildId &&
+            t.world === data.world
+        );
+        index !== -1 ? (updated[index] = data) : updated.push(data);
+        return { data: updated };
       }
     );
   };
@@ -66,142 +149,151 @@ export const Timers = () => {
       ["guild-timers", world],
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== world) return old;
-
-        return {
-          data: old?.data.filter((timer) => timer.npc.id !== data.npc.id) || [],
-        };
+        const filtered =
+          old?.data.filter(
+            (t) =>
+              !(
+                t.npcId === data.npcId &&
+                t.world === data.world &&
+                t.guildId === data.guildId
+              )
+          ) || [];
+        return { data: filtered };
       }
     );
   };
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!timers || timers.length === 0) return;
-
-      const newTimers = timers.reduce((acc: TimerWithTimeLeft[], timer) => {
-        const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-        const timeLeft = maxSpawnTime - Date.now();
-
-        if (timeLeft <= -removeTimerAfterMs) {
-          handleTimerRemove(timer);
-          return acc;
-        }
-
-        const newTimer = {
-          ...timer,
-          timeLeft,
-        };
-
-        acc.push(newTimer);
-
-        return acc;
-      }, []);
-
-      setCalculatedTimers(newTimers);
+      const now = Date.now();
+      setCalculatedTimers((prev) =>
+        prev
+          .map((timer) => ({
+            ...timer,
+            timeLeft: new Date(timer.maxSpawnTime).getTime() - now,
+          }))
+          .filter((t) => t.timeLeft > -removeTimerAfterMs)
+      );
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [timers, handleTimerRemove, removeTimerAfterMs]);
+  }, [removeTimerAfterMs]);
 
   useEffect(() => {
-    if (socket.hasListeners("timers-create") || !connected) return;
-
-    socket.on("timers-create", (data: Timer) => {
-      handleTimerMessage(data);
-    });
+    if (!connected) return;
+    socket?.on(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
+    socket?.on(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+    return () => {
+      socket?.off(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
+      socket?.off(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+    };
   }, [connected]);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [columns, setColumns] = useState(1);
 
   useEffect(() => {
     if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const width = entry.contentRect.width;
-
-        const newColumns = breakpoints.reduce((acc, breakpoint) => {
-          return width >= breakpoint ? acc + 1 : acc;
-        }, 0);
-        setColumns(newColumns || 1);
-      }
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width;
+      const bps = compactMode ? BREAKPOINTS.compact : BREAKPOINTS.normal;
+      const cols = bps.reduce((acc, bp) => (width >= bp ? acc + 1 : acc), 0);
+      setColumns(cols || 1);
     });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
   }, [open, compactMode]);
 
-  const sorted = calculatedTimers?.sort((a, b) => {
-    const key = `${accountId}${characterId}`;
-    const isPinnedA = pinnedTimers[key]?.includes?.(a.npc.name);
-    const isPinnedB = pinnedTimers[key]?.includes?.(b.npc.name);
-
-    if (isPinnedA && !isPinnedB) return -1;
-    if (!isPinnedA && isPinnedB) return 1;
-
-    return (
-      new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
-    );
-  });
-
-  const filtered = sorted?.filter((timer) => {
-    const key = `${accountId}${characterId}`;
-    const isHidden = hiddenTimers[key]?.includes?.(timer.npc.name);
-
-    return !isHidden;
-  });
+  const key = `${accountId}${characterId}`;
+  const sortedTimers = useMemo(() => {
+    return calculatedTimers
+      .filter((t) => timersGrouping || t.guildId === selectedGuildId)
+      .filter((t) => !hiddenTimers[key]?.includes?.(t.npc.name))
+      .sort((a, b) => {
+        const pinA = pinnedTimers[key]?.includes?.(a.npc.name);
+        const pinB = pinnedTimers[key]?.includes?.(b.npc.name);
+        if (pinA && !pinB) return -1;
+        if (!pinA && pinB) return 1;
+        return (
+          new Date(a.maxSpawnTime).getTime() -
+          new Date(b.maxSpawnTime).getTime()
+        );
+      });
+  }, [
+    calculatedTimers,
+    selectedGuildId,
+    hiddenTimers,
+    pinnedTimers,
+    timersGrouping,
+  ]);
 
   return (
-    open && (
-      <DraggableWindow
-        id="timers"
-        title="Lootlog"
-        actions={[
-          <div
-            className="ll-settings-button ll-custom-cursor-pointer"
-            key="settings"
-            onClick={() => setOpen("settings", true)}
-          />,
-        ]}
-        onClose={() => setOpen("timers", false)}
-        minHeight={108}
-      >
-        <span
-          ref={containerRef}
-          className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="timers"
+          initial={{ opacity: 0, scaleY: 1.01 }}
+          animate={{ opacity: 1, scaleY: 1 }}
+          exit={{ opacity: 0, scaleY: 1.01 }}
+          transition={{ duration: 0.1 }}
         >
-          {filtered?.length === 0 && (
-            <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
-              ----
-            </span>
-          )}
-          <ScrollArea className="ll-h-full ll-py-1 ll-w-full" type="scroll">
+          <DraggableWindow
+            id="timers"
+            title="Lootlog"
+            actions={[
+              <div
+                key="settings"
+                className="ll-settings-button ll-custom-cursor-pointer"
+                onClick={() => toggleOpen("settings")}
+              />,
+              <div
+                key="online-players"
+                className="ll-players-button ll-custom-cursor-pointer ll-ml-1"
+                onClick={() => toggleOpen("online-players")}
+              />,
+            ]}
+            onClose={() => setOpen("timers", false)}
+            minHeight={108}
+          >
             <span
-              className="ll-grid ll-gap-0.5 ll-box-border"
-              style={{
-                gridTemplateColumns: `repeat(${columns}, 1fr)`,
-              }}
+              ref={containerRef}
+              className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
             >
-              {filtered?.map((timer) => (
-                <SingleTimer
-                  key={timer.npc.id}
-                  timer={timer}
-                  timeLeft={timer.timeLeft}
-                  compactMode={compactMode}
+              {!timersGrouping && (
+                <GuildSelector
+                  selectedGuildId={selectedGuildId}
+                  setSelectedGuildId={setSelectedGuildId}
+                  disabled={addTimerOpen}
                 />
-              ))}
-            </span>
-          </ScrollArea>
+              )}
+              <ScrollArea className="ll-h-full ll-pb-1 ll-w-full" type="scroll">
+                {sortedTimers.length === 0 ? (
+                  <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
+                    ----
+                  </span>
+                ) : (
+                  <span
+                    className="ll-grid ll-gap-0.5 ll-box-border"
+                    style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+                  >
+                    {sortedTimers.map((timer) => (
+                      <SingleTimer
+                        key={`${timer.npcId}-${timer.guildId}`}
+                        timer={timer}
+                        timeLeft={timer.timeLeft}
+                        compactMode={compactMode}
+                        canDelete={canDeleteTimers}
+                      />
+                    ))}
+                  </span>
+                )}
+              </ScrollArea>
 
-          <TimerTile>
-            <PlusIcon color="white" height={16} width={16} />
-          </TimerTile>
-        </span>
-      </DraggableWindow>
-    )
+              {!timersGrouping && (
+                <Tile onClick={() => toggleOpen("add-timer")}>
+                  <PlusIcon color="white" height={16} width={16} />
+                </Tile>
+              )}
+            </span>
+          </DraggableWindow>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { Permission, Timer } from 'generated/client';
+import { Permission, Prisma, Timer, NpcType, Guild } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { PrismaService } from 'src/db/prisma.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
@@ -16,6 +16,11 @@ import { omit } from 'lodash';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GetTimersDto } from 'src/timers/dto/get-timers.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
+import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
+import { DEFAULT_RESPAWN_RANDOMNESS } from 'src/timers/constants/respawn';
+import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
+import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
+import { ELIGIBLE_TITAN_READ_ACL } from 'src/timers/constants/required-titan-acls';
 
 @Injectable()
 export class TimersService {
@@ -74,6 +79,8 @@ export class TimersService {
           minSpawnTime,
           world: data.world,
           npcId: data.npc.id,
+          latestRespBaseSeconds: data.respBaseSeconds,
+          latestRespawnRandomness: data.respawnRandomness,
           guild: {
             connect: {
               id: guild.id,
@@ -102,6 +109,9 @@ export class TimersService {
         update: {
           maxSpawnTime,
           minSpawnTime,
+          latestRespBaseSeconds: data.respBaseSeconds,
+          latestRespawnRandomness:
+            data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
           member: {
             connect: {
               memberId: {
@@ -119,28 +129,83 @@ export class TimersService {
     );
 
     newTimersUpsert.forEach((newTimer) => {
-      this.emitTimer(newTimer);
+      this.emitUpdateTimer(newTimer);
     });
 
     return;
   }
 
-  async getTimers({ world, guildId }: GetTimersDto) {
+  async createManualTimer(
+    discordId: string,
+    guildId: string,
+    data: CreateManualTimerDto,
+  ) {
     const now = new Date();
+
+    const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
+      data.respBaseSeconds,
+      data.respawnRandomness,
+      now,
+    );
+
+    const npcId = generateUniqueIntId();
+
+    const newTimer = await this.prisma.timer.create({
+      data: {
+        maxSpawnTime,
+        minSpawnTime,
+        npcId,
+        npc: {
+          id: npcId,
+          name: data.name,
+          prof: '',
+          location: '',
+          wt: '',
+          lvl: '',
+          type: '',
+          icon: '',
+          margonemType: 999,
+        },
+        world: data.world,
+        latestRespBaseSeconds: data.respBaseSeconds,
+        latestRespawnRandomness:
+          data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+        guild: {
+          connect: {
+            id: guildId,
+          },
+        },
+        member: {
+          connect: {
+            memberId: {
+              userId: discordId,
+              guildId: guildId,
+            },
+          },
+        },
+      },
+    });
+
+    this.emitUpdateTimer(newTimer);
+
+    return;
+  }
+
+  async getTimers(
+    { world }: GetTimersDto,
+    guild: Guild,
+    permissions: Permission[],
+  ) {
+    const now = new Date();
+    const canReadTitans = ELIGIBLE_TITAN_READ_ACL.some((acl) =>
+      permissions.includes(acl),
+    );
+
     const timers = await this.prisma.timer.findMany({
       where: {
-        guildId: guildId,
+        guildId: guild.id,
         maxSpawnTime: { gt: now.toISOString() },
         world,
-        // ...(permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS)
-        //   ? {}
-        //   : {
-        //       npc: {
-        //         type: {
-        //           not: NpcType.TITAN,
-        //         },
-        //       },
-        //     }),
       },
       orderBy: {
         maxSpawnTime: 'desc',
@@ -150,59 +215,159 @@ export class TimersService {
       },
     });
 
-    return timers;
+    const filteredTimers = canReadTitans
+      ? timers
+      : timers.filter((timer) => {
+          const npc =
+            typeof timer.npc === 'string' ? JSON.parse(timer.npc) : timer.npc;
+          return npc.type !== NpcType.TITAN;
+        });
+
+    return filteredTimers;
   }
 
-  async getTimersMerged(discordId: string, { world }: GetTimersDto) {
+  async getAllTimers(discordId: string, { world }: GetTimersDto) {
     const now = new Date();
+
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
       [Permission.LOOTLOG_READ],
     );
 
-    const timers = await this.prisma.timer.findMany({
-      where: {
-        guildId: {
-          in: guilds.map((guild) => guild.id),
-        },
+    if (guilds.length === 0) {
+      throw new ForbiddenException();
+    }
+
+    const guildIds = guilds.map((guild) => guild.id);
+
+    const permissionsPerGuild =
+      await this.guildsService.getMultipleGuildsPermissions(
+        discordId,
+        guildIds,
+      );
+
+    const results: Timer[] = [];
+
+    for (const guild of guilds) {
+      const guildId = guild.id;
+      const guildPermissions =
+        permissionsPerGuild.find((p) => p.guild.id === guildId)?.data || [];
+
+      const canReadTitans = ELIGIBLE_TITAN_READ_ACL.some((acl) =>
+        guildPermissions.includes(acl),
+      );
+
+      const where: any = {
+        guildId,
         maxSpawnTime: { gt: now.toISOString() },
         world,
-        // ...(permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS)
-        //   ? {}
-        //   : {
-        //       npc: {
-        //         type: {
-        //           not: NpcType.TITAN,
-        //         },
-        //       },
-        //     }),
-      },
-      orderBy: {
-        maxSpawnTime: 'desc',
-      },
-      include: {
-        member: true,
+      };
+
+      const timers = await this.prisma.timer.findMany({
+        where,
+        orderBy: {
+          maxSpawnTime: 'desc',
+        },
+        include: {
+          member: true,
+        },
+      });
+
+      const timersReduce = timers.reduce((acc, timer) => {
+        const npc =
+          typeof timer.npc === 'string' ? JSON.parse(timer.npc) : timer.npc;
+
+        if (!canReadTitans && npc.type === NpcType.TITAN) {
+          return acc;
+        }
+
+        acc.push(timer);
+        return acc;
+      }, []);
+
+      results.push(...timersReduce);
+    }
+
+    return results;
+  }
+
+  async resetTimer(
+    discordId: string,
+    guildId: string,
+    npcId: string,
+    data: ResetTimerDto,
+  ) {
+    const now = new Date();
+
+    const timer = await this.prisma.timer.findUnique({
+      where: {
+        timerId: {
+          guildId: guildId,
+          world: data.world,
+          npcId: parseInt(npcId, 10),
+        },
       },
     });
 
-    const mergedTimers = timers.reduce((acc, timer) => {
-      const existing = acc.find((t) => t.npc.id === timer.npcId);
+    if (!timer) {
+      throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+    }
 
-      if (existing) {
-        existing.members.push(timer.member);
-      } else {
-        const newTimer = { ...timer, members: [timer.member] };
+    const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
+      timer.latestRespBaseSeconds,
+      timer.latestRespawnRandomness,
+      now,
+    );
 
-        acc.push(omit(newTimer, ['member', 'createdById']));
-      }
+    const updatedTimer = await this.prisma.timer.update({
+      where: {
+        timerId: {
+          guildId: guildId,
+          world: data.world,
+          npcId: parseInt(npcId, 10),
+        },
+      },
+      data: {
+        minSpawnTime,
+        maxSpawnTime,
+        member: {
+          connect: {
+            memberId: {
+              userId: discordId,
+              guildId: guildId,
+            },
+          },
+        },
+      },
+    });
 
-      return acc;
-    }, []);
-
-    return mergedTimers;
+    this.emitUpdateTimer(updatedTimer);
   }
 
-  async emitTimer(payload: Timer) {
+  async deleteTimer(guildId: string, npcId: string, world: string) {
+    try {
+      await this.prisma.timer.delete({
+        where: {
+          timerId: {
+            guildId,
+            world,
+            npcId: parseInt(npcId, 10),
+          },
+        },
+      });
+
+      this.emitDeleteTimer({ npcId: parseInt(npcId, 10), world, guildId });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
+        }
+      }
+      throw error;
+    }
+  }
+
+  async emitUpdateTimer(payload: Timer) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_TIMERS_UPDATE,
@@ -210,9 +375,17 @@ export class TimersService {
     );
   }
 
+  async emitDeleteTimer(payload: Partial<Timer>) {
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_TIMERS_DELETE,
+      payload,
+    );
+  }
+
   calculateRespawnTime(
     respBaseSeconds: number,
-    respawnRandomness: number = 10,
+    respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
     now: Date,
   ) {
     const date = new Date(now).getTime();

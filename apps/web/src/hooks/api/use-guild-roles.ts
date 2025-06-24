@@ -13,12 +13,12 @@ export type GuildRole = {
 
 export const useGuildRoles = () => {
   const guildId = useGuildId();
-  const { client, isAuthenticated } = useApiClient();
+  const { client } = useApiClient();
 
   const query = useQuery({
     queryKey: ["guild-roles", guildId],
     queryFn: () => client.get<GuildRole[]>(`/guilds/${guildId}/roles`),
-    enabled: isAuthenticated && !!guildId,
+    enabled: !!guildId,
     select: (response) => response.data,
   });
 

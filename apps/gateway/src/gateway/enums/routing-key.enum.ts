@@ -8,4 +8,13 @@ export enum RoutingKey {
   GUILDS_TIMERS_DELETE = 'guilds.timers.delete',
 
   GUILDS_SEND_MESSAGE = 'guilds.send.message',
+
+  GUILDS_MEMBERS_ADD = 'guilds.members.add',
+  GUILDS_MEMBERS_REMOVE = 'guilds.members.remove',
+  GUILDS_MEMBERS_UPDATE = 'guilds.members.update',
+
+  GUILDS_MEMBERS_ADD_ROLE = 'guilds.members.add.role',
+  GUILDS_MEMBERS_REMOVE_ROLE = 'guilds.members.remove.role',
+
+  GUILDS_NOTIFICATIONS_SEND = 'guilds.notifications.send',
 }

@@ -10,6 +10,7 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { PrismaService } from 'src/db/prisma.service';
 import { UsersModule } from 'src/users/users.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
+import { GuildsRpcHandler } from 'src/guilds/guild-rpc.handler';
 
 @Module({
   imports: [
@@ -19,15 +20,17 @@ import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
     forwardRef(() => LootlogConfigModule),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
-        const config = configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ);
-
-        return config;
-      },
+      useFactory: async (configService: ConfigService) =>
+        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
   ],
   controllers: [GuildsController],
-  providers: [GuildsService, GuildsEventsHandler, PrismaService],
+  providers: [
+    GuildsService,
+    GuildsEventsHandler,
+    PrismaService,
+    GuildsRpcHandler,
+  ],
   exports: [GuildsService, GuildsEventsHandler],
 })
 export class GuildsModule {}
