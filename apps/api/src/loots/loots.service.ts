@@ -22,11 +22,40 @@ import {
   Permission,
   Prisma,
   LootlogConfigNpc,
+  Member,
+  ItemType,
 } from 'generated/client';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
+
+// Types for better type safety
+interface Guild {
+  id: string;
+  name: string;
+  // Add other guild properties as needed
+}
+
+interface LootlogConfig {
+  id: string;
+  npcs: LootlogConfigNpc[];
+  // Add other config properties as needed
+}
+
+interface ProcessedLootItem {
+  id: number;
+  hid: string;
+  name: string;
+  icon: string;
+  stat: string;
+  pr: number;
+  rarity: ItemRarity;
+  prc: string;
+  type: ItemType;
+  prof: Profession[];
+  lvl: number;
+}
 
 @Injectable()
 export class LootsService {
@@ -40,18 +69,64 @@ export class LootsService {
   ) {}
 
   async createLoot(discordId: string, body: CreateLootDto) {
-    if (body.loots.length > 10) {
-      throw new BadRequestException('TOO MANY LOOTS');
-    }
+    this.validateCreateLootRequest(body);
 
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
       [Permission.LOOTLOG_WRITE],
     );
+
     if (guilds.length === 0) {
       throw new ForbiddenException();
     }
 
+    const filteredGuilds = await this.filterGuildsByBlacklist(
+      discordId,
+      body,
+      guilds,
+    );
+
+    if (filteredGuilds.length === 0) {
+      return;
+    }
+
+    const filteredGuildIds = filteredGuilds.map((guild) => guild.id);
+    const [lootlogConfigs, members] = await Promise.all([
+      this.lootlogConfigService.getMultipleLootlogConfigs(filteredGuildIds),
+      this.getMembersByGuildIds(filteredGuildIds, discordId),
+    ]);
+
+    const processedData = this.processLootData(
+      body,
+      filteredGuilds,
+      lootlogConfigs,
+      members,
+    );
+
+    if (processedData.length === 0) {
+      return;
+    }
+
+    // TODO: Re-enable indexing when types are fixed
+    // const npcs = this.mapNpcs(this.sortNpcsByWt(body.npcs));
+    // const players = this.mapPlayers(body.players);
+    // this.playersService.bulkIndexPlayers(players);
+    // this.npcsService.bulkIndexNpcs(npcs);
+
+    await this.saveLootData(processedData);
+  }
+
+  private validateCreateLootRequest(body: CreateLootDto) {
+    if (body.loots.length > 10) {
+      throw new BadRequestException('TOO MANY LOOTS');
+    }
+  }
+
+  private async filterGuildsByBlacklist(
+    discordId: string,
+    body: CreateLootDto,
+    guilds: Guild[],
+  ): Promise<Guild[]> {
     const config =
       await this.userLootlogConfigService.getLootlogCharacterConfig(
         discordId,
@@ -59,48 +134,40 @@ export class LootsService {
         body.characterId,
       );
 
-    const { filteredGuildIds, filteredGuilds } = guilds.reduce(
-      (acc, guild) => {
-        const isOnBlacklist = config?.collectLootBlaclistGuildIds?.includes(
-          guild.id,
-        );
-        if (!isOnBlacklist) {
-          acc.filteredGuilds.push(guild);
-          acc.filteredGuildIds.push(guild.id);
-        }
-
-        return acc;
-      },
-      { filteredGuilds: [], filteredGuildIds: [] },
+    return guilds.filter(
+      (guild) => !config?.collectLootBlaclistGuildIds?.includes(guild.id),
     );
+  }
 
-    const [lootlogConfigs, members] = await Promise.all([
-      this.lootlogConfigService.getMultipleLootlogConfigs(filteredGuildIds),
-      this.prisma.member.findMany({
-        where: {
-          guildId: {
-            in: filteredGuildIds,
-          },
-          userId: discordId,
-        },
-      }),
-    ]);
-
-    const highestWtNpc = body.npcs.reduce((prev, current) => {
-      return prev && prev.wt > current.wt ? prev : current;
+  private async getMembersByGuildIds(
+    filteredGuildIds: string[],
+    discordId: string,
+  ): Promise<Member[]> {
+    return this.prisma.member.findMany({
+      where: {
+        guildId: { in: filteredGuildIds },
+        userId: discordId,
+      },
     });
+  }
+
+  private processLootData(
+    body: CreateLootDto,
+    filteredGuilds: Guild[],
+    lootlogConfigs: LootlogConfig[],
+    members: Member[],
+  ): Prisma.LootCreateManyInput[] {
+    const highestWtNpc = this.getHighestWtNpc(body.npcs);
     const highestWtNpcType = getNpcTypeByWt(
       highestWtNpc.wt,
       highestWtNpc.prof,
       highestWtNpc.type,
     );
 
-    const sortedNpcsByWt = this.sortNpcsByWt(body.npcs);
-
-    const npcs = this.mapNpcs(sortedNpcsByWt);
+    const npcs = this.mapNpcs(this.sortNpcsByWt(body.npcs));
     const players = this.mapPlayers(body.players);
 
-    const data = filteredGuilds.reduce((acc, guild) => {
+    return filteredGuilds.reduce((acc, guild) => {
       const config = lootlogConfigs.find((config) => config.id === guild.id);
       const calculatedLoot = this.getLootForGivenConfig(
         body.loots,
@@ -109,12 +176,13 @@ export class LootsService {
       );
 
       if (calculatedLoot.length === 0) return acc;
+
+      const member = members.find(({ guildId }) => guildId === guild.id);
       const uniqueLootId = this.createUniqueLootId(
         body.loots,
         body.world,
         guild.id,
       );
-      const member = members.find(({ guildId }) => guildId === guild.id);
 
       acc.push({
         uniqueId: uniqueLootId,
@@ -130,28 +198,34 @@ export class LootsService {
 
       return acc;
     }, []);
+  }
 
-    if (data.length === 0) return;
+  private getHighestWtNpc(npcs: CreateLootDto['npcs']) {
+    return npcs.reduce((prev, current) =>
+      prev && prev.wt > current.wt ? prev : current,
+    );
+  }
 
-    this.playersService.bulkIndexPlayers(players);
-    this.npcsService.bulkIndexNpcs(npcs);
-
+  private async saveLootData(
+    data: Prisma.LootCreateManyInput[],
+  ): Promise<void> {
     try {
       await this.prisma.loot.createMany({
         data,
         skipDuplicates: true,
       });
     } catch (error) {
-      console.log(error);
+      console.error('Error saving loot data:', error);
+      throw new BadRequestException('Failed to save loot data');
     }
-
-    return;
   }
 
   async fetchLootsByGuildId(
     guildId: string,
     permissions: Permission[],
-    {
+    params: FetchLootsParamsDto,
+  ) {
+    const {
       cursor = null,
       limit = DEFAULT_PAGE_LIMIT,
       npcTypes,
@@ -159,78 +233,96 @@ export class LootsService {
       players,
       rarities,
       world,
-    }: FetchLootsParamsDto,
-  ) {
+    } = params;
+
     if (limit > MAX_PAGE_LIMIT) {
       throw new BadRequestException({
         message: ErrorKey.PAGINATION_LIMIT_TOO_HIGH,
       });
     }
 
-    // @TODO = add permissions for titans
-
-    const playersCondition =
-      players.length > 0
-        ? Prisma.sql`
-    AND EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements("players") AS player
-        WHERE player->>'name' = ANY(ARRAY[${Prisma.join(players)}]::text[])
-    )`
-        : Prisma.sql``;
-
-    const npcsCondition =
-      npcs.length > 0
-        ? Prisma.sql`
-    AND EXISTS (
-      SELECT 1
-      FROM jsonb_array_elements("npcs") AS npc
-      WHERE npc->>'name' = ANY(ARRAY[${Prisma.join(npcs)}]::text[])
-    )`
-        : Prisma.sql``;
-
-    const npcTypesCondition =
-      npcTypes.length > 0
-        ? Prisma.sql`
-    AND EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements("npcs") AS npc
-        WHERE npc->>'type' = ANY(ARRAY[${Prisma.join(npcTypes)}]::text[])
-    )`
-        : Prisma.sql``;
-
-    const raritiesCondition =
-      rarities.length > 0
-        ? Prisma.sql`
-        AND EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements("items") AS loot
-        WHERE loot->>'rarity' = ANY(ARRAY[${Prisma.join(rarities)}]::text[])
-        )`
-        : Prisma.sql``;
-
-    const cursorCondition = cursor
-      ? Prisma.sql`
-    AND "id" < ${Number(cursor)}
-    `
-      : Prisma.sql``;
+    const conditions = this.buildQueryConditions({
+      players,
+      npcs,
+      npcTypes,
+      rarities,
+      cursor,
+    });
 
     const query = Prisma.sql`
       SELECT * FROM "Loot"
       WHERE "guildId" = ${guildId}
       AND "world" = ${world}
-      ${playersCondition}
-      ${npcsCondition}
-      ${npcTypesCondition}
-      ${raritiesCondition}
-      ${cursorCondition}
+      ${conditions.playersCondition}
+      ${conditions.npcsCondition}
+      ${conditions.npcTypesCondition}
+      ${conditions.raritiesCondition}
+      ${conditions.cursorCondition}
       ORDER BY "id" DESC
       LIMIT ${limit};
     `;
 
-    const loots = await this.prisma.$queryRaw(query);
+    return this.prisma.$queryRaw(query);
+  }
 
-    return loots;
+  private buildQueryConditions({
+    players,
+    npcs,
+    npcTypes,
+    rarities,
+    cursor,
+  }: {
+    players: string[];
+    npcs: string[];
+    npcTypes: string[];
+    rarities: string[];
+    cursor: number | null;
+  }) {
+    return {
+      playersCondition:
+        players.length > 0
+          ? Prisma.sql`
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements("players") AS player
+            WHERE player->>'name' = ANY(ARRAY[${Prisma.join(players)}]::text[])
+          )`
+          : Prisma.sql``,
+
+      npcsCondition:
+        npcs.length > 0
+          ? Prisma.sql`
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements("npcs") AS npc
+            WHERE npc->>'name' = ANY(ARRAY[${Prisma.join(npcs)}]::text[])
+          )`
+          : Prisma.sql``,
+
+      npcTypesCondition:
+        npcTypes.length > 0
+          ? Prisma.sql`
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements("npcs") AS npc
+            WHERE npc->>'type' = ANY(ARRAY[${Prisma.join(npcTypes)}]::text[])
+          )`
+          : Prisma.sql``,
+
+      raritiesCondition:
+        rarities.length > 0
+          ? Prisma.sql`
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements("items") AS loot
+            WHERE loot->>'rarity' = ANY(ARRAY[${Prisma.join(rarities)}]::text[])
+          )`
+          : Prisma.sql``,
+
+      cursorCondition: cursor
+        ? Prisma.sql`AND "id" < ${Number(cursor)}`
+        : Prisma.sql``,
+    };
   }
 
   createUniqueLootId(
@@ -240,18 +332,8 @@ export class LootsService {
   ) {
     const string =
       loots
-        .sort((a, b) => {
-          if (a.hid > b.hid) {
-            return 1;
-          }
-
-          if (a.hid < b.hid) {
-            return -1;
-          }
-
-          return 0;
-        })
         .map((loot) => loot.hid)
+        .sort((a, b) => a.localeCompare(b)) // Prostsze sortowanie
         .join('') +
       world +
       guildId;
@@ -260,34 +342,34 @@ export class LootsService {
   }
 
   parseItemStats(stats: string) {
-    const split = stats.split(';');
-    const statsObj = {};
-
-    split.forEach((stat) => {
-      const [key, value] = stat.split('=');
-
-      statsObj[key] = value;
-    });
-
-    return statsObj;
+    return stats.split(';').reduce(
+      (acc, stat) => {
+        const [key, value] = stat.split('=');
+        if (key && value) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
   }
 
   getItemStats({ stat, cl }: CreateLootDto['loots'][0]) {
     const parsedStats = this.parseItemStats(stat);
 
-    const lvl = parsedStats['lvl'] as number;
+    const lvl = parsedStats['lvl'] ? Number(parsedStats['lvl']) : 0;
     const rarity = parsedStats['rarity']?.toUpperCase() as ItemRarity;
     const requiredProf = parsedStats['reqp'] as string;
     const requiredProfArray = requiredProf
       ? requiredProf
           .split('')
           .map((id) => getProfByShortname(id))
-          .filter((prof) => prof)
+          .filter(Boolean) // Prostsze od filter((prof) => prof)
       : Object.values(Profession);
     const type = getItemTypeByCl(cl);
 
     return {
-      lvl: lvl ? +lvl : 0,
+      lvl,
       rarity,
       prof: requiredProfArray,
       type,
@@ -295,50 +377,42 @@ export class LootsService {
   }
 
   sortNpcsByWt(npcs: CreateLootDto['npcs']) {
-    return npcs.sort((a, b) => {
-      if (a.wt > b.wt) {
-        return -1;
-      }
-
-      if (a.wt < b.wt) {
-        return 0;
-      }
-
-      return 0;
-    });
+    return [...npcs].sort((a, b) => b.wt - a.wt); // Prostsze sortowanie malejące
   }
 
   getLootForGivenConfig(
     loot: CreateLootDto['loots'],
     npcs: LootlogConfigNpc[],
-    highestWtNpcType,
-  ) {
-    const calculatedLoot = loot.reduce((acc, loot) => {
-      const { rarity, lvl, type, prof } = this.getItemStats(loot);
-      const { allowedRarities } = npcs.find(
-        (npc) => highestWtNpcType === npc.npcType,
-      );
+    highestWtNpcType: string,
+  ): ProcessedLootItem[] {
+    const targetNpc = npcs.find((npc) => npc.npcType === highestWtNpcType);
+    if (!targetNpc) {
+      return [];
+    }
 
-      if (allowedRarities.includes(rarity)) {
-        acc.push({
-          id: loot.id,
-          hid: loot.hid,
-          name: loot.name,
-          icon: loot.icon,
-          stat: loot.stat,
-          pr: loot.pr,
-          rarity: rarity,
-          prc: loot.prc,
-          type: type,
-          prof: prof,
-          lvl: lvl,
-        });
-      }
+    return loot
+      .map((item) => {
+        const { rarity, lvl, type, prof } = this.getItemStats(item);
 
-      return acc;
-    }, []);
+        if (!targetNpc.allowedRarities.includes(rarity)) {
+          return null;
+        }
 
-    return calculatedLoot;
+        return {
+          id: item.id,
+          hid: item.hid,
+          name: item.name,
+          icon: item.icon,
+          stat: item.stat,
+          pr: item.pr,
+          rarity,
+          prc: item.prc,
+          type,
+          prof,
+          lvl,
+        };
+      })
+      .filter(Boolean) as ProcessedLootItem[]; // Type assertion after filter
   }
 
   mapNpcs(npcs: CreateLootDto['npcs']) {
