@@ -11,8 +11,6 @@ import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
 import { ErrorKey } from 'src/timers/enum/error-key.enum';
-import { RoutingKey } from 'src/timers/enum/routing-key.enum';
-import { omit } from 'lodash';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GetTimersDto } from 'src/timers/dto/get-timers.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
@@ -21,6 +19,7 @@ import { DEFAULT_RESPAWN_RANDOMNESS } from 'src/timers/constants/respawn';
 import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
 import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
 import { ELIGIBLE_TITAN_READ_ACL } from 'src/timers/constants/required-titan-acls';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 
 @Injectable()
 export class TimersService {

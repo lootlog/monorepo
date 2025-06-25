@@ -1,8 +1,8 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { SendMessageDto } from 'src/chat/dto/send-message.dto';
-import { RoutingKey } from 'src/chat/enum/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { v6 } from 'uuid';
 

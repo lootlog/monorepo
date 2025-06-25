@@ -1,15 +1,33 @@
 export enum Queue {
   GUILDS_TIMERS_CREATE = 'gateway-guilds-timers-create',
   GUILDS_TIMERS_UPDATE = 'gateway-guilds-timers-update',
+  GUILDS_TIMERS_UPDATE_DLQ = 'gateway-guilds-timers-update.dlq',
+  GUILDS_TIMERS_UPDATE_RETRY = 'gateway-guilds-timers-update.retry',
   GUILDS_TIMERS_DELETE = 'gateway-guilds-timers-delete',
+  GUILDS_TIMERS_DELETE_DLQ = 'gateway-guilds-timers-delete.dlq',
+  GUILDS_TIMERS_DELETE_RETRY = 'gateway-guilds-timers-delete.retry',
   GUILDS_SEND_MESSAGE = 'gateway-guilds-send-message',
+  GUILDS_SEND_MESSAGE_DLQ = 'gateway-guilds-send-message.dlq',
+  GUILDS_SEND_MESSAGE_RETRY = 'gateway-guilds-send-message.retry',
 
   GUILDS_MEMBERS_ADD = 'gateway-guilds-members-add',
+  GUILDS_MEMBERS_ADD_DLQ = 'gateway-guilds-members-add.dlq',
+  GUILDS_MEMBERS_ADD_RETRY = 'gateway-guilds-members-add.retry',
   GUILDS_MEMBERS_REMOVE = 'gateway-guilds-members-remove',
+  GUILDS_MEMBERS_REMOVE_DLQ = 'gateway-guilds-members-remove.dlq',
+  GUILDS_MEMBERS_REMOVE_RETRY = 'gateway-guilds-members-remove.retry',
   GUILDS_MEMBERS_UPDATE = 'gateway-guilds-members-update',
+  GUILDS_MEMBERS_UPDATE_DLQ = 'gateway-guilds-members-update.dlq',
+  GUILDS_MEMBERS_UPDATE_RETRY = 'gateway-guilds-members-update.retry',
 
   GUILDS_MEMBERS_ADD_ROLE = 'gateway-guilds-members-add-role',
+  GUILDS_MEMBERS_ADD_ROLE_DLQ = 'gateway-guilds-members-add-role.dlq',
+  GUILDS_MEMBERS_ADD_ROLE_RETRY = 'gateway-guilds-members-add-role.retry',
   GUILDS_MEMBERS_REMOVE_ROLE = 'gateway-guilds-members-remove-role',
+  GUILDS_MEMBERS_REMOVE_ROLE_DLQ = 'gateway-guilds-members-remove-role.dlq',
+  GUILDS_MEMBERS_REMOVE_ROLE_RETRY = 'gateway-guilds-members-remove-role.retry',
 
   GUILDS_SEND_NOTIFICATION = 'gateway-guilds-send-notification',
+  GUILDS_SEND_NOTIFICATION_DLQ = 'gateway-guilds-send-notification.dlq',
+  GUILDS_SEND_NOTIFICATION_RETRY = 'gateway-guilds-send-notification.retry',
 }
