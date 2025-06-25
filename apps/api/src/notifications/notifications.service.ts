@@ -9,9 +9,9 @@ import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { CreateNotificationDto } from 'src/notifications/dto/create-notification.dto';
 import { Error } from 'src/notifications/enum/error.enum';
-import { RoutingKey } from 'src/notifications/enum/routing-key.enum';
 import { omit } from 'lodash';
 import { v4 as uuid } from 'uuid';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 
 @Injectable()
 export class NotificationsService {

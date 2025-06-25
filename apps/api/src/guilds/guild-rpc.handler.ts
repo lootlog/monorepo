@@ -4,8 +4,8 @@ import {
 } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { Queue } from 'src/guilds/enum/queue.enum';
-import { RoutingKey } from 'src/guilds/enum/routing-key.enum';
+import { Queue } from 'src/enum/queue.enum';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
 
 @Injectable()
