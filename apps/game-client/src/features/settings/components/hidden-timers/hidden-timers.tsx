@@ -1,4 +1,3 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tile } from "@/components/ui/tile";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
@@ -22,7 +21,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
   };
 
   return (
-    <ScrollArea className="ll-h-64 ll-w-full" type="auto">
+    <div className="ll-py-4">
       {hiddenTimersForAccount && hiddenTimersForAccount.length > 0 && (
         <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-pr-4 ll-box-border">
           {hiddenTimersForAccount.map((timer) => {
@@ -44,6 +43,6 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
       {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0
         ? "Brak ukrytych timerów dla wybranej postaci."
         : null}
-    </ScrollArea>
+    </div>
   );
 };

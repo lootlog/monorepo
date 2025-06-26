@@ -144,6 +144,7 @@ export const useWindowsStore = create<WindowsState>()(
         "add-timer": state["add-timer"],
         "npc-detector": state["npc-detector"],
         notifications: state["notifications"],
+        currentWindowFocus: state.currentWindowFocus,
         "create-notification": {
           size: state["create-notification"].size,
           position: state["create-notification"].position,
