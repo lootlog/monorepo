@@ -60,7 +60,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
 
   useEffect(() => {
     reset(defaultValues);
-  }, [characterId, settings, reset]); // reset w depsach
+  }, [characterId, settings, reset]);
 
   function onSubmit(data: FormData) {
     if (!characterId) return;
