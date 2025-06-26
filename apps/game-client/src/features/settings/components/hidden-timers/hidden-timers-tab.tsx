@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CharacterTile } from "@/components/character-tile";
-import { HiddenTimers } from "@/features/settings/components/hidden-timers";
+import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useGlobalStore } from "@/store/global.store";
 
@@ -14,17 +14,17 @@ export const HiddenTimersTab = () => {
       <Tabs defaultValue={characterId} className="w-full">
         <TabsList>
           {characterList?.map((character) => (
-            <TabsTrigger key={character.id} value={`${character.id}`}>
+            <TabsTrigger
+              key={character.id}
+              value={`${character.id}`}
+              className="ll-mr-1"
+            >
               <CharacterTile character={character} />
             </TabsTrigger>
           ))}
         </TabsList>
         {characterList?.map((character) => (
-          <TabsContent
-            key={character.id}
-            value={`${character.id}`}
-            className="ll-py-2"
-          >
+          <TabsContent key={character.id} value={`${character.id}`}>
             <HiddenTimers characterId={character.id.toString()} />
           </TabsContent>
         ))}

@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 
 const MARGONEM_CHARTACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
+const MARGONEM_CHARACTER_LIST_EN_URL =
+  "https://public-api.margonem.com/account/charlist";
 
 export type MargonemCharacter = {
   clan?: number;
@@ -22,16 +24,17 @@ export const useCharacterList = () => {
   const { world } = useGlobalStore((state) => state.gameState);
   const { client } = useApiClient();
   const hs3 = window.getCookie?.("hs3");
+  const isPl = window.location.href.includes("margonem.pl");
+  const url = isPl
+    ? MARGONEM_CHARTACTER_LIST_URL
+    : MARGONEM_CHARACTER_LIST_EN_URL;
 
   const query = useQuery({
     queryKey: ["characters", world],
     queryFn: async () =>
-      client.get<MargonemCharacter[]>(
-        `${MARGONEM_CHARTACTER_LIST_URL}?hs3=${hs3}`,
-        {
-          withCredentials: true,
-        }
-      ),
+      client.get<MargonemCharacter[]>(`${url}?hs3=${hs3}`, {
+        withCredentials: true,
+      }),
     enabled: !!hs3,
     select: (response) =>
       response.data

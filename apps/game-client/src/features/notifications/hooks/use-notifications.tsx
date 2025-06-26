@@ -6,7 +6,7 @@ import { GameNpc } from "@/types/margonem/npcs";
 import { useEffect, useRef } from "react";
 
 export type Notification = {
-  npc?: GameNpc & { location: string };
+  npc?: GameNpc & { location: string; name: string };
   message?: string;
   discordId: string;
   guildId: string;
@@ -28,7 +28,7 @@ export const useNotifications = () => {
 
     socket?.on(GatewayEvent.NOTIFICATION, (data: Notification) => {
       // @ts-ignore
-      if (data.discordId === sessionDataRef.current?.user.discordId) return;
+      // if (data.discordId === sessionDataRef.current?.user.discordId) return;
       pushNotification(data);
     });
   }, [connected]);
