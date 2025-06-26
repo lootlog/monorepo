@@ -1,5 +1,8 @@
 import { useCreateLoot } from "@/hooks/api/use-create-loot";
+import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
+import { NpcType } from "@/hooks/api/use-npcs";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
 import {
@@ -10,7 +13,7 @@ import {
 import { useWindowsStore } from "@/store/windows.store";
 import { W } from "@/types/margonem/game-events/f";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { GameNpc } from "@/types/margonem/npcs";
+import { composeNpcChatMessage } from "@/utils/chat/compose-npc-chat-message";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
 import { getBattleParticipants } from "@/utils/game/get-battle-participants";
@@ -29,6 +32,8 @@ export const useGameEventsParser = () => {
   const isNI = gameInterface === "ni";
   const { mutate: createLoot } = useCreateLoot();
   const { mutate: createTimer } = useCreateTimer();
+  const { mutate: createNotification } = useCreateNotification();
+  const { mutate: sendChatMessage } = useSendChatMessage();
   const { settings } = useNpcDetectorStore();
   const settingsRef = useRef(settings);
 
@@ -72,9 +77,52 @@ export const useGameEventsParser = () => {
     }
   };
 
+  const handleSendMessage = (
+    npcType: NpcType,
+    baseMessage: string,
+    guildIds: string[]
+  ) => {
+    const chatMessage = composeNpcChatMessage(npcType, baseMessage);
+
+    sendChatMessage(
+      {
+        message: chatMessage,
+        guildIds,
+      },
+      {
+        onSuccess: () => {
+          setOpen("npc-detector", true);
+        },
+      }
+    );
+  };
+
+  const handleSendNotification = (npc: any, guildIds: string[]) => {
+    if (!world || !characterId || !accountId) return;
+
+    const payload = {
+      npc: {
+        id: npc.id,
+        hpp: 0,
+        location: npc.location,
+        name: npc.nick,
+        wt: npc.wt,
+        x: npc.x,
+        y: npc.y,
+        lvl: npc.lvl,
+        prof: npc.prof,
+        icon: npc.icon,
+        type: npc.type,
+      },
+      world,
+      guildIds,
+    };
+
+    createNotification(payload);
+  };
+
   const handleNpcDetection = (event: GameEvent) => {
     if (event.f?.init === "1" || !characterId) return;
-    console.log("handleNpcDetection", event);
 
     const npcs =
       event.npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
@@ -93,7 +141,10 @@ export const useGameEventsParser = () => {
           getNpcIconFromEvent(event, npc.icon.id) ||
           Game.getNpcIcon(npc.icon.id);
 
-        acc.push({
+        const autoSendMessage = settings?.autoNotifyChat ?? false;
+        const autoSendNotification = settings?.autoNotifyClan ?? false;
+
+        const composedNpc = {
           ...npc,
           icon: icon || "",
           nick: tpl.nick,
@@ -102,7 +153,25 @@ export const useGameEventsParser = () => {
           lvl: tpl.lvl,
           type: tpl.type,
           location: Game.map.name,
-        });
+          notificationSent: autoSendNotification,
+          msgSent: autoSendMessage,
+        };
+
+        const guildIds = settings?.guildIds ?? [];
+
+        if (autoSendMessage) {
+          handleSendMessage(
+            npcType,
+            `${composedNpc.nick} (${composedNpc.lvl}${composedNpc.prof})`,
+            guildIds
+          );
+        }
+
+        if (autoSendNotification) {
+          handleSendNotification(composedNpc, guildIds);
+        }
+
+        acc.push(composedNpc);
         return acc;
       }, []) ?? [];
 
@@ -239,7 +308,10 @@ export const useGameEventsParser = () => {
 
         if (!isNpcTypeDetected) return acc;
 
-        acc.push({
+        const autoSendMessage = settings?.autoNotifyChat ?? false;
+        const autoSendNotification = settings?.autoNotifyClan ?? false;
+
+        const composedNpc = {
           ...npc,
           icon: npc.icon || "",
           nick: npc.nick,
@@ -248,7 +320,25 @@ export const useGameEventsParser = () => {
           lvl: npc.lvl,
           type: npc.type,
           location: Game.map.name,
-        });
+          notificationSent: autoSendNotification,
+          msgSent: autoSendMessage,
+        };
+
+        const guildIds = settings?.guildIds ?? [];
+
+        if (autoSendMessage) {
+          handleSendMessage(
+            npcType,
+            `${composedNpc.nick} (${composedNpc.lvl}${composedNpc.prof})`,
+            guildIds
+          );
+        }
+
+        if (autoSendNotification) {
+          handleSendNotification(composedNpc, guildIds);
+        }
+
+        acc.push(composedNpc);
         return acc;
       }, []) ?? [];
 

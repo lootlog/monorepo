@@ -7,9 +7,9 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { debounce } from "lodash";
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
 
 export type DetectorSettingsTabFormProps = {
@@ -31,7 +31,7 @@ const FormSchema = z.object({
       notifyWindow: z.boolean(),
       autoNotifyClan: z.boolean(),
       autoNotifyChat: z.boolean(),
-      notifySound: z.boolean(),
+      // notifySound: z.boolean(),
       highlight: z.boolean(),
       guildIds: z.array(z.string()),
     })
@@ -46,11 +46,9 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   const { settings, setSettings } = useNpcDetectorStore();
   const { data: guilds } = useGuilds();
 
-  // wyciągamy ustawienia dla danej postaci (lub recommended)
   const currentSettings: NpcDetectorSettings =
     (characterId && settings?.[characterId]) || recommendedSettings;
 
-  // Zbuduj defaultValues zgodnie z FormSchema
   const defaultValues: FormData = {
     settingsByNpcType: currentSettings,
   };
@@ -60,18 +58,9 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     defaultValues,
   });
 
-  // Zresetuj formularz gdy zmieni się characterId lub settings
   useEffect(() => {
     reset(defaultValues);
   }, [characterId, settings, reset]); // reset w depsach
-
-  const valuesRef = useRef<FormData>(getValues());
-
-  const debouncedSave = useRef(
-    debounce(() => {
-      onSubmit(valuesRef.current);
-    }, 1000)
-  ).current;
 
   function onSubmit(data: FormData) {
     if (!characterId) return;
@@ -82,16 +71,9 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   }
 
   const watchedData = watch();
-  useEffect(() => {
-    valuesRef.current = watchedData;
-    debouncedSave();
-  }, [watchedData, debouncedSave]);
-
-  useEffect(() => {
-    return () => {
-      debouncedSave.cancel();
-    };
-  }, [debouncedSave]);
+  useDeepCompareEffect(() => {
+    onSubmit(watchedData);
+  }, [watchedData]);
 
   return (
     <form className="ll-h-full ll-py-4">
@@ -130,13 +112,13 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
                 >
                   Auto wiadomość na czacie
                 </Checkbox>
-                <Checkbox
+                {/* <Checkbox
                   id={`${field.key}-notifySound`}
                   disabled={!watchDetect}
                   {...register(`settingsByNpcType.${field.key}.notifySound`)}
                 >
                   Powiadom dźwiękiem
-                </Checkbox>
+                </Checkbox> */}
                 <Checkbox
                   id={`${field.key}-highlight`}
                   disabled={!watchDetect}

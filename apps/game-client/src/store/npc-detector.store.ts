@@ -5,6 +5,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 export type GameNpcWithLocation = GameNpc & {
   location: string;
+  msgSent: boolean;
+  notificationSent: boolean;
 };
 
 export type PickedNpcType =
@@ -36,16 +38,17 @@ interface NpcDetectorState {
   addNpc: (npc: GameNpcWithLocation | GameNpcWithLocation[]) => void;
   clearNpcs: () => void;
   setSettings: (charactedId: string, settings: NpcDetectorSettings) => void;
+  setNpcState: (npcId: number, npc: GameNpcWithLocation) => void;
 }
 
 export const recommendedSettings: NpcDetectorSettings = {
   [NpcType.ELITE2]: {
-    detect: true,
-    notifyWindow: true,
+    detect: false,
+    notifyWindow: false,
     autoNotifyClan: false,
     autoNotifyChat: false,
     notifySound: true,
-    highlight: true,
+    highlight: false,
     guildIds: [],
   },
   [NpcType.HERO]: {
@@ -81,9 +84,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
   persist(
     (set) => ({
       npcs: [],
-      settings: {
-        npcs: {} as Record<NpcType, NpcDetectorSettingByNpc>,
-      },
+      settings: {},
       setState: ({ npcs }) => set({ npcs }),
       addNpc: (npc) =>
         set((state) => {
@@ -111,6 +112,14 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
             },
           },
         })),
+      setNpcState: (npcId: number, npc: GameNpcWithLocation) => {
+        set((state) => {
+          const npcs = state.npcs.map((n) =>
+            n.id === npcId ? { ...n, ...npc } : n
+          );
+          return { npcs };
+        });
+      },
     }),
     {
       name: "ll-npc-detector-state",
