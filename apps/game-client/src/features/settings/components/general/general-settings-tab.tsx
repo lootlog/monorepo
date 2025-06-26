@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
 import { useTimersStore } from "@/store/timers.store";
 import { FC, useState } from "react";
 
@@ -89,6 +90,7 @@ export const GeneralSettingsTab: FC = () => {
           />
         </div>
       </div>
+      <CatchingSettings />
     </div>
   );
 };
