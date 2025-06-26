@@ -28,7 +28,7 @@ export const useNotifications = () => {
 
     socket?.on(GatewayEvent.NOTIFICATION, (data: Notification) => {
       // @ts-ignore
-      // if (data.discordId === sessionDataRef.current?.user.discordId) return;
+      if (data.discordId === sessionDataRef.current?.user.discordId) return;
       pushNotification(data);
     });
   }, [connected]);
