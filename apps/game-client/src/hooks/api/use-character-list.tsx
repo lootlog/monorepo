@@ -7,8 +7,6 @@ const MARGONEM_CHARTACTER_LIST_URL =
 const MARGONEM_CHARACTER_LIST_EN_URL =
   "https://public-api.margonem.com/account/charlist";
 
-const regex = /(?:https?:\/\/)?(?:[\w-]+\.)*[\w-]+\.(pl)(?:\/|$)/i;
-
 export type MargonemCharacter = {
   clan?: number;
   clan_rank?: number;
@@ -26,7 +24,7 @@ export const useCharacterList = () => {
   const { world } = useGlobalStore((state) => state.gameState);
   const { client } = useApiClient();
   const hs3 = window.getCookie?.("hs3");
-  const isPl = regex.test(window.location.href);
+  const isPl = window.location.href.includes("margonem.pl");
   const url = isPl
     ? MARGONEM_CHARTACTER_LIST_URL
     : MARGONEM_CHARACTER_LIST_EN_URL;
