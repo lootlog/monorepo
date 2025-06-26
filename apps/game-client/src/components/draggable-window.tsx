@@ -5,7 +5,7 @@ import {
   WindowId,
   WindowOpacity,
 } from "@/store/windows.store";
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 
 export type DraggableWindowProps = {
   children: React.ReactNode;
@@ -44,8 +44,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const defaultSize = state[id].size;
 
   const [size, setSize] = useState({
-    width: defaultSize.width || minWidth,
-    height: defaultSize.height || minHeight,
+    width: resizable ? defaultSize.width : minWidth,
+    height: resizable ? defaultSize.height : minHeight,
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -62,12 +62,18 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const defaultPosition = getClampedPosition(rawDefaultPosition);
 
   const draggableRef = useRef<HTMLDivElement>(null!);
+
+  const onDragStop = useCallback(
+    (position: { x: number; y: number }) => {
+      state.setPosition(id, position);
+    },
+    [id, state.setPosition]
+  );
+
   const { position, handleMouseDown, handleTouchStart } = useDrag({
     ref: draggableRef,
     defaultState: defaultPosition,
-    onDragStop: (position) => {
-      state.setPosition(id, position);
-    },
+    onDragStop,
   });
 
   const handleResize = (e: React.MouseEvent) => {
@@ -191,7 +197,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             onClick={onClose}
           />
         </div>
-        <div className="ll-flex-1 ll-overflow-auto">{children}</div>
+        <div className="ll-flex-1 ll-overflow-hidden">{children}</div>
         {resizable && (
           <div
             className="ll-absolute ll-bottom-0 ll-right-0 ll-w-4 ll-h-4 ll-cursor-se-resize ll-bg-transparent"

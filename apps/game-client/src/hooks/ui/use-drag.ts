@@ -32,6 +32,7 @@ export const useDrag = ({
   const [dragInfo, setDragInfo] = useState(DEFAULT_DRAG_INFO);
   const [finalPosition, setFinalPosition] = useState(defaultState);
   const [isDragging, setIsDragging] = useState(false);
+  const [wasJustDragging, setWasJustDragging] = useState(false);
 
   const updateFinalPosition = useCallback(
     (width: number, height: number, x: number, y: number) => {
@@ -81,7 +82,12 @@ export const useDrag = ({
     updateFinalPosition(width, height, left - deltaX, top - deltaY);
   };
 
-  const endDrag = () => setIsDragging(false);
+  const endDrag = useCallback(() => {
+    if (isDragging) {
+      setWasJustDragging(true);
+      setIsDragging(false);
+    }
+  }, [isDragging]);
 
   const handleMouseDown = (evt: ReactMouseEvent<HTMLElement>) => {
     evt.stopPropagation();
@@ -116,20 +122,15 @@ export const useDrag = ({
     [isDragging, dragInfo]
   );
 
-  const handleMouseUp = () => endDrag();
-  const handleTouchEnd = () => endDrag();
+  const handleMouseUp = useCallback(() => endDrag(), [endDrag]);
+  const handleTouchEnd = useCallback(() => endDrag(), [endDrag]);
 
   useEffect(() => {
-    if (!isDragging) {
+    if (wasJustDragging && !isDragging) {
       onDragStop(finalPosition);
+      setWasJustDragging(false);
     }
-  }, [isDragging]);
-
-  useEffect(() => {
-    if (isDragging === false) {
-      onDragStop(finalPosition);
-    }
-  }, [isDragging]);
+  }, [isDragging, wasJustDragging, finalPosition, onDragStop]);
 
   useEffect(() => {
     let timeoutId: number | undefined;

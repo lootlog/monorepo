@@ -1,20 +1,28 @@
-import * as React from "react";
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { cn } from "@/lib/utils";
 
-const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <CheckboxPrimitive.Root
-    ref={ref}
-    className={cn(
-      "ll-peer ll-h-4 ll-w-4 ll-shrink-0 ll-rounded-sm ll-border ll-border-primary ll-shadow focus-visible:ll-outline-none focus-visible:ll-ring-1 focus-visible:ll-ring-ring disabled:ll-cursor-not-allowed disabled:ll-opacity-50 data-[state=checked]:ll-bg-primary data-[state=checked]:ll-text-primary-foreground",
-      className
-    )}
-    {...props}
-  ></CheckboxPrimitive.Root>
-));
-Checkbox.displayName = CheckboxPrimitive.Root.displayName;
-
-export { Checkbox };
+export const Checkbox: React.FC<React.ComponentProps<"input">> = ({
+  id,
+  children,
+  value,
+  ...props
+}) => {
+  return (
+    <div
+      className={cn("checkbox-custom c-checkbox", {
+        "!ll-text-gray-700": props.disabled,
+        "!ll-cursor-not-allowed": props.disabled,
+      })}
+    >
+      <input id={id} type="checkbox" value={value} {...props} />
+      <label
+        htmlFor={id}
+        className={cn("c-checkbox__label--highlight", {
+          "!ll-cursor-not-allowed": props.disabled,
+          "!ll-text-gray-500": props.disabled,
+        })}
+      >
+        {children}
+      </label>
+    </div>
+  );
+};

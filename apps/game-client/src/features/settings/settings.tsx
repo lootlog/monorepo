@@ -1,4 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { SettingsTabs } from "@/features/settings/components/settings-tabs";
 import { useWindowsStore } from "@/store/windows.store";

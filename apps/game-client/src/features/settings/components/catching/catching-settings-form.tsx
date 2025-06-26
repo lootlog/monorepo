@@ -54,8 +54,8 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   }, [guilds, lootlogCharactersConfig, reset]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="ll-grid ll-grid-cols-2 ll-gap-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="ll-py-4">
+      <span className="ll-grid ll-grid-cols-2 ll-gap-2">
         <div>
           <h4 className="ll-mb-2">Nie łap timerów na:</h4>
           <ScrollArea className="ll-flex ll-flex-col ll-h-32" type="auto">
@@ -104,7 +104,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
             })}
           </ScrollArea>
         </div>
-      </div>
+      </span>
       <div className="ll-w-full ll-flex ll-justify-center ll-mt-4">
         <button
           type="submit"

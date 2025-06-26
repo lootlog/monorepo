@@ -4,10 +4,15 @@ import { getInitializeState } from "@/lib/game/get-initialize-state";
 import { getInterfaceName } from "@/lib/game/get-interface-name";
 import { getWorldName } from "@/lib/game/get-world-name";
 import { useGlobalStore } from "@/store/global.store";
+import {
+  recommendedSettings,
+  useNpcDetectorStore,
+} from "@/store/npc-detector.store";
 import { useEffect } from "react";
 
 export const useInitialConfiguration = () => {
   const { setGameState } = useGlobalStore();
+  const { setSettings, settings } = useNpcDetectorStore();
 
   const init = async () => {
     const started = typeof window._g == "function";
@@ -35,6 +40,10 @@ export const useInitialConfiguration = () => {
       accountId,
       characterId,
     });
+
+    if (!settings[characterId]) {
+      setSettings(characterId, recommendedSettings);
+    }
   };
 
   useEffect(() => {
