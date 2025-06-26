@@ -6,7 +6,7 @@ import { GameNpc } from "@/types/margonem/npcs";
 import { useEffect, useRef } from "react";
 
 export type Notification = {
-  npc?: GameNpc & { location: string };
+  npc?: GameNpc & { location: string; name: string };
   message?: string;
   discordId: string;
   guildId: string;
