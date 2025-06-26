@@ -22,10 +22,10 @@ export type NpcListItemProps = {
 };
 
 const BASE_SHADOW_COLOR_BY_NPC_TYPE: Record<PickedNpcType, string> = {
-  [NpcType.COLOSSUS]: "0 0 64px 32px rgba(53, 255, 105, 0.7)", // green
-  [NpcType.HERO]: "0 0 64px 32px rgba(220, 247, 99, 0.7)", // yellow
-  [NpcType.ELITE2]: "0 0 64px 32px rgba(219, 90, 186, 0.7)", // rose
-  [NpcType.TITAN]: "0 0 64px 32px rgba(59, 130, 246, 0.7)", // blue
+  [NpcType.COLOSSUS]: "0 -32px 64px 24px rgba(53, 255, 105, 0.7)", // green
+  [NpcType.HERO]: "0 -32px 64px 24px rgba(220, 247, 99, 0.7)", // yellow
+  [NpcType.ELITE2]: "0 -32px 64px 24px rgba(219, 90, 186, 0.7)", // rose
+  [NpcType.TITAN]: "0 -32px 64px 24px rgba(59, 130, 246, 0.7)", // blue
 };
 
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
@@ -43,6 +43,11 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   };
 
   const handleSendNotification = (npc: GameNpcWithLocation) => {
+    if (settingsByNpcType.guildIds?.length === 0) {
+      window.message("Brak ustawionych gildii do wysłania komunikatu.");
+      return;
+    }
+
     if (!npc || !world) return;
 
     const payload = {
@@ -74,6 +79,11 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   };
 
   const handleSendChatNotification = (npc: GameNpcWithLocation) => {
+    if (settingsByNpcType.guildIds?.length === 0) {
+      window.message("Brak ustawionych gildii do wysłania wiadomości na czat.");
+      return;
+    }
+
     const chatMessage = composeNpcChatMessage(
       npcType,
       `${npc.nick} (${npc.lvl}${npc.prof})`
@@ -100,7 +110,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
     : "";
 
   return (
-    <Fragment key={npc.id}>
+    <span key={npc.id}>
       <span
         className={cn(
           "ll-flex ll-justify-between ll-py-2 ll-gap-4 ll-rounded-lg ll-px-3"
@@ -120,21 +130,28 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
             {npc.location} ({npc.x}, {npc.y})
           </span>
           <span className="ll-flex ll-gap-1">
-            <Button
-              disabled={npc.notificationSent}
-              onClick={() => handleSendNotification(npc)}
-            >
-              {npc.notificationSent ? "Wysłano" : "Komunikat"}
-            </Button>
-            <Button
-              disabled={npc.msgSent}
-              onClick={() => handleSendChatNotification(npc)}
-            >
-              {npc.msgSent ? "Wysłano" : "Wiadomość na czat"}
-            </Button>
+            {settingsByNpcType.guildIds?.length === 0 && (
+              <span>Brak ustawionych serwerów - odwiedź ustawienia</span>
+            )}
+            {settingsByNpcType.guildIds?.length > 0 && (
+              <>
+                <Button
+                  disabled={npc.notificationSent}
+                  onClick={() => handleSendNotification(npc)}
+                >
+                  {npc.notificationSent ? "Wysłano" : "Komunikat"}
+                </Button>
+                <Button
+                  disabled={npc.msgSent}
+                  onClick={() => handleSendChatNotification(npc)}
+                >
+                  {npc.msgSent ? "Wysłano" : "Wiadomość na czat"}
+                </Button>
+              </>
+            )}
           </span>
         </span>
-        {npcs.length > 0 && (
+        {npcs.length > 1 && (
           <XIcon
             className={cn(
               "ll-custom-cursor-pointer ll-text-gray-300 hover:ll-text-gray-100 ll-transition-colors"
@@ -145,14 +162,14 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         )}
       </span>
 
-      {npcs.length > 0 && (
-        <Separator
-          className="ll-bg-gray-600 ll-h-[1px]"
-          style={{
-            boxShadow,
-          }}
-        />
-      )}
-    </Fragment>
+      <Separator
+        className={cn("ll-bg-gray-600 ll-h-[1px]", {
+          "ll-h-0": npcs.length === 1,
+        })}
+        style={{
+          boxShadow,
+        }}
+      />
+    </span>
   );
 };
