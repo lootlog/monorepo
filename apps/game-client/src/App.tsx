@@ -79,15 +79,7 @@ function App() {
   return (
     gameInitialized && (
       <>
-        <ErrorBoundary
-          FallbackComponent={() => <div>xasd</div>}
-          onError={(error, info) => {
-            console.log("asdasdasd", error, info);
-            console.error("❌ Caught error in Timers:", error, info);
-          }}
-        >
-          <Timers />
-        </ErrorBoundary>
+        <Timers />
         <AddTimer />
         <Settings />
         <Chat />

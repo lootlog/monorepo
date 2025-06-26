@@ -3,7 +3,7 @@ import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type UseSendChatMessageOptions = {
   message: string;
-  guildId: string;
+  guildIds: string[];
 };
 
 export const useSendChatMessage = () => {
@@ -11,8 +11,12 @@ export const useSendChatMessage = () => {
 
   const mutation = useMutation({
     mutationKey: ["chat-message"],
-    mutationFn: ({ message, guildId }: UseSendChatMessageOptions) => {
-      return client.post(`/guilds/${guildId}/chat-messages`, { message });
+    mutationFn: ({ message, guildIds }: UseSendChatMessageOptions) => {
+      return Promise.all(
+        guildIds.map((guildId) =>
+          client.post(`/guilds/${guildId}/chat-messages`, { message })
+        )
+      );
     },
     onSuccess: () => {
       console.log("onSuccess");

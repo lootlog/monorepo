@@ -28,7 +28,8 @@ http:
         - "apiForwardAuth"
         - "apiCompress"
       entryPoints:
-        - "web"
+        - "web"    
+        
     gateway:
       rule: "PathPrefix(`/gateway`)"
       service: "gateway"
@@ -38,21 +39,31 @@ http:
         - "apiCompress"
         - "apiForwardAuth"
       entryPoints:
-        - "web"
+        - "web"    
     landing:
-      rule: "Path(`/`) || PathPrefix(`/_next/`)"
+      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`)"
       service: "landing"
+      priority: 1
       middlewares:
         - "apiCompress"
       entryPoints:
         - "web"
     web-client:
-      rule: "PathRegexp(`/(.+)`)"
+      rule: "PathPrefix(`/`)"
       service: "web-client"
+      priority: 0
       middlewares:
+        - "cors"
         - "apiCompress"
       entryPoints:
         - "web"
+    # web-client:
+    #   rule: "PathRegexp(`/(.+)`)"
+    #   service: "web-client"
+    #   middlewares:
+    #     - "apiCompress"
+    #   entryPoints:
+    #     - "web"
     # web-client:
     #   rule: "PathPrefix(`/`)"
     #   service: "web-client"
@@ -60,13 +71,13 @@ http:
     #     - "apiCompress"
     #   entryPoints:
     #     - "web"
-    web-client-ws:
-      rule: "Path(`/`) && HeaderRegexp(`Upgrade`, `(?i)^websocket$`)"
-      service: "web-client"
-      middlewares:
-        - "apiCompress"
-      entryPoints:
-        - "web"
+    # web-client-ws:
+    #   rule: "Path(`/`) && HeaderRegexp(`Upgrade`, `(?i)^websocket$`)"
+    #   service: "web-client"
+    #   middlewares:
+    #     - "apiCompress"
+    #   entryPoints:
+    #     - "web"
         
   services:
     web-client:
@@ -76,7 +87,7 @@ http:
     landing:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:3001"
+        - url: "http://host.docker.internal:3003"
     auth:
       loadBalancer:
         servers:

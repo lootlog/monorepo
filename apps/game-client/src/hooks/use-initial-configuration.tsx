@@ -4,10 +4,24 @@ import { getInitializeState } from "@/lib/game/get-initialize-state";
 import { getInterfaceName } from "@/lib/game/get-interface-name";
 import { getWorldName } from "@/lib/game/get-world-name";
 import { useGlobalStore } from "@/store/global.store";
+import {
+  recommendedSettings as recommendedNotificationsSettings,
+  useNotificationsStore,
+} from "@/store/notifications.store";
+import {
+  recommendedSettings as recommendedDetectorSettings,
+  useNpcDetectorStore,
+} from "@/store/npc-detector.store";
 import { useEffect } from "react";
 
 export const useInitialConfiguration = () => {
   const { setGameState } = useGlobalStore();
+  const { setSettings: setDetectorSettings, settings: detectorSettings } =
+    useNpcDetectorStore();
+  const {
+    setSettings: setNotificationsSettings,
+    settings: notificationsSettings,
+  } = useNotificationsStore();
 
   const init = async () => {
     const started = typeof window._g == "function";
@@ -35,6 +49,14 @@ export const useInitialConfiguration = () => {
       accountId,
       characterId,
     });
+
+    if (!detectorSettings[characterId]) {
+      setDetectorSettings(characterId, recommendedDetectorSettings);
+    }
+
+    if (!notificationsSettings[characterId]) {
+      setNotificationsSettings(characterId, recommendedNotificationsSettings);
+    }
   };
 
   useEffect(() => {
