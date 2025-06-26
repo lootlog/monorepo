@@ -34,10 +34,13 @@ export const PortalShadow = ({
     const ro = new window.ResizeObserver(updateRect);
     ro.observe(targetRef.current);
 
+    const interval = setInterval(updateRect, 16);
+
     window.addEventListener("scroll", updateRect, true);
     window.addEventListener("resize", updateRect);
 
     return () => {
+      clearInterval(interval);
       ro.disconnect();
       window.removeEventListener("scroll", updateRect, true);
       window.removeEventListener("resize", updateRect);
