@@ -22,10 +22,10 @@ export type NpcListItemProps = {
 };
 
 const BASE_SHADOW_COLOR_BY_NPC_TYPE: Record<PickedNpcType, string> = {
-  [NpcType.COLOSSUS]: "0 -32px 64px 24px rgba(53, 255, 105, 0.7)", // green
-  [NpcType.HERO]: "0 -32px 64px 24px rgba(220, 247, 99, 0.7)", // yellow
-  [NpcType.ELITE2]: "0 -32px 64px 24px rgba(219, 90, 186, 0.7)", // rose
-  [NpcType.TITAN]: "0 -32px 64px 24px rgba(59, 130, 246, 0.7)", // blue
+  [NpcType.COLOSSUS]: "0 0px 64px 32px rgba(53, 255, 105, 0.7)", // green
+  [NpcType.HERO]: "0 0px 64px 32px rgba(220, 247, 99, 0.7)", // yellow
+  [NpcType.ELITE2]: "0 0px 64px 32px rgba(219, 90, 186, 0.7)", // rose
+  [NpcType.TITAN]: "0 0px 64px 32px rgba(59, 130, 246, 0.7)", // blue
 };
 
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
