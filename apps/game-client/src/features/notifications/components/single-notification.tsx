@@ -62,13 +62,13 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                 }
                 draggable={false}
                 src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${notification.npc.icon}`}
-                alt={notification.npc.nick}
+                alt={notification.npc.name}
               />
             </span>
             <span className="ll-flex ll-flex-col ll-justify-center">
               <span>
                 <span className="ll-font-semibold">
-                  {notification.npc.nick}{" "}
+                  {notification.npc.name}{" "}
                 </span>
                 <span>
                   ({notification.npc.lvl}
