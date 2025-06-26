@@ -20,6 +20,17 @@ import { useWindowsStore } from "@/store/windows.store";
 import { GatewayEvent } from "@/config/gateway";
 import { GuildSelector } from "@/components/guild-selector";
 import { AnimatePresence, motion } from "framer-motion";
+import { decomposeChatMessage } from "@/utils/chat/decompose-chat-message";
+import { NPC_NAMES } from "@/constants/margonem";
+import { NpcType } from "@/hooks/api/use-npcs";
+import { PickedNpcType } from "@/store/npc-detector.store";
+
+const COLOR_BY_NPC_TYPE: Record<PickedNpcType, string> = {
+  [NpcType.COLOSSUS]: "rgba(53, 255, 105, 1)", // green
+  [NpcType.HERO]: "rgba(220, 247, 99, 1)", // yellow
+  [NpcType.ELITE2]: "rgba(219, 90, 186, 1)", // rose
+  [NpcType.TITAN]: "rgba(59, 130, 246, 1)", // blue
+};
 
 export const Chat = () => {
   const {
@@ -44,11 +55,12 @@ export const Chat = () => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (!selectedGuildId) return;
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const message = formData.get("message") as string;
     if (!message.trim()) return;
 
-    sendChatMessage({ guildId: selectedGuildId ?? "", message });
+    sendChatMessage({ guildIds: [selectedGuildId], message });
 
     (e.currentTarget as HTMLFormElement).reset();
     return;
@@ -79,6 +91,23 @@ export const Chat = () => {
       behavior: "instant",
     });
   }, [messages, open]);
+
+  const renderChatMessage = (message: ChatMessage) => {
+    const messageData = decomposeChatMessage(message.message);
+
+    if (messageData.npcName && messageData.npcType && messageData.npcLvl) {
+      const shortname = NPC_NAMES[messageData.npcType]?.shortname;
+      const color = COLOR_BY_NPC_TYPE[messageData.npcType as PickedNpcType];
+
+      return (
+        <span style={{ color }}>
+          [{shortname}] {messageData.npcName} ({messageData.npcLvl})
+        </span>
+      );
+    }
+
+    return <span>{messageData.baseMessage}</span>;
+  };
 
   return (
     <AnimatePresence>
@@ -135,7 +164,7 @@ export const Chat = () => {
                             </span>
                           </span>{" "}
                           <span className="ll-break-words ll-[overflow-wrap:anywhere]">
-                            {message.message}
+                            {renderChatMessage(message)}
                           </span>
                         </div>
                       );
