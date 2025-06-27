@@ -1,11 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
-import { Notification } from "@/features/notifications/hooks/use-notifications";
-import { useNotificationsStore } from "@/store/notifications.store";
+import { NotificationWithServers } from "@/store/notifications.store";
 import { FC } from "react";
 
 export type NotificationsListProps = {
-  notifications?: Notification[];
+  notifications?: NotificationWithServers[];
 };
 
 export const NotificationsList: FC<NotificationsListProps> = ({

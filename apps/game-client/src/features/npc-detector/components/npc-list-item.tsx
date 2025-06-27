@@ -21,12 +21,21 @@ export type NpcListItemProps = {
   idx: number;
 };
 
-const BASE_SHADOW_COLOR_BY_NPC_TYPE: Record<PickedNpcType, string> = {
-  [NpcType.COLOSSUS]: "0 0px 64px 32px rgba(53, 255, 105, 0.7)", // green
-  [NpcType.HERO]: "0 0px 64px 32px rgba(220, 247, 99, 0.7)", // yellow
-  [NpcType.ELITE2]: "0 0px 64px 32px rgba(219, 90, 186, 0.7)", // rose
-  [NpcType.TITAN]: "0 0px 64px 32px rgba(59, 130, 246, 0.7)", // blue
+const COLORS_BY_NPC_TYPE: Record<PickedNpcType, string> = {
+  [NpcType.COLOSSUS]: "rgba(53, 255, 105, 0.6)",
+  [NpcType.HERO]: "rgba(249, 137, 72, 0.6)",
+  [NpcType.ELITE2]: "rgba(219, 90, 186, 0.6)",
+  [NpcType.TITAN]: "rgba(59, 130, 246, 0.6)",
 };
+
+const BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE: Record<PickedNpcType, string> = {
+  [NpcType.COLOSSUS]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.COLOSSUS]}, transparent)`,
+  [NpcType.HERO]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.HERO]}, transparent)`,
+  [NpcType.ELITE2]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.ELITE2]}, transparent)`,
+  [NpcType.TITAN]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.TITAN]}, transparent)`,
+};
+
+const NPCS_WITH_LOCATION = [NpcType.HERO];
 
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { npcs, removeNpc, settings, setNpcState } = useNpcDetectorStore();
@@ -84,9 +93,16 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
       return;
     }
 
+    let location = "";
+
+    if (NPCS_WITH_LOCATION.includes(npcType)) {
+      location = `${npc.location} (${npc.x}, ${npc.y})`;
+    }
+
     const chatMessage = composeNpcChatMessage(
       npcType,
-      `${npc.nick} (${npc.lvl}${npc.prof})`
+      `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
+      location
     );
 
     sendChatMessage(
@@ -105,17 +121,20 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
     );
   };
 
-  const boxShadow = settingsByNpcType.highlight
-    ? BASE_SHADOW_COLOR_BY_NPC_TYPE[npcType as PickedNpcType]
+  const gradient = settingsByNpcType.highlight
+    ? BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE[npcType as PickedNpcType]
     : "";
+  const backgroundColor = settingsByNpcType.highlight
+    ? COLORS_BY_NPC_TYPE[npcType as PickedNpcType]
+    : "transparent";
 
   return (
     <span key={npc.id}>
       <span
-        className={cn(
-          "ll-flex ll-justify-between ll-py-2 ll-gap-4 ll-rounded-lg ll-px-3"
-        )}
-        style={{ zIndex: npcs.length - idx }}
+        className={cn("ll-flex ll-justify-between ll-py-2 ll-gap-4 ll-px-3")}
+        style={{
+          background: idx === 0 ? gradient : backgroundColor,
+        }}
       >
         <NpcTile npc={npc} />
         <span className="ll-flex ll-flex-col ll-gap-1 ll-flex-1">
@@ -166,9 +185,6 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         className={cn("ll-bg-gray-600 ll-h-[1px]", {
           "ll-h-0": npcs.length === 1,
         })}
-        style={{
-          boxShadow,
-        }}
       />
     </span>
   );

@@ -192,7 +192,6 @@ export class GuildsService {
   }
 
   async createGuild(data: CreateGuildDto) {
-    throw new Error('xd');
     let guild;
 
     try {
