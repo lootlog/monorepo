@@ -13,6 +13,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       gcTime: QUERY_CLIENT_CACHE_TIME_MS,
+      staleTime: 0,
+      refetchOnMount: "always",
     },
   },
 });

@@ -82,18 +82,7 @@ export class Gateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() { data: player }: JoinGatewayDto,
   ): Promise<any> {
-    let guildIds: string[] = [];
-
-    const key = client.data.discordId;
-    const cachedUserGuilds = await this.redis.get(key);
-
-    if (cachedUserGuilds) {
-      guildIds = JSON.parse(cachedUserGuilds) as string[];
-    } else {
-      guildIds = await this.guildsService.getUserGuilds(discordId);
-    }
-
-    this.redis.set(key, JSON.stringify(guildIds), 2000);
+    const guildIds = await this.guildsService.getUserGuilds(discordId);
 
     if (guildIds.length === 0) {
       console.log('No guilds found for user', discordId);

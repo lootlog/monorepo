@@ -1,8 +1,8 @@
 import { FC, Fragment } from "react";
-import { Notification } from "../hooks/use-notifications";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
+  NotificationWithServers,
   PickedNpcType,
   useNotificationsStore,
 } from "@/store/notifications.store";
@@ -12,17 +12,25 @@ import { NpcType } from "@/hooks/api/use-npcs";
 import { useGlobalStore } from "@/store/global.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { NpcTile } from "@/components/npc-tile";
+import { useGuilds } from "@/hooks/api/use-guilds";
 
 export type SingleNotificationProps = {
-  notification: Notification;
+  notification: NotificationWithServers;
   index: number;
 };
 
-const BASE_SHADOW_COLOR_BY_NPC_TYPE: Record<PickedNpcType, string> = {
-  [NpcType.COLOSSUS]: "0 0px 64px 32px rgba(53, 255, 105, 0.7)", // green
-  [NpcType.HERO]: "0 0px 64px 32px rgba(220, 247, 99, 0.7)", // yellow
-  [NpcType.ELITE2]: "0 0px 64px 32px rgba(219, 90, 186, 0.7)", // rose
-  [NpcType.TITAN]: "0 0px 64px 32px rgba(59, 130, 246, 0.7)", // blue
+const COLORS_BY_NPC_TYPE: Record<PickedNpcType, string> = {
+  [NpcType.COLOSSUS]: "rgba(53, 255, 105, 0.6)",
+  [NpcType.HERO]: "rgba(249, 137, 72, 0.6)",
+  [NpcType.ELITE2]: "rgba(219, 90, 186, 0.6)",
+  [NpcType.TITAN]: "rgba(59, 130, 246, 0.6)",
+};
+
+const BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE: Record<PickedNpcType, string> = {
+  [NpcType.COLOSSUS]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.COLOSSUS]}, transparent)`,
+  [NpcType.HERO]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.HERO]}, transparent)`,
+  [NpcType.ELITE2]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.ELITE2]}, transparent)`,
+  [NpcType.TITAN]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.TITAN]}, transparent)`,
 };
 
 export const SingleNotification: FC<SingleNotificationProps> = ({
@@ -36,6 +44,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   };
   const { characterId } = useGlobalStore((s) => s.gameState);
   const { data: members } = useGuildMembers(notification.guildId);
+  const { data: guilds } = useGuilds();
   const guildMember = members?.[notification.discordId];
   const roleWithTopPosition = guildMember?.roles.sort(
     (a, b) => b.position - a.position
@@ -47,13 +56,26 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const settingsByNpcType = settings[characterId!][npcType as PickedNpcType];
 
-  const boxShadow = settingsByNpcType.highlight
-    ? BASE_SHADOW_COLOR_BY_NPC_TYPE[npcType as PickedNpcType]
+  const gradient = settingsByNpcType.highlight
+    ? BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE[npcType as PickedNpcType]
     : "";
+  const backgroundColor = settingsByNpcType.highlight
+    ? COLORS_BY_NPC_TYPE[npcType as PickedNpcType]
+    : "transparent";
+
+  const serverNames = notification.servers.map((server) => {
+    const guild = guilds?.find((g) => g.id === server);
+    return guild ? guild.name : "";
+  });
 
   return (
     <Fragment key={notification.notificationId}>
-      <span className={cn("ll-flex ll-py-2 ll-gap-4 ll-rounded-lg ll-px-3")}>
+      <span
+        className={cn("ll-flex ll-py-2 ll-gap-4 ll-px-3")}
+        style={{
+          background: index === 0 ? gradient : backgroundColor,
+        }}
+      >
         {notification.npc && (
           <span className="ll-w-full ll-flex ll-gap-2">
             <NpcTile npc={notification.npc} />
@@ -75,13 +97,19 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
                 <span>Świat:</span>{" "}
                 <span className="ll-font-semibold">{notification.world}</span>
               </span>
-              <span className="ll-mb-2 ll-text-xs">
+              <span className="ll-text-xs">
                 <span>Dodane przez: </span>
                 <span
                   className="ll-font-semibold"
                   style={{ color: `#${color}` }}
                 >
                   {members?.[notification.discordId].name}
+                </span>
+              </span>
+              <span className="ll-text-xs">
+                <span>Serwery: </span>
+                <span className="ll-font-semibold">
+                  {serverNames.join(", ")}
                 </span>
               </span>
             </span>
@@ -102,9 +130,6 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         className={cn("ll-bg-gray-600 ll-h-[1px]", {
           "ll-h-0": notifications.length === 1,
         })}
-        style={{
-          boxShadow,
-        }}
       />
     </Fragment>
   );
