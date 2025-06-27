@@ -79,7 +79,7 @@ export const NotificationsSettingsTabForm: FC<
       <span key={field.key}>
         <div className="ll-font-semibold ll-mb-2">{field.label}</div>
         <Checkbox
-          id={`${field.key}-detect`}
+          id={`${field.key}-show`}
           {...register(`settingsByNpcType.${field.key}.show`)}
         >
           Wyświetlaj
