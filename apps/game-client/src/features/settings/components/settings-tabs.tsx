@@ -45,7 +45,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
         className="ll-flex ll-flex-col ll-h-full ll-w-full"
       >
         <TabsList
-          className="ll-flex-shrink-0 ll-flex-wrap !ll-justify-start ll-justify-items-start ll-gap-x-1 ll-gap-0 ll-flex" /* wymuś brak rozciągania w pionie */
+          className="ll-flex-shrink-0 ll-flex-wrap !ll-justify-start ll-justify-items-start ll-gap-x-1 !ll-gap-0 ll-flex" /* wymuś brak rozciągania w pionie */
         >
           {TABS_LIST.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
