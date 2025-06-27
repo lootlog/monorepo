@@ -49,19 +49,20 @@ export const NotificationsSettingsTabForm: FC<
     settingsByNpcType: currentSettings,
   };
 
-  const { register, watch, getValues, reset } = useForm<FormData>({
+  const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues,
   });
 
   useEffect(() => {
     reset(defaultValues);
-  }, [characterId, settings, reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [characterId, settings]);
 
   function onSubmit(data: FormData) {
     if (!characterId) return;
     setSettings(
-      characterId?.toString(),
+      characterId.toString(),
       data.settingsByNpcType as NotificationsSettings
     );
   }
@@ -71,54 +72,53 @@ export const NotificationsSettingsTabForm: FC<
     onSubmit(watchedData);
   }, [watchedData]);
 
+  const renderField = (field: (typeof mainFields)[number]) => {
+    const watchShow = watchedData.settingsByNpcType[field.key]?.show;
+    return (
+      <span key={field.key}>
+        <div className="ll-font-semibold ll-mb-2">{field.label}</div>
+        <Checkbox
+          id={`${field.key}-detect`}
+          {...register(`settingsByNpcType.${field.key}.show`)}
+        >
+          Wyświetlaj
+        </Checkbox>
+        <Checkbox
+          id={`${field.key}-highlight`}
+          disabled={!watchShow}
+          {...register(`settingsByNpcType.${field.key}.highlight`)}
+        >
+          Podświetlenie
+        </Checkbox>
+        <div className="ll-mt-2">
+          <span className="ll-font-semibold">Z jakich serwerów:</span>
+          <div className="ll-mt-2">
+            {guilds?.map((guild) => {
+              const id = `${field.key}-${guild.id}`;
+              return (
+                <Checkbox
+                  key={id}
+                  id={id}
+                  type="checkbox"
+                  disabled={!watchShow}
+                  value={guild.id}
+                  {...register(`settingsByNpcType.${field.key}.guildIds`)}
+                >
+                  {guild.name}
+                </Checkbox>
+              );
+            })}
+          </div>
+        </div>
+      </span>
+    );
+  };
+
   return (
     <form className="ll-h-full ll-py-4">
       <div className="ll-flex-1">
         <span className="ll-grid ll-grid-cols-2 ll-gap-y-6 ll-mb-2">
-          {mainFields.map((field) => {
-            const watchShow = watch(`settingsByNpcType.${field.key}.show`);
-
-            return (
-              <span key={field.key}>
-                <div className="ll-font-semibold ll-mb-2">{field.label}</div>
-                <Checkbox
-                  id={`${field.key}-detect`}
-                  {...register(`settingsByNpcType.${field.key}.show`)}
-                >
-                  Wyświetlaj
-                </Checkbox>
-                <Checkbox
-                  id={`${field.key}-highlight`}
-                  disabled={!watchShow}
-                  {...register(`settingsByNpcType.${field.key}.highlight`)}
-                >
-                  Podświetlenie
-                </Checkbox>
-                <div className="ll-mt-2">
-                  <span className="ll-font-semibold">Z jakich serwerów:</span>
-                  <div className="ll-mt-2">
-                    {guilds?.map((guild) => {
-                      const id = `${field.key}-${guild.id}`;
-                      return (
-                        <Checkbox
-                          key={id}
-                          id={id}
-                          type="checkbox"
-                          disabled={!watchShow}
-                          value={guild.id}
-                          {...register(
-                            `settingsByNpcType.${field.key}.guildIds`
-                          )}
-                        >
-                          {guild.name}
-                        </Checkbox>
-                      );
-                    })}
-                  </div>
-                </div>
-              </span>
-            );
-          })}
+          {mainFields.map(renderField)}
         </span>
       </div>
     </form>
