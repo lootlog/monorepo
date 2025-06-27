@@ -95,13 +95,16 @@ export const Chat = () => {
   const renderChatMessage = (message: ChatMessage) => {
     const messageData = decomposeChatMessage(message.message);
 
-    if (messageData.npcName && messageData.npcType && messageData.npcLvl) {
-      const shortname = NPC_NAMES[messageData.npcType]?.shortname;
-      const color = COLOR_BY_NPC_TYPE[messageData.npcType as PickedNpcType];
+    if (messageData.npc) {
+      const shortname = NPC_NAMES[messageData.npc.npcType]?.shortname;
+      const color = COLOR_BY_NPC_TYPE[messageData.npc.npcType as PickedNpcType];
 
       return (
         <span style={{ color }}>
-          [{shortname}] {messageData.npcName} ({messageData.npcLvl})
+          [{shortname}] {messageData.npc.npcName}{" "}
+          {messageData.npc.npcLocation
+            ? `- ${messageData.npc.npcLocation}`
+            : ""}
         </span>
       );
     }

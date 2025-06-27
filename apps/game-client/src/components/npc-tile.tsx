@@ -13,14 +13,16 @@ export const NpcTile: FC<NpcTileProps> = ({ npc, className }) => {
     npc.icon.startsWith("http://") || npc.icon.startsWith("https://");
 
   return (
-    <img
-      className={cn(
-        "ll-relative ll-custom-cursor-pointer ll-rounded-lg ll-max-h-16 ll-max-w-12",
-        className
-      )}
-      draggable={false}
-      src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${npc.icon}`}
-      alt={npc.nick}
-    />
+    <span className="ll-w-12 ll-flex ll-items-center ll-justify-center">
+      <img
+        className={cn(
+          "ll-custom-cursor-pointer ll-rounded-lg ll-max-w-12",
+          className
+        )}
+        draggable={false}
+        src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${npc.icon}`}
+        alt={npc.nick}
+      />
+    </span>
   );
 };

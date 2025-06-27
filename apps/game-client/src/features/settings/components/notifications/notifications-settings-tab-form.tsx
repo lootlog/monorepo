@@ -29,6 +29,7 @@ const FormSchema = z.object({
     z.object({
       show: z.boolean(),
       highlight: z.boolean(),
+      ignoreOtherWorlds: z.boolean(),
       guildIds: z.array(z.string()),
     })
   ),
@@ -82,6 +83,13 @@ export const NotificationsSettingsTabForm: FC<
           {...register(`settingsByNpcType.${field.key}.show`)}
         >
           Wyświetlaj
+        </Checkbox>
+        <Checkbox
+          id={`${field.key}-ignore-other-worlds`}
+          disabled={!watchShow}
+          {...register(`settingsByNpcType.${field.key}.ignoreOtherWorlds`)}
+        >
+          Ignoruj inne światy
         </Checkbox>
         <Checkbox
           id={`${field.key}-highlight`}

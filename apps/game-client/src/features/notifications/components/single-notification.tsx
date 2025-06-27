@@ -56,9 +56,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       <span className={cn("ll-flex ll-py-2 ll-gap-4 ll-rounded-lg ll-px-3")}>
         {notification.npc && (
           <span className="ll-w-full ll-flex ll-gap-2">
-            <span className="ll-w-10 ll-flex">
-              <NpcTile npc={notification.npc} />
-            </span>
+            <NpcTile npc={notification.npc} />
             <span className="ll-flex ll-flex-col ll-justify-center">
               <span>
                 <span className="ll-font-semibold">

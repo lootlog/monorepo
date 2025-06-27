@@ -12,6 +12,7 @@ export type PickedNpcType =
 export interface NotificationsSettingByNpc {
   show: boolean;
   highlight: boolean;
+  ignoreOtherWorlds: boolean;
   guildIds: string[];
 }
 
@@ -24,6 +25,7 @@ interface NotificationsState {
   notifications: Notification[];
   settings: Record<string, NotificationsSettings>;
   setSettings: (characterId: string, settings: NotificationsSettings) => void;
+  setState: (settings: Record<string, NotificationsSettings>) => void;
   pushNotification: (notification: Notification) => void;
   clearNotifications: () => void;
   removeNotification: (id: string) => void;
@@ -33,21 +35,25 @@ export const recommendedSettings: NotificationsSettings = {
   [NpcType.ELITE2]: {
     show: false,
     highlight: false,
+    ignoreOtherWorlds: false,
     guildIds: [],
   },
   [NpcType.HERO]: {
     show: true,
     highlight: true,
+    ignoreOtherWorlds: false,
     guildIds: [],
   },
   [NpcType.COLOSSUS]: {
     show: true,
     highlight: true,
+    ignoreOtherWorlds: false,
     guildIds: [],
   },
   [NpcType.TITAN]: {
     show: true,
     highlight: true,
+    ignoreOtherWorlds: false,
     guildIds: [],
   },
 };
@@ -57,6 +63,8 @@ export const useNotificationsStore = create<NotificationsState>()(
     (set) => ({
       notifications: [],
       settings: {},
+      setState: (settings: Record<string, NotificationsSettings>) =>
+        set(() => ({ settings })),
       setSettings: (characterId: string, settings: NotificationsSettings) =>
         set((state) => ({
           settings: {

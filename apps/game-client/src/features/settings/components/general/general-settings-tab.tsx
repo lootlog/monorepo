@@ -90,7 +90,6 @@ export const GeneralSettingsTab: FC = () => {
           />
         </div>
       </div>
-      <CatchingSettings />
     </div>
   );
 };

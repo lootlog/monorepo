@@ -1,6 +1,10 @@
 import { create } from "zustand";
 
 export type GameInterface = "si" | "ni";
+export enum LanguageVersion {
+  EN = "en",
+  PL = "pl",
+}
 
 interface GameState {
   gameInitialized: boolean;
@@ -8,6 +12,7 @@ interface GameState {
   world?: string;
   accountId?: string;
   characterId?: string;
+  languageVersion?: LanguageVersion;
 }
 interface GlobalState {
   gameState: GameState;
@@ -21,6 +26,7 @@ export const useGlobalStore = create<GlobalState>((set) => ({
     world: undefined,
     accountId: undefined,
     characterId: undefined,
+    languageVersion: undefined,
   },
   setGameState: (gameState) => set({ gameState }),
 }));
