@@ -124,6 +124,7 @@ export const useNotificationsStore = create<NotificationsState>()(
       partialize: (state) => ({
         settings: state.settings,
       }),
+      version: 1,
     }
   )
 );
