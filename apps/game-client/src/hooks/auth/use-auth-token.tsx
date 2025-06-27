@@ -24,7 +24,7 @@ export const useAuthToken = () => {
 
       return response.json();
     },
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   return query;

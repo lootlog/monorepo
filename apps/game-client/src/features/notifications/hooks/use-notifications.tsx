@@ -38,7 +38,8 @@ export const useNotifications = () => {
 
     socket?.on(GatewayEvent.NOTIFICATION, (data: Notification) => {
       const npcType = getNpcTypeByWt(data.npc?.wt!);
-      // if (data.discordId === sessionDataRef.current?.user.discordId) return;
+      // @ts-ignore
+      if (data.discordId === sessionDataRef.current?.user.discordId) return;
 
       if (
         data.world !== world &&
@@ -46,7 +47,7 @@ export const useNotifications = () => {
       )
         return;
 
-      pushNotification(data);
+      pushNotification({ ...data, servers: [data.guildId] });
     });
   }, [connected]);
 };
