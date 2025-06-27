@@ -1,5 +1,5 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { useGlobalStore } from "@/store/global.store";
+import { LanguageVersion, useGlobalStore } from "@/store/global.store";
 import { useQuery } from "@tanstack/react-query";
 
 const MARGONEM_CHARTACTER_LIST_URL =
@@ -21,13 +21,13 @@ export type MargonemCharacter = {
 };
 
 export const useCharacterList = () => {
-  const { world } = useGlobalStore((state) => state.gameState);
+  const { world, languageVersion } = useGlobalStore((state) => state.gameState);
   const { client } = useApiClient();
   const hs3 = window.getCookie?.("hs3");
-  const isPl = window.location.href.includes("margonem.pl");
-  const url = isPl
-    ? MARGONEM_CHARTACTER_LIST_URL
-    : MARGONEM_CHARACTER_LIST_EN_URL;
+  const url =
+    languageVersion === LanguageVersion.PL
+      ? MARGONEM_CHARTACTER_LIST_URL
+      : MARGONEM_CHARACTER_LIST_EN_URL;
 
   const query = useQuery({
     queryKey: ["characters", world],
@@ -35,7 +35,7 @@ export const useCharacterList = () => {
       client.get<MargonemCharacter[]>(`${url}?hs3=${hs3}`, {
         withCredentials: true,
       }),
-    enabled: !!hs3,
+    enabled: !!hs3 && !!languageVersion,
     select: (response) =>
       response.data
         .filter((char) => char.world === world)

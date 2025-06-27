@@ -1,3 +1,4 @@
+import { MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { useCreateLoot } from "@/hooks/api/use-create-loot";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
@@ -268,8 +269,10 @@ export const useGameEventsParser = () => {
 
       if (!data) return;
 
-      if (!npc.respBaseSeconds || npc.respBaseSeconds < 2) return;
+      if (!npc.respBaseSeconds) return;
       removeNpc(npc.id);
+
+      if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
 
       createTimer({
         respawnRandomness: data.resp_rand,
