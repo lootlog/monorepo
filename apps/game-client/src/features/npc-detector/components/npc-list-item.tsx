@@ -28,6 +28,8 @@ const BASE_SHADOW_COLOR_BY_NPC_TYPE: Record<PickedNpcType, string> = {
   [NpcType.TITAN]: "0 0px 64px 32px rgba(59, 130, 246, 0.7)", // blue
 };
 
+const NPCS_WITH_LOCATION = [NpcType.HERO];
+
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { npcs, removeNpc, settings, setNpcState } = useNpcDetectorStore();
   const { characterId, world } = useGlobalStore((s) => s.gameState);
@@ -84,9 +86,16 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
       return;
     }
 
+    let location = "";
+
+    if (NPCS_WITH_LOCATION.includes(npcType)) {
+      location = `${npc.location} (${npc.x}, ${npc.y})`;
+    }
+
     const chatMessage = composeNpcChatMessage(
       npcType,
-      `${npc.nick} (${npc.lvl}${npc.prof})`
+      `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
+      location
     );
 
     sendChatMessage(

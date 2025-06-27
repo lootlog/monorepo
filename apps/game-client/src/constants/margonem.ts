@@ -15,3 +15,5 @@ export const NPC_NAMES: {
   ELITE2: { shortname: "E2", longname: "elita II" },
   ELITE: { shortname: "E", longname: "elita" },
 };
+
+export const MIN_RESP_BASE_SECONDS = 2;

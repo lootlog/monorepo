@@ -40,14 +40,14 @@ http:
         - "apiForwardAuth"
       entryPoints:
         - "web"    
-    landing:
-      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`)"
-      service: "landing"
-      priority: 1
-      middlewares:
-        - "apiCompress"
-      entryPoints:
-        - "web"
+    # landing:
+    #   rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`)"
+    #   service: "landing"
+    #   priority: 1
+    #   middlewares:
+    #     - "apiCompress"
+    #   entryPoints:
+    #     - "web"
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
