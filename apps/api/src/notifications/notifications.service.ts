@@ -12,6 +12,7 @@ import { Error } from 'src/notifications/enum/error.enum';
 import { omit } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { RoutingKey } from 'src/enum/routing-key.enum';
+import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 
 @Injectable()
 export class NotificationsService {
@@ -51,8 +52,6 @@ export class NotificationsService {
       return acc;
     }, []);
 
-    console.log('guildIds:', guildIds);
-
     if (data.message) {
       console.log('do something with message:', data.message);
       return;
@@ -60,20 +59,24 @@ export class NotificationsService {
 
     const notificationId = uuid();
 
+    const mappedData = {
+      ...data,
+      npc: {
+        ...data.npc,
+        type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
+      },
+    };
+
     guildIds.forEach((guildId) => {
-      this.emitNotification(discordId, guildId, notificationId, data);
+      this.emitNotification(discordId, guildId, notificationId, mappedData);
     });
-
-    console.log('do something with npc:', data.npc);
-
-    console.log('Sending notification...');
   }
 
   async emitNotification(
     discordId: string,
     guildId: string,
     notificationId: string,
-    data: CreateNotificationDto,
+    data,
   ) {
     const desiredData = omit(data, ['guildIds']);
 

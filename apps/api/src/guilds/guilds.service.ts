@@ -116,10 +116,14 @@ export class GuildsService {
     }, []);
 
     if (discordId === member.guild.ownerId) {
-      return { data: Object.values(Permission), guild };
+      return {
+        permissions: Object.values(Permission),
+        guild,
+        roles: member.roles,
+      };
     }
 
-    return { data: permissions, guild };
+    return { permissions, guild, roles: member.roles };
   }
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
@@ -139,7 +143,7 @@ export class GuildsService {
       const member = members.find((m) => m.guildId === guild.id);
 
       if (!member) {
-        return { guild, data: [] };
+        return { guild, permissions: [], roles: member.roles };
       }
 
       let permissions = member.roles.reduce((acc: Permission[], role) => {
@@ -150,7 +154,7 @@ export class GuildsService {
         permissions = Object.values(Permission);
       }
 
-      return { guild, data: permissions };
+      return { guild, permissions, roles: member.roles };
     });
 
     return result;

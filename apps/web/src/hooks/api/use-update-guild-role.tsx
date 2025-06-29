@@ -9,6 +9,8 @@ import { GuildRole } from "@/hooks/api/use-guild-roles";
 type UpdateGuildRoleOptions = {
   roleId: string;
   permissions: Permission[];
+  lvlRangeFrom: number;
+  lvlRangeTo: number;
 };
 
 type UpdateGuildRoleResponse = AxiosResponse<GuildRole>;
@@ -23,17 +25,17 @@ export const useUpdateGuildRole = () => {
     unknown,
     UpdateGuildRoleOptions
   >({
-    mutationFn: async ({ permissions, roleId }) => {
-      return client.patch(`/guilds/${guildId}/roles/${roleId}/permissions`, {
-        permissions,
-      });
+    mutationFn: async ({ roleId, ...rest }) => {
+      return client.patch(
+        `/guilds/${guildId}/roles/${roleId}/permissions`,
+        rest
+      );
     },
     mutationKey: ["update-guild-role"],
-    onSuccess: (response) => {
-      // queryClient.invalidateQueries({
-      //   queryKey: ["guild-roles", guildId],
-      // });
-      queryClient.setQueryData(["guild-role", guildId], response.data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["guild-roles", guildId],
+      });
     },
   });
 

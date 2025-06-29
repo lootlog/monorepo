@@ -1,0 +1,11 @@
+export enum NpcType {
+  COMMON = 'COMMON',
+  ELITE = 'ELITE',
+  ELITE2 = 'ELITE2',
+  ELITE3 = 'ELITE3',
+  HERO = 'HERO',
+  EVENT_HERO = 'EVENT_HERO',
+  TITAN = 'TITAN',
+  COLOSSUS = 'COLOSSUS',
+  NPC = 'NPC',
+}

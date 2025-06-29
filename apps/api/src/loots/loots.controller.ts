@@ -7,12 +7,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { Guild, Permission } from 'generated/client';
+import { Guild, Permission, Role } from 'generated/client';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { LootsService } from 'src/loots/loots.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
+import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -28,6 +29,7 @@ export class LootsController {
   @Get('/guilds/:guildId/loots')
   async fetchLootsByGuildId(
     @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
     @Query('cursor') cursor: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number,
@@ -41,7 +43,7 @@ export class LootsController {
     @Query('npcs', new ArrayValidationPipe())
     npcs: string[],
   ) {
-    return this.lootsService.fetchLootsByGuildId(guild.id, permissions, {
+    return this.lootsService.fetchLootsByGuildId(guild, permissions, roles, {
       cursor,
       limit,
       npcTypes,
