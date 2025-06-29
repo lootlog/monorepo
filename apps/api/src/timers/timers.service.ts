@@ -167,7 +167,9 @@ export class TimersService {
     const now = new Date();
     const administrativeUser = isAdministrativeUser(permissions);
     const canViewTitans = canReadTitans(permissions, administrativeUser);
-    const mergedLevelRanges = mergeLevelRanges(roles);
+    const mergedLevelRanges = mergeLevelRanges(roles, [
+      Permission.LOOTLOG_READ,
+    ]);
     const timers = await this.prisma.timer.findMany({
       where: {
         guildId: guild.id,
@@ -207,7 +209,9 @@ export class TimersService {
       );
       const permissions = guildPermissionsAndRoles?.permissions || [];
       const roles = guildPermissionsAndRoles?.roles || [];
-      const mergedLevelRanges = mergeLevelRanges(roles);
+      const mergedLevelRanges = mergeLevelRanges(roles, [
+        Permission.LOOTLOG_READ,
+      ]);
       const administrativeUser = isAdministrativeUser(permissions);
       const canViewTitans = canReadTitans(permissions, administrativeUser);
       const timers = await this.prisma.timer.findMany({

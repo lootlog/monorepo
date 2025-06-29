@@ -43,6 +43,7 @@ export class GatewayService {
           );
           if (!desiredGuild) return;
           const ranges = desiredGuild?.ranges || [];
+
           const administrativeUser = isAdministrativeUser(
             desiredGuild.permissions,
           );
@@ -57,10 +58,12 @@ export class GatewayService {
             );
             return;
           }
+
           const isInRange = ranges.some(
             (range: { from: number; to: number }) =>
               npcLevel >= range.from && npcLevel <= range.to,
           );
+
           if (!isInRange && !administrativeUser) {
             this.logger.debug(
               `NPC level ${npcLevel} is not in range for guild ${guildId} for user ${socket.data.discordId}`,
