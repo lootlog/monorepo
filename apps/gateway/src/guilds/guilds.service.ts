@@ -6,6 +6,8 @@ import {
 } from 'src/config/rabbitmq.config';
 import { Permission } from 'src/guilds/enum/permission.type';
 import { RoutingKey } from 'src/guilds/enum/routing-key.enum';
+import { Role } from 'src/guilds/types/role.type';
+import { mergeLevelRanges } from 'src/guilds/utils/merge-level-range';
 
 type GetGuildsResponse = {
   guild: { id: string };
@@ -29,10 +31,10 @@ export class GuildsService {
       });
       return response.map((data) => ({
         guild: data.guild,
-        ranges: data.roles.map((role) => ({
-          from: role.lvlRangeFrom,
-          to: role.lvlRangeTo,
-        })),
+        ranges: mergeLevelRanges(data.roles as Role[], [
+          Permission.LOOTLOG_READ,
+        ]),
+
         permissions: data.permissions,
       }));
     } catch (err) {
