@@ -143,7 +143,7 @@ export class GuildsService {
       const member = members.find((m) => m.guildId === guild.id);
 
       if (!member) {
-        return { guild, permissions: [], roles: member.roles };
+        return { guild, permissions: [], roles: [] };
       }
 
       let permissions = member.roles.reduce((acc: Permission[], role) => {
