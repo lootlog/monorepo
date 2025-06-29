@@ -1,4 +1,5 @@
-import { Permission, Role } from 'generated/client';
+import { Permission } from 'src/guilds/enum/permission.type';
+import { Role } from 'src/guilds/types/role.type';
 
 export function mergeLevelRanges(
   roles: Role[],
