@@ -34,7 +34,14 @@ export const RolesSettings = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4">
+      <div className="p-4 pb-6">
+        <div className="text-lg font-semibold">Ustawienia ról</div>
+        <div className="text-sm text-gray-500">
+          Ustawienia ról, które mogą być przypisane do graczy na serwerze
+          Discord. Tutaj możesz przypisać uprawnienia do ról.
+        </div>
+      </div>
+      <div className="p-4 border-t">
         <SearchInput
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Szukaj roli..."
