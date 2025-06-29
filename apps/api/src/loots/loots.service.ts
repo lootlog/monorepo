@@ -22,11 +22,16 @@ import {
   Permission,
   Prisma,
   LootlogConfigNpc,
+  Guild,
+  Role,
 } from 'generated/client';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
+import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
+import { mergeLevelRanges } from 'src/shared/utils/merge-level-range';
+import { canReadTitans } from 'src/shared/permissions/can-read-titans';
 
 @Injectable()
 export class LootsService {
@@ -149,8 +154,9 @@ export class LootsService {
   }
 
   async fetchLootsByGuildId(
-    guildId: string,
+    guild: Guild,
     permissions: Permission[],
+    roles: Role[],
     {
       cursor = null,
       limit = DEFAULT_PAGE_LIMIT,
@@ -167,7 +173,36 @@ export class LootsService {
       });
     }
 
-    // @TODO = add permissions for titans
+    const mergedLevelRanges = mergeLevelRanges(roles);
+
+    const administrativeUser = isAdministrativeUser(permissions);
+    const canViewTitans = canReadTitans(permissions, administrativeUser);
+
+    const canViewTitansCondition = canViewTitans
+      ? Prisma.sql``
+      : Prisma.sql`
+            AND EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements("npcs") AS npc
+        WHERE npc->>'type' != 'TITAN'
+    )`;
+
+    const levelRangesCondition =
+      mergedLevelRanges.length > 0 && !administrativeUser
+        ? Prisma.sql`
+      AND EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements("npcs") AS npc
+        WHERE
+          ${Prisma.join(
+            mergedLevelRanges.map(
+              (range) =>
+                Prisma.sql`(npc->>'lvl')::int >= ${range.from} AND (npc->>'lvl')::int <= ${range.to}`,
+            ),
+            ' OR ',
+          )}
+      )`
+        : Prisma.sql``;
 
     const playersCondition =
       players.length > 0
@@ -217,13 +252,15 @@ export class LootsService {
 
     const query = Prisma.sql`
       SELECT * FROM "Loot"
-      WHERE "guildId" = ${guildId}
+      WHERE "guildId" = ${guild.id}
       AND "world" = ${world}
       ${playersCondition}
       ${npcsCondition}
       ${npcTypesCondition}
       ${raritiesCondition}
       ${cursorCondition}
+      ${levelRangesCondition}
+      ${canViewTitansCondition}
       ORDER BY "id" DESC
       LIMIT ${limit};
     `;
@@ -352,6 +389,7 @@ export class LootsService {
       location: npc.location,
       type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
       margonemType: npc.type,
+      hpp: npc.hpp,
     }));
   }
 

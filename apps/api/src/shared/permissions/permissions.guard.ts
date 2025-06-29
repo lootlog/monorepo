@@ -46,36 +46,25 @@ export class PermissionsGuard implements CanActivate {
     guildId: string,
     request: any,
   ) {
-    const permissions = await this.guildsService.getGuildPermissions(
-      discordId,
-      guildId,
-    );
+    const { permissions, guild, roles } =
+      await this.guildsService.getGuildPermissions(discordId, guildId);
 
     if (!permissions) {
       return false;
     }
 
     const hasPermission = requiredPermissions.every((permission) =>
-      permissions.data.includes(permission),
+      permissions.includes(permission),
     );
 
     if (!hasPermission) {
       return false;
     }
 
-    request.permissions = permissions.data;
-    request.guild = permissions.guild;
+    request.permissions = permissions;
+    request.guild = guild;
+    request.roles = roles;
 
     return true;
-  }
-
-  async verifyManageable(userId: string, guildId: string) {
-    // const manageable = await this.discordService.getManageableDiscordGuild(
-    //   userId,
-    //   guildId,
-    // );
-    const manageable = true;
-
-    return !!manageable;
   }
 }

@@ -97,6 +97,8 @@ export class RolesService {
       where: { id: roleId },
       data: {
         permissions: data.permissions,
+        lvlRangeFrom: data.lvlRangeFrom,
+        lvlRangeTo: data.lvlRangeTo,
       },
     });
 

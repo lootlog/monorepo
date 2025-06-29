@@ -29,7 +29,7 @@ export const RolePanelContent: FC<RolePanelContentProps> = ({
         <div className="font-semibold text-sm">{selectedRole.name}</div>
       </div>
     </div>
-    <ScrollArea className="h-[calc(100vh-230px)]">
+    <ScrollArea className="h-[calc(100vh-318px)]">
       <RolesSettingsForm role={selectedRole} />
     </ScrollArea>
   </>
