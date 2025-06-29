@@ -1,4 +1,4 @@
-import { UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
+import { UseFilters, UsePipes, ValidationPipe, Logger } from '@nestjs/common';
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -21,6 +21,9 @@ import { Platform } from 'src/gateway/enums/platform.enum';
 import { Socket } from 'src/gateway/types/socket-user.type';
 import { groupBy, omit } from 'lodash';
 import { RedisService } from 'src/lib/redis/redis.service';
+import { buildUser } from 'src/gateway/utils/build-user';
+import { emitPresenceToRooms } from 'src/gateway/utils/emit-presence-to-rooms';
+import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
 
 @WebSocketGateway({
   namespace:
@@ -29,6 +32,8 @@ import { RedisService } from 'src/lib/redis/redis.service';
   pingTimeout: 60000,
 })
 export class Gateway {
+  private readonly logger = new Logger(Gateway.name);
+
   constructor(
     private configService: ConfigService,
     private guildsService: GuildsService,
@@ -40,38 +45,34 @@ export class Gateway {
 
   async handleConnection(client: Socket) {
     const { discordId, platform } = this.getConnectionMetadata(client.request);
-    console.log('client connected');
-    console.log('discord id: ', discordId);
-    console.log('platform: ', platform);
-
+    this.logger.log('client connected');
+    this.logger.debug(`discord id: ${discordId}`);
+    this.logger.debug(`platform: ${platform}`);
     if (!discordId) {
-      console.log('No discordId found in headers, disconnecting client');
+      this.logger.warn('No discordId found in headers, disconnecting client');
       return client.disconnect();
     }
-
     if (platform === Platform.UNKNOWN) {
-      console.log('Unrecognized platform, disconnecting...');
+      this.logger.warn('Unrecognized platform, disconnecting...');
       return client.disconnect();
     }
-
     client.data = {
       discordId,
       sessionId: client.id,
       platform,
     };
-
     client.on(GatewayEvent.DISCONNECTING, () => {
       if (client.data) {
-        client.rooms.forEach((room) => {
-          client.to(room).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
+        emitPresenceToRooms(
+          client,
+          {
             discordId: client.data.discordId,
             player: client.data.player,
             status: UserPresenceStatus.OFFLINE,
-            guildId: room,
-          });
-        });
-
-        console.log('client disconnected', client.data.discordId);
+          },
+          GatewayEvent.UPDATE_SERVER_PRESENCE,
+        );
+        this.logger.log(`client disconnected ${client.data.discordId}`);
       }
     });
   }
@@ -82,33 +83,18 @@ export class Gateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() { data: player }: JoinGatewayDto,
   ): Promise<any> {
-    const guildIds = await this.guildsService.getUserGuilds(discordId);
-
-    if (guildIds.length === 0) {
-      console.log('No guilds found for user', discordId);
+    const guilds = await this.guildsService.getUserGuilds(discordId);
+    if (guilds.length === 0) {
+      this.logger.warn(`No guilds found for user ${discordId}`);
       return { status: 'error', message: 'No guilds found for user' };
     }
-
-    const user = {
-      ...client.data,
-      status: UserPresenceStatus.ONLINE,
-      player,
-    };
-
+    const guildIds = getGuildIds(guilds);
+    const user = buildUser(client, player, guilds);
     client.data = user;
-
     client.join(guildIds);
-
-    client.rooms.forEach((room) => {
-      client.to(room).emit(GatewayEvent.UPDATE_SERVER_PRESENCE, {
-        ...user,
-        guildId: room,
-      });
-    });
-
-    return client.emit(GatewayEvent.JOIN, {
-      status: 'success',
-    });
+    emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);
+    client.emit(GatewayEvent.JOIN, { status: 'success' });
+    return;
   }
 
   @UseFilters(new BaseWsExceptionFilter())
@@ -121,35 +107,25 @@ export class Gateway {
     if (!client.rooms.has(guildId)) {
       return {};
     }
-
     const socketsInRoom = await this.server.in(guildId).fetchSockets();
     const users = socketsInRoom
       .filter((s) => s.data.player.world === world)
       .map((s) => omit(s.data, 'sessionId'))
-      .sort((a, b) => {
-        return b.player.lvl - a.player.lvl;
-      });
-
+      .sort((a, b) => b.player.lvl - a.player.lvl);
     const groupedUsers = groupBy(users, 'discordId');
-
     return groupedUsers;
   }
 
   getConnectionMetadata(request: Socket['request']) {
     const id = (request.headers['x-auth-discord-id'] as string) || null;
     const platform = this.determineUserPlatform(request.headers.origin);
-
-    return {
-      discordId: id,
-      platform,
-    };
+    return { discordId: id, platform };
   }
 
   determineUserPlatform(requestOrigin: string) {
-    console.log('Request Origin:', requestOrigin);
+    this.logger.debug(`Request Origin: ${requestOrigin}`);
     if (!requestOrigin) return Platform.UNKNOWN;
     const result = GAME_URL_REGEX.test(requestOrigin);
-
     return result ? Platform.GAME : Platform.WEB_APP;
   }
 }

@@ -20,6 +20,8 @@ import { GuildRole } from "@/hooks/api/use-guild-roles";
 import { useUpdateGuildRole } from "@/hooks/api/use-update-guild-role";
 import { Permission } from "@/hooks/api/use-guild-permissions";
 import { cn } from "@/utils/cn";
+import { Input } from "@lootlog/ui/components/input";
+import { Label } from "@/components/ui/label";
 
 const PERMISSIONS = [
   {
@@ -72,14 +74,41 @@ const PERMISSIONS = [
     description: "Pozwala na czytanie powiadomień z lootloga",
     border: true,
   },
-];
+] as const;
 
-const formSchema = z.object(
-  PERMISSIONS.reduce((acc, p) => {
+const DEFAULT_LVL_RANGE_FROM = "0";
+const DEFAULT_LVL_RANGE_TO = "500";
+
+type PermissionKey = (typeof PERMISSIONS)[number]["key"];
+
+const formSchema = z.object({
+  lvlRangeFrom: z
+    .string()
+    .min(0)
+    .max(500)
+    .transform((val) => {
+      const num = Number(val);
+      if (isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
+      if (num > 500) return DEFAULT_LVL_RANGE_TO;
+      if (num < 0) return DEFAULT_LVL_RANGE_FROM;
+      return String(num);
+    }),
+  lvlRangeTo: z
+    .string()
+    .min(0)
+    .max(500)
+    .transform((val) => {
+      const num = Number(val);
+      if (isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
+      if (num > 500) return DEFAULT_LVL_RANGE_TO;
+      if (num < 0) return DEFAULT_LVL_RANGE_FROM;
+      return String(num);
+    }),
+  ...PERMISSIONS.reduce((acc, p) => {
     acc[p.key] = z.boolean();
     return acc;
-  }, {} as z.ZodRawShape)
-);
+  }, {} as z.ZodRawShape),
+});
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
@@ -94,22 +123,31 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
-    defaultValues: PERMISSIONS.reduce(
-      (acc, p) => ({
-        ...acc,
-        [p.key]: role.permissions.includes(p.key as Permission),
-      }),
-      {} as Record<string, boolean>
-    ),
+    defaultValues: {
+      lvlRangeFrom: role.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
+      lvlRangeTo: role.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+      ...PERMISSIONS.reduce(
+        (acc, p) => ({
+          ...acc,
+          [p.key]: !!role.permissions.includes(p.key),
+        }),
+        {} as Record<PermissionKey, boolean>
+      ),
+    },
   });
 
   function onSubmit(values: FormSchemaType) {
     updateGuildRole(
       {
-        permissions: Object.keys(values).filter(
-          (key) => values[key as keyof typeof values]
-        ) as Permission[],
+        permissions: PERMISSIONS.filter(
+          (p) =>
+            values[
+              p.key as unknown as keyof FormSchemaType
+            ] as unknown as boolean
+        ).map((p) => p.key),
         roleId: role.id,
+        lvlRangeFrom: Number(values.lvlRangeFrom),
+        lvlRangeTo: Number(values.lvlRangeTo),
       },
       {
         onSuccess: (response) => {
@@ -117,17 +155,19 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
             variant: "default",
             description: "Zaktualizowano ustawienia",
           });
-          form.reset(
-            PERMISSIONS.reduce(
+          form.reset({
+            lvlRangeFrom:
+              response.data.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
+            lvlRangeTo:
+              response.data.lvlRangeTo?.toString() || DEFAULT_LVL_RANGE_TO,
+            ...PERMISSIONS.reduce(
               (acc, p) => ({
                 ...acc,
-                [p.key]: response.data.permissions.includes(
-                  p.key as Permission
-                ),
+                [p.key]: response.data.permissions.includes(p.key),
               }),
-              {} as Record<string, boolean>
-            )
-          );
+              {} as Record<PermissionKey, boolean>
+            ),
+          });
         },
         onError: () => {
           toast({
@@ -142,16 +182,69 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="px-6 p-2 border-b">
+          <Label>Ustawienia roli</Label>
+        </div>
+        <div className="px-6 pt-2">
+          <Label>Przedział levelowy</Label>
+          <FormDescription>
+            Określa przedział levelowy danej roli - przydatne w momencie, gdy na
+            jednym serwerze Discord jest kilka klanów. Ustawienie tej opcji
+            wyłączy możliwość wyświetlania łupów i timerów spoza przedziału.
+          </FormDescription>
+        </div>
+        <div className="flex px-6 p-4 gap-4 border-b items-center">
+          <FormField
+            control={form.control}
+            name="lvlRangeFrom"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    placeholder={DEFAULT_LVL_RANGE_FROM}
+                    type="number"
+                    max={500}
+                    min={0}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          -
+          <FormField
+            control={form.control}
+            name="lvlRangeTo"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    placeholder={DEFAULT_LVL_RANGE_TO}
+                    type="number"
+                    max={500}
+                    min={0}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="px-6 p-2 border-b">
+          <Label>Ustawienia dostępów</Label>
+        </div>
         {PERMISSIONS.map((perm) => (
           <FormField
             key={perm.key}
             control={form.control}
-            name={perm.key}
+            name={perm.key as unknown as keyof FormSchemaType}
             render={({ field }) => (
               <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 px-6 border-b hover:bg-[#181C25]">
                 <FormControl>
                   <Checkbox
-                    checked={field.value}
+                    checked={!!field.value}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -166,6 +259,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
             )}
           />
         ))}
+
         <div className="h-28" />
         <div
           className={cn(
