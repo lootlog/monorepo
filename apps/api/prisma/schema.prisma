@@ -45,14 +45,16 @@ enum Permission {
 }
 
 model Role {
-  id          String       @id
-  guildId     String
-  name        String
-  color       Int?
-  position    Int?
-  permissions Permission[] @default([])
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           String       @id
+  guildId      String
+  name         String
+  color        Int?
+  position     Int?
+  permissions  Permission[] @default([])
+  lvlRangeFrom Int?         @default(0)
+  lvlRangeTo   Int?         @default(500)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   guild   Guild    @relation(fields: [guildId], references: [id])
   members Member[]

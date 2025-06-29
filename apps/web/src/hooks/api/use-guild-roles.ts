@@ -9,6 +9,8 @@ export type GuildRole = {
   name: string;
   color: number;
   permissions: Permission[];
+  lvlRangeFrom: number;
+  lvlRangeTo: number;
 };
 
 export const useGuildRoles = () => {

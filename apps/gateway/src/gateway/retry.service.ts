@@ -18,24 +18,16 @@ export class RetryService {
 
   constructor(private readonly amqp: AmqpConnection) {}
 
-  /**
-   * Sprawdza czy należy wykonać retry czy wysłać do DLQ
-   */
   shouldRetry(headers: Record<string, any>, maxRetries: number = 3): boolean {
     const retryCount = this.getRetryCount(headers);
     return retryCount < maxRetries;
   }
 
-  /**
-   * Pobiera aktualną liczbę prób na podstawie x-death headers
-   */
   getRetryCount(headers: Record<string, any>): number {
-    // Sprawdź najpierw x-retry-count (jeśli jest ustawiony manualnie)
     if (headers['x-retry-count']) {
       return headers['x-retry-count'];
     }
 
-    // Jeśli nie ma x-retry-count, użyj x-death count
     const xDeath = headers['x-death'];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
       return xDeath[0].count || 0;
@@ -44,9 +36,6 @@ export class RetryService {
     return 0;
   }
 
-  /**
-   * Wysyła wiadomość do DLQ
-   */
   async sendToDlq(
     message: any,
     dlqRoutingKey: string,
@@ -66,11 +55,6 @@ export class RetryService {
     });
   }
 
-  /**
-   * Główna metoda do obsługi retry logic w handlerach
-   * Sprawdza czy robić retry czy wysłać do DLQ
-   * Zwraca true jeśli handler ma kontynuować, false jeśli wiadomość została wysłana do DLQ
-   */
   async handleRetryLogic(
     data: any,
     headers: Record<string, any>,
@@ -86,12 +70,12 @@ export class RetryService {
         `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
       );
       await this.sendToDlq(data, dlqRoutingKey, headers, config);
-      return false; // Handler powinien się zakończyć
+      return false;
     }
 
     this.logger.log(
       `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
     );
-    return true; // Handler może kontynuować
+    return true;
   }
 }
