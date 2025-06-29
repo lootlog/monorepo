@@ -42,7 +42,7 @@ export const NpcSettings = () => {
           "grid-cols-[theme(width.64)_1fr]": selectedNpc,
         })}
       >
-        <ScrollArea className="flex flex-col h-[calc(100vh-182px)]">
+        <ScrollArea className="flex flex-col h-[calc(100vh-270px)]">
           {config?.npcs?.map((npc) => {
             const active = selectedNpc?.id === npc.id;
 
