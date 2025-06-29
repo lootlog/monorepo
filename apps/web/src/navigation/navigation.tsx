@@ -9,10 +9,10 @@ import { SignIn } from "@/screens/signin/signin";
 import { Home } from "@/screens/home/home";
 import { Guild } from "@/screens/guild/guild";
 import { SettingsLayout } from "@/components/layout/settings-layout";
-import { LootlogSettings } from "@/screens/lootlog-settings/lootlog-settings";
 import { GeneralSettings } from "@/screens/general-settings/general-settings";
 import { RolesSettings } from "@/screens/roles-settings/roles-settings";
 import { AuthenticationGuard } from "@/components/auth/authentication-guard";
+import { NpcSettings } from "@/screens/lootlog-settings/npc-settings";
 
 export const Navigation = () => {
   return (
@@ -37,10 +37,7 @@ export const Navigation = () => {
                 path="/:guildId/settings/roles/:roleId"
                 element={<RolesSettings />}
               />
-              <Route
-                path="/:guildId/settings/lootlog"
-                element={<LootlogSettings />}
-              />
+              <Route path="/:guildId/settings/npcs" element={<NpcSettings />} />
             </Route>
           </Route>
         </Route>
