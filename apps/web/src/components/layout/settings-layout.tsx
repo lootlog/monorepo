@@ -18,8 +18,8 @@ const NAV_ELEMENTS = [
   },
   {
     id: "lootlog",
-    label: "Lootlog",
-    href: "/settings/lootlog",
+    label: "Ustawienia potworów i NPC",
+    href: "/settings/npcs",
   },
 ];
 
