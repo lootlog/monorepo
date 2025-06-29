@@ -29,7 +29,7 @@ export const NpcSettingsPanelContent: FC<NpcSettingsPanelContentProps> = ({
           </div>
         </div>
       </div>
-      <ScrollArea className="h-[calc(100vh-158px)]">
+      <ScrollArea className="h-[calc(100vh-246px)]">
         <NpcSettingsForm npc={selectedNpc} />
       </ScrollArea>
     </>
