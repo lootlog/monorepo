@@ -173,7 +173,9 @@ export class LootsService {
       });
     }
 
-    const mergedLevelRanges = mergeLevelRanges(roles);
+    const mergedLevelRanges = mergeLevelRanges(roles, [
+      Permission.LOOTLOG_READ,
+    ]);
 
     const administrativeUser = isAdministrativeUser(permissions);
     const canViewTitans = canReadTitans(permissions, administrativeUser);
