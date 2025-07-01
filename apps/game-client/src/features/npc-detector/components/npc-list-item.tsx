@@ -43,8 +43,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
 
-  const npcType = getNpcTypeByWt(npc.wt);
-
+  const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[characterId!][npcType as PickedNpcType];
 
   const handleRemoveNpc = (npcId: number) => {
