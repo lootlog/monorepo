@@ -6,7 +6,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useGuilds } from "@/hooks/api/use-guilds";
-import { FC } from "react";
+import { FC, useEffect } from "react";
+import { useDeepCompareEffect } from "react-use";
 
 export type GuildSelectorProps = {
   selectedGuildId?: string;
@@ -19,7 +20,15 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
   setSelectedGuildId,
   disabled = false,
 }) => {
-  const { data: guilds } = useGuilds();
+  const { data: guilds, isFetched } = useGuilds();
+
+  useDeepCompareEffect(() => {
+    if (!isFetched || !guilds || guilds.length === 0) return;
+    const exists = guilds.some((guild) => guild.id === selectedGuildId);
+    if (!exists) {
+      setSelectedGuildId(guilds[0].id);
+    }
+  }, [guilds, isFetched, selectedGuildId]);
 
   return (
     <Select
