@@ -1,6 +1,14 @@
 import { NpcType } from "@/hooks/api/use-npcs";
 
-export const getNpcTypeByWt = (wt: number) => {
+export const getNpcTypeByWt = (
+  wt: number,
+  prof?: string,
+  type?: number
+): NpcType => {
+  if ((type === 5 || type === 0) && !prof) {
+    return NpcType.NPC;
+  }
+
   if (wt > 99) return NpcType.TITAN;
   else if (wt > 89) return NpcType.COLOSSUS;
   else if (wt > 79) return NpcType.HERO;
@@ -8,5 +16,5 @@ export const getNpcTypeByWt = (wt: number) => {
   else if (wt > 19) return NpcType.ELITE2;
   else if (wt > 9) return NpcType.ELITE;
 
-  return NpcType.NPC;
+  return NpcType.COMMON;
 };
