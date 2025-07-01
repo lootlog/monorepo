@@ -123,6 +123,7 @@ export const useNotificationsStore = create<NotificationsState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         settings: state.settings,
+        notifications: state.notifications,
       }),
       version: 1,
     }
