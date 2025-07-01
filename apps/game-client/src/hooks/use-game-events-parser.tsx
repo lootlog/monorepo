@@ -131,9 +131,13 @@ export const useGameEventsParser = () => {
           getNpcTplFromEvent(event, npc.tpl) || Game.getNpcTpl(npc.tpl);
         if (!tpl) return acc;
 
-        const npcType = getNpcTypeByWt(tpl.wt);
+        const npcType = getNpcTypeByWt(tpl.wt, tpl.prof, tpl.type);
+
         const settings =
           settingsRef.current[characterId][npcType as PickedNpcType];
+
+        if (!settings) return acc;
+
         const isNpcTypeDetected = settings?.detect ?? false;
 
         if (!isNpcTypeDetected) return acc;
@@ -303,10 +307,13 @@ export const useGameEventsParser = () => {
       npcs?.reduce<GameNpcWithLocation[]>((acc, npc) => {
         if (!npc) return acc;
 
-        const npcType = getNpcTypeByWt(npc.wt);
+        const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
 
         const settings =
           settingsRef.current[characterId][npcType as PickedNpcType];
+
+        if (!settings) return acc;
+
         const isNpcTypeDetected = settings?.detect ?? false;
 
         if (!isNpcTypeDetected) return acc;
