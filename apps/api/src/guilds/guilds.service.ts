@@ -244,7 +244,7 @@ export class GuildsService {
       //     },
       //   },
       // });
-      await this.prisma.loot.deleteMany({ where: { guildId } });
+      // await this.prisma.loot.deleteMany({ where: { guildId } });
       await this.prisma.timer.deleteMany({ where: { guildId } });
 
       await this.membersService.deleteMembersByGuildId(guildId);

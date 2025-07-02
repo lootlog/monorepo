@@ -1,0 +1,40 @@
+[
+  {
+    "cl": 14,
+    "id": 21740,
+    "pr": 5929,
+    "hid": "a08249cds10a71b2f727ceaf305569ee8f70918b41fe34e8c98a559e82f195b84",
+    "prc": "zl",
+    "icon": "tar/tarcza143.gif",
+    "name": "Cęgi konspiracji z diabłem",
+    "stat": "ac=85;act=1;binds;blok=38;ds=21;lvl=30;rarity=unique;reqp=pw;resfire=4;sa=16"
+  },
+  {
+    "id": 38784,
+    "pr": 488948,
+    "hid": "d9a8bcc8df27f5c150d0a21ca630fc9f055fd59d72084ffa9053e590bdb5714d",
+    "lvl": 255,
+    "prc": "zl",
+    "icon": "mie/miecz387.gif",
+    "name": "Rozrywacz jeńców wojennych",
+    "prof": ["WARRIOR"],
+    "stat": "binds;crit=1;dmg=3799,4643;energybon=27;lvl=255;rarity=unique;reqp=w;sa=72;wound=20,1399",
+    "type": "ONE_HAND_WEAPON",
+    "rarity": "UNIQUE"
+  },
+  [
+    {
+      "id": 21740,
+      "pr": 5929,
+      "hid": "a08249cds10a71b2f727ceaf305569ee8f70918b41fe34e8c98a559e82f195b84",
+      "lvl": 30,
+      "prc": "zl",
+      "icon": "tar/tarcza143.gif",
+      "name": "Cęgi konspiracji z diabłem",
+      "prof": ["PALADIN", "WARRIOR"],
+      "stat": "ac=85;act=1;binds;blok=38;ds=21;lvl=30;rarity=unique;reqp=pw;resfire=4;sa=16",
+      "type": "SHIELD",
+      "rarity": "UNIQUE"
+    }
+  ]
+]
