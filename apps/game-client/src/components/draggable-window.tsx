@@ -5,6 +5,7 @@ import {
   WindowId,
   WindowOpacity,
 } from "@/store/windows.store";
+import { Pin, PinOff } from "lucide-react";
 import { FC, useCallback, useEffect, useRef, useState } from "react";
 
 export type DraggableWindowProps = {
@@ -42,6 +43,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const opacity = state[id].opacity;
   const rawDefaultPosition = state[id].position;
   const defaultSize = state[id].size;
+  const isLocked = state[id].locked;
 
   const [size, setSize] = useState({
     width: resizable ? defaultSize.width : minWidth,
@@ -59,7 +61,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     };
   };
 
-  const defaultPosition = getClampedPosition(rawDefaultPosition);
+  const defaultPosition = isLocked
+    ? rawDefaultPosition
+    : getClampedPosition(rawDefaultPosition);
 
   const draggableRef = useRef<HTMLDivElement>(null!);
 
@@ -74,10 +78,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     ref: draggableRef,
     defaultState: defaultPosition,
     onDragStop,
+    isLocked,
   });
 
   const handleResize = (e: React.MouseEvent) => {
-    if (!resizable) return;
+    if (!resizable || isLocked) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -152,6 +157,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         height: size.height,
       };
 
+  const handleLockToggle = () => {
+    state.setLocked(id, !isLocked);
+  };
+
   return (
     <div
       className="ll-pointer-events-auto ll-absolute"
@@ -188,9 +197,24 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             />
             {actions}
           </div>
-          <p className="ll-text-[11px] ll-background-[0_0] ll-text-[beige] ll-line-height-[28px] ll-text-shadow-[1px_1px_1px_black] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2">
-            {title}
-          </p>
+          <div className="ll-background-[0_0] ll-line-height-[28px] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
+            <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
+              {title}
+            </p>
+            {isLocked ? (
+              <PinOff
+                className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                size="14"
+                onClick={handleLockToggle}
+              />
+            ) : (
+              <Pin
+                className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                size="14"
+                onClick={handleLockToggle}
+              />
+            )}
+          </div>
           <button
             type="button"
             className="ll-close-button ll-custom-cursor-pointer"
@@ -198,7 +222,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           />
         </div>
         <div className="ll-flex-1 ll-overflow-hidden">{children}</div>
-        {resizable && (
+        {resizable && !isLocked && (
           <div
             className="ll-absolute ll-bottom-0 ll-right-0 ll-w-4 ll-h-4 ll-cursor-se-resize ll-bg-transparent"
             onMouseDown={handleResize}
