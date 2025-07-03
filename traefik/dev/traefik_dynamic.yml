@@ -51,7 +51,7 @@ http:
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
-      priority: 0
+      priority: 1
       middlewares:
         - "cors"
         - "apiCompress"

@@ -37,6 +37,7 @@ interface WindowData {
   position: WindowPositionState;
   size: WindowSizeState;
   opacity: WindowOpacity;
+  locked: boolean;
 }
 
 interface WindowsState {
@@ -54,6 +55,7 @@ interface WindowsState {
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
   setSize: (window: WindowId, size: WindowSizeState) => void;
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
+  setLocked: (window: WindowId, locked: boolean) => void;
   toggleOpen: (window: WindowId) => void;
 }
 
@@ -69,30 +71,35 @@ export const useWindowsStore = create<WindowsState>()(
         position: DEFAULT_POSITION,
         size: { width: 420, height: 440 },
         opacity: DEFAULT_OPACITY,
+        locked: false,
       },
       timers: {
         open: true,
         position: DEFAULT_POSITION,
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
+        locked: false,
       },
       chat: {
         open: true,
         position: DEFAULT_POSITION,
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
+        locked: false,
       },
       "online-players": {
         open: true,
         position: DEFAULT_POSITION,
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
+        locked: false,
       },
       "add-timer": {
         open: false,
         position: DEFAULT_POSITION,
         size: { width: 242, height: 300 },
         opacity: DEFAULT_OPACITY,
+        locked: false,
       },
       "npc-detector": {
         open: false,
@@ -100,12 +107,14 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 300, height: 300 },
         opacity: DEFAULT_OPACITY,
         state: { npcs: [] },
+        locked: false,
       },
       notifications: {
         open: false,
         position: DEFAULT_POSITION,
         size: { width: 360, height: 300 },
         opacity: DEFAULT_OPACITY,
+        locked: false,
       },
       "create-notification": {
         open: false,
@@ -113,6 +122,7 @@ export const useWindowsStore = create<WindowsState>()(
         size: { width: 242, height: 300 },
         opacity: DEFAULT_OPACITY,
         state: { npcs: [] },
+        locked: false,
       },
       currentWindowFocus: undefined,
       setCurrentWindowFocus: (key: WindowId) =>
@@ -129,6 +139,8 @@ export const useWindowsStore = create<WindowsState>()(
         set((state) => ({ [key]: { ...state[key], size } })),
       setOpacity: (key: WindowId, opacity: WindowOpacity) =>
         set((state) => ({ [key]: { ...state[key], opacity } })),
+      setLocked: (key: WindowId, locked: boolean) =>
+        set((state) => ({ [key]: { ...state[key], locked } })),
       toggleOpen: (key: WindowId) => {
         const curr = get()[key].open;
         set((state) => ({ [key]: { ...state[key], open: !curr } }));
