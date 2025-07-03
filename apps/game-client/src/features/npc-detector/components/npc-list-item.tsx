@@ -40,8 +40,10 @@ const NPCS_WITH_LOCATION = [NpcType.HERO];
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { npcs, removeNpc, settings, setNpcState } = useNpcDetectorStore();
   const { characterId, world } = useGlobalStore((s) => s.gameState);
-  const { mutate: sendChatMessage } = useSendChatMessage();
-  const { mutate: createNotification } = useCreateNotification();
+  const { mutate: sendChatMessage, isPending: isSendChatMessagePending } =
+    useSendChatMessage();
+  const { mutate: createNotification, isPending: isCreateNotificationPending } =
+    useCreateNotification();
 
   const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[characterId!][npcType as PickedNpcType];
@@ -154,16 +156,16 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
             {settingsByNpcType.guildIds?.length > 0 && (
               <>
                 <Button
-                  disabled={npc.notificationSent}
+                  disabled={isCreateNotificationPending || npc.notificationSent}
                   onClick={() => handleSendNotification(npc)}
                 >
                   {npc.notificationSent ? "Wysłano" : "Komunikat"}
                 </Button>
                 <Button
-                  disabled={npc.msgSent}
+                  disabled={isSendChatMessagePending || npc.msgSent}
                   onClick={() => handleSendChatNotification(npc)}
                 >
-                  {npc.msgSent ? "Wysłano" : "Wiadomość na czat"}
+                  {npc.msgSent ? "Wysłano" : "Wiadomość"}
                 </Button>
               </>
             )}
