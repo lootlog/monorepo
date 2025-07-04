@@ -223,7 +223,7 @@ export const Timers = () => {
             className="ll-bg-black/20"
           />
         )}
-        <ScrollArea className="!ll-h-full ll-pb-1 !ll-w-full" type="auto">
+        <ScrollArea className="!ll-h-full ll-pb-1 !ll-w-full" type="hover">
           {sortedTimers.length === 0 ? (
             <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
               ----
