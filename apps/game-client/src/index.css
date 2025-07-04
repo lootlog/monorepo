@@ -135,3 +135,16 @@ body.si > #lootlog-root {
   width: 14px;
   height: 14px;
 }
+
+.bottom-wrapper {
+  height: calc(100% - 400px);
+  margin-top: -8px;
+}
+
+.b_wrapper {
+  display: none;
+}
+
+.all-b {
+  display: none !important;
+}
