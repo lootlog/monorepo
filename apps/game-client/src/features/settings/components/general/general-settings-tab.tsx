@@ -11,8 +11,10 @@ export const GeneralSettingsTab: FC = () => {
     setRemoveTimerAfterMs,
     compactMode,
     timersGrouping,
+    timersUnderBag,
     toggleCompactMode,
     toggleTimersGrouping,
+    toggleTimersUnderBag,
   } = useTimersStore();
 
   const [inputValue, setInputValue] = useState<string>(
@@ -74,6 +76,16 @@ export const GeneralSettingsTab: FC = () => {
           <label htmlFor="timers-grouping-toggle">
             Grupowanie timerów (łączy timery z różnych lootlogów w jeden)
           </label>
+        </div>
+        <div className="checkbox-custom c-checkbox">
+          <input
+            id="timers-under-bag-toggle"
+            type="checkbox"
+            value={timersUnderBag ? "1" : "0"}
+            checked={timersUnderBag}
+            onChange={toggleTimersUnderBag}
+          />
+          <label htmlFor="timers-under-bag-toggle">Timery pod torbami</label>
         </div>
       </div>
 

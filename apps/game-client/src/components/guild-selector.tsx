@@ -6,19 +6,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useGuilds } from "@/hooks/api/use-guilds";
-import { FC, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { FC } from "react";
 import { useDeepCompareEffect } from "react-use";
 
 export type GuildSelectorProps = {
   selectedGuildId?: string;
   setSelectedGuildId: (guildId: string) => void;
   disabled?: boolean;
+  className?: string;
 };
 
 export const GuildSelector: FC<GuildSelectorProps> = ({
   selectedGuildId,
   setSelectedGuildId,
   disabled = false,
+  className = "",
 }) => {
   const { data: guilds, isFetched } = useGuilds();
 
@@ -36,7 +39,12 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
       onValueChange={setSelectedGuildId}
       disabled={disabled}
     >
-      <SelectTrigger className="w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2 ll-custom-cursor-pointer">
+      <SelectTrigger
+        className={cn(
+          "w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2 ll-custom-cursor-pointer",
+          className
+        )}
+      >
         <SelectValue
           placeholder="Wybierz serwer..."
           className="ll-h-4 ll-text-sm ll-text-white"
