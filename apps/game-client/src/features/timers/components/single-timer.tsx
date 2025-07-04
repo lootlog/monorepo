@@ -172,7 +172,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         <Tile
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof COLORS}
-          className="ll-h-full"
+          className={cn("ll-h-full", {
+            "!ll-py-[1px]": compactMode,
+          })}
         >
           <span
             className={cn(
@@ -181,14 +183,15 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 "ll-text-red-500": hasPassedRedThreshold,
                 "ll-text-orange-400": isMinSpawnTime,
                 "ll-text-white": !hasPassedRedThreshold && !isMinSpawnTime,
-                "ll-py-1": document.body.classList.contains("si"),
-                "ll-flex-col ll-py-0 ll-leading-tight": compactMode,
+                "ll-py-1":
+                  document.body.classList.contains("si") && !compactMode,
+                "ll-flex-col ll-py-0 ll-px-0 ll-leading-[1.05]": compactMode,
               }
             )}
           >
             <span
-              className={cn({
-                "ll-text-[10px] ll-text-center ll-h-full ll-flex ll-justify-center ll-items-center":
+              className={cn("ll-whitespace-nowrap ll-truncate", {
+                "ll-text-[10px] ll-text-center ll-px-0.5 ll-box-border ll-h-full ll-items-center ":
                   compactMode,
               })}
             >

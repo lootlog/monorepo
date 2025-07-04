@@ -7,8 +7,10 @@ interface TimersState {
   timersColors: Record<string, string | undefined>;
   removeTimerAfterMs: number;
   compactMode?: boolean;
+  timersUnderBag?: boolean;
   timersGrouping?: boolean;
   toggleCompactMode?: () => void;
+  toggleTimersUnderBag?: () => void;
   toggleTimersGrouping?: () => void;
   setRemoveTimerAfterMs: (ms: number) => void;
   addHiddenTimer: (
@@ -45,11 +47,15 @@ export const useTimersStore = create<TimersState>()(
       removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
       compactMode: false,
       timersGrouping: true,
+      timersUnderBag: false,
       setRemoveTimerAfterMs: (ms: number) => {
         set({ removeTimerAfterMs: ms });
       },
       toggleCompactMode: () => {
         set((state) => ({ compactMode: !state.compactMode }));
+      },
+      toggleTimersUnderBag: () => {
+        set((state) => ({ timersUnderBag: !state.timersUnderBag }));
       },
       toggleTimersGrouping: () => {
         set((state) => ({ timersGrouping: !state.timersGrouping }));
