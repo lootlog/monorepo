@@ -140,6 +140,7 @@ export const useTimersStore = create<TimersState>()(
         removeTimerAfterMs: state.removeTimerAfterMs,
         compactMode: state.compactMode,
         timersGrouping: state.timersGrouping,
+        timersUnderBag: state.timersUnderBag,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,

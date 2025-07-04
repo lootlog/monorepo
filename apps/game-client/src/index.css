@@ -137,7 +137,7 @@ body.si > #lootlog-root {
 }
 
 .bottom-wrapper {
-  height: calc(100% - 400px);
+  height: calc(100% - 398px);
   margin-top: -8px;
 }
 
