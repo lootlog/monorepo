@@ -21,6 +21,7 @@ export type DraggableWindowProps = {
   maxWidth?: number;
   maxHeight?: number;
   dynamicHeight?: boolean;
+  closable?: boolean;
 };
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
@@ -38,6 +39,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   maxWidth,
   maxHeight,
   dynamicHeight = false,
+  closable = true,
 }) => {
   const state = useWindowsStore();
   const opacity = state[id].opacity;
@@ -215,11 +217,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
               />
             )}
           </div>
-          <button
-            type="button"
-            className="ll-close-button ll-custom-cursor-pointer"
-            onClick={onClose}
-          />
+          {closable && (
+            <button
+              type="button"
+              className="ll-close-button ll-custom-cursor-pointer"
+              onClick={onClose}
+            />
+          )}
         </div>
         <div className="ll-flex-1 ll-overflow-hidden">{children}</div>
         {resizable && !isLocked && (

@@ -18,7 +18,8 @@ export type WindowId =
   | "add-timer"
   | "npc-detector"
   | "notifications"
-  | "create-notification";
+  | "create-notification"
+  | "quick-access";
 
 interface WindowPositionState {
   x: number;
@@ -49,6 +50,7 @@ interface WindowsState {
   "npc-detector": WindowData & { state: NpcDetectorWindowState };
   notifications: WindowData;
   "create-notification": WindowData & { state: CreateNotificationState };
+  "quick-access": WindowData;
   currentWindowFocus?: WindowId;
   setCurrentWindowFocus: (key: WindowId) => void;
   setOpen: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
@@ -124,6 +126,13 @@ export const useWindowsStore = create<WindowsState>()(
         state: { npcs: [] },
         locked: false,
       },
+      "quick-access": {
+        open: true,
+        position: DEFAULT_POSITION,
+        size: { width: 180, height: 68 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
       currentWindowFocus: undefined,
       setCurrentWindowFocus: (key: WindowId) =>
         set({ currentWindowFocus: key }),
@@ -162,6 +171,7 @@ export const useWindowsStore = create<WindowsState>()(
           position: state["create-notification"].position,
           opacity: state["create-notification"].opacity,
         },
+        "quick-access": state["quick-access"],
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
