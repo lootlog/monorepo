@@ -66,7 +66,9 @@ const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
 };
 
 export const Timers = () => {
-  const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
+  const { characterId, accountId, world, gameInterface } = useGlobalStore(
+    (s) => s.gameState
+  );
   const {
     timers: { open },
     "add-timer": { open: addTimerOpen },
@@ -257,7 +259,7 @@ export const Timers = () => {
     );
   };
 
-  if (timersUnderBag) {
+  if (timersUnderBag && gameInterface === "ni") {
     return <UnderBagTimers>{renderTimers()}</UnderBagTimers>;
   }
 
