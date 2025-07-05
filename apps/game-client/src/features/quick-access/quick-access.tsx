@@ -36,7 +36,6 @@ export const QuickAccess = () => {
       minHeight={48}
       minWidth={222}
       closable={false}
-      disableTitle
     >
       <div className="ll-flex ll-gap-1 ll-px-1 ll-py-1">
         {BUTTONS.map((button) => (
