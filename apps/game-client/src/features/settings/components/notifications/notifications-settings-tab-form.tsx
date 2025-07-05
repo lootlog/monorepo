@@ -17,6 +17,7 @@ export type NotificationsSettingsTabFormProps = {
 };
 
 const mainFields = [
+  { label: "Komunikaty", key: "message" },
   { label: "Elita 2", key: NpcType.ELITE2 },
   { label: "Heros", key: NpcType.HERO },
   { label: "Kolos", key: NpcType.COLOSSUS },
@@ -25,7 +26,13 @@ const mainFields = [
 
 const FormSchema = z.object({
   settingsByNpcType: z.record(
-    z.enum([NpcType.ELITE2, NpcType.HERO, NpcType.COLOSSUS, NpcType.TITAN]),
+    z.enum([
+      NpcType.ELITE2,
+      NpcType.HERO,
+      NpcType.COLOSSUS,
+      NpcType.TITAN,
+      "message",
+    ]),
     z.object({
       show: z.boolean(),
       highlight: z.boolean(),

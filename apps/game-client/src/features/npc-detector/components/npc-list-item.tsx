@@ -182,11 +182,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         )}
       </span>
 
-      <Separator
-        className={cn("ll-bg-gray-600 ll-h-[1px]", {
-          "ll-h-0": npcs.length === 1,
-        })}
-      />
+      {npcs.length > 1 && <Separator className="ll-bg-gray-600 ll-h-[1px]" />}
     </span>
   );
 };
