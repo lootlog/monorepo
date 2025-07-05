@@ -41,9 +41,13 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
               {time}@{serverNames.join(", ")} - {notification.world}
             </span>
           </span>
-          <span className="ll-flex ll-gap-2 ll-py-1">
-            <NpcTile npc={notification.npc} containerClassName="ll-w-8" />
-            <span className="ll-flex ll-flex-col ll-justify-center">
+          <span className="ll-flex ll-gap-4 ll-py-1">
+            <NpcTile
+              npc={notification.npc}
+              className="ll-max-h-12"
+              containerClassName="ll-w-6"
+            />
+            <span className="ll-flex ll-flex-col">
               <span>
                 <span className="ll-font-semibold ll-text-xs">
                   {notification.npc.name}{" "}
