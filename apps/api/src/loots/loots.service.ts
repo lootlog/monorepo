@@ -30,8 +30,6 @@ import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { mergeLevelRanges } from 'src/shared/utils/merge-level-range';
-import { canReadTitans } from 'src/shared/permissions/can-read-titans';
 
 @Injectable()
 export class LootsService {
@@ -173,36 +171,28 @@ export class LootsService {
       });
     }
 
-    const mergedLevelRanges = mergeLevelRanges(roles, [
-      Permission.LOOTLOG_READ,
-    ]);
-
     const administrativeUser = isAdministrativeUser(permissions);
-    const canViewTitans = canReadTitans(permissions, administrativeUser);
-
-    const canViewTitansCondition = canViewTitans
-      ? Prisma.sql``
-      : Prisma.sql`
-            AND EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements("npcs") AS npc
-        WHERE npc->>'type' != 'TITAN'
-    )`;
 
     const levelRangesCondition =
-      mergedLevelRanges.length > 0 && !administrativeUser
+      roles.length > 0 && !administrativeUser
         ? Prisma.sql`
       AND EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements("npcs") AS npc
-        WHERE
-          ${Prisma.join(
-            mergedLevelRanges.map(
-              (range) =>
-                Prisma.sql`(npc->>'lvl')::int >= ${range.from} AND (npc->>'lvl')::int <= ${range.to}`,
-            ),
-            ' OR ',
-          )}
+      SELECT 1
+      FROM jsonb_array_elements("npcs") AS npc
+      WHERE
+        ${Prisma.join(
+          roles.map((role) => {
+            const hasReadTitans = role.permissions?.includes(
+              Permission.LOOTLOG_READ_LOOTS_TITANS,
+            );
+            return Prisma.sql`
+          (npc->>'lvl')::int >= ${role.lvlRangeFrom}
+          AND (npc->>'lvl')::int <= ${role.lvlRangeTo}
+          ${hasReadTitans ? Prisma.sql`` : Prisma.sql`AND (npc->>'type') != 'TITAN'`}
+          `;
+          }),
+          ' OR ',
+        )}
       )`
         : Prisma.sql``;
 
@@ -262,7 +252,6 @@ export class LootsService {
       ${raritiesCondition}
       ${cursorCondition}
       ${levelRangesCondition}
-      ${canViewTitansCondition}
       ORDER BY "id" DESC
       LIMIT ${limit};
     `;

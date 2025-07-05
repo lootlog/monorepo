@@ -31,10 +31,7 @@ export class GuildsService {
       });
       return response.map((data) => ({
         guild: data.guild,
-        ranges: mergeLevelRanges(data.roles as Role[], [
-          Permission.LOOTLOG_READ,
-        ]),
-
+        roles: data.roles,
         permissions: data.permissions,
       }));
     } catch (err) {
