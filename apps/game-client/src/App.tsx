@@ -8,12 +8,13 @@ import { OnlinePlayers } from "@/features/online-players/online-players";
 import { AddTimer } from "@/features/timers/add-timer";
 import { NpcDetector } from "@/features/npc-detector/npc-detector";
 import { Notifications } from "@/features/notifications/notifications";
-import { CreateNotification } from "@/features/notifications/create-notification";
 import { QuickAccess } from "@/features/quick-access/quick-access";
+import { useHotkeys } from "@/hooks/use-hotkeys";
 
 function App() {
   useGameEventsParser();
   useInitialConfiguration();
+  useHotkeys();
 
   const { gameInitialized } = useGlobalStore((state) => state.gameState);
 
@@ -27,7 +28,6 @@ function App() {
         <OnlinePlayers />
         <NpcDetector />
         <Notifications />
-        <CreateNotification />
         <QuickAccess />
       </>
     )

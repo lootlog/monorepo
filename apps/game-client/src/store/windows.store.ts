@@ -129,7 +129,7 @@ export const useWindowsStore = create<WindowsState>()(
       "quick-access": {
         open: true,
         position: DEFAULT_POSITION,
-        size: { width: 180, height: 68 },
+        size: { width: 180, height: 48 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },

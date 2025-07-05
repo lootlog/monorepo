@@ -5,10 +5,7 @@ import {
   useNotifications,
 } from "@/features/notifications/hooks/use-notifications";
 import { useGlobalStore } from "@/store/global.store";
-import {
-  PickedNpcType,
-  useNotificationsStore,
-} from "@/store/notifications.store";
+import { useNotificationsStore } from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { AnimatePresence, motion } from "framer-motion";
@@ -16,8 +13,11 @@ import { AnimatePresence, motion } from "framer-motion";
 export const Notifications = () => {
   useNotifications();
   const { setOpen } = useWindowsStore();
-  const { notifications, clearNotifications, settings } =
-    useNotificationsStore();
+  const {
+    notifications,
+    clearNotifications,
+    settings: notificationsSettings,
+  } = useNotificationsStore();
   const { characterId } = useGlobalStore((s) => s.gameState);
 
   const handleClose = () => {
@@ -25,18 +25,23 @@ export const Notifications = () => {
     clearNotifications();
   };
 
+  const getKey = (notification: Notification) => {
+    if (!notification.npc || !notification.npc.wt) return "message";
+    return getNpcTypeByWt(notification.npc.wt);
+  };
+
   const isNotificationVisible = (notification: Notification) => {
-    if (!notification.npc || !notification.npc.wt || !characterId) return false;
-    const npcType = getNpcTypeByWt(notification.npc.wt);
-    const charSettings = settings[characterId];
+    const key = getKey(
+      notification
+    ) as keyof (typeof notificationsSettings)[string];
+
+    const charSettings = notificationsSettings[characterId!];
     if (!charSettings) return false;
 
-    const settingsByNpcType = charSettings[npcType as PickedNpcType];
-    if (!settingsByNpcType) return false;
-    return (
-      settingsByNpcType.show &&
-      settingsByNpcType.guildIds.includes(notification.guildId)
-    );
+    const settings = charSettings[key];
+    if (!settings) return false;
+
+    return settings.show && settings.guildIds.includes(notification.guildId);
   };
 
   const filteredNotifications = notifications.filter(isNotificationVisible);

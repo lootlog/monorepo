@@ -3,22 +3,23 @@ import { NpcType } from "@/hooks/api/use-npcs";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type PickedNpcType =
+export type NotificationType =
   | NpcType.HERO
   | NpcType.COLOSSUS
   | NpcType.TITAN
-  | NpcType.ELITE2;
+  | NpcType.ELITE2
+  | "message";
 
-export interface NotificationsSettingByNpc {
+export interface NotificationSettings {
   show: boolean;
   highlight: boolean;
   ignoreOtherWorlds: boolean;
   guildIds: string[];
 }
 
-export type NotificationsSettings = Pick<
-  Record<NpcType, NotificationsSettingByNpc>,
-  PickedNpcType
+export type NotificationsSettings = Record<
+  NotificationType,
+  NotificationSettings
 >;
 
 export type NotificationWithServers = Notification & {
@@ -60,6 +61,12 @@ export const recommendedSettings: NotificationsSettings = {
     ignoreOtherWorlds: false,
     guildIds: [],
   },
+  message: {
+    show: true,
+    highlight: true,
+    ignoreOtherWorlds: false,
+    guildIds: [],
+  },
 };
 
 export const useNotificationsStore = create<NotificationsState>()(
@@ -95,7 +102,13 @@ export const useNotificationsStore = create<NotificationsState>()(
             return { notifications: [...state.notifications] };
           }
 
-          // If the notification npc is already present, overwrite it
+          if (notification.message) {
+            return {
+              notifications: [notification, ...state.notifications],
+            };
+          }
+
+          // If the notification npc is already present, overwrite it and push to the front
           const existingNotificationIndex = state.notifications.findIndex(
             (n) =>
               n.npc?.id === notification.npc?.id &&
@@ -103,7 +116,13 @@ export const useNotificationsStore = create<NotificationsState>()(
           );
           if (existingNotificationIndex !== -1) {
             state.notifications[existingNotificationIndex] = notification;
-            return { notifications: [...state.notifications] };
+            return {
+              notifications: [
+                ...state.notifications.slice(0, existingNotificationIndex),
+                ...state.notifications.slice(existingNotificationIndex + 1),
+                notification,
+              ],
+            };
           }
 
           return {
@@ -125,7 +144,7 @@ export const useNotificationsStore = create<NotificationsState>()(
         settings: state.settings,
         notifications: state.notifications,
       }),
-      version: 1,
+      version: 2,
     }
   )
 );

@@ -6,14 +6,24 @@ import { FC } from "react";
 export type NpcTileProps = {
   npc: GameNpc;
   className?: string;
+  containerClassName?: string;
 };
 
-export const NpcTile: FC<NpcTileProps> = ({ npc, className }) => {
+export const NpcTile: FC<NpcTileProps> = ({
+  npc,
+  className,
+  containerClassName,
+}) => {
   const imageHasDomain =
     npc.icon.startsWith("http://") || npc.icon.startsWith("https://");
 
   return (
-    <span className="ll-w-12 ll-flex ll-items-center ll-justify-center">
+    <span
+      className={cn(
+        "ll-w-12 ll-flex ll-items-center ll-justify-center",
+        containerClassName
+      )}
+    >
       <img
         className={cn(
           "ll-custom-cursor-pointer ll-rounded-lg ll-max-w-12",
