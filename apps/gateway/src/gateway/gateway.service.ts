@@ -42,6 +42,11 @@ export class GatewayService {
             (g: any) => g.guild.id === guildId,
           );
           if (!desiredGuild) return;
+          if (!npc) {
+            socket.emit(event, data);
+            return;
+          }
+
           const ranges = desiredGuild?.ranges || [];
 
           const administrativeUser = isAdministrativeUser(
@@ -97,7 +102,7 @@ export class GatewayService {
     this.emitToEligibleSockets({
       guildId: data.guildId,
       npc: data.npc,
-      type: data.npc.type,
+      type: data.npc?.type,
       event: GatewayEvent.NOTIFICATIONS_SEND,
       data,
     });

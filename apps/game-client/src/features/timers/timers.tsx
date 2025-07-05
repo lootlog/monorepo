@@ -84,7 +84,7 @@ export const Timers = () => {
     timersUnderBag,
   } = useTimersStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    "timers-selected-guild",
+    "ll-timers-selected-guild",
     ""
   );
   const { data: guildPermissions } = useGuildPermissions({
