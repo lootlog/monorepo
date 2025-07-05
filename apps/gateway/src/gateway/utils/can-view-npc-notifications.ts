@@ -16,6 +16,9 @@ export const canViewNpcNotification = (npc: Npc, roles: Role[]) => {
   }
 
   return roles.some(
-    (role) => role.lvlRangeFrom <= npc.lvl && role.lvlRangeTo >= npc.lvl,
+    (role) =>
+      role.lvlRangeFrom <= npc.lvl &&
+      role.lvlRangeTo >= npc.lvl &&
+      role.permissions.includes(Permission.LOOTLOG_READ),
   );
 };
