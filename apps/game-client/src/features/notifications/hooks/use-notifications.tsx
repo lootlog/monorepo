@@ -4,7 +4,6 @@ import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { GameNpc } from "@/types/margonem/npcs";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { useEffect, useRef } from "react";
 
 export type Notification = {
@@ -35,14 +34,8 @@ export const useNotifications = () => {
     if (socket?.hasListeners(GatewayEvent.NOTIFICATION) || !connected) return;
 
     socket?.on(GatewayEvent.NOTIFICATION, (data: Notification) => {
-      const npcType = getNpcTypeByWt(data.npc?.wt!);
-      const key = (npcType ? npcType : "message") as keyof typeof settings;
-
       // @ts-ignore
       if (data.discordId === sessionDataRef.current?.user.discordId) return;
-
-      if (data.world !== world && settingsRef.current[key].ignoreOtherWorlds)
-        return;
 
       pushNotification({ ...data, servers: [data.guildId] });
     });

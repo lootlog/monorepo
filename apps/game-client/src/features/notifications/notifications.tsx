@@ -18,7 +18,7 @@ export const Notifications = () => {
     clearNotifications,
     settings: notificationsSettings,
   } = useNotificationsStore();
-  const { characterId } = useGlobalStore((s) => s.gameState);
+  const { characterId, world } = useGlobalStore((s) => s.gameState);
 
   const handleClose = () => {
     setOpen("notifications", false);
@@ -40,6 +40,10 @@ export const Notifications = () => {
 
     const settings = charSettings[key];
     if (!settings) return false;
+
+    if (settings.ignoreOtherWorlds && notification.world !== world) {
+      return false;
+    }
 
     return settings.show && settings.guildIds.includes(notification.guildId);
   };
