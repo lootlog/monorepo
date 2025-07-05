@@ -11,7 +11,6 @@ import { useGlobalStore } from "@/store/global.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { format } from "date-fns";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import {
@@ -34,8 +33,6 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const { data: members } = useGuildMembers(notification.guildId);
   const { data: guilds } = useGuilds();
   const guildMember = members?.[notification.discordId];
-  const color = useMemberColor(guildMember);
-  const memberName = guildMember?.name;
 
   const npcType = notification.npc
     ? getNpcTypeByWt(notification.npc.wt!)

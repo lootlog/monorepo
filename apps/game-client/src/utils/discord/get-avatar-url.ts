@@ -3,6 +3,10 @@ export const getDiscordAvatarUrl = (
   avatar?: string | null | undefined,
   size: number = 128
 ): string => {
+  if (avatar?.startsWith("http")) {
+    return avatar;
+  }
+
   if (!userId) {
     return `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random() * 5)}.png`;
   }
