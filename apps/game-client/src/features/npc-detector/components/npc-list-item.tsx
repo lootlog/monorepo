@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
 import { NpcType } from "@/hooks/api/use-npcs";
@@ -15,24 +14,14 @@ import { XIcon } from "lucide-react";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { composeNpcChatMessage } from "@/utils/chat/compose-npc-chat-message";
+import {
+  getBackgroundColor,
+  getGradient,
+} from "@/utils/notifications-and-detector/background";
 
 export type NpcListItemProps = {
   npc: GameNpcWithLocation;
   idx: number;
-};
-
-const COLORS_BY_NPC_TYPE: Record<PickedNpcType, string> = {
-  [NpcType.COLOSSUS]: "rgba(53, 255, 105, 0.6)",
-  [NpcType.HERO]: "rgba(249, 137, 72, 0.6)",
-  [NpcType.ELITE2]: "rgba(219, 90, 186, 0.6)",
-  [NpcType.TITAN]: "rgba(59, 130, 246, 0.6)",
-};
-
-const BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE: Record<PickedNpcType, string> = {
-  [NpcType.COLOSSUS]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.COLOSSUS]}, transparent)`,
-  [NpcType.HERO]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.HERO]}, transparent)`,
-  [NpcType.ELITE2]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.ELITE2]}, transparent)`,
-  [NpcType.TITAN]: `linear-gradient(to top, ${COLORS_BY_NPC_TYPE[NpcType.TITAN]}, transparent)`,
 };
 
 const NPCS_WITH_LOCATION = [NpcType.HERO];
@@ -47,6 +36,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
 
   const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[characterId!][npcType as PickedNpcType];
+  const key = npcType;
 
   const handleRemoveNpc = (npcId: number) => {
     removeNpc(npcId);
@@ -122,19 +112,15 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
     );
   };
 
-  const gradient = settingsByNpcType.highlight
-    ? BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE[npcType as PickedNpcType]
-    : "";
-  const backgroundColor = settingsByNpcType.highlight
-    ? COLORS_BY_NPC_TYPE[npcType as PickedNpcType]
-    : "transparent";
-
   return (
     <span key={npc.id}>
       <span
         className={cn("ll-flex ll-justify-between ll-py-2 ll-gap-4 ll-px-3")}
         style={{
-          background: idx === 0 ? gradient : backgroundColor,
+          background:
+            idx === 0
+              ? getGradient(key, settingsByNpcType?.highlight)
+              : getBackgroundColor(key, settingsByNpcType?.highlight),
         }}
       >
         <NpcTile npc={npc} />
