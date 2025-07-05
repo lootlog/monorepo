@@ -60,7 +60,6 @@ export const ChatInput: FC<ChatInputProps> = ({ selectedGuildId }) => {
       </Label>
       <Input
         autoComplete="off"
-        autoFocus
         placeholder="Wiadomość..."
         {...register("message")}
       />
