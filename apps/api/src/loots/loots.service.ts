@@ -186,9 +186,14 @@ export class LootsService {
               Permission.LOOTLOG_READ_LOOTS_TITANS,
             );
             return Prisma.sql`
-          (npc->>'lvl')::int >= ${role.lvlRangeFrom}
-          AND (npc->>'lvl')::int <= ${role.lvlRangeTo}
-          ${hasReadTitans ? Prisma.sql`` : Prisma.sql`AND (npc->>'type') != 'TITAN'`}
+          (
+            (npc->>'lvl')::int >= ${role.lvlRangeFrom}
+            AND (npc->>'lvl')::int <= ${role.lvlRangeTo}
+            AND (
+            (npc->>'type') != 'TITAN'
+            OR (${hasReadTitans ? Prisma.sql`TRUE` : Prisma.sql`FALSE`})
+            )
+          )
           `;
           }),
           ' OR ',
