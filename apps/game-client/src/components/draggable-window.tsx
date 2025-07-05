@@ -22,6 +22,7 @@ export type DraggableWindowProps = {
   maxHeight?: number;
   dynamicHeight?: boolean;
   closable?: boolean;
+  disableTitle?: boolean;
 };
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
@@ -40,6 +41,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   maxHeight,
   dynamicHeight = false,
   closable = true,
+  disableTitle = false,
 }) => {
   const state = useWindowsStore();
   const opacity = state[id].opacity;
@@ -191,40 +193,42 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           }
         )}
       >
-        <div className="ll-flex ll-items-center ll-justify-between ll-px-1 ll-flex-shrink-0">
-          <div className="ll-flex ll-items-center ll-gap-1">
-            <div
-              className="ll-opacity-button ll-custom-cursor-pointer ll-mt-0.5"
-              onClick={handleOpacityChange}
-            />
-            {actions}
-          </div>
-          <div className="ll-background-[0_0] ll-line-height-[28px] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
-            <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
-              {title}
-            </p>
-            {isLocked ? (
-              <PinOff
-                className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
-                size="14"
-                onClick={handleLockToggle}
+        {!disableTitle && (
+          <div className="ll-flex ll-items-center ll-justify-between ll-px-1 ll-flex-shrink-0">
+            <div className="ll-flex ll-items-center ll-gap-1">
+              <div
+                className="ll-opacity-button ll-custom-cursor-pointer ll-mt-0.5"
+                onClick={handleOpacityChange}
               />
-            ) : (
-              <Pin
-                className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
-                size="14"
-                onClick={handleLockToggle}
+              {actions}
+            </div>
+            <div className="ll-background-[0_0] ll-line-height-[28px] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
+              <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
+                {title}
+              </p>
+              {isLocked ? (
+                <PinOff
+                  className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                  size="14"
+                  onClick={handleLockToggle}
+                />
+              ) : (
+                <Pin
+                  className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                  size="14"
+                  onClick={handleLockToggle}
+                />
+              )}
+            </div>
+            {closable && (
+              <button
+                type="button"
+                className="ll-close-button ll-custom-cursor-pointer"
+                onClick={onClose}
               />
             )}
           </div>
-          {closable && (
-            <button
-              type="button"
-              className="ll-close-button ll-custom-cursor-pointer"
-              onClick={onClose}
-            />
-          )}
-        </div>
+        )}
         <div className="ll-flex-1 ll-overflow-hidden">{children}</div>
         {resizable && !isLocked && (
           <div

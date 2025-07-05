@@ -33,11 +33,12 @@ export const QuickAccess = () => {
     <DraggableWindow
       id="quick-access"
       title="Lootlog"
-      minHeight={68}
-      minWidth={180}
+      minHeight={48}
+      minWidth={222}
       closable={false}
+      disableTitle
     >
-      <div className="ll-flex ll-gap-1 ll-px-1 ll-py-2">
+      <div className="ll-flex ll-gap-1 ll-px-1 ll-py-1">
         {BUTTONS.map((button) => (
           <QuickAccessButton
             key={button.id}
