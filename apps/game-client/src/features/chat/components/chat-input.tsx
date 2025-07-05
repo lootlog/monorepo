@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useGlobalStore } from "@/store/global.store";
@@ -52,8 +53,11 @@ export const ChatInput: FC<ChatInputProps> = ({ selectedGuildId }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="ll-flex ll-items-center ll-justify-center"
+      className="ll-flex ll-justify-center ll-flex-col"
     >
+      <Label className="!ll-text-[10px]">
+        (zacznij od !, aby wysłać powiadomienie)
+      </Label>
       <Input
         autoComplete="off"
         autoFocus

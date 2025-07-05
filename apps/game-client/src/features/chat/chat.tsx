@@ -67,7 +67,7 @@ export const Chat = () => {
                   ref={scrollAreaRef}
                   type="auto"
                 >
-                  <div className="ll-flex ll-flex-col ll-gap-1 ll-p-1 ll-w-full">
+                  <div className="ll-flex ll-flex-col ll-gap-1 ll-p-1 ll-w-full ll-bg-gray-200/10 ll-backdrop-blur-xs ll-rounded-lg">
                     {messages?.map((message) => {
                       const guildMember = guildMembers?.[message.senderId];
 
@@ -82,7 +82,7 @@ export const Chat = () => {
                   </div>
                 </ScrollArea>
               </div>
-              <div className="ll-flex-shrink-0 ll-pt-2 ll-pb-1">
+              <div className="ll-flex-shrink-0 ll-pb-1 ll-mt-1">
                 <ChatInput selectedGuildId={selectedGuildId} />
               </div>
             </div>
