@@ -172,7 +172,7 @@ export class BotService {
           roleIds: memberRoleIds,
           type,
           banner: member.user.banner,
-          avatar: member.user.avatar,
+          avatar: member.user.avatarURL(),
           name: getDiscordMemberName(member),
         };
       }),
