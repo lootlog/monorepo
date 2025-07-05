@@ -171,17 +171,21 @@ export class LootsService {
       });
     }
 
+    const filteredRoles = roles.filter((role) => {
+      return role.permissions.includes(Permission.LOOTLOG_READ);
+    });
+
     const administrativeUser = isAdministrativeUser(permissions);
 
     const levelRangesCondition =
-      roles.length > 0 && !administrativeUser
+      filteredRoles.length > 0 && !administrativeUser
         ? Prisma.sql`
       AND EXISTS (
       SELECT 1
       FROM jsonb_array_elements("npcs") AS npc
       WHERE
         ${Prisma.join(
-          roles.map((role) => {
+          filteredRoles.map((role) => {
             const hasReadTitans = role.permissions?.includes(
               Permission.LOOTLOG_READ_LOOTS_TITANS,
             );
