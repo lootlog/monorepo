@@ -2,7 +2,9 @@ import { FC, PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
 
 export const UnderBagTimers: FC<PropsWithChildren> = ({ children }) => {
-  const bottomWrapper = document.querySelector(".bottom-wrapper");
+  const bottomWrapper = document.querySelector(
+    ".right-column > .inner-wrapper > .bottom-wrapper"
+  );
 
   return createPortal(
     <div
