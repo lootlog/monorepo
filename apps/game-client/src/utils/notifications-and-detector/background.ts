@@ -1,7 +1,7 @@
 import { NpcType } from "@/hooks/api/use-npcs";
 
 const TEXT_COLORS_BY_KEY: Record<string, string> = {
-  [NpcType.COLOSSUS]: "rgba(53, 255, 105, 1)",
+  [NpcType.COLOSSUS]: "rgba(33, 131, 128, 1)",
   [NpcType.HERO]: "rgba(249, 137, 72, 1)",
   [NpcType.ELITE2]: "rgba(219, 90, 186, 1)",
   [NpcType.TITAN]: "rgba(59, 130, 246, 1)",
@@ -9,7 +9,7 @@ const TEXT_COLORS_BY_KEY: Record<string, string> = {
 };
 
 const BACKGROUND_COLORS_BY_KEY: Record<string, string> = {
-  [NpcType.COLOSSUS]: "rgba(53, 255, 105, 0.6)",
+  [NpcType.COLOSSUS]: "rgba(33, 131, 128, 0.6)",
   [NpcType.HERO]: "rgba(249, 137, 72, 0.6)",
   [NpcType.ELITE2]: "rgba(219, 90, 186, 0.6)",
   [NpcType.TITAN]: "rgba(59, 130, 246, 0.6)",
