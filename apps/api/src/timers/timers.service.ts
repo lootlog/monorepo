@@ -27,9 +27,7 @@ import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
 import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { mergeLevelRanges } from 'src/shared/utils/merge-level-range';
-import { isNpcInLevelRanges } from 'src/shared/utils/is-npc-in-level-range';
-import { canReadTitans } from 'src/shared/permissions/can-read-titans';
+import { canViewNpcTimer } from 'src/shared/utils/can-view-npc-timer';
 
 function parseNpc(npc: any) {
   return typeof npc === 'string' ? JSON.parse(npc) : npc;
@@ -166,10 +164,7 @@ export class TimersService {
   ) {
     const now = new Date();
     const administrativeUser = isAdministrativeUser(permissions);
-    const canViewTitans = canReadTitans(permissions, administrativeUser);
-    const mergedLevelRanges = mergeLevelRanges(roles, [
-      Permission.LOOTLOG_READ,
-    ]);
+
     const timers = await this.prisma.timer.findMany({
       where: {
         guildId: guild.id,
@@ -179,11 +174,12 @@ export class TimersService {
       orderBy: { maxSpawnTime: 'desc' },
       include: { member: true },
     });
+
     const filteredTimers = timers.filter((timer) => {
-      const npc = parseNpc(timer.npc);
-      if (!canViewTitans && npc.type === NpcType.TITAN) return false;
       if (administrativeUser) return true;
-      return isNpcInLevelRanges(npc, mergedLevelRanges);
+      const npc = parseNpc(timer.npc);
+
+      return canViewNpcTimer(npc, roles);
     });
     return filteredTimers;
   }
@@ -201,19 +197,18 @@ export class TimersService {
         discordId,
         guildIds,
       );
+
     const results: Timer[] = [];
     for (const guild of guilds) {
       const guildId = guild.id;
       const guildPermissionsAndRoles = permissionsPerGuild.find(
         (p) => p.guild.id === guildId,
       );
+
       const permissions = guildPermissionsAndRoles?.permissions || [];
       const roles = guildPermissionsAndRoles?.roles || [];
-      const mergedLevelRanges = mergeLevelRanges(roles, [
-        Permission.LOOTLOG_READ,
-      ]);
       const administrativeUser = isAdministrativeUser(permissions);
-      const canViewTitans = canReadTitans(permissions, administrativeUser);
+
       const timers = await this.prisma.timer.findMany({
         where: {
           guildId,
@@ -223,12 +218,14 @@ export class TimersService {
         orderBy: { maxSpawnTime: 'desc' },
         include: { member: true },
       });
+
       const filtered = timers.filter((timer) => {
-        const npc = parseNpc(timer.npc);
-        if (!canViewTitans && npc.type === NpcType.TITAN) return false;
         if (administrativeUser) return true;
-        return isNpcInLevelRanges(npc, mergedLevelRanges);
+        const npc = parseNpc(timer.npc);
+
+        return canViewNpcTimer(npc, roles);
       });
+
       results.push(...filtered);
     }
     return results;
