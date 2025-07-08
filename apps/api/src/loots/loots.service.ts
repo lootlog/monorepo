@@ -256,7 +256,7 @@ export class LootsService {
       : Prisma.sql``;
 
     const loots: any[] = await this.prisma.$queryRaw(Prisma.sql`
-    SELECT l.*
+    SELECT DISTINCT ON (l."id") l.*
     FROM "Loot" l
     INNER JOIN "LootSubmission" s ON s."lootId" = l."id"
     WHERE s."guildId" = ${guild.id}
