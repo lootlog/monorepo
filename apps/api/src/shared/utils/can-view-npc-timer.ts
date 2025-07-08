@@ -1,6 +1,6 @@
-import { Npc, NpcType, Permission, Role } from 'generated/client';
+import { NpcType, Permission, Role } from 'generated/client';
 
-export const canViewNpcTimer = (npc: Npc, roles: Role[]) => {
+export const canViewNpcTimer = (npc: any, roles: Role[]) => {
   if (!npc) return false;
 
   if (npc.type === NpcType.TITAN) {

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Guild, Permission } from 'generated/client';
 import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
 import { GuildsService } from 'src/guilds/guilds.service';
@@ -34,6 +42,13 @@ export class GuildsController {
     @Body() data: UpdateGuildConfigDto,
   ) {
     return this.guildsService.updateGuildConfig(guild.id, data);
+  }
+
+  // @Permissions(Permission.OWNER)
+  // @UseGuards(PermissionsGuard)
+  @Post(':guildId/sync')
+  async handleGuildSync(@Param('guildId') guildId: string) {
+    return this.guildsService.handleGuildSyncTrigger(guildId);
   }
 
   @Permissions(Permission.LOOTLOG_READ)
