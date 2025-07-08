@@ -158,4 +158,16 @@ export class GuildsEventsHandler {
     await this.guildsService.deleteGuild(data);
     console.log(`Guild deleted successfully: ${data.guildId}`);
   }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_SYNC,
+    queue: Queue.GUILDS_SYNC,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleGuildsSync(data: CreateGuildDto) {
+    await this.guildsService.handleGuildSync(data);
+  }
 }

@@ -1,5 +1,8 @@
 export enum Queue {
   // guilds
+  GUILDS_SYNC = 'backend-guilds-sync',
+  GUILDS_SYNC_DLQ = 'backend-guilds-sync.dlq',
+  GUILDS_SYNC_RETRY = 'backend-guilds-sync.retry',
   GUILDS_CREATE = 'backend-guilds-create',
   GUILDS_CREATE_DLQ = 'backend-guilds-create.dlq',
   GUILDS_CREATE_RETRY = 'backend-guilds-create.retry',
