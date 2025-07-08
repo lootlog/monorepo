@@ -19,6 +19,8 @@ import { generateSlug } from 'src/shared/utils/generate-slug';
 import { UsersService } from 'src/users/users.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 
 @Injectable()
 export class GuildsService {
@@ -28,6 +30,7 @@ export class GuildsService {
     @Inject(forwardRef(() => LootlogConfigService))
     private lootlogConfigService: LootlogConfigService,
     @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
     private readonly amqpConnection: AmqpConnection,
     private readonly prisma: PrismaService,
   ) {}
@@ -244,7 +247,7 @@ export class GuildsService {
       //     },
       //   },
       // });
-      await this.prisma.loot.deleteMany({ where: { guildId } });
+      // await this.prisma.loot.deleteMany({ where: { guildId } });
       await this.prisma.timer.deleteMany({ where: { guildId } });
 
       await this.membersService.deleteMembersByGuildId(guildId);
@@ -258,5 +261,30 @@ export class GuildsService {
     }
 
     return;
+  }
+
+  async handleGuildSyncTrigger(guildId: string) {
+    console.log(this.amqpConnection.publish);
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_SYNC_TRIGGER,
+      {
+        guildId,
+      },
+    );
+  }
+
+  async handleGuildSync(data: CreateGuildDto) {
+    const guild = await this.getGuildById(data.guildId);
+
+    console.log(guild);
+
+    if (!guild) {
+      throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
+    }
+
+    await this.rolesService.bulkUpdateRoles(data.guildId, data.roles);
+    await this.membersService.bulkUpdateMembers(data.guildId, data.members);
   }
 }

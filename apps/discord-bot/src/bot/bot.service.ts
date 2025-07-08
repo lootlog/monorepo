@@ -274,4 +274,53 @@ export class BotService {
       payload,
     );
   }
+
+  async handleGuildSync(guildId: string) {
+    console.log(`Syncing guild with ID: ${guildId}`);
+    const guild = await this.client.guilds.fetch(guildId);
+
+    this.logger.log(`Syncing guild: ${guild.name} (${guild.id})`);
+
+    const payload = {
+      guildId: guild.id,
+      name: guild.name,
+      icon: guild.iconURL(),
+      ownerId: guild.ownerId,
+      roles: guild.roles.cache.map((role) => {
+        const isAdministrativeUser =
+          (Number(role.permissions.bitfield) & 0x8) === 0x8;
+
+        return {
+          id: role.id,
+          name: role.name,
+          color: role.color,
+          admin: isAdministrativeUser,
+          position: role.position,
+        };
+      }),
+      members: guild.members.cache.map((member) => {
+        const isOwner = guild.ownerId === member.id;
+
+        const memberRoleIds = member.roles.cache.map((role) => {
+          return role.id;
+        });
+        const type = isOwner ? MemberType.OWNER : getMemberType(member);
+
+        return {
+          id: member.id,
+          roleIds: memberRoleIds,
+          type,
+          banner: member.user.banner,
+          avatar: member.user.avatarURL(),
+          name: getDiscordMemberName(member),
+        };
+      }),
+    };
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_SYNC,
+      payload,
+    );
+  }
 }
