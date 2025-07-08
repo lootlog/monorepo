@@ -13,6 +13,8 @@ export enum RoutingKey {
   GUILDS_MEMBERS_REMOVE_ROLE = 'guilds.members.remove.role',
 
   GUILDS_CREATE = 'guilds.create',
+  GUILDS_SYNC = 'guilds.sync',
+  GUILDS_SYNC_TRIGGER = 'guilds.sync.trigger',
   GUILDS_CREATE_DLQ = 'guilds.create.dlq',
   GUILDS_CREATE_RETRY = 'guilds.create.retry',
   GUILDS_UPDATE = 'guilds.update',
