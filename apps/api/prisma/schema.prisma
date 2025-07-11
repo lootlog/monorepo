@@ -192,6 +192,7 @@ model Loot {
   npcs      Json
 
   lootSubmissions LootSubmission[]
+  lootShare       Json             @default("{}")
 
   @@index([uniqueId])
   @@index([createdAt])

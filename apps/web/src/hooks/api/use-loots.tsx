@@ -50,6 +50,7 @@ export type Loot = {
   players: Player[];
   items: Item[];
   member: GuildMember;
+  lootShare: Record<string, string[]>;
 };
 
 export type UseLootsOptions = {
