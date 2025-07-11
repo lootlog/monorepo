@@ -99,7 +99,7 @@ export const ItemTile: FC<ItemTileProps> = ({
             shareIndex={shareIndex}
           />
         </TooltipTrigger>
-        <TooltipContent className="w-80 p-3 pb-0" side="right">
+        <TooltipContent className="w-80 p-3 pb-0">
           <div className="flex flex-row border-b items-center justify-between pb-2">
             <div className="flex flex-col justify-between">
               <p className="font-heading mt-12 scroll-m-20 mr-8 text-md font-semibold tracking-tight first:mt-0">
