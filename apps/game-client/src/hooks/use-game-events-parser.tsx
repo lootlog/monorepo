@@ -418,7 +418,10 @@ export const useGameEventsParser = () => {
     }
 
     if (event.d?.[2]) talkingNpcId.current = event.d[2];
-    if (event.f?.w && event.f.init === "1") pendingBattle.current = event.f.w;
+    if (event.f?.w && event.f.init === "1") {
+      latestLootId.current = null;
+      pendingBattle.current = event.f.w;
+    }
     if (event.npcs) handleNpcDetection(event);
 
     if (
