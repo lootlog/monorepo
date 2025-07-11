@@ -189,19 +189,25 @@ export class LootsService {
     const parsedLoot =
       typeof loot.items === 'string' ? JSON.parse(loot.items) : loot.items;
 
-    const mappedLootShare = Object.entries(lootShare).reduce((acc, value) => {
-      const [nick, hid] = value;
-      const playerId = parsedPlayers.find((p) => p.name === nick)?.id;
-      const itemId = parsedLoot.find((item) => item.hid === hid)?.id;
-      if (!playerId || !itemId) return acc;
+    const mappedLootShare = Object.entries(lootShare).reduce(
+      (acc, [nick, hids]) => {
+        const playerId = parsedPlayers.find((p) => p.name === nick);
+        if (!playerId) return acc;
 
-      acc[playerId] = hid;
+        const itemIds = (hids as string[])
+          .map((hid) => parsedLoot.find((item) => item.hid === hid))
+          .filter(Boolean);
 
-      return acc;
-    }, {});
+        if (itemIds.length === 0) return acc;
+
+        acc[playerId] = itemIds;
+        return acc;
+      },
+      {},
+    );
 
     if (Object.keys(mappedLootShare).length === 0) {
-      throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE);
+      throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER);
     }
 
     await this.prisma.loot.update({
@@ -211,7 +217,7 @@ export class LootsService {
       },
     });
 
-    return mappedLootShare;
+    return;
   }
 
   async fetchLootsByGuildId(
