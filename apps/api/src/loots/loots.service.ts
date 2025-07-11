@@ -110,17 +110,26 @@ export class LootsService {
     let loot = await this.prisma.loot.findUnique({ where: { uniqueId } });
 
     if (!loot) {
-      loot = await this.prisma.loot.create({
-        data: {
-          uniqueId,
-          items,
-          world: body.world,
-          source: body.source,
-          location: body.location,
-          players,
-          npcs,
-        },
-      });
+      try {
+        loot = await this.prisma.loot.create({
+          data: {
+            uniqueId,
+            items,
+            world: body.world,
+            source: body.source,
+            location: body.location,
+            players,
+            npcs,
+          },
+        });
+      } catch (e: any) {
+        if (e.code === 'P2002') {
+          loot = await this.prisma.loot.findUnique({ where: { uniqueId } });
+          if (!loot) throw e;
+        } else {
+          throw e;
+        }
+      }
     }
 
     await Promise.all(
@@ -507,7 +516,7 @@ export class LootsService {
           share[nick] = [itemId];
         }
       }
-      // reset lastIndex LOOT_SHARE_ITEM_REGEX, żeby nie gubiło itemów przy kolejnych osobach
+
       LOOT_SHARE_ITEM_REGEX.lastIndex = 0;
     }
 
