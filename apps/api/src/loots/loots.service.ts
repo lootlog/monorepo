@@ -207,6 +207,13 @@ export class LootsService {
       throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER);
     }
 
+    if (Object.keys(mappedLootShare).length < parsedLoot.length) {
+      console.warn(
+        'Loot share does not include all items, some items may not be shared.',
+      );
+      console.log(data.msg);
+    }
+
     await this.prisma.loot.update({
       where: { id: lootId },
       data: {
