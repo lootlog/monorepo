@@ -516,7 +516,6 @@ export class LootsService {
           share[nick] = [itemId];
         }
       }
-
       LOOT_SHARE_ITEM_REGEX.lastIndex = 0;
     }
 
