@@ -31,7 +31,10 @@ import { GuildsService } from 'src/guilds/guilds.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
 import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
-import { LOOT_SHARE_MSG_REGEX } from 'src/loots/constants/loot-share-msg-regex';
+import {
+  LOOT_SHARE_ITEM_REGEX,
+  LOOT_SHARE_MSG_REGEX,
+} from 'src/loots/constants/loot-share-msg-regex';
 
 @Injectable()
 export class LootsService {
@@ -489,17 +492,23 @@ export class LootsService {
 
   getLootShareFromMsg(msg: string) {
     let share = {};
-
     let match;
+
     while ((match = LOOT_SHARE_MSG_REGEX.exec(msg)) !== null) {
       const nick = match[1].trim();
-      const itemId = match[2];
+      const itemsStr = match[2];
 
-      if (share[nick]) {
-        share[nick].push(itemId);
-      } else {
-        share[nick] = [itemId];
+      let itemMatch;
+      while ((itemMatch = LOOT_SHARE_ITEM_REGEX.exec(itemsStr)) !== null) {
+        const itemId = itemMatch[1];
+        if (share[nick]) {
+          share[nick].push(itemId);
+        } else {
+          share[nick] = [itemId];
+        }
       }
+      // reset lastIndex LOOT_SHARE_ITEM_REGEX, żeby nie gubiło itemów przy kolejnych osobach
+      LOOT_SHARE_ITEM_REGEX.lastIndex = 0;
     }
 
     return share;
