@@ -40,7 +40,6 @@ export const useGameEventsParser = () => {
   const { settings } = useNpcDetectorStore();
   const settingsRef = useRef(settings);
   const latestLootId = useRef<number | null>(null);
-  const pendingLootUpdate = useRef<{ msg: string } | null>(null);
 
   useEffect(() => {
     settingsRef.current = settings;
@@ -221,20 +220,6 @@ export const useGameEventsParser = () => {
       {
         onSuccess: (response) => {
           latestLootId.current = response.data.id;
-          if (pendingLootUpdate.current) {
-            updateLoot(
-              {
-                id: response.data.id,
-                msg: pendingLootUpdate.current.msg,
-              },
-              {
-                onSuccess: () => {
-                  latestLootId.current = null;
-                  pendingLootUpdate.current = null;
-                },
-              }
-            );
-          }
         },
       }
     );
@@ -291,21 +276,6 @@ export const useGameEventsParser = () => {
         {
           onSuccess: (response) => {
             latestLootId.current = response.data.id;
-            if (pendingLootUpdate.current) {
-              updateLoot(
-                {
-                  id: response.data.id,
-                  msg: pendingLootUpdate.current.msg,
-                },
-                {
-                  onSuccess: () => {
-                    console.log("Loot updated (from queue)");
-                    latestLootId.current = null;
-                    pendingLootUpdate.current = null;
-                  },
-                }
-              );
-            }
           },
         }
       );
@@ -406,18 +376,20 @@ export const useGameEventsParser = () => {
   };
 
   const handleUpdateLoot = (event: GameEvent) => {
-    if (!world || !characterId || !accountId || !event.chat) return;
+    if (
+      !world ||
+      !characterId ||
+      !accountId ||
+      !event.chat ||
+      !latestLootId.current
+    )
+      return;
 
     const desiredMsg = event.chat?.channels?.system?.msg?.find((msgData) =>
       msgData.msg?.includes("Podział")
     );
 
     if (!desiredMsg) return;
-
-    if (!latestLootId.current) {
-      pendingLootUpdate.current = { msg: desiredMsg.msg };
-      return;
-    }
 
     const payload = {
       msg: desiredMsg.msg,
@@ -428,7 +400,6 @@ export const useGameEventsParser = () => {
       onSuccess: () => {
         console.log("Loot updated successfully");
         latestLootId.current = null;
-        pendingLootUpdate.current = null;
       },
     });
   };
