@@ -1,3 +1,4 @@
+import { ChatEvent } from "@/types/margonem/game-events/chat";
 import { D } from "@/types/margonem/game-events/d";
 import { F } from "@/types/margonem/game-events/f";
 import { Icon } from "@/types/margonem/game-events/icons";
@@ -20,4 +21,5 @@ export type GameEvent = {
   item?: ItemEvent;
   loot?: Loot;
   other?: Other;
+  chat?: ChatEvent;
 };

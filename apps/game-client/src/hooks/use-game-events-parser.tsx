@@ -4,6 +4,7 @@ import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
+import { useUpdateLoot } from "@/hooks/api/use-update-loot";
 import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
 import {
@@ -33,10 +34,13 @@ export const useGameEventsParser = () => {
   const isNI = gameInterface === "ni";
   const { mutate: createLoot } = useCreateLoot();
   const { mutate: createTimer } = useCreateTimer();
+  const { mutate: updateLoot } = useUpdateLoot();
   const { mutate: createNotification } = useCreateNotification();
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { settings } = useNpcDetectorStore();
   const settingsRef = useRef(settings);
+  const latestLootId = useRef<number | null>(null);
+  const pendingLootUpdate = useRef<{ msg: string } | null>(null);
 
   useEffect(() => {
     settingsRef.current = settings;
@@ -203,16 +207,37 @@ export const useGameEventsParser = () => {
       event.f.w
     );
 
-    createLoot({
-      world,
-      source: event.loot.source.toUpperCase(),
-      location: Game.map.name,
-      npcs,
-      loots,
-      players: party,
-      accountId,
-      characterId,
-    });
+    createLoot(
+      {
+        world,
+        source: event.loot.source.toUpperCase(),
+        location: Game.map.name,
+        npcs,
+        loots,
+        players: party,
+        accountId,
+        characterId,
+      },
+      {
+        onSuccess: (response) => {
+          latestLootId.current = response.data.id;
+          if (pendingLootUpdate.current) {
+            updateLoot(
+              {
+                id: response.data.id,
+                msg: pendingLootUpdate.current.msg,
+              },
+              {
+                onSuccess: () => {
+                  latestLootId.current = null;
+                  pendingLootUpdate.current = null;
+                },
+              }
+            );
+          }
+        },
+      }
+    );
   };
 
   const createLootFromDialog = (event: GameEvent) => {
@@ -252,16 +277,38 @@ export const useGameEventsParser = () => {
     ];
 
     if (npcs.length > 0) {
-      createLoot({
-        world,
-        source: event.loot.source.toUpperCase(),
-        location: Game.map.name,
-        loots,
-        npcs,
-        players,
-        accountId,
-        characterId,
-      });
+      createLoot(
+        {
+          world,
+          source: event.loot.source.toUpperCase(),
+          location: Game.map.name,
+          loots,
+          npcs,
+          players,
+          accountId,
+          characterId,
+        },
+        {
+          onSuccess: (response) => {
+            latestLootId.current = response.data.id;
+            if (pendingLootUpdate.current) {
+              updateLoot(
+                {
+                  id: response.data.id,
+                  msg: pendingLootUpdate.current.msg,
+                },
+                {
+                  onSuccess: () => {
+                    console.log("Loot updated (from queue)");
+                    latestLootId.current = null;
+                    pendingLootUpdate.current = null;
+                  },
+                }
+              );
+            }
+          },
+        }
+      );
     }
   };
 
@@ -358,9 +405,46 @@ export const useGameEventsParser = () => {
     }
   };
 
+  const handleUpdateLoot = (event: GameEvent) => {
+    if (!world || !characterId || !accountId || !event.chat) return;
+
+    const desiredMsg = event.chat?.channels?.system?.msg?.find((msgData) =>
+      msgData.msg.includes("Podział")
+    );
+
+    if (!desiredMsg) return;
+
+    if (!latestLootId.current) {
+      pendingLootUpdate.current = { msg: desiredMsg.msg };
+      return;
+    }
+
+    const payload = {
+      msg: desiredMsg.msg,
+      id: latestLootId.current,
+    };
+
+    updateLoot(payload, {
+      onSuccess: () => {
+        console.log("Loot updated successfully");
+        latestLootId.current = null;
+        pendingLootUpdate.current = null;
+      },
+    });
+  };
+
   const handleEvent = (event: GameEvent) => {
     if (!world || !characterId || !accountId || Object.keys(event).length <= 2)
       return;
+
+    if (
+      event.chat &&
+      event.chat?.channels?.system?.msg?.some((msgData) =>
+        msgData.msg?.includes("Podział")
+      )
+    ) {
+      handleUpdateLoot(event);
+    }
 
     if (event.d?.[2]) talkingNpcId.current = event.d[2];
     if (event.f?.w && event.f.init === "1") pendingBattle.current = event.f.w;
@@ -371,10 +455,12 @@ export const useGameEventsParser = () => {
       event.item &&
       event.loot?.source === "fight"
     ) {
+      latestLootId.current = null;
       createLootFromBattle(event);
     }
 
     if (event.item && event.loot?.source === "dialog") {
+      latestLootId.current = null;
       if (event.npcs_del?.length) createLootFromDialog(event);
       else if (talkingNpcId.current) {
         const npc = Game.getNpc(+talkingNpcId.current);

@@ -12,6 +12,7 @@ export type LootDto = {
   prc: string;
   stat: string;
   cl: number;
+  own?: number;
 };
 
 export type CreateLootOptions = {
@@ -29,13 +30,17 @@ export type UseCreateLootOptions = {
   location: string;
 };
 
+export type CreateLootResponse = {
+  id: number;
+};
+
 export const useCreateLoot = () => {
   const { client } = useAuthenticatedApiClient();
 
   const mutation = useMutation({
     mutationKey: ["create-loot"],
     mutationFn: (options: UseCreateLootOptions) => {
-      return client.post("/loots", options);
+      return client.post<CreateLootResponse>("/loots", options);
     },
     onSuccess: () => {
       console.log("onSuccess");

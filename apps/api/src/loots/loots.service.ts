@@ -30,6 +30,11 @@ import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
+import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
+import {
+  LOOT_SHARE_ITEM_REGEX,
+  LOOT_SHARE_NICK_REGEX,
+} from 'src/loots/constants/loot-share-msg-regex';
 
 @Injectable()
 export class LootsService {
@@ -153,7 +158,56 @@ export class LootsService {
     this.playersService.bulkIndexPlayers(players);
     this.npcsService.bulkIndexNpcs(npcs);
 
-    return;
+    return { id: loot.id };
+  }
+
+  async updateLoot(discordId: string, lootId: number, data: UpdateLootDto) {
+    const loot = await this.prisma.loot.findFirst({
+      where: {
+        id: lootId,
+        lootSubmissions: { some: { member: { userId: discordId } } },
+        lootShare: {
+          equals: {},
+        },
+      },
+    });
+
+    if (!loot) {
+      throw new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT);
+    }
+
+    const lootShare = this.getLootShareFromMsg(data.msg);
+    if (Object.keys(lootShare).length === 0) {
+      throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE);
+    }
+
+    const parsedPlayers =
+      typeof loot.players === 'string'
+        ? JSON.parse(loot.players)
+        : loot.players;
+
+    const mappedLootShare = Object.entries(lootShare).reduce((acc, value) => {
+      const [nick, hid] = value;
+      const playerId = parsedPlayers.find((p) => p.name === nick)?.id;
+      if (!playerId) return acc;
+
+      acc[playerId] = hid;
+
+      return acc;
+    }, {});
+
+    if (Object.keys(mappedLootShare).length === 0) {
+      throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE);
+    }
+
+    await this.prisma.loot.update({
+      where: { id: lootId },
+      data: {
+        lootShare: mappedLootShare,
+      },
+    });
+
+    return mappedLootShare;
   }
 
   async fetchLootsByGuildId(
@@ -375,6 +429,7 @@ export class LootsService {
   mapItems(items: CreateLootDto['loots']) {
     return items.map((item) => {
       const { lvl, rarity, prof, type } = this.getItemStats(item);
+
       return {
         id: item.id,
         hid: item.hid,
@@ -416,5 +471,27 @@ export class LootsService {
       characterId: player.id,
       accountId: player.accountId,
     }));
+  }
+
+  getLootShareFromMsg(msg: string) {
+    let share = {};
+
+    let match;
+    while ((match = LOOT_SHARE_NICK_REGEX.exec(msg)) !== null) {
+      const nick = match[1].trim();
+      const itemsStr = match[2];
+
+      const itemRegex = LOOT_SHARE_ITEM_REGEX;
+      let itemMatch;
+      while ((itemMatch = itemRegex.exec(itemsStr)) !== null) {
+        if (share[nick]) {
+          share[nick].push(itemMatch[1]);
+        } else {
+          share[nick] = [itemMatch[1]];
+        }
+      }
+    }
+
+    return share;
   }
 }
