@@ -34,18 +34,19 @@ export const ItemImage: FC<ItemImageProps> = ({
           backgroundImage: `url(${MARGONEM_CDN_ITEMS_URL}/${icon})`,
         }}
       />
-      {shareIndex && (
-        <div
-          className={cn(
-            "top-7 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center"
-          )}
-          style={{
-            backgroundColor: color ? `${color}` : "transparent",
-          }}
-        >
-          {shareIndex + 1}
-        </div>
-      )}
+      {shareIndex ||
+        (shareIndex === 0 && (
+          <div
+            className={cn(
+              "top-7 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center"
+            )}
+            style={{
+              backgroundColor: color ? `${color}` : "transparent",
+            }}
+          >
+            {shareIndex + 1}
+          </div>
+        ))}
     </div>
   );
 };
