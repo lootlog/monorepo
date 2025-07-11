@@ -2,13 +2,16 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { Guild, Permission, Role } from 'generated/client';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
+import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
 import { LootsService } from 'src/loots/loots.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
@@ -60,5 +63,14 @@ export class LootsController {
     @Body() body: CreateLootDto,
   ) {
     return this.lootsService.createLoot(discordId, body);
+  }
+
+  @Patch('/loots/:id')
+  async updateLoot(
+    @DiscordId() discordId: string,
+    @Body() body: UpdateLootDto,
+    @Param('id', new ParseIntPipe()) lootId: number,
+  ) {
+    return this.lootsService.updateLoot(discordId, lootId, body);
   }
 }

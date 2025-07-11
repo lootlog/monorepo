@@ -4,7 +4,7 @@ import { getItemRarity } from "@/utils/game/get-item-rarity";
 
 export const getLoot = (items: ItemEvent = {}): LootDto[] => {
   const loots = Object.values(items).reduce((acc: LootDto[], item) => {
-    const { hid, icon, name, pr, prc, stat, cl, tpl, loc } = item;
+    const { hid, icon, name, pr, prc, stat, cl, tpl, loc, own } = item;
     const rarity = getItemRarity(stat);
 
     if (rarity && (loc === "l" || loc === "k") && rarity !== "common") {
@@ -13,6 +13,7 @@ export const getLoot = (items: ItemEvent = {}): LootDto[] => {
         hid,
         icon,
         name,
+        own,
         pr,
         prc,
         stat,
