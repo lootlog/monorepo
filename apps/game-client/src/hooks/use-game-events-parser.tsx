@@ -409,7 +409,7 @@ export const useGameEventsParser = () => {
     if (!world || !characterId || !accountId || !event.chat) return;
 
     const desiredMsg = event.chat?.channels?.system?.msg?.find((msgData) =>
-      msgData.msg.includes("Podział")
+      msgData.msg?.includes("Podział")
     );
 
     if (!desiredMsg) return;
