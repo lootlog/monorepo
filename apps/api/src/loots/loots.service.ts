@@ -24,6 +24,7 @@ import {
   LootlogConfigNpc,
   Guild,
   Role,
+  NpcType,
 } from 'generated/client';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
@@ -106,6 +107,10 @@ export class LootsService {
     const npcs = this.mapNpcs(sortedNpcsByWt);
     const players = this.mapPlayers(body.players);
     const items = this.mapItems(body.loots);
+    const share =
+      highestWtNpcType === NpcType.COLOSSUS
+        ? this.mapLootShare(body.loots, body.players)
+        : {};
 
     let loot = await this.prisma.loot.findUnique({ where: { uniqueId } });
 
@@ -120,6 +125,7 @@ export class LootsService {
             location: body.location,
             players,
             npcs,
+            lootShare: share,
           },
         });
       } catch (e: any) {
@@ -470,6 +476,23 @@ export class LootsService {
         type,
       };
     });
+  }
+
+  mapLootShare(
+    items: CreateLootDto['loots'],
+    players: CreateLootDto['players'],
+  ) {
+    return items.reduce((acc, item) => {
+      if (item.own) {
+        const player = players.find((p) => p.id === item.own);
+        const playerId = player ? `${player.id}${player.accountId}` : null;
+        if (!playerId) return acc;
+
+        acc[playerId] = [item.hid];
+      }
+
+      return acc;
+    }, {});
   }
 
   mapNpcs(npcs: CreateLootDto['npcs']) {
