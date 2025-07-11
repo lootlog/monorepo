@@ -186,10 +186,14 @@ export class LootsService {
         ? JSON.parse(loot.players)
         : loot.players;
 
+    const parsedLoot =
+      typeof loot.items === 'string' ? JSON.parse(loot.items) : loot.items;
+
     const mappedLootShare = Object.entries(lootShare).reduce((acc, value) => {
       const [nick, hid] = value;
       const playerId = parsedPlayers.find((p) => p.name === nick)?.id;
-      if (!playerId) return acc;
+      const itemId = parsedLoot.find((item) => item.hid === hid)?.id;
+      if (!playerId || !itemId) return acc;
 
       acc[playerId] = hid;
 
