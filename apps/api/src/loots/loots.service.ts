@@ -191,11 +191,11 @@ export class LootsService {
 
     const mappedLootShare = Object.entries(lootShare).reduce(
       (acc, [nick, hids]) => {
-        const playerId = parsedPlayers.find((p) => p.name === nick);
+        const playerId = parsedPlayers.find((p) => p.name === nick)?.id;
         if (!playerId) return acc;
 
         const itemIds = (hids as string[])
-          .map((hid) => parsedLoot.find((item) => item.hid === hid))
+          .map((hid) => parsedLoot.find((item) => item.hid === hid)?.hid)
           .filter(Boolean);
 
         if (itemIds.length === 0) return acc;
@@ -217,7 +217,7 @@ export class LootsService {
       },
     });
 
-    return;
+    return mappedLootShare;
   }
 
   async fetchLootsByGuildId(
