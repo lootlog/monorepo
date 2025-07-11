@@ -44,6 +44,10 @@ class LootDto {
   @IsNotEmpty()
   @IsNumber()
   cl: number;
+
+  @IsOptional()
+  @IsNumber()
+  own?: number;
 }
 
 class PlayerDto {
