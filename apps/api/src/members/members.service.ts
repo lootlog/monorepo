@@ -152,20 +152,34 @@ export class MembersService {
     roleIds,
     type,
   }: UpdateMemberDto) {
-    await this.prisma.member.update({
+    const roles = await this.prisma.role.findMany({
       where: {
-        memberId: {
-          userId: id,
-          guildId,
+        id: {
+          in: roleIds,
         },
       },
-      data: {
+    });
+
+    await this.prisma.member.upsert({
+      where: { memberId: { userId: id, guildId } },
+      update: {
         avatar,
         banner,
+        type,
         name,
+        roles: {
+          set: roles.map(({ id }) => ({ id })),
+        },
+      },
+      create: {
+        userId: id,
+        guildId,
+        avatar,
+        name,
+        banner,
         type,
         roles: {
-          set: roleIds.map((id) => ({ id })),
+          connect: roles.map(({ id }) => ({ id })),
         },
       },
     });
