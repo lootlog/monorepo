@@ -38,6 +38,7 @@ interface NpcDetectorState {
   addNpc: (npc: GameNpcWithLocation | GameNpcWithLocation[]) => void;
   clearNpcs: () => void;
   setSettings: (charactedId: string, settings: NpcDetectorSettings) => void;
+  setSettingsForAllCharacters: (settings: NpcDetectorSettings) => void;
   setNpcState: (npcId: number, npc: GameNpcWithLocation) => void;
 }
 
@@ -112,6 +113,17 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
             },
           },
         })),
+      setSettingsForAllCharacters: (settings: NpcDetectorSettings) =>
+        set((state) => {
+          const newSettings = Object.keys(state.settings).reduce(
+            (acc, characterId) => {
+              acc[characterId] = settings;
+              return acc;
+            },
+            {} as Record<string, NpcDetectorSettings>
+          );
+          return { settings: newSettings };
+        }),
       setNpcState: (npcId: number, npc: GameNpcWithLocation) => {
         set((state) => {
           const npcs = state.npcs.map((n) =>

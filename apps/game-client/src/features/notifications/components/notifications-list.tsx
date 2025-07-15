@@ -21,6 +21,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
             key={notification.notificationId}
             notification={notification}
             index={i}
+            showCloseButton={notifications.length > 1}
           />
         );
       })}
