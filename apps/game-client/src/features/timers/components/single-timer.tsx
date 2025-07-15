@@ -39,56 +39,55 @@ export const COLORS = {
     bgNoOpacity: "ll-bg-red-500",
     border: "ll-border-red-500",
   },
-  green: {
-    bg: "ll-bg-green-500/20 hover:ll-bg-green-500/40",
-    bgNoOpacity: "ll-bg-green-500",
-    border: "ll-border-green-500",
-  },
-  blue: {
-    bg: "ll-bg-indigo-800/20 hover:ll-bg-indigo-800/40",
-    bgNoOpacity: "ll-bg-indigo-800",
-    border: "ll-border-indigo-800",
+  orange: {
+    bg: "ll-bg-orange-500/20 hover:ll-bg-orange-500/40",
+    bgNoOpacity: "ll-bg-orange-500",
+    border: "ll-border-orange-500",
   },
   yellow: {
     bg: "ll-bg-yellow-500/20 hover:ll-bg-yellow-500/40",
     bgNoOpacity: "ll-bg-yellow-500",
     border: "ll-border-yellow-500",
   },
-  purple: {
-    bg: "ll-bg-purple-500/20 hover:ll-bg-purple-500/40",
-    bgNoOpacity: "ll-bg-purple-500",
-    border: "ll-border-purple-500",
-  },
-  orange: {
-    bg: "ll-bg-orange-500/20 hover:ll-bg-orange-500/40",
-    bgNoOpacity: "ll-bg-orange-500",
-    border: "ll-border-orange-500",
-  },
-  pink: {
-    bg: "ll-bg-pink-500/20 hover:ll-bg-pink-500/40",
-    bgNoOpacity: "ll-bg-pink-500",
-    border: "ll-border-pink-500",
-  },
-
-  teal: {
-    bg: "ll-bg-teal-500/20 hover:ll-bg-teal-500/40",
-    bgNoOpacity: "ll-bg-teal-500",
-    border: "ll-border-teal-500",
-  },
   lime: {
     bg: "ll-bg-lime-500/20 hover:ll-bg-lime-500/40",
     bgNoOpacity: "ll-bg-lime-500",
     border: "ll-border-lime-500",
   },
-  emerald: {
-    bg: "ll-bg-emerald-700/20 hover:ll-bg-emerald-700/40",
-    bgNoOpacity: "ll-bg-emerald-700",
-    border: "ll-border-emerald-700",
+  green: {
+    bg: "ll-bg-green-500/20 hover:ll-bg-green-500/40",
+    bgNoOpacity: "ll-bg-green-500",
+    border: "ll-border-green-500",
+  },
+  teal: {
+    bg: "ll-bg-teal-500/20 hover:ll-bg-teal-500/40",
+    bgNoOpacity: "ll-bg-teal-500",
+    border: "ll-border-teal-500",
   },
   sky: {
     bg: "ll-bg-sky-500/20 hover:ll-bg-sky-500/40",
     bgNoOpacity: "ll-bg-sky-500",
     border: "ll-border-sky-500",
+  },
+  blue: {
+    bg: "ll-bg-indigo-800/20 hover:ll-bg-indigo-800/40",
+    bgNoOpacity: "ll-bg-indigo-800",
+    border: "ll-border-indigo-800",
+  },
+  violet: {
+    bg: "ll-bg-violet-400/20 hover:ll-bg-violet-400/40",
+    bgNoOpacity: "ll-bg-violet-400",
+    border: "ll-border-violet-400",
+  },
+  purple: {
+    bg: "ll-bg-purple-600/20 hover:ll-bg-purple-600/40",
+    bgNoOpacity: "ll-bg-purple-600",
+    border: "ll-border-purple-600",
+  },
+  pink: {
+    bg: "ll-bg-pink-500/20 hover:ll-bg-pink-500/40",
+    bgNoOpacity: "ll-bg-pink-500",
+    border: "ll-border-pink-500",
   },
   white: {
     bg: "ll-bg-gray-400/20 hover:ll-bg-gray-400/40",
@@ -244,16 +243,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         </Tile>
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="ll-w-40 ll-flex ll-flex-col">
-        <div className="ll-flex ll-gap-1 ll-my-1.5 ll-w-full ll-justify-start ll-flex-wrap">
+      <ContextMenuContent className="ll-w-48 ll-flex ll-flex-col">
+        <div className="ll-flex ll-gap-1 ll-my-1.5 ll-w-full ll-justify-center ll-flex-wrap">
           {Object.entries(COLORS).map(([id, color]) => (
             <div
               key={id}
               className={cn(
-                "ll-size-3.5 ll-rounded-md ll-box-border ll-border-transparent ll-custom-cursor-pointer",
+                "ll-size-3 ll-rounded-md ll-box-border ll-border-transparent ll-custom-cursor-pointer",
                 color.bgNoOpacity,
                 {
-                  "ll-border-solid ll-border-gray-50": selectedColor === id,
+                  " ll-ring-2 ll-ring-white": selectedColor === id,
                 }
               )}
               onClick={() => handleTimerColorChange(id)}

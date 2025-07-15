@@ -42,6 +42,18 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       );
     }
 
+    if (messageData.baseMessage.startsWith("!")) {
+      const color = getTextColor("message", true);
+      return (
+        <span
+          className={cn({ "ll-opacity-50": isMsgYesterday })}
+          style={{ color }}
+        >
+          [P] {messageData.baseMessage.slice(1)}
+        </span>
+      );
+    }
+
     return (
       <span className={cn({ "ll-opacity-50": isMsgYesterday })}>
         {messageData.baseMessage}
