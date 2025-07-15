@@ -250,7 +250,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               key={id}
               className={cn(
                 "ll-size-3 ll-rounded-md ll-box-border ll-border-transparent ll-custom-cursor-pointer",
-                color.bgNoOpacity,
+                color?.bgNoOpacity,
                 {
                   " ll-ring-2 ll-ring-white": selectedColor === id,
                 }
