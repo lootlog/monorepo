@@ -1,4 +1,6 @@
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { NpcType } from "@/hooks/api/use-npcs";
 import {
@@ -6,6 +8,7 @@ import {
   recommendedSettings,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
+import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -43,8 +46,10 @@ type FormData = z.infer<typeof FormSchema>;
 export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   characterId,
 }) => {
-  const { settings, setSettings } = useNpcDetectorStore();
+  const { settings, setSettings, setSettingsForAllCharacters } =
+    useNpcDetectorStore();
   const { data: guilds } = useGuilds();
+  const { data: characters } = useCharacterList();
 
   const currentSettings: NpcDetectorSettings =
     (characterId && settings?.[characterId]) || recommendedSettings;
@@ -60,7 +65,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
 
   useEffect(() => {
     reset(defaultValues);
-  }, [characterId, settings, reset]);
+  }, [characterId]);
 
   function onSubmit(data: FormData) {
     if (!characterId) return;
@@ -75,12 +80,26 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
     onSubmit(watchedData);
   }, [watchedData]);
 
+  function applyToAll(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    const characterIds = characters?.map((c) => c.id.toString()) || [];
+    const data = watchedData.settingsByNpcType;
+
+    characterIds.forEach((characterId) => {
+      setSettings(characterId, data as NpcDetectorSettings);
+    });
+  }
+
   return (
     <form className="ll-h-full ll-py-4">
       <div className="ll-flex-1">
+        <div className="ll-pb-2">
+          <Button onClick={applyToAll}>Aplikuj do wszystkich postaci</Button>
+        </div>
         <span className="ll-grid ll-grid-cols-2 ll-gap-y-6 ll-mb-2">
           {mainFields.map((field) => {
             const watchDetect = watch(`settingsByNpcType.${field.key}.detect`);
+            const textColor = getTextColor(field.key, true);
 
             return (
               <span key={field.key}>
@@ -122,6 +141,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
                 <Checkbox
                   id={`${field.key}-highlight`}
                   disabled={!watchDetect}
+                  labelStyle={{ color: textColor }}
                   {...register(`settingsByNpcType.${field.key}.highlight`)}
                 >
                   Podświetlenie
