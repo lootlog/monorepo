@@ -39,6 +39,7 @@ interface WindowData {
   size: WindowSizeState;
   opacity: WindowOpacity;
   locked: boolean;
+  autofocus?: boolean;
 }
 
 interface WindowsState {
@@ -58,7 +59,8 @@ interface WindowsState {
   setSize: (window: WindowId, size: WindowSizeState) => void;
   setOpacity: (window: WindowId, opacity: WindowOpacity) => void;
   setLocked: (window: WindowId, locked: boolean) => void;
-  toggleOpen: (window: WindowId) => void;
+  toggleOpen: (window: WindowId, autofocus?: boolean) => void;
+  setAutofocus: (window: WindowId, autofocus: boolean) => void;
 }
 
 const DEFAULT_OPACITY: WindowOpacity = 4;
@@ -88,6 +90,7 @@ export const useWindowsStore = create<WindowsState>()(
         size: DEFAULT_SIZE,
         opacity: DEFAULT_OPACITY,
         locked: false,
+        autofocus: false,
       },
       "online-players": {
         open: true,
@@ -150,9 +153,18 @@ export const useWindowsStore = create<WindowsState>()(
         set((state) => ({ [key]: { ...state[key], opacity } })),
       setLocked: (key: WindowId, locked: boolean) =>
         set((state) => ({ [key]: { ...state[key], locked } })),
-      toggleOpen: (key: WindowId) => {
+      setAutofocus: (key: WindowId, autofocus: boolean) =>
+        set((state) => ({ [key]: { ...state[key], autofocus } })),
+      toggleOpen: (key: WindowId, autofocus?: boolean) => {
         const curr = get()[key].open;
-        set((state) => ({ [key]: { ...state[key], open: !curr } }));
+        set((state) => ({
+          [key]: {
+            ...state[key],
+            open: !curr,
+            autofocus,
+          },
+          currentWindowFocus: !curr ? key : undefined,
+        }));
       },
     }),
     {
