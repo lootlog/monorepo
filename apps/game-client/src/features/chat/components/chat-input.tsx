@@ -10,6 +10,7 @@ import { z } from "zod";
 
 export type ChatInputProps = {
   selectedGuildId?: string;
+  autofocus?: boolean;
 };
 
 const FormSchema = z.object({
@@ -18,7 +19,10 @@ const FormSchema = z.object({
 
 type FormData = z.infer<typeof FormSchema>;
 
-export const ChatInput: FC<ChatInputProps> = ({ selectedGuildId }) => {
+export const ChatInput: FC<ChatInputProps> = ({
+  selectedGuildId,
+  autofocus,
+}) => {
   const { world } = useGlobalStore((state) => state.gameState);
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
@@ -61,6 +65,7 @@ export const ChatInput: FC<ChatInputProps> = ({ selectedGuildId }) => {
       <Input
         autoComplete="off"
         placeholder="Wiadomość..."
+        autoFocus={autofocus}
         {...register("message")}
       />
     </form>

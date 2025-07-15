@@ -5,7 +5,7 @@ import {
   WindowId,
   WindowOpacity,
 } from "@/store/windows.store";
-import { Pin, PinOff } from "lucide-react";
+import { Blend, Pin, PinOff, XIcon } from "lucide-react";
 import { FC, useCallback, useEffect, useRef, useState } from "react";
 
 export type DraggableWindowProps = {
@@ -196,8 +196,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         {!disableTitle && (
           <div className="ll-flex ll-items-center ll-justify-between ll-px-1 ll-flex-shrink-0">
             <div className="ll-flex ll-items-center ll-gap-1">
-              <div
-                className="ll-opacity-button ll-custom-cursor-pointer ll-mt-0.5"
+              <Blend
+                className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+                size="14"
                 onClick={handleOpacityChange}
               />
               {actions}
@@ -221,9 +222,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
               )}
             </div>
             {closable && (
-              <button
+              <XIcon
+                size="14"
                 type="button"
-                className="ll-close-button ll-custom-cursor-pointer"
+                className="ll-custom-cursor-pointer ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
                 onClick={onClose}
               />
             )}

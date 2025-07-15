@@ -20,11 +20,15 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
     removeHiddenTimer(accountId, characterId, timer);
   };
 
+  const sortedHiddenTimers = hiddenTimersForAccount
+    ? [...hiddenTimersForAccount].sort((a, b) => a.localeCompare(b))
+    : [];
+
   return (
     <div className="ll-py-4">
-      {hiddenTimersForAccount && hiddenTimersForAccount.length > 0 && (
+      {sortedHiddenTimers && sortedHiddenTimers.length > 0 && (
         <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-pr-4 ll-box-border">
-          {hiddenTimersForAccount.map((timer) => {
+          {sortedHiddenTimers.map((timer) => {
             return (
               <Tile key={timer}>
                 <span className="ll-flex ll-justify-between ll-items-center ll-w-full ll-px-1 ll-box-border">

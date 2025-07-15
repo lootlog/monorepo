@@ -14,7 +14,7 @@ import { ChatInput } from "@/features/chat/components/chat-input";
 
 export const Chat = () => {
   const {
-    chat: { open },
+    chat: { open, autofocus },
     setOpen,
   } = useWindowsStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
@@ -83,7 +83,10 @@ export const Chat = () => {
                 </ScrollArea>
               </div>
               <div className="ll-flex-shrink-0 ll-pb-1 ll-mt-1">
-                <ChatInput selectedGuildId={selectedGuildId} />
+                <ChatInput
+                  selectedGuildId={selectedGuildId}
+                  autofocus={autofocus}
+                />
               </div>
             </div>
           </DraggableWindow>
