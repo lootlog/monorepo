@@ -1,35 +1,14 @@
 http:
   routers:
-    auth:
-      rule: "PathPrefix(`/api/auth`)"
-      service: "auth"
+    landing:
+      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`)"
+      service: "landing"
+      priority: 30
       middlewares:
-        - "cors"
-        - "apiStripPrefix"
         - "apiCompress"
       entryPoints:
         - "web"
-    search:
-      rule: "PathPrefix(`/api/search`)"
-      service: "search"
-      middlewares:
-        - "cors"
-        - "apiStripPrefix"
-        - "apiForwardAuth"
-        - "apiCompress"
-      entryPoints:
-        - "web"
-    api:
-      rule: "PathPrefix(`/api/lootlog`)"
-      service: "api"
-      middlewares:
-        - "cors"
-        - "apiStripPrefix"
-        - "apiForwardAuth"
-        - "apiCompress"
-      entryPoints:
-        - "web"    
-        
+
     gateway:
       rule: "PathPrefix(`/gateway`)"
       service: "gateway"
@@ -38,16 +17,45 @@ http:
         - "apiStripPrefix"
         - "apiCompress"
         - "apiForwardAuth"
+      priority: 20
       entryPoints:
-        - "web"    
-    # landing:
-    #   rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`)"
-    #   service: "landing"
-    #   priority: 1
-    #   middlewares:
-    #     - "apiCompress"
-    #   entryPoints:
-    #     - "web"
+        - "web"
+
+    auth:
+      rule: "PathPrefix(`/api/auth`)"
+      service: "auth"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
+    search:
+      rule: "PathPrefix(`/api/search`)"
+      service: "search"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
+    api:
+      rule: "PathPrefix(`/api/lootlog`)"
+      service: "api"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
@@ -57,27 +65,16 @@ http:
         - "apiCompress"
       entryPoints:
         - "web"
-    # web-client:
-    #   rule: "PathRegexp(`/(.+)`)"
-    #   service: "web-client"
-    #   middlewares:
-    #     - "apiCompress"
-    #   entryPoints:
-    #     - "web"
-    # web-client:
-    #   rule: "PathPrefix(`/`)"
-    #   service: "web-client"
-    #   middlewares:
-    #     - "apiCompress"
-    #   entryPoints:
-    #     - "web"
+
     # web-client-ws:
-    #   rule: "Path(`/`) && HeaderRegexp(`Upgrade`, `(?i)^websocket$`)"
+    #   rule: "HeaderRegexp(`Upgrade`, `(?i)websocket`)"
     #   service: "web-client"
-    #   middlewares:
-    #     - "apiCompress"
     #   entryPoints:
     #     - "web"
+    #   priority: 100
+    #   middlewares:
+    #     - "cors"
+    #     - "apiCompress"
         
   services:
     web-client:

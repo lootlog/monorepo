@@ -7,6 +7,7 @@ import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useUpdateLoot } from "@/hooks/api/use-update-loot";
 import { Game } from "@/lib/game";
 import { useGlobalStore } from "@/store/global.store";
+import { useNotificationsStore } from "@/store/notifications.store";
 import {
   GameNpcWithLocation,
   PickedNpcType,
@@ -29,6 +30,7 @@ export const useGameEventsParser = () => {
   const [initialized, setInitialized] = useState(false);
   const { setOpen } = useWindowsStore();
   const { addNpc, removeNpc } = useNpcDetectorStore();
+  const { removeNotificationByNpcId } = useNotificationsStore();
   const pendingBattle = useRef<W | null>(null);
   const talkingNpcId = useRef<string | null>(null);
   const isNI = gameInterface === "ni";
@@ -292,6 +294,7 @@ export const useGameEventsParser = () => {
 
       if (!npc.respBaseSeconds) return;
       removeNpc(npc.id);
+      removeNotificationByNpcId(npc.id, world);
 
       if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
 

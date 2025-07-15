@@ -5,7 +5,7 @@ const TEXT_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.HERO]: "rgba(249, 137, 72, 1)",
   [NpcType.ELITE2]: "rgba(219, 90, 186, 1)",
   [NpcType.TITAN]: "rgba(59, 130, 246, 1)",
-  message: "rgba(255,255, 255, 1)",
+  message: "rgba(219, 39, 99, 1)",
 };
 
 const BACKGROUND_COLORS_BY_KEY: Record<string, string> = {

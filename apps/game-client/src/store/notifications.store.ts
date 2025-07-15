@@ -14,6 +14,7 @@ export interface NotificationSettings {
   show: boolean;
   highlight: boolean;
   ignoreOtherWorlds: boolean;
+  autoHideTimeout?: number;
   guildIds: string[];
 }
 
@@ -34,6 +35,7 @@ interface NotificationsState {
   pushNotification: (notification: NotificationWithServers) => void;
   clearNotifications: () => void;
   removeNotification: (id: string) => void;
+  removeNotificationByNpcId: (npcId: number, world?: string) => void;
 }
 
 export const recommendedSettings: NotificationsSettings = {
@@ -41,30 +43,35 @@ export const recommendedSettings: NotificationsSettings = {
     show: false,
     highlight: false,
     ignoreOtherWorlds: false,
+    autoHideTimeout: 0,
     guildIds: [],
   },
   [NpcType.HERO]: {
     show: true,
     highlight: true,
     ignoreOtherWorlds: false,
+    autoHideTimeout: 0,
     guildIds: [],
   },
   [NpcType.COLOSSUS]: {
     show: true,
     highlight: true,
     ignoreOtherWorlds: false,
+    autoHideTimeout: 0,
     guildIds: [],
   },
   [NpcType.TITAN]: {
     show: true,
     highlight: true,
     ignoreOtherWorlds: false,
+    autoHideTimeout: 0,
     guildIds: [],
   },
   message: {
     show: true,
     highlight: true,
     ignoreOtherWorlds: false,
+    autoHideTimeout: 0,
     guildIds: [],
   },
 };
@@ -134,6 +141,16 @@ export const useNotificationsStore = create<NotificationsState>()(
         set((state) => ({
           notifications: state.notifications.filter(
             (notification) => notification.notificationId !== id
+          ),
+        })),
+      removeNotificationByNpcId: (npcId: number, world?: string) =>
+        set((state) => ({
+          notifications: state.notifications.filter(
+            (notification) =>
+              !(
+                notification.npc?.id === npcId &&
+                (world ? notification.world === world : true)
+              )
           ),
         })),
     }),

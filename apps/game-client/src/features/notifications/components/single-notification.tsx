@@ -1,4 +1,4 @@
-import { FC, Fragment, useMemo } from "react";
+import { FC, Fragment, useMemo, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
@@ -17,18 +17,20 @@ import {
   getBackgroundColor,
   getGradient,
 } from "@/utils/notifications-and-detector/background";
+import { Progress } from "@/components/ui/progress";
 
 export type SingleNotificationProps = {
   notification: NotificationWithServers;
   index: number;
+  showCloseButton?: boolean;
 };
 
 export const SingleNotification: FC<SingleNotificationProps> = ({
   notification,
   index,
+  showCloseButton = false,
 }) => {
-  const { removeNotification, notifications, settings } =
-    useNotificationsStore();
+  const { removeNotification, settings } = useNotificationsStore();
   const { characterId } = useGlobalStore((s) => s.gameState);
   const { data: members } = useGuildMembers(notification.guildId);
   const { data: guilds } = useGuilds();
@@ -45,6 +47,28 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const settingsByNpcType = characterId
     ? settings[characterId]?.[key]
     : undefined;
+  const autoHideTimeout = settingsByNpcType?.autoHideTimeout || 0;
+
+  const [secondsLeft, setSecondsLeft] = useState(autoHideTimeout);
+
+  useEffect(() => {
+    if (!autoHideTimeout || autoHideTimeout <= 0) return;
+    console.log("ritern", autoHideTimeout);
+    setSecondsLeft(autoHideTimeout);
+
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          removeNotification(notification.notificationId);
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoHideTimeout, notification.notificationId]);
 
   const serverNames = useMemo(
     () =>
@@ -58,6 +82,12 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     removeNotification(notification.notificationId);
 
   const time = format(new Date(notification.createdAt), "HH:mm");
+  const color = getBackgroundColor(key, true);
+
+  const secondsLeftPercentage =
+    autoHideTimeout > 0 ? (secondsLeft / autoHideTimeout) * 100 : 0;
+
+  console.log(autoHideTimeout);
 
   return (
     <Fragment key={notification.notificationId}>
@@ -86,7 +116,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             time={time}
           />
         )}
-        {notifications.length > 1 && (
+        {showCloseButton && (
           <XIcon
             className={cn(
               "ll-custom-cursor-pointer ll-text-gray-300 hover:ll-text-gray-100 ll-transition-colors"
@@ -97,8 +127,12 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         )}
       </span>
       <span className="ll-flex ll-flex-col ll-justify-center"></span>
-      {notifications.length > 1 && (
-        <Separator className="ll-bg-gray-600 ll-h-[1px]" />
+      {autoHideTimeout > 0 && (
+        <>
+          <Separator className="ll-bg-black/70 ll-h-[1px]" />
+          <Progress value={secondsLeftPercentage} indicatorColor={color} />
+          <Separator className="ll-bg-black/70 ll-h-[1px]" />
+        </>
       )}
     </Fragment>
   );
