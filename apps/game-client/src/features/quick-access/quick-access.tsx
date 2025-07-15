@@ -16,27 +16,27 @@ const BUTTONS: QuickAccessButtonProps[] = [
   {
     id: "timers",
     title: "Timery",
-    icon: <Timer />,
+    icon: <Timer size="16" />,
   },
   {
     id: "online-players",
     title: "Gracze online",
-    icon: <Users />,
+    icon: <Users size="16" />,
   },
   {
     id: "chat",
-    title: "Czat",
-    icon: <MessagesSquare />,
+    title: "Chat",
+    icon: <MessagesSquare size="16" />,
   },
   {
     id: "settings",
     title: "Ustawienia",
-    icon: <Settings />,
+    icon: <Settings size="16" />,
   },
   {
     id: "lootlog-app",
     title: "Strona Lootloga",
-    icon: <SquareArrowOutUpRight />,
+    icon: <SquareArrowOutUpRight size="16" />,
     href: `${LOOTLOG_APP_URL}/@me`,
   },
 ];
@@ -47,7 +47,7 @@ export const QuickAccess = () => {
       id="quick-access"
       title="Lootlog"
       minHeight={48}
-      minWidth={222}
+      minWidth={184}
       closable={false}
     >
       <div className="ll-flex ll-gap-1 ll-px-1 ll-py-1">

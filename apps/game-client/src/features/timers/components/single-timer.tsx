@@ -5,6 +5,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Tile } from "@/components/ui/tile";
+import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import { Timer } from "@/hooks/api/use-timers";
@@ -68,6 +69,27 @@ export const COLORS = {
     bgNoOpacity: "ll-bg-pink-500",
     border: "ll-border-pink-500",
   },
+
+  teal: {
+    bg: "ll-bg-teal-500/20 hover:ll-bg-teal-500/40",
+    bgNoOpacity: "ll-bg-teal-500",
+    border: "ll-border-teal-500",
+  },
+  lime: {
+    bg: "ll-bg-lime-500/20 hover:ll-bg-lime-500/40",
+    bgNoOpacity: "ll-bg-lime-500",
+    border: "ll-border-lime-500",
+  },
+  emerald: {
+    bg: "ll-bg-emerald-700/20 hover:ll-bg-emerald-700/40",
+    bgNoOpacity: "ll-bg-emerald-700",
+    border: "ll-border-emerald-700",
+  },
+  sky: {
+    bg: "ll-bg-sky-500/20 hover:ll-bg-sky-500/40",
+    bgNoOpacity: "ll-bg-sky-500",
+    border: "ll-border-sky-500",
+  },
   white: {
     bg: "ll-bg-gray-400/20 hover:ll-bg-gray-400/40",
     bgNoOpacity: "ll-bg-gray-400",
@@ -84,6 +106,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const { accountId, characterId, world } = useGlobalStore(
     (state) => state.gameState
   );
+  const { data: characters } = useCharacterList();
   const {
     addHiddenTimer,
     addPinnedTimer,
@@ -109,6 +132,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       </span>
       <i>${NPC_NAMES[timer.npc.type]?.longname ?? ""}</i>
       <br />
+      ${timersGrouping ? "" : `Dodane przez: <span class="">${timer?.member?.name}</span>`}
       <span class="elite_timer_tip_date">
         Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
@@ -116,11 +140,25 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
     `);
-  }, [timer.npc.id, timer.npc.name, timer.minSpawnTime, timer.maxSpawnTime]);
+  }, [
+    timer.npc.id,
+    timer.npc.name,
+    timer.minSpawnTime,
+    timer.maxSpawnTime,
+    timersGrouping,
+  ]);
 
   const handleHideTimer = () => {
     if (!accountId || !characterId) return;
     addHiddenTimer(accountId, characterId, timer.npc.name);
+  };
+
+  const handleHideTimerForAll = () => {
+    if (!accountId || !characters) return;
+
+    characters.forEach((character) => {
+      addHiddenTimer(accountId, String(character.id), timer.npc.name);
+    });
   };
 
   const handlePinTimer = () => {
@@ -206,13 +244,13 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         </Tile>
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="ll-w-32 ll-flex ll-flex-col">
-        <div className="ll-flex ll-gap-1 ll-my-1.5 ll-w-full ll-justify-center">
+      <ContextMenuContent className="ll-w-40 ll-flex ll-flex-col">
+        <div className="ll-flex ll-gap-1 ll-my-1.5 ll-w-full ll-justify-start ll-flex-wrap">
           {Object.entries(COLORS).map(([id, color]) => (
             <div
               key={id}
               className={cn(
-                "ll-size-3 ll-rounded-full ll-border-2 ll-box-border ll-border-transparent ll-custom-cursor-pointer",
+                "ll-size-3.5 ll-rounded-md ll-box-border ll-border-transparent ll-custom-cursor-pointer",
                 color.bgNoOpacity,
                 {
                   "ll-border-solid ll-border-gray-50": selectedColor === id,
@@ -225,7 +263,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         <ContextMenuItem onClick={handlePinTimer}>
           {isPinned ? "Odepnij" : "Przypnij"}
         </ContextMenuItem>
-        <ContextMenuItem onClick={handleHideTimer}>Ukryj timer</ContextMenuItem>
+        <ContextMenuItem onClick={handleHideTimer}>Ukryj</ContextMenuItem>
+        <ContextMenuItem onClick={handleHideTimerForAll}>
+          Ukryj dla wszystkich postaci
+        </ContextMenuItem>
         {!timersGrouping && (
           <ContextMenuItem onClick={handleRestartTimer}>
             Odliczaj od początku

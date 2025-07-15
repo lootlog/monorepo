@@ -7,6 +7,7 @@ import { decomposeChatMessage } from "@/utils/chat/decompose-chat-message";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { format } from "date-fns";
 import { FC } from "react";
+import { isYesterday } from "date-fns";
 
 export type ChatMessageProps = {
   message: ChatMessageType;
@@ -15,6 +16,11 @@ export type ChatMessageProps = {
 
 export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
   const memberColor = useMemberColor(member);
+  const msgDate = new Date(message.timestamp);
+  const now = new Date();
+  const isMsgYesterdayOrOlder =
+    msgDate < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const isMsgYesterday = isYesterday(msgDate) || isMsgYesterdayOrOlder;
 
   const renderChatMessage = (message: ChatMessageType) => {
     const messageData = decomposeChatMessage(message.message);
@@ -24,7 +30,10 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       const color = getTextColor(messageData.npc.npcType, true);
 
       return (
-        <span style={{ color }}>
+        <span
+          style={{ color }}
+          className={cn({ "ll-opacity-50": isMsgYesterday })}
+        >
           [{shortname}] {messageData.npc.npcName}{" "}
           {messageData.npc.npcLocation
             ? `- ${messageData.npc.npcLocation}`
@@ -33,7 +42,11 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       );
     }
 
-    return <span>{messageData.baseMessage}</span>;
+    return (
+      <span className={cn({ "ll-opacity-50": isMsgYesterday })}>
+        {messageData.baseMessage}
+      </span>
+    );
   };
 
   return (
@@ -42,11 +55,17 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       className="ll-text-white ll-text-xs ll-whitespace-pre-wrap ll-break-words ll-[overflow-wrap:anywhere] ll-w-[calc(100%-1rem)]"
     >
       <span className="ll-inline-block ll-whitespace-nowrap">
-        <span className="ll-text-[11px]">
+        <span
+          className={cn("ll-text-[11px]", {
+            "ll-opacity-50": isMsgYesterday,
+          })}
+        >
           [{format(new Date(message.timestamp), "HH:mm")}]
         </span>{" "}
         <span
-          className={cn("ll-font-bold ll-mx-1")}
+          className={cn("ll-font-bold ll-mx-1", {
+            "ll-opacity-50": isMsgYesterday,
+          })}
           style={{ color: `#${memberColor}` }}
         >
           {member?.name || "Nieznany"}:

@@ -36,7 +36,7 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
   return (
     <Button
       id={key}
-      className="ll-quick-access-button ll-custom-cursor-pointer ll-h-8"
+      className="ll-quick-access-button ll-custom-cursor-pointer ll-h-6"
       onClick={handleClick}
     >
       {icon}
