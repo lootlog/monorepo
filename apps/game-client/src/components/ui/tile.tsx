@@ -17,8 +17,8 @@ export const Tile: FC<TileProps> = ({
   className = "",
   onClick = () => {},
 }) => {
-  const borderColor = COLORS[color ?? "white"].border;
-  const bgColor = COLORS[color ?? "white"].bg;
+  const borderColor = COLORS[color ?? "white"]?.border;
+  const bgColor = COLORS[color ?? "white"]?.bg;
 
   return (
     <span
