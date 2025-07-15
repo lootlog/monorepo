@@ -1,7 +1,7 @@
 http:
   routers:
     landing:
-      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`)"
+      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`) || Path(`/terms-of-service`) || Path(`/privacy-policy`) || PathPrefix(`/screenshots/`)"
       service: "landing"
       priority: 30
       middlewares:
