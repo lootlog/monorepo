@@ -6,6 +6,7 @@ export type GuildMember = {
   id: string;
   userId: string;
   guildId: string;
+  avatar?: string;
   type: string;
   name: string;
   user: User;

@@ -46,6 +46,49 @@ export class RolesService {
     }
   }
 
+  async bulkUpdateRoles(
+    guildId: string,
+    roles: GuildRoleDto[],
+  ): Promise<Prisma.BatchPayload> {
+    try {
+      const updateOrCreatePromises = roles.map(
+        async ({ id, name, color, admin, position }) => {
+          const existingRole = await this.prisma.role.findUnique({
+            where: { id, guildId },
+          });
+
+          if (existingRole) {
+            return this.prisma.role.update({
+              where: { id },
+              data: {
+                name,
+                color,
+                position,
+                // permissions: admin ? Object.values(Permission) : [],
+              },
+            });
+          } else {
+            return this.prisma.role.create({
+              data: {
+                id,
+                guildId,
+                name,
+                color,
+                position,
+                permissions: admin ? Object.values(Permission) : [],
+              },
+            });
+          }
+        },
+      );
+
+      await Promise.all(updateOrCreatePromises);
+      return { count: roles.length };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async createRole(data: CreateRoleDto) {
     try {
       await this.prisma.role.create({
@@ -97,6 +140,8 @@ export class RolesService {
       where: { id: roleId },
       data: {
         permissions: data.permissions,
+        lvlRangeFrom: data.lvlRangeFrom,
+        lvlRangeTo: data.lvlRangeTo,
       },
     });
 

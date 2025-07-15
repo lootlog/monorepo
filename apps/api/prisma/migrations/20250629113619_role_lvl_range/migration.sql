@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Role" ADD COLUMN     "lvlRangeFrom" INTEGER DEFAULT 0,
+ADD COLUMN     "lvlRangeTo" INTEGER DEFAULT 500;

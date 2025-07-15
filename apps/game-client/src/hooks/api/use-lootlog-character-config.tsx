@@ -33,7 +33,7 @@ export const useLootlogCharactersConfig = () => {
       ),
     select: (response) => response.data,
     enabled: !!accountId,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   return query;

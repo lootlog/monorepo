@@ -4,6 +4,8 @@ export enum RoutingKey {
   GUILDS_DELETE = 'guilds.delete',
   GUILDS_UPDATE = 'guilds.update',
   GUILDS_CREATE = 'guilds.create',
+  GUILDS_SYNC = 'guilds.sync',
+  GUILDS_SYNC_TRIGGER = 'guilds.sync.trigger',
 
   GUILDS_CREATE_ROLE = 'guilds.create.role',
   GUILDS_UPDATE_ROLE = 'guilds.update.role',

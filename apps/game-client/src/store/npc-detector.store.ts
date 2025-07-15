@@ -3,32 +3,91 @@ import { GameNpc } from "@/types/margonem/npcs";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+export type GameNpcWithLocation = GameNpc & {
+  location: string;
+  msgSent: boolean;
+  notificationSent: boolean;
+};
+
+export type PickedNpcType =
+  | NpcType.HERO
+  | NpcType.COLOSSUS
+  | NpcType.TITAN
+  | NpcType.ELITE2;
+
+export interface NpcDetectorSettingByNpc {
+  detect: boolean;
+  notifyWindow: boolean;
+  autoNotifyClan: boolean;
+  autoNotifyChat: boolean;
+  notifySound: boolean;
+  highlight: boolean;
+  guildIds: string[];
+}
+
+export type NpcDetectorSettings = Pick<
+  Record<NpcType, NpcDetectorSettingByNpc>,
+  PickedNpcType
+>;
+
 interface NpcDetectorState {
-  npcs: GameNpc[];
-  detectTypes: Pick<
-    Record<NpcType, boolean>,
-    NpcType.HERO | NpcType.COLOSSUS | NpcType.TITAN
-  >;
+  npcs: GameNpcWithLocation[];
+  settings: Record<string, NpcDetectorSettings>;
   setState: (game: NpcDetectorState) => void;
   removeNpc: (npcId: number | number[]) => void;
-  addNpc: (npc: GameNpc | GameNpc[]) => void;
+  addNpc: (npc: GameNpcWithLocation | GameNpcWithLocation[]) => void;
   clearNpcs: () => void;
-  setDetectTypes: (
-    type: NpcType.HERO | NpcType.COLOSSUS | NpcType.TITAN
-  ) => void;
+  setSettings: (charactedId: string, settings: NpcDetectorSettings) => void;
+  setSettingsForAllCharacters: (settings: NpcDetectorSettings) => void;
+  setNpcState: (npcId: number, npc: GameNpcWithLocation) => void;
 }
+
+export const recommendedSettings: NpcDetectorSettings = {
+  [NpcType.ELITE2]: {
+    detect: false,
+    notifyWindow: false,
+    autoNotifyClan: false,
+    autoNotifyChat: false,
+    notifySound: true,
+    highlight: false,
+    guildIds: [],
+  },
+  [NpcType.HERO]: {
+    detect: true,
+    notifyWindow: true,
+    autoNotifyClan: false,
+    autoNotifyChat: false,
+    notifySound: true,
+    highlight: true,
+    guildIds: [],
+  },
+  [NpcType.COLOSSUS]: {
+    detect: true,
+    notifyWindow: true,
+    autoNotifyClan: false,
+    autoNotifyChat: false,
+    notifySound: true,
+    highlight: true,
+    guildIds: [],
+  },
+  [NpcType.TITAN]: {
+    detect: true,
+    notifyWindow: true,
+    autoNotifyClan: false,
+    autoNotifyChat: false,
+    notifySound: true,
+    highlight: true,
+    guildIds: [],
+  },
+};
 
 export const useNpcDetectorStore = create<NpcDetectorState>()(
   persist(
     (set) => ({
       npcs: [],
-      detectTypes: {
-        [NpcType.HERO]: true,
-        [NpcType.COLOSSUS]: true,
-        [NpcType.TITAN]: true,
-      },
+      settings: {},
       setState: ({ npcs }) => set({ npcs }),
-      addNpc: (npc: GameNpc | GameNpc[]) =>
+      addNpc: (npc) =>
         set((state) => {
           const newNpcs = Array.isArray(npc) ? npc : [npc];
           const existingIds = new Set(state.npcs.map((n) => n.id));
@@ -44,18 +103,40 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
           ),
         })),
       clearNpcs: () => set({ npcs: [] }),
-      setDetectTypes: (type: NpcType.HERO | NpcType.COLOSSUS | NpcType.TITAN) =>
+      setSettings: (characterId, settings) =>
         set((state) => ({
-          detectTypes: {
-            ...state.detectTypes,
-            [type]: !state.detectTypes[type],
+          settings: {
+            ...state.settings,
+            [characterId]: {
+              ...state.settings[characterId],
+              ...settings,
+            },
           },
         })),
+      setSettingsForAllCharacters: (settings: NpcDetectorSettings) =>
+        set((state) => {
+          const newSettings = Object.keys(state.settings).reduce(
+            (acc, characterId) => {
+              acc[characterId] = settings;
+              return acc;
+            },
+            {} as Record<string, NpcDetectorSettings>
+          );
+          return { settings: newSettings };
+        }),
+      setNpcState: (npcId: number, npc: GameNpcWithLocation) => {
+        set((state) => {
+          const npcs = state.npcs.map((n) =>
+            n.id === npcId ? { ...n, ...npc } : n
+          );
+          return { npcs };
+        });
+      },
     }),
     {
       name: "ll-npc-detector-state",
       partialize: (state) => ({
-        detectTypes: state.detectTypes,
+        settings: state.settings,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,

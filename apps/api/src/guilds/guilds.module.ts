@@ -11,6 +11,7 @@ import { PrismaService } from 'src/db/prisma.service';
 import { UsersModule } from 'src/users/users.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
 import { GuildsRpcHandler } from 'src/guilds/guild-rpc.handler';
+import { RetryService } from 'src/rabbitmq/retry.service';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { GuildsRpcHandler } from 'src/guilds/guild-rpc.handler';
     GuildsEventsHandler,
     PrismaService,
     GuildsRpcHandler,
+    RetryService,
   ],
   exports: [GuildsService, GuildsEventsHandler],
 })

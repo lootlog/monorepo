@@ -1,8 +1,8 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 import { CreatePlayerDto } from 'src/players/dto/create-player.dto';
-import { RoutingKey } from 'src/players/enum/routing-key.enum';
 
 @Injectable()
 export class PlayersService {

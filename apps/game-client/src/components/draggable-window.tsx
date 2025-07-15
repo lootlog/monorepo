@@ -5,7 +5,8 @@ import {
   WindowId,
   WindowOpacity,
 } from "@/store/windows.store";
-import { FC, useEffect, useRef, useState } from "react";
+import { Blend, Pin, PinOff, XIcon } from "lucide-react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 
 export type DraggableWindowProps = {
   children: React.ReactNode;
@@ -20,6 +21,8 @@ export type DraggableWindowProps = {
   maxWidth?: number;
   maxHeight?: number;
   dynamicHeight?: boolean;
+  closable?: boolean;
+  disableTitle?: boolean;
 };
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
@@ -37,15 +40,18 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   maxWidth,
   maxHeight,
   dynamicHeight = false,
+  closable = true,
+  disableTitle = false,
 }) => {
   const state = useWindowsStore();
   const opacity = state[id].opacity;
   const rawDefaultPosition = state[id].position;
   const defaultSize = state[id].size;
+  const isLocked = state[id].locked;
 
   const [size, setSize] = useState({
-    width: defaultSize.width || minWidth,
-    height: defaultSize.height || minHeight,
+    width: resizable ? defaultSize.width : minWidth,
+    height: resizable ? defaultSize.height : minHeight,
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -59,19 +65,28 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     };
   };
 
-  const defaultPosition = getClampedPosition(rawDefaultPosition);
+  const defaultPosition = isLocked
+    ? rawDefaultPosition
+    : getClampedPosition(rawDefaultPosition);
 
   const draggableRef = useRef<HTMLDivElement>(null!);
+
+  const onDragStop = useCallback(
+    (position: { x: number; y: number }) => {
+      state.setPosition(id, position);
+    },
+    [id, state.setPosition]
+  );
+
   const { position, handleMouseDown, handleTouchStart } = useDrag({
     ref: draggableRef,
     defaultState: defaultPosition,
-    onDragStop: (position) => {
-      state.setPosition(id, position);
-    },
+    onDragStop,
+    isLocked,
   });
 
   const handleResize = (e: React.MouseEvent) => {
-    if (!resizable) return;
+    if (!resizable || isLocked) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -146,6 +161,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         height: size.height,
       };
 
+  const handleLockToggle = () => {
+    state.setLocked(id, !isLocked);
+  };
+
   return (
     <div
       className="ll-pointer-events-auto ll-absolute"
@@ -174,25 +193,46 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           }
         )}
       >
-        <div className="ll-flex ll-items-center ll-justify-between ll-px-1 ll-flex-shrink-0">
-          <div className="ll-flex ll-items-center ll-gap-1">
-            <div
-              className="ll-opacity-button ll-custom-cursor-pointer ll-mt-0.5"
-              onClick={handleOpacityChange}
-            />
-            {actions}
+        {!disableTitle && (
+          <div className="ll-flex ll-items-center ll-justify-between ll-px-1 ll-flex-shrink-0">
+            <div className="ll-flex ll-items-center ll-gap-1">
+              <Blend
+                className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+                size="14"
+                onClick={handleOpacityChange}
+              />
+              {actions}
+            </div>
+            <div className="ll-background-[0_0] ll-line-height-[28px] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
+              <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
+                {title}
+              </p>
+              {isLocked ? (
+                <PinOff
+                  className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                  size="14"
+                  onClick={handleLockToggle}
+                />
+              ) : (
+                <Pin
+                  className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                  size="14"
+                  onClick={handleLockToggle}
+                />
+              )}
+            </div>
+            {closable && (
+              <XIcon
+                size="14"
+                type="button"
+                className="ll-custom-cursor-pointer ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+                onClick={onClose}
+              />
+            )}
           </div>
-          <p className="ll-text-[11px] ll-background-[0_0] ll-text-[beige] ll-line-height-[28px] ll-text-shadow-[1px_1px_1px_black] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2">
-            {title}
-          </p>
-          <button
-            type="button"
-            className="ll-close-button ll-custom-cursor-pointer"
-            onClick={onClose}
-          />
-        </div>
-        <div className="ll-flex-1 ll-overflow-auto">{children}</div>
-        {resizable && (
+        )}
+        <div className="ll-flex-1 ll-overflow-hidden">{children}</div>
+        {resizable && !isLocked && (
           <div
             className="ll-absolute ll-bottom-0 ll-right-0 ll-w-4 ll-h-4 ll-cursor-se-resize ll-bg-transparent"
             onMouseDown={handleResize}

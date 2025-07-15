@@ -1,8 +1,9 @@
+import { Npc } from 'src/gateway/types/npc.type';
+
 export class CreateTimerDto {
   guildId: string;
   minSpawnTime: number;
   maxSpawnTime: number;
-  name: string;
-  type: string;
+  npc: Npc;
   location: string;
 }

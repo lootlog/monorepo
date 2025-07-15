@@ -15,6 +15,9 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "focus-visible:ll-border-ring focus-visible:ll-ring-ring/50 focus-visible:ll-ring-[3px]",
         "aria-invalid:ll-ring-destructive/20 dark:ll-aria-invalid:ll-ring-destructive/40 aria-invalid:ll-border-destructive",
         "ll-text-white ll-box-border ll-text-xs",
+        {
+          "!ll-cursor-not-allowed": props.disabled,
+        },
         className
       )}
       {...props}

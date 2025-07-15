@@ -4,15 +4,20 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { Permission, Prisma, Timer, NpcType, Guild } from 'generated/client';
+import {
+  Permission,
+  Prisma,
+  Timer,
+  NpcType,
+  Guild,
+  Role,
+} from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { PrismaService } from 'src/db/prisma.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
 import { ErrorKey } from 'src/timers/enum/error-key.enum';
-import { RoutingKey } from 'src/timers/enum/routing-key.enum';
-import { omit } from 'lodash';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GetTimersDto } from 'src/timers/dto/get-timers.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
@@ -20,7 +25,13 @@ import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
 import { DEFAULT_RESPAWN_RANDOMNESS } from 'src/timers/constants/respawn';
 import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
 import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
-import { ELIGIBLE_TITAN_READ_ACL } from 'src/timers/constants/required-titan-acls';
+import { RoutingKey } from 'src/enum/routing-key.enum';
+import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
+import { canViewNpcTimer } from 'src/shared/utils/can-view-npc-timer';
+
+function parseNpc(npc: any) {
+  return typeof npc === 'string' ? JSON.parse(npc) : npc;
+}
 
 @Injectable()
 export class TimersService {
@@ -33,10 +44,8 @@ export class TimersService {
 
   async createTimer(discordId: string, data: CreateTimerDto) {
     const now = new Date();
-
     if (data.npc.wt < 19)
       throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
-
     const [guilds, config] = await Promise.all([
       this.guildsService.getGuildsForRequiredPermissions(discordId, [
         Permission.LOOTLOG_WRITE,
@@ -47,91 +56,61 @@ export class TimersService {
         data.characterId,
       ),
     ]);
-
-    if (guilds.length === 0) {
-      throw new ForbiddenException();
-    }
-
-    const filteredGuilds = guilds.filter((guild) => {
-      const isOnBlacklist = config?.addTimersBlacklistGuildIds?.includes(
-        guild.id,
-      );
-      return !isOnBlacklist;
-    });
-
+    if (guilds.length === 0) throw new ForbiddenException();
+    const filteredGuilds = guilds.filter(
+      (guild) => !config?.addTimersBlacklistGuildIds?.includes(guild.id),
+    );
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
       data.respBaseSeconds,
       data.respawnRandomness,
       now,
     );
-
-    const newTimers = filteredGuilds.map((guild) => {
-      return {
-        where: {
-          timerId: {
-            guildId: guild.id,
-            world: data.world,
-            npcId: data.npc.id,
-          },
-        },
-        create: {
-          maxSpawnTime,
-          minSpawnTime,
+    const newTimers = filteredGuilds.map((guild) => ({
+      where: {
+        timerId: {
+          guildId: guild.id,
           world: data.world,
           npcId: data.npc.id,
-          latestRespBaseSeconds: data.respBaseSeconds,
-          latestRespawnRandomness: data.respawnRandomness,
-          guild: {
-            connect: {
-              id: guild.id,
-            },
-          },
-          member: {
-            connect: {
-              memberId: {
-                userId: discordId,
-                guildId: guild.id,
-              },
-            },
-          },
-          npc: {
-            id: data.npc.id,
-            name: data.npc.name,
-            prof: getProfByShortname(data.npc.prof),
-            location: data.npc.location,
-            wt: data.npc.wt,
-            lvl: data.npc.lvl,
-            type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
-            icon: data.npc.icon,
-            margonemType: data.npc.type,
-          },
         },
-        update: {
-          maxSpawnTime,
-          minSpawnTime,
-          latestRespBaseSeconds: data.respBaseSeconds,
-          latestRespawnRandomness:
-            data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
-          member: {
-            connect: {
-              memberId: {
-                userId: discordId,
-                guildId: guild.id,
-              },
-            },
-          },
+      },
+      create: {
+        maxSpawnTime,
+        minSpawnTime,
+        world: data.world,
+        npcId: data.npc.id,
+        latestRespBaseSeconds: data.respBaseSeconds,
+        latestRespawnRandomness: data.respawnRandomness,
+        guild: { connect: { id: guild.id } },
+        member: {
+          connect: { memberId: { userId: discordId, guildId: guild.id } },
         },
-      };
-    });
-
+        npc: {
+          id: data.npc.id,
+          name: data.npc.name,
+          prof: getProfByShortname(data.npc.prof),
+          location: data.npc.location,
+          wt: data.npc.wt,
+          lvl: data.npc.lvl,
+          type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
+          icon: data.npc.icon,
+          margonemType: data.npc.type,
+        },
+      },
+      update: {
+        maxSpawnTime,
+        minSpawnTime,
+        latestRespBaseSeconds: data.respBaseSeconds,
+        latestRespawnRandomness:
+          data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+        member: {
+          connect: { memberId: { userId: discordId, guildId: guild.id } },
+        },
+      },
+    }));
     const newTimersUpsert = await Promise.all(
       newTimers.map((timer) => this.prisma.timer.upsert(timer)),
     );
-
-    newTimersUpsert.forEach((newTimer) => {
-      this.emitUpdateTimer(newTimer);
-    });
-
+    newTimersUpsert.forEach((newTimer) => this.emitUpdateTimer(newTimer));
     return;
   }
 
@@ -141,15 +120,12 @@ export class TimersService {
     data: CreateManualTimerDto,
   ) {
     const now = new Date();
-
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
       data.respBaseSeconds,
       data.respawnRandomness,
       now,
     );
-
     const npcId = generateUniqueIntId();
-
     const newTimer = await this.prisma.timer.create({
       data: {
         maxSpawnTime,
@@ -161,7 +137,7 @@ export class TimersService {
           prof: '',
           location: '',
           wt: '',
-          lvl: '',
+          lvl: 0,
           type: '',
           icon: '',
           margonemType: 999,
@@ -170,24 +146,13 @@ export class TimersService {
         latestRespBaseSeconds: data.respBaseSeconds,
         latestRespawnRandomness:
           data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
-        guild: {
-          connect: {
-            id: guildId,
-          },
-        },
+        guild: { connect: { id: guildId } },
         member: {
-          connect: {
-            memberId: {
-              userId: discordId,
-              guildId: guildId,
-            },
-          },
+          connect: { memberId: { userId: discordId, guildId: guildId } },
         },
       },
     });
-
     this.emitUpdateTimer(newTimer);
-
     return;
   }
 
@@ -195,11 +160,10 @@ export class TimersService {
     { world }: GetTimersDto,
     guild: Guild,
     permissions: Permission[],
+    roles: Role[],
   ) {
     const now = new Date();
-    const canReadTitans = ELIGIBLE_TITAN_READ_ACL.some((acl) =>
-      permissions.includes(acl),
-    );
+    const administrativeUser = isAdministrativeUser(permissions);
 
     const timers = await this.prisma.timer.findMany({
       where: {
@@ -207,39 +171,27 @@ export class TimersService {
         maxSpawnTime: { gt: now.toISOString() },
         world,
       },
-      orderBy: {
-        maxSpawnTime: 'desc',
-      },
-      include: {
-        member: true,
-      },
+      orderBy: { maxSpawnTime: 'desc' },
+      include: { member: true },
     });
 
-    const filteredTimers = canReadTitans
-      ? timers
-      : timers.filter((timer) => {
-          const npc =
-            typeof timer.npc === 'string' ? JSON.parse(timer.npc) : timer.npc;
-          return npc.type !== NpcType.TITAN;
-        });
+    const filteredTimers = timers.filter((timer) => {
+      if (administrativeUser) return true;
+      const npc = parseNpc(timer.npc);
 
+      return canViewNpcTimer(npc, roles);
+    });
     return filteredTimers;
   }
 
   async getAllTimers(discordId: string, { world }: GetTimersDto) {
     const now = new Date();
-
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
       [Permission.LOOTLOG_READ],
     );
-
-    if (guilds.length === 0) {
-      throw new ForbiddenException();
-    }
-
+    if (guilds.length === 0) throw new ForbiddenException();
     const guildIds = guilds.map((guild) => guild.id);
-
     const permissionsPerGuild =
       await this.guildsService.getMultipleGuildsPermissions(
         discordId,
@@ -247,47 +199,35 @@ export class TimersService {
       );
 
     const results: Timer[] = [];
-
     for (const guild of guilds) {
       const guildId = guild.id;
-      const guildPermissions =
-        permissionsPerGuild.find((p) => p.guild.id === guildId)?.data || [];
-
-      const canReadTitans = ELIGIBLE_TITAN_READ_ACL.some((acl) =>
-        guildPermissions.includes(acl),
+      const guildPermissionsAndRoles = permissionsPerGuild.find(
+        (p) => p.guild.id === guildId,
       );
 
-      const where: any = {
-        guildId,
-        maxSpawnTime: { gt: now.toISOString() },
-        world,
-      };
+      const permissions = guildPermissionsAndRoles?.permissions || [];
+      const roles = guildPermissionsAndRoles?.roles || [];
+      const administrativeUser = isAdministrativeUser(permissions);
 
       const timers = await this.prisma.timer.findMany({
-        where,
-        orderBy: {
-          maxSpawnTime: 'desc',
+        where: {
+          guildId,
+          maxSpawnTime: { gt: now.toISOString() },
+          world,
         },
-        include: {
-          member: true,
-        },
+        orderBy: { maxSpawnTime: 'desc' },
+        include: { member: true },
       });
 
-      const timersReduce = timers.reduce((acc, timer) => {
-        const npc =
-          typeof timer.npc === 'string' ? JSON.parse(timer.npc) : timer.npc;
+      const filtered = timers.filter((timer) => {
+        if (administrativeUser) return true;
+        const npc = parseNpc(timer.npc);
 
-        if (!canReadTitans && npc.type === NpcType.TITAN) {
-          return acc;
-        }
+        return canViewNpcTimer(npc, roles);
+      });
 
-        acc.push(timer);
-        return acc;
-      }, []);
-
-      results.push(...timersReduce);
+      results.push(...filtered);
     }
-
     return results;
   }
 
@@ -298,7 +238,6 @@ export class TimersService {
     data: ResetTimerDto,
   ) {
     const now = new Date();
-
     const timer = await this.prisma.timer.findUnique({
       where: {
         timerId: {
@@ -308,17 +247,13 @@ export class TimersService {
         },
       },
     });
-
-    if (!timer) {
+    if (!timer)
       throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
-    }
-
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
       timer.latestRespBaseSeconds,
       timer.latestRespawnRandomness,
       now,
     );
-
     const updatedTimer = await this.prisma.timer.update({
       where: {
         timerId: {
@@ -340,7 +275,6 @@ export class TimersService {
         },
       },
     });
-
     this.emitUpdateTimer(updatedTimer);
   }
 
@@ -355,7 +289,6 @@ export class TimersService {
           },
         },
       });
-
       this.emitDeleteTimer({ npcId: parseInt(npcId, 10), world, guildId });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -391,10 +324,8 @@ export class TimersService {
     const date = new Date(now).getTime();
     const respMs = respBaseSeconds * 1000;
     const multiplier = respawnRandomness / 100;
-
     const maxSpawnTime = Math.round(respMs * multiplier + respMs);
     const minSpawnTime = Math.round(respMs - respMs * multiplier);
-
     return {
       minSpawnTime: new Date(date + minSpawnTime),
       maxSpawnTime: new Date(date + maxSpawnTime),

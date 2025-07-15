@@ -19,6 +19,8 @@ import { generateSlug } from 'src/shared/utils/generate-slug';
 import { UsersService } from 'src/users/users.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 
 @Injectable()
 export class GuildsService {
@@ -28,6 +30,7 @@ export class GuildsService {
     @Inject(forwardRef(() => LootlogConfigService))
     private lootlogConfigService: LootlogConfigService,
     @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
     private readonly amqpConnection: AmqpConnection,
     private readonly prisma: PrismaService,
   ) {}
@@ -116,10 +119,14 @@ export class GuildsService {
     }, []);
 
     if (discordId === member.guild.ownerId) {
-      return { data: Object.values(Permission), guild };
+      return {
+        permissions: Object.values(Permission),
+        guild,
+        roles: member.roles,
+      };
     }
 
-    return { data: permissions, guild };
+    return { permissions, guild, roles: member.roles };
   }
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
@@ -139,7 +146,7 @@ export class GuildsService {
       const member = members.find((m) => m.guildId === guild.id);
 
       if (!member) {
-        return { guild, data: [] };
+        return { guild, permissions: [], roles: [] };
       }
 
       let permissions = member.roles.reduce((acc: Permission[], role) => {
@@ -150,7 +157,7 @@ export class GuildsService {
         permissions = Object.values(Permission);
       }
 
-      return { guild, data: permissions };
+      return { guild, permissions, roles: member.roles };
     });
 
     return result;
@@ -240,7 +247,7 @@ export class GuildsService {
       //     },
       //   },
       // });
-      await this.prisma.loot.deleteMany({ where: { guildId } });
+      // await this.prisma.loot.deleteMany({ where: { guildId } });
       await this.prisma.timer.deleteMany({ where: { guildId } });
 
       await this.membersService.deleteMembersByGuildId(guildId);
@@ -254,5 +261,30 @@ export class GuildsService {
     }
 
     return;
+  }
+
+  async handleGuildSyncTrigger(guildId: string) {
+    console.log(this.amqpConnection.publish);
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_SYNC_TRIGGER,
+      {
+        guildId,
+      },
+    );
+  }
+
+  async handleGuildSync(data: CreateGuildDto) {
+    const guild = await this.getGuildById(data.guildId);
+
+    console.log(guild);
+
+    if (!guild) {
+      throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
+    }
+
+    await this.rolesService.bulkUpdateRoles(data.guildId, data.roles);
+    await this.membersService.bulkUpdateMembers(data.guildId, data.members);
   }
 }

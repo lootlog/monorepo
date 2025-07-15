@@ -34,7 +34,14 @@ export const RolesSettings = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4">
+      <div className="p-4 pb-6">
+        <div className="text-lg font-semibold">Ustawienia ról</div>
+        <div className="text-sm text-gray-500">
+          Ustawienia ról, które mogą być przypisane do graczy na serwerze
+          Discord. Tutaj możesz przypisać uprawnienia do ról.
+        </div>
+      </div>
+      <div className="p-4 border-t">
         <SearchInput
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Szukaj roli..."
@@ -45,7 +52,7 @@ export const RolesSettings = () => {
           "grid-cols-[theme(width.64)_1fr]": selectedRole,
         })}
       >
-        <ScrollArea className="flex flex-col h-[calc(100vh-182px)]">
+        <ScrollArea className="flex flex-col h-[calc(100vh-270px)]">
           {filteredRoles?.map((role) => {
             const color = role.color === 0 ? "FFF" : role.color.toString(16);
             const active = selectedRole?.id === role.id;
@@ -66,7 +73,12 @@ export const RolesSettings = () => {
                     className={cn("size-4 rounded-full")}
                     style={{ backgroundColor: `#${color}` }}
                   />
-                  <div className="font-semibold">{role.name}</div>
+                  <div>
+                    <div className="font-semibold">{role.name}</div>
+                    <div className="text-xs text-gray-500">
+                      ({role.lvlRangeFrom} - {role.lvlRangeTo})
+                    </div>
+                  </div>
                 </div>
                 {!selectedRole && (
                   <Button

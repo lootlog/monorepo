@@ -11,7 +11,7 @@ export const useGuilds = () => {
     queryFn: () =>
       client.get<Guild[]>(`${API_URL}/guilds/@me`, { withCredentials: true }),
     select: (response) => response.data,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   return query;
