@@ -43,6 +43,7 @@ export const ChatInput: FC<ChatInputProps> = ({
         message: data.message.slice(1),
         world,
       });
+      sendChatMessage({ guildIds: [selectedGuildId], message: data.message });
 
       reset();
       return;
