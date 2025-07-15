@@ -20,7 +20,9 @@ export const PageHeader: React.FC = () => {
 
   return (
     <div className="flex flex-row items-center justify-between w-full h-16 px-4 text-white">
-      <h1 className="text-xl font-bold">lootlog.pl</h1>
+      <a href="/" className="text-xl font-bold">
+        lootlog.pl
+      </a>
       <div className="flex flex-row gap-4">
         {isAuthenticated ? (
           <a href="/@me">
