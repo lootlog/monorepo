@@ -1,4 +1,8 @@
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { NpcType } from "@/hooks/api/use-npcs";
 import {
@@ -6,6 +10,7 @@ import {
   recommendedSettings,
   useNotificationsStore,
 } from "@/store/notifications.store";
+import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -37,6 +42,7 @@ const FormSchema = z.object({
       show: z.boolean(),
       highlight: z.boolean(),
       ignoreOtherWorlds: z.boolean(),
+      autoHideTimeout: z.number().min(0).optional(),
       guildIds: z.array(z.string()),
     })
   ),
@@ -47,7 +53,8 @@ type FormData = z.infer<typeof FormSchema>;
 export const NotificationsSettingsTabForm: FC<
   NotificationsSettingsTabFormProps
 > = ({ characterId }) => {
-  const { settings, setSettings } = useNotificationsStore();
+  const { settings, setSettings, setState } = useNotificationsStore();
+  const { data: characters } = useCharacterList();
   const { data: guilds } = useGuilds();
 
   const currentSettings: NotificationsSettings =
@@ -65,7 +72,7 @@ export const NotificationsSettingsTabForm: FC<
   useEffect(() => {
     reset(defaultValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterId, settings]);
+  }, [characterId]);
 
   function onSubmit(data: FormData) {
     if (!characterId) return;
@@ -80,11 +87,34 @@ export const NotificationsSettingsTabForm: FC<
     onSubmit(watchedData);
   }, [watchedData]);
 
+  function applyToAll(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    const characterIds = characters?.map((c) => c.id.toString()) || [];
+
+    setState(
+      characterIds.reduce(
+        (acc, id) => {
+          acc[id] = Object.fromEntries(
+            mainFields.map((field) => [
+              field.key,
+              watchedData.settingsByNpcType[field.key] ??
+                recommendedSettings[field.key],
+            ])
+          ) as NotificationsSettings;
+          return acc;
+        },
+        {} as Record<string, NotificationsSettings>
+      )
+    );
+  }
+
   const renderField = (field: (typeof mainFields)[number]) => {
     const watchShow = watchedData.settingsByNpcType[field.key]?.show;
+    const textColor = getTextColor(field.key, true);
+
     return (
       <span key={field.key}>
-        <div className="ll-font-semibold ll-mb-2">{field.label}</div>
+        <div className="ll-font-semibold ll-mb-1">{field.label}</div>
         <Checkbox
           id={`${field.key}-show`}
           {...register(`settingsByNpcType.${field.key}.show`)}
@@ -101,13 +131,25 @@ export const NotificationsSettingsTabForm: FC<
         <Checkbox
           id={`${field.key}-highlight`}
           disabled={!watchShow}
+          labelStyle={{ color: textColor }}
           {...register(`settingsByNpcType.${field.key}.highlight`)}
         >
           Podświetlenie
         </Checkbox>
         <div className="ll-mt-2">
+          <Label>Auto ukrywanie: (sekundy)</Label>
+          <Input
+            id={`${field.key}-auto-hide-timeout`}
+            type="number"
+            disabled={!watchShow}
+            className="!ll-w-16 !ll-mt-1"
+            placeholder="0"
+            {...register(`settingsByNpcType.${field.key}.autoHideTimeout`)}
+          />
+        </div>
+        <div className="ll-mt-2">
           <span className="ll-font-semibold">Z jakich serwerów:</span>
-          <div className="ll-mt-2">
+          <div className="ll-mt-1">
             {guilds?.map((guild) => {
               const id = `${field.key}-${guild.id}`;
               return (
@@ -132,7 +174,10 @@ export const NotificationsSettingsTabForm: FC<
   return (
     <form className="ll-h-full ll-py-4">
       <div className="ll-flex-1">
-        <span className="ll-grid ll-grid-cols-2 ll-gap-y-6 ll-mb-2">
+        <div className="ll-pb-2">
+          <Button onClick={applyToAll}>Aplikuj do wszystkich postaci</Button>
+        </div>
+        <span className="ll-grid ll-grid-cols-2 ll-gap-y-4 ll-mb-12">
           {mainFields.map(renderField)}
         </span>
       </div>
