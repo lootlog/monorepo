@@ -39,10 +39,16 @@ jobs:
         run: |
           yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i $KUSTOMIZE_PATH
 
-      - name: Commit and push changes
+      - name: Commit and push with retry
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
+
           git add $KUSTOMIZE_PATH
-          git commit -m "ci: update service-a image to $IMAGE_TAG"
-          git push
+          git commit -m "ci: update service-a image to $IMAGE_TAG" || echo "No changes to commit"
+
+          for i in {1..5}; do
+            git fetch origin main
+            git rebase origin/main || { echo "Rebase failed"; exit 1; }
+            git push origin HEAD:main && break || sleep 5
+          done
