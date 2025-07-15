@@ -21,6 +21,7 @@ type UseDragConfig = {
   calculateFor?: "topLeft" | "bottomRight";
   defaultState?: { x: number; y: number };
   onDragStop: (position: { x: number; y: number }) => void;
+  isLocked?: boolean;
 };
 
 export const useDrag = ({
@@ -28,10 +29,12 @@ export const useDrag = ({
   calculateFor = "topLeft",
   defaultState = DEFAULT_STATE,
   onDragStop,
+  isLocked = false,
 }: UseDragConfig) => {
   const [dragInfo, setDragInfo] = useState(DEFAULT_DRAG_INFO);
   const [finalPosition, setFinalPosition] = useState(defaultState);
   const [isDragging, setIsDragging] = useState(false);
+  const [wasJustDragging, setWasJustDragging] = useState(false);
 
   const updateFinalPosition = useCallback(
     (width: number, height: number, x: number, y: number) => {
@@ -64,6 +67,7 @@ export const useDrag = ({
   );
 
   const startDrag = (x: number, y: number) => {
+    if (isLocked) return;
     const { current } = ref;
     if (!current) return;
     const { top, left, width, height } = current.getBoundingClientRect();
@@ -81,9 +85,15 @@ export const useDrag = ({
     updateFinalPosition(width, height, left - deltaX, top - deltaY);
   };
 
-  const endDrag = () => setIsDragging(false);
+  const endDrag = useCallback(() => {
+    if (isDragging) {
+      setWasJustDragging(true);
+      setIsDragging(false);
+    }
+  }, [isDragging]);
 
   const handleMouseDown = (evt: ReactMouseEvent<HTMLElement>) => {
+    if (isLocked) return;
     evt.stopPropagation();
     if (!(evt.target instanceof HTMLElement)) return;
     if (evt.target.getAttribute("data-state") === "input") return;
@@ -93,6 +103,7 @@ export const useDrag = ({
   };
 
   const handleTouchStart = (evt: ReactTouchEvent<HTMLElement>) => {
+    if (isLocked) return;
     if (evt.touches.length > 1) return;
     const touch = evt.touches[0];
     startDrag(touch.clientX, touch.clientY);
@@ -116,22 +127,18 @@ export const useDrag = ({
     [isDragging, dragInfo]
   );
 
-  const handleMouseUp = () => endDrag();
-  const handleTouchEnd = () => endDrag();
+  const handleMouseUp = useCallback(() => endDrag(), [endDrag]);
+  const handleTouchEnd = useCallback(() => endDrag(), [endDrag]);
 
   useEffect(() => {
-    if (!isDragging) {
+    if (wasJustDragging && !isDragging) {
       onDragStop(finalPosition);
+      setWasJustDragging(false);
     }
-  }, [isDragging]);
+  }, [isDragging, wasJustDragging, finalPosition, onDragStop]);
 
   useEffect(() => {
-    if (isDragging === false) {
-      onDragStop(finalPosition);
-    }
-  }, [isDragging]);
-
-  useEffect(() => {
+    if (isLocked) return;
     let timeoutId: number | undefined;
 
     const handleResize = () => {
@@ -139,6 +146,7 @@ export const useDrag = ({
         clearTimeout(timeoutId);
       }
       timeoutId = window.setTimeout(() => {
+        if (isLocked) return;
         const { current: draggableElement } = ref;
         if (!draggableElement) return;
         const { width, height } = draggableElement.getBoundingClientRect();
@@ -162,7 +170,7 @@ export const useDrag = ({
         clearTimeout(timeoutId);
       }
     };
-  }, [ref]);
+  }, [ref, isLocked]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handleMouseMove);
@@ -179,6 +187,7 @@ export const useDrag = ({
   }, [handleMouseMove, handleTouchMove]);
 
   useEffect(() => {
+    if (isLocked) return;
     const { current } = ref;
     if (!current) return;
     const { width, height } = current.getBoundingClientRect();

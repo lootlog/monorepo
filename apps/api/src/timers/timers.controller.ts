@@ -9,10 +9,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { Guild, Permission } from 'generated/client';
+import { Guild, Permission, Role } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
+import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -42,6 +43,7 @@ export class TimersController {
   async getTimers(
     @Query('world') world: string,
     @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
     return this.timersService.getTimers(
@@ -50,6 +52,7 @@ export class TimersController {
       },
       guild,
       permissions,
+      roles,
     );
   }
 

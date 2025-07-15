@@ -7,6 +7,7 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { GatewayQueueHandler } from 'src/gateway/gateway-queue.handler';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
+import { RetryService } from 'src/gateway/retry.service';
 
 @Module({
   imports: [
@@ -18,6 +19,6 @@ import { RedisModule } from 'src/lib/redis/redis.module';
     GuildsModule,
     RedisModule,
   ],
-  providers: [GatewayService, Gateway, GatewayQueueHandler],
+  providers: [GatewayService, Gateway, GatewayQueueHandler, RetryService],
 })
 export class GatewayModule {}

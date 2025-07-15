@@ -15,17 +15,17 @@ datasource db {
 }
 
 model Guild {
-  id        String   @id
-  name      String
-  icon      String?
-  ownerId   String
-  vanityUrl String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  roles     Role[]
-  members   Member[]
-  timers    Timer[]
-  loots     Loot[]
+  id              String           @id
+  name            String
+  icon            String?
+  ownerId         String
+  vanityUrl       String?          @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  roles           Role[]
+  members         Member[]
+  timers          Timer[]
+  lootSubmissions LootSubmission[]
 
   @@index([vanityUrl])
 }
@@ -45,14 +45,16 @@ enum Permission {
 }
 
 model Role {
-  id          String       @id
-  guildId     String
-  name        String
-  color       Int?
-  position    Int?
-  permissions Permission[] @default([])
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           String       @id
+  guildId      String
+  name         String
+  color        Int?
+  position     Int?
+  permissions  Permission[] @default([])
+  lvlRangeFrom Int?         @default(0)
+  lvlRangeTo   Int?         @default(500)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   guild   Guild    @relation(fields: [guildId], references: [id])
   members Member[]
@@ -69,20 +71,20 @@ enum MemberType {
 }
 
 model Member {
-  id        Int        @id @default(autoincrement())
-  userId    String
-  guildId   String
-  type      MemberType @default(USER)
-  name      String
-  avatar    String?
-  banner    String?
-  active    Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  guild     Guild      @relation(fields: [guildId], references: [id])
-  roles     Role[]
-  loots     Loot[]
-  timers    Timer[]
+  id              Int              @id @default(autoincrement())
+  userId          String
+  guildId         String
+  type            MemberType       @default(USER)
+  name            String
+  avatar          String?
+  banner          String?
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  guild           Guild            @relation(fields: [guildId], references: [id])
+  roles           Role[]
+  timers          Timer[]
+  lootSubmissions LootSubmission[]
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
@@ -179,9 +181,7 @@ enum LootSource {
 
 model Loot {
   id        Int        @id @default(autoincrement())
-  uniqueId  String
-  guildId   String
-  memberId  Int
+  uniqueId  String     @unique
   items     Json
   world     String
   source    LootSource
@@ -191,52 +191,26 @@ model Loot {
   updatedAt DateTime   @updatedAt
   npcs      Json
 
-  guild  Guild  @relation(fields: [guildId], references: [id])
+  lootSubmissions LootSubmission[]
+  lootShare       Json             @default("{}")
+
+  @@index([uniqueId])
+  @@index([createdAt])
+}
+
+model LootSubmission {
+  id        Int      @id @default(autoincrement())
+  lootId    Int
+  guildId   String
+  memberId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  loot   Loot   @relation(fields: [lootId], references: [id])
   member Member @relation(fields: [memberId], references: [id])
+  guild  Guild  @relation(fields: [guildId], references: [id])
 
-  @@unique([uniqueId])
-}
-
-model Item {
-  id     String     @id
-  name   String
-  rarity ItemRarity
-  icon   String
-  type   ItemType
-  prof   Profession
-  lvl    Int
-  pr     Int
-  prc    Int
-  stat   String
-  lootId Int?
-}
-
-model Player {
-  id          String     @id
-  characterId Int
-  accountId   Int
-  name        String
-  icon        String
-  prof        Profession
-  lvl         Int
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  lootId      Int?
-}
-
-model Npc {
-  id           Int        @id
-  name         String
-  lvl          Int
-  prof         Profession
-  type         NpcType
-  margonemType Int
-  location     String
-  wt           Int
-  icon         String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  lootId       Int?
+  @@unique([lootId, guildId, memberId])
 }
 
 model LootlogConfigNpc {

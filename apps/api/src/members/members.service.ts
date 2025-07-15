@@ -79,6 +79,31 @@ export class MembersService {
     return;
   }
 
+  async bulkUpdateMembers(guildId: string, members: GuildMemberDto[]) {
+    try {
+      await Promise.all(
+        members.map(({ id, name, roleIds, type, banner, avatar }) => {
+          return this.prisma.member.update({
+            where: { memberId: { userId: id, guildId } },
+            data: {
+              name,
+              type,
+              banner,
+              avatar,
+              roles: {
+                set: roleIds.map((id) => ({ id })),
+              },
+            },
+          });
+        }),
+      ).catch(console.log);
+    } catch (error) {
+      console.log(error);
+    }
+
+    return;
+  }
+
   async addMember(data: AddMemberDto) {
     const { id, roleIds, avatar, guildId, type, name, banner } = data;
 
@@ -127,20 +152,34 @@ export class MembersService {
     roleIds,
     type,
   }: UpdateMemberDto) {
-    await this.prisma.member.update({
+    const roles = await this.prisma.role.findMany({
       where: {
-        memberId: {
-          userId: id,
-          guildId,
+        id: {
+          in: roleIds,
         },
       },
-      data: {
+    });
+
+    await this.prisma.member.upsert({
+      where: { memberId: { userId: id, guildId } },
+      update: {
         avatar,
         banner,
+        type,
         name,
+        roles: {
+          set: roles.map(({ id }) => ({ id })),
+        },
+      },
+      create: {
+        userId: id,
+        guildId,
+        avatar,
+        name,
+        banner,
         type,
         roles: {
-          set: roleIds.map((id) => ({ id })),
+          connect: roles.map(({ id }) => ({ id })),
         },
       },
     });

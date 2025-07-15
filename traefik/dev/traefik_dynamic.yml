@@ -1,34 +1,14 @@
 http:
   routers:
-    auth:
-      rule: "PathPrefix(`/api/auth`)"
-      service: "auth"
+    landing:
+      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`) || Path(`/terms-of-service`) || Path(`/privacy-policy`) || PathPrefix(`/screenshots/`)"
+      service: "landing"
+      priority: 30
       middlewares:
-        - "cors"
-        - "apiStripPrefix"
         - "apiCompress"
       entryPoints:
         - "web"
-    search:
-      rule: "PathPrefix(`/api/search`)"
-      service: "search"
-      middlewares:
-        - "cors"
-        - "apiStripPrefix"
-        - "apiForwardAuth"
-        - "apiCompress"
-      entryPoints:
-        - "web"
-    api:
-      rule: "PathPrefix(`/api/lootlog`)"
-      service: "api"
-      middlewares:
-        - "cors"
-        - "apiStripPrefix"
-        - "apiForwardAuth"
-        - "apiCompress"
-      entryPoints:
-        - "web"
+
     gateway:
       rule: "PathPrefix(`/gateway`)"
       service: "gateway"
@@ -37,36 +17,64 @@ http:
         - "apiStripPrefix"
         - "apiCompress"
         - "apiForwardAuth"
+      priority: 20
       entryPoints:
         - "web"
-    landing:
-      rule: "Path(`/`) || PathPrefix(`/_next/`)"
-      service: "landing"
+
+    auth:
+      rule: "PathPrefix(`/api/auth`)"
+      service: "auth"
       middlewares:
+        - "cors"
+        - "apiStripPrefix"
         - "apiCompress"
+      priority: 10
       entryPoints:
         - "web"
+
+    search:
+      rule: "PathPrefix(`/api/search`)"
+      service: "search"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
+    api:
+      rule: "PathPrefix(`/api/lootlog`)"
+      service: "api"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
     web-client:
-      rule: "PathRegexp(`/(.+)`)"
+      rule: "PathPrefix(`/`)"
       service: "web-client"
+      priority: 1
       middlewares:
+        - "cors"
         - "apiCompress"
       entryPoints:
         - "web"
-    # web-client:
-    #   rule: "PathPrefix(`/`)"
+
+    # web-client-ws:
+    #   rule: "HeaderRegexp(`Upgrade`, `(?i)websocket`)"
     #   service: "web-client"
-    #   middlewares:
-    #     - "apiCompress"
     #   entryPoints:
     #     - "web"
-    web-client-ws:
-      rule: "Path(`/`) && HeaderRegexp(`Upgrade`, `(?i)^websocket$`)"
-      service: "web-client"
-      middlewares:
-        - "apiCompress"
-      entryPoints:
-        - "web"
+    #   priority: 100
+    #   middlewares:
+    #     - "cors"
+    #     - "apiCompress"
         
   services:
     web-client:
@@ -76,7 +84,7 @@ http:
     landing:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:3001"
+        - url: "http://host.docker.internal:3003"
     auth:
       loadBalancer:
         servers:

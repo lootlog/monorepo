@@ -2,7 +2,7 @@ import { writeFileSync } from 'fs';
 import generateLootPayload from './generate-loot.mjs';
 
 const token =
-  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Inl5RzhWZVc1djJVbzlYeFN2dDFkUCJ9.eyJpc3MiOiJodHRwczovL2xvb3Rsb2ctbG9jYWwuZXUuYXV0aDAuY29tLyIsInN1YiI6Im9hdXRoMnxEaXNjb3JkfDM2MjkwNzEzNTgyNDEwMTM3NiIsImF1ZCI6WyJodHRwczovL2xvY2FsLmxvb3Rsb2cucGwiLCJodHRwczovL2xvb3Rsb2ctbG9jYWwuZXUuYXV0aDAuY29tL3VzZXJpbmZvIl0sImlhdCI6MTcyNzY5NDk1NSwiZXhwIjoxNzI3NzgxMzU1LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwiYXpwIjoiekJ1ODhWcTZYR083QnRaR2xHTUdXYkZVV2RJdDhEdU8ifQ.hNobZrwI0i_ezHaswdRcAQDSIAby6ENvziP1S2D_0BJrAzKik9ppiNLeE0GCK4oQsi2FxiVVFF1WqcWbTuLDJRMC0WrduUyBqBivnB4PFpGFjlVAxVlPMKam0euYXO0UmD1RhiwrKXPZ3_fCCy5ZWyzXb4gBmSRrbz5gR5pL91xlpXigcZDFK4YHsWVwy4WAS033oKUCD9TnwUA7NsWrv3N603jExg9g_ZU_NE15KW051n1lWphdBUfmZxMPeeV07gJbA73rhoLpcadiDyKWCwStTk4HGoc0XOnoMBJ-0dXb1j5ZdmXP3sSfWd5IKOFk0JI7PKi6UNzQyANjM7j98g';
+  'eyJhbGciOiJFZERTQSIsImtpZCI6IjBxeFE1bG5GMHVCRXFHanYyTlJ0cWpwWTJ0NTQ1M3FXIn0.eyJpZCI6IjR4WExCdlBTYlgybkhmZ3dNemFBUUNkZjVvOFFDZGFyIiwiZW1haWwiOiJrYW1pbHdyb25rYTdAZ21haWwuY29tIiwiZGlzY29yZElkIjoiMzYyOTA3MTM1ODI0MTAxMzc2IiwiaWF0IjoxNzUxMjAwMTQzLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0L2FwaS9hdXRoIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9hcGkvYXV0aCIsImV4cCI6MTc1MTI4NjU0Mywic3ViIjoiNHhYTEJ2UFNiWDJuSGZnd016YUFRQ2RmNW84UUNkYXIifQ.RH_hJngpQhYxxBWg4QajzaA3u40gPacFAayxLZqTWxOfuzUdiLU1sRvrpOLz7iHXWJZu16wu-2qfHMJOiU-lCA';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -15,7 +15,7 @@ const seedThroughBackend = async (amount = 1) => {
   for (const loot of loots) {
     console.log(counter);
 
-    const response = await fetch(`http://localhost:4000/loots`, {
+    const response = await fetch(`http://localhost/loots`, {
       body: JSON.stringify(loot),
       method: 'POST',
       headers: {

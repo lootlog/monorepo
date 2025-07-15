@@ -14,10 +14,16 @@ import { mapStatsToDisplayValues } from "@/utils/item-tips/map-stats-to-display-
 
 type ItemTileProps = {
   item: Item;
+  color?: string;
+  shareIndex?: number;
+  shareNickname?: string;
 };
 
 export const ItemTile: FC<ItemTileProps> = ({
   item: { name, rarity, icon, stat },
+  color = "",
+  shareIndex,
+  shareNickname,
 }) => {
   const { t } = useTranslation();
   const rarityCn = cn("text-xs font-semibold", {
@@ -86,9 +92,14 @@ export const ItemTile: FC<ItemTileProps> = ({
     <TooltipProvider>
       <Tooltip delayDuration={100}>
         <TooltipTrigger>
-          <ItemImage rarity={rarity} icon={icon} />
+          <ItemImage
+            rarity={rarity}
+            icon={icon}
+            color={color}
+            shareIndex={shareIndex}
+          />
         </TooltipTrigger>
-        <TooltipContent className="w-80 p-3 pb-0" side="right">
+        <TooltipContent className="w-80 p-3 pb-0">
           <div className="flex flex-row border-b items-center justify-between pb-2">
             <div className="flex flex-col justify-between">
               <p className="font-heading mt-12 scroll-m-20 mr-8 text-md font-semibold tracking-tight first:mt-0">
@@ -96,11 +107,17 @@ export const ItemTile: FC<ItemTileProps> = ({
               </p>
               <p className={rarityCn}>{t(`itemRarity.${rarity}`)}</p>
             </div>
-            <ItemImage rarity={rarity} icon={icon} />
+            <ItemImage rarity={rarity} icon={icon} color={color} />
           </div>
           <div className="pt-2 text-xs flex flex-col gap-2">
             {renderStats()}
           </div>
+          {shareNickname && (
+            <div className="text-xs py-2">
+              Zdobyto przez:{" "}
+              <span className="font-semibold">{shareNickname}</span>
+            </div>
+          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
