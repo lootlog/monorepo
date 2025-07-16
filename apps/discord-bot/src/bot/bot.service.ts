@@ -279,54 +279,61 @@ export class BotService {
   }
 
   async handleGuildSync(guildId: string) {
-    console.log(`Syncing guild with ID: ${guildId}`);
-    const guild = await this.client.guilds.fetch(guildId);
+    try {
+      console.log(`Syncing guild with ID: ${guildId}`);
+      const guild = await this.client.guilds.fetch(guildId);
 
-    this.logger.log(`Syncing guild: ${guild.name} (${guild.id})`);
+      this.logger.log(`Syncing guild: ${guild.name} (${guild.id})`);
 
-    const members = await guild.members.fetch();
-    const roles = await guild.roles.fetch();
+      const members = await guild.members.fetch();
+      const roles = await guild.roles.fetch();
 
-    const payload = {
-      guildId: guild.id,
-      name: guild.name,
-      icon: guild.iconURL(),
-      ownerId: guild.ownerId,
-      roles: roles.map((role) => {
-        const isAdministrativeUser =
-          (Number(role.permissions.bitfield) & 0x8) === 0x8;
+      const payload = {
+        guildId: guild.id,
+        name: guild.name,
+        icon: guild.iconURL(),
+        ownerId: guild.ownerId,
+        roles: roles.map((role) => {
+          const isAdministrativeUser =
+            (Number(role.permissions.bitfield) & 0x8) === 0x8;
 
-        return {
-          id: role.id,
-          name: role.name,
-          color: role.color,
-          admin: isAdministrativeUser,
-          position: role.position,
-        };
-      }),
-      members: members.map((member) => {
-        const isOwner = guild.ownerId === member.id;
+          return {
+            id: role.id,
+            name: role.name,
+            color: role.color,
+            admin: isAdministrativeUser,
+            position: role.position,
+          };
+        }),
+        members: members.map((member) => {
+          const isOwner = guild.ownerId === member.id;
 
-        const memberRoleIds = roles.map((role) => {
-          return role.id;
-        });
-        const type = isOwner ? MemberType.OWNER : getMemberType(member);
+          const memberRoleIds = roles.map((role) => {
+            return role.id;
+          });
+          const type = isOwner ? MemberType.OWNER : getMemberType(member);
 
-        return {
-          id: member.id,
-          roleIds: memberRoleIds,
-          type,
-          banner: member.user.banner,
-          avatar: member.user.avatarURL(),
-          name: getDiscordMemberName(member),
-        };
-      }),
-    };
+          return {
+            id: member.id,
+            roleIds: memberRoleIds,
+            type,
+            banner: member.user.banner,
+            avatar: member.user.avatarURL(),
+            name: getDiscordMemberName(member),
+          };
+        }),
+      };
 
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_SYNC,
-      payload,
-    );
+      this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_SYNC,
+        payload,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to sync guild with ID: ${guildId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }
