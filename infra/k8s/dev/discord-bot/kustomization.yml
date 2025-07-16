@@ -3,5 +3,5 @@ resources:
   - ../../base/discord-bot
 images:
   - name: kamilwronka7/lootlog-discord-bot
-    newTag: dev-7cf190cded6b62eb175fac0efd71bcb1aae5204d
+    newTag: dev-53dc26d26c652dc481a915ed691bb33e5c149d2d
 namePrefix: dev-
