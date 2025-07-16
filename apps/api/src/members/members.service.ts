@@ -232,7 +232,11 @@ export class MembersService {
   }
 
   async deleteMembersByGuildId(guildId: string) {
-    await this.prisma.member.deleteMany({ where: { guildId } });
+    try {
+      await this.prisma.member.deleteMany({ where: { guildId } });
+    } catch (error) {
+      console.log(error);
+    }
 
     return;
   }
