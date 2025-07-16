@@ -89,15 +89,26 @@ export class MembersService {
     try {
       await Promise.all(
         members.map(({ id, name, roleIds, type, banner, avatar }) => {
-          return this.prisma.member.update({
+          return this.prisma.member.upsert({
             where: { memberId: { userId: id, guildId } },
-            data: {
+            update: {
               name,
               type,
               banner,
               avatar,
               roles: {
                 set: roleIds.map((id) => ({ id })),
+              },
+            },
+            create: {
+              userId: id,
+              guildId,
+              name,
+              type,
+              banner,
+              avatar,
+              roles: {
+                connect: roleIds.map((id) => ({ id })),
               },
             },
           });
