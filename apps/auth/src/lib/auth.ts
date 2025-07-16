@@ -47,7 +47,7 @@ export const auth: any = betterAuth({
       enabled: true,
       maxAge: 5 * 60,
     },
-    expiresIn: 60 * 60 * 24 * 365 * 10, // 10 years
+    expiresIn: 60 * 60 * 24 * 365, // 1 year
     updateAge: 60 * 60 * 24 * 30, // 30 days
     freshAge: 0,
   },
