@@ -1,7 +1,10 @@
+const url = "$GAME_CLIENT_URL$";
+const version = "$GAME_CLIENT_VERSION$";
+
 // ==UserScript==
 // @name       @lootlog/game-client
 // @namespace  npm/vite-plugin-monkey
-// @version    0.0.1
+// @version    1.0.0
 // @author     Wildstylez & friends
 // @icon       https://vitejs.dev/logo.svg
 // @match      https://*.margonem.pl
@@ -20,10 +23,8 @@
 (function () {
   "use strict";
 
-  const url = "$GAME_CLIENT_URL$";
-
   const script = document.createElement("script");
-  script.src = `${url}?ts=${Date.now()}`;
+  script.src = `${url}?v=${version}`;
 
   document.head.appendChild(script);
 })();
