@@ -30,7 +30,7 @@ export default function Home(): JSX.Element {
               href={ADDON_URL}
               className="px-8 py-3 bg-[#7c3aed] hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
             >
-              Zainstaluj Dodatek
+              Zainstaluj dodatek
             </a>
           </div>
         </div>
