@@ -30,6 +30,7 @@ export class RolesService {
   ): Promise<Prisma.BatchPayload> {
     try {
       return this.prisma.role.createMany({
+        skipDuplicates: true,
         data: roles.map(({ id, name, color, admin, position }) => {
           return {
             id,
