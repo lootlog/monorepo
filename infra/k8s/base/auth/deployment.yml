@@ -83,6 +83,16 @@ spec:
                 secretKeyRef:
                   name: lootlog-auth-secrets
                   key: cookieDomain
+            - name: COOKIE_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: cookiePrefix
+            - name: ADMIN_ACCOUNT_IDS
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: adminAccountIds
 
           livenessProbe:
             httpGet:
