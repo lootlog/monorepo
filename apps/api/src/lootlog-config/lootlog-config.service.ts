@@ -45,6 +45,16 @@ export class LootlogConfigService {
   }
 
   async createLootlogConfig(guildId: string) {
+    const lootlogConfigExists = await this.prisma.lootlogConfig.findUnique({
+      where: {
+        id: guildId,
+      },
+    });
+
+    if (lootlogConfigExists) {
+      return;
+    }
+
     const data: UpdateLootlogConfigDto = {
       npcs: Object.values(NpcType).map((npcType) => ({
         npcType,
@@ -58,6 +68,7 @@ export class LootlogConfigService {
         npcs: {
           createMany: {
             data: data.npcs,
+            skipDuplicates: true,
           },
         },
       },

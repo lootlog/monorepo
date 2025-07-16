@@ -30,6 +30,7 @@ export class RolesService {
   ): Promise<Prisma.BatchPayload> {
     try {
       return this.prisma.role.createMany({
+        skipDuplicates: true,
         data: roles.map(({ id, name, color, admin, position }) => {
           return {
             id,
@@ -175,9 +176,13 @@ export class RolesService {
   }
 
   async deleteRolesByGuildId(guildId: string) {
-    await this.prisma.role.deleteMany({
-      where: { guildId },
-    });
+    try {
+      await this.prisma.role.deleteMany({
+        where: { guildId },
+      });
+    } catch (error) {
+      console.log(error);
+    }
 
     return;
   }

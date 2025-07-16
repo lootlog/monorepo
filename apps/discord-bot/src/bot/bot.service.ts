@@ -142,12 +142,15 @@ export class BotService {
   public async handleGuildCreate(guild: Guild) {
     this.logger.log(`Bot is added to the new guild`, guild.name);
 
+    const members = await guild.members.fetch();
+    const roles = await guild.roles.fetch();
+
     const payload = {
       guildId: guild.id,
       name: guild.name,
       icon: guild.iconURL(),
       ownerId: guild.ownerId,
-      roles: guild.roles.cache.map((role) => {
+      roles: roles.map((role) => {
         const isAdministrativeUser =
           (Number(role.permissions.bitfield) & 0x8) === 0x8;
 
@@ -159,7 +162,7 @@ export class BotService {
           position: role.position,
         };
       }),
-      members: guild.members.cache.map((member) => {
+      members: members.map((member) => {
         const isOwner = guild.ownerId === member.id;
 
         const memberRoleIds = member.roles.cache.map((role) => {
@@ -276,51 +279,63 @@ export class BotService {
   }
 
   async handleGuildSync(guildId: string) {
-    console.log(`Syncing guild with ID: ${guildId}`);
-    const guild = await this.client.guilds.fetch(guildId);
+    try {
+      console.log(`Syncing guild with ID: ${guildId}`);
+      const guild = await this.client.guilds.fetch(guildId);
 
-    this.logger.log(`Syncing guild: ${guild.name} (${guild.id})`);
+      this.logger.log(`Syncing guild: ${guild.name} (${guild.id})`);
 
-    const payload = {
-      guildId: guild.id,
-      name: guild.name,
-      icon: guild.iconURL(),
-      ownerId: guild.ownerId,
-      roles: guild.roles.cache.map((role) => {
-        const isAdministrativeUser =
-          (Number(role.permissions.bitfield) & 0x8) === 0x8;
+      const members = await guild.members.fetch();
+      const roles = await guild.roles.fetch();
 
-        return {
-          id: role.id,
-          name: role.name,
-          color: role.color,
-          admin: isAdministrativeUser,
-          position: role.position,
-        };
-      }),
-      members: guild.members.cache.map((member) => {
-        const isOwner = guild.ownerId === member.id;
+      const payload = {
+        guildId: guild.id,
+        name: guild.name,
+        icon: guild.iconURL(),
+        ownerId: guild.ownerId,
+        roles: roles.map((role) => {
+          const isAdministrativeUser =
+            (Number(role.permissions.bitfield) & 0x8) === 0x8;
 
-        const memberRoleIds = member.roles.cache.map((role) => {
-          return role.id;
-        });
-        const type = isOwner ? MemberType.OWNER : getMemberType(member);
+          return {
+            id: role.id,
+            name: role.name,
+            color: role.color,
+            admin: isAdministrativeUser,
+            position: role.position,
+          };
+        }),
+        members: members.map((member) => {
+          const isOwner = guild.ownerId === member.id;
 
-        return {
-          id: member.id,
-          roleIds: memberRoleIds,
-          type,
-          banner: member.user.banner,
-          avatar: member.user.avatarURL(),
-          name: getDiscordMemberName(member),
-        };
-      }),
-    };
+          const memberRoleIds = member.roles.cache.map((role) => {
+            return role.id;
+          });
+          const type = isOwner ? MemberType.OWNER : getMemberType(member);
 
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_SYNC,
-      payload,
-    );
+          return {
+            id: member.id,
+            roleIds: memberRoleIds,
+            type,
+            banner: member.user.banner,
+            avatar: member.user.avatarURL(),
+            name: getDiscordMemberName(member),
+          };
+        }),
+      };
+
+      console.log('Sync payload:', JSON.stringify(payload));
+
+      this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_SYNC,
+        payload,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to sync guild with ID: ${guildId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }
