@@ -165,7 +165,7 @@ export class BotService {
       members: members.map((member) => {
         const isOwner = guild.ownerId === member.id;
 
-        const memberRoleIds = roles.map((role) => {
+        const memberRoleIds = member.roles.cache.map((role) => {
           return role.id;
         });
         const type = isOwner ? MemberType.OWNER : getMemberType(member);
@@ -308,7 +308,7 @@ export class BotService {
         members: members.map((member) => {
           const isOwner = guild.ownerId === member.id;
 
-          const memberRoleIds = roles.map((role) => {
+          const memberRoleIds = member.roles.cache.map((role) => {
             return role.id;
           });
           const type = isOwner ? MemberType.OWNER : getMemberType(member);
@@ -323,6 +323,8 @@ export class BotService {
           };
         }),
       };
+
+      console.log('Sync payload:', JSON.stringify(payload));
 
       this.amqpConnection.publish(
         DEFAULT_EXCHANGE_NAME,

@@ -302,5 +302,6 @@ export class GuildsService {
 
     await this.rolesService.bulkUpdateRoles(data.guildId, data.roles);
     await this.membersService.bulkUpdateMembers(data.guildId, data.members);
+    await this.lootlogConfigService.createLootlogConfig(data.guildId);
   }
 }
