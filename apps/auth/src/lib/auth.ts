@@ -4,7 +4,7 @@ import { PostgresDialect } from "kysely";
 
 import { APP_CONFIG } from "../config/app.config.js";
 import pg from "pg";
-import { bearer, jwt } from "better-auth/plugins";
+import { admin, bearer, jwt } from "better-auth/plugins";
 
 const { user, password, port, host, database } = APP_CONFIG.postgres;
 const { clientId, clientSecret } = APP_CONFIG.discord;
@@ -47,8 +47,8 @@ export const auth: any = betterAuth({
       enabled: true,
       maxAge: 5 * 60,
     },
-    expiresIn: 60 * 60 * 24 * 30,
-    updateAge: 60 * 60 * 24,
+    expiresIn: 60 * 60 * 24 * 365 * 10, // 10 years
+    updateAge: 60 * 60 * 24 * 30, // 30 days
     freshAge: 0,
   },
   emailAndPassword: {
@@ -65,13 +65,17 @@ export const auth: any = betterAuth({
       enabled: true,
       domain: APP_CONFIG.cookieDomain,
     },
+    ipAddress: {
+      ipAddressHeaders: ["cf-connecting-ip"],
+    },
+    cookiePrefix: APP_CONFIG.cookiePrefix,
   },
   plugins: [
     jwt({
       jwt: {
         issuer: APP_CONFIG.appUrl,
         audience: APP_CONFIG.appUrl,
-        expirationTime: "24h",
+        expirationTime: "365d",
         definePayload: ({ user }) => {
           return {
             id: user.id,
@@ -83,6 +87,7 @@ export const auth: any = betterAuth({
       },
     }),
     bearer(),
+    admin({ adminUserIds: APP_CONFIG.adminAccountIds }),
   ],
   socialProviders: {
     discord: {
