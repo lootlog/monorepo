@@ -1,12 +1,13 @@
 import { readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-const packageJson = JSON.parse(
-  readFileSync(join(__dirname, "../../package.json"), "utf8")
-);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, "../../package.json"), "utf8")
+);
 
 const src = join(__dirname, "../templates/entrypoint.js");
 const dest = join(__dirname, "../../dist/@lootlog/entrypoint.user.js");
