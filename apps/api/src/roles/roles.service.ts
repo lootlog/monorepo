@@ -175,9 +175,13 @@ export class RolesService {
   }
 
   async deleteRolesByGuildId(guildId: string) {
-    await this.prisma.role.deleteMany({
-      where: { guildId },
-    });
+    try {
+      await this.prisma.role.deleteMany({
+        where: { guildId },
+      });
+    } catch (error) {
+      console.log(error);
+    }
 
     return;
   }

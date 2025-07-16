@@ -114,19 +114,19 @@ export class GuildsService {
       include: { roles: true, guild: true },
     });
 
-    const permissions = member.roles.reduce((acc: Permission[], role) => {
+    const permissions = member?.roles.reduce((acc: Permission[], role) => {
       return acc.concat(role.permissions);
     }, []);
 
-    if (discordId === member.guild.ownerId) {
+    if (discordId === member?.guild.ownerId) {
       return {
         permissions: Object.values(Permission),
         guild,
-        roles: member.roles,
+        roles: member?.roles,
       };
     }
 
-    return { permissions, guild, roles: member.roles };
+    return { permissions, guild, roles: member?.roles };
   }
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
@@ -239,7 +239,12 @@ export class GuildsService {
       await this.prisma.lootlogConfigNpc.deleteMany({
         where: { lootlogConfigId: guildId },
       });
-      await this.prisma.lootlogConfig.delete({ where: { id: guildId } });
+      try {
+        await this.prisma.lootlogConfig.delete({ where: { id: guildId } });
+      } catch (error) {
+        console.log(error);
+      }
+
       // await this.prisma.lootItems.deleteMany({
       //   where: {
       //     loot: {
@@ -248,7 +253,12 @@ export class GuildsService {
       //   },
       // });
       // await this.prisma.loot.deleteMany({ where: { guildId } });
-      await this.prisma.timer.deleteMany({ where: { guildId } });
+
+      try {
+        await this.prisma.timer.deleteMany({ where: { guildId } });
+      } catch (error) {
+        console.log(error);
+      }
 
       await this.membersService.deleteMembersByGuildId(guildId);
       await this.rolesService.deleteRolesByGuildId(guildId);
