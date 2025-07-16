@@ -142,12 +142,15 @@ export class BotService {
   public async handleGuildCreate(guild: Guild) {
     this.logger.log(`Bot is added to the new guild`, guild.name);
 
+    const members = await guild.members.fetch();
+    const roles = await guild.roles.fetch();
+
     const payload = {
       guildId: guild.id,
       name: guild.name,
       icon: guild.iconURL(),
       ownerId: guild.ownerId,
-      roles: guild.roles.cache.map((role) => {
+      roles: roles.map((role) => {
         const isAdministrativeUser =
           (Number(role.permissions.bitfield) & 0x8) === 0x8;
 
@@ -159,10 +162,10 @@ export class BotService {
           position: role.position,
         };
       }),
-      members: guild.members.cache.map((member) => {
+      members: members.map((member) => {
         const isOwner = guild.ownerId === member.id;
 
-        const memberRoleIds = member.roles.cache.map((role) => {
+        const memberRoleIds = roles.map((role) => {
           return role.id;
         });
         const type = isOwner ? MemberType.OWNER : getMemberType(member);
@@ -281,12 +284,15 @@ export class BotService {
 
     this.logger.log(`Syncing guild: ${guild.name} (${guild.id})`);
 
+    const members = await guild.members.fetch();
+    const roles = await guild.roles.fetch();
+
     const payload = {
       guildId: guild.id,
       name: guild.name,
       icon: guild.iconURL(),
       ownerId: guild.ownerId,
-      roles: guild.roles.cache.map((role) => {
+      roles: roles.map((role) => {
         const isAdministrativeUser =
           (Number(role.permissions.bitfield) & 0x8) === 0x8;
 
@@ -298,10 +304,10 @@ export class BotService {
           position: role.position,
         };
       }),
-      members: guild.members.cache.map((member) => {
+      members: members.map((member) => {
         const isOwner = guild.ownerId === member.id;
 
-        const memberRoleIds = member.roles.cache.map((role) => {
+        const memberRoleIds = roles.map((role) => {
           return role.id;
         });
         const type = isOwner ? MemberType.OWNER : getMemberType(member);

@@ -202,14 +202,20 @@ export class GuildsService {
     let guild;
 
     try {
-      guild = await this.prisma.guild.create({
-        data: {
-          id: data.guildId,
-          name: data.name,
-          icon: data.icon,
-          ownerId: data.ownerId,
-        },
+      guild = await this.prisma.guild.findUnique({
+        where: { id: data.guildId },
       });
+
+      if (!guild) {
+        guild = await this.prisma.guild.create({
+          data: {
+            id: data.guildId,
+            name: data.name,
+            icon: data.icon,
+            ownerId: data.ownerId,
+          },
+        });
+      }
     } catch (error) {
       console.log(error);
     }

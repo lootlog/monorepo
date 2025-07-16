@@ -69,7 +69,13 @@ export class MembersService {
             },
           };
 
-          return this.prisma.member.create({ data: member });
+          return this.prisma.member
+            .upsert({
+              where: { memberId: { userId: id, guildId } },
+              create: member,
+              update: member,
+            })
+            .catch(console.log);
         }),
       );
     } catch (error) {
