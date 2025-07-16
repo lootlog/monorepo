@@ -269,9 +269,9 @@ export class GuildsService {
       await this.membersService.deleteMembersByGuildId(guildId);
       await this.rolesService.deleteRolesByGuildId(guildId);
 
-      await this.prisma.guild.delete({
-        where: { id: guildId },
-      });
+      // await this.prisma.guild.delete({
+      //   where: { id: guildId },
+      // });
     } catch (error) {
       console.log(error);
     }
