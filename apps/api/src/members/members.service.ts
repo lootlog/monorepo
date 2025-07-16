@@ -69,7 +69,13 @@ export class MembersService {
             },
           };
 
-          return this.prisma.member.create({ data: member });
+          return this.prisma.member
+            .upsert({
+              where: { memberId: { userId: id, guildId } },
+              create: member,
+              update: member,
+            })
+            .catch(console.log);
         }),
       );
     } catch (error) {
@@ -83,15 +89,26 @@ export class MembersService {
     try {
       await Promise.all(
         members.map(({ id, name, roleIds, type, banner, avatar }) => {
-          return this.prisma.member.update({
+          return this.prisma.member.upsert({
             where: { memberId: { userId: id, guildId } },
-            data: {
+            update: {
               name,
               type,
               banner,
               avatar,
               roles: {
                 set: roleIds.map((id) => ({ id })),
+              },
+            },
+            create: {
+              userId: id,
+              guildId,
+              name,
+              type,
+              banner,
+              avatar,
+              roles: {
+                connect: roleIds.map((id) => ({ id })),
               },
             },
           });
@@ -232,7 +249,11 @@ export class MembersService {
   }
 
   async deleteMembersByGuildId(guildId: string) {
-    await this.prisma.member.deleteMany({ where: { guildId } });
+    try {
+      await this.prisma.member.deleteMany({ where: { guildId } });
+    } catch (error) {
+      console.log(error);
+    }
 
     return;
   }
