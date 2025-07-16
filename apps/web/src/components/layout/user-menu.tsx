@@ -10,10 +10,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/hooks/api/use-user";
-import { Loader2, PlusIcon, Settings, User2 } from "lucide-react";
+import { Loader2, LogOut, Settings, User2 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+  };
 
   return (
     <div className="flex border-t w-full h-16 items-center p-3 justify-between">
@@ -38,30 +43,20 @@ export const UserMenu = () => {
                 </Avatar>
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <div className="px-16 py-4">
-                <p className="leading-7 [&:not(:first-child)]:mt-6">
-                  {/* {data?.globalName ?? data?.username} */}
-                  {user.name}
-                </p>
-              </div>
-              <div className="border-t border-gray-200 dark:border-gray-700"></div>
-              <div className="py-4 text-center">
-                <DropdownMenuItem>
-                  <PlusIcon className="mr-2 h-4 w-4" /> Dodaj serwer
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem onClick={() => logout()}>
+            <DropdownMenuContent align="start">
+              <div className="py-2 text-center">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600 focus:text-red-600"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem> */}
+                  <span>Wyloguj się</span>
+                </DropdownMenuItem>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
           <div>
-            <span className="text-sm font-semibold">
-              {/* {data?.globalName ?? data?.username} */}
-              {user.name}
-            </span>
+            <span className="text-sm font-semibold">{user.name}</span>
           </div>
         </div>
       )}
