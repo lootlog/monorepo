@@ -54,35 +54,6 @@ export class MembersEventsHandler {
 
   @RabbitSubscribe({
     exchange: 'default',
-    routingKey: RoutingKey.GUILDS_MEMBERS_UPDATE,
-    queue: Queue.GUILDS_MEMBERS_UPDATE,
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
-    queueOptions: {
-      durable: true,
-      deadLetterExchange: RETRY_EXCHANGE_NAME,
-      deadLetterRoutingKey: RoutingKey.GUILDS_MEMBERS_UPDATE_RETRY,
-    },
-  })
-  async handleUpdateMember(data: AddMemberDto, amqpMsg: any) {
-    const headers = amqpMsg.properties.headers || {};
-
-    const shouldContinue = await this.retryService.handleRetryLogic(
-      data,
-      headers,
-      RoutingKey.GUILDS_MEMBERS_UPDATE_DLQ,
-      `member update: ${data.id}`,
-    );
-
-    if (!shouldContinue) {
-      return;
-    }
-
-    await this.membersService.updateMember(data);
-    console.log(`Member updated successfully: ${data.id}`);
-  }
-
-  @RabbitSubscribe({
-    exchange: 'default',
     routingKey: RoutingKey.GUILDS_MEMBERS_REMOVE,
     queue: Queue.GUILDS_MEMBERS_REMOVE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,

@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { DeleteMemberRoleDto } from './dto/delete-member-role.dto';
 import { AddMemberRoleDto } from 'src/members/dto/add-member-role.dto';
 import { AddMemberDto } from 'src/members/dto/add-member.dto';
@@ -6,19 +11,70 @@ import { DeleteMemberDto } from 'src/members/dto/delete-member.dto';
 import { GuildMemberDto } from 'src/guilds/dto/create-guild.dto';
 import { PrismaService } from 'src/db/prisma.service';
 import { UpdateMemberDto } from 'src/members/dto/update-member-dto';
+import {
+  MEMBER_CACHE_TTL,
+  REFRESH_PERMISSIONS_TTL,
+} from 'src/members/constants/member-cache.constant';
+import { DiscordService } from 'src/discord/discord.service';
+import { APIGuildMember } from 'discord-api-types/v10';
+import { ErrorKey } from 'src/members/enum/error-key.enum';
+import { GuildsService } from 'src/guilds/guilds.service';
 
 @Injectable()
 export class MembersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly discordService: DiscordService,
+    @Inject(forwardRef(() => GuildsService))
+    private readonly guildsService: GuildsService,
+  ) {}
 
-  async getGuildMemberById(memberId: string, guildId: string) {
+  async getGuildMemberById(options: {
+    discordId: string;
+    guildId: string;
+    userId: string;
+    refresh?: boolean;
+    standalone?: boolean;
+  }) {
+    const { discordId, guildId, userId, refresh, standalone } = options;
+
+    let desiredGuildId = guildId;
+
+    if (refresh || standalone) {
+      const guild = await this.guildsService.getGuildById(guildId);
+
+      desiredGuildId = guild.id;
+    }
+
+    const now = new Date();
+    const cacheTtl = refresh ? REFRESH_PERMISSIONS_TTL : MEMBER_CACHE_TTL;
+
     const member = await this.prisma.member.findUnique({
-      where: { memberId: { userId: memberId, guildId } },
+      where: {
+        memberId: { userId: discordId, guildId: desiredGuildId },
+        updatedAt: { gte: new Date(now.getTime() - cacheTtl) },
+      },
       include: { roles: true },
     });
 
+    if (member && refresh) {
+      throw new BadRequestException(ErrorKey.MEMBER_TTL_ACTIVE);
+    }
+
     if (!member) {
-      return null;
+      const discordMember = await this.discordService.getGuildMember({
+        guildId: desiredGuildId,
+        userId,
+      });
+
+      if (!discordMember) {
+        return null;
+      }
+
+      return this.createOrUpdateMember({
+        ...discordMember,
+        guildId: desiredGuildId,
+      });
     }
 
     return member;
@@ -160,15 +216,16 @@ export class MembersService {
     return member;
   }
 
-  async updateMember({
-    id,
+  async createOrUpdateMember({
     guildId,
     avatar,
-    name,
+    nick,
     banner,
-    roleIds,
-    type,
-  }: UpdateMemberDto) {
+    roles: roleIds,
+    user,
+  }: APIGuildMember & { guildId: string }) {
+    const { id } = user;
+
     const roles = await this.prisma.role.findMany({
       where: {
         id: {
@@ -177,31 +234,32 @@ export class MembersService {
       },
     });
 
-    await this.prisma.member.upsert({
+    const member = await this.prisma.member.upsert({
       where: { memberId: { userId: id, guildId } },
       update: {
         avatar,
         banner,
-        type,
-        name,
+        name: nick || user.username,
         roles: {
           set: roles.map(({ id }) => ({ id })),
         },
       },
       create: {
         userId: id,
-        guildId,
+        guild: {
+          connect: { id: guildId },
+        },
         avatar,
-        name,
+        name: nick || user.username,
         banner,
-        type,
         roles: {
           connect: roles.map(({ id }) => ({ id })),
         },
       },
+      include: { roles: true },
     });
 
-    return;
+    return member;
   }
 
   async deleteMember({ id, guildId }: DeleteMemberDto) {

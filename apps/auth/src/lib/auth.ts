@@ -26,7 +26,7 @@ const dialect = new PostgresDialect({
   pool: new pg.Pool(poolConfig),
 });
 
-export const auth: any = betterAuth({
+export const auth = betterAuth({
   appName: "@lootlog/auth",
   basePath: "/idp",
   database: {
@@ -94,7 +94,7 @@ export const auth: any = betterAuth({
       clientId,
       clientSecret,
       redirectURI: `${APP_CONFIG.appUrl}/idp/callback/discord`,
-      scopes: ["identify", "email", "guilds"],
+      scopes: ["identify", "email", "guilds", "guilds.members.read"],
       mapProfileToUser: (profile) => {
         return {
           firstName: profile.given_name,

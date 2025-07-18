@@ -13,6 +13,7 @@ import { GuildsService } from 'src/guilds/guilds.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -23,8 +24,11 @@ export class GuildsController {
   constructor(private readonly guildsService: GuildsService) {}
 
   @Get('/@me')
-  async getUserGuilds(@DiscordId() discordId: string) {
-    return this.guildsService.getUserGuilds(discordId);
+  async getUserGuilds(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ) {
+    return this.guildsService.getUserGuilds(discordId, userId);
   }
 
   @Permissions(Permission.LOOTLOG_READ)

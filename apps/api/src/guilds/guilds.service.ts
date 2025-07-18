@@ -16,47 +16,50 @@ import { ErrorKey } from 'src/guilds/enum/error-key.enum';
 import { MembersService } from 'src/members/members.service';
 import { RolesService } from 'src/roles/roles.service';
 import { generateSlug } from 'src/shared/utils/generate-slug';
-import { UsersService } from 'src/users/users.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
+import { DiscordService } from 'src/discord/discord.service';
+import { RedisService } from 'src/lib/redis/redis.service';
+import { DISCORD_GUILDS_CACHE_TTL_SECONDS } from 'src/guilds/constants/discord-guilds-cache-ttl';
 
 @Injectable()
 export class GuildsService {
   constructor(
+    @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
     private readonly rolesService: RolesService,
     @Inject(forwardRef(() => LootlogConfigService))
     private lootlogConfigService: LootlogConfigService,
-    @Inject(forwardRef(() => UsersService))
-    private readonly usersService: UsersService,
     private readonly amqpConnection: AmqpConnection,
     private readonly prisma: PrismaService,
+    private readonly discordService: DiscordService,
+    private readonly redisService: RedisService,
   ) {}
 
-  async getUserGuilds(discordId: string) {
+  async getUserGuilds(discordId: string, userId: string) {
+    const cacheKey = `user:${userId}:guilds`;
+    const cachedGuildIds = await this.redisService.get(cacheKey);
+
+    let guildIds: string[] = [];
+
+    if (cachedGuildIds) {
+      guildIds = JSON.parse(cachedGuildIds) as string[];
+    } else {
+      const discordGuilds = await this.discordService.getUserGuilds(userId);
+      guildIds = discordGuilds.map((guild) => guild.id);
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(guildIds),
+        DISCORD_GUILDS_CACHE_TTL_SECONDS,
+      );
+    }
+
     const guilds = await this.prisma.guild.findMany({
       where: {
-        OR: [
-          {
-            ownerId: discordId,
-          },
-          {
-            members: {
-              some: {
-                userId: discordId,
-                roles: {
-                  some: {
-                    permissions: {
-                      has: Permission.LOOTLOG_READ,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        ],
+        id: { in: guildIds },
       },
     });
 
@@ -106,27 +109,26 @@ export class GuildsService {
     return guilds;
   }
 
-  async getGuildPermissions(discordId: string, guildId: string) {
+  async getGuildPermissions(options: {
+    discordId: string;
+    userId: string;
+    guildId: string;
+  }) {
+    const { discordId, userId, guildId } = options;
     const guild = await this.getGuildById(guildId);
 
-    const member = await this.prisma.member.findUnique({
-      where: { memberId: { userId: discordId, guildId: guild.id } },
-      include: { roles: true, guild: true },
+    const member = await this.membersService.getGuildMemberById({
+      userId,
+      discordId,
+      guildId: guild.id,
     });
 
     const permissions = member?.roles.reduce((acc: Permission[], role) => {
       return acc.concat(role.permissions);
     }, []);
+    const uniquePermissions = Array.from(new Set(permissions));
 
-    if (discordId === member?.guild.ownerId) {
-      return {
-        permissions: Object.values(Permission),
-        guild,
-        roles: member?.roles,
-      };
-    }
-
-    return { permissions, guild, roles: member?.roles };
+    return { permissions: uniquePermissions, guild, roles: member?.roles };
   }
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
@@ -221,7 +223,7 @@ export class GuildsService {
     }
 
     await this.rolesService.bulkCreateRoles(data.guildId, data.roles);
-    await this.membersService.bulkCreateMembers(data.guildId, data.members);
+    // await this.membersService.bulkCreateMembers(data.guildId, data.members);
     await this.lootlogConfigService.createLootlogConfig(data.guildId);
 
     return guild;
