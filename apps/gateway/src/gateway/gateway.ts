@@ -12,7 +12,7 @@ import { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
 import { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
-import { WsDiscordId } from 'src/shared/decorators/user-id.decorator';
+import { WsDiscordId, WsUserId } from 'src/shared/decorators/user-id.decorator';
 import { ConfigService } from '@nestjs/config';
 import { RuntimeEnvironment } from 'src/types/common.types';
 import { GuildsService } from 'src/guilds/guilds.service';
@@ -44,7 +44,9 @@ export class Gateway {
   server: Server;
 
   async handleConnection(client: Socket) {
-    const { discordId, platform } = this.getConnectionMetadata(client.request);
+    const { discordId, platform, userId } = this.getConnectionMetadata(
+      client.request,
+    );
     this.logger.log('client connected');
     this.logger.debug(`discord id: ${discordId}`);
     this.logger.debug(`platform: ${platform}`);
@@ -58,6 +60,7 @@ export class Gateway {
     }
     client.data = {
       discordId,
+      userId,
       sessionId: client.id,
       platform,
     };
@@ -80,10 +83,14 @@ export class Gateway {
   @SubscribeMessage(GatewayEvent.JOIN)
   async handleJoin(
     @WsDiscordId() discordId: string,
+    @WsUserId() userId: string,
     @ConnectedSocket() client: Socket,
     @MessageBody() { data: player }: JoinGatewayDto,
   ): Promise<any> {
-    const guilds = await this.guildsService.getUserGuilds(discordId);
+    const guilds = await this.guildsService.getUserGuilds({
+      discordId,
+      userId,
+    });
     if (guilds.length === 0) {
       this.logger.warn(`No guilds found for user ${discordId}`);
       return { status: 'error', message: 'No guilds found for user' };
@@ -110,16 +117,17 @@ export class Gateway {
     const socketsInRoom = await this.server.in(guildId).fetchSockets();
     const users = socketsInRoom
       .filter((s) => s.data.player.world === world)
-      .map((s) => omit(s.data, 'sessionId'))
+      .map((s) => omit(s.data, ['sessionId', 'userId']))
       .sort((a, b) => b.player.lvl - a.player.lvl);
     const groupedUsers = groupBy(users, 'discordId');
     return groupedUsers;
   }
 
   getConnectionMetadata(request: Socket['request']) {
-    const id = (request.headers['x-auth-discord-id'] as string) || null;
+    const discordId = (request.headers['x-auth-discord-id'] as string) || null;
+    const userId = (request.headers['x-auth-user-id'] as string) || null;
     const platform = this.determineUserPlatform(request.headers.origin);
-    return { discordId: id, platform };
+    return { discordId, userId, platform };
   }
 
   determineUserPlatform(requestOrigin: string) {

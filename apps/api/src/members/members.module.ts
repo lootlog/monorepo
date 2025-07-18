@@ -9,6 +9,7 @@ import { RetryService } from 'src/rabbitmq/retry.service';
 import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
+import { DiscordModule } from 'src/discord/discord.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ConfigKey } from 'src/config/config-key.enum';
       useFactory: async (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
+    DiscordModule,
   ],
   controllers: [MembersController],
   providers: [

@@ -32,6 +32,6 @@ export const discordConfigFactory = (
       discordDevelopmentGuildId && env === RuntimeEnvironment.LOCAL
         ? [discordDevelopmentGuildId]
         : undefined,
-    intents: [IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.Guilds],
+    intents: [IntentsBitField.Flags.Guilds],
   };
 };

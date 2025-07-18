@@ -18,8 +18,15 @@ export class GuildsRpcHandler {
     queue: Queue.GUILDS_RPC_GET_USER_GUILDS,
     errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
-  async getUserGuilds(data: { discordId: string }) {
-    const guilds = await this.guildsService.getUserGuilds(data.discordId);
+  async getUserGuilds(data: { discordId: string; userId: string }) {
+    if (!data.discordId || !data.userId) {
+      return [];
+    }
+
+    const guilds = await this.guildsService.getUserGuilds(
+      data.discordId,
+      data.userId,
+    );
     const guildIds = guilds.map((guild) => guild.id);
     const guildsWithPermissions =
       await this.guildsService.getMultipleGuildsPermissions(

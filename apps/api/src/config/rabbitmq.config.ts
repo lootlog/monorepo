@@ -6,6 +6,7 @@ import { RoutingKey } from 'src/enum/routing-key.enum';
 export const DEFAULT_EXCHANGE_NAME = 'default';
 export const DEAD_LETTER_EXCHANGE_NAME = 'dlx';
 export const RETRY_EXCHANGE_NAME = 'retry';
+export const DEFAULT_RPC_TIMEOUT = 5000;
 
 const DEFAULT_TTL = 30000; // 30 seconds
 

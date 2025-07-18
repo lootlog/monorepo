@@ -141,6 +141,8 @@ export class LootsService {
     await Promise.all(
       filteredGuilds.map(async (guild) => {
         const config = lootlogConfigs.find((c) => c.id === guild.id);
+        if (!config) return;
+
         const calculatedLoot = this.getLootForGivenConfig(
           body.loots,
           config.npcs,
