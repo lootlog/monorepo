@@ -48,13 +48,6 @@ export class GuildsController {
     return this.guildsService.updateGuildConfig(guild.id, data);
   }
 
-  // @Permissions(Permission.OWNER)
-  // @UseGuards(PermissionsGuard)
-  @Post(':guildId/sync')
-  async handleGuildSync(@Param('guildId') guildId: string) {
-    return this.guildsService.handleGuildSyncTrigger(guildId);
-  }
-
   @Permissions(Permission.LOOTLOG_READ)
   @UseGuards(PermissionsGuard)
   @Get(':guildId/config')

@@ -23,7 +23,7 @@ export class AuthService {
       });
       return response;
     } catch (err) {
-      this.logger.error(`Failed to fetch IDP token for user ${userId}: ${err}`);
+      this.logger.error(`Failed to fetch IDP token`);
       return null;
     }
   }

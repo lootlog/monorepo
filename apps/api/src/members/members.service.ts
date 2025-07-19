@@ -91,10 +91,19 @@ export class MembersService {
         });
       } catch (error) {
         this.logger.error(
-          'Failed to fetch member from Discord',
+          'Failed to fetch member from Discord, serving stale data',
           (error as Error).stack,
         );
-        return null;
+
+        // Zwróć stale dane z bazy bez względu na TTL
+        const staleMember = await this.prisma.member.findUnique({
+          where: {
+            memberId: { userId: discordId, guildId: desiredGuildId },
+          },
+          include: { roles: true },
+        });
+
+        return staleMember;
       }
     }
 
@@ -316,88 +325,6 @@ export class MembersService {
     } catch (error) {
       this.logger.error(
         `Failed to create/update member ${id}`,
-        (error as Error).stack,
-      );
-      throw error;
-    }
-  }
-
-  async updateMember(data: UpdateMemberDto): Promise<void> {
-    const { id, guildId, avatar, banner, name, type } = data;
-
-    try {
-      await this.prisma.member.update({
-        where: { memberId: { userId: id, guildId } },
-        data: {
-          avatar,
-          banner,
-          name,
-          type,
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to update member ${id}`,
-        (error as Error).stack,
-      );
-      throw error;
-    }
-  }
-
-  async deleteMember({ id, guildId }: DeleteMemberDto): Promise<void> {
-    try {
-      await this.prisma.member.update({
-        where: { memberId: { userId: id, guildId } },
-        data: {
-          roles: { set: [] },
-          active: false,
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to delete member ${id}`,
-        (error as Error).stack,
-      );
-      throw error;
-    }
-  }
-
-  async addMemberRole({
-    id,
-    guildId,
-    roleId,
-  }: AddMemberRoleDto): Promise<void> {
-    try {
-      await this.prisma.member.update({
-        where: { memberId: { userId: id, guildId } },
-        data: {
-          roles: { connect: { id: roleId } },
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to add role ${roleId} to member ${id}`,
-        (error as Error).stack,
-      );
-      throw error;
-    }
-  }
-
-  async deleteMemberRole({
-    roleId,
-    guildId,
-    id,
-  }: DeleteMemberRoleDto): Promise<void> {
-    try {
-      await this.prisma.member.update({
-        where: { memberId: { userId: id, guildId } },
-        data: {
-          roles: { disconnect: { id: roleId } },
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to remove role ${roleId} from member ${id}`,
         (error as Error).stack,
       );
       throw error;

@@ -32,8 +32,6 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
 
-    console.log(userId, guildId);
-
     return this.verifyPermissions({
       requiredPermissions,
       discordId,
