@@ -24,7 +24,11 @@ export class NotificationsService {
     private readonly guildsService: GuildsService,
   ) {}
 
-  async sendNotification(discordId: string, data: CreateNotificationDto) {
+  async sendNotification(
+    discordId: string,
+    userId: string,
+    data: CreateNotificationDto,
+  ) {
     if (!data.message && !data.npc) {
       throw new BadRequestException(Error.MISSING_MESSAGE_OR_NPC);
     }
@@ -35,6 +39,7 @@ export class NotificationsService {
     const createdAt = new Date().toISOString();
     const userGuilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
+      userId,
       [
         Permission.LOOTLOG_NOTIFICATIONS_SEND,
         Permission.OWNER,

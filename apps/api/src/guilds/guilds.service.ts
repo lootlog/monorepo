@@ -36,7 +36,17 @@ export class GuildsService {
     private readonly discordService: DiscordService,
   ) {}
 
-  async getUserGuilds(discordId: string, userId: string) {
+  async getUserGuilds(
+    discordId: string,
+    userId: string,
+    options?: { skipNoAccess?: boolean },
+  ) {
+    if (options?.skipNoAccess) {
+      return this.getGuildsForRequiredPermissions(discordId, userId, [
+        Permission.LOOTLOG_READ,
+      ]);
+    }
+
     const discordGuildIds = await this.discordService.getUserGuildIds(userId);
 
     const guilds = await this.prisma.guild.findMany({
@@ -65,20 +75,24 @@ export class GuildsService {
   }
 
   async getGuildsForRequiredPermissions(
+    discordId: string,
     userId: string,
     requiredPermissions: Permission[],
   ) {
+    const discordGuildIds = await this.discordService.getUserGuildIds(userId);
+
     const guilds = await this.prisma.guild.findMany({
       where: {
         active: true,
+        id: { in: discordGuildIds },
         OR: [
           {
-            ownerId: userId,
+            ownerId: discordId,
           },
           {
             members: {
               some: {
-                userId,
+                userId: discordId,
                 roles: {
                   some: {
                     permissions: {
@@ -254,12 +268,9 @@ export class GuildsService {
   async deleteGuild({ guildId }: DeleteGuildDto) {
     try {
       await this.prisma.$transaction(async (tx) => {
-        await Promise.all([
-          tx.lootlogConfigNpc.deleteMany({
-            where: { lootlogConfigId: guildId },
-          }),
-          tx.timer.deleteMany({ where: { guildId } }),
-        ]);
+        await tx.lootlogConfigNpc.deleteMany({
+          where: { lootlogConfigId: guildId },
+        });
 
         await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
 

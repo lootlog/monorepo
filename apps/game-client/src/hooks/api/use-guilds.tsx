@@ -9,7 +9,9 @@ export const useGuilds = () => {
   const query = useQuery({
     queryKey: ["user-guilds"],
     queryFn: () =>
-      client.get<Guild[]>(`${API_URL}/guilds/@me`, { withCredentials: true }),
+      client.get<Guild[]>(`${API_URL}/guilds/@me?skipNoAccess=true`, {
+        withCredentials: true,
+      }),
     select: (response) => response.data,
     refetchOnMount: true,
   });
