@@ -24,7 +24,7 @@ RUN find ./apps -name "*.ts" -delete && \
     find ./packages -name "src" -type d -exec rm -rf {} + 2>/dev/null || true
 
 # Install dependencies with cache mount
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --no-frozen-lockfile --prefer-offline
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 
 # Copy source code after dependencies are installed
 COPY . .
