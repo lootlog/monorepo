@@ -33,8 +33,6 @@ export const WsUserId = createParamDecorator(
       throw new WsException('Unauthorized');
     }
 
-    console.log(client.data);
-
     return client.data.userId;
   },
 );

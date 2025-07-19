@@ -98,8 +98,6 @@ export const SidebarNav: FC = () => {
   const guild = guilds?.find(
     (g) => g.id === guildId || g.vanityUrl === guildId
   );
-
-  console.log(member);
   const canTriggerRefresh =
     member?.updatedAt &&
     new Date(member.updatedAt).getTime() < Date.now() - REFRESH_PERMISSIONS_TTL;

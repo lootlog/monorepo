@@ -1,5 +1,4 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { MembersEventsHandler } from './members-events.handler';
 import { MembersService } from './members.service';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
@@ -23,12 +22,7 @@ import { DiscordModule } from 'src/discord/discord.module';
     DiscordModule,
   ],
   controllers: [MembersController],
-  providers: [
-    MembersService,
-    MembersEventsHandler,
-    PrismaService,
-    RetryService,
-  ],
+  providers: [MembersService, PrismaService, RetryService],
   exports: [MembersService],
 })
 export class MembersModule {}

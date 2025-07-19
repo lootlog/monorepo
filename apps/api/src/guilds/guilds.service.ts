@@ -19,8 +19,6 @@ import { RolesService } from 'src/roles/roles.service';
 import { generateSlug } from 'src/shared/utils/generate-slug';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
 import { DiscordService } from 'src/discord/discord.service';
 
 @Injectable()
@@ -39,12 +37,12 @@ export class GuildsService {
   ) {}
 
   async getUserGuilds(discordId: string, userId: string) {
-    const discordGuilds = await this.discordService.getUserGuilds(userId);
-    const guildIds = discordGuilds.map((guild) => guild.id);
+    const discordGuildIds = await this.discordService.getUserGuildIds(userId);
 
     const guilds = await this.prisma.guild.findMany({
       where: {
-        id: { in: guildIds },
+        id: { in: discordGuildIds },
+        active: true,
       },
     });
 
@@ -53,7 +51,10 @@ export class GuildsService {
 
   async getGuildById(idOrVanityURL: string) {
     const guild = await this.prisma.guild.findFirst({
-      where: { OR: [{ id: idOrVanityURL }, { vanityUrl: idOrVanityURL }] },
+      where: {
+        active: true,
+        OR: [{ id: idOrVanityURL }, { vanityUrl: idOrVanityURL }],
+      },
     });
 
     if (!guild) {
@@ -69,6 +70,7 @@ export class GuildsService {
   ) {
     const guilds = await this.prisma.guild.findMany({
       where: {
+        active: true,
         OR: [
           {
             ownerId: userId,
@@ -125,10 +127,9 @@ export class GuildsService {
   }
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
-    // Używamy Promise.all dla równoległego pobierania danych
     const [guilds, members] = await Promise.all([
       this.prisma.guild.findMany({
-        where: { id: { in: guildIds } },
+        where: { id: { in: guildIds }, active: true },
       }),
       this.prisma.member.findMany({
         where: {
@@ -139,7 +140,6 @@ export class GuildsService {
       }),
     ]);
 
-    // Tworzymy mapę dla szybszego wyszukiwania
     const memberMap = new Map(members.map((m) => [m.guildId, m]));
     const allPermissions = Object.values(Permission);
 
@@ -200,19 +200,20 @@ export class GuildsService {
     let guild;
 
     try {
-      // Używamy upsert zamiast find + create
       guild = await this.prisma.guild.upsert({
         where: { id: data.guildId },
         update: {
           name: data.name,
           icon: data.icon,
           ownerId: data.ownerId,
+          active: true,
         },
         create: {
           id: data.guildId,
           name: data.name,
           icon: data.icon,
           ownerId: data.ownerId,
+          active: true,
         },
       });
     } catch (error) {
@@ -223,7 +224,6 @@ export class GuildsService {
       throw error;
     }
 
-    // Wykonujemy operacje równolegle
     await Promise.all([
       this.rolesService.bulkCreateRoles(data.guildId, data.roles),
       this.lootlogConfigService.createLootlogConfig(data.guildId),
@@ -253,9 +253,7 @@ export class GuildsService {
 
   async deleteGuild({ guildId }: DeleteGuildDto) {
     try {
-      // Używamy transakcji dla atomiczności operacji
       await this.prisma.$transaction(async (tx) => {
-        // Usuwamy w odpowiedniej kolejności (zależności najpierw)
         await Promise.all([
           tx.lootlogConfigNpc.deleteMany({
             where: { lootlogConfigId: guildId },
@@ -265,11 +263,15 @@ export class GuildsService {
 
         await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
 
-        // Usuwamy członków i role równolegle
         await Promise.all([
           this.membersService.deleteMembersByGuildId(guildId),
           this.rolesService.deleteRolesByGuildId(guildId),
         ]);
+
+        await tx.guild.update({
+          where: { id: guildId },
+          data: { active: false },
+        });
       });
     } catch (error) {
       this.logger.error(
@@ -278,35 +280,5 @@ export class GuildsService {
       );
       throw error;
     }
-  }
-
-  async handleGuildSyncTrigger(guildId: string) {
-    try {
-      this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_SYNC_TRIGGER,
-        { guildId },
-      );
-    } catch (error) {
-      this.logger.error(
-        'Failed to trigger guild sync',
-        error instanceof Error ? error.stack : error,
-      );
-      throw error;
-    }
-  }
-
-  async handleGuildSync(data: CreateGuildDto) {
-    const guild = await this.getGuildById(data.guildId);
-
-    if (!guild) {
-      throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
-    }
-
-    // Wykonujemy operacje równolegle
-    await Promise.all([
-      this.rolesService.bulkUpdateRoles(data.guildId, data.roles),
-      this.lootlogConfigService.createLootlogConfig(data.guildId),
-    ]);
   }
 }

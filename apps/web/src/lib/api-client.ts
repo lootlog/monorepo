@@ -5,8 +5,6 @@ export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
-
-// Global error interceptor - setupowany tylko raz
 let interceptorSetup = false;
 
 export const setupApiInterceptors = (
@@ -17,20 +15,29 @@ export const setupApiInterceptors = (
   }) => void
 ) => {
   if (interceptorSetup) {
-    return; // Już setupowany, nie rób tego ponownie
+    return;
   }
 
   apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
       if (error.response && error.response.status === 403) {
-        console.error("Forbidden access - you do not have permission");
         toast({
           title: "Brak dostępu",
           description: "Nie masz uprawnień do tego lootloga.",
           variant: "destructive",
         });
       }
+
+      if (error.response && error.response.status === 404) {
+        toast({
+          title: "Nie znaleziono",
+          description:
+            "Zasób, do którego próbujesz uzyskać dostęp, nie istnieje.",
+          variant: "destructive",
+        });
+      }
+
       return Promise.reject(error);
     }
   );

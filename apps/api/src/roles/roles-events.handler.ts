@@ -48,7 +48,7 @@ export class RolesEventsHandler {
       return;
     }
 
-    await this.rolesService.createRole(data);
+    await this.rolesService.createOrUpdateRole(data);
     console.log(`Role created successfully: ${data.id}`);
   }
 
@@ -77,7 +77,7 @@ export class RolesEventsHandler {
       return;
     }
 
-    await this.rolesService.updateRole(data);
+    await this.rolesService.createOrUpdateRole(data);
     console.log(`Role updated successfully: ${data.id}`);
   }
 
