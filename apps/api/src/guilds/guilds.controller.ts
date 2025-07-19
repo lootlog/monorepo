@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   Param,
+  ParseBoolPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Guild, Permission } from 'generated/client';
@@ -27,8 +30,12 @@ export class GuildsController {
   async getUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
+    @Query('skipNoAccess', new DefaultValuePipe(false), ParseBoolPipe)
+    skipNoAccess?: boolean,
   ) {
-    return this.guildsService.getUserGuilds(discordId, userId);
+    return this.guildsService.getUserGuilds(discordId, userId, {
+      skipNoAccess,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_READ)

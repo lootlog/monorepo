@@ -5,13 +5,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { DeleteMemberRoleDto } from './dto/delete-member-role.dto';
-import { AddMemberRoleDto } from 'src/members/dto/add-member-role.dto';
-import { AddMemberDto } from 'src/members/dto/add-member.dto';
-import { DeleteMemberDto } from 'src/members/dto/delete-member.dto';
-import { GuildMemberDto } from 'src/guilds/dto/create-guild.dto';
 import { PrismaService } from 'src/db/prisma.service';
-import { UpdateMemberDto } from 'src/members/dto/update-member-dto';
 import {
   MEMBER_CACHE_TTL,
   REFRESH_PERMISSIONS_TTL,
@@ -27,7 +21,6 @@ type MemberWithRoles = Member & { roles: Role[] };
 @Injectable()
 export class MembersService {
   private readonly logger = new Logger(MembersService.name);
-  private readonly BATCH_SIZE = 100; // Rozmiar batch dla bulk operacji
 
   constructor(
     private readonly prisma: PrismaService,
@@ -95,7 +88,6 @@ export class MembersService {
           (error as Error).stack,
         );
 
-        // Zwróć stale dane z bazy bez względu na TTL
         const staleMember = await this.prisma.member.findUnique({
           where: {
             memberId: { userId: discordId, guildId: desiredGuildId },
@@ -110,176 +102,11 @@ export class MembersService {
     return member;
   }
 
-  async getMembersByUserId(userId: string): Promise<MemberWithRoles[]> {
-    return this.prisma.member.findMany({
-      where: { userId },
-      include: { roles: true },
-    });
-  }
-
   async getGuildMembers(guildId: string): Promise<MemberWithRoles[]> {
     return this.prisma.member.findMany({
-      where: { guildId },
+      where: { guildId, active: true },
       include: { roles: true },
     });
-  }
-
-  async bulkGetMembersByGuildId(
-    guildId: string,
-    memberIds: string[],
-  ): Promise<MemberWithRoles[]> {
-    return this.prisma.member.findMany({
-      where: {
-        guildId,
-        userId: { in: memberIds },
-      },
-      include: { roles: true },
-    });
-  }
-
-  private async processMemberBatch(
-    members: GuildMemberDto[],
-    guildId: string,
-    isUpdate = false,
-  ): Promise<number> {
-    const operations = members.map(
-      async ({ id, name, roleIds, type, banner, avatar }) => {
-        try {
-          const memberData = {
-            userId: id,
-            guildId,
-            type,
-            name,
-            banner,
-            avatar,
-            roles: isUpdate
-              ? { set: roleIds.map((roleId) => ({ id: roleId })) }
-              : { connect: roleIds.map((roleId) => ({ id: roleId })) },
-          };
-
-          return await this.prisma.member.upsert({
-            where: { memberId: { userId: id, guildId } },
-            create: {
-              ...memberData,
-              roles: { connect: roleIds.map((roleId) => ({ id: roleId })) },
-            },
-            update: memberData,
-          });
-        } catch (error) {
-          this.logger.error(
-            `Failed to process member ${id}`,
-            (error as Error).stack,
-          );
-          return null;
-        }
-      },
-    );
-
-    const results = await Promise.allSettled(operations);
-    const failed = results.filter(
-      (result) => result.status === 'rejected',
-    ).length;
-
-    if (failed > 0) {
-      this.logger.warn(
-        `Failed to process ${failed} out of ${members.length} members`,
-      );
-    }
-
-    return results.filter((result) => result.status === 'fulfilled').length;
-  }
-
-  async bulkCreateMembers(
-    guildId: string,
-    members: GuildMemberDto[],
-  ): Promise<number> {
-    try {
-      const batches = this.chunkArray(members, this.BATCH_SIZE);
-      let totalProcessed = 0;
-
-      for (const batch of batches) {
-        const processed = await this.processMemberBatch(batch, guildId, false);
-        totalProcessed += processed;
-      }
-
-      this.logger.log(
-        `Successfully processed ${totalProcessed} members for guild ${guildId}`,
-      );
-      return totalProcessed;
-    } catch (error) {
-      this.logger.error(
-        'Failed to bulk create members',
-        (error as Error).stack,
-      );
-      throw error;
-    }
-  }
-
-  async bulkUpdateMembers(
-    guildId: string,
-    members: GuildMemberDto[],
-  ): Promise<number> {
-    try {
-      const batches = this.chunkArray(members, this.BATCH_SIZE);
-      let totalProcessed = 0;
-
-      for (const batch of batches) {
-        const processed = await this.processMemberBatch(batch, guildId, true);
-        totalProcessed += processed;
-      }
-
-      this.logger.log(
-        `Successfully updated ${totalProcessed} members for guild ${guildId}`,
-      );
-      return totalProcessed;
-    } catch (error) {
-      this.logger.error(
-        'Failed to bulk update members',
-        (error as Error).stack,
-      );
-      throw error;
-    }
-  }
-
-  async addMember(data: AddMemberDto): Promise<MemberWithRoles> {
-    const { id, roleIds, avatar, guildId, type, name, banner } = data;
-
-    try {
-      // Optymalizacja: pobieramy tylko istniejące role jednym zapytaniem
-      const existingRoles = await this.prisma.role.findMany({
-        where: { id: { in: roleIds } },
-        select: { id: true },
-      });
-
-      const existingRoleIds = existingRoles.map((role) => role.id);
-
-      const member = await this.prisma.member.upsert({
-        where: { memberId: { userId: id, guildId } },
-        update: {
-          avatar,
-          banner,
-          type,
-          name,
-          active: true,
-          roles: { set: existingRoleIds.map((roleId) => ({ id: roleId })) },
-        },
-        create: {
-          userId: id,
-          guildId,
-          avatar,
-          name,
-          banner,
-          type,
-          roles: { connect: existingRoleIds.map((roleId) => ({ id: roleId })) },
-        },
-        include: { roles: true },
-      });
-
-      return member;
-    } catch (error) {
-      this.logger.error(`Failed to add member ${id}`, (error as Error).stack);
-      throw error;
-    }
   }
 
   async createOrUpdateMember({
@@ -293,7 +120,6 @@ export class MembersService {
     const { id } = user;
 
     try {
-      // Optymalizacja: pobieramy tylko istniejące role
       const existingRoles = await this.prisma.role.findMany({
         where: { id: { in: roleIds } },
         select: { id: true },
@@ -308,12 +134,14 @@ export class MembersService {
           avatar,
           banner,
           name: memberName,
+          active: true,
           roles: { set: existingRoleIds.map((roleId) => ({ id: roleId })) },
         },
         create: {
           userId: id,
           guild: { connect: { id: guildId } },
           avatar,
+          active: true,
           name: memberName,
           banner,
           roles: { connect: existingRoleIds.map((roleId) => ({ id: roleId })) },
@@ -333,8 +161,9 @@ export class MembersService {
 
   async deleteMembersByGuildId(guildId: string): Promise<number> {
     try {
-      const result = await this.prisma.member.deleteMany({
+      const result = await this.prisma.member.updateMany({
         where: { guildId },
+        data: { active: false },
       });
 
       this.logger.log(`Deleted ${result.count} members from guild ${guildId}`);
@@ -346,14 +175,5 @@ export class MembersService {
       );
       throw error;
     }
-  }
-
-  // Utility method dla dzielenia na batche
-  private chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
-    }
-    return chunks;
   }
 }
