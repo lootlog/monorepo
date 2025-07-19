@@ -12,6 +12,8 @@ import { UsersModule } from 'src/users/users.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
 import { GuildsRpcHandler } from 'src/guilds/guild-rpc.handler';
 import { RetryService } from 'src/rabbitmq/retry.service';
+import { DiscordModule } from 'src/discord/discord.module';
+import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { RetryService } from 'src/rabbitmq/retry.service';
       useFactory: async (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
+    RedisModule,
+    DiscordModule,
   ],
   controllers: [GuildsController],
   providers: [

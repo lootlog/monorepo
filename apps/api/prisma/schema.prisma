@@ -26,6 +26,7 @@ model Guild {
   members         Member[]
   timers          Timer[]
   lootSubmissions LootSubmission[]
+  active          Boolean          @default(true)
 
   @@index([vanityUrl])
 }

@@ -4,4 +4,5 @@ export class CreateRoleDto {
   name: string;
   color: number;
   position: number;
+  admin: boolean;
 }

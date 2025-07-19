@@ -18,6 +18,7 @@ const configSchema = z.object({
   COOKIE_DOMAIN: z.string(),
   COOKIE_PREFIX: z.string(),
   ADMIN_ACCOUNT_IDS: z.string().transform((val) => val.split(",")),
+  RABBITMQ_URI: z.string(),
 });
 
 const {
@@ -36,6 +37,7 @@ const {
   COOKIE_DOMAIN,
   COOKIE_PREFIX,
   ADMIN_ACCOUNT_IDS,
+  RABBITMQ_URI,
 } = configSchema.parse(process.env);
 
 export const APP_CONFIG = {
@@ -58,5 +60,9 @@ export const APP_CONFIG = {
   discord: {
     clientId: DISCORD_CLIENT_ID,
     clientSecret: DISCORD_CLIENT_SECRET,
+  },
+  rabbitmq: {
+    uri: RABBITMQ_URI,
+    exchange: "default",
   },
 };

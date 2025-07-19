@@ -14,7 +14,7 @@ export const PageHeader: React.FC = () => {
     await authClient.signIn.social({
       provider: "discord",
       callbackURL: url,
-      scopes: ["identify", "email", "guilds"],
+      scopes: ["identify", "email", "guilds", "guilds.members.read"],
     });
   };
 

@@ -51,4 +51,6 @@ export enum RoutingKey {
 
   SEARCH_NPCS_INDEX = 'search.npcs.index',
   SEARCH_PLAYERS_INDEX = 'search.players.index',
+
+  AUTH_GET_IDP_TOKEN = 'auth.get.idp.token',
 }
