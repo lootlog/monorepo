@@ -48,7 +48,7 @@ export class LootsService {
     private readonly userLootlogConfigService: UserLootlogConfigService,
   ) {}
 
-  async createLoot(discordId: string, body: CreateLootDto) {
+  async createLoot(discordId: string, userId: string, body: CreateLootDto) {
     if (body.loots.length > 10) {
       throw new BadRequestException('TOO MANY LOOTS');
     }
@@ -57,6 +57,7 @@ export class LootsService {
 
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
+      userId,
       [Permission.LOOTLOG_WRITE],
     );
     if (guilds.length === 0) {
