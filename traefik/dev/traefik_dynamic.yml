@@ -111,7 +111,7 @@ http:
           - "/gateway"
     apiForwardAuth:
       forwardAuth:
-        address: "http://host.docker.internal:4001/verify-auth"
+        address: "http://host.docker.internal:4001/auth/verify"
         trustForwardHeader: true
         authResponseHeaders:
           - "X-Auth-User-Id"

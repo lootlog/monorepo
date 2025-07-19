@@ -22,6 +22,7 @@ export type SocketUserPlayer = {
 export type SocketUser = {
   discordId: string;
   sessionId: string;
+  userId: string;
   platform: Platform;
   player?: SocketUserPlayer;
   status?: UserPresenceStatus;

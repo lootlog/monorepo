@@ -20,7 +20,6 @@ export class CreateGuildDto {
   guildId: string;
   name: string;
   icon: string;
-  members: GuildMemberDto[];
   roles: GuildRoleDto[];
   ownerId: string;
 }

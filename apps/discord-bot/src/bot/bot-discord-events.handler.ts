@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BaseHandler, Context, ContextOf, On, RoleUpdateHandler } from 'necord';
+import { Context, ContextOf, On } from 'necord';
 import { Events } from 'discord.js';
 import { BotService } from 'src/bot/bot.service';
 
@@ -12,41 +12,6 @@ export class BotDiscordEventsHandler {
   @On(Events.ClientReady)
   public async handleReady(@Context() [client]: ContextOf<Events.ClientReady>) {
     this.logger.log('Bot is ready and logged in as: ', client.user.username);
-  }
-
-  @On(Events.GuildMemberAdd)
-  public async handleGuildMemberAdd(
-    @Context() [member]: ContextOf<Events.GuildMemberAdd>,
-  ) {
-    this.botService.handleGuildMemberAdd(member);
-  }
-
-  @On(Events.GuildMemberUpdate)
-  public async handleGuildMemberUpdate(
-    @Context() [oldMember, newMember]: ContextOf<Events.GuildMemberUpdate>,
-  ) {
-    this.botService.handleGuildMemberUpdate(oldMember, newMember);
-  }
-
-  @On(Events.GuildMemberRemove)
-  public async handleGuildMemberDelete(
-    @Context() [member]: ContextOf<Events.GuildMemberRemove>,
-  ) {
-    this.botService.handleGuildMemberDelete(member);
-  }
-
-  @On('guildMemberRoleAdd')
-  public async handleGuildMemberRoleAdd(
-    @Context() [member, role]: ContextOf<'guildMemberRoleAdd'>,
-  ) {
-    this.botService.handleGuildMemberRoleAdd(member, role);
-  }
-
-  @On('guildMemberRoleRemove')
-  public async handleGuildMemberRoleRemove(
-    @Context() [member, role]: ContextOf<'guildMemberRoleRemove'>,
-  ) {
-    this.botService.handleGuildMemberRoleRemove(member, role);
   }
 
   @On(Events.GuildCreate)
