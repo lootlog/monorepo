@@ -19,6 +19,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.quit();
   }
 
+  async getClient(): Promise<Redis> {
+    if (!this.client) {
+      throw new Error('Redis client is not initialized');
+    }
+    return this.client;
+  }
+
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
     if (ttlSeconds) {
       await this.client.set(key, value, 'EX', ttlSeconds);

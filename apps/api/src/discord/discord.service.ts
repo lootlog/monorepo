@@ -1,15 +1,29 @@
 import { REST } from '@discordjs/rest';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
 import { RedisService } from 'src/lib/redis/redis.service';
+import Redlock from 'redlock';
 
 @Injectable()
-export class DiscordService {
+export class DiscordService implements OnModuleInit {
+  private redlock: Redlock;
+
   constructor(
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
   ) {}
+
+  async onModuleInit() {
+    const client = await this.redisService.getClient();
+    this.redlock = new Redlock([client], {
+      driftFactor: 0.01,
+      retryCount: 10,
+      retryDelay: 200,
+      retryJitter: 200,
+      automaticExtensionThreshold: 500,
+    });
+  }
 
   async getRestClient(userId: string) {
     const token = await this.authService.getIdpToken(userId);
@@ -26,8 +40,8 @@ export class DiscordService {
   async getUserGuilds(userId: string): Promise<APIGuild[]> {
     const cacheKey = `user:${userId}:guilds:data`;
     const lockKey = `user:${userId}:guilds:lock`;
-    const lockTtl = 10; // sekundy
-    const cacheTtl = 120; // 2 minuty cache (guilds się rzadziej zmieniają)
+    const lockTtl = 10000; // 10 sekund w milisekundach
+    const cacheTtl = 120; // 2 minuty cache
 
     console.log(`Checking cache for key: ${cacheKey}`);
 
@@ -40,24 +54,17 @@ export class DiscordService {
 
     console.log(`Cache miss, acquiring lock: ${lockKey}`);
 
-    // Jeśli nie ma w cache, użyj locka
-    let acquired = false;
-    while (!acquired) {
-      acquired = await this.redisService.setNX(lockKey, 'locked', lockTtl);
-      if (!acquired) {
-        console.log(`Lock not acquired, waiting... ${lockKey}`);
-        await new Promise((res) => setTimeout(res, 100));
-
-        // Sprawdź cache ponownie po oczekiwaniu - może ktoś inny już pobrał
-        const cachedAfterWait = await this.redisService.get(cacheKey);
-        if (cachedAfterWait) {
-          console.log(`Cache hit after wait for user ${userId} guilds`);
-          return JSON.parse(cachedAfterWait) as APIGuild[];
-        }
-      }
-    }
+    // Użyj Redlock do distributed locking
+    const lock = await this.redlock.acquire([lockKey], lockTtl);
 
     try {
+      // Sprawdź cache ponownie po uzyskaniu locka
+      const cachedAfterLock = await this.redisService.get(cacheKey);
+      if (cachedAfterLock) {
+        console.log(`Cache hit after acquiring lock for user ${userId} guilds`);
+        return JSON.parse(cachedAfterLock) as APIGuild[];
+      }
+
       const rest = await this.getRestClient(userId);
 
       console.log(`Fetching guilds for user ${userId}`);
@@ -72,7 +79,7 @@ export class DiscordService {
 
       return guilds;
     } finally {
-      await this.redisService.del(lockKey);
+      await lock.release();
       console.log(`Lock released: ${lockKey}`);
     }
   }
@@ -84,7 +91,7 @@ export class DiscordService {
     const { guildId, userId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
     const lockKey = `guild:${guildId}:member:${userId}:lock`;
-    const lockTtl = 10; // sekundy
+    const lockTtl = 10000; // 10 sekund w milisekundach
     const cacheTtl = 60; // 1 minuta cache
 
     console.log(`Checking cache for key: ${cacheKey}`);
@@ -98,26 +105,19 @@ export class DiscordService {
 
     console.log(`Cache miss, acquiring lock: ${lockKey}`);
 
-    // Jeśli nie ma w cache, użyj locka
-    let acquired = false;
-    while (!acquired) {
-      acquired = await this.redisService.setNX(lockKey, 'locked', lockTtl);
-      if (!acquired) {
-        console.log(`Lock not acquired, waiting... ${lockKey}`);
-        await new Promise((res) => setTimeout(res, 100));
-
-        // Sprawdź cache ponownie po oczekiwaniu - może ktoś inny już pobrał
-        const cachedAfterWait = await this.redisService.get(cacheKey);
-        if (cachedAfterWait) {
-          console.log(
-            `Cache hit after wait for guild ${guildId} and user ${userId}`,
-          );
-          return JSON.parse(cachedAfterWait) as APIGuildMember;
-        }
-      }
-    }
+    // Użyj Redlock do distributed locking
+    const lock = await this.redlock.acquire([lockKey], lockTtl);
 
     try {
+      // Sprawdź cache ponownie po uzyskaniu locka
+      const cachedAfterLock = await this.redisService.get(cacheKey);
+      if (cachedAfterLock) {
+        console.log(
+          `Cache hit after acquiring lock for guild ${guildId} and user ${userId}`,
+        );
+        return JSON.parse(cachedAfterLock) as APIGuildMember;
+      }
+
       const rest = await this.getRestClient(userId);
 
       console.log(`Fetching member for guild ${guildId} and user ${userId}`);
@@ -134,7 +134,7 @@ export class DiscordService {
 
       return member;
     } finally {
-      await this.redisService.del(lockKey);
+      await lock.release();
       console.log(`Lock released: ${lockKey}`);
     }
   }
