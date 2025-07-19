@@ -20,7 +20,6 @@ export class BotService {
   private readonly logger = new Logger(BotService.name);
 
   constructor(
-    private readonly configService: ConfigService,
     private readonly client: Client,
     private readonly amqpConnection: AmqpConnection,
   ) {}
@@ -142,7 +141,6 @@ export class BotService {
   public async handleGuildCreate(guild: Guild) {
     this.logger.log(`Bot is added to the new guild`, guild.name);
 
-    const members = await guild.members.fetch();
     const roles = await guild.roles.fetch();
 
     const payload = {
@@ -162,26 +160,10 @@ export class BotService {
           position: role.position,
         };
       }),
-      members: members.map((member) => {
-        const isOwner = guild.ownerId === member.id;
-
-        const memberRoleIds = member.roles.cache.map((role) => {
-          return role.id;
-        });
-        const type = isOwner ? MemberType.OWNER : getMemberType(member);
-
-        return {
-          id: member.id,
-          roleIds: memberRoleIds,
-          type,
-          banner: member.user.banner,
-          avatar: member.user.avatarURL(),
-          name: getDiscordMemberName(member),
-        };
-      }),
     };
 
     console.log(JSON.stringify(payload));
+    const members = await guild.members.fetch();
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
