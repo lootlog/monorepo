@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   Param,
+  ParseBoolPipe,
   Patch,
   Post,
   Query,
@@ -28,7 +30,8 @@ export class GuildsController {
   async getUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Query('skipNoAccess') skipNoAccess?: boolean,
+    @Query('skipNoAccess', new DefaultValuePipe(false), ParseBoolPipe)
+    skipNoAccess?: boolean,
   ) {
     return this.guildsService.getUserGuilds(discordId, userId, {
       skipNoAccess,
