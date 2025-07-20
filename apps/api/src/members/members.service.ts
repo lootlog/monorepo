@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   forwardRef,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import {
@@ -81,12 +84,20 @@ export class MembersService {
         return this.createOrUpdateMember({
           ...discordMember,
           guildId: desiredGuildId,
+          globalUserId: userId,
         });
       } catch (error) {
         this.logger.error(
           'Failed to fetch member from Discord, serving stale data',
           (error as Error).stack,
         );
+
+        if (refresh) {
+          throw new HttpException(
+            'Member TTL is active',
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
 
         const staleMember = await this.prisma.member.findUnique({
           where: {
@@ -102,10 +113,34 @@ export class MembersService {
     return member;
   }
 
+  async refreshMember(options: { discordId: string; guildId: string }) {
+    const member = await this.prisma.member.findUnique({
+      where: {
+        memberId: { userId: options.discordId, guildId: options.guildId },
+      },
+    });
+
+    if (!member || !member.globalUserId) {
+      throw new NotFoundException();
+    }
+
+    return this.getGuildMemberById({
+      ...options,
+      userId: member.globalUserId,
+      refresh: true,
+      standalone: true,
+    });
+  }
+
   async getGuildMembers(guildId: string): Promise<MemberWithRoles[]> {
     return this.prisma.member.findMany({
       where: { guildId, active: true },
-      include: { roles: true },
+      include: {
+        roles: {
+          orderBy: { position: 'desc' },
+        },
+      },
+      orderBy: { name: 'asc' },
     });
   }
 
@@ -116,7 +151,11 @@ export class MembersService {
     banner,
     roles: roleIds,
     user,
-  }: APIGuildMember & { guildId: string }): Promise<MemberWithRoles> {
+    globalUserId,
+  }: APIGuildMember & {
+    guildId: string;
+    globalUserId: string;
+  }): Promise<MemberWithRoles> {
     const { id } = user;
 
     try {
@@ -126,23 +165,26 @@ export class MembersService {
       });
 
       const existingRoleIds = existingRoles.map((role) => role.id);
-      const memberName = nick || user.username;
+      const memberName = nick || user.global_name || user.username;
+      const memberAvatar = avatar || user.avatar;
 
       const member = await this.prisma.member.upsert({
         where: { memberId: { userId: id, guildId } },
         update: {
-          avatar,
+          avatar: memberAvatar,
           banner,
           name: memberName,
           active: true,
+          globalUserId,
           roles: { set: existingRoleIds.map((roleId) => ({ id: roleId })) },
         },
         create: {
           userId: id,
           guild: { connect: { id: guildId } },
-          avatar,
+          avatar: memberAvatar,
           active: true,
           name: memberName,
+          globalUserId,
           banner,
           roles: { connect: existingRoleIds.map((roleId) => ({ id: roleId })) },
         },

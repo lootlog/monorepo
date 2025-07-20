@@ -86,6 +86,7 @@ model Member {
   roles           Role[]
   timers          Timer[]
   lootSubmissions LootSubmission[]
+  globalUserId    String?
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
