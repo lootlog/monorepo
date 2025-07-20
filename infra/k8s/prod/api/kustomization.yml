@@ -3,5 +3,5 @@ resources:
   - ../../base/api
 images:
   - name: kamilwronka7/lootlog-api
-    newTag: prod-78875e265c07155e326d044d8e3533eed1cc862e
+    newTag: prod-0f74ad513986eb5755d95a7fcb6532a3583e0544
 namePrefix: prod-
