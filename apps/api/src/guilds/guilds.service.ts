@@ -41,7 +41,6 @@ export class GuildsService {
     userId: string,
     options?: { skipNoAccess?: boolean },
   ) {
-    console.log(userId, 'requested guilds for discordId:', discordId);
     if (options?.skipNoAccess) {
       return this.getGuildsForRequiredPermissions(discordId, userId, [
         Permission.LOOTLOG_READ,

@@ -7,7 +7,7 @@ import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
 export const DEFAULT_EXCHANGE_NAME = 'default';
 export const DEAD_LETTER_EXCHANGE_NAME = 'dlx';
 export const RETRY_EXCHANGE_NAME = 'retry';
-export const DEFAULT_RPC_TIMEOUT = 5000;
+export const DEFAULT_RPC_TIMEOUT = 15000;
 
 const DEFAULT_TTL = 30000; // 30 seconds
 

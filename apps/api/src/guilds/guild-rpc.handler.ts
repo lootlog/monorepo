@@ -23,18 +23,10 @@ export class GuildsRpcHandler {
       return [];
     }
 
-    console.log(
-      `RPC: getUserGuilds - discordId: ${data.discordId}, userId: ${data.userId}`,
-    );
-
     const guilds = await this.guildsService.getUserGuilds(
       data.discordId,
       data.userId,
       { skipNoAccess: true },
-    );
-
-    console.log(
-      `RPC: getUserGuilds - discordId: ${data.discordId}, userId: ${data.userId}, guilds: ${guilds.length}`,
     );
 
     const guildIds = guilds.map((guild) => guild.id);
@@ -43,10 +35,6 @@ export class GuildsRpcHandler {
         data.discordId,
         guildIds,
       );
-
-    console.log(
-      `RPC: getUserGuilds - discordId: ${data.discordId}, userId: ${data.userId}, guildsWithPermissions: ${guildsWithPermissions.length}`,
-    );
 
     return guildsWithPermissions;
   }
