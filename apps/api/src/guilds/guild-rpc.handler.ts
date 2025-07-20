@@ -27,12 +27,21 @@ export class GuildsRpcHandler {
       data.discordId,
       data.userId,
     );
+
+    console.log(
+      `RPC: getUserGuilds - discordId: ${data.discordId}, userId: ${data.userId}, guilds: ${guilds.length}`,
+    );
+
     const guildIds = guilds.map((guild) => guild.id);
     const guildsWithPermissions =
       await this.guildsService.getMultipleGuildsPermissions(
         data.discordId,
         guildIds,
       );
+
+    console.log(
+      `RPC: getUserGuilds - discordId: ${data.discordId}, userId: ${data.userId}, guildsWithPermissions: ${guildsWithPermissions.length}`,
+    );
 
     return guildsWithPermissions;
   }
