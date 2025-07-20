@@ -121,7 +121,9 @@ export class MembersService {
     });
 
     if (!member || !member.globalUserId) {
-      throw new NotFoundException();
+      throw new NotFoundException(
+        'Member not found or global user ID is missing',
+      );
     }
 
     return this.getGuildMemberById({

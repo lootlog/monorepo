@@ -91,12 +91,14 @@ export class Gateway {
       discordId,
       userId,
     });
+
     if (guilds.length === 0) {
       this.logger.warn(`No guilds found for user ${discordId}`);
       return { status: 'error', message: 'No guilds found for user' };
     }
     const guildIds = getGuildIds(guilds);
     const user = buildUser(client, player, guilds);
+
     client.data = user;
     client.join(guildIds);
     emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);

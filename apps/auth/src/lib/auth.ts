@@ -94,7 +94,7 @@ export const auth: any = betterAuth({
       clientId,
       clientSecret,
       redirectURI: `${APP_CONFIG.appUrl}/idp/callback/discord`,
-      scopes: ["identify", "email", "guilds", "guilds.members.read"],
+      scopes: ["guilds.members.read", "guilds", "identify", "email"],
       mapProfileToUser: (profile) => {
         return {
           firstName: profile.given_name,

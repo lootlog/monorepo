@@ -29,6 +29,7 @@ export class GuildsService {
         payload: { discordId, userId },
         timeout: DEFAULT_RPC_TIMEOUT,
       });
+
       return response.map((data) => ({
         guild: data.guild,
         roles: data.roles,
