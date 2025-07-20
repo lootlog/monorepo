@@ -8,7 +8,13 @@ import { BrowserRouter } from "react-router-dom";
 import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "next-themes";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (

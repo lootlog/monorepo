@@ -55,7 +55,7 @@ export const MembersSettings = () => {
       <div className="p-4 border-t box-border">
         <SearchInput
           onChange={(e) => setSearchValue(e.target.value)}
-          placeholder="Szukaj roli..."
+          placeholder="Szukaj członka..."
         />
       </div>
       <div
