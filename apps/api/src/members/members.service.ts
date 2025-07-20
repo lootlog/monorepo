@@ -134,7 +134,7 @@ export class MembersService {
 
   async getGuildMembers(guildId: string): Promise<MemberWithRoles[]> {
     return this.prisma.member.findMany({
-      where: { guildId, active: true },
+      where: { guildId, active: true, globalUserId: { not: null } },
       include: {
         roles: {
           orderBy: { position: 'desc' },

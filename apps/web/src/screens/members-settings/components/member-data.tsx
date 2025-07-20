@@ -1,4 +1,6 @@
 import { GuildMember } from "@/hooks/api/use-guild-member";
+import { Permission } from "@/hooks/api/use-guild-permissions";
+
 import { useTranslation } from "react-i18next";
 
 export type MemberDataProps = {
@@ -16,7 +18,6 @@ export const MemberData = ({ member }: MemberDataProps) => {
         </div>
       )}
       {member.roles.map((role) => {
-        console.log(role);
         const color = role.color === 0 ? "FFF" : role.color.toString(16);
 
         return (
@@ -36,6 +37,8 @@ export const MemberData = ({ member }: MemberDataProps) => {
             <span className="flex gap-1 flex-wrap">
               {role.permissions.length > 0 &&
                 role.permissions.map((permission) => {
+                  if (permission === Permission.OWNER) return null;
+
                   return (
                     <span key={permission} className="text-xs text-gray-400">
                       {t(`permissions.${permission}`)}

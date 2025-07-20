@@ -13,6 +13,7 @@ export type MemberItemProps = {
   active?: boolean;
   onSelect: () => void;
   showActions?: boolean;
+  isOwner?: boolean;
 };
 
 export const MemberItem: FC<MemberItemProps> = ({
@@ -20,6 +21,7 @@ export const MemberItem: FC<MemberItemProps> = ({
   active,
   onSelect,
   showActions = true,
+  isOwner = false,
 }) => {
   const color = getColorFromRole(member.roles);
   const avatarUrl = getDiscordAvatarUrl(member.userId, member.avatar);
@@ -41,7 +43,8 @@ export const MemberItem: FC<MemberItemProps> = ({
         </Avatar>
         <div>
           <div className="font-semibold" style={{ color: `#${color}` }}>
-            {member.name}
+            {member.name}{" "}
+            <span className="text-white">{isOwner ? "(właściciel)" : ""}</span>
           </div>
         </div>
       </div>

@@ -9,12 +9,14 @@ export type MembersPanelContentProps = {
   selectedMember: GuildMember;
   setSelectedMember: (member: GuildMember | null) => void;
   selectedMemberColor: string | undefined;
+  isOwner?: boolean;
 };
 
 export const MembersPanelContent: FC<MembersPanelContentProps> = ({
   selectedMember,
   setSelectedMember,
   selectedMemberColor,
+  isOwner = false,
 }) => (
   <>
     <div className="p-4 border-b h-12 flex flex-row gap-4 items-center justify-between">
@@ -28,7 +30,8 @@ export const MembersPanelContent: FC<MembersPanelContentProps> = ({
             className="font-semibold text-sm"
             style={{ color: `#${selectedMemberColor}` }}
           >
-            {selectedMember.name}
+            {selectedMember.name}{" "}
+            <span className="text-white">{isOwner ? "(właściciel)" : ""}</span>
           </div>
         </div>
       </div>

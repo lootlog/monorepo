@@ -9,6 +9,7 @@ import { GuildMember } from "@/hooks/api/use-guild-member";
 import { MembersPanelContent } from "@/screens/members-settings/components/members-panel";
 import { MemberItem } from "@/screens/members-settings/components/member-item";
 import { getColorFromRole } from "@/utils/get-color-from-role";
+import { useGuild } from "@/hooks/api/use-guild";
 
 export const MembersSettings = () => {
   const { data: members } = useGuildMembers();
@@ -17,6 +18,7 @@ export const MembersSettings = () => {
     null
   );
   const [shouldAnimate, setShouldAnimate] = useState(false);
+  const { data: guild } = useGuild({});
 
   const prevSelectedMember = useRef<GuildMember | null>(null);
 
@@ -69,6 +71,7 @@ export const MembersSettings = () => {
               active={selectedMember?.id === member.id}
               onSelect={() => setSelectedMember(member)}
               showActions={!selectedMember}
+              isOwner={member.userId === guild?.ownerId}
             />
           ))}
         </ScrollArea>
@@ -86,6 +89,7 @@ export const MembersSettings = () => {
                   selectedMember={selectedMember}
                   setSelectedMember={setSelectedMember}
                   selectedMemberColor={selectedMemberColor}
+                  isOwner={selectedMember.userId === guild?.ownerId}
                 />
               </motion.div>
             ) : (
