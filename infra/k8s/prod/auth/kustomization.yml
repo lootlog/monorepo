@@ -3,5 +3,5 @@ resources:
   - ../../base/auth
 images:
   - name: kamilwronka7/lootlog-auth
-    newTag: prod-0f74ad513986eb5755d95a7fcb6532a3583e0544
+    newTag: prod-840df52349270d8d8b69ac5730c4f44934b613d9
 namePrefix: prod-
