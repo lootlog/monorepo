@@ -47,11 +47,11 @@ export class MembersController {
   @Post('/:discordId/refresh')
   async refreshMember(
     @Param('discordId') discordId: string,
-    @Param('guildId') guildId: string,
+    @GuildData() guild: Guild,
   ) {
     return this.membersService.refreshMember({
       discordId,
-      guildId,
+      guildId: guild.id,
     });
   }
 
