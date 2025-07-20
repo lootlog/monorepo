@@ -22,10 +22,6 @@ export class GuildsService {
   async getUserGuilds(options: { discordId: string; userId: string }) {
     const { discordId, userId } = options;
 
-    console.log(
-      `RPC: getUserGuilds - discordId: ${discordId}, userId: ${userId}`,
-    );
-
     try {
       const response = await this.amqpConnection.request<GetGuildsResponse>({
         exchange: DEFAULT_EXCHANGE_NAME,
@@ -33,10 +29,6 @@ export class GuildsService {
         payload: { discordId, userId },
         timeout: DEFAULT_RPC_TIMEOUT,
       });
-
-      console.log(
-        `RPC: getUserGuilds - discordId: ${discordId}, userId: ${userId}, guilds: ${response.length}`,
-      );
 
       return response.map((data) => ({
         guild: data.guild,
