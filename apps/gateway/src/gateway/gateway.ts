@@ -87,16 +87,27 @@ export class Gateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() { data: player }: JoinGatewayDto,
   ): Promise<any> {
+    console.log(
+      `requesting guilds for discordId: ${discordId}, userId: ${userId}`,
+    );
+    console.log(`player data: ${JSON.stringify(player)}`);
+
     const guilds = await this.guildsService.getUserGuilds({
       discordId,
       userId,
     });
+
+    console.log(`guilds fetched: ${JSON.stringify(guilds)}`);
+
     if (guilds.length === 0) {
       this.logger.warn(`No guilds found for user ${discordId}`);
       return { status: 'error', message: 'No guilds found for user' };
     }
     const guildIds = getGuildIds(guilds);
     const user = buildUser(client, player, guilds);
+
+    console.log(`user built: ${JSON.stringify(user)}`);
+
     client.data = user;
     client.join(guildIds);
     emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);
