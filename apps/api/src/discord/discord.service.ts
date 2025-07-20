@@ -1,5 +1,10 @@
 import { REST } from '@discordjs/rest';
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
 import { RedisService } from 'src/lib/redis/redis.service';
@@ -10,6 +15,12 @@ export class DiscordService implements OnModuleInit {
   private readonly logger = new Logger(DiscordService.name);
   private redlock: Redlock;
   private readonly lockTtl = 10000;
+  private readonly requiredScopes = [
+    'guilds.members.read',
+    'guilds',
+    'identify',
+    'email',
+  ];
 
   constructor(
     private readonly authService: AuthService,
@@ -32,6 +43,12 @@ export class DiscordService implements OnModuleInit {
     if (!token) {
       throw new Error('Failed to retrieve IDP token');
     }
+    if (!this.requiredScopes.every((scope) => token.scopes.includes(scope))) {
+      throw new UnauthorizedException(
+        `Missing required scopes: ${this.requiredScopes.join(', ')}`,
+      );
+    }
+
     return new REST({
       version: '10',
       authPrefix: 'Bearer',
