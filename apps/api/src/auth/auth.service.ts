@@ -14,6 +14,7 @@ export class AuthService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   async getIdpToken(userId: string): Promise<GetIdpTokenResponse | null> {
+    console.log(`RPC: getIdpToken - userId: ${userId}`);
     try {
       const response = await this.amqpConnection.request<GetIdpTokenResponse>({
         exchange: DEFAULT_EXCHANGE_NAME,
@@ -21,6 +22,9 @@ export class AuthService {
         payload: { userId },
         timeout: DEFAULT_RPC_TIMEOUT,
       });
+      console.log(
+        `RPC: getIdpToken - userId: ${userId}, response: ${response.scopes}`,
+      );
       return response;
     } catch (err) {
       this.logger.error(`Failed to fetch IDP token`);
