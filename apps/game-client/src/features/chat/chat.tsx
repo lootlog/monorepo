@@ -71,13 +71,13 @@ export const Chat = () => {
                     {messages?.map((message) => {
                       const guildMember = guildMembers?.[message.senderId];
 
-                      return !!guildMember ? (
+                      return (
                         <ChatMessage
                           key={message.id}
                           message={message}
                           member={guildMember}
                         />
-                      ) : null;
+                      );
                     })}
                   </div>
                 </ScrollArea>
