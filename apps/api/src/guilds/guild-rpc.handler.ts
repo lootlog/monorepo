@@ -26,7 +26,9 @@ export class GuildsRpcHandler {
     const guilds = await this.guildsService.getUserGuilds(
       data.discordId,
       data.userId,
+      { skipNoAccess: true },
     );
+
     const guildIds = guilds.map((guild) => guild.id);
     const guildsWithPermissions =
       await this.guildsService.getMultipleGuildsPermissions(
