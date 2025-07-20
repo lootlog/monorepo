@@ -45,7 +45,7 @@ export class GuildsController {
     return this.guildsService.getGuildById(guild.id);
   }
 
-  @Permissions(Permission.OWNER)
+  @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Patch(':guildId/config')
   async updateGuildConfig(

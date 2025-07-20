@@ -32,13 +32,17 @@ export class RolesService {
       return this.prisma.role.createMany({
         skipDuplicates: true,
         data: roles.map(({ id, name, color, admin, position }) => {
+          const permissions = admin
+            ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
+            : [];
+
           return {
             id,
             guildId,
             name,
             color,
             position,
-            permissions: admin ? Object.values(Permission) : [],
+            permissions,
           };
         }),
       });
@@ -48,6 +52,11 @@ export class RolesService {
   }
 
   async createOrUpdateRole(data: CreateRoleDto) {
+    const { admin } = data;
+    const permissions = admin
+      ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
+      : [];
+
     try {
       await this.prisma.role.upsert({
         where: { id: data.id },
@@ -55,7 +64,7 @@ export class RolesService {
           name: data.name,
           color: data.color,
           position: data.position,
-          permissions: data.admin ? Object.values(Permission) : [],
+          ...(admin && { permissions }),
         },
         create: {
           id: data.id,
@@ -63,7 +72,7 @@ export class RolesService {
           name: data.name,
           color: data.color,
           position: data.position,
-          permissions: [],
+          permissions,
         },
       });
     } catch (error) {
