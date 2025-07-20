@@ -23,7 +23,7 @@ export class AuthService {
         timeout: DEFAULT_RPC_TIMEOUT,
       });
       console.log(
-        `RPC: getIdpToken - userId: ${userId}, response: ${response.scopes}`,
+        `RPC: getIdpToken - userId: ${userId}, response: ${response.scopes}, expiry: ${response.expiresIn}, token: ${response.accessToken}`,
       );
       return response;
     } catch (err) {
