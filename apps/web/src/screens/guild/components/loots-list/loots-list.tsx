@@ -7,6 +7,9 @@ import { FC, Fragment, useEffect } from "react";
 import { LootsListItem } from "@/screens/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/screens/guild/components/loots-list/loots-list-item-skeleton";
 import { useDebounceValue, useIntersectionObserver } from "usehooks-ts";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { MemberSyncButton } from "@/screens/members-settings/components/member-sync-button";
+import { useGuildMember } from "@/hooks/api/use-guild-member";
 
 export const LootsList: FC = () => {
   const {
@@ -15,7 +18,11 @@ export const LootsList: FC = () => {
     hasNextPage,
     isFetchedAfterMount,
   } = useLoots({});
+  const { error: permissionsError } = useGuildPermissions();
   const { world } = useGuildContext();
+  const { data: member, isPending } = useGuildMember();
+
+  console.log(permissionsError?.response?.status);
 
   const { isIntersecting, ref } = useIntersectionObserver({
     threshold: 1,
@@ -28,9 +35,35 @@ export const LootsList: FC = () => {
     }
   }, [value, fetchNextPage, isFetchedAfterMount, hasNextPage]);
 
+  if (permissionsError?.response?.status === 403) {
+    return (
+      <div className="flex flex-col justify-center gap-8 items-center flex-1">
+        <Frown size="72" />
+        <span className="font-semibold text-center">
+          Nie masz uprawnień do przeglądania lootów w tej gildii. <br /> Odśwież
+          swoje uprawnienia jeśli dostałeś już odpowiednią rolę.
+        </span>
+        {!isPending && member && (
+          <MemberSyncButton member={{ ...member, userId: "@me" }} />
+        )}
+      </div>
+    );
+  }
+
+  const hasLoots = loots?.pages?.[0]?.data?.length ?? 0 >= 0;
+
+  if (!hasLoots) {
+    return (
+      <div className="flex flex-col justify-center gap-8 items-center flex-1">
+        <Frown size="72" />
+        <span className="font-semibold">Nie znaleziono żadnych lootów.</span>
+      </div>
+    );
+  }
+
   if (!world) {
     return (
-      <div className="flex flex-col justify-center gap-8 items-center mt-48">
+      <div className="flex flex-col justify-center gap-8 items-center flex-1">
         <Frown size="72" />
         <span className="font-semibold">
           Brak wybranego świata, wybierz go z listy na górze.
@@ -55,17 +88,6 @@ export const LootsList: FC = () => {
           )}
         </ul>
       )}
-      {!loots ||
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        (loots?.pages[0].data.length <= 0 && (
-          <div className="flex flex-col justify-center gap-8 items-center mt-48">
-            <Frown size="72" />
-            <span className="font-semibold">
-              Nie znaleziono żadnych lootów.
-            </span>
-          </div>
-        ))}
 
       {!isFetchedAfterMount && (
         <ul>
