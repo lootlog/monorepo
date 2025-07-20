@@ -30,6 +30,7 @@ export class GuildsRpcHandler {
     const guilds = await this.guildsService.getUserGuilds(
       data.discordId,
       data.userId,
+      { skipNoAccess: true },
     );
 
     console.log(
