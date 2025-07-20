@@ -23,6 +23,10 @@ export class GuildsRpcHandler {
       return [];
     }
 
+    console.log(
+      `RPC: getUserGuilds - discordId: ${data.discordId}, userId: ${data.userId}`,
+    );
+
     const guilds = await this.guildsService.getUserGuilds(
       data.discordId,
       data.userId,
