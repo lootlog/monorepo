@@ -1,5 +1,5 @@
 import { useToast } from "@/components/ui/use-toast";
-import { apiClient, setupApiInterceptors } from "@/lib/api-client";
+import { apiClient, setupApiInterceptors } from "@/lib/api-client/api-client";
 import { useEffect } from "react";
 
 export const useApiClient = () => {
