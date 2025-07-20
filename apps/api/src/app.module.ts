@@ -18,6 +18,8 @@ import { LoggerMiddleware } from 'src/middleware/logger.middleware';
 import { ChatModule } from 'src/chat/chat.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { DiscordModule } from './discord/discord.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
     ChatModule,
     RedisModule,
     NotificationsModule,
+    DiscordModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

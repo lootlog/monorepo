@@ -42,12 +42,12 @@ export class TimersService {
     private readonly userLootlogConfigService: UserLootlogConfigService,
   ) {}
 
-  async createTimer(discordId: string, data: CreateTimerDto) {
+  async createTimer(discordId: string, userId: string, data: CreateTimerDto) {
     const now = new Date();
     if (data.npc.wt < 19)
       throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
     const [guilds, config] = await Promise.all([
-      this.guildsService.getGuildsForRequiredPermissions(discordId, [
+      this.guildsService.getGuildsForRequiredPermissions(discordId, userId, [
         Permission.LOOTLOG_WRITE,
       ]),
       this.userLootlogConfigService.getLootlogCharacterConfig(
@@ -184,10 +184,15 @@ export class TimersService {
     return filteredTimers;
   }
 
-  async getAllTimers(discordId: string, { world }: GetTimersDto) {
+  async getAllTimers(
+    discordId: string,
+    userId: string,
+    { world }: GetTimersDto,
+  ) {
     const now = new Date();
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
+      userId,
       [Permission.LOOTLOG_READ],
     );
     if (guilds.length === 0) throw new ForbiddenException();

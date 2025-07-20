@@ -19,6 +19,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.quit();
   }
 
+  async getClient(): Promise<Redis> {
+    if (!this.client) {
+      throw new Error('Redis client is not initialized');
+    }
+    return this.client;
+  }
+
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
     if (ttlSeconds) {
       await this.client.set(key, value, 'EX', ttlSeconds);
@@ -33,5 +40,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async del(key: string): Promise<number> {
     return this.client.del(key);
+  }
+
+  async setNX(
+    key: string,
+    value: string,
+    ttlSeconds?: number,
+  ): Promise<boolean> {
+    if (ttlSeconds) {
+      // SET key value EX ttl NX - returns "OK" if successful, null if key exists
+      const result = await this.client.set(key, value, 'EX', ttlSeconds, 'NX');
+      return result === 'OK';
+    } else {
+      // SETNX key value - returns 1 if successful, 0 if key exists
+      const result = await this.client.setnx(key, value);
+      return result === 1;
+    }
   }
 }

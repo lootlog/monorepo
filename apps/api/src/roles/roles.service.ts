@@ -32,13 +32,17 @@ export class RolesService {
       return this.prisma.role.createMany({
         skipDuplicates: true,
         data: roles.map(({ id, name, color, admin, position }) => {
+          const permissions = admin
+            ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
+            : [];
+
           return {
             id,
             guildId,
             name,
             color,
             position,
-            permissions: admin ? Object.values(Permission) : [],
+            permissions,
           };
         }),
       });
@@ -47,59 +51,28 @@ export class RolesService {
     }
   }
 
-  async bulkUpdateRoles(
-    guildId: string,
-    roles: GuildRoleDto[],
-  ): Promise<Prisma.BatchPayload> {
-    try {
-      const updateOrCreatePromises = roles.map(
-        async ({ id, name, color, admin, position }) => {
-          const existingRole = await this.prisma.role.findUnique({
-            where: { id, guildId },
-          });
+  async createOrUpdateRole(data: CreateRoleDto) {
+    const { admin } = data;
+    const permissions = admin
+      ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
+      : [];
 
-          if (existingRole) {
-            return this.prisma.role.update({
-              where: { id },
-              data: {
-                name,
-                color,
-                position,
-                // permissions: admin ? Object.values(Permission) : [],
-              },
-            });
-          } else {
-            return this.prisma.role.create({
-              data: {
-                id,
-                guildId,
-                name,
-                color,
-                position,
-                permissions: admin ? Object.values(Permission) : [],
-              },
-            });
-          }
+    try {
+      await this.prisma.role.upsert({
+        where: { id: data.id },
+        update: {
+          name: data.name,
+          color: data.color,
+          position: data.position,
+          ...(admin && { permissions }),
         },
-      );
-
-      await Promise.all(updateOrCreatePromises);
-      return { count: roles.length };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async createRole(data: CreateRoleDto) {
-    try {
-      await this.prisma.role.create({
-        data: {
+        create: {
           id: data.id,
           guildId: data.guildId,
           name: data.name,
           color: data.color,
           position: data.position,
-          permissions: [],
+          permissions,
         },
       });
     } catch (error) {
@@ -147,24 +120,6 @@ export class RolesService {
     });
 
     return updatedRole;
-  }
-
-  async updateRole(data: UpdateRoleDto) {
-    await this.prisma.role.update({
-      where: { id: data.id },
-      data: {
-        name: data.name,
-        color: data.color,
-        position: data.position,
-        ...(data.admin
-          ? {
-              permissions: Object.values(Permission),
-            }
-          : {}),
-      },
-    });
-
-    return;
   }
 
   async deleteRole(data: DeleteRoleDto) {

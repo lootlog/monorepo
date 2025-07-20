@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { UsersService } from 'src/users/users.service';
 
@@ -8,8 +8,8 @@ import { UsersService } from 'src/users/users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // @Get('/@me/guilds')
-  // async getUserGuilds(@DiscordId() discordId: string) {
-  //   return this.usersService.getUserGuilds(discordId);
-  // }
+  @Get('/@me/scopes')
+  async getUserIdpTokenScopes(@UserId() userId: string) {
+    return this.usersService.getUserIdpTokenScopes(userId);
+  }
 }

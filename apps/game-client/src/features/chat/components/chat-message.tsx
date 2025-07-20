@@ -61,6 +61,8 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
     );
   };
 
+  if (!member?.name) return null;
+
   return (
     <div
       key={message.id}

@@ -1,260 +1,221 @@
-import { Injectable } from '@nestjs/common';
-import { DeleteMemberRoleDto } from './dto/delete-member-role.dto';
-import { AddMemberRoleDto } from 'src/members/dto/add-member-role.dto';
-import { AddMemberDto } from 'src/members/dto/add-member.dto';
-import { DeleteMemberDto } from 'src/members/dto/delete-member.dto';
-import { GuildMemberDto } from 'src/guilds/dto/create-guild.dto';
+import {
+  BadRequestException,
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
-import { UpdateMemberDto } from 'src/members/dto/update-member-dto';
+import {
+  MEMBER_CACHE_TTL,
+  REFRESH_PERMISSIONS_TTL,
+} from 'src/members/constants/member-cache.constant';
+import { DiscordService } from 'src/discord/discord.service';
+import { APIGuildMember } from 'discord-api-types/v10';
+import { ErrorKey } from 'src/members/enum/error-key.enum';
+import { GuildsService } from 'src/guilds/guilds.service';
+import { Member, Role } from 'generated/client';
+
+type MemberWithRoles = Member & { roles: Role[] };
 
 @Injectable()
 export class MembersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MembersService.name);
 
-  async getGuildMemberById(memberId: string, guildId: string) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly discordService: DiscordService,
+    @Inject(forwardRef(() => GuildsService))
+    private readonly guildsService: GuildsService,
+  ) {}
+
+  async getGuildMemberById(options: {
+    discordId: string;
+    guildId: string;
+    userId: string;
+    refresh?: boolean;
+    standalone?: boolean;
+  }): Promise<MemberWithRoles | null> {
+    const {
+      discordId,
+      guildId,
+      userId,
+      refresh = false,
+      standalone = false,
+    } = options;
+
+    let desiredGuildId = guildId;
+
+    if (refresh || standalone) {
+      const guild = await this.guildsService.getGuildById(guildId);
+      desiredGuildId = guild.id;
+    }
+
+    const now = new Date();
+    const cacheTtl = refresh ? REFRESH_PERMISSIONS_TTL : MEMBER_CACHE_TTL;
+    const cacheExpiry = new Date(now.getTime() - cacheTtl);
+
     const member = await this.prisma.member.findUnique({
-      where: { memberId: { userId: memberId, guildId } },
+      where: {
+        memberId: { userId: discordId, guildId: desiredGuildId },
+        updatedAt: { gte: cacheExpiry },
+      },
       include: { roles: true },
     });
+
+    if (member && refresh) {
+      throw new BadRequestException(ErrorKey.MEMBER_TTL_ACTIVE);
+    }
 
     if (!member) {
-      return null;
+      try {
+        const discordMember = await this.discordService.getGuildMember({
+          guildId: desiredGuildId,
+          userId,
+        });
+
+        if (!discordMember) {
+          return null;
+        }
+
+        return this.createOrUpdateMember({
+          ...discordMember,
+          guildId: desiredGuildId,
+          globalUserId: userId,
+        });
+      } catch (error) {
+        this.logger.error(
+          'Failed to fetch member from Discord, serving stale data',
+          (error as Error).stack,
+        );
+
+        if (refresh) {
+          throw new HttpException(
+            'Member TTL is active',
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
+
+        const staleMember = await this.prisma.member.findUnique({
+          where: {
+            memberId: { userId: discordId, guildId: desiredGuildId },
+          },
+          include: { roles: true },
+        });
+
+        return staleMember;
+      }
     }
 
     return member;
   }
 
-  async getMembersByUserId(userId: string) {
-    const members = await this.prisma.member.findMany({
-      where: { userId: userId },
-    });
-    return members;
-  }
-
-  async getGuildMembers(guildId: string) {
-    const members = await this.prisma.member.findMany({
-      where: { guildId },
-      include: { roles: true },
-    });
-
-    return members;
-  }
-
-  async bulkGetMembersByGuildId(guildId: string, memberIds: string[]) {
-    const members = await this.prisma.member.findMany({
+  async refreshMember(options: { discordId: string; guildId: string }) {
+    const member = await this.prisma.member.findUnique({
       where: {
-        guildId,
-        userId: {
-          in: memberIds,
-        },
+        memberId: { userId: options.discordId, guildId: options.guildId },
       },
     });
 
-    return members;
-  }
-
-  async bulkCreateMembers(guildId: string, members: GuildMemberDto[]) {
-    try {
-      await Promise.all(
-        members.map(({ id, name, roleIds, type, banner, avatar }) => {
-          const member = {
-            userId: id,
-            guildId,
-            type,
-            name,
-            banner,
-            avatar,
-            roles: {
-              connect: roleIds.map((id) => ({ id })),
-            },
-          };
-
-          return this.prisma.member
-            .upsert({
-              where: { memberId: { userId: id, guildId } },
-              create: member,
-              update: member,
-            })
-            .catch(console.log);
-        }),
-      );
-    } catch (error) {
-      console.log(error);
+    if (!member || !member.globalUserId) {
+      throw new NotFoundException();
     }
 
-    return;
-  }
-
-  async bulkUpdateMembers(guildId: string, members: GuildMemberDto[]) {
-    try {
-      await Promise.all(
-        members.map(({ id, name, roleIds, type, banner, avatar }) => {
-          return this.prisma.member.upsert({
-            where: { memberId: { userId: id, guildId } },
-            update: {
-              name,
-              type,
-              banner,
-              avatar,
-              roles: {
-                set: roleIds.map((id) => ({ id })),
-              },
-            },
-            create: {
-              userId: id,
-              guildId,
-              name,
-              type,
-              banner,
-              avatar,
-              roles: {
-                connect: roleIds.map((id) => ({ id })),
-              },
-            },
-          });
-        }),
-      ).catch(console.log);
-    } catch (error) {
-      console.log(error);
-    }
-
-    return;
-  }
-
-  async addMember(data: AddMemberDto) {
-    const { id, roleIds, avatar, guildId, type, name, banner } = data;
-
-    const roles = await this.prisma.role.findMany({
-      where: {
-        id: {
-          in: roleIds,
-        },
-      },
+    return this.getGuildMemberById({
+      ...options,
+      userId: member.globalUserId,
+      refresh: true,
+      standalone: true,
     });
-
-    const member = await this.prisma.member.upsert({
-      where: { memberId: { userId: id, guildId } },
-      update: {
-        avatar,
-        banner,
-        type,
-        name,
-        active: true,
-        roles: {
-          set: roles.map(({ id }) => ({ id })),
-        },
-      },
-      create: {
-        userId: id,
-        guildId,
-        avatar,
-        name,
-        banner,
-        type,
-        roles: {
-          connect: roles.map(({ id }) => ({ id })),
-        },
-      },
-    });
-
-    return member;
   }
 
-  async updateMember({
-    id,
+  async getGuildMembers(guildId: string): Promise<MemberWithRoles[]> {
+    return this.prisma.member.findMany({
+      where: { guildId, active: true, globalUserId: { not: null } },
+      include: {
+        roles: {
+          orderBy: { position: 'desc' },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async createOrUpdateMember({
     guildId,
     avatar,
-    name,
+    nick,
     banner,
-    roleIds,
-    type,
-  }: UpdateMemberDto) {
-    const roles = await this.prisma.role.findMany({
-      where: {
-        id: {
-          in: roleIds,
-        },
-      },
-    });
+    roles: roleIds,
+    user,
+    globalUserId,
+  }: APIGuildMember & {
+    guildId: string;
+    globalUserId: string;
+  }): Promise<MemberWithRoles> {
+    const { id } = user;
 
-    await this.prisma.member.upsert({
-      where: { memberId: { userId: id, guildId } },
-      update: {
-        avatar,
-        banner,
-        type,
-        name,
-        roles: {
-          set: roles.map(({ id }) => ({ id })),
-        },
-      },
-      create: {
-        userId: id,
-        guildId,
-        avatar,
-        name,
-        banner,
-        type,
-        roles: {
-          connect: roles.map(({ id }) => ({ id })),
-        },
-      },
-    });
-
-    return;
-  }
-
-  async deleteMember({ id, guildId }: DeleteMemberDto) {
-    await this.prisma.member.update({
-      where: { memberId: { userId: id, guildId } },
-      data: {
-        roles: {
-          set: [],
-        },
-        active: false,
-      },
-    });
-
-    return;
-  }
-
-  async addMemberRole({ id, guildId, roleId }: AddMemberRoleDto) {
-    await this.prisma.member.update({
-      where: { memberId: { userId: id, guildId } },
-      data: {
-        roles: {
-          connect: {
-            id: roleId,
-          },
-        },
-      },
-    });
-
-    return;
-  }
-
-  async deleteMemberRole({ roleId, guildId, id }: DeleteMemberRoleDto) {
-    await this.prisma.member.update({
-      where: { memberId: { userId: id, guildId } },
-      data: {
-        roles: {
-          disconnect: {
-            id: roleId,
-          },
-        },
-      },
-    });
-
-    return;
-  }
-
-  async deleteMembersByGuildId(guildId: string) {
     try {
-      await this.prisma.member.deleteMany({ where: { guildId } });
-    } catch (error) {
-      console.log(error);
-    }
+      const existingRoles = await this.prisma.role.findMany({
+        where: { id: { in: roleIds } },
+        select: { id: true },
+      });
 
-    return;
+      const existingRoleIds = existingRoles.map((role) => role.id);
+      const memberName = nick || user.global_name || user.username;
+      const memberAvatar = avatar || user.avatar;
+
+      const member = await this.prisma.member.upsert({
+        where: { memberId: { userId: id, guildId } },
+        update: {
+          avatar: memberAvatar,
+          banner,
+          name: memberName,
+          active: true,
+          globalUserId,
+          roles: { set: existingRoleIds.map((roleId) => ({ id: roleId })) },
+        },
+        create: {
+          userId: id,
+          guild: { connect: { id: guildId } },
+          avatar: memberAvatar,
+          active: true,
+          name: memberName,
+          globalUserId,
+          banner,
+          roles: { connect: existingRoleIds.map((roleId) => ({ id: roleId })) },
+        },
+        include: { roles: true },
+      });
+
+      return member;
+    } catch (error) {
+      this.logger.error(
+        `Failed to create/update member ${id}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
+  }
+
+  async deleteMembersByGuildId(guildId: string): Promise<number> {
+    try {
+      const result = await this.prisma.member.updateMany({
+        where: { guildId },
+        data: { active: false },
+      });
+
+      this.logger.log(`Deleted ${result.count} members from guild ${guildId}`);
+      return result.count;
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete members for guild ${guildId}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
   }
 }
