@@ -93,6 +93,7 @@ export class GuildsService {
             members: {
               some: {
                 userId: discordId,
+                globalUserId: { not: null },
                 roles: {
                   some: {
                     permissions: {
