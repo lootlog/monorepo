@@ -13,6 +13,7 @@ import { GeneralSettings } from "@/screens/general-settings/general-settings";
 import { RolesSettings } from "@/screens/roles-settings/roles-settings";
 import { AuthenticationGuard } from "@/components/auth/authentication-guard";
 import { NpcSettings } from "@/screens/lootlog-settings/npc-settings";
+import { MembersSettings } from "@/screens/members-settings/members-settings";
 
 export const Navigation = () => {
   return (
@@ -38,6 +39,10 @@ export const Navigation = () => {
                 element={<RolesSettings />}
               />
               <Route path="/:guildId/settings/npcs" element={<NpcSettings />} />
+              <Route
+                path="/:guildId/settings/members"
+                element={<MembersSettings />}
+              />
             </Route>
           </Route>
         </Route>

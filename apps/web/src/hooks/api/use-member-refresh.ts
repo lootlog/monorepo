@@ -24,6 +24,12 @@ export const useMemberRefresh = () => {
       queryClient.invalidateQueries({
         queryKey: ["member", guildId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["members", guildId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["loots", guildId],
+      });
     },
     onError: () => {
       toast({
