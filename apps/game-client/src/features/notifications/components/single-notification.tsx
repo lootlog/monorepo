@@ -53,7 +53,6 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   useEffect(() => {
     if (!autoHideTimeout || autoHideTimeout <= 0) return;
-    console.log("ritern", autoHideTimeout);
     setSecondsLeft(autoHideTimeout);
 
     const interval = setInterval(() => {
@@ -86,8 +85,6 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const secondsLeftPercentage =
     autoHideTimeout > 0 ? (secondsLeft / autoHideTimeout) * 100 : 0;
-
-  console.log(autoHideTimeout);
 
   return (
     <Fragment key={notification.notificationId}>
