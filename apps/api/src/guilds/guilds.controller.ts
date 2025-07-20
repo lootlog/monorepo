@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   Param,
+  ParseBoolPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Guild, Permission } from 'generated/client';
@@ -13,6 +16,7 @@ import { GuildsService } from 'src/guilds/guilds.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -23,8 +27,15 @@ export class GuildsController {
   constructor(private readonly guildsService: GuildsService) {}
 
   @Get('/@me')
-  async getUserGuilds(@DiscordId() discordId: string) {
-    return this.guildsService.getUserGuilds(discordId);
+  async getUserGuilds(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+    @Query('skipNoAccess', new DefaultValuePipe(false), ParseBoolPipe)
+    skipNoAccess?: boolean,
+  ) {
+    return this.guildsService.getUserGuilds(discordId, userId, {
+      skipNoAccess,
+    });
   }
 
   @Permissions(Permission.LOOTLOG_READ)
@@ -34,7 +45,7 @@ export class GuildsController {
     return this.guildsService.getGuildById(guild.id);
   }
 
-  @Permissions(Permission.OWNER)
+  @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Patch(':guildId/config')
   async updateGuildConfig(
@@ -42,13 +53,6 @@ export class GuildsController {
     @Body() data: UpdateGuildConfigDto,
   ) {
     return this.guildsService.updateGuildConfig(guild.id, data);
-  }
-
-  // @Permissions(Permission.OWNER)
-  // @UseGuards(PermissionsGuard)
-  @Post(':guildId/sync')
-  async handleGuildSync(@Param('guildId') guildId: string) {
-    return this.guildsService.handleGuildSyncTrigger(guildId);
   }
 
   @Permissions(Permission.LOOTLOG_READ)

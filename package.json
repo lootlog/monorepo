@@ -22,12 +22,12 @@
     "@lootlog/typescript-config": "workspace:*",
     "prettier": "^3.4.2",
     "turbo": "^2.4.0",
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "packageManager": "pnpm@10.12.1",
   "pnpm": {
     "overrides": {
-      "discord-api-types": "^0.38.8",
+      "discord-api-types": "0.38.13",
       "multer": "^2.0.1",
       "cross-spawn": "^7.0.5",
       "body-parser": "^1.20.3",

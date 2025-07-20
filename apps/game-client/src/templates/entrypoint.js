@@ -4,7 +4,7 @@ const version = "$GAME_CLIENT_VERSION$";
 // ==UserScript==
 // @name       @lootlog/game-client
 // @namespace  npm/vite-plugin-monkey
-// @version    1.0.0
+// @version    1.0.1
 // @author     Wildstylez & friends
 // @icon       https://vitejs.dev/logo.svg
 // @match      https://*.margonem.pl

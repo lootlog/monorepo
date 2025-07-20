@@ -93,6 +93,11 @@ spec:
                 secretKeyRef:
                   name: lootlog-auth-secrets
                   key: adminAccountIds
+            - name: RABBITMQ_URI
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: rabbitmqUri
 
           livenessProbe:
             httpGet:

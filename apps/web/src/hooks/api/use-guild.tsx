@@ -7,6 +7,7 @@ export type Guild = {
   name: string;
   icon: string | null;
   vanityUrl?: string;
+  ownerId: string;
 };
 
 type UseGuildOptions = {
