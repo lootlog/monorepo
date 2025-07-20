@@ -40,6 +40,11 @@ export class DiscordService implements OnModuleInit {
 
   async getRestClient(userId: string) {
     const token = await this.authService.getIdpToken(userId);
+
+    console.log(
+      `Using token for userId: ${userId}, data: ${JSON.stringify(token)}`,
+    );
+
     if (!token) {
       throw new Error('Failed to retrieve IDP token');
     }
