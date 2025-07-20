@@ -30,11 +30,11 @@ export class DiscordService implements OnModuleInit {
   async onModuleInit() {
     const client = await this.redisService.getClient();
     this.redlock = new Redlock([client], {
-      driftFactor: 0.01,
-      retryCount: 10,
-      retryDelay: 200,
-      retryJitter: 200,
-      automaticExtensionThreshold: 2000,
+      driftFactor: 0.01, // time in ms
+      retryCount: 10, // number of times to retry acquiring a lock
+      retryDelay: 200, // time in ms to wait before retrying
+      retryJitter: 200, // time in ms to add random jitter to retry delay
+      automaticExtensionThreshold: 5000, // time in ms before extending a lock
     });
   }
 
@@ -120,6 +120,12 @@ export class DiscordService implements OnModuleInit {
       await this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl);
 
       return member;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
+        error,
+      );
+      await lock.release();
     } finally {
       await lock.release();
     }
