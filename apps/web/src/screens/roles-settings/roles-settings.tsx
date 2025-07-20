@@ -52,7 +52,7 @@ export const RolesSettings = () => {
           "grid-cols-[theme(width.64)_1fr]": selectedRole,
         })}
       >
-        <ScrollArea className="flex flex-col h-[calc(100vh-270px)]">
+        <ScrollArea className="flex flex-col h-[calc(100vh-280px)]">
           {filteredRoles?.map((role) => {
             const color = role.color === 0 ? "FFF" : role.color.toString(16);
             const active = selectedRole?.id === role.id;
