@@ -21,6 +21,11 @@ const NAV_ELEMENTS = [
     label: "Ustawienia potworów i NPC",
     href: "/settings/npcs",
   },
+  {
+    id: "members",
+    label: "Członkowie",
+    href: "/settings/members",
+  },
 ];
 
 export const SettingsLayout: React.FC = () => {
@@ -28,7 +33,7 @@ export const SettingsLayout: React.FC = () => {
   const { pathname } = useLocation();
 
   return (
-    <div className="flex flex-row w-full h-[calc(100%)]">
+    <div className="flex flex-row w-full h-full">
       <div className="w-full h-full flex flex-col">
         <PageHeader>
           <div className="flex flex-row gap-2">
@@ -36,7 +41,7 @@ export const SettingsLayout: React.FC = () => {
             <h1 className="font-semibold p-0">Ustawienia</h1>
           </div>
         </PageHeader>
-        <div className="p-2 flex flex-row gap-2 border-b">
+        <div className="p-2 flex flex-row gap-2 border-b box-border">
           {NAV_ELEMENTS.map((navElement) => {
             const url = `/${guildId}${navElement.href}`;
             const active = pathname === url;

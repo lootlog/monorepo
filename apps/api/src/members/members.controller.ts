@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -39,6 +39,19 @@ export class MembersController {
       userId,
       refresh: true,
       standalone: true,
+    });
+  }
+
+  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @UseGuards(PermissionsGuard)
+  @Post('/:discordId/refresh')
+  async refreshMember(
+    @Param('discordId') discordId: string,
+    @Param('guildId') guildId: string,
+  ) {
+    return this.membersService.refreshMember({
+      discordId,
+      guildId,
     });
   }
 
