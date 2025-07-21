@@ -185,15 +185,12 @@ export class LootsService {
     guildId: string;
     lootId: number;
   }) {
-    const { discordId, guildId, lootId } = options;
+    const { guildId, lootId } = options;
 
     const comments = await this.prisma.lootComment.findMany({
       where: {
         guildId,
         lootId,
-        member: {
-          userId: discordId,
-        },
       },
       orderBy: {
         createdAt: 'desc',
