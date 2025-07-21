@@ -135,6 +135,7 @@ export class GuildsService {
       permissions: uniquePermissions,
       guild,
       roles: member?.roles || [],
+      member,
     };
   }
 
