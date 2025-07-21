@@ -3,7 +3,7 @@ import { SEARCH_API_URL } from "@/config/api";
 import { useApiClient } from "@/hooks/api/use-api-client";
 
 export type Player = {
-  id: number;
+  id: string;
   accountId: number;
   guildId: string;
   name: string;

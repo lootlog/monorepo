@@ -36,6 +36,7 @@ import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
 } from 'src/loots/constants/loot-share-msg-regex';
+import { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
 
 @Injectable()
 export class LootsService {
@@ -177,6 +178,108 @@ export class LootsService {
     this.npcsService.bulkIndexNpcs(npcs);
 
     return { id: loot.id };
+  }
+
+  async getComments(options: {
+    discordId: string;
+    guildId: string;
+    lootId: number;
+  }) {
+    const { discordId, guildId, lootId } = options;
+
+    const comments = await this.prisma.lootComment.findMany({
+      where: {
+        guildId,
+        lootId,
+        member: {
+          userId: discordId,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        member: {
+          select: {
+            name: true,
+            avatar: true,
+            userId: true,
+            roles: {
+              select: {
+                color: true,
+              },
+              orderBy: {
+                position: 'desc',
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return comments;
+  }
+
+  async deleteLoot(options) {
+    const { guildId, lootId } = options;
+
+    const loot = await this.prisma.loot.findFirst({
+      where: {
+        id: lootId,
+        lootSubmissions: { some: { guildId } },
+      },
+    });
+
+    if (!loot) {
+      throw new ForbiddenException(ErrorKey.CANT_DELETE_LOOT);
+    }
+
+    await this.prisma.lootSubmission.deleteMany({
+      where: {
+        lootId,
+        guildId,
+      },
+    });
+  }
+
+  async createComment(options: {
+    discordId: string;
+    userId: string;
+    guildId: string;
+    lootId: number;
+    body: CreateCommentDto;
+  }) {
+    const { discordId, lootId, body, guildId } = options;
+    const loot = await this.prisma.loot.findFirst({
+      where: {
+        id: lootId,
+        lootSubmissions: { some: { guildId } },
+      },
+    });
+
+    if (!loot) {
+      throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
+    }
+
+    return this.prisma.lootComment.create({
+      data: {
+        content: body.content,
+        guildId,
+        loot: {
+          connect: {
+            id: lootId,
+          },
+        },
+        member: {
+          connect: {
+            memberId: {
+              userId: discordId,
+              guildId: guildId,
+            },
+          },
+        },
+      },
+    });
   }
 
   async updateLoot(discordId: string, lootId: number, data: UpdateLootDto) {
@@ -345,7 +448,12 @@ export class LootsService {
       : Prisma.sql``;
 
     const loots: any[] = await this.prisma.$queryRaw(Prisma.sql`
-    SELECT DISTINCT ON (l."id") l.*
+    SELECT DISTINCT ON (l."id") l.*,
+      (
+      SELECT COUNT(*)
+      FROM "LootComment" lc
+      WHERE lc."lootId" = l."id" AND lc."guildId" = ${guild.id}
+      ) AS "commentsCount"
     FROM "Loot" l
     INNER JOIN "LootSubmission" s ON s."lootId" = l."id"
     WHERE s."guildId" = ${guild.id}
@@ -358,7 +466,7 @@ export class LootsService {
       ${levelRangesCondition}
     ORDER BY l."id" DESC
     LIMIT ${limit};
-  `);
+    `);
 
     if (!loots.length) return [];
 
