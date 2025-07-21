@@ -86,6 +86,7 @@ model Member {
   roles           Role[]
   timers          Timer[]
   lootSubmissions LootSubmission[]
+  comments        LootComment[]
   globalUserId    String?
 
   @@unique(name: "memberId", [userId, guildId])
@@ -194,6 +195,7 @@ model Loot {
   npcs      Json
 
   lootSubmissions LootSubmission[]
+  comments        LootComment[]
   lootShare       Json             @default("{}")
 
   @@index([uniqueId])
@@ -213,6 +215,21 @@ model LootSubmission {
   guild  Guild  @relation(fields: [guildId], references: [id])
 
   @@unique([lootId, guildId, memberId])
+}
+
+model LootComment {
+  id        Int      @id @default(autoincrement())
+  lootId    Int
+  memberId  Int
+  guildId   String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  loot   Loot   @relation(fields: [lootId], references: [id])
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@index([lootId])
 }
 
 model LootlogConfigNpc {

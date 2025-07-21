@@ -30,7 +30,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@lootlog/ui/components/sheet";
 import { useLg } from "@/hooks/use-lg";
 
 export const Guild: React.FC = () => {
