@@ -6,7 +6,7 @@ import { PanelLeft } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@lootlog/ui/components/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
