@@ -56,15 +56,18 @@ export class TimersService {
         data.characterId,
       ),
     ]);
+
     if (guilds.length === 0) throw new ForbiddenException();
     const filteredGuilds = guilds.filter(
       (guild) => !config?.addTimersBlacklistGuildIds?.includes(guild.id),
     );
+
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
       data.respBaseSeconds,
       data.respawnRandomness,
       now,
     );
+
     const newTimers = filteredGuilds.map((guild) => ({
       where: {
         timerId: {
@@ -99,6 +102,17 @@ export class TimersService {
       update: {
         maxSpawnTime,
         minSpawnTime,
+        npc: {
+          id: data.npc.id,
+          name: data.npc.name,
+          prof: getProfByShortname(data.npc.prof),
+          location: data.npc.location,
+          wt: data.npc.wt,
+          lvl: data.npc.lvl,
+          type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
+          icon: data.npc.icon,
+          margonemType: data.npc.type,
+        },
         latestRespBaseSeconds: data.respBaseSeconds,
         latestRespawnRandomness:
           data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,

@@ -1,4 +1,5 @@
 import { MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
+import { SpecialE2 } from "@/constants/special-e2";
 import { useCreateLoot } from "@/hooks/api/use-create-loot";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
@@ -298,6 +299,11 @@ export const useGameEventsParser = () => {
 
       if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
 
+      const map = Game.map.id;
+      const specialE2 = SpecialE2[map as keyof typeof SpecialE2];
+
+      console.log(specialE2);
+
       createTimer({
         respawnRandomness: data.resp_rand,
         respBaseSeconds: npc.respBaseSeconds,
@@ -312,7 +318,7 @@ export const useGameEventsParser = () => {
           hpp: 0,
           type: data.type,
           lvl: data.lvl,
-          name: data.nick,
+          name: specialE2 || data.nick,
           location: Game.map.name,
         },
       });
