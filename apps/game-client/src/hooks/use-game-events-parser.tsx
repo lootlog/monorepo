@@ -302,8 +302,6 @@ export const useGameEventsParser = () => {
       const map = Game.map.id;
       const specialE2 = SpecialE2[map as keyof typeof SpecialE2];
 
-      console.log(specialE2);
-
       createTimer({
         respawnRandomness: data.resp_rand,
         respBaseSeconds: npc.respBaseSeconds,
