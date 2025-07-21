@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -10,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Guild, Permission, Role } from 'generated/client';
+import { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
 import { LootsService } from 'src/loots/loots.service';
@@ -65,6 +67,53 @@ export class LootsController {
     @Body() body: CreateLootDto,
   ) {
     return this.lootsService.createLoot(discordId, userId, body);
+  }
+
+  @Permissions(Permission.LOOTLOG_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/loots/:lootId/comments')
+  async getComments(
+    @DiscordId() discordId: string,
+    @Param('lootId', new ParseIntPipe()) lootId: number,
+    @GuildData() guild: Guild,
+  ) {
+    return this.lootsService.getComments({
+      discordId,
+      lootId,
+      guildId: guild.id,
+    });
+  }
+
+  @Permissions(Permission.LOOTLOG_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/loots/:lootId/comments')
+  async createComment(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+    @Param('lootId', new ParseIntPipe()) lootId: number,
+    @Body() body: CreateCommentDto,
+    @GuildData() guild: Guild,
+  ) {
+    return this.lootsService.createComment({
+      discordId,
+      userId,
+      lootId,
+      body,
+      guildId: guild.id,
+    });
+  }
+
+  @Permissions(Permission.ADMIN, Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/loots/:lootId')
+  async deleteLoot(
+    @Param('lootId', new ParseIntPipe()) lootId: number,
+    @GuildData() guild: Guild,
+  ) {
+    return this.lootsService.deleteLoot({
+      guildId: guild.id,
+      lootId,
+    });
   }
 
   @Patch('/loots/:id')
