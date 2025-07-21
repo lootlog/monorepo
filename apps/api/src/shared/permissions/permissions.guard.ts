@@ -51,7 +51,7 @@ export class PermissionsGuard implements CanActivate {
     const { requiredPermissions, discordId, guildId, userId, request } =
       options;
 
-    const { permissions, guild, roles } =
+    const { permissions, guild, roles, member } =
       await this.guildsService.getGuildPermissions({
         discordId,
         userId,
@@ -73,6 +73,7 @@ export class PermissionsGuard implements CanActivate {
     request.permissions = permissions;
     request.guild = guild;
     request.roles = roles;
+    request.member = member;
 
     return true;
   }

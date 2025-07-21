@@ -51,6 +51,7 @@ export type Loot = {
   items: Item[];
   member: GuildMember;
   lootShare: Record<string, string[]>;
+  commentsCount: number;
 };
 
 export type UseLootsOptions = {
