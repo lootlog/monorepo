@@ -93,7 +93,7 @@ export class MembersService {
         );
 
         if (error instanceof NotFoundException) {
-          this.deactivateMember({
+          await this.deactivateMember({
             discordId,
             guildId,
           });
