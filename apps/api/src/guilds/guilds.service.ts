@@ -6,6 +6,7 @@ import {
   NotFoundException,
   forwardRef,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
@@ -121,6 +122,10 @@ export class GuildsService {
       discordId,
       guildId: guild.id,
     });
+
+    if (!member.active) {
+      throw new ForbiddenException();
+    }
 
     const isOwner = guild.ownerId === discordId;
     const permissions = isOwner
