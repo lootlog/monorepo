@@ -116,21 +116,36 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const hasPassedRedThreshold = timeLeft < 0;
 
   useEffect(() => {
-    // @ts-ignore
-    $(`#${timer.npc.id}`).tip(`
+    const levelSuffix =
+      timer.npc.lvl === 0
+        ? ""
+        : ` (${timer.npc.lvl}${timer.npc.prof?.charAt(0).toLowerCase() ?? ""})`;
+
+    const escapeHtml = (unsafe: string) => {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+
+    const tooltipContent = `
       <span class="elite_timer_tip_name">
-      <b>${timer.npc.name}${timer.npc.lvl === 0 ? "" : ` (${timer.npc.lvl}${timer.npc.prof ? timer.npc.prof.charAt(0).toLowerCase() : ""})`}</b>
+      <b>${escapeHtml(timer.npc.name)}${escapeHtml(levelSuffix)}</b>
       </span>
-      <i>${NPC_NAMES[timer.npc.type]?.longname ?? ""}</i>
+      <i>${escapeHtml(NPC_NAMES[timer.npc.type]?.longname ?? "")}</i>
       <br />
-      ${timersGrouping ? "" : `Dodane przez: <span class="">${timer?.member?.name}</span>`}
+      ${timersGrouping ? "" : `Dodane przez: <span class="">${escapeHtml(timer?.member?.name ?? "")}</span>`}
       <span class="elite_timer_tip_date">
       Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
       <span class="elite_timer_tip_date">
       Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
-    `);
+    `;
+    // @ts-ignore
+    $(`#${timer.npc.id}`).tip(tooltipContent);
   }, [
     timer.npc.id,
     timer.member?.name,
