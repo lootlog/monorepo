@@ -1,6 +1,8 @@
 namespace: lootlog-prod
 resources:
   - ../../base/api
+patchesStrategicMerge:
+  - hpa.yml
 images:
   - name: kamilwronka7/lootlog-api
     newTag: prod-4158da3f9454e33851f25f23793f64853fde5bcd
