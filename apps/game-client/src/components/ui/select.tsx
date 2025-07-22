@@ -20,7 +20,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "ll-flex ll-h-6 ll-w-full ll-items-center ll-justify-between ll-whitespace-nowrap ll-rounded-md ll-box-border ll-border ll-bg-transparent ll-px-1.5 ll-py-2 ll-text-sm placeholder:ll-text-muted-foreground disabled:ll-cursor-not-allowed disabled:ll-opacity-50 [&>span]:ll-line-clamp-1 ll-border-gray-400 ll-outline-none",
+      "ll-flex ll-h-6 ll-w-full ll-items-center ll-justify-between ll-whitespace-nowrap ll-rounded-sm ll-box-border ll-border ll-border-solid ll-bg-transparent ll-px-1.5 ll-py-2 ll-text-sm placeholder:ll-text-muted-foreground disabled:ll-cursor-not-allowed disabled:ll-opacity-50 [&>span]:ll-line-clamp-1 ll-border-gray-400 ll-outline-none",
       className
     )}
     {...props}
@@ -76,7 +76,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "ll-relative ll-z-50 ll-box-border -ll-mt-1 ll-px-1 ll-flex ll-flex-col gap-2 ll-max-h-96 ll-min-w-[8rem] ll-overflow-hidden ll-rounded-md ll-bg-black/90 ll-border ll-border-solid ll-border-gray-400 ll-text-popover-foreground ll-shadow-md data-[state=open]:ll-animate-in data-[state=closed]:ll-animate-out data-[state=closed]:ll-fade-out-0 data-[state=open]:ll-fade-in-0 data-[state=closed]:ll-zoom-out-95 data-[state=open]:ll-zoom-in-95 data-[side=bottom]:ll-slide-in-from-top-2 data-[side=left]:ll-slide-in-from-right-2 data-[side=right]:ll-slide-in-from-left-2 data-[side=top]:ll-slide-in-from-bottom-2",
+        "ll-relative ll-z-50 ll-box-border -ll-mt-1 ll-px-1 ll-flex ll-flex-col gap-2 ll-max-h-96 ll-min-w-[8rem] ll-overflow-hidden ll-rounded-sm ll-bg-black/90 ll-border ll-border-solid ll-border-gray-400 ll-text-popover-foreground ll-shadow-md data-[state=open]:ll-animate-in data-[state=closed]:ll-animate-out data-[state=closed]:ll-fade-out-0 data-[state=open]:ll-fade-in-0 data-[state=closed]:ll-zoom-out-95 data-[state=open]:ll-zoom-in-95 data-[side=bottom]:ll-slide-in-from-top-2 data-[side=left]:ll-slide-in-from-right-2 data-[side=right]:ll-slide-in-from-left-2 data-[side=top]:ll-slide-in-from-bottom-2",
         position === "popper" &&
           "data-[side=bottom]:ll-translate-y-1 data-[side=left]:ll--translate-x-1 data-[side=right]:ll-translate-x-1 data-[side=top]:ll--translate-y-1",
         className

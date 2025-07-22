@@ -8,7 +8,7 @@ export const UnderBagTimers: FC<PropsWithChildren> = ({ children }) => {
 
   return createPortal(
     <div
-      className="ll-pl-4 ll-py-1 ll-box-border ll-h-full ll-pr-[6px] ll-bg-black/70"
+      className="ll-pl-4 ll-py-1 ll-box-border ll-h-full ll-pr-[6px] ll-bg-black/70 ll-relative ll-flex ll-flex-col"
       onWheel={(e) => e.stopPropagation()}
     >
       {children}
