@@ -4,6 +4,7 @@ import {
   OnModuleInit,
   Logger,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
@@ -89,7 +90,7 @@ export class DiscordService implements OnModuleInit {
   async getGuildMember(options: {
     guildId: string;
     userId: string;
-  }): Promise<APIGuildMember> {
+  }): Promise<APIGuildMember | null> {
     const cacheTtl = 60; // 1 minute
     const { guildId, userId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
@@ -116,12 +117,20 @@ export class DiscordService implements OnModuleInit {
       await this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl);
 
       return member;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status === 404) {
+        this.logger.debug(
+          `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
+        );
+
+        throw new NotFoundException();
+      }
+
       this.logger.error(
         `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
         error,
       );
-      await lock.release();
+      return null;
     } finally {
       await lock.release();
     }
