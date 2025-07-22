@@ -264,7 +264,7 @@ export const Timers = () => {
         )}
 
         <ScrollArea
-          className="!ll-h-full ll-pb-1 !ll-w-full ll-py-1"
+          className="ll-pb-1 !ll-w-full ll-py-1 ll-flex-1"
           type="hover"
         >
           {sortedTimers.length === 0 ? (
@@ -321,6 +321,14 @@ export const Timers = () => {
               onClick={() => setTimersSortOrder("desc")}
             />
           )}
+          {!timersGrouping && (
+            <PlusIcon
+              key="add-timer"
+              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+              size="14"
+              onClick={() => toggleOpen("add-timer")}
+            />
+          )}
         </div>
         <div className="ll-bg-[0_0] ll-top-1 ll-leading-[28px] -ll-mt-1.5 ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform -ll-translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
           <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
@@ -328,11 +336,6 @@ export const Timers = () => {
           </p>
         </div>
         {renderTimers()}
-        {!timersGrouping && (
-          <Tile onClick={() => toggleOpen("add-timer")}>
-            <PlusIcon color="white" height={16} width={16} />
-          </Tile>
-        )}
       </UnderBagTimers>
     );
   }
@@ -359,6 +362,14 @@ export const Timers = () => {
         onClick={() => setTimersSortOrder("desc")}
       />
     ),
+    !timersGrouping ? (
+      <PlusIcon
+        key="add-timer"
+        className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+        size="14"
+        onClick={() => toggleOpen("add-timer")}
+      />
+    ) : null,
   ];
 
   return (
@@ -380,11 +391,6 @@ export const Timers = () => {
           >
             <div className="ll-flex ll-flex-col ll-h-full">
               {renderTimers()}
-              {!timersGrouping && (
-                <Tile onClick={() => toggleOpen("add-timer")}>
-                  <PlusIcon color="white" height={16} width={16} />
-                </Tile>
-              )}
             </div>
           </DraggableWindow>
         </motion.div>
