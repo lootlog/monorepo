@@ -120,6 +120,7 @@ export class TimersService {
           connect: { memberId: { userId: discordId, guildId: guild.id } },
         },
       },
+      include: { member: true },
     }));
     const newTimersUpsert = await Promise.all(
       newTimers.map((timer) => this.prisma.timer.upsert(timer)),
