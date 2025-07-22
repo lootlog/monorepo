@@ -233,7 +233,7 @@ export class MembersService {
 
     return this.prisma.member.update({
       where: { memberId: { userId: discordId, guildId } },
-      data: { active: false },
+      data: { active: false, roles: { set: [] } },
     });
   }
 
