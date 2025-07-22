@@ -24,9 +24,11 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
     ? [...hiddenTimersForAccount].sort((a, b) => a.localeCompare(b))
     : [];
 
+  const uniqueHiddenTimers = Array.from(new Set(sortedHiddenTimers));
+
   return (
     <div className="ll-py-4">
-      {sortedHiddenTimers && sortedHiddenTimers.length > 0 && (
+      {uniqueHiddenTimers && uniqueHiddenTimers.length > 0 && (
         <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-pr-4 ll-box-border">
           {sortedHiddenTimers.map((timer) => {
             return (
