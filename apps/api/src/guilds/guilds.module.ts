@@ -7,13 +7,13 @@ import { RolesModule } from 'src/roles/roles.module';
 import { ConfigService } from '@nestjs/config';
 import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { PrismaService } from 'src/db/prisma.service';
 import { UsersModule } from 'src/users/users.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
 import { GuildsRpcHandler } from 'src/guilds/guild-rpc.handler';
 import { RetryService } from 'src/rabbitmq/retry.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
+import { PrismaModule } from 'src/db/prisma.module';
 
 @Module({
   imports: [
@@ -28,12 +28,12 @@ import { RedisModule } from 'src/lib/redis/redis.module';
     }),
     RedisModule,
     DiscordModule,
+    PrismaModule,
   ],
   controllers: [GuildsController],
   providers: [
     GuildsService,
     GuildsEventsHandler,
-    PrismaService,
     GuildsRpcHandler,
     RetryService,
   ],
