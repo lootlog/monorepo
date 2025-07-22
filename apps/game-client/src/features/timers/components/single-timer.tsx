@@ -141,6 +141,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     `);
   }, [
     timer.npc.id,
+    timer.member?.name,
     timer.npc.name,
     timer.minSpawnTime,
     timer.maxSpawnTime,
