@@ -5,6 +5,6 @@ export const SpecialE2 = {
   5738: "Shae Phu (s1)",
   6634: "Choukker (p1)",
   6636: "Choukker (p3)",
-  1620: "Krab pustelnik (wyspa)",
-  4271: "Krab pustelnik (statek)",
+  1741: "Krab pustelnik (wyspa)",
+  7370: "Krab pustelnik (statek)",
 };
