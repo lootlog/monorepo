@@ -104,6 +104,7 @@ export const TimersFilters: FC = () => {
           return (
             <div
               key={type}
+              role="button"
               onClick={() => toggleFiltersSelectedNpcTypes(type)}
               className={cn(
                 "ll-flex ll-items-center ll-justify-center ll-gap-2 hover:ll-bg-gray-400/50 ll-px-1 ll-py-0.5 ll-box-border ll-text-white ll-text-xs",
