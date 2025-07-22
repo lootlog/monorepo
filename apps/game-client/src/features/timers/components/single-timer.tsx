@@ -5,6 +5,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Tile } from "@/components/ui/tile";
+import { NPC_NAMES } from "@/constants/margonem";
 import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
@@ -22,15 +23,6 @@ type SingleTimerProps = {
   timeLeft?: number;
   compactMode?: boolean;
   canDelete?: boolean;
-};
-
-const NPC_NAMES: { [key: string]: { shortname: string; longname: string } } = {
-  TITAN: { shortname: "T", longname: "tytan" },
-  COLOSSUS: { shortname: "K", longname: "kolos" },
-  HERO: { shortname: "H", longname: "heros" },
-  ELITE3: { shortname: "E3", longname: "elita III" },
-  ELITE2: { shortname: "E2", longname: "elita II" },
-  ELITE: { shortname: "E", longname: "elita" },
 };
 
 export const COLORS = {
@@ -127,16 +119,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     // @ts-ignore
     $(`#${timer.npc.id}`).tip(`
       <span class="elite_timer_tip_name">
-        <b>${timer.npc.name}</b>
+      <b>${timer.npc.name}${timer.npc.lvl === 0 ? "" : ` (${timer.npc.lvl}${timer.npc.prof ? timer.npc.prof.charAt(0).toLowerCase() : ""})`}</b>
       </span>
       <i>${NPC_NAMES[timer.npc.type]?.longname ?? ""}</i>
       <br />
       ${timersGrouping ? "" : `Dodane przez: <span class="">${timer?.member?.name}</span>`}
       <span class="elite_timer_tip_date">
-        Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+      Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
       <span class="elite_timer_tip_date">
-        Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+      Max: ${format(new Date(timer.maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
     `);
   }, [

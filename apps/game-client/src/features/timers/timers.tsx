@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useLocalStorage } from "react-use";
 import { useQueryClient } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { Filter, PlusIcon, SortAsc, SortDesc } from "lucide-react";
 import { AxiosResponse } from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -22,6 +22,8 @@ import { useWindowsStore } from "@/store/windows.store";
 import { GatewayEvent } from "@/config/gateway";
 import { GuildMember } from "@/hooks/api/use-guild-members";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
+import { TimersFilters } from "@/features/timers/components/timers-filters";
+import { cn } from "@/lib/utils";
 
 type TimerWithTimeLeft = Timer & { timeLeft: number; members?: GuildMember[] };
 
@@ -82,6 +84,14 @@ export const Timers = () => {
     compactMode,
     timersGrouping,
     timersUnderBag,
+    timerFiltersEnabled,
+    toggleTimerFiltersEnabled,
+    timerFiltersSearchText,
+    timerFiltersSelectedNpcTypes,
+    timerFiltersMinLvl,
+    timerFiltersMaxLvl,
+    timersSortOrder,
+    setTimersSortOrder,
   } = useTimersStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     "ll-timers-selected-guild",
@@ -191,15 +201,33 @@ export const Timers = () => {
     return calculatedTimers
       .filter((t) => timersGrouping || t.guildId === selectedGuildId)
       .filter((t) => !hiddenTimers[key]?.includes?.(t.npc.name))
+      .filter((t) =>
+        timerFiltersSearchText
+          ? t.npc.name
+              .toLowerCase()
+              .includes(timerFiltersSearchText.toLowerCase())
+          : true
+      )
+      .filter(
+        (t) =>
+          timerFiltersSelectedNpcTypes.includes(t.npc.type) || t.npc.lvl === 0
+      )
+      .filter(
+        (t) =>
+          (t.npc.lvl >= timerFiltersMinLvl &&
+            t.npc.lvl <= timerFiltersMaxLvl) ||
+          t.npc.lvl === 0
+      )
       .sort((a, b) => {
         const pinA = pinnedTimers[key]?.includes?.(a.npc.name);
         const pinB = pinnedTimers[key]?.includes?.(b.npc.name);
         if (pinA && !pinB) return -1;
         if (!pinA && pinB) return 1;
-        return (
-          new Date(a.maxSpawnTime).getTime() -
-          new Date(b.maxSpawnTime).getTime()
-        );
+
+        const timeA = new Date(a.maxSpawnTime).getTime();
+        const timeB = new Date(b.maxSpawnTime).getTime();
+
+        return timersSortOrder === "asc" ? timeA - timeB : timeB - timeA;
       });
   }, [
     calculatedTimers,
@@ -207,23 +235,38 @@ export const Timers = () => {
     hiddenTimers,
     pinnedTimers,
     timersGrouping,
+    timerFiltersSearchText,
+    timerFiltersSelectedNpcTypes,
+    timerFiltersMinLvl,
+    timerFiltersMaxLvl,
+    timersSortOrder,
   ]);
 
   const renderTimers = () => {
     return (
       <span
         ref={containerRef}
-        className="ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full"
+        className={cn(
+          "ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full",
+          {
+            "!ll-pt-0": timersUnderBag,
+          }
+        )}
       >
+        {timerFiltersEnabled && <TimersFilters />}
         {!timersGrouping && (
           <GuildSelector
             selectedGuildId={selectedGuildId}
             setSelectedGuildId={setSelectedGuildId}
             disabled={addTimerOpen}
-            className="ll-bg-black/20"
+            className="ll-bg-black/20 !ll-mb-1"
           />
         )}
-        <ScrollArea className="!ll-h-full ll-pb-1 !ll-w-full" type="hover">
+
+        <ScrollArea
+          className="!ll-h-full ll-pb-1 !ll-w-full ll-py-1"
+          type="hover"
+        >
           {sortedTimers.length === 0 ? (
             <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
               ----
@@ -249,19 +292,74 @@ export const Timers = () => {
             </span>
           )}
         </ScrollArea>
-
-        {!timersGrouping && (
-          <Tile onClick={() => toggleOpen("add-timer")}>
-            <PlusIcon color="white" height={16} width={16} />
-          </Tile>
-        )}
       </span>
     );
   };
 
   if (timersUnderBag && gameInterface === "ni") {
-    return <UnderBagTimers>{renderTimers()}</UnderBagTimers>;
+    return (
+      <UnderBagTimers>
+        <div className="ll-flex ll-gap-1">
+          <Filter
+            key="filters"
+            className="ll-custom-cursor-pointer -ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors ll-h-5 ll-mb-1"
+            size="14"
+            onClick={toggleTimerFiltersEnabled}
+          />
+          {timersSortOrder === "desc" ? (
+            <SortDesc
+              key="sort-desc"
+              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+              size="14"
+              onClick={() => setTimersSortOrder("asc")}
+            />
+          ) : (
+            <SortAsc
+              key="sort-asc"
+              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+              size="14"
+              onClick={() => setTimersSortOrder("desc")}
+            />
+          )}
+        </div>
+        <div className="ll-background-[0_0] ll-top-1 ll-line-height-[28px] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
+          <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
+            Timery
+          </p>
+        </div>
+        {renderTimers()}
+        {!timersGrouping && (
+          <Tile onClick={() => toggleOpen("add-timer")}>
+            <PlusIcon color="white" height={16} width={16} />
+          </Tile>
+        )}
+      </UnderBagTimers>
+    );
   }
+
+  const actions = [
+    <Filter
+      key="filters"
+      className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+      size="14"
+      onClick={toggleTimerFiltersEnabled}
+    />,
+    timersSortOrder === "desc" ? (
+      <SortDesc
+        key="sort-desc"
+        className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+        size="14"
+        onClick={() => setTimersSortOrder("asc")}
+      />
+    ) : (
+      <SortAsc
+        key="sort-asc"
+        className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+        size="14"
+        onClick={() => setTimersSortOrder("desc")}
+      />
+    ),
+  ];
 
   return (
     <AnimatePresence>
@@ -278,8 +376,16 @@ export const Timers = () => {
             title="Timery"
             onClose={() => setOpen("timers", false)}
             minHeight={108}
+            actions={actions}
           >
-            {renderTimers()}
+            <div className="ll-flex ll-flex-col ll-h-full">
+              {renderTimers()}
+              {!timersGrouping && (
+                <Tile onClick={() => toggleOpen("add-timer")}>
+                  <PlusIcon color="white" height={16} width={16} />
+                </Tile>
+              )}
+            </div>
           </DraggableWindow>
         </motion.div>
       )}
