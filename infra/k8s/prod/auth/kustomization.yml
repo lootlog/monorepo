@@ -1,6 +1,8 @@
 namespace: lootlog-prod
 resources:
   - ../../base/auth
+patchesStrategicMerge:
+  - hpa.yml
 images:
   - name: kamilwronka7/lootlog-auth
     newTag: prod-b938a25f4fcd58c7cbb1cc69701e6853855ef408
