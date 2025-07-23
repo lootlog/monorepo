@@ -94,12 +94,9 @@ export class GuildsService {
     userId: string,
     requiredPermissions: Permission[],
   ) {
-    const guildIds = await this.discordService.getUserGuildIds(userId);
-
     const guilds = await this.prisma.guild.findMany({
       where: {
         active: true,
-        id: { in: guildIds },
         OR: [
           {
             ownerId: discordId,
