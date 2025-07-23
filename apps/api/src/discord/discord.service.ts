@@ -15,7 +15,7 @@ import Redlock from 'redlock';
 export class DiscordService implements OnModuleInit {
   private readonly logger = new Logger(DiscordService.name);
   private redlock: Redlock;
-  private readonly lockTtl = 10000;
+  private readonly lockTtl = 14000;
   private readonly requiredScopes = [
     'guilds.members.read',
     'guilds',
@@ -31,11 +31,11 @@ export class DiscordService implements OnModuleInit {
   async onModuleInit() {
     const client = await this.redisService.getClient();
     this.redlock = new Redlock([client], {
-      driftFactor: 0.01, // time in ms
-      retryCount: 20, // number of times to retry acquiring a lock
-      retryDelay: 200, // time in ms to wait before retrying
-      retryJitter: 200, // time in ms to add random jitter to retry delay
-      automaticExtensionThreshold: 5000, // time in ms before extending a lock
+      driftFactor: 0.01,
+      retryCount: 10,
+      retryDelay: 1000,
+      retryJitter: 200,
+      automaticExtensionThreshold: 3000,
     });
   }
 
