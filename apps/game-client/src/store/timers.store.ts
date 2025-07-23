@@ -31,26 +31,10 @@ interface TimersState {
   toggleTimerFiltersEnabled: () => void;
   setRemoveTimerAfterMs: (ms: number) => void;
   setTimerFiltersSearchText: (text: string) => void;
-  addHiddenTimer: (
-    accountId: string,
-    characterId: string,
-    timerId: string
-  ) => void;
-  removeHiddenTimer: (
-    accountId: string,
-    characterId: string,
-    timerId: string
-  ) => void;
-  addPinnedTimer: (
-    accountId: string,
-    characterId: string,
-    timerId: string
-  ) => void;
-  removePinnedTimer: (
-    accountId: string,
-    characterId: string,
-    timerId: string
-  ) => void;
+  hideTimer: (guildId: string, timerId: string) => void;
+  revealTimer: (guildId: string, timerId: string) => void;
+  pinTimer: (guildId: string, timerId: string) => void;
+  unpinTimer: (guildId: string, timerId: string) => void;
   setTimerColor: (npcName: string, color?: string) => void;
 }
 
@@ -76,7 +60,7 @@ export const useTimersStore = create<TimersState>()(
       timersColors: {},
       removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
       compactMode: false,
-      timersGrouping: true,
+      timersGrouping: false,
       timersUnderBag: false,
       timerFiltersEnabled: false,
       timerFiltersSearchText: "",
@@ -111,65 +95,45 @@ export const useTimersStore = create<TimersState>()(
       toggleTimersGrouping: () => {
         set((state) => ({ timersGrouping: !state.timersGrouping }));
       },
-      addHiddenTimer: (
-        accountId: string,
-        characterId: string,
-        timerId: string
-      ) => {
-        const key = accountId + characterId;
-        const currentHidden = get().hiddenTimers[key] || [];
+      hideTimer: (guildId: string, timerId: string) => {
+        const currentHidden = get().hiddenTimers[guildId] || [];
 
         set({
           hiddenTimers: {
             ...get().hiddenTimers,
-            [key]: [...new Set([...currentHidden, timerId])],
+            [guildId]: [...new Set([...currentHidden, timerId])],
           },
         });
       },
-      removeHiddenTimer: (
-        accountId: string,
-        characterId: string,
-        timerId: string
-      ) => {
-        const key = accountId + characterId;
-        const currentHidden = get().hiddenTimers[key] || [];
+      revealTimer: (guildId: string, timerId: string) => {
+        const currentHidden = get().hiddenTimers[guildId] || [];
         const updatedHidden = currentHidden.filter((id) => id !== timerId);
 
         set({
           hiddenTimers: {
             ...get().hiddenTimers,
-            [key]: updatedHidden,
+            [guildId]: updatedHidden,
           },
         });
       },
-      addPinnedTimer: (
-        accountId: string,
-        characterId: string,
-        timerId: string
-      ) => {
-        const key = accountId + characterId;
-        const currentPinned = get().pinnedTimers[key] || [];
+      pinTimer: (guildId: string, timerId: string) => {
+        const currentPinned = get().pinnedTimers[guildId] || [];
 
         set({
           pinnedTimers: {
             ...get().pinnedTimers,
-            [key]: [...currentPinned, timerId],
+            [guildId]: [...new Set([...currentPinned, timerId])],
           },
         });
       },
-      removePinnedTimer: (
-        accountId: string,
-        characterId: string,
-        timerId: string
-      ) => {
-        const key = accountId + characterId;
-        const currentPinned = get().pinnedTimers[key] || [];
+      unpinTimer: (guildId: string, timerId: string) => {
+        const currentPinned = get().pinnedTimers[guildId] || [];
         const updatedPinned = currentPinned.filter((id) => id !== timerId);
 
         set({
           pinnedTimers: {
             ...get().pinnedTimers,
-            [key]: updatedPinned,
+            [guildId]: updatedPinned,
           },
         });
       },
@@ -197,7 +161,7 @@ export const useTimersStore = create<TimersState>()(
         timersFilters: state.timersFilters,
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
     }
   )
 );
