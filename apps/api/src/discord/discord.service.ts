@@ -31,7 +31,8 @@ export class DiscordService implements OnModuleInit {
     this.restClient = new REST({
       version: '10',
       authPrefix: 'Bearer',
-      timeout: 10000,
+      timeout: 5000,
+      rejectOnRateLimit: ['/users'],
     });
   }
 
