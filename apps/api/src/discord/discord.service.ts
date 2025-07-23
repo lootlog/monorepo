@@ -22,11 +22,18 @@ export class DiscordService implements OnModuleInit {
     'identify',
     'email',
   ];
+  private readonly restClient: REST;
 
   constructor(
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
-  ) {}
+  ) {
+    this.restClient = new REST({
+      version: '10',
+      authPrefix: 'Bearer',
+      timeout: 10000,
+    });
+  }
 
   async onModuleInit() {
     const client = await this.redisService.getClient();
@@ -54,26 +61,16 @@ export class DiscordService implements OnModuleInit {
       );
     }
 
-    return new REST({
-      version: '10',
-      authPrefix: 'Bearer',
-      timeout: 10000,
-    }).setToken(token.accessToken);
+    return this.restClient.setToken(token.accessToken);
   }
 
   async getUserGuildIds(
     userId: string,
     bypassCache?: boolean,
   ): Promise<string[]> {
-<<<<<<< Updated upstream
     const cacheTtl = 60 * 60 * 4; // 4 hours
     const cacheKey = `user:${userId}:guilds:data`;
     const lockKey = `user:${userId}:guilds:lock`;
-=======
-    const cacheTtl = 60 * 60 * 2; // 2 hours
-    const cacheKey = `user:${userId}:discord-guilds:data`;
-    const lockKey = `user:${userId}:discord-guilds:lock`;
->>>>>>> Stashed changes
 
     if (!bypassCache) {
       const cached = await this.redisService.get(cacheKey);
