@@ -32,7 +32,7 @@ export class DiscordService implements OnModuleInit {
     const client = await this.redisService.getClient();
     this.redlock = new Redlock([client], {
       driftFactor: 0.01, // time in ms
-      retryCount: 10, // number of times to retry acquiring a lock
+      retryCount: 20, // number of times to retry acquiring a lock
       retryDelay: 200, // time in ms to wait before retrying
       retryJitter: 200, // time in ms to add random jitter to retry delay
       automaticExtensionThreshold: 5000, // time in ms before extending a lock
@@ -93,6 +93,14 @@ export class DiscordService implements OnModuleInit {
 
       const rest = await this.getRestClient(userId);
       const guilds = (await rest.get(Routes.userGuilds())) as APIGuild[];
+
+      this.logger.debug(`Fetched guilds for user: ${userId}`);
+      this.logger.debug(`Guilds: ${JSON.stringify(guilds)}`);
+
+      if (!guilds || guilds.length === 0) {
+        this.logger.warn(`No guilds found for user: ${userId}`);
+        return [];
+      }
 
       await this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl);
 
