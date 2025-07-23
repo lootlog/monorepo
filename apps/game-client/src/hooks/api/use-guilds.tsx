@@ -9,7 +9,7 @@ export const useGuilds = () => {
   const query = useQuery({
     queryKey: ["user-guilds"],
     queryFn: () =>
-      client.get<Guild[]>(`${API_URL}/guilds/@me?skipNoAccess=true`, {
+      client.get<Guild[]>(`${API_URL}/guilds/@me?source=game`, {
         withCredentials: true,
       }),
     select: (response) => response.data,

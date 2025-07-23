@@ -3,6 +3,7 @@ import {
   RabbitRPC,
 } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
+import { Permission } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { Queue } from 'src/enum/queue.enum';
 import { RoutingKey } from 'src/enum/routing-key.enum';
@@ -23,10 +24,10 @@ export class GuildsRpcHandler {
       return [];
     }
 
-    const guilds = await this.guildsService.getUserGuilds(
+    const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       data.discordId,
       data.userId,
-      { skipNoAccess: true },
+      [Permission.LOOTLOG_READ],
     );
 
     const guildIds = guilds.map((guild) => guild.id);

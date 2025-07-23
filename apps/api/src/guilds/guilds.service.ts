@@ -37,12 +37,8 @@ export class GuildsService {
     private readonly discordService: DiscordService,
   ) {}
 
-  async getUserGuilds(
-    discordId: string,
-    userId: string,
-    options?: { skipNoAccess?: boolean },
-  ) {
-    if (options?.skipNoAccess) {
+  async getUserGuilds(discordId: string, userId: string, source?: string) {
+    if (source === 'game') {
       return this.getGuildsForRequiredPermissions(discordId, userId, [
         Permission.LOOTLOG_READ,
       ]);
