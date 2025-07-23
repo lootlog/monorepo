@@ -213,7 +213,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger className="ll-h-full">
+      <ContextMenuTrigger className="ll-h-full ll-pr-[1px]">
         <Tile
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof COLORS}

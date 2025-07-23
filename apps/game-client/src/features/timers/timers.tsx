@@ -276,7 +276,7 @@ export const Timers = () => {
               className="ll-grid ll-gap-0.5 ll-box-border ll-w-full"
               style={{
                 gridTemplateColumns: compactMode
-                  ? "repeat(auto-fit, minmax(115px, 1fr))"
+                  ? "repeat(auto-fit, minmax(110px, 1fr))"
                   : "repeat(auto-fit, minmax(232px, 1fr))",
               }}
             >
