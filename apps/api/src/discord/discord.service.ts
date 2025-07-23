@@ -15,7 +15,7 @@ import Redlock from 'redlock';
 export class DiscordService implements OnModuleInit {
   private readonly logger = new Logger(DiscordService.name);
   private redlock: Redlock;
-  private readonly lockTtl = 10000;
+  private readonly lockTtl = 14000;
   private readonly requiredScopes = [
     'guilds.members.read',
     'guilds',
@@ -31,16 +31,19 @@ export class DiscordService implements OnModuleInit {
   async onModuleInit() {
     const client = await this.redisService.getClient();
     this.redlock = new Redlock([client], {
-      driftFactor: 0.01, // time in ms
-      retryCount: 10, // number of times to retry acquiring a lock
-      retryDelay: 200, // time in ms to wait before retrying
-      retryJitter: 200, // time in ms to add random jitter to retry delay
-      automaticExtensionThreshold: 5000, // time in ms before extending a lock
+      driftFactor: 0.01,
+      retryCount: 10,
+      retryDelay: 1000,
+      retryJitter: 200,
+      automaticExtensionThreshold: 3000,
     });
   }
 
   async getRestClient(userId: string) {
     const token = await this.authService.getIdpToken(userId);
+
+    this.logger.debug(`Retrieving REST client for user: ${userId}`);
+    this.logger.debug(`Token: ${JSON.stringify(token)}`);
 
     if (!token) {
       throw new Error('Failed to retrieve IDP token');
@@ -54,6 +57,7 @@ export class DiscordService implements OnModuleInit {
     return new REST({
       version: '10',
       authPrefix: 'Bearer',
+      timeout: 5000,
       rejectOnRateLimit: ['/users'],
     }).setToken(token.accessToken);
   }
@@ -62,32 +66,56 @@ export class DiscordService implements OnModuleInit {
     userId: string,
     bypassCache?: boolean,
   ): Promise<string[]> {
-    const cacheTtl = 60 * 60 * 2; // 2 hours
-    const cacheKey = `user:${userId}:guilds:data`;
-    const lockKey = `user:${userId}:guilds:lock`;
+    const cacheTtl = 60 * 60 * 4; // 4 hours
+    const cacheKey = `user:${userId}:discord-guilds:data`;
+    const lockKey = `user:${userId}:discord-guilds:lock`;
 
     if (!bypassCache) {
       const cached = await this.redisService.get(cacheKey);
       if (cached) {
+        this.logger.debug(`Cache hit for user: ${userId}`);
+        this.logger.debug(`Cache key: ${cacheKey}`);
         return (JSON.parse(cached) as APIGuild[]).map((g) => g.id);
       }
     }
 
-    const lock = await this.redlock.acquire([lockKey], this.lockTtl);
+    this.logger.debug(`Cache miss for user: ${userId}`);
+    this.logger.debug(`Lock key: ${lockKey}`);
+
+    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+
     try {
+      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+
       if (!bypassCache) {
         const cachedAfterLock = await this.redisService.get(cacheKey);
+        this.logger.debug(`Cache after lock for user: ${userId}`);
+        this.logger.debug(`Cache key after lock: ${cacheKey}`);
         if (cachedAfterLock) {
           return (JSON.parse(cachedAfterLock) as APIGuild[]).map((g) => g.id);
         }
       }
 
       const rest = await this.getRestClient(userId);
+
       const guilds = (await rest.get(Routes.userGuilds())) as APIGuild[];
+
+      this.logger.debug(`Fetched guilds for user: ${userId}`);
+      this.logger.debug(`Guilds: ${JSON.stringify(guilds)}`);
+
+      if (!guilds || guilds.length === 0) {
+        this.logger.warn(`No guilds found for user: ${userId}`);
+        return [];
+      }
 
       await this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl);
 
       return guilds.map((g) => g.id);
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch user guilds for userId: ${userId}`,
+        error,
+      );
     } finally {
       await lock.release();
       this.logger.debug(`Lock released: ${lockKey}`);

@@ -94,7 +94,11 @@ export class Gateway {
 
     if (guilds.length === 0) {
       this.logger.warn(`No guilds found for user ${discordId}`);
-      return { status: 'error', message: 'No guilds found for user' };
+      client.emit(GatewayEvent.JOIN, {
+        status: 'error',
+        message: 'No guilds found',
+      });
+      return;
     }
     const guildIds = getGuildIds(guilds);
     const user = buildUser(client, player, guilds);
