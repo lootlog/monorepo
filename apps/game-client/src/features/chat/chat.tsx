@@ -11,14 +11,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { ChatMessage } from "@/features/chat/components/chat-message";
 import { ChatInput } from "@/features/chat/components/chat-input";
+import { useGlobalStore } from "@/store/global.store";
 
 export const Chat = () => {
+  const { accountId, characterId } = useGlobalStore((state) => state.gameState);
   const {
     chat: { open, autofocus },
     setOpen,
   } = useWindowsStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    `ll-chat-selected-guild`,
+    `ll:chat:selected-guild:${accountId}:${characterId}`,
     ""
   );
   const { data: messages } = useChatMessages({

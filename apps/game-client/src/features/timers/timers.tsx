@@ -8,7 +8,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DraggableWindow } from "@/components/draggable-window";
 import { GuildSelector } from "@/components/guild-selector";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tile } from "@/components/ui/tile";
 import { SingleTimer } from "@/features/timers/components/single-timer";
 import {
   useGuildPermissions,
@@ -17,7 +16,7 @@ import {
 import { useTimers, Timer } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
-import { useTimersStore } from "@/store/timers.store";
+import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { GatewayEvent } from "@/config/gateway";
 import { GuildMember } from "@/hooks/api/use-guild-members";
@@ -87,16 +86,16 @@ export const Timers = () => {
     timerFiltersEnabled,
     toggleTimerFiltersEnabled,
     timerFiltersSearchText,
-    timerFiltersSelectedNpcTypes,
-    timerFiltersMinLvl,
-    timerFiltersMaxLvl,
     timersSortOrder,
     setTimersSortOrder,
+    timersFilters,
   } = useTimersStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    "ll-timers-selected-guild",
+    `ll:timers:selected-guild:${accountId}:${characterId}`,
     ""
   );
+  const filters = timersFilters[selectedGuildId!] || DEFAULT_TIMERS_FILTERS;
+
   const { data: guildPermissions } = useGuildPermissions({
     guildId: selectedGuildId,
   });
@@ -209,13 +208,11 @@ export const Timers = () => {
           : true
       )
       .filter(
-        (t) =>
-          timerFiltersSelectedNpcTypes.includes(t.npc.type) || t.npc.lvl === 0
+        (t) => filters.selectedNpcTypes.includes(t.npc.type) || t.npc.lvl === 0
       )
       .filter(
         (t) =>
-          (t.npc.lvl >= timerFiltersMinLvl &&
-            t.npc.lvl <= timerFiltersMaxLvl) ||
+          (t.npc.lvl >= filters.minLvl && t.npc.lvl <= filters.maxLvl) ||
           t.npc.lvl === 0
       )
       .sort((a, b) => {
@@ -236,10 +233,10 @@ export const Timers = () => {
     pinnedTimers,
     timersGrouping,
     timerFiltersSearchText,
-    timerFiltersSelectedNpcTypes,
-    timerFiltersMinLvl,
-    timerFiltersMaxLvl,
     timersSortOrder,
+    filters.minLvl,
+    filters.maxLvl,
+    filters.selectedNpcTypes,
   ]);
 
   const renderTimers = () => {
@@ -253,7 +250,9 @@ export const Timers = () => {
           }
         )}
       >
-        {timerFiltersEnabled && <TimersFilters />}
+        {timerFiltersEnabled && selectedGuildId && (
+          <TimersFilters guildId={selectedGuildId} />
+        )}
         {!timersGrouping && (
           <GuildSelector
             selectedGuildId={selectedGuildId}
