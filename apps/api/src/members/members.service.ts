@@ -62,7 +62,6 @@ export class MembersService {
       where: {
         memberId: { userId: discordId, guildId: desiredGuildId },
         updatedAt: { gte: cacheExpiry },
-        active: true,
       },
       include: { roles: true },
     });
