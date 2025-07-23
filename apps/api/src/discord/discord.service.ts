@@ -62,7 +62,7 @@ export class DiscordService implements OnModuleInit {
     userId: string,
     bypassCache?: boolean,
   ): Promise<string[]> {
-    const cacheTtl = 1800; // 30 minutes
+    const cacheTtl = 60 * 60 * 2; // 2 hours
     const cacheKey = `user:${userId}:guilds:data`;
     const lockKey = `user:${userId}:guilds:lock`;
 
