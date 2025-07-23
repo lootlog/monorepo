@@ -49,6 +49,13 @@ export class GuildsService {
       true,
     );
 
+    if (!discordGuildIds || discordGuildIds.length === 0) {
+      this.logger.warn(
+        `No guilds found for user ${userId} with Discord ID ${discordId}`,
+      );
+      return [];
+    }
+
     const guilds = await this.prisma.guild.findMany({
       where: {
         id: { in: discordGuildIds },

@@ -57,7 +57,6 @@ export class DiscordService implements OnModuleInit {
     return new REST({
       version: '10',
       authPrefix: 'Bearer',
-      rejectOnRateLimit: ['/users'],
     }).setToken(token.accessToken);
   }
 
