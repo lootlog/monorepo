@@ -1,11 +1,11 @@
-import { COLORS } from "@/features/timers/components/single-timer";
+import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { cn } from "@/lib/utils";
 import { FC } from "react";
 
 export type TileProps = {
   children?: React.ReactNode;
   id?: string;
-  color?: keyof typeof COLORS;
+  color?: keyof typeof TIMERS_COLORS;
   className?: string;
   onClick?: () => void;
 };
@@ -17,8 +17,8 @@ export const Tile: FC<TileProps> = ({
   className = "",
   onClick = () => {},
 }) => {
-  const borderColor = COLORS[color ?? "white"]?.border;
-  const bgColor = COLORS[color ?? "white"]?.bg;
+  const borderColor = TIMERS_COLORS[color ?? "white"]?.border;
+  const bgColor = TIMERS_COLORS[color ?? "white"]?.bg;
 
   return (
     <span
