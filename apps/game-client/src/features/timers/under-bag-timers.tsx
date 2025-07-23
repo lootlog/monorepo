@@ -3,16 +3,19 @@ import { createPortal } from "react-dom";
 
 export const UnderBagTimers: FC<PropsWithChildren> = ({ children }) => {
   const bottomWrapper = document.querySelector(
-    ".right-column > .inner-wrapper > .bottom-wrapper"
+    ".right-column > .inner-wrapper > .right-main-column-wrapper > .tutorial-banner-anchor"
   );
 
-  return createPortal(
-    <div
-      className="ll-pl-4 ll-py-1 ll-box-border ll-h-full ll-max-h-full ll-pr-[6px] ll-bg-black/70 ll-relative ll-flex ll-flex-col ll-pb-6"
-      onWheel={(e) => e.stopPropagation()}
-    >
-      {children}
-    </div>,
-    bottomWrapper!
+  return (
+    bottomWrapper &&
+    createPortal(
+      <div
+        className="ll-pl-4 ll-py-1 ll-box-border ll-h-full ll-max-h-full ll-pr-[6px] ll-bg-black/70 ll-relative ll-flex ll-flex-col ll-pb-6 -ll-right-[140px]"
+        onWheel={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>,
+      bottomWrapper!
+    )
   );
 };
