@@ -37,18 +37,17 @@ export class GuildsService {
     private readonly discordService: DiscordService,
   ) {}
 
-  async getUserGuilds(
-    discordId: string,
-    userId: string,
-    options?: { skipNoAccess?: boolean },
-  ) {
-    if (options?.skipNoAccess) {
+  async getUserGuilds(discordId: string, userId: string, source?: string) {
+    if (source === 'game') {
       return this.getGuildsForRequiredPermissions(discordId, userId, [
         Permission.LOOTLOG_READ,
       ]);
     }
 
-    const discordGuildIds = await this.discordService.getUserGuildIds(userId);
+    const discordGuildIds = await this.discordService.getUserGuildIds(
+      userId,
+      true,
+    );
 
     const guilds = await this.prisma.guild.findMany({
       where: {
@@ -56,6 +55,14 @@ export class GuildsService {
         active: true,
       },
     });
+
+    const comparedGuilds = guilds.every((guild) => {
+      return discordGuildIds.includes(guild.id);
+    });
+
+    if (!comparedGuilds) {
+      await this.discordService.clearUserGuildIdsCache(userId);
+    }
 
     return guilds;
   }
@@ -80,9 +87,12 @@ export class GuildsService {
     userId: string,
     requiredPermissions: Permission[],
   ) {
+    const guildIds = await this.discordService.getUserGuildIds(userId);
+
     const guilds = await this.prisma.guild.findMany({
       where: {
         active: true,
+        id: { in: guildIds },
         OR: [
           {
             ownerId: discordId,
