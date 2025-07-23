@@ -288,10 +288,8 @@ export class GuildsService {
 
         await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
 
-        await Promise.all([
-          this.membersService.deleteMembersByGuildId(guildId),
-          this.rolesService.deleteRolesByGuildId(guildId),
-        ]);
+        await this.membersService.deleteMembersByGuildId(guildId);
+        await this.rolesService.deleteRolesByGuildId(guildId);
 
         await tx.guild.update({
           where: { id: guildId },

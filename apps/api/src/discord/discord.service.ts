@@ -42,6 +42,9 @@ export class DiscordService implements OnModuleInit {
   async getRestClient(userId: string) {
     const token = await this.authService.getIdpToken(userId);
 
+    this.logger.debug(`Retrieving REST client for user: ${userId}`);
+    this.logger.debug(`Token: ${JSON.stringify(token)}`);
+
     if (!token) {
       throw new Error('Failed to retrieve IDP token');
     }
@@ -62,21 +65,28 @@ export class DiscordService implements OnModuleInit {
     userId: string,
     bypassCache?: boolean,
   ): Promise<string[]> {
-    const cacheTtl = 60 * 60 * 2; // 2 hours
+    const cacheTtl = 60 * 60 * 4; // 4 hours
     const cacheKey = `user:${userId}:guilds:data`;
     const lockKey = `user:${userId}:guilds:lock`;
 
     if (!bypassCache) {
       const cached = await this.redisService.get(cacheKey);
       if (cached) {
+        this.logger.debug(`Cache hit for user: ${userId}`);
+        this.logger.debug(`Cache key: ${cacheKey}`);
         return (JSON.parse(cached) as APIGuild[]).map((g) => g.id);
       }
     }
+
+    this.logger.debug(`Cache miss for user: ${userId}`);
+    this.logger.debug(`Lock key: ${lockKey}`);
 
     const lock = await this.redlock.acquire([lockKey], this.lockTtl);
     try {
       if (!bypassCache) {
         const cachedAfterLock = await this.redisService.get(cacheKey);
+        this.logger.debug(`Cache after lock for user: ${userId}`);
+        this.logger.debug(`Cache key after lock: ${cacheKey}`);
         if (cachedAfterLock) {
           return (JSON.parse(cachedAfterLock) as APIGuild[]).map((g) => g.id);
         }
@@ -88,6 +98,11 @@ export class DiscordService implements OnModuleInit {
       await this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl);
 
       return guilds.map((g) => g.id);
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch user guilds for userId: ${userId}`,
+        error,
+      );
     } finally {
       await lock.release();
       this.logger.debug(`Lock released: ${lockKey}`);
