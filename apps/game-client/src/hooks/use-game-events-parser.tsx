@@ -1,5 +1,6 @@
 import { MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
+import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
 import { useCreateLoot } from "@/hooks/api/use-create-loot";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
@@ -87,9 +88,16 @@ export const useGameEventsParser = () => {
   const handleSendMessage = (
     npcType: NpcType,
     baseMessage: string,
+    npcLocation: { name: string; x: number; y: number },
     guildIds: string[]
   ) => {
-    const chatMessage = composeNpcChatMessage(npcType, baseMessage);
+    let location = "";
+
+    if (NPCS_WITH_LOCATION.includes(npcType)) {
+      location = `${npcLocation.name} (${npcLocation.x}, ${npcLocation.y})`;
+    }
+
+    const chatMessage = composeNpcChatMessage(npcType, baseMessage, location);
 
     sendChatMessage(
       {
@@ -174,6 +182,11 @@ export const useGameEventsParser = () => {
           handleSendMessage(
             npcType,
             `${composedNpc.nick} (${composedNpc.lvl}${composedNpc.prof})`,
+            {
+              name: composedNpc.location,
+              x: composedNpc.x,
+              y: composedNpc.y,
+            },
             guildIds
           );
         }
@@ -367,6 +380,11 @@ export const useGameEventsParser = () => {
           handleSendMessage(
             npcType,
             `${composedNpc.nick} (${composedNpc.lvl}${composedNpc.prof})`,
+            {
+              name: composedNpc.location,
+              x: composedNpc.x,
+              y: composedNpc.y,
+            },
             guildIds
           );
         }

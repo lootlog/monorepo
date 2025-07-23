@@ -1,34 +1,27 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CharacterTile } from "@/components/character-tile";
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
-import { useCharacterList } from "@/hooks/api/use-character-list";
-import { useGlobalStore } from "@/store/global.store";
+import { GuildSelector } from "@/components/guild-selector";
+import { useState } from "react";
+import { useTimersStore } from "@/store/timers.store";
 
 export const HiddenTimersTab = () => {
-  const { data: characterList } = useCharacterList();
-  const { characterId } = useGlobalStore((state) => state.gameState);
+  const { timersGrouping } = useTimersStore();
+  const [selectedGuildId, setSelectedGuildId] = useState("");
 
   return (
     <div className="ll-flex ll-flex-col ll-gap-1 ll-pt-2">
-      <label className="ll-mt-1 ll-font-semibold">Wybierz postać:</label>
-      <Tabs defaultValue={characterId} className="w-full">
-        <TabsList>
-          {characterList?.map((character) => (
-            <TabsTrigger
-              key={character.id}
-              value={`${character.id}`}
-              className="ll-mr-1"
-            >
-              <CharacterTile character={character} />
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {characterList?.map((character) => (
-          <TabsContent key={character.id} value={`${character.id}`}>
-            <HiddenTimers characterId={character.id.toString()} />
-          </TabsContent>
-        ))}
-      </Tabs>
+      <label className="ll-mt-1 ll-font-semibold">
+        {timersGrouping
+          ? "Grupowanie włączone - globalne ustawienia bez podziału na serwer"
+          : "Wybierz serwer:"}
+      </label>
+      {!timersGrouping && (
+        <GuildSelector
+          className="ll-mb-2 ll-w-full"
+          selectedGuildId={selectedGuildId}
+          setSelectedGuildId={setSelectedGuildId}
+        />
+      )}
+      <HiddenTimers guildId={selectedGuildId} />
     </div>
   );
 };
