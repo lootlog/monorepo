@@ -48,7 +48,10 @@ export class GuildsService {
       ]);
     }
 
-    const discordGuildIds = await this.discordService.getUserGuildIds(userId);
+    const discordGuildIds = await this.discordService.getUserGuildIds(
+      userId,
+      true,
+    );
 
     const guilds = await this.prisma.guild.findMany({
       where: {
@@ -56,6 +59,14 @@ export class GuildsService {
         active: true,
       },
     });
+
+    const comparedGuilds = guilds.every((guild) => {
+      return discordGuildIds.includes(guild.id);
+    });
+
+    if (!comparedGuilds) {
+      await this.discordService.clearUserGuildIdsCache(userId);
+    }
 
     return guilds;
   }
@@ -80,9 +91,12 @@ export class GuildsService {
     userId: string,
     requiredPermissions: Permission[],
   ) {
+    const guildIds = await this.discordService.getUserGuildIds(userId);
+
     const guilds = await this.prisma.guild.findMany({
       where: {
         active: true,
+        id: { in: guildIds },
         OR: [
           {
             ownerId: discordId,
