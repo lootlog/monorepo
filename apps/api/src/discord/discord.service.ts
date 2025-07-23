@@ -22,19 +22,11 @@ export class DiscordService implements OnModuleInit {
     'identify',
     'email',
   ];
-  private readonly restClient: REST;
 
   constructor(
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
-  ) {
-    this.restClient = new REST({
-      version: '10',
-      authPrefix: 'Bearer',
-      timeout: 5000,
-      rejectOnRateLimit: ['/users'],
-    });
-  }
+  ) {}
 
   async onModuleInit() {
     const client = await this.redisService.getClient();
@@ -62,7 +54,12 @@ export class DiscordService implements OnModuleInit {
       );
     }
 
-    return this.restClient.setToken(token.accessToken);
+    return new REST({
+      version: '10',
+      authPrefix: 'Bearer',
+      timeout: 5000,
+      rejectOnRateLimit: ['/users'],
+    }).setToken(token.accessToken);
   }
 
   async getUserGuildIds(
