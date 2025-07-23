@@ -69,8 +69,8 @@ export class DiscordService implements OnModuleInit {
     bypassCache?: boolean,
   ): Promise<string[]> {
     const cacheTtl = 60 * 60 * 4; // 4 hours
-    const cacheKey = `user:${userId}:guilds:data`;
-    const lockKey = `user:${userId}:guilds:lock`;
+    const cacheKey = `user:${userId}:discord-guilds:data`;
+    const lockKey = `user:${userId}:discord-guilds:lock`;
 
     if (!bypassCache) {
       const cached = await this.redisService.get(cacheKey);
