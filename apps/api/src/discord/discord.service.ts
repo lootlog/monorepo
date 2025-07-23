@@ -57,6 +57,7 @@ export class DiscordService implements OnModuleInit {
     return new REST({
       version: '10',
       authPrefix: 'Bearer',
+      timeout: 10000,
     }).setToken(token.accessToken);
   }
 
