@@ -34,7 +34,12 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
       setConnected(false);
     });
 
-    socket.on(GatewayEvent.JOIN, () => {
+    socket.on(GatewayEvent.JOIN, (data) => {
+      if (data.status === "error") {
+        console.error("Join error:", data.message);
+        return;
+      }
+
       setJoined(true);
     });
 

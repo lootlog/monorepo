@@ -49,6 +49,13 @@ export class GuildsService {
       true,
     );
 
+    if (!discordGuildIds || discordGuildIds.length === 0) {
+      this.logger.warn(
+        `No guilds found for user ${userId} with Discord ID ${discordId}`,
+      );
+      return [];
+    }
+
     const guilds = await this.prisma.guild.findMany({
       where: {
         id: { in: discordGuildIds },
@@ -87,12 +94,9 @@ export class GuildsService {
     userId: string,
     requiredPermissions: Permission[],
   ) {
-    const guildIds = await this.discordService.getUserGuildIds(userId);
-
     const guilds = await this.prisma.guild.findMany({
       where: {
         active: true,
-        id: { in: guildIds },
         OR: [
           {
             ownerId: discordId,
@@ -288,10 +292,8 @@ export class GuildsService {
 
         await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
 
-        await Promise.all([
-          this.membersService.deleteMembersByGuildId(guildId),
-          this.rolesService.deleteRolesByGuildId(guildId),
-        ]);
+        await this.membersService.deleteMembersByGuildId(guildId);
+        await this.rolesService.deleteRolesByGuildId(guildId);
 
         await tx.guild.update({
           where: { id: guildId },
