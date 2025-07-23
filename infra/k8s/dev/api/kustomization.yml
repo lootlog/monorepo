@@ -5,5 +5,5 @@ patchesStrategicMerge:
   - hpa.yml
 images:
   - name: kamilwronka7/lootlog-api
-    newTag: dev-a4466018bce737300505ebd518e020d722c36e9d
+    newTag: dev-ad0a83b4c15e6d2a7d12829c6170d1604c7a0486
 namePrefix: dev-
