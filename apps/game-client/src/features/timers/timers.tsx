@@ -296,49 +296,49 @@ export const Timers = () => {
     );
   };
 
-  if (timersUnderBag && gameInterface === "ni") {
-    return (
-      <UnderBagTimers>
-        <div className="ll-flex ll-gap-1">
-          <Filter
-            key="filters"
-            className="ll-custom-cursor-pointer -ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors ll-h-5 ll-mb-1"
-            size="14"
-            onClick={toggleTimerFiltersEnabled}
-          />
-          {timersSortOrder === "desc" ? (
-            <SortDesc
-              key="sort-desc"
-              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
-              size="14"
-              onClick={() => setTimersSortOrder("asc")}
-            />
-          ) : (
-            <SortAsc
-              key="sort-asc"
-              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
-              size="14"
-              onClick={() => setTimersSortOrder("desc")}
-            />
-          )}
-          {!timersGrouping && (
-            <PlusIcon
-              key="add-timer"
-              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
-              size="14"
-              onClick={() => toggleOpen("add-timer")}
-            />
-          )}
-        </div>
-        <div className="ll-bg-[0_0] ll-top-1 ll-leading-[28px] -ll-mt-1.5 ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform -ll-translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
-          <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
-            Timery
-          </p>
-        </div>
-        {renderTimers()}
-      </UnderBagTimers>
-    );
-  }
+  // if (timersUnderBag && gameInterface === "ni") {
+  //   return (
+  //     <UnderBagTimers>
+  //       <div className="ll-flex ll-gap-1">
+  //         <Filter
+  //           key="filters"
+  //           className="ll-custom-cursor-pointer -ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors ll-h-5 ll-mb-1"
+  //           size="14"
+  //           onClick={toggleTimerFiltersEnabled}
+  //         />
+  //         {timersSortOrder === "desc" ? (
+  //           <SortDesc
+  //             key="sort-desc"
+  //             className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+  //             size="14"
+  //             onClick={() => setTimersSortOrder("asc")}
+  //           />
+  //         ) : (
+  //           <SortAsc
+  //             key="sort-asc"
+  //             className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+  //             size="14"
+  //             onClick={() => setTimersSortOrder("desc")}
+  //           />
+  //         )}
+  //         {!timersGrouping && (
+  //           <PlusIcon
+  //             key="add-timer"
+  //             className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+  //             size="14"
+  //             onClick={() => toggleOpen("add-timer")}
+  //           />
+  //         )}
+  //       </div>
+  //       <div className="ll-bg-[0_0] ll-top-1 ll-leading-[28px] -ll-mt-1.5 ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform -ll-translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
+  //         <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
+  //           Timery
+  //         </p>
+  //       </div>
+  //       {renderTimers()}
+  //     </UnderBagTimers>
+  //   );
+  // }
 
   const actions = [
     <Filter
