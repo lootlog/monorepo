@@ -41,19 +41,13 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
       if (isNaN(numericValue)) return;
 
       const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
+
       setTimersFilters(filtersKey, {
         ...filters,
         minLvl: clampedValue,
       });
-
-      if (clampedValue > filters.maxLvl) {
-        setTimersFilters(filtersKey, {
-          ...filters,
-          maxLvl: clampedValue,
-        });
-      }
     },
-    [setTimersFilters, filters.maxLvl, filtersKey]
+    [setTimersFilters, filters, filtersKey]
   );
 
   const handleMaxLvlChange = useCallback(
@@ -67,15 +61,8 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
         ...filters,
         maxLvl: clampedValue,
       });
-
-      if (clampedValue < filters.minLvl) {
-        setTimersFilters(filtersKey, {
-          ...filters,
-          minLvl: clampedValue,
-        });
-      }
     },
-    [setTimersFilters, filters.minLvl, filtersKey]
+    [setTimersFilters, filters, filtersKey]
   );
 
   const handleToggleNpcType = useCallback(
