@@ -94,7 +94,8 @@ export const Timers = () => {
     `ll:timers:selected-guild:${accountId}:${characterId}`,
     ""
   );
-  const filters = timersFilters[selectedGuildId!] || DEFAULT_TIMERS_FILTERS;
+  const settingsKey = timersGrouping ? "global" : selectedGuildId!;
+  const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
   const { data: guildPermissions } = useGuildPermissions({
     guildId: selectedGuildId,
@@ -195,11 +196,12 @@ export const Timers = () => {
     };
   }, [connected]);
 
-  const key = `${accountId}${characterId}`;
   const sortedTimers = useMemo(() => {
     return calculatedTimers
       .filter((t) => timersGrouping || t.guildId === selectedGuildId)
-      .filter((t) => !hiddenTimers[key]?.includes?.(t.npc.name))
+      .filter((t) => {
+        return !hiddenTimers[settingsKey]?.includes?.(t.npc.name);
+      })
       .filter((t) =>
         timerFiltersSearchText
           ? t.npc.name
@@ -216,8 +218,8 @@ export const Timers = () => {
           t.npc.lvl === 0
       )
       .sort((a, b) => {
-        const pinA = pinnedTimers[key]?.includes?.(a.npc.name);
-        const pinB = pinnedTimers[key]?.includes?.(b.npc.name);
+        const pinA = pinnedTimers[settingsKey]?.includes?.(a.npc.name);
+        const pinB = pinnedTimers[settingsKey]?.includes?.(b.npc.name);
         if (pinA && !pinB) return -1;
         if (!pinA && pinB) return 1;
 
@@ -237,6 +239,7 @@ export const Timers = () => {
     filters.minLvl,
     filters.maxLvl,
     filters.selectedNpcTypes,
+    settingsKey,
   ]);
 
   const renderTimers = () => {
@@ -250,9 +253,7 @@ export const Timers = () => {
           }
         )}
       >
-        {timerFiltersEnabled && selectedGuildId && (
-          <TimersFilters guildId={selectedGuildId} />
-        )}
+        {timerFiltersEnabled && <TimersFilters filtersKey={settingsKey} />}
         {!timersGrouping && (
           <GuildSelector
             selectedGuildId={selectedGuildId}
@@ -286,6 +287,7 @@ export const Timers = () => {
                   timeLeft={timer.timeLeft}
                   compactMode={compactMode}
                   canDelete={canDeleteTimers}
+                  settingsKey={settingsKey}
                 />
               ))}
             </span>

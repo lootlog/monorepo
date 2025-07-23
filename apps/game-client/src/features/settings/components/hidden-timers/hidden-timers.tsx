@@ -1,23 +1,23 @@
 import { Tile } from "@/components/ui/tile";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
+import { XIcon } from "lucide-react";
 import { FC } from "react";
 
 export type HiddenTimersProps = {
-  characterId?: string;
+  guildId?: string;
 };
 
-export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
-  const { accountId } = useGlobalStore((state) => state.gameState);
-  const { hiddenTimers, removeHiddenTimer } = useTimersStore();
+export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
+  const { hiddenTimers, revealTimer, timersGrouping } = useTimersStore();
 
-  const key = `${accountId}${characterId}`;
-  const hiddenTimersForAccount = hiddenTimers[key];
+  const key = timersGrouping ? "global" : guildId;
+  const hiddenTimersForAccount = hiddenTimers[key!];
 
   const handleRemoveTimer = (timer: string) => {
-    if (!accountId || !characterId) return;
+    if (!key) return;
 
-    removeHiddenTimer(accountId, characterId, timer);
+    revealTimer(key, timer);
   };
 
   const sortedHiddenTimers = hiddenTimersForAccount
@@ -29,15 +29,16 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
   return (
     <div className="ll-py-4">
       {uniqueHiddenTimers && uniqueHiddenTimers.length > 0 && (
-        <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-pr-4 ll-box-border">
+        <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-box-border">
           {sortedHiddenTimers.map((timer) => {
             return (
               <Tile key={timer}>
                 <span className="ll-flex ll-justify-between ll-items-center ll-w-full ll-px-1 ll-box-border">
                   {timer}
-                  <button
+                  <XIcon
+                    size="14"
                     type="button"
-                    className="ll-close-button ll-custom-cursor-pointer ll-mb-0.5"
+                    className="ll-custom-cursor-pointer ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors -ll-mr-0.5"
                     onClick={() => handleRemoveTimer(timer)}
                   />
                 </span>
@@ -47,7 +48,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ characterId }) => {
         </span>
       )}
       {!hiddenTimersForAccount || hiddenTimersForAccount.length === 0
-        ? "Brak ukrytych timerów dla wybranej postaci."
+        ? "Brak ukrytych timerów."
         : null}
     </div>
   );

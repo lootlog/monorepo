@@ -65,8 +65,13 @@ type FormValues = z.infer<typeof schema>;
 
 export const AddTimerForm: React.FC = () => {
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
-  const { world } = useGlobalStore((state) => state.gameState);
-  const [selectedGuildId] = useLocalStorage(`ll-timers-selected-guild`, "");
+  const { world, accountId, characterId } = useGlobalStore(
+    (state) => state.gameState
+  );
+  const [selectedGuildId] = useLocalStorage(
+    `ll:timers:selected-guild:${accountId}:${characterId}`,
+    ""
+  );
   const { setOpen } = useWindowsStore();
 
   const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
