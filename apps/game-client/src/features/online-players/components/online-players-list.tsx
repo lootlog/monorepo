@@ -2,12 +2,14 @@ import { GuildSelector } from "@/components/guild-selector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
+import { useGlobalStore } from "@/store/global.store";
 import { FC } from "react";
 import { useLocalStorage } from "react-use";
 
 export const OnlinePlayersList: FC = () => {
+  const { accountId, characterId } = useGlobalStore((state) => state.gameState);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    `ll-online-players-selected-guild`,
+    `ll:online-players:selected-guild:${accountId}:${characterId}`,
     ""
   );
   const [onlinePlayers] = usePlayersPresence(selectedGuildId);

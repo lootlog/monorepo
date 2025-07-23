@@ -2,27 +2,32 @@ import { NpcType } from "@/hooks/api/use-npcs";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+type TimersFilters = {
+  minLvl: number;
+  maxLvl: number;
+  selectedNpcTypes: NpcType[];
+};
+
+type HiddenTimers = Record<string, string[]>;
+type PinnedTimers = Record<string, string[]>;
+
 interface TimersState {
-  hiddenTimers: Record<string, string[]>;
-  pinnedTimers: Record<string, string[]>;
+  hiddenTimers: HiddenTimers;
+  pinnedTimers: PinnedTimers;
   timersColors: Record<string, string | undefined>;
   removeTimerAfterMs: number;
   compactMode?: boolean;
   timersUnderBag?: boolean;
   timersGrouping?: boolean;
+  timersFilters: Record<string, TimersFilters>;
   timerFiltersEnabled?: boolean;
   timerFiltersSearchText?: string;
-  timerFiltersSelectedNpcTypes: NpcType[];
-  timerFiltersMinLvl: number;
-  timerFiltersMaxLvl: number;
   timersSortOrder?: "asc" | "desc";
-  setTimerFiltersMinLvl: (lvl: number) => void;
-  setTimerFiltersMaxLvl: (lvl: number) => void;
+  setTimersFilters: (guildId: string, filters: TimersFilters) => void;
   setTimersSortOrder: (order: "asc" | "desc") => void;
   toggleCompactMode: () => void;
   toggleTimersUnderBag: () => void;
   toggleTimersGrouping: () => void;
-  toggleFiltersSelectedNpcTypes: (npcType: NpcType) => void;
   toggleTimerFiltersEnabled: () => void;
   setRemoveTimerAfterMs: (ms: number) => void;
   setTimerFiltersSearchText: (text: string) => void;
@@ -56,6 +61,13 @@ const DEFAULT_SELECTED_NPC_TYPES = [
   NpcType.HERO,
   NpcType.TITAN,
 ];
+
+export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
+  minLvl: 0,
+  maxLvl: 300,
+  selectedNpcTypes: DEFAULT_SELECTED_NPC_TYPES,
+};
+
 export const useTimersStore = create<TimersState>()(
   persist(
     (set, get) => ({
@@ -68,30 +80,18 @@ export const useTimersStore = create<TimersState>()(
       timersUnderBag: false,
       timerFiltersEnabled: false,
       timerFiltersSearchText: "",
-      timerFiltersMinLvl: 0,
-      timerFiltersMaxLvl: 300,
-      timerFiltersSelectedNpcTypes: DEFAULT_SELECTED_NPC_TYPES,
       timersSortOrder: "asc",
+      timersFilters: {},
+      setTimersFilters: (guildId: string, filters: TimersFilters) => {
+        set((state) => ({
+          timersFilters: {
+            ...state.timersFilters,
+            [guildId]: filters,
+          },
+        }));
+      },
       setTimersSortOrder: (order: "asc" | "desc") => {
         set({ timersSortOrder: order });
-      },
-      setTimerFiltersMinLvl: (lvl: number) => {
-        set({ timerFiltersMinLvl: lvl });
-      },
-      setTimerFiltersMaxLvl: (lvl: number) => {
-        set({ timerFiltersMaxLvl: lvl });
-      },
-      toggleFiltersSelectedNpcTypes: (npcType: NpcType) => {
-        set((state) => {
-          const selected = state.timerFiltersSelectedNpcTypes.includes(npcType);
-          return {
-            timerFiltersSelectedNpcTypes: selected
-              ? state.timerFiltersSelectedNpcTypes.filter(
-                  (type) => type !== npcType
-                )
-              : [...state.timerFiltersSelectedNpcTypes, npcType],
-          };
-        });
       },
       toggleTimerFiltersEnabled: () => {
         set((state) => ({ timerFiltersEnabled: !state.timerFiltersEnabled }));
@@ -193,10 +193,8 @@ export const useTimersStore = create<TimersState>()(
         timersGrouping: state.timersGrouping,
         timersUnderBag: state.timersUnderBag,
         timerFiltersEnabled: state.timerFiltersEnabled,
-        timerFiltersSelectedNpcTypes: state.timerFiltersSelectedNpcTypes,
-        timerFiltersMaxLvl: state.timerFiltersMaxLvl,
-        timerFiltersMinLvl: state.timerFiltersMinLvl,
         timersSortOrder: state.timersSortOrder,
+        timersFilters: state.timersFilters,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
