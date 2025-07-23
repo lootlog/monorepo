@@ -84,8 +84,11 @@ export class DiscordService implements OnModuleInit {
     this.logger.debug(`Cache miss for user: ${userId}`);
     this.logger.debug(`Lock key: ${lockKey}`);
 
-    const lock = await this.redlock.acquire([lockKey], this.lockTtl);
+    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+
     try {
+      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+
       if (!bypassCache) {
         const cachedAfterLock = await this.redisService.get(cacheKey);
         this.logger.debug(`Cache after lock for user: ${userId}`);
@@ -96,6 +99,7 @@ export class DiscordService implements OnModuleInit {
       }
 
       const rest = await this.getRestClient(userId);
+
       const guilds = (await rest.get(Routes.userGuilds())) as APIGuild[];
 
       this.logger.debug(`Fetched guilds for user: ${userId}`);
