@@ -69,9 +69,11 @@ const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
 };
 
 export const Timers = () => {
-  const { world: defaultWorld, gameInterface } = useGlobalStore(
-    (s) => s.gameState
-  );
+  const {
+    world: defaultWorld,
+    gameInterface,
+    characterId,
+  } = useGlobalStore((s) => s.gameState);
   const {
     timers: { open },
     "add-timer": { open: addTimerOpen },
@@ -92,7 +94,8 @@ export const Timers = () => {
     setTimersSortOrder,
     timersFilters,
   } = useTimersStore();
-  const { world, allowWorldSelection, guildId } = useSettingsStore();
+  const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
+  const guildId = guildIdByCharId[characterId!];
   const desiredWorld = timersGrouping ? defaultWorld : world || defaultWorld;
   const desiredWorldRef = useRef<string | undefined>(desiredWorld);
 
