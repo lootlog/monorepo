@@ -22,7 +22,6 @@ import { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
 import { groupBy, omit } from 'lodash';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { buildUser } from 'src/gateway/utils/build-user';
-import { emitPresenceToRooms } from 'src/gateway/utils/emit-presence-to-rooms';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
 
 @WebSocketGateway({
@@ -66,7 +65,7 @@ export class Gateway {
     };
     client.on(GatewayEvent.DISCONNECTING, () => {
       if (client.data) {
-        emitPresenceToRooms(
+        this.emitPresenceToRooms(
           client,
           {
             discordId: client.data.discordId,
@@ -105,7 +104,7 @@ export class Gateway {
 
     client.data = user;
     client.join(guildIds);
-    emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);
+    this.emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);
     client.emit(GatewayEvent.JOIN, { status: 'success' });
     return;
   }
@@ -130,7 +129,11 @@ export class Gateway {
     return groupedUsers;
   }
 
-  emitPresenceToRooms(client: Socket, user: SocketUser, event: GatewayEvent) {
+  emitPresenceToRooms(
+    client: Socket,
+    user: Partial<SocketUser>,
+    event: GatewayEvent,
+  ) {
     const preparedUser = omit(user, ['sessionId', 'guilds', 'userId']);
 
     client.rooms.forEach((room) => {
