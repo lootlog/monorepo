@@ -20,8 +20,11 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   disabled = false,
   className = "",
 }) => {
-  const { world: defaultWorld } = useGlobalStore((state) => state.gameState);
-  const { guildId, world, setWorld } = useSettingsStore();
+  const { world: defaultWorld, characterId } = useGlobalStore(
+    (state) => state.gameState
+  );
+  const { guildIdByCharId, world, setWorld } = useSettingsStore();
+  const guildId = guildIdByCharId[characterId!];
   const { data: worlds, isFetched } = useWorlds({ guildId });
 
   useEffect(() => {
