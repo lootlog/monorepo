@@ -8,8 +8,11 @@ import { useSettingsStore } from "@/store/settings.store";
 import { FC } from "react";
 
 export const OnlinePlayersList: FC = () => {
-  const { world: defaultWorld } = useGlobalStore((state) => state.gameState);
-  const { allowWorldSelection, guildId, world } = useSettingsStore();
+  const { world: defaultWorld, characterId } = useGlobalStore(
+    (state) => state.gameState
+  );
+  const { allowWorldSelection, guildIdByCharId, world } = useSettingsStore();
+  const guildId = guildIdByCharId[characterId!];
   const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
 
   const onlinePlayersList = Object.entries(onlinePlayers);
