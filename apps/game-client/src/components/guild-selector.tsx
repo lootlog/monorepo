@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/select";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { cn } from "@/lib/utils";
+import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { FC } from "react";
 import { useDeepCompareEffect } from "react-use";
@@ -24,23 +25,35 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
   onChange,
   value,
 }) => {
+  const { characterId } = useGlobalStore((state) => state.gameState);
   const { data: guilds, isFetched } = useGuilds();
-  const { setGuildId, guildId } = useSettingsStore();
+  const { setGuildId, guildIdByCharId } = useSettingsStore();
+
+  const guildId = guildIdByCharId[characterId!];
 
   useDeepCompareEffect(() => {
     if (!isFetched || !guilds || guilds.length === 0 || value) return;
     const exists = guilds.some((guild) => guild.id === guildId);
     if (!exists) {
-      setGuildId(guilds[0].id);
+      setGuildId(characterId!, guilds[0].id);
     }
   }, [guilds, isFetched, guildId]);
 
   const selectedValue = value !== undefined ? value : guildId;
 
+  const handleChange = (newGuildId: string) => {
+    if (onChange) {
+      onChange(newGuildId);
+      return;
+    }
+
+    setGuildId(characterId!, newGuildId);
+  };
+
   return (
     <Select
       value={selectedValue}
-      onValueChange={onChange || setGuildId}
+      onValueChange={handleChange}
       disabled={disabled}
     >
       <SelectTrigger
