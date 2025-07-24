@@ -42,9 +42,6 @@ export class DiscordService implements OnModuleInit {
   async getRestClient(userId: string) {
     const token = await this.authService.getIdpToken(userId);
 
-    this.logger.debug(`Retrieving REST client for user: ${userId}`);
-    this.logger.debug(`Token: ${JSON.stringify(token)}`);
-
     if (!token) {
       throw new Error('Failed to retrieve IDP token');
     }
@@ -73,14 +70,9 @@ export class DiscordService implements OnModuleInit {
     if (!bypassCache) {
       const cached = await this.redisService.get(cacheKey);
       if (cached) {
-        this.logger.debug(`Cache hit for user: ${userId}`);
-        this.logger.debug(`Cache key: ${cacheKey}`);
         return (JSON.parse(cached) as APIGuild[]).map((g) => g.id);
       }
     }
-
-    this.logger.debug(`Cache miss for user: ${userId}`);
-    this.logger.debug(`Lock key: ${lockKey}`);
 
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
@@ -89,8 +81,6 @@ export class DiscordService implements OnModuleInit {
 
       if (!bypassCache) {
         const cachedAfterLock = await this.redisService.get(cacheKey);
-        this.logger.debug(`Cache after lock for user: ${userId}`);
-        this.logger.debug(`Cache key after lock: ${cacheKey}`);
         if (cachedAfterLock) {
           return (JSON.parse(cachedAfterLock) as APIGuild[]).map((g) => g.id);
         }
@@ -99,9 +89,6 @@ export class DiscordService implements OnModuleInit {
       const rest = await this.getRestClient(userId);
 
       const guilds = (await rest.get(Routes.userGuilds())) as APIGuild[];
-
-      this.logger.debug(`Fetched guilds for user: ${userId}`);
-      this.logger.debug(`Guilds: ${JSON.stringify(guilds)}`);
 
       if (!guilds || guilds.length === 0) {
         this.logger.warn(`No guilds found for user: ${userId}`);
@@ -126,7 +113,6 @@ export class DiscordService implements OnModuleInit {
     const cacheKey = `user:${userId}:guilds:data`;
 
     await this.redisService.del(cacheKey);
-    this.logger.debug(`Cache cleared for user: ${userId}`);
   }
 
   async getGuildMember(options: {
