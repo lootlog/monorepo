@@ -31,6 +31,7 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({
         allowWorldSelection: state.allowWorldSelection,
         world: state.world,
+        guildId: state.guildId,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
