@@ -144,7 +144,7 @@ body.si > #lootlog-root {
   height: 100%;
 }
 
-.bottom-wrapper {
+.inner-wrapper > .right-main-column-wrapper > .bottom-wrapper {
   height: calc(100% - 406px);
   width: 253px !important;
 }
