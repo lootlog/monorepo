@@ -40,7 +40,7 @@ const SelectScrollUpButton = React.forwardRef<
   <SelectPrimitive.ScrollUpButton
     ref={ref}
     className={cn(
-      "ll-flex ll-cursor-default ll-items-center ll-justify-center ll-py-1",
+      "ll-flex ll-cursor-default ll-items-center ll-justify-center ll-py-1 ll-text-white",
       className
     )}
     {...props}
@@ -57,7 +57,7 @@ const SelectScrollDownButton = React.forwardRef<
   <SelectPrimitive.ScrollDownButton
     ref={ref}
     className={cn(
-      "ll-flex ll-cursor-default ll-items-center ll-justify-center ll-py-1",
+      "ll-flex ll-cursor-default ll-items-center ll-justify-center ll-py-1 ll-text-white",
       className
     )}
     {...props}
@@ -76,9 +76,9 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "ll-relative ll-z-50 ll-box-border -ll-mt-1 ll-px-1 ll-flex ll-flex-col gap-2 ll-max-h-96 ll-min-w-[8rem] ll-overflow-hidden ll-rounded-sm ll-bg-black/90 ll-border ll-border-solid ll-border-gray-400 ll-text-popover-foreground ll-shadow-md data-[state=open]:ll-animate-in data-[state=closed]:ll-animate-out data-[state=closed]:ll-fade-out-0 data-[state=open]:ll-fade-in-0 data-[state=closed]:ll-zoom-out-95 data-[state=open]:ll-zoom-in-95 data-[side=bottom]:ll-slide-in-from-top-2 data-[side=left]:ll-slide-in-from-right-2 data-[side=right]:ll-slide-in-from-left-2 data-[side=top]:ll-slide-in-from-bottom-2",
+        "ll-border-solid ll-border-gray-400 ll-bg-black/90 ll-rounded-sm ll-border ll-box-border ll-shadow-md data-[state=open]:ll-animate-in data-[state=closed]:ll-animate-out data-[state=closed]:ll-fade-out-0 data-[state=open]:ll-fade-in-0 data-[state=closed]:ll-zoom-out-95 data-[state=open]:ll-zoom-in-95 data-[side=bottom]:ll-slide-in-from-top-2 data-[side=left]:ll-slide-in-from-right-2 data-[side=right]:ll-slide-in-from-left-2 data-[side=top]:ll-slide-in-from-bottom-2",
         position === "popper" &&
-          "data-[side=bottom]:ll-translate-y-1 data-[side=left]:ll--translate-x-1 data-[side=right]:ll-translate-x-1 data-[side=top]:ll--translate-y-1",
+          "data-[side=bottom]:ll-translate-y-1 data-[side=left]:ll--translate-x-1 data-[side=right]:ll-translate-x-1 data-[side=top]:ll--translate-y-1 ll-min-w-[var(--radix-select-trigger-width)]",
         className
       )}
       position={position}
@@ -87,9 +87,9 @@ const SelectContent = React.forwardRef<
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
         className={cn(
-          "ll-box-border ll-flex ll-flex-col ll-gap-1 ll-shadow-lg ll-px-1.5 -ll-ml-1.5",
+          "ll-box-border ll-max-h-96 ll-w-full ll-flex ll-flex-col ll-shadow-lg ll-items-center ll-justify-center ll-px-1 ll-gap-1",
           position === "popper" &&
-            "ll-h-[var(--radix-select-trigger-height)] ll-w-full ll-min-w-[var(--radix-select-trigger-width)]"
+            "ll-h-[var(--radix-select-trigger-height)] ll-min-w-[var(--radix-select-trigger-width)]"
         )}
       >
         {children}
@@ -122,7 +122,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "ll-relative data-[state=checked]:ll-bg-gray-400/30 ll-h-6 ll-transition-all hover:ll-bg-gray-400/30 ll-flex ll-cursor-default ll-select-none ll-box-border ll-border-gray-400 ll-border-solid ll-border ll-items-center ll-text-white ll-text-[11px] ll-bg-transparent ll-rounded-sm ll-py-1.5 ll-pl-2 ll-pr-8 ll-text-sm ll-outline-none data-[disabled]:ll-pointer-events-none data-[disabled]:ll-opacity-50",
+      "ll-relative data-[state=checked]:ll-bg-gray-400/30 ll-h-6 ll-transition-all hover:ll-bg-gray-400/30 ll-flex ll-cursor-default ll-select-none ll-box-border ll-border-gray-400 ll-border-solid ll-border ll-items-center ll-text-white ll-text-[11px] ll-bg-transparent ll-rounded-sm ll-py-1.5 ll-pl-2 ll-text-sm ll-outline-none data-[disabled]:ll-pointer-events-none data-[disabled]:ll-opacity-50",
       className
     )}
     {...props}
