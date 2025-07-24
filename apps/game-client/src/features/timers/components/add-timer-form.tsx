@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
 import { useGlobalStore } from "@/store/global.store";
-import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
 import {
   calculateMaxOffsetFromMinOffset,
@@ -23,6 +22,7 @@ import {
   parseDurationToSeconds,
 } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
+import { useSettingsStore } from "@/store/settings.store";
 
 const MULTIPLIER_BY_NPC_TYPE: Record<string, number> = {
   [NpcType.ELITE2]: 10,
@@ -65,13 +65,8 @@ type FormValues = z.infer<typeof schema>;
 
 export const AddTimerForm: React.FC = () => {
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
-  const { world, accountId, characterId } = useGlobalStore(
-    (state) => state.gameState
-  );
-  const [selectedGuildId] = useLocalStorage(
-    `ll:timers:selected-guild:${accountId}:${characterId}`,
-    ""
-  );
+  const { world } = useGlobalStore((state) => state.gameState);
+  const { guildId } = useSettingsStore();
   const { setOpen } = useWindowsStore();
 
   const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
@@ -83,7 +78,7 @@ export const AddTimerForm: React.FC = () => {
   });
 
   const onSubmit = (data: FormValues) => {
-    if (!world || !selectedGuildId) return;
+    if (!world || !guildId) return;
 
     const { name, minSpawn, npcType } = data;
     const respawnRandomness = npcType
@@ -101,7 +96,7 @@ export const AddTimerForm: React.FC = () => {
         respBaseSeconds,
         respawnRandomness,
         world,
-        guildId: selectedGuildId,
+        guildId,
       },
       {
         onSuccess: () => {

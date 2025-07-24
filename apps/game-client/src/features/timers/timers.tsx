@@ -93,6 +93,12 @@ export const Timers = () => {
     timersFilters,
   } = useTimersStore();
   const { world, allowWorldSelection, guildId } = useSettingsStore();
+  const desiredWorld = timersGrouping ? defaultWorld : world || defaultWorld;
+  const desiredWorldRef = useRef<string | undefined>(desiredWorld);
+
+  useEffect(() => {
+    desiredWorldRef.current = desiredWorld;
+  }, [desiredWorld]);
 
   const settingsKey = timersGrouping ? "global" : guildId!;
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
@@ -101,7 +107,7 @@ export const Timers = () => {
     guildId,
   });
   const { data: timers } = useTimers({
-    world: timersGrouping ? defaultWorld : world || defaultWorld,
+    world: desiredWorld,
   });
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
@@ -138,9 +144,9 @@ export const Timers = () => {
 
   const handleTimerMessage = (data: Timer) => {
     queryClient.setQueryData(
-      ["guild-timers", world],
+      ["guild-timers", desiredWorldRef.current],
       (old: AxiosResponse<Timer[]>) => {
-        if (data.world !== world) return old;
+        if (data.world !== desiredWorldRef.current) return old;
         const updated = [...(old?.data || [])];
         const index = updated.findIndex(
           (t) =>
@@ -156,9 +162,9 @@ export const Timers = () => {
 
   const handleTimerRemove = (data: Timer) => {
     queryClient.setQueryData(
-      ["guild-timers", world],
+      ["guild-timers", desiredWorldRef.current],
       (old: AxiosResponse<Timer[]>) => {
-        if (data.world !== world) return old;
+        if (data.world !== desiredWorldRef.current) return old;
         const filtered =
           old?.data.filter(
             (t) =>
