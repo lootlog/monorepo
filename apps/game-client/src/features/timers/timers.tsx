@@ -23,6 +23,8 @@ import { GuildMember } from "@/hooks/api/use-guild-members";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { TimersFilters } from "@/features/timers/components/timers-filters";
 import { cn } from "@/lib/utils";
+import { WorldSelector } from "@/components/world-selector";
+import { useSettingsStore } from "@/store/settings.store";
 
 type TimerWithTimeLeft = Timer & { timeLeft: number; members?: GuildMember[] };
 
@@ -67,7 +69,7 @@ const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
 };
 
 export const Timers = () => {
-  const { characterId, accountId, world, gameInterface } = useGlobalStore(
+  const { world: defaultWorld, gameInterface } = useGlobalStore(
     (s) => s.gameState
   );
   const {
@@ -90,17 +92,17 @@ export const Timers = () => {
     setTimersSortOrder,
     timersFilters,
   } = useTimersStore();
-  const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    `ll:timers:selected-guild:${accountId}:${characterId}`,
-    ""
-  );
-  const settingsKey = timersGrouping ? "global" : selectedGuildId!;
+  const { world, allowWorldSelection, guildId } = useSettingsStore();
+
+  const settingsKey = timersGrouping ? "global" : guildId!;
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
   const { data: guildPermissions } = useGuildPermissions({
-    guildId: selectedGuildId,
+    guildId,
   });
-  const { data: timers } = useTimers({ world });
+  const { data: timers } = useTimers({
+    world: timersGrouping ? defaultWorld : world || defaultWorld,
+  });
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
 
@@ -198,7 +200,7 @@ export const Timers = () => {
 
   const sortedTimers = useMemo(() => {
     return calculatedTimers
-      .filter((t) => timersGrouping || t.guildId === selectedGuildId)
+      .filter((t) => timersGrouping || t.guildId === guildId)
       .filter((t) => {
         return !hiddenTimers[settingsKey]?.includes?.(t.npc.name);
       })
@@ -230,7 +232,7 @@ export const Timers = () => {
       });
   }, [
     calculatedTimers,
-    selectedGuildId,
+    guildId,
     hiddenTimers,
     pinnedTimers,
     timersGrouping,
@@ -254,14 +256,17 @@ export const Timers = () => {
         )}
       >
         {timerFiltersEnabled && <TimersFilters filtersKey={settingsKey} />}
-        {!timersGrouping && (
-          <GuildSelector
-            selectedGuildId={selectedGuildId}
-            setSelectedGuildId={setSelectedGuildId}
-            disabled={addTimerOpen}
-            className="ll-bg-black/20 !ll-mb-1"
-          />
-        )}
+        <span className="ll-flex ll-gap-1 ll-w-full">
+          {!timersGrouping && (
+            <GuildSelector
+              disabled={addTimerOpen}
+              className="ll-bg-black/20 !ll-mb-1"
+            />
+          )}
+          {allowWorldSelection && !timersGrouping && (
+            <WorldSelector className="ll-w-1/3" />
+          )}
+        </span>
 
         <ScrollArea
           className="ll-pb-1 !ll-w-full ll-py-1 ll-flex-1"

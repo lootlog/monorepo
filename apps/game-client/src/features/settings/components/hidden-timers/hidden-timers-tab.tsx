@@ -15,11 +15,13 @@ export const HiddenTimersTab = () => {
           : "Wybierz serwer:"}
       </label>
       {!timersGrouping && (
-        <GuildSelector
-          className="ll-mb-2 ll-w-full"
-          selectedGuildId={selectedGuildId}
-          setSelectedGuildId={setSelectedGuildId}
-        />
+        <span className="ll-w-2/3">
+          <GuildSelector
+            className="ll-mb-2"
+            onChange={setSelectedGuildId}
+            value={selectedGuildId}
+          />
+        </span>
       )}
       <HiddenTimers guildId={selectedGuildId} />
     </div>
