@@ -33,13 +33,13 @@ const getPresenceKey = (presence: PlayerPresence) => {
 };
 
 export const usePlayersPresence = (
-  selectedGuildId?: string
+  selectedGuildId?: string,
+  world?: string
 ): [
   PlayerPresenceResponse,
   boolean,
   React.Dispatch<React.SetStateAction<PlayerPresenceResponse>>,
 ] => {
-  const { world } = useGlobalStore((state) => state.gameState);
   const [onlinePlayers, setOnlinePlayers] = useState<PlayerPresenceResponse>(
     {}
   );
