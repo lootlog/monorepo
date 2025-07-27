@@ -35,6 +35,14 @@ export class GuildsController {
     return this.guildsService.getUserGuilds(discordId, userId, source);
   }
 
+  @Get('/@me/manageable')
+  async getManageableUserGuilds(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ) {
+    return this.guildsService.getManageableUserGuilds(discordId, userId);
+  }
+
   @Permissions(Permission.LOOTLOG_READ)
   @UseGuards(PermissionsGuard)
   @Get(':guildId')

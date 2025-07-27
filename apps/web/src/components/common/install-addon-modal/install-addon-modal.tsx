@@ -1,9 +1,7 @@
-import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
@@ -30,19 +28,17 @@ export const InstallAddonModal: FC = () => {
             Zainstaluj dodatek, aby korzystać z lootloga w grze.
           </DialogDescription>
         </DialogHeader>
-        <a
-          href={ADDON_INSTALL_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:underline"
-        >
-          Instaluj dodatek
-        </a>
-        <DialogFooter>
-          <Button variant="secondary" onClick={handleModalClose}>
-            Anuluj
-          </Button>
-        </DialogFooter>
+        <div className="p-4">
+          <a
+            href={ADDON_INSTALL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+            onClick={handleModalClose}
+          >
+            Instaluj dodatek
+          </a>
+        </div>
       </DialogContent>
     </Dialog>
   );
