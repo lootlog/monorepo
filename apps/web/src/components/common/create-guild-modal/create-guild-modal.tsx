@@ -1,10 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Card, CardContent } from "@lootlog/ui/components/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
@@ -21,16 +19,14 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
+import { cn } from "@lootlog/ui/lib/utils";
 
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [debouncedValue] = useDebounceValue<string>(searchValue, 200);
   const { createGuildModal } = useGlobalContext();
 
-  const { data: manageableGuilds } = useManageableGuilds({
-    skipConfigured: true,
-    enabled: createGuildModal.state.isOpen,
-  });
+  const { data: manageableGuilds } = useManageableGuilds();
 
   const handleAddToGuild = (guildId: string) => {
     const searchParams = new URLSearchParams();
@@ -64,7 +60,7 @@ export const CreateGuildModal: FC = () => {
             Utwórz nowy lootlog dla swojego klanu
           </DialogDescription>
         </DialogHeader>
-        <div>
+        <div className="p-4 border-b">
           <SearchInput
             placeholder="Szukaj serwera..."
             value={searchValue}
@@ -72,33 +68,34 @@ export const CreateGuildModal: FC = () => {
           />
         </div>
         <ScrollArea className="min-h-80 max-h-80">
-          <div className="flex flex-col gap-4">
-            {filteredGuilds?.map((guild) => {
+          <div className="flex flex-col">
+            {filteredGuilds?.map((guild, index) => {
               const avatarSrc = getGuildIconById(guild.id, guild.icon);
               return (
-                <Card key={guild.id}>
-                  <CardContent className="p-4 px-4 flex flex-row justify-between items-center">
-                    <div className="flex flex-row gap-4 items-center">
-                      <Avatar>
-                        <AvatarImage src={avatarSrc} />
-                        <AvatarFallback>{guild.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <p className="text-md font-semibold">{guild.name}</p>
-                    </div>
-                    <Button onClick={() => handleAddToGuild(guild.id)}>
-                      Dodaj
-                    </Button>
-                  </CardContent>
-                </Card>
+                <div
+                  key={guild.id}
+                  className={cn(
+                    "p-4 px-4 flex flex-row justify-between items-center border-b",
+                    {
+                      "border-none": index === filteredGuilds.length - 1,
+                    }
+                  )}
+                >
+                  <div className="flex flex-row gap-4 items-center">
+                    <Avatar>
+                      <AvatarImage src={avatarSrc} />
+                      <AvatarFallback>{guild.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <p className="text-md font-semibold">{guild.name}</p>
+                  </div>
+                  <Button onClick={() => handleAddToGuild(guild.id)} size="sm">
+                    Dodaj
+                  </Button>
+                </div>
               );
             })}
           </div>
         </ScrollArea>
-        <DialogFooter>
-          <Button variant="secondary" onClick={handleModalClose}>
-            Anuluj
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
