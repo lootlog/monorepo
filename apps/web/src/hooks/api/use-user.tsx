@@ -4,10 +4,22 @@ import {
   UserPreferences,
 } from "@/hooks/api/use-user-preferences";
 
-export type User = {
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  image?: string | null;
+  firstName?: string;
+  lastName?: string;
   discordId: string;
+  role?: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type User = SessionUser & {
   preferences?: UserPreferences;
-  [key: string]: unknown;
 };
 
 export const useUser = () => {

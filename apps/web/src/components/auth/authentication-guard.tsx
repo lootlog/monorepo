@@ -42,7 +42,7 @@ export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
   return (
     <>
       <Dialog open={!hasRequiredScopes}>
-        <DialogContent>
+        <DialogContent className="p-4">
           <DialogTitle>Wymagane ponowne zalogowanie</DialogTitle>
           <DialogDescription>
             Aby kontynuować korzystanie z Lootloga, musisz ponownie się
