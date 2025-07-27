@@ -263,3 +263,13 @@ model UserCharactersLootlogSettings {
 
   @@unique([userId, accountId, characterId])
 }
+
+model UserSettings {
+  id          Int      @id @default(autoincrement())
+  userId      String   @unique
+  guildsOrder String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
