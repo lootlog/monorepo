@@ -12,7 +12,7 @@ import {
 } from "@/store/notifications.store";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
@@ -73,6 +73,17 @@ export const NotificationsSettingsTabForm: FC<
     reset(defaultValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [characterId]);
+
+  const lastSettingsRef = useRef<NotificationsSettings | undefined>(
+    currentSettings
+  );
+  useDeepCompareEffect(() => {
+    if (!characterId) return;
+    if (lastSettingsRef.current !== currentSettings) {
+      lastSettingsRef.current = currentSettings;
+      reset({ settingsByNpcType: currentSettings });
+    }
+  }, [currentSettings, characterId]);
 
   function onSubmit(data: FormData) {
     if (!characterId) return;
