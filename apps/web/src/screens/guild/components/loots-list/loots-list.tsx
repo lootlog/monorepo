@@ -22,8 +22,6 @@ export const LootsList: FC = () => {
   const { world } = useGuildContext();
   const { data: member, isPending } = useGuildMember();
 
-  console.log(permissionsError?.response?.status);
-
   const { isIntersecting, ref } = useIntersectionObserver({
     threshold: 1,
   });

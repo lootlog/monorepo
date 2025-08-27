@@ -9,7 +9,6 @@ import { GuildRoleDto } from 'src/guilds/dto/create-guild.dto';
 import { CreateRoleDto } from 'src/roles/dto/create-role.dto';
 import { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
 import { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
-import { UpdateRoleDto } from 'src/roles/dto/update-role.dto';
 
 @Injectable()
 export class RolesService {
@@ -123,6 +122,14 @@ export class RolesService {
   }
 
   async deleteRole(data: DeleteRoleDto) {
+    const role = await this.prisma.role.findUnique({
+      where: { id: data.id, guildId: data.guildId },
+    });
+
+    if (!role) {
+      return;
+    }
+
     await this.prisma.role.delete({
       where: { id: data.id },
     });

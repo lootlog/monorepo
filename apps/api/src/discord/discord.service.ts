@@ -4,6 +4,7 @@ import {
   OnModuleInit,
   Logger,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
@@ -14,7 +15,7 @@ import Redlock from 'redlock';
 export class DiscordService implements OnModuleInit {
   private readonly logger = new Logger(DiscordService.name);
   private redlock: Redlock;
-  private readonly lockTtl = 10000;
+  private readonly lockTtl = 14000;
   private readonly requiredScopes = [
     'guilds.members.read',
     'guilds',
@@ -30,11 +31,11 @@ export class DiscordService implements OnModuleInit {
   async onModuleInit() {
     const client = await this.redisService.getClient();
     this.redlock = new Redlock([client], {
-      driftFactor: 0.01, // time in ms
-      retryCount: 10, // number of times to retry acquiring a lock
-      retryDelay: 200, // time in ms to wait before retrying
-      retryJitter: 200, // time in ms to add random jitter to retry delay
-      automaticExtensionThreshold: 5000, // time in ms before extending a lock
+      driftFactor: 0.01,
+      retryCount: 10,
+      retryDelay: 1000,
+      retryJitter: 200,
+      automaticExtensionThreshold: 3000,
     });
   }
 
@@ -53,43 +54,65 @@ export class DiscordService implements OnModuleInit {
     return new REST({
       version: '10',
       authPrefix: 'Bearer',
+      timeout: 5000,
       rejectOnRateLimit: ['/users'],
     }).setToken(token.accessToken);
   }
 
-  async getUserGuildIds(userId: string): Promise<string[]> {
-    const cacheTtl = 120;
-    const cacheKey = `user:${userId}:guilds:data`;
-    const lockKey = `user:${userId}:guilds:lock`;
+  async getUserGuilds(userId: string): Promise<APIGuild[]> {
+    const cacheTtl = 60 * 5; // 5 minutes
+    const cacheKey = `user:${userId}:discord-guilds:data`;
+    const lockKey = `user:${userId}:discord-guilds:lock`;
 
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
-      return (JSON.parse(cached) as APIGuild[]).map((g) => g.id);
+      return JSON.parse(cached) as APIGuild[];
     }
 
-    const lock = await this.redlock.acquire([lockKey], this.lockTtl);
+    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+
     try {
+      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
-        return (JSON.parse(cachedAfterLock) as APIGuild[]).map((g) => g.id);
+        return JSON.parse(cachedAfterLock) as APIGuild[];
       }
 
       const rest = await this.getRestClient(userId);
+
       const guilds = (await rest.get(Routes.userGuilds())) as APIGuild[];
+
+      if (!guilds || guilds.length === 0) {
+        this.logger.warn(`No guilds found for user: ${userId}`);
+        return [];
+      }
 
       await this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl);
 
-      return guilds.map((g) => g.id);
+      return guilds;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch user guilds for userId: ${userId}`,
+        error,
+      );
+      return [];
     } finally {
-      await lock.release();
+      await lock?.release();
       this.logger.debug(`Lock released: ${lockKey}`);
     }
+  }
+
+  async clearUserGuildIdsCache(userId: string) {
+    const cacheKey = `user:${userId}:guilds:data`;
+
+    await this.redisService.del(cacheKey);
   }
 
   async getGuildMember(options: {
     guildId: string;
     userId: string;
-  }): Promise<APIGuildMember> {
+  }): Promise<APIGuildMember | null> {
     const cacheTtl = 60; // 1 minute
     const { guildId, userId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
@@ -116,12 +139,20 @@ export class DiscordService implements OnModuleInit {
       await this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl);
 
       return member;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status === 404) {
+        this.logger.debug(
+          `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
+        );
+
+        throw new NotFoundException();
+      }
+
       this.logger.error(
         `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
         error,
       );
-      await lock.release();
+      return null;
     } finally {
       await lock.release();
     }

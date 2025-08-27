@@ -136,8 +136,17 @@ body.si > #lootlog-root {
   height: 14px;
 }
 
-.bottom-wrapper {
+.inner-wrapper {
+  height: 100%;
+}
+
+.right-main-column-wrapper {
+  height: 100%;
+}
+
+.inner-wrapper > .right-main-column-wrapper > .bottom-wrapper {
   height: calc(100% - 406px);
+  width: 253px !important;
 }
 
 .b_wrapper {
@@ -146,4 +155,14 @@ body.si > #lootlog-root {
 
 .all-b {
   display: none !important;
+}
+
+.input-no-spinner::-webkit-inner-spin-button,
+.input-no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-no-spinner {
+  -moz-appearance: textfield; /* Firefox */
 }

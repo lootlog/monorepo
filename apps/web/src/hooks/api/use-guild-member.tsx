@@ -4,7 +4,7 @@ import { useGuildId } from "@/hooks/use-guild-id";
 import { GuildRole } from "@/hooks/api/use-guild-roles";
 
 export type GuildMember = {
-  id: string;
+  id: number;
   name: string;
   avatar: string | null;
   updatedAt: string;

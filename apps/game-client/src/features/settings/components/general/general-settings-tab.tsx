@@ -1,5 +1,6 @@
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
+import { useSettingsStore } from "@/store/settings.store";
 import { useTimersStore } from "@/store/timers.store";
 import { FC, useState } from "react";
 
@@ -16,6 +17,7 @@ export const GeneralSettingsTab: FC = () => {
     toggleTimersGrouping,
     toggleTimersUnderBag,
   } = useTimersStore();
+  const { allowWorldSelection, toggleAllowWorldSelection } = useSettingsStore();
 
   const [inputValue, setInputValue] = useState<string>(
     (removeTimerAfterMs / 1000).toString()
@@ -54,7 +56,17 @@ export const GeneralSettingsTab: FC = () => {
         Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.
       </p>
       <div className="ll-mb-4 ll-mt-4">
-        <label className="ll-font-semibold ll-mb-4">Ustawienia widoku</label>
+        <Checkbox
+          value={allowWorldSelection ? "1" : "0"}
+          checked={allowWorldSelection}
+          onChange={toggleAllowWorldSelection}
+          id="allow-world-selection"
+        >
+          Pozwalaj na wybór świata - nie działa na zgrupowanych timerach
+        </Checkbox>
+      </div>
+      <div className="ll-mb-4 ll-mt-4">
+        <label className="ll-font-semibold ll-mb-4">Ustawienia timerów</label>
         <div className="checkbox-custom c-checkbox ll-mt-2">
           <input
             id="compact-mode-toggle"

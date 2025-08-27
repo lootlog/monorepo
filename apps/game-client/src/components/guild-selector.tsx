@@ -7,41 +7,58 @@ import {
 } from "@/components/ui/select";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { cn } from "@/lib/utils";
+import { useGlobalStore } from "@/store/global.store";
+import { useSettingsStore } from "@/store/settings.store";
 import { FC } from "react";
 import { useDeepCompareEffect } from "react-use";
 
 export type GuildSelectorProps = {
-  selectedGuildId?: string;
-  setSelectedGuildId: (guildId: string) => void;
   disabled?: boolean;
   className?: string;
+  onChange?: (guildId: string) => void;
+  value?: string;
 };
 
 export const GuildSelector: FC<GuildSelectorProps> = ({
-  selectedGuildId,
-  setSelectedGuildId,
   disabled = false,
   className = "",
+  onChange,
+  value,
 }) => {
+  const { characterId } = useGlobalStore((state) => state.gameState);
   const { data: guilds, isFetched } = useGuilds();
+  const { setGuildId, guildIdByCharId } = useSettingsStore();
+
+  const guildId = guildIdByCharId[characterId!];
 
   useDeepCompareEffect(() => {
-    if (!isFetched || !guilds || guilds.length === 0) return;
-    const exists = guilds.some((guild) => guild.id === selectedGuildId);
+    if (!isFetched || !guilds || guilds.length === 0 || value) return;
+    const exists = guilds.some((guild) => guild.id === guildId);
     if (!exists) {
-      setSelectedGuildId(guilds[0].id);
+      setGuildId(characterId!, guilds[0].id);
     }
-  }, [guilds, isFetched, selectedGuildId]);
+  }, [guilds, isFetched, guildId]);
+
+  const selectedValue = value !== undefined ? value : guildId;
+
+  const handleChange = (newGuildId: string) => {
+    if (onChange) {
+      onChange(newGuildId);
+      return;
+    }
+
+    setGuildId(characterId!, newGuildId);
+  };
 
   return (
     <Select
-      value={selectedGuildId}
-      onValueChange={setSelectedGuildId}
+      value={selectedValue}
+      onValueChange={handleChange}
       disabled={disabled}
     >
       <SelectTrigger
         className={cn(
-          "w-[180px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2 ll-custom-cursor-pointer",
+          "ll-w-[231px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-mb-1 ll-custom-cursor-pointer",
           className
         )}
       >
@@ -56,7 +73,7 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
             <SelectItem
               key={guild.id}
               value={guild.id}
-              className="ll-text-xs ll-font-semibold ll-w-[222px] ll-h-5"
+              className="ll-text-xs ll-font-semibold ll-w-full ll-h-5"
             >
               {guild.name}
             </SelectItem>

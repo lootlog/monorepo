@@ -1,6 +1,8 @@
 namespace: lootlog-dev
 resources:
   - ../../base/auth
+patchesStrategicMerge:
+  - hpa.yml
 images:
   - name: kamilwronka7/lootlog-auth
     newTag: dev-ce882ee9db92f12f232fb9a80f168e006cb80077
