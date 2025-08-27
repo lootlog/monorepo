@@ -6,12 +6,16 @@ import { cn } from "@/lib/utils";
 interface ProgressProps
   extends React.ComponentProps<typeof ProgressPrimitive.Root> {
   indicatorColor?: string;
+  animationDurationMs?: number;
+  disableDefaultTransition?: boolean;
 }
 
 function Progress({
   className,
   value,
   indicatorColor,
+  animationDurationMs,
+  disableDefaultTransition,
   ...props
 }: ProgressProps) {
   return (
@@ -25,10 +29,16 @@ function Progress({
     >
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
-        className="ll-bg-[#5ecbff] ll-h-full ll-w-full ll-flex-1 ll-transition-all"
+        className={cn(
+          "ll-bg-[#5ecbff] ll-h-full ll-w-full ll-flex-1",
+          !disableDefaultTransition && "ll-transition-all"
+        )}
         style={{
           transform: `translateX(-${100 - (value || 0)}%)`,
           background: indicatorColor,
+          transition: animationDurationMs
+            ? `transform linear ${animationDurationMs}ms`
+            : undefined,
         }}
       />
     </ProgressPrimitive.Root>
