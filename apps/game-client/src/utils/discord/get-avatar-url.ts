@@ -8,7 +8,7 @@ export const getDiscordAvatarUrl = (
   }
 
   if (!userId) {
-    return `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random() * 5)}.png`;
+    return `https://cdn.discordapp.com/embed/avatars/4.png`;
   }
 
   if (!avatar) {
