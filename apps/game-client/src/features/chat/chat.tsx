@@ -11,14 +11,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { ChatMessage } from "@/features/chat/components/chat-message";
 import { ChatInput } from "@/features/chat/components/chat-input";
+import { useGlobalStore } from "@/store/global.store";
 
 export const Chat = () => {
+  const { accountId, characterId } = useGlobalStore((state) => state.gameState);
   const {
     chat: { open, autofocus },
     setOpen,
   } = useWindowsStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
-    `ll-chat-selected-guild`,
+    `ll:chat:selected-guild:${accountId}:${characterId}`,
     ""
   );
   const { data: messages } = useChatMessages({
@@ -57,8 +59,8 @@ export const Chat = () => {
             <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
               <div className="ll-flex-shrink-0 ll-pt-2">
                 <GuildSelector
-                  selectedGuildId={selectedGuildId}
-                  setSelectedGuildId={setSelectedGuildId}
+                  value={selectedGuildId}
+                  onChange={setSelectedGuildId}
                 />
               </div>
               <div className="ll-flex-1 ll-overflow-hidden">

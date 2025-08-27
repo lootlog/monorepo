@@ -30,12 +30,17 @@ export class GuildsController {
   async getUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Query('skipNoAccess', new DefaultValuePipe(false), ParseBoolPipe)
-    skipNoAccess?: boolean,
+    @Query('source') source: string,
   ) {
-    return this.guildsService.getUserGuilds(discordId, userId, {
-      skipNoAccess,
-    });
+    return this.guildsService.getUserGuilds(discordId, userId, source);
+  }
+
+  @Get('/@me/manageable')
+  async getManageableUserGuilds(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ) {
+    return this.guildsService.getManageableUserGuilds(discordId, userId);
   }
 
   @Permissions(Permission.LOOTLOG_READ)

@@ -62,6 +62,7 @@ export class MembersService {
       where: {
         memberId: { userId: discordId, guildId: desiredGuildId },
         updatedAt: { gte: cacheExpiry },
+        active: true,
       },
       include: { roles: true },
     });
@@ -91,6 +92,15 @@ export class MembersService {
           'Failed to fetch member from Discord, serving stale data',
           (error as Error).stack,
         );
+
+        if (error instanceof NotFoundException) {
+          await this.deactivateMember({
+            discordId,
+            guildId,
+          });
+
+          return null;
+        }
 
         if (refresh) {
           throw new HttpException(
@@ -201,6 +211,31 @@ export class MembersService {
       );
       throw error;
     }
+  }
+
+  async deactivateMember(options: {
+    discordId: string;
+    guildId: string;
+  }): Promise<Member | null> {
+    const { discordId, guildId } = options;
+
+    const member = await this.prisma.member.findUnique({
+      where: { memberId: { userId: discordId, guildId } },
+      include: { roles: true },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+
+    if (!member.active) {
+      throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
+    }
+
+    return this.prisma.member.update({
+      where: { memberId: { userId: discordId, guildId } },
+      data: { active: false, roles: { set: [] } },
+    });
   }
 
   async deleteMembersByGuildId(guildId: string): Promise<number> {

@@ -4,11 +4,11 @@ import { TimersController } from './timers.controller';
 import { MembersModule } from 'src/members/members.module';
 import { NpcsModule } from 'src/npcs/npcs.module';
 import { GuildsModule } from 'src/guilds/guilds.module';
-import { PrismaService } from 'src/db/prisma.service';
 import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-config.module';
+import { PrismaModule } from 'src/db/prisma.module';
 
 @Module({
   imports: [
@@ -21,8 +21,9 @@ import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-co
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
     UserLootlogConfigModule,
+    PrismaModule,
   ],
-  providers: [TimersService, PrismaService],
+  providers: [TimersService],
   controllers: [TimersController],
 })
 export class TimersModule {}

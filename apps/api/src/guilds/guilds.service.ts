@@ -6,8 +6,9 @@ import {
   NotFoundException,
   forwardRef,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
-import { Permission } from 'generated/client';
+import { Guild, Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
 import { DeleteGuildDto } from 'src/guilds/dto/delete-guild.dto';
@@ -20,6 +21,7 @@ import { generateSlug } from 'src/shared/utils/generate-slug';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
 import { DiscordService } from 'src/discord/discord.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class GuildsService {
@@ -31,32 +33,89 @@ export class GuildsService {
     private readonly rolesService: RolesService,
     @Inject(forwardRef(() => LootlogConfigService))
     private lootlogConfigService: LootlogConfigService,
-    private readonly amqpConnection: AmqpConnection,
     private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
-  async getUserGuilds(
-    discordId: string,
-    userId: string,
-    options?: { skipNoAccess?: boolean },
-  ) {
-    if (options?.skipNoAccess) {
-      return this.getGuildsForRequiredPermissions(discordId, userId, [
+  async getUserGuilds(discordId: string, userId: string, source?: string) {
+    const userPreferences = await this.usersService.getUserPreferences(userId);
+
+    let guilds: Guild[] = [];
+    if (source === 'game') {
+      guilds = await this.getGuildsForRequiredPermissions(discordId, userId, [
         Permission.LOOTLOG_READ,
       ]);
+    } else {
+      const discordGuilds = await this.discordService.getUserGuilds(userId);
+
+      if (!discordGuilds || discordGuilds.length === 0) {
+        this.logger.warn(
+          `No guilds found for user ${userId} with Discord ID ${discordId}`,
+        );
+        return [];
+      }
+
+      const discordGuildIds = discordGuilds.map((guild) => guild.id);
+
+      guilds = await this.prisma.guild.findMany({
+        where: {
+          id: { in: discordGuildIds },
+          active: true,
+        },
+      });
+
+      const comparedGuilds = guilds.every((guild) => {
+        return discordGuildIds.includes(guild.id);
+      });
+
+      if (!comparedGuilds) {
+        await this.discordService.clearUserGuildIdsCache(userId);
+      }
     }
 
-    const discordGuildIds = await this.discordService.getUserGuildIds(userId);
-
-    const guilds = await this.prisma.guild.findMany({
-      where: {
-        id: { in: discordGuildIds },
-        active: true,
-      },
-    });
+    if (
+      userPreferences?.guildsOrder &&
+      Array.isArray(userPreferences.guildsOrder)
+    ) {
+      const guildOrderMap = new Map(
+        userPreferences.guildsOrder.map((id: string, idx: number) => [id, idx]),
+      );
+      guilds.sort((a, b) => {
+        const aIdx = guildOrderMap.has(a.id)
+          ? guildOrderMap.get(a.id)
+          : Number.MAX_SAFE_INTEGER;
+        const bIdx = guildOrderMap.has(b.id)
+          ? guildOrderMap.get(b.id)
+          : Number.MAX_SAFE_INTEGER;
+        return aIdx - bIdx;
+      });
+    }
 
     return guilds;
+  }
+
+  async getManageableUserGuilds(discordId: string, userId: string) {
+    const discordGuilds = await this.discordService.getUserGuilds(userId);
+
+    if (!discordGuilds || discordGuilds.length === 0) {
+      this.logger.warn(
+        `No guilds found for user ${userId} with Discord ID ${discordId}`,
+      );
+      return [];
+    }
+
+    return discordGuilds
+      .filter((guild) => parseInt(guild.permissions, 10) & 0x8)
+      .map((guild) => {
+        return {
+          id: guild.id,
+          name: guild.name,
+          icon: guild.icon,
+          ownerId: guild.owner_id,
+        };
+      });
   }
 
   async getGuildById(idOrVanityURL: string) {
@@ -122,6 +181,10 @@ export class GuildsService {
       guildId: guild.id,
     });
 
+    if (!member.active) {
+      throw new ForbiddenException();
+    }
+
     const isOwner = guild.ownerId === discordId;
     const permissions = isOwner
       ? Object.values(Permission)
@@ -135,6 +198,7 @@ export class GuildsService {
       permissions: uniquePermissions,
       guild,
       roles: member?.roles || [],
+      member,
     };
   }
 
@@ -272,10 +336,8 @@ export class GuildsService {
 
         await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
 
-        await Promise.all([
-          this.membersService.deleteMembersByGuildId(guildId),
-          this.rolesService.deleteRolesByGuildId(guildId),
-        ]);
+        await this.membersService.deleteMembersByGuildId(guildId);
+        await this.rolesService.deleteRolesByGuildId(guildId);
 
         await tx.guild.update({
           where: { id: guildId },

@@ -7,7 +7,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@lootlog/ui/components/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Command,
@@ -21,6 +20,7 @@ import {
 } from "@lootlog/ui/components/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/utils/cn";
+import { Badge } from "@lootlog/ui/components/badge";
 
 /**
  * Variants for the multi-select component to handle different styles.

@@ -24,7 +24,7 @@ export type NpcListItemProps = {
   idx: number;
 };
 
-const NPCS_WITH_LOCATION = [NpcType.HERO];
+export const NPCS_WITH_LOCATION = [NpcType.HERO];
 
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { npcs, removeNpc, settings, setNpcState } = useNpcDetectorStore();
