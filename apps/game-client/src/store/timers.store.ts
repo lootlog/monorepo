@@ -8,6 +8,21 @@ type TimersFilters = {
   selectedNpcTypes: NpcType[];
 };
 
+type TimersGeneralConfig = {
+  removeTimerAfterMs: number;
+  timersGrouping: boolean;
+  timersUnderBag: boolean;
+  countdownMode: "min" | "max";
+};
+
+type TimersDisplayConfig = {
+  showType: boolean;
+  showLevel: boolean;
+  fontSize: number;
+  minColumnWidth: number;
+  singleTimerDisplayMode: "column" | "row";
+};
+
 type HiddenTimers = Record<string, string[]>;
 type PinnedTimers = Record<string, string[]>;
 
@@ -15,21 +30,17 @@ interface TimersState {
   hiddenTimers: HiddenTimers;
   pinnedTimers: PinnedTimers;
   timersColors: Record<string, string | undefined>;
-  removeTimerAfterMs: number;
-  compactMode?: boolean;
-  timersUnderBag?: boolean;
-  timersGrouping?: boolean;
   timersFilters: Record<string, TimersFilters>;
   timerFiltersEnabled?: boolean;
   timerFiltersSearchText?: string;
   timersSortOrder?: "asc" | "desc";
+  generalConfig: TimersGeneralConfig;
+  setGeneralConfig: (config: TimersGeneralConfig) => void;
+  displayConfig: TimersDisplayConfig;
+  setDisplayConfig: (config: TimersDisplayConfig) => void;
   setTimersFilters: (guildId: string, filters: TimersFilters) => void;
   setTimersSortOrder: (order: "asc" | "desc") => void;
-  toggleCompactMode: () => void;
-  toggleTimersUnderBag: () => void;
-  toggleTimersGrouping: () => void;
   toggleTimerFiltersEnabled: () => void;
-  setRemoveTimerAfterMs: (ms: number) => void;
   setTimerFiltersSearchText: (text: string) => void;
   hideTimer: (guildId: string, timerId: string) => void;
   revealTimer: (guildId: string, timerId: string) => void;
@@ -58,10 +69,25 @@ export const useTimersStore = create<TimersState>()(
       hiddenTimers: {},
       pinnedTimers: {},
       timersColors: {},
-      removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
-      compactMode: false,
-      timersGrouping: false,
-      timersUnderBag: false,
+      generalConfig: {
+        removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
+        timersGrouping: false,
+        timersUnderBag: false,
+        countdownMode: "max",
+      },
+      setGeneralConfig: (config: TimersGeneralConfig) => {
+        set({ generalConfig: config });
+      },
+      displayConfig: {
+        showType: false,
+        showLevel: false,
+        fontSize: 11,
+        minColumnWidth: 110,
+        singleTimerDisplayMode: "row",
+      },
+      setDisplayConfig: (config: TimersDisplayConfig) => {
+        set({ displayConfig: config });
+      },
       timerFiltersEnabled: false,
       timerFiltersSearchText: "",
       timersSortOrder: "asc",
@@ -82,18 +108,6 @@ export const useTimersStore = create<TimersState>()(
       },
       setTimerFiltersSearchText: (text: string) => {
         set({ timerFiltersSearchText: text });
-      },
-      setRemoveTimerAfterMs: (ms: number) => {
-        set({ removeTimerAfterMs: ms });
-      },
-      toggleCompactMode: () => {
-        set((state) => ({ compactMode: !state.compactMode }));
-      },
-      toggleTimersUnderBag: () => {
-        set((state) => ({ timersUnderBag: !state.timersUnderBag }));
-      },
-      toggleTimersGrouping: () => {
-        set((state) => ({ timersGrouping: !state.timersGrouping }));
       },
       hideTimer: (guildId: string, timerId: string) => {
         const currentHidden = get().hiddenTimers[guildId] || [];
@@ -152,13 +166,11 @@ export const useTimersStore = create<TimersState>()(
         hiddenTimers: state.hiddenTimers,
         pinnedTimers: state.pinnedTimers,
         timersColors: state.timersColors,
-        removeTimerAfterMs: state.removeTimerAfterMs,
-        compactMode: state.compactMode,
-        timersGrouping: state.timersGrouping,
-        timersUnderBag: state.timersUnderBag,
         timerFiltersEnabled: state.timerFiltersEnabled,
         timersSortOrder: state.timersSortOrder,
         timersFilters: state.timersFilters,
+        generalConfig: state.generalConfig,
+        displayConfig: state.displayConfig,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 2,
