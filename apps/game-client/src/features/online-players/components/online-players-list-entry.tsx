@@ -33,7 +33,7 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
   };
 
   const guildMember = guildMembers?.[discordId];
-  const roleWithTopPosition = guildMember?.roles.sort(
+  const roleWithTopPosition = guildMember?.roles?.sort(
     (a, b) => b.position - a.position
   );
   const roleColor = roleWithTopPosition?.[0]?.color;
