@@ -10,7 +10,7 @@ export const NotificationsSettingsTab = () => {
 
   return (
     <div className="ll-w-full ll-pt-2">
-      <h2>Ustawienia powiadomień</h2>
+      <h2 className="ll-text-sm">Ustawienia powiadomień</h2>
       <p className=" ll-text-gray-400 ll-mb-2">
         Skonfiguruj ustawienia powiadomień dla każdej z postaci. Możesz
         dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą
@@ -20,11 +20,7 @@ export const NotificationsSettingsTab = () => {
       <Tabs defaultValue={characterId} className="w-full">
         <TabsList>
           {characterList?.map((character) => (
-            <TabsTrigger
-              key={character.id}
-              value={`${character.id}`}
-              className="ll-mr-1"
-            >
+            <TabsTrigger key={character.id} value={`${character.id}`}>
               <CharacterTile character={character} />
             </TabsTrigger>
           ))}

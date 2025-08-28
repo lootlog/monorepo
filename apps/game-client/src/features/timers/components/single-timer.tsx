@@ -21,15 +21,15 @@ import { FC, useEffect } from "react";
 type SingleTimerProps = {
   timer: Timer;
   settingsKey: string;
-  timeLeft?: number;
-  compactMode?: boolean;
+  minTimeLeft?: number;
+  maxTimeLeft?: number;
   canDelete?: boolean;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
-  timeLeft = 0,
-  compactMode,
+  minTimeLeft = 0,
+  maxTimeLeft = 0,
   canDelete = false,
   settingsKey,
 }) => {
@@ -42,15 +42,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     pinnedTimers,
     setTimerColor,
     timersColors,
-    timersGrouping,
+    displayConfig,
+    generalConfig,
   } = useTimersStore();
   const { mutate: resetTimer } = useResetTimer();
   const { mutate: deleteTimer } = useDeleteTimer();
 
-  const minSpawnTime = new Date(timer.minSpawnTime).getTime();
+  const isMinSpawnTime = minTimeLeft < 0;
+  const hasPassedRedThreshold = maxTimeLeft < 0;
 
-  const isMinSpawnTime = minSpawnTime - Date.now() < 0;
-  const hasPassedRedThreshold = timeLeft < 0;
+  console.log(isMinSpawnTime);
 
   useEffect(() => {
     const levelSuffix =
@@ -73,7 +74,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       </span>
       <i>${escapeHtml(NPC_NAMES[timer.npc.type]?.longname ?? "")}</i>
       <br />
-      ${timersGrouping ? "" : `Dodane przez: <span class="">${escapeHtml(timer?.member?.name ?? "")}</span>`}
+      ${generalConfig.timersGrouping ? "" : `Dodane przez: <span class="">${escapeHtml(timer?.member?.name ?? "")}</span>`}
       <span class="elite_timer_tip_date">
       Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
@@ -89,7 +90,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     timer.npc.name,
     timer.minSpawnTime,
     timer.maxSpawnTime,
-    timersGrouping,
+    generalConfig.timersGrouping,
   ]);
 
   const handleHideTimer = () => {
@@ -163,9 +164,19 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const selectedColor = timersColors[timer.npc.name] ?? "white";
   const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
 
-  const shortname = compactMode
-    ? ""
-    : `[${NPC_NAMES[timer.npc.type]?.shortname ?? "M"}]`;
+  const shortname = displayConfig.showType
+    ? `[${NPC_NAMES[timer.npc.type]?.shortname ?? "M"}]`
+    : "";
+
+  const npcDetails =
+    displayConfig.showLevel && timer.npc.lvl > 0 && timer.npc.prof
+      ? ` (${timer.npc.lvl}${timer.npc.prof})`
+      : "";
+
+  const timeLeft =
+    generalConfig.countdownMode === "max" || isMinSpawnTime
+      ? maxTimeLeft
+      : minTimeLeft;
 
   return (
     <ContextMenu>
@@ -173,9 +184,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         <Tile
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof TIMERS_COLORS}
-          className={cn("ll-h-full", {
-            "!ll-py-[1px]": compactMode,
-          })}
         >
           <span
             className={cn(
@@ -184,22 +192,24 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 "ll-text-red-500": hasPassedRedThreshold,
                 "ll-text-orange-400": isMinSpawnTime,
                 "ll-text-white": !hasPassedRedThreshold && !isMinSpawnTime,
-                "ll-py-1":
-                  document.body.classList.contains("si") && !compactMode,
-                "ll-flex-col ll-py-0 ll-px-0 ll-leading-[1.05]": compactMode,
+                "ll-py-1": document.body.classList.contains("si"),
+                "ll-flex-col ll-py-0 ll-px-0 ll-leading-[1.05] ll-items-center":
+                  displayConfig.singleTimerDisplayMode === "column",
               }
             )}
           >
             <span
-              className={cn("ll-whitespace-nowrap ll-truncate", {
-                "ll-text-[10px] ll-text-center ll-px-0.5 ll-box-border ll-h-full ll-items-center ":
-                  compactMode,
-              })}
+              className={cn("ll-whitespace-nowrap ll-truncate")}
+              style={{
+                fontSize: `${displayConfig.fontSize}px`,
+              }}
             >
-              {shortname} {timer.npc.name}
+              {shortname} {timer.npc.name} {npcDetails}
             </span>
             <div
-              className={cn({ "ll-text-[10px] ll-text-center": compactMode })}
+              style={{
+                fontSize: `${displayConfig.fontSize}px`,
+              }}
             >
               {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
             </div>
@@ -237,12 +247,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         <ContextMenuItem onClick={handleHideTimerForAll}>
           Ukryj na wszystkich serwerach
         </ContextMenuItem>
-        {!timersGrouping && (
+        {!generalConfig.timersGrouping && (
           <ContextMenuItem onClick={handleRestartTimer}>
             Odliczaj od początku
           </ContextMenuItem>
         )}
-        {!timersGrouping && canDelete && (
+        {!generalConfig.timersGrouping && canDelete && (
           <ContextMenuItem onClick={handleDeleteTimer}>
             Usuń timer
           </ContextMenuItem>
