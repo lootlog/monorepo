@@ -11,7 +11,7 @@ export const DetectorSettingsTab: FC = () => {
 
   return (
     <div className="ll-w-full ll-pt-2">
-      <h2>Ustawienia wykrywacza</h2>
+      <h2 className="ll-text-sm">Ustawienia wykrywacza</h2>
       <p className=" ll-text-gray-400 ll-mb-2">
         Skonfiguruj ustawienia dotyczące wykrywania NPC w grze dla każdej z
         postaci.
@@ -20,11 +20,7 @@ export const DetectorSettingsTab: FC = () => {
       <Tabs defaultValue={characterId} className="w-full">
         <TabsList>
           {characterList?.map((character) => (
-            <TabsTrigger
-              key={character.id}
-              value={`${character.id}`}
-              className="ll-mr-1"
-            >
+            <TabsTrigger key={character.id} value={`${character.id}`}>
               <CharacterTile character={character} />
             </TabsTrigger>
           ))}
