@@ -168,7 +168,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const npcDetails =
     displayConfig.showLevel && timer.npc.lvl > 0 && timer.npc.prof
-      ? ` (${timer.npc.lvl}${timer.npc.prof})`
+      ? ` (${timer.npc.lvl}${timer.npc.prof?.charAt(0).toLowerCase() ?? ""})`
       : "";
 
   const timeLeft =
