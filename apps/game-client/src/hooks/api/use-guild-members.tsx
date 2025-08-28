@@ -3,14 +3,14 @@ import { User } from "@/hooks/api/use-user";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type GuildMember = {
-  id: string;
+  id: number;
   userId: string;
   guildId: string;
   avatar?: string;
   type: string;
   name: string;
-  user: User;
-  roles: {
+  user?: User;
+  roles?: {
     position: number;
     color: number;
   }[];
