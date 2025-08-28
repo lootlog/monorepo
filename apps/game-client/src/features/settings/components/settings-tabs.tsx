@@ -5,6 +5,7 @@ import { DetectorSettingsTab } from "@/features/settings/components/detector/det
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
+import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
 import { FC } from "react";
 
 export type SettingsTabsProps = {};
@@ -14,6 +15,11 @@ const TABS_LIST = [
     value: "general",
     label: "Ogólne",
     content: <GeneralSettingsTab />,
+  },
+  {
+    value: "timers",
+    label: "Timery",
+    content: <TimersSettingsTab />,
   },
   {
     value: "catching",
@@ -44,16 +50,14 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
         defaultValue="general"
         className="ll-flex ll-flex-col ll-h-full ll-w-full"
       >
-        <TabsList
-          className="ll-flex-shrink-0 ll-flex-wrap !ll-justify-start ll-justify-items-start !ll-gap-x-1 !ll-gap-0 ll-flex" /* wymuś brak rozciągania w pionie */
-        >
+        <TabsList className="ll-flex-shrink-0 ll-flex-wrap !ll-justify-start ll-justify-items-start !ll-gap-x-1 !ll-gap-0 ll-flex">
           {TABS_LIST.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
               {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
-        <ScrollArea className="ll-h-full ll-w-full ll-box-border" type="auto">
+        <ScrollArea className="ll-h-full ll-w-full ll-box-border" type="hover">
           {TABS_LIST.map((tab) => (
             <TabsContent key={tab.value} value={tab.value}>
               {tab.content}
