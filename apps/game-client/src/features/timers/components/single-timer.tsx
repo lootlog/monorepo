@@ -51,8 +51,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const isMinSpawnTime = minTimeLeft < 0;
   const hasPassedRedThreshold = maxTimeLeft < 0;
 
-  console.log(isMinSpawnTime);
-
   useEffect(() => {
     const levelSuffix =
       timer.npc.lvl === 0
