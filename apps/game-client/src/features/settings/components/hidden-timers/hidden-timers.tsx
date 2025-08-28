@@ -1,5 +1,4 @@
 import { Tile } from "@/components/ui/tile";
-import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { XIcon } from "lucide-react";
 import { FC } from "react";
@@ -9,9 +8,9 @@ export type HiddenTimersProps = {
 };
 
 export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
-  const { hiddenTimers, revealTimer, timersGrouping } = useTimersStore();
+  const { hiddenTimers, revealTimer, generalConfig } = useTimersStore();
 
-  const key = timersGrouping ? "global" : guildId;
+  const key = generalConfig.timersGrouping ? "global" : guildId;
   const hiddenTimersForAccount = hiddenTimers[key!];
 
   const handleRemoveTimer = (timer: string) => {
