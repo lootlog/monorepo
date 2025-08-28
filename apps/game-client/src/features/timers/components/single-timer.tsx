@@ -185,7 +185,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         >
           <span
             className={cn(
-              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border ll-h-full",
+              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border ll-h-full ll-min-w-0",
               {
                 "ll-text-red-500": hasPassedRedThreshold,
                 "ll-text-orange-400": isMinSpawnTime,
@@ -197,7 +197,13 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             )}
           >
             <span
-              className={cn("ll-whitespace-nowrap ll-truncate")}
+              className={cn(
+                "ll-whitespace-nowrap ll-truncate ll-min-w-0 ll-max-w-full",
+                {
+                  "ll-w-full ll-text-center":
+                    displayConfig.singleTimerDisplayMode === "column",
+                }
+              )}
               style={{
                 fontSize: `${displayConfig.fontSize}px`,
               }}
