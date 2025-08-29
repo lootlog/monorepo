@@ -8,22 +8,25 @@ import {
   PartyMember,
 } from "@/utils/game/get-battle-participants";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { CreateLootResponse } from "@/hooks/api/use-create-loot";
+import { CreateLootResponse, useCreateLoot } from "@/hooks/api/use-create-loot";
 import { LootHandlersConfig } from "./types";
+import { useGlobalStore } from "@/store/global.store";
+import { useUpdateLoot } from "@/hooks/api/use-update-loot";
 
 export const useLootHandlers = (config: LootHandlersConfig) => {
+  const { world, characterId, accountId } = useGlobalStore(
+    (state) => state.gameState
+  );
+  const { mutate: createLoot } = useCreateLoot();
+  const { mutate: updateLoot } = useUpdateLoot();
   const {
     isValidGameState,
-    world,
-    accountId,
-    characterId,
-    createLoot,
-    updateLoot,
     pendingBattle,
     talkingNpcId,
     latestLootId,
     isLootDistributionMessage,
   } = config;
+
   const createLootFromBattle = useCallback(
     (event: GameEvent) => {
       if (
