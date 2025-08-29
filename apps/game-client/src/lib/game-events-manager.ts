@@ -96,19 +96,21 @@ class GameEventsManager {
   }
 
   private setupGameInitProxy() {
+    if (this.trySetupGameProxy()) return;
+
+    this.watchForGameInit();
+  }
+
+  private trySetupGameProxy(): boolean {
     if (!window._g || typeof window._g !== "function") {
-      setTimeout(() => this.setupGameInitProxy(), 100);
-      return;
+      return false;
     }
 
     const original = window._g;
     const proxy = new Proxy(original, {
       apply: (target, thisArg, args) => {
         const result = target.apply(thisArg, args);
-
-        // Notify that game initialization might have changed
         this.onGameInitChange();
-
         return result;
       },
     });
@@ -120,10 +122,83 @@ class GameEventsManager {
         window._g = original;
       },
     });
+
+    return true;
+  }
+
+  private watchForGameInit() {
+    this.setupPropertyWatcher();
+  }
+
+  private setupPropertyWatcher() {
+    try {
+      const descriptor = Object.getOwnPropertyDescriptor(window, "_g");
+      const self = this;
+
+      Object.defineProperty(window, "_g", {
+        get() {
+          return descriptor?.value;
+        },
+        set(value) {
+          if (descriptor) {
+            descriptor.value = value;
+          }
+
+          if (typeof value === "function") {
+            setTimeout(() => {
+              if (!self.trySetupGameProxy()) {
+                console.warn("Game proxy setup failed after _g was set");
+              }
+            }, 0);
+          }
+        },
+        configurable: true,
+        enumerable: true,
+      });
+
+      this.proxies.push({
+        cleanup: () => {
+          if (descriptor) {
+            Object.defineProperty(window, "_g", descriptor);
+          } else {
+            delete (window as any)._g;
+          }
+        },
+      });
+    } catch (error) {
+      console.warn("Property watcher failed, using backoff retry:", error);
+      this.setupBackoffRetry();
+    }
+  }
+
+  private setupBackoffRetry() {
+    let attempts = 0;
+    const maxAttempts = 10;
+    const baseDelay = 50;
+
+    const retry = () => {
+      if (attempts >= maxAttempts) {
+        console.warn(
+          "Failed to setup game init proxy after",
+          maxAttempts,
+          "attempts"
+        );
+        return;
+      }
+
+      if (this.trySetupGameProxy()) {
+        return;
+      }
+
+      attempts++;
+      const delay = Math.min(baseDelay * Math.pow(2, attempts), 5000); // Exponential backoff, max 5s
+      setTimeout(retry, delay);
+    };
+
+    setTimeout(retry, baseDelay);
   }
 
   private onGameInitChange() {
-    // This will be set by the hook that manages initialization
     if (this.gameInitCallback) {
       this.gameInitCallback();
     }
@@ -145,5 +220,4 @@ class GameEventsManager {
   }
 }
 
-// Singleton instance
 export const gameEventsManager = new GameEventsManager();
