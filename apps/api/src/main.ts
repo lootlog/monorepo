@@ -7,6 +7,7 @@ import {
   FastifyAdapter,
 } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -20,6 +21,16 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe());
+
+  // Swagger configuration
+  const config = new DocumentBuilder()
+    .setTitle('Lootlog API')
+    .setDescription('The Lootlog API documentation')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
 
   await app.startAllMicroservices();
   await app.listen(port, '0.0.0.0');
