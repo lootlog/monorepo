@@ -1,10 +1,20 @@
 import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { composeNpcChatMessage } from "@/utils/chat/compose-npc-chat-message";
-import { MessagingHandlersConfig, NpcLocation } from "./types";
+import { NpcLocation } from "./types";
+import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
+import { useCreateNotification } from "@/hooks/api/use-create-notification";
+import { useGlobalStore } from "@/store/global.store";
+import { useWindowsStore } from "@/store/windows.store";
 
-export const useMessagingHandlers = (config: MessagingHandlersConfig) => {
-  const { sendChatMessage, createNotification, setOpen, world, characterId, accountId } = config;
+export const useMessagingHandlers = () => {
+  const { mutate: sendChatMessage } = useSendChatMessage();
+  const { mutate: createNotification } = useCreateNotification();
+  const { world, characterId, accountId } = useGlobalStore(
+    (state) => state.gameState
+  );
+  const { setOpen } = useWindowsStore();
+
   const handleSendMessage = (
     npcType: NpcType,
     baseMessage: string,
@@ -12,7 +22,7 @@ export const useMessagingHandlers = (config: MessagingHandlersConfig) => {
     guildIds: string[]
   ) => {
     if (!sendChatMessage || !setOpen) return;
-    
+
     let location = "";
 
     if (NPCS_WITH_LOCATION.includes(npcType)) {

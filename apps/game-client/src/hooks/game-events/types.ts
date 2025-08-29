@@ -8,16 +8,10 @@ import {
   NpcDetectorSettings,
   GameNpcWithLocation,
 } from "@/store/npc-detector.store";
-import { LootDto, CreateLootResponse } from "@/hooks/api/use-create-loot";
-import { UpdateLootOptions } from "@/hooks/api/use-update-loot";
-import { UseCreateTimerOptions } from "@/hooks/api/use-create-timer";
-import { UseSendChatMessageOptions } from "@/hooks/api/use-send-chat-message";
-import { UseCreateNotificationOptions } from "@/hooks/api/use-create-notification";
+import { LootDto } from "@/hooks/api/use-create-loot";
 import { PartyMember, Npc } from "@/utils/game/get-battle-participants";
 import { ChatEventMsg } from "@/types/margonem/game-events/chat";
 import { W } from "@/types/margonem/game-events/f";
-import { WindowId } from "@/store/windows.store";
-import { AxiosResponse } from "axios";
 
 export type EventNpc = Npcs[0];
 
@@ -82,14 +76,8 @@ export interface EventHandlersConfig {
     autoSendMessage: boolean,
     autoSendNotification: boolean
   ) => void;
-  characterId?: string;
-  world?: string;
-  accountId?: string;
-  createTimer?: (data: UseCreateTimerOptions) => void;
   removeNpc?: (npcId: number | number[]) => void;
   removeNotificationByNpcId?: (npcId: number, world?: string) => void;
-  setOpen?: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
-  addNpc?: (npc: GameNpcWithLocation | GameNpcWithLocation[]) => void;
   pendingBattle?: React.RefObject<W | null>;
   talkingNpcId?: React.RefObject<string | null>;
   latestLootId?: React.RefObject<number | null>;
@@ -101,23 +89,6 @@ export interface EventHandlersConfig {
 
 export interface LootHandlersConfig {
   isValidGameState: boolean;
-  world?: string;
-  accountId?: string;
-  characterId?: string;
-  createLoot?: (
-    data: LootCreationData,
-    options?: {
-      onSuccess?: (response: AxiosResponse<CreateLootResponse>) => void;
-      onError?: (error: any) => void;
-    }
-  ) => void;
-  updateLoot?: (
-    data: UpdateLootOptions,
-    options?: {
-      onSuccess?: () => void;
-      onError?: (error: any) => void;
-    }
-  ) => void;
   pendingBattle?: React.RefObject<W | null>;
   talkingNpcId?: React.RefObject<string | null>;
   latestLootId?: React.RefObject<number | null>;
@@ -133,14 +104,4 @@ export interface NpcProcessorsConfig {
     guildIds: string[]
   ) => void;
   handleSendNotification: (npc: GameNpc, guildIds: string[]) => void;
-  characterId?: string;
-}
-
-export interface MessagingHandlersConfig {
-  sendChatMessage?: (data: UseSendChatMessageOptions) => void;
-  createNotification?: (data: UseCreateNotificationOptions) => void;
-  setOpen?: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
-  world?: string;
-  characterId?: string;
-  accountId?: string;
 }
