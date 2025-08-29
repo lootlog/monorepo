@@ -6,8 +6,9 @@ import {
 } from "@/components/ui/context-menu";
 import { Tile } from "@/components/ui/tile";
 import { NPC_NAMES } from "@/constants/margonem";
-import { useCharacterList } from "@/hooks/api/use-character-list";
+import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
+import { useGuilds } from "@/hooks/api/use-guilds";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import { Timer } from "@/hooks/api/use-timers";
 import { cn } from "@/lib/utils";
@@ -19,101 +20,36 @@ import { FC, useEffect } from "react";
 
 type SingleTimerProps = {
   timer: Timer;
-  guildId?: string;
-  timeLeft?: number;
-  compactMode?: boolean;
+  settingsKey: string;
+  minTimeLeft?: number;
+  maxTimeLeft?: number;
   canDelete?: boolean;
-};
-
-export const COLORS = {
-  red: {
-    bg: "ll-bg-red-500/20 hover:ll-bg-red-500/40",
-    bgNoOpacity: "ll-bg-red-500",
-    border: "ll-border-red-500",
-  },
-  orange: {
-    bg: "ll-bg-orange-500/20 hover:ll-bg-orange-500/40",
-    bgNoOpacity: "ll-bg-orange-500",
-    border: "ll-border-orange-500",
-  },
-  yellow: {
-    bg: "ll-bg-yellow-500/20 hover:ll-bg-yellow-500/40",
-    bgNoOpacity: "ll-bg-yellow-500",
-    border: "ll-border-yellow-500",
-  },
-  lime: {
-    bg: "ll-bg-lime-500/20 hover:ll-bg-lime-500/40",
-    bgNoOpacity: "ll-bg-lime-500",
-    border: "ll-border-lime-500",
-  },
-  green: {
-    bg: "ll-bg-green-500/20 hover:ll-bg-green-500/40",
-    bgNoOpacity: "ll-bg-green-500",
-    border: "ll-border-green-500",
-  },
-  teal: {
-    bg: "ll-bg-teal-500/20 hover:ll-bg-teal-500/40",
-    bgNoOpacity: "ll-bg-teal-500",
-    border: "ll-border-teal-500",
-  },
-  sky: {
-    bg: "ll-bg-sky-500/20 hover:ll-bg-sky-500/40",
-    bgNoOpacity: "ll-bg-sky-500",
-    border: "ll-border-sky-500",
-  },
-  blue: {
-    bg: "ll-bg-indigo-800/20 hover:ll-bg-indigo-800/40",
-    bgNoOpacity: "ll-bg-indigo-800",
-    border: "ll-border-indigo-800",
-  },
-  violet: {
-    bg: "ll-bg-violet-400/20 hover:ll-bg-violet-400/40",
-    bgNoOpacity: "ll-bg-violet-400",
-    border: "ll-border-violet-400",
-  },
-  purple: {
-    bg: "ll-bg-purple-600/20 hover:ll-bg-purple-600/40",
-    bgNoOpacity: "ll-bg-purple-600",
-    border: "ll-border-purple-600",
-  },
-  pink: {
-    bg: "ll-bg-pink-500/20 hover:ll-bg-pink-500/40",
-    bgNoOpacity: "ll-bg-pink-500",
-    border: "ll-border-pink-500",
-  },
-  white: {
-    bg: "ll-bg-gray-400/20 hover:ll-bg-gray-400/40",
-    bgNoOpacity: "ll-bg-gray-400",
-    border: "ll-border-gray-400",
-  },
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
-  timeLeft = 0,
-  compactMode,
+  minTimeLeft = 0,
+  maxTimeLeft = 0,
   canDelete = false,
+  settingsKey,
 }) => {
-  const { accountId, characterId, world } = useGlobalStore(
-    (state) => state.gameState
-  );
-  const { data: characters } = useCharacterList();
+  const { world } = useGlobalStore((state) => state.gameState);
+  const { data: guilds } = useGuilds();
   const {
-    addHiddenTimer,
-    addPinnedTimer,
-    removePinnedTimer,
+    hideTimer,
+    pinTimer,
+    unpinTimer,
     pinnedTimers,
     setTimerColor,
     timersColors,
-    timersGrouping,
+    displayConfig,
+    generalConfig,
   } = useTimersStore();
   const { mutate: resetTimer } = useResetTimer();
   const { mutate: deleteTimer } = useDeleteTimer();
 
-  const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-
-  const isMinSpawnTime = minSpawnTime - Date.now() < 0;
-  const hasPassedRedThreshold = timeLeft < 0;
+  const isMinSpawnTime = minTimeLeft < 0;
+  const hasPassedRedThreshold = maxTimeLeft < 0;
 
   useEffect(() => {
     const levelSuffix =
@@ -136,7 +72,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       </span>
       <i>${escapeHtml(NPC_NAMES[timer.npc.type]?.longname ?? "")}</i>
       <br />
-      ${timersGrouping ? "" : `Dodane przez: <span class="">${escapeHtml(timer?.member?.name ?? "")}</span>`}
+      ${generalConfig.timersGrouping ? "" : `Dodane przez: <span class="">${escapeHtml(timer?.member?.name ?? "")}</span>`}
       <span class="elite_timer_tip_date">
       Min: ${format(new Date(timer.minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
       </span>
@@ -152,30 +88,51 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     timer.npc.name,
     timer.minSpawnTime,
     timer.maxSpawnTime,
-    timersGrouping,
+    generalConfig.timersGrouping,
   ]);
 
   const handleHideTimer = () => {
-    if (!accountId || !characterId) return;
-    addHiddenTimer(accountId, characterId, timer.npc.name);
+    if (!settingsKey) return;
+    console.log("Hiding timer", timer.npc.name, "for", settingsKey);
+    hideTimer(settingsKey, timer.npc.name);
   };
 
   const handleHideTimerForAll = () => {
-    if (!accountId || !characters) return;
+    if (!settingsKey || !guilds) return;
 
-    characters.forEach((character) => {
-      addHiddenTimer(accountId, String(character.id), timer.npc.name);
+    guilds.forEach((guild) => {
+      hideTimer(guild.id, timer.npc.name);
     });
+
+    hideTimer("global", timer.npc.name);
   };
 
   const handlePinTimer = () => {
-    if (!accountId || !characterId) return;
+    if (!settingsKey) return;
 
     if (isPinned) {
-      removePinnedTimer(accountId, characterId, timer.npc.name);
+      unpinTimer(settingsKey, timer.npc.name);
       return;
     }
-    addPinnedTimer(accountId, characterId, timer.npc.name);
+    pinTimer(settingsKey, timer.npc.name);
+  };
+
+  const handlePinTimerForAll = () => {
+    if (!settingsKey || !guilds) return;
+
+    guilds.forEach((guild) => {
+      pinTimer(guild.id, timer.npc.name);
+    });
+
+    pinTimer("global", timer.npc.name);
+  };
+
+  const handleUnpinTimerForAll = () => {
+    if (!settingsKey || !guilds) return;
+    guilds.forEach((guild) => {
+      unpinTimer(guild.id, timer.npc.name);
+    });
+    unpinTimer("global", timer.npc.name);
   };
 
   const handleTimerColorChange = (color?: string) => {
@@ -183,7 +140,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   };
 
   const handleRestartTimer = () => {
-    if (!accountId || !characterId || !world) return;
+    if (!world) return;
 
     resetTimer({
       world,
@@ -193,7 +150,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   };
 
   const handleDeleteTimer = () => {
-    if (!accountId || !characterId || !world) return;
+    if (!world) return;
 
     deleteTimer({
       world,
@@ -203,47 +160,60 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   };
 
   const selectedColor = timersColors[timer.npc.name] ?? "white";
-  const isPinned = pinnedTimers[`${accountId}${characterId}`]?.includes(
-    timer.npc.name
-  );
+  const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
 
-  const shortname = compactMode
-    ? ""
-    : `[${NPC_NAMES[timer.npc.type]?.shortname ?? "M"}]`;
+  const shortname = displayConfig.showType
+    ? `[${NPC_NAMES[timer.npc.type]?.shortname ?? "M"}]`
+    : "";
+
+  const npcDetails =
+    displayConfig.showLevel && timer.npc.lvl > 0 && timer.npc.prof
+      ? ` (${timer.npc.lvl}${timer.npc.prof})`
+      : "";
+
+  const timeLeft =
+    generalConfig.countdownMode === "max" || isMinSpawnTime
+      ? maxTimeLeft
+      : minTimeLeft;
 
   return (
     <ContextMenu>
       <ContextMenuTrigger className="ll-h-full ll-pr-[1px]">
         <Tile
           id={timer.npc.id.toString()}
-          color={selectedColor as keyof typeof COLORS}
-          className={cn("ll-h-full", {
-            "!ll-py-[1px]": compactMode,
-          })}
+          color={selectedColor as keyof typeof TIMERS_COLORS}
         >
           <span
             className={cn(
-              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border ll-h-full",
+              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border ll-h-full ll-min-w-0",
               {
                 "ll-text-red-500": hasPassedRedThreshold,
                 "ll-text-orange-400": isMinSpawnTime,
                 "ll-text-white": !hasPassedRedThreshold && !isMinSpawnTime,
-                "ll-py-1":
-                  document.body.classList.contains("si") && !compactMode,
-                "ll-flex-col ll-py-0 ll-px-0 ll-leading-[1.05]": compactMode,
+                "ll-py-1": document.body.classList.contains("si"),
+                "ll-flex-col ll-py-0 ll-px-0 ll-leading-[1.05] ll-items-center":
+                  displayConfig.singleTimerDisplayMode === "column",
               }
             )}
           >
             <span
-              className={cn("ll-whitespace-nowrap ll-truncate", {
-                "ll-text-[10px] ll-text-center ll-px-0.5 ll-box-border ll-h-full ll-items-center ":
-                  compactMode,
-              })}
+              className={cn(
+                "ll-whitespace-nowrap ll-truncate ll-min-w-0 ll-max-w-full",
+                {
+                  "ll-w-full ll-text-center":
+                    displayConfig.singleTimerDisplayMode === "column",
+                }
+              )}
+              style={{
+                fontSize: `${displayConfig.fontSize}px`,
+              }}
             >
-              {shortname} {timer.npc.name}
+              {shortname} {timer.npc.name} {npcDetails}
             </span>
             <div
-              className={cn({ "ll-text-[10px] ll-text-center": compactMode })}
+              style={{
+                fontSize: `${displayConfig.fontSize}px`,
+              }}
             >
               {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
             </div>
@@ -253,7 +223,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
       <ContextMenuContent className="ll-w-48 ll-flex ll-flex-col">
         <div className="ll-flex ll-gap-1 ll-my-1.5 ll-w-full ll-justify-center ll-flex-wrap">
-          {Object.entries(COLORS).map(([id, color]) => (
+          {Object.entries(TIMERS_COLORS).map(([id, color]) => (
             <div
               key={id}
               className={cn(
@@ -270,16 +240,23 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         <ContextMenuItem onClick={handlePinTimer}>
           {isPinned ? "Odepnij" : "Przypnij"}
         </ContextMenuItem>
+        <ContextMenuItem
+          onClick={isPinned ? handleUnpinTimerForAll : handlePinTimerForAll}
+        >
+          {isPinned
+            ? "Odepnij na wszystkich serwerach"
+            : "Przypnij na wszystkich serwerach"}
+        </ContextMenuItem>
         <ContextMenuItem onClick={handleHideTimer}>Ukryj</ContextMenuItem>
         <ContextMenuItem onClick={handleHideTimerForAll}>
-          Ukryj dla wszystkich postaci
+          Ukryj na wszystkich serwerach
         </ContextMenuItem>
-        {!timersGrouping && (
+        {!generalConfig.timersGrouping && (
           <ContextMenuItem onClick={handleRestartTimer}>
             Odliczaj od początku
           </ContextMenuItem>
         )}
-        {!timersGrouping && canDelete && (
+        {!generalConfig.timersGrouping && canDelete && (
           <ContextMenuItem onClick={handleDeleteTimer}>
             Usuń timer
           </ContextMenuItem>

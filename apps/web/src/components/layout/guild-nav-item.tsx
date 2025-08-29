@@ -11,35 +11,62 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
-import { FC } from "react";
+import { FC, memo } from "react";
 import { Link } from "react-router-dom";
 
 export type GuildNavItemProps = {
   guild: Guild;
+  isDragging?: boolean;
 };
 
-export const GuildNavItem: FC<GuildNavItemProps> = ({ guild }) => {
+const GuildNavItemComponent: FC<GuildNavItemProps> = ({
+  guild,
+  isDragging = false,
+}) => {
   const guildId = useGuildId();
   const isActive = guildId === guild.id || guildId === guild.vanityUrl;
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDragging) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   return (
     <Tooltip>
-      <TooltipTrigger>
-        <Link to={`/${guild.vanityUrl ?? guild.id}`}>
-          <Avatar
-            className={cn(
-              "size-12 border-solid border-4 transition-all border-transparent box-border rounded-xl",
-              { "border-primary": isActive }
-            )}
+      <TooltipTrigger asChild>
+        <div className="w-full flex items-center justify-center mb-1">
+          <Link
+            to={`/${guild.vanityUrl ?? guild.id}`}
+            draggable={false}
+            className="block"
+            onClick={handleClick}
+            style={{ pointerEvents: isDragging ? "none" : "auto" }}
           >
-            <AvatarImage src={guild.icon as string} alt={guild.name} />
-            <AvatarFallback className="rounded-none">
-              {guild.name[0]}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
+            <Avatar
+              className={cn(
+                "size-12 border-solid border-4 transition-all border-transparent box-border rounded-xl hover:rounded-lg",
+                { "border-primary rounded-lg": isActive }
+              )}
+            >
+              <AvatarImage
+                src={guild.icon as string}
+                alt={guild.name}
+                className="pointer-events-none select-none"
+              />
+              <AvatarFallback className="rounded-none text-white font-medium">
+                {guild.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+        </div>
       </TooltipTrigger>
-      <TooltipContent side="right">{guild.name}</TooltipContent>
+      <TooltipContent side="right" className="font-medium">
+        {guild.name}
+      </TooltipContent>
     </Tooltip>
   );
 };
+
+export const GuildNavItem = memo(GuildNavItemComponent);

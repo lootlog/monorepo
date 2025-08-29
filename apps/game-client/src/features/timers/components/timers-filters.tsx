@@ -14,10 +14,10 @@ const clampValue = (value: number, min: number, max: number): number => {
 };
 
 export type TimersFiltersProps = {
-  guildId: string;
+  filtersKey: string;
 };
 
-export const TimersFilters: FC<TimersFiltersProps> = ({ guildId }) => {
+export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   const {
     timerFiltersSearchText,
     setTimerFiltersSearchText,
@@ -25,7 +25,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ guildId }) => {
     setTimersFilters,
   } = useTimersStore();
 
-  const filters = timersFilters[guildId] || DEFAULT_TIMERS_FILTERS;
+  const filters = timersFilters[filtersKey] || DEFAULT_TIMERS_FILTERS;
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,19 +41,13 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ guildId }) => {
       if (isNaN(numericValue)) return;
 
       const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
-      setTimersFilters(guildId, {
+
+      setTimersFilters(filtersKey, {
         ...filters,
         minLvl: clampedValue,
       });
-
-      if (clampedValue > filters.maxLvl) {
-        setTimersFilters(guildId, {
-          ...filters,
-          maxLvl: clampedValue,
-        });
-      }
     },
-    [setTimersFilters, filters.maxLvl]
+    [setTimersFilters, filters, filtersKey]
   );
 
   const handleMaxLvlChange = useCallback(
@@ -63,31 +57,24 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ guildId }) => {
       if (isNaN(numericValue)) return;
 
       const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
-      setTimersFilters(guildId, {
+      setTimersFilters(filtersKey, {
         ...filters,
         maxLvl: clampedValue,
       });
-
-      if (clampedValue < filters.minLvl) {
-        setTimersFilters(guildId, {
-          ...filters,
-          minLvl: clampedValue,
-        });
-      }
     },
-    [setTimersFilters, filters.minLvl]
+    [setTimersFilters, filters, filtersKey]
   );
 
   const handleToggleNpcType = useCallback(
     (npcType: NpcType) => {
-      setTimersFilters(guildId, {
+      setTimersFilters(filtersKey, {
         ...filters,
         selectedNpcTypes: filters.selectedNpcTypes.includes(npcType)
           ? filters.selectedNpcTypes.filter((type) => type !== npcType)
           : [...filters.selectedNpcTypes, npcType],
       });
     },
-    [setTimersFilters, filters.selectedNpcTypes, guildId]
+    [setTimersFilters, filters.selectedNpcTypes, filtersKey]
   );
 
   return (
@@ -102,7 +89,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ guildId }) => {
           placeholder="Od"
           value={filters.minLvl.toString()}
           onChange={handleMinLvlChange}
-          className="ll-w-8"
+          className="ll-w-8 input-no-spinner"
           max={MAX_LVL}
           min={MIN_LVL}
           type="number"
@@ -114,7 +101,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ guildId }) => {
           placeholder="Do"
           value={filters.maxLvl.toString()}
           onChange={handleMaxLvlChange}
-          className="ll-w-8"
+          className="ll-w-8 input-no-spinner"
           min={MIN_LVL}
           max={MAX_LVL}
           type="number"

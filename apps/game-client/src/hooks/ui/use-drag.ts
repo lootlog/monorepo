@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useState,
+  useRef,
 } from "react";
 
 const DEFAULT_STATE = { x: 0, y: 0 };
@@ -33,13 +34,16 @@ export const useDrag = ({
 }: UseDragConfig) => {
   const [dragInfo, setDragInfo] = useState(DEFAULT_DRAG_INFO);
   const [finalPosition, setFinalPosition] = useState(defaultState);
+  const rafRef = useRef<number | null>(null);
+  const nextPosRef = useRef<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [wasJustDragging, setWasJustDragging] = useState(false);
 
   const updateFinalPosition = useCallback(
     (width: number, height: number, x: number, y: number) => {
+      let newPos: { x: number; y: number };
       if (calculateFor === "bottomRight") {
-        setFinalPosition({
+        newPos = {
           x: Math.max(
             Math.min(
               window.innerWidth - width,
@@ -54,14 +58,23 @@ export const useDrag = ({
             ),
             0
           ),
-        });
-        return;
+        };
+      } else {
+        newPos = {
+          x: Math.min(Math.max(0, x), window.innerWidth - width),
+          y: Math.min(Math.max(0, y), window.innerHeight - height),
+        };
       }
-
-      setFinalPosition({
-        x: Math.min(Math.max(0, x), window.innerWidth - width),
-        y: Math.min(Math.max(0, y), window.innerHeight - height),
-      });
+      nextPosRef.current = newPos;
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          if (nextPosRef.current) {
+            setFinalPosition(nextPosRef.current);
+            nextPosRef.current = null;
+          }
+          rafRef.current = null;
+        });
+      }
     },
     [calculateFor]
   );
@@ -153,14 +166,12 @@ export const useDrag = ({
         setFinalPosition((prev) => {
           const x = Math.min(Math.max(0, prev.x), window.innerWidth - width);
           const y = Math.min(Math.max(0, prev.y), window.innerHeight - height);
-          onDragStop({ x, y });
-
-          return {
-            x,
-            y,
-          };
+          if (x !== prev.x || y !== prev.y) {
+            setTimeout(() => onDragStop({ x, y }), 0);
+          }
+          return { x, y };
         });
-      }, 100); // 100ms debounce
+      }, 100);
     };
 
     window.addEventListener("resize", handleResize);
@@ -170,7 +181,7 @@ export const useDrag = ({
         clearTimeout(timeoutId);
       }
     };
-  }, [ref, isLocked]);
+  }, [ref, isLocked, onDragStop]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handleMouseMove);
@@ -183,22 +194,14 @@ export const useDrag = ({
       document.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, [handleMouseMove, handleTouchMove]);
 
-  useEffect(() => {
-    if (isLocked) return;
-    const { current } = ref;
-    if (!current) return;
-    const { width, height } = current.getBoundingClientRect();
-
-    setFinalPosition((prev) => {
-      const x = Math.min(Math.max(0, prev.x), window.innerWidth - width);
-      const y = Math.min(Math.max(0, prev.y), window.innerHeight - height);
-      onDragStop({ x, y });
-      return { x, y };
-    });
-  }, [ref]);
+  // Usunięto clampowanie pozycji i setFinalPosition z efektu mount/ref
 
   const recalculate = (width: number, height: number) => {
     const { current } = ref;

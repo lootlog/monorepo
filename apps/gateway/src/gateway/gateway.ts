@@ -18,11 +18,10 @@ import { RuntimeEnvironment } from 'src/types/common.types';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
 import { Platform } from 'src/gateway/enums/platform.enum';
-import { Socket } from 'src/gateway/types/socket-user.type';
+import { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
 import { groupBy, omit } from 'lodash';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { buildUser } from 'src/gateway/utils/build-user';
-import { emitPresenceToRooms } from 'src/gateway/utils/emit-presence-to-rooms';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
 
 @WebSocketGateway({
@@ -66,7 +65,7 @@ export class Gateway {
     };
     client.on(GatewayEvent.DISCONNECTING, () => {
       if (client.data) {
-        emitPresenceToRooms(
+        this.emitPresenceToRooms(
           client,
           {
             discordId: client.data.discordId,
@@ -105,7 +104,7 @@ export class Gateway {
 
     client.data = user;
     client.join(guildIds);
-    emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);
+    this.emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);
     client.emit(GatewayEvent.JOIN, { status: 'success' });
     return;
   }
@@ -123,16 +122,33 @@ export class Gateway {
     const socketsInRoom = await this.server.in(guildId).fetchSockets();
     const users = socketsInRoom
       .filter((s) => s.data.player.world === world)
-      .map((s) => omit(s.data, ['sessionId', 'userId']))
+      .map((s) => omit(s.data, ['sessionId', 'userId', 'guilds']))
       .sort((a, b) => b.player.lvl - a.player.lvl);
     const groupedUsers = groupBy(users, 'discordId');
+
     return groupedUsers;
+  }
+
+  emitPresenceToRooms(
+    client: Socket,
+    user: Partial<SocketUser>,
+    event: GatewayEvent,
+  ) {
+    const preparedUser = omit(user, ['sessionId', 'guilds', 'userId']);
+
+    client.rooms.forEach((room) => {
+      client.to(room).emit(event, {
+        ...preparedUser,
+        guildId: room,
+      });
+    });
   }
 
   getConnectionMetadata(request: Socket['request']) {
     const discordId = (request.headers['x-auth-discord-id'] as string) || null;
     const userId = (request.headers['x-auth-user-id'] as string) || null;
     const platform = this.determineUserPlatform(request.headers.origin);
+
     return { discordId, userId, platform };
   }
 
@@ -140,6 +156,7 @@ export class Gateway {
     this.logger.debug(`Request Origin: ${requestOrigin}`);
     if (!requestOrigin) return Platform.UNKNOWN;
     const result = GAME_URL_REGEX.test(requestOrigin);
+
     return result ? Platform.GAME : Platform.WEB_APP;
   }
 }
