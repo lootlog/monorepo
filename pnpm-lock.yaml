@@ -6,7 +6,7 @@ settings:
   injectWorkspacePackages: true
 
 overrides:
-  discord-api-types: 0.38.13
+  discord-api-types: 0.38.15
   multer: ^2.0.1
   cross-spawn: ^7.0.5
   body-parser: ^1.20.3
@@ -86,8 +86,8 @@ importers:
         specifier: ^0.14.1
         version: 0.14.2
       discord-api-types:
-        specifier: 0.38.13
-        version: 0.38.13
+        specifier: 0.38.15
+        version: 0.38.15
       fastify:
         specifier: ^5.3.2
         version: 5.4.0
@@ -302,7 +302,7 @@ importers:
         version: 5.1.5
       necord:
         specifier: ^6.8.14
-        version: 6.8.14(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(discord-api-types@0.38.13)(discord.js@14.21.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 6.8.14(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(discord-api-types@0.38.15)(discord.js@14.21.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -852,8 +852,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       discord-api-types:
-        specifier: 0.38.13
-        version: 0.38.13
+        specifier: 0.38.15
+        version: 0.38.15
       framer-motion:
         specifier: ^12.18.1
         version: 12.19.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -5229,8 +5229,8 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  discord-api-types@0.38.13:
-    resolution: {integrity: sha512-FELWJRgLVQuR7Az8RhdEZE0k6QNjSW9PCUcU1iyP2Gke8HrJmnMceSS9pD93UM64s3tvZzJPajpPLjWZJylf4g==}
+  discord-api-types@0.38.15:
+    resolution: {integrity: sha512-RX3skyRH7p6BlHOW62ztdnIc87+wv4TEJEURMir5k5BbRJ10wK1MCqFEO6USHTol3gkiHLE6wWoHhNQ2pqB4AA==}
 
   discord.js@14.21.0:
     resolution: {integrity: sha512-U5w41cEmcnSfwKYlLv5RJjB8Joa+QJyRwIJz5i/eg+v2Qvv6EYpCRhN9I2Rlf0900LuqSDg8edakUATrDZQncQ==}
@@ -7090,7 +7090,7 @@ packages:
     peerDependencies:
       '@nestjs/common': ^10.2.0 || ^11.0.0
       '@nestjs/core': ^10.2.0 || ^11.0.0
-      discord-api-types: 0.38.13
+      discord-api-types: 0.38.15
       discord.js: ^14.0.1
       reflect-metadata: ^0.2.1
       rxjs: ^7.2.0
@@ -9863,7 +9863,7 @@ snapshots:
       '@discordjs/formatters': 0.6.1
       '@discordjs/util': 1.1.1
       '@sapphire/shapeshift': 4.0.0
-      discord-api-types: 0.38.13
+      discord-api-types: 0.38.15
       fast-deep-equal: 3.1.3
       ts-mixer: 6.0.4
       tslib: 2.8.1
@@ -9874,7 +9874,7 @@ snapshots:
 
   '@discordjs/formatters@0.6.1':
     dependencies:
-      discord-api-types: 0.38.13
+      discord-api-types: 0.38.15
 
   '@discordjs/rest@2.5.1':
     dependencies:
@@ -9883,7 +9883,7 @@ snapshots:
       '@sapphire/async-queue': 1.5.5
       '@sapphire/snowflake': 3.5.5
       '@vladfrangu/async_event_emitter': 2.4.6
-      discord-api-types: 0.38.13
+      discord-api-types: 0.38.15
       magic-bytes.js: 1.12.1
       tslib: 2.8.1
       undici: 6.21.3
@@ -9898,7 +9898,7 @@ snapshots:
       '@sapphire/async-queue': 1.5.5
       '@types/ws': 8.18.1
       '@vladfrangu/async_event_emitter': 2.4.6
-      discord-api-types: 0.38.13
+      discord-api-types: 0.38.15
       tslib: 2.8.1
       ws: 8.18.2
     transitivePeerDependencies:
@@ -13819,7 +13819,7 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  discord-api-types@0.38.13: {}
+  discord-api-types@0.38.15: {}
 
   discord.js@14.21.0:
     dependencies:
@@ -13830,7 +13830,7 @@ snapshots:
       '@discordjs/util': 1.1.1
       '@discordjs/ws': 1.2.3
       '@sapphire/snowflake': 3.5.3
-      discord-api-types: 0.38.13
+      discord-api-types: 0.38.15
       fast-deep-equal: 3.1.3
       lodash.snakecase: 4.1.1
       magic-bytes.js: 1.12.1
@@ -16190,11 +16190,11 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  necord@6.8.14(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(discord-api-types@0.38.13)(discord.js@14.21.0)(reflect-metadata@0.2.2)(rxjs@7.8.2):
+  necord@6.8.14(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(discord-api-types@0.38.15)(discord.js@14.21.0)(reflect-metadata@0.2.2)(rxjs@7.8.2):
     dependencies:
       '@nestjs/common': 11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.3(@nestjs/common@11.1.3(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.3)(@nestjs/platform-express@11.1.3)(@nestjs/websockets@11.1.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      discord-api-types: 0.38.13
+      discord-api-types: 0.38.15
       discord.js: 14.21.0
       path-to-regexp: 8.2.0
       reflect-metadata: 0.2.2
