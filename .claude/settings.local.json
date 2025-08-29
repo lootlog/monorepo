@@ -4,7 +4,14 @@
       "Bash(pnpm build:*)",
       "Bash(npx tsc:*)",
       "Bash(pnpm test:*)",
-      "Bash(npx prisma generate:*)"
+      "Bash(npx prisma generate:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git branch:*)",
+      "Bash(gh config set:*)",
+      "Bash(gh pr list:*)",
+      "Bash(curl:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh api:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,6 @@
 import { Timers } from "@/features/timers/timers";
 import { Settings } from "@/features/settings/settings";
-import { useGameEventsParser } from "@/hooks/use-game-events-parser";
+import { useGameEventsParser } from "@/hooks/game-events/use-game-events-parser";
 import { Chat } from "@/features/chat/chat";
 import { useGlobalStore } from "@/store/global.store";
 import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
