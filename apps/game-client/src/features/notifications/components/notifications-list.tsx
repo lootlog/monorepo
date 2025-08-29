@@ -5,10 +5,12 @@ import { FC } from "react";
 
 export type NotificationsListProps = {
   notifications?: NotificationWithServers[];
+  now?: number;
 };
 
 export const NotificationsList: FC<NotificationsListProps> = ({
   notifications,
+  now,
 }) => {
   return (
     <ScrollArea
@@ -19,6 +21,7 @@ export const NotificationsList: FC<NotificationsListProps> = ({
         return (
           <SingleNotification
             key={notification.notificationId}
+            now={now}
             notification={notification}
             index={i}
             showCloseButton={notifications.length > 1}

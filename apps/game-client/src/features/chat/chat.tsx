@@ -59,8 +59,8 @@ export const Chat = () => {
             <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
               <div className="ll-flex-shrink-0 ll-pt-2">
                 <GuildSelector
-                  selectedGuildId={selectedGuildId}
-                  setSelectedGuildId={setSelectedGuildId}
+                  value={selectedGuildId}
+                  onChange={setSelectedGuildId}
                 />
               </div>
               <div className="ll-flex-1 ll-overflow-hidden">

@@ -1,4 +1,4 @@
-import { FC, Fragment, useMemo, useEffect, useState } from "react";
+import { FC, Fragment, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
@@ -23,12 +23,14 @@ export type SingleNotificationProps = {
   notification: NotificationWithServers;
   index: number;
   showCloseButton?: boolean;
+  now?: number;
 };
 
 export const SingleNotification: FC<SingleNotificationProps> = ({
   notification,
   index,
   showCloseButton = false,
+  now,
 }) => {
   const { removeNotification, settings } = useNotificationsStore();
   const { characterId } = useGlobalStore((s) => s.gameState);
@@ -49,25 +51,17 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     : undefined;
   const autoHideTimeout = settingsByNpcType?.autoHideTimeout || 0;
 
-  const [secondsLeft, setSecondsLeft] = useState(autoHideTimeout);
-
-  useEffect(() => {
-    if (!autoHideTimeout || autoHideTimeout <= 0) return;
-    setSecondsLeft(autoHideTimeout);
-
-    const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          removeNotification(notification.notificationId);
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [autoHideTimeout, notification.notificationId]);
+  const createdAtMs = useMemo(
+    () => new Date(notification.createdAt).getTime(),
+    [notification.createdAt]
+  );
+  const secondsLeft = useMemo(() => {
+    if (!autoHideTimeout || autoHideTimeout <= 0) return 0;
+    const endAt = createdAtMs + autoHideTimeout * 1000;
+    const diffMs = endAt - (now ?? Date.now());
+    if (diffMs <= 0) return 0;
+    return Math.ceil(diffMs / 1000);
+  }, [autoHideTimeout, createdAtMs, now]);
 
   const serverNames = useMemo(
     () =>
@@ -84,7 +78,9 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const color = getBackgroundColor(key, true);
 
   const secondsLeftPercentage =
-    autoHideTimeout > 0 ? (secondsLeft / autoHideTimeout) * 100 : 0;
+    autoHideTimeout > 0 && secondsLeft > 0
+      ? (secondsLeft / autoHideTimeout) * 100
+      : 0;
 
   return (
     <Fragment key={notification.notificationId}>
@@ -124,7 +120,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         )}
       </span>
       <span className="ll-flex ll-flex-col ll-justify-center"></span>
-      {autoHideTimeout > 0 && (
+      {autoHideTimeout > 0 && secondsLeft > 0 && (
         <>
           <Separator className="ll-bg-black/70 ll-h-[1px]" />
           <Progress value={secondsLeftPercentage} indicatorColor={color} />
