@@ -13,6 +13,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
   const {
     isValidGameState,
     processNpcSettings,
+    processGameNpcSettings,
     composeNpcFromEvent,
     composeNpcFromGame,
     processNpcActions,
@@ -45,12 +46,12 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
 
           const npcType = getNpcTypeByWt(tpl.wt, tpl.prof, tpl.type);
           if (!processNpcSettings) return acc;
-          
+
           const processedSettings = processNpcSettings(npc, npcType, event);
           if (!processedSettings) return acc;
 
           if (!composeNpcFromEvent || !processNpcActions) return acc;
-          
+
           const composedNpc = composeNpcFromEvent(npc, tpl, processedSettings);
 
           processNpcActions(
@@ -89,13 +90,13 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         if (!npc) return acc;
 
         const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
-        if (!processNpcSettings) return acc;
-        
-        const processedSettings = processNpcSettings(npc, npcType);
+        if (!processGameNpcSettings) return acc;
+
+        const processedSettings = processGameNpcSettings(npc, npcType);
         if (!processedSettings) return acc;
 
         if (!composeNpcFromGame || !processNpcActions) return acc;
-        
+
         const composedNpc = composeNpcFromGame(npc, processedSettings);
 
         processNpcActions(
