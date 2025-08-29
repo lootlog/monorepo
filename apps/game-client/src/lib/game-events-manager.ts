@@ -46,7 +46,7 @@ class GameEventsManager {
 
     events.forEach((event) => {
       try {
-        this.eventProcessor!(event);
+        this.eventProcessor?.(event);
       } catch (error) {
         console.warn("Failed to process queued event:", error);
       }
