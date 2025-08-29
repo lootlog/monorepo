@@ -11,7 +11,7 @@ export const CatchingSettings = () => {
 
   return (
     <div className="ll-w-full ll-pt-2">
-      <h2>Ustawienia łapania lootu i timerów</h2>
+      <h2 className="ll-text-sm">Ustawienia łapania lootu i timerów</h2>
       <p className=" ll-text-gray-400 ll-mb-2">
         Skonfiguruj ustawienia dotyczące łapania lootu i timerów w grze dla
         każdej z postaci.
@@ -20,11 +20,7 @@ export const CatchingSettings = () => {
       <Tabs defaultValue={characterId} className="ll-w-full">
         <TabsList>
           {characterList?.map((character) => (
-            <TabsTrigger
-              key={character.id}
-              value={`${character.id}`}
-              className="ll-mr-1"
-            >
+            <TabsTrigger key={character.id} value={`${character.id}`}>
               <CharacterTile character={character} />
             </TabsTrigger>
           ))}

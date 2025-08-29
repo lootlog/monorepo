@@ -228,7 +228,7 @@ export class MembersService {
       throw new NotFoundException('Member not found');
     }
 
-    if (!member.active) {
+    if (!member?.active) {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
