@@ -4,17 +4,17 @@ import { useState } from "react";
 import { useTimersStore } from "@/store/timers.store";
 
 export const HiddenTimersTab = () => {
-  const { timersGrouping } = useTimersStore();
+  const { generalConfig } = useTimersStore();
   const [selectedGuildId, setSelectedGuildId] = useState("");
 
   return (
     <div className="ll-flex ll-flex-col ll-gap-1 ll-pt-2">
       <label className="ll-mt-1 ll-font-semibold">
-        {timersGrouping
+        {generalConfig.timersGrouping
           ? "Grupowanie włączone - globalne ustawienia bez podziału na serwer"
           : "Wybierz serwer:"}
       </label>
-      {!timersGrouping && (
+      {!generalConfig.timersGrouping && (
         <span className="ll-w-2/3">
           <GuildSelector
             className="ll-mb-2"
