@@ -1,8 +1,7 @@
 import { writeFileSync } from 'fs';
 import generateLootPayload from './generate-loot.mjs';
 
-const token =
-  'eyJhbGciOiJFZERTQSIsImtpZCI6IjBxeFE1bG5GMHVCRXFHanYyTlJ0cWpwWTJ0NTQ1M3FXIn0.eyJpZCI6IjR4WExCdlBTYlgybkhmZ3dNemFBUUNkZjVvOFFDZGFyIiwiZW1haWwiOiJrYW1pbHdyb25rYTdAZ21haWwuY29tIiwiZGlzY29yZElkIjoiMzYyOTA3MTM1ODI0MTAxMzc2IiwiaWF0IjoxNzUxMjAwMTQzLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0L2FwaS9hdXRoIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdC9hcGkvYXV0aCIsImV4cCI6MTc1MTI4NjU0Mywic3ViIjoiNHhYTEJ2UFNiWDJuSGZnd016YUFRQ2RmNW84UUNkYXIifQ.RH_hJngpQhYxxBWg4QajzaA3u40gPacFAayxLZqTWxOfuzUdiLU1sRvrpOLz7iHXWJZu16wu-2qfHMJOiU-lCA';
+const token = 'your_token_here';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
