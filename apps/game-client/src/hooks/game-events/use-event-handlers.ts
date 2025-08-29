@@ -6,10 +6,21 @@ import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { GameNpcWithLocation } from "@/store/npc-detector.store";
+import {
+  GameNpcWithLocation,
+  useNpcDetectorStore,
+} from "@/store/npc-detector.store";
 import { EventHandlersConfig } from "./types";
+import { useCreateTimer } from "@/hooks/api/use-create-timer";
+import { useGlobalStore } from "@/store/global.store";
+import { useWindowsStore } from "@/store/windows.store";
 
 export const useEventHandlers = (config: EventHandlersConfig) => {
+  const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
+  const { mutate: createTimer } = useCreateTimer();
+  const { addNpc, removeNpc } = useNpcDetectorStore();
+  const { setOpen } = useWindowsStore();
+
   const {
     isValidGameState,
     processNpcSettings,
@@ -17,20 +28,12 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
     composeNpcFromEvent,
     composeNpcFromGame,
     processNpcActions,
-    characterId,
-    world,
-    accountId,
-    createTimer,
-    removeNpc,
     removeNotificationByNpcId,
-    setOpen,
-    addNpc,
     pendingBattle,
     talkingNpcId,
     latestLootId,
     createLootFromBattle,
     handleUpdateLoot,
-    handleDialogLoot,
     isLootDistributionMessage,
   } = config;
 

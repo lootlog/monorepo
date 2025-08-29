@@ -1,13 +1,6 @@
 import { useCallback, useRef } from "react";
-import { useCreateLoot } from "@/hooks/api/use-create-loot";
-import { useCreateNotification } from "@/hooks/api/use-create-notification";
-import { useCreateTimer } from "@/hooks/api/use-create-timer";
-import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { useUpdateLoot } from "@/hooks/api/use-update-loot";
 import { useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
-import { useNpcDetectorStore } from "@/store/npc-detector.store";
-import { useWindowsStore } from "@/store/windows.store";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
 import { W } from "@/types/margonem/game-events/f";
 
@@ -21,16 +14,8 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
   const { gameInitialized, characterId, accountId, world } = useGlobalStore(
     (s) => s.gameState
   );
-  const { setOpen } = useWindowsStore();
-  const { addNpc, removeNpc } = useNpcDetectorStore();
-  const { removeNotificationByNpcId } = useNotificationsStore();
 
-  // API hooks
-  const { mutate: createLoot } = useCreateLoot();
-  const { mutate: createTimer } = useCreateTimer();
-  const { mutate: updateLoot } = useUpdateLoot();
-  const { mutate: createNotification } = useCreateNotification();
-  const { mutate: sendChatMessage } = useSendChatMessage();
+  const { removeNotificationByNpcId } = useNotificationsStore();
 
   // Refs for tracking state
   const pendingBattle = useRef<W | null>(null);
@@ -44,14 +29,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
     accountId
   );
 
-  const { handleSendMessage, handleSendNotification } = useMessagingHandlers({
-    sendChatMessage,
-    createNotification,
-    setOpen,
-    world,
-    characterId,
-    accountId,
-  });
+  const { handleSendMessage, handleSendNotification } = useMessagingHandlers();
 
   const {
     processNpcSettings,
@@ -63,26 +41,16 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
     settingsRef,
     handleSendMessage,
     handleSendNotification,
-    characterId,
   });
 
-  const {
-    createLootFromBattle,
-    createLootFromDialog,
-    handleUpdateLoot,
-    handleDialogLoot,
-  } = useLootHandlers({
-    isValidGameState,
-    world,
-    accountId,
-    characterId,
-    createLoot,
-    updateLoot,
-    pendingBattle,
-    talkingNpcId,
-    latestLootId,
-    isLootDistributionMessage,
-  });
+  const { createLootFromBattle, handleUpdateLoot, handleDialogLoot } =
+    useLootHandlers({
+      isValidGameState,
+      pendingBattle,
+      talkingNpcId,
+      latestLootId,
+      isLootDistributionMessage,
+    });
 
   const {
     handleNpcDetection,
@@ -98,14 +66,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
     composeNpcFromEvent,
     composeNpcFromGame,
     processNpcActions,
-    characterId,
-    world,
-    accountId,
-    createTimer,
-    removeNpc,
     removeNotificationByNpcId,
-    setOpen,
-    addNpc,
     pendingBattle,
     talkingNpcId,
     latestLootId,
