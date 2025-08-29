@@ -3,30 +3,67 @@ import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { PickedNpcType } from "@/store/npc-detector.store";
-import { ProcessedNpcSettings, NpcProcessorsConfig } from "./types";
+import { PickedNpcType, GameNpcWithLocation } from "@/store/npc-detector.store";
+import { GameNpc } from "@/types/margonem/npcs";
+import { NpcTpl } from "@/types/margonem/npc-tpl-manager";
+import { ProcessedNpcSettings, NpcProcessorsConfig, EventNpc } from "./types";
 
 const isPickedNpcType = (npcType: NpcType): npcType is PickedNpcType => {
-  return [NpcType.HERO, NpcType.COLOSSUS, NpcType.TITAN, NpcType.ELITE2].includes(npcType as PickedNpcType);
+  return [
+    NpcType.HERO,
+    NpcType.COLOSSUS,
+    NpcType.TITAN,
+    NpcType.ELITE2,
+  ].includes(npcType as PickedNpcType);
 };
 
 export const useNpcProcessors = (config: NpcProcessorsConfig) => {
-  const { settingsRef, handleSendMessage, handleSendNotification, characterId } = config;
+  const {
+    settingsRef,
+    handleSendMessage,
+    handleSendNotification,
+    characterId,
+  } = config;
   const processNpcSettings = useCallback(
     (
-      npc: any,
+      npc: EventNpc,
       npcType: NpcType,
       event?: GameEvent
     ): ProcessedNpcSettings | null => {
       if (!characterId || !isPickedNpcType(npcType)) return null;
 
-      const settings = settingsRef.current[characterId]?.[npcType];
+      const settings = settingsRef.current?.[characterId]?.[npcType];
       if (!settings?.detect) return null;
 
       const icon = event
-        ? getNpcIconFromEvent(event, npc.icon?.id) ||
-          Game.getNpcIcon(npc.icon?.id)
-        : npc.icon || "";
+        ? getNpcIconFromEvent(event, npc.icon.id) ||
+          Game.getNpcIcon(npc.icon.id) ||
+          ""
+        : Game.getNpcIcon(npc.icon.id) || "";
+
+      const autoSendMessage = settings.autoNotifyChat ?? false;
+      const autoSendNotification = settings.autoNotifyClan ?? false;
+      const guildIds = settings.guildIds ?? [];
+
+      return {
+        settings,
+        icon,
+        autoSendMessage,
+        autoSendNotification,
+        guildIds,
+      };
+    },
+    [characterId]
+  );
+
+  const processGameNpcSettings = useCallback(
+    (npc: GameNpc, npcType: NpcType): ProcessedNpcSettings | null => {
+      if (!characterId || !isPickedNpcType(npcType)) return null;
+
+      const settings = settingsRef.current?.[characterId]?.[npcType];
+      if (!settings?.detect) return null;
+
+      const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
 
       const autoSendMessage = settings.autoNotifyChat ?? false;
       const autoSendNotification = settings.autoNotifyClan ?? false;
@@ -44,7 +81,11 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
   );
 
   const composeNpcFromEvent = useCallback(
-    (npc: any, tpl: any, processedSettings: ProcessedNpcSettings) => ({
+    (
+      npc: EventNpc,
+      tpl: NpcTpl,
+      processedSettings: ProcessedNpcSettings
+    ): GameNpcWithLocation => ({
       ...npc,
       icon: processedSettings.icon,
       nick: tpl.nick,
@@ -60,7 +101,10 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
   );
 
   const composeNpcFromGame = useCallback(
-    (npc: any, processedSettings: ProcessedNpcSettings) => ({
+    (
+      npc: GameNpc,
+      processedSettings: ProcessedNpcSettings
+    ): GameNpcWithLocation => ({
       ...npc,
       icon: processedSettings.icon,
       nick: npc.nick,
@@ -77,7 +121,7 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
 
   const processNpcActions = useCallback(
     (
-      composedNpc: any,
+      composedNpc: GameNpcWithLocation,
       npcType: NpcType,
       guildIds: string[],
       autoSendMessage: boolean,
@@ -105,6 +149,7 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
 
   return {
     processNpcSettings,
+    processGameNpcSettings,
     composeNpcFromEvent,
     composeNpcFromGame,
     processNpcActions,

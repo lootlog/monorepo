@@ -55,6 +55,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
 
   const {
     processNpcSettings,
+    processGameNpcSettings,
     composeNpcFromEvent,
     composeNpcFromGame,
     processNpcActions,
@@ -93,6 +94,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
   } = useEventHandlers({
     isValidGameState,
     processNpcSettings,
+    processGameNpcSettings,
     composeNpcFromEvent,
     composeNpcFromGame,
     processNpcActions,

@@ -1,8 +1,14 @@
 import { useCallback } from "react";
+import { AxiosResponse } from "axios";
 import { Game } from "@/lib/game";
 import { getLoot } from "@/utils/game/get-loots";
-import { getBattleParticipants } from "@/utils/game/get-battle-participants";
+import {
+  getBattleParticipants,
+  Npc,
+  PartyMember,
+} from "@/utils/game/get-battle-participants";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
+import { CreateLootResponse } from "@/hooks/api/use-create-loot";
 import { LootHandlersConfig } from "./types";
 
 export const useLootHandlers = (config: LootHandlersConfig) => {
@@ -20,7 +26,13 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
   } = config;
   const createLootFromBattle = useCallback(
     (event: GameEvent) => {
-      if (!createLoot || !pendingBattle || !latestLootId || !pendingBattle.current) return;
+      if (
+        !createLoot ||
+        !pendingBattle ||
+        !latestLootId ||
+        !pendingBattle.current
+      )
+        return;
 
       const loots = getLoot(event.item);
       if (!loots.length || !isValidGameState || !event.loot || !event.f) return;
@@ -42,7 +54,7 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
           characterId: characterId!,
         },
         {
-          onSuccess: (response: any) => {
+          onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
             latestLootId.current = response.data.id;
           },
         }
@@ -66,26 +78,26 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
       const loots = getLoot(event.item);
       if (!loots.length || !isValidGameState || !event.loot) return;
 
-      const npcs =
+      const npcs: Npc[] =
         event.npcs_del
           ?.map((npc) => Game.getNpc(npc.id))
           .filter(Boolean)
           .map((npcData) => ({
             icon: npcData!.icon,
             id: npcData!.id,
+            name: npcData!.nick,
             prof: npcData!.prof,
             hpp: 0,
             type: npcData!.type,
             wt: npcData!.wt,
             lvl: npcData!.lvl,
-            name: npcData!.nick,
             location: Game.map.name,
           })) ?? [];
 
       if (npcs.length === 0) return;
 
       const hero = Game.hero;
-      const players = [
+      const players: PartyMember[] = [
         {
           id: hero.id,
           name: hero.nick,
@@ -111,7 +123,7 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
           characterId: characterId!,
         },
         {
-          onSuccess: (response: any) => {
+          onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
             latestLootId.current = response.data.id;
           },
         }
@@ -134,7 +146,6 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
         { msg: desiredMsg.msg, id: latestLootId.current },
         {
           onSuccess: () => {
-            console.log("Loot updated successfully");
             latestLootId.current = null;
           },
         }
