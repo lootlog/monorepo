@@ -9,8 +9,8 @@ import { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
 import {
   DEFAULT_PAGE_LIMIT,
   MAX_PAGE_LIMIT,
-} from 'src/loots/config/pagination';
-import { ErrorKey } from 'src/loots/enum/error-key.enum';
+} from './config/pagination';
+import { ErrorKey } from './enum/error-key.enum';
 import { PlayersService } from 'src/players/players.service';
 import { NpcsService } from 'src/npcs/npcs.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
@@ -96,25 +96,25 @@ export class LootsService {
       }),
     ]);
 
-    const highestWtNpc = body.npcs.reduce((prev, current) => {
-      return prev && prev.wt > current.wt ? prev : current;
-    });
+    const npcData = this.processNpcs(body.npcs);
     const highestWtNpcType = getNpcTypeByWt(
-      highestWtNpc.wt,
-      highestWtNpc.prof,
-      highestWtNpc.type,
+      npcData.highest.wt,
+      npcData.highest.prof,
+      npcData.highest.type,
     );
 
-    const sortedNpcsByWt = this.sortNpcsByWt(body.npcs);
-    const npcs = this.mapNpcs(sortedNpcsByWt);
-    const players = this.mapPlayers(body.players);
-    const items = this.mapItems(body.loots);
-    const share =
-      highestWtNpcType === NpcType.COLOSSUS
-        ? this.mapLootShare(body.loots, body.players)
-        : {};
-
     let loot = await this.prisma.loot.findUnique({ where: { uniqueId } });
+
+    let npcs: any, players: any, items: any, share: any;
+    if (!loot) {
+      npcs = npcData.mapped;
+      players = this.mapPlayers(body.players);
+      items = this.mapItems(body.loots);
+      share =
+        highestWtNpcType === NpcType.COLOSSUS
+          ? this.mapLootShare(body.loots, body.players)
+          : {};
+    }
 
     if (!loot) {
       try {
@@ -140,42 +140,40 @@ export class LootsService {
       }
     }
 
-    await Promise.all(
-      filteredGuilds.map(async (guild) => {
+    const submissionData = filteredGuilds
+      .map((guild) => {
         const config = lootlogConfigs.find((c) => c.id === guild.id);
-        if (!config) return;
+        if (!config) return null;
 
         const calculatedLoot = this.getLootForGivenConfig(
           body.loots,
           config.npcs,
           highestWtNpcType,
         );
-
-        if (calculatedLoot.length === 0) return;
+        if (calculatedLoot.length === 0) return null;
 
         const member = members.find(({ guildId }) => guildId === guild.id);
-        if (!member) return;
+        if (!member) return null;
 
-        await this.prisma.lootSubmission.upsert({
-          where: {
-            lootId_guildId_memberId: {
-              lootId: loot.id,
-              guildId: guild.id,
-              memberId: member.id,
-            },
-          },
-          update: {},
-          create: {
-            lootId: loot.id,
-            guildId: guild.id,
-            memberId: member.id,
-          },
-        });
-      }),
-    );
+        return {
+          lootId: loot.id,
+          guildId: guild.id,
+          memberId: member.id,
+        };
+      })
+      .filter(Boolean);
 
-    this.playersService.bulkIndexPlayers(players);
-    this.npcsService.bulkIndexNpcs(npcs);
+    if (submissionData.length > 0) {
+      await this.prisma.lootSubmission.createMany({
+        data: submissionData,
+        skipDuplicates: true,
+      });
+    }
+
+    if (players && npcs) {
+      this.playersService.bulkIndexPlayers(players);
+      this.npcsService.bulkIndexNpcs(npcs);
+    }
 
     return { id: loot.id };
   }
@@ -299,13 +297,8 @@ export class LootsService {
       throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE);
     }
 
-    const parsedPlayers =
-      typeof loot.players === 'string'
-        ? JSON.parse(loot.players)
-        : loot.players;
-
-    const parsedLoot =
-      typeof loot.items === 'string' ? JSON.parse(loot.items) : loot.items;
+    const parsedPlayers = this.parseJsonField(loot.players);
+    const parsedLoot = this.parseJsonField(loot.items);
 
     const mappedLootShare = Object.entries(lootShare).reduce(
       (acc, [nick, hids]) => {
@@ -485,13 +478,13 @@ export class LootsService {
       },
     });
 
-    const submissionsByLootId: Record<number, typeof submissions> = {};
-    for (const sub of submissions) {
-      if (!submissionsByLootId[sub.lootId]) {
-        submissionsByLootId[sub.lootId] = [];
-      }
-      submissionsByLootId[sub.lootId].push(sub);
-    }
+    const submissionsByLootId = submissions.reduce(
+      (acc, sub) => {
+        (acc[sub.lootId] ??= []).push(sub);
+        return acc;
+      },
+      {} as Record<number, typeof submissions>,
+    );
 
     return loots.map((loot) => ({
       ...loot,
@@ -532,6 +525,30 @@ export class LootsService {
       : Object.values(Profession);
     const type = getItemTypeByCl(cl);
     return { lvl, rarity, prof: requiredProfArray, type };
+  }
+
+  private parseJsonField(field: any): any {
+    return typeof field === 'string' ? JSON.parse(field) : field;
+  }
+
+  private processNpcs(npcs: CreateLootDto['npcs']) {
+    const sorted = [...npcs].sort((a, b) => b.wt - a.wt);
+    return {
+      highest: sorted[0],
+      sorted,
+      mapped: sorted.map((npc) => ({
+        id: npc.id,
+        name: npc.name,
+        lvl: npc.lvl,
+        prof: getProfByShortname(npc.prof),
+        icon: npc.icon,
+        wt: npc.wt,
+        location: npc.location,
+        type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
+        margonemType: npc.type,
+        hpp: npc.hpp,
+      })),
+    };
   }
 
   sortNpcsByWt(npcs: CreateLootDto['npcs']) {
