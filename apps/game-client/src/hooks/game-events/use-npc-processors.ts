@@ -6,6 +6,10 @@ import { GameEvent } from "@/types/margonem/game-events/game-event";
 import { PickedNpcType } from "@/store/npc-detector.store";
 import { ProcessedNpcSettings, NpcProcessorsConfig } from "./types";
 
+const isPickedNpcType = (npcType: NpcType): npcType is PickedNpcType => {
+  return [NpcType.HERO, NpcType.COLOSSUS, NpcType.TITAN, NpcType.ELITE2].includes(npcType as PickedNpcType);
+};
+
 export const useNpcProcessors = (config: NpcProcessorsConfig) => {
   const { settingsRef, handleSendMessage, handleSendNotification, characterId } = config;
   const processNpcSettings = useCallback(
@@ -14,10 +18,9 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
       npcType: NpcType,
       event?: GameEvent
     ): ProcessedNpcSettings | null => {
-      if (!characterId) return null;
+      if (!characterId || !isPickedNpcType(npcType)) return null;
 
-      const settings =
-        settingsRef.current[characterId]?.[npcType as PickedNpcType];
+      const settings = settingsRef.current[characterId]?.[npcType];
       if (!settings?.detect) return null;
 
       const icon = event

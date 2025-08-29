@@ -33,7 +33,7 @@ export type UseGuildNpcsOptions = {
 
 export const useNpcs = ({ search }: UseGuildNpcsOptions) => {
   const token = useAuthToken();
-  const guildId = "kek";
+  const guildId = undefined; // TODO: Add proper guild context
 
   const queryParams = {
     search: search ?? "",

@@ -20,7 +20,7 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
   } = config;
   const createLootFromBattle = useCallback(
     (event: GameEvent) => {
-      if (!createLoot || !pendingBattle || !latestLootId) return;
+      if (!createLoot || !pendingBattle || !latestLootId || !pendingBattle.current) return;
 
       const loots = getLoot(event.item);
       if (!loots.length || !isValidGameState || !event.loot || !event.f) return;
