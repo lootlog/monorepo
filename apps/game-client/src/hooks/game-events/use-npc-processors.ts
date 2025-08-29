@@ -7,6 +7,7 @@ import { PickedNpcType, GameNpcWithLocation } from "@/store/npc-detector.store";
 import { GameNpc } from "@/types/margonem/npcs";
 import { NpcTpl } from "@/types/margonem/npc-tpl-manager";
 import { ProcessedNpcSettings, NpcProcessorsConfig, EventNpc } from "./types";
+import { useGlobalStore } from "@/store/global.store";
 
 const isPickedNpcType = (npcType: NpcType): npcType is PickedNpcType => {
   return [
@@ -18,12 +19,9 @@ const isPickedNpcType = (npcType: NpcType): npcType is PickedNpcType => {
 };
 
 export const useNpcProcessors = (config: NpcProcessorsConfig) => {
-  const {
-    settingsRef,
-    handleSendMessage,
-    handleSendNotification,
-    characterId,
-  } = config;
+  const { characterId } = useGlobalStore((s) => s.gameState);
+
+  const { settingsRef, handleSendMessage, handleSendNotification } = config;
   const processNpcSettings = useCallback(
     (
       npc: EventNpc,
