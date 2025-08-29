@@ -16,8 +16,9 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { getLanguageVersion } from "@/utils/game/get-language-version";
+import { gameEventsManager } from "@/lib/game-events-manager";
 import { isEmpty } from "lodash";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export const useInitialConfiguration = () => {
   const { setGameState, gameState } = useGlobalStore();
@@ -27,21 +28,30 @@ export const useInitialConfiguration = () => {
     useNotificationsStore();
   const { data: guilds } = useGuilds();
   const { data: characterList } = useCharacterList();
+  const initializationRef = useRef({ 
+    initialized: false,
+    timeoutId: null as NodeJS.Timeout | null
+  });
 
-  const init = async () => {
-    const started = typeof window._g == "function";
-    if (!started) {
-      setTimeout(init, 500);
-      return;
+  const scheduleInitCheck = () => {
+    if (initializationRef.current.timeoutId) {
+      clearTimeout(initializationRef.current.timeoutId);
     }
+
+    initializationRef.current.timeoutId = setTimeout(() => {
+      checkAndInitialize();
+    }, 0);
+  };
+
+  const checkAndInitialize = () => {
+    if (initializationRef.current.initialized) return;
 
     const interfaceName = getInterfaceName();
     const initialized = getInitializeState(interfaceName);
 
-    if (!initialized) {
-      setTimeout(init, 500);
-      return;
-    }
+    if (!initialized) return;
+
+    initializationRef.current.initialized = true;
 
     const world = getWorldName(interfaceName);
     const accountId = getAccountId(interfaceName);
@@ -58,6 +68,8 @@ export const useInitialConfiguration = () => {
       characterId,
       languageVersion,
     });
+
+    gameEventsManager.setReady(true);
   };
 
   const initDetectorConfiguration = (characterId: string) => {
@@ -91,7 +103,19 @@ export const useInitialConfiguration = () => {
   };
 
   useEffect(() => {
-    init();
+    gameEventsManager.setupProxies();
+    gameEventsManager.setGameInitCallback(() => {
+      if (!initializationRef.current.initialized) {
+        scheduleInitCheck();
+      }
+    });
+
+    return () => {
+      gameEventsManager.cleanup();
+      if (initializationRef.current.timeoutId) {
+        clearTimeout(initializationRef.current.timeoutId);
+      }
+    };
   }, []);
 
   useEffect(() => {
