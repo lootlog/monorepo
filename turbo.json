@@ -64,6 +64,10 @@
     "configure:env": {
       "cache": false,
       "interactive": true
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "cache": false
     }
   }
 }
