@@ -36,3 +36,6 @@ npm-debug.log*
 *.pem
 
 generated
+
+CLAUDE.md
+.claude/settings.local.json
