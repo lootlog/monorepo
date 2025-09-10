@@ -14,7 +14,7 @@ export default function TermsOfService(): JSX.Element {
           <h1 className="text-4xl font-bold text-white mb-8 text-center">
             Regulamin Serwisu
           </h1>
-          <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-8 text-gray-300 space-y-6">
+          <div className=" backdrop-blur-sm rounded-xl p-8 text-gray-300 space-y-6">
             <p className="text-sm text-gray-400">
               Data ostatniej aktualizacji:{" "}
               {new Date().toLocaleDateString("pl-PL")}
