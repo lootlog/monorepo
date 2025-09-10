@@ -29,7 +29,9 @@ export const PageHeader: React.FC = () => {
             <Button>Przejdź do lootloga</Button>
           </a>
         ) : (
-          <Button onClick={handleLoginAction}>Zaloguj się</Button>
+          <Button className="pointer-events-auto" onClick={handleLoginAction}>
+            Zaloguj się
+          </Button>
         )}
       </div>
     </div>
