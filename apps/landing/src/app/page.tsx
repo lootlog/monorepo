@@ -111,7 +111,7 @@ export default function Home(): JSX.Element {
           isBounce={false}
           autoDemo={true}
           autoSpeed={0.5}
-          autoIntensity={2.2}
+          autoIntensity={2.6}
           takeoverDuration={0.25}
           autoResumeDelay={3000}
           autoRampDuration={0.6}
@@ -119,7 +119,7 @@ export default function Home(): JSX.Element {
           // dt={0.001666}
         />
 
-        <div className="absolute inset-0 px-4 pointer-events-none">
+        <div className="absolute inset-0 px-4 pointer-events-auto lg:pointer-events-none">
           <PageHeader />
           <div className="max-w-6xl mx-auto text-center flex flex-col items-center justify-center h-[calc(100dvh-4rem)]">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
