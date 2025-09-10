@@ -116,7 +116,7 @@ export default function Home(): JSX.Element {
           autoResumeDelay={3000}
           autoRampDuration={0.6}
           BFECC={true}
-          dt={0.001666}
+          // dt={0.001666}
         />
 
         <div className="absolute inset-0 px-4 pointer-events-none">
