@@ -38,6 +38,7 @@
       "@nestjs/core",
       "@prisma/client",
       "@prisma/engines",
+      "@scarf/scarf",
       "@swc/core",
       "@tailwindcss/oxide",
       "core-js-pure",
