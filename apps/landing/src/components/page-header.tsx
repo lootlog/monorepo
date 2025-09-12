@@ -25,11 +25,13 @@ export const PageHeader: React.FC = () => {
       </a>
       <div className="flex flex-row gap-4">
         {isAuthenticated ? (
-          <a href="/@me">
+          <a href="/@me" className="pointer-events-auto">
             <Button>Przejdź do lootloga</Button>
           </a>
         ) : (
-          <Button onClick={handleLoginAction}>Zaloguj się</Button>
+          <Button className="pointer-events-auto" onClick={handleLoginAction}>
+            Zaloguj się
+          </Button>
         )}
       </div>
     </div>
