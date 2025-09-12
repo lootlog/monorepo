@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@lootlog/ui/globals.css";
 import { JSX } from "react";
 import { LayoutProps } from "@/.next/types/app/page";
-import { PageHeader } from "@/src/components/page-header";
+import { ThemeProvider } from "@lootlog/ui/components/next-theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,49 +43,55 @@ export default function RootLayout({
   children,
 }: Readonly<LayoutProps>): JSX.Element {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-[#101218] via-purple-900 to-[#101218] text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-white`}
       >
-        <PageHeader />
-        {children}
-        <footer className="py-8 px-4 bg-gradient-to-r from-[#101218] via-purple-900/20 to-[#101218]">
-          <div className="max-w-6xl mx-auto text-center text-gray-400">
-            <p>
-              Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.
-            </p>
-            <p>
-              &copy; {new Date().getFullYear()} Lootlog.pl - Dodatek do gry
-              Margonem
-            </p>
-            <div className="mt-4 flex justify-center gap-6">
-              <a
-                href="https://discord.gg/mPcczaeYMu"
-                className="hover:text-white transition-colors"
-              >
-                Discord
-              </a>
-              <a
-                href="https://github.com/lootlog/monorepo"
-                className="hover:text-white transition-colors"
-              >
-                GitHub
-              </a>
-              <a
-                href="/privacy-policy"
-                className="hover:text-white transition-colors"
-              >
-                Polityka Prywatności
-              </a>
-              <a
-                href="/terms-of-service"
-                className="hover:text-white transition-colors"
-              >
-                Regulamin
-              </a>
+        <ThemeProvider
+          enableSystem
+          defaultTheme="dark"
+          attribute="class"
+          disableTransitionOnChange
+        >
+          {children}
+          <footer className="py-8 px-4 bg-background">
+            <div className="max-w-6xl mx-auto text-center text-gray-400">
+              <p>
+                Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.
+              </p>
+              <p>
+                &copy; {new Date().getFullYear()} Lootlog.pl - Dodatek do gry
+                Margonem
+              </p>
+              <div className="mt-4 flex justify-center gap-6">
+                <a
+                  href="https://discord.gg/mPcczaeYMu"
+                  className="hover:text-white transition-colors"
+                >
+                  Discord
+                </a>
+                <a
+                  href="https://github.com/lootlog/monorepo"
+                  className="hover:text-white transition-colors"
+                >
+                  GitHub
+                </a>
+                <a
+                  href="/privacy-policy"
+                  className="hover:text-white transition-colors"
+                >
+                  Polityka Prywatności
+                </a>
+                <a
+                  href="/terms-of-service"
+                  className="hover:text-white transition-colors"
+                >
+                  Regulamin
+                </a>
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );
