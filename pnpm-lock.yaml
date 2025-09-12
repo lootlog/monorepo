@@ -948,9 +948,6 @@ importers:
       jsdom:
         specifier: ^26.0.0
         version: 26.1.0
-      tailwindcss:
-        specifier: ^4.1.13
-        version: 4.1.13
       typescript:
         specifier: ~5.7.3
         version: 5.7.3

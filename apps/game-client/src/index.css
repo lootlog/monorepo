@@ -1,5 +1,6 @@
-@import "tailwindcss" prefix(ll);
-@import "tw-animate-css";
+@import "tailwindcss/theme.css" prefix(ll);
+@import "tailwindcss/utilities.css" prefix(ll);
+@import "tw-animate-css" prefix(ll);
 @source "src/**/*.{ts,tsx}";
 
 @variant dark (.dark-theme *);
