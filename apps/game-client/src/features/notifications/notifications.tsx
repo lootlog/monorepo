@@ -42,7 +42,7 @@ export const Notifications = () => {
           minWidth={360}
           dynamicHeight
         >
-          <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
+          <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
             <NotificationsList
               notifications={filteredNotifications}
               now={now}

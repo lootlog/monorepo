@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@lootlog/ui/components/dropdown-menu";
 import { useUser } from "@/hooks/api/use-user";
 import { Loader2, LogOut, Settings, User2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";

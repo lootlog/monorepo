@@ -178,29 +178,29 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger className="ll-h-full ll-pr-[1px]">
+      <ContextMenuTrigger className="ll:h-full ll:pr-[1px]">
         <Tile
           id={timer.npc.id.toString()}
           color={selectedColor as keyof typeof TIMERS_COLORS}
         >
           <span
             className={cn(
-              "ll-flex ll-justify-between ll-w-full ll-text-[11px] ll-px-1 ll-box-border ll-h-full ll-min-w-0",
+              "ll:flex ll:justify-between ll:w-full ll:text-[11px] ll:px-1 ll:box-border ll:h-full ll:min-w-0",
               {
-                "ll-text-red-500": hasPassedRedThreshold,
-                "ll-text-orange-400": isMinSpawnTime,
-                "ll-text-white": !hasPassedRedThreshold && !isMinSpawnTime,
-                "ll-py-1": document.body.classList.contains("si"),
-                "ll-flex-col ll-py-0 ll-px-0 ll-leading-[1.05] ll-items-center":
+                "ll:text-red-500": hasPassedRedThreshold,
+                "ll:text-orange-400": isMinSpawnTime,
+                "ll:text-white": !hasPassedRedThreshold && !isMinSpawnTime,
+                "ll:py-1": document.body.classList.contains("si"),
+                "ll:flex-col ll:py-0 ll:px-0 ll:leading-[1.05] ll:items-center":
                   displayConfig.singleTimerDisplayMode === "column",
               }
             )}
           >
             <span
               className={cn(
-                "ll-whitespace-nowrap ll-truncate ll-min-w-0 ll-max-w-full",
+                "ll:whitespace-nowrap ll:truncate ll:min-w-0 ll:max-w-full",
                 {
-                  "ll-w-full ll-text-center":
+                  "ll:w-full ll:text-center":
                     displayConfig.singleTimerDisplayMode === "column",
                 }
               )}
@@ -221,16 +221,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         </Tile>
       </ContextMenuTrigger>
 
-      <ContextMenuContent className="ll-w-48 ll-flex ll-flex-col">
-        <div className="ll-flex ll-gap-1 ll-my-1.5 ll-w-full ll-justify-center ll-flex-wrap">
+      <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
+        <div className="ll:flex ll:gap-1 ll:my-1.5 ll:w-full ll:justify-center ll:flex-wrap">
           {Object.entries(TIMERS_COLORS).map(([id, color]) => (
             <div
               key={id}
               className={cn(
-                "ll-size-3 ll-rounded-md ll-box-border ll-border-transparent ll-custom-cursor-pointer",
+                "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll:custom-cursor-pointer",
                 color?.bgNoOpacity,
                 {
-                  " ll-ring-2 ll-ring-white": selectedColor === id,
+                  " ll:ring-2 ll:ring-white": selectedColor === id,
                 }
               )}
               onClick={() => handleTimerColorChange(id)}

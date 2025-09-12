@@ -8,7 +8,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-} from "@/components/ui/sidebar";
+} from "@lootlog/ui/components/sidebar";
 import { FC } from "react";
 
 export const UserSidebar: FC = () => {

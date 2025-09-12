@@ -8,7 +8,7 @@ export const GeneralSettings = () => {
     <div className="h-full p-4">
       <div className="text-lg font-semibold">Ogólne</div>
       <div className="text-sm text-gray-500">Ogólne ustawienia lootloga</div>
-      <div className="flex-1">{guild && <GeneralSettingsForm />}</div>
+      <div>{guild && <GeneralSettingsForm />}</div>
     </div>
   );
 };

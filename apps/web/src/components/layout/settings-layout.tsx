@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { useGuildId } from "@/hooks/use-guild-id";
 import { Button } from "@lootlog/ui/components/button";
 import { Link, Outlet, useLocation } from "react-router-dom";

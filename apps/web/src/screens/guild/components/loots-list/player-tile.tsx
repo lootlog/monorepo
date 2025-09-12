@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@lootlog/ui/components/tooltip";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { Player } from "@/hooks/api/use-guild-players";
 import { cn } from "@lootlog/ui/lib/utils";

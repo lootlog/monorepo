@@ -155,7 +155,7 @@ export const useNotificationsStore = create<NotificationsState>()(
         })),
     }),
     {
-      name: "ll-notifications-state",
+      name: "ll:notifications-state",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         settings: state.settings,

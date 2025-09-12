@@ -267,36 +267,36 @@ export const Timers = () => {
       <span
         ref={containerRef}
         className={cn(
-          "ll-h-full ll-flex ll-flex-1 ll-flex-col ll-box-border ll-pt-1 ll-w-full",
+          "ll:h-full ll:flex ll:flex-1 ll:flex-col ll:box-border ll:pt-1 ll:w-full",
           {
-            "!ll-pt-0": generalConfig.timersUnderBag,
+            "!ll:pt-0": generalConfig.timersUnderBag,
           }
         )}
       >
         {timerFiltersEnabled && <TimersFilters filtersKey={settingsKey} />}
-        <span className="ll-flex ll-gap-1 ll-w-full">
+        <span className="ll:flex ll:gap-1 ll:w-full">
           {!generalConfig.timersGrouping && (
             <GuildSelector
               disabled={addTimerOpen}
-              className="ll-bg-black/20 !ll-mb-1"
+              className="ll:bg-black/20 !ll:mb-1"
             />
           )}
           {allowWorldSelection && !generalConfig.timersGrouping && (
-            <WorldSelector className="ll-w-1/3" />
+            <WorldSelector className="ll:w-1/3" />
           )}
         </span>
 
         <ScrollArea
-          className="ll-pb-1 !ll-w-full ll-py-1 ll-flex-1"
+          className="ll:pb-1 !ll:w-full ll:py-1 ll:flex-1"
           type="hover"
         >
           {sortedTimers.length === 0 ? (
-            <span className="ll-text-white ll-w-full ll-flex ll-justify-center">
+            <span className="ll:text-white ll:w-full ll:flex ll:justify-center">
               ----
             </span>
           ) : (
             <span
-              className="ll-grid ll-gap-0.5 ll-box-border ll-w-full"
+              className="ll:grid ll:gap-0.5 ll:box-border ll:w-full"
               style={{
                 gridTemplateColumns: `repeat(auto-fit, minmax(${displayConfig.minColumnWidth}px, 1fr))`,
               }}
@@ -321,24 +321,24 @@ export const Timers = () => {
   if (generalConfig.timersUnderBag && gameInterface === "ni") {
     return (
       <UnderBagTimers>
-        <div className="ll-flex ll-gap-1">
+        <div className="ll:flex ll:gap-1">
           <Filter
             key="filters"
-            className="ll-custom-cursor-pointer -ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors ll-h-5 ll-mb-1"
+            className="ll:custom-cursor-pointer -ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors ll:h-5 ll:mb-1"
             size="14"
             onClick={toggleTimerFiltersEnabled}
           />
           {timersSortOrder === "desc" ? (
             <SortDesc
               key="sort-desc"
-              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+              className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={() => setTimersSortOrder("asc")}
             />
           ) : (
             <SortAsc
               key="sort-asc"
-              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+              className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={() => setTimersSortOrder("desc")}
             />
@@ -346,14 +346,14 @@ export const Timers = () => {
           {!generalConfig.timersGrouping && (
             <PlusIcon
               key="add-timer"
-              className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+              className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={() => toggleOpen("add-timer")}
             />
           )}
         </div>
-        <div className="ll-bg-[0_0] ll-top-1 ll-leading-[28px] -ll-mt-1.5 ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform -ll-translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
-          <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
+        <div className="ll:bg-[0_0] ll:top-1 ll:leading-[28px] -ll:mt-1.5 ll:custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform -ll:translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
+          <p className="ll:text-[11px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
             Timery
           </p>
         </div>
@@ -365,21 +365,21 @@ export const Timers = () => {
   const actions = [
     <Filter
       key="filters"
-      className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+      className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
       size="14"
       onClick={toggleTimerFiltersEnabled}
     />,
     timersSortOrder === "desc" ? (
       <SortDesc
         key="sort-desc"
-        className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+        className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
         size="14"
         onClick={() => setTimersSortOrder("asc")}
       />
     ) : (
       <SortAsc
         key="sort-asc"
-        className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+        className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
         size="14"
         onClick={() => setTimersSortOrder("desc")}
       />
@@ -387,7 +387,7 @@ export const Timers = () => {
     !generalConfig.timersGrouping ? (
       <PlusIcon
         key="add-timer"
-        className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+        className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
         size="14"
         onClick={() => toggleOpen("add-timer")}
       />
@@ -411,7 +411,7 @@ export const Timers = () => {
             minHeight={108}
             actions={actions}
           >
-            <div className="ll-flex ll-flex-col ll-h-full">
+            <div className="ll:flex ll:flex-col ll:h-full">
               {renderTimers()}
             </div>
           </DraggableWindow>

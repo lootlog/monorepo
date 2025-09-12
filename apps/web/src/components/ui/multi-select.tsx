@@ -5,9 +5,9 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@lootlog/ui/components/popover";
 import { Button } from "@lootlog/ui/components/button";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@lootlog/ui/components/separator";
 import {
   Command,
   CommandEmpty,
@@ -18,7 +18,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@lootlog/ui/components/command";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@/utils/cn";
 import { Badge } from "@lootlog/ui/components/badge";
 
@@ -339,11 +339,11 @@ export const MultiSelect = React.forwardRef<
                       <CommandItem
                         key={option.value}
                         onSelect={() => toggleOption(option.value)}
-                        className="cursor-pointer"
+                        className="cursor-pointer group"
                       >
                         <div
                           className={cn(
-                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border-2 border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
                               : "opacity-50 [&_svg]:invisible"

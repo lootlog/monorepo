@@ -54,11 +54,11 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   }, [guilds, lootlogCharactersConfig, reset]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="ll-py-4">
-      <span className="ll-grid ll-grid-cols-2 ll-gap-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="ll:py-4">
+      <span className="ll:grid ll:grid-cols-2 ll:gap-2">
         <div>
-          <h4 className="ll-mb-2">Nie łap timerów na:</h4>
-          <ScrollArea className="ll-flex ll-flex-col ll-h-32" type="auto">
+          <h4 className="ll:mb-2">Nie łap timerów na:</h4>
+          <ScrollArea className="ll:flex ll:flex-col ll:h-32" type="auto">
             {guilds?.map((guild) => {
               const id = `${guild.id}-timers`;
 
@@ -81,8 +81,8 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
           </ScrollArea>
         </div>
         <div>
-          <h4 className="ll-mb-2">Nie łap lootu na:</h4>
-          <ScrollArea className="ll-flex ll-flex-col ll-h-32" type="auto">
+          <h4 className="ll:mb-2">Nie łap lootu na:</h4>
+          <ScrollArea className="ll:flex ll:flex-col ll:h-32" type="auto">
             {guilds?.map((guild) => {
               const id = `${guild.id}-loots`;
 
@@ -105,10 +105,10 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
           </ScrollArea>
         </div>
       </span>
-      <div className="ll-w-full ll-flex ll-justify-center ll-mt-4">
+      <div className="ll:w-full ll:flex ll:justify-center ll:mt-4">
         <button
           type="submit"
-          className="ll-text-[12px] ll-border ll-border-gray-400 ll-bg-gray-400/30 hover:ll-bg-gray-400/50 ll-rounded-sm ll-h-5 ll-text-white"
+          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 hover:ll:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white"
           disabled={isPending}
         >
           {isPending ? "Zapisywanie..." : "Zapisz"}

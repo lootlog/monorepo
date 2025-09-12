@@ -115,7 +115,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   return (
     <span key={npc.id}>
       <span
-        className={cn("ll-flex ll-justify-between ll-py-2 ll-gap-4 ll-px-3")}
+        className={cn("ll:flex ll:justify-between ll:py-2 ll:gap-4 ll:px-3")}
         style={{
           background:
             idx === 0
@@ -124,18 +124,18 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         }}
       >
         <NpcTile npc={npc} />
-        <span className="ll-flex ll-flex-col ll-gap-1 ll-flex-1">
+        <span className="ll:flex ll:flex-col ll:gap-1 ll:flex-1">
           <span>
-            <span className="ll-font-semibold">{npc.nick} </span>
+            <span className="ll:font-semibold">{npc.nick} </span>
             <span>
               ({npc.lvl}
               {npc.prof})
             </span>
           </span>
-          <span className="ll-mb-2 ll-text-xs">
+          <span className="ll:mb-2 ll:text-xs">
             {npc.location} ({npc.x}, {npc.y})
           </span>
-          <span className="ll-flex ll-gap-1">
+          <span className="ll:flex ll:gap-1">
             {settingsByNpcType.guildIds?.length === 0 && (
               <span>Brak ustawionych serwerów - odwiedź ustawienia</span>
             )}
@@ -160,7 +160,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         {npcs.length > 1 && (
           <XIcon
             className={cn(
-              "ll-custom-cursor-pointer ll-text-gray-300 hover:ll-text-gray-100 ll-transition-colors"
+              "ll:custom-cursor-pointer ll:text-gray-300 hover:ll:text-gray-100 ll:transition-colors"
             )}
             size="16"
             onClick={() => handleRemoveNpc(npc.id)}
@@ -168,7 +168,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         )}
       </span>
 
-      {npcs.length > 1 && <Separator className="ll-bg-gray-600 ll-h-[1px]" />}
+      {npcs.length > 1 && <Separator className="ll:bg-gray-600 ll:h-[1px]" />}
     </span>
   );
 };

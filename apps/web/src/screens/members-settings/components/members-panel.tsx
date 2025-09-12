@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { GuildMember } from "@/hooks/api/use-guild-member";
 import { MemberData } from "@/screens/members-settings/components/member-data";
 import { MemberSyncButton } from "@/screens/members-settings/components/member-sync-button";

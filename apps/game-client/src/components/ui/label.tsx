@@ -9,7 +9,7 @@ export const Label = ({
   return (
     <label
       htmlFor="text"
-      className={cn("ll-font-semibold ll-text-xs", className)}
+      className={cn("ll:font-semibold ll:text-xs", className)}
       {...props}
     >
       {children}
