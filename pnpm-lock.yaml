@@ -220,7 +220,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^1.13.8
-        version: 1.14.4(hono@4.8.3)
+        version: 1.14.4(hono@4.9.7)
       '@lootlog/api-helpers':
         specifier: workspace:*
         version: file:packages/api-helpers
@@ -234,8 +234,8 @@ importers:
         specifier: ^16.4.7
         version: 16.6.0
       hono:
-        specifier: ^4.7.0
-        version: 4.8.3
+        specifier: ^4.9.6
+        version: 4.9.7
       jwks-rsa:
         specifier: ^3.1.0
         version: 3.2.0
@@ -726,7 +726,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^1.13.8
-        version: 1.14.4(hono@4.8.3)
+        version: 1.14.4(hono@4.9.7)
       '@lootlog/api-helpers':
         specifier: workspace:*
         version: file:packages/api-helpers
@@ -737,8 +737,8 @@ importers:
         specifier: ^16.4.7
         version: 16.6.0
       hono:
-        specifier: ^4.7.0
-        version: 4.8.3
+        specifier: ^4.9.6
+        version: 4.9.7
       jwks-rsa:
         specifier: ^3.1.0
         version: 3.2.0
@@ -976,8 +976,8 @@ importers:
   packages/api-helpers:
     dependencies:
       hono:
-        specifier: ^4.7.0
-        version: 4.8.3
+        specifier: ^4.9.6
+        version: 4.9.7
       jose:
         specifier: ^6.0.11
         version: 6.0.11
@@ -6046,8 +6046,8 @@ packages:
   header-case@1.0.1:
     resolution: {integrity: sha512-i0q9mkOeSuhXw6bGgiQCCBgY/jlZuV/7dZXyZ9c6LcBrqwvT8eT719E9uxE5LiZftdl+z81Ugbg/VvXV4OJOeQ==}
 
-  hono@4.8.3:
-    resolution: {integrity: sha512-jYZ6ZtfWjzBdh8H/0CIFfCBHaFL75k+KMzaM177hrWWm2TWL39YMYaJgB74uK/niRc866NMlH9B8uCvIo284WQ==}
+  hono@4.9.7:
+    resolution: {integrity: sha512-t4Te6ERzIaC48W3x4hJmBwgNlLhmiEdEE5ViYb02ffw4ignHNHa5IBtPjmbKstmtKa8X6C35iWwK4HaqvrzG9w==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@2.8.9:
@@ -10277,9 +10277,9 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/node-server@1.14.4(hono@4.8.3)':
+  '@hono/node-server@1.14.4(hono@4.9.7)':
     dependencies:
-      hono: 4.8.3
+      hono: 4.9.7
 
   '@hookform/resolvers@5.2.1(react-hook-form@7.58.1(react@19.1.0))':
     dependencies:
@@ -11005,7 +11005,7 @@ snapshots:
 
   '@lootlog/api-helpers@file:packages/api-helpers':
     dependencies:
-      hono: 4.8.3
+      hono: 4.9.7
       jose: 6.0.13
       jwks-rsa: 3.2.0
     transitivePeerDependencies:
@@ -14935,7 +14935,7 @@ snapshots:
       no-case: 2.3.2
       upper-case: 1.1.3
 
-  hono@4.8.3: {}
+  hono@4.9.7: {}
 
   hosted-git-info@2.8.9: {}
 
