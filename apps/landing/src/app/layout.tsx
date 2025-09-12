@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@lootlog/ui/globals.css";
-import { JSX } from "react";
-import { LayoutProps } from "@/.next/types/app/page";
+import type { JSX, ReactNode } from "react";
+
 import { ThemeProvider } from "@lootlog/ui/components/next-theme-provider";
 
 const geistSans = Geist({
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<LayoutProps>): JSX.Element {
+}: Readonly<{ children: ReactNode }>): JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning>
       <body

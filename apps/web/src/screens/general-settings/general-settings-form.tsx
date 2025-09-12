@@ -9,15 +9,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+} from "@lootlog/ui/components/form";
+import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
 import { useGuild } from "@/hooks/api/use-guild";
 import { generateSlug } from "@/utils/generate-slug";
 import { cn } from "@/utils/cn";
 import { useUpdateGuild } from "@/hooks/api/use-update-guild";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const RESTRICTED_NAMES = ["@me"];
 
@@ -28,7 +28,6 @@ const formSchema = z.object({
 export const GeneralSettingsForm = () => {
   const { data: guild } = useGuild({});
 
-  const { toast } = useToast();
   const { mutate: updateGuildConfig } = useUpdateGuild();
   const navigate = useNavigate();
 
@@ -41,10 +40,7 @@ export const GeneralSettingsForm = () => {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (RESTRICTED_NAMES.includes(values.vanityUrl)) {
-      toast({
-        variant: "destructive",
-        description: "Ta nazwa jest zarezerwowana i nie może być użyta.",
-      });
+      toast.error("Ta nazwa jest zarezerwowana i nie może być użyta.");
       return;
     }
 
@@ -52,18 +48,12 @@ export const GeneralSettingsForm = () => {
       { vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null },
       {
         onSuccess: ({ data }) => {
-          toast({
-            variant: "default",
-            description: "Zaktualizowano konfigurację lootloga",
-          });
+          toast.success("Zaktualizowano konfigurację lootloga");
           navigate(`/${data.vanityUrl ?? data.id}/settings`);
           form.resetField("vanityUrl", { defaultValue: data.vanityUrl });
         },
         onError: () => {
-          toast({
-            variant: "destructive",
-            description: "Nie udało się zaktualizować konfiguracji lootloga",
-          });
+          toast.error("Nie udało się zaktualizować konfiguracji lootloga");
         },
       }
     );

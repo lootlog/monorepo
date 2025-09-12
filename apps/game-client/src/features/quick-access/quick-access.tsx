@@ -50,7 +50,7 @@ export const QuickAccess = () => {
       minWidth={184}
       closable={false}
     >
-      <div className="ll-flex ll-gap-1 ll-px-1 ll-py-1">
+      <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
         {BUTTONS.map((button) => (
           <QuickAccessButton
             key={button.id}

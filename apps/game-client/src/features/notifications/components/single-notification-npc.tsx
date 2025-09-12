@@ -24,32 +24,32 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   if (!notification.npc) return null;
 
   return (
-    <span className="ll-w-full ll-flex ll-gap-2">
+    <span className="ll:w-full ll:flex ll:gap-2">
       <img
         src={avatarUrl}
-        className="ll-w-8 ll-h-8 ll-rounded-full"
+        className="ll:w-8 ll:h-8 ll:rounded-full"
         alt="Avatar"
       />
-      <span className="ll-flex ll-flex-col ll-justify-center ll-gap-2">
-        <span className="ll-flex ll-flex-col ll-gap-1">
+      <span className="ll:flex ll:flex-col ll:justify-center ll:gap-2">
+        <span className="ll:flex ll:flex-col ll:gap-1">
           <span>
-            <span className="ll-font-semibold" style={{ color: `#${color}` }}>
+            <span className="ll:font-semibold" style={{ color: `#${color}` }}>
               {member?.name}
             </span>
-            <span className="ll-text-[11px] ll-text-gray-300">
+            <span className="ll:text-[11px] ll:text-gray-300">
               {" "}
               {time}@{serverNames.join(", ")} - {notification.world}
             </span>
           </span>
-          <span className="ll-flex ll-gap-4 ll-py-1">
+          <span className="ll:flex ll:gap-4 ll:py-1">
             <NpcTile
               npc={notification.npc}
-              className="ll-max-h-12"
-              containerClassName="ll-w-6"
+              className="ll:max-h-12"
+              containerClassName="ll:w-6"
             />
-            <span className="ll-flex ll-flex-col">
+            <span className="ll:flex ll:flex-col">
               <span>
-                <span className="ll-font-semibold ll-text-xs">
+                <span className="ll:font-semibold ll:text-xs">
                   {notification.npc.name}{" "}
                 </span>
                 <span>
@@ -57,7 +57,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
                   {notification.npc.prof})
                 </span>
               </span>
-              <span className="ll-mb-2 ll-text-xs">
+              <span className="ll:mb-2 ll:text-xs">
                 {notification.npc.location} ({notification.npc.x},{" "}
                 {notification.npc.y})
               </span>

@@ -20,13 +20,13 @@ export const NpcTile: FC<NpcTileProps> = ({
   return (
     <span
       className={cn(
-        "ll-w-12 ll-flex ll-items-center ll-justify-center",
+        "ll:w-12 ll:flex ll:items-center ll:justify-center",
         containerClassName
       )}
     >
       <img
         className={cn(
-          "ll-custom-cursor-pointer ll-rounded-lg ll-max-w-12",
+          "ll:custom-cursor-pointer ll:rounded-lg ll:max-w-12",
           className
         )}
         draggable={false}

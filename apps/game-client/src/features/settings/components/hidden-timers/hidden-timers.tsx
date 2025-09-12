@@ -26,18 +26,18 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
   const uniqueHiddenTimers = Array.from(new Set(sortedHiddenTimers));
 
   return (
-    <div className="ll-py-4">
+    <div className="ll:py-4">
       {uniqueHiddenTimers && uniqueHiddenTimers.length > 0 && (
-        <span className="ll-grid ll-gap-1 ll-grid-cols-2 ll-w-full ll-box-border">
+        <span className="ll:grid ll:gap-1 ll:grid-cols-2 ll:w-full ll:box-border">
           {sortedHiddenTimers.map((timer) => {
             return (
               <Tile key={timer}>
-                <span className="ll-flex ll-justify-between ll-items-center ll-w-full ll-px-1 ll-box-border">
+                <span className="ll:flex ll:justify-between ll:items-center ll:w-full ll:px-1 ll:box-border">
                   {timer}
                   <XIcon
                     size="14"
                     type="button"
-                    className="ll-custom-cursor-pointer ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors -ll-mr-0.5"
+                    className="ll:custom-cursor-pointer ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors -ll:mr-0.5"
                     onClick={() => handleRemoveTimer(timer)}
                   />
                 </span>

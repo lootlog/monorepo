@@ -4,7 +4,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@lootlog/ui/components/select";
 import { useWorlds } from "@/hooks/api/use-worlds";
 import { useGuildContext } from "@/hooks/use-guild-context";
 

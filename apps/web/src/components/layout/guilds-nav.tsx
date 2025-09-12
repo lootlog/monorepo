@@ -2,8 +2,8 @@ import { GuildNavCreate } from "@/components/layout/guild-nav-create";
 import { GuildNavItem } from "@/components/layout/guild-nav-item";
 import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Separator } from "@lootlog/ui/components/separator";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { useUpdateUserPreferences } from "@/hooks/api/use-update-user-preferences";
 import { useUser } from "@/hooks/api/use-user";
@@ -73,10 +73,10 @@ export const GuildsNav: FC = () => {
   const guildList = guildsState || [];
 
   return (
-    <div className="flex h-full flex-col gap-2 w-16 border-r border-solid pt-2">
+    <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 h-full">
       <UserNavItem />
       <Separator className="-mt-[1px]" />
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-24">
         <Reorder.Group
           axis="y"
           values={guildList}

@@ -167,7 +167,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   return (
     <div
-      className="ll-pointer-events-auto ll-absolute"
+      className="ll:pointer-events-auto ll:absolute"
       ref={draggableRef}
       style={{
         ...style,
@@ -183,39 +183,39 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     >
       <div
         className={cn(
-          "ll-w-full ll-h-full ll-rounded-lg ll-border-solid ll-border ll-border-white/50 ll-p-1 !ll-relative ll-box-border ll-text-white ll-flex ll-flex-col",
+          "ll:w-full ll:h-full ll:rounded-lg ll:border-solid ll:border ll:border-white/50 ll:p-1 !ll:relative ll:box-border ll:text-white ll:flex ll:flex-col",
           {
-            "ll-bg-black/0": opacity === 1,
-            "ll-bg-black/25": opacity === 2,
-            "ll-bg-black/50": opacity === 3,
-            "ll-bg-black/75": opacity === 4,
-            "ll-bg-black": opacity === 5,
+            "ll:bg-black/0": opacity === 1,
+            "ll:bg-black/25": opacity === 2,
+            "ll:bg-black/50": opacity === 3,
+            "ll:bg-black/75": opacity === 4,
+            "ll:bg-black": opacity === 5,
           }
         )}
       >
         {!disableTitle && (
-          <div className="ll-flex ll-items-center ll-justify-between ll-px-1 ll-flex-shrink-0">
-            <div className="ll-flex ll-items-center ll-gap-1">
+          <div className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:flex-shrink-0">
+            <div className="ll:flex ll:items-center ll:gap-1">
               <Blend
-                className="ll-custom-cursor-pointer ll-mt-0.5 ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+                className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
                 size="14"
                 onClick={handleOpacityChange}
               />
               {actions}
             </div>
-            <div className="ll-background-[0_0] ll-line-height-[28px] ll-custom-cursor-pointer ll-absolute ll-left-1/2 ll-transform ll--translate-x-1/2 ll-flex ll-gap-2 ll-items-center">
-              <p className="ll-text-[11px] ll-text-[beige] ll-text-shadow-[1px_1px_1px_black]">
+            <div className="ll:background-[0_0] ll:line-height-[28px] ll:custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
+              <p className="ll:text-[11px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
                 {title}
               </p>
               {isLocked ? (
                 <PinOff
-                  className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                  className="!ll:stroke-gray-400 ll:text-xs ll:absolute -ll:right-5 !hover:ll:stroke-gray-200"
                   size="14"
                   onClick={handleLockToggle}
                 />
               ) : (
                 <Pin
-                  className="!ll-stroke-gray-400 ll-text-xs ll-absolute -ll-right-5 !hover:ll-stroke-gray-200"
+                  className="!ll:stroke-gray-400 ll:text-xs ll:absolute -ll:right-5 !hover:ll:stroke-gray-200"
                   size="14"
                   onClick={handleLockToggle}
                 />
@@ -225,16 +225,16 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
               <XIcon
                 size="14"
                 type="button"
-                className="ll-custom-cursor-pointer ll-stroke-gray-300 hover:ll-stroke-gray-100 ll-transition-colors"
+                className="ll:custom-cursor-pointer ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
                 onClick={onClose}
               />
             )}
           </div>
         )}
-        <div className="ll-flex-1 ll-overflow-hidden">{children}</div>
+        <div className="ll:flex-1 ll:overflow-hidden">{children}</div>
         {resizable && !isLocked && (
           <div
-            className="ll-absolute ll-bottom-0 ll-right-0 ll-w-4 ll-h-4 ll-cursor-se-resize ll-bg-transparent"
+            className="ll:absolute ll:bottom-0 ll:right-0 ll:w-4 ll:h-4 ll:cursor-se-resize ll:bg-transparent"
             onMouseDown={handleResize}
             style={{
               background:

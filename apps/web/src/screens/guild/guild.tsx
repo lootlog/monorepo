@@ -9,11 +9,11 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@lootlog/ui/components/tooltip";
 import { LootsList } from "@/screens/guild/components/loots-list/loots-list";
 import { useTimers } from "@/hooks/api/use-timers";
 import { noop } from "lodash";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {

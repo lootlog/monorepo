@@ -1,5 +1,5 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { useTimers } from "@/hooks/api/use-timers";
 import { groupBy } from "lodash";

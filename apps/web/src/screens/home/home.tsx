@@ -1,7 +1,10 @@
 import { useSession } from "@/hooks/auth/use-session";
 
 import { UserSidebar } from "@/components/layout/user-sidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarTrigger,
+} from "@lootlog/ui/components/sidebar";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageContainer } from "@/components/ui/page-container";
 

@@ -8,13 +8,13 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-} from "@/components/ui/sidebar";
+} from "@lootlog/ui/components/sidebar";
 import { FC } from "react";
 
 export const GuildSidebar: FC = () => {
   return (
     <Sidebar>
-      <SidebarContent className="bg-background h-full">
+      <SidebarContent className="h-full">
         <SidebarGroup className="p-0 h-full">
           <SidebarGroupContent className="h-full">
             <SidebarMenu className="flex flex-row h-full gap-0">
@@ -24,7 +24,7 @@ export const GuildSidebar: FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="bg-background p-0">
+      <SidebarFooter className="p-0">
         <UserMenu />
       </SidebarFooter>
     </Sidebar>
