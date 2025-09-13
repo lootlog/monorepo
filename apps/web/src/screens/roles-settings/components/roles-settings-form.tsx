@@ -190,7 +190,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full max-w-3xl md:py-2 mx-auto"
+        className="w-full md:py-2 mx-auto"
       >
         <div className="px-6 p-2 border-b">
           <Label>Ustawienia roli</Label>

@@ -33,15 +33,15 @@ export const RolesSettings = () => {
     selectedRole?.color === 0 ? "FFF" : selectedRole?.color.toString(16);
 
   return (
-    <div className="h-full flex flex-col min-h-0">
-      <div className="p-4 pb-4">
+    <div className="h-full flex flex-col min-h-0 overflow-hidden">
+      <div className="p-4 pb-4 flex-shrink-0">
         <div className="text-lg font-semibold">Ustawienia ról</div>
         <div className="text-sm text-gray-500">
           Ustawienia ról, które mogą być przypisane do graczy na serwerze
           Discord. Tutaj możesz przypisać uprawnienia do ról.
         </div>
       </div>
-      <div className="px-4 py-3 border-t">
+      <div className="px-4 py-3 border-t flex-shrink-0">
         <SearchInput
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Szukaj roli..."
@@ -49,64 +49,63 @@ export const RolesSettings = () => {
       </div>
       <div
         className={cn(
-          "border-t grid flex-1 min-h-0 transition-[grid-template-columns]",
+          "border-t grid flex-1 min-h-0 transition-[grid-template-columns] overflow-hidden",
           selectedRole
             ? "grid-cols-1 md:grid-cols-[theme(width.64)_1fr]"
             : "grid-cols-1 md:grid-cols-[1fr]"
         )}
       >
         <ScrollArea
-          className={cn(
-            "flex flex-col h-full min-h-0",
-            selectedRole && "hidden md:flex"
-          )}
+          className={cn("h-full min-h-0", selectedRole && "hidden md:block")}
         >
-          {filteredRoles?.map((role) => {
-            const color = role.color === 0 ? "FFF" : role.color.toString(16);
-            const active = selectedRole?.id === role.id;
+          <div className="flex flex-col">
+            {filteredRoles?.map((role) => {
+              const color = role.color === 0 ? "FFF" : role.color.toString(16);
+              const active = selectedRole?.id === role.id;
 
-            return (
-              <div
-                key={role.id}
-                className={cn(
-                  "border-b flex flex-row justify-between py-3 px-5 items-center hover:bg-secondary cursor-pointer text-sm",
-                  {
-                    "bg-secondary": active,
-                  }
-                )}
-                onClick={() => setSelectedRole(role)}
-              >
-                <div className="flex gap-4 items-center">
-                  <div
-                    className={cn("size-4 rounded-full")}
-                    style={{ backgroundColor: `#${color}` }}
-                  />
-                  <div>
-                    <div className="font-semibold">{role.name}</div>
-                    <div className="text-xs text-gray-500">
-                      ({role.lvlRangeFrom} - {role.lvlRangeTo})
+              return (
+                <div
+                  key={role.id}
+                  className={cn(
+                    "border-b flex flex-row justify-between py-3 px-5 items-center hover:bg-secondary cursor-pointer text-sm",
+                    {
+                      "bg-secondary": active,
+                    }
+                  )}
+                  onClick={() => setSelectedRole(role)}
+                >
+                  <div className="flex gap-4 items-center">
+                    <div
+                      className={cn("size-4 rounded-full")}
+                      style={{ backgroundColor: `#${color}` }}
+                    />
+                    <div>
+                      <div className="font-semibold">{role.name}</div>
+                      <div className="text-xs text-gray-500">
+                        ({role.lvlRangeFrom} - {role.lvlRangeTo})
+                      </div>
                     </div>
                   </div>
+                  {!selectedRole && (
+                    <Button
+                      className="size-8 rounded-full"
+                      size="sm"
+                      variant="secondary"
+                    >
+                      <EllipsisVertical />
+                    </Button>
+                  )}
                 </div>
-                {!selectedRole && (
-                  <Button
-                    className="size-8 rounded-full"
-                    size="sm"
-                    variant="secondary"
-                  >
-                    <EllipsisVertical />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </ScrollArea>
         <AnimatePresence mode="popLayout">
           {selectedRole &&
             (shouldAnimate ? (
               <motion.div
                 className={cn(
-                  "border-l min-h-0 flex flex-col",
+                  "border-l min-h-0 h-full overflow-hidden",
                   "md:border-l border-l-0"
                 )}
                 initial={{ opacity: 0, x: 32 }}
@@ -124,7 +123,7 @@ export const RolesSettings = () => {
             ) : (
               <div
                 className={cn(
-                  "border-l min-h-0 flex flex-col",
+                  "border-l min-h-0 h-full overflow-hidden",
                   "md:border-l border-l-0"
                 )}
                 key={selectedRole.id}
