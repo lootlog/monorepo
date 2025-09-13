@@ -112,7 +112,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         {showCloseButton && (
           <XIcon
             className={cn(
-              "ll:custom-cursor-pointer ll:text-gray-300 hover:ll:text-gray-100 ll:transition-colors"
+              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors"
             )}
             size="16"
             onClick={handleRemoveNotification}

@@ -160,7 +160,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         {npcs.length > 1 && (
           <XIcon
             className={cn(
-              "ll:custom-cursor-pointer ll:text-gray-300 hover:ll:text-gray-100 ll:transition-colors"
+              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors"
             )}
             size="16"
             onClick={() => handleRemoveNpc(npc.id)}

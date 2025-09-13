@@ -108,7 +108,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           inputMode="numeric"
         />
       </div>
-      <div className="ll:flex ll:custom-cursor-pointer ll:items-center ll:justify-center ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:bg-gray-500/30 ll:transition-all">
+      <div className="ll:flex ll-custom-cursor-pointer ll:items-center ll:justify-center ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:bg-gray-500/30 ll:transition-all">
         {NPC_TYPES_OPTIONS.map((type, index) => {
           const npc = NPC_NAMES[type];
           const isSelected = filters.selectedNpcTypes.includes(type);
@@ -120,7 +120,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
               role="button"
               onClick={() => handleToggleNpcType(type)}
               className={cn(
-                "ll:flex ll:items-center ll:justify-center ll:gap-2 hover:ll:bg-gray-400/50 ll:px-1 ll:py-0.5 ll:box-border ll:text-white ll:text-xs",
+                "ll:flex ll:items-center ll:justify-center ll:gap-2 ll:hover:bg-gray-400/50 ll:px-1 ll:py-0.5 ll:box-border ll:text-white ll:text-xs",
                 {
                   "ll:border-r ll:border-r-white ll:border-solid": isNotLast,
                   "ll:bg-gray-400/30": isSelected,

@@ -25,7 +25,7 @@ export const CharacterTile: FC<CharacterTileProps> = ({
     <div
       id={character.id.toString()}
       className={cn(
-        "ll:w-[32px] ll:h-[48px] ll:relative ll:custom-cursor-pointer ll:rounded-lg",
+        "ll:w-[32px] ll:h-[48px] ll:relative ll-custom-cursor-pointer ll:rounded-lg",
         className
       )}
       style={{

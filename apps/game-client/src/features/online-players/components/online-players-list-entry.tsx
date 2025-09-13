@@ -49,12 +49,12 @@ export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
       >
         ({presences.length}) {guildMember?.name}
       </div>
-      <span className="ll:flex ll:flex-row ll:flex-wrap ll:justify-end -ll:mr-2">
+      <span className="ll:flex ll:flex-row ll:flex-wrap ll:justify-end ll:-mr-2">
         {presences.map((presence) => (
           <CharacterTile
             key={`${presence.player?.accountId}-${presence.player?.characterId}`}
             character={getCharacterData(presence)}
-            className="ll:scale-75 ll:max-h-6 -ll:mt-1 -ll:ml-2"
+            className="ll:scale-75 ll:max-h-6 ll:-mt-1 ll:-ml-2"
           />
         ))}
       </span>

@@ -50,7 +50,7 @@ export const SettingsTabs: FC<SettingsTabsProps> = () => {
         defaultValue="general"
         className="ll:flex ll:flex-col ll:h-full ll:w-full"
       >
-        <TabsList className="ll:flex-shrink-0 ll:flex-wrap !ll:justify-start ll:justify-items-start !ll:gap-x-1 !ll:gap-0 ll:flex">
+        <TabsList className="ll:flex-shrink-0 ll:flex-wrap ll:!justify-start ll:justify-items-start ll:gap-1 ll:gap-y-0 ll:flex">
           {TABS_LIST.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
               {tab.label}
