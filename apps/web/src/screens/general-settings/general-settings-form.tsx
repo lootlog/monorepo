@@ -107,7 +107,7 @@ export const GeneralSettingsForm = () => {
                 damping: 28,
                 mass: 0.7,
               }}
-              className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[20rem] z-50 flex justify-center px-2 pb-2 sm:px-4"
+              className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[theme(width.64)] z-50 flex justify-center px-2 pb-2 sm:px-4"
             >
               <motion.div
                 layout
