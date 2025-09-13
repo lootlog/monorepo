@@ -1,5 +1,4 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { useGuildId } from "@/hooks/use-guild-id";
 import { Button } from "@lootlog/ui/components/button";
@@ -102,12 +101,10 @@ export const SettingsLayout: React.FC = () => {
             })}
           </div>
         </div>
-        <div className="flex-1 min-h-0 flex">
-          <ScrollArea className="flex w-full flex-1 min-h-0">
-            <div className="w-full flex flex-col gap-0 pb-4 md:pb-6">
-              <Outlet />
-            </div>
-          </ScrollArea>
+        <div className="flex-1 min-h-0 flex overflow-hidden">
+          <div className="w-full flex-1 min-h-0 overflow-hidden">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>
