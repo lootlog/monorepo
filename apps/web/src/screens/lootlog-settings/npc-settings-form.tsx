@@ -77,7 +77,7 @@ export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full max-w-3xl md:py-2 mx-auto"
+        className="w-full md:py-2 mx-auto"
       >
         <FormField
           control={form.control}
@@ -159,6 +159,9 @@ export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
             </FormItem>
           )}
         />
+
+        {/* Safe area spacer so fixed unsaved bar doesn't cover last item */}
+        <div className="h-20 md:h-24" />
 
         <AnimatePresence>
           {form.formState.isDirty && (
