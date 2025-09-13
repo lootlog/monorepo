@@ -51,25 +51,25 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     <Select value={world} onValueChange={setWorld} disabled={disabled}>
       <SelectTrigger
         className={cn(
-          "ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-mb-1 ll-custom-cursor-pointer",
+          "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll-custom-cursor-pointer",
           className
         )}
       >
         <SelectValue
           placeholder="Wybierz świat..."
-          className="ll-h-4 ll-text-sm ll-text-white"
+          className="ll:h-4 ll:text-sm ll:text-white"
         />
       </SelectTrigger>
       <SelectContent
         position="popper"
-        className="ll-font-sans ll-z-[500] ll-w-[120px] ll-py-1 ll-justify-center ll-items-center"
+        className="ll:font-sans ll:z-[500] ll:w-[120px] ll:py-1 ll:justify-center ll:items-center"
       >
         {worlds?.map((world) => {
           return (
             <SelectItem
               key={world}
               value={world}
-              className="ll-text-xs ll-font-semibold ll-w-full ll-h-5"
+              className="ll:text-xs ll:font-semibold ll:w-full ll:h-5"
             >
               {world.charAt(0).toUpperCase() + world.slice(1)}
             </SelectItem>

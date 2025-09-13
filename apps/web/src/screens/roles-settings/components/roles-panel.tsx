@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { GuildRole } from "@/hooks/api/use-guild-roles";
 import { RolesSettingsForm } from "@/screens/roles-settings/components/roles-settings-form";
 import { ArrowLeft } from "lucide-react";

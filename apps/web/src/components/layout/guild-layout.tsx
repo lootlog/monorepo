@@ -1,7 +1,7 @@
 import { GuildSidebar } from "@/components/layout/guild-sidebar";
 import { PageContainer } from "@/components/ui/page-container";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/toaster";
+import { SidebarProvider } from "@lootlog/ui/components/sidebar";
+import { Toaster } from "@lootlog/ui/components/sonner";
 import { GuildContextProvider } from "@/contexts/guild.context";
 import { FC } from "react";
 import { Outlet } from "react-router-dom";

@@ -1,10 +1,5 @@
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@lootlog/ui/components/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardContent } from "@lootlog/ui/components/card";
+import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useRef } from "react";
 
 export const LootsListItemSkeleton: React.FC = () => {
@@ -13,10 +8,10 @@ export const LootsListItemSkeleton: React.FC = () => {
 
   return (
     <li className="">
-      <Card className="rounded-none border-b border-t-0 border-x-0 h-32 flex flex-col justify-center">
-        <CardHeader className="flex-row space-y-0 px-4 py-1 flex-wrap">
+      <div className="rounded-none border-b border-t-0 border-x-0 md:h-32 py-1 md:py-0 flex flex-col justify-center">
+        <div className="flex-row space-y-0 px-4 py-1 flex-wrap">
           <Skeleton className="w-72 h-[20px] rounded-md" />
-        </CardHeader>
+        </div>
         <CardContent className="flex flex-row justify-between items-center flex-wrap px-4 py-1 gap-4">
           <div className="flex flex-row gap-2">
             {[...Array(RANDOM_ITEMS.current)].map((_, i) => (
@@ -29,10 +24,10 @@ export const LootsListItemSkeleton: React.FC = () => {
             ))}
           </div>
         </CardContent>
-        <CardFooter className="px-4 py-1">
+        <div className="px-4 py-1">
           <Skeleton className="w-36 h-[20px] rounded-md" />
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </li>
   );
 };

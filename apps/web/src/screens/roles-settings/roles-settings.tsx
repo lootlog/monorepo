@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import { Button } from "@lootlog/ui/components/button";
 import { EllipsisVertical } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
 import { RolePanelContent } from "@/screens/roles-settings/components/roles-panel";
 
@@ -61,9 +61,9 @@ export const RolesSettings = () => {
               <div
                 key={role.id}
                 className={cn(
-                  "border-b flex flex-row justify-between py-4 px-6 h-12 items-center hover:bg-[#181C25] cursor-pointer text-sm",
+                  "border-b flex flex-row justify-between py-4 px-6 h-12 items-center hover:bg-secondary cursor-pointer text-sm",
                   {
-                    "bg-[#181C25]": active,
+                    "bg-secondary": active,
                   }
                 )}
                 onClick={() => setSelectedRole(role)}

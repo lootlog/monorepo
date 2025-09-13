@@ -1,8 +1,3 @@
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Guild } from "@/hooks/api/use-guild";
 import { useGuildId } from "@/hooks/use-guild-id";
 import { cn } from "@/utils/cn";
@@ -11,6 +6,11 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { FC, memo } from "react";
 import { Link } from "react-router-dom";
 

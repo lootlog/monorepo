@@ -32,7 +32,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       return (
         <span
           style={{ color }}
-          className={cn({ "ll-opacity-50": isMsgYesterday })}
+          className={cn({ "ll:opacity-50": isMsgYesterday })}
         >
           [{shortname}] {messageData.npc.npcName}{" "}
           {messageData.npc.npcLocation
@@ -46,7 +46,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       const color = getTextColor("message", true);
       return (
         <span
-          className={cn({ "ll-opacity-50": isMsgYesterday })}
+          className={cn({ "ll:opacity-50": isMsgYesterday })}
           style={{ color }}
         >
           [P] {messageData.baseMessage.slice(1)}
@@ -55,7 +55,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
     }
 
     return (
-      <span className={cn({ "ll-opacity-50": isMsgYesterday })}>
+      <span className={cn({ "ll:opacity-50": isMsgYesterday })}>
         {messageData.baseMessage}
       </span>
     );
@@ -66,26 +66,26 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
   return (
     <div
       key={message.id}
-      className="ll-text-white ll-text-xs ll-whitespace-pre-wrap ll-break-words ll-[overflow-wrap:anywhere] ll-w-[calc(100%-1rem)]"
+      className="ll:text-white ll:text-xs ll:whitespace-pre-wrap ll:break-words ll:[overflow-wrap:anywhere] ll:w-[calc(100%-1rem)]"
     >
-      <span className="ll-inline-block ll-whitespace-nowrap">
+      <span className="ll:inline-block ll:whitespace-nowrap">
         <span
-          className={cn("ll-text-[11px]", {
-            "ll-opacity-50": isMsgYesterday,
+          className={cn("ll:text-[11px]", {
+            "ll:opacity-50": isMsgYesterday,
           })}
         >
           [{format(new Date(message.timestamp), "HH:mm")}]
         </span>{" "}
         <span
-          className={cn("ll-font-bold ll-mx-1", {
-            "ll-opacity-50": isMsgYesterday,
+          className={cn("ll:font-bold ll:mx-1", {
+            "ll:opacity-50": isMsgYesterday,
           })}
           style={{ color: `#${memberColor}` }}
         >
           {member?.name || "Nieznany"}:
         </span>
       </span>{" "}
-      <span className="ll-break-words ll-[overflow-wrap:anywhere]">
+      <span className="ll:break-words ll:[overflow-wrap:anywhere]">
         {renderChatMessage(message)}
       </span>
     </div>

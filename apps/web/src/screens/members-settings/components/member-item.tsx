@@ -30,9 +30,9 @@ export const MemberItem: FC<MemberItemProps> = ({
     <div
       key={member.id}
       className={cn(
-        "border-b flex flex-row justify-between py-4 px-6 h-12 items-center hover:bg-[#181C25] cursor-pointer text-sm box-border",
+        "border-b flex flex-row justify-between py-4 px-6 h-12 items-center hover:bg-secondary cursor-pointer text-sm box-border",
         {
-          "bg-[#181C25]": active,
+          "bg-secondary": active,
         }
       )}
       onClick={onSelect}

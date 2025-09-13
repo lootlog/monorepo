@@ -10,14 +10,14 @@ export const CatchingSettings = () => {
   const { characterId } = useGlobalStore((state) => state.gameState);
 
   return (
-    <div className="ll-w-full ll-pt-2">
-      <h2 className="ll-text-sm">Ustawienia łapania lootu i timerów</h2>
-      <p className=" ll-text-gray-400 ll-mb-2">
+    <div className="ll:w-full ll:pt-2">
+      <h2 className="ll:text-sm">Ustawienia łapania lootu i timerów</h2>
+      <p className=" ll:text-gray-400 ll:mb-2">
         Skonfiguruj ustawienia dotyczące łapania lootu i timerów w grze dla
         każdej z postaci.
       </p>
-      <label className="ll-font-semibold">Wybierz postać:</label>
-      <Tabs defaultValue={characterId} className="ll-w-full">
+      <label className="ll:font-semibold">Wybierz postać:</label>
+      <Tabs defaultValue={characterId} className="ll:w-full">
         <TabsList>
           {characterList?.map((character) => (
             <TabsTrigger key={character.id} value={`${character.id}`}>

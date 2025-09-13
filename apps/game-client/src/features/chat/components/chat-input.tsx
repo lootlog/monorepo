@@ -58,9 +58,9 @@ export const ChatInput: FC<ChatInputProps> = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="ll-flex ll-justify-center ll-flex-col"
+      className="ll:flex ll:justify-center ll:flex-col"
     >
-      <Label className="!ll-text-[10px]">
+      <Label className="ll:!text-[10px]">
         (zacznij od !, aby wysłać powiadomienie)
       </Label>
       <Input

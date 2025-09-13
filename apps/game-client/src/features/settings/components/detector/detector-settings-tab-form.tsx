@@ -91,19 +91,19 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   }
 
   return (
-    <form className="ll-h-full ll-py-4">
-      <div className="ll-flex-1">
-        <div className="ll-pb-2">
+    <form className="ll:h-full ll:py-4">
+      <div className="ll:flex-1">
+        <div className="ll:pb-2">
           <Button onClick={applyToAll}>Aplikuj do wszystkich postaci</Button>
         </div>
-        <span className="ll-grid ll-grid-cols-2 ll-gap-y-6 ll-mb-2">
+        <span className="ll:grid ll:grid-cols-2 ll:gap-y-6 ll:mb-2">
           {mainFields.map((field) => {
             const watchDetect = watch(`settingsByNpcType.${field.key}.detect`);
             const textColor = getTextColor(field.key, true);
 
             return (
               <span key={field.key}>
-                <div className="ll-font-semibold ll-mb-2">{field.label}</div>
+                <div className="ll:font-semibold ll:mb-2">{field.label}</div>
                 <Checkbox
                   id={`${field.key}-detect`}
                   {...register(`settingsByNpcType.${field.key}.detect`)}
@@ -146,11 +146,11 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
                 >
                   Podświetlenie
                 </Checkbox>
-                <div className="ll-mt-2">
-                  <span className="ll-font-semibold">
+                <div className="ll:mt-2">
+                  <span className="ll:font-semibold">
                     Na jakie serwery wysyłać:
                   </span>
-                  <div className="ll-mt-2">
+                  <div className="ll:mt-2">
                     {guilds?.map((guild) => {
                       const id = `${field.key}-${guild.id}`;
                       return (
