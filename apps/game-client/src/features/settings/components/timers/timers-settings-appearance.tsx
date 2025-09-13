@@ -1,4 +1,3 @@
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -10,8 +9,8 @@ export const TimersSettingsAppearance: FC = () => {
   const { displayConfig, setDisplayConfig } = useTimersStore();
 
   return (
-    <span className="ll-flex ll-flex-col ll-gap-3">
-      <div className="ll-flex ll-flex-col ll-gap-2">
+    <span className="ll:flex ll:flex-col ll:gap-3">
+      <div className="ll:flex ll:flex-col ll:gap-2">
         <Label htmlFor="show-level">Wyświetlaj poziom potwora</Label>
         <Switch
           checked={displayConfig.showLevel}
@@ -21,7 +20,7 @@ export const TimersSettingsAppearance: FC = () => {
           id="show-level"
         />
       </div>
-      <div className="ll-flex ll-flex-col ll-gap-2">
+      <div className="ll:flex ll:flex-col ll:gap-2">
         <Label htmlFor="show-type">Wyświetlaj typ potwora</Label>
         <Switch
           checked={displayConfig.showType}
@@ -32,12 +31,12 @@ export const TimersSettingsAppearance: FC = () => {
         />
       </div>
 
-      <span className="ll-space-y-2">
+      <span className="ll:space-y-2">
         <div>
           <Label htmlFor="show-type">
             Tryb wyświetlania pojedynczego timera
           </Label>
-          <p className="ll-text-muted-foreground">
+          <p className="ll:text-muted-foreground">
             Kolumny - wyświetla czas pod nazwą timera. <br /> Wiersze -
             wyświetla czas obok nazwy timera.
           </p>
@@ -59,7 +58,7 @@ export const TimersSettingsAppearance: FC = () => {
           <ToggleGroupItem value="row">Wiersze</ToggleGroupItem>
         </ToggleGroup>
       </span>
-      <span className="ll-space-y-2">
+      <span className="ll:space-y-2">
         <Label>Wielkość czcionki</Label>
         <Slider
           min={8}
@@ -71,7 +70,7 @@ export const TimersSettingsAppearance: FC = () => {
           }
         />
       </span>
-      <span className="ll-space-y-2">
+      <span className="ll:space-y-2">
         <Label>Minimalna szerokość pojedynczego timera</Label>
         <Slider
           min={0}

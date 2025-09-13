@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SearchInput } from "@/components/ui/search-input";
 import { useManageableGuilds } from "@/hooks/api/use-manageable-guilds";
 import { FC, useState } from "react";

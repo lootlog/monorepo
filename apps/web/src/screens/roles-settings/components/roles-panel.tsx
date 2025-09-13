@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { GuildRole } from "@/hooks/api/use-guild-roles";
 import { RolesSettingsForm } from "@/screens/roles-settings/components/roles-settings-form";
 import { ArrowLeft } from "lucide-react";
@@ -15,8 +15,8 @@ export const RolePanelContent: FC<RolePanelContentProps> = ({
   setSelectedRole,
   selectedRoleColor,
 }) => (
-  <>
-    <div className="p-4 border-b h-12 flex flex-row gap-4 items-center">
+  <div className="flex flex-col h-full min-h-0">
+    <div className="p-4 border-b flex flex-row gap-4 items-center min-h-12">
       <ArrowLeft
         className="cursor-pointer"
         onClick={() => setSelectedRole(null)}
@@ -26,11 +26,13 @@ export const RolePanelContent: FC<RolePanelContentProps> = ({
           className="size-4 rounded-full"
           style={{ backgroundColor: `#${selectedRoleColor}` }}
         />
-        <div className="font-semibold text-sm">{selectedRole.name}</div>
+        <div className="font-semibold text-sm truncate">
+          {selectedRole.name}
+        </div>
       </div>
     </div>
-    <ScrollArea className="h-[calc(100vh-318px)]">
+    <ScrollArea className="flex-1 min-h-0">
       <RolesSettingsForm role={selectedRole} />
     </ScrollArea>
-  </>
+  </div>
 );

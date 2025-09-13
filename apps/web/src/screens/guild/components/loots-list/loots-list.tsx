@@ -1,5 +1,5 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Separator } from "@lootlog/ui/components/separator";
 import { useLoots } from "@/hooks/api/use-loots";
 import { useGuildContext } from "@/hooks/use-guild-context";
 import { Frown, Loader2 } from "lucide-react";
@@ -71,7 +71,7 @@ export const LootsList: FC = () => {
   }
 
   return (
-    <ScrollArea id="loots-list" className="h-full flex-1 relative">
+    <ScrollArea id="loots-list" className="h-24 flex-1 relative">
       {loots && (
         <ul className="flex flex-col">
           {loots.pages.map((page) =>

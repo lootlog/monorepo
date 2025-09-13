@@ -58,22 +58,22 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
     >
       <SelectTrigger
         className={cn(
-          "ll-w-[231px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-mb-1 ll-custom-cursor-pointer",
+          "ll:w-[231px] ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll-custom-cursor-pointer",
           className
         )}
       >
         <SelectValue
           placeholder="Wybierz serwer..."
-          className="ll-h-4 ll-text-sm ll-text-white"
+          className="ll:h-4 ll:text-sm ll:text-white"
         />
       </SelectTrigger>
-      <SelectContent className="ll-font-sans ll-z-[500] ll-w-[232px] ll-py-1">
+      <SelectContent className="ll:font-sans ll:z-[500] ll:w-[232px] ll:py-1">
         {guilds?.map((guild) => {
           return (
             <SelectItem
               key={guild.id}
               value={guild.id}
-              className="ll-text-xs ll-font-semibold ll-w-full ll-h-5"
+              className="ll:text-xs ll:font-semibold ll:w-full ll:h-5"
             >
               {guild.name}
             </SelectItem>

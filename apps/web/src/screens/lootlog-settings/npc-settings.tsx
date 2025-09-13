@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import { Button } from "@lootlog/ui/components/button";
 import { EllipsisVertical } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
 import { NpcSettingsPanelContent } from "@/screens/lootlog-settings/components/npc-settings-panel-content";
 import { useTranslation } from "react-i18next";
@@ -30,7 +30,7 @@ export const NpcSettings = () => {
   }, [selectedNpc]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0">
       <div className="p-4 pb-6">
         <div className="text-lg font-semibold">Ustawienia potworów i NPC</div>
         <div className="text-sm text-gray-500">
@@ -38,11 +38,20 @@ export const NpcSettings = () => {
         </div>
       </div>
       <div
-        className={cn("border-t grid grid-cols-[1fr] flex-1", {
-          "grid-cols-[theme(width.64)_1fr]": selectedNpc,
-        })}
+        className={cn(
+          "border-t grid flex-1 min-h-0 transition-[grid-template-columns]",
+          // Base: single column; when selected on md+ show two columns.
+          selectedNpc
+            ? "grid-cols-1 md:grid-cols-[theme(width.64)_1fr]"
+            : "grid-cols-1 md:grid-cols-[1fr]"
+        )}
       >
-        <ScrollArea className="flex flex-col h-[calc(100vh-270px)]">
+        <ScrollArea
+          className={cn(
+            "flex flex-col h-full min-h-0 overflow-hidden",
+            selectedNpc && "hidden md:flex"
+          )}
+        >
           {config?.npcs?.map((npc) => {
             const active = selectedNpc?.id === npc.id;
 
@@ -50,9 +59,9 @@ export const NpcSettings = () => {
               <div
                 key={npc.id}
                 className={cn(
-                  "border-b flex flex-row justify-between py-4 px-6 items-center hover:bg-[#181C25] cursor-pointer text-sm",
+                  "border-b flex flex-row justify-between py-4 px-6 items-center hover:bg-secondary cursor-pointer text-sm",
                   {
-                    "bg-[#181C25]": active,
+                    "bg-secondary": active,
                   }
                 )}
                 onClick={() => setSelectedNpc(npc)}
@@ -98,14 +107,19 @@ export const NpcSettings = () => {
             );
           })}
         </ScrollArea>
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {selectedNpc &&
             (shouldAnimate ? (
               <motion.div
-                className="border-l"
-                initial={{ opacity: 0, x: 64 }}
+                className={cn(
+                  "border-l min-h-0 flex flex-col",
+
+                  "md:border-l border-l-0"
+                )}
+                initial={{ opacity: 0, x: 32 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                exit={{ opacity: 0, x: 16 }}
+                transition={{ type: "spring", stiffness: 420, damping: 32 }}
                 key={selectedNpc.id}
               >
                 <NpcSettingsPanelContent
@@ -114,9 +128,14 @@ export const NpcSettings = () => {
                 />
               </motion.div>
             ) : (
-              <div className="border-l">
+              <div
+                className={cn(
+                  "border-l min-h-0 flex flex-col",
+                  "md:border-l border-l-0"
+                )}
+                key={selectedNpc.id}
+              >
                 <NpcSettingsPanelContent
-                  key={selectedNpc.id}
                   selectedNpc={selectedNpc}
                   setSelectedNpc={setSelectedNpc}
                 />

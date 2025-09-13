@@ -2,15 +2,6 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { useCreateManualTimer } from "@/hooks/api/use-create-manual-timer";
 import { useGlobalStore } from "@/store/global.store";
@@ -23,6 +14,15 @@ import {
 } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 import { useSettingsStore } from "@/store/settings.store";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const MULTIPLIER_BY_NPC_TYPE: Record<string, number> = {
   [NpcType.ELITE2]: 10,
@@ -52,8 +52,7 @@ const schema = z.object({
   minSpawn: z
     .string()
     .min(1)
-    .transform((val) => parseDurationToSeconds(val))
-    .refine((val) => val > 0, {
+    .refine((val) => parseDurationToSeconds(val) > 0, {
       message: "Duration must be greater than 0 seconds",
     }),
   npcType: z
@@ -82,15 +81,15 @@ export const AddTimerForm: React.FC = () => {
     if (!world || !guildId) return;
 
     const { name, minSpawn, npcType } = data;
+    const minSpawnSeconds = parseDurationToSeconds(minSpawn);
     const respawnRandomness = npcType
       ? MULTIPLIER_BY_NPC_TYPE[npcType]
       : DEFAULT_RESPAWN_RANDOMNESS;
 
     const respBaseSeconds = calculateRespBaseSecondsFromMinOffset(
-      minSpawn,
+      minSpawnSeconds,
       respawnRandomness
     );
-
     createManualTimer(
       {
         name,
@@ -120,9 +119,9 @@ export const AddTimerForm: React.FC = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="ll-space-y-4 ll-box-border ll-mt-2 ll-mx-auto ll-w-[222px]"
+      className="ll:space-y-4 ll:box-border ll:mt-2 ll:mx-auto ll:w-[222px]"
     >
-      <div className="ll-w-full">
+      <div className="ll:w-full">
         <Label htmlFor="text">Nazwa</Label>
         <Input
           id="text"
@@ -142,7 +141,7 @@ export const AddTimerForm: React.FC = () => {
         />
       </div>
       <div>
-        <label htmlFor="role" className="ll-font-semibold ll-text-xs">
+        <label htmlFor="role" className="ll:font-semibold ll:text-xs">
           Typ potwora
         </label>
         <Select
@@ -154,18 +153,18 @@ export const AddTimerForm: React.FC = () => {
             );
           }}
         >
-          <SelectTrigger className="w-[222px] ll-text-white ll-text-xs ll-border-gray-400 ll-rounded-xs ll-h-4 ll-my-1 ll-mb-2 ll-custom-cursor-pointer">
+          <SelectTrigger className="w-[222px] ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:my-1 ll:mb-2 ll-custom-cursor-pointer">
             <SelectValue
-              className="ll-h-4 ll-text-sm ll-text-white"
+              className="ll:h-4 ll:text-sm ll:text-white"
               placeholder="Wybierz typ potwora..."
             />
           </SelectTrigger>
-          <SelectContent className="ll-font-sans ll-z-[500] ll-w-[222px] ll-py-1">
+          <SelectContent className="ll:font-sans ll:z-[500] ll:w-[222px] ll:py-1">
             {SELECT_OPTIONS.map((option) => (
               <SelectItem
                 key={option.value}
                 value={option.value}
-                className="ll-text-xs ll-font-semibold ll-w-[210px] ll-h-5"
+                className="ll:text-xs ll:font-semibold ll:w-[210px] ll:h-5"
               >
                 {option.label}
               </SelectItem>
@@ -174,24 +173,24 @@ export const AddTimerForm: React.FC = () => {
         </Select>
       </div>
 
-      <div className="ll-space-y-1 ll-flex ll-items-center ll-flex-col ll-w-full">
-        <div className="ll-text-xs ll-font-semibold">Wyliczony czas respu:</div>
-        <div className="ll-space-x-2">
-          <span className="ll-text-xs ll-font-semibold">min:</span>
-          <span className="ll-text-yellow-500">
+      <div className="ll:space-y-1 ll:flex ll:items-center ll:flex-col ll:w-full">
+        <div className="ll:text-xs ll:font-semibold">Wyliczony czas respu:</div>
+        <div className="ll:space-x-2">
+          <span className="ll:text-xs ll:font-semibold">min:</span>
+          <span className="ll:text-yellow-500">
             {formatSecondsToHHMMSS(minOffset)}
           </span>
-          <span className="ll-text-xs ll-font-semibold">max:</span>
-          <span className="ll-text-red-500">
+          <span className="ll:text-xs ll:font-semibold">max:</span>
+          <span className="ll:text-red-500">
             {formatSecondsToHHMMSS(maxOffset)}
           </span>
         </div>
       </div>
 
-      <div className="ll-flex ll-justify-center">
+      <div className="ll:flex ll:justify-center">
         <button
           type="submit"
-          className="ll-text-[12px] ll-border ll-border-gray-400 ll-bg-gray-400/30 hover:ll-bg-gray-400/50 ll-rounded-sm ll-h-5 ll-text-white ll-mt-1"
+          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:mt-1"
           disabled={isPending}
         >
           {isPending ? "Dodawanie..." : "Dodaj"}

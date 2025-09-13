@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@lootlog/ui/components/tooltip";
 import { useSession } from "@/hooks/auth/use-session";
 import { cn } from "@/utils/cn";
 import {

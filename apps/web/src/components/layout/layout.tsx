@@ -1,7 +1,7 @@
 import { CreateGuildModal } from "@/components/common/create-guild-modal/create-guild-modal";
 import { InstallAddonModal } from "@/components/common/install-addon-modal/install-addon-modal";
 import { PageContainer } from "@/components/ui/page-container";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@lootlog/ui/components/sonner";
 
 import { ThemeProvider } from "next-themes";
 import { Outlet } from "react-router-dom";

@@ -44,11 +44,11 @@ export const TimersSettingsGeneral: FC = () => {
   };
 
   return (
-    <div className="ll-flex ll-flex-col ll-gap-3">
-      <div className="ll-flex ll-flex-col ll-gap-2">
+    <div className="ll:flex ll:flex-col ll:gap-3">
+      <div className="ll:flex ll:flex-col ll:gap-2">
         <div>
           <Label htmlFor="show-type">Grupuj timery</Label>
-          <p className="ll-text-muted-foreground">
+          <p className="ll:text-muted-foreground">
             Łączy timery z różnych lootlogów w jeden zbiorczy.
           </p>
         </div>
@@ -60,10 +60,10 @@ export const TimersSettingsGeneral: FC = () => {
           id="show-type"
         />
       </div>
-      <div className="ll-flex ll-flex-col ll-gap-2">
+      <div className="ll:flex ll:flex-col ll:gap-2">
         <div>
           <Label htmlFor="show-type">Timery pod torbami</Label>
-          <p className="ll-text-muted-foreground">
+          <p className="ll:text-muted-foreground">
             Wyświetla timery pod torbami zamiast w osobnym okienku.
           </p>
         </div>
@@ -75,7 +75,7 @@ export const TimersSettingsGeneral: FC = () => {
           id="show-type"
         />
       </div>
-      <div className="ll-space-y-1">
+      <div className="ll:space-y-1">
         <Label>Odliczaj do</Label>
         <ToggleGroup
           type="single"
@@ -91,16 +91,16 @@ export const TimersSettingsGeneral: FC = () => {
           value={generalConfig.countdownMode}
         >
           <ToggleGroupItem value="max">Max</ToggleGroupItem>
-          <ToggleGroupItem value="min" className="ll-text-nowrap">
+          <ToggleGroupItem value="min" className="ll:text-nowrap">
             Min
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-      <div className="ll-space-y-1">
-        <Label className="ll-font-semibold">
+      <div className="ll:space-y-1">
+        <Label className="ll:font-semibold">
           Czas usunięcia timera po wyzerowaniu (w sekundach)
         </Label>
-        <div className="ll-w-8">
+        <div className="ll:w-8">
           <Input
             type="text"
             value={inputValue}

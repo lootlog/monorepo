@@ -85,7 +85,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   return (
     <Fragment key={notification.notificationId}>
       <span
-        className={cn("ll-flex ll-gap-4 ll-px-2 ll-py-2")}
+        className={cn("ll:flex ll:gap-4 ll:px-2 ll:py-2")}
         style={{
           background:
             index === 0
@@ -112,19 +112,19 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         {showCloseButton && (
           <XIcon
             className={cn(
-              "ll-custom-cursor-pointer ll-text-gray-300 hover:ll-text-gray-100 ll-transition-colors"
+              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors"
             )}
             size="16"
             onClick={handleRemoveNotification}
           />
         )}
       </span>
-      <span className="ll-flex ll-flex-col ll-justify-center"></span>
+      <span className="ll:flex ll:flex-col ll:justify-center"></span>
       {autoHideTimeout > 0 && secondsLeft > 0 && (
         <>
-          <Separator className="ll-bg-black/70 ll-h-[1px]" />
+          <Separator className="ll:bg-black/70 ll:h-[1px]" />
           <Progress value={secondsLeftPercentage} indicatorColor={color} />
-          <Separator className="ll-bg-black/70 ll-h-[1px]" />
+          <Separator className="ll:bg-black/70 ll:h-[1px]" />
         </>
       )}
     </Fragment>
