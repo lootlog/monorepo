@@ -11,7 +11,7 @@ import { LootDetails } from "@/screens/guild/components/loots-list/loot-details"
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@lootlog/ui/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PlayerTile } from "@/screens/guild/components/loots-list/player-tile";
 import { LootDetailsActions } from "@/screens/guild/components/loots-list/loot-details-actions";
 import {
@@ -66,7 +66,7 @@ export const LootDetailsSheetContent: FC<LootDetailsSheetProps> = ({
           <LootDetailsActions loot={loot} />
         </div>
       )}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-24">
         <div className="flex flex-row gap-1 flex-wrap p-4 border-b">
           {loot.players.map((player, idx) => {
             const color = playerColorMap[player.id];

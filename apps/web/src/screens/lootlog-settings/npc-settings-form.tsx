@@ -10,7 +10,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,21 +18,20 @@ import { LootlogConfigNpc } from "@/hooks/api/use-guild-lootlog-settings";
 import { ItemRarity } from "@/hooks/api/use-loots";
 import { cn } from "@/utils/cn";
 import { useUpdateGuildLootlogNpc } from "@/hooks/api/use-update-guild-lootlog-npc";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 type NpcSettingsFormProps = {
   npc: LootlogConfigNpc;
 };
 
 const formSchema = z.object({
-  LEGENDARY: z.boolean().default(true),
-  UPGRADED: z.boolean().default(true),
-  HEROIC: z.boolean().default(true),
-  UNIQUE: z.boolean().default(true),
+  LEGENDARY: z.boolean(),
+  UPGRADED: z.boolean(),
+  HEROIC: z.boolean(),
+  UNIQUE: z.boolean(),
 });
 
 export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
-  const { toast } = useToast();
   const { mutate: updateGuildLootlogNpc } = useUpdateGuildLootlogNpc();
 
   const { t } = useTranslation();
@@ -56,16 +55,10 @@ export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
       },
       {
         onSuccess: () => {
-          toast({
-            variant: "default",
-            description: "Zaktualizowano ustawienia",
-          });
+          toast.success("Zaktualizowano ustawienia");
         },
         onError: () => {
-          toast({
-            variant: "destructive",
-            description: "Nie udało się zaktualizować ustawień",
-          });
+          toast.error("Nie udało się zaktualizować ustawień");
         },
       }
     );

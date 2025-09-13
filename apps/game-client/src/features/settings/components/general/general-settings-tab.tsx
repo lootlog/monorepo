@@ -6,12 +6,12 @@ export const GeneralSettingsTab: FC = () => {
   const { allowWorldSelection, toggleAllowWorldSelection } = useSettingsStore();
 
   return (
-    <div className="ll-w-full ll-pt-2">
-      <h2 className="ll-text-sm">Ustawienia ogólne</h2>
-      <p className=" ll-text-gray-400">
+    <div className="ll:w-full ll:pt-2">
+      <h2 className="ll:text-sm">Ustawienia ogólne</h2>
+      <p className=" ll:text-gray-400">
         Skonfiguruj ogólne ustawienia dotyczące działania dodatku w grze.
       </p>
-      <div className="ll-mb-4 ll-mt-4">
+      <div className="ll:mb-4 ll:mt-4">
         <Checkbox
           value={allowWorldSelection ? "1" : "0"}
           checked={allowWorldSelection}

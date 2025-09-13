@@ -161,7 +161,7 @@ export const useTimersStore = create<TimersState>()(
       },
     }),
     {
-      name: "ll-timers-state",
+      name: "ll:timers-state",
       partialize: (state) => ({
         hiddenTimers: state.hiddenTimers,
         pinnedTimers: state.pinnedTimers,

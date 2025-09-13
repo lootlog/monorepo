@@ -1,6 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Separator } from "@/components/ui/separator";
-import { useSidebar } from "@/components/ui/sidebar";
+import { Separator } from "@lootlog/ui/components/separator";
+import { useSidebar } from "@lootlog/ui/components/sidebar";
 import {
   Permission,
   useGuildPermissions,
@@ -22,7 +22,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@lootlog/ui/components/tooltip";
 import { useGuildMember } from "@/hooks/api/use-guild-member";
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
 import { useMemberRefresh } from "@/hooks/api/use-member-refresh";
@@ -170,14 +170,10 @@ export const SidebarNav: FC = () => {
                   })}
                 >
                   <Button
-                    variant="ghost"
+                    variant={isActive ? "default" : "ghost"}
                     size="sm"
                     className={cn(
-                      "justify-start w-full font-semibold transition px-2",
-                      {
-                        "bg-violet-900": isActive,
-                        "hover:bg-violet-700": isActive,
-                      }
+                      "justify-start w-full font-semibold transition"
                     )}
                     disabled={!available}
                   >

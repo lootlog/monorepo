@@ -9,14 +9,14 @@ export const NotificationsSettingsTab = () => {
   const { characterId } = useGlobalStore((state) => state.gameState);
 
   return (
-    <div className="ll-w-full ll-pt-2">
-      <h2 className="ll-text-sm">Ustawienia powiadomień</h2>
-      <p className=" ll-text-gray-400 ll-mb-2">
+    <div className="ll:w-full ll:pt-2">
+      <h2 className="ll:text-sm">Ustawienia powiadomień</h2>
+      <p className=" ll:text-gray-400 ll:mb-2">
         Skonfiguruj ustawienia powiadomień dla każdej z postaci. Możesz
         dostosować, które typy NPC będą wywoływać powiadomienia oraz jak będą
         one prezentowane.
       </p>
-      <label className="ll-mt-1 ll-font-semibold">Wybierz postać:</label>
+      <label className="ll:mt-1 ll:font-semibold">Wybierz postać:</label>
       <Tabs defaultValue={characterId} className="w-full">
         <TabsList>
           {characterList?.map((character) => (

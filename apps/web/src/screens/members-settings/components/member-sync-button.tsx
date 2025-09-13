@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@lootlog/ui/components/tooltip";
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
 import { GuildMember } from "@/hooks/api/use-guild-member";
 import { useMemberRefresh } from "@/hooks/api/use-member-refresh";

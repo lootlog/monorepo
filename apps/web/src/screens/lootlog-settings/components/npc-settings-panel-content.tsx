@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { LootlogConfigNpc } from "@/hooks/api/use-guild-lootlog-settings";
 import { NpcSettingsForm } from "@/screens/lootlog-settings/npc-settings-form";
 import { ArrowLeft } from "lucide-react";

@@ -2,7 +2,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { cn } from "@/utils/cn";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { GuildMember } from "@/hooks/api/use-guild-member";

@@ -11,17 +11,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { useToast } from "@/components/ui/use-toast";
 import { GuildRole } from "@/hooks/api/use-guild-roles";
 import { useUpdateGuildRole } from "@/hooks/api/use-update-guild-role";
 import { Permission } from "@/hooks/api/use-guild-permissions";
 import { cn } from "@/utils/cn";
 import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@lootlog/ui/components/label";
+import { toast } from "sonner";
 
 const PERMISSIONS = [
   {
@@ -117,7 +117,6 @@ type RolesSettingsFormProps = {
 };
 
 export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
-  const { toast } = useToast();
   const { mutate: updateGuildRole } = useUpdateGuildRole();
   const { t } = useTranslation();
 
@@ -151,10 +150,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
       },
       {
         onSuccess: (response) => {
-          toast({
-            variant: "default",
-            description: "Zaktualizowano ustawienia",
-          });
+          toast.success("Zaktualizowano ustawienia");
           form.reset({
             lvlRangeFrom:
               response.data.lvlRangeFrom?.toString() || DEFAULT_LVL_RANGE_FROM,
@@ -170,10 +166,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
           });
         },
         onError: () => {
-          toast({
-            variant: "destructive",
-            description: "Nie udało się zaktualizować ustawień",
-          });
+          toast.error("Nie udało się zaktualizować ustawień");
         },
       }
     );
@@ -241,7 +234,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
             control={form.control}
             name={perm.key as unknown as keyof FormSchemaType}
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 px-6 border-b hover:bg-[#181C25]">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 px-6 border-b hover:bg-secondary">
                 <FormControl>
                   <Checkbox
                     checked={!!field.value}

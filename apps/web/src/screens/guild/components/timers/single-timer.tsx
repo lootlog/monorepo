@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@lootlog/ui/components/tooltip";
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { format } from "date-fns";
 import { Timer, useTimers } from "@/hooks/api/use-timers";
