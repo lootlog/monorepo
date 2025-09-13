@@ -686,7 +686,7 @@ const MagicBento: React.FC<BentoProps> = ({
       <BentoCardGrid gridRef={gridRef}>
         <div className="card-responsive grid gap-2 max-w-full">
           {cardData.map((card, index) => {
-            const baseClassName = `card cursor-pointer flex flex-col relative justify-between relative min-h-[200px] rounded-lg border border-solid font-light overflow-hidden transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] ${
+            const baseClassName = `card cursor-pointer flex flex-col justify-between relative min-h-[200px] rounded-lg border border-solid font-light overflow-hidden transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] ${
               enableBorderGlow ? "card--border-glow" : ""
             }`;
 
