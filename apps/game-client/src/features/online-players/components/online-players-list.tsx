@@ -18,13 +18,13 @@ export const OnlinePlayersList: FC = () => {
   const onlinePlayersList = Object.entries(onlinePlayers);
 
   return (
-    <div className="ll-h-full ll-w-full">
-      <div className="ll-flex ll-flex-col ll-h-full ll-overflow-hidden">
-        <div className="ll-pt-1 ll-flex ll-gap-1">
+    <div className="ll:h-full ll:w-full">
+      <div className="ll:flex ll:flex-col ll:h-full ll:overflow-hidden">
+        <div className="ll:pt-1 ll:flex ll:gap-1">
           <GuildSelector />
-          {allowWorldSelection && <WorldSelector className="ll-w-1/3" />}
+          {allowWorldSelection && <WorldSelector className="ll:w-1/3" />}
         </div>
-        <ScrollArea className="ll-flex-1 ll-box-border" type="hover">
+        <ScrollArea className="ll:flex-1 ll:box-border" type="hover">
           {onlinePlayersList.length > 0 ? (
             onlinePlayersList.map(([discordId, presences]) => (
               <OnlinePlayersListEntry
@@ -35,7 +35,7 @@ export const OnlinePlayersList: FC = () => {
               />
             ))
           ) : (
-            <p className="ll-text-gray-500 ll-w-full ll-flex ll-items-center ll-justify-center">
+            <p className="ll:text-gray-500 ll:w-full ll:flex ll:items-center ll:justify-center">
               Brak graczy online.
             </p>
           )}

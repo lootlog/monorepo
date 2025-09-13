@@ -38,7 +38,7 @@ export const NpcDetector = () => {
         minWidth={360}
         dynamicHeight
       >
-        <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
+        <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
           <NpcsList npcs={filteredNpcs} />
         </div>
       </DraggableWindow>

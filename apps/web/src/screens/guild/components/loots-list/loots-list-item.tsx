@@ -34,7 +34,7 @@ export const LootsListItem: React.FC<Props> = ({ loot }) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <li className="py-2 hover:bg-[#181C25] group hover:cursor-pointer">
+        <li className="py-2 hover:bg-secondary group hover:cursor-pointer transition-all">
           <div className="px-4 py-1 flex flex-row justify-between">
             <div className="space-y-0 leading-none w-3/4">
               <LootNpcs npcs={loot.npcs} />

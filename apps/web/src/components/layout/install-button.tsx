@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@lootlog/ui/components/tooltip";
 import { useGlobalContext } from "@/hooks/use-global-context";
 import { Button } from "@lootlog/ui/components/button";
 import { Blocks } from "lucide-react";

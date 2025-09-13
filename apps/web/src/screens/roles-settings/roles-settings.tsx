@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import { Button } from "@lootlog/ui/components/button";
 import { EllipsisVertical } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
 import { RolePanelContent } from "@/screens/roles-settings/components/roles-panel";
 
@@ -33,26 +33,34 @@ export const RolesSettings = () => {
     selectedRole?.color === 0 ? "FFF" : selectedRole?.color.toString(16);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 pb-6">
+    <div className="h-full flex flex-col min-h-0">
+      <div className="p-4 pb-4">
         <div className="text-lg font-semibold">Ustawienia ról</div>
         <div className="text-sm text-gray-500">
           Ustawienia ról, które mogą być przypisane do graczy na serwerze
           Discord. Tutaj możesz przypisać uprawnienia do ról.
         </div>
       </div>
-      <div className="p-4 border-t">
+      <div className="px-4 py-3 border-t">
         <SearchInput
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Szukaj roli..."
         />
       </div>
       <div
-        className={cn("border-t grid grid-cols-[1fr] flex-1", {
-          "grid-cols-[theme(width.64)_1fr]": selectedRole,
-        })}
+        className={cn(
+          "border-t grid flex-1 min-h-0 transition-[grid-template-columns]",
+          selectedRole
+            ? "grid-cols-1 md:grid-cols-[theme(width.64)_1fr]"
+            : "grid-cols-1 md:grid-cols-[1fr]"
+        )}
       >
-        <ScrollArea className="flex flex-col h-[calc(100vh-280px)]">
+        <ScrollArea
+          className={cn(
+            "flex flex-col h-full min-h-0",
+            selectedRole && "hidden md:flex"
+          )}
+        >
           {filteredRoles?.map((role) => {
             const color = role.color === 0 ? "FFF" : role.color.toString(16);
             const active = selectedRole?.id === role.id;
@@ -61,9 +69,9 @@ export const RolesSettings = () => {
               <div
                 key={role.id}
                 className={cn(
-                  "border-b flex flex-row justify-between py-4 px-6 h-12 items-center hover:bg-[#181C25] cursor-pointer text-sm",
+                  "border-b flex flex-row justify-between py-3 px-5 items-center hover:bg-secondary cursor-pointer text-sm",
                   {
-                    "bg-[#181C25]": active,
+                    "bg-secondary": active,
                   }
                 )}
                 onClick={() => setSelectedRole(role)}
@@ -93,14 +101,18 @@ export const RolesSettings = () => {
             );
           })}
         </ScrollArea>
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {selectedRole &&
             (shouldAnimate ? (
               <motion.div
-                className="border-l"
-                initial={{ opacity: 0, x: 64 }}
+                className={cn(
+                  "border-l min-h-0 flex flex-col",
+                  "md:border-l border-l-0"
+                )}
+                initial={{ opacity: 0, x: 32 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                exit={{ opacity: 0, x: 16 }}
+                transition={{ type: "spring", stiffness: 420, damping: 32 }}
                 key={selectedRole.id}
               >
                 <RolePanelContent
@@ -110,9 +122,14 @@ export const RolesSettings = () => {
                 />
               </motion.div>
             ) : (
-              <div className="border-l">
+              <div
+                className={cn(
+                  "border-l min-h-0 flex flex-col",
+                  "md:border-l border-l-0"
+                )}
+                key={selectedRole.id}
+              >
                 <RolePanelContent
-                  key={selectedRole.id}
                   selectedRole={selectedRole}
                   setSelectedRole={setSelectedRole}
                   selectedRoleColor={selectedRoleColor}

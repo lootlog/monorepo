@@ -125,7 +125,7 @@ export const NotificationsSettingsTabForm: FC<
 
     return (
       <span key={field.key}>
-        <div className="ll-font-semibold ll-mb-1">{field.label}</div>
+        <div className="ll:font-semibold ll:mb-1">{field.label}</div>
         <Checkbox
           id={`${field.key}-show`}
           {...register(`settingsByNpcType.${field.key}.show`)}
@@ -147,20 +147,20 @@ export const NotificationsSettingsTabForm: FC<
         >
           Podświetlenie
         </Checkbox>
-        <div className="ll-mt-2">
+        <div className="ll:mt-2">
           <Label>Auto ukrywanie: (sekundy)</Label>
           <Input
             id={`${field.key}-auto-hide-timeout`}
             type="number"
             disabled={!watchShow}
-            className="!ll-w-16 !ll-mt-1"
+            className="ll:!w-16 ll:!mt-1"
             placeholder="0"
             {...register(`settingsByNpcType.${field.key}.autoHideTimeout`)}
           />
         </div>
-        <div className="ll-mt-2">
-          <span className="ll-font-semibold">Z jakich serwerów:</span>
-          <div className="ll-mt-1">
+        <div className="ll:mt-2">
+          <span className="ll:font-semibold">Z jakich serwerów:</span>
+          <div className="ll:mt-1">
             {guilds?.map((guild) => {
               const id = `${field.key}-${guild.id}`;
               return (
@@ -183,12 +183,12 @@ export const NotificationsSettingsTabForm: FC<
   };
 
   return (
-    <form className="ll-h-full ll-py-4">
-      <div className="ll-flex-1">
-        <div className="ll-pb-2">
+    <form className="ll:h-full ll:py-4">
+      <div className="ll:flex-1">
+        <div className="ll:pb-2">
           <Button onClick={applyToAll}>Aplikuj do wszystkich postaci</Button>
         </div>
-        <span className="ll-grid ll-grid-cols-2 ll-gap-y-4 ll-mb-12">
+        <span className="ll:grid ll:grid-cols-2 ll:gap-y-4 ll:mb-12">
           {mainFields.map(renderField)}
         </span>
       </div>

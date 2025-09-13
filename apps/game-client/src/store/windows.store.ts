@@ -168,7 +168,7 @@ export const useWindowsStore = create<WindowsState>()(
       },
     }),
     {
-      name: "ll-windows-state",
+      name: "ll:windows-state",
       partialize: (state) => ({
         settings: state.settings,
         timers: state.timers,

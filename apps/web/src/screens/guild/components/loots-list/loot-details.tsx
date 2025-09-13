@@ -1,4 +1,3 @@
-import { useToast } from "@/components/ui/use-toast";
 import { Loot } from "@/hooks/api/use-loots";
 import { ItemTile } from "@/screens/guild/components/loots-list/item-tile";
 import { Button } from "@lootlog/ui/components/button";
@@ -10,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
+import { toast } from "sonner";
 
 export type LootDetailsProps = {
   loot: Loot;
@@ -17,23 +17,16 @@ export type LootDetailsProps = {
 };
 
 export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
 
   const handleCopyId = (id: string) => {
     navigator.clipboard
       .writeText(id)
       .then(() => {
-        toast({
-          title: "ID skopiowane",
-          description: `ID zostało skopiowane do schowka.`,
-        });
+        toast.success("ID skopiowane");
       })
       .catch(() => {
-        toast({
-          title: "Błąd kopiowania",
-          description: "Nie udało się skopiować ID. Spróbuj ponownie.",
-        });
+        toast.error("Nie udało się skopiować ID. Spróbuj ponownie.");
       });
   };
 

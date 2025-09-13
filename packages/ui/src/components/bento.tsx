@@ -683,11 +683,10 @@ const MagicBento: React.FC<BentoProps> = ({
           glowColor={glowColor}
         />
       )}
-
       <BentoCardGrid gridRef={gridRef}>
         <div className="card-responsive grid gap-2 max-w-full">
           {cardData.map((card, index) => {
-            const baseClassName = `card cursor-pointer flex flex-col relative justify-between relative group min-h-[200px] rounded-lg border border-solid font-light overflow-hidden transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] ${
+            const baseClassName = `card cursor-pointer flex flex-col justify-between relative min-h-[200px] rounded-lg border border-solid font-light overflow-hidden transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] ${
               enableBorderGlow ? "card--border-glow" : ""
             }`;
 
@@ -853,14 +852,14 @@ const MagicBento: React.FC<BentoProps> = ({
                     {card.title}
                   </span>
                 </div>
-                <div className="-z-10 flex items-center justify-center w-full h-full transition-all px-4 rounded-md">
+                <div className="flex items-center justify-center w-full h-full transition-all px-4 rounded-md">
                   <ImageZoom zoomMargin={isMobile ? 0 : 100}>
                     {card.image}
                   </ImageZoom>
                 </div>
-                <div className="card__content flex flex-col relative  text-white p-4 transition-all">
+                <div className="card__content flex flex-col relative text-white p-4 transition-all">
                   <p
-                    className={`card__description  text-sm  leading-5 opacity-90 ${textAutoHide ? "text-clamp-2" : ""}`}
+                    className={`card__description text-sm leading-5 opacity-90 ${textAutoHide ? "text-clamp-2" : ""}`}
                   >
                     {card.description}
                   </p>

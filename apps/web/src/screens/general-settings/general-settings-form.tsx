@@ -9,15 +9,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+} from "@lootlog/ui/components/form";
+import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
 import { useGuild } from "@/hooks/api/use-guild";
+import { AnimatePresence, motion } from "framer-motion";
 import { generateSlug } from "@/utils/generate-slug";
-import { cn } from "@/utils/cn";
 import { useUpdateGuild } from "@/hooks/api/use-update-guild";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const RESTRICTED_NAMES = ["@me"];
 
@@ -28,7 +28,6 @@ const formSchema = z.object({
 export const GeneralSettingsForm = () => {
   const { data: guild } = useGuild({});
 
-  const { toast } = useToast();
   const { mutate: updateGuildConfig } = useUpdateGuild();
   const navigate = useNavigate();
 
@@ -41,10 +40,7 @@ export const GeneralSettingsForm = () => {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (RESTRICTED_NAMES.includes(values.vanityUrl)) {
-      toast({
-        variant: "destructive",
-        description: "Ta nazwa jest zarezerwowana i nie może być użyta.",
-      });
+      toast.error("Ta nazwa jest zarezerwowana i nie może być użyta.");
       return;
     }
 
@@ -52,18 +48,12 @@ export const GeneralSettingsForm = () => {
       { vanityUrl: values.vanityUrl.length > 0 ? values.vanityUrl : null },
       {
         onSuccess: ({ data }) => {
-          toast({
-            variant: "default",
-            description: "Zaktualizowano konfigurację lootloga",
-          });
+          toast.success("Zaktualizowano konfigurację lootloga");
           navigate(`/${data.vanityUrl ?? data.id}/settings`);
           form.resetField("vanityUrl", { defaultValue: data.vanityUrl });
         },
         onError: () => {
-          toast({
-            variant: "destructive",
-            description: "Nie udało się zaktualizować konfiguracji lootloga",
-          });
+          toast.error("Nie udało się zaktualizować konfiguracji lootloga");
         },
       }
     );
@@ -102,26 +92,57 @@ export const GeneralSettingsForm = () => {
           )}
         />
 
-        <div
-          className={cn(
-            "absolute bottom-2 left-0 md:left-68 px-4 py-2 w-full md:w-[calc(100vw-288px)]transition-all",
-            {
-              "opacity-0": !form.formState.isDirty,
-            }
+        {/* Unsaved changes floating bar with pop animation */}
+        <AnimatePresence>
+          {form.formState.isDirty && (
+            <motion.div
+              key="unsaved-bar"
+              aria-live="polite"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{
+                type: "spring",
+                stiffness: 520,
+                damping: 28,
+                mass: 0.7,
+              }}
+              className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[theme(width.64)] z-50 flex justify-center px-2 pb-2 sm:px-4"
+            >
+              <motion.div
+                layout
+                layoutId="unsaved-bar-inner"
+                transition={{
+                  type: "spring",
+                  stiffness: 380,
+                  damping: 30,
+                  mass: 0.6,
+                }}
+                className="pointer-events-auto flex w-full max-w-3xl items-center justify-between gap-4 rounded-md border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-3 shadow-md"
+              >
+                <p className="text-sm font-medium">Masz niezapisane zmiany</p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => form.reset()}
+                  >
+                    Resetuj
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="default"
+                    size="sm"
+                    disabled={form.formState.isSubmitting}
+                  >
+                    {form.formState.isSubmitting ? "Zapisywanie..." : "Zapisz"}
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
-        >
-          <div className=" flex justify-between items-center p-4 border rounded-lg">
-            <div className="font-semibold">Masz niezapisane zmiany!</div>
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => form.reset()}>
-                Resetuj
-              </Button>
-              <Button type="submit" variant="default">
-                Zapisz
-              </Button>
-            </div>
-          </div>
-        </div>
+        </AnimatePresence>
       </form>
     </Form>
   );

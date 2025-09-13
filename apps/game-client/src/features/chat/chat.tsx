@@ -1,5 +1,4 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChatMessages } from "@/hooks/api/use-chat-messages";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useRef, useLayoutEffect } from "react";
@@ -12,6 +11,7 @@ import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages
 import { ChatMessage } from "@/features/chat/components/chat-message";
 import { ChatInput } from "@/features/chat/components/chat-input";
 import { useGlobalStore } from "@/store/global.store";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Chat = () => {
   const { accountId, characterId } = useGlobalStore((state) => state.gameState);
@@ -56,20 +56,20 @@ export const Chat = () => {
             title="Chat"
             onClose={() => setOpen("chat", false)}
           >
-            <div className="ll-flex ll-flex-col ll-h-full ll-w-full">
-              <div className="ll-flex-shrink-0 ll-pt-2">
+            <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
+              <div className="ll:flex-shrink-0 ll:pt-2">
                 <GuildSelector
                   value={selectedGuildId}
                   onChange={setSelectedGuildId}
                 />
               </div>
-              <div className="ll-flex-1 ll-overflow-hidden">
+              <div className="ll:flex-1 ll:overflow-hidden">
                 <ScrollArea
-                  className="ll-h-full ll-w-full ll-box-border"
+                  className="ll:h-full ll:w-full ll:box-border"
                   ref={scrollAreaRef}
                   type="auto"
                 >
-                  <div className="ll-flex ll-flex-col ll-gap-1 ll-p-1 ll-w-full  ll-backdrop-blur-xs ll-rounded-lg">
+                  <div className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg">
                     {messages?.map((message) => {
                       const guildMember = guildMembers?.[message.senderId];
 
@@ -84,7 +84,7 @@ export const Chat = () => {
                   </div>
                 </ScrollArea>
               </div>
-              <div className="ll-flex-shrink-0 ll-pb-1 ll-mt-1">
+              <div className="ll:flex-shrink-0 ll:pb-1 ll:mt-1">
                 <ChatInput
                   selectedGuildId={selectedGuildId}
                   autofocus={autofocus}

@@ -10,13 +10,13 @@ export const DetectorSettingsTab: FC = () => {
   const { characterId } = useGlobalStore((state) => state.gameState);
 
   return (
-    <div className="ll-w-full ll-pt-2">
-      <h2 className="ll-text-sm">Ustawienia wykrywacza</h2>
-      <p className=" ll-text-gray-400 ll-mb-2">
+    <div className="ll:w-full ll:pt-2">
+      <h2 className="ll:text-sm">Ustawienia wykrywacza</h2>
+      <p className=" ll:text-gray-400 ll:mb-2">
         Skonfiguruj ustawienia dotyczące wykrywania NPC w grze dla każdej z
         postaci.
       </p>
-      <label className="ll-mt-1 ll-font-semibold">Wybierz postać:</label>
+      <label className="ll:mt-1 ll:font-semibold">Wybierz postać:</label>
       <Tabs defaultValue={characterId} className="w-full">
         <TabsList>
           {characterList?.map((character) => (

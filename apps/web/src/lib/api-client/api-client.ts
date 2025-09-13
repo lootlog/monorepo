@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_URL } from "@/config/api";
+import { toast } from "sonner";
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -7,13 +8,7 @@ export const apiClient = axios.create({
 });
 let interceptorSetup = false;
 
-export const setupApiInterceptors = (
-  toast: (options: {
-    title: string;
-    description: string;
-    variant?: "default" | "destructive";
-  }) => void
-) => {
+export const setupApiInterceptors = () => {
   if (interceptorSetup) {
     return;
   }
@@ -22,20 +17,11 @@ export const setupApiInterceptors = (
     (response) => response,
     (error) => {
       if (error.response && error.response.status === 403) {
-        toast({
-          title: "Brak dostępu",
-          description: "Nie masz uprawnień do tego lootloga.",
-          variant: "destructive",
-        });
+        toast.error("Brak dostępu");
       }
 
       if (error.response && error.response.status === 404) {
-        toast({
-          title: "Nie znaleziono",
-          description:
-            "Zasób, do którego próbujesz uzyskać dostęp, nie istnieje.",
-          variant: "destructive",
-        });
+        toast.error("Nie znaleziono");
       }
 
       throw error;

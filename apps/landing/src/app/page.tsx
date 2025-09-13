@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 const cardData: BentoCardProps[] = [
   {
-    color: "var(--primary)",
+    color: "var(--background)",
     title: "Timery respawnu",
     description: "Śledzenie czasów respawnu potworów w czasie rzeczywistym.",
     image: (
@@ -26,7 +26,7 @@ const cardData: BentoCardProps[] = [
     ),
   },
   {
-    color: "var(--primary)",
+    color: "var(--background)",
     title: "Wykrywacz NPC",
     description:
       "Automatyczne wykrywanie potworów na mapie z informacjami o typie i poziomie.",
@@ -39,7 +39,7 @@ const cardData: BentoCardProps[] = [
     ),
   },
   {
-    color: "var(--primary)",
+    color: "var(--background)",
     title: "Panel Lootloga",
     description: "Wyświetlanie, wyszukiwanie i filtrowanie zebranych łupów.",
     image: (
@@ -51,7 +51,7 @@ const cardData: BentoCardProps[] = [
     ),
   },
   {
-    color: "var(--primary)",
+    color: "var(--background)",
     title: "Zarządzanie rolami",
     description: "Rozbudowane zarządzanie rolami i uprawnieniami w klanie.",
     image: (
@@ -63,7 +63,7 @@ const cardData: BentoCardProps[] = [
     ),
   },
   {
-    color: "var(--primary)",
+    color: "var(--background)",
     title: "Chat",
     description:
       "Szybka komunikacja z członkami klanu dzięki wbudowanemu chatowi.",
@@ -76,7 +76,7 @@ const cardData: BentoCardProps[] = [
     ),
   },
   {
-    color: "var(--primary)",
+    color: "var(--background)",
     title: "Powiadomienia",
     description: "Natychmiastowe powiadomienia o ważnych wydarzeniach w grze.",
     image: (
@@ -118,7 +118,6 @@ export default function Home(): JSX.Element {
           BFECC={true}
           // dt={0.001666}
         />
-
         <div className="absolute inset-0 px-4 pointer-events-auto lg:pointer-events-none">
           <PageHeader />
           <div className="max-w-6xl mx-auto text-center flex flex-col items-center justify-center h-[calc(100dvh-4rem)]">
@@ -133,9 +132,12 @@ export default function Home(): JSX.Element {
               organizację w klanie.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="pointer-events-auto" asChild>
-                <a href={ADDON_URL}>Zainstaluj dodatek</a>
-              </Button>
+              <a href={ADDON_URL}>
+                <Button className="pointer-events-auto">
+                  Zainstaluj dodatek
+                </Button>
+              </a>
+
               <Button
                 className="bg-white/80 text-background pointer-events-auto hover:bg-white/100"
                 asChild
