@@ -37,7 +37,7 @@ export const HiddenTimers: FC<HiddenTimersProps> = ({ guildId }) => {
                   <XIcon
                     size="14"
                     type="button"
-                    className="ll:custom-cursor-pointer ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors -ll:mr-0.5"
+                    className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors ll:-mr-0.5"
                     onClick={() => handleRemoveTimer(timer)}
                   />
                 </span>

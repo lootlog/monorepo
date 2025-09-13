@@ -58,7 +58,7 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
     >
       <SelectTrigger
         className={cn(
-          "ll:w-[231px] ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll:custom-cursor-pointer",
+          "ll:w-[231px] ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll-custom-cursor-pointer",
           className
         )}
       >

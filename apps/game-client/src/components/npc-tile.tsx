@@ -26,7 +26,7 @@ export const NpcTile: FC<NpcTileProps> = ({
     >
       <img
         className={cn(
-          "ll:custom-cursor-pointer ll:rounded-lg ll:max-w-12",
+          "ll-custom-cursor-pointer ll:rounded-lg ll:max-w-12",
           className
         )}
         draggable={false}

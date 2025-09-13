@@ -153,7 +153,7 @@ export const AddTimerForm: React.FC = () => {
             );
           }}
         >
-          <SelectTrigger className="w-[222px] ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:my-1 ll:mb-2 ll:custom-cursor-pointer">
+          <SelectTrigger className="w-[222px] ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:my-1 ll:mb-2 ll-custom-cursor-pointer">
             <SelectValue
               className="ll:h-4 ll:text-sm ll:text-white"
               placeholder="Wybierz typ potwora..."
@@ -190,7 +190,7 @@ export const AddTimerForm: React.FC = () => {
       <div className="ll:flex ll:justify-center">
         <button
           type="submit"
-          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 hover:ll:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:mt-1"
+          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:mt-1"
           disabled={isPending}
         >
           {isPending ? "Dodawanie..." : "Dodaj"}

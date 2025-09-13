@@ -108,7 +108,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
       <div className="ll:w-full ll:flex ll:justify-center ll:mt-4">
         <button
           type="submit"
-          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 hover:ll:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white"
+          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white"
           disabled={isPending}
         >
           {isPending ? "Zapisywanie..." : "Zapisz"}

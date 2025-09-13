@@ -8,6 +8,8 @@ import {
 import { Blend, Pin, PinOff, XIcon } from "lucide-react";
 import { FC, useCallback, useEffect, useRef, useState } from "react";
 
+const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
+
 export type DraggableWindowProps = {
   children: React.ReactNode;
   id: WindowId;
@@ -24,8 +26,6 @@ export type DraggableWindowProps = {
   closable?: boolean;
   disableTitle?: boolean;
 };
-
-const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
 
 export const DraggableWindow: FC<DraggableWindowProps> = ({
   children,
@@ -75,7 +75,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     (position: { x: number; y: number }) => {
       state.setPosition(id, position);
     },
-    [id, state.setPosition]
+    [id, state]
   );
 
   const { position, handleMouseDown, handleTouchStart } = useDrag({
@@ -87,16 +87,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const handleResize = (e: React.MouseEvent) => {
     if (!resizable || isLocked) return;
-
     e.preventDefault();
     e.stopPropagation();
     setIsResizing(true);
-
     const startX = e.clientX;
     const startY = e.clientY;
     const startWidth = size.width;
     const startHeight = size.height;
-
     const handleMouseMove = (e: MouseEvent) => {
       const newWidth = Math.max(
         minWidth,
@@ -112,16 +109,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           startHeight + (e.clientY - startY)
         )
       );
-
       setSize({ width: newWidth, height: newHeight });
     };
-
     const handleMouseUp = () => {
       setIsResizing(false);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
@@ -152,14 +146,8 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   }, [size.height, size.width, isResizing]);
 
   const style = dynamicHeight
-    ? {
-        height: "auto",
-        width: size.width,
-      }
-    : {
-        width: size.width,
-        height: size.height,
-      };
+    ? { height: "auto", width: size.width }
+    : { width: size.width, height: size.height };
 
   const handleLockToggle = () => {
     state.setLocked(id, !isLocked);
@@ -183,7 +171,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     >
       <div
         className={cn(
-          "ll:w-full ll:h-full ll:rounded-lg ll:border-solid ll:border ll:border-white/50 ll:p-1 !ll:relative ll:box-border ll:text-white ll:flex ll:flex-col",
+          "ll:w-full ll:h-full ll:rounded-lg ll:border-solid ll:border ll:border-white/50 ll:p-1 ll:relative ll:box-border ll:text-white ll:flex ll:flex-col",
           {
             "ll:bg-black/0": opacity === 1,
             "ll:bg-black/25": opacity === 2,
@@ -197,25 +185,26 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           <div className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:flex-shrink-0">
             <div className="ll:flex ll:items-center ll:gap-1">
               <Blend
-                className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+                className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
                 size="14"
                 onClick={handleOpacityChange}
               />
               {actions}
             </div>
-            <div className="ll:background-[0_0] ll:line-height-[28px] ll:custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
-              <p className="ll:text-[11px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
+            <div className="ll:bg-transparent ll:leading-[28px] ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
+              <p className="ll:text-[11px] ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]">
                 {title}
               </p>
+
               {isLocked ? (
                 <PinOff
-                  className="!ll:stroke-gray-400 ll:text-xs ll:absolute -ll:right-5 !hover:ll:stroke-gray-200"
+                  className="ll:!stroke-gray-400 ll:text-xs ll:absolute ll:-right-5 ll:hover:!stroke-gray-200"
                   size="14"
                   onClick={handleLockToggle}
                 />
               ) : (
                 <Pin
-                  className="!ll:stroke-gray-400 ll:text-xs ll:absolute -ll:right-5 !hover:ll:stroke-gray-200"
+                  className="ll:!stroke-gray-400 ll:text-xs ll:absolute ll:-right-5 ll:hover:!stroke-gray-200"
                   size="14"
                   onClick={handleLockToggle}
                 />
@@ -225,7 +214,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
               <XIcon
                 size="14"
                 type="button"
-                className="ll:custom-cursor-pointer ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+                className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
                 onClick={onClose}
               />
             )}

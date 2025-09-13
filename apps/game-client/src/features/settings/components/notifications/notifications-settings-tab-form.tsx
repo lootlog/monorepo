@@ -153,7 +153,7 @@ export const NotificationsSettingsTabForm: FC<
             id={`${field.key}-auto-hide-timeout`}
             type="number"
             disabled={!watchShow}
-            className="!ll:w-16 !ll:mt-1"
+            className="ll:!w-16 ll:!mt-1"
             placeholder="0"
             {...register(`settingsByNpcType.${field.key}.autoHideTimeout`)}
           />

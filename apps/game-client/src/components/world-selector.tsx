@@ -51,7 +51,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     <Select value={world} onValueChange={setWorld} disabled={disabled}>
       <SelectTrigger
         className={cn(
-          "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll:custom-cursor-pointer",
+          "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll-custom-cursor-pointer",
           className
         )}
       >

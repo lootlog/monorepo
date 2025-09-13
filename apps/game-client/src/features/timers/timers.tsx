@@ -269,7 +269,7 @@ export const Timers = () => {
         className={cn(
           "ll:h-full ll:flex ll:flex-1 ll:flex-col ll:box-border ll:pt-1 ll:w-full",
           {
-            "!ll:pt-0": generalConfig.timersUnderBag,
+            "ll:!pt-0": generalConfig.timersUnderBag,
           }
         )}
       >
@@ -278,7 +278,7 @@ export const Timers = () => {
           {!generalConfig.timersGrouping && (
             <GuildSelector
               disabled={addTimerOpen}
-              className="ll:bg-black/20 !ll:mb-1"
+              className="ll:bg-black/20 ll:!mb-1"
             />
           )}
           {allowWorldSelection && !generalConfig.timersGrouping && (
@@ -287,7 +287,7 @@ export const Timers = () => {
         </span>
 
         <ScrollArea
-          className="ll:pb-1 !ll:w-full ll:py-1 ll:flex-1"
+          className="ll:pb-1 ll:!w-full ll:py-1 ll:flex-1"
           type="hover"
         >
           {sortedTimers.length === 0 ? (
@@ -324,21 +324,21 @@ export const Timers = () => {
         <div className="ll:flex ll:gap-1">
           <Filter
             key="filters"
-            className="ll:custom-cursor-pointer -ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors ll:h-5 ll:mb-1"
+            className="ll-custom-cursor-pointer ll:-mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors ll:h-5 ll:mb-1"
             size="14"
             onClick={toggleTimerFiltersEnabled}
           />
           {timersSortOrder === "desc" ? (
             <SortDesc
               key="sort-desc"
-              className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+              className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={() => setTimersSortOrder("asc")}
             />
           ) : (
             <SortAsc
               key="sort-asc"
-              className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+              className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={() => setTimersSortOrder("desc")}
             />
@@ -346,13 +346,13 @@ export const Timers = () => {
           {!generalConfig.timersGrouping && (
             <PlusIcon
               key="add-timer"
-              className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+              className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={() => toggleOpen("add-timer")}
             />
           )}
         </div>
-        <div className="ll:bg-[0_0] ll:top-1 ll:leading-[28px] -ll:mt-1.5 ll:custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform -ll:translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
+        <div className="ll:bg-[0_0] ll:top-1 ll:leading-[28px] ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
           <p className="ll:text-[11px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
             Timery
           </p>
@@ -365,21 +365,21 @@ export const Timers = () => {
   const actions = [
     <Filter
       key="filters"
-      className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+      className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
       size="14"
       onClick={toggleTimerFiltersEnabled}
     />,
     timersSortOrder === "desc" ? (
       <SortDesc
         key="sort-desc"
-        className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+        className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
         size="14"
         onClick={() => setTimersSortOrder("asc")}
       />
     ) : (
       <SortAsc
         key="sort-asc"
-        className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+        className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
         size="14"
         onClick={() => setTimersSortOrder("desc")}
       />
@@ -387,7 +387,7 @@ export const Timers = () => {
     !generalConfig.timersGrouping ? (
       <PlusIcon
         key="add-timer"
-        className="ll:custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 hover:ll:stroke-gray-100 ll:transition-colors"
+        className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
         size="14"
         onClick={() => toggleOpen("add-timer")}
       />

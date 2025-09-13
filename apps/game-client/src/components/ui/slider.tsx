@@ -82,10 +82,10 @@ const Slider = React.forwardRef<
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb
             onPointerDown={thumbPointerDown}
-            className="ll:relative ll:flex ll:items-center ll:justify-center ll:h-4 ll:w-4 ll:rounded-full ll:border ll:border-primary/50 ll:bg-ring ll:shadow ll:transition-colors focus-visible:ll:outline-none focus-visible:ll:ring-1 focus-visible:ll:ring-ring disabled:ll:pointer-events-none disabled:ll:opacity-50"
+            className="ll:relative ll:flex ll:items-center ll:justify-center ll:h-4 ll:w-4 ll:rounded-full ll:border ll:border-primary/50 ll:bg-ring ll:shadow ll:transition-colors ll:focus-visible:outline-none ll:focus-visible:ring-1 ll:ring-ring ll:disabled:pointer-events-none ll:disabled:opacity-50"
           >
             {showValue && dragging && (
-              <span className="ll:absolute -ll:top-5 ll:left-1/2 -ll:translate-x-1/2 ll:select-none ll:text-[10px] ll:leading-none ll:rounded ll:bg-black/70 ll:px-1 ll:py-[1px] ll:text-white ll:pointer-events-none">
+              <span className="ll:absolute ll:-top-5 ll:left-1/2 ll:-translate-x-1/2 ll:select-none ll:text-[10px] ll:leading-none ll:rounded ll:bg-black/70 ll:px-1 ll:py-[1px] ll:text-white ll:pointer-events-none">
                 {display}
               </span>
             )}
