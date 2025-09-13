@@ -134,7 +134,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
       },
     }),
     {
-      name: "ll:npc-detector-state",
+      name: "ll-npc-detector-state",
       partialize: (state) => ({
         settings: state.settings,
       }),
