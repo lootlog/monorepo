@@ -19,6 +19,7 @@ import { ItemRarity } from "@/hooks/api/use-loots";
 import { cn } from "@/utils/cn";
 import { useUpdateGuildLootlogNpc } from "@/hooks/api/use-update-guild-lootlog-npc";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 
 type NpcSettingsFormProps = {
   npc: LootlogConfigNpc;
@@ -33,8 +34,8 @@ const formSchema = z.object({
 
 export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
   const { mutate: updateGuildLootlogNpc } = useUpdateGuildLootlogNpc();
-
   const { t } = useTranslation();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,18 +65,20 @@ export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
     );
   }
 
-  const getRarityCn = (rarity: ItemRarity) => {
-    return cn({
-      "text-amber-700": rarity === "LEGENDARY",
-      "text-blue-500": rarity === "HEROIC",
-      "text-amber-300": rarity === "UNIQUE",
-      "text-pink-700": rarity === "UPGRADED",
+  const getRarityCn = (rarity: ItemRarity) =>
+    cn({
+      "text-amber-700": rarity === ItemRarity.LEGENDARY,
+      "text-blue-500": rarity === ItemRarity.HEROIC,
+      "text-amber-300": rarity === ItemRarity.UNIQUE,
+      "text-pink-700": rarity === ItemRarity.UPGRADED,
     });
-  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full max-w-3xl md:py-2 mx-auto"
+      >
         <FormField
           control={form.control}
           name={ItemRarity.LEGENDARY}
@@ -157,27 +160,56 @@ export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
           )}
         />
 
-        <div className="h-28" />
-        <div
-          className={cn(
-            "absolute bottom-2 left-0 md:left-68 px-4 py-2 w-full transition-all",
-            {
-              "opacity-0 pointer-events-none": !form.formState.isDirty,
-            }
+        <AnimatePresence>
+          {form.formState.isDirty && (
+            <motion.div
+              key="unsaved-bar"
+              aria-live="polite"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{
+                type: "spring",
+                stiffness: 520,
+                damping: 28,
+                mass: 0.7,
+              }}
+              className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[theme(width.64)] z-50 flex justify-center px-4 pb-3"
+            >
+              <motion.div
+                layout
+                layoutId="unsaved-bar-inner-npc"
+                transition={{
+                  type: "spring",
+                  stiffness: 380,
+                  damping: 30,
+                  mass: 0.6,
+                }}
+                className="pointer-events-auto w-full max-w-3xl rounded-md border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-3 shadow-md flex items-center justify-between gap-4"
+              >
+                <p className="text-sm font-medium">Masz niezapisane zmiany</p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => form.reset()}
+                  >
+                    Resetuj
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="default"
+                    size="sm"
+                    disabled={form.formState.isSubmitting}
+                  >
+                    {form.formState.isSubmitting ? "Zapisywanie..." : "Zapisz"}
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
-        >
-          <div className=" flex justify-between items-center p-4 border rounded-lg bg-background">
-            <div className="font-semibold">Masz niezapisane zmiany!</div>
-            <div className="flex gap-2">
-              <Button type="reset" variant="ghost">
-                Resetuj
-              </Button>
-              <Button type="submit" variant="default">
-                Zapisz
-              </Button>
-            </div>
-          </div>
-        </div>
+        </AnimatePresence>
       </form>
     </Form>
   );
