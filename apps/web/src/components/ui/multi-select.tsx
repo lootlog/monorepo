@@ -220,7 +220,7 @@ export const MultiSelect = React.forwardRef<
             {...props}
             onClick={handleTogglePopover}
             className={cn(
-              "flex w-full p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit",
+              "flex w-full p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit bg-secondary hover:bg-input/50",
               className
             )}
           >
@@ -321,10 +321,10 @@ export const MultiSelect = React.forwardRef<
                 defaultValue={searchValue}
               />
             )}
-            <CommandList>
+            <CommandList className="flex-1">
               <CommandEmpty>Brak wyników.</CommandEmpty>
-              <CommandGroup>
-                <ScrollArea className="max-h-56 h-56">
+              <ScrollArea className="max-h-56">
+                <CommandGroup>
                   {loading && (
                     <div className="py-6 px-6 text-center text-sm flex items-center justify-center">
                       <Loader2 className="animate-spin" />
@@ -358,38 +358,38 @@ export const MultiSelect = React.forwardRef<
                       </CommandItem>
                     );
                   })}
-                </ScrollArea>
-              </CommandGroup>
-              <CommandSeparator />
-              <CommandGroup>
-                <div className="flex items-center justify-between">
-                  {selectedValues.length > 0 && (
-                    <>
-                      <CommandItem
-                        onSelect={handleClear}
-                        className="flex-1 justify-center cursor-pointer p-0"
-                      >
-                        <Button variant="ghost" className="w-full" size="sm">
-                          Wyczyść
-                        </Button>
-                      </CommandItem>
-                      <Separator
-                        orientation="vertical"
-                        className="flex min-h-6 h-full"
-                      />
-                    </>
-                  )}
-                  <CommandItem
-                    onSelect={handleClose}
-                    className="flex-1 justify-center cursor-pointer max-w-full p-0"
-                  >
-                    <Button variant="default" className="w-full" size="sm">
-                      Zapisz
-                    </Button>
-                  </CommandItem>
-                </div>
-              </CommandGroup>
+                </CommandGroup>
+              </ScrollArea>
             </CommandList>
+            <CommandSeparator />
+            <CommandGroup className="mt-auto">
+              <div className="flex items-center justify-between p-1 gap-2">
+                {selectedValues.length > 0 && (
+                  <>
+                    <CommandItem
+                      onSelect={handleClear}
+                      className="flex-1 justify-center cursor-pointer p-0"
+                    >
+                      <Button variant="ghost" className="w-full" size="sm">
+                        Wyczyść
+                      </Button>
+                    </CommandItem>
+                    <Separator
+                      orientation="vertical"
+                      className="flex min-h-6 h-full"
+                    />
+                  </>
+                )}
+                <CommandItem
+                  onSelect={handleClose}
+                  className="flex-1 justify-center cursor-pointer max-w-full p-0"
+                >
+                  <Button variant="default" className="w-full" size="sm">
+                    Zapisz
+                  </Button>
+                </CommandItem>
+              </div>
+            </CommandGroup>
           </Command>
         </PopoverContent>
       </Popover>
