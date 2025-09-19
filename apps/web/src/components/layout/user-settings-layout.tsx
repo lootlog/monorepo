@@ -11,30 +11,25 @@ const NAV_ELEMENTS = [
     href: "/settings",
   },
   {
-    id: "roles",
-    label: "Role",
-    href: "/settings/roles",
+    id: "appearance",
+    label: "Wygląd",
+    href: "/settings/appearance",
   },
   {
-    id: "lootlog",
-    label: "Ustawienia potworów i NPC",
-    href: "/settings/npcs",
-  },
-  {
-    id: "members",
-    label: "Członkowie",
-    href: "/settings/members",
+    id: "servers",
+    label: "Serwery",
+    href: "/settings/servers",
   },
 ];
 
-export const SettingsLayout: React.FC = () => {
+export const UserSettingsLayout: React.FC = () => {
   const guildId = useGuildId();
 
   return (
     <div className="flex flex-row w-full h-full min-h-0">
       <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
         <PageHeader>
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2 items-center justify-center">
             <SidebarTrigger />
             <h1 className="font-semibold p-0">Ustawienia</h1>
           </div>
