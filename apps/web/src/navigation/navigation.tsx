@@ -6,7 +6,7 @@ import { Reservations } from "@/screens/reservations/reservations";
 import { Stats } from "@/screens/stats/stats";
 import { Layout } from "@/components/layout/layout";
 import { SignIn } from "@/screens/signin/signin";
-import { Home } from "@/screens/home/home";
+
 import { Guild } from "@/screens/guild/guild";
 import { SettingsLayout } from "@/components/layout/settings-layout";
 import { GeneralSettings } from "@/screens/general-settings/general-settings";
@@ -14,13 +14,28 @@ import { RolesSettings } from "@/screens/roles-settings/roles-settings";
 import { AuthenticationGuard } from "@/components/auth/authentication-guard";
 import { NpcSettings } from "@/screens/lootlog-settings/npc-settings";
 import { MembersSettings } from "@/screens/members-settings/members-settings";
+import { HomeLayout } from "@/components/layout/home-layout";
+import { UserSettings } from "@/screens/user-settings/user-settings";
+import { Home } from "@/screens/home/home";
+import { UserSettingsLayout } from "@/components/layout/user-settings-layout";
+import { BattlesPanel } from "@/screens/battles-panel/battles-panel";
 
 export const Navigation = () => {
   return (
     <AuthenticationGuard>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route path="/@me" element={<Home />} />
+          <Route path="/@me" element={<HomeLayout />}>
+            <Route path="/@me" element={<Home />} />
+            <Route path="/@me/battles" element={<BattlesPanel />} />
+            <Route path="/@me/settings" element={<UserSettingsLayout />}>
+              <Route path="/@me/settings" element={<UserSettings />} />
+              <Route
+                path="/@me/settings/appearance"
+                element={<UserSettings />}
+              />
+            </Route>
+          </Route>
           <Route path="/signin" element={<SignIn />} />
           <Route path="/init" element={<Init />} />
           <Route path="/:guildId" element={<GuildLayout />}>

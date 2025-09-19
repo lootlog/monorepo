@@ -10,7 +10,7 @@ import { useUser } from "@/hooks/api/use-user";
 import { Reorder } from "framer-motion";
 import { FC, useState, useEffect, useCallback, useMemo } from "react";
 
-export const GuildsNav: FC = () => {
+export const GuildsSelector: FC = () => {
   const { data: guilds } = useGuilds();
   const { user } = useUser();
   const [guildsState, setGuildsState] = useState<typeof guilds>([]);
