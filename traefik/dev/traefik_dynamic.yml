@@ -44,6 +44,18 @@ http:
       entryPoints:
         - "web"
 
+    battlelog:
+      rule: "PathPrefix(`/api/battlelog`)"
+      service: "battlelog"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
     api:
       rule: "PathPrefix(`/api/lootlog`)"
       service: "api"
@@ -101,6 +113,10 @@ http:
       loadBalancer:
         servers:
         - url: "http://host.docker.internal:4004"
+    battlelog:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:4005"
   middlewares:
     apiStripPrefix:
       stripPrefix:
@@ -108,6 +124,7 @@ http:
           - "/api/auth"
           - "/api/search"
           - "/api/lootlog"
+          - "/api/battlelog"
           - "/gateway"
     apiForwardAuth:
       forwardAuth:
