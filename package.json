@@ -12,6 +12,9 @@
     "api:migrate:dev": "turbo run api:migrate:dev",
     "api:generate": "turbo run api:generate",
     "api:studio": "turbo run api:studio",
+    "battlelog:migrate:dev": "turbo run battlelog:migrate:dev",
+    "battlelog:generate": "turbo run battlelog:generate",
+    "battlelog:studio": "turbo run battlelog:studio",
     "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
     "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
     "configure:env": "turbo run configure:env",
@@ -45,6 +48,7 @@
       "esbuild",
       "prisma",
       "sharp",
+      "unrs-resolver",
       "workerd"
     ]
   },
