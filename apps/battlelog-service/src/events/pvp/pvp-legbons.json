@@ -1,0 +1,319 @@
+{
+  "accountId": "9822301",
+  "characterId": "617",
+  "world": "gordion",
+  "events": [
+    {
+      "f": {
+        "m": [
+          "0;0;txt=Walka bez Punktów Honoru - gracze są z tego samego klanu."
+        ],
+        "init": "1",
+        "auto": "0",
+        "w": {
+          "617": {
+            "originalId": 617,
+            "name": "wild w domu",
+            "lvl": 304,
+            "prof": "h",
+            "icon": "/kuf/kuf_niepokorna.gif",
+            "team": 2
+          },
+          "19016": {
+            "originalId": 19016,
+            "name": "Mati Kox",
+            "lvl": 305,
+            "prof": "w",
+            "icon": "/crimson/wm.gif",
+            "team": 1
+          }
+        }
+      },
+      "ev": 1758580537.70743
+    },
+    {
+      "f": {},
+      "ev": 1758580538.55823
+    },
+    {
+      "f": {
+        "m": [
+          "617=100;19016=100;tspell=Podwójny strzał;skillId=97",
+          "617=100;19016=99;+dmgd=11269;-redacdmg_per=-30;+acdmg=174;-endest=12,3;-legbon_facade=13;+injure=142;-dmgd=947",
+          "617=100;19016=98;+dmgd=11994;+acdmg=174;-endest=12,3;-dmgd=1388",
+          "19016=100;0;heal=2084",
+          "19016=100;0;injure=100,30"
+        ]
+      },
+      "ev": 1758580538.858234
+    },
+    {
+      "f": {
+        "m": ["19016=100;0;step"]
+      },
+      "ev": 1758580540.111838
+    },
+    {
+      "f": {
+        "m": [
+          "617=100;19016=100;tspell=Dziki zapał;skillId=217",
+          "617=100;19016=97;+dmgd=14000;+acdmg=174;-endest=12,3;-dmgd=2658",
+          "617=100;19016=97;tspell=Błyskawiczny strzał;skillId=85;energy=-16;combo-max=1",
+          "617=100;19016=97;+pierce;+dmgd=14231;+acdmg=174;-endest=12,3;-blok=4269;+injure=76;-legbon_cleanse;-dmgd=512",
+          "19016=99;0;heal=1980"
+        ]
+      },
+      "ev": 1758580540.521983
+    },
+    {
+      "f": {
+        "m": ["19016=99;0;step"]
+      },
+      "ev": 1758580541.808029
+    },
+    {
+      "f": {
+        "m": [
+          "617=100;19016=99;tspell=Diamentowa strzała;skillId=178;active_decblock_per=20",
+          "617=100;19016=98;+dmgd=16527;+acdmg=174;-endest=12,3;-blok=4958;+injure=204;-dmgd=1361",
+          "19016=99;0;heal=1876",
+          "19016=99;0;injure=143,30"
+        ]
+      },
+      "ev": 1758580541.965173
+    },
+    {
+      "f": {
+        "m": [
+          "19016=99;617=100;tspell=Szarża;skillId=130",
+          "19016=99;617=100;+dmg=8937;-evade;-dmg=0"
+        ]
+      },
+      "ev": 1758580543.214925
+    },
+    {
+      "f": {
+        "m": [
+          "617=100;19016=99;tspell=Krytyczne wzmocnienie;skillId=113",
+          "617=100;19016=96;+crit;+critslow_per=8;+dmgd=24721;+acdmg=174;-endest=12,3;-blok=7416;-legbon_critred=25;-dmgd=3913",
+          "617=100;19016=96;tspell=Podwójny strzał;skillId=97",
+          "617=100;19016=94;+pierce;+dmgd=12191;+acdmg=174;-endest=12,3;-pierceb;+injure=279;-dmgd=1862",
+          "617=100;19016=94;+pierce;+dmgd=12744;-arrowblock;-dmgd=0",
+          "19016=96;0;heal=1771",
+          "19016=96;0;injure=196,30"
+        ]
+      },
+      "ev": 1758580543.568465
+    },
+    {
+      "f": {
+        "m": [
+          "19016=96;617=100;tspell=Paraliżujący cios;skillId=110",
+          "19016=96;617=100;+dmg=8422;-evade;-dmg=0",
+          "617=100;19016=96;tspell=Rozpraszająca strzała;skillId=41",
+          "617=100;19016=95;+dmgd=14066;+acdmg=174;-endest=12,3;-blok=4220;-dmgd=673",
+          "19016=96;0;heal=1667",
+          "19016=96;0;injure=196,30"
+        ]
+      },
+      "ev": 1758580544.61529
+    },
+    {
+      "f": {
+        "m": [
+          "19016=96;617=92;tspell=Zdruzgotanie;skillId=39;+oth_dmg=6448, ,wild w domu(92%);combo-max=3",
+          "19016=96;617=87;+dmg=10473;-redacdmg_per=-15;+acdmg=108;-legbon_facade=13;-dmg=3851",
+          "617=90;0;heal=2226"
+        ]
+      },
+      "ev": 1758580545.508336
+    },
+    {
+      "f": {
+        "m": [
+          "617=100;617=100;tspell=Bandażowanie ran;skillId=81;bandage=8073",
+          "19016=97;0;heal=1563",
+          "19016=97;0;injure=196,30"
+        ]
+      },
+      "ev": 1758580545.660359
+    },
+    {
+      "f": {},
+      "ev": 1758580546.473535
+    },
+    {
+      "f": {
+        "m": [
+          "19016=97;617=100;tspell=Okrzyk bojowy;skillId=271",
+          "19016=97;617=90;+crit;+critslow_per=15;+engback=73;+dmg=18646;+acdmg=108;-legbon_critred=25;+critwound;-dmg=7934",
+          "617=93;0;heal=2115",
+          "617=92;0;critwound=595,25",
+          "617=92;19016=97;tspell=Błyskawiczny strzał;skillId=85;energy=-50;combo-max=3",
+          "617=92;19016=97;+dmgd=13522;+acdmg=174;-endest=12,3;-blok=4057;-dmgd=555",
+          "19016=98;0;heal=1459",
+          "19016=98;617=92;tspell=Błyskawiczny atak;skillId=204",
+          "19016=98;617=87;+wound;+dmg=10740;+acdmg=108;-dmg=4199",
+          "617=89;0;heal=2003",
+          "617=86;0;wound=2691,25",
+          "617=85;0;critwound=595,25",
+          "617=85;617=85;tspell=Medytacja;skillId=220;energy=-169",
+          "19016=99;0;heal=1355",
+          "19016=99;617=85;tspell=Błyskawiczny atak;skillId=204",
+          "19016=99;617=85;+wound;+dmg=10721;-evade;-dmg=0",
+          "617=87;0;heal=1892",
+          "617=84;0;wound=2691,25",
+          "617=83;0;critwound=595,25",
+          "617=83;19016=99;tspell=Podwójny strzał;skillId=97",
+          "617=83;19016=98;+dmgd=11718;+acdmg=174;-endest=12,3;+legbon_holytouch;-dmgd=1809",
+          "617=83;19016=97;+pierce;+dmgd=10889;+acdmg=174;-endest=12,3;-pierceb;+legbon_holytouch;+injure=210;-dmgd=1401",
+          "19016=98;0;heal=1250",
+          "19016=97;0;injure=147,30",
+          "19016=97;617=83;tspell=Paraliżujący cios;skillId=110",
+          "19016=97;617=80;+dmg=8658;+acdmg=108;-dmg=2687",
+          "617=82;0;heal=1781",
+          "617=88;0;legbon_holytouch_heal=4776",
+          "617=85;0;wound=2691,25",
+          "617=85;19016=97;tspell=Dziki zapał;skillId=217",
+          "617=85;19016=96;+dmgd=11834;-legbon_glare;+acdmg=174;-endest=12,3;+legbon_holytouch;-dmgd=2037",
+          "19016=97;0;heal=1146",
+          "19016=97;0;injure=147,30",
+          "19016=97;617=85;tspell=Błyskawiczny atak;skillId=204",
+          "19016=97;617=75;+crit;+critslow_per=15;+engback=73;+wound;+dmg=18662;+acdmg=108;-endest=15;-legbon_critred=25;-dmg=8140",
+          "617=77;0;heal=1669",
+          "617=83;0;legbon_holytouch_heal=4776",
+          "617=78;0;wound=4037,25",
+          "0;0;txt=wild w domu - utrata tury",
+          "19016=97;0;heal=1042",
+          "19016=97;0;injure=147,30",
+          "19016=97;617=69;tspell=Zdruzgotanie;skillId=39;+oth_dmg=6448, ,wild w domu(69%);combo-max=3",
+          "19016=97;617=64;+dmg=10199;+legbon_curse;+acdmg=108;-endest=15;+injure=599;-dmg=3995",
+          "617=66;0;heal=1558",
+          "617=72;0;legbon_holytouch_heal=4776",
+          "617=67;0;wound=4037,25",
+          "617=67;0;injure=450,25",
+          "0;0;txt=wild w domu - utrata tury",
+          "19016=98;0;heal=938",
+          "19016=98;19016=98;tspell=Kamienna skóra;skillId=34;resfire_per=30;resfrost_per=30;reslight_per=40;antidote=15;achpp_per=0",
+          "617=69;0;heal=1447",
+          "617=75;0;legbon_holytouch_heal=4776",
+          "617=70;0;wound=4037,25",
+          "617=69;0;injure=450,25",
+          "617=69;19016=98;tspell=Błyskawiczny strzał;skillId=85;energy=-16;combo-max=1",
+          "617=69;19016=92;+crit;+critslow_per=8;+fastarrow;+dmgd=21786;+legbon_curse;+acdmg=174;-endest=12,3;-legbon_critred=25;-dmgd=7069",
+          "617=71;0;heal=1336",
+          "617=66;0;wound=4037,25",
+          "617=65;0;injure=450,25"
+        ]
+      },
+      "ev": 1758580546.810256
+    },
+    {
+      "f": {
+        "m": [
+          "617=65;19016=92;tspell=Diamentowa strzała;skillId=178;active_decblock_per=20",
+          "617=65;19016=87;+pierce;+dmgd=17215;+acdmg=174;-endest=12,3;-pierceb;+injure=896;-dmgd=5979",
+          "617=67;0;heal=1224",
+          "617=67;19016=87;tspell=Krytyczne wzmocnienie;skillId=113",
+          "617=67;19016=84;+pierce;+dmgd=15010;+acdmg=174;-endest=12,3;-pierceb;+injure=667;-dmgd=4447",
+          "19016=84;0;heal=834",
+          "19016=84;0;injure=467,30",
+          "0;0;txt=Mati Kox - utrata tury",
+          "617=68;0;heal=1113",
+          "617=68;19016=84;tspell=Podwójny strzał;skillId=97",
+          "617=68;19016=70;+crit;+legbon_verycrit;+critslow_per=8;+dmgd=37089;+acdmg=174;-endest=12,3;-legbon_critred=25;-dmgd=16888",
+          "617=68;19016=67;+dmgd=13666;+legbon_curse;+acdmg=174;-dmgd=3684",
+          "19016=67;0;heal=729",
+          "19016=67;0;injure=467,30",
+          "0;0;txt=Mati Kox - utrata tury",
+          "617=69;0;heal=1002",
+          "617=69;19016=67;tspell=Rozpraszająca strzała;skillId=41",
+          "617=69;19016=63;+dmgd=14856;+acdmg=174;+injure=696;-dmgd=4646",
+          "617=70;0;heal=890",
+          "617=70;19016=60;+pierce;+fastarrow;+dmgd=13586;+acdmg=174;-endest=12,3;-pierceb;+injure=573;-dmgd=3825",
+          "19016=60;0;heal=625",
+          "19016=60;0;injure=402,30",
+          "19016=60;617=70;tspell=Paraliżujący cios;skillId=110",
+          "19016=60;617=67;+wound;+dmg=8789;+acdmg=108;-endest=15;-dmg=2983",
+          "617=68;0;heal=779",
+          "617=64;0;wound=2691,25",
+          "617=64;19016=60;tspell=Błyskawiczny strzał;skillId=85;energy=-50;combo-max=3",
+          "617=64;19016=59;+dmgd=11985;+acdmg=174;-endest=12,3;-blok=3596;-dmgd=655",
+          "617=65;0;heal=668",
+          "617=62;0;wound=2691,25",
+          "617=62;617=62;tspell=Medytacja;skillId=220;energy=-152",
+          "19016=60;0;heal=521",
+          "19016=60;0;injure=402,30",
+          "19016=60;617=62;tspell=Szarża;skillId=130",
+          "19016=60;617=57;+dmg=9432;+acdmg=108;-endest=15;+injure=531;-dmg=3544",
+          "617=58;0;heal=556",
+          "617=54;0;wound=2691,25",
+          "617=54;0;injure=399,25",
+          "617=54;19016=60;tspell=Podwójny strzał;skillId=97",
+          "617=54;19016=60;+dmgd=9691;+acdmg=174;-endest=12,3;-blok=2907;-dmgd=64",
+          "617=54;19016=59;+dmgd=10673;-legbon_glare;+acdmg=174;-endest=12,3;-blok=3202;-dmgd=351",
+          "19016=60;0;heal=417",
+          "19016=59;0;injure=402,30",
+          "19016=59;617=54;tspell=Błyskawiczny atak;skillId=204",
+          "19016=59;617=48;+wound;+dmg=10645;+acdmg=108;-endest=15;-dmg=4569",
+          "617=49;0;heal=445",
+          "617=44;0;wound=4037,25",
+          "617=43;0;injure=399,25",
+          "0;0;txt=wild w domu - utrata tury",
+          "19016=60;0;heal=313",
+          "19016=60;617=35;tspell=Zdruzgotanie;skillId=39;+oth_dmg=6448, ,wild w domu(35%);combo-max=3",
+          "19016=60;617=25;+crit;+critslow_per=15;+engback=73;+wound;+dmg=18072;+acdmg=108;-legbon_critred=25;+critwound;-dmg=8097",
+          "617=25;0;heal=334",
+          "617=19;0;wound=5382,25",
+          "617=18;0;injure=399,25",
+          "617=62;0;legbon_lastheal=35530,wild w domu(62%);critwound=607,25",
+          "617=62;19016=60;tspell=Dziki zapał;skillId=217",
+          "617=62;19016=56;+pierce;+dmgd=13762;+acdmg=174;-endest=12,3;-pierceb;-dmgd=4366",
+          "19016=56;0;heal=208"
+        ]
+      },
+      "ev": 1758580546.965132
+    },
+    {
+      "f": {
+        "m": [
+          "19016=56;617=62;tspell=Okrzyk bojowy;skillId=271",
+          "19016=56;617=56;+wound;+dmg=10784;+acdmg=108;+injure=725;-dmg=4834",
+          "617=56;0;heal=223",
+          "617=49;0;wound=5382,25",
+          "617=49;0;injure=544,25",
+          "617=48;0;critwound=607,25",
+          "617=48;19016=56;tspell=Diamentowa strzała;skillId=178;active_decblock_per=20",
+          "617=48;19016=51;+dmgd=15459;+acdmg=174;-endest=12,3;-dmgd=5759",
+          "19016=51;0;heal=104",
+          "19016=51;617=48;tspell=Paraliżujący cios;skillId=110",
+          "19016=51;617=43;+dmg=9495;+acdmg=108;-endest=15;-dmg=3883",
+          "617=43;0;heal=111",
+          "617=37;0;wound=5382,25",
+          "617=36;0;injure=544,25",
+          "617=35;0;critwound=607,25",
+          "617=35;19016=51;tspell=Krytyczne wzmocnienie;skillId=113",
+          "617=35;19016=48;+dmgd=13089;+acdmg=174;-endest=12,3;+injure=616;-dmgd=4107",
+          "19016=48;0;injure=432,30",
+          "19016=48;617=35;tspell=Błyskawiczny atak;skillId=204",
+          "19016=48;617=29;+dmg=10126;+acdmg=108;-dmg=4460",
+          "617=23;0;wound=5382,25",
+          "617=22;0;injure=544,25",
+          "617=22;19016=48;tspell=Podwójny strzał;skillId=97",
+          "617=22;19016=45;+dmgd=10636;+acdmg=174;-endest=10,3;-dmgd=2463",
+          "617=22;19016=43;+dmgd=11004;+acdmg=174;+injure=421;-dmgd=2810",
+          "19016=43;0;injure=295,30",
+          "19016=43;617=17;tspell=Zdruzgotanie;skillId=39;+oth_dmg=4298, ,wild w domu(17%);combo-max=2",
+          "19016=43;617=11;+dmg=9558;+acdmg=108;-dmg=4082",
+          "617=5;0;wound=5382,25",
+          "617=5;19016=42;+pierce;+fastarrow;+dmgd=11709;+acdmg=174;-blok=3513;-dmgd=1091",
+          "617=0;0;wound=5382,25",
+          "0;0;winner=Mati Kox",
+          "0;0;loser=wild w domu"
+        ],
+        "endBattle": 1
+      },
+      "ev": 1758580547.171331
+    }
+  ]
+}

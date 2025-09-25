@@ -7,3 +7,104 @@ datasource db {
     provider = "postgresql"
     url      = env("POSTGRESQL_CONNECTION_URI")
 }
+
+model Battle {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    public    Boolean  @default(false)
+    userId    String
+
+    // Battle metadata
+    accountId   String
+    characterId String
+    world       String
+    duration    Float
+    type        String
+    winner      String
+    loser       String
+
+    // Relations
+    warriors BattleWarrior[]
+
+    @@map("battles")
+}
+
+model BattleWarrior {
+    id       String @id @default(cuid())
+    battleId String
+
+    // Warrior info
+    originalId String
+    name       String
+    lvl        Int
+    prof       String
+    icon       String
+    team       Int
+    turns      Int
+
+    // Damage stats
+    damageDealt               Int @default(0)
+    damageDealtAfterDefensive Int @default(0)
+    damageTaken               Int @default(0)
+    rageDamageDealt           Int @default(0)
+    trueDamageDealt           Int @default(0)
+    trueDamageTaken           Int @default(0)
+
+    // Healing stats
+    passiveHealing Int @default(0)
+    activeHealing  Int @default(0)
+
+    // Combat stats
+    armorPierces            Int @default(0)
+    criticalHits            Int @default(0)
+    reducedArmor            Int @default(0)
+    reducedPoisonResistance Int @default(0)
+    evasions                Int @default(0)
+    fastArrows              Int @default(0)
+    blocks                  Int @default(0)
+    blockedDamage           Int @default(0)
+
+    // Damage over time
+    woundDamageTaken            Int @default(0)
+    poisonDamageTaken           Int @default(0)
+    injureDamageTaken           Int @default(0)
+    critWoundDamageTaken        Int @default(0)
+    firePassiveDamageTaken      Int @default(0)
+    lightningPassiveDamageTaken Int @default(0)
+
+    // Energy/Mana
+    destroyedEnergy   Int @default(0)
+    destroyedMana     Int @default(0)
+    regeneratedEnergy Int @default(0)
+
+    // Reflection
+    reflectedDamage      Int @default(0)
+    reflectedDamageTaken Int @default(0)
+
+    // Relations
+    battle           Battle          @relation(fields: [battleId], references: [id], onDelete: Cascade)
+    legendaryBonuses LegendaryBonus?
+
+    @@map("battle_warriors")
+}
+
+model LegendaryBonus {
+    id              String @id @default(cuid())
+    battleWarriorId String @unique
+
+    curse         Int @default(0)
+    cleanse       Int @default(0)
+    lastheal      Int @default(0)
+    lasthealValue Int @default(0)
+    glare         Int @default(0)
+    holytouch     Int @default(0)
+    critred       Int @default(0)
+    facade        Int @default(0)
+    verycrit      Int @default(0)
+
+    // Relations
+    battleWarrior BattleWarrior @relation(fields: [battleWarriorId], references: [id], onDelete: Cascade)
+
+    @@map("legendary_bonuses")
+}

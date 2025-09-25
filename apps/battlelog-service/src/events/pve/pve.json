@@ -1,0 +1,158 @@
+{
+  "accountId": "9822301",
+  "characterId": "617",
+  "world": "gordion",
+  "events": [
+    {
+      "f": {
+        "m": [
+          "1050=96;0;heal_per-allies=15",
+          "24440=97;0;heal_per-allies=8",
+          "1050=96;0;heal_per-enemies=-10",
+          "24440=97;0;heal_per-enemies=-1",
+          "347=100;0;hp_per-allies=10",
+          "1578=100;0;poison_lowdmg_per-enemies=10",
+          "617=100;-240586=100;tspell=Podwójny strzał;skillId=97",
+          "617=100;-240586=81;+crit;+legbon_verycrit;+critslow_per=8;+dmgd=57265;+acdmg=248;+injure=7798;-dmgd=51988",
+          "617=100;-240586=70;+crit;+critslow_per=8;+dmgd=32964;+acdmg=248;+injure=4205;-dmgd=28037",
+          "88=100;-240586=70;tspell=Podwójny strzał;skillId=97",
+          "88=100;-240586=58;+crit;+critslow_per=8;+dmgd=36427;+acdmg=183;+injure=4751;-dmgd=31675",
+          "88=100;-240586=55;+dmgd=12755;+acdmg=183;+legbon_holytouch;+injure=1270;-dmgd=8470",
+          "1050=96;1050=96;tspell=Podwójny dech;skillId=89;aura-sa_per=20",
+          "1578=100;-240586=55;tspell=Piętno bestii;skillId=264;+spell-taken_dmg-all",
+          "3040=99;-240586=55;tspell=Podwójny strzał;skillId=97",
+          "3040=99;-240586=55;+crit;+critslow_per=8;+pierce;+dmgd=22244;-evade;-dmgd=0",
+          "3040=99;-240586=47;+crit;+critslow_per=8;+dmgd=21926;+acdmg=198;+taken_dmg=3288;-dmgd=20954",
+          "24440=97;-240586=47;tspell=Płonąca strzała;skillId=26",
+          "24440=97;-240586=36;+crit;+dmgd=16966;+dmgf=24570;+acdmg=67;+resdmg=1;+taken_dmg=6229;-dmgd=15381;-dmgf=14892",
+          "18810=100;0;step",
+          "347=100;347=100;tspell=Porażająca tarcza;skillId=202;lightshield;antidote=10",
+          "30035=100;30035=100;tspell=Porażająca tarcza;skillId=202;lightshield;antidote=10",
+          "617=100;-240586=36;tspell=Dziki zapał;skillId=217",
+          "617=100;-240586=28;+pierce;+dmgd=17102;+acdmg=248;+taken_dmg=2565;-dmgd=19667",
+          "88=100;0;legbon_holytouch_heal=0",
+          "88=100;-240586=28;tspell=Błyskawiczny strzał;skillId=85;energy=-25;combo-max=2",
+          "88=100;-240586=13;+crit;+critslow_per=8;+fastarrow;+dmgd=38118;+acdmg=183;+taken_dmg=5717;-dmgd=40013",
+          "3040=99;-240586=13;tspell=Diamentowa strzała;skillId=178;active_decblock_per=11",
+          "3040=99;-240586=0;+crit;+legbon_verycrit;+critslow_per=8;+wound;+dmgd=46008;+acdmg=198;+legbon_holytouch;+taken_dmg=6901;-dmgd=49285",
+          "24440=97;-308580=100;tspell=Podwójne trafienie;skillId=239",
+          "24440=97;-308580=0;+crit;+engback=14;+critsa_per=5;+dmgd=16867;+dmgf=22067;+acdmg=67;-absorbm=8094;+taken_dmg=5840;-dmgd=15707;-dmgf=15370",
+          "0;0;txt=r k t - atak w martwego przeciwnika.",
+          "88=100;0;legbon_holytouch_heal=0",
+          "88=100;-308579=100;tspell=Diamentowa strzała;skillId=178;active_decblock_per=20",
+          "88=100;-308579=45;+pierce;+dmgd=15903;+legbon_curse;+acdmg=183;+injure=2385;+taken_dmg=2385;-dmgd=18288",
+          "1050=96;-308579=45;tspell=Emanujące strzały;skillId=244;critval-enemies=-30;critmval-enemies=-30",
+          "1578=100;-308579=45;tspell=Podwójny strzał;skillId=97",
+          "1578=100;-308579=22;+dmgd=9381;+acdmg=245;+legbon_holytouch;+taken_dmg=1407;-dmgd=7584",
+          "1578=100;-308579=0;+crit;+critslow_per=8;+dmgd=28179;+acdmg=245;+taken_dmg=4226;-dmgd=29247",
+          "0;0;winner=r k t, Koma N, Don Pulpecik, wild w domu, Ciekly Dziurawe Ręce, Gorbi, T u r b o, Nabiton Kox, Franck Tooth",
+          "0;0;loser=Driada Haworsja, Chamedora Pani Drzew, Nymphemonia",
+          "0;0;+exp=72761",
+          "0;0;txt=Nymphemonia: zdobyto Dusza hamadriady, Warstwa twardej kory, Oplot czarnych korzeni"
+        ],
+        "endBattle": 1,
+        "init": "1",
+        "auto": "1",
+        "w": {
+          "88": {
+            "originalId": 88,
+            "name": "Koma N",
+            "lvl": 301,
+            "prof": "h",
+            "icon": "/eve/uro24-maj-jelly1.gif",
+            "team": 1
+          },
+          "347": {
+            "originalId": 347,
+            "name": "Don Pulpecik",
+            "lvl": 301,
+            "prof": "p",
+            "icon": "/paid/bf20-pal-m.gif",
+            "team": 1
+          },
+          "617": {
+            "originalId": 617,
+            "name": "wild w domu",
+            "lvl": 304,
+            "prof": "h",
+            "icon": "/kuf/kuf_niepokorna.gif",
+            "team": 1
+          },
+          "1050": {
+            "originalId": 1050,
+            "name": "Franck Tooth",
+            "lvl": 302,
+            "prof": "t",
+            "icon": "/paid/bf20-low-d.gif",
+            "team": 1
+          },
+          "1578": {
+            "originalId": 1578,
+            "name": "Ciekly Dziurawe Ręce",
+            "lvl": 304,
+            "prof": "h",
+            "icon": "/paid/her_koziec_k2.gif",
+            "team": 1
+          },
+          "3040": {
+            "originalId": 3040,
+            "name": "Gorbi",
+            "lvl": 302,
+            "prof": "h",
+            "icon": "/kuf/her_xxix_nimfa_k2.gif",
+            "team": 1
+          },
+          "18810": {
+            "originalId": 18810,
+            "name": "T u r b o",
+            "lvl": 301,
+            "prof": "b",
+            "icon": "/kuf/leg_xxv_shadow_m4.gif",
+            "team": 1
+          },
+          "24440": {
+            "originalId": 24440,
+            "name": "r k t",
+            "lvl": 305,
+            "prof": "t",
+            "icon": "/noob/tk.gif",
+            "team": 1
+          },
+          "30035": {
+            "originalId": 30035,
+            "name": "Nabiton Kox",
+            "lvl": 302,
+            "prof": "p",
+            "icon": "/eve/w18-out-j8.gif",
+            "team": 1
+          },
+          "-308579": {
+            "originalId": 308579,
+            "name": "Driada Haworsja",
+            "lvl": 285,
+            "prof": "b",
+            "icon": "hum/m_hamadriada-6a.gif",
+            "team": 2
+          },
+          "-308580": {
+            "originalId": 308580,
+            "name": "Chamedora Pani Drzew",
+            "lvl": 284,
+            "prof": "m",
+            "icon": "hum/m_hamadriada-5b.gif",
+            "team": 2
+          },
+          "-240586": {
+            "originalId": 240586,
+            "name": "Nymphemonia",
+            "lvl": 287,
+            "prof": "h",
+            "icon": "e2/nymphemonia.gif",
+            "team": 2
+          }
+        }
+      },
+      "ev": 1758555131.476865
+    }
+  ]
+}
