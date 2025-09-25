@@ -1,0 +1,178 @@
+{
+  "accountId": "9822301",
+  "characterId": "617",
+  "world": "gordion",
+  "events": [
+    {
+      "f": {
+        "m": [
+          "24440=100;0;heal_per-allies=15",
+          "1050=96;0;heal_per-allies=15",
+          "24440=100;0;heal_per-enemies=-10",
+          "1050=96;0;heal_per-enemies=-10",
+          "347=100;0;hp_per-allies=10"
+        ],
+        "init": "1",
+        "auto": "0",
+        "w": {
+          "347": {
+            "originalId": 347,
+            "name": "Don Pulpecik",
+            "lvl": 301,
+            "prof": "p",
+            "icon": "/paid/bf20-pal-m.gif",
+            "team": 1
+          },
+          "617": {
+            "originalId": 617,
+            "name": "wild w domu",
+            "lvl": 304,
+            "prof": "h",
+            "icon": "/kuf/kuf_niepokorna.gif",
+            "team": 1
+          },
+          "1050": {
+            "originalId": 1050,
+            "name": "Franck Tooth",
+            "lvl": 302,
+            "prof": "t",
+            "icon": "/paid/bf20-low-d.gif",
+            "team": 1
+          },
+          "3040": {
+            "originalId": 3040,
+            "name": "Gorbi",
+            "lvl": 302,
+            "prof": "h",
+            "icon": "/kuf/her_xxix_nimfa_k2.gif",
+            "team": 1
+          },
+          "18810": {
+            "originalId": 18810,
+            "name": "T u r b o",
+            "lvl": 301,
+            "prof": "b",
+            "icon": "/kuf/leg_xxv_shadow_m4.gif",
+            "team": 1
+          },
+          "24440": {
+            "originalId": 24440,
+            "name": "r k t",
+            "lvl": 305,
+            "prof": "t",
+            "icon": "/noob/tk.gif",
+            "team": 1
+          },
+          "-185508": {
+            "originalId": 185508,
+            "name": "Chopesz",
+            "lvl": 267,
+            "prof": "b",
+            "icon": "e2/chopesh2.gif",
+            "team": 2
+          },
+          "-308563": {
+            "originalId": 308563,
+            "name": "Antyczny skrytobójca",
+            "lvl": 266,
+            "prof": "b",
+            "icon": "hum/katakumby08.gif",
+            "team": 2
+          },
+          "-308562": {
+            "originalId": 308562,
+            "name": "Antyczny skrytobójca",
+            "lvl": 266,
+            "prof": "b",
+            "icon": "hum/katakumby07.gif",
+            "team": 2
+          }
+        }
+      },
+      "ev": 1758555240.138047
+    },
+    {
+      "f": {},
+      "ev": 1758555240.503769
+    },
+    {
+      "f": {},
+      "ev": 1758555241.946138
+    },
+    {
+      "f": {
+        "m": [
+          "617=100;-185508=100;tspell=Krytyczne wzmocnienie;skillId=113",
+          "617=100;-185508=71;+crit;+critslow_per=8;+pierce;+dmgd=66864;+acdmg=248;+injure=10029;-dmgd=66864"
+        ]
+      },
+      "ev": 1758555243.246935
+    },
+    {
+      "f": {
+        "m": ["1050=96;1050=96;tspell=Podwójny dech;skillId=89;aura-sa_per=20"]
+      },
+      "ev": 1758555243.435086
+    },
+    {
+      "f": {},
+      "ev": 1758555245.095765
+    },
+    {
+      "f": {
+        "m": [
+          "24440=100;-308562=100;tspell=Podwójne trafienie;skillId=239",
+          "24440=100;-308562=100;+crit;+engback=10;+dmgd=31848;+dmgl=26822;-evade;-dmgd=0",
+          "24440=100;-308562=100;+crit;+engback=10;+pierce;+dmgd=30000;+dmgl=27495;-evade;-dmgd=0",
+          "3040=99;-185508=71;tspell=Podwójny strzał;skillId=97",
+          "3040=99;-185508=55;+crit;+critslow_per=8;+wound;+dmgd=43222;+acdmg=198;+legbon_holytouch;-dmgd=38810",
+          "3040=99;-185508=28;+crit;+legbon_verycrit;+critslow_per=8;+dmgd=66455;+acdmg=198;-dmgd=62220"
+        ]
+      },
+      "ev": 1758555245.44296
+    },
+    {
+      "f": {
+        "m": [
+          "18810=100;-185508=28;tspell=Zadziorny atak;skillId=210",
+          "18810=100;-185508=4;+crit;+of_crit;+critslow_per=10;+engback=33;+dmg=36316;+dmgo=27604;+acdmg=508;-dmg=32680;-dmgo=23464"
+        ]
+      },
+      "ev": 1758555245.59584
+    },
+    {
+      "f": {},
+      "ev": 1758555247.582149
+    },
+    {
+      "f": {
+        "m": [
+          "347=100;347=100;tspell=Porażająca tarcza;skillId=202;lightshield;antidote=10"
+        ]
+      },
+      "ev": 1758555247.742435
+    },
+    {
+      "f": {
+        "m": [
+          "617=100;-185508=4;tspell=Podwójny strzał;skillId=97",
+          "617=100;-185508=0;+crit;+critslow_per=8;+pierce;+dmgd=53676;+acdmg=248;+injure=8051;-dmgd=53676",
+          "0;0;txt=wild w domu - atak w martwego przeciwnika.",
+          "24440=100;24440=100;tspell=Podwójny dech;skillId=89;aura-sa_per=20",
+          "3040=99;0;legbon_holytouch_heal=0",
+          "3040=99;-308562=100;tspell=Błyskawiczny strzał;skillId=85;energy=-25;combo-max=3",
+          "3040=99;-308562=0;+crit;+critslow_per=8;+dmgd=47463;+acdmg=198;-dmgd=44173",
+          "1050=96;-308563=100;tspell=Emanujące strzały;skillId=244;critval-enemies=-30;critmval-enemies=-30",
+          "18810=100;-308563=100;tspell=Amok;skillId=272",
+          "18810=100;-308563=0;+crit;+of_crit;+critslow_per=10;+engback=50;+critsa_per=20;+of_wound;+dmg=36577;+dmgo=29090;+acdmg=241;vamp_time=0;-dmg=33351;-dmgo=25626",
+          "0;0;winner=r k t, Don Pulpecik, wild w domu, T u r b o, Franck Tooth, Gorbi",
+          "0;0;loser=Antyczny skrytobójca, Antyczny skrytobójca, Chopesz",
+          "0;0;txt=Nie otrzymano punktów doświadczenia - zbyt duża różnica poziomów.",
+          "0;0;txt=Chopesz: zdobyto Złota piramida, Napierśnik chwały Imperium, Złota piramida"
+        ],
+        "endBattle": 1
+      },
+      "ev": 1758555248.694117
+    }
+  ]
+}

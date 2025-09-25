@@ -1,0 +1,79 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { BattlesService } from 'src/battles/battles.service';
+import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
+import { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
+import { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
+import { AuthGuard } from 'src/shared/guards/auth.guard';
+import { BattleAccessGuard } from 'src/shared/guards/battle-access.guard';
+import { BattleOwnerGuard } from 'src/shared/guards/battle-owner.guard';
+
+@UseGuards(AuthGuard)
+@Controller('battles')
+export class BattlesController {
+  constructor(private readonly battlesService: BattlesService) {}
+
+  @Post('/')
+  createBattle(
+    @Body() createBattleDto: CreateBattleDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.createBattle({
+      data: createBattleDto,
+      userId,
+    });
+  }
+
+  @Get('/public')
+  getPublicBattles(@Query() query: QueryBattlesDto) {
+    return this.battlesService.getPublicBattles(query);
+  }
+
+  @Get('/@me')
+  getDashboardBattles(
+    @Query() query: QueryBattlesDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getDashboardBattles(query, userId);
+  }
+
+  @UseGuards(BattleAccessGuard)
+  @Get('/:battleId')
+  getBattle(@Param('battleId') battleId: string, @UserId() userId: string) {
+    return this.battlesService.getBattleFromDatabase(battleId, userId);
+  }
+
+  @UseGuards(BattleAccessGuard)
+  @Get('/:battleId/raw')
+  getBattleRawData(
+    @Param('battleId') battleId: string,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getBattleRawData(battleId, userId);
+  }
+
+  @UseGuards(BattleOwnerGuard)
+  @Patch('/:battleId')
+  updateBattle(
+    @Param('battleId') battleId: string,
+    @Body() updateBattleDto: UpdateBattleDto,
+  ) {
+    return this.battlesService.updateBattle(battleId, updateBattleDto);
+  }
+
+  @UseGuards(BattleOwnerGuard)
+  @Delete('/:battleId')
+  deleteBattle(@Param('battleId') battleId: string) {
+    return this.battlesService.deleteBattle(battleId);
+  }
+}

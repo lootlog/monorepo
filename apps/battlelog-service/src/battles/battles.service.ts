@@ -1,0 +1,466 @@
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+import type { Prisma } from '../../generated/client';
+import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
+import {
+  PaginationStrategy,
+  QueryBattlesDto,
+  SortField,
+  SortOrder,
+} from 'src/battles/dto/query-battles.dto';
+import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
+import type { PaginationOptions } from 'src/battles/interfaces/pagination.interface';
+import { PaginationService } from 'src/battles/services/pagination.service';
+import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
+import { R2Service } from 'src/shared/modules/r2/r2.service';
+import {
+  BattleAnalysis,
+  BattleProcessor,
+  type Warrior,
+} from './battle-processor';
+import type {
+  BattleNotFoundError,
+  BattleProcessingError,
+  BattleWithRelations,
+  CreateBattleParams,
+  CreateBattleResult,
+  DeleteBattleResult,
+  GetAllBattlesResult,
+  IBattlesService,
+  R2StorageError,
+  RawBattleData,
+} from './interfaces/battle-service.interface';
+
+@Injectable()
+export class BattlesService implements IBattlesService {
+  private readonly logger = new Logger(BattlesService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly r2Service: R2Service,
+    private readonly paginationService: PaginationService,
+  ) {}
+
+  async createBattle(params: CreateBattleParams): Promise<CreateBattleResult> {
+    const { data, userId } = params;
+
+    try {
+      const analysis = this.analyzeBattle(data);
+      const battle = await this.storeBattleInDatabase(data, userId, analysis);
+      await this.storeRawBattleData(battle.id, data);
+
+      this.logger.log(
+        `Battle ${battle.id} created successfully for user ${userId}`,
+      );
+
+      return {
+        battleId: battle.id,
+        analysis,
+        battle: {
+          id: battle.id,
+          createdAt: battle.createdAt,
+          public: battle.public,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create battle for user ${userId}:`, error);
+      throw new Error(
+        `Battle creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  async getPublicBattles(query: QueryBattlesDto): Promise<GetAllBattlesResult> {
+    try {
+      const where = this.buildFilterConditions(query);
+      where.public = true;
+
+      const paginationOptions = this.buildPaginationOptions(query);
+      const result = await this.paginationService.paginateBattles(
+        where,
+        paginationOptions,
+      );
+
+      this.logger.log(
+        `Paginated public battles using ${result.strategy} strategy in ${result.performance.queryTime}ms`,
+      );
+
+      return {
+        battles: result.data,
+        pagination: result.pagination,
+        meta: {
+          strategy: result.strategy,
+          performance: result.performance,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to retrieve public battles:', error);
+      throw new Error(
+        `Failed to retrieve public battles: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  async getDashboardBattles(
+    query: QueryBattlesDto,
+    requestingUserId: string,
+  ): Promise<GetAllBattlesResult> {
+    try {
+      const where = this.buildFilterConditions(query);
+      where.userId = requestingUserId;
+
+      const paginationOptions = this.buildPaginationOptions(query);
+      const result = await this.paginationService.paginateBattles(
+        where,
+        paginationOptions,
+      );
+
+      this.logger.log(
+        `Paginated dashboard battles for user ${requestingUserId} using ${result.strategy} strategy in ${result.performance.queryTime}ms`,
+      );
+
+      return {
+        battles: result.data,
+        pagination: result.pagination,
+        meta: {
+          strategy: result.strategy,
+          performance: result.performance,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to retrieve dashboard battles:', error);
+      throw new Error(
+        `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  async getBattleRawData(
+    battleId: string,
+    requestingUserId?: string,
+  ): Promise<RawBattleData> {
+    try {
+      if (requestingUserId) {
+        await this.checkBattleAccess(battleId, requestingUserId);
+      }
+
+      const rawData = await this.r2Service.getBattleData(battleId);
+      this.logger.debug(`Retrieved raw data for battle ${battleId}`);
+      return rawData;
+    } catch (error) {
+      this.logger.error(
+        `Failed to retrieve raw data for battle ${battleId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async getBattleFromDatabase(
+    battleId: string,
+    requestingUserId?: string,
+  ): Promise<BattleWithRelations> {
+    try {
+      if (requestingUserId) {
+        await this.checkBattleAccess(battleId, requestingUserId);
+      }
+
+      const battle = await this.prisma.battle.findUniqueOrThrow({
+        where: { id: battleId },
+        include: {
+          warriors: {
+            include: {
+              legendaryBonuses: true,
+            },
+          },
+        },
+      });
+
+      this.logger.debug(`Retrieved battle ${battleId} from database`);
+      return battle;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'NotFoundError') {
+        this.logger.warn(`Battle ${battleId} not found in database`);
+        throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      }
+
+      this.logger.error(
+        `Failed to retrieve battle ${battleId} from database:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async updateBattle(
+    battleId: string,
+    updateData: UpdateBattleDto,
+  ): Promise<BattleWithRelations> {
+    try {
+      const battle = await this.prisma.battle.update({
+        where: { id: battleId },
+        data: {
+          public: updateData.public,
+          updatedAt: new Date(),
+        },
+        include: {
+          warriors: {
+            include: {
+              legendaryBonuses: true,
+            },
+          },
+        },
+      });
+
+      this.logger.log(
+        `Battle ${battleId} updated successfully (public: ${updateData.public})`,
+      );
+      return battle;
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+        this.logger.warn(`Battle ${battleId} not found for update`);
+        throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      }
+
+      this.logger.error(`Failed to update battle ${battleId}:`, error);
+      throw new Error(
+        `Update failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  async deleteBattle(battleId: string): Promise<DeleteBattleResult> {
+    try {
+      await this.prisma.battle.delete({
+        where: { id: battleId },
+      });
+
+      try {
+        await this.r2Service.deleteBattleData(battleId);
+        this.logger.debug(`R2 data deleted for battle ${battleId}`);
+      } catch (r2Error) {
+        this.logger.warn(
+          `Failed to delete R2 data for battle ${battleId}:`,
+          r2Error,
+        );
+      }
+
+      this.logger.log(`Battle ${battleId} deleted successfully`);
+      return { message: 'Battle deleted successfully' };
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+        this.logger.warn(`Battle ${battleId} not found for deletion`);
+        throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      }
+
+      this.logger.error(`Failed to delete battle ${battleId}:`, error);
+      throw new Error(
+        `Deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  analyzeBattle(dto: CreateBattleDto): BattleAnalysis {
+    try {
+      const processor = new BattleProcessor();
+      const analysis = processor.processBattle(dto);
+
+      this.logger.debug(
+        `Analyzed battle: ${analysis.type}, duration: ${analysis.duration}ms`,
+      );
+      return analysis;
+    } catch (error) {
+      this.logger.error('Failed to analyze battle data:', error);
+      throw new Error(
+        `Battle analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  private buildFilterConditions(
+    query: QueryBattlesDto,
+  ): Prisma.BattleWhereInput {
+    const where: Prisma.BattleWhereInput = {};
+
+    if (query.world) where.world = query.world;
+    if (query.type) where.type = query.type;
+    if (query.userId) where.userId = query.userId;
+    if (typeof query.public === 'boolean') where.public = query.public;
+    if (query.characterId) where.characterId = query.characterId;
+
+    if (query.search) {
+      where.warriors = {
+        some: {
+          name: {
+            contains: query.search,
+            mode: 'insensitive',
+          },
+        },
+      };
+    }
+
+    return where;
+  }
+
+  private buildPaginationOptions(query: QueryBattlesDto): PaginationOptions {
+    return {
+      strategy: query.strategy ?? PaginationStrategy.AUTO,
+      sortField: query.sortBy ?? SortField.CREATED_AT,
+      sortOrder: query.sortOrder ?? SortOrder.DESC,
+      includeTotal: query.includeTotal ?? true,
+      estimateTotal: query.estimateTotal ?? false,
+
+      page: query.page,
+      limit: query.limit,
+
+      cursor: query.cursor,
+      size: query.size,
+    };
+  }
+
+  private async checkBattleAccess(
+    battleId: string,
+    requestingUserId: string,
+  ): Promise<void> {
+    try {
+      const battle = await this.prisma.battle.findUniqueOrThrow({
+        where: { id: battleId },
+        select: { userId: true, public: true },
+      });
+
+      if (!battle.public && battle.userId !== requestingUserId) {
+        throw new ForbiddenException(
+          'Access denied: Battle is private and you are not the owner',
+        );
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'NotFoundError') {
+        throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      }
+      throw error;
+    }
+  }
+
+  private async storeBattleInDatabase(
+    data: CreateBattleDto,
+    userId: string,
+    analysis: BattleAnalysis,
+  ): Promise<BattleWithRelations> {
+    try {
+      const battleData: Prisma.BattleCreateInput = {
+        userId,
+        accountId: data.accountId,
+        characterId: data.characterId,
+        world: data.world,
+        duration: analysis.duration,
+        type: analysis.type,
+        winner: analysis.outcome.winner,
+        loser: analysis.outcome.loser,
+        warriors: {
+          create: analysis.warriors.map(
+            (
+              warrior: Warrior,
+            ): Prisma.BattleWarriorCreateWithoutBattleInput => ({
+              originalId: warrior.originalId,
+              name: warrior.name,
+              lvl: warrior.lvl,
+              prof: warrior.prof,
+              icon: warrior.icon,
+              team: warrior.team,
+              turns: warrior.turns,
+              damageDealt: warrior.damageDealt,
+              damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
+              damageTaken: warrior.damageTaken,
+              rageDamageDealt: warrior.rageDamageDealt,
+              trueDamageDealt: warrior.trueDamageDealt,
+              trueDamageTaken: warrior.trueDamageTaken,
+              passiveHealing: warrior.passiveHealing,
+              activeHealing: warrior.activeHealing,
+              armorPierces: warrior.armorPierces,
+              criticalHits: warrior.criticalHits,
+              reducedArmor: warrior.reducedArmor,
+              reducedPoisonResistance: warrior.reducedPoisonResistance,
+              evasions: warrior.evasions,
+              fastArrows: warrior.fastArrows,
+              blocks: warrior.blocks,
+              blockedDamage: warrior.blockedDamage,
+              woundDamageTaken: warrior.woundDamageTaken,
+              poisonDamageTaken: warrior.poisonDamageTaken,
+              injureDamageTaken: warrior.injureDamageTaken,
+              critWoundDamageTaken: warrior.critWoundDamageTaken,
+              firePassiveDamageTaken: warrior.firePassiveDamageTaken,
+              lightningPassiveDamageTaken: warrior.lightningPassiveDamageTaken,
+              destroyedEnergy: warrior.destroyedEnergy,
+              destroyedMana: warrior.destroyedMana,
+              regeneratedEnergy: warrior.regeneratedEnergy,
+              reflectedDamage: warrior.reflectedDamage,
+              reflectedDamageTaken: warrior.reflectedDamageTaken,
+              legendaryBonuses: {
+                create: {
+                  curse: warrior.legbons.curse,
+                  cleanse: warrior.legbons.cleanse,
+                  lastheal: warrior.legbons.lastheal,
+                  lasthealValue: warrior.legbons.lasthealValue,
+                  glare: warrior.legbons.glare,
+                  holytouch: warrior.legbons.holytouch,
+                  critred: warrior.legbons.critred,
+                  facade: warrior.legbons.facade,
+                  verycrit: warrior.legbons.verycrit,
+                },
+              },
+            }),
+          ),
+        },
+      };
+
+      const battle = await this.prisma.battle.create({
+        data: battleData,
+        include: {
+          warriors: {
+            include: {
+              legendaryBonuses: true,
+            },
+          },
+        },
+      });
+
+      this.logger.debug(`Battle stored in database with ID: ${battle.id}`);
+      return battle;
+    } catch (error) {
+      this.logger.error('Failed to store battle in database:', error);
+      throw new Error(
+        `Database storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  private async storeRawBattleData(
+    battleId: string,
+    data: CreateBattleDto,
+  ): Promise<void> {
+    try {
+      const rawBattleData: RawBattleData = {
+        battleId,
+        timestamp: new Date().toISOString(),
+        rawData: data,
+      };
+
+      await this.r2Service.uploadBattleData(battleId, rawBattleData);
+      this.logger.debug(
+        `Raw battle data stored successfully for battle ${battleId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to store raw battle data for ${battleId}:`,
+        error,
+      );
+      throw new Error(
+        `R2 storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+}

@@ -1,0 +1,584 @@
+{
+    "accountId": "9822301",
+    "characterId": "52785",
+    "world": "gordion",
+    "events": [
+        {
+            "f": {
+                "m": [
+                    "52785=100;0;poison_lowdmg_per-enemies=10",
+                    "0;0;txt=Walka bez Punktów Honoru - gracze są z tego samego klanu."
+                ],
+                "init": "1",
+                "auto": "0",
+                "w": {
+                    "11107": {
+                        "originalId": 11107,
+                        "name": "Matty Cox",
+                        "lvl": 244,
+                        "prof": "w",
+                        "icon": "/eve/grzyb23-c2-u-m.gif",
+                        "team": 1
+                    },
+                    "52785": {
+                        "originalId": 52785,
+                        "name": "side to side",
+                        "lvl": 244,
+                        "prof": "b",
+                        "icon": "/kuf/her_xxvii_rogatya_m4.gif",
+                        "team": 2
+                    }
+                }
+            },
+            "ev": 1758582087.972944
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=100;11107=100;tspell=Zadziorny atak;skillId=210",
+                    "52785=100;11107=100;+dmg=5424;+dmgo=4261;-evade;-dmg=0"
+                ]
+            },
+            "ev": 1758582089.830297
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=100;52785=100;tspell=Paraliżujący cios;skillId=110",
+                    "11107=100;52785=100;+crit;+critslow_per=6;+engback=43;+wound;+dmg=10976;-evade;-dmg=0"
+                ]
+            },
+            "ev": 1758582090.616685
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=100;11107=100;tspell=Zadziorny atak;skillId=210",
+                    "52785=100;11107=99;+dmg=5349;+dmgo=4423;+legbon_curse;-redacdmg_per=-9;+acdmg=409;-endest=12;-legbon_facade=13;-dmg=442",
+                    "11107=100;0;heal=442",
+                    "11107=99;0;poison=773,41",
+                    "0;0;txt=Matty Cox - utrata tury"
+                ]
+            },
+            "ev": 1758582091.681311
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=100;11107=99;tspell=Trujące pchnięcie;skillId=82",
+                    "52785=100;11107=98;+dmg=5190;+dmgo=4603;+thirdatt=5738;+acdmg=102;-dmg=399;-dmgo=123;-thirdatt=642"
+                ]
+            },
+            "ev": 1758582093.43128
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=100;11107=86;tspell=Podstępne uderzenie;skillId=129;+oth_dmg=9693, ,Matty Cox(86%);combo-max=3",
+                    "52785=100;11107=81;+crit;+of_crit;+critslow_per=10;+engback=56;+critsa_per=20;+actdmg=1;+dmg=11424;+dmgo=8407;+acdmg=102;-endest=12;-blok=3427;-dmg=2185;-dmgo=2420",
+                    "11107=82;0;heal=766",
+                    "11107=80;0;poison=1494,40"
+                ]
+            },
+            "ev": 1758582095.516965
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=80;52785=100;tspell=Okrzyk bojowy;skillId=271",
+                    "11107=80;52785=92;+crit;+critslow_per=6;+wound;-poison_lowdmg_per=10;+dmg=10121;-redacdmg_per=-18;+acdmg=78;-legbon_facade=13;+critwound;+injure=836;-dmg=5574",
+                    "52785=94;0;heal=860",
+                    "52785=91;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "52785=90;0;injure=669,20",
+                    "52785=90;0;critwound=446,20"
+                ]
+            },
+            "ev": 1758582098.766631
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=90;11107=80;tspell=Amok;skillId=272",
+                    "52785=90;11107=71;+crit;+of_crit;+critslow_per=10;+engback=56;+critsa_per=20;+actdmg=1;+dmg=11594;+dmgo=8617;+acdmg=102;vamp_time=1143;-dmg=4990;-dmgo=2633",
+                    "11107=72;0;heal=725",
+                    "11107=70;0;poison=1519,39"
+                ]
+            },
+            "ev": 1758582101.369573
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=70;52785=91;tspell=Błyskawiczny atak;skillId=204",
+                    "11107=70;52785=83;+crit;+critslow_per=6;+engback=34;-poison_lowdmg_per=10;+dmg=10398;+acdmg=78;-endest=12;+critwound;-dmg=5868",
+                    "52785=84;0;heal=817",
+                    "52785=82;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "52785=81;0;injure=669,20",
+                    "52785=80;0;critwound=469,20"
+                ]
+            },
+            "ev": 1758582102.031179
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=80;11107=70;tspell=Zadziorny atak;skillId=210",
+                    "52785=80;11107=70;+dmg=5299;+dmgo=4287;-evade;vamp_time=12;-dmg=0;-dmgo=84",
+                    "11107=71;0;heal=685",
+                    "11107=69;0;poison=1519,39"
+                ]
+            },
+            "ev": 1758582103.27311
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=69;52785=73;tspell=Zdruzgotanie;skillId=39;-poison_lowdmg_per=10;+oth_dmg=5222, ,side to side(73%);combo-max=3",
+                    "11107=69;52785=69;-poison_lowdmg_per=10;+dmg=6480;+acdmg=78;-endest=12;-dmg=2713",
+                    "52785=70;0;heal=774",
+                    "52785=68;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "52785=67;0;injure=669,20",
+                    "52785=66;0;critwound=469,20"
+                ]
+            },
+            "ev": 1758582103.966529
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=66;11107=69;tspell=Zadziorny atak;skillId=210",
+                    "52785=66;11107=66;+crit;+critslow_per=10;+engback=56;+actdmg=1;+dmg=11898;+dmgo=4097;+acdmg=409;-blok=3569;vamp_time=413;-dmg=2731;-dmgo=26",
+                    "52785=68;0;heal=731",
+                    "52785=66;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "52785=65;0;critwound=469,20"
+                ]
+            },
+            "ev": 1758582105.034185
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=65;11107=66;tspell=Trujące pchnięcie;skillId=82",
+                    "52785=65;11107=66;+of_woundpoison=50;+dmg=5270;+dmgo=4195;+acdmg=102;-endest=12;-blok=1581;vamp_time=23;-dmg=7;-dmgo=150",
+                    "11107=67;0;heal=645",
+                    "11107=66;0;wound=735,30",
+                    "11107=64;0;poison=1544,38"
+                ]
+            },
+            "ev": 1758582106.524355
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=64;52785=65;tspell=Paraliżujący cios;skillId=110",
+                    "11107=64;52785=62;-poison_lowdmg_per=10;+dmg=5887;+acdmg=78;-endest=12;-dmg=2300",
+                    "52785=63;0;heal=688",
+                    "52785=60;0;-poison_lowdmg_per=10;wound=1743,20"
+                ]
+            },
+            "ev": 1758582107.984388
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=60;11107=53;tspell=Podstępne uderzenie;skillId=129;+oth_dmg=9693, ,Matty Cox(53%);combo-max=3",
+                    "52785=60;11107=52;+dmg=4913;+dmgo=3930;+legbon_curse;+acdmg=102;vamp_time=94;-dmg=552;-dmgo=79",
+                    "11107=53;0;heal=604",
+                    "11107=52;0;wound=735,30",
+                    "11107=50;0;poison=1544,38",
+                    "0;0;txt=Matty Cox - utrata tury",
+                    "52785=61;0;heal=645"
+                ]
+            },
+            "ev": 1758582108.742366
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=86;52785=86;tspell=Opatrywanie ran;skillId=237;bandage=18134;resfire_per=40;resfrost_per=40;reslight_per=40",
+                    "11107=51;0;heal=564",
+                    "11107=50;0;wound=735,30",
+                    "11107=48;0;poison=1544,38"
+                ]
+            },
+            "ev": 1758582110.127388
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=48;52785=86;tspell=Błyskawiczny atak;skillId=204",
+                    "11107=48;52785=77;+crit;+critslow_per=6;+engback=66;-poison_lowdmg_per=10;+dmg=11352;+acdmg=78;+critwound;-dmg=6862",
+                    "52785=78;0;heal=602",
+                    "52785=77;0;critwound=549,20"
+                ]
+            },
+            "ev": 1758582111.370509
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=77;11107=48;tspell=Zadziorny atak;skillId=210",
+                    "52785=77;11107=48;+dmg=4448;+dmgo=3906;+acdmg=409;-endest=12;-blok=1334;vamp_time=14;-dmg=0;-dmgo=94",
+                    "11107=48;0;heal=524",
+                    "11107=48;0;wound=735,30",
+                    "11107=46;0;poison=1544,38"
+                ]
+            },
+            "ev": 1758582112.377991
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=46;52785=70;tspell=Zdruzgotanie;skillId=39;-poison_lowdmg_per=10;+oth_dmg=5222, ,side to side(70%);combo-max=3",
+                    "11107=46;52785=49;+crit;+legbon_verycrit;+critslow_per=6;+engback=66;+wound;-poison_lowdmg_per=10;+dmg=21028;+acdmg=78;+critwound;-dmg=15228",
+                    "52785=50;0;heal=559",
+                    "52785=47;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "52785=45;0;critwound=1218,20"
+                ]
+            },
+            "ev": 1758582113.730075
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=45;11107=46;tspell=Zadziorny atak;skillId=210",
+                    "52785=45;11107=44;+of_woundpoison=50;+dmg=5688;+dmgo=4410;+acdmg=409;vamp_time=278;-dmg=1419;-dmgo=439",
+                    "52785=47;0;heal=516",
+                    "52785=44;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "52785=42;0;critwound=1218,20"
+                ]
+            },
+            "ev": 1758582114.518024
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=42;11107=44;tspell=Rozpraszający atak;skillId=223",
+                    "52785=42;11107=42;+dmg=5775;+dmgo=4425;-legbon_glare;+acdmg=102;-blok=1733;-dmg=438;-dmgo=609",
+                    "11107=43;0;heal=484",
+                    "11107=42;0;wound=1102,30",
+                    "11107=40;0;poison=1544,38"
+                ]
+            },
+            "ev": 1758582116.875726
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=40;11107=40;tspell=Kamienna skóra;skillId=34;resfire_per=30;resfrost_per=30;reslight_per=40;antidote=15;achpp_per=20",
+                    "52785=43;0;heal=473",
+                    "52785=40;0;wound=1960,20",
+                    "52785=39;0;critwound=1218,20",
+                    "0;0;txt=side to side - utrata tury",
+                    "11107=40;0;heal=443",
+                    "11107=39;0;wound=1102,30"
+                ]
+            },
+            "ev": 1758582117.980635
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=39;52785=39;tspell=Paraliżujący cios;skillId=110",
+                    "11107=39;52785=35;+wound;+dmg=6069;+acdmg=78;-dmg=2604",
+                    "52785=36;0;heal=430",
+                    "52785=32;0;wound=2940,20"
+                ]
+            },
+            "ev": 1758582119.330126
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=32;11107=28;tspell=Podstępne uderzenie;skillId=129;+oth_dmg=9693, ,Matty Cox(28%);combo-max=3",
+                    "52785=32;11107=28;+dmg=4351;+dmgo=3793;-legbon_glare;+acdmg=102;-endest=12;-blok=1305;-dmg=0",
+                    "11107=28;0;heal=403",
+                    "11107=27;0;wound=1102,30"
+                ]
+            },
+            "ev": 1758582119.976338
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=27;52785=32;tspell=Błyskawiczny atak;skillId=204",
+                    "11107=27;52785=32;+dmg=6909;-evade;-dmg=0",
+                    "52785=32;0;heal=387",
+                    "52785=28;0;wound=2940,20",
+                    "0;0;txt=side to side - utrata tury",
+                    "11107=27;0;heal=363"
+                ]
+            },
+            "ev": 1758582121.284231
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=27;52785=20;tspell=Zdruzgotanie;skillId=39;+oth_dmg=5875, ,side to side(20%);combo-max=3",
+                    "11107=27;52785=20;+crit;+critslow_per=6;+engback=66;+wound;+dmg=13467;-evade;-dmg=0",
+                    "52785=21;0;heal=344",
+                    "52785=41;0;legbon_lastheal=17777,side to side(41%);wound=2940,20"
+                ]
+            },
+            "ev": 1758582122.917858
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=41;11107=27;tspell=Zadziorny atak;skillId=210",
+                    "52785=41;11107=27;+dmg=4630;+dmgo=3880;+acdmg=409;-dmg=432;-dmgo=17",
+                    "52785=41;0;heal=301",
+                    "52785=38;0;-poison_lowdmg_per=10;wound=2614,20"
+                ]
+            },
+            "ev": 1758582123.783613
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=38;11107=27;tspell=Zadziorny atak;skillId=210",
+                    "52785=38;11107=25;+dmg=5536;+dmgo=4150;+thirdatt=5097;+acdmg=409;-blok=1661;-dmg=211;-dmgo=209;-thirdatt=686",
+                    "11107=26;0;heal=322",
+                    "11107=25;0;poison=616,53"
+                ]
+            },
+            "ev": 1758582125.377017
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=25;52785=38;tspell=Okrzyk bojowy;skillId=271",
+                    "11107=25;52785=38;+crit;+critslow_per=6;+engback=45;+wound;-poison_lowdmg_per=10;+dmg=11368;-evade;-dmg=0",
+                    "52785=38;0;heal=258"
+                ]
+            },
+            "ev": 1758582126.46779
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=57;52785=57;tspell=Opatrywanie ran;skillId=237;bandage=13601;resfire_per=40;resfrost_per=40;reslight_per=40",
+                    "11107=25;0;heal=282",
+                    "11107=25;0;poison=616,53"
+                ]
+            },
+            "ev": 1758582127.078468
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=25;52785=57;tspell=Paraliżujący cios;skillId=110",
+                    "11107=25;52785=53;-poison_lowdmg_per=10;+dmg=6399;+acdmg=78;-dmg=2924",
+                    "52785=53;0;heal=215"
+                ]
+            },
+            "ev": 1758582128.470142
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=53;11107=25;tspell=Trujące pchnięcie;skillId=82",
+                    "52785=53;11107=23;+dmg=5022;+dmgo=3733;+thirdatt=4617;+acdmg=102;-dmg=866;-dmgo=151;-thirdatt=582",
+                    "11107=23;0;heal=242",
+                    "11107=22;0;poison=1170,53"
+                ]
+            },
+            "ev": 1758582129.175971
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=22;52785=53;tspell=Błyskawiczny atak;skillId=204",
+                    "11107=22;52785=50;-poison_lowdmg_per=10;+dmg=5657;+acdmg=78;-dmg=2386",
+                    "52785=50;0;heal=172"
+                ]
+            },
+            "ev": 1758582131.67801
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=50;11107=21;+of_woundpoison=50;+dmg=4856;+dmgo=4015;-legbon_glare;+legbon_curse;+acdmg=102;-blok=1457;-dmg=78;-dmgo=305",
+                    "11107=22;0;heal=201",
+                    "11107=21;0;wound=735,30",
+                    "11107=19;0;poison=1170,53",
+                    "0;0;txt=Matty Cox - utrata tury",
+                    "52785=50;0;heal=129",
+                    "0;0;txt=side to side - utrata tury",
+                    "11107=20;0;heal=161",
+                    "11107=19;0;wound=735,30",
+                    "11107=55;0;legbon_lastheal=32238,Matty Cox(55%);poison=1170,53"
+                ]
+            },
+            "ev": 1758582132.219493
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=55;52785=43;tspell=Zdruzgotanie;skillId=39;-poison_lowdmg_per=10;+oth_dmg=5222, ,side to side(43%);combo-max=3",
+                    "11107=55;52785=33;+crit;+critslow_per=6;+engback=66;-poison_lowdmg_per=10;+dmg=11775;+acdmg=78;-endest=12;+critwound;-dmg=7547",
+                    "52785=33;0;heal=86",
+                    "52785=32;0;critwound=604,20"
+                ]
+            },
+            "ev": 1758582133.19889
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=32;11107=48;+of_crit;+critslow_per=10;+engback=56;+critsa_per=20;+actdmg=1;+of_woundpoison=50;+dmg=5569;+dmgo=7717;+legbon_curse;+acdmg=10;+acdmg_destroyed;-endest=12;-dmg=2073;-dmgo=3780",
+                    "52785=32;0;heal=43",
+                    "52785=31;0;critwound=604,20"
+                ]
+            },
+            "ev": 1758582134.62367
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=31;11107=37;tspell=Podstępne uderzenie;skillId=129;+oth_dmg=9693, ,Matty Cox(37%);combo-max=3",
+                    "52785=31;11107=34;+dmg=5752;+dmgo=4581;-legbon_glare;-blok=1726;-dmg=943;-dmgo=1334",
+                    "11107=34;0;heal=121",
+                    "11107=33;0;wound=1102,30",
+                    "11107=31;0;poison=1569,37",
+                    "0;0;txt=Matty Cox - utrata tury",
+                    "52785=30;0;critwound=604,20",
+                    "0;0;txt=side to side - utrata tury",
+                    "11107=31;0;heal=81",
+                    "11107=30;0;wound=1102,30",
+                    "11107=28;0;poison=1569,37"
+                ]
+            },
+            "ev": 1758582136.219175
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=28;11107=28;tspell=Kamienna skóra;skillId=34;resfire_per=30;resfrost_per=30;reslight_per=40;antidote=15;achpp_per=24"
+                ]
+            },
+            "ev": 1758582137.680707
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=30;11107=28;tspell=Rozpraszający atak;skillId=223",
+                    "52785=30;11107=28;+of_woundpoison=50;+dmg=5411;+dmgo=4171;-legbon_glare;-endest=12;-blok=1623;-dmg=164;-dmgo=335",
+                    "11107=28;0;heal=40",
+                    "11107=26;0;wound=1469,30",
+                    "11107=25;0;poison=629,52"
+                ]
+            },
+            "ev": 1758582137.868223
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=25;52785=30;tspell=Paraliżujący cios;skillId=110",
+                    "11107=25;52785=23;+crit;+critslow_per=6;+distract;+engback=66;-poison_lowdmg_per=10;+dmg=8905;+acdmg=78;+critwound;-dmg=5177",
+                    "52785=23;0;critwound=414,20",
+                    "0;0;txt=side to side - utrata tury",
+                    "52785=22;0;critwound=414,20"
+                ]
+            },
+            "ev": 1758582138.931986
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=22;52785=22;tspell=Odetchnięcie;skillId=111;energy=-111",
+                    "11107=23;0;wound=1469,30",
+                    "11107=23;0;poison=629,52"
+                ]
+            },
+            "ev": 1758582139.678225
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=23;52785=22;tspell=Błyskawiczny atak;skillId=204",
+                    "11107=23;52785=19;+wound;-poison_lowdmg_per=10;+dmg=5731;+acdmg=78;-dmg=2610",
+                    "52785=16;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "52785=16;0;critwound=414,20"
+                ]
+            },
+            "ev": 1758582140.879395
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=16;11107=23;tspell=Amok;skillId=272",
+                    "52785=16;11107=22;+dmg=4800;+dmgo=3771;+legbon_curse;vamp_time=124;-dmg=672;-dmgo=157",
+                    "11107=20;0;wound=1469,30",
+                    "11107=19;0;poison=629,52",
+                    "0;0;txt=Matty Cox - utrata tury",
+                    "52785=13;0;-poison_lowdmg_per=10;wound=1743,20"
+                ]
+            },
+            "ev": 1758582141.374967
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=26;52785=26;tspell=Opatrywanie ran;skillId=237;bandage=9067;resfire_per=40;resfrost_per=40;reslight_per=40",
+                    "52785=23;0;-poison_lowdmg_per=10;wound=1743,20"
+                ]
+            },
+            "ev": 1758582142.925133
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=23;11107=19;tspell=Zadziorny atak;skillId=210",
+                    "52785=23;11107=15;+of_crit;+critslow_per=10;+engback=56;+critsa_per=20;+actdmg=1;+dmg=5724;+dmgo=8556;-blok=1717;vamp_time=537;-dmg=258;-dmgo=3327",
+                    "11107=13;0;wound=1469,30",
+                    "11107=13;0;poison=642,51"
+                ]
+            },
+            "ev": 1758582145.123272
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=13;52785=17;tspell=Zdruzgotanie;skillId=39;-poison_lowdmg_per=10;+oth_dmg=5222, ,side to side(17%);combo-max=3",
+                    "11107=13;52785=17;+crit;+critslow_per=6;+distract;+engback=58;-poison_lowdmg_per=10;+dmg=10986;-evade;-dmg=0",
+                    "52785=15;0;-poison_lowdmg_per=10;wound=1743,20"
+                ]
+            },
+            "ev": 1758582145.770457
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=15;11107=5;tspell=Podstępne uderzenie;skillId=129;+oth_dmg=6462, ,Matty Cox(5%);combo-max=2",
+                    "52785=15;11107=3;+of_woundpoison=50;+dmg=5732;+dmgo=4288;-legbon_glare;-endest=12;vamp_time=247;-dmg=1255;-dmgo=393",
+                    "52785=12;0;-poison_lowdmg_per=10;wound=1743,20",
+                    "0;0;txt=side to side - utrata tury",
+                    "11107=1;0;wound=1469,30",
+                    "11107=1;0;poison=642,51"
+                ]
+            },
+            "ev": 1758582147.086372
+        },
+        {
+            "f": {
+                "m": [
+                    "11107=1;52785=12;tspell=Okrzyk bojowy;skillId=271",
+                    "11107=1;52785=12;+crit;+critslow_per=6;-poison_lowdmg_per=10;+dmg=11064;-parry;-contra;-dmg=0"
+                ]
+            },
+            "ev": 1758582148.722711
+        },
+        {
+            "f": {
+                "m": [
+                    "52785=12;11107=0;+crit;+of_crit;+legbon_verycrit;+critslow_per=10;+engback=56;+actdmg=1;+dmg=11255;+dmgo=14318;-parry;+critpoison_per=5;-blok=3377;vamp_time=420;-dmg=2805",
+                    "0;0;winner=side to side",
+                    "0;0;loser=Matty Cox"
+                ],
+                "endBattle": 1
+            },
+            "ev": 1758582149.031613
+        }
+    ]
+}
