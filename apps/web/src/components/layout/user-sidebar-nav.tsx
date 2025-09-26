@@ -14,7 +14,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Panel walk",
     icon: <Swords className="mr-1 h-4 w-4" />,
-    path: "/battles",
+    path: "/battle-panel",
     available: true,
     enabled: true,
     divided: false,

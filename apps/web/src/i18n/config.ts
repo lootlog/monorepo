@@ -5,6 +5,8 @@ import itemStats from "./translations/item-stats.json";
 import itemRarity from "./translations/item-rarity.json";
 import npcType from "./translations/npc-type.json";
 import permissions from "./translations/permissions.json";
+import professions from "./translations/professions.json";
+import battle from "./translations/battle.json";
 
 i18n
   .use(initReactI18next) // passes i18n down to react-i18next
@@ -19,6 +21,8 @@ i18n
           itemRarity,
           npcType,
           permissions,
+          professions,
+          battle,
         },
       },
     },

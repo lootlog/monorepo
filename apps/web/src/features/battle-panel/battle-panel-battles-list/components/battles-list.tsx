@@ -1,5 +1,5 @@
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
-import { BattlesListEntry } from "@/screens/battles-panel/components/battles-list-entry";
+import { BattlesListEntry } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list-entry";
 
 export const BattlesList = () => {
   const { data: battlesResponse } = useBattles();
