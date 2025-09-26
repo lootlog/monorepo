@@ -8,28 +8,22 @@ import permissions from "./translations/permissions.json";
 import professions from "./translations/professions.json";
 import battle from "./translations/battle.json";
 
-i18n
-  .use(initReactI18next) // passes i18n down to react-i18next
-  .init({
-    // the translations
-    // (tip move them in a JSON file and import them,
-    // or even better, manage them via a UI: https://react.i18next.com/guides/multiple-translation-files#manage-your-translations-with-a-management-gui)
-    resources: {
-      pl: {
-        translation: {
-          itemStats,
-          itemRarity,
-          npcType,
-          permissions,
-          professions,
-          battle,
-        },
+i18n.use(initReactI18next).init({
+  resources: {
+    pl: {
+      translation: {
+        itemStats,
+        itemRarity,
+        npcType,
+        permissions,
+        professions,
+        battle,
       },
     },
-    lng: "pl", // if you're using a language detector, do not define the lng option
-    fallbackLng: "pl",
-
-    interpolation: {
-      escapeValue: false, // react already safes from xss => https://www.i18next.com/translation-function/interpolation#unescape
-    },
-  });
+  },
+  lng: "pl",
+  fallbackLng: "pl",
+  interpolation: {
+    escapeValue: false,
+  },
+});

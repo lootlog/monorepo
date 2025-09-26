@@ -1,7 +1,10 @@
 import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import { cn } from "@lootlog/ui/lib/utils";
 import { FC, memo } from "react";
-import { BattleActionItem } from "./battle-action-item";
+import { Trans } from "react-i18next";
+import { generateDynamicValuesAndComponents } from "./dynamic-values-helper";
+import { roundHpPercentage, transformAndRoundEnergyMana } from "./value-utils";
 
 export type BattleSpellActionsProps = {
   actions: { type: string; value: string }[];
@@ -22,27 +25,43 @@ export const BattleSpellActions: FC<BattleSpellActionsProps> = memo(({
 
   const transformValue = (value: string, type: string): string => {
     if (type === "energy" || type === "mana") {
-      return (parseInt(value, 10) * -1).toString();
+      return transformAndRoundEnergyMana(value);
     }
     return value;
   };
 
+  const teamColors = {
+    "bg-red-800/50": attacker?.team === 1,
+    "bg-green-800/50": attacker?.team === 2,
+  };
+
   return (
-    <>
-      {actions.map((action, sIndex) => (
-        <BattleActionItem
-          key={`spellActions-${eventIndex}-${sIndex}`}
-          action={action}
-          attacker={attacker}
-          defender={defender}
-          event={event}
-          transformValue={transformValue}
-          customComponents={{
-            value: <span className="font-semibold" />,
-          }}
-        />
-      ))}
-    </>
+    <div className={cn("px-4 py-1 bg-gray-100/10", teamColors)}>
+      {actions.map((action, sIndex) => {
+        const processedValue = transformValue(action.value, action.type);
+        const dynamicData = generateDynamicValuesAndComponents(action.value);
+
+        return (
+          <div key={`spellActions-${eventIndex}-${sIndex}`}>
+            <Trans
+              i18nKey={`battle.${action.type}`}
+              values={{
+                name: attacker?.name,
+                defenderName: defender?.name,
+                value: processedValue,
+                hp: roundHpPercentage(event.attackerHpPercentage),
+                defenderHp: roundHpPercentage(event.defenderHpPercentage),
+                ...dynamicData.values,
+              }}
+              components={{
+                value: <span className="font-semibold" />,
+                ...dynamicData.components,
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 });
 
