@@ -4,6 +4,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { FC } from "react";
 import { Trans } from "react-i18next";
 import { generateDynamicValuesAndComponents } from "./dynamic-values-helper";
+import { processDamageValue, roundHpPercentage } from "./value-utils";
 
 export type BattleLogAttackActionsProps = {
   actions: { type: string; value: string }[];
@@ -49,34 +50,34 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
 
           actions.forEach((action) => {
             if (action.type === "+dmgd")
-              positiveDamage.dmgd = `+${action.value}`;
+              positiveDamage.dmgd = processDamageValue(action.value, "+");
             else if (action.type === "+dmgf")
-              positiveDamage.dmgf = `+${action.value}`;
+              positiveDamage.dmgf = processDamageValue(action.value, "+");
             else if (action.type === "+dmgl")
-              positiveDamage.dmgl = `+${action.value}`;
+              positiveDamage.dmgl = processDamageValue(action.value, "+");
             else if (action.type === "-dmgd")
-              negativeDamage.dmgd = `-${action.value}`;
+              negativeDamage.dmgd = processDamageValue(action.value, "-");
             else if (action.type === "-dmgf")
-              negativeDamage.dmgf = `-${action.value}`;
+              negativeDamage.dmgf = processDamageValue(action.value, "-");
             else if (action.type === "-dmgl")
-              negativeDamage.dmgl = `-${action.value}`;
+              negativeDamage.dmgl = processDamageValue(action.value, "-");
             else if (action.type === "-dmg")
-              negativeDamage.dmg = `-${action.value}`;
+              negativeDamage.dmg = processDamageValue(action.value, "-");
             else if (action.type === "+dmg")
-              positiveDamage.dmg = `+${action.value}`;
+              positiveDamage.dmg = processDamageValue(action.value, "+");
             else if (action.type === "-dmgo")
-              negativeDamage.dmgo = `-${action.value}`;
+              negativeDamage.dmgo = processDamageValue(action.value, "-");
             else if (action.type === "+dmgo")
-              positiveDamage.dmgo = `+${action.value}`;
+              positiveDamage.dmgo = processDamageValue(action.value, "+");
             else if (action.type === "+dmgc")
-              positiveDamage.dmgc = `+${action.value}`;
+              positiveDamage.dmgc = processDamageValue(action.value, "+");
             else if (action.type === "-dmgc")
-              negativeDamage.dmgc = `-${action.value}`;
+              negativeDamage.dmgc = processDamageValue(action.value, "-");
             else if (action.type === "+thirdatt") {
-              positiveDamage.thirdatt = `+${action.value}`;
+              positiveDamage.thirdatt = processDamageValue(action.value, "+");
               otherActions.push(action);
             } else if (action.type === "-thirdatt") {
-              negativeDamage.thirdatt = `-${action.value}`;
+              negativeDamage.thirdatt = processDamageValue(action.value, "-");
             } else otherActions.push(action);
           });
 
@@ -105,7 +106,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                     i18nKey="battle.+combined_dmg"
                     values={{
                       name: attacker?.name,
-                      hp: event.attackerHpPercentage,
+                      hp: roundHpPercentage(event.attackerHpPercentage),
                       ...positiveDamage,
                     }}
                     components={{
@@ -144,6 +145,38 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                         thirdatt: (
                           <span className="font-semibold text-yellow-400" />
                         ),
+                        heal: <span className="font-semibold text-blue-300" />,
+                        fastArrow: (
+                          <span className="font-semibold text-yellow-400" />
+                        ),
+                        crit: <span className="font-semibold text-red-400" />,
+                        verycrit: (
+                          <span className="font-semibold text-red-600" />
+                        ),
+                        bonusDamage: (
+                          <span className="font-semibold text-purple-400" />
+                        ),
+                        resourceDestroy: (
+                          <span className="font-semibold text-yellow-100" />
+                        ),
+                        curse: (
+                          <span className="font-semibold text-yellow-400" />
+                        ),
+                        ofcrit: (
+                          <span className="font-semibold text-orange-400" />
+                        ),
+                        legbonFacade: (
+                          <span className="font-semibold text-sky-400" />
+                        ),
+                        legbonCritred: (
+                          <span className="font-semibold text-sky-400" />
+                        ),
+                        pierce: (
+                          <span className="font-semibold text-green-500" />
+                        ),
+                        injure: (
+                          <span className="font-semibold text-pink-400" />
+                        ),
                       }}
                     />
                   </span>
@@ -155,7 +188,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                     i18nKey="battle.-combined_dmg"
                     values={{
                       name: defender?.name,
-                      hp: event.defenderHpPercentage,
+                      hp: roundHpPercentage(event.defenderHpPercentage),
                       ...negativeDamage,
                     }}
                     components={{

@@ -10,30 +10,26 @@ export type BattleSystemActionsProps = {
   eventIndex: number;
 };
 
-export const BattleSystemActions: FC<BattleSystemActionsProps> = memo(({
-  actions,
-  attacker,
-  event,
-  eventIndex,
-}) => {
-  if (actions.length === 0) return null;
+export const BattleSystemActions: FC<BattleSystemActionsProps> = memo(
+  ({ actions, attacker, event, eventIndex }) => {
+    if (actions.length === 0) return null;
 
-  return (
-    <>
-      {actions.map((action, aIndex) => (
-        <BattleActionItem
-          key={`systemActions-${eventIndex}-${aIndex}`}
-          action={action}
-          attacker={attacker}
-          event={event}
-          useTeamColors={false}
-          customComponents={{
-            value: <span className="font-semibold" />,
-          }}
-        />
-      ))}
-    </>
-  );
-});
+    return (
+      <>
+        {actions.map((action, aIndex) => (
+          <BattleActionItem
+            key={`systemActions-${eventIndex}-${aIndex}`}
+            action={action}
+            attacker={attacker}
+            event={event}
+            customComponents={{
+              value: <span className="font-semibold" />,
+            }}
+          />
+        ))}
+      </>
+    );
+  }
+);
 
 BattleSystemActions.displayName = "BattleSystemActions";
