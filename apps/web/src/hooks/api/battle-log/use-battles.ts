@@ -67,6 +67,8 @@ export type Battle = {
   type: string;
   winner: string;
   loser: string;
+  winningTeam: number;
+  losingTeam: number;
   warriors: Warrior[];
 };
 

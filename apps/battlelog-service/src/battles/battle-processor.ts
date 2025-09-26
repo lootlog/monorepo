@@ -48,7 +48,7 @@ export type Warrior = {
   };
 };
 
-type ParsedMove = {
+export type ParsedMove = {
   attackerId: string | null;
   defenderId: string | null;
   attackerHpPercentage: number | null;
@@ -59,18 +59,24 @@ type ParsedMove = {
 export type BattleAnalysis = {
   duration: number;
   warriors: Warrior[];
+  parsedMoves: ParsedMove[];
   outcome: {
     winner: string;
     loser: string;
+    winningTeam: number | null;
+    losingTeam: number | null;
   };
   type: string;
 };
 
 export class BattleProcessor {
   private readonly warriors = new Map<string, Warrior>();
+  private readonly lastHp = new Map<string, number>();
   private readonly battleOutcome = {
     winner: '',
     loser: '',
+    winningTeam: null as number | null,
+    losingTeam: null as number | null,
   };
   private battleType = '';
 
@@ -81,18 +87,18 @@ export class BattleProcessor {
 
     const moves = this.extractAndParseMoves(battleData.events);
     this.calculateBattleStats(moves);
+    this.determineOutcomeTeams();
 
     return {
       duration,
       warriors: Array.from(this.warriors.values()),
+      parsedMoves: moves,
       outcome: this.battleOutcome,
       type: this.battleType,
     };
   }
 
-  private extractAndParseMoves(
-    events: CreateBattleDto['events'],
-  ): ParsedMove[] {
+  public extractAndParseMoves(events: CreateBattleDto['events']): ParsedMove[] {
     const allMoves: string[] = [];
 
     for (const event of events) {
@@ -121,6 +127,14 @@ export class BattleProcessor {
 
   private calculateBattleStats(moves: ParsedMove[]) {
     for (const move of moves) {
+      // Track latest HP percentages seen for each participant
+      if (move.attackerId && move.attackerHpPercentage != null) {
+        this.lastHp.set(move.attackerId, move.attackerHpPercentage);
+      }
+      if (move.defenderId && move.defenderHpPercentage != null) {
+        this.lastHp.set(move.defenderId, move.defenderHpPercentage);
+      }
+
       this.processOutcome(move);
 
       if (!move.actions.length) continue;
@@ -417,5 +431,122 @@ export class BattleProcessor {
     const team2Count = warriors.filter((w) => w.team === 2).length;
 
     this.battleType = `${team1Count}v${team2Count}`;
+  }
+
+  private determineOutcomeTeams() {
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    const splitNames = (s: string): string[] =>
+      s
+        .split(',')
+        .map((n) => n.trim())
+        .filter(Boolean);
+
+    const getTeamFromNames = (names: string[]): number | null => {
+      if (names.length === 0) return null;
+      const tokens = names.map((n) => n.trim());
+      const lowerSet = new Set(tokens.map((n) => normalize(n)));
+      const idSet = new Set(tokens.filter((t) => /^\d+$/.test(t)));
+      const teams: number[] = [];
+      for (const [id, w] of this.warriors.entries()) {
+        // Match by warrior map key (id)
+        if (idSet.has(id)) {
+          teams.push(w.team);
+          continue;
+        }
+        // Match by originalId string
+        if (idSet.has(String(w.originalId))) {
+          teams.push(w.team);
+          continue;
+        }
+        // Match by name (case-insensitive)
+        if (lowerSet.has(normalize(w.name))) {
+          teams.push(w.team);
+        }
+      }
+      if (teams.length === 0) return null;
+      // Prefer the most frequent team if multiple
+      const counts = teams.reduce<Record<number, number>>((acc, t) => {
+        acc[t] = (acc[t] ?? 0) + 1;
+        return acc;
+      }, {});
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      return Number(sorted[0][0]);
+    };
+
+    const winnerNames = splitNames(this.battleOutcome.winner);
+    const loserNames = splitNames(this.battleOutcome.loser);
+
+    let winningTeam = getTeamFromNames(winnerNames);
+    let losingTeam = getTeamFromNames(loserNames);
+
+    if (winningTeam == null && losingTeam != null) {
+      // Infer the other team if possible (assuming two-team battle, teams labeled 1 and 2)
+      winningTeam = losingTeam === 1 ? 2 : losingTeam === 2 ? 1 : null;
+    } else if (losingTeam == null && winningTeam != null) {
+      losingTeam = winningTeam === 1 ? 2 : winningTeam === 2 ? 1 : null;
+    }
+
+    // Fallbacks based on last known HP and aggregate stats to ensure we always set teams
+    if (winningTeam == null || losingTeam == null) {
+      const teams = Array.from(this.warriors.entries()).reduce(
+        (acc, [id, w]) => {
+          const hp = this.lastHp.get(id);
+          const hpValue = typeof hp === 'number' ? hp : 0;
+          acc.hpSum[w.team] = (acc.hpSum[w.team] ?? 0) + hpValue;
+          acc.alive[w.team] = (acc.alive[w.team] ?? 0) + (hpValue > 0 ? 1 : 0);
+          acc.dmgDealt[w.team] = (acc.dmgDealt[w.team] ?? 0) + w.damageDealt;
+          acc.dmgTaken[w.team] = (acc.dmgTaken[w.team] ?? 0) + w.damageTaken;
+          return acc;
+        },
+        {
+          hpSum: {} as Record<number, number>,
+          alive: {} as Record<number, number>,
+          dmgDealt: {} as Record<number, number>,
+          dmgTaken: {} as Record<number, number>,
+        },
+      );
+
+      const [t1, t2] = [1, 2];
+      const alive1 = teams.alive[t1] ?? 0;
+      const alive2 = teams.alive[t2] ?? 0;
+      const hp1 = teams.hpSum[t1] ?? 0;
+      const hp2 = teams.hpSum[t2] ?? 0;
+      const dealt1 = teams.dmgDealt[t1] ?? 0;
+      const dealt2 = teams.dmgDealt[t2] ?? 0;
+      const taken1 = teams.dmgTaken[t1] ?? 0;
+      const taken2 = teams.dmgTaken[t2] ?? 0;
+
+      if (winningTeam == null && losingTeam == null) {
+        if (alive1 !== alive2) {
+          winningTeam = alive1 > alive2 ? t1 : t2;
+          losingTeam = winningTeam === t1 ? t2 : t1;
+        } else if (hp1 !== hp2) {
+          winningTeam = hp1 > hp2 ? t1 : t2;
+          losingTeam = winningTeam === t1 ? t2 : t1;
+        } else if (dealt1 !== dealt2) {
+          winningTeam = dealt1 > dealt2 ? t1 : t2;
+          losingTeam = winningTeam === t1 ? t2 : t1;
+        } else if (taken1 !== taken2) {
+          winningTeam = taken1 < taken2 ? t1 : t2;
+          losingTeam = winningTeam === t1 ? t2 : t1;
+        } else {
+          // Deterministic default
+          winningTeam = t1;
+          losingTeam = t2;
+        }
+      } else if (winningTeam == null) {
+        winningTeam = losingTeam === t1 ? t2 : t1;
+      } else if (losingTeam == null) {
+        losingTeam = winningTeam === t1 ? t2 : t1;
+      }
+    }
+
+    this.battleOutcome.winningTeam = winningTeam;
+    this.battleOutcome.losingTeam = losingTeam;
   }
 }

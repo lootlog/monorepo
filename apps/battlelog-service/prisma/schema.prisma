@@ -23,6 +23,9 @@ model Battle {
     type        String
     winner      String
     loser       String
+    winningTeam Int
+    losingTeam  Int
+    honorPoints Int    @default(0)
 
     // Relations
     warriors BattleWarrior[]

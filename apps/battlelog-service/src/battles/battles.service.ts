@@ -20,6 +20,7 @@ import { R2Service } from 'src/shared/modules/r2/r2.service';
 import {
   BattleAnalysis,
   BattleProcessor,
+  ParsedMove,
   type Warrior,
 } from './battle-processor';
 import type {
@@ -51,7 +52,10 @@ export class BattlesService implements IBattlesService {
     try {
       const analysis = this.analyzeBattle(data);
       const battle = await this.storeBattleInDatabase(data, userId, analysis);
-      await this.storeRawBattleData(battle.id, data);
+      await this.storeRawBattleData(battle.id, {
+        ...data,
+        parsedEvents: analysis.parsedMoves,
+      });
 
       this.logger.log(
         `Battle ${battle.id} created successfully for user ${userId}`,
@@ -360,6 +364,8 @@ export class BattlesService implements IBattlesService {
         type: analysis.type,
         winner: analysis.outcome.winner,
         loser: analysis.outcome.loser,
+        winningTeam: analysis.outcome.winningTeam!,
+        losingTeam: analysis.outcome.losingTeam!,
         warriors: {
           create: analysis.warriors.map(
             (
@@ -440,7 +446,9 @@ export class BattlesService implements IBattlesService {
 
   private async storeRawBattleData(
     battleId: string,
-    data: CreateBattleDto,
+    data: CreateBattleDto & {
+      parsedEvents: ParsedMove[];
+    },
   ): Promise<void> {
     try {
       const rawBattleData: RawBattleData = {

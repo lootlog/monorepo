@@ -18,7 +18,10 @@ import { HomeLayout } from "@/components/layout/home-layout";
 import { UserSettings } from "@/screens/user-settings/user-settings";
 import { Home } from "@/screens/home/home";
 import { UserSettingsLayout } from "@/components/layout/user-settings-layout";
-import { BattlesPanel } from "@/screens/battles-panel/battles-panel";
+import { BattlePanelDashboard } from "@/features/battle-panel/battle-panel-dashboard/battle-panel-dashboard";
+import { BattlePanelBattlesList } from "@/features/battle-panel/battle-panel-battles-list/battle-panel-battles-list";
+import { BattlePanelLayout } from "@/features/battle-panel/battle-panel-layout/battle-panel-layout";
+import { BattlePanelSingleBattle } from "@/features/battle-panel/battle-panel-single-battle/battle-panel-single-battle";
 
 export const Navigation = () => {
   return (
@@ -27,7 +30,24 @@ export const Navigation = () => {
         <Route path="/" element={<Layout />}>
           <Route path="/@me" element={<HomeLayout />}>
             <Route path="/@me" element={<Home />} />
-            <Route path="/@me/battles" element={<BattlesPanel />} />
+            <Route path="/@me/battle-panel" element={<BattlePanelLayout />}>
+              <Route
+                path="/@me/battle-panel"
+                element={<BattlePanelDashboard />}
+              />
+              <Route
+                path="/@me/battle-panel/stats"
+                element={<BattlePanelDashboard />}
+              />
+              <Route
+                path="/@me/battle-panel/battles"
+                element={<BattlePanelBattlesList />}
+              />
+              <Route
+                path="/@me/battle-panel/battles/:battleId"
+                element={<BattlePanelSingleBattle />}
+              />
+            </Route>
             <Route path="/@me/settings" element={<UserSettingsLayout />}>
               <Route path="/@me/settings" element={<UserSettings />} />
               <Route
