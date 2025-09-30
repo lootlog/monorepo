@@ -1,9 +1,13 @@
-import type { Battle, BattleWarrior, LegendaryBonus } from '../../../generated/client';
+import type {
+  Battle,
+  BattleWarrior,
+  LegendaryBonus,
+} from '../../../generated/client';
 import type { QueryBattlesDto } from '../dto/query-battles.dto';
 import type { UpdateBattleDto } from '../dto/update-battle.dto';
 import type { CreateBattleDto } from '../dto/create-battle.dto';
 import type { PaginationResult } from './pagination.interface';
-import type { BattleAnalysis } from '../battle-processor';
+import type { BattleAnalysis, ParsedMove } from '../battle-processor';
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {
@@ -46,7 +50,9 @@ export interface DeleteBattleResult {
 export interface RawBattleData {
   battleId: string;
   timestamp: string;
-  rawData: CreateBattleDto;
+  rawData: Omit<CreateBattleDto, 'events'> & {
+    events: ParsedMove[];
+  };
 }
 
 // Service interface
@@ -64,22 +70,34 @@ export interface IBattlesService {
   /**
    * Retrieves battles for dashboard (public + private for owner)
    */
-  getDashboardBattles(query: QueryBattlesDto, requestingUserId: string): Promise<GetAllBattlesResult>;
+  getDashboardBattles(
+    query: QueryBattlesDto,
+    requestingUserId: string,
+  ): Promise<GetAllBattlesResult>;
 
   /**
    * Retrieves a single battle from database with all relations
    */
-  getBattleFromDatabase(battleId: string, requestingUserId?: string): Promise<BattleWithRelations>;
+  getBattleFromDatabase(
+    battleId: string,
+    requestingUserId?: string,
+  ): Promise<BattleWithRelations>;
 
   /**
    * Retrieves raw battle data from R2 storage
    */
-  getBattleRawData(battleId: string, requestingUserId?: string): Promise<RawBattleData>;
+  getBattleRawData(
+    battleId: string,
+    requestingUserId?: string,
+  ): Promise<RawBattleData>;
 
   /**
    * Updates a battle (only public field)
    */
-  updateBattle(battleId: string, updateData: UpdateBattleDto): Promise<BattleWithRelations>;
+  updateBattle(
+    battleId: string,
+    updateData: UpdateBattleDto,
+  ): Promise<BattleWithRelations>;
 
   /**
    * Deletes a battle from both database and R2 storage

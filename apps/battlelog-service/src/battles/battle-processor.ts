@@ -8,6 +8,7 @@ export type Warrior = {
   prof: string;
   icon: string;
   team: number;
+  isDead: boolean;
   damageDealt: number;
   damageDealtAfterDefensive: number;
   damageTaken: number;
@@ -130,9 +131,19 @@ export class BattleProcessor {
       // Track latest HP percentages seen for each participant
       if (move.attackerId && move.attackerHpPercentage != null) {
         this.lastHp.set(move.attackerId, move.attackerHpPercentage);
+        // Update death status based on HP
+        const attacker = this.warriors.get(move.attackerId);
+        if (attacker && move.attackerHpPercentage <= 0) {
+          attacker.isDead = true;
+        }
       }
       if (move.defenderId && move.defenderHpPercentage != null) {
         this.lastHp.set(move.defenderId, move.defenderHpPercentage);
+        // Update death status based on HP
+        const defender = this.warriors.get(move.defenderId);
+        if (defender && move.defenderHpPercentage <= 0) {
+          defender.isDead = true;
+        }
       }
 
       this.processOutcome(move);
@@ -361,6 +372,7 @@ export class BattleProcessor {
           prof: warriorData.prof,
           icon: warriorData.icon,
           team: warriorData.team,
+          isDead: false,
           damageDealt: 0,
           damageDealtAfterDefensive: 0,
           damageTaken: 0,

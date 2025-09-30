@@ -17,7 +17,7 @@ export type RawBattleParsedEvent = {
 export type RawBattle = {
   accountId: string;
   characterId: string;
-  parsedEvents: RawBattleParsedEvent[];
+  events: RawBattleParsedEvent[];
   world: string;
 };
 

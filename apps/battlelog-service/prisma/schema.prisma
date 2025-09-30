@@ -46,6 +46,9 @@ model BattleWarrior {
     team       Int
     turns      Int
 
+    // Status
+    isDead Boolean @default(false)
+
     // Damage stats
     damageDealt               Int @default(0)
     damageDealtAfterDefensive Int @default(0)

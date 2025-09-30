@@ -14,83 +14,66 @@ export type BattleEventEntryProps = {
   attacker?: Warrior;
   defender?: Warrior;
   eventIndex: number;
+  userTeam?: number;
 };
 
-/**
- * Renders a single battle event with all its categorized actions
- *
- * This component orchestrates the rendering of different action types
- * from a parsed battle event, delegating to specialized action components.
- *
- * @param event - Raw battle event data
- * @param attacker - Warrior who performed the action
- * @param defender - Warrior who received the action
- * @param eventIndex - Index for React keys
- */
-export const BattleEventEntry: FC<BattleEventEntryProps> = memo(({
-  event,
-  attacker,
-  defender,
-  eventIndex,
-}) => {
-  // Parse actions with memoization to avoid re-parsing on every render
-  const parsedActions = useMemo(
-    () => parseActions(event.actions),
-    [event.actions]
-  );
+export const BattleEventEntry: FC<BattleEventEntryProps> = memo(
+  ({ event, attacker, defender, eventIndex, userTeam }) => {
+    const parsedActions = useMemo(
+      () => parseActions(event.actions),
+      [event.actions]
+    );
 
-  return (
-    <li className="border-b-2">
-      {/* Buff actions - status effects that help allies */}
-      <BattleBuffActions
-        actions={parsedActions.buffActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-      />
+    return (
+      <li className="border-b-2 border-transparent">
+        <BattleBuffActions
+          actions={parsedActions.buffActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+        />
 
-      {/* System actions - game messages and notifications */}
-      <BattleSystemActions
-        actions={parsedActions.systemActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-      />
+        <BattleSystemActions
+          actions={parsedActions.systemActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+        />
 
-      {/* Spell actions - magic spells and abilities */}
-      <BattleSpellActions
-        actions={parsedActions.spellActions}
-        attacker={attacker}
-        defender={defender}
-        event={event}
-        eventIndex={eventIndex}
-      />
+        <BattleSpellActions
+          actions={parsedActions.spellActions}
+          attacker={attacker}
+          defender={defender}
+          event={event}
+          eventIndex={eventIndex}
+          userTeam={userTeam}
+        />
 
-      {/* Attack actions - damage dealing and combat effects */}
-      <BattleLogAttackActions
-        attacker={attacker}
-        defender={defender}
-        actions={parsedActions.attackActions}
-        event={event}
-      />
+        <BattleLogAttackActions
+          attacker={attacker}
+          defender={defender}
+          actions={parsedActions.attackActions}
+          event={event}
+          userTeam={userTeam}
+        />
 
-      {/* Passive actions - ongoing effects like healing, poison */}
-      <BattlePassiveActions
-        actions={parsedActions.passiveActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-      />
+        <BattlePassiveActions
+          actions={parsedActions.passiveActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+          userTeam={userTeam}
+        />
 
-      {/* Outcome actions - battle results (winner/loser) */}
-      <BattleOutcomeActions
-        actions={parsedActions.outcomeActions}
-        attacker={attacker}
-        event={event}
-        eventIndex={eventIndex}
-      />
-    </li>
-  );
-});
+        <BattleOutcomeActions
+          actions={parsedActions.outcomeActions}
+          attacker={attacker}
+          event={event}
+          eventIndex={eventIndex}
+        />
+      </li>
+    );
+  }
+);
 
 BattleEventEntry.displayName = "BattleEventEntry";

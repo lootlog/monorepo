@@ -1,4 +1,3 @@
-import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
@@ -9,14 +8,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@lootlog/ui/components/chart";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
 
 export const description = "An area chart with a legend";
 

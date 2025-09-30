@@ -51,6 +51,7 @@ export const apiClient = getApiClient("default");
 export const battlelogApiClient = getApiClient("battlelog");
 
 let interceptorsInitialized = false;
+
 export const setupApiInterceptors = () => {
   if (interceptorsInitialized) return;
   clients.forEach((client) => attachInterceptors(client));
