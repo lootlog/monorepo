@@ -52,10 +52,15 @@ export class BattlesService implements IBattlesService {
     try {
       const analysis = this.analyzeBattle(data);
       const battle = await this.storeBattleInDatabase(data, userId, analysis);
-      await this.storeRawBattleData(battle.id, {
-        ...data,
-        parsedEvents: analysis.parsedMoves,
-      });
+
+      const rawBattleData = {
+        events: analysis.parsedMoves,
+        accountId: data.accountId,
+        characterId: data.characterId,
+        world: data.world,
+      };
+
+      await this.storeRawBattleData(battle.id, rawBattleData);
 
       this.logger.log(
         `Battle ${battle.id} created successfully for user ${userId}`,
@@ -184,8 +189,18 @@ export class BattlesService implements IBattlesService {
         },
       });
 
+      const battleWithCalculations = {
+        ...battle,
+        warriors: battle.warriors.map(warrior => ({
+          ...warrior,
+          damageDealtAfterDefensivePercentage: warrior.damageDealt > 0
+            ? Math.round((warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000) / 100
+            : 0,
+        })),
+      };
+
       this.logger.debug(`Retrieved battle ${battleId} from database`);
-      return battle;
+      return battleWithCalculations;
     } catch (error) {
       if (error instanceof Error && error.name === 'NotFoundError') {
         this.logger.warn(`Battle ${battleId} not found in database`);
@@ -377,6 +392,7 @@ export class BattlesService implements IBattlesService {
               prof: warrior.prof,
               icon: warrior.icon,
               team: warrior.team,
+              isDead: warrior.isDead,
               turns: warrior.turns,
               damageDealt: warrior.damageDealt,
               damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
@@ -446,8 +462,8 @@ export class BattlesService implements IBattlesService {
 
   private async storeRawBattleData(
     battleId: string,
-    data: CreateBattleDto & {
-      parsedEvents: ParsedMove[];
+    data: Omit<CreateBattleDto, 'events'> & {
+      events: ParsedMove[];
     },
   ): Promise<void> {
     try {

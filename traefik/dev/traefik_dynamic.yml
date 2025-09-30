@@ -56,6 +56,14 @@ http:
       entryPoints:
         - "web"
 
+    battlelog-client:
+      rule: "Host(`battlelog.localhost`)"
+      service: "battlelogClient"
+      priority: 1
+      middlewares:
+        - "apiCompress"
+        - "stripPrefix"
+
     api:
       rule: "PathPrefix(`/api/lootlog`)"
       service: "api"
@@ -117,6 +125,10 @@ http:
       loadBalancer:
         servers:
         - url: "http://host.docker.internal:4005"
+    battlelogClient:
+      loadBalancer:
+        servers:
+        - url: "http://host.docker.internal:3004"
   middlewares:
     apiStripPrefix:
       stripPrefix:

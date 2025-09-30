@@ -11,6 +11,7 @@ export type BattleLogAttackActionsProps = {
   attacker?: Warrior;
   defender?: Warrior;
   event: RawBattleParsedEvent;
+  userTeam?: number;
 };
 
 export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
@@ -18,13 +19,14 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
   defender,
   actions,
   event,
+  userTeam,
 }) => {
   return (
     actions.length > 0 && (
       <div
         className={cn("px-4 py-1 bg-gray-100/10 flex flex-col", {
-          "bg-red-800/50": attacker?.team === 1,
-          "bg-green-800/50": attacker?.team === 2,
+          "bg-red-400/10": attacker?.team !== userTeam,
+          "bg-green-400/10": attacker?.team === userTeam,
         })}
       >
         {(() => {

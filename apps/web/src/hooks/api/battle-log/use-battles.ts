@@ -53,6 +53,8 @@ export type Warrior = {
   reflectedDamage: number;
   reflectedDamageTaken: number;
   legendaryBonuses: WarriorLegendaryBonuses;
+  damageDealtAfterDefensivePercentage: number;
+  isDead: boolean;
 };
 
 export type Battle = {

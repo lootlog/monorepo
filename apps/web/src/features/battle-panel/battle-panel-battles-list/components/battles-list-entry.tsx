@@ -59,7 +59,10 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({ battle }) => {
                 <Sword className="h-4 w-4" />
                 {userTeam?.team === 1 ? "Twoja drużyna" : "Przeciwnicy"}
               </div>
-              <TeamDisplay team={attackingTeam} />
+              <TeamDisplay
+                team={attackingTeam}
+                characterId={battle.characterId}
+              />
             </div>
 
             <div className="space-y-2">
@@ -72,7 +75,10 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({ battle }) => {
                 <Sword className="h-4 w-4" />
                 {userTeam?.team === 2 ? "Twoja drużyna" : "Przeciwnicy"}
               </div>
-              <TeamDisplay team={defendingTeam} />
+              <TeamDisplay
+                team={defendingTeam}
+                characterId={battle.characterId}
+              />
             </div>
           </div>
 

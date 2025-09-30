@@ -9,17 +9,18 @@ export type BattlePassiveActionsProps = {
   attacker?: Warrior;
   event: RawBattleParsedEvent;
   eventIndex: number;
+  userTeam?: number;
 };
 
 export const BattlePassiveActions: FC<BattlePassiveActionsProps> = memo(
-  ({ actions, attacker, event, eventIndex }) => {
+  ({ actions, attacker, event, eventIndex, userTeam }) => {
     if (actions.length === 0) return null;
 
     return (
       <div
         className={cn("py-1 bg-gray-100/10", {
-          "bg-red-800/40": attacker?.team === 1,
-          "bg-green-800/40": attacker?.team === 2,
+          "bg-red-400/[15%]": attacker?.team !== userTeam,
+          "bg-green-400/[15%]": attacker?.team === userTeam,
         })}
       >
         {actions.map((action, sIndex) => (

@@ -3,7 +3,6 @@ import { BattleOverview } from "@/features/battle-panel/battle-panel-single-batt
 import { BattleStatsTable } from "@/features/battle-panel/battle-panel-single-battle/components/battle-stats-table/battle-stats-table";
 import { useBattle } from "@/hooks/api/battle-log/use-battle";
 import { useBattleRaw } from "@/hooks/api/battle-log/use-battle-raw";
-import { Separator } from "@lootlog/ui/components/separator";
 import { useParams } from "react-router-dom";
 
 export const BattlePanelSingleBattle = () => {
@@ -12,11 +11,9 @@ export const BattlePanelSingleBattle = () => {
   const { data: rawBattle } = useBattleRaw({ battleId });
 
   return (
-    <div>
+    <div className="w-full">
       {battle && <BattleOverview battle={battle} />}
-      <Separator />
       {battle && <BattleStatsTable battle={battle} />}
-      <Separator />
       {rawBattle && battle && (
         <BattleLog rawBattle={rawBattle?.rawData} warriors={battle.warriors} />
       )}

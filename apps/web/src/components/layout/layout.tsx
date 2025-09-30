@@ -6,13 +6,8 @@ import { Toaster } from "@lootlog/ui/components/sonner";
 import { Outlet } from "react-router-dom";
 
 export const Layout: React.FC = () => {
-  // const style = {
-  //   background:
-  //     "linear-gradient(90deg,rgba(131, 58, 180, 0.31) 0%, rgba(253, 29, 29, 0.32) 50%, rgba(252, 176, 69, 0.3) 100%)",
-  // };
-
   return (
-    <div>
+    <div className="w-full">
       <Outlet />
       <Toaster />
       <CreateGuildModal />
