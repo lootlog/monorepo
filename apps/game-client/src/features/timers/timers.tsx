@@ -24,6 +24,7 @@ import { TimersFilters } from "@/features/timers/components/timers-filters";
 import { cn } from "@/lib/utils";
 import { WorldSelector } from "@/components/world-selector";
 import { useSettingsStore } from "@/store/settings.store";
+import { NpcType } from "@/hooks/api/use-npcs";
 
 export type TimerWithTimeLeft = Timer & {
   maxTimeLeft: number;
@@ -230,7 +231,10 @@ export const Timers = () => {
           : true
       )
       .filter(
-        (t) => filters.selectedNpcTypes.includes(t.npc.type) || t.npc.lvl === 0
+        (t) =>
+          filters.selectedNpcTypes.includes(t.npc.type) ||
+          t.npc.lvl === 0 ||
+          t.npc.type === NpcType.NPC
       )
       .filter(
         (t) =>
