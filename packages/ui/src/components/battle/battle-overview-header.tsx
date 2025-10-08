@@ -1,4 +1,4 @@
-import { Button } from "../button.js";
+import { Button } from "../button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../alert-dialog.js";
+} from "../alert-dialog";
 import { Copy, Share2, Users, Lock } from "lucide-react";
 import { FC } from "react";
 
@@ -20,6 +20,7 @@ export type BattleOverviewHeaderProps = {
   onCopyClick: () => void;
   onUnshareClick: () => void;
   onDeleteClick: () => void;
+  showActions?: boolean;
   labels?: {
     title: string;
     copyLink: string;
@@ -40,6 +41,7 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
   onCopyClick,
   onUnshareClick,
   onDeleteClick,
+  showActions = true,
   labels = {
     title: "Battle Overview",
     copyLink: "Copy link",
@@ -60,59 +62,61 @@ export const BattleOverviewHeader: FC<BattleOverviewHeaderProps> = ({
             <Users className="h-5 w-5" />
             {labels.title}
           </div>
-          <div className="flex flex-row gap-2">
-            {isPublic ? (
-              <>
+          {showActions && (
+            <div className="flex flex-row gap-2">
+              {isPublic ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={onCopyClick}
+                    disabled={isPending}
+                  >
+                    {labels.copyLink} <Copy />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={onUnshareClick}
+                    disabled={isPending}
+                  >
+                    {labels.hide} <Lock />
+                  </Button>
+                </>
+              ) : (
                 <Button
                   variant="outline"
-                  onClick={onCopyClick}
+                  onClick={onShareClick}
                   disabled={isPending}
                 >
-                  {labels.copyLink} <Copy />
+                  {labels.share} <Share2 />
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={onUnshareClick}
-                  disabled={isPending}
-                >
-                  {labels.hide} <Lock />
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={onShareClick}
-                disabled={isPending}
-              >
-                {labels.share} <Share2 />
-              </Button>
-            )}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isPending}>
-                  {labels.delete}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {labels.deleteConfirmTitle}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {labels.deleteConfirmDescription}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
-                  <AlertDialogAction asChild>
-                    <Button variant="destructive" onClick={onDeleteClick}>
-                      {labels.deleteBattle}
-                    </Button>
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={isPending}>
+                    {labels.delete}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {labels.deleteConfirmTitle}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {labels.deleteConfirmDescription}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                      <Button variant="destructive" onClick={onDeleteClick}>
+                        {labels.deleteBattle}
+                      </Button>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
       </div>
     </>

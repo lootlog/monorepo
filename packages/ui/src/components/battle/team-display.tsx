@@ -1,7 +1,7 @@
-import { cn } from "../../lib/utils.js";
+import { cn } from "../../lib/utils";
 import { FC } from "react";
-import { PlayerTile } from "./player-tile.js";
-import type { SharedWarrior } from "../../types/battle.js";
+import { PlayerTile } from "./player-tile";
+import type { SharedWarrior } from "../../types/battle";
 
 export type TeamDisplayProps = {
   team: SharedWarrior[];

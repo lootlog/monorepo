@@ -1,8 +1,8 @@
-import { cn } from "../../lib/utils.js";
+import { cn } from "../../lib/utils";
 import { Sword } from "lucide-react";
 import { FC } from "react";
-import { TeamDisplay } from "./team-display.js";
-import type { SharedWarrior } from "../../types/battle.js";
+import { TeamDisplay } from "./team-display";
+import type { SharedWarrior } from "../../types/battle";
 
 export type BattleTeamSectionProps = {
   team: SharedWarrior[];

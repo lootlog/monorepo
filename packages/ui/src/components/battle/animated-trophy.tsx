@@ -1,4 +1,4 @@
-import { cn } from "../../lib/utils.js";
+import { cn } from "../../lib/utils";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import { FC } from "react";

@@ -1,10 +1,11 @@
-import { cn } from "../../lib/utils.js";
+import { cn } from "../../lib/utils";
 import { FC } from "react";
-import { BattleOverviewHeader } from "./battle-overview-header.js";
-import { BattleTeamSection } from "./battle-team-section.js";
-import { AnimatedTrophy } from "./animated-trophy.js";
-import { BattleMetadata } from "./battle-metadata.js";
-import type { SharedBattleData } from "../../types/battle.js";
+import { BattleOverviewHeader } from "./battle-overview-header";
+import { BattleTeamSection } from "./battle-team-section";
+import { AnimatedTrophy } from "./animated-trophy";
+import { BattleMetadata } from "./battle-metadata";
+import type { SharedBattleData } from "../../types/battle";
+import { DEFAULT_BATTLE_LABELS, type BattleLabels } from "./battle-labels";
 
 export type BattleOverviewCardProps = {
   battle: SharedBattleData & {
@@ -17,33 +18,9 @@ export type BattleOverviewCardProps = {
   onUnshare?: (battleId: string) => void;
   onDelete?: (battleId: string) => void;
   isSharePending?: boolean;
+  showActions?: boolean;
   cdnBaseUrl: string;
-  labels?: {
-    header?: {
-      title: string;
-      copyLink: string;
-      hide: string;
-      share: string;
-      delete: string;
-      deleteConfirmTitle: string;
-      deleteConfirmDescription: string;
-      cancel: string;
-      deleteBattle: string;
-    };
-    teams?: {
-      userTeam: string;
-      enemyTeam: string;
-    };
-    metadata?: {
-      startTime: string;
-      duration: string;
-      battleType: string;
-      public: string;
-      private: string;
-      publicTooltip: string;
-      privateTooltip: string;
-    };
-  };
+  labels?: Partial<BattleLabels>;
 };
 
 export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
@@ -54,9 +31,16 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
   onUnshare,
   onDelete,
   isSharePending = false,
+  showActions = true,
   cdnBaseUrl,
-  labels,
+  labels = DEFAULT_BATTLE_LABELS,
 }) => {
+  const mergedLabels = {
+    header: { ...DEFAULT_BATTLE_LABELS.header, ...labels.header },
+    teams: { ...DEFAULT_BATTLE_LABELS.teams, ...labels.teams },
+    metadata: { ...DEFAULT_BATTLE_LABELS.metadata, ...labels.metadata },
+  };
+
   const attackingTeam = battle.warriors.filter((w: any) => w.team === 1);
   const defendingTeam = battle.warriors.filter((w: any) => w.team === 2);
 
@@ -89,7 +73,8 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
         onCopyClick={handleCopyClick}
         onUnshareClick={handleUnshareClick}
         onDeleteClick={handleDeleteClick}
-        labels={labels?.header}
+        showActions={showActions}
+        labels={mergedLabels.header}
       />
       <div
         className={cn(
@@ -108,7 +93,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               userTeam={userTeam?.team}
               characterId={currentUserCharacterId || battle.characterId}
               cdnBaseUrl={cdnBaseUrl}
-              teamLabels={labels?.teams}
+              teamLabels={mergedLabels.teams}
             />
             <div className="grid grid-cols-3 items-center justify-items-center">
               <div>
@@ -134,11 +119,11 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               userTeam={userTeam?.team}
               characterId={currentUserCharacterId || battle.characterId}
               cdnBaseUrl={cdnBaseUrl}
-              teamLabels={labels?.teams}
+              teamLabels={mergedLabels.teams}
             />
           </div>
         </div>
-        <BattleMetadata battle={battle} labels={labels?.metadata} />
+        <BattleMetadata battle={battle} labels={mergedLabels.metadata} />
       </div>
     </div>
   );
