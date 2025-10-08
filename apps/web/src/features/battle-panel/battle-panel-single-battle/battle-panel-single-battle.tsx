@@ -1,4 +1,4 @@
-import { BattleLog, BattleStatsTable } from "@lootlog/ui/components/battle";
+import { BattleLog, BattleStatsTable } from "@/components/battle";
 import { BattleOverview } from "@/features/battle-panel/battle-panel-single-battle/components/battle-overview";
 import { useBattle } from "@/hooks/api/battle-log/use-battle";
 import { useBattleRaw } from "@/hooks/api/battle-log/use-battle-raw";

@@ -4,8 +4,8 @@ import { useBattleSharing } from "../hooks/use-battle-sharing";
 import { useDeleteBattle } from "@/hooks/api/battle-log/use-delete-battle";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { BattleOverviewCard } from "@lootlog/ui/components/battle";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { BattleOverviewCard } from "@/components/battle";
 
 export type BattleOverviewProps = {
   battle: Battle;
@@ -64,7 +64,8 @@ export const BattleOverview: FC<BattleOverviewProps> = ({ battle }) => {
           share: "Udostępnij",
           delete: "Usuń",
           deleteConfirmTitle: "Czy na pewno chcesz usunąć tę walkę?",
-          deleteConfirmDescription: "Ta akcja jest nieodwracalna. Walka zostanie całkowicie usunięta z systemu i nie będzie można jej przywrócić. Nie będzie również brana podczas obliczania statystyk.",
+          deleteConfirmDescription:
+            "Ta akcja jest nieodwracalna. Walka zostanie całkowicie usunięta z systemu i nie będzie można jej przywrócić. Nie będzie również brana podczas obliczania statystyk.",
           cancel: "Anuluj",
           deleteBattle: "Usuń walkę",
         },
@@ -78,7 +79,8 @@ export const BattleOverview: FC<BattleOverviewProps> = ({ battle }) => {
           battleType: "Typ walki",
           public: "Publiczna",
           private: "Prywatna",
-          publicTooltip: "Walka jest publiczna - może być przeglądana przez osoby posiadające link",
+          publicTooltip:
+            "Walka jest publiczna - może być przeglądana przez osoby posiadające link",
           privateTooltip: "Walka jest prywatna - tylko Ty możesz ją zobaczyć",
         },
       }}
