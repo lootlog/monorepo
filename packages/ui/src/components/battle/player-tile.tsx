@@ -1,5 +1,5 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../tooltip.js";
-import { cn } from "../../lib/utils.js";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../tooltip";
+import { cn } from "../../lib/utils";
 import { FC } from "react";
 
 type PlayerTileProps = {

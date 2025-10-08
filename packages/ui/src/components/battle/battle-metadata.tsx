@@ -1,9 +1,9 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../tooltip.js";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../tooltip";
 import { format } from "date-fns";
 import { Calendar, Clock, Lock, Unlock, Users } from "lucide-react";
 import { FC } from "react";
-import { formatSeconds } from "../../lib/date-utils.js";
-import type { SharedBattleData } from "../../types/battle.js";
+import { formatSeconds } from "../../lib/date-utils";
+import type { SharedBattleData } from "../../types/battle";
 
 export type BattleMetadataProps = {
   battle: Pick<SharedBattleData, 'duration' | 'type'> & {

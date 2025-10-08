@@ -1,7 +1,7 @@
 http:
   routers:
     landing:
-      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`) || Path(`/terms-of-service`) || Path(`/privacy-policy`) || Path(`/docs`) || PathPrefix(`/screenshots/`)"
+      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`) || Path(`/terms-of-service`) || Path(`/privacy-policy`) || Path(`/docs`) || PathPrefix(`/screenshots/`) || PathPrefix(`/battles`)"
       service: "landing"
       priority: 30
       middlewares:
@@ -55,14 +55,6 @@ http:
       priority: 10
       entryPoints:
         - "web"
-
-    battlelog-client:
-      rule: "Host(`battlelog.localhost`)"
-      service: "battlelogClient"
-      priority: 1
-      middlewares:
-        - "apiCompress"
-        - "stripPrefix"
 
     api:
       rule: "PathPrefix(`/api/lootlog`)"
@@ -125,10 +117,6 @@ http:
       loadBalancer:
         servers:
         - url: "http://host.docker.internal:4005"
-    battlelogClient:
-      loadBalancer:
-        servers:
-        - url: "http://host.docker.internal:3004"
   middlewares:
     apiStripPrefix:
       stripPrefix:

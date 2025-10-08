@@ -63,14 +63,21 @@ export type SharedBattleData = {
   warriors: SharedWarrior[];
 };
 
+export type SharedRawBattleParsedEventAction = {
+  actionType: string;
+  param: string;
+};
+
+export type SharedRawBattleParsedEvent = {
+  attackerId: string;
+  defenderId: string;
+  actions: SharedRawBattleParsedEventAction[];
+  attackerHpPercentage: number;
+  defenderHpPercentage: number;
+};
+
 export type SharedRawBattleData = {
-  events: Array<{
-    attackerId: string | null;
-    defenderId: string | null;
-    attackerHpPercentage: number | null;
-    defenderHpPercentage: number | null;
-    actions: Array<{ actionType: string; param: string }>;
-  }>;
+  events: SharedRawBattleParsedEvent[];
   accountId: string;
   characterId: string;
   world: string;

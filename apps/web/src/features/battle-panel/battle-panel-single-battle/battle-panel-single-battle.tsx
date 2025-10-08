@@ -1,6 +1,5 @@
-import { BattleLog } from "@/features/battle-panel/battle-panel-single-battle/components/battle-log/battle-log";
+import { BattleLog, BattleStatsTable } from "@lootlog/ui/components/battle";
 import { BattleOverview } from "@/features/battle-panel/battle-panel-single-battle/components/battle-overview";
-import { BattleStatsTable } from "@/features/battle-panel/battle-panel-single-battle/components/battle-stats-table/battle-stats-table";
 import { useBattle } from "@/hooks/api/battle-log/use-battle";
 import { useBattleRaw } from "@/hooks/api/battle-log/use-battle-raw";
 import { useParams } from "react-router-dom";

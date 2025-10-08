@@ -1,9 +1,9 @@
-import { Button } from "../button.js";
-import { cn } from "../../lib/utils.js";
+import { Button } from "../button";
+import { cn } from "../../lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { pick } from "lodash";
 import { User, ChevronDown, ChevronRight, Skull } from "lucide-react";
-import type { SharedBattleData, SharedWarrior } from "../../types/battle.js";
+import type { SharedBattleData, SharedWarrior } from "../../types/battle";
 
 export const getBattleStatsColumns = (
   battle: SharedBattleData,

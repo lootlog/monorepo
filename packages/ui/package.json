@@ -33,12 +33,14 @@
     "date-fns": "^3.6.0",
     "framer-motion": "^12.23.22",
     "gsap": "^3.13.0",
+    "i18next": "^24.2.3",
     "lodash": "^4.17.21",
     "lucide-react": "0.475.0",
     "next-themes": "^0.4.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.58.1",
+    "react-i18next": "^15.5.3",
     "react-medium-image-zoom": "^5.3.0",
     "recharts": "2.15.4",
     "sonner": "^2.0.7",
@@ -68,6 +70,8 @@
     "./components/battle": "./src/components/battle/index.ts",
     "./types/*": "./src/types/*.ts",
     "./hooks/*": "./src/hooks/*.ts",
+    "./i18n/battle-i18n": "./src/i18n/battle-i18n.ts",
+    "./i18n/translations/battle.json": "./src/i18n/translations/battle.json",
     "./postcss.config.mjs": "./postcss.config.mjs"
   }
 }
