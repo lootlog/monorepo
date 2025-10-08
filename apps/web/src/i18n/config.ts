@@ -6,7 +6,7 @@ import itemRarity from "./translations/item-rarity.json";
 import npcType from "./translations/npc-type.json";
 import permissions from "./translations/permissions.json";
 import professions from "./translations/professions.json";
-import battle from "@lootlog/ui/i18n/translations/battle.json";
+import battle from "./translations/battle.json";
 
 i18n.use(initReactI18next).init({
   resources: {
