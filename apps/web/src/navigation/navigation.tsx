@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
 import { GuildLayout } from "@/components/layout/guild-layout";
 import { Init } from "@/screens/init/init";
 import { Timers } from "@/screens/timers/timers";
@@ -22,11 +22,24 @@ import { BattlePanelDashboard } from "@/features/battle-panel/battle-panel-dashb
 import { BattlePanelBattlesList } from "@/features/battle-panel/battle-panel-battles-list/battle-panel-battles-list";
 import { BattlePanelLayout } from "@/features/battle-panel/battle-panel-layout/battle-panel-layout";
 import { BattlePanelSingleBattle } from "@/features/battle-panel/battle-panel-single-battle/battle-panel-single-battle";
+import { PublicBattle } from "@/screens/public-battle/public-battle";
+
+const AuthenticatedRoutes = () => {
+  return (
+    <AuthenticationGuard>
+      <Outlet />
+    </AuthenticationGuard>
+  );
+};
 
 export const Navigation = () => {
   return (
-    <AuthenticationGuard>
-      <Routes>
+    <Routes>
+      {/* Public routes - no authentication required */}
+      <Route path="/battles/:id" element={<PublicBattle />} />
+
+      {/* Authenticated routes */}
+      <Route element={<AuthenticatedRoutes />}>
         <Route path="/" element={<Layout />}>
           <Route path="/@me" element={<HomeLayout />}>
             <Route path="/@me" element={<Home />} />
@@ -81,7 +94,7 @@ export const Navigation = () => {
             </Route>
           </Route>
         </Route>
-      </Routes>
-    </AuthenticationGuard>
+      </Route>
+    </Routes>
   );
 };
