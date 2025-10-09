@@ -1,0 +1,77 @@
+{
+  "accountId": "8932476",
+  "characterId": "166846",
+  "world": "gordion",
+  "events": [
+    {
+      "f": {
+        "m": [
+          "166846=100;-270797=100;tspell=Podwójny strzał;skillId=97",
+          "166846=100;-270797=98;+dmgd=13696;+acdmg=198;-dmgd=6874",
+          "166846=100;-270797=95;+fastarrow;+dmgd=14333;+acdmg=198;-dmgd=7626",
+          "166846=100;-270797=95;tspell=Dziki zapał;skillId=217",
+          "166846=100;-270797=92;+dmgd=16370;+acdmg=198;+injure=1456;-dmgd=9711",
+          "166846=100;-270797=92;tspell=Krytyczne wzmocnienie;skillId=113",
+          "166846=100;-270797=87;+crit;+critslow_per=8;+fastarrow;+dmgd=29547;+acdmg=198;-blok=8864;-dmgd=14035",
+          "166846=100;-270797=87;tspell=Błyskawiczny strzał;skillId=85;energy=-30;combo-max=2",
+          "166846=100;-270797=68;+crit;+legbon_verycrit;+critslow_per=8;+pierce;+dmgd=53638;+acdmg=198;-dmgd=53638",
+          "-270797=68;0;injure=1456",
+          "-270797=68;0;step",
+          "166846=100;-270797=68;tspell=Podwójny strzał;skillId=97",
+          "166846=100;-270797=61;+crit;+critslow_per=8;+dmgd=26735;+acdmg=198;-dmgd=20337",
+          "166846=100;-270797=52;+crit;+critslow_per=8;+pierce;+dmgd=26491;+acdmg=198;-dmgd=26491",
+          "166846=100;-270797=52;tspell=Rozpraszająca strzała;skillId=41",
+          "166846=100;-270797=45;+pierce;+dmgd=18053;+acdmg=198;-dmgd=18053",
+          "166846=100;-270797=45;tspell=Diamentowa strzała;skillId=178;active_decblock_per=20",
+          "166846=100;-270797=41;+fastarrow;+dmgd=19677;+acdmg=198;+injure=2099;-dmgd=13994",
+          "166846=100;-270797=41;tspell=Krytyczne wzmocnienie;skillId=113",
+          "166846=100;-270797=35;+pierce;+dmgd=17083;+acdmg=198;-dmgd=17083",
+          "-270797=34;0;injure=2099",
+          "-270797=34;0;step",
+          "166846=100;-270797=34;tspell=Podwójny strzał;skillId=97",
+          "166846=100;-270797=26;+crit;+critslow_per=8;+dmgd=28766;+acdmg=198;+legbon_anguish;-dmgd=23338",
+          "166846=100;-270797=20;+pierce;+dmgd=16236;+acdmg=198;-dmgd=16236",
+          "166846=100;-270797=20;tspell=Błyskawiczny strzał;skillId=85;energy=-45;combo-max=3",
+          "166846=100;-270797=16;+dmgd=16216;+acdmg=198;-dmgd=11375",
+          "166846=100;166846=100;tspell=Medytacja;skillId=220;energy=-150",
+          "166846=100;166846=100;tspell=Bandażowanie ran;skillId=81;bandage=0",
+          "-270797=15;0;anguish=3909",
+          "-270797=14;0;injure=2099",
+          "-270797=14;166846=96;+dmg=6642;+dmgf=5055;-redacdmg_per=-30;+acdmg=63;+resdmg=1;-dmg=1733;-dmgf=1804",
+          "166846=100;0;heal=3451",
+          "166846=100;-270797=14;tspell=Podwójny strzał;skillId=97",
+          "166846=100;-270797=5;+crit;+critslow_per=8;+pierce;+dmgd=26383;+legbon_curse;+acdmg=198;-dmgd=26383",
+          "166846=100;-270797=2;+dmgd=13580;+acdmg=198;-dmgd=9186",
+          "166846=100;0;heal=86",
+          "166846=100;-270797=2;tspell=Dziki zapał;skillId=217",
+          "166846=100;-270797=0;+dmgd=16326;+acdmg=198;-dmgd=12055",
+          "0;0;winner=Romamu",
+          "0;0;loser=Test - elita II P",
+          "0;0;+exp=49550"
+        ],
+        "endBattle": 1,
+        "init": "1",
+        "auto": "1",
+        "w": {
+          "166846": {
+            "originalId": 166846,
+            "name": "Romamu",
+            "lvl": 300,
+            "prof": "h",
+            "icon": "/noob/hm.gif",
+            "team": 1
+          },
+          "-270797": {
+            "originalId": 270797,
+            "name": "Test - elita II P",
+            "lvl": 300,
+            "prof": "p",
+            "icon": "obj/trening8.gif",
+            "team": 2
+          }
+        }
+      },
+      "ev": 1759998269.258966
+    }
+  ]
+}

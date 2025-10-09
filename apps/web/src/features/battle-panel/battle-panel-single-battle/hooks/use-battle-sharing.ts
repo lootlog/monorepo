@@ -8,7 +8,7 @@ export const useBattleSharing = () => {
   const [, copy] = useCopyToClipboard();
 
   const composeBattleUrl = (battleId: string) => {
-    return `${BATTLELOG_PUBLIC_URL}/battles?id=${battleId}`;
+    return `${BATTLELOG_PUBLIC_URL}/battles/${battleId}`;
   };
 
   const handleCopy = async (url: string) => {

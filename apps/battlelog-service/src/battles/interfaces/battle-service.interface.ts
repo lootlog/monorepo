@@ -1,7 +1,6 @@
 import type {
   Battle,
   BattleWarrior,
-  LegendaryBonus,
 } from '../../../generated/client';
 import type { QueryBattlesDto } from '../dto/query-battles.dto';
 import type { UpdateBattleDto } from '../dto/update-battle.dto';
@@ -11,9 +10,7 @@ import type { BattleAnalysis, ParsedMove } from '../battle-processor';
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {
-  warriors: (BattleWarrior & {
-    legendaryBonuses: LegendaryBonus | null;
-  })[];
+  warriors: BattleWarrior[];
 }
 
 // Service method parameters

@@ -93,11 +93,7 @@ export class PaginationService {
       skip,
       take: limit,
       include: {
-        warriors: {
-          include: {
-            legendaryBonuses: true,
-          },
-        },
+        warriors: true,
       },
       orderBy: this.buildOrderBy(options.sortField, options.sortOrder),
     });
@@ -148,11 +144,7 @@ export class PaginationService {
       where: cursorWhere,
       take: size + 1,
       include: {
-        warriors: {
-          include: {
-            legendaryBonuses: true,
-          },
-        },
+        warriors: true,
       },
       orderBy: this.buildOrderBy(options.sortField, options.sortOrder),
     });

@@ -2,10 +2,10 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { Sword } from "lucide-react";
 import { FC } from "react";
 import { TeamDisplay } from "./team-display";
-import type { SharedWarrior } from "./types/battle";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleTeamSectionProps = {
-  team: SharedWarrior[];
+  team: Warrior[];
   teamNumber: 1 | 2;
   userTeam: number | undefined;
   characterId: string;

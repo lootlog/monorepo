@@ -1,20 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
 
-export type WarriorLegendaryBonuses = {
-  id: string;
-  battleWarriorId: string;
-  curse: number;
-  cleanse: number;
-  lastheal: number;
-  lasthealValue: number;
-  glare: number;
-  holytouch: number;
-  critred: number;
-  facade: number;
-  verycrit: number;
-};
-
 export type Warrior = {
   id: string;
   battleId: string;
@@ -26,8 +12,23 @@ export type Warrior = {
   team: number;
   turns: number;
   damageDealt: number;
+  distanceDamage: number;
+  meleeDamage: number;
+  auxiliaryDamage: number;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  thirdAttDamage: number;
   damageDealtAfterDefensive: number;
   damageTaken: number;
+  distanceDamageTaken: number;
+  meleeDamageTaken: number;
+  auxiliaryDamageTaken: number;
+  fireDamageTaken: number;
+  frostDamageTaken: number;
+  lightningDamageTaken: number;
+  thirdAttDamageTaken: number;
+  flatDamageTaken: number;
   rageDamageDealt: number;
   trueDamageDealt: number;
   trueDamageTaken: number;
@@ -37,13 +38,16 @@ export type Warrior = {
   criticalHits: number;
   reducedArmor: number;
   reducedPoisonResistance: number;
+  magicResistanceDestroyed: number;
   evasions: number;
+  counters: number;
   fastArrows: number;
   blocks: number;
   blockedDamage: number;
   woundDamageTaken: number;
   poisonDamageTaken: number;
   injureDamageTaken: number;
+  injures: number;
   critWoundDamageTaken: number;
   firePassiveDamageTaken: number;
   lightningPassiveDamageTaken: number;
@@ -52,9 +56,31 @@ export type Warrior = {
   regeneratedEnergy: number;
   reflectedDamage: number;
   reflectedDamageTaken: number;
-  legendaryBonuses: WarriorLegendaryBonuses;
   damageDealtAfterDefensivePercentage: number;
   isDead: boolean;
+  surrendered: boolean;
+  fled: boolean;
+  spellsUsed: number;
+  spellsUsedMap: Record<string, number>;
+  normalAttacks: number;
+  steps: number;
+  turnsLost: number;
+  legbons: number;
+  legbonCurse: number;
+  legbonCleanse: number;
+  legbonLastheal: number;
+  legbonLasthealValue: number;
+  legbonGlare: number;
+  legbonHolytouch: number;
+  legbonHolytouchValue: number;
+  legbonCritredValue: number;
+  legbonFacadeValue: number;
+  legbonVerycrit: number;
+  legbonAnguish: number;
+  legbonPunctureValue: number;
+  legbonAnguishDamageTaken: number;
+  stigmaDamageDealt: number;
+  ph: number;
 };
 
 export type Battle = {
@@ -71,7 +97,9 @@ export type Battle = {
   loser: string;
   winningTeam: number;
   losingTeam: number;
+  hasFlee: boolean;
   warriors: Warrior[];
+  world: string;
 };
 
 export type GetBattlesResponse = {
@@ -95,12 +123,33 @@ export type GetBattlesResponse = {
   };
 };
 
-export const useBattles = () => {
+export type UseBattlesParams = {
+  page?: number;
+  limit?: number;
+  world?: string;
+  type?: string;
+  search?: string;
+};
+
+export const useBattles = (params?: UseBattlesParams) => {
   const { client } = useBattleLogApiClient();
+  const page = params?.page ?? 1;
+  const limit = params?.limit ?? 10;
 
   const query = useQuery({
-    queryKey: ["battles", "@me"],
-    queryFn: () => client.get<GetBattlesResponse>(`/battles/@me`),
+    queryKey: ["battles", "@me", params],
+    queryFn: () => {
+      const searchParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+
+      if (params?.world) searchParams.append("world", params.world);
+      if (params?.type) searchParams.append("type", params.type);
+      if (params?.search) searchParams.append("search", params.search);
+
+      return client.get<GetBattlesResponse>(`/battles/@me?${searchParams}`);
+    },
     select: (response) => response.data,
   });
 

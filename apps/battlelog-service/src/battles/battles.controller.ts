@@ -34,11 +34,6 @@ export class BattlesController {
     });
   }
 
-  @Get('/public')
-  getPublicBattles(@Query() query: QueryBattlesDto) {
-    return this.battlesService.getPublicBattles(query);
-  }
-
   @Get('/@me')
   getDashboardBattles(
     @Query() query: QueryBattlesDto,
@@ -75,5 +70,20 @@ export class BattlesController {
   @Delete('/:battleId')
   deleteBattle(@Param('battleId') battleId: string) {
     return this.battlesService.deleteBattle(battleId);
+  }
+}
+
+@Controller('battles/public')
+export class PublicBattlesController {
+  constructor(private readonly battlesService: BattlesService) {}
+
+  @Get('/:battleId')
+  getPublicBattle(@Param('battleId') battleId: string) {
+    return this.battlesService.getPublicBattle(battleId);
+  }
+
+  @Get('/:battleId/raw')
+  getPublicBattleRaw(@Param('battleId') battleId: string) {
+    return this.battlesService.getPublicBattleRaw(battleId);
   }
 }

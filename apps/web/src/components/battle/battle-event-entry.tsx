@@ -1,5 +1,4 @@
 import { BattleLogAttackActions } from "./actions/battle-log-attack-action";
-import { SharedRawBattleParsedEvent, SharedWarrior } from "./types/battle";
 import { FC, memo, useMemo } from "react";
 import { parseActions } from "./utils/battle-actions-parser";
 import { BattleBuffActions } from "./actions/battle-buff-actions";
@@ -7,11 +6,13 @@ import { BattleOutcomeActions } from "./actions/battle-outcome-actions";
 import { BattlePassiveActions } from "./actions/battle-passive-actions";
 import { BattleSpellActions } from "./actions/battle-spell-actions";
 import { BattleSystemActions } from "./actions/battle-system-actions";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleEventEntryProps = {
-  event: SharedRawBattleParsedEvent;
-  attacker?: SharedWarrior;
-  defender?: SharedWarrior;
+  event: RawBattleParsedEvent;
+  attacker?: Warrior;
+  defender?: Warrior;
   eventIndex: number;
   userTeam?: number;
 };

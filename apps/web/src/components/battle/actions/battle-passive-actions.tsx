@@ -1,12 +1,13 @@
-import { SharedRawBattleParsedEvent, SharedWarrior } from "./../types/battle";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import { FC, memo } from "react";
 import { BattleActionItem } from "./battle-action-item";
 import { cn } from "@lootlog/ui/lib/utils";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattlePassiveActionsProps = {
   actions: { type: string; value: string }[];
-  attacker?: SharedWarrior;
-  event: SharedRawBattleParsedEvent;
+  attacker?: Warrior;
+  event: RawBattleParsedEvent;
   eventIndex: number;
   userTeam?: number;
 };
@@ -39,6 +40,7 @@ export const BattlePassiveActions: FC<BattlePassiveActionsProps> = memo(
               poison: <span className="font-semibold text-green-400" />,
               fire: <span className="font-semibold text-red-400" />,
               light: <span className="font-semibold text-yellow-400" />,
+              anguish: <span className="font-semibold text-red-600" />,
             }}
           />
         ))}

@@ -1,12 +1,13 @@
-import { SharedRawBattleParsedEvent, SharedWarrior } from "./types/battle";
 import { FC, memo, useMemo } from "react";
 import { BattleEventEntry } from "./battle-event-entry";
 import { BattleHeader } from "./battle-header";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleLogListProps = {
-  events?: SharedRawBattleParsedEvent[];
+  events?: RawBattleParsedEvent[];
   characterId?: string;
-  warriors: SharedWarrior[];
+  warriors: Warrior[];
   userTeam?: number;
 };
 

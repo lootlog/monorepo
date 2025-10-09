@@ -4,14 +4,11 @@ import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
-import type { SharedBattleData, SharedWarrior } from "./types/battle";
 import { DEFAULT_BATTLE_LABELS, type BattleLabels } from "./battle-labels";
+import { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleOverviewCardProps = {
-  battle: SharedBattleData & {
-    createdAt: string;
-    public: boolean;
-  };
+  battle: Battle;
   currentUserCharacterId?: string;
   onShare?: (battleId: string) => void;
   onCopyLink?: (battleId: string) => void;
@@ -41,15 +38,11 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
     metadata: { ...DEFAULT_BATTLE_LABELS.metadata, ...labels.metadata },
   };
 
-  const attackingTeam = battle.warriors.filter(
-    (w: SharedWarrior) => w.team === 1
-  );
-  const defendingTeam = battle.warriors.filter(
-    (w: SharedWarrior) => w.team === 2
-  );
+  const attackingTeam = battle.warriors.filter((w: Warrior) => w.team === 1);
+  const defendingTeam = battle.warriors.filter((w: Warrior) => w.team === 2);
 
   const userTeam = battle.warriors.find(
-    (w: SharedWarrior) =>
+    (w: Warrior) =>
       w.originalId === (currentUserCharacterId || battle.characterId)
   );
 
@@ -103,7 +96,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
             <div className="grid grid-cols-3 items-center justify-items-center">
               <div>
                 <AnimatedTrophy
-                  show={battle.winningTeam === 1}
+                  show={battle.winningTeam === 1 && !battle.hasFlee}
                   isUserTeamWinner={userTeam?.team === 1}
                 />
               </div>
@@ -112,7 +105,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               </div>
               <div>
                 <AnimatedTrophy
-                  show={battle.winningTeam === 2}
+                  show={battle.winningTeam === 2 && !battle.hasFlee}
                   isUserTeamWinner={userTeam?.team === 2}
                 />
               </div>

@@ -1,27 +1,57 @@
-import {
-  SharedBattleData,
-  SharedWarrior,
-} from "@/components/battle/types/battle";
+import { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
-import { pick } from "lodash";
-import { ChevronDown, ChevronRight, Skull } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Flag,
+  ShieldAlert,
+  Skull,
+} from "lucide-react";
 
 export const getBattleStatsTableColumns = (
-  _battle: SharedBattleData,
-  expandedRows: Map<string, "damage" | "legendary">,
+  _battle: Battle,
+  expandedRows: Map<
+    string,
+    "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
+  >,
   toggleDamageExpansion: (warriorId: string) => void,
-  toggleLegendaryExpansion: (warriorId: string) => void
-): ColumnDef<SharedWarrior>[] => [
+  toggleLegendaryExpansion: (warriorId: string) => void,
+  toggleTurnsExpansion: (warriorId: string) => void,
+  toggleBlocksExpansion: (warriorId: string) => void,
+  toggleDetailsExpansion: (warriorId: string) => void,
+  toggleDamageDealtExpansion: (warriorId: string) => void
+): ColumnDef<Warrior>[] => [
   {
     accessorKey: "name",
     header: "Nick",
     cell: ({ row }) => {
+      const warrior = row.original;
+      const isExpanded = expandedRows.get(warrior.id) === "details";
       return (
         <div className="flex items-center gap-1">
-          <span className="font-semibold">{row.original.name}</span>
-          {row.original.isDead && <Skull size={18} />}
+          <Button
+            onClick={() => toggleDetailsExpansion(warrior.id)}
+            className={cn(
+              "flex items-center gap-1 bg-transparent p-1 rounded transition-colors",
+              {
+                "bg-secondary": isExpanded,
+              }
+            )}
+            variant="secondary"
+            size="sm"
+          >
+            <span className="font-semibold">{warrior.name}</span>
+            {warrior.isDead && <Skull size={18} />}
+            {warrior.surrendered && <Flag size={18} />}
+            {warrior.fled && <ShieldAlert size={18} />}
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       );
     },
@@ -30,21 +60,67 @@ export const getBattleStatsTableColumns = (
     accessorKey: "turns",
     header: "Tury",
     enableSorting: true,
-    cell: ({ row }) => (
-      <div className="text-right tabular-nums">{row.original.turns}</div>
-    ),
+    cell: ({ row }) => {
+      const warrior = row.original;
+      const isExpanded = expandedRows.get(warrior.id) === "turns";
+      return (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => toggleTurnsExpansion(warrior.id)}
+            className={cn(
+              "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
+              {
+                "bg-secondary": isExpanded,
+              }
+            )}
+            variant="secondary"
+            size="sm"
+          >
+            <span className="tabular-nums">{warrior.turns}</span>
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "damageDealt",
     header: "Obrażenia",
     enableSorting: true,
-    cell: ({ row }) => (
-      <div className="text-right tabular-nums">{row.original.damageDealt}</div>
-    ),
+    cell: ({ row }) => {
+      const warrior = row.original;
+      const isExpanded = expandedRows.get(warrior.id) === "damageDealt";
+      return (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => toggleDamageDealtExpansion(warrior.id)}
+            className={cn(
+              "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
+              {
+                "bg-secondary": isExpanded,
+              }
+            )}
+            variant="secondary"
+            size="sm"
+          >
+            <span className="tabular-nums">{warrior.damageDealt}</span>
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "damageDealtAfterDefensive",
-    header: "Trafione obrażenia",
+    header: "Trafione obrażenia (ataki)",
     enableSorting: true,
     cell: ({ row }) => {
       const value = row.original.damageDealtAfterDefensive;
@@ -105,9 +181,32 @@ export const getBattleStatsTableColumns = (
     accessorKey: "blocks",
     header: "Bloki",
     enableSorting: true,
-    cell: ({ row }) => (
-      <div className="text-right tabular-nums">{row.original.blocks}</div>
-    ),
+    cell: ({ row }) => {
+      const warrior = row.original;
+      const isExpanded = expandedRows.get(warrior.id) === "blocks";
+      return (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => toggleBlocksExpansion(warrior.id)}
+            className={cn(
+              "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
+              {
+                "bg-secondary": isExpanded,
+              }
+            )}
+            variant="secondary"
+            size="sm"
+          >
+            <span className="tabular-nums">{warrior.blocks}</span>
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "criticalHits",
@@ -118,22 +217,12 @@ export const getBattleStatsTableColumns = (
     ),
   },
   {
-    accessorKey: "legendaryBonuses",
+    accessorKey: "legbons",
     header: "Bonusy",
     enableSorting: true,
     cell: ({ row }) => {
       const warrior = row.original;
-      const value = warrior.legendaryBonuses;
-      const pickedValues = pick(value, [
-        "holytouch",
-        "curse",
-        "facade",
-        "critred",
-        "verycrit",
-        "lastheal",
-        "glare",
-      ]);
-      const sum = Object.values(pickedValues).reduce((a, b) => a + b, 0);
+      const value = warrior.legbons;
       const isExpanded = expandedRows.get(warrior.id) === "legendary";
 
       return (
@@ -149,7 +238,7 @@ export const getBattleStatsTableColumns = (
             variant="secondary"
             size="sm"
           >
-            <span className="tabular-nums">{sum}</span>
+            <span className="tabular-nums">{value}</span>
             {isExpanded ? (
               <ChevronDown className="h-4 w-4" />
             ) : (

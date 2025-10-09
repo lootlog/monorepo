@@ -17,6 +17,7 @@ export const ATTACK_ACTIONS_SORT_ORDER = [
   "+stun",
   "-legbon_holytouch",
   "-legbon_facade",
+  "+legbon_puncture",
   "-redacdmg_per",
   "+resdmg",
   "-manadest",
@@ -28,6 +29,7 @@ export const ATTACK_ACTIONS_SORT_ORDER = [
   "+crush",
   "+vulture",
   "+rage",
+  "+legbon_anguish",
   "+acdmg_destroyed",
   "legbon_lastheal",
   "-absorb",
@@ -46,7 +48,7 @@ export const ATTACK_ACTIONS_SORT_ORDER = [
   "-dmgd",
 ] as const;
 
-export const SYSTEM_ACTION_TYPES = ["txt", "step"] as const;
+export const SYSTEM_ACTION_TYPES = ["txt", "step", "+ph"] as const;
 
 export const SPELL_ACTION_TYPES = [
   "tspell",
@@ -94,6 +96,7 @@ export const PASSIVE_ACTION_TYPES = [
   "poison",
   "fire",
   "light",
+  "anguish",
 ] as const;
 
 export const ATTACK_ACTION_TYPES = [
@@ -119,8 +122,10 @@ export const ATTACK_ACTION_TYPES = [
   "+legbon_verycrit",
   "+legbon_curse",
   "+legbon_holytouch",
+  "+legbon_puncture",
   "-legbon_facade",
   "-legbon_glare",
+  "+legbon_anguish",
   "-pierceb",
   "-blok",
   "+engback",
@@ -162,7 +167,7 @@ export const ATTACK_ACTION_TYPES = [
 
 export const OUTCOME_ACTION_TYPES = ["winner", "loser"] as const;
 
-export const IGNORED_ACTION_TYPES = ["skillId"] as const;
+export const IGNORED_ACTION_TYPES = ["skillId", "+exp"] as const;
 
 export type SystemActionType = (typeof SYSTEM_ACTION_TYPES)[number];
 export type SpellActionType = (typeof SPELL_ACTION_TYPES)[number];

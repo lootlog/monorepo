@@ -1,4 +1,4 @@
-import { BattlesChart } from "@/features/battle-panel/battle-panel-dashboard/components/battles-chart";
+// import { BattlesChart } from "@/features/battle-panel/battle-panel-dashboard/components/battles-chart";
 import { RecentBattles } from "@/features/battle-panel/battle-panel-dashboard/components/recent-battles";
 import { StatsOverview } from "@/features/battle-panel/battle-panel-dashboard/components/stats-overview";
 
@@ -8,11 +8,11 @@ export const BattlePanelDashboard = () => {
   return (
     <div>
       <StatsOverview />
-      <Separator />
-      <div className="grid grid-cols-2 gap-4">
+      {/* <Separator /> */}
+      {/* <div className="grid grid-cols-2 gap-4">
         <BattlesChart />
         <BattlesChart />
-      </div>
+      </div> */}
       <Separator />
       <RecentBattles />
     </div>
