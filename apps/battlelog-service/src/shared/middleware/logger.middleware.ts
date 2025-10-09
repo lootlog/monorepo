@@ -10,21 +10,15 @@ export class LoggerMiddleware implements NestMiddleware {
   ) {}
 
   use(req: FastifyRequest['raw'], res: FastifyReply['raw'], next: () => void) {
-    // @ts-ignore
-    const { method, originalUrl } = req;
-    const requestStartTime = new Date().getTime();
+    const { method, url } = req;
+    const requestStartTime = Date.now();
 
     res.on('finish', () => {
       const { statusCode } = res;
+      const duration = Date.now() - requestStartTime;
+      const message = `${method} ${url} ${statusCode} ${duration}ms`;
 
-      const responseTime = new Date().getTime();
-      const duration = responseTime - requestStartTime;
-      const message = `${method} ${originalUrl} ${statusCode} ${duration}ms`;
-
-      this.logger.log({
-        message,
-        level: 'info',
-      });
+      this.logger.log('info', message);
     });
 
     next();

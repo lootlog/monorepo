@@ -1,11 +1,12 @@
-import { SharedRawBattleParsedEvent, SharedWarrior } from "./../types/battle";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import { FC, memo } from "react";
 import { BattleActionItem } from "./battle-action-item";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleOutcomeActionsProps = {
   actions: { type: string; value: string }[];
-  attacker?: SharedWarrior;
-  event: SharedRawBattleParsedEvent;
+  attacker?: Warrior;
+  event: RawBattleParsedEvent;
   eventIndex: number;
 };
 

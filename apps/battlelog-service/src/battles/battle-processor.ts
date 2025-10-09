@@ -2,6 +2,11 @@ import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 
 export type Warrior = {
   turns: number;
+  turnsLost: number;
+  steps: number;
+  normalAttacks: number;
+  spellsUsed: number;
+  spellsUsedMap: Record<string, number>;
   originalId: string;
   name: string;
   lvl: number;
@@ -9,23 +14,47 @@ export type Warrior = {
   icon: string;
   team: number;
   isDead: boolean;
+  surrendered: boolean;
+  fled: boolean;
+  maxHp: number;
   damageDealt: number;
+  distanceDamage: number;
+  meleeDamage: number;
+  auxiliaryDamage: number;
+  fireDamage: number;
+  frostDamage: number;
+  lightningDamage: number;
+  thirdAttDamage: number;
   damageDealtAfterDefensive: number;
+  damageDealtAfterDefensivePercentage: number;
   damageTaken: number;
+  distanceDamageTaken: number;
+  meleeDamageTaken: number;
+  auxiliaryDamageTaken: number;
+  fireDamageTaken: number;
+  frostDamageTaken: number;
+  lightningDamageTaken: number;
+  thirdAttDamageTaken: number;
+  flatDamageTaken: number;
   rageDamageDealt: number;
   trueDamageDealt: number;
   trueDamageTaken: number;
+  stigmaDamageDealt: number;
   passiveHealing: number;
   activeHealing: number;
   armorPierces: number;
   criticalHits: number;
   reducedArmor: number;
   reducedPoisonResistance: number;
+  magicResistanceDestroyed: number;
   woundDamageTaken: number;
   poisonDamageTaken: number;
   injureDamageTaken: number;
+  injures: number;
   critWoundDamageTaken: number;
   evasions: number;
+  attacksEvaded: number;
+  counters: number;
   fastArrows: number;
   firePassiveDamageTaken: number;
   lightningPassiveDamageTaken: number;
@@ -33,20 +62,26 @@ export type Warrior = {
   destroyedMana: number;
   blockedDamage: number;
   blocks: number;
+  attacksBlocked: number;
   regeneratedEnergy: number;
+  regeneratedMana: number;
   reflectedDamage: number;
   reflectedDamageTaken: number;
-  legbons: {
-    curse: number;
-    cleanse: number;
-    lastheal: number;
-    lasthealValue: number;
-    glare: number;
-    holytouch: number;
-    critred: number;
-    facade: number;
-    verycrit: number;
-  };
+  legbons: number;
+  legbonCurse: number;
+  legbonCleanse: number;
+  legbonLastheal: number;
+  legbonLasthealValue: number;
+  legbonGlare: number;
+  legbonHolytouch: number;
+  legbonHolytouchValue: number;
+  legbonCritredValue: number;
+  legbonFacadeValue: number;
+  legbonVerycrit: number;
+  legbonAnguish: number;
+  legbonAnguishDamageTaken: number;
+  legbonPunctureValue: number;
+  ph: number;
 };
 
 export type ParsedMove = {
@@ -55,6 +90,26 @@ export type ParsedMove = {
   attackerHpPercentage: number | null;
   defenderHpPercentage: number | null;
   actions: { actionType: string; param: string }[];
+};
+
+export type StatisticEntry = {
+  warriorId: string;
+  name: string;
+  value: number;
+  formattedValue?: string;
+};
+
+export type BattleStatistics = {
+  topDamageDealer: StatisticEntry | null; // Najwięcej skutecznych obrażeń
+  topTank: StatisticEntry | null; // Najwięcej wytrzymanych obrażeń
+  bestEfficiency: StatisticEntry | null; // Najwyższy % penetracji pancerza
+  criticalMaster: StatisticEntry | null; // Najwięcej critów
+  evasionExpert: StatisticEntry | null; // Najwięcej uników
+  shieldWall: StatisticEntry | null; // Najwięcej bloków
+  damagePerTurn: StatisticEntry | null; // Najwyższe DPT
+  mostActive: StatisticEntry | null; // Najwięcej tur
+  legendaryWarrior: StatisticEntry | null; // Najwięcej legendary bonusów
+  untouchable: StatisticEntry | null; // Najwięcej ataków unikniętych/zablokowanych
 };
 
 export type BattleAnalysis = {
@@ -66,8 +121,10 @@ export type BattleAnalysis = {
     loser: string;
     winningTeam: number | null;
     losingTeam: number | null;
+    hasFlee: boolean;
   };
   type: string;
+  statistics: BattleStatistics;
 };
 
 export class BattleProcessor {
@@ -78,8 +135,11 @@ export class BattleProcessor {
     loser: '',
     winningTeam: null as number | null,
     losingTeam: null as number | null,
+    hasFlee: false,
   };
   private battleType = '';
+  private lastAttackerId: string | null = null;
+  private remainingFollowUpAttacks = 0;
 
   processBattle(battleData: CreateBattleDto): BattleAnalysis {
     const duration = this.calculateBattleDuration(battleData.events);
@@ -87,8 +147,11 @@ export class BattleProcessor {
     this.determineBattleType();
 
     const moves = this.extractAndParseMoves(battleData.events);
-    this.calculateBattleStats(moves);
+    this.calculateBattleStats(moves, { characterId: battleData.characterId });
     this.determineOutcomeTeams();
+    this.calculateDerivedStats();
+
+    const statistics = this.calculateBattleStatistics();
 
     return {
       duration,
@@ -96,6 +159,7 @@ export class BattleProcessor {
       parsedMoves: moves,
       outcome: this.battleOutcome,
       type: this.battleType,
+      statistics,
     };
   }
 
@@ -126,44 +190,115 @@ export class BattleProcessor {
     });
   }
 
-  private calculateBattleStats(moves: ParsedMove[]) {
+  private calculateBattleStats(
+    moves: ParsedMove[],
+    battleMeta: { characterId: string },
+  ) {
     for (const move of moves) {
-      // Track latest HP percentages seen for each participant
+      this.processOutcome(move);
+
+      if (!move.actions.length) {
+        // Update HP tracking even if no actions
+        if (move.attackerId && move.attackerHpPercentage != null) {
+          this.lastHp.set(move.attackerId, move.attackerHpPercentage);
+        }
+        if (move.defenderId && move.defenderHpPercentage != null) {
+          this.lastHp.set(move.defenderId, move.defenderHpPercentage);
+        }
+        continue;
+      }
+
+      const stepAction = move.actions.find(
+        (action) => action.actionType === 'step',
+      );
+      const tspellAction = move.actions.find(
+        (action) => action.actionType === 'tspell',
+      );
+      const hasSpell = !!tspellAction;
+      const hasStepAction = !!stepAction;
+
+      if (hasStepAction) {
+        const attacker = this.warriors.get(move.attackerId!);
+        if (attacker) {
+          attacker.turns++;
+          attacker.steps++;
+        }
+      }
+
+      if (hasSpell) {
+        // Tura ze spellem - zawsze liczymy
+        if (move.attackerId && move.defenderId) {
+          const attacker = this.warriors.get(move.attackerId);
+          if (attacker) {
+            attacker.turns++;
+            attacker.spellsUsed++;
+
+            // Zlicz konkretny spell w mapie
+            const spellName = tspellAction.param || 'unknown';
+            attacker.spellsUsedMap[spellName] =
+              (attacker.spellsUsedMap[spellName] || 0) + 1;
+          }
+        }
+
+        // Sprawdź czy spell ma follow-up ataki
+        const skillId = tspellAction.param
+          ? parseInt(tspellAction.param, 10)
+          : 0;
+        if (skillId === 97 || skillId === 239) {
+          // Te spelle mają 2 follow-up ataki
+          this.remainingFollowUpAttacks = 2;
+        } else {
+          // Standardowy spell ma 1 follow-up atak
+          this.remainingFollowUpAttacks = 1;
+        }
+        this.lastAttackerId = move.attackerId;
+      } else {
+        // Zwykły atak
+        if (
+          this.remainingFollowUpAttacks > 0 &&
+          move.attackerId === this.lastAttackerId
+        ) {
+          // To jest follow-up atak po spellu - nie liczymy jako tura
+          this.remainingFollowUpAttacks--;
+        } else {
+          // To jest normalna tura ze zwykłym atakiem
+          if (move.attackerId && move.defenderId) {
+            const attacker = this.warriors.get(move.attackerId);
+            if (attacker) {
+              attacker.turns++;
+              attacker.normalAttacks++;
+            }
+          }
+          this.remainingFollowUpAttacks = 0;
+        }
+        this.lastAttackerId = move.attackerId;
+      }
+
+      this.processActions(move, hasSpell, battleMeta);
+
+      // Update HP tracking after processing all actions
       if (move.attackerId && move.attackerHpPercentage != null) {
-        this.lastHp.set(move.attackerId, move.attackerHpPercentage);
-        // Update death status based on HP
         const attacker = this.warriors.get(move.attackerId);
         if (attacker && move.attackerHpPercentage <= 0) {
           attacker.isDead = true;
         }
+        this.lastHp.set(move.attackerId, move.attackerHpPercentage);
       }
       if (move.defenderId && move.defenderHpPercentage != null) {
-        this.lastHp.set(move.defenderId, move.defenderHpPercentage);
-        // Update death status based on HP
         const defender = this.warriors.get(move.defenderId);
         if (defender && move.defenderHpPercentage <= 0) {
           defender.isDead = true;
         }
+        this.lastHp.set(move.defenderId, move.defenderHpPercentage);
       }
-
-      this.processOutcome(move);
-
-      if (!move.actions.length) continue;
-
-      const hasSpell = move.actions.some(
-        (action) => action.actionType === 'tspell',
-      );
-
-      if (move.attackerId && move.defenderId && !hasSpell) {
-        const attacker = this.warriors.get(move.attackerId);
-        if (attacker) attacker.turns++;
-      }
-
-      this.processActions(move, hasSpell);
     }
   }
 
-  private processActions(move: ParsedMove, hasSpell: boolean) {
+  private processActions(
+    move: ParsedMove,
+    hasSpell: boolean,
+    battleMeta: { characterId: string },
+  ) {
     const attacker = move.attackerId
       ? this.warriors.get(move.attackerId)
       : null;
@@ -180,6 +315,35 @@ export class BattleProcessor {
         this.battleOutcome.loser = param;
         continue;
       }
+      if (actionType === '+ph') {
+        const warrior = this.warriors.get(battleMeta.characterId);
+        if (warrior) warrior.ph = +param;
+      }
+
+      // Obsługa utraty tury (txt nie ma attackerId/defenderId)
+      if (actionType === 'txt' && param.includes('utrata tury')) {
+        const warriorName = param.split(' - ')[0]?.trim();
+        if (warriorName) {
+          const warrior = this.findWarriorByName(warriorName);
+          if (warrior) {
+            warrior.turns++;
+            warrior.turnsLost++;
+          }
+        }
+        continue;
+      }
+
+      // Obsługa poddania się
+      if (actionType === 'txt' && param.includes('poddał walkę')) {
+        const warriorName = param.split(' poddał walkę')[0]?.trim();
+        if (warriorName) {
+          const warrior = this.findWarriorByName(warriorName);
+          if (warrior) {
+            warrior.surrendered = true;
+          }
+        }
+        continue;
+      }
 
       if (!attacker) continue;
 
@@ -189,24 +353,136 @@ export class BattleProcessor {
 
       switch (actionType) {
         case '+dmgd':
+          attacker.damageDealt += value;
+          attacker.distanceDamage += value;
+          break;
+
         case '+dmg':
+          attacker.damageDealt += value;
+          attacker.meleeDamage += value;
+          break;
+
         case '+dmgo':
+          attacker.damageDealt += value;
+          attacker.auxiliaryDamage += value;
+          break;
+
         case '+dmgf':
+          attacker.damageDealt += value;
+          attacker.fireDamage += value;
+          break;
+
         case '+dmgc':
+          attacker.damageDealt += value;
+          attacker.frostDamage += value;
+          break;
+
         case '+dmgl':
+          attacker.damageDealt += value;
+          attacker.lightningDamage += value;
+          break;
+
         case '+thirdatt':
           attacker.damageDealt += value;
+          attacker.thirdAttDamage += value;
+          break;
+
+        case '-dmgd':
+          attacker.damageDealtAfterDefensive += value;
+          if (defender) {
+            defender.damageTaken += value;
+            defender.distanceDamageTaken += value;
+            defender.flatDamageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
           break;
 
         case '-dmg':
-        case '-dmgd':
+          attacker.damageDealtAfterDefensive += value;
+          if (defender) {
+            defender.damageTaken += value;
+            defender.meleeDamageTaken += value;
+            defender.flatDamageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
+          break;
+
         case '-dmgo':
+          attacker.damageDealtAfterDefensive += value;
+          if (defender) {
+            defender.damageTaken += value;
+            defender.auxiliaryDamageTaken += value;
+            defender.flatDamageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
+          break;
+
         case '-dmgf':
+          attacker.damageDealtAfterDefensive += value;
+          if (defender) {
+            defender.damageTaken += value;
+            defender.fireDamageTaken += value;
+            defender.flatDamageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
+          break;
+
         case '-dmgc':
+          attacker.damageDealtAfterDefensive += value;
+          if (defender) {
+            defender.damageTaken += value;
+            defender.frostDamageTaken += value;
+            defender.flatDamageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
+          break;
+
         case '-dmgl':
+          attacker.damageDealtAfterDefensive += value;
+          if (defender) {
+            defender.damageTaken += value;
+            defender.lightningDamageTaken += value;
+            defender.flatDamageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
+          break;
+
         case '-thirdatt':
           attacker.damageDealtAfterDefensive += value;
-          if (defender) defender.damageTaken += value;
+          if (defender) {
+            defender.damageTaken += value;
+            defender.thirdAttDamageTaken += value;
+            defender.flatDamageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
           break;
 
         case '+oth_dmg':
@@ -220,11 +496,28 @@ export class BattleProcessor {
           } else {
             attacker.damageTaken += firstValue;
             attacker.trueDamageTaken += firstValue;
+            attacker.reflectedDamageTaken += firstValue;
+
+            if (defender) {
+              defender.reflectedDamage += firstValue;
+            }
           }
           break;
 
         case '+rage':
           attacker.rageDamageDealt += value;
+          break;
+
+        case '+taken_dmg':
+          attacker.stigmaDamageDealt += value;
+          if (defender) {
+            defender.damageTaken += value;
+            this.tryCalculateMaxHp(
+              move.defenderId!,
+              value,
+              move.defenderHpPercentage,
+            );
+          }
           break;
 
         case '+pierce':
@@ -249,26 +542,36 @@ export class BattleProcessor {
 
         case 'wound':
           attacker.woundDamageTaken += value;
+          attacker.damageTaken += value;
           break;
 
         case 'critwound':
           attacker.critWoundDamageTaken += value;
+          attacker.damageTaken += value;
+          break;
+
+        case 'anguish':
+          attacker.legbonAnguishDamageTaken += value;
+          attacker.damageTaken += value;
           break;
 
         case 'poison':
           attacker.poisonDamageTaken += value;
-          break;
-
-        case '+actdmg':
-          attacker.reducedPoisonResistance += value;
+          attacker.damageTaken += value;
           break;
 
         case 'injure':
           attacker.injureDamageTaken += value;
+          attacker.damageTaken += value;
           break;
 
         case '+injure':
-          if (defender) defender.injureDamageTaken += value;
+          if (defender) defender.injures++;
+          break;
+
+        case 'flee':
+          attacker.fled = true;
+          this.battleOutcome.hasFlee = true;
           break;
 
         case '+fastarrow':
@@ -277,10 +580,12 @@ export class BattleProcessor {
 
         case 'fire':
           attacker.firePassiveDamageTaken += value;
+          attacker.damageTaken += value;
           break;
 
         case 'light':
           attacker.lightningPassiveDamageTaken += value;
+          attacker.damageTaken += value;
           break;
 
         case 'energy':
@@ -292,24 +597,32 @@ export class BattleProcessor {
           break;
 
         case '+legbon_curse':
-          attacker.legbons.curse++;
+          attacker.legbonCurse++;
           break;
 
         case '+legbon_holytouch':
-          attacker.legbons.holytouch++;
+          attacker.legbonHolytouch++;
+          break;
+
+        case 'legbon_holytouch_heal':
+          attacker.legbonHolytouchValue += value;
           break;
 
         case '+legbon_verycrit':
-          attacker.legbons.verycrit++;
+          attacker.legbonVerycrit++;
+          break;
+
+        case '+legbon_anguish':
+          attacker.legbonAnguish++;
           break;
 
         case 'legbon_lastheal':
           if (defender) {
-            defender.legbons.lastheal++;
-            defender.legbons.lasthealValue += value;
+            defender.legbonLastheal++;
+            defender.legbonLasthealValue += value;
           } else {
-            attacker.legbons.lastheal++;
-            attacker.legbons.lasthealValue += value;
+            attacker.legbonLastheal++;
+            attacker.legbonLasthealValue += value;
           }
           break;
       }
@@ -319,11 +632,17 @@ export class BattleProcessor {
       switch (actionType) {
         case '-evade':
           defender.evasions++;
+          if (attacker) attacker.attacksEvaded++;
+          break;
+
+        case '-contra':
+          defender.counters++;
           break;
 
         case '-blok':
           defender.blocks++;
           defender.blockedDamage += value;
+          if (attacker) attacker.attacksBlocked++;
           break;
 
         case '-endest':
@@ -338,20 +657,36 @@ export class BattleProcessor {
           defender.regeneratedEnergy += value;
           break;
 
+        case 'mana':
+          attacker.regeneratedMana -= value;
+          break;
+
         case '-legbon_cleanse':
-          defender.legbons.cleanse++;
+          defender.legbonCleanse++;
           break;
 
         case '-legbon_glare':
-          defender.legbons.glare++;
+          defender.legbonGlare++;
           break;
 
         case '-legbon_critred':
-          defender.legbons.critred++;
+          defender.legbonCritredValue = value;
           break;
 
         case '-legbon_facade':
-          defender.legbons.facade++;
+          defender.legbonFacadeValue = value;
+          break;
+
+        case '+legbon_puncture':
+          attacker.legbonPunctureValue = value;
+          break;
+
+        case '+resdmg':
+          attacker.magicResistanceDestroyed += value;
+          break;
+
+        case '+actdmg':
+          attacker.reducedPoisonResistance += value;
           break;
       }
     }
@@ -366,6 +701,11 @@ export class BattleProcessor {
 
         this.warriors.set(id, {
           turns: 0,
+          turnsLost: 0,
+          steps: 0,
+          normalAttacks: 0,
+          spellsUsed: 0,
+          spellsUsedMap: {},
           originalId: warriorData.originalId.toString(),
           name: warriorData.name,
           lvl: warriorData.lvl,
@@ -373,23 +713,48 @@ export class BattleProcessor {
           icon: warriorData.icon,
           team: warriorData.team,
           isDead: false,
+          surrendered: false,
+          fled: false,
+          maxHp: 0,
           damageDealt: 0,
+          distanceDamage: 0,
+          meleeDamage: 0,
+          auxiliaryDamage: 0,
+          fireDamage: 0,
+          frostDamage: 0,
+          lightningDamage: 0,
+          thirdAttDamage: 0,
           damageDealtAfterDefensive: 0,
+          damageDealtAfterDefensivePercentage: 0,
           damageTaken: 0,
+          distanceDamageTaken: 0,
+          meleeDamageTaken: 0,
+          auxiliaryDamageTaken: 0,
+          fireDamageTaken: 0,
+          frostDamageTaken: 0,
+          lightningDamageTaken: 0,
+          thirdAttDamageTaken: 0,
+          flatDamageTaken: 0,
           rageDamageDealt: 0,
           trueDamageDealt: 0,
           trueDamageTaken: 0,
+          stigmaDamageDealt: 0,
           passiveHealing: 0,
           activeHealing: 0,
           armorPierces: 0,
           criticalHits: 0,
           reducedArmor: 0,
           reducedPoisonResistance: 0,
+          magicResistanceDestroyed: 0,
           woundDamageTaken: 0,
+          legbonAnguishDamageTaken: 0,
           poisonDamageTaken: 0,
           injureDamageTaken: 0,
+          injures: 0,
           critWoundDamageTaken: 0,
           evasions: 0,
+          attacksEvaded: 0,
+          counters: 0,
           fastArrows: 0,
           firePassiveDamageTaken: 0,
           lightningPassiveDamageTaken: 0,
@@ -397,20 +762,25 @@ export class BattleProcessor {
           destroyedMana: 0,
           blockedDamage: 0,
           blocks: 0,
+          attacksBlocked: 0,
           regeneratedEnergy: 0,
+          regeneratedMana: 0,
           reflectedDamage: 0,
           reflectedDamageTaken: 0,
-          legbons: {
-            curse: 0,
-            cleanse: 0,
-            lastheal: 0,
-            lasthealValue: 0,
-            glare: 0,
-            holytouch: 0,
-            critred: 0,
-            facade: 0,
-            verycrit: 0,
-          },
+          legbonCurse: 0,
+          legbonCleanse: 0,
+          legbonLastheal: 0,
+          legbonLasthealValue: 0,
+          legbonGlare: 0,
+          legbonHolytouch: 0,
+          legbonHolytouchValue: 0,
+          legbonCritredValue: 0,
+          legbonFacadeValue: 0,
+          legbonVerycrit: 0,
+          legbonAnguish: 0,
+          legbonPunctureValue: 0,
+          legbons: 0,
+          ph: 0,
         });
       }
     }
@@ -560,5 +930,139 @@ export class BattleProcessor {
 
     this.battleOutcome.winningTeam = winningTeam;
     this.battleOutcome.losingTeam = losingTeam;
+  }
+
+  private calculateDerivedStats(): void {
+    for (const warrior of this.warriors.values()) {
+      warrior.damageDealtAfterDefensivePercentage =
+        warrior.damageDealt > 0
+          ? Math.round(
+              (warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000,
+            ) / 100
+          : 0;
+      warrior.legbons = this.getLegendaryTotal(warrior);
+    }
+  }
+
+  private findWarriorByName(name: string): Warrior | null {
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    const normalizedName = normalize(name);
+
+    for (const warrior of this.warriors.values()) {
+      if (normalize(warrior.name) === normalizedName) {
+        return warrior;
+      }
+    }
+
+    return null;
+  }
+
+  private tryCalculateMaxHp(
+    warriorId: string,
+    damageReceived: number,
+    hpAfter: number | null,
+  ): void {
+    const warrior = this.warriors.get(warriorId);
+    if (!warrior || damageReceived <= 0 || hpAfter == null) return;
+
+    const hpBefore = this.lastHp.get(warriorId);
+    if (hpBefore == null || hpBefore === hpAfter) return;
+
+    const hpDrop = hpBefore - hpAfter;
+    if (hpDrop <= 0) return; // HP nie spadło (healing w tym samym move?)
+
+    // maxHP = damage / (hpDrop / 100)
+    const calculatedMaxHp = Math.round(damageReceived / (hpDrop / 100));
+
+    if (calculatedMaxHp > 0 && calculatedMaxHp < 1000000) {
+      // Weź maksimum z dotychczas obliczonych wartości
+      if (warrior.maxHp === 0 || calculatedMaxHp > warrior.maxHp) {
+        warrior.maxHp = calculatedMaxHp;
+      }
+    }
+  }
+
+  private calculateBattleStatistics(): BattleStatistics {
+    const warriors = Array.from(this.warriors.values());
+    const activeWarriors = warriors.filter((w) => w.turns > 0);
+
+    const findTop = (
+      warriors: Warrior[],
+      getValue: (w: Warrior) => number,
+      format?: (value: number) => string,
+    ): StatisticEntry | null => {
+      if (warriors.length === 0) return null;
+      const top = warriors.reduce((best, current) => {
+        const bestValue = getValue(best);
+        const currentValue = getValue(current);
+        return currentValue > bestValue ? current : best;
+      });
+      const value = getValue(top);
+      return value > 0
+        ? {
+            warriorId: top.originalId,
+            name: top.name,
+            value,
+            formattedValue: format ? format(value) : undefined,
+          }
+        : null;
+    };
+
+    return {
+      // Top Damage Dealer - najwięcej skutecznych obrażeń
+      topDamageDealer: findTop(warriors, (w) => w.damageDealtAfterDefensive),
+
+      // Top Tank - najwięcej wytrzymanych obrażeń
+      topTank: findTop(warriors, (w) => w.damageTaken),
+
+      // Best Efficiency - najwyższy % penetracji pancerza
+      bestEfficiency: findTop(
+        warriors.filter((w) => w.damageDealt > 0),
+        (w) => w.damageDealtAfterDefensivePercentage,
+        (v) => `${v.toFixed(2)}%`,
+      ),
+
+      // Critical Master - najwięcej critów
+      criticalMaster: findTop(warriors, (w) => w.criticalHits),
+
+      // Evasion Expert - najwięcej uników
+      evasionExpert: findTop(warriors, (w) => w.evasions),
+
+      // Shield Wall - najwięcej bloków
+      shieldWall: findTop(warriors, (w) => w.blocks),
+
+      // Damage Per Turn - najwyższe DPT
+      damagePerTurn: findTop(
+        activeWarriors,
+        (w) => (w.turns > 0 ? w.damageDealtAfterDefensive / w.turns : 0),
+        (v) => v.toFixed(1),
+      ),
+
+      // Most Active - najwięcej tur
+      mostActive: findTop(warriors, (w) => w.turns),
+
+      // Legendary Warrior - najwięcej legendary bonusów
+      legendaryWarrior: findTop(warriors, this.getLegendaryTotal),
+
+      // Untouchable - najwięcej ataków unikniętych/zablokowanych
+      untouchable: findTop(warriors, (w) => w.evasions + w.blocks),
+    };
+  }
+
+  private getLegendaryTotal(w: Warrior) {
+    return (
+      w.legbonCurse +
+      w.legbonCleanse +
+      w.legbonLastheal +
+      w.legbonGlare +
+      w.legbonHolytouch +
+      w.legbonVerycrit +
+      w.legbonAnguish
+    );
   }
 }

@@ -21,14 +21,18 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DamageBreakdown } from "./damage-breakdown";
 import { LegendaryBonusesBreakdown } from "./legendary-bonuses-breakdown";
-import { SharedWarrior } from "./types/battle";
+import { TurnsBreakdown } from "./turns-breakdown";
+import { BlocksBreakdown } from "./blocks-breakdown";
+import { WarriorDetailsBreakdown } from "./warrior-details-breakdown";
+import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 interface ExpandableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   getRowClassName?: (row: Row<TData>) => string;
   forceHorizontalScroll?: boolean;
-  expandedRows: Map<string, "damage" | "legendary">;
+  expandedRows: Map<string, "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt">;
 }
 
 export function ExpandableDataTable<TData, TValue>({
@@ -103,7 +107,7 @@ export function ExpandableDataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
-                const warrior = row.original as SharedWarrior;
+                const warrior = row.original as Warrior;
                 const expansionType = expandedRows.get(warrior.id);
 
                 return (
@@ -170,6 +174,18 @@ export function ExpandableDataTable<TData, TValue>({
                                     <LegendaryBonusesBreakdown
                                       warrior={warrior}
                                     />
+                                  )}
+                                  {expansionType === "turns" && (
+                                    <TurnsBreakdown warrior={warrior} />
+                                  )}
+                                  {expansionType === "blocks" && (
+                                    <BlocksBreakdown warrior={warrior} />
+                                  )}
+                                  {expansionType === "details" && (
+                                    <WarriorDetailsBreakdown warrior={warrior} />
+                                  )}
+                                  {expansionType === "damageDealt" && (
+                                    <DamageDealtBreakdown warrior={warrior} />
                                   )}
                                 </motion.div>
                               </AnimatePresence>

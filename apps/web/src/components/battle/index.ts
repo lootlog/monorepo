@@ -10,7 +10,6 @@ export { TeamDisplay } from "./team-display";
 export { PlayerTile } from "./player-tile";
 export { AnimatedTrophy } from "./animated-trophy";
 export { BattleMetadata } from "./battle-metadata";
-export { getBattleStatsColumns } from "./battle-stats-table-columns";
 
 // Battle Stats Table Components
 export { BattleStatsTable } from "./battle-stats-table";
@@ -85,13 +84,3 @@ export type {
   ParsedActions,
 } from "./utils/battle-actions-parser";
 export type { DynamicValuesConfig } from "./utils/dynamic-values-helper";
-
-// Re-export types
-export type {
-  SharedBattleData,
-  SharedWarrior,
-  SharedLegendaryBonuses,
-  SharedRawBattleData,
-  SharedRawBattleParsedEvent,
-  SharedRawBattleParsedEventAction,
-} from "./types/battle";

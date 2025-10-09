@@ -44,6 +44,17 @@ http:
       entryPoints:
         - "web"
 
+    battlelog-public:
+      rule: "PathPrefix(`/api/battlelog/battles/public`)"
+      service: "battlelog"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiCompress"
+      priority: 15
+      entryPoints:
+        - "web"
+
     battlelog:
       rule: "PathPrefix(`/api/battlelog`)"
       service: "battlelog"

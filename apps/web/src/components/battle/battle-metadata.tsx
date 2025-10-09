@@ -5,16 +5,22 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { format } from "date-fns";
-import { Calendar, Clock, Lock, Unlock, Users } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Earth,
+  Lock,
+  ShieldCheck,
+  Unlock,
+  Users,
+} from "lucide-react";
 import { FC } from "react";
-import type { SharedBattleData } from "./types/battle";
 import { formatSeconds } from "@/utils/date/format-seconds";
+import { Battle } from "@/hooks/api/battle-log/use-battles";
+import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 export type BattleMetadataProps = {
-  battle: Pick<SharedBattleData, "duration" | "type"> & {
-    createdAt: string;
-    public: boolean;
-  };
+  battle: Battle;
   labels?: {
     startTime: string;
     duration: string;
@@ -39,6 +45,10 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
     privateTooltip: "This battle is private - only you can see it",
   },
 }) => {
+  const warrior = battle.warriors.find(
+    (w) => w.originalId === battle.characterId
+  );
+
   return (
     <TooltipProvider>
       <div className="flex flex-row gap-4 p-4 text-xs text-muted-foreground w-full justify-center">
@@ -91,6 +101,43 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </p>
           </TooltipContent>
         </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1 cursor-help">
+              <Earth size={14} /> {capitalizeFirstLetter(battle.world)}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={8}>
+            <p>Świat</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {warrior?.ph !== 0 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 cursor-help">
+                <ShieldCheck size={14} /> Punkty honoru: {warrior?.ph}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={8}>
+              <p>Świat</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {battle.hasFlee && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 cursor-help">
+                <ShieldCheck size={14} /> Ucieczka
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={8}>
+              <p>Walka przerwana przez ucieczkę</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </TooltipProvider>
   );

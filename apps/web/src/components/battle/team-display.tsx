@@ -1,10 +1,10 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { FC } from "react";
 import { PlayerTile } from "./player-tile";
-import type { SharedWarrior } from "./types/battle";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type TeamDisplayProps = {
-  team: SharedWarrior[];
+  team: Warrior[];
   characterId?: string;
   className?: string;
   cdnBaseUrl: string;

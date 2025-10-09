@@ -1,4 +1,4 @@
-import { SharedRawBattleParsedEvent, SharedWarrior } from "./../types/battle";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import { cn } from "@lootlog/ui/lib/utils";
 import { FC, memo } from "react";
 import { Trans } from "react-i18next";
@@ -7,12 +7,13 @@ import {
   roundHpPercentage,
   transformAndRoundEnergyMana,
 } from "../utils/value-utils";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleSpellActionsProps = {
   actions: { type: string; value: string }[];
-  attacker?: SharedWarrior;
-  defender?: SharedWarrior;
-  event: SharedRawBattleParsedEvent;
+  attacker?: Warrior;
+  defender?: Warrior;
+  event: RawBattleParsedEvent;
   eventIndex: number;
   userTeam?: number;
 };

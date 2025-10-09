@@ -17,9 +17,10 @@ export const PublicBattle = () => {
     data: battle,
     isLoading: isBattleLoading,
     error: battleError,
-  } = useBattle({ battleId: battleId ?? undefined });
+  } = useBattle({ battleId: battleId ?? undefined, isPublic: true });
   const { data: rawBattle, isLoading: isRawBattleLoading } = useBattleRaw({
     battleId: battleId ?? undefined,
+    isPublic: true,
   });
 
   const isLoading = isBattleLoading || isRawBattleLoading;

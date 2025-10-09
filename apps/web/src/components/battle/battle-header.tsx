@@ -1,9 +1,9 @@
-import { SharedWarrior } from "./types/battle";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 import { cn } from "@lootlog/ui/lib/utils";
 import { FC, memo } from "react";
 
 export type BattleHeaderProps = {
-  warriors: SharedWarrior[];
+  warriors: Warrior[];
   characterId?: string;
 };
 

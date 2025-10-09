@@ -29,15 +29,19 @@ export type GetBattleRawResponse = {
 
 export type UseBattleRawOptions = {
   battleId?: string;
+  isPublic?: boolean;
 };
 
 export const useBattleRaw = (options: UseBattleRawOptions) => {
   const { client } = useBattleLogApiClient();
 
+  const endpoint = options.isPublic
+    ? `/battles/public/${options.battleId}/raw`
+    : `/battles/${options.battleId}/raw`;
+
   const query = useQuery({
-    queryKey: ["battles", "raw", options.battleId],
-    queryFn: () =>
-      client.get<GetBattleRawResponse>(`/battles/${options.battleId}/raw`),
+    queryKey: ["battles", "raw", options.battleId, options.isPublic ? "public" : "private"],
+    queryFn: () => client.get<GetBattleRawResponse>(endpoint),
     enabled: !!options.battleId,
     select: (response) => response.data,
   });

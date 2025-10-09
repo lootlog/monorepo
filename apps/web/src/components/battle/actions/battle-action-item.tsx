@@ -1,4 +1,3 @@
-import { SharedRawBattleParsedEvent, SharedWarrior } from "./../types/battle";
 import { cn } from "@lootlog/ui/lib/utils";
 import { FC, memo, ReactNode } from "react";
 import { Trans } from "react-i18next";
@@ -7,12 +6,14 @@ import {
   generateDynamicValuesAndComponents,
 } from "../utils/dynamic-values-helper";
 import { roundHpPercentage, roundValue } from "../utils/value-utils";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleActionItemProps = {
   action: { type: string; value: string };
-  attacker?: SharedWarrior;
-  defender?: SharedWarrior;
-  event: SharedRawBattleParsedEvent;
+  attacker?: Warrior;
+  defender?: Warrior;
+  event: RawBattleParsedEvent;
   className?: string;
   customComponents?: Record<string, ReactNode>;
   transformValue?: (value: string, type: string) => string;

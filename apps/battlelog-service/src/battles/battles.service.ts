@@ -4,7 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import type { Prisma } from '../../generated/client';
+import { Prisma } from '../../generated/client';
 import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import {
   PaginationStrategy,
@@ -181,35 +181,24 @@ export class BattlesService implements IBattlesService {
       const battle = await this.prisma.battle.findUniqueOrThrow({
         where: { id: battleId },
         include: {
-          warriors: {
-            include: {
-              legendaryBonuses: true,
-            },
-          },
+          warriors: true,
         },
       });
 
-      const battleWithCalculations = {
-        ...battle,
-        warriors: battle.warriors.map(warrior => ({
-          ...warrior,
-          damageDealtAfterDefensivePercentage: warrior.damageDealt > 0
-            ? Math.round((warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000) / 100
-            : 0,
-        })),
-      };
-
-      this.logger.debug(`Retrieved battle ${battleId} from database`);
-      return battleWithCalculations;
+      return battle;
     } catch (error) {
-      if (error instanceof Error && error.name === 'NotFoundError') {
-        this.logger.warn(`Battle ${battleId} not found in database`);
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
         throw new NotFoundException(`Battle with ID ${battleId} not found`);
       }
-
+      if (error instanceof Error && error.name === 'NotFoundError') {
+        throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      }
       this.logger.error(
-        `Failed to retrieve battle ${battleId} from database:`,
-        error,
+        'Failed to retrieve battle from database',
+        error instanceof Error ? error.stack : error,
       );
       throw error;
     }
@@ -227,11 +216,7 @@ export class BattlesService implements IBattlesService {
           updatedAt: new Date(),
         },
         include: {
-          warriors: {
-            include: {
-              legendaryBonuses: true,
-            },
-          },
+          warriors: true,
         },
       });
 
@@ -280,6 +265,67 @@ export class BattlesService implements IBattlesService {
       throw new Error(
         `Deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
+    }
+  }
+
+  async getPublicBattle(battleId: string): Promise<BattleWithRelations> {
+    try {
+      const battle = await this.prisma.battle.findUniqueOrThrow({
+        where: { id: battleId, public: true },
+        include: {
+          warriors: true,
+        },
+      });
+
+      return battle;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException(
+          `Public battle with ID ${battleId} not found`,
+        );
+      }
+      if (error instanceof Error && error.name === 'NotFoundError') {
+        throw new NotFoundException(
+          `Public battle with ID ${battleId} not found`,
+        );
+      }
+      this.logger.error(
+        'Failed to retrieve public battle',
+        error instanceof Error ? error.stack : error,
+      );
+      throw error;
+    }
+  }
+
+  async getPublicBattleRaw(battleId: string): Promise<RawBattleData> {
+    try {
+      const battle = await this.prisma.battle.findUniqueOrThrow({
+        where: { id: battleId, public: true },
+        select: { id: true },
+      });
+      return await this.r2Service.getBattleData(battle.id);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException(
+          `Public battle with ID ${battleId} not found`,
+        );
+      }
+      if (error instanceof Error && error.name === 'NotFoundError') {
+        throw new NotFoundException(
+          `Public battle with ID ${battleId} not found`,
+        );
+      }
+      this.logger.error(
+        'Failed to retrieve public battle raw data',
+        error instanceof Error ? error.stack : error,
+      );
+      throw error;
     }
   }
 
@@ -357,6 +403,12 @@ export class BattlesService implements IBattlesService {
         );
       }
     } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException(`Battle with ID ${battleId} not found`);
+      }
       if (error instanceof Error && error.name === 'NotFoundError') {
         throw new NotFoundException(`Battle with ID ${battleId} not found`);
       }
@@ -370,7 +422,7 @@ export class BattlesService implements IBattlesService {
     analysis: BattleAnalysis,
   ): Promise<BattleWithRelations> {
     try {
-      const battleData: Prisma.BattleCreateInput = {
+      const battleData = {
         userId,
         accountId: data.accountId,
         characterId: data.characterId,
@@ -381,6 +433,8 @@ export class BattlesService implements IBattlesService {
         loser: analysis.outcome.loser,
         winningTeam: analysis.outcome.winningTeam!,
         losingTeam: analysis.outcome.losingTeam!,
+        hasFlee: analysis.outcome.hasFlee,
+        statistics: analysis.statistics as unknown as Prisma.InputJsonValue,
         warriors: {
           create: analysis.warriors.map(
             (
@@ -393,47 +447,81 @@ export class BattlesService implements IBattlesService {
               icon: warrior.icon,
               team: warrior.team,
               isDead: warrior.isDead,
+              surrendered: warrior.surrendered,
+              fled: warrior.fled,
+              maxHp: warrior.maxHp,
               turns: warrior.turns,
+              turnsLost: warrior.turnsLost,
+              steps: warrior.steps,
+              normalAttacks: warrior.normalAttacks,
+              spellsUsed: warrior.spellsUsed,
+              spellsUsedMap: warrior.spellsUsedMap,
               damageDealt: warrior.damageDealt,
+              distanceDamage: warrior.distanceDamage,
+              meleeDamage: warrior.meleeDamage,
+              auxiliaryDamage: warrior.auxiliaryDamage,
+              fireDamage: warrior.fireDamage,
+              frostDamage: warrior.frostDamage,
+              lightningDamage: warrior.lightningDamage,
+              thirdAttDamage: warrior.thirdAttDamage,
               damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
+              damageDealtAfterDefensivePercentage:
+                warrior.damageDealtAfterDefensivePercentage,
               damageTaken: warrior.damageTaken,
+              distanceDamageTaken: warrior.distanceDamageTaken,
+              meleeDamageTaken: warrior.meleeDamageTaken,
+              auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
+              fireDamageTaken: warrior.fireDamageTaken,
+              frostDamageTaken: warrior.frostDamageTaken,
+              lightningDamageTaken: warrior.lightningDamageTaken,
+              thirdAttDamageTaken: warrior.thirdAttDamageTaken,
+              flatDamageTaken: warrior.flatDamageTaken,
               rageDamageDealt: warrior.rageDamageDealt,
               trueDamageDealt: warrior.trueDamageDealt,
               trueDamageTaken: warrior.trueDamageTaken,
+              stigmaDamageDealt: warrior.stigmaDamageDealt,
               passiveHealing: warrior.passiveHealing,
               activeHealing: warrior.activeHealing,
               armorPierces: warrior.armorPierces,
               criticalHits: warrior.criticalHits,
               reducedArmor: warrior.reducedArmor,
               reducedPoisonResistance: warrior.reducedPoisonResistance,
+              magicResistanceDestroyed: warrior.magicResistanceDestroyed,
               evasions: warrior.evasions,
+              attacksEvaded: warrior.attacksEvaded,
+              counters: warrior.counters,
               fastArrows: warrior.fastArrows,
               blocks: warrior.blocks,
+              attacksBlocked: warrior.attacksBlocked,
               blockedDamage: warrior.blockedDamage,
               woundDamageTaken: warrior.woundDamageTaken,
               poisonDamageTaken: warrior.poisonDamageTaken,
               injureDamageTaken: warrior.injureDamageTaken,
+              injures: warrior.injures,
               critWoundDamageTaken: warrior.critWoundDamageTaken,
               firePassiveDamageTaken: warrior.firePassiveDamageTaken,
               lightningPassiveDamageTaken: warrior.lightningPassiveDamageTaken,
               destroyedEnergy: warrior.destroyedEnergy,
               destroyedMana: warrior.destroyedMana,
               regeneratedEnergy: warrior.regeneratedEnergy,
+              regeneratedMana: warrior.regeneratedMana,
               reflectedDamage: warrior.reflectedDamage,
               reflectedDamageTaken: warrior.reflectedDamageTaken,
-              legendaryBonuses: {
-                create: {
-                  curse: warrior.legbons.curse,
-                  cleanse: warrior.legbons.cleanse,
-                  lastheal: warrior.legbons.lastheal,
-                  lasthealValue: warrior.legbons.lasthealValue,
-                  glare: warrior.legbons.glare,
-                  holytouch: warrior.legbons.holytouch,
-                  critred: warrior.legbons.critred,
-                  facade: warrior.legbons.facade,
-                  verycrit: warrior.legbons.verycrit,
-                },
-              },
+              legbonCurse: warrior.legbonCurse,
+              legbonCleanse: warrior.legbonCleanse,
+              legbonLastheal: warrior.legbonLastheal,
+              legbonLasthealValue: warrior.legbonLasthealValue,
+              legbonGlare: warrior.legbonGlare,
+              legbonHolytouch: warrior.legbonHolytouch,
+              legbonHolytouchValue: warrior.legbonHolytouchValue,
+              legbonCritredValue: warrior.legbonCritredValue,
+              legbonVerycrit: warrior.legbonVerycrit,
+              legbonAnguish: warrior.legbonAnguish,
+              legbonFacadeValue: warrior.legbonFacadeValue,
+              legbonPunctureValue: warrior.legbonPunctureValue,
+              legbons: warrior.legbons,
+              legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
+              ph: warrior.ph,
             }),
           ),
         },
@@ -442,11 +530,7 @@ export class BattlesService implements IBattlesService {
       const battle = await this.prisma.battle.create({
         data: battleData,
         include: {
-          warriors: {
-            include: {
-              legendaryBonuses: true,
-            },
-          },
+          warriors: true,
         },
       });
 

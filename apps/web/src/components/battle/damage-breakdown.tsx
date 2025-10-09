@@ -1,4 +1,4 @@
-import { SharedWarrior } from "./types/battle";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 import {
   Table,
   TableBody,
@@ -10,28 +10,68 @@ import {
 import { FC } from "react";
 
 interface DamageBreakdownProps {
-  warrior: SharedWarrior;
+  warrior: Warrior;
 }
 
 export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
   const damageBreakdown = [
     {
-      type: "Obrażenia od ran",
-      value: warrior.woundDamageTaken,
+      type: "Wszystkie otrzymane obrażenia",
+      value: warrior.damageTaken,
+      color: "text-white",
+    },
+    {
+      type: "Obrażenia dystansowe",
+      value: warrior.distanceDamageTaken,
+      color: "text-green-400",
+    },
+    {
+      type: "Obrażenia fizyczne",
+      value: warrior.meleeDamageTaken,
+      color: "text-blue-300",
+    },
+    {
+      type: "Obrażenia pomocnicze",
+      value: warrior.auxiliaryDamageTaken,
+      color: "text-orange-300",
+    },
+    {
+      type: "Obrażenia od ognia",
+      value: warrior.fireDamageTaken,
       color: "text-red-400",
+    },
+    {
+      type: "Obrażenia od lodu",
+      value: warrior.frostDamageTaken,
+      color: "text-cyan-400",
+    },
+    {
+      type: "Obrażenia od błyskawic",
+      value: warrior.lightningDamageTaken,
+      color: "text-yellow-400",
+    },
+    {
+      type: "Obrażenia od trzeciego ataku",
+      value: warrior.thirdAttDamageTaken,
+      color: "text-orange-400",
+    },
+    {
+      type: "Obrażenia od procentówek",
+      value: warrior.trueDamageTaken,
+      color: "text-white",
     },
     {
       type: "Obrażenia od trucizny",
       value: warrior.poisonDamageTaken,
-      color: "text-green-400",
+      color: "text-green-600",
     },
     {
-      type: "Obrażenia od urazów",
+      type: "Obrażenia od zranienia",
       value: warrior.injureDamageTaken,
-      color: "text-yellow-400",
+      color: "text-red-300",
     },
     {
-      type: "Krytyczne obrażenia od ran",
+      type: "Krytyczne obrażenia od głębokich ran",
       value: warrior.critWoundDamageTaken,
       color: "text-orange-400",
     },
@@ -39,6 +79,11 @@ export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
       type: "Pasywne obrażenia od ognia",
       value: warrior.firePassiveDamageTaken,
       color: "text-red-500",
+    },
+    {
+      type: "Pasywne obrażenia od błyskawic",
+      value: warrior.lightningPassiveDamageTaken,
+      color: "text-yellow-500",
     },
   ].filter((item) => item.value > 0);
 
@@ -53,7 +98,7 @@ export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
   return (
     <div className="p-4 bg-background hover:bg-background">
       <h4 className="font-semibold mb-3 text-sm">
-        Szczegółowy podział obrażeń - {warrior.name}
+        Szczegółowy podział obrażeń {warrior.name}
       </h4>
       <Table className="text-sm">
         <TableHeader>

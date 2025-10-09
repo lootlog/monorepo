@@ -1,15 +1,16 @@
-import { SharedRawBattleParsedEvent, SharedWarrior } from "./../types/battle";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import { cn } from "@lootlog/ui/lib/utils";
 import { FC } from "react";
 import { Trans } from "react-i18next";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
 import { processDamageValue, roundHpPercentage } from "../utils/value-utils";
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleLogAttackActionsProps = {
   actions: { type: string; value: string }[];
-  attacker?: SharedWarrior;
-  defender?: SharedWarrior;
-  event: SharedRawBattleParsedEvent;
+  attacker?: Warrior;
+  defender?: Warrior;
+  event: RawBattleParsedEvent;
   userTeam?: number;
 };
 
@@ -177,6 +178,12 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                         ),
                         injure: (
                           <span className="font-semibold text-pink-400" />
+                        ),
+                        anguish: (
+                          <span className="font-semibold text-red-600" />
+                        ),
+                        puncture: (
+                          <span className="font-semibold text-red-300" />
                         ),
                       }}
                     />

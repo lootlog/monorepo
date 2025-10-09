@@ -1,11 +1,12 @@
+import { Warrior } from "@/hooks/api/battle-log/use-battles";
 import { BattleLogList } from "./battle-log-list";
-import { SharedRawBattleData, SharedWarrior } from "./types/battle";
 import { Sword } from "lucide-react";
 import { FC, useMemo } from "react";
+import { RawBattle } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleLogProps = {
-  rawBattle: SharedRawBattleData;
-  warriors: SharedWarrior[];
+  rawBattle: RawBattle;
+  warriors: Warrior[];
 };
 
 export const BattleLog: FC<BattleLogProps> = ({ rawBattle, warriors }) => {

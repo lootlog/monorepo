@@ -25,7 +25,7 @@ export function RecentBattles() {
         </div>
       </div>
       <Separator />
-      <BattlesList />
+      <BattlesList params={{ page: 1, limit: 10 }} showPagination={false} />
     </div>
   );
 }

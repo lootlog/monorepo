@@ -89,5 +89,9 @@
   "resfire_per": "Odporność na ogień +<value>{{value}}%</value>",
   "reslight_per": "Odporność na błyskawice +<value>{{value}}%</value>",
   "resfrost_per": "Odporność na zimno +<value>{{value}}%</value>",
-  "+critsa_per": "+Przyspieszenie o <value>{{value}}%</value> po ciosie krytycznym na 3 tury."
+  "+critsa_per": "+Przyspieszenie o <value>{{value}}%</value> po ciosie krytycznym na 3 tury.",
+  "+ph": "Zwycięzca zdobył łącznie <value>{{value}}</value> punktów honoru.",
+  "+legbon_anguish": "<anguish>+Krwawa udręka</anguish>",
+  "anguish": "<value>{{name}}({{hp}}%)</value>: <anguish><value>{{value}}</value></anguish> obrażeń od krwawienia.",
+  "+legbon_puncture": "<puncture>+Przeszywająca skuteczność, wszystkie ataki pomijają <value>{{value}}%</value> defensywy</puncture>"
 }

@@ -20,7 +20,14 @@ async function bootstrap() {
     infer: true,
   });
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: false,
+      },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Battle Log API')
