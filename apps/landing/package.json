@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@lootlog/ui": "workspace:*",
-    "better-auth": "^1.3.9",
+    "better-auth": "^1.3.26",
     "i18next": "^25.5.3",
     "lucide-react": "^0.475.0",
     "next": "^15.5.2",
