@@ -68,6 +68,17 @@
     "test": {
       "dependsOn": ["^test"],
       "cache": false
+    },
+    "battlelog:migrate:dev": {
+      "cache": false,
+      "interactive": true
+    },
+    "battlelog:generate": {
+      "cache": false
+    },
+    "battlelog:studio": {
+      "cache": false,
+      "interactive": false
     }
   }
 }

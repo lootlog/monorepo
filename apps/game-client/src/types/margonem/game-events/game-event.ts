@@ -8,6 +8,7 @@ import { NpcTpl } from "@/types/margonem/game-events/npc_tpls";
 import { Npcs } from "@/types/margonem/game-events/npcs";
 import { NpcsDel } from "@/types/margonem/game-events/npcs_del";
 import { Other } from "@/types/margonem/game-events/other";
+import { PartyEvent } from "@/types/margonem/game-events/party";
 
 export type GameEvent = {
   d: D;
@@ -22,4 +23,5 @@ export type GameEvent = {
   loot?: Loot;
   other?: Other;
   chat?: ChatEvent;
+  party?: PartyEvent;
 };

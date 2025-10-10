@@ -16,7 +16,7 @@ export const UserNavItem = () => {
   const { data } = useSession();
   const { pathname } = useLocation();
 
-  const isActive = pathname === "/@me";
+  const isActive = pathname.startsWith("/@me");
 
   return (
     <Tooltip>

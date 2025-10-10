@@ -1,0 +1,60 @@
+name: Deploy battlelog service to dev
+
+on:
+  push:
+    paths:
+      - "apps/battlelog-service/**"
+      - ".github/workflows/dev-deploy-battlelog-service.yml"
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  IMAGE_NAME: kamilwronka7/lootlog-battlelog-service
+  IMAGE_TAG: dev-${{ github.sha }}
+  KUSTOMIZE_PATH: infra/k8s/dev/battlelog-service/kustomization.yml
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build --target battlelog-service --build-arg GITHUB_SHA="$GITHUB_SHA" --build-arg GITHUB_REF="$GITHUB_REF" -t $IMAGE_NAME:$IMAGE_TAG .
+          docker push $IMAGE_NAME:$IMAGE_TAG
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Update kustomization.yaml image tag
+        run: |
+          yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i $KUSTOMIZE_PATH
+
+      - name: Commit and push with retry
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git add $KUSTOMIZE_PATH
+          git commit -m "ci: update service-a image to $IMAGE_TAG" || echo "No changes to commit"
+
+          for i in {1..5}; do
+            git fetch origin develop
+            git rebase origin/develop || { echo "Rebase failed"; exit 1; }
+            git push origin HEAD:develop && break || sleep 5
+          done
