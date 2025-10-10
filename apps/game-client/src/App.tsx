@@ -10,6 +10,7 @@ import { NpcDetector } from "@/features/npc-detector/npc-detector";
 import { Notifications } from "@/features/notifications/notifications";
 import { QuickAccess } from "@/features/quick-access/quick-access";
 import { useHotkeys } from "@/hooks/use-hotkeys";
+import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   useGameEventsParser();
@@ -29,6 +30,7 @@ function App() {
         <NpcDetector />
         <Notifications />
         <QuickAccess />
+        <Toaster />
       </>
     )
   );

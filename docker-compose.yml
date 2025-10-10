@@ -44,6 +44,22 @@ services:
     ports:
       - "5433:5432"
 
+  battle-log-db:
+    image: postgres:17-alpine
+    container_name: "battle-log-db"
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    volumes:
+      - battle-log-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${BATTLE_LOG_DB_NAME}
+      POSTGRES_USER: ${BATTLE_LOG_DB_USER}
+      POSTGRES_PASSWORD: ${BATTLE_LOG_DB_PASSWORD}
+    ports:
+      - "5434:5432"
+
   meilisearch:
     image: "getmeili/meilisearch:v1.10.0"
     environment:
@@ -94,3 +110,4 @@ volumes:
   lootlog-users-db:
   meilisearch:
   redis:
+  battle-log-db:

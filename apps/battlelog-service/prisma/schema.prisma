@@ -1,0 +1,164 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("POSTGRESQL_CONNECTION_URI")
+}
+
+model Battle {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    public    Boolean  @default(false)
+    userId    String
+
+    // Battle metadata
+    accountId   String
+    characterId String
+    world       String
+    duration    Float
+    type        String
+    winner      String
+    loser       String
+    winningTeam Int
+    losingTeam  Int
+    honorPoints Int     @default(0)
+    hasFlee     Boolean @default(false)
+    statistics  Json
+
+    // Relations
+    warriors BattleWarrior[]
+
+    @@map("battles")
+}
+
+model UserCharacter {
+    id        String   @id @default(cuid())
+    userId    String
+    characterId String // originalId from the game
+    name      String
+    world     String
+    icon      String   @default("")
+    lastSeenAt DateTime @default(now())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, characterId, world])
+    @@index([userId])
+    @@map("user_characters")
+}
+
+model BattleWarrior {
+    id       String @id @default(cuid())
+    battleId String
+
+    // Warrior info
+    originalId    String
+    name          String
+    lvl           Int
+    prof          String
+    icon          String
+    team          Int
+    turns         Int
+    turnsLost     Int    @default(0)
+    steps         Int    @default(0)
+    normalAttacks Int    @default(0)
+    spellsUsed    Int    @default(0)
+    spellsUsedMap Json   @default("{}")
+
+    // Status
+    isDead      Boolean @default(false)
+    surrendered Boolean @default(false)
+    fled        Boolean @default(false)
+    maxHp       Int     @default(0)
+
+    // Damage stats
+    damageDealt                         Int   @default(0)
+    distanceDamage                      Int   @default(0)
+    meleeDamage                         Int   @default(0)
+    auxiliaryDamage                     Int   @default(0)
+    fireDamage                          Int   @default(0)
+    frostDamage                         Int   @default(0)
+    lightningDamage                     Int   @default(0)
+    thirdAttDamage                      Int   @default(0)
+    damageDealtAfterDefensive           Int   @default(0)
+    damageDealtAfterDefensivePercentage Float @default(0)
+    damageTaken                         Int   @default(0)
+    distanceDamageTaken                 Int   @default(0)
+    meleeDamageTaken                    Int   @default(0)
+    auxiliaryDamageTaken                Int   @default(0)
+    fireDamageTaken                     Int   @default(0)
+    frostDamageTaken                    Int   @default(0)
+    lightningDamageTaken                Int   @default(0)
+    thirdAttDamageTaken                 Int   @default(0)
+    flatDamageTaken                     Int   @default(0)
+    rageDamageDealt                     Int   @default(0)
+    trueDamageDealt                     Int   @default(0)
+    trueDamageTaken                     Int   @default(0)
+    stigmaDamageDealt                   Int   @default(0)
+    stigmaDamageTaken                   Int   @default(0)
+
+    // Healing stats
+    passiveHealing Int @default(0)
+    activeHealing  Int @default(0)
+
+    // Combat stats
+    armorPierces            Int @default(0)
+    criticalHits            Int @default(0)
+    reducedArmor            Int @default(0)
+    reducedPoisonResistance Int @default(0)
+    magicResistanceDestroyed Int @default(0)
+    evasions                Int @default(0)
+    attacksEvaded           Int @default(0)
+    counters                Int @default(0)
+    fastArrows              Int @default(0)
+    blocks                  Int @default(0)
+    attacksBlocked          Int @default(0)
+    blockedDamage           Int @default(0)
+
+    // Damage over time
+    woundDamageTaken            Int @default(0)
+    poisonDamageTaken           Int @default(0)
+    injureDamageTaken           Int @default(0)
+    injures                     Int @default(0)
+    critWoundDamageTaken        Int @default(0)
+    firePassiveDamageTaken      Int @default(0)
+    lightningPassiveDamageTaken Int @default(0)
+
+    // Energy/Mana
+    destroyedEnergy   Int @default(0)
+    destroyedMana     Int @default(0)
+    regeneratedEnergy Int @default(0)
+    regeneratedMana   Int @default(0)
+
+    // Reflection
+    reflectedDamage      Int @default(0)
+    reflectedDamageTaken Int @default(0)
+
+    // Legendary bonuses
+    legbons                  Int @default(0)
+    legbonCurse              Int @default(0)
+    legbonCleanse            Int @default(0)
+    legbonLastheal           Int @default(0)
+    legbonLasthealValue      Int @default(0)
+    legbonGlare              Int @default(0)
+    legbonHolytouch          Int @default(0)
+    legbonHolytouchValue     Int @default(0)
+    legbonCritredValue       Int @default(0)
+    legbonFacadeValue        Int @default(0)
+    legbonPunctureValue      Int @default(0)
+    legbonVerycrit           Int @default(0)
+    legbonAnguish            Int @default(0)
+    legbonAnguishDamageTaken Int @default(0)
+
+    // Honor points
+    ph Int @default(0)
+
+    // Relations
+    battle Battle @relation(fields: [battleId], references: [id], onDelete: Cascade)
+
+    @@map("battle_warriors")
+}

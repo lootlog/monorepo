@@ -17,6 +17,7 @@ export default defineConfig({
       "@/contexts": path.resolve(__dirname, "./src/contexts"),
       "@/enums": path.resolve(__dirname, "./src/enums"),
       "@/eventEmitter": path.resolve(__dirname, "./src/eventEmitter"),
+      "@/features": path.resolve(__dirname, "./src/features"),
       "@/hooks": path.resolve(__dirname, "./src/hooks"),
       "@/i18n": path.resolve(__dirname, "./src/i18n"),
       "@/layout": path.resolve(__dirname, "./src/layout"),

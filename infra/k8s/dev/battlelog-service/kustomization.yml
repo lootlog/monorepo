@@ -1,0 +1,9 @@
+namespace: lootlog-dev
+resources:
+  - ../../base/battlelog-service
+patchesStrategicMerge:
+  - hpa.yml
+images:
+  - name: kamilwronka7/lootlog-battlelog-service
+    newTag: dev-42bcf0b973f0d81ecd9d7c58c3e756af7f2dc3cf
+namePrefix: dev-
