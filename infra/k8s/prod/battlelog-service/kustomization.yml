@@ -1,0 +1,9 @@
+namespace: lootlog-prod
+resources:
+  - ../../base/battlelog-service
+patchesStrategicMerge:
+  - hpa.yml
+images:
+  - name: kamilwronka7/lootlog-battlelog-service
+    newTag: prod-466535111e9e692189ebdff31ce106d9ddbb2cbb
+namePrefix: prod-

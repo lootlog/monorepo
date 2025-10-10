@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { Navigation } from "./navigation/navigation";
 
 import "@lootlog/ui/globals.css";
@@ -24,14 +25,16 @@ function App() {
       enableSystem
       disableTransitionOnChange
     >
-      <GlobalContextProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <Navigation />
-            <ReactQueryDevtools initialIsOpen={false} />
-          </BrowserRouter>
-        </QueryClientProvider>
-      </GlobalContextProvider>
+      <NuqsAdapter>
+        <GlobalContextProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <Navigation />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </BrowserRouter>
+          </QueryClientProvider>
+        </GlobalContextProvider>
+      </NuqsAdapter>
     </ThemeProvider>
   );
 }

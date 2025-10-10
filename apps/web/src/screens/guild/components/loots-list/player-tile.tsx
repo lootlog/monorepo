@@ -11,8 +11,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { FC } from "react";
 
 type PlayerTileProps = {
-  player: Player;
-  idx: number;
+  player: Partial<Player>;
+  idx?: number;
   color?: string;
   className?: string;
 };
@@ -31,27 +31,28 @@ export const PlayerTile: FC<PlayerTileProps> = ({
             <div
               className={cn(
                 "w-[32px] h-[48px] relative cursor-pointer rounded-lg"
-                // className
               )}
               style={{
                 backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${icon})`,
                 backgroundColor: "transparent",
               }}
             />
-            <div
-              className="top-10 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center"
-              style={{
-                backgroundColor: color ? `${color}` : "transparent",
-              }}
-            >
-              {idx + 1}
-            </div>
+            {idx !== undefined && (
+              <div
+                className="top-10 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center"
+                style={{
+                  backgroundColor: color ? `${color}` : "transparent",
+                }}
+              >
+                {idx + 1}
+              </div>
+            )}
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <p>
             {name} &nbsp;({lvl}
-            {prof.charAt(0).toLowerCase()})
+            {prof?.charAt(0).toLowerCase()})
           </p>
         </TooltipContent>
       </Tooltip>
