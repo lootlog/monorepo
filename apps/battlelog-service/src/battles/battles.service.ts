@@ -69,12 +69,6 @@ export class BattlesService implements IBattlesService {
 
       return {
         battleId: battle.id,
-        analysis,
-        battle: {
-          id: battle.id,
-          createdAt: battle.createdAt,
-          public: battle.public,
-        },
       };
     } catch (error) {
       this.logger.error(`Failed to create battle for user ${userId}:`, error);
@@ -150,7 +144,12 @@ export class BattlesService implements IBattlesService {
   }
 
   async getUserCharacters(userId: string): Promise<{
-    characters: Array<{ id: string; name: string; world: string; icon: string }>;
+    characters: Array<{
+      id: string;
+      name: string;
+      world: string;
+      icon: string;
+    }>;
   }> {
     try {
       const userCharacters = await this.prisma.userCharacter.findMany({
@@ -260,7 +259,9 @@ export class BattlesService implements IBattlesService {
         include: { warriors: true },
       });
 
-      this.logger.log(`Battle ${battleId} updated (public: ${updateData.public})`);
+      this.logger.log(
+        `Battle ${battleId} updated (public: ${updateData.public})`,
+      );
       return battle;
     } catch (error) {
       this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
@@ -275,7 +276,10 @@ export class BattlesService implements IBattlesService {
       try {
         await this.r2Service.deleteBattleData(battleId);
       } catch (r2Error) {
-        this.logger.warn(`Failed to delete R2 data for battle ${battleId}`, r2Error);
+        this.logger.warn(
+          `Failed to delete R2 data for battle ${battleId}`,
+          r2Error,
+        );
       }
 
       this.logger.log(`Battle ${battleId} deleted`);
@@ -293,7 +297,10 @@ export class BattlesService implements IBattlesService {
         include: { warriors: true },
       });
     } catch (error) {
-      this.handlePrismaError(error, `Public battle with ID ${battleId} not found`);
+      this.handlePrismaError(
+        error,
+        `Public battle with ID ${battleId} not found`,
+      );
       throw error;
     }
   }
@@ -306,7 +313,10 @@ export class BattlesService implements IBattlesService {
       });
       return await this.r2Service.getBattleData(battle.id);
     } catch (error) {
-      this.handlePrismaError(error, `Public battle with ID ${battleId} not found`);
+      this.handlePrismaError(
+        error,
+        `Public battle with ID ${battleId} not found`,
+      );
       throw error;
     }
   }
@@ -349,7 +359,8 @@ export class BattlesService implements IBattlesService {
     }
 
     if (characterIds.length) {
-      where.characterId = characterIds.length === 1 ? characterIds[0] : { in: characterIds };
+      where.characterId =
+        characterIds.length === 1 ? characterIds[0] : { in: characterIds };
     }
 
     if (query.type?.length) {
@@ -464,7 +475,8 @@ export class BattlesService implements IBattlesService {
 
   private handlePrismaError(error: unknown, message: string): void {
     if (
-      (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') ||
+      (error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025') ||
       (error instanceof Error && error.name === 'NotFoundError')
     ) {
       throw new NotFoundException(message);
@@ -485,7 +497,10 @@ export class BattlesService implements IBattlesService {
         create: { userId, characterId, name, world, icon },
       });
     } catch (error) {
-      this.logger.warn(`Failed to upsert character ${characterId} for user ${userId}`, error);
+      this.logger.warn(
+        `Failed to upsert character ${characterId} for user ${userId}`,
+        error,
+      );
     }
   }
 
@@ -495,9 +510,17 @@ export class BattlesService implements IBattlesService {
     analysis: BattleAnalysis,
   ): Promise<BattleWithRelations> {
     try {
-      const userWarrior = analysis.warriors.find((w) => w.originalId === data.characterId);
+      const userWarrior = analysis.warriors.find(
+        (w) => w.originalId === data.characterId,
+      );
       if (userWarrior) {
-        await this.upsertUserCharacter(userId, data.characterId, userWarrior.name, data.world, userWarrior.icon);
+        await this.upsertUserCharacter(
+          userId,
+          data.characterId,
+          userWarrior.name,
+          data.world,
+          userWarrior.icon,
+        );
       }
 
       const battleData = {
