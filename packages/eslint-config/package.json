@@ -10,7 +10,7 @@
     "./nest-js": "./nest.js"
   },
   "devDependencies": {
-    "@next/eslint-plugin-next": "^15.1.6",
+    "@next/eslint-plugin-next": "^15.5.4",
     "@typescript-eslint/eslint-plugin": "^8.23.0",
     "@typescript-eslint/parser": "^8.23.0",
     "eslint": "^9.20.0",

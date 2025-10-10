@@ -1156,8 +1156,8 @@ importers:
   packages/eslint-config:
     devDependencies:
       '@next/eslint-plugin-next':
-        specifier: ^15.1.6
-        version: 15.3.4
+        specifier: ^15.5.4
+        version: 15.5.4
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.23.0
         version: 8.35.0(@typescript-eslint/parser@8.35.0(eslint@9.29.0(jiti@2.5.1))(typescript@5.7.3))(eslint@9.29.0(jiti@2.5.1))(typescript@5.7.3)
@@ -2968,8 +2968,8 @@ packages:
   '@next/env@15.5.2':
     resolution: {integrity: sha512-Qe06ew4zt12LeO6N7j8/nULSOe3fMXE4dM6xgpBQNvdzyK1sv5y4oAP3bq4LamrvGCZtmRYnW8URFCeX5nFgGg==}
 
-  '@next/eslint-plugin-next@15.3.4':
-    resolution: {integrity: sha512-lBxYdj7TI8phbJcLSAqDt57nIcobEign5NYIKCiy0hXQhrUbTqLqOaSDi568U6vFg4hJfBdZYsG4iP/uKhCqgg==}
+  '@next/eslint-plugin-next@15.5.4':
+    resolution: {integrity: sha512-SR1vhXNNg16T4zffhJ4TS7Xn7eq4NfKfcOsRwea7RIAHrjRpI9ALYbamqIJqkAhowLlERffiwk0FMvTLNdnVtw==}
 
   '@next/swc-darwin-arm64@15.5.2':
     resolution: {integrity: sha512-8bGt577BXGSd4iqFygmzIfTYizHb0LGWqH+qgIF/2EDxS5JsSdERJKA8WgwDyNBZgTIIA4D8qUtoQHmxIIquoQ==}
@@ -9297,7 +9297,7 @@ packages:
   superagent@8.1.2:
     resolution: {integrity: sha512-6WTxW1EB6yCxV5VFOIPQruWGHqc3yI7hEmZK6h+pyk69Lk/Ut7rLUY6W/ONF2MjBuGjvmMiIpsrVJ2vjrHlslA==}
     engines: {node: '>=6.4.0 <13 || >=14'}
-    deprecated: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
+    deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   supertest@6.3.4:
     resolution: {integrity: sha512-erY3HFDG0dPnhw4U+udPfrzXa4xhSG+n4rxfRuZWCUvjFWwKl+OxWf/7zk50s84/fAAs7vf5QAb9uRa0cCykxw==}
@@ -12625,7 +12625,7 @@ snapshots:
 
   '@next/env@15.5.2': {}
 
-  '@next/eslint-plugin-next@15.3.4':
+  '@next/eslint-plugin-next@15.5.4':
     dependencies:
       fast-glob: 3.3.1
 
