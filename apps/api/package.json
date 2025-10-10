@@ -29,7 +29,7 @@
     "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.1.2",
     "@nestjs/config": "^4.0.2",
-    "@nestjs/core": "^11.1.2",
+    "@nestjs/core": "^11.1.6",
     "@nestjs/microservices": "^11.1.2",
     "@nestjs/platform-fastify": "^11.1.2",
     "@nestjs/platform-socket.io": "^11.1.2",

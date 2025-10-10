@@ -22,7 +22,7 @@
     "@golevelup/nestjs-rabbitmq": "^6.0.1",
     "@nestjs/common": "^11.1.2",
     "@nestjs/config": "^4.0.2",
-    "@nestjs/core": "^11.1.2",
+    "@nestjs/core": "^11.1.6",
     "@nestjs/microservices": "^11.1.2",
     "@nestjs/platform-express": "^11.1.2",
     "discord.js": "^14.19.3",
