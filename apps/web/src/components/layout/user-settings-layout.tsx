@@ -15,11 +15,6 @@ const NAV_ELEMENTS = [
     label: "Wygląd",
     href: "/settings/appearance",
   },
-  {
-    id: "servers",
-    label: "Serwery",
-    href: "/settings/servers",
-  },
 ];
 
 export const UserSettingsLayout: React.FC = () => {
