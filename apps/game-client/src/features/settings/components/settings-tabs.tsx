@@ -1,5 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BattlePanelSettingsTab } from "@/features/settings/components/battle-panel/battle-panel-settings-tab";
 import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
@@ -40,6 +41,11 @@ const TABS_LIST = [
     value: "notifications",
     label: "Powiadomienia",
     content: <NotificationsSettingsTab />,
+  },
+  {
+    value: "battle-panel",
+    label: "Panel walk (beta)",
+    content: <BattlePanelSettingsTab />,
   },
 ];
 
