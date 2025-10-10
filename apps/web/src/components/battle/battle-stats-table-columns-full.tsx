@@ -6,9 +6,9 @@ import {
   ChevronDown,
   ChevronRight,
   Flag,
-  ShieldAlert,
   Skull,
 } from "lucide-react";
+import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
 
 export const getBattleStatsTableColumns = (
   _battle: Battle,
@@ -45,7 +45,7 @@ export const getBattleStatsTableColumns = (
             <span className="font-semibold">{warrior.name}</span>
             {warrior.isDead && <Skull size={18} />}
             {warrior.surrendered && <Flag size={18} />}
-            {warrior.fled && <ShieldAlert size={18} />}
+            {warrior.fled && <EmergencyExitIcon size={18} />}
             {isExpanded ? (
               <ChevronDown className="h-4 w-4" />
             ) : (

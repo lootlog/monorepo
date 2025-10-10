@@ -12,6 +12,7 @@ import {
 import { BattlesService } from 'src/battles/battles.service';
 import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
+import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
 import { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -40,6 +41,32 @@ export class BattlesController {
     @UserId() userId: string,
   ) {
     return this.battlesService.getDashboardBattles(query, userId);
+  }
+
+  @Get('/@me/characters')
+  getUserCharacters(@UserId() userId: string) {
+    return this.battlesService.getUserCharacters(userId);
+  }
+
+  @Get('/@me/analytics')
+  getBattleAnalytics(
+    @Query() query: QueryBattleAnalyticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getBattleAnalytics(query, userId);
+  }
+
+  @Get('/@me/warriors/search')
+  searchWarriors(
+    @Query('q') query: string,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.searchWarriors(query, userId);
+  }
+
+  @Get('/@me/worlds')
+  getUserWorlds(@UserId() userId: string) {
+    return this.battlesService.getUserWorlds(userId);
   }
 
   @UseGuards(BattleAccessGuard)

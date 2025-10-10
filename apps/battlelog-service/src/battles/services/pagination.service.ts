@@ -11,8 +11,8 @@ import {
 @Injectable()
 export class PaginationService {
   private readonly logger = new Logger(PaginationService.name);
-  private readonly LARGE_DATASET_THRESHOLD = 10000; // Switch to cursor for large datasets
-  private readonly ESTIMATED_COUNT_THRESHOLD = 100000; // Use estimated counts for very large datasets
+  private readonly LARGE_DATASET_THRESHOLD = 10000;
+  private readonly ESTIMATED_COUNT_THRESHOLD = 100000;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -43,26 +43,14 @@ export class PaginationService {
     where: any,
     options: PaginationOptions,
   ): Promise<PaginationStrategy> {
-    if (options.strategy === PaginationStrategy.CURSOR) {
+    if (options.strategy !== PaginationStrategy.AUTO) {
+      return options.strategy;
+    }
+
+    if (options.cursor || (options.page && options.limit && options.page > 50)) {
       return PaginationStrategy.CURSOR;
     }
 
-    if (options.strategy === PaginationStrategy.OFFSET) {
-      return PaginationStrategy.OFFSET;
-    }
-
-    // AUTO strategy: make intelligent decision
-    if (options.cursor) {
-      return PaginationStrategy.CURSOR;
-    }
-
-    // For large page numbers, cursor is more efficient
-    if (options.page && options.limit && options.page > 50) {
-      this.logger.log(`Using cursor pagination for large page number: ${options.page}`);
-      return PaginationStrategy.CURSOR;
-    }
-
-    // For small datasets or first few pages, offset is fine
     return PaginationStrategy.OFFSET;
   }
 
@@ -126,33 +114,26 @@ export class PaginationService {
   ): Promise<PaginationResult<any>> {
     const { size = 20, cursor, includeTotal, estimateTotal } = options;
 
-    // Decode cursor if provided
     let cursorData: any = null;
     if (cursor) {
       try {
         cursorData = JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'));
       } catch (error) {
-        this.logger.warn(`Invalid cursor provided: ${cursor}`);
+        this.logger.warn(`Invalid cursor: ${cursor}`);
       }
     }
 
-    // Build cursor condition
     const cursorWhere = this.buildCursorWhere(where, cursorData, options);
-
-    // Get one extra item to check if there are more results
     const battles = await this.prisma.battle.findMany({
       where: cursorWhere,
       take: size + 1,
-      include: {
-        warriors: true,
-      },
+      include: { warriors: true },
       orderBy: this.buildOrderBy(options.sortField, options.sortOrder),
     });
 
     const hasNext = battles.length > size;
     const items = hasNext ? battles.slice(0, size) : battles;
 
-    // Generate next cursor
     let nextCursor: string | undefined;
     if (hasNext && items.length > 0) {
       const lastItem = items[items.length - 1];
@@ -163,15 +144,12 @@ export class PaginationService {
       nextCursor = Buffer.from(JSON.stringify(cursorPayload)).toString('base64');
     }
 
-    // Get total count if requested (expensive for cursor pagination)
     let total: number | undefined;
     const countStartTime = Date.now();
     if (includeTotal) {
-      if (estimateTotal) {
-        total = await this.getEstimatedCount(where);
-      } else {
-        total = await this.prisma.battle.count({ where });
-      }
+      total = estimateTotal
+        ? await this.getEstimatedCount(where)
+        : await this.prisma.battle.count({ where });
     }
     const countTime = Date.now() - countStartTime;
 
@@ -224,19 +202,12 @@ export class PaginationService {
 
   private buildOrderBy(sortField: SortField, sortOrder: SortOrder): any {
     const order = sortOrder === SortOrder.ASC ? 'asc' : 'desc';
-
-    return [
-      { [sortField]: order },
-      { id: order }, // Secondary sort for consistent pagination
-    ];
+    return [{ [sortField]: order }, { id: order }];
   }
 
   private async getEstimatedCount(where: any): Promise<number> {
     try {
-      // For PostgreSQL, we can use table statistics for estimation
-      // This is much faster than COUNT(*) for large tables
       if (Object.keys(where).length === 0) {
-        // No filters, use table statistics
         const result = await this.prisma.$queryRaw<[{ estimated_count: bigint }]>`
           SELECT reltuples::BIGINT AS estimated_count
           FROM pg_class
@@ -244,8 +215,6 @@ export class PaginationService {
         `;
         return Number(result[0]?.estimated_count || 0);
       } else {
-        // With filters, fall back to actual count but with a limit
-        // This prevents extremely long-running queries
         const result = await this.prisma.$queryRaw<[{ count: bigint }]>`
           SELECT COUNT(*) as count
           FROM (
@@ -257,14 +226,12 @@ export class PaginationService {
         return Number(result[0]?.count || 0);
       }
     } catch (error) {
-      this.logger.warn('Failed to get estimated count, falling back to exact count', error);
+      this.logger.warn('Failed to get estimated count, falling back', error);
       return this.prisma.battle.count({ where });
     }
   }
 
   private buildWhereClause(where: any): string {
-    // This is a simplified implementation
-    // In a real application, you'd want a more robust query builder
     const conditions: string[] = [];
 
     Object.entries(where).forEach(([key, value]) => {
@@ -273,7 +240,6 @@ export class PaginationService {
       } else if (typeof value === 'boolean') {
         conditions.push(`${key} = ${value}`);
       }
-      // Add more type handling as needed
     });
 
     return conditions.join(' AND ') || 'TRUE';

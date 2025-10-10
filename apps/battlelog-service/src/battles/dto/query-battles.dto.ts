@@ -1,7 +1,9 @@
 import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -85,8 +87,14 @@ export class QueryBattlesDto {
   world?: string;
 
   @IsOptional()
-  @IsString()
-  type?: string;
+  @IsArray()
+  @IsIn(['solo', 'group'], { each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return value.split(',').map((v) => v.trim());
+    return [value];
+  })
+  type?: Array<'solo' | 'group'>;
 
   @IsOptional()
   @IsString()
@@ -98,10 +106,31 @@ export class QueryBattlesDto {
   public?: boolean;
 
   @IsOptional()
-  @IsString()
-  characterId?: string;
+  @IsArray()
+  @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return value.split(',').map((v) => v.trim());
+    return [value];
+  })
+  characterId?: Array<string>;
 
   @IsOptional()
   @IsString()
   search?: string; // For searching by warrior names
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(['won', 'lost', 'flee'], { each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return value.split(',').map((v) => v.trim());
+    return [value];
+  })
+  result?: Array<'won' | 'lost' | 'flee'>; // Battle result filter
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  ph?: boolean; // Filter battles with honor points
 }

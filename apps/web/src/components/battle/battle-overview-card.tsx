@@ -46,6 +46,11 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
       w.originalId === (currentUserCharacterId || battle.characterId)
   );
 
+  const leftTeam = userTeam?.team === 1 ? attackingTeam : defendingTeam;
+  const rightTeam = userTeam?.team === 1 ? defendingTeam : attackingTeam;
+  const leftTeamNumber = userTeam?.team === 1 ? 1 : 2;
+  const rightTeamNumber = userTeam?.team === 1 ? 2 : 1;
+
   const handleShareClick = () => {
     onShare?.(battle.id);
   };
@@ -74,20 +79,12 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
         showActions={showActions}
         labels={mergedLabels.header}
       />
-      <div
-        className={cn(
-          "bg-gradient-to-r via-transparent text-white relative border-b",
-          {
-            "from-red-400/10 to-green-400/10": userTeam?.team === 2,
-            "from-green-400/10 to-red-400/10": userTeam?.team === 1,
-          }
-        )}
-      >
+      <div className="bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 text-white relative border-b">
         <div className="p-4 pt-12 pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <BattleTeamSection
-              team={attackingTeam}
-              teamNumber={1}
+              team={leftTeam}
+              teamNumber={leftTeamNumber}
               userTeam={userTeam?.team}
               characterId={currentUserCharacterId || battle.characterId}
               cdnBaseUrl={cdnBaseUrl}
@@ -96,8 +93,8 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
             <div className="grid grid-cols-3 items-center justify-items-center">
               <div>
                 <AnimatedTrophy
-                  show={battle.winningTeam === 1 && !battle.hasFlee}
-                  isUserTeamWinner={userTeam?.team === 1}
+                  show={battle.winningTeam === leftTeamNumber && !battle.hasFlee}
+                  isUserTeamWinner={userTeam?.team === leftTeamNumber}
                 />
               </div>
               <div className="text-center">
@@ -105,15 +102,15 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               </div>
               <div>
                 <AnimatedTrophy
-                  show={battle.winningTeam === 2 && !battle.hasFlee}
-                  isUserTeamWinner={userTeam?.team === 2}
+                  show={battle.winningTeam === rightTeamNumber && !battle.hasFlee}
+                  isUserTeamWinner={userTeam?.team === rightTeamNumber}
                 />
               </div>
             </div>
 
             <BattleTeamSection
-              team={defendingTeam}
-              teamNumber={2}
+              team={rightTeam}
+              teamNumber={rightTeamNumber}
               userTeam={userTeam?.team}
               characterId={currentUserCharacterId || battle.characterId}
               cdnBaseUrl={cdnBaseUrl}

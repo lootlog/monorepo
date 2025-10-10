@@ -12,6 +12,7 @@ import {
   SortField,
   SortOrder,
 } from 'src/battles/dto/query-battles.dto';
+import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
 import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import type { PaginationOptions } from 'src/battles/interfaces/pagination.interface';
 import { PaginationService } from 'src/battles/services/pagination.service';
@@ -85,7 +86,7 @@ export class BattlesService implements IBattlesService {
 
   async getPublicBattles(query: QueryBattlesDto): Promise<GetAllBattlesResult> {
     try {
-      const where = this.buildFilterConditions(query);
+      const where = await this.buildFilterConditions(query);
       where.public = true;
 
       const paginationOptions = this.buildPaginationOptions(query);
@@ -119,7 +120,7 @@ export class BattlesService implements IBattlesService {
     requestingUserId: string,
   ): Promise<GetAllBattlesResult> {
     try {
-      const where = this.buildFilterConditions(query);
+      const where = await this.buildFilterConditions(query, requestingUserId);
       where.userId = requestingUserId;
 
       const paginationOptions = this.buildPaginationOptions(query);
@@ -144,6 +145,63 @@ export class BattlesService implements IBattlesService {
       this.logger.error('Failed to retrieve dashboard battles:', error);
       throw new Error(
         `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  async getUserCharacters(userId: string): Promise<{
+    characters: Array<{ id: string; name: string; world: string; icon: string }>;
+  }> {
+    try {
+      const userCharacters = await this.prisma.userCharacter.findMany({
+        where: { userId },
+        orderBy: { lastSeenAt: 'desc' },
+        select: {
+          characterId: true,
+          name: true,
+          world: true,
+          icon: true,
+        },
+      });
+
+      const characters = userCharacters.map((char) => ({
+        id: char.characterId,
+        name: char.name,
+        world: char.world,
+        icon: char.icon,
+      }));
+
+      this.logger.log(
+        `Retrieved ${characters.length} characters for user ${userId}`,
+      );
+
+      return { characters };
+    } catch (error) {
+      this.logger.error('Failed to retrieve user characters:', error);
+      throw new Error(
+        `Failed to retrieve user characters: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  async getUserWorlds(userId: string): Promise<{ worlds: string[] }> {
+    try {
+      const userCharacters = await this.prisma.userCharacter.findMany({
+        where: { userId },
+        select: { world: true },
+        distinct: ['world'],
+        orderBy: { world: 'asc' },
+      });
+
+      const worlds = userCharacters.map((char) => char.world);
+
+      this.logger.log(`Retrieved ${worlds.length} worlds for user ${userId}`);
+
+      return { worlds };
+    } catch (error) {
+      this.logger.error('Failed to retrieve user worlds:', error);
+      throw new Error(
+        `Failed to retrieve user worlds: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -178,28 +236,12 @@ export class BattlesService implements IBattlesService {
         await this.checkBattleAccess(battleId, requestingUserId);
       }
 
-      const battle = await this.prisma.battle.findUniqueOrThrow({
+      return await this.prisma.battle.findUniqueOrThrow({
         where: { id: battleId },
-        include: {
-          warriors: true,
-        },
+        include: { warriors: true },
       });
-
-      return battle;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException(`Battle with ID ${battleId} not found`);
-      }
-      if (error instanceof Error && error.name === 'NotFoundError') {
-        throw new NotFoundException(`Battle with ID ${battleId} not found`);
-      }
-      this.logger.error(
-        'Failed to retrieve battle from database',
-        error instanceof Error ? error.stack : error,
-      );
+      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
       throw error;
     }
   }
@@ -215,87 +257,43 @@ export class BattlesService implements IBattlesService {
           public: updateData.public,
           updatedAt: new Date(),
         },
-        include: {
-          warriors: true,
-        },
+        include: { warriors: true },
       });
 
-      this.logger.log(
-        `Battle ${battleId} updated successfully (public: ${updateData.public})`,
-      );
+      this.logger.log(`Battle ${battleId} updated (public: ${updateData.public})`);
       return battle;
     } catch (error) {
-      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
-        this.logger.warn(`Battle ${battleId} not found for update`);
-        throw new NotFoundException(`Battle with ID ${battleId} not found`);
-      }
-
-      this.logger.error(`Failed to update battle ${battleId}:`, error);
-      throw new Error(
-        `Update failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
+      throw error;
     }
   }
 
   async deleteBattle(battleId: string): Promise<DeleteBattleResult> {
     try {
-      await this.prisma.battle.delete({
-        where: { id: battleId },
-      });
+      await this.prisma.battle.delete({ where: { id: battleId } });
 
       try {
         await this.r2Service.deleteBattleData(battleId);
-        this.logger.debug(`R2 data deleted for battle ${battleId}`);
       } catch (r2Error) {
-        this.logger.warn(
-          `Failed to delete R2 data for battle ${battleId}:`,
-          r2Error,
-        );
+        this.logger.warn(`Failed to delete R2 data for battle ${battleId}`, r2Error);
       }
 
-      this.logger.log(`Battle ${battleId} deleted successfully`);
+      this.logger.log(`Battle ${battleId} deleted`);
       return { message: 'Battle deleted successfully' };
     } catch (error) {
-      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
-        this.logger.warn(`Battle ${battleId} not found for deletion`);
-        throw new NotFoundException(`Battle with ID ${battleId} not found`);
-      }
-
-      this.logger.error(`Failed to delete battle ${battleId}:`, error);
-      throw new Error(
-        `Deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
+      throw error;
     }
   }
 
   async getPublicBattle(battleId: string): Promise<BattleWithRelations> {
     try {
-      const battle = await this.prisma.battle.findUniqueOrThrow({
+      return await this.prisma.battle.findUniqueOrThrow({
         where: { id: battleId, public: true },
-        include: {
-          warriors: true,
-        },
+        include: { warriors: true },
       });
-
-      return battle;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException(
-          `Public battle with ID ${battleId} not found`,
-        );
-      }
-      if (error instanceof Error && error.name === 'NotFoundError') {
-        throw new NotFoundException(
-          `Public battle with ID ${battleId} not found`,
-        );
-      }
-      this.logger.error(
-        'Failed to retrieve public battle',
-        error instanceof Error ? error.stack : error,
-      );
+      this.handlePrismaError(error, `Public battle with ID ${battleId} not found`);
       throw error;
     }
   }
@@ -308,23 +306,7 @@ export class BattlesService implements IBattlesService {
       });
       return await this.r2Service.getBattleData(battle.id);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException(
-          `Public battle with ID ${battleId} not found`,
-        );
-      }
-      if (error instanceof Error && error.name === 'NotFoundError') {
-        throw new NotFoundException(
-          `Public battle with ID ${battleId} not found`,
-        );
-      }
-      this.logger.error(
-        'Failed to retrieve public battle raw data',
-        error instanceof Error ? error.stack : error,
-      );
+      this.handlePrismaError(error, `Public battle with ID ${battleId} not found`);
       throw error;
     }
   }
@@ -346,26 +328,100 @@ export class BattlesService implements IBattlesService {
     }
   }
 
-  private buildFilterConditions(
+  private async buildFilterConditions(
     query: QueryBattlesDto,
-  ): Prisma.BattleWhereInput {
+    userId?: string,
+  ): Promise<Prisma.BattleWhereInput> {
     const where: Prisma.BattleWhereInput = {};
+    const andConditions: Prisma.BattleWhereInput[] = [];
 
     if (query.world) where.world = query.world;
-    if (query.type) where.type = query.type;
     if (query.userId) where.userId = query.userId;
     if (typeof query.public === 'boolean') where.public = query.public;
-    if (query.characterId) where.characterId = query.characterId;
+
+    let characterIds = query.characterId || [];
+    if (query.result?.length && !characterIds.length && userId) {
+      const userCharacters = await this.prisma.userCharacter.findMany({
+        where: { userId },
+        select: { characterId: true },
+      });
+      characterIds = userCharacters.map((c) => c.characterId);
+    }
+
+    if (characterIds.length) {
+      where.characterId = characterIds.length === 1 ? characterIds[0] : { in: characterIds };
+    }
+
+    if (query.type?.length) {
+      const hasSolo = query.type.includes('solo');
+      const hasGroup = query.type.includes('group');
+      if (hasSolo && !hasGroup) {
+        where.type = '1v1';
+      } else if (hasGroup && !hasSolo) {
+        where.type = { not: '1v1' };
+      }
+    }
+
+    if (query.result?.length && characterIds.length) {
+      const resultConditions: Prisma.BattleWhereInput[] = [];
+
+      if (query.result.includes('won')) {
+        characterIds.forEach((charId) => {
+          [1, 2].forEach((team) => {
+            resultConditions.push({
+              AND: [
+                { warriors: { some: { originalId: charId, team } } },
+                { winningTeam: team },
+                { hasFlee: false },
+              ],
+            });
+          });
+        });
+      }
+
+      if (query.result.includes('lost')) {
+        characterIds.forEach((charId) => {
+          [1, 2].forEach((team) => {
+            resultConditions.push({
+              AND: [
+                { warriors: { some: { originalId: charId, team } } },
+                { losingTeam: team },
+                { hasFlee: false },
+              ],
+            });
+          });
+        });
+      }
+
+      if (query.result.includes('flee')) {
+        resultConditions.push({ hasFlee: true });
+      }
+
+      if (resultConditions.length) {
+        andConditions.push({ OR: resultConditions });
+      }
+    }
+
+    if (query.ph === true) {
+      const phFilter: any = { ph: { gt: 0 } };
+      if (characterIds.length) {
+        phFilter.originalId = { in: characterIds };
+      }
+      andConditions.push({ warriors: { some: phFilter } });
+    }
 
     if (query.search) {
-      where.warriors = {
-        some: {
-          name: {
-            contains: query.search,
-            mode: 'insensitive',
+      andConditions.push({
+        warriors: {
+          some: {
+            name: { contains: query.search, mode: 'insensitive' },
           },
         },
-      };
+      });
+    }
+
+    if (andConditions.length) {
+      where.AND = andConditions;
     }
 
     return where;
@@ -398,21 +454,38 @@ export class BattlesService implements IBattlesService {
       });
 
       if (!battle.public && battle.userId !== requestingUserId) {
-        throw new ForbiddenException(
-          'Access denied: Battle is private and you are not the owner',
-        );
+        throw new ForbiddenException('Access denied: Battle is private');
       }
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException(`Battle with ID ${battleId} not found`);
-      }
-      if (error instanceof Error && error.name === 'NotFoundError') {
-        throw new NotFoundException(`Battle with ID ${battleId} not found`);
-      }
+      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
       throw error;
+    }
+  }
+
+  private handlePrismaError(error: unknown, message: string): void {
+    if (
+      (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') ||
+      (error instanceof Error && error.name === 'NotFoundError')
+    ) {
+      throw new NotFoundException(message);
+    }
+  }
+
+  private async upsertUserCharacter(
+    userId: string,
+    characterId: string,
+    name: string,
+    world: string,
+    icon: string,
+  ): Promise<void> {
+    try {
+      await this.prisma.userCharacter.upsert({
+        where: { userId_characterId_world: { userId, characterId, world } },
+        update: { name, icon, lastSeenAt: new Date() },
+        create: { userId, characterId, name, world, icon },
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to upsert character ${characterId} for user ${userId}`, error);
     }
   }
 
@@ -422,6 +495,11 @@ export class BattlesService implements IBattlesService {
     analysis: BattleAnalysis,
   ): Promise<BattleWithRelations> {
     try {
+      const userWarrior = analysis.warriors.find((w) => w.originalId === data.characterId);
+      if (userWarrior) {
+        await this.upsertUserCharacter(userId, data.characterId, userWarrior.name, data.world, userWarrior.icon);
+      }
+
       const battleData = {
         userId,
         accountId: data.accountId,
@@ -480,6 +558,7 @@ export class BattlesService implements IBattlesService {
               trueDamageDealt: warrior.trueDamageDealt,
               trueDamageTaken: warrior.trueDamageTaken,
               stigmaDamageDealt: warrior.stigmaDamageDealt,
+              stigmaDamageTaken: warrior.stigmaDamageTaken,
               passiveHealing: warrior.passiveHealing,
               activeHealing: warrior.activeHealing,
               armorPierces: warrior.armorPierces,
@@ -569,6 +648,190 @@ export class BattlesService implements IBattlesService {
       throw new Error(
         `R2 storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
+    }
+  }
+
+  async searchWarriors(
+    query: string,
+    userId: string,
+  ): Promise<{
+    warriors: Array<{ name: string; icon: string; prof: string; lvl: number }>;
+  }> {
+    try {
+      if (!query || query.trim().length < 2) {
+        return { warriors: [] };
+      }
+
+      const warriors = await this.prisma.battleWarrior.findMany({
+        where: {
+          battle: {
+            userId,
+          },
+          name: {
+            contains: query.trim(),
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          name: true,
+          icon: true,
+          prof: true,
+          lvl: true,
+        },
+        distinct: ['name'],
+        take: 10,
+        orderBy: {
+          name: 'asc',
+        },
+      });
+
+      this.logger.log(
+        `Found ${warriors.length} warriors matching "${query}" for user ${userId}`,
+      );
+
+      return { warriors };
+    } catch (error) {
+      this.logger.error('Failed to search warriors:', error);
+      throw error;
+    }
+  }
+
+  async getBattleAnalytics(
+    query: QueryBattleAnalyticsDto,
+    userId: string,
+  ): Promise<{
+    totalBattles: number;
+    wins: number;
+    losses: number;
+    winRatio: number;
+    totalPH: number;
+  }> {
+    try {
+      // Get character IDs to filter by
+      let characterIds: string[] = [];
+
+      if (query.characterId) {
+        // Verify the character belongs to the user
+        const userCharacter = await this.prisma.userCharacter.findFirst({
+          where: {
+            userId,
+            characterId: query.characterId,
+            ...(query.world && { world: query.world }),
+          },
+        });
+
+        if (!userCharacter) {
+          throw new NotFoundException(
+            `Character ${query.characterId} not found for user`,
+          );
+        }
+
+        characterIds = [query.characterId];
+      } else {
+        // Get all user's characters
+        const userCharacters = await this.prisma.userCharacter.findMany({
+          where: {
+            userId,
+            ...(query.world && { world: query.world }),
+          },
+          select: { characterId: true },
+        });
+
+        characterIds = userCharacters.map((c) => c.characterId);
+      }
+
+      if (characterIds.length === 0) {
+        return {
+          totalBattles: 0,
+          wins: 0,
+          losses: 0,
+          winRatio: 0,
+          totalPH: 0,
+        };
+      }
+
+      // Calculate date filter based on period
+      let startDate: Date | undefined;
+      if (query.period) {
+        const now = new Date();
+        const periodMap: Record<string, number> = {
+          '24h': 1,
+          '3d': 3,
+          '7d': 7,
+          '14d': 14,
+          '30d': 30,
+          '90d': 90,
+          '180d': 180,
+        };
+
+        const days = periodMap[query.period];
+        startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      }
+
+      // Build filter for battles
+      const where: Prisma.BattleWhereInput = {
+        userId,
+        ...(query.world && { world: query.world }),
+        ...(startDate && { createdAt: { gte: startDate } }),
+        warriors: {
+          some: {
+            originalId: { in: characterIds },
+          },
+        },
+      };
+
+      // Get all battles with warriors data
+      const battles = await this.prisma.battle.findMany({
+        where,
+        include: {
+          warriors: {
+            where: {
+              originalId: { in: characterIds },
+            },
+          },
+        },
+      });
+
+      // Calculate analytics
+      let wins = 0;
+      let losses = 0;
+      let totalPH = 0;
+
+      for (const battle of battles) {
+        const userWarrior = battle.warriors[0]; // We filtered for user's characters only
+
+        if (userWarrior) {
+          // Calculate PH
+          totalPH += userWarrior.ph;
+
+          // Determine if won or lost (exclude flee battles)
+          if (!battle.hasFlee) {
+            if (userWarrior.team === battle.winningTeam) {
+              wins++;
+            } else if (userWarrior.team === battle.losingTeam) {
+              losses++;
+            }
+          }
+        }
+      }
+
+      const totalBattles = wins + losses;
+      const winRatio = totalBattles > 0 ? wins / totalBattles : 0;
+
+      this.logger.log(
+        `Analytics for user ${userId}: ${totalBattles} battles, ${wins} wins, ${losses} losses, ${totalPH} PH`,
+      );
+
+      return {
+        totalBattles,
+        wins,
+        losses,
+        winRatio: Math.round(winRatio * 10000) / 100, // Round to 2 decimal places, as percentage
+        totalPH,
+      };
+    } catch (error) {
+      this.logger.error('Failed to retrieve battle analytics:', error);
+      throw error;
     }
   }
 }

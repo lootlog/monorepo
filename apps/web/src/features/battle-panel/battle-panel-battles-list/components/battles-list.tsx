@@ -1,7 +1,8 @@
-import {
-  useBattles,
+import type {
+  GetBattlesResponse,
   UseBattlesParams,
 } from "@/hooks/api/battle-log/use-battles";
+import type { BattleCharacter } from "@/hooks/api/battle-log/use-battle-characters";
 import { BattlesListEntry } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list-entry";
 import {
   Pagination,
@@ -12,48 +13,79 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@lootlog/ui/components/pagination";
-import { useRef, useEffect } from "react";
 import {
-  BattlesListFilters,
-  type BattleFilters,
-} from "./battles-list-filters";
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@lootlog/ui/components/empty";
+import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
+import { Swords } from "lucide-react";
+import { cn } from "@lootlog/ui/lib/utils";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 type BattlesListProps = {
+  battlesResponse?: GetBattlesResponse;
+  characters?: BattleCharacter[];
   params?: UseBattlesParams;
   onPageChange?: (page: number) => void;
   onFiltersChange?: (filters: BattleFilters) => void;
   showPagination?: boolean;
   showFilters?: boolean;
+  isLoading?: boolean;
 };
 
 export const BattlesList = ({
+  battlesResponse,
+  characters,
   params,
   onPageChange,
   onFiltersChange,
   showPagination = false,
   showFilters = false,
+  isLoading = false,
 }: BattlesListProps) => {
-  const { data: battlesResponse } = useBattles(params);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (containerRef.current && params?.page) {
-      containerRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  }, [params?.page]);
 
   const currentFilters: BattleFilters = {
     world: params?.world,
     type: params?.type,
     search: params?.search,
+    result: params?.result,
+    ph: params?.ph,
+    characterId: params?.characterId,
   };
 
   const handlePageClick = (page: number) => {
     if (onPageChange) {
       onPageChange(page);
+    }
+  };
+
+  const handleResultClick = (result: "won" | "lost" | "flee") => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        ...currentFilters,
+        result: [result],
+      });
+    }
+  };
+
+  const handleWorldClick = (world: string) => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        ...currentFilters,
+        world,
+      });
+    }
+  };
+
+  const handlePhClick = () => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        ...currentFilters,
+        ph: true,
+      });
     }
   };
 
@@ -63,7 +95,6 @@ export const BattlesList = ({
     const { page, totalPages } = battlesResponse.pagination;
     const items = [];
 
-    // Always show first page
     items.push(
       <PaginationItem key={1}>
         <PaginationLink
@@ -75,12 +106,10 @@ export const BattlesList = ({
       </PaginationItem>
     );
 
-    // Show ellipsis if needed
     if (page > 3) {
       items.push(<PaginationEllipsis key="ellipsis-start" />);
     }
 
-    // Show pages around current page
     for (
       let i = Math.max(2, page - 1);
       i <= Math.min(totalPages - 1, page + 1);
@@ -98,12 +127,10 @@ export const BattlesList = ({
       );
     }
 
-    // Show ellipsis if needed
     if (page < totalPages - 2) {
       items.push(<PaginationEllipsis key="ellipsis-end" />);
     }
 
-    // Always show last page if there's more than one page
     if (totalPages > 1) {
       items.push(
         <PaginationItem key={totalPages}>
@@ -121,18 +148,49 @@ export const BattlesList = ({
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col min-h-full">
+    <div className="flex flex-col h-full">
       {showFilters && onFiltersChange && (
         <BattlesListFilters
           filters={currentFilters}
           onFiltersChange={onFiltersChange}
+          characters={characters}
         />
       )}
 
-      <div className="flex-1">
-        {battlesResponse?.battles.map((battle) => (
-          <BattlesListEntry key={battle.id} battle={battle} />
-        ))}
+      <div
+        className={cn("flex-1", {
+          "flex items-center justify-center min-h-[70vh]":
+            isLoading || battlesResponse?.battles.length === 0,
+        })}
+      >
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center gap-3 p-8">
+            <Spinner className="size-8" />
+            <p className="text-sm text-muted-foreground">Ładowanie walk...</p>
+          </div>
+        ) : battlesResponse?.battles.length === 0 ? (
+          <Empty className="border-0">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Swords />
+              </EmptyMedia>
+              <EmptyTitle>Brak walk</EmptyTitle>
+              <EmptyDescription>
+                Nie znaleziono żadnych walk spełniających kryteria wyszukiwania
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          battlesResponse?.battles.map((battle) => (
+            <BattlesListEntry
+              key={battle.id}
+              battle={battle}
+              onResultClick={handleResultClick}
+              onWorldClick={handleWorldClick}
+              onPhClick={handlePhClick}
+            />
+          ))
+        )}
       </div>
 
       {showPagination &&
