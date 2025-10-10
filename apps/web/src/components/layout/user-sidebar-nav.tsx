@@ -1,15 +1,43 @@
 import { useSession } from "@/hooks/auth/use-session";
+import { LayoutDashboard, Settings, Swords } from "lucide-react";
+import { SidebarNav, MenuItem } from "./sidebar-nav";
+
+const menuItems: MenuItem[] = [
+  {
+    label: "Dashboard",
+    icon: <LayoutDashboard className="mr-1 h-4 w-4" />,
+    path: "",
+    available: true,
+    enabled: true,
+    divided: false,
+  },
+  {
+    label: "Panel walk",
+    icon: <Swords className="mr-1 h-4 w-4" />,
+    path: "/battle-panel",
+    available: true,
+    enabled: true,
+    divided: false,
+    badge: { content: "BETA", variant: "default" },
+  },
+  {
+    label: "Ustawienia",
+    icon: <Settings className="mr-1 h-4 w-4" />,
+    path: "/settings",
+    available: true,
+    enabled: true,
+    divided: true,
+  },
+];
 
 export const UserSidebarNav = () => {
   const { data: session } = useSession();
 
-  return (
-    <div className="flex flex-col w-full gap-1 flex-1">
-      <div className="h-14 min-h-14 flex flex-row items-center border-b mb-2 px-2 font-semibold">
-        <span className="ml-3 max-w-44 text-nowrap text-ellipsis overflow-hidden">
-          {session?.user?.name}
-        </span>
-      </div>
-    </div>
+  const header = (
+    <span className="ml-3 w-full text-nowrap text-ellipsis overflow-hidden">
+      Cześć, {session?.user?.name}! 👋
+    </span>
   );
+
+  return <SidebarNav items={menuItems} basePath="/@me" header={header} />;
 };

@@ -9,6 +9,7 @@ import { useMessagingHandlers } from "./use-messaging-handlers";
 import { useNpcProcessors } from "./use-npc-processors";
 import { useLootHandlers } from "./use-loot-handlers";
 import { useEventHandlers } from "./use-event-handlers";
+import { useBattleEventHandler } from "@/hooks/game-events/use-battle-event-handler";
 
 export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
   const { gameInitialized, characterId, accountId, world } = useGlobalStore(
@@ -76,6 +77,8 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
     isLootDistributionMessage,
   });
 
+  const { handleBattleEventsV2 } = useBattleEventHandler();
+
   const handleEvent = useCallback(
     (event: GameEvent) => {
       // Early return for invalid events
@@ -85,6 +88,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
       if (event.chat) handleChatEvents(event);
       if (event.d) handleDialogEvents(event);
       if (event.f) handleBattleEvents(event);
+      if (event.f) handleBattleEventsV2(event);
       if (event.npcs) handleNpcDetection(event);
       if (event.item) handleDialogLoot(event);
       if (event.npcs_del?.length) handleRespawnTimers(event);

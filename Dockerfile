@@ -37,7 +37,8 @@ RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     pnpm deploy --filter=@lootlog/auth --prod /prod/auth && \
     pnpm deploy --filter=@lootlog/search --prod /prod/search && \
     pnpm deploy --filter=@lootlog/discord-bot --prod /prod/discord-bot && \
-    pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway
+    pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway && \
+    pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service
 
 FROM base AS auth
 COPY --from=build /prod/auth /prod/auth
@@ -66,5 +67,11 @@ CMD [ "pnpm", "start" ]
 FROM base AS gateway
 COPY --from=build /prod/gateway /prod/gateway
 WORKDIR /prod/gateway
+EXPOSE 4000
+CMD [ "pnpm", "start" ]
+
+FROM base AS battlelog-service
+COPY --from=build /prod/battlelog-service /prod/battlelog-service
+WORKDIR /prod/battlelog-service
 EXPOSE 4000
 CMD [ "pnpm", "start" ]

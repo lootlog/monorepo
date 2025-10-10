@@ -1,5 +1,5 @@
-import { GuildsNav } from "@/components/layout/guilds-nav";
-import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { GuildsSelector } from "@/components/layout/guilds-selector";
+import { GuildsSidebarNav } from "@/components/layout/guilds-sidebar-nav";
 import { UserMenu } from "@/components/layout/user-menu";
 import {
   Sidebar,
@@ -18,8 +18,8 @@ export const GuildSidebar: FC = () => {
         <SidebarGroup className="p-0 h-full">
           <SidebarGroupContent className="h-full">
             <SidebarMenu className="flex flex-row h-full gap-0">
-              <GuildsNav />
-              <SidebarNav />
+              <GuildsSelector />
+              <GuildsSidebarNav />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
