@@ -43,5 +43,6 @@ export const mapBattleEventsToPayload = (
 
   //   console.log(result);
 
+  // @ts-ignore
   return result;
 };

@@ -1,4 +1,4 @@
-import { SharedRawBattleParsedEvent } from "./../types/battle";
+import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import {
   ATTACK_ACTIONS_SORT_ORDER,
   isAttackActionInContext,
@@ -84,7 +84,7 @@ const categorizeAction = (
 };
 
 export const parseActions = (
-  actions: SharedRawBattleParsedEvent["actions"]
+  actions: RawBattleParsedEvent["actions"]
 ): ParsedActions => {
   const parsedActions = createEmptyParsedActions();
   const allActionTypes = actions.map((action) => action.actionType);
