@@ -15,7 +15,7 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "api:generate"],
+      "dependsOn": ["^build", "api:generate", "battlelog:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "env": ["GAME_CLIENT_URL"],
       "outputs": [
