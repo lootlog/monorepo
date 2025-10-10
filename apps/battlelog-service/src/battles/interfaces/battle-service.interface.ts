@@ -1,7 +1,4 @@
-import type {
-  Battle,
-  BattleWarrior,
-} from '../../../generated/client';
+import type { Battle, BattleWarrior } from '../../../generated/client';
 import type { QueryBattlesDto } from '../dto/query-battles.dto';
 import type { UpdateBattleDto } from '../dto/update-battle.dto';
 import type { CreateBattleDto } from '../dto/create-battle.dto';
@@ -22,12 +19,6 @@ export interface CreateBattleParams {
 // Service method return types
 export interface CreateBattleResult {
   battleId: string;
-  analysis: BattleAnalysis;
-  battle: {
-    id: string;
-    createdAt: Date;
-    public: boolean;
-  };
 }
 
 export interface GetAllBattlesResult {

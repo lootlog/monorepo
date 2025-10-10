@@ -36,8 +36,6 @@ export const useBattleEventHandler = () => {
       battleStore.events.push(event);
 
       if (event.f.endBattle === 1 && battleStore.battleState === "in-battle") {
-        console.log("Battle ended. Events:", battleStore.events);
-
         const battleTurns = battleStore.events.reduce((acc: string[], curr) => {
           if (!curr.f || !curr.f.m) return acc;
 
