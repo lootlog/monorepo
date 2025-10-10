@@ -1,12 +1,12 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: auth-hpa
+  name: battlelog-service-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: auth
+    name: battlelog-service
   minReplicas: 1
   maxReplicas: 1
   metrics:
