@@ -80,6 +80,7 @@ export type Warrior = {
   legbonPunctureValue: number;
   legbonAnguishDamageTaken: number;
   stigmaDamageDealt: number;
+  stigmaDamageTaken: number;
   ph: number;
 };
 
@@ -127,8 +128,11 @@ export type UseBattlesParams = {
   page?: number;
   limit?: number;
   world?: string;
-  type?: string;
+  type?: Array<"solo" | "group">;
   search?: string;
+  result?: Array<"won" | "lost" | "flee">;
+  ph?: boolean;
+  characterId?: Array<string>;
 };
 
 export const useBattles = (params?: UseBattlesParams) => {
@@ -145,8 +149,17 @@ export const useBattles = (params?: UseBattlesParams) => {
       });
 
       if (params?.world) searchParams.append("world", params.world);
-      if (params?.type) searchParams.append("type", params.type);
+      if (params?.type && params.type.length > 0) {
+        params.type.forEach((t) => searchParams.append("type", t));
+      }
       if (params?.search) searchParams.append("search", params.search);
+      if (params?.result && params.result.length > 0) {
+        params.result.forEach((r) => searchParams.append("result", r));
+      }
+      if (params?.ph) searchParams.append("ph", "true");
+      if (params?.characterId && params.characterId.length > 0) {
+        params.characterId.forEach((id) => searchParams.append("characterId", id));
+      }
 
       return client.get<GetBattlesResponse>(`/battles/@me?${searchParams}`);
     },

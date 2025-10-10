@@ -6,14 +6,15 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { format } from "date-fns";
 import {
+  Award,
   Calendar,
   Clock,
   Earth,
   Lock,
-  ShieldCheck,
   Unlock,
   Users,
 } from "lucide-react";
+import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
 import { FC } from "react";
 import { formatSeconds } from "@/utils/date/format-seconds";
 import { Battle } from "@/hooks/api/battle-log/use-battles";
@@ -21,6 +22,7 @@ import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 export type BattleMetadataProps = {
   battle: Battle;
+  align?: "left" | "center";
   labels?: {
     startTime: string;
     duration: string;
@@ -34,6 +36,7 @@ export type BattleMetadataProps = {
 
 export const BattleMetadata: FC<BattleMetadataProps> = ({
   battle,
+  align = "center",
   labels = {
     startTime: "Battle start date and time",
     duration: "Battle duration",
@@ -51,10 +54,12 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
   return (
     <TooltipProvider>
-      <div className="flex flex-row gap-4 p-4 text-xs text-muted-foreground w-full justify-center">
+      <div
+        className={`flex flex-row flex-wrap gap-4 p-4 text-xs text-muted-foreground w-full ${align === "center" ? "justify-center" : "justify-start"}`}
+      >
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 cursor-help">
+            <div className="flex items-center gap-2 cursor-help whitespace-nowrap">
               <Calendar size="14" />
               {battle && format(battle.createdAt, "dd.MM.yyyy HH:mm")}
             </div>
@@ -66,7 +71,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help">
+            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
               <Clock size="14" />
               {formatSeconds(battle.duration)}
             </div>
@@ -78,7 +83,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help">
+            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
               <Users size="14" />
               {battle.type}
             </div>
@@ -90,7 +95,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help">
+            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
               {battle.public ? <Unlock size="14" /> : <Lock size="14" />}
               {battle.public ? labels.public : labels.private}
             </div>
@@ -104,7 +109,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 cursor-help">
+            <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
               <Earth size={14} /> {capitalizeFirstLetter(battle.world)}
             </div>
           </TooltipTrigger>
@@ -116,12 +121,12 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
         {warrior?.ph !== 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 cursor-help">
-                <ShieldCheck size={14} /> Punkty honoru: {warrior?.ph}
+              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                <Award size={14} /> Punkty honoru: {warrior?.ph}
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>
-              <p>Świat</p>
+              <p>Otrzymane lub stracone punkty honoru</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -129,8 +134,8 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
         {battle.hasFlee && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 cursor-help">
-                <ShieldCheck size={14} /> Ucieczka
+              <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
+                <EmergencyExitIcon size={14} /> Ucieczka
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>

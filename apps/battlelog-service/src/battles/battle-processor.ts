@@ -40,6 +40,7 @@ export type Warrior = {
   trueDamageDealt: number;
   trueDamageTaken: number;
   stigmaDamageDealt: number;
+  stigmaDamageTaken: number;
   passiveHealing: number;
   activeHealing: number;
   armorPierces: number;
@@ -100,16 +101,16 @@ export type StatisticEntry = {
 };
 
 export type BattleStatistics = {
-  topDamageDealer: StatisticEntry | null; // Najwięcej skutecznych obrażeń
-  topTank: StatisticEntry | null; // Najwięcej wytrzymanych obrażeń
-  bestEfficiency: StatisticEntry | null; // Najwyższy % penetracji pancerza
-  criticalMaster: StatisticEntry | null; // Najwięcej critów
-  evasionExpert: StatisticEntry | null; // Najwięcej uników
-  shieldWall: StatisticEntry | null; // Najwięcej bloków
-  damagePerTurn: StatisticEntry | null; // Najwyższe DPT
-  mostActive: StatisticEntry | null; // Najwięcej tur
-  legendaryWarrior: StatisticEntry | null; // Najwięcej legendary bonusów
-  untouchable: StatisticEntry | null; // Najwięcej ataków unikniętych/zablokowanych
+  topDamageDealer: StatisticEntry | null;
+  topTank: StatisticEntry | null;
+  bestEfficiency: StatisticEntry | null;
+  criticalMaster: StatisticEntry | null;
+  evasionExpert: StatisticEntry | null;
+  shieldWall: StatisticEntry | null;
+  damagePerTurn: StatisticEntry | null;
+  mostActive: StatisticEntry | null;
+  legendaryWarrior: StatisticEntry | null;
+  untouchable: StatisticEntry | null;
 };
 
 export type BattleAnalysis = {
@@ -164,13 +165,7 @@ export class BattleProcessor {
   }
 
   public extractAndParseMoves(events: CreateBattleDto['events']): ParsedMove[] {
-    const allMoves: string[] = [];
-
-    for (const event of events) {
-      if (event.f?.m?.length) {
-        allMoves.push(...event.f.m);
-      }
-    }
+    const allMoves = events.flatMap((event) => event.f?.m || []);
 
     return allMoves.map((move) => {
       const [attackerPart, defenderPart, ...actions] = move.split(';');
@@ -198,24 +193,12 @@ export class BattleProcessor {
       this.processOutcome(move);
 
       if (!move.actions.length) {
-        // Update HP tracking even if no actions
-        if (move.attackerId && move.attackerHpPercentage != null) {
-          this.lastHp.set(move.attackerId, move.attackerHpPercentage);
-        }
-        if (move.defenderId && move.defenderHpPercentage != null) {
-          this.lastHp.set(move.defenderId, move.defenderHpPercentage);
-        }
+        this.updateHpTracking(move);
         continue;
       }
 
-      const stepAction = move.actions.find(
-        (action) => action.actionType === 'step',
-      );
-      const tspellAction = move.actions.find(
-        (action) => action.actionType === 'tspell',
-      );
-      const hasSpell = !!tspellAction;
-      const hasStepAction = !!stepAction;
+      const tspellAction = move.actions.find((a) => a.actionType === 'tspell');
+      const hasStepAction = move.actions.some((a) => a.actionType === 'step');
 
       if (hasStepAction) {
         const attacker = this.warriors.get(move.attackerId!);
@@ -225,72 +208,58 @@ export class BattleProcessor {
         }
       }
 
-      if (hasSpell) {
-        // Tura ze spellem - zawsze liczymy
+      this.processTurnTracking(move, tspellAction);
+      this.processActions(move, !!tspellAction, battleMeta);
+      this.updateHpTracking(move);
+    }
+  }
+
+  private processTurnTracking(move: ParsedMove, tspellAction?: { actionType: string; param: string }) {
+    if (tspellAction) {
+      if (move.attackerId && move.defenderId) {
+        const attacker = this.warriors.get(move.attackerId);
+        if (attacker) {
+          attacker.turns++;
+          attacker.spellsUsed++;
+          const spellName = tspellAction.param || 'unknown';
+          attacker.spellsUsedMap[spellName] = (attacker.spellsUsedMap[spellName] || 0) + 1;
+        }
+      }
+
+      const skillId = tspellAction.param ? parseInt(tspellAction.param, 10) : 0;
+      this.remainingFollowUpAttacks = (skillId === 97 || skillId === 239) ? 2 : 1;
+      this.lastAttackerId = move.attackerId;
+    } else {
+      if (this.remainingFollowUpAttacks > 0 && move.attackerId === this.lastAttackerId) {
+        this.remainingFollowUpAttacks--;
+      } else {
         if (move.attackerId && move.defenderId) {
           const attacker = this.warriors.get(move.attackerId);
           if (attacker) {
             attacker.turns++;
-            attacker.spellsUsed++;
-
-            // Zlicz konkretny spell w mapie
-            const spellName = tspellAction.param || 'unknown';
-            attacker.spellsUsedMap[spellName] =
-              (attacker.spellsUsedMap[spellName] || 0) + 1;
+            attacker.normalAttacks++;
           }
         }
-
-        // Sprawdź czy spell ma follow-up ataki
-        const skillId = tspellAction.param
-          ? parseInt(tspellAction.param, 10)
-          : 0;
-        if (skillId === 97 || skillId === 239) {
-          // Te spelle mają 2 follow-up ataki
-          this.remainingFollowUpAttacks = 2;
-        } else {
-          // Standardowy spell ma 1 follow-up atak
-          this.remainingFollowUpAttacks = 1;
-        }
-        this.lastAttackerId = move.attackerId;
-      } else {
-        // Zwykły atak
-        if (
-          this.remainingFollowUpAttacks > 0 &&
-          move.attackerId === this.lastAttackerId
-        ) {
-          // To jest follow-up atak po spellu - nie liczymy jako tura
-          this.remainingFollowUpAttacks--;
-        } else {
-          // To jest normalna tura ze zwykłym atakiem
-          if (move.attackerId && move.defenderId) {
-            const attacker = this.warriors.get(move.attackerId);
-            if (attacker) {
-              attacker.turns++;
-              attacker.normalAttacks++;
-            }
-          }
-          this.remainingFollowUpAttacks = 0;
-        }
-        this.lastAttackerId = move.attackerId;
+        this.remainingFollowUpAttacks = 0;
       }
+      this.lastAttackerId = move.attackerId;
+    }
+  }
 
-      this.processActions(move, hasSpell, battleMeta);
-
-      // Update HP tracking after processing all actions
-      if (move.attackerId && move.attackerHpPercentage != null) {
-        const attacker = this.warriors.get(move.attackerId);
-        if (attacker && move.attackerHpPercentage <= 0) {
-          attacker.isDead = true;
-        }
-        this.lastHp.set(move.attackerId, move.attackerHpPercentage);
+  private updateHpTracking(move: ParsedMove) {
+    if (move.attackerId && move.attackerHpPercentage != null) {
+      const attacker = this.warriors.get(move.attackerId);
+      if (attacker && move.attackerHpPercentage <= 0) {
+        attacker.isDead = true;
       }
-      if (move.defenderId && move.defenderHpPercentage != null) {
-        const defender = this.warriors.get(move.defenderId);
-        if (defender && move.defenderHpPercentage <= 0) {
-          defender.isDead = true;
-        }
-        this.lastHp.set(move.defenderId, move.defenderHpPercentage);
+      this.lastHp.set(move.attackerId, move.attackerHpPercentage);
+    }
+    if (move.defenderId && move.defenderHpPercentage != null) {
+      const defender = this.warriors.get(move.defenderId);
+      if (defender && move.defenderHpPercentage <= 0) {
+        defender.isDead = true;
       }
+      this.lastHp.set(move.defenderId, move.defenderHpPercentage);
     }
   }
 
@@ -300,10 +269,10 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     const attacker = move.attackerId
-      ? this.warriors.get(move.attackerId)
+      ? this.warriors.get(move.attackerId) ?? null
       : null;
     const defender = move.defenderId
-      ? this.warriors.get(move.defenderId)
+      ? this.warriors.get(move.defenderId) ?? null
       : null;
 
     for (const { actionType, param } of move.actions) {
@@ -321,26 +290,18 @@ export class BattleProcessor {
       }
 
       // Obsługa utraty tury (txt nie ma attackerId/defenderId)
-      if (actionType === 'txt' && param.includes('utrata tury')) {
-        const warriorName = param.split(' - ')[0]?.trim();
-        if (warriorName) {
-          const warrior = this.findWarriorByName(warriorName);
+      if (actionType === 'txt') {
+        if (param.includes('utrata tury')) {
+          const warriorName = param.split(' - ')[0]?.trim();
+          const warrior = warriorName ? this.findWarrior(warriorName) : null;
           if (warrior) {
             warrior.turns++;
             warrior.turnsLost++;
           }
-        }
-        continue;
-      }
-
-      // Obsługa poddania się
-      if (actionType === 'txt' && param.includes('poddał walkę')) {
-        const warriorName = param.split(' poddał walkę')[0]?.trim();
-        if (warriorName) {
-          const warrior = this.findWarriorByName(warriorName);
-          if (warrior) {
-            warrior.surrendered = true;
-          }
+        } else if (param.includes('poddał walkę')) {
+          const warriorName = param.split(' poddał walkę')[0]?.trim();
+          const warrior = warriorName ? this.findWarrior(warriorName) : null;
+          if (warrior) warrior.surrendered = true;
         }
         continue;
       }
@@ -351,156 +312,50 @@ export class BattleProcessor {
       const [firstParam] = param.split(',');
       const firstValue = firstParam ? parseInt(firstParam, 10) : 0;
 
+      const damageDealtMap: Record<string, keyof Warrior> = {
+        '+dmgd': 'distanceDamage',
+        '+dmg': 'meleeDamage',
+        '+dmgo': 'auxiliaryDamage',
+        '+dmgf': 'fireDamage',
+        '+dmgc': 'frostDamage',
+        '+dmgl': 'lightningDamage',
+        '+thirdatt': 'thirdAttDamage',
+      };
+
+      if (damageDealtMap[actionType]) {
+        attacker.damageDealt += value;
+        (attacker[damageDealtMap[actionType]] as number) += value;
+        continue;
+      }
+
+      const damageTakenMap: Record<string, keyof Warrior> = {
+        '-dmgd': 'distanceDamageTaken',
+        '-dmg': 'meleeDamageTaken',
+        '-dmgo': 'auxiliaryDamageTaken',
+        '-dmgf': 'fireDamageTaken',
+        '-dmgc': 'frostDamageTaken',
+        '-dmgl': 'lightningDamageTaken',
+        '-thirdatt': 'thirdAttDamageTaken',
+      };
+
+      if (damageTakenMap[actionType]) {
+        attacker.damageDealtAfterDefensive += value;
+        if (defender) {
+          defender.damageTaken += value;
+          (defender[damageTakenMap[actionType]] as number) += value;
+          defender.flatDamageTaken += value;
+          this.tryCalculateMaxHp(move.defenderId!, value, move.defenderHpPercentage);
+        }
+        continue;
+      }
+
       switch (actionType) {
-        case '+dmgd':
-          attacker.damageDealt += value;
-          attacker.distanceDamage += value;
-          break;
-
-        case '+dmg':
-          attacker.damageDealt += value;
-          attacker.meleeDamage += value;
-          break;
-
-        case '+dmgo':
-          attacker.damageDealt += value;
-          attacker.auxiliaryDamage += value;
-          break;
-
-        case '+dmgf':
-          attacker.damageDealt += value;
-          attacker.fireDamage += value;
-          break;
-
-        case '+dmgc':
-          attacker.damageDealt += value;
-          attacker.frostDamage += value;
-          break;
-
-        case '+dmgl':
-          attacker.damageDealt += value;
-          attacker.lightningDamage += value;
-          break;
-
-        case '+thirdatt':
-          attacker.damageDealt += value;
-          attacker.thirdAttDamage += value;
-          break;
-
-        case '-dmgd':
-          attacker.damageDealtAfterDefensive += value;
-          if (defender) {
-            defender.damageTaken += value;
-            defender.distanceDamageTaken += value;
-            defender.flatDamageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
-          break;
-
-        case '-dmg':
-          attacker.damageDealtAfterDefensive += value;
-          if (defender) {
-            defender.damageTaken += value;
-            defender.meleeDamageTaken += value;
-            defender.flatDamageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
-          break;
-
-        case '-dmgo':
-          attacker.damageDealtAfterDefensive += value;
-          if (defender) {
-            defender.damageTaken += value;
-            defender.auxiliaryDamageTaken += value;
-            defender.flatDamageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
-          break;
-
-        case '-dmgf':
-          attacker.damageDealtAfterDefensive += value;
-          if (defender) {
-            defender.damageTaken += value;
-            defender.fireDamageTaken += value;
-            defender.flatDamageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
-          break;
-
-        case '-dmgc':
-          attacker.damageDealtAfterDefensive += value;
-          if (defender) {
-            defender.damageTaken += value;
-            defender.frostDamageTaken += value;
-            defender.flatDamageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
-          break;
-
-        case '-dmgl':
-          attacker.damageDealtAfterDefensive += value;
-          if (defender) {
-            defender.damageTaken += value;
-            defender.lightningDamageTaken += value;
-            defender.flatDamageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
-          break;
-
-        case '-thirdatt':
-          attacker.damageDealtAfterDefensive += value;
-          if (defender) {
-            defender.damageTaken += value;
-            defender.thirdAttDamageTaken += value;
-            defender.flatDamageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
-          break;
 
         case '+oth_dmg':
           if (hasSpell) {
-            attacker.damageDealt += firstValue;
-            attacker.trueDamageDealt += firstValue;
-            if (defender) {
-              defender.damageTaken += firstValue;
-              defender.trueDamageTaken += firstValue;
-            }
+            this.handleSpellTrueDamage(attacker, param, firstValue, defender);
           } else {
-            attacker.damageTaken += firstValue;
-            attacker.trueDamageTaken += firstValue;
-            attacker.reflectedDamageTaken += firstValue;
-
-            if (defender) {
-              defender.reflectedDamage += firstValue;
-            }
+            this.handleReflectedDamage(attacker, defender, firstValue);
           }
           break;
 
@@ -510,14 +365,7 @@ export class BattleProcessor {
 
         case '+taken_dmg':
           attacker.stigmaDamageDealt += value;
-          if (defender) {
-            defender.damageTaken += value;
-            this.tryCalculateMaxHp(
-              move.defenderId!,
-              value,
-              move.defenderHpPercentage,
-            );
-          }
+          if (defender) defender.stigmaDamageTaken += value;
           break;
 
         case '+pierce':
@@ -692,98 +540,144 @@ export class BattleProcessor {
     }
   }
 
+  private handleSpellTrueDamage(
+    attacker: Warrior,
+    param: string,
+    damage: number,
+    defender: Warrior | null,
+  ): void {
+    attacker.damageDealt += damage;
+    attacker.trueDamageDealt += damage;
+
+    const parts = param.split(',');
+    if (parts.length >= 3) {
+      const targetNameWithHp = parts[2].trim();
+      const hpMatch = targetNameWithHp.match(/\((\d+)%\)$/);
+      const targetHp = hpMatch ? parseInt(hpMatch[1], 10) : null;
+      const targetName = targetNameWithHp.split('(')[0].trim();
+
+      const found = this.findWarrior(targetName, true);
+      if (found) {
+        const [targetWarriorId, targetWarrior] = found;
+        targetWarrior.damageTaken += damage;
+        targetWarrior.trueDamageTaken += damage;
+        if (targetHp !== null) {
+          this.tryCalculateMaxHp(targetWarriorId, damage, targetHp);
+        }
+      }
+    } else if (defender) {
+      defender.damageTaken += damage;
+      defender.trueDamageTaken += damage;
+    }
+  }
+
+  private handleReflectedDamage(
+    attacker: Warrior,
+    defender: Warrior | null,
+    damage: number,
+  ): void {
+    attacker.damageTaken += damage;
+    attacker.trueDamageTaken += damage;
+    attacker.reflectedDamageTaken += damage;
+    if (defender) defender.reflectedDamage += damage;
+  }
+
   private initializeBattleWarriors(events: CreateBattleDto['events']): void {
     for (const event of events) {
       if (!event.f?.w) continue;
-
       for (const [id, warriorData] of Object.entries(event.f.w)) {
-        if (this.warriors.has(id)) continue;
-
-        this.warriors.set(id, {
-          turns: 0,
-          turnsLost: 0,
-          steps: 0,
-          normalAttacks: 0,
-          spellsUsed: 0,
-          spellsUsedMap: {},
-          originalId: warriorData.originalId.toString(),
-          name: warriorData.name,
-          lvl: warriorData.lvl,
-          prof: warriorData.prof,
-          icon: warriorData.icon,
-          team: warriorData.team,
-          isDead: false,
-          surrendered: false,
-          fled: false,
-          maxHp: 0,
-          damageDealt: 0,
-          distanceDamage: 0,
-          meleeDamage: 0,
-          auxiliaryDamage: 0,
-          fireDamage: 0,
-          frostDamage: 0,
-          lightningDamage: 0,
-          thirdAttDamage: 0,
-          damageDealtAfterDefensive: 0,
-          damageDealtAfterDefensivePercentage: 0,
-          damageTaken: 0,
-          distanceDamageTaken: 0,
-          meleeDamageTaken: 0,
-          auxiliaryDamageTaken: 0,
-          fireDamageTaken: 0,
-          frostDamageTaken: 0,
-          lightningDamageTaken: 0,
-          thirdAttDamageTaken: 0,
-          flatDamageTaken: 0,
-          rageDamageDealt: 0,
-          trueDamageDealt: 0,
-          trueDamageTaken: 0,
-          stigmaDamageDealt: 0,
-          passiveHealing: 0,
-          activeHealing: 0,
-          armorPierces: 0,
-          criticalHits: 0,
-          reducedArmor: 0,
-          reducedPoisonResistance: 0,
-          magicResistanceDestroyed: 0,
-          woundDamageTaken: 0,
-          legbonAnguishDamageTaken: 0,
-          poisonDamageTaken: 0,
-          injureDamageTaken: 0,
-          injures: 0,
-          critWoundDamageTaken: 0,
-          evasions: 0,
-          attacksEvaded: 0,
-          counters: 0,
-          fastArrows: 0,
-          firePassiveDamageTaken: 0,
-          lightningPassiveDamageTaken: 0,
-          destroyedEnergy: 0,
-          destroyedMana: 0,
-          blockedDamage: 0,
-          blocks: 0,
-          attacksBlocked: 0,
-          regeneratedEnergy: 0,
-          regeneratedMana: 0,
-          reflectedDamage: 0,
-          reflectedDamageTaken: 0,
-          legbonCurse: 0,
-          legbonCleanse: 0,
-          legbonLastheal: 0,
-          legbonLasthealValue: 0,
-          legbonGlare: 0,
-          legbonHolytouch: 0,
-          legbonHolytouchValue: 0,
-          legbonCritredValue: 0,
-          legbonFacadeValue: 0,
-          legbonVerycrit: 0,
-          legbonAnguish: 0,
-          legbonPunctureValue: 0,
-          legbons: 0,
-          ph: 0,
-        });
+        if (!this.warriors.has(id)) {
+          this.warriors.set(id, this.createWarrior(warriorData));
+        }
       }
     }
+  }
+
+  private createWarrior(data: { originalId: number; name: string; lvl: number; prof: string; icon: string; team: number }): Warrior {
+    return {
+      turns: 0,
+      turnsLost: 0,
+      steps: 0,
+      normalAttacks: 0,
+      spellsUsed: 0,
+      spellsUsedMap: {},
+      originalId: data.originalId.toString(),
+      name: data.name,
+      lvl: data.lvl,
+      prof: data.prof,
+      icon: data.icon,
+      team: data.team,
+      isDead: false,
+      surrendered: false,
+      fled: false,
+      maxHp: 0,
+      damageDealt: 0,
+      distanceDamage: 0,
+      meleeDamage: 0,
+      auxiliaryDamage: 0,
+      fireDamage: 0,
+      frostDamage: 0,
+      lightningDamage: 0,
+      thirdAttDamage: 0,
+      damageDealtAfterDefensive: 0,
+      damageDealtAfterDefensivePercentage: 0,
+      damageTaken: 0,
+      distanceDamageTaken: 0,
+      meleeDamageTaken: 0,
+      auxiliaryDamageTaken: 0,
+      fireDamageTaken: 0,
+      frostDamageTaken: 0,
+      lightningDamageTaken: 0,
+      thirdAttDamageTaken: 0,
+      flatDamageTaken: 0,
+      rageDamageDealt: 0,
+      trueDamageDealt: 0,
+      trueDamageTaken: 0,
+      stigmaDamageDealt: 0,
+      stigmaDamageTaken: 0,
+      passiveHealing: 0,
+      activeHealing: 0,
+      armorPierces: 0,
+      criticalHits: 0,
+      reducedArmor: 0,
+      reducedPoisonResistance: 0,
+      magicResistanceDestroyed: 0,
+      woundDamageTaken: 0,
+      legbonAnguishDamageTaken: 0,
+      poisonDamageTaken: 0,
+      injureDamageTaken: 0,
+      injures: 0,
+      critWoundDamageTaken: 0,
+      evasions: 0,
+      attacksEvaded: 0,
+      counters: 0,
+      fastArrows: 0,
+      firePassiveDamageTaken: 0,
+      lightningPassiveDamageTaken: 0,
+      destroyedEnergy: 0,
+      destroyedMana: 0,
+      blockedDamage: 0,
+      blocks: 0,
+      attacksBlocked: 0,
+      regeneratedEnergy: 0,
+      regeneratedMana: 0,
+      reflectedDamage: 0,
+      reflectedDamageTaken: 0,
+      legbonCurse: 0,
+      legbonCleanse: 0,
+      legbonLastheal: 0,
+      legbonLasthealValue: 0,
+      legbonGlare: 0,
+      legbonHolytouch: 0,
+      legbonHolytouchValue: 0,
+      legbonCritredValue: 0,
+      legbonFacadeValue: 0,
+      legbonVerycrit: 0,
+      legbonAnguish: 0,
+      legbonPunctureValue: 0,
+      legbons: 0,
+      ph: 0,
+    };
   }
 
   private calculateBattleDuration(events: CreateBattleDto['events']): number {
@@ -816,42 +710,28 @@ export class BattleProcessor {
   }
 
   private determineOutcomeTeams() {
-    const normalize = (s: string) =>
-      s
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-
     const splitNames = (s: string): string[] =>
-      s
-        .split(',')
-        .map((n) => n.trim())
-        .filter(Boolean);
+      s.split(',').map((n) => n.trim()).filter(Boolean);
 
     const getTeamFromNames = (names: string[]): number | null => {
       if (names.length === 0) return null;
       const tokens = names.map((n) => n.trim());
-      const lowerSet = new Set(tokens.map((n) => normalize(n)));
+      const lowerSet = new Set(tokens.map((n) => this.normalize(n)));
       const idSet = new Set(tokens.filter((t) => /^\d+$/.test(t)));
       const teams: number[] = [];
+
       for (const [id, w] of this.warriors.entries()) {
-        // Match by warrior map key (id)
-        if (idSet.has(id)) {
+        if (idSet.has(id) || idSet.has(String(w.originalId))) {
           teams.push(w.team);
           continue;
         }
-        // Match by originalId string
-        if (idSet.has(String(w.originalId))) {
-          teams.push(w.team);
-          continue;
-        }
-        // Match by name (case-insensitive)
-        if (lowerSet.has(normalize(w.name))) {
+        if (lowerSet.has(this.normalize(w.name))) {
           teams.push(w.team);
         }
       }
+
       if (teams.length === 0) return null;
-      // Prefer the most frequent team if multiple
+
       const counts = teams.reduce<Record<number, number>>((acc, t) => {
         acc[t] = (acc[t] ?? 0) + 1;
         return acc;
@@ -866,14 +746,15 @@ export class BattleProcessor {
     let winningTeam = getTeamFromNames(winnerNames);
     let losingTeam = getTeamFromNames(loserNames);
 
+    const inferTeam = (team: number | null): number | null =>
+      team === 1 ? 2 : team === 2 ? 1 : null;
+
     if (winningTeam == null && losingTeam != null) {
-      // Infer the other team if possible (assuming two-team battle, teams labeled 1 and 2)
-      winningTeam = losingTeam === 1 ? 2 : losingTeam === 2 ? 1 : null;
+      winningTeam = inferTeam(losingTeam);
     } else if (losingTeam == null && winningTeam != null) {
-      losingTeam = winningTeam === 1 ? 2 : winningTeam === 2 ? 1 : null;
+      losingTeam = inferTeam(winningTeam);
     }
 
-    // Fallbacks based on last known HP and aggregate stats to ensure we always set teams
     if (winningTeam == null || losingTeam == null) {
       const teams = Array.from(this.warriors.entries()).reduce(
         (acc, [id, w]) => {
@@ -936,26 +817,32 @@ export class BattleProcessor {
     for (const warrior of this.warriors.values()) {
       warrior.damageDealtAfterDefensivePercentage =
         warrior.damageDealt > 0
-          ? Math.round(
-              (warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000,
-            ) / 100
+          ? Math.round((warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000) / 100
           : 0;
       warrior.legbons = this.getLegendaryTotal(warrior);
+
+      if (warrior.ph !== 0) {
+        const isWinning = warrior.team === this.battleOutcome.winningTeam;
+        const isLosing = warrior.team === this.battleOutcome.losingTeam;
+        if ((isLosing && warrior.ph > 0) || (isWinning && warrior.ph < 0)) {
+          warrior.ph = -warrior.ph;
+        }
+      }
     }
   }
 
-  private findWarriorByName(name: string): Warrior | null {
-    const normalize = (s: string) =>
-      s
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+  private normalize(s: string): string {
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
 
-    const normalizedName = normalize(name);
+  private findWarrior(name: string): Warrior | null;
+  private findWarrior(name: string, withId: true): [string, Warrior] | null;
+  private findWarrior(name: string, withId = false): Warrior | [string, Warrior] | null {
+    const normalizedName = this.normalize(name);
 
-    for (const warrior of this.warriors.values()) {
-      if (normalize(warrior.name) === normalizedName) {
-        return warrior;
+    for (const [id, warrior] of this.warriors.entries()) {
+      if (this.normalize(warrior.name) === normalizedName) {
+        return withId ? [id, warrior] : warrior;
       }
     }
 
@@ -1014,42 +901,23 @@ export class BattleProcessor {
     };
 
     return {
-      // Top Damage Dealer - najwięcej skutecznych obrażeń
       topDamageDealer: findTop(warriors, (w) => w.damageDealtAfterDefensive),
-
-      // Top Tank - najwięcej wytrzymanych obrażeń
       topTank: findTop(warriors, (w) => w.damageTaken),
-
-      // Best Efficiency - najwyższy % penetracji pancerza
       bestEfficiency: findTop(
         warriors.filter((w) => w.damageDealt > 0),
         (w) => w.damageDealtAfterDefensivePercentage,
         (v) => `${v.toFixed(2)}%`,
       ),
-
-      // Critical Master - najwięcej critów
       criticalMaster: findTop(warriors, (w) => w.criticalHits),
-
-      // Evasion Expert - najwięcej uników
       evasionExpert: findTop(warriors, (w) => w.evasions),
-
-      // Shield Wall - najwięcej bloków
       shieldWall: findTop(warriors, (w) => w.blocks),
-
-      // Damage Per Turn - najwyższe DPT
       damagePerTurn: findTop(
         activeWarriors,
         (w) => (w.turns > 0 ? w.damageDealtAfterDefensive / w.turns : 0),
         (v) => v.toFixed(1),
       ),
-
-      // Most Active - najwięcej tur
       mostActive: findTop(warriors, (w) => w.turns),
-
-      // Legendary Warrior - najwięcej legendary bonusów
       legendaryWarrior: findTop(warriors, this.getLegendaryTotal),
-
-      // Untouchable - najwięcej ataków unikniętych/zablokowanych
       untouchable: findTop(warriors, (w) => w.evasions + w.blocks),
     };
   }

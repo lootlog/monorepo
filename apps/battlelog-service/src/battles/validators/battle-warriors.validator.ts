@@ -19,8 +19,15 @@ export function ValidateWarriorsRecord(validationOptions?: ValidationOptions) {
             return false;
           }
 
+          const teams = new Set<number>();
+
           for (const [key, warrior] of Object.entries(value)) {
             if (typeof key !== 'string') {
+              return false;
+            }
+
+            // Reject battles with NPC warriors (keys starting with minus sign)
+            if (key.startsWith('-')) {
               return false;
             }
 
@@ -35,6 +42,16 @@ export function ValidateWarriorsRecord(validationOptions?: ValidationOptions) {
             if (errors.length > 0) {
               return false;
             }
+
+            // Collect team numbers
+            if ('team' in warrior && typeof warrior.team === 'number') {
+              teams.add(warrior.team);
+            }
+          }
+
+          // Reject battles with only one team
+          if (teams.size <= 1) {
+            return false;
           }
 
           return true;

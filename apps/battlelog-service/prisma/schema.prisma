@@ -35,6 +35,22 @@ model Battle {
     @@map("battles")
 }
 
+model UserCharacter {
+    id        String   @id @default(cuid())
+    userId    String
+    characterId String // originalId from the game
+    name      String
+    world     String
+    icon      String   @default("")
+    lastSeenAt DateTime @default(now())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, characterId, world])
+    @@index([userId])
+    @@map("user_characters")
+}
+
 model BattleWarrior {
     id       String @id @default(cuid())
     battleId String
@@ -83,6 +99,7 @@ model BattleWarrior {
     trueDamageDealt                     Int   @default(0)
     trueDamageTaken                     Int   @default(0)
     stigmaDamageDealt                   Int   @default(0)
+    stigmaDamageTaken                   Int   @default(0)
 
     // Healing stats
     passiveHealing Int @default(0)

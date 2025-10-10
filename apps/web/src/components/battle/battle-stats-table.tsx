@@ -94,8 +94,12 @@ export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
   };
 
   const sortedWarriors = useMemo(() => {
-    return [...battle.warriors].sort((a, b) => a.team - b.team);
-  }, [battle.warriors]);
+    return [...battle.warriors].sort((a, b) => {
+      if (a.team === userTeam && b.team !== userTeam) return -1;
+      if (a.team !== userTeam && b.team === userTeam) return 1;
+      return a.team - b.team;
+    });
+  }, [battle.warriors, userTeam]);
 
   const currentColumns = useMemo(() => {
     return getBattleStatsTableColumns(

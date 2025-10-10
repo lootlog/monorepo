@@ -93,6 +93,9 @@ export const DamageDealtBreakdown: FC<DamageDealtBreakdownProps> = ({
         Szczegółowy podział zadanych obrażeń - {warrior.name} - (nie bierze pod
         uwagę pasywnych obrażeń np. od trucizny lub gr)
       </h4>
+      <p className="text-xs text-muted-foreground mb-2">
+        Uwaga: Piętno bestii to dodatkowe obrażenia (nie wliczone do sumy)
+      </p>
       <Table className="text-sm">
         <TableHeader>
           <TableRow className="hover:bg-transparent">

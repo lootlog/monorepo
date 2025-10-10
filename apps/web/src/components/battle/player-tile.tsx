@@ -56,8 +56,8 @@ export const PlayerTile: FC<PlayerTileProps> = ({
         </TooltipTrigger>
         <TooltipContent>
           <p>
-            {name} &nbsp;({lvl}
-            {prof?.charAt(0).toLowerCase()})
+            {name}
+            {lvl && `(${lvl}${prof?.charAt(0).toLowerCase()})`}
           </p>
         </TooltipContent>
       </Tooltip>
