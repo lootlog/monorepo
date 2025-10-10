@@ -1,4 +1,3 @@
-import { cn } from "@lootlog/ui/lib/utils";
 import { FC } from "react";
 import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
@@ -93,7 +92,9 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
             <div className="grid grid-cols-3 items-center justify-items-center">
               <div>
                 <AnimatedTrophy
-                  show={battle.winningTeam === leftTeamNumber && !battle.hasFlee}
+                  show={
+                    battle.winningTeam === leftTeamNumber && !battle.hasFlee
+                  }
                   isUserTeamWinner={userTeam?.team === leftTeamNumber}
                 />
               </div>
@@ -102,7 +103,9 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
               </div>
               <div>
                 <AnimatedTrophy
-                  show={battle.winningTeam === rightTeamNumber && !battle.hasFlee}
+                  show={
+                    battle.winningTeam === rightTeamNumber && !battle.hasFlee
+                  }
                   isUserTeamWinner={userTeam?.team === rightTeamNumber}
                 />
               </div>
