@@ -66,6 +66,11 @@ export const DamageBreakdown: FC<DamageBreakdownProps> = ({ warrior }) => {
       color: "text-purple-400",
     },
     {
+      type: "Obrażenia od głębokich ran",
+      value: warrior.woundDamageTaken,
+      color: "text-green-600",
+    },
+    {
       type: "Obrażenia od trucizny",
       value: warrior.poisonDamageTaken,
       color: "text-green-600",
