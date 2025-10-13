@@ -7,6 +7,8 @@ import {
   forwardRef,
   Logger,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Guild, Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
@@ -48,30 +50,43 @@ export class GuildsService {
         Permission.LOOTLOG_READ,
       ]);
     } else {
-      const discordGuilds = await this.discordService.getUserGuilds(userId);
+      try {
+        const discordGuilds = await this.discordService.getUserGuilds(userId);
 
-      if (!discordGuilds || discordGuilds.length === 0) {
-        this.logger.warn(
-          `No guilds found for user ${userId} with Discord ID ${discordId}`,
-        );
-        return [];
-      }
+        if (!discordGuilds || discordGuilds.length === 0) {
+          this.logger.warn(
+            `No guilds found for user ${userId} with Discord ID ${discordId}`,
+          );
+          return [];
+        }
 
-      const discordGuildIds = discordGuilds.map((guild) => guild.id);
+        const discordGuildIds = discordGuilds.map((guild) => guild.id);
 
-      guilds = await this.prisma.guild.findMany({
-        where: {
-          id: { in: discordGuildIds },
-          active: true,
-        },
-      });
+        guilds = await this.prisma.guild.findMany({
+          where: {
+            id: { in: discordGuildIds },
+            active: true,
+          },
+        });
 
-      const comparedGuilds = guilds.every((guild) => {
-        return discordGuildIds.includes(guild.id);
-      });
+        const comparedGuilds = guilds.every((guild) => {
+          return discordGuildIds.includes(guild.id);
+        });
 
-      if (!comparedGuilds) {
-        await this.discordService.clearUserGuildIdsCache(userId);
+        if (!comparedGuilds) {
+          await this.discordService.clearUserGuildIdsCache(userId);
+        }
+      } catch (error) {
+        if (
+          error instanceof HttpException &&
+          error.getStatus() === HttpStatus.UNAUTHORIZED
+        ) {
+          this.logger.warn(
+            `User authentication failed for userId: ${userId}, returning empty guilds`,
+          );
+          return [];
+        }
+        throw error;
       }
     }
 
@@ -97,25 +112,38 @@ export class GuildsService {
   }
 
   async getManageableUserGuilds(discordId: string, userId: string) {
-    const discordGuilds = await this.discordService.getUserGuilds(userId);
+    try {
+      const discordGuilds = await this.discordService.getUserGuilds(userId);
 
-    if (!discordGuilds || discordGuilds.length === 0) {
-      this.logger.warn(
-        `No guilds found for user ${userId} with Discord ID ${discordId}`,
-      );
-      return [];
+      if (!discordGuilds || discordGuilds.length === 0) {
+        this.logger.warn(
+          `No guilds found for user ${userId} with Discord ID ${discordId}`,
+        );
+        return [];
+      }
+
+      return discordGuilds
+        .filter((guild) => parseInt(guild.permissions, 10) & 0x8)
+        .map((guild) => {
+          return {
+            id: guild.id,
+            name: guild.name,
+            icon: guild.icon,
+            ownerId: guild.owner_id,
+          };
+        });
+    } catch (error) {
+      if (
+        error instanceof HttpException &&
+        error.getStatus() === HttpStatus.UNAUTHORIZED
+      ) {
+        this.logger.warn(
+          `User authentication failed for userId: ${userId}, returning empty guilds`,
+        );
+        return [];
+      }
+      throw error;
     }
-
-    return discordGuilds
-      .filter((guild) => parseInt(guild.permissions, 10) & 0x8)
-      .map((guild) => {
-        return {
-          id: guild.id,
-          name: guild.name,
-          icon: guild.icon,
-          ownerId: guild.owner_id,
-        };
-      });
   }
 
   async getGuildById(idOrVanityURL: string) {
@@ -181,7 +209,7 @@ export class GuildsService {
       guildId: guild.id,
     });
 
-    if (!member.active) {
+    if (!member || !member.active) {
       throw new ForbiddenException();
     }
 
