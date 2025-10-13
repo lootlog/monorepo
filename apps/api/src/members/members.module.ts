@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MembersService } from './members.service';
+import { MembersConsumer } from './members.consumer';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
 import { RolesModule } from 'src/roles/roles.module';
@@ -23,7 +24,7 @@ import { PrismaModule } from 'src/db/prisma.module';
     PrismaModule,
   ],
   controllers: [MembersController],
-  providers: [MembersService, RetryService],
+  providers: [MembersService, MembersConsumer, RetryService],
   exports: [MembersService],
 })
 export class MembersModule {}

@@ -20,6 +20,7 @@ import { RedisModule } from 'src/lib/redis/redis.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { DiscordModule } from './discord/discord.module';
 import { AuthModule } from './auth/auth.module';
+import { CircuitBreakerModule } from 'src/lib/circuit-breaker/circuit-breaker.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
       inject: [ConfigService],
     }),
     ConfigModule.forRoot(APP_CONFIG),
+    CircuitBreakerModule,
     UsersModule,
     TimersModule,
     LootsModule,

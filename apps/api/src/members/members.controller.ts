@@ -61,4 +61,28 @@ export class MembersController {
   async getGuildMembers(@GuildData() guild: Guild) {
     return this.membersService.getGuildMembers(guild.id);
   }
+
+  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @UseGuards(PermissionsGuard)
+  @Post('refresh-all')
+  async refreshAllMembers(
+    @GuildData() guild: Guild,
+    @DiscordId() discordId: string,
+  ) {
+    return this.membersService.createBulkRefreshJob(guild.id, discordId);
+  }
+
+  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @UseGuards(PermissionsGuard)
+  @Get('refresh-jobs/latest')
+  async getLatestRefreshJob(@GuildData() guild: Guild) {
+    return this.membersService.getLatestRefreshJob(guild.id);
+  }
+
+  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @UseGuards(PermissionsGuard)
+  @Get('refresh-jobs/:jobId')
+  async getRefreshJobStatus(@Param('jobId') jobId: string) {
+    return this.membersService.getRefreshJobStatus(parseInt(jobId, 10));
+  }
 }

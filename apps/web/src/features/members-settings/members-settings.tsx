@@ -8,6 +8,7 @@ import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { GuildMember } from "@/hooks/api/use-guild-member";
 import { MembersPanelContent } from "@/features/members-settings/components/members-panel";
 import { MemberItem } from "@/features/members-settings/components/member-item";
+import { RefreshMembersButton } from "@/features/members-settings/components/refresh-members-button";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { useGuild } from "@/hooks/api/use-guild";
 
@@ -46,10 +47,15 @@ export const MembersSettings = () => {
   return (
     <div className="h-full flex flex-col min-h-0">
       <div className="p-4 pb-6">
-        <div className="text-lg font-semibold">Ustawienia członków</div>
-        <div className="text-sm text-gray-500">
-          Ustawienia członków, którzy mogą być przypisani do ról na serwerze
-          Discord. Tutaj możesz przypisać uprawnienia do ról.
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-lg font-semibold">Ustawienia członków</div>
+            <div className="text-sm text-gray-500">
+              Ustawienia członków, którzy mogą być przypisani do ról na serwerze
+              Discord. Tutaj możesz przypisać uprawnienia do ról.
+            </div>
+          </div>
+          <RefreshMembersButton />
         </div>
       </div>
       <div className="p-4 border-t box-border">

@@ -273,3 +273,26 @@ model UserSettings {
 
   @@index([userId])
 }
+
+enum RefreshJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model MemberRefreshJob {
+  id               Int              @id @default(autoincrement())
+  guildId          String
+  requestedBy      String
+  status           RefreshJobStatus @default(PENDING)
+  totalMembers     Int              @default(0)
+  processedMembers Int              @default(0)
+  failedMembers    Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  completedAt      DateTime?
+
+  @@index([guildId])
+  @@index([status])
+}

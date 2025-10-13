@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
 import { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
+import { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
@@ -100,5 +101,11 @@ export class GatewayService {
 
   async invalidatePlayerCache(discordId: string) {
     await this.redis.del(discordId);
+  }
+
+  async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
   }
 }

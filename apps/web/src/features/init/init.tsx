@@ -11,7 +11,7 @@ export const Init: React.FC = () => {
 
   useEffect(() => {
     if (guildData) {
-      navigate({ to: `/${guildData.id}` as any });
+      navigate({ to: `/${guildData.id}` });
     }
   }, [navigate, guildData]);
 
