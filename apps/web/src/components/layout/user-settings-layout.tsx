@@ -1,7 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import { useGuildId } from "@/hooks/use-guild-id";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "@tanstack/react-router";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
 
 const NAV_ELEMENTS = [
@@ -18,8 +17,6 @@ const NAV_ELEMENTS = [
 ];
 
 export const UserSettingsLayout: React.FC = () => {
-  const guildId = useGuildId();
-
   return (
     <div className="flex flex-row w-full h-full min-h-0">
       <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
@@ -31,7 +28,7 @@ export const UserSettingsLayout: React.FC = () => {
         </PageHeader>
         <HorizontalMenu
           items={NAV_ELEMENTS}
-          basePath={`/${guildId}`}
+          basePath={`/@me`}
           ariaLabel="Ustawienia"
         />
         <div className="flex-1 min-h-0 flex overflow-hidden">

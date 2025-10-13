@@ -1,9 +1,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearch } from "@tanstack/react-router";
 import { Player } from "@/hooks/api/use-guild-players";
 import { Npc } from "@/hooks/api/use-npcs";
 import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
-import { parse, stringify } from "qs";
+import { stringify } from "qs";
 import { useGuildId } from "@/hooks/use-guild-id";
 import { useGuildContext } from "@/hooks/use-guild-context";
 import { useApiClient } from "@/hooks/api/use-api-client";
@@ -71,12 +71,10 @@ export type UseLootsErrorResponse = {
 export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
   const guildId = useGuildId();
   const { client } = useApiClient();
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, unknown>;
   const { world } = useGuildContext();
 
-  const { npcs, npcTypes, rarities, players } = parse(searchParams.toString(), {
-    ignoreQueryPrefix: true,
-  });
+  const { npcs, npcTypes, rarities, players } = searchParams;
 
   const queryParams = {
     limit,

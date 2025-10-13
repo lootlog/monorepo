@@ -2,10 +2,10 @@ import { BattleLog, BattleStatsTable } from "@/components/battle";
 import { BattleOverview } from "@/features/battle-panel/battle-panel-single-battle/components/battle-overview";
 import { useBattle } from "@/hooks/api/battle-log/use-battle";
 import { useBattleRaw } from "@/hooks/api/battle-log/use-battle-raw";
-import { useParams } from "react-router-dom";
+import { useParams } from "@tanstack/react-router";
 
 export const BattlePanelSingleBattle = () => {
-  const { battleId } = useParams<{ battleId: string }>();
+  const { battleId } = useParams({ from: "/_authenticated/@me/battle-panel/battles/$battleId" });
   const { data: battle } = useBattle({ battleId });
   const { data: rawBattle } = useBattleRaw({ battleId });
 

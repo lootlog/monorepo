@@ -3,7 +3,7 @@ import { InstallAddonModal } from "@/components/common/install-addon-modal/insta
 
 import { Toaster } from "@lootlog/ui/components/sonner";
 
-import { Outlet } from "react-router-dom";
+import { Outlet } from "@tanstack/react-router";
 
 export const Layout: React.FC = () => {
   return (

@@ -5,7 +5,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Sword } from "lucide-react";
 import { FC } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { BattleMetadata } from "@/components/battle/battle-metadata";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
@@ -72,7 +72,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   return (
     <Link
       key={battle.id}
-      to={`/@me/battle-panel/battles/${battle.id}`}
+      to={`/@me/battle-panel/battles/${battle.id}` as any}
       className="block"
     >
       <div
