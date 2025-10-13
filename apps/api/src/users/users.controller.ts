@@ -12,15 +12,6 @@ import { UsersService } from 'src/users/users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('/@me/scopes')
-  @ApiOperation({ summary: 'Get user IDP token scopes', description: 'Retrieve authentication token scopes for the user' })
-  @ApiResponse({ status: 200, description: 'User token scopes' })
-  @ApiResponse({ status: 401, description: 'IDP token has expired' })
-  @ApiResponse({ status: 503, description: 'Auth service unavailable' })
-  async getUserIdpTokenScopes(@UserId() userId: string) {
-    return this.usersService.getUserIdpTokenScopes(userId);
-  }
-
   @Get('/@me/preferences')
   @ApiOperation({ summary: 'Get user preferences', description: 'Retrieve user preferences' })
   @ApiResponse({ status: 200, description: 'User preferences' })

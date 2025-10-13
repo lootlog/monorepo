@@ -49,4 +49,28 @@ authController.get("/verify", async (c) => {
   return c.json({ status: "OK" });
 });
 
+authController.get("/@me/scopes", async (c) => {
+  const user = c.get("user");
+
+  if (!user) return c.body(null, 401);
+
+  const token = await auth.api.getAccessToken({
+    body: {
+      providerId: "discord",
+      userId: user.id,
+    },
+  });
+
+  if (!token || !token.accessToken) {
+    return c.json({ error: "Failed to retrieve IDP token" }, 503);
+  }
+
+  const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
+  if (expiresAt && expiresAt < new Date()) {
+    return c.json({ error: "IDP token has expired. Please reconnect your account." }, 401);
+  }
+
+  return c.json(token.scopes || []);
+});
+
 export { authController };
