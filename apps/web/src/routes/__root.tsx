@@ -3,6 +3,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { GlobalContextProvider } from "@/contexts/global-context";
+import { GatewayProvider } from "@/contexts/gateway-context";
 import { ThemeProvider } from "next-themes";
 
 import "@lootlog/ui/globals.css";
@@ -27,8 +28,10 @@ function RootComponent() {
       <NuqsAdapter>
         <GlobalContextProvider>
           <QueryClientProvider client={queryClient}>
-            <Outlet />
-            <ReactQueryDevtools initialIsOpen={false} />
+            <GatewayProvider>
+              <Outlet />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </GatewayProvider>
           </QueryClientProvider>
         </GlobalContextProvider>
       </NuqsAdapter>

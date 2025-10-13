@@ -11,6 +11,8 @@ export type GuildMember = {
   roles: GuildRole[];
   userId: string;
   globalUserId?: string;
+  isStale?: boolean;
+  staleWarning?: string;
 };
 
 export const useGuildMember = () => {

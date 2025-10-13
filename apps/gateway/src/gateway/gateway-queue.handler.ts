@@ -9,6 +9,7 @@ import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
 import { DeleteMemberRoleDto } from 'src/gateway/dto/delete-member-role.dto';
 import { DeleteMemberDto } from 'src/gateway/dto/delete-member.dto';
 import { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
+import { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { Queue } from 'src/gateway/enums/queue.enum';
@@ -453,5 +454,21 @@ export class GatewayQueueHandler {
       ),
       headers: amqpMsg.properties.headers,
     });
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
+    queue: Queue.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
+    await this.gatewayService.handleMembersRefreshJobUpdate(data);
+    console.log(
+      `Member refresh job update sent for guild: ${data.guildId}, status: ${data.status}`,
+    );
   }
 }
