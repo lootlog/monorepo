@@ -47,6 +47,9 @@ export class AuthService implements OnModuleInit {
     });
 
     if (!response) {
+      this.logger.error(
+        `Empty response from auth service for user ${userId}`,
+      );
       throw new AuthServiceUnavailableError(
         'Empty response from auth service',
       );
@@ -57,6 +60,9 @@ export class AuthService implements OnModuleInit {
         response.error !== 'TOKEN_NOT_FOUND' &&
         response.error !== 'TOKEN_FETCH_FAILED'
       ) {
+        this.logger.error(
+          `Auth service returned error for user ${userId}: ${response.error}`,
+        );
         throw new AuthServiceUnavailableError(
           `Auth service error: ${response.error}`,
         );
@@ -102,8 +108,15 @@ export class AuthService implements OnModuleInit {
         );
       }
 
-      this.logger.error(`Failed to fetch IDP token for user ${userId}`, err);
-      throw new AuthServiceUnavailableError();
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const errorStack = err instanceof Error ? err.stack : undefined;
+      this.logger.error(
+        `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
+        errorStack,
+      );
+      throw new AuthServiceUnavailableError(
+        `Failed to fetch IDP token: ${errorMessage}`,
+      );
     }
   }
 }
