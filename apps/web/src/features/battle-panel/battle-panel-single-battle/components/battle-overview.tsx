@@ -3,7 +3,7 @@ import { FC } from "react";
 import { useBattleSharing } from "../hooks/use-battle-sharing";
 import { useDeleteBattle } from "@/hooks/api/battle-log/use-delete-battle";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { BattleOverviewCard } from "@/components/battle";
 
@@ -35,7 +35,7 @@ export const BattleOverview: FC<BattleOverviewProps> = ({ battle }) => {
       {
         onSuccess: () => {
           toast.success("Walka została usunięta.", { duration: 3000 });
-          navigate("/@me/battle-panel/battles");
+          navigate({ to: "/@me/battle-panel/battles" });
         },
         onError: (error) => {
           console.warn("Error deleting battle:", error);

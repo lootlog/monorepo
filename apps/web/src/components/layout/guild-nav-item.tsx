@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { FC, memo } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 
 export type GuildNavItemProps = {
   guild: Guild;
@@ -38,7 +38,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
       <TooltipTrigger asChild>
         <div className="w-full flex items-center justify-center mb-1">
           <Link
-            to={`/${guild.vanityUrl ?? guild.id}`}
+            to={`/${guild.vanityUrl ?? guild.id}` as any}
             draggable={false}
             className="block"
             onClick={handleClick}

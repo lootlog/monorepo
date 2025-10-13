@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Outlet, useLocation, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
@@ -9,7 +9,7 @@ import { Button } from "@lootlog/ui/components/button";
 export const BattlePanelLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const params = useParams();
+  const params = useParams({ strict: false });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Get battle data if we're on a single battle page
@@ -80,7 +80,7 @@ export const BattlePanelLayout = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate(navInfo.backPath!)}
+                  onClick={() => navigate({ to: navInfo.backPath! as any })}
                   className="p-1 h-8 w-8"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -95,7 +95,7 @@ export const BattlePanelLayout = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate(crumb.path!)}
+                      onClick={() => navigate({ to: crumb.path! as any })}
                       className="text-sm h-auto p-1 font-semibold hover:bg-accent/50 whitespace-nowrap"
                     >
                       {crumb.label}
