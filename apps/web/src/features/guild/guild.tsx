@@ -11,8 +11,6 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { LootsList } from "@/features/guild/components/loots-list/loots-list";
-import { useTimers } from "@/hooks/api/use-timers";
-import { noop } from "lodash";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -35,7 +33,6 @@ import { useLg } from "@/hooks/use-lg";
 
 export const Guild: React.FC = () => {
   const [timersVisible, setTimersVisible] = useState(false);
-  const { data: timers } = useTimers();
   const isMobile = useIsMobile();
   const isLg = useLg();
 
@@ -44,14 +41,7 @@ export const Guild: React.FC = () => {
   };
 
   const getTooltipContent = () => {
-    if (timersVisible && timers?.length) {
-      return "Ukryj timery";
-    }
-    if (!timersVisible && timers?.length) {
-      return "Pokaż timery";
-    }
-
-    return "Brak timerów";
+    return timersVisible ? "Ukryj timery" : "Pokaż timery";
   };
 
   return (
@@ -64,10 +54,7 @@ export const Guild: React.FC = () => {
             <WorldSwitcher />
           </div>
           <div className="flex flex-row gap-4 items-center justify-end">
-            <span
-              onClick={timers?.length ? toggleTimers : noop}
-              className="cursor-pointer"
-            >
+            <span onClick={toggleTimers} className="cursor-pointer">
               <TooltipProvider>
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
@@ -117,10 +104,10 @@ export const Guild: React.FC = () => {
         {!isLg && (
           <div
             className={cn("w-72 min-w-72 border-l hidden lg:block", {
-              "w-0 min-w-0": !timersVisible || !timers?.length,
+              "w-0 min-w-0": !timersVisible,
             })}
           >
-            {timersVisible && timers?.length && <Timers />}
+            {timersVisible && <Timers />}
           </div>
         )}
 
