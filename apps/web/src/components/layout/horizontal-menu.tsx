@@ -1,5 +1,5 @@
 import { Button } from "@lootlog/ui/components/button";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
 interface NavElement {
