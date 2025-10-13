@@ -105,18 +105,43 @@ export class LootsService {
 
     let loot = await this.prisma.loot.findUnique({ where: { uniqueId } });
 
-    let npcs: any, players: any, items: any, share: any;
-    if (!loot) {
-      npcs = npcData.mapped;
-      players = this.mapPlayers(body.players);
-      items = this.mapItems(body.loots);
-      share =
+    const submissionData = filteredGuilds
+      .map((guild) => {
+        const config = lootlogConfigs.find((c) => c.id === guild.id);
+        if (!config) return null;
+
+        const calculatedLoot = this.getLootForGivenConfig(
+          body.loots,
+          config.npcs,
+          highestWtNpcType,
+        );
+        if (calculatedLoot.length === 0) return null;
+
+        const member = members.find(({ guildId }) => guildId === guild.id);
+        if (!member) return null;
+
+        return {
+          guildId: guild.id,
+          memberId: member.id,
+        };
+      })
+      .filter(Boolean);
+
+    if (!loot && submissionData.length === 0) {
+      throw new BadRequestException(
+        ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+      );
+    }
+
+    if (!loot && submissionData.length > 0) {
+      const npcs = npcData.mapped;
+      const players = this.mapPlayers(body.players);
+      const items = this.mapItems(body.loots);
+      const share =
         highestWtNpcType === NpcType.COLOSSUS
           ? this.mapLootShare(body.loots, body.players)
           : {};
-    }
 
-    if (!loot) {
       try {
         loot = await this.prisma.loot.create({
           data: {
@@ -138,41 +163,16 @@ export class LootsService {
           throw e;
         }
       }
-    }
 
-    const submissionData = filteredGuilds
-      .map((guild) => {
-        const config = lootlogConfigs.find((c) => c.id === guild.id);
-        if (!config) return null;
-
-        const calculatedLoot = this.getLootForGivenConfig(
-          body.loots,
-          config.npcs,
-          highestWtNpcType,
-        );
-        if (calculatedLoot.length === 0) return null;
-
-        const member = members.find(({ guildId }) => guildId === guild.id);
-        if (!member) return null;
-
-        return {
-          lootId: loot.id,
-          guildId: guild.id,
-          memberId: member.id,
-        };
-      })
-      .filter(Boolean);
-
-    if (submissionData.length > 0) {
-      await this.prisma.lootSubmission.createMany({
-        data: submissionData,
-        skipDuplicates: true,
-      });
-    }
-
-    if (players && npcs) {
       this.playersService.bulkIndexPlayers(players);
       this.npcsService.bulkIndexNpcs(npcs);
+    }
+
+    if (submissionData.length > 0 && loot) {
+      await this.prisma.lootSubmission.createMany({
+        data: submissionData.map((sd) => ({ ...sd, lootId: loot.id })),
+        skipDuplicates: true,
+      });
     }
 
     return { id: loot.id };
