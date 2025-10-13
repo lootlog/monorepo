@@ -9,9 +9,10 @@ import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 
 type Props = {
   loot: Loot;
+  canManageLoots: boolean;
 };
 
-export const LootsListItem: React.FC<Props> = ({ loot }) => {
+export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
   const date = timestampToDate(loot.createdAt);
 
   const playerColorMap = loot.players.reduce<
@@ -90,6 +91,7 @@ export const LootsListItem: React.FC<Props> = ({ loot }) => {
         loot={loot}
         ownerMap={itemOwnerMap}
         playerColorMap={playerColorMap}
+        canManageLoots={canManageLoots}
       />
     </Sheet>
   );

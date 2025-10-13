@@ -3,13 +3,19 @@ import { Separator } from "@lootlog/ui/components/separator";
 import { useLoots } from "@/hooks/api/use-loots";
 import { useGuildContext } from "@/hooks/use-guild-context";
 import { Frown, Loader2 } from "lucide-react";
-import { FC, Fragment, useEffect } from "react";
+import { FC, Fragment, useEffect, useMemo } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
 import { useDebounceValue, useIntersectionObserver } from "usehooks-ts";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import {
+  Permission,
+  useGuildPermissions,
+} from "@/hooks/api/use-guild-permissions";
 import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
 import { useGuildMember } from "@/hooks/api/use-guild-member";
+import { useIsOwner } from "@/hooks/use-is-owner";
+
+const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 
 export const LootsList: FC = () => {
   const {
@@ -18,9 +24,16 @@ export const LootsList: FC = () => {
     hasNextPage,
     isFetchedAfterMount,
   } = useLoots({});
-  const { error: permissionsError } = useGuildPermissions();
+  const { data: permissions, error: permissionsError } = useGuildPermissions();
   const { world } = useGuildContext();
   const { data: member, isPending } = useGuildMember();
+  const isOwner = useIsOwner();
+
+  const canManageLoots = useMemo(
+    () =>
+      permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner,
+    [permissions, isOwner]
+  );
 
   const { isIntersecting, ref } = useIntersectionObserver({
     threshold: 1,
@@ -78,7 +91,11 @@ export const LootsList: FC = () => {
             page.data.map((loot) => {
               return (
                 <Fragment key={loot.id}>
-                  <LootsListItem key={loot.id} loot={loot} />
+                  <LootsListItem
+                    key={loot.id}
+                    loot={loot}
+                    canManageLoots={canManageLoots}
+                  />
                   <Separator />
                 </Fragment>
               );
@@ -90,7 +107,7 @@ export const LootsList: FC = () => {
       {!isFetchedAfterMount && (
         <ul>
           {Array.from({ length: 12 }).map((_, index) => {
-            return <LootsListItemSkeleton key={index} />;
+            return <LootsListItemSkeleton key={index} index={index} />;
           })}
         </ul>
       )}

@@ -14,31 +14,22 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { LootDetailsActions } from "@/features/guild/components/loots-list/loot-details-actions";
-import {
-  Permission,
-  useGuildPermissions,
-} from "@/hooks/api/use-guild-permissions";
-import { useIsOwner } from "@/hooks/use-is-owner";
 
 export type LootDetailsSheetProps = {
   loot: Loot;
   ownerMap: Record<string, string | undefined>;
   playerColorMap: Record<string, { color: string; idx: number }>;
+  canManageLoots: boolean;
 };
-
-const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 
 export const LootDetailsSheetContent: FC<LootDetailsSheetProps> = ({
   loot,
   ownerMap,
   playerColorMap,
+  canManageLoots,
 }) => {
   const date = timestampToDate(loot.createdAt);
-  const { data: permissions } = useGuildPermissions();
-  const isOwner = useIsOwner();
   const isMobile = useIsMobile();
-  const canManageLoots =
-    permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
 
   return (
     <SheetContent
