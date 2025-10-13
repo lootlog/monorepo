@@ -52,13 +52,27 @@ export class AuthService implements OnModuleInit {
       );
     }
 
+    if ('error' in response) {
+      if (
+        response.error === 'TOKEN_NOT_FOUND' ||
+        response.error === 'TOKEN_FETCH_FAILED'
+      ) {
+        throw new TokenExpiredError();
+      }
+      throw new AuthServiceUnavailableError(
+        `Auth service error: ${response.error}`,
+      );
+    }
+
     return response;
   }
 
-  async getIdpToken(userId: string): Promise<GetIdpTokenResponse> {
+  async getIdpToken(
+    userId: string,
+  ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
     try {
       const response = await this.circuitBreaker.fire(userId);
-      return response;
+      return response as Extract<GetIdpTokenResponse, { accessToken: string }>;
     } catch (err) {
       if (err instanceof TokenExpiredError) {
         this.logger.warn(`Token expired for user ${userId}`);
