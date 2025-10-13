@@ -37,22 +37,6 @@ export const Timers = () => {
 
   return (
     <ScrollArea className="h-[calc(100dvh_-_64px)]">
-      <div>
-        {Object.keys(groups).map((key) => {
-          return (
-            <div key={key} className="border-b">
-              <p className="text-sm capitalize font-semibold px-4 py-2 border-b">
-                {NPC_NAMES[key] ?? "Dodane ręcznie"} - {groups[key]?.length}
-              </p>
-              <div>
-                {groups[key]?.map((timer) => {
-                  return <SingleTimer key={timer.npc.id} timer={timer} />;
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
       {isPending &&
         Array.from({ length: 8 }).map((_, index) => {
           return (
@@ -62,6 +46,29 @@ export const Timers = () => {
             </div>
           );
         })}
+      {!isPending && timers && timers.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground">
+          <p>Brak timerów</p>
+        </div>
+      )}
+      {!isPending && timers && timers.length > 0 && (
+        <div>
+          {Object.keys(groups).map((key) => {
+            return (
+              <div key={key} className="border-b">
+                <p className="text-sm capitalize font-semibold px-4 py-2 border-b">
+                  {NPC_NAMES[key] ?? "Dodane ręcznie"} - {groups[key]?.length}
+                </p>
+                <div>
+                  {groups[key]?.map((timer) => {
+                    return <SingleTimer key={timer.npc.id} timer={timer} />;
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </ScrollArea>
   );
 };

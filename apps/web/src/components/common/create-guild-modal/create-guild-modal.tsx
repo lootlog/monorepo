@@ -26,7 +26,7 @@ export const CreateGuildModal: FC = () => {
   const [debouncedValue] = useDebounceValue<string>(searchValue, 200);
   const { createGuildModal } = useGlobalContext();
 
-  const { data: manageableGuilds } = useManageableGuilds();
+  const { data: manageableGuilds } = useManageableGuilds(createGuildModal.state.isOpen);
 
   const handleAddToGuild = (guildId: string) => {
     const searchParams = new URLSearchParams();
