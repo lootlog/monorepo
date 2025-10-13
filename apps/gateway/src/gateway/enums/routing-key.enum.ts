@@ -35,4 +35,6 @@ export enum RoutingKey {
   GUILDS_NOTIFICATIONS_SEND = 'guilds.notifications.send',
   GUILDS_NOTIFICATIONS_SEND_DLQ = 'guilds.notifications.send.dlq',
   GUILDS_NOTIFICATIONS_SEND_RETRY = 'guilds.notifications.send.retry',
+
+  GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'guilds.members.refresh.job.update',
 }

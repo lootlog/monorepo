@@ -7,19 +7,28 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from 'src/db/prisma.service';
 import {
   MEMBER_CACHE_TTL,
   REFRESH_PERMISSIONS_TTL,
+  ADMIN_BULK_REFRESH_RATE_LIMIT,
 } from 'src/members/constants/member-cache.constant';
 import { DiscordService } from 'src/discord/discord.service';
 import { APIGuildMember } from 'discord-api-types/v10';
 import { ErrorKey } from 'src/members/enum/error-key.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { Member, Role } from 'generated/client';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 
-type MemberWithRoles = Member & { roles: Role[] };
+type MemberWithRoles = Member & {
+  roles: Role[];
+  isStale?: boolean;
+  staleWarning?: string;
+};
 
 @Injectable()
 export class MembersService {
@@ -30,6 +39,7 @@ export class MembersService {
     private readonly discordService: DiscordService,
     @Inject(forwardRef(() => GuildsService))
     private readonly guildsService: GuildsService,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   async getGuildMemberById(options: {
@@ -88,11 +98,6 @@ export class MembersService {
           globalUserId: userId,
         });
       } catch (error) {
-        this.logger.error(
-          'Failed to fetch member from Discord, serving stale data',
-          (error as Error).stack,
-        );
-
         if (error instanceof NotFoundException) {
           await this.deactivateMember({
             discordId,
@@ -101,6 +106,33 @@ export class MembersService {
 
           return null;
         }
+
+        if (error instanceof ServiceUnavailableException) {
+          this.logger.warn(
+            'Auth service unavailable, serving stale data',
+            { guildId: desiredGuildId, userId },
+          );
+
+          const staleMember = await this.prisma.member.findUnique({
+            where: {
+              memberId: { userId: discordId, guildId: desiredGuildId },
+            },
+            include: { roles: true },
+          });
+
+          if (staleMember) {
+            return {
+              ...staleMember,
+              isStale: true,
+              staleWarning: 'Data may be outdated due to service issues',
+            };
+          }
+        }
+
+        this.logger.error(
+          'Failed to fetch member from Discord, serving stale data',
+          (error as Error).stack,
+        );
 
         if (refresh) {
           throw new HttpException(
@@ -116,7 +148,15 @@ export class MembersService {
           include: { roles: true },
         });
 
-        return staleMember;
+        if (staleMember) {
+          return {
+            ...staleMember,
+            isStale: true,
+            staleWarning: 'Using cached data due to API error',
+          };
+        }
+
+        return null;
       }
     }
 
@@ -254,5 +294,72 @@ export class MembersService {
       );
       throw error;
     }
+  }
+
+  async createBulkRefreshJob(guildId: string, requestedBy: string) {
+    const recentJob = await this.prisma.memberRefreshJob.findFirst({
+      where: {
+        guildId,
+        createdAt: {
+          gte: new Date(Date.now() - ADMIN_BULK_REFRESH_RATE_LIMIT),
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (recentJob) {
+      throw new BadRequestException({
+        message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
+        nextAvailableAt: new Date(
+          recentJob.createdAt.getTime() + ADMIN_BULK_REFRESH_RATE_LIMIT,
+        ),
+      });
+    }
+
+    const members = await this.getGuildMembers(guildId);
+
+    const job = await this.prisma.memberRefreshJob.create({
+      data: {
+        guildId,
+        requestedBy,
+        status: 'PENDING',
+        totalMembers: members.length,
+      },
+    });
+
+    await this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_MEMBERS_BULK_REFRESH,
+      {
+        jobId: job.id,
+        guildId,
+        memberIds: members.map((m) => m.userId),
+      },
+    );
+
+    return job;
+  }
+
+  async getLatestRefreshJob(guildId: string) {
+    const job = await this.prisma.memberRefreshJob.findFirst({
+      where: { guildId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return job;
+  }
+
+  async getRefreshJobStatus(jobId: number) {
+    const job = await this.prisma.memberRefreshJob.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) {
+      throw new NotFoundException({
+        message: ErrorKey.REFRESH_JOB_NOT_FOUND,
+      });
+    }
+
+    return job;
   }
 }

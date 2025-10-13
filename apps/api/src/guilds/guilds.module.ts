@@ -14,6 +14,7 @@ import { RetryService } from 'src/rabbitmq/retry.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import { PrismaModule } from 'src/db/prisma.module';
+import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.interceptor';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PrismaModule } from 'src/db/prisma.module';
     GuildsEventsHandler,
     GuildsRpcHandler,
     RetryService,
+    MemberSyncInterceptor,
   ],
   exports: [GuildsService, GuildsEventsHandler],
 })

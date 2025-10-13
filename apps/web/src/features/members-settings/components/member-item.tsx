@@ -5,7 +5,13 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
-import { EllipsisVertical } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
+import { AlertCircle, EllipsisVertical } from "lucide-react";
 import { FC } from "react";
 
 export type MemberItemProps = {
@@ -42,9 +48,23 @@ export const MemberItem: FC<MemberItemProps> = ({
           <AvatarImage src={avatarUrl} />
         </Avatar>
         <div>
-          <div className="font-semibold" style={{ color: `#${color}` }}>
-            {member.name}{" "}
-            <span className="text-white">{isOwner ? "(właściciel)" : ""}</span>
+          <div className="font-semibold flex items-center gap-2" style={{ color: `#${color}` }}>
+            <span>
+              {member.name}{" "}
+              <span className="text-white">{isOwner ? "(właściciel)" : ""}</span>
+            </span>
+            {member.isStale && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AlertCircle className="w-4 h-4 text-yellow-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{member.staleWarning || "Dane mogą być nieaktualne"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
       </div>

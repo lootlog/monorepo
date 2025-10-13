@@ -48,6 +48,9 @@ export enum RoutingKey {
   GUILDS_MEMBERS_ADD_ROLE_RETRY = 'guilds.members.add.role.retry',
   GUILDS_MEMBERS_REMOVE_ROLE_DLQ = 'guilds.members.remove.role.dlq',
   GUILDS_MEMBERS_REMOVE_ROLE_RETRY = 'guilds.members.remove.role.retry',
+  GUILDS_MEMBERS_BULK_REFRESH = 'guilds.members.bulk.refresh',
+  GUILDS_MEMBERS_REFRESH = 'guilds.members.refresh',
+  GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'guilds.members.refresh.job.update',
 
   SEARCH_NPCS_INDEX = 'search.npcs.index',
   SEARCH_PLAYERS_INDEX = 'search.players.index',
