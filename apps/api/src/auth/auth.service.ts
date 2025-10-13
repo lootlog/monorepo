@@ -54,14 +54,13 @@ export class AuthService implements OnModuleInit {
 
     if ('error' in response) {
       if (
-        response.error === 'TOKEN_NOT_FOUND' ||
-        response.error === 'TOKEN_FETCH_FAILED'
+        response.error !== 'TOKEN_NOT_FOUND' &&
+        response.error !== 'TOKEN_FETCH_FAILED'
       ) {
-        throw new TokenExpiredError();
+        throw new AuthServiceUnavailableError(
+          `Auth service error: ${response.error}`,
+        );
       }
-      throw new AuthServiceUnavailableError(
-        `Auth service error: ${response.error}`,
-      );
     }
 
     return response;
@@ -72,10 +71,20 @@ export class AuthService implements OnModuleInit {
   ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
     try {
       const response = await this.circuitBreaker.fire(userId);
+
+      if ('error' in response) {
+        if (
+          response.error === 'TOKEN_NOT_FOUND' ||
+          response.error === 'TOKEN_FETCH_FAILED'
+        ) {
+          this.logger.warn(`Token expired for user ${userId}`);
+          throw new TokenExpiredError();
+        }
+      }
+
       return response as Extract<GetIdpTokenResponse, { accessToken: string }>;
     } catch (err) {
       if (err instanceof TokenExpiredError) {
-        this.logger.warn(`Token expired for user ${userId}`);
         throw err;
       }
 
