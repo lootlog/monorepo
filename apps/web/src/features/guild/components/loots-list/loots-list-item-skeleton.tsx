@@ -1,10 +1,13 @@
 import { CardContent } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { useRef } from "react";
 
-export const LootsListItemSkeleton: React.FC = () => {
-  const RANDOM_ITEMS = useRef(Math.floor(Math.random() * 5) + 1);
-  const RANDOM_PLAYERS = useRef(Math.floor(Math.random() * 10) + 1);
+type Props = {
+  index?: number;
+};
+
+export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
+  const ITEMS_COUNT = ((index % 5) + 1);
+  const PLAYERS_COUNT = ((index % 8) + 1);
 
   return (
     <li className="">
@@ -14,12 +17,12 @@ export const LootsListItemSkeleton: React.FC = () => {
         </div>
         <CardContent className="flex flex-row justify-between items-center flex-wrap px-4 py-1 gap-4">
           <div className="flex flex-row gap-2">
-            {[...Array(RANDOM_ITEMS.current)].map((_, i) => (
+            {[...Array(ITEMS_COUNT)].map((_, i) => (
               <Skeleton key={i} className="w-[36px] h-[36px] rounded-md" />
             ))}
           </div>
           <div className="flex flex-row gap-2">
-            {[...Array(RANDOM_PLAYERS.current)].map((_, i) => (
+            {[...Array(PLAYERS_COUNT)].map((_, i) => (
               <Skeleton key={i} className="w-[32px] h-[48px] rounded-md" />
             ))}
           </div>
