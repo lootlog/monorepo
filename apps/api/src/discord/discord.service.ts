@@ -7,6 +7,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/auth/auth.service';
 import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
 import { RedisService } from 'src/lib/redis/redis.service';
@@ -17,6 +18,9 @@ import {
   InvalidScopesError,
 } from 'src/auth/errors';
 import { retry, RetryableError } from 'src/lib/retry/retry.util';
+import { ConfigKey } from 'src/config/config-key.enum';
+import { ServiceConfig } from 'src/config/service.config';
+import { RuntimeEnvironment } from 'src/types/runtime.types';
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
@@ -29,11 +33,16 @@ export class DiscordService implements OnModuleInit {
     'identify',
     'email',
   ];
+  private isLocal: boolean;
 
   constructor(
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const serviceConfig = this.configService.get<ServiceConfig>(ConfigKey.SERVICE);
+    this.isLocal = serviceConfig?.env === RuntimeEnvironment.LOCAL;
+  }
 
   async onModuleInit() {
     const client = await this.redisService.getClient();
@@ -90,7 +99,8 @@ export class DiscordService implements OnModuleInit {
   }
 
   async getUserGuilds(userId: string): Promise<APIGuild[]> {
-    const cacheTtl = 60 * 5; // 5 minutes
+    const cacheTtl = this.isLocal ? 10 : 60 * 5; // 10s local, 5min prod
+    const errorCacheTtl = this.isLocal ? 5 : 60; // 5s local, 1min prod
     const cacheKey = `user:${userId}:discord-guilds:data`;
     const lockKey = `user:${userId}:discord-guilds:lock`;
 
@@ -147,6 +157,15 @@ export class DiscordService implements OnModuleInit {
 
       return guilds;
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        this.logger.warn(
+          `User authentication failed for userId: ${userId}, caching empty result`,
+          error,
+        );
+        await this.redisService.set(cacheKey, JSON.stringify([]), errorCacheTtl);
+        throw error;
+      }
+
       this.logger.error(
         `Failed to fetch user guilds for userId: ${userId}`,
         error,
@@ -168,14 +187,18 @@ export class DiscordService implements OnModuleInit {
     guildId: string;
     userId: string;
   }): Promise<APIGuildMember | null> {
-    const cacheTtl = 60; // 1 minute
+    const cacheTtl = this.isLocal ? 10 : 300; // 10s local, 5min prod
+    const staleCacheTtl = this.isLocal ? 60 : 3600; // 1min local, 1hr prod
+    const errorCacheTtl = this.isLocal ? 5 : 60; // 5s local, 1min prod
     const { guildId, userId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
+    const staleCacheKey = `guild:${guildId}:member:${userId}:stale`;
     const lockKey = `guild:${guildId}:member:${userId}:lock`;
 
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
-      return JSON.parse(cached) as APIGuildMember;
+      const parsed = JSON.parse(cached);
+      return parsed === null ? null : (parsed as APIGuildMember);
     }
 
     const lock = await this.redlock.acquire([lockKey], this.lockTtl);
@@ -183,7 +206,8 @@ export class DiscordService implements OnModuleInit {
     try {
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
-        return JSON.parse(cachedAfterLock) as APIGuildMember;
+        const parsed = JSON.parse(cachedAfterLock);
+        return parsed === null ? null : (parsed as APIGuildMember);
       }
 
       const rest = await this.getRestClient(userId);
@@ -221,6 +245,11 @@ export class DiscordService implements OnModuleInit {
       );
 
       await this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl);
+      await this.redisService.set(
+        staleCacheKey,
+        JSON.stringify(member),
+        staleCacheTtl,
+      );
 
       return member;
     } catch (error: any) {
@@ -230,6 +259,39 @@ export class DiscordService implements OnModuleInit {
         );
 
         throw new NotFoundException();
+      }
+
+      if (error instanceof UnauthorizedException) {
+        this.logger.warn(
+          `User authentication failed for guildId: ${guildId}, userId: ${userId}, caching null result`,
+          error,
+        );
+        await this.redisService.set(
+          cacheKey,
+          JSON.stringify(null),
+          errorCacheTtl,
+        );
+        throw error;
+      }
+
+      if (error.name === 'RateLimitError') {
+        this.logger.warn(
+          `Discord API rate limit hit for guildId: ${guildId}, userId: ${userId}. ` +
+            `Retry after: ${error.retryAfter}ms. Serving stale data if available.`,
+        );
+
+        const staleData = await this.redisService.get(staleCacheKey);
+        if (staleData) {
+          this.logger.debug(
+            `Returning stale cached data for guildId: ${guildId}, userId: ${userId}`,
+          );
+          return JSON.parse(staleData) as APIGuildMember;
+        }
+
+        this.logger.error(
+          `No stale data available for rate-limited request. guildId: ${guildId}, userId: ${userId}`,
+        );
+        return null;
       }
 
       this.logger.error(
