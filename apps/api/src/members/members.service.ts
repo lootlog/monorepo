@@ -47,7 +47,9 @@ export class MembersService {
     private readonly amqpConnection: AmqpConnection,
     private readonly configService: ConfigService,
   ) {
-    const serviceConfig = this.configService.get<ServiceConfig>(ConfigKey.SERVICE);
+    const serviceConfig = this.configService.get<ServiceConfig>(
+      ConfigKey.SERVICE,
+    );
     this.env = serviceConfig?.env || RuntimeEnvironment.PROD;
   }
 
@@ -134,13 +136,13 @@ export class MembersService {
           try {
             await this.deactivateMember({
               discordId,
-              guildId,
+              guildId: desiredGuildId,
             });
           } catch (deactivateError) {
-            this.logger.debug(
-              'Member not found during deactivation',
-              { guildId, userId: discordId },
-            );
+            this.logger.debug('Member not found during deactivation', {
+              guildId: desiredGuildId,
+              userId: discordId,
+            });
           }
 
           return null;
@@ -161,20 +163,20 @@ export class MembersService {
               guildId: desiredGuildId,
             });
           } catch (deactivateError) {
-            this.logger.debug(
-              'Member not found during deactivation',
-              { guildId: desiredGuildId, userId: discordId },
-            );
+            this.logger.debug('Member not found during deactivation', {
+              guildId: desiredGuildId,
+              userId: discordId,
+            });
           }
 
           return null;
         }
 
         if (error instanceof ServiceUnavailableException) {
-          this.logger.warn(
-            'Auth service unavailable, serving stale data',
-            { guildId: desiredGuildId, userId },
-          );
+          this.logger.warn('Auth service unavailable, serving stale data', {
+            guildId: desiredGuildId,
+            userId,
+          });
 
           const staleMember = await this.prisma.member.findUnique({
             where: {
