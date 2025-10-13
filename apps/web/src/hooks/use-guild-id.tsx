@@ -1,11 +1,11 @@
-import { matchPath, useLocation, useSearchParams } from "react-router-dom";
+import { useParams, useSearch } from "@tanstack/react-router";
 
 export const useGuildId = () => {
-  const location = useLocation();
-  const match = matchPath({ path: "/:id/*" }, location.pathname);
-  const [params] = useSearchParams();
-  const guildIdFromPath = match?.params.id;
-  const guildIdFromSearchParams = params.get("guild_id");
+  const params = useParams({ strict: false });
+  const search = useSearch({ strict: false }) as { guild_id?: string };
+
+  const guildIdFromPath = "guildId" in params ? params.guildId : undefined;
+  const guildIdFromSearchParams = search?.guild_id;
 
   const guildId = guildIdFromSearchParams ?? guildIdFromPath ?? undefined;
 
