@@ -37,7 +37,7 @@ export const CreateGuildModal: FC = () => {
     searchParams.set("guild_id", guildId);
     searchParams.set("redirect_uri", `${window.location.origin}/init`);
 
-    window.location.href = `https://discord.com/api/oauth2/authorize?${searchParams.toString()}`;
+    window.location.assign(`https://discord.com/api/oauth2/authorize?${searchParams.toString()}`);
   };
 
   const handleModalClose = () => {
@@ -57,7 +57,10 @@ export const CreateGuildModal: FC = () => {
         <DialogHeader>
           <DialogTitle>Nowy lootlog</DialogTitle>
           <DialogDescription>
-            Utwórz nowy lootlog dla swojego klanu
+            Utwórz nowy lootlog dla swojego klanu. Jeśli nie widzisz tutaj
+            swojego Discorda, nie masz uprawnień do dodawania bota na serwer lub
+            dopiero założyłeś serwer Discord. Odczekaj proszę do 10 minut i
+            spróbuj ponownie.
           </DialogDescription>
         </DialogHeader>
         <div className="p-4 border-b">

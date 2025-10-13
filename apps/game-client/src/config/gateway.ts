@@ -24,4 +24,7 @@ export enum GatewayEvent {
 
   // notifications
   NOTIFICATION = "notifications-send",
+
+  // members
+  MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
 }
