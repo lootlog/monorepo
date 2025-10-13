@@ -5,7 +5,7 @@ import { useBattleRaw } from "@/hooks/api/battle-log/use-battle-raw";
 import { useParams } from "@tanstack/react-router";
 
 export const BattlePanelSingleBattle = () => {
-  const { battleId } = useParams({ from: "/_authenticated/@me/battle-panel/battles/$battleId" });
+  const { battleId } = useParams({ from: "/_authenticated/@me/battle-panel/battles_/$battleId" });
   const { data: battle } = useBattle({ battleId });
   const { data: rawBattle } = useBattleRaw({ battleId });
 
