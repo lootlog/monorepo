@@ -28,6 +28,11 @@ export const setupAuthHandlers = async () => {
 
           if (!content.userId) {
             console.error("Invalid message format, userId is required");
+            channel?.sendToQueue(
+              msg.properties.replyTo,
+              Buffer.from(JSON.stringify({ error: "INVALID_REQUEST" })),
+              { correlationId: msg.properties.correlationId }
+            );
             channel?.ack(msg);
             return;
           }
@@ -42,7 +47,12 @@ export const setupAuthHandlers = async () => {
           channel?.ack(msg);
         } catch (error) {
           console.error("Error processing auth message:", error);
-          channel?.nack(msg, false, false);
+          channel?.sendToQueue(
+            msg.properties.replyTo,
+            Buffer.from(JSON.stringify({ error: "INTERNAL_ERROR" })),
+            { correlationId: msg.properties.correlationId }
+          );
+          channel?.ack(msg);
         }
       },
       { noAck: false }
