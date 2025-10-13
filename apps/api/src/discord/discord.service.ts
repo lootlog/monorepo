@@ -1,4 +1,4 @@
-import { REST } from '@discordjs/rest';
+import { REST, RateLimitError } from '@discordjs/rest';
 import {
   Injectable,
   OnModuleInit,
@@ -153,6 +153,14 @@ export class DiscordService implements OnModuleInit {
           try {
             return (await rest.get(path)) as APIGuild[];
           } catch (error: any) {
+            if (error instanceof RateLimitError) {
+              await this.rateLimiter.updateFromRateLimitError(path, {
+                retryAfter: error.retryAfter,
+                limit: error.limit,
+                hash: error.hash,
+              });
+              throw error;
+            }
             if (error.status >= 500 || error.code === 'ECONNRESET') {
               throw new RetryableError(
                 `Discord API error: ${error.message}`,
@@ -248,6 +256,14 @@ export class DiscordService implements OnModuleInit {
             return (await rest.get(path)) as APIGuildMember;
           } catch (error: any) {
             if (error.status === 404) {
+              throw error;
+            }
+            if (error instanceof RateLimitError) {
+              await this.rateLimiter.updateFromRateLimitError(path, {
+                retryAfter: error.retryAfter,
+                limit: error.limit,
+                hash: error.hash,
+              });
               throw error;
             }
             if (error.status >= 500 || error.code === 'ECONNRESET') {

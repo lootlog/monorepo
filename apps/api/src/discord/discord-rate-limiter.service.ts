@@ -150,6 +150,36 @@ export class DiscordRateLimiterService {
     return `discord:ratelimit:${bucket}`;
   }
 
+  async updateFromRateLimitError(
+    path: string,
+    error: { retryAfter: number; limit: number; hash: string },
+  ): Promise<void> {
+    const bucket = error.hash || 'unknown';
+    const normalizedPath = this.normalizePath(path);
+    this.pathToBucketCache.set(normalizedPath, bucket);
+
+    const now = Date.now();
+    const reset = now + error.retryAfter;
+    const topLevelResource = this.extractTopLevelResource(path);
+    const key = this.getBucketKey(bucket, topLevelResource);
+    const ttl = Math.max(Math.ceil(error.retryAfter / 1000), 1);
+
+    const rateLimitData: RateLimitData = {
+      remaining: 0,
+      reset,
+      limit: error.limit,
+      bucket,
+    };
+
+    await this.redis.set(key, JSON.stringify(rateLimitData), ttl);
+
+    const resourceInfo = topLevelResource ? ` [${topLevelResource}]` : '';
+    this.logger.warn(
+      `Rate limit exceeded: bucket=${bucket}${resourceInfo}, ` +
+        `0/${error.limit} remaining, locked for ${Math.ceil(error.retryAfter / 1000)}s`,
+    );
+  }
+
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
