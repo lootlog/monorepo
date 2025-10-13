@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/auth/auth.service';
 import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
 import { RedisService } from 'src/lib/redis/redis.service';
+import { DiscordRateLimiterService } from './discord-rate-limiter.service';
 import Redlock from 'redlock';
 import {
   TokenExpiredError,
@@ -38,6 +39,7 @@ export class DiscordService implements OnModuleInit {
   constructor(
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
+    private readonly rateLimiter: DiscordRateLimiterService,
     private readonly configService: ConfigService,
   ) {
     const serviceConfig = this.configService.get<ServiceConfig>(ConfigKey.SERVICE);
@@ -65,12 +67,34 @@ export class DiscordService implements OnModuleInit {
         throw new InvalidScopesError(this.requiredScopes, token.scopes);
       }
 
-      return new REST({
+      const rest = new REST({
         version: '10',
         authPrefix: 'Bearer',
         timeout: 5000,
         rejectOnRateLimit: ['/users'],
       }).setToken(token.accessToken);
+
+      rest.on('response', async (request, response) => {
+        try {
+          const headers = {
+            'x-ratelimit-bucket': response.headers.get('x-ratelimit-bucket'),
+            'x-ratelimit-limit': response.headers.get('x-ratelimit-limit'),
+            'x-ratelimit-remaining': response.headers.get('x-ratelimit-remaining'),
+            'x-ratelimit-reset': response.headers.get('x-ratelimit-reset'),
+            'x-ratelimit-scope': response.headers.get('x-ratelimit-scope'),
+            'x-ratelimit-global': response.headers.get('x-ratelimit-global'),
+          };
+
+          await this.rateLimiter.updateFromHeaders(request.path, headers);
+        } catch (error) {
+          this.logger.error(
+            'Failed to update rate limit from headers',
+            (error as Error).stack,
+          );
+        }
+      });
+
+      return rest;
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new UnauthorizedException({
@@ -121,10 +145,13 @@ export class DiscordService implements OnModuleInit {
 
       const rest = await this.getRestClient(userId);
 
+      const path = Routes.userGuilds();
+      await this.rateLimiter.checkRateLimitForPath(path);
+
       const guilds = await retry(
         async () => {
           try {
-            return (await rest.get(Routes.userGuilds())) as APIGuild[];
+            return (await rest.get(path)) as APIGuild[];
           } catch (error: any) {
             if (error.status >= 500 || error.code === 'ECONNRESET') {
               throw new RetryableError(
@@ -212,12 +239,13 @@ export class DiscordService implements OnModuleInit {
 
       const rest = await this.getRestClient(userId);
 
+      const path = Routes.userGuildMember(guildId);
+      await this.rateLimiter.checkRateLimitForPath(path);
+
       const member = await retry(
         async () => {
           try {
-            return (await rest.get(
-              Routes.userGuildMember(guildId),
-            )) as APIGuildMember;
+            return (await rest.get(path)) as APIGuildMember;
           } catch (error: any) {
             if (error.status === 404) {
               throw error;
@@ -274,30 +302,19 @@ export class DiscordService implements OnModuleInit {
         throw error;
       }
 
-      if (error.name === 'RateLimitError') {
-        this.logger.warn(
-          `Discord API rate limit hit for guildId: ${guildId}, userId: ${userId}. ` +
-            `Retry after: ${error.retryAfter}ms. Serving stale data if available.`,
-        );
-
-        const staleData = await this.redisService.get(staleCacheKey);
-        if (staleData) {
-          this.logger.debug(
-            `Returning stale cached data for guildId: ${guildId}, userId: ${userId}`,
-          );
-          return JSON.parse(staleData) as APIGuildMember;
-        }
-
-        this.logger.error(
-          `No stale data available for rate-limited request. guildId: ${guildId}, userId: ${userId}`,
-        );
-        return null;
-      }
-
       this.logger.error(
         `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
         error,
       );
+
+      const staleData = await this.redisService.get(staleCacheKey);
+      if (staleData) {
+        this.logger.debug(
+          `Returning stale cached data due to error for guildId: ${guildId}, userId: ${userId}`,
+        );
+        return JSON.parse(staleData) as APIGuildMember;
+      }
+
       return null;
     } finally {
       await lock.release();
