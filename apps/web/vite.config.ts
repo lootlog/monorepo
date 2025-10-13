@@ -28,7 +28,13 @@ export default defineConfig({
       "@/store": path.resolve(__dirname, "./src/store"),
       "@/types": path.resolve(__dirname, "./src/types"),
       "@/utils": path.resolve(__dirname, "./src/utils"),
+      "use-sync-external-store/shim/index.js": path.resolve(__dirname, "./src/shims/use-sync-external-store-shim.js"),
+      "use-sync-external-store/shim": path.resolve(__dirname, "./src/shims/use-sync-external-store-shim.js"),
+      "use-sync-external-store/shim/with-selector": path.resolve(__dirname, "./src/shims/use-sync-external-store-shim-with-selector.js"),
     },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "react-dom/client"],
   },
   plugins: [react(), tailwindcss()],
   base: "/",
