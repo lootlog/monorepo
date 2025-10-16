@@ -1,8 +1,11 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
 } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { createHash } from 'crypto';
 import { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
@@ -47,6 +50,7 @@ export class LootsService {
     private readonly prisma: PrismaService,
     private readonly lootlogConfigService: LootlogConfigService,
     private readonly userLootlogConfigService: UserLootlogConfigService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
   async createLoot(discordId: string, userId: string, body: CreateLootDto) {
@@ -322,10 +326,14 @@ export class LootsService {
     }
 
     if (Object.keys(mappedLootShare).length < parsedLoot.length) {
-      console.warn(
-        'Loot share does not include all items, some items may not be shared.',
-      );
-      console.log(data.msg);
+      this.logger.log({
+        level: 'warn',
+        message: 'Loot share does not include all items, some items may not be shared',
+        lootId,
+        lootShareMsg: data.msg,
+        mappedItemsCount: Object.keys(mappedLootShare).length,
+        totalItemsCount: parsedLoot.length,
+      });
     }
 
     await this.prisma.loot.update({
