@@ -2,7 +2,6 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/lib/redis/redis.service';
-import { CircuitBreakerService, CircuitBreakerError } from 'src/lib/circuit-breaker/circuit-breaker.service';
 import {
   UserGuildData,
   GetUserGuildsOptions,
@@ -16,7 +15,6 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { ApiConfig } from 'src/config/api.config';
 import { firstValueFrom } from 'rxjs';
 
-const CIRCUIT_BREAKER_KEY = 'guilds-http';
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000];
 const REQUEST_TIMEOUT = 10000;
@@ -30,7 +28,6 @@ export class GuildsService {
   constructor(
     private readonly httpService: HttpService,
     private readonly redis: RedisService,
-    private readonly circuitBreaker: CircuitBreakerService,
     private readonly configService: ConfigService,
   ) {
     const apiConfig = this.configService.get<ApiConfig>(ConfigKey.API);
@@ -40,23 +37,19 @@ export class GuildsService {
   async getUserGuilds(options: GetUserGuildsOptions): Promise<UserGuildData[]> {
     const { discordId, userId } = options;
     const startTime = Date.now();
-
-    this.logger.log(`Fetching guilds for user ${discordId}`);
-
     const cacheKey = getUserGuildsCacheKey(discordId, userId);
     const dedupeKey = `${discordId}:${userId}`;
 
     if (this.pendingRequests.has(dedupeKey)) {
-      this.logger.debug(`Request deduplication: returning pending request for ${discordId}`);
+      this.logger.debug(`Request deduplication for ${discordId}`);
       return this.pendingRequests.get(dedupeKey)!;
     }
 
-    const promise = this.fetchUserGuildsWithFallback(options, startTime);
+    const promise = this.fetchUserGuildsWithFallback(options, cacheKey, startTime);
     this.pendingRequests.set(dedupeKey, promise);
 
     try {
-      const result = await promise;
-      return result;
+      return await promise;
     } finally {
       this.pendingRequests.delete(dedupeKey);
     }
@@ -64,20 +57,16 @@ export class GuildsService {
 
   private async fetchUserGuildsWithFallback(
     options: GetUserGuildsOptions,
+    cacheKey: string,
     startTime: number,
   ): Promise<UserGuildData[]> {
-    const { discordId, userId } = options;
-    const cacheKey = getUserGuildsCacheKey(discordId, userId);
+    const { discordId } = options;
 
     try {
       const cached = await this.getCachedGuilds(cacheKey);
       if (cached) {
-        this.logger.log(
-          `Cache hit for user ${discordId} (age: ${Date.now() - cached.cachedAt}ms)`,
-        );
-
         this.refreshInBackground(options, cacheKey).catch((err) => {
-          this.logger.warn(`Background refresh failed for ${discordId}: ${err.message}`);
+          this.logger.warn(`Background refresh failed: ${err.message}`);
         });
 
         return cached.guilds;
@@ -85,32 +74,26 @@ export class GuildsService {
 
       const guilds = await this.fetchFromHttpWithRetry(options);
       const duration = Date.now() - startTime;
-      this.logger.log(`HTTP fetch completed for ${discordId} in ${duration}ms`);
+      this.logger.debug(`Fetched guilds for ${discordId} in ${duration}ms`);
 
       await this.cacheGuilds(cacheKey, guilds);
       return guilds;
     } catch (error) {
       const duration = Date.now() - startTime;
-
-      if (error instanceof CircuitBreakerError) {
-        this.logger.error(
-          `Circuit breaker open for ${discordId}, attempting stale cache fallback`,
-        );
-      } else {
-        this.logger.error(
-          `Failed to fetch guilds for ${discordId} after ${duration}ms: ${error.message}`,
-        );
-      }
+      this.logger.error(
+        `Failed to fetch guilds for ${discordId} after ${duration}ms: ${error.message}`,
+      );
 
       const staleCache = await this.getStaleCache(cacheKey);
       if (staleCache) {
+        const age = Math.floor((Date.now() - staleCache.cachedAt) / 1000);
         this.logger.warn(
-          `Returning stale cache for ${discordId} (age: ${Date.now() - staleCache.cachedAt}ms)`,
+          `Using stale cache for ${discordId} (${age}s old)`,
         );
         return staleCache.guilds;
       }
 
-      this.logger.error(`No fallback available for ${discordId}, returning empty array`);
+      this.logger.error(`No fallback available for ${discordId}`);
       return [];
     }
   }
@@ -122,45 +105,25 @@ export class GuildsService {
     const { discordId, userId } = options;
 
     try {
-      return await this.circuitBreaker.execute(
-        CIRCUIT_BREAKER_KEY,
-        async () => {
-          this.logger.debug(
-            `Making HTTP call for ${discordId} (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`,
-          );
-
-          const url = `${this.apiUrl}/internal/guilds/user-permissions`;
-          const response = await firstValueFrom(
-            this.httpService.get<UserGuildData[]>(url, {
-              params: { discordId, userId },
-              timeout: REQUEST_TIMEOUT,
-            }),
-          );
-
-          return response.data as UserGuildData[];
-        },
-        {
-          failureThreshold: 5,
-          successThreshold: 2,
+      const url = `${this.apiUrl}/internal/guilds/user-permissions`;
+      const response = await firstValueFrom(
+        this.httpService.get<UserGuildData[]>(url, {
+          params: { discordId, userId },
           timeout: REQUEST_TIMEOUT,
-          resetTimeout: 30000,
-        },
+        }),
       );
-    } catch (error) {
-      if (error instanceof CircuitBreakerError) {
-        throw error;
-      }
 
+      return response.data as UserGuildData[];
+    } catch (error) {
       if (retryCount < MAX_RETRIES) {
         const delay = RETRY_DELAYS[retryCount];
-        this.logger.warn(
-          `HTTP call failed for ${discordId}, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`,
+        this.logger.debug(
+          `Retry ${retryCount + 1}/${MAX_RETRIES} for ${discordId} in ${delay}ms`,
         );
         await this.sleep(delay);
         return this.fetchFromHttpWithRetry(options, retryCount + 1);
       }
 
-      this.logger.error(`HTTP call failed for ${discordId} after ${MAX_RETRIES + 1} attempts`);
       throw error;
     }
   }
@@ -169,15 +132,11 @@ export class GuildsService {
     options: GetUserGuildsOptions,
     cacheKey: string,
   ): Promise<void> {
-    const { discordId } = options;
-    this.logger.debug(`Starting background refresh for ${discordId}`);
-
     try {
       const guilds = await this.fetchFromHttpWithRetry(options);
       await this.cacheGuilds(cacheKey, guilds);
-      this.logger.debug(`Background refresh completed for ${discordId}`);
     } catch (error) {
-      this.logger.warn(`Background refresh failed for ${discordId}: ${error.message}`);
+      throw error;
     }
   }
 
@@ -190,13 +149,12 @@ export class GuildsService {
       const age = Date.now() - data.cachedAt;
 
       if (age > CACHE_TTL.USER_GUILDS * 1000) {
-        this.logger.debug(`Cache expired for key ${cacheKey} (age: ${age}ms)`);
         return null;
       }
 
       return data;
     } catch (error) {
-      this.logger.error(`Failed to read cache for ${cacheKey}: ${error.message}`);
+      this.logger.error(`Cache read error: ${error.message}`);
       return null;
     }
   }
@@ -208,7 +166,7 @@ export class GuildsService {
 
       return JSON.parse(cached);
     } catch (error) {
-      this.logger.error(`Failed to read stale cache for ${cacheKey}: ${error.message}`);
+      this.logger.error(`Stale cache read error: ${error.message}`);
       return null;
     }
   }
@@ -224,9 +182,8 @@ export class GuildsService {
         JSON.stringify(data),
         CACHE_TTL.USER_GUILDS * 2,
       );
-      this.logger.debug(`Cached guilds with key ${cacheKey}`);
     } catch (error) {
-      this.logger.error(`Failed to cache guilds for ${cacheKey}: ${error.message}`);
+      this.logger.error(`Cache write error: ${error.message}`);
     }
   }
 
@@ -234,9 +191,9 @@ export class GuildsService {
     const cacheKey = getUserGuildsCacheKey(discordId, userId);
     try {
       await this.redis.del(cacheKey);
-      this.logger.log(`Invalidated cache for user ${discordId}`);
+      this.logger.debug(`Cache invalidated for ${discordId}`);
     } catch (error) {
-      this.logger.error(`Failed to invalidate cache for ${discordId}: ${error.message}`);
+      this.logger.error(`Cache invalidation error: ${error.message}`);
     }
   }
 

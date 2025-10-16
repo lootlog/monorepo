@@ -19,7 +19,6 @@ import { RedisModule } from 'src/lib/redis/redis.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { DiscordModule } from './discord/discord.module';
 import { AuthModule } from './auth/auth.module';
-import { CircuitBreakerModule } from 'src/lib/circuit-breaker/circuit-breaker.module';
 import { LoggerMiddleware } from 'src/shared/middleware/logger.middleware';
 
 @Module({
@@ -31,7 +30,6 @@ import { LoggerMiddleware } from 'src/shared/middleware/logger.middleware';
       inject: [ConfigService],
     }),
     ConfigModule.forRoot(APP_CONFIG),
-    CircuitBreakerModule,
     UsersModule,
     TimersModule,
     LootsModule,

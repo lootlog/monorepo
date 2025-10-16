@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -9,38 +9,22 @@ import {
   TokenExpiredError,
   AuthServiceUnavailableError,
 } from 'src/auth/errors';
-import { CircuitBreakerService } from 'src/lib/circuit-breaker/circuit-breaker.service';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { AuthConfig } from 'src/config/auth.config';
-import CircuitBreaker = require('opossum');
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
 
 @Injectable()
-export class AuthService implements OnModuleInit {
-  private circuitBreaker: CircuitBreaker<[userId: string], GetIdpTokenResponse>;
+export class AuthService {
   private authServiceUrl: string;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly httpService: HttpService,
-    private readonly circuitBreakerService: CircuitBreakerService,
     private readonly configService: ConfigService,
   ) {
     const authConfig = this.configService.get<AuthConfig>(ConfigKey.AUTH);
     this.authServiceUrl = authConfig.serviceUrl;
-  }
-
-  onModuleInit() {
-    this.circuitBreaker = this.circuitBreakerService.createBreaker(
-      'auth-idp-token',
-      this.fetchIdpToken.bind(this),
-      {
-        timeout: DEFAULT_REQUEST_TIMEOUT,
-        errorThresholdPercentage: 50,
-        resetTimeout: 30000,
-      },
-    );
   }
 
   private async fetchIdpToken(userId: string): Promise<GetIdpTokenResponse> {
@@ -102,7 +86,7 @@ export class AuthService implements OnModuleInit {
     userId: string,
   ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
     try {
-      const response = await this.circuitBreaker.fire(userId);
+      const response = await this.fetchIdpToken(userId);
 
       if ('error' in response) {
         if (
@@ -124,22 +108,8 @@ export class AuthService implements OnModuleInit {
         throw err;
       }
 
-      if (err instanceof Error && err.name === 'TimeoutError') {
-        this.logger.log({
-          level: 'error',
-          message: `Auth service timeout for user ${userId}`,
-        });
-        throw new AuthServiceUnavailableError('Auth service timeout');
-      }
-
-      if (this.circuitBreaker.opened) {
-        this.logger.log({
-          level: 'error',
-          message: `Auth service circuit breaker is open for user ${userId}`,
-        });
-        throw new AuthServiceUnavailableError(
-          'Auth service circuit breaker is open',
-        );
+      if (err instanceof AuthServiceUnavailableError) {
+        throw err;
       }
 
       const errorMessage = err instanceof Error ? err.message : String(err);
