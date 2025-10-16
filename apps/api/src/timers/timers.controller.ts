@@ -17,6 +17,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { Guild, Permission, Role } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
@@ -55,9 +56,10 @@ export class TimersController {
     @DiscordId() discordId: string,
     @UserId() userId: string,
   ) {
-    return this.timersService.getAllTimers(discordId, userId, {
+    const timers = await this.timersService.getAllTimers(discordId, userId, {
       world,
     });
+    return plainToInstance(TimerEntity, timers);
   }
 
   @Permissions(Permission.LOOTLOG_READ)
@@ -81,7 +83,7 @@ export class TimersController {
     @MemberRoles() roles: Role[],
     @GuildData() guild: Guild,
   ) {
-    return this.timersService.getTimers(
+    const timers = await this.timersService.getTimers(
       {
         world,
       },
@@ -89,6 +91,7 @@ export class TimersController {
       permissions,
       roles,
     );
+    return plainToInstance(TimerEntity, timers);
   }
 
   @Permissions(Permission.LOOTLOG_WRITE)
@@ -115,7 +118,8 @@ export class TimersController {
     @Param('npcId') npcId: string,
     @Body() data: ResetTimerDto,
   ) {
-    return this.timersService.resetTimer(discordId, guildId, npcId, data);
+    const timer = await this.timersService.resetTimer(discordId, guildId, npcId, data);
+    return plainToInstance(TimerEntity, timer);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)

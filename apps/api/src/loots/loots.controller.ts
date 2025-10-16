@@ -18,6 +18,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { Guild, Permission, Role } from 'generated/client';
 import { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
@@ -79,7 +80,7 @@ export class LootsController {
     @Query('npcs', new ArrayValidationPipe())
     npcs: string[],
   ) {
-    return this.lootsService.fetchLootsByGuildId(guild, permissions, roles, {
+    const loots = await this.lootsService.fetchLootsByGuildId(guild, permissions, roles, {
       cursor,
       limit,
       npcTypes,
@@ -88,6 +89,7 @@ export class LootsController {
       npcs,
       world,
     });
+    return plainToInstance(LootEntity, loots);
   }
 
   @Post('/loots')
@@ -129,11 +131,12 @@ export class LootsController {
     @Param('lootId', new ParseIntPipe()) lootId: number,
     @GuildData() guild: Guild,
   ) {
-    return this.lootsService.getComments({
+    const comments = await this.lootsService.getComments({
       discordId,
       lootId,
       guildId: guild.id,
     });
+    return plainToInstance(LootCommentEntity, comments);
   }
 
   @Permissions(Permission.LOOTLOG_WRITE)
@@ -159,13 +162,14 @@ export class LootsController {
     @Body() body: CreateCommentDto,
     @GuildData() guild: Guild,
   ) {
-    return this.lootsService.createComment({
+    const comment = await this.lootsService.createComment({
       discordId,
       userId,
       lootId,
       body,
       guildId: guild.id,
     });
+    return plainToInstance(LootCommentEntity, comment);
   }
 
   @Permissions(Permission.ADMIN, Permission.LOOTLOG_MANAGE)

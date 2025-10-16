@@ -125,6 +125,8 @@ export class DiscordService implements OnModuleInit {
     try {
       const token = await this.authService.getIdpToken(userId);
 
+      console.log(token.accessToken);
+
       if (!this.requiredScopes.every((scope) => token.scopes.includes(scope))) {
         throw new InvalidScopesError(this.requiredScopes, token.scopes);
       }
@@ -157,6 +159,7 @@ export class DiscordService implements OnModuleInit {
             request.path,
             headers,
             userId, // Pass userId for per-user rate limit tracking
+            request.method, // Pass HTTP method for accurate bucket mapping
           );
 
           // TODO [LOW PRIORITY]: Track invalid requests (401, 403, 429) to prevent Cloudflare bans
@@ -233,7 +236,7 @@ export class DiscordService implements OnModuleInit {
       const path = Routes.userGuilds();
 
       // Check rate limit with userId for per-user tracking
-      await this.rateLimiter.checkRateLimitForPath(path, userId);
+      await this.rateLimiter.checkRateLimitForPath(path, userId, 'GET');
 
       const guilds = await retry(
         async () => {
@@ -248,18 +251,15 @@ export class DiscordService implements OnModuleInit {
                   limit: error.limit,
                   hash: error.hash,
                   scope: error.scope,
+                  global: error.global,
                 },
                 userId,
+                'GET',
               );
-              this.logger.log({
-                level: 'warn',
-                message: `Rate limit hit for getUserGuilds, waiting ${error.retryAfter}ms before retry`,
-              });
-              await new Promise((resolve) =>
-                setTimeout(resolve, error.retryAfter),
-              );
+              // Don't sleep here - rate limiter already updated the cache
+              // The retry mechanism will handle the delay
               throw new RetryableError(
-                `Rate limit exceeded, retried after ${error.retryAfter}ms`,
+                `Rate limit exceeded, will retry after ${error.retryAfter}ms`,
               );
             }
             if (error.status >= 500 || error.code === 'ECONNRESET') {
@@ -360,7 +360,7 @@ export class DiscordService implements OnModuleInit {
     threshold: number = 3,
   ): Promise<boolean> {
     const path = Routes.userGuildMember(guildId);
-    return this.rateLimiter.hasBucketCapacity(path, userId, threshold);
+    return this.rateLimiter.hasBucketCapacity(path, userId, threshold, 'GET');
   }
 
   async getGuildMember(options: {
@@ -391,6 +391,7 @@ export class DiscordService implements OnModuleInit {
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
       // Double-check cache after acquiring lock (another request might have filled it)
+
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
         const parsed = JSON.parse(cachedAfterLock);
@@ -400,13 +401,21 @@ export class DiscordService implements OnModuleInit {
       const rest = await this.getRestClient(userId);
       const path = Routes.userGuildMember(guildId);
 
-      // Check rate limit with userId for per-user tracking
-      await this.rateLimiter.checkRateLimitForPath(path, userId);
+      await this.rateLimiter.checkRateLimitForPath(path, userId, 'GET');
 
       const member = await retry(
         async () => {
           try {
-            return (await rest.get(path)) as APIGuildMember;
+            const result = (await rest.get(path)) as APIGuildMember;
+            this.logger.log({
+              level: 'info',
+              message: 'Discord API returned member data',
+              path,
+              hasResult: !!result,
+              resultKeys: result ? Object.keys(result) : [],
+              result: JSON.stringify(result),
+            });
+            return result;
           } catch (error: any) {
             if (error.status === 404) {
               throw error;
@@ -419,18 +428,15 @@ export class DiscordService implements OnModuleInit {
                   limit: error.limit,
                   hash: error.hash,
                   scope: error.scope,
+                  global: error.global,
                 },
                 userId,
+                'GET',
               );
-              this.logger.log({
-                level: 'warn',
-                message: `Rate limit hit for getGuildMember, waiting ${error.retryAfter}ms before retry`,
-              });
-              await new Promise((resolve) =>
-                setTimeout(resolve, error.retryAfter),
-              );
+              // Don't sleep here - rate limiter already updated the cache
+              // The retry mechanism will handle the delay
               throw new RetryableError(
-                `Rate limit exceeded, retried after ${error.retryAfter}ms`,
+                `Rate limit exceeded, will retry after ${error.retryAfter}ms`,
               );
             }
             if (error.status >= 500 || error.code === 'ECONNRESET') {

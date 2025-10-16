@@ -6,6 +6,7 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { MembersService } from './members.service';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -41,12 +42,13 @@ export class MembersController {
     @UserId() userId: string,
     @Param('guildId') guildId: string,
   ) {
-    return this.membersService.getGuildMemberById({
+    const member = await this.membersService.getGuildMemberById({
       discordId,
       guildId,
       userId,
       standalone: true,
     });
+    return plainToInstance(MemberEntity, member);
   }
 
   @Post('@me/refresh')
@@ -65,13 +67,14 @@ export class MembersController {
     @UserId() userId: string,
     @Param('guildId') guildId: string,
   ) {
-    return this.membersService.getGuildMemberById({
+    const member = await this.membersService.getGuildMemberById({
       discordId,
       guildId,
       userId,
       refresh: true,
       standalone: true,
     });
+    return plainToInstance(MemberEntity, member);
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -94,10 +97,11 @@ export class MembersController {
     @Param('discordId') discordId: string,
     @GuildData() guild: Guild,
   ) {
-    return this.membersService.refreshMember({
+    const member = await this.membersService.refreshMember({
       discordId,
       guildId: guild.id,
     });
+    return plainToInstance(MemberEntity, member);
   }
 
   @Permissions(Permission.LOOTLOG_READ)
@@ -115,7 +119,8 @@ export class MembersController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   async getGuildMembers(@GuildData() guild: Guild) {
-    return this.membersService.getGuildMembers(guild.id);
+    const members = await this.membersService.getGuildMembers(guild.id);
+    return plainToInstance(MemberEntity, members);
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -136,7 +141,8 @@ export class MembersController {
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
   ) {
-    return this.membersService.createBulkRefreshJob(guild.id, discordId);
+    const job = await this.membersService.createBulkRefreshJob(guild.id, discordId);
+    return plainToInstance(MemberRefreshJobEntity, job);
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -155,7 +161,8 @@ export class MembersController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
   @ApiResponse({ status: 404, description: 'No refresh jobs found' })
   async getLatestRefreshJob(@GuildData() guild: Guild) {
-    return this.membersService.getLatestRefreshJob(guild.id);
+    const job = await this.membersService.getLatestRefreshJob(guild.id);
+    return job ? plainToInstance(MemberRefreshJobEntity, job) : null;
   }
 
   @Permissions(Permission.ADMIN, Permission.OWNER)
@@ -175,6 +182,7 @@ export class MembersController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
   @ApiResponse({ status: 404, description: 'Refresh job not found' })
   async getRefreshJobStatus(@Param('jobId') jobId: string) {
-    return this.membersService.getRefreshJobStatus(parseInt(jobId, 10));
+    const job = await this.membersService.getRefreshJobStatus(parseInt(jobId, 10));
+    return plainToInstance(MemberRefreshJobEntity, job);
   }
 }

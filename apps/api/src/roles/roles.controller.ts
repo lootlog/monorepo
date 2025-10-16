@@ -6,6 +6,7 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { Guild, Permission } from 'generated/client';
 import { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
 import { RolesService } from 'src/roles/roles.service';
@@ -38,7 +39,8 @@ export class RolesController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
   async getGuildRoles(@GuildData() guild: Guild) {
-    return this.rolesService.getRolesByGuildId(guild.id);
+    const roles = await this.rolesService.getRolesByGuildId(guild.id);
+    return plainToInstance(RoleEntity, roles);
   }
 
   @Permissions(Permission.ADMIN)
@@ -63,11 +65,12 @@ export class RolesController {
     @DiscordId() discordId: string,
     @Body() data: UpdateRolePermissionsDto,
   ) {
-    return this.rolesService.updateRolePermissions(
+    const role = await this.rolesService.updateRolePermissions(
       discordId,
       guild.id,
       roleId,
       data,
     );
+    return plainToInstance(RoleEntity, role);
   }
 }

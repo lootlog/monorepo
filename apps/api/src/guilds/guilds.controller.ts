@@ -15,6 +15,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { Guild, Permission } from 'generated/client';
 import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
 import { UserGuildPermissionsDto } from 'src/guilds/dto/user-guild-permissions.dto';
@@ -27,6 +28,7 @@ import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.interceptor';
+import { GuildEntity } from 'src/shared/entities/guild.entity';
 
 @ApiTags('guilds')
 @ApiBearerAuth()
@@ -52,7 +54,8 @@ export class GuildsController {
     @UserId() userId: string,
     @Query('source') source: string,
   ) {
-    return this.guildsService.getUserGuilds(discordId, userId, source);
+    const guilds = await this.guildsService.getUserGuilds(discordId, userId, source);
+    return plainToInstance(GuildEntity, guilds);
   }
 
   @Get('/@me/permissions')
@@ -90,7 +93,8 @@ export class GuildsController {
   @ApiParam({ name: 'guildId', description: 'Guild ID' })
   @ApiResponse({ status: 200, description: 'Guild information' })
   async getGuildById(@GuildData() guild: Guild) {
-    return this.guildsService.getGuildById(guild.id);
+    const guildData = await this.guildsService.getGuildById(guild.id);
+    return plainToInstance(GuildEntity, guildData);
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -100,14 +104,16 @@ export class GuildsController {
     @GuildData() guild: Guild,
     @Body() data: UpdateGuildConfigDto,
   ) {
-    return this.guildsService.updateGuildConfig(guild.id, data);
+    const updatedGuild = await this.guildsService.updateGuildConfig(guild.id, data);
+    return plainToInstance(GuildEntity, updatedGuild);
   }
 
   @Permissions(Permission.LOOTLOG_READ)
   @UseGuards(PermissionsGuard)
   @Get(':guildId/config')
   async getGuildConfig(@GuildData() guild: Guild) {
-    return this.guildsService.getGuildById(guild.id);
+    const guildData = await this.guildsService.getGuildById(guild.id);
+    return plainToInstance(GuildEntity, guildData);
   }
 
   @Permissions(Permission.LOOTLOG_READ)
