@@ -9,4 +9,5 @@ export enum GatewayEvent {
   TIMERS_DELETE = 'timers-delete',
   NOTIFICATIONS_SEND = 'notifications-send',
   MEMBERS_REFRESH_JOB_UPDATE = 'members-refresh-job-update',
+  PERMISSIONS_UPDATED = 'permissions-updated',
 }
