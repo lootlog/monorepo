@@ -90,6 +90,51 @@ export class DiscordRateLimiterService {
     }
   }
 
+  /**
+   * Check if bucket has sufficient capacity for background requests
+   * Returns true if bucket has enough remaining requests (>= threshold)
+   * Used to prevent background jobs from consuming user's rate limit
+   */
+  async hasBucketCapacity(
+    path: string,
+    userId?: string,
+    threshold: number = 3,
+  ): Promise<boolean> {
+    const normalizedPath = this.normalizePath(path);
+    const cachedMetadata = this.pathToBucketCache.get(normalizedPath);
+
+    if (!cachedMetadata) {
+      // No rate limit data cached - assume bucket is available
+      return true;
+    }
+
+    const topLevelResource = this.extractTopLevelResource(path);
+    const key = this.getBucketKey(
+      cachedMetadata.bucket,
+      userId,
+      topLevelResource,
+      cachedMetadata.scope,
+    );
+    const data = await this.redis.get(key);
+
+    if (!data) {
+      // No rate limit data - bucket is available
+      return true;
+    }
+
+    const rateLimitData = JSON.parse(data) as RateLimitData;
+    const now = Date.now();
+
+    // If reset time has passed, bucket is available
+    if (rateLimitData.reset <= now) {
+      await this.redis.del(key);
+      return true;
+    }
+
+    // Check if remaining requests are above threshold
+    return rateLimitData.remaining >= threshold;
+  }
+
   async updateFromHeaders(
     path: string,
     headers: Record<string, string | null>,

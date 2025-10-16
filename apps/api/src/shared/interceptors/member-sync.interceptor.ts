@@ -27,7 +27,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
     const { userId, discordId } = request;
 
     return next.handle().pipe(
-      tap(async (data) => {
+      tap((data) => {
         if (!userId || !discordId || !data) {
           return;
         }
@@ -39,7 +39,15 @@ export class MemberSyncInterceptor implements NestInterceptor {
             return;
           }
 
-          this.queueStaleMemberRefreshes(discordId, userId, guilds);
+          // Fire and forget - don't block response
+          this.queueStaleMemberRefreshes(discordId, userId, guilds).catch(
+            (error) => {
+              this.logger.error(
+                'Error queuing stale member refreshes',
+                (error as Error).stack,
+              );
+            },
+          );
         } catch (error) {
           this.logger.error(
             'Error in member sync interceptor',

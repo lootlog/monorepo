@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { MembersService } from 'src/members/members.service';
 import { PrismaService } from 'src/db/prisma.service';
+import { DiscordService } from 'src/discord/discord.service';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { Queue } from 'src/enum/queue.enum';
@@ -28,6 +29,7 @@ export class MembersConsumer {
     private readonly membersService: MembersService,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly discordService: DiscordService,
   ) {}
 
   @RabbitSubscribe({
@@ -135,6 +137,25 @@ export class MembersConsumer {
     );
 
     try {
+      // Check if user's rate limit bucket has capacity before making request
+      // This prevents background jobs from blocking user's interactive requests
+      const hasCapacity = await this.discordService.hasGuildMemberBucketCapacity(
+        guildId,
+        userId,
+        3, // Require at least 3 remaining requests
+      );
+
+      if (!hasCapacity) {
+        this.logger.debug(
+          `Skipping background refresh for member ${discordId} in guild ${guildId} - rate limit bucket is busy`,
+        );
+        return;
+      }
+
+      // Add delay to prevent overwhelming Discord API rate limits
+      // This ensures background refreshes don't compete with user requests
+      await this.sleep(this.MEMBER_REFRESH_DELAY_MS);
+
       await this.membersService.getGuildMemberById({
         discordId,
         guildId,
