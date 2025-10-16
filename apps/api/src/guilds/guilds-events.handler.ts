@@ -2,7 +2,9 @@ import {
   MessageHandlerErrorBehavior,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
 import { Queue } from 'src/enum/queue.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
@@ -19,6 +21,7 @@ export class GuildsEventsHandler {
   constructor(
     private readonly guildsService: GuildsService,
     private readonly retryService: RetryService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
   @RabbitSubscribe({
@@ -49,7 +52,11 @@ export class GuildsEventsHandler {
 
     // Główna logika biznesowa
     await this.guildsService.createGuild(data);
-    console.log(`Guild created successfully: ${data.guildId}`);
+    this.logger.log({
+      level: 'info',
+      message: 'Guild created successfully',
+      guildId: data.guildId,
+    });
   }
 
   @RabbitSubscribe({
@@ -61,10 +68,12 @@ export class GuildsEventsHandler {
     },
   })
   handleGuildCreateDlq(message: CreateGuildDto) {
-    console.warn(
-      'Guild CREATE DLQ message - manual intervention needed:',
-      message,
-    );
+    this.logger.log({
+      level: 'warn',
+      message: 'Guild CREATE DLQ message - manual intervention needed',
+      guildId: message.guildId,
+      data: message,
+    });
   }
 
   @RabbitSubscribe({
@@ -76,10 +85,12 @@ export class GuildsEventsHandler {
     },
   })
   handleGuildUpdateDlq(message: CreateGuildDto) {
-    console.warn(
-      'Guild UPDATE DLQ message - manual intervention needed:',
-      message,
-    );
+    this.logger.log({
+      level: 'warn',
+      message: 'Guild UPDATE DLQ message - manual intervention needed',
+      guildId: message.guildId,
+      data: message,
+    });
   }
 
   @RabbitSubscribe({
@@ -91,10 +102,12 @@ export class GuildsEventsHandler {
     },
   })
   handleGuildDeleteDlq(message: CreateGuildDto) {
-    console.warn(
-      'Guild DELETE DLQ message - manual intervention needed:',
-      message,
-    );
+    this.logger.log({
+      level: 'warn',
+      message: 'Guild DELETE DLQ message - manual intervention needed',
+      guildId: message.guildId,
+      data: message,
+    });
   }
 
   @RabbitSubscribe({
@@ -125,7 +138,11 @@ export class GuildsEventsHandler {
 
     // Główna logika biznesowa
     await this.guildsService.updateGuild(data);
-    console.log(`Guild updated successfully: ${data.guildId}`);
+    this.logger.log({
+      level: 'info',
+      message: 'Guild updated successfully',
+      guildId: data.guildId,
+    });
   }
 
   @RabbitSubscribe({
@@ -156,6 +173,10 @@ export class GuildsEventsHandler {
 
     // Główna logika biznesowa
     await this.guildsService.deleteGuild(data);
-    console.log(`Guild deleted successfully: ${data.guildId}`);
+    this.logger.log({
+      level: 'info',
+      message: 'Guild deleted successfully',
+      guildId: data.guildId,
+    });
   }
 }
