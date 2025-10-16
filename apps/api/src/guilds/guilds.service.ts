@@ -5,11 +5,12 @@ import {
   Injectable,
   NotFoundException,
   forwardRef,
-  Logger,
   ForbiddenException,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { Guild, Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
@@ -27,9 +28,8 @@ import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class GuildsService {
-  private readonly logger = new Logger(GuildsService.name);
-
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
     private readonly rolesService: RolesService,
@@ -54,9 +54,10 @@ export class GuildsService {
         const discordGuilds = await this.discordService.getUserGuilds(userId);
 
         if (!discordGuilds || discordGuilds.length === 0) {
-          this.logger.warn(
-            `No guilds found for user ${userId} with Discord ID ${discordId}`,
-          );
+          this.logger.log({
+            level: 'warn',
+            message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
+          });
           return [];
         }
 
@@ -81,9 +82,10 @@ export class GuildsService {
           error instanceof HttpException &&
           error.getStatus() === HttpStatus.UNAUTHORIZED
         ) {
-          this.logger.warn(
-            `User authentication failed for userId: ${userId}, returning empty guilds`,
-          );
+          this.logger.log({
+            level: 'warn',
+            message: `User authentication failed for userId: ${userId}, returning empty guilds`,
+          });
           return [];
         }
         throw error;
@@ -116,9 +118,10 @@ export class GuildsService {
       const discordGuilds = await this.discordService.getUserGuilds(userId);
 
       if (!discordGuilds || discordGuilds.length === 0) {
-        this.logger.warn(
-          `No guilds found for user ${userId} with Discord ID ${discordId}`,
-        );
+        this.logger.log({
+          level: 'warn',
+          message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
+        });
         return [];
       }
 
@@ -137,9 +140,10 @@ export class GuildsService {
         error instanceof HttpException &&
         error.getStatus() === HttpStatus.UNAUTHORIZED
       ) {
-        this.logger.warn(
-          `User authentication failed for userId: ${userId}, returning empty guilds`,
-        );
+        this.logger.log({
+          level: 'warn',
+          message: `User authentication failed for userId: ${userId}, returning empty guilds`,
+        });
         return [];
       }
       throw error;
@@ -321,10 +325,11 @@ export class GuildsService {
         },
       });
     } catch (error) {
-      this.logger.error(
-        'Failed to create/update guild',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to create/update guild',
+        error: error instanceof Error ? error.stack : error,
+      });
       throw error;
     }
 
@@ -347,10 +352,11 @@ export class GuildsService {
         },
       });
     } catch (error) {
-      this.logger.error(
-        'Failed to update guild',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to update guild',
+        error: error instanceof Error ? error.stack : error,
+      });
       throw error;
     }
   }
@@ -373,10 +379,11 @@ export class GuildsService {
         });
       });
     } catch (error) {
-      this.logger.error(
-        'Failed to delete guild',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to delete guild',
+        error: error instanceof Error ? error.stack : error,
+      });
       throw error;
     }
   }

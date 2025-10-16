@@ -1,10 +1,12 @@
 import {
+  Inject,
   Injectable,
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  Logger,
 } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
@@ -15,9 +17,8 @@ import { RoutingKey } from 'src/enum/routing-key.enum';
 
 @Injectable()
 export class MemberSyncInterceptor implements NestInterceptor {
-  private readonly logger = new Logger(MemberSyncInterceptor.name);
-
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
@@ -42,17 +43,19 @@ export class MemberSyncInterceptor implements NestInterceptor {
           // Fire and forget - don't block response
           this.queueStaleMemberRefreshes(discordId, userId, guilds).catch(
             (error) => {
-              this.logger.error(
-                'Error queuing stale member refreshes',
-                (error as Error).stack,
-              );
+              this.logger.log({
+                level: 'error',
+                message: 'Error queuing stale member refreshes',
+                stack: (error as Error).stack,
+              });
             },
           );
         } catch (error) {
-          this.logger.error(
-            'Error in member sync interceptor',
-            (error as Error).stack,
-          );
+          this.logger.log({
+            level: 'error',
+            message: 'Error in member sync interceptor',
+            stack: (error as Error).stack,
+          });
         }
       }),
     );
@@ -83,15 +86,17 @@ export class MemberSyncInterceptor implements NestInterceptor {
     });
 
     if (staleMembers.length === 0) {
-      this.logger.debug(
-        `No stale members found for user ${userId} in ${guildIds.length} guilds`,
-      );
+      this.logger.log({
+        level: 'debug',
+        message: `No stale members found for user ${userId} in ${guildIds.length} guilds`,
+      });
       return;
     }
 
-    this.logger.log(
-      `Queueing refresh for ${staleMembers.length} stale members for user ${userId}`,
-    );
+    this.logger.log({
+      level: 'info',
+      message: `Queueing refresh for ${staleMembers.length} stale members for user ${userId}`,
+    });
 
     for (const member of staleMembers) {
       try {
@@ -105,14 +110,16 @@ export class MemberSyncInterceptor implements NestInterceptor {
           },
         );
 
-        this.logger.debug(
-          `Queued refresh for member ${member.userId} in guild ${member.guildId}`,
-        );
+        this.logger.log({
+          level: 'debug',
+          message: `Queued refresh for member ${member.userId} in guild ${member.guildId}`,
+        });
       } catch (error) {
-        this.logger.error(
-          `Failed to queue refresh for member ${member.userId}`,
-          (error as Error).stack,
-        );
+        this.logger.log({
+          level: 'error',
+          message: `Failed to queue refresh for member ${member.userId}`,
+          stack: (error as Error).stack,
+        });
       }
     }
   }

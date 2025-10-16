@@ -1,5 +1,7 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { GetIdpTokenResponse } from 'src/auth/types/get-idp-token-response.type';
 import {
   DEFAULT_EXCHANGE_NAME,
@@ -15,13 +17,13 @@ import CircuitBreaker = require('opossum');
 
 @Injectable()
 export class AuthService implements OnModuleInit {
-  private readonly logger = new Logger(AuthService.name);
   private circuitBreaker: CircuitBreaker<
     [userId: string],
     GetIdpTokenResponse
   >;
 
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly amqpConnection: AmqpConnection,
     private readonly circuitBreakerService: CircuitBreakerService,
   ) {}
@@ -47,9 +49,10 @@ export class AuthService implements OnModuleInit {
     });
 
     if (!response) {
-      this.logger.error(
-        `Empty response from auth service for user ${userId}`,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Empty response from auth service for user ${userId}`,
+      });
       throw new AuthServiceUnavailableError(
         'Empty response from auth service',
       );
@@ -60,9 +63,10 @@ export class AuthService implements OnModuleInit {
         response.error !== 'TOKEN_NOT_FOUND' &&
         response.error !== 'TOKEN_FETCH_FAILED'
       ) {
-        this.logger.error(
-          `Auth service returned error for user ${userId}: ${response.error}`,
-        );
+        this.logger.log({
+          level: 'error',
+          message: `Auth service returned error for user ${userId}: ${response.error}`,
+        });
         throw new AuthServiceUnavailableError(
           `Auth service error: ${response.error}`,
         );
@@ -83,7 +87,10 @@ export class AuthService implements OnModuleInit {
           response.error === 'TOKEN_NOT_FOUND' ||
           response.error === 'TOKEN_FETCH_FAILED'
         ) {
-          this.logger.warn(`Token expired for user ${userId}`);
+          this.logger.log({
+            level: 'warn',
+            message: `Token expired for user ${userId}`,
+          });
           throw new TokenExpiredError();
         }
       }
@@ -95,14 +102,18 @@ export class AuthService implements OnModuleInit {
       }
 
       if (err instanceof Error && err.name === 'TimeoutError') {
-        this.logger.error(`Auth service timeout for user ${userId}`);
+        this.logger.log({
+          level: 'error',
+          message: `Auth service timeout for user ${userId}`,
+        });
         throw new AuthServiceUnavailableError('Auth service timeout');
       }
 
       if (this.circuitBreaker.opened) {
-        this.logger.error(
-          `Auth service circuit breaker is open for user ${userId}`,
-        );
+        this.logger.log({
+          level: 'error',
+          message: `Auth service circuit breaker is open for user ${userId}`,
+        });
         throw new AuthServiceUnavailableError(
           'Auth service circuit breaker is open',
         );
@@ -110,10 +121,11 @@ export class AuthService implements OnModuleInit {
 
       const errorMessage = err instanceof Error ? err.message : String(err);
       const errorStack = err instanceof Error ? err.stack : undefined;
-      this.logger.error(
-        `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
-        errorStack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,
+        stack: errorStack,
+      });
       throw new AuthServiceUnavailableError(
         `Failed to fetch IDP token: ${errorMessage}`,
       );

@@ -1,4 +1,6 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import CircuitBreaker = require('opossum');
 
 export interface CircuitBreakerOptions {
@@ -12,11 +14,17 @@ export interface CircuitBreakerOptions {
 
 @Injectable()
 export class CircuitBreakerService implements OnModuleInit {
-  private readonly logger = new Logger(CircuitBreakerService.name);
   private readonly breakers = new Map<string, CircuitBreaker<any, any>>();
 
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
+
   onModuleInit() {
-    this.logger.log('Circuit Breaker Service initialized');
+    this.logger.log({
+      level: 'info',
+      message: 'Circuit Breaker Service initialized',
+    });
   }
 
   createBreaker<
@@ -46,43 +54,70 @@ export class CircuitBreakerService implements OnModuleInit {
     const breaker = new CircuitBreaker(fn, breakerOptions);
 
     breaker.on('open', () => {
-      this.logger.error(`Circuit breaker opened: ${name}`);
+      this.logger.log({
+        level: 'error',
+        message: `Circuit breaker opened: ${name}`,
+      });
     });
 
     breaker.on('halfOpen', () => {
-      this.logger.warn(`Circuit breaker half-open: ${name}`);
+      this.logger.log({
+        level: 'warn',
+        message: `Circuit breaker half-open: ${name}`,
+      });
     });
 
     breaker.on('close', () => {
-      this.logger.log(`Circuit breaker closed: ${name}`);
+      this.logger.log({
+        level: 'info',
+        message: `Circuit breaker closed: ${name}`,
+      });
     });
 
     breaker.on('failure', (error) => {
-      this.logger.debug(`Circuit breaker failure: ${name}`, error.message);
+      this.logger.log({
+        level: 'debug',
+        message: `Circuit breaker failure: ${name}`,
+        error: error.message,
+      });
     });
 
     breaker.on('success', () => {
-      this.logger.debug(`Circuit breaker success: ${name}`);
+      this.logger.log({
+        level: 'debug',
+        message: `Circuit breaker success: ${name}`,
+      });
     });
 
     breaker.on('timeout', () => {
-      this.logger.warn(`Circuit breaker timeout: ${name}`);
+      this.logger.log({
+        level: 'warn',
+        message: `Circuit breaker timeout: ${name}`,
+      });
     });
 
     breaker.on('reject', () => {
-      this.logger.warn(`Circuit breaker rejected call: ${name}`);
+      this.logger.log({
+        level: 'warn',
+        message: `Circuit breaker rejected call: ${name}`,
+      });
     });
 
     breaker.fallback((error) => {
-      this.logger.error(
-        `Circuit breaker fallback triggered for ${name}`,
+      this.logger.log({
+        level: 'error',
+        message: `Circuit breaker fallback triggered for ${name}`,
         error,
-      );
+      });
       throw error;
     });
 
     this.breakers.set(name, breaker);
-    this.logger.log(`Circuit breaker created: ${name}`, breakerOptions);
+    this.logger.log({
+      level: 'info',
+      message: `Circuit breaker created: ${name}`,
+      options: breakerOptions,
+    });
 
     return breaker;
   }

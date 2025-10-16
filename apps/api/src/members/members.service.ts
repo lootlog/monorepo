@@ -5,12 +5,13 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { PrismaService } from 'src/db/prisma.service';
 import {
   getMemberCacheTtl,
@@ -36,10 +37,10 @@ type MemberWithRoles = Member & {
 
 @Injectable()
 export class MembersService {
-  private readonly logger = new Logger(MembersService.name);
   private readonly env: RuntimeEnvironment;
 
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
     @Inject(forwardRef(() => GuildsService))
@@ -131,10 +132,12 @@ export class MembersService {
         });
 
         if (!discordMember) {
-          this.logger.warn(
-            'Discord API returned null, attempting to serve stale data',
-            { guildId: desiredGuildId, userId: discordId },
-          );
+          this.logger.log({
+            level: 'warn',
+            message: 'Discord API returned null, attempting to serve stale data',
+            guildId: desiredGuildId,
+            userId: discordId,
+          });
 
           const staleMember = await this.getStaleMember(
             discordId,
@@ -178,10 +181,12 @@ export class MembersService {
           error instanceof HttpException &&
           error.getStatus() === HttpStatus.UNAUTHORIZED
         ) {
-          this.logger.warn(
-            'User authentication failed (token expired/invalid), deactivating member',
-            { guildId: desiredGuildId, userId: discordId },
-          );
+          this.logger.log({
+            level: 'warn',
+            message: 'User authentication failed (token expired/invalid), deactivating member',
+            guildId: desiredGuildId,
+            userId: discordId,
+          });
 
           const existingMember = await this.prisma.member.findUnique({
             where: {
@@ -202,7 +207,9 @@ export class MembersService {
         }
 
         if (error instanceof ServiceUnavailableException) {
-          this.logger.warn('Auth service unavailable, serving stale data', {
+          this.logger.log({
+            level: 'warn',
+            message: 'Auth service unavailable, serving stale data',
             guildId: desiredGuildId,
             userId,
           });
@@ -214,10 +221,11 @@ export class MembersService {
           );
         }
 
-        this.logger.error(
-          'Failed to fetch member from Discord, serving stale data',
-          (error as Error).stack,
-        );
+        this.logger.log({
+          level: 'error',
+          message: 'Failed to fetch member from Discord, serving stale data',
+          stack: (error as Error).stack,
+        });
 
         if (refresh) {
           throw error;
@@ -326,10 +334,11 @@ export class MembersService {
 
       return member;
     } catch (error) {
-      this.logger.error(
-        `Failed to create/update member ${id}`,
-        (error as Error).stack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Failed to create/update member ${id}`,
+        stack: (error as Error).stack,
+      });
       throw error;
     }
   }
@@ -366,15 +375,17 @@ export class MembersService {
         data: { active: false },
       });
 
-      this.logger.log(
-        `Deactivated ${result.count} members from guild ${guildId}`,
-      );
+      this.logger.log({
+        level: 'info',
+        message: `Deactivated ${result.count} members from guild ${guildId}`,
+      });
       return result.count;
     } catch (error) {
-      this.logger.error(
-        `Failed to deactivate members for guild ${guildId}`,
-        (error as Error).stack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Failed to deactivate members for guild ${guildId}`,
+        stack: (error as Error).stack,
+      });
       throw error;
     }
   }
