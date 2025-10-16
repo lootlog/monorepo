@@ -42,7 +42,9 @@ export class DiscordService implements OnModuleInit {
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly configService: ConfigService,
   ) {
-    const serviceConfig = this.configService.get<ServiceConfig>(ConfigKey.SERVICE);
+    const serviceConfig = this.configService.get<ServiceConfig>(
+      ConfigKey.SERVICE,
+    );
     this.isLocal = serviceConfig?.env === RuntimeEnvironment.LOCAL;
   }
 
@@ -61,9 +63,7 @@ export class DiscordService implements OnModuleInit {
     try {
       const token = await this.authService.getIdpToken(userId);
 
-      if (
-        !this.requiredScopes.every((scope) => token.scopes.includes(scope))
-      ) {
+      if (!this.requiredScopes.every((scope) => token.scopes.includes(scope))) {
         throw new InvalidScopesError(this.requiredScopes, token.scopes);
       }
 
@@ -79,7 +79,9 @@ export class DiscordService implements OnModuleInit {
           const headers = {
             'x-ratelimit-bucket': response.headers.get('x-ratelimit-bucket'),
             'x-ratelimit-limit': response.headers.get('x-ratelimit-limit'),
-            'x-ratelimit-remaining': response.headers.get('x-ratelimit-remaining'),
+            'x-ratelimit-remaining': response.headers.get(
+              'x-ratelimit-remaining',
+            ),
             'x-ratelimit-reset': response.headers.get('x-ratelimit-reset'),
             'x-ratelimit-scope': response.headers.get('x-ratelimit-scope'),
             'x-ratelimit-global': response.headers.get('x-ratelimit-global'),
@@ -162,9 +164,7 @@ export class DiscordService implements OnModuleInit {
               throw error;
             }
             if (error.status >= 500 || error.code === 'ECONNRESET') {
-              throw new RetryableError(
-                `Discord API error: ${error.message}`,
-              );
+              throw new RetryableError(`Discord API error: ${error.message}`);
             }
             throw error;
           }
@@ -197,7 +197,11 @@ export class DiscordService implements OnModuleInit {
           `User authentication failed for userId: ${userId}, caching empty result`,
           error,
         );
-        await this.redisService.set(cacheKey, JSON.stringify([]), errorCacheTtl);
+        await this.redisService.set(
+          cacheKey,
+          JSON.stringify([]),
+          errorCacheTtl,
+        );
         throw error;
       }
 
@@ -267,9 +271,7 @@ export class DiscordService implements OnModuleInit {
               throw error;
             }
             if (error.status >= 500 || error.code === 'ECONNRESET') {
-              throw new RetryableError(
-                `Discord API error: ${error.message}`,
-              );
+              throw new RetryableError(`Discord API error: ${error.message}`);
             }
             throw error;
           }
