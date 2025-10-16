@@ -291,6 +291,19 @@ export class DiscordService implements OnModuleInit {
     await this.redisService.del(cacheKey);
   }
 
+  /**
+   * Check if user's rate limit bucket has capacity for guild member requests
+   * Used by background jobs to avoid consuming user's rate limit
+   */
+  async hasGuildMemberBucketCapacity(
+    guildId: string,
+    userId: string,
+    threshold: number = 3,
+  ): Promise<boolean> {
+    const path = Routes.userGuildMember(guildId);
+    return this.rateLimiter.hasBucketCapacity(path, userId, threshold);
+  }
+
   async getGuildMember(options: {
     guildId: string;
     userId: string;
