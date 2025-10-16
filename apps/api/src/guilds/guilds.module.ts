@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { GuildsController } from './guilds.controller';
+import { GuildsInternalController } from './guilds-internal.controller';
 import { GuildsService } from './guilds.service';
 import { GuildsEventsHandler } from 'src/guilds/guilds-events.handler';
 import { MembersModule } from 'src/members/members.module';
@@ -9,7 +10,6 @@ import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { UsersModule } from 'src/users/users.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
-import { GuildsRpcHandler } from 'src/guilds/guild-rpc.handler';
 import { RetryService } from 'src/rabbitmq/retry.service';
 import { DiscordModule } from 'src/discord/discord.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
@@ -31,11 +31,10 @@ import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.inter
     DiscordModule,
     PrismaModule,
   ],
-  controllers: [GuildsController],
+  controllers: [GuildsController, GuildsInternalController],
   providers: [
     GuildsService,
     GuildsEventsHandler,
-    GuildsRpcHandler,
     RetryService,
     MemberSyncInterceptor,
   ],

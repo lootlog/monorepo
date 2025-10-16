@@ -1,5 +1,6 @@
 import { ConfigModuleOptions } from '@nestjs/config';
 import * as Joi from 'joi';
+import authConfig from 'src/config/auth.config';
 import rabbitmqConfig from 'src/config/rabbitmq.config';
 import redisConfig from 'src/config/redis.config';
 import serviceConfig from 'src/config/service.config';
@@ -9,7 +10,7 @@ import { RuntimeEnvironment } from 'src/types/runtime.types';
 export const APP_CONFIG: ConfigModuleOptions = {
   envFilePath: `.env`,
   isGlobal: true,
-  load: [serviceConfig, rabbitmqConfig, winstonConfig, redisConfig],
+  load: [serviceConfig, rabbitmqConfig, winstonConfig, redisConfig, authConfig],
   cache: true,
   validationSchema: Joi.object({
     ENV: Joi.string()
@@ -29,6 +30,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     REDIS_PORT: Joi.number().required(),
     REDIS_PASSWORD: Joi.string().required(),
     REDIS_USERNAME: Joi.string().required(),
+    AUTH_SERVICE_URL: Joi.string().required(),
   }),
   validationOptions: {
     allowUnknown: true,

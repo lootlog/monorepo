@@ -4,6 +4,7 @@ export interface GuildRole {
   id: string;
   lvlRangeFrom: number;
   lvlRangeTo: number;
+  permissions: Permission[];
 }
 
 export interface Guild {
@@ -12,7 +13,6 @@ export interface Guild {
 
 export interface UserGuildData {
   guild: Guild;
-  permissions: Permission[];
   roles: GuildRole[];
 }
 

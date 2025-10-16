@@ -15,7 +15,6 @@ export enum Queue {
   GUILDS_INITIALIZE = 'backend-guilds-initialize',
   GUILDS_INITIALIZE_DLQ = 'backend-guilds-initialize.dlq',
   GUILDS_INITIALIZE_RETRY = 'backend-guilds-initialize.retry',
-  GUILDS_RPC_GET_USER_GUILDS = 'backend-guilds-rpc-get-user-guilds',
   // roles
   GUILDS_CREATE_ROLE = 'backend-guilds-create-role',
   GUILDS_CREATE_ROLE_DLQ = 'backend-guilds-create-role.dlq',

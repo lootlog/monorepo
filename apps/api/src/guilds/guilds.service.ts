@@ -271,6 +271,74 @@ export class GuildsService {
     return result;
   }
 
+  async getUserGuildsWithPermissions(discordId: string, userId: string) {
+    const guilds = await this.getGuildsForRequiredPermissions(
+      discordId,
+      userId,
+      [Permission.LOOTLOG_READ],
+    );
+
+    const guildIds = guilds.map((guild) => guild.id);
+    const members = await this.prisma.member.findMany({
+      where: {
+        userId: discordId,
+        guildId: { in: guildIds },
+      },
+      include: {
+        roles: {
+          select: {
+            id: true,
+            lvlRangeFrom: true,
+            lvlRangeTo: true,
+            permissions: true,
+          },
+        },
+      },
+    });
+
+    const memberMap = new Map(members.map((m) => [m.guildId, m]));
+    const allPermissions = Object.values(Permission);
+
+    return guilds.map((guild) => {
+      const member = memberMap.get(guild.id);
+      const isOwner = guild.ownerId === discordId;
+
+      if (!member) {
+        if (isOwner) {
+          return {
+            guild: { id: guild.id },
+            roles: [
+              {
+                id: 'owner',
+                lvlRangeFrom: 0,
+                lvlRangeTo: 999,
+                permissions: allPermissions,
+              },
+            ],
+          };
+        }
+        return {
+          guild: { id: guild.id },
+          roles: [],
+        };
+      }
+
+      const rolesWithPermissions = member.roles
+        .map((role) => ({
+          id: role.id,
+          lvlRangeFrom: role.lvlRangeFrom,
+          lvlRangeTo: role.lvlRangeTo,
+          permissions: isOwner ? allPermissions : role.permissions,
+        }))
+        .filter((role) => role.permissions.length > 0);
+
+      return {
+        guild: { id: guild.id },
+        roles: rolesWithPermissions,
+      };
+    });
+  }
+
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
     if (RESTRICTED_VANITY_URLS.includes(data.vanityUrl)) {
       throw new BadRequestException({

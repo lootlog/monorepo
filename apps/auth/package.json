@@ -14,7 +14,6 @@
   "dependencies": {
     "@hono/node-server": "^1.19.5",
     "@lootlog/api-helpers": "workspace:*",
-    "amqplib": "^0.10.9",
     "better-auth": "^1.3.27",
     "dotenv": "^17.2.3",
     "hono": "^4.9.12",
@@ -26,7 +25,6 @@
   "devDependencies": {
     "@lootlog/types": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
-    "@types/amqplib": "^0.10.7",
     "@types/node": "^24.7.2",
     "@types/pg": "^8.15.5",
     "pkgroll": "^2.18.1",

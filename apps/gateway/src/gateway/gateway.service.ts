@@ -9,7 +9,7 @@ import { NpcType } from 'src/gateway/enums/npc-type.enum';
 import { Gateway } from 'src/gateway/gateway';
 import { Npc } from 'src/gateway/types/npc.type';
 import { canViewNpcTimer } from 'src/gateway/utils/can-view-npc-timer';
-import { isAdministrativeUser } from 'src/guilds/utils/is-administrative-user';
+import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
 import { RedisService } from 'src/lib/redis/redis.service';
 
 @Injectable()
@@ -46,9 +46,8 @@ export class GatewayService {
             socket.emit(event, data);
             return;
           }
-          const administrativeUser = isAdministrativeUser(
-            desiredGuild.permissions,
-          );
+          const roles = desiredGuild.roles || [];
+          const administrativeUser = isAdministrativeUserFromRoles(roles);
 
           if (administrativeUser) {
             this.logger.debug(
@@ -58,7 +57,6 @@ export class GatewayService {
             return;
           }
 
-          const roles = desiredGuild.roles || [];
           const canViewNpc = canViewNpcTimer(npc, roles);
 
           if (!canViewNpc) {

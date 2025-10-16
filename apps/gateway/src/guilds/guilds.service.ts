@@ -1,10 +1,6 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  DEFAULT_EXCHANGE_NAME,
-  DEFAULT_RPC_TIMEOUT,
-} from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/guilds/enum/routing-key.enum';
+import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { CircuitBreakerService, CircuitBreakerError } from 'src/lib/circuit-breaker/circuit-breaker.service';
 import {
@@ -16,21 +12,30 @@ import {
   getUserGuildsCacheKey,
   CACHE_TTL,
 } from 'src/guilds/utils/cache-keys.util';
+import { ConfigKey } from 'src/config/config-key.enum';
+import { ApiConfig } from 'src/config/api.config';
+import { firstValueFrom } from 'rxjs';
 
-const CIRCUIT_BREAKER_KEY = 'guilds-rpc';
+const CIRCUIT_BREAKER_KEY = 'guilds-http';
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000];
+const REQUEST_TIMEOUT = 10000;
 
 @Injectable()
 export class GuildsService {
   private readonly logger = new Logger(GuildsService.name);
   private pendingRequests = new Map<string, Promise<UserGuildData[]>>();
+  private readonly apiUrl: string;
 
   constructor(
-    private readonly amqpConnection: AmqpConnection,
+    private readonly httpService: HttpService,
     private readonly redis: RedisService,
     private readonly circuitBreaker: CircuitBreakerService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const apiConfig = this.configService.get<ApiConfig>(ConfigKey.API);
+    this.apiUrl = apiConfig.url;
+  }
 
   async getUserGuilds(options: GetUserGuildsOptions): Promise<UserGuildData[]> {
     const { discordId, userId } = options;
@@ -78,9 +83,9 @@ export class GuildsService {
         return cached.guilds;
       }
 
-      const guilds = await this.fetchFromRpcWithRetry(options);
+      const guilds = await this.fetchFromHttpWithRetry(options);
       const duration = Date.now() - startTime;
-      this.logger.log(`RPC fetch completed for ${discordId} in ${duration}ms`);
+      this.logger.log(`HTTP fetch completed for ${discordId} in ${duration}ms`);
 
       await this.cacheGuilds(cacheKey, guilds);
       return guilds;
@@ -110,7 +115,7 @@ export class GuildsService {
     }
   }
 
-  private async fetchFromRpcWithRetry(
+  private async fetchFromHttpWithRetry(
     options: GetUserGuildsOptions,
     retryCount = 0,
   ): Promise<UserGuildData[]> {
@@ -121,26 +126,23 @@ export class GuildsService {
         CIRCUIT_BREAKER_KEY,
         async () => {
           this.logger.debug(
-            `Making RPC call for ${discordId} (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`,
+            `Making HTTP call for ${discordId} (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`,
           );
 
-          const response = await this.amqpConnection.request<UserGuildData[]>({
-            exchange: DEFAULT_EXCHANGE_NAME,
-            routingKey: RoutingKey.GUILDS_RPC_GET_USER_GUILDS,
-            payload: { discordId, userId },
-            timeout: DEFAULT_RPC_TIMEOUT,
-          });
+          const url = `${this.apiUrl}/internal/guilds/user-permissions`;
+          const response = await firstValueFrom(
+            this.httpService.get<UserGuildData[]>(url, {
+              params: { discordId, userId },
+              timeout: REQUEST_TIMEOUT,
+            }),
+          );
 
-          return response.map((data) => ({
-            guild: data.guild,
-            roles: data.roles,
-            permissions: data.permissions,
-          }));
+          return response.data as UserGuildData[];
         },
         {
           failureThreshold: 5,
           successThreshold: 2,
-          timeout: DEFAULT_RPC_TIMEOUT,
+          timeout: REQUEST_TIMEOUT,
           resetTimeout: 30000,
         },
       );
@@ -152,13 +154,13 @@ export class GuildsService {
       if (retryCount < MAX_RETRIES) {
         const delay = RETRY_DELAYS[retryCount];
         this.logger.warn(
-          `RPC call failed for ${discordId}, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`,
+          `HTTP call failed for ${discordId}, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`,
         );
         await this.sleep(delay);
-        return this.fetchFromRpcWithRetry(options, retryCount + 1);
+        return this.fetchFromHttpWithRetry(options, retryCount + 1);
       }
 
-      this.logger.error(`RPC call failed for ${discordId} after ${MAX_RETRIES + 1} attempts`);
+      this.logger.error(`HTTP call failed for ${discordId} after ${MAX_RETRIES + 1} attempts`);
       throw error;
     }
   }
@@ -171,7 +173,7 @@ export class GuildsService {
     this.logger.debug(`Starting background refresh for ${discordId}`);
 
     try {
-      const guilds = await this.fetchFromRpcWithRetry(options);
+      const guilds = await this.fetchFromHttpWithRetry(options);
       await this.cacheGuilds(cacheKey, guilds);
       this.logger.debug(`Background refresh completed for ${discordId}`);
     } catch (error) {
