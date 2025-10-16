@@ -163,15 +163,22 @@ export class GatewayQueueHandler {
       data,
       headers,
       RoutingKey.GUILDS_MEMBERS_UPDATE_DLQ,
-      `member update cache invalidation: ${data.id}`,
+      `member permissions update: ${data.discordId}`,
     );
 
     if (!shouldContinue) {
       return;
     }
 
-    await this.gatewayService.invalidatePlayerCache(data.id);
-    console.log(`Member cache invalidated successfully: ${data.id}`);
+    await Promise.all([
+      this.gatewayService.invalidatePlayerCache(data.id),
+      this.gatewayService.invalidateUserGuildsCache(data.discordId, data.userId),
+      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
+    ]);
+
+    console.log(
+      `Member permissions updated for ${data.discordId} in guild ${data.guildId}`,
+    );
   }
 
   @RabbitSubscribe({

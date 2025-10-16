@@ -383,6 +383,9 @@ export class LootsService {
             const hasReadTitans = role.permissions?.includes(
               Permission.LOOTLOG_READ_LOOTS_TITANS,
             );
+            const hasReadHeroes = role.permissions?.includes(
+              Permission.LOOTLOG_READ_LOOTS_HEROES,
+            );
             return Prisma.sql`
           (
             (npc->>'lvl')::int >= ${role.lvlRangeFrom}
@@ -390,6 +393,10 @@ export class LootsService {
             AND (
             (npc->>'type') != 'TITAN'
             OR (${hasReadTitans ? Prisma.sql`TRUE` : Prisma.sql`FALSE`})
+            )
+            AND (
+            (npc->>'type') NOT IN ('HERO', 'EVENT_HERO')
+            OR (${hasReadHeroes ? Prisma.sql`TRUE` : Prisma.sql`FALSE`})
             )
           )
           `;

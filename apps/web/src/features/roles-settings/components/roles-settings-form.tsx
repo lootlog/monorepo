@@ -55,6 +55,16 @@ const PERMISSIONS = [
     border: true,
   },
   {
+    key: Permission.LOOTLOG_READ_LOOTS_HEROES,
+    description: "Dostęp do lootów herosów",
+    border: true,
+  },
+  {
+    key: Permission.LOOTLOG_READ_TIMERS_HEROES,
+    description: "Dostęp do timerów herosów",
+    border: true,
+  },
+  {
     key: Permission.LOOTLOG_CHAT_READ,
     description: "Pozwala na czytanie wiadomości z lootloga",
     border: true,

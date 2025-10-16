@@ -332,6 +332,17 @@ export class MembersService {
         include: { roles: true },
       });
 
+      await this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_MEMBERS_UPDATE,
+        {
+          id: id,
+          discordId: id,
+          userId: globalUserId,
+          guildId,
+        },
+      );
+
       return member;
     } catch (error) {
       this.logger.log({
