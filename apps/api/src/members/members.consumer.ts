@@ -1,5 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { MembersService } from 'src/members/members.service';
 import { PrismaService } from 'src/db/prisma.service';
 import { DiscordService } from 'src/discord/discord.service';
@@ -21,11 +23,11 @@ interface MemberRefreshPayload {
 
 @Injectable()
 export class MembersConsumer {
-  private readonly logger = new Logger(MembersConsumer.name);
   private readonly MEMBER_REFRESH_DELAY_MS = 200;
   private readonly JOB_UPDATE_INTERVAL = 5;
 
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly membersService: MembersService,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
@@ -40,9 +42,10 @@ export class MembersConsumer {
   async handleBulkRefresh(payload: BulkRefreshPayload) {
     const { jobId, guildId, memberIds } = payload;
 
-    this.logger.log(
-      `Starting bulk refresh job ${jobId} for guild ${guildId} with ${memberIds.length} members`,
-    );
+    this.logger.log({
+      level: 'info',
+      message: `Starting bulk refresh job ${jobId} for guild ${guildId} with ${memberIds.length} members`,
+    });
 
     try {
       await this.prisma.memberRefreshJob.update({
@@ -74,14 +77,16 @@ export class MembersConsumer {
             await this.emitJobUpdate(jobId);
           }
 
-          this.logger.debug(
-            `Successfully refreshed member ${memberId} in job ${jobId}`,
-          );
+          this.logger.log({
+            level: 'debug',
+            message: `Successfully refreshed member ${memberId} in job ${jobId}`,
+          });
         } catch (error) {
-          this.logger.error(
-            `Failed to refresh member ${memberId} in job ${jobId}`,
+          this.logger.log({
+            level: 'error',
+            message: `Failed to refresh member ${memberId} in job ${jobId}`,
             error,
-          );
+          });
 
           await this.prisma.memberRefreshJob.update({
             where: { id: jobId },
@@ -105,12 +110,16 @@ export class MembersConsumer {
 
       await this.emitJobUpdate(jobId);
 
-      this.logger.log(`Completed bulk refresh job ${jobId} for guild ${guildId}`);
+      this.logger.log({
+        level: 'info',
+        message: `Completed bulk refresh job ${jobId} for guild ${guildId}`,
+      });
     } catch (error) {
-      this.logger.error(
-        `Fatal error in bulk refresh job ${jobId}`,
-        (error as Error).stack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Fatal error in bulk refresh job ${jobId}`,
+        stack: (error as Error).stack,
+      });
 
       await this.prisma.memberRefreshJob.update({
         where: { id: jobId },
@@ -132,9 +141,10 @@ export class MembersConsumer {
   async handleMemberRefresh(payload: MemberRefreshPayload) {
     const { discordId, guildId, userId } = payload;
 
-    this.logger.debug(
-      `Processing background refresh for member ${discordId} in guild ${guildId}`,
-    );
+    this.logger.log({
+      level: 'debug',
+      message: `Processing background refresh for member ${discordId} in guild ${guildId}`,
+    });
 
     try {
       // Check if user's rate limit bucket has capacity before making request
@@ -146,9 +156,10 @@ export class MembersConsumer {
       );
 
       if (!hasCapacity) {
-        this.logger.debug(
-          `Skipping background refresh for member ${discordId} in guild ${guildId} - rate limit bucket is busy`,
-        );
+        this.logger.log({
+          level: 'debug',
+          message: `Skipping background refresh for member ${discordId} in guild ${guildId} - rate limit bucket is busy`,
+        });
         return;
       }
 
@@ -164,14 +175,16 @@ export class MembersConsumer {
         standalone: false,
       });
 
-      this.logger.debug(
-        `Successfully refreshed member ${discordId} in guild ${guildId}`,
-      );
+      this.logger.log({
+        level: 'debug',
+        message: `Successfully refreshed member ${discordId} in guild ${guildId}`,
+      });
     } catch (error) {
-      this.logger.error(
-        `Failed to refresh member ${discordId} in guild ${guildId}`,
-        (error as Error).stack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Failed to refresh member ${discordId} in guild ${guildId}`,
+        stack: (error as Error).stack,
+      });
     }
   }
 
@@ -186,7 +199,10 @@ export class MembersConsumer {
       });
 
       if (!job) {
-        this.logger.warn(`Job ${jobId} not found when emitting update`);
+        this.logger.log({
+          level: 'warn',
+          message: `Job ${jobId} not found when emitting update`,
+        });
         return;
       }
 
@@ -204,12 +220,16 @@ export class MembersConsumer {
         },
       );
 
-      this.logger.debug(`Emitted job update for job ${jobId}`);
+      this.logger.log({
+        level: 'debug',
+        message: `Emitted job update for job ${jobId}`,
+      });
     } catch (error) {
-      this.logger.error(
-        `Failed to emit job update for job ${jobId}`,
-        (error as Error).stack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Failed to emit job update for job ${jobId}`,
+        stack: (error as Error).stack,
+      });
     }
   }
 }

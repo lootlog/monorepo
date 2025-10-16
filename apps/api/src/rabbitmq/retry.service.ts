@@ -1,5 +1,7 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
@@ -15,9 +17,10 @@ export interface RetryConfig {
 
 @Injectable()
 export class RetryService {
-  private readonly logger = new Logger(RetryService.name);
-
-  constructor(private readonly amqp: AmqpConnection) {}
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly amqp: AmqpConnection,
+  ) {}
 
   /**
    * Sprawdza czy należy wykonać retry czy wysłać do DLQ
@@ -56,7 +59,10 @@ export class RetryService {
   ): Promise<void> {
     const dlqExchange = config.dlqExchange || DEAD_LETTER_EXCHANGE_NAME;
 
-    this.logger.warn(`Sending message to DLQ: ${dlqRoutingKey}`);
+    this.logger.log({
+      level: 'warn',
+      message: `Sending message to DLQ: ${dlqRoutingKey}`,
+    });
 
     await this.amqp.publish(dlqExchange, dlqRoutingKey, message, {
       headers: {
@@ -113,17 +119,19 @@ export class RetryService {
     const maxRetries = config.maxRetries || 3;
 
     if (!this.shouldRetry(headers, maxRetries)) {
-      this.logger.warn(
-        `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
-      );
+      this.logger.log({
+        level: 'warn',
+        message: `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
+      });
       await this.sendToDlq(data, dlqRoutingKey, headers, config);
-      return false; // Handler powinien się zakończyć
+      return false;
     }
 
-    this.logger.log(
-      `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
-    );
-    return true; // Handler może kontynuować
+    this.logger.log({
+      level: 'info',
+      message: `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
+    });
+    return true;
   }
 
   /**
@@ -139,22 +147,34 @@ export class RetryService {
     const currentRetryCount = this.getRetryCount(headers);
     const retryDelayMs = config.retryDelayMs || 30000;
 
-    this.logger.log(`[RETRY QUEUE] Processing retry for ${identifier}`);
-    this.logger.log(
-      `[RETRY QUEUE] Current headers: ${JSON.stringify(headers)}`,
-    );
-    this.logger.log(`[RETRY QUEUE] Current retry count: ${currentRetryCount}`);
-    this.logger.log(`[RETRY QUEUE] TTL: ${retryDelayMs}ms`);
+    this.logger.log({
+      level: 'info',
+      message: `[RETRY QUEUE] Processing retry for ${identifier}`,
+    });
+    this.logger.log({
+      level: 'info',
+      message: `[RETRY QUEUE] Current headers: ${JSON.stringify(headers)}`,
+    });
+    this.logger.log({
+      level: 'info',
+      message: `[RETRY QUEUE] Current retry count: ${currentRetryCount}`,
+    });
+    this.logger.log({
+      level: 'info',
+      message: `[RETRY QUEUE] TTL: ${retryDelayMs}ms`,
+    });
 
     // NIE modyfikuj headers - pozwól RabbitMQ wysłać oryginalną wiadomość
     // Retry count będzie automatycznie zwiększony przez x-death mechanism
 
-    this.logger.log(
-      `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
-    );
-    this.logger.log(
-      `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
-    );
+    this.logger.log({
+      level: 'info',
+      message: `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
+    });
+    this.logger.log({
+      level: 'info',
+      message: `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
+    });
 
     // Handler kończy się tutaj - wiadomość wygaśnie i wróci do głównej queue
   }

@@ -2,11 +2,13 @@ import { REST, RateLimitError } from '@discordjs/rest';
 import {
   Injectable,
   OnModuleInit,
-  Logger,
+  Inject,
   UnauthorizedException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/auth/auth.service';
 import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
@@ -25,7 +27,6 @@ import { RuntimeEnvironment } from 'src/types/runtime.types';
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
-  private readonly logger = new Logger(DiscordService.name);
   private redlock: Redlock;
 
   // Lock configuration
@@ -66,6 +67,7 @@ export class DiscordService implements OnModuleInit {
   private isLocal: boolean;
 
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly authService: AuthService,
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
@@ -136,10 +138,11 @@ export class DiscordService implements OnModuleInit {
           // Implement when application scales to >16 req/s sustained
           // See: /improvements/discord-rate-limiter.md section 4 for implementation details
         } catch (error) {
-          this.logger.error(
-            'Failed to update rate limit from headers',
-            (error as Error).stack,
-          );
+          this.logger.log({
+            level: 'error',
+            message: 'Failed to update rate limit from headers',
+            error: (error as Error).stack,
+          });
         }
       });
 
@@ -221,9 +224,10 @@ export class DiscordService implements OnModuleInit {
                 userId, // Pass userId for per-user rate limit tracking
               );
               // Wait exactly retryAfter ms before retrying (respects Discord's rate limit)
-              this.logger.warn(
-                `Rate limit hit for getUserGuilds, waiting ${error.retryAfter}ms before retry`,
-              );
+              this.logger.log({
+                level: 'warn',
+                message: `Rate limit hit for getUserGuilds, waiting ${error.retryAfter}ms before retry`,
+              });
               await new Promise((resolve) =>
                 setTimeout(resolve, error.retryAfter),
               );
@@ -244,15 +248,19 @@ export class DiscordService implements OnModuleInit {
           backoffFactor: this.retryBackoffFactor,
           retryableErrors: [RetryableError],
           onRetry: (attempt, error) => {
-            this.logger.warn(
-              `Retrying getUserGuilds (attempt ${attempt}): ${error.message}`,
-            );
+            this.logger.log({
+              level: 'warn',
+              message: `Retrying getUserGuilds (attempt ${attempt}): ${error.message}`,
+            });
           },
         },
       );
 
       if (!guilds || guilds.length === 0) {
-        this.logger.warn(`No guilds found for user: ${userId}`);
+        this.logger.log({
+          level: 'warn',
+          message: `No guilds found for user: ${userId}`,
+        });
         return [];
       }
 
@@ -262,10 +270,11 @@ export class DiscordService implements OnModuleInit {
       return guilds;
     } catch (error) {
       if (error instanceof UnauthorizedException) {
-        this.logger.warn(
-          `User authentication failed for userId: ${userId}`,
+        this.logger.log({
+          level: 'warn',
+          message: `User authentication failed for userId: ${userId}`,
           error,
-        );
+        });
         // Cache empty result for auth errors to avoid repeated attempts
         await this.redisService.set(
           cacheKey,
@@ -275,10 +284,11 @@ export class DiscordService implements OnModuleInit {
         throw error;
       }
 
-      this.logger.error(
-        `Failed to fetch user guilds for userId: ${userId}`,
+      this.logger.log({
+        level: 'error',
+        message: `Failed to fetch user guilds for userId: ${userId}`,
         error,
-      );
+      });
       return [];
     } finally {
       // Always release the lock
@@ -363,9 +373,10 @@ export class DiscordService implements OnModuleInit {
                 userId, // Pass userId for per-user rate limit tracking
               );
               // Wait exactly retryAfter ms before retrying (respects Discord's rate limit)
-              this.logger.warn(
-                `Rate limit hit for getGuildMember, waiting ${error.retryAfter}ms before retry`,
-              );
+              this.logger.log({
+                level: 'warn',
+                message: `Rate limit hit for getGuildMember, waiting ${error.retryAfter}ms before retry`,
+              });
               await new Promise((resolve) =>
                 setTimeout(resolve, error.retryAfter),
               );
@@ -386,9 +397,10 @@ export class DiscordService implements OnModuleInit {
           backoffFactor: this.retryBackoffFactor,
           retryableErrors: [RetryableError],
           onRetry: (attempt, error) => {
-            this.logger.warn(
-              `Retrying getGuildMember (attempt ${attempt}): ${error.message}`,
-            );
+            this.logger.log({
+              level: 'warn',
+              message: `Retrying getGuildMember (attempt ${attempt}): ${error.message}`,
+            });
           },
         },
       );
@@ -399,9 +411,10 @@ export class DiscordService implements OnModuleInit {
       return member;
     } catch (error: any) {
       if (error.status === 404) {
-        this.logger.debug(
-          `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
-        );
+        this.logger.log({
+          level: 'debug',
+          message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
+        });
         // Cache the 404 result to avoid repeated lookups
         await this.redisService.set(
           cacheKey,
@@ -415,10 +428,11 @@ export class DiscordService implements OnModuleInit {
       }
 
       if (error instanceof UnauthorizedException) {
-        this.logger.warn(
-          `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
+        this.logger.log({
+          level: 'warn',
+          message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
           error,
-        );
+        });
         // Cache null result for auth errors
         await this.redisService.set(
           cacheKey,
@@ -428,10 +442,11 @@ export class DiscordService implements OnModuleInit {
         throw error;
       }
 
-      this.logger.error(
-        `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
+      this.logger.log({
+        level: 'error',
+        message: `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
         error,
-      );
+      });
 
       // Return null for other errors instead of throwing
       return null;

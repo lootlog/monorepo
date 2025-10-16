@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { RedisService } from 'src/lib/redis/redis.service';
 
 interface RateLimitData {
@@ -16,7 +18,6 @@ interface BucketMetadata {
 
 @Injectable()
 export class DiscordRateLimiterService {
-  private readonly logger = new Logger(DiscordRateLimiterService.name);
   // Cache mapping: normalizedPath -> bucket metadata (bucket ID + scope)
   private readonly pathToBucketCache = new Map<string, BucketMetadata>();
 
@@ -25,7 +26,10 @@ export class DiscordRateLimiterService {
   // For large applications (>40 req/s sustained), consider implementing a sliding window counter.
   // See: /improvements/discord-rate-limiter.md section 3 for implementation details.
 
-  constructor(private readonly redis: RedisService) {}
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly redis: RedisService,
+  ) {}
 
   async checkRateLimit(
     bucket: string,
@@ -53,11 +57,13 @@ export class DiscordRateLimiterService {
     if (rateLimitData.remaining <= 0) {
       const waitTime = rateLimitData.reset - now + 100; // Add 100ms buffer
       const scopeInfo = scope ? ` scope: ${scope},` : '';
-      this.logger.warn(
-        `Rate limit reached for bucket ${bucket} ` +
+      this.logger.log({
+        level: 'warn',
+        message:
+          `Rate limit reached for bucket ${bucket} ` +
           `(${scopeInfo} user: ${userId || 'none'}, resource: ${topLevelResource || 'none'}). ` +
           `Waiting ${waitTime}ms. ${rateLimitData.remaining}/${rateLimitData.limit} remaining.`,
-      );
+      });
       await this.sleep(waitTime);
       await this.redis.del(key);
       return;
@@ -66,12 +72,14 @@ export class DiscordRateLimiterService {
     // Log warning if we're close to the limit
     if (rateLimitData.remaining <= 2) {
       const scopeInfo = scope ? ` scope: ${scope},` : '';
-      this.logger.debug(
-        `Low rate limit for bucket ${bucket} ` +
+      this.logger.log({
+        level: 'debug',
+        message:
+          `Low rate limit for bucket ${bucket} ` +
           `(${scopeInfo} user: ${userId || 'none'}, resource: ${topLevelResource || 'none'}): ` +
           `${rateLimitData.remaining}/${rateLimitData.limit} remaining, ` +
           `resets in ${Math.ceil((rateLimitData.reset - now) / 1000)}s`,
-      );
+      });
     }
   }
 
@@ -206,10 +214,12 @@ export class DiscordRateLimiterService {
     const userInfo = userId ? ` [user:${userId}]` : '';
     const resourceInfo = topLevelResource ? ` [${topLevelResource}]` : '';
 
-    this.logger.debug(
-      `Rate limit updated${globalInfo}${scopeInfo}: bucket=${bucket}${userInfo}${resourceInfo}, ` +
+    this.logger.log({
+      level: 'debug',
+      message:
+        `Rate limit updated${globalInfo}${scopeInfo}: bucket=${bucket}${userInfo}${resourceInfo}, ` +
         `${remaining}/${limit} remaining, resets at ${new Date(reset).toISOString()}`,
-    );
+    });
   }
 
   async updateFromRateLimitError(
@@ -244,10 +254,12 @@ export class DiscordRateLimiterService {
 
     const userInfo = userId ? ` [user:${userId}]` : '';
     const resourceInfo = topLevelResource ? ` [${topLevelResource}]` : '';
-    this.logger.warn(
-      `Rate limit exceeded: bucket=${bucket}${userInfo}${resourceInfo}, ` +
+    this.logger.log({
+      level: 'warn',
+      message:
+        `Rate limit exceeded: bucket=${bucket}${userInfo}${resourceInfo}, ` +
         `0/${error.limit} remaining, locked for ${Math.ceil(error.retryAfter / 1000)}s`,
-    );
+    });
   }
 
   private normalizePath(path: string): string {

@@ -8,19 +8,34 @@ import { RuntimeEnvironment } from 'src/types/runtime.types';
 export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
   const { ENV, HOSTNAME, AXIOM_DATASET, AXIOM_TOKEN } = process.env;
 
-  const transports =
-    ENV === RuntimeEnvironment.LOCAL
-      ? [new winston.transports.Console({ level: 'debug' })]
-      : [
-          new AxiomTransport({
-            dataset: AXIOM_DATASET,
-            token: AXIOM_TOKEN,
-          }),
-        ];
+  const isLocal = ENV === RuntimeEnvironment.LOCAL;
+
+  const localFormat = winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.colorize({ all: true }),
+    winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
+      const contextStr = context ? `[${context}]` : '';
+      const metaStr = Object.keys(meta).length
+        ? `\n${JSON.stringify(meta, null, 2)}`
+        : '';
+      return `${timestamp} ${level} ${contextStr} ${message}${metaStr}`;
+    }),
+  );
+
+  const prodFormat = winston.format.json();
+
+  const transports = isLocal
+    ? [new winston.transports.Console({ level: 'debug' })]
+    : [
+        new AxiomTransport({
+          dataset: AXIOM_DATASET,
+          token: AXIOM_TOKEN,
+        }),
+      ];
 
   return {
     level: 'info',
-    format: winston.format.json(),
+    format: isLocal ? localFormat : prodFormat,
     defaultMeta: { service: `${ENV}-api-service-${HOSTNAME ?? 'api'}` },
     transports,
   };
