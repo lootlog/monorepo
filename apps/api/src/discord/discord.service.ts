@@ -30,7 +30,9 @@ export class DiscordService implements OnModuleInit {
   private redlock: Redlock;
 
   // Lock configuration
-  private readonly lockTtl = 10000; // 10s - enough for Discord API call
+  private readonly lockTtl = 6000; // 6s - slightly more than REST timeout
+  private readonly lockAcquireTimeout = 8000; // 8s - maximum time to wait for lock
+  private readonly cacheCheckInterval = 100; // Check cache every 100ms when waiting
 
   // Cache TTL configuration (in seconds)
   private readonly guildsCacheTtlLocal = 10;
@@ -50,9 +52,9 @@ export class DiscordService implements OnModuleInit {
 
   // Redlock configuration
   private readonly redlockDriftFactor = 0.01;
-  private readonly redlockRetryCount = 10;
-  private readonly redlockRetryDelay = 200;
-  private readonly redlockRetryJitter = 100;
+  private readonly redlockRetryCount = 3;
+  private readonly redlockRetryDelay = 100;
+  private readonly redlockRetryJitter = 50;
   private readonly redlockExtensionThreshold = 3000;
 
   // REST client configuration
@@ -92,6 +94,31 @@ export class DiscordService implements OnModuleInit {
 
   private getCacheTtl(localTtl: number, prodTtl: number): number {
     return this.isLocal ? localTtl : prodTtl;
+  }
+
+  private async waitForCache<T>(
+    cacheKey: string,
+    startTime: number,
+  ): Promise<T | null> {
+    const elapsed = Date.now() - startTime;
+    if (elapsed >= this.lockAcquireTimeout) {
+      return null;
+    }
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, this.cacheCheckInterval),
+    );
+
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached) as T;
+    }
+
+    if (Date.now() - startTime < this.lockAcquireTimeout) {
+      return this.waitForCache<T>(cacheKey, startTime);
+    }
+
+    return null;
   }
 
   async getRestClient(userId: string) {
@@ -190,6 +217,7 @@ export class DiscordService implements OnModuleInit {
 
     // Use Redlock to prevent multiple concurrent Discord API calls
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+    const startTime = Date.now();
 
     try {
       // Try to acquire lock
@@ -221,9 +249,8 @@ export class DiscordService implements OnModuleInit {
                   hash: error.hash,
                   scope: error.scope,
                 },
-                userId, // Pass userId for per-user rate limit tracking
+                userId,
               );
-              // Wait exactly retryAfter ms before retrying (respects Discord's rate limit)
               this.logger.log({
                 level: 'warn',
                 message: `Rate limit hit for getUserGuilds, waiting ${error.retryAfter}ms before retry`,
@@ -269,13 +296,36 @@ export class DiscordService implements OnModuleInit {
 
       return guilds;
     } catch (error) {
+      if ((error as any)?.name === 'ExecutionError') {
+        this.logger.log({
+          level: 'warn',
+          message: `Lock acquisition failed for getUserGuilds, waiting for cache to be populated by another request`,
+          userId,
+        });
+
+        const cachedData = await this.waitForCache<APIGuild[]>(
+          cacheKey,
+          startTime,
+        );
+
+        if (cachedData) {
+          return cachedData;
+        }
+
+        this.logger.log({
+          level: 'error',
+          message: `Cache was not populated within timeout for getUserGuilds`,
+          userId,
+        });
+        return [];
+      }
+
       if (error instanceof UnauthorizedException) {
         this.logger.log({
           level: 'warn',
           message: `User authentication failed for userId: ${userId}`,
           error,
         });
-        // Cache empty result for auth errors to avoid repeated attempts
         await this.redisService.set(
           cacheKey,
           JSON.stringify([]),
@@ -291,7 +341,6 @@ export class DiscordService implements OnModuleInit {
       });
       return [];
     } finally {
-      // Always release the lock
       await lock?.release();
     }
   }
@@ -335,6 +384,7 @@ export class DiscordService implements OnModuleInit {
 
     // Use Redlock to prevent multiple concurrent Discord API calls
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
+    const startTime = Date.now();
 
     try {
       // Try to acquire lock
@@ -370,9 +420,8 @@ export class DiscordService implements OnModuleInit {
                   hash: error.hash,
                   scope: error.scope,
                 },
-                userId, // Pass userId for per-user rate limit tracking
+                userId,
               );
-              // Wait exactly retryAfter ms before retrying (respects Discord's rate limit)
               this.logger.log({
                 level: 'warn',
                 message: `Rate limit hit for getGuildMember, waiting ${error.retryAfter}ms before retry`,
@@ -410,12 +459,37 @@ export class DiscordService implements OnModuleInit {
 
       return member;
     } catch (error: any) {
+      if (error?.name === 'ExecutionError') {
+        this.logger.log({
+          level: 'warn',
+          message: `Lock acquisition failed for getGuildMember, waiting for cache to be populated by another request`,
+          guildId,
+          userId,
+        });
+
+        const cachedData = await this.waitForCache<APIGuildMember | null>(
+          cacheKey,
+          startTime,
+        );
+
+        if (cachedData !== null) {
+          return cachedData;
+        }
+
+        this.logger.log({
+          level: 'error',
+          message: `Cache was not populated within timeout for getGuildMember`,
+          guildId,
+          userId,
+        });
+        return null;
+      }
+
       if (error.status === 404) {
         this.logger.log({
           level: 'debug',
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
         });
-        // Cache the 404 result to avoid repeated lookups
         await this.redisService.set(
           cacheKey,
           JSON.stringify(null),
@@ -433,7 +507,6 @@ export class DiscordService implements OnModuleInit {
           message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
           error,
         });
-        // Cache null result for auth errors
         await this.redisService.set(
           cacheKey,
           JSON.stringify(null),
@@ -448,10 +521,8 @@ export class DiscordService implements OnModuleInit {
         error,
       });
 
-      // Return null for other errors instead of throwing
       return null;
     } finally {
-      // Always release the lock
       await lock?.release();
     }
   }
