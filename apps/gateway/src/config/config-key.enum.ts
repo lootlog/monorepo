@@ -3,4 +3,5 @@ export enum ConfigKey {
   RABBITMQ = 'rabbitmq',
   AUTH = 'auth',
   REDIS = 'redis',
+  API = 'api',
 }

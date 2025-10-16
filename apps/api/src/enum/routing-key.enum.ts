@@ -26,7 +26,6 @@ export enum RoutingKey {
   GUILDS_INITIALIZE = 'guilds.initialize',
   GUILDS_INITIALIZE_DLQ = 'guilds.initialize.dlq',
   GUILDS_INITIALIZE_RETRY = 'guilds.initialize.retry',
-  GUILDS_RPC_GET_USER_GUILDS = 'guilds.rpc.get.user-guilds',
 
   GUILDS_CREATE_ROLE = 'guilds.create.role',
   GUILDS_CREATE_ROLE_DLQ = 'guilds.create.role.dlq',
@@ -54,6 +53,4 @@ export enum RoutingKey {
 
   SEARCH_NPCS_INDEX = 'search.npcs.index',
   SEARCH_PLAYERS_INDEX = 'search.players.index',
-
-  AUTH_GET_IDP_TOKEN = 'auth.get.idp.token',
 }

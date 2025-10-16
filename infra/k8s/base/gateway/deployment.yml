@@ -17,24 +17,24 @@ spec:
           image: kamilwronka7/lootlog-gateway:latest
           resources:
             requests:
-              memory: '384Mi'
-              cpu: '200m'
+              memory: "384Mi"
+              cpu: "200m"
             limits:
-              memory: '512Mi'
-              cpu: '300m'
+              memory: "512Mi"
+              cpu: "300m"
           ports:
             - name: container-port
               containerPort: 4000
           env:
             - name: PORT
-              value: '4000'
+              value: "4000"
             - name: ENV
               valueFrom:
                 secretKeyRef:
                   key: env
                   name: lootlog-gateway-secrets
             - name: SERVICE_NAME
-              value: 'gateway'
+              value: "gateway"
             - name: RABBITMQ_URI
               valueFrom:
                 secretKeyRef:
@@ -53,7 +53,12 @@ spec:
             - name: REDIS_HOST
               value: dragonfly
             - name: REDIS_PORT
-              value: '6379'
+              value: "6379"
+            - name: API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-gateway-secrets
+                  key: apiUrl
 
           livenessProbe:
             httpGet:

@@ -17,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { Guild, Permission } from 'generated/client';
 import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
+import { UserGuildPermissionsDto } from 'src/guilds/dto/user-guild-permissions.dto';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
@@ -52,6 +53,23 @@ export class GuildsController {
     @Query('source') source: string,
   ) {
     return this.guildsService.getUserGuilds(discordId, userId, source);
+  }
+
+  @Get('/@me/permissions')
+  @ApiOperation({
+    summary: 'Get user guilds with permissions',
+    description: 'Retrieve all guilds with permissions and roles for the authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of user guilds with permissions',
+    type: [UserGuildPermissionsDto],
+  })
+  async getUserGuildsWithPermissions(
+    @DiscordId() discordId: string,
+    @UserId() userId: string,
+  ): Promise<UserGuildPermissionsDto[]> {
+    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
   }
 
   @Get('/@me/manageable')

@@ -73,4 +73,35 @@ authController.get("/@me/scopes", async (c) => {
   return c.json(token.scopes || []);
 });
 
+authController.post("/idp-token", async (c) => {
+  const body = await c.req.json();
+  const { userId } = body;
+
+  if (!userId) {
+    return c.json({ error: "INVALID_REQUEST" }, 400);
+  }
+
+  const token = await auth.api.getAccessToken({
+    body: {
+      providerId: "discord",
+      userId: userId,
+    },
+  });
+
+  if (!token || !token.accessToken) {
+    return c.json({ error: "TOKEN_NOT_FOUND" });
+  }
+
+  const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
+  if (expiresAt && expiresAt < new Date()) {
+    return c.json({ error: "TOKEN_EXPIRED" });
+  }
+
+  return c.json({
+    accessToken: token.accessToken,
+    expiresIn: token.expiresAt ? Math.floor((expiresAt!.getTime() - Date.now()) / 1000) : 0,
+    scopes: token.scopes || [],
+  });
+});
+
 export { authController };
