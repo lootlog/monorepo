@@ -21,6 +21,8 @@ interface MemberRefreshPayload {
 @Injectable()
 export class MembersConsumer {
   private readonly logger = new Logger(MembersConsumer.name);
+  private readonly MEMBER_REFRESH_DELAY_MS = 200;
+  private readonly JOB_UPDATE_INTERVAL = 5;
 
   constructor(
     private readonly membersService: MembersService,
@@ -52,21 +54,21 @@ export class MembersConsumer {
 
       for (const memberId of memberIds) {
         try {
-          await this.sleep(200);
+          await this.sleep(this.MEMBER_REFRESH_DELAY_MS);
 
           await this.membersService.refreshMember({
             discordId: memberId,
             guildId,
-          });
-
-          await this.prisma.memberRefreshJob.update({
-            where: { id: jobId },
-            data: { processedMembers: { increment: 1 } },
+            skipTtlCheck: true,
           });
 
           processedCount++;
 
-          if (processedCount % 5 === 0) {
+          if (processedCount % this.JOB_UPDATE_INTERVAL === 0) {
+            await this.prisma.memberRefreshJob.update({
+              where: { id: jobId },
+              data: { processedMembers: processedCount },
+            });
             await this.emitJobUpdate(jobId);
           }
 
@@ -84,7 +86,9 @@ export class MembersConsumer {
             data: { failedMembers: { increment: 1 } },
           });
 
-          await this.emitJobUpdate(jobId);
+          if (processedCount % this.JOB_UPDATE_INTERVAL === 0) {
+            await this.emitJobUpdate(jobId);
+          }
         }
       }
 
@@ -92,6 +96,7 @@ export class MembersConsumer {
         where: { id: jobId },
         data: {
           status: 'COMPLETED',
+          processedMembers: processedCount,
           completedAt: new Date(),
         },
       });

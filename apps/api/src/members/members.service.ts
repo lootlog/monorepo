@@ -50,15 +50,44 @@ export class MembersService {
     const serviceConfig = this.configService.get<ServiceConfig>(
       ConfigKey.SERVICE,
     );
-    this.env = serviceConfig?.env || RuntimeEnvironment.PROD;
+    this.env = serviceConfig?.env || RuntimeEnvironment.LOCAL;
   }
 
+  private async getStaleMember(
+    discordId: string,
+    guildId: string,
+    warningMessage: string,
+  ): Promise<MemberWithRoles | null> {
+    const staleMember = await this.prisma.member.findUnique({
+      where: {
+        memberId: { userId: discordId, guildId },
+      },
+      include: { roles: true },
+    });
+
+    if (staleMember) {
+      return {
+        ...staleMember,
+        isStale: true,
+        staleWarning: warningMessage,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Caching strategy: standard TTL (5min) vs refresh TTL (30s)
+   * Fallback: serves stale data on API failures with warning flag
+   * Auto-deactivates members on NotFoundException or 401 Unauthorized
+   */
   async getGuildMemberById(options: {
     discordId: string;
     guildId: string;
     userId: string;
     refresh?: boolean;
     standalone?: boolean;
+    skipTtlCheck?: boolean;
   }): Promise<MemberWithRoles | null> {
     const {
       discordId,
@@ -66,10 +95,10 @@ export class MembersService {
       userId,
       refresh = false,
       standalone = false,
+      skipTtlCheck = false,
     } = options;
 
     let desiredGuildId = guildId;
-
     if (refresh || standalone) {
       const guild = await this.guildsService.getGuildById(guildId);
       desiredGuildId = guild.id;
@@ -90,11 +119,11 @@ export class MembersService {
       include: { roles: true },
     });
 
-    if (member && refresh) {
+    if (member && refresh && !skipTtlCheck) {
       throw new BadRequestException(ErrorKey.MEMBER_TTL_ACTIVE);
     }
 
-    if (!member) {
+    if (!member || skipTtlCheck) {
       try {
         const discordMember = await this.discordService.getGuildMember({
           guildId: desiredGuildId,
@@ -107,20 +136,14 @@ export class MembersService {
             { guildId: desiredGuildId, userId: discordId },
           );
 
-          const staleMember = await this.prisma.member.findUnique({
-            where: {
-              memberId: { userId: discordId, guildId: desiredGuildId },
-            },
-            include: { roles: true },
-          });
+          const staleMember = await this.getStaleMember(
+            discordId,
+            desiredGuildId,
+            'Using cached data due to Discord API rate limiting or errors',
+          );
 
           if (staleMember && staleMember.active) {
-            return {
-              ...staleMember,
-              isStale: true,
-              staleWarning:
-                'Using cached data due to Discord API rate limiting or errors',
-            };
+            return staleMember;
           }
 
           return null;
@@ -133,15 +156,18 @@ export class MembersService {
         });
       } catch (error) {
         if (error instanceof NotFoundException) {
-          try {
-            await this.deactivateMember({
-              discordId,
-              guildId: desiredGuildId,
-            });
-          } catch (deactivateError) {
-            this.logger.debug('Member not found during deactivation', {
-              guildId: desiredGuildId,
-              userId: discordId,
+          const existingMember = await this.prisma.member.findUnique({
+            where: {
+              memberId: { userId: discordId, guildId: desiredGuildId },
+            },
+          });
+
+          if (existingMember && existingMember.active) {
+            await this.prisma.member.update({
+              where: {
+                memberId: { userId: discordId, guildId: desiredGuildId },
+              },
+              data: { active: false, roles: { set: [] } },
             });
           }
 
@@ -157,15 +183,18 @@ export class MembersService {
             { guildId: desiredGuildId, userId: discordId },
           );
 
-          try {
-            await this.deactivateMember({
-              discordId,
-              guildId: desiredGuildId,
-            });
-          } catch (deactivateError) {
-            this.logger.debug('Member not found during deactivation', {
-              guildId: desiredGuildId,
-              userId: discordId,
+          const existingMember = await this.prisma.member.findUnique({
+            where: {
+              memberId: { userId: discordId, guildId: desiredGuildId },
+            },
+          });
+
+          if (existingMember && existingMember.active) {
+            await this.prisma.member.update({
+              where: {
+                memberId: { userId: discordId, guildId: desiredGuildId },
+              },
+              data: { active: false, roles: { set: [] } },
             });
           }
 
@@ -178,20 +207,11 @@ export class MembersService {
             userId,
           });
 
-          const staleMember = await this.prisma.member.findUnique({
-            where: {
-              memberId: { userId: discordId, guildId: desiredGuildId },
-            },
-            include: { roles: true },
-          });
-
-          if (staleMember) {
-            return {
-              ...staleMember,
-              isStale: true,
-              staleWarning: 'Data may be outdated due to service issues',
-            };
-          }
+          return this.getStaleMember(
+            discordId,
+            desiredGuildId,
+            'Data may be outdated due to service issues',
+          );
         }
 
         this.logger.error(
@@ -200,35 +220,25 @@ export class MembersService {
         );
 
         if (refresh) {
-          throw new HttpException(
-            'Member TTL is active',
-            HttpStatus.TOO_MANY_REQUESTS,
-          );
+          throw error;
         }
 
-        const staleMember = await this.prisma.member.findUnique({
-          where: {
-            memberId: { userId: discordId, guildId: desiredGuildId },
-          },
-          include: { roles: true },
-        });
-
-        if (staleMember) {
-          return {
-            ...staleMember,
-            isStale: true,
-            staleWarning: 'Using cached data due to API error',
-          };
-        }
-
-        return null;
+        return this.getStaleMember(
+          discordId,
+          desiredGuildId,
+          'Using cached data due to API error',
+        );
       }
     }
 
     return member;
   }
 
-  async refreshMember(options: { discordId: string; guildId: string }) {
+  async refreshMember(options: {
+    discordId: string;
+    guildId: string;
+    skipTtlCheck?: boolean;
+  }) {
     const member = await this.prisma.member.findUnique({
       where: {
         memberId: { userId: options.discordId, guildId: options.guildId },
@@ -242,10 +252,12 @@ export class MembersService {
     }
 
     return this.getGuildMemberById({
-      ...options,
+      discordId: options.discordId,
+      guildId: options.guildId,
       userId: member.globalUserId,
       refresh: true,
       standalone: true,
+      skipTtlCheck: options.skipTtlCheck,
     });
   }
 
@@ -276,12 +288,16 @@ export class MembersService {
     const { id } = user;
 
     try {
-      const existingRoles = await this.prisma.role.findMany({
-        where: { id: { in: roleIds } },
-        select: { id: true },
-      });
+      const existingRoleIds =
+        roleIds.length > 0
+          ? (
+              await this.prisma.role.findMany({
+                where: { id: { in: roleIds } },
+                select: { id: true },
+              })
+            ).map((role) => role.id)
+          : [];
 
-      const existingRoleIds = existingRoles.map((role) => role.id);
       const memberName = nick || user.global_name || user.username;
       const memberAvatar = avatar || user.avatar;
 
@@ -333,7 +349,7 @@ export class MembersService {
       throw new NotFoundException('Member not found');
     }
 
-    if (!member?.active) {
+    if (!member.active) {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
@@ -350,11 +366,13 @@ export class MembersService {
         data: { active: false },
       });
 
-      this.logger.log(`Deleted ${result.count} members from guild ${guildId}`);
+      this.logger.log(
+        `Deactivated ${result.count} members from guild ${guildId}`,
+      );
       return result.count;
     } catch (error) {
       this.logger.error(
-        `Failed to delete members for guild ${guildId}`,
+        `Failed to deactivate members for guild ${guildId}`,
         (error as Error).stack,
       );
       throw error;
