@@ -112,9 +112,6 @@ importers:
       node-html-parser:
         specifier: ^7.0.1
         version: 7.0.1
-      opossum:
-        specifier: ^9.0.0
-        version: 9.0.0
       random-words:
         specifier: ^2.0.1
         version: 2.0.1
@@ -167,9 +164,6 @@ importers:
       '@types/node':
         specifier: ^24.7.2
         version: 24.7.2
-      '@types/opossum':
-        specifier: ^8.1.9
-        version: 8.1.9
       '@types/redlock':
         specifier: ^4.0.7
         version: 4.0.7
@@ -4562,9 +4556,6 @@ packages:
   '@types/node@24.7.2':
     resolution: {integrity: sha512-/NbVmcGTP+lj5oa4yiYxxeBjRivKQ5Ns1eSZeB99ExsEQ6rX5XYU1Zy/gGxY/ilqtD4Etx9mKyrPxZRetiahhA==}
 
-  '@types/opossum@8.1.9':
-    resolution: {integrity: sha512-Jm/tYxuJFefiwRYs+/EOsUP3ktk0c8siMgAHPLnA4PXF4wKghzcjqf88dY+Xii5jId5Txw4JV0FMKTpjbd7KJA==}
-
   '@types/pg@8.15.5':
     resolution: {integrity: sha512-LF7lF6zWEKxuT3/OR8wAZGzkg4ENGXFNyiV/JeOt9z5B+0ZVwbql9McqX5c/WStFq1GaGso7H1AzP/qSzmlCKQ==}
 
@@ -7839,10 +7830,6 @@ packages:
   open@10.2.0:
     resolution: {integrity: sha512-YgBpdJHPyQ2UE5x+hlSXcnejzAvD0b22U2OuAP+8OnlJT+PjWPxtgmGqKKc+RgTM63U9gN0YzrYc71R2WT/hTA==}
     engines: {node: '>=18'}
-
-  opossum@9.0.0:
-    resolution: {integrity: sha512-K76U0QkxOfUZamneQuzz+AP0fyfTJcCplZ2oZL93nxeupuJbN4s6uFNbmVCt4eWqqGqRnnowdFuBicJ1fLMVxw==}
-    engines: {node: ^24 || ^22 || ^20}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -13647,10 +13634,6 @@ snapshots:
     dependencies:
       undici-types: 7.14.0
 
-  '@types/opossum@8.1.9':
-    dependencies:
-      '@types/node': 24.7.2
-
   '@types/pg@8.15.5':
     dependencies:
       '@types/node': 24.7.2
@@ -17398,8 +17381,6 @@ snapshots:
       define-lazy-prop: 3.0.0
       is-inside-container: 1.0.0
       wsl-utils: 0.1.0
-
-  opossum@9.0.0: {}
 
   optionator@0.9.4:
     dependencies:
