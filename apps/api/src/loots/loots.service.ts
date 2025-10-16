@@ -260,7 +260,7 @@ export class LootsService {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
 
-    return this.prisma.lootComment.create({
+    const comment = await this.prisma.lootComment.create({
       data: {
         content: body.content,
         guildId,
@@ -279,6 +279,8 @@ export class LootsService {
         },
       },
     });
+
+    return comment;
   }
 
   async updateLoot(discordId: string, lootId: number, data: UpdateLootDto) {
@@ -501,10 +503,12 @@ export class LootsService {
       {} as Record<number, typeof submissions>,
     );
 
-    return loots.map((loot) => ({
+    const lootsWithSubmissions = loots.map((loot) => ({
       ...loot,
       submissions: submissionsByLootId[loot.id] || [],
     }));
+
+    return lootsWithSubmissions;
   }
 
   createUniqueLootId(loots: CreateLootDto['loots'], world: string): string {

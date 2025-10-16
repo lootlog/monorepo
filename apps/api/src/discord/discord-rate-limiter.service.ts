@@ -18,8 +18,14 @@ interface BucketMetadata {
 
 @Injectable()
 export class DiscordRateLimiterService {
-  // Cache mapping: normalizedPath -> bucket metadata (bucket ID + scope)
+  // Cache mapping: METHOD + normalizedPath -> bucket metadata (bucket ID + scope)
   private readonly pathToBucketCache = new Map<string, BucketMetadata>();
+
+  private readonly GLOBAL_KEY = 'discord:ratelimit:global';
+
+  // Jitter range for sleep times (ms)
+  private readonly MIN_JITTER = 50;
+  private readonly MAX_JITTER = 250;
 
   // TODO [LOW-MEDIUM PRIORITY]: Implement proactive global rate limit tracking (50 req/s)
   // Discord API has a global limit of 50 requests per second. Currently we only react to 429 responses.
@@ -31,14 +37,64 @@ export class DiscordRateLimiterService {
     private readonly redis: RedisService,
   ) {}
 
-  async checkRateLimit(
+
+  /**
+   * Check rate limit ONLY if we have cached 429 response data
+   * This prevents requests when we KNOW we're rate limited
+   * Does NOT block based on header estimates
+   */
+  async checkRateLimitForPath(
+    path: string,
+    userId?: string,
+    method: string = 'GET',
+  ): Promise<void> {
+    const key = this.normalizeKey(method, path);
+    const cachedMetadata = this.pathToBucketCache.get(key);
+
+    this.logger.log({
+      level: 'info',
+      message: 'checkRateLimitForPath',
+      key,
+      hasCachedMetadata: !!cachedMetadata,
+      cachedMetadata: cachedMetadata ? JSON.stringify(cachedMetadata) : 'null',
+    });
+
+    if (cachedMetadata) {
+      const topLevelResource = this.extractTopLevelResource(path);
+      // Only check if we have explicit rate limit block (remaining: 0)
+      await this.checkRateLimitIfBlocked(
+        cachedMetadata.bucket,
+        userId,
+        topLevelResource,
+        cachedMetadata.scope,
+      );
+    }
+  }
+
+  /**
+   * Check ONLY if we have a known active rate limit (remaining: 0)
+   * Does NOT block based on low remaining counts from headers
+   */
+  private async checkRateLimitIfBlocked(
     bucket: string,
     userId?: string,
     topLevelResource?: string,
     scope?: 'user' | 'shared' | 'global',
   ): Promise<void> {
+    // Check for global rate limit first
+    await this.checkGlobalBlock();
+
     const key = this.getBucketKey(bucket, userId, topLevelResource, scope);
     const data = await this.redis.get(key);
+
+    this.logger.log({
+      level: 'info',
+      message: 'checkRateLimitIfBlocked - Redis lookup',
+      bucket,
+      userId,
+      redisKey: key,
+      hasData: !!data,
+    });
 
     if (!data) {
       return;
@@ -49,52 +105,38 @@ export class DiscordRateLimiterService {
 
     // Clean up expired rate limit data
     if (rateLimitData.reset <= now) {
+      this.logger.log({
+        level: 'info',
+        message: 'Rate limit expired, clearing',
+        bucket,
+      });
       await this.redis.del(key);
       return;
     }
 
-    // If we've hit the rate limit, wait
-    if (rateLimitData.remaining <= 0) {
-      const waitTime = rateLimitData.reset - now + 100; // Add 100ms buffer
+    // ONLY block if remaining is 0 (from a 429 response)
+    // Do NOT block based on header estimates
+    if (rateLimitData.remaining === 0) {
+      const waitTime = rateLimitData.reset - now + this.getJitter();
+      const resetDate = new Date(rateLimitData.reset);
       const scopeInfo = scope ? ` scope: ${scope},` : '';
       this.logger.log({
         level: 'warn',
         message:
-          `Rate limit reached for bucket ${bucket} ` +
+          `Rate limit active (from 429) for bucket ${bucket} ` +
           `(${scopeInfo} user: ${userId || 'none'}, resource: ${topLevelResource || 'none'}). ` +
-          `Waiting ${waitTime}ms. ${rateLimitData.remaining}/${rateLimitData.limit} remaining.`,
+          `Waiting ${waitTime}ms. ${rateLimitData.remaining}/${rateLimitData.limit} remaining. ` +
+          `Resets at ${resetDate.toISOString()}`,
       });
       await this.sleep(waitTime);
       await this.redis.del(key);
-      return;
-    }
-
-    // Log warning if we're close to the limit
-    if (rateLimitData.remaining <= 2) {
-      const scopeInfo = scope ? ` scope: ${scope},` : '';
+    } else {
       this.logger.log({
-        level: 'debug',
-        message:
-          `Low rate limit for bucket ${bucket} ` +
-          `(${scopeInfo} user: ${userId || 'none'}, resource: ${topLevelResource || 'none'}): ` +
-          `${rateLimitData.remaining}/${rateLimitData.limit} remaining, ` +
-          `resets in ${Math.ceil((rateLimitData.reset - now) / 1000)}s`,
+        level: 'info',
+        message: 'Rate limit data exists but remaining > 0, allowing request',
+        remaining: rateLimitData.remaining,
+        limit: rateLimitData.limit,
       });
-    }
-  }
-
-  async checkRateLimitForPath(path: string, userId?: string): Promise<void> {
-    const normalizedPath = this.normalizePath(path);
-    const cachedMetadata = this.pathToBucketCache.get(normalizedPath);
-
-    if (cachedMetadata) {
-      const topLevelResource = this.extractTopLevelResource(path);
-      await this.checkRateLimit(
-        cachedMetadata.bucket,
-        userId,
-        topLevelResource,
-        cachedMetadata.scope,
-      );
     }
   }
 
@@ -107,9 +149,10 @@ export class DiscordRateLimiterService {
     path: string,
     userId?: string,
     threshold: number = 3,
+    method: string = 'GET',
   ): Promise<boolean> {
-    const normalizedPath = this.normalizePath(path);
-    const cachedMetadata = this.pathToBucketCache.get(normalizedPath);
+    const key = this.normalizeKey(method, path);
+    const cachedMetadata = this.pathToBucketCache.get(key);
 
     if (!cachedMetadata) {
       // No rate limit data cached - assume bucket is available
@@ -117,13 +160,13 @@ export class DiscordRateLimiterService {
     }
 
     const topLevelResource = this.extractTopLevelResource(path);
-    const key = this.getBucketKey(
+    const bucketKey = this.getBucketKey(
       cachedMetadata.bucket,
       userId,
       topLevelResource,
       cachedMetadata.scope,
     );
-    const data = await this.redis.get(key);
+    const data = await this.redis.get(bucketKey);
 
     if (!data) {
       // No rate limit data - bucket is available
@@ -135,7 +178,7 @@ export class DiscordRateLimiterService {
 
     // If reset time has passed, bucket is available
     if (rateLimitData.reset <= now) {
-      await this.redis.del(key);
+      await this.redis.del(bucketKey);
       return true;
     }
 
@@ -143,10 +186,16 @@ export class DiscordRateLimiterService {
     return rateLimitData.remaining >= threshold;
   }
 
+  /**
+   * Update bucket metadata from response headers
+   * This only caches the bucket ID mapping, does NOT store rate limit data
+   * Rate limit data is ONLY stored from 429 responses
+   */
   async updateFromHeaders(
     path: string,
     headers: Record<string, string | null>,
     userId?: string,
+    method: string = 'GET',
   ): Promise<void> {
     const bucket = headers['x-ratelimit-bucket'];
 
@@ -154,111 +203,108 @@ export class DiscordRateLimiterService {
       return;
     }
 
-    const normalizedPath = this.normalizePath(path);
-    const limit = parseInt(headers['x-ratelimit-limit'] || '0');
-    const remaining = parseInt(headers['x-ratelimit-remaining'] || '0');
-    const resetTimestamp = parseFloat(headers['x-ratelimit-reset'] || '0');
-    // Prefer X-RateLimit-Reset-After for higher precision (supports decimals for milliseconds)
-    // Falls back to X-RateLimit-Reset if Reset-After is not available
-    const resetAfter = parseFloat(headers['x-ratelimit-reset-after'] || '0');
+    const key = this.normalizeKey(method, path);
     const scope = headers['x-ratelimit-scope'] as
       | 'user'
       | 'shared'
       | 'global'
       | null;
-    const isGlobal = headers['x-ratelimit-global'] === 'true';
 
-    // Cache bucket metadata with scope
-    this.pathToBucketCache.set(normalizedPath, {
+    // Only cache bucket metadata (for path -> bucket mapping)
+    // Do NOT store rate limit data from headers
+    this.pathToBucketCache.set(key, {
       bucket,
       scope: scope || undefined,
     });
-
-    if (limit === 0) {
-      return;
-    }
-
-    const now = Date.now();
-    let reset: number;
-
-    // Prefer Reset-After (more precise, includes milliseconds) over Reset timestamp
-    if (resetAfter > 0) {
-      reset = now + Math.floor(resetAfter * 1000);
-    } else if (resetTimestamp > 0) {
-      reset = Math.floor(resetTimestamp * 1000);
-    } else {
-      return; // No valid reset time available
-    }
-
-    // Skip if reset time has already passed
-    if (reset <= now) {
-      return;
-    }
-
-    const topLevelResource = this.extractTopLevelResource(path);
-    const key = this.getBucketKey(bucket, userId, topLevelResource, scope || undefined);
-    const ttl = Math.max(Math.ceil((reset - now) / 1000), 1);
-
-    const rateLimitData: RateLimitData = {
-      remaining,
-      reset,
-      limit,
-      bucket,
-      scope: scope || undefined,
-    };
-
-    await this.redis.set(key, JSON.stringify(rateLimitData), ttl);
-
-    const scopeInfo = scope ? ` (scope: ${scope})` : '';
-    const globalInfo = isGlobal ? ' [GLOBAL]' : '';
-    const userInfo = userId ? ` [user:${userId}]` : '';
-    const resourceInfo = topLevelResource ? ` [${topLevelResource}]` : '';
 
     this.logger.log({
       level: 'debug',
-      message:
-        `Rate limit updated${globalInfo}${scopeInfo}: bucket=${bucket}${userInfo}${resourceInfo}, ` +
-        `${remaining}/${limit} remaining, resets at ${new Date(reset).toISOString()}`,
+      message: 'Updated bucket metadata from headers',
+      key,
+      bucket,
+      scope: scope || 'undefined',
+      remaining: headers['x-ratelimit-remaining'],
+      limit: headers['x-ratelimit-limit'],
     });
   }
 
+  /**
+   * Update rate limit data from 429 response
+   * This is the ONLY place where rate limit blocking data is stored
+   * Uses retry_after from Discord's 429 response body
+   */
   async updateFromRateLimitError(
     path: string,
-    error: { retryAfter: number; limit: number; hash: string; scope?: 'user' | 'shared' | 'global' },
+    error: {
+      retryAfter: number; // In milliseconds (Discord.js already converted)
+      limit: number;
+      hash: string;
+      scope?: 'user' | 'shared' | 'global';
+      global?: boolean;
+    },
     userId?: string,
+    method: string = 'GET',
   ): Promise<void> {
     const bucket = error.hash || 'unknown';
-    const normalizedPath = this.normalizePath(path);
+    const key = this.normalizeKey(method, path);
 
     // Cache bucket metadata with scope (if available from error)
-    this.pathToBucketCache.set(normalizedPath, {
+    this.pathToBucketCache.set(key, {
       bucket,
       scope: error.scope,
     });
 
     const now = Date.now();
+    // Note: Discord.js RateLimitError.retryAfter is already in MILLISECONDS
+    // Discord API returns retry_after in SECONDS in the body, but Discord.js converts it
     const reset = now + error.retryAfter;
+
+    this.logger.log({
+      level: 'warn',
+      message: '429 Rate Limit Error Received',
+      path,
+      method,
+      bucket,
+      retryAfterMs: error.retryAfter,
+      retryAfterSeconds: error.retryAfter / 1000,
+      limit: error.limit,
+      scope: error.scope,
+      global: error.global,
+      userId,
+      resetAt: new Date(reset).toISOString(),
+    });
+
+    // If global rate limit error, block all requests
+    if (error.global || error.scope === 'global') {
+      await this.blockGlobally(error.retryAfter);
+    }
+
     const topLevelResource = this.extractTopLevelResource(path);
-    const key = this.getBucketKey(bucket, userId, topLevelResource, error.scope);
+    const bucketKey = this.getBucketKey(
+      bucket,
+      userId,
+      topLevelResource,
+      error.scope,
+    );
     const ttl = Math.max(Math.ceil(error.retryAfter / 1000), 1);
 
+    // Store rate limit block with remaining: 0
     const rateLimitData: RateLimitData = {
-      remaining: 0,
+      remaining: 0, // Always 0 from 429 response
       reset,
       limit: error.limit,
       bucket,
       scope: error.scope,
     };
 
-    await this.redis.set(key, JSON.stringify(rateLimitData), ttl);
+    await this.redis.set(bucketKey, JSON.stringify(rateLimitData), ttl);
 
-    const userInfo = userId ? ` [user:${userId}]` : '';
-    const resourceInfo = topLevelResource ? ` [${topLevelResource}]` : '';
     this.logger.log({
       level: 'warn',
-      message:
-        `Rate limit exceeded: bucket=${bucket}${userInfo}${resourceInfo}, ` +
-        `0/${error.limit} remaining, locked for ${Math.ceil(error.retryAfter / 1000)}s`,
+      message: 'Stored rate limit block in Redis',
+      redisKey: bucketKey,
+      ttlSeconds: ttl,
+      rateLimitData: JSON.stringify(rateLimitData),
     });
   }
 
@@ -347,6 +393,91 @@ export class DiscordRateLimiterService {
       return `discord:ratelimit:${bucket}:${topLevelResource}`;
     }
     return `discord:ratelimit:${bucket}`;
+  }
+
+  /**
+   * Clear all rate limit data for a specific user
+   * Useful for testing or when user re-authenticates
+   */
+  async clearUserRateLimits(userId: string): Promise<void> {
+    const pattern = `discord:ratelimit:*:user:${userId}*`;
+    const client = await this.redis.getClient();
+    const keys = await client.keys(pattern);
+
+    if (keys.length > 0) {
+      await Promise.all(keys.map((key) => this.redis.del(key)));
+      this.logger.log({
+        level: 'info',
+        message: `Cleared ${keys.length} rate limit entries for user ${userId}`,
+      });
+    }
+  }
+
+  /**
+   * Clear all rate limit data
+   * Useful for testing
+   */
+  async clearAllRateLimits(): Promise<void> {
+    const pattern = 'discord:ratelimit:*';
+    const client = await this.redis.getClient();
+    const keys = await client.keys(pattern);
+
+    if (keys.length > 0) {
+      await Promise.all(keys.map((key) => this.redis.del(key)));
+      this.logger.log({
+        level: 'info',
+        message: `Cleared ${keys.length} rate limit entries`,
+      });
+    }
+  }
+
+  /**
+   * Block globally for a specified time (used when Discord returns global rate limit)
+   */
+  private async blockGlobally(ttlMs: number): Promise<void> {
+    const ttlSec = Math.max(Math.ceil(ttlMs / 1000), 1);
+    const resetAt = Date.now() + ttlMs;
+    await this.redis.set(this.GLOBAL_KEY, String(resetAt), ttlSec);
+    this.logger.log({
+      level: 'warn',
+      message: `Global rate limit active, blocked for ${ttlSec}s until ${new Date(resetAt).toISOString()}`,
+    });
+  }
+
+  /**
+   * Check if there's an active global rate limit block
+   */
+  private async checkGlobalBlock(): Promise<void> {
+    const until = await this.redis.get(this.GLOBAL_KEY);
+    if (!until) {
+      return;
+    }
+
+    const waitMs = Number(until) - Date.now();
+    if (waitMs > 0) {
+      const jitteredWait = waitMs + this.getJitter();
+      this.logger.log({
+        level: 'warn',
+        message: `Global rate limit active, waiting ${jitteredWait}ms`,
+      });
+      await this.sleep(jitteredWait);
+    }
+  }
+
+  /**
+   * Generate cache key from HTTP method and path
+   */
+  private normalizeKey(method: string, path: string): string {
+    return `${method.toUpperCase()} ${this.normalizePath(path)}`;
+  }
+
+  /**
+   * Get random jitter value
+   */
+  private getJitter(): number {
+    return Math.floor(
+      Math.random() * (this.MAX_JITTER - this.MIN_JITTER) + this.MIN_JITTER,
+    );
   }
 
   private sleep(ms: number): Promise<void> {

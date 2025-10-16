@@ -150,7 +150,20 @@ export class GuildsService {
     }
   }
 
+  /**
+   * Get guild by ID or vanity URL
+   * Returns raw Guild from Prisma
+   */
   async getGuildById(idOrVanityURL: string) {
+    const guild = await this.getGuildByIdInternal(idOrVanityURL);
+    return guild;
+  }
+
+  /**
+   * Get guild by ID or vanity URL (for internal use)
+   * Returns raw Guild from Prisma with ALL fields including ownerId
+   */
+  async getGuildByIdInternal(idOrVanityURL: string) {
     const guild = await this.prisma.guild.findFirst({
       where: {
         active: true,
@@ -205,7 +218,8 @@ export class GuildsService {
     guildId: string;
   }) {
     const { discordId, userId, guildId } = options;
-    const guild = await this.getGuildById(guildId);
+
+    const guild = await this.getGuildByIdInternal(guildId);
 
     const member = await this.membersService.getGuildMemberById({
       userId,
@@ -218,6 +232,7 @@ export class GuildsService {
     }
 
     const isOwner = guild.ownerId === discordId;
+
     const permissions = isOwner
       ? Object.values(Permission)
       : member?.roles.reduce((acc: Permission[], role) => {

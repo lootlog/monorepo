@@ -17,15 +17,15 @@ export class UsersService {
       where: { userId },
     });
 
-    return (
-      userSettings || {
-        id: 0,
-        userId,
-        guildsOrder: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-    );
+    const settings = userSettings || {
+      id: 0,
+      userId,
+      guildsOrder: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    return settings;
   }
 
   async updateUserPreferences(

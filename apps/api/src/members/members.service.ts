@@ -67,11 +67,12 @@ export class MembersService {
     });
 
     if (staleMember) {
-      return {
+      const memberWithWarning = {
         ...staleMember,
         isStale: true,
         staleWarning: warningMessage,
       };
+      return memberWithWarning as any;
     }
 
     return null;
@@ -152,11 +153,13 @@ export class MembersService {
           return null;
         }
 
-        return this.createOrUpdateMember({
+        const createdMember = await this.createOrUpdateMember({
           ...discordMember,
           guildId: desiredGuildId,
           globalUserId: userId,
         });
+
+        return createdMember;
       } catch (error) {
         if (error instanceof NotFoundException) {
           const existingMember = await this.prisma.member.findUnique({
@@ -239,7 +242,7 @@ export class MembersService {
       }
     }
 
-    return member;
+    return member as any;
   }
 
   async refreshMember(options: {
@@ -270,7 +273,7 @@ export class MembersService {
   }
 
   async getGuildMembers(guildId: string): Promise<MemberWithRoles[]> {
-    return this.prisma.member.findMany({
+    const members = await this.prisma.member.findMany({
       where: { guildId, active: true, globalUserId: { not: null } },
       include: {
         roles: {
@@ -279,6 +282,8 @@ export class MembersService {
       },
       orderBy: { name: 'asc' },
     });
+
+    return members;
   }
 
   async createOrUpdateMember({
