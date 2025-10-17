@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { RefreshJobUpdate } from "@/types/refresh-job";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
-import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 export const useRefreshJob = (
