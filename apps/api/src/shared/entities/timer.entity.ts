@@ -42,6 +42,9 @@ export class TimerEntity {
   })
   npc: any;
 
+  @Expose()
+  member: any;
+
   @Exclude()
   createdById: number;
 
