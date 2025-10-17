@@ -1,13 +1,13 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { Player } from "@/hooks/api/use-guild-players";
-import { Npc } from "@/hooks/api/use-npcs";
+import { Npc } from "@/hooks/api/game-data/use-npcs";
 import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
 import { stringify } from "qs";
-import { useGuildId } from "@/hooks/use-guild-id";
-import { useGuildContext } from "@/hooks/use-guild-context";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { GuildMember } from "@/hooks/api/use-guild-member";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { Player } from "@/hooks/api/game-data/use-guild-players";
 
 export enum ItemRarity {
   COMMON = "COMMON",

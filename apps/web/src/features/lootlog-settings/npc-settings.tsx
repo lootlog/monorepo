@@ -1,7 +1,7 @@
 import {
   LootlogConfigNpc,
   useGuildLootlogConfig,
-} from "@/hooks/api/use-guild-lootlog-settings";
+} from "@/hooks/api/guilds/use-guild-lootlog-settings";
 
 import { useState } from "react";
 import { cn } from "@/utils/cn";

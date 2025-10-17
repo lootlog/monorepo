@@ -4,11 +4,11 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
-import { GuildMember } from "@/hooks/api/use-guild-member";
-import { useMemberRefresh } from "@/hooks/api/use-member-refresh";
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCcw } from "lucide-react";
 import { FC, useCallback } from "react";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 
 export type MemberSyncButtonProps = {
   member: GuildMember;

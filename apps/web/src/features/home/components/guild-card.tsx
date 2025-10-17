@@ -1,3 +1,4 @@
+import { Guild } from "@/hooks/api/guilds/use-guild";
 import {
   Avatar,
   AvatarFallback,
@@ -11,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@lootlog/ui/components/card";
-import { Guild } from "hooks/api/use-guild";
 import { Link } from "@tanstack/react-router";
 
 type Props = {

@@ -14,12 +14,12 @@ import {
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { LootlogConfigNpc } from "@/hooks/api/use-guild-lootlog-settings";
-import { ItemRarity } from "@/hooks/api/use-loots";
+import { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
+import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { cn } from "@/utils/cn";
-import { useUpdateGuildLootlogNpc } from "@/hooks/api/use-update-guild-lootlog-npc";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import { useUpdateGuildLootlogNpc } from "@/hooks/api/guilds/use-update-guild-lootlog-npc";
 
 type NpcSettingsFormProps = {
   npc: LootlogConfigNpc;

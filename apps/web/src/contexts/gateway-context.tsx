@@ -2,8 +2,8 @@ import React, { createContext, useCallback, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
-import { useUser } from "@/hooks/api/use-user";
-import { useGuilds } from "@/hooks/api/use-guilds";
+import { useGuilds } from "@/hooks/api/guilds/use-guilds";
+import { useUser } from "@/hooks/api/user/use-user";
 
 export type GatewayProviderValue = {
   connected: boolean;

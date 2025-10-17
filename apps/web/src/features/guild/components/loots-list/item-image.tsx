@@ -1,5 +1,5 @@
 import { MARGONEM_CDN_ITEMS_URL } from "@/constants/margonem";
-import { ItemRarity } from "@/hooks/api/use-loots";
+import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { FC } from "react";
 import { cn } from "@/utils/cn";
 

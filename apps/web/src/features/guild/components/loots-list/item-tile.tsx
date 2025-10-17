@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { Item, ItemRarity } from "@/hooks/api/use-loots";
+import { Item, ItemRarity } from "@/hooks/api/loots/use-loots";
 import { FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { ItemImage } from "@/features/guild/components/loots-list/item-image";

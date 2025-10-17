@@ -3,8 +3,8 @@ import { useSidebar } from "@lootlog/ui/components/sidebar";
 import {
   Permission,
   useGuildPermissions,
-} from "@/hooks/api/use-guild-permissions";
-import { useGuildId } from "@/hooks/use-guild-id";
+} from "@/hooks/api/guilds/use-guild-permissions";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   BarChart4,
   CalendarClock,
@@ -14,16 +14,16 @@ import {
   Settings,
 } from "lucide-react";
 import { FC, useMemo } from "react";
-import { useGuilds } from "@/hooks/api/use-guilds";
+import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useGuildMember } from "@/hooks/api/use-guild-member";
+import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
-import { useMemberRefresh } from "@/hooks/api/use-member-refresh";
 import { SidebarNav, MenuItem } from "./sidebar-nav";
+import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();

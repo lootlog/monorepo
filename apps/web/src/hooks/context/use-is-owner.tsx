@@ -1,4 +1,4 @@
-import { useGuild } from "@/hooks/api/use-guild";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useSession } from "@/hooks/auth/use-session";
 
 export const useIsOwner = () => {

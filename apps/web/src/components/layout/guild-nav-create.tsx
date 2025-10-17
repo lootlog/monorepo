@@ -3,10 +3,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useGlobalContext } from "@/hooks/use-global-context";
 import { Button } from "@lootlog/ui/components/button";
 import { PlusCircleIcon } from "lucide-react";
 import { FC } from "react";
+import { useGlobalContext } from "@/hooks/context/use-global-context";
 
 export const GuildNavCreate: FC = () => {
   const {

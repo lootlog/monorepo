@@ -5,11 +5,11 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { format } from "date-fns";
-import { Timer, useTimers } from "@/hooks/api/use-timers";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
+import { Timer, useTimers } from "@/hooks/api/game-data/use-timers";
 
 type SingleTimerProps = {
   timer: Timer;

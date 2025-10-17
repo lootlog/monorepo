@@ -1,12 +1,12 @@
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCw, Clock } from "lucide-react";
-import { useBulkMemberRefresh } from "@/hooks/api/use-bulk-member-refresh";
-import { useRefreshJob } from "@/hooks/use-refresh-job";
-import { useGuildId } from "@/hooks/use-guild-id";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMemo, useCallback } from "react";
 import { cn } from "@/utils/cn";
-import { useCountdown } from "@/hooks/use-countdown";
 import { useRefreshStatus } from "@/features/members-settings/contexts/refresh-status-context";
+import { useCountdown } from "@/hooks/utils/use-countdown";
+import { useBulkMemberRefresh } from "@/hooks/api/members/use-bulk-member-refresh";
+import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
 
 const ADMIN_BULK_REFRESH_RATE_LIMIT = 1000 * 60 * 10; // 10 minutes
 
@@ -52,10 +52,16 @@ export const RefreshMembersButton = () => {
     [markAsFailed]
   );
 
-  const { jobStatus } = useRefreshJob(guildId, currentJobId, handleRefreshedIds, handleFailedIds);
+  const { jobStatus } = useRefreshJob(
+    guildId,
+    currentJobId,
+    handleRefreshedIds,
+    handleFailedIds
+  );
 
   const displayJob = jobStatus || currentJob;
-  const isRefreshing = displayJob?.status === 'PROCESSING' || displayJob?.status === 'PENDING';
+  const isRefreshing =
+    displayJob?.status === "PROCESSING" || displayJob?.status === "PENDING";
   const progress = displayJob
     ? (displayJob.processedMembers / displayJob.totalMembers) * 100
     : 0;
@@ -88,13 +94,14 @@ export const RefreshMembersButton = () => {
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Clock className="w-4 h-4" />
         <span>
-          Kolejne odświeżenie za {countdown.minutes}:{countdown.seconds.toString().padStart(2, '0')}
+          Kolejne odświeżenie za {countdown.minutes}:
+          {countdown.seconds.toString().padStart(2, "0")}
         </span>
       </div>
     );
   }
 
-  if (displayJob?.status === 'COMPLETED' && !countdown.isExpired) {
+  if (displayJob?.status === "COMPLETED" && !countdown.isExpired) {
     return (
       <div className="flex items-center gap-2 text-sm text-green-600">
         <RefreshCw className="w-4 h-4" />
@@ -103,7 +110,7 @@ export const RefreshMembersButton = () => {
     );
   }
 
-  if (displayJob?.status === 'FAILED') {
+  if (displayJob?.status === "FAILED") {
     return (
       <div className="flex items-center gap-2">
         <span className="text-sm text-red-600">Błąd odświeżania</span>
@@ -113,7 +120,9 @@ export const RefreshMembersButton = () => {
           onClick={handleRefresh}
           disabled={isPending || !countdown.isExpired}
         >
-          <RefreshCw className={cn("w-4 h-4 mr-2", isPending && "animate-spin")} />
+          <RefreshCw
+            className={cn("w-4 h-4 mr-2", isPending && "animate-spin")}
+          />
           Spróbuj ponownie
         </Button>
       </div>

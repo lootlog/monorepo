@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { useGuildId } from "@/hooks/use-guild-id";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { AxiosError, AxiosResponse } from "axios";
 import { ApiClientGenericErrorResponse } from "@/lib/api-client/api-client.types";
 

@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
@@ -8,6 +7,7 @@ import { GameNpc } from "@/types/margonem/npcs";
 import { NpcTpl } from "@/types/margonem/npc-tpl-manager";
 import { ProcessedNpcSettings, NpcProcessorsConfig, EventNpc } from "./types";
 import { useGlobalStore } from "@/store/global.store";
+import { NpcType } from "@/hooks/api/use-npcs";
 
 const isPickedNpcType = (npcType: NpcType): npcType is PickedNpcType => {
   return [

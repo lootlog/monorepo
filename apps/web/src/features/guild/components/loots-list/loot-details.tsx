@@ -1,4 +1,4 @@
-import { Loot } from "@/hooks/api/use-loots";
+import { Loot } from "@/hooks/api/loots/use-loots";
 import { ItemTile } from "@/features/guild/components/loots-list/item-tile";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";

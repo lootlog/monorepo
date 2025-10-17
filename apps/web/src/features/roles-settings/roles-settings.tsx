@@ -1,5 +1,5 @@
 import { SearchInput } from "@/components/ui/search-input";
-import { GuildRole, useGuildRoles } from "@/hooks/api/use-guild-roles";
+import { GuildRole, useGuildRoles } from "@/hooks/api/guilds/use-guild-roles";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
 import { Button } from "@lootlog/ui/components/button";

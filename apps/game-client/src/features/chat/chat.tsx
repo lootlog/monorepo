@@ -1,6 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { useChatMessages } from "@/hooks/api/use-chat-messages";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useRef, useLayoutEffect } from "react";
 import { Viewport } from "@radix-ui/react-scroll-area";
 import { useLocalStorage } from "react-use";
@@ -12,6 +11,7 @@ import { ChatMessage } from "@/features/chat/components/chat-message";
 import { ChatInput } from "@/features/chat/components/chat-input";
 import { useGlobalStore } from "@/store/global.store";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useGuildMembers } from "@/hooks/api/use-guild-members";
 
 export const Chat = () => {
   const { accountId, characterId } = useGlobalStore((state) => state.gameState);

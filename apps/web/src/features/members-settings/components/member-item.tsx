@@ -1,11 +1,10 @@
-import { GuildMember } from "@/hooks/api/use-guild-member";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { useRefreshStatus } from "@/features/members-settings/contexts/refresh-status-context";
-import { useDeactivateMember } from "@/hooks/api/use-deactivate-member";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -20,8 +19,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { AlertCircle, EllipsisVertical, CheckCircle2, XCircle, UserX } from "lucide-react";
+import {
+  AlertCircle,
+  EllipsisVertical,
+  CheckCircle2,
+  XCircle,
+  UserX,
+} from "lucide-react";
 import { FC } from "react";
+import { useDeactivateMember } from "@/hooks/api/members/use-deactivate-member";
 
 export type MemberItemProps = {
   member: GuildMember;
@@ -70,10 +76,15 @@ export const MemberItem: FC<MemberItemProps> = ({
           <AvatarImage src={avatarUrl} />
         </Avatar>
         <div className="flex flex-col">
-          <div className="font-semibold flex items-center gap-2" style={{ color: `#${color}` }}>
+          <div
+            className="font-semibold flex items-center gap-2"
+            style={{ color: `#${color}` }}
+          >
             <span>
               {member.name}{" "}
-              <span className="text-white">{isOwner ? "(właściciel)" : ""}</span>
+              <span className="text-white">
+                {isOwner ? "(właściciel)" : ""}
+              </span>
             </span>
             {isRefreshed && (
               <TooltipProvider>
@@ -106,7 +117,9 @@ export const MemberItem: FC<MemberItemProps> = ({
                     <AlertCircle className="w-4 h-4 text-yellow-500" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-xs">{member.staleWarning || "Dane mogą być nieaktualne"}</p>
+                    <p className="text-xs">
+                      {member.staleWarning || "Dane mogą być nieaktualne"}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

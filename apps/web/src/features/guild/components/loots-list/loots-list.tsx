@@ -1,7 +1,6 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
-import { useLoots } from "@/hooks/api/use-loots";
-import { useGuildContext } from "@/hooks/use-guild-context";
+import { useLoots } from "@/hooks/api/loots/use-loots";
 import { Frown, Loader2 } from "lucide-react";
 import { FC, Fragment, useEffect, useMemo } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
@@ -10,10 +9,11 @@ import { useDebounceValue, useIntersectionObserver } from "usehooks-ts";
 import {
   Permission,
   useGuildPermissions,
-} from "@/hooks/api/use-guild-permissions";
+} from "@/hooks/api/guilds/use-guild-permissions";
 import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
-import { useGuildMember } from "@/hooks/api/use-guild-member";
-import { useIsOwner } from "@/hooks/use-is-owner";
+import { useGuildMember } from "@/hooks/api/members/use-guild-member";
+import { useIsOwner } from "@/hooks/context/use-is-owner";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
 
 const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 

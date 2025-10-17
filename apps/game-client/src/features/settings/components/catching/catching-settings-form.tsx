@@ -1,11 +1,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { FC, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
+import { useGuilds } from "@/hooks/api/use-guilds";
 
 export type CatchingSettingsFormProps = {
   characterId: string;
