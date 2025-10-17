@@ -1,3 +1,5 @@
+import { useWorlds } from "@/hooks/api/game-data/use-worlds";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
 import {
   Select,
   SelectContent,
@@ -5,8 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { useWorlds } from "@/hooks/api/use-worlds";
-import { useGuildContext } from "@/hooks/use-guild-context";
 
 export const WorldSwitcher: React.FC = () => {
   const { data: worlds } = useWorlds();

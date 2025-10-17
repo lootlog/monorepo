@@ -2,9 +2,11 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
-  Logger,
 } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { Permission } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { GuildsService } from 'src/guilds/guilds.service';
@@ -17,9 +19,8 @@ import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 
 @Injectable()
 export class NotificationsService {
-  private readonly logger = new Logger(NotificationsService.name);
-
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
   ) {}
@@ -48,18 +49,20 @@ export class NotificationsService {
       ],
     );
     if (userGuilds.length === 0) {
-      this.logger.warn(
-        `User ${discordId} has no permission to send notifications`,
-      );
+      this.logger.log({
+        level: 'warn',
+        message: `User ${discordId} has no permission to send notifications`,
+      });
       throw new ForbiddenException();
     }
     const guildIds = userGuilds
       .map((g) => g.id)
       .filter((id) => data.guildIds.includes(id));
     if (!guildIds.length) {
-      this.logger.warn(
-        `User ${discordId} tried to send notification to unauthorized guilds: ${data.guildIds}`,
-      );
+      this.logger.log({
+        level: 'warn',
+        message: `User ${discordId} tried to send notification to unauthorized guilds: ${data.guildIds}`,
+      });
       throw new ForbiddenException();
     }
     const basePayload = {

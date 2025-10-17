@@ -1,0 +1,121 @@
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Separator } from "@lootlog/ui/components/separator";
+import { useLoots } from "@/hooks/api/loots/use-loots";
+import { Frown, Loader2 } from "lucide-react";
+import { FC, Fragment, useEffect, useMemo } from "react";
+import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
+import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
+import { useDebounceValue, useIntersectionObserver } from "usehooks-ts";
+import {
+  Permission,
+  useGuildPermissions,
+} from "@/hooks/api/guilds/use-guild-permissions";
+import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
+import { useGuildMember } from "@/hooks/api/members/use-guild-member";
+import { useIsOwner } from "@/hooks/context/use-is-owner";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
+
+const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
+
+export const LootsList: FC = () => {
+  const {
+    data: loots,
+    fetchNextPage,
+    hasNextPage,
+    isFetchedAfterMount,
+  } = useLoots({});
+  const { data: permissions, error: permissionsError } = useGuildPermissions();
+  const { world } = useGuildContext();
+  const { data: member, isPending } = useGuildMember();
+  const isOwner = useIsOwner();
+
+  const canManageLoots = useMemo(
+    () =>
+      permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner,
+    [permissions, isOwner]
+  );
+
+  const { isIntersecting, ref } = useIntersectionObserver({
+    threshold: 1,
+  });
+  const [value] = useDebounceValue(isIntersecting, 100);
+
+  useEffect(() => {
+    if (value && hasNextPage && isFetchedAfterMount) {
+      fetchNextPage();
+    }
+  }, [value, fetchNextPage, isFetchedAfterMount, hasNextPage]);
+
+  if (permissionsError?.response?.status === 403) {
+    return (
+      <div className="flex flex-col justify-center gap-8 items-center flex-1">
+        <Frown size="72" />
+        <span className="font-semibold text-center">
+          Nie masz uprawnień do przeglądania lootów w tej gildii. <br /> Odśwież
+          swoje uprawnienia jeśli dostałeś już odpowiednią rolę.
+        </span>
+        {!isPending && member && (
+          <MemberSyncButton member={{ ...member, userId: "@me" }} />
+        )}
+      </div>
+    );
+  }
+
+  const hasLoots = loots?.pages?.[0]?.data?.length ?? 0 >= 0;
+
+  if (!hasLoots) {
+    return (
+      <div className="flex flex-col justify-center gap-8 items-center flex-1">
+        <Frown size="72" />
+        <span className="font-semibold">Nie znaleziono żadnych lootów.</span>
+      </div>
+    );
+  }
+
+  if (!world) {
+    return (
+      <div className="flex flex-col justify-center gap-8 items-center flex-1">
+        <Frown size="72" />
+        <span className="font-semibold">
+          Brak wybranego świata, wybierz go z listy na górze.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <ScrollArea id="loots-list" className="h-24 flex-1 relative">
+      {loots && (
+        <ul className="flex flex-col">
+          {loots.pages.map((page) =>
+            page.data.map((loot) => {
+              return (
+                <Fragment key={loot.id}>
+                  <LootsListItem
+                    key={loot.id}
+                    loot={loot}
+                    canManageLoots={canManageLoots}
+                  />
+                  <Separator />
+                </Fragment>
+              );
+            })
+          )}
+        </ul>
+      )}
+
+      {!isFetchedAfterMount && (
+        <ul>
+          {Array.from({ length: 12 }).map((_, index) => {
+            return <LootsListItemSkeleton key={index} index={index} />;
+          })}
+        </ul>
+      )}
+      {hasNextPage && (
+        <div ref={ref} className="h-24 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      )}
+    </ScrollArea>
+  );
+};

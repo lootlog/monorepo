@@ -49,4 +49,59 @@ authController.get("/verify", async (c) => {
   return c.json({ status: "OK" });
 });
 
+authController.get("/@me/scopes", async (c) => {
+  const user = c.get("user");
+
+  if (!user) return c.body(null, 401);
+
+  const token = await auth.api.getAccessToken({
+    body: {
+      providerId: "discord",
+      userId: user.id,
+    },
+  });
+
+  if (!token || !token.accessToken) {
+    return c.json({ error: "Failed to retrieve IDP token" }, 503);
+  }
+
+  const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
+  if (expiresAt && expiresAt < new Date()) {
+    return c.json({ error: "IDP token has expired. Please reconnect your account." }, 401);
+  }
+
+  return c.json(token.scopes || []);
+});
+
+authController.post("/idp-token", async (c) => {
+  const body = await c.req.json();
+  const { userId } = body;
+
+  if (!userId) {
+    return c.json({ error: "INVALID_REQUEST" }, 400);
+  }
+
+  const token = await auth.api.getAccessToken({
+    body: {
+      providerId: "discord",
+      userId: userId,
+    },
+  });
+
+  if (!token || !token.accessToken) {
+    return c.json({ error: "TOKEN_NOT_FOUND" });
+  }
+
+  const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
+  if (expiresAt && expiresAt < new Date()) {
+    return c.json({ error: "TOKEN_EXPIRED" });
+  }
+
+  return c.json({
+    accessToken: token.accessToken,
+    expiresIn: token.expiresAt ? Math.floor((expiresAt!.getTime() - Date.now()) / 1000) : 0,
+    scopes: token.scopes || [],
+  });
+});
+
 export { authController };

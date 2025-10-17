@@ -3,7 +3,7 @@ import { PageContainer } from "@/components/ui/page-container";
 
 import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { FC } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "@tanstack/react-router";
 
 export const HomeLayout: FC = () => {
   return (

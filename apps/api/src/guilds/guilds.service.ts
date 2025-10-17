@@ -5,9 +5,12 @@ import {
   Injectable,
   NotFoundException,
   forwardRef,
-  Logger,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { Guild, Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
@@ -20,14 +23,13 @@ import { RolesService } from 'src/roles/roles.service';
 import { generateSlug } from 'src/shared/utils/generate-slug';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
-import { DiscordService } from 'src/discord/discord.service';
 import { UsersService } from 'src/users/users.service';
+import { DiscordService } from 'src/discord/discord.service';
 
 @Injectable()
 export class GuildsService {
-  private readonly logger = new Logger(GuildsService.name);
-
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Inject(forwardRef(() => MembersService))
     private readonly membersService: MembersService,
     private readonly rolesService: RolesService,
@@ -48,30 +50,45 @@ export class GuildsService {
         Permission.LOOTLOG_READ,
       ]);
     } else {
-      const discordGuilds = await this.discordService.getUserGuilds(userId);
+      try {
+        const discordGuilds = await this.discordService.getUserGuilds(userId);
 
-      if (!discordGuilds || discordGuilds.length === 0) {
-        this.logger.warn(
-          `No guilds found for user ${userId} with Discord ID ${discordId}`,
-        );
-        return [];
-      }
+        if (!discordGuilds || discordGuilds.length === 0) {
+          this.logger.log({
+            level: 'warn',
+            message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
+          });
+          return [];
+        }
 
-      const discordGuildIds = discordGuilds.map((guild) => guild.id);
+        const discordGuildIds = discordGuilds.map((guild) => guild.id);
 
-      guilds = await this.prisma.guild.findMany({
-        where: {
-          id: { in: discordGuildIds },
-          active: true,
-        },
-      });
+        guilds = await this.prisma.guild.findMany({
+          where: {
+            id: { in: discordGuildIds },
+            active: true,
+          },
+        });
 
-      const comparedGuilds = guilds.every((guild) => {
-        return discordGuildIds.includes(guild.id);
-      });
+        const comparedGuilds = guilds.every((guild) => {
+          return discordGuildIds.includes(guild.id);
+        });
 
-      if (!comparedGuilds) {
-        await this.discordService.clearUserGuildIdsCache(userId);
+        if (!comparedGuilds) {
+          await this.discordService.clearUserGuildIdsCache(userId);
+        }
+      } catch (error) {
+        if (
+          error instanceof HttpException &&
+          error.getStatus() === HttpStatus.UNAUTHORIZED
+        ) {
+          this.logger.log({
+            level: 'warn',
+            message: `User authentication failed for userId: ${userId}, returning empty guilds`,
+          });
+          return [];
+        }
+        throw error;
       }
     }
 
@@ -97,28 +114,56 @@ export class GuildsService {
   }
 
   async getManageableUserGuilds(discordId: string, userId: string) {
-    const discordGuilds = await this.discordService.getUserGuilds(userId);
+    try {
+      const discordGuilds = await this.discordService.getUserGuilds(userId);
 
-    if (!discordGuilds || discordGuilds.length === 0) {
-      this.logger.warn(
-        `No guilds found for user ${userId} with Discord ID ${discordId}`,
-      );
-      return [];
+      if (!discordGuilds || discordGuilds.length === 0) {
+        this.logger.log({
+          level: 'warn',
+          message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
+        });
+        return [];
+      }
+
+      return discordGuilds
+        .filter((guild) => parseInt(guild.permissions, 10) & 0x8)
+        .map((guild) => {
+          return {
+            id: guild.id,
+            name: guild.name,
+            icon: guild.icon,
+            ownerId: guild.owner_id,
+          };
+        });
+    } catch (error) {
+      if (
+        error instanceof HttpException &&
+        error.getStatus() === HttpStatus.UNAUTHORIZED
+      ) {
+        this.logger.log({
+          level: 'warn',
+          message: `User authentication failed for userId: ${userId}, returning empty guilds`,
+        });
+        return [];
+      }
+      throw error;
     }
-
-    return discordGuilds
-      .filter((guild) => parseInt(guild.permissions, 10) & 0x8)
-      .map((guild) => {
-        return {
-          id: guild.id,
-          name: guild.name,
-          icon: guild.icon,
-          ownerId: guild.owner_id,
-        };
-      });
   }
 
+  /**
+   * Get guild by ID or vanity URL
+   * Returns raw Guild from Prisma
+   */
   async getGuildById(idOrVanityURL: string) {
+    const guild = await this.getGuildByIdInternal(idOrVanityURL);
+    return guild;
+  }
+
+  /**
+   * Get guild by ID or vanity URL (for internal use)
+   * Returns raw Guild from Prisma with ALL fields including ownerId
+   */
+  async getGuildByIdInternal(idOrVanityURL: string) {
     const guild = await this.prisma.guild.findFirst({
       where: {
         active: true,
@@ -173,7 +218,8 @@ export class GuildsService {
     guildId: string;
   }) {
     const { discordId, userId, guildId } = options;
-    const guild = await this.getGuildById(guildId);
+
+    const guild = await this.getGuildByIdInternal(guildId);
 
     const member = await this.membersService.getGuildMemberById({
       userId,
@@ -181,11 +227,12 @@ export class GuildsService {
       guildId: guild.id,
     });
 
-    if (!member.active) {
+    if (!member || !member.active) {
       throw new ForbiddenException();
     }
 
     const isOwner = guild.ownerId === discordId;
+
     const permissions = isOwner
       ? Object.values(Permission)
       : member?.roles.reduce((acc: Permission[], role) => {
@@ -237,6 +284,74 @@ export class GuildsService {
     });
 
     return result;
+  }
+
+  async getUserGuildsWithPermissions(discordId: string, userId: string) {
+    const guilds = await this.getGuildsForRequiredPermissions(
+      discordId,
+      userId,
+      [Permission.LOOTLOG_READ],
+    );
+
+    const guildIds = guilds.map((guild) => guild.id);
+    const members = await this.prisma.member.findMany({
+      where: {
+        userId: discordId,
+        guildId: { in: guildIds },
+      },
+      include: {
+        roles: {
+          select: {
+            id: true,
+            lvlRangeFrom: true,
+            lvlRangeTo: true,
+            permissions: true,
+          },
+        },
+      },
+    });
+
+    const memberMap = new Map(members.map((m) => [m.guildId, m]));
+    const allPermissions = Object.values(Permission);
+
+    return guilds.map((guild) => {
+      const member = memberMap.get(guild.id);
+      const isOwner = guild.ownerId === discordId;
+
+      if (!member) {
+        if (isOwner) {
+          return {
+            guild: { id: guild.id },
+            roles: [
+              {
+                id: 'owner',
+                lvlRangeFrom: 0,
+                lvlRangeTo: 999,
+                permissions: allPermissions,
+              },
+            ],
+          };
+        }
+        return {
+          guild: { id: guild.id },
+          roles: [],
+        };
+      }
+
+      const rolesWithPermissions = member.roles
+        .map((role) => ({
+          id: role.id,
+          lvlRangeFrom: role.lvlRangeFrom,
+          lvlRangeTo: role.lvlRangeTo,
+          permissions: isOwner ? allPermissions : role.permissions,
+        }))
+        .filter((role) => role.permissions.length > 0);
+
+      return {
+        guild: { id: guild.id },
+        roles: rolesWithPermissions,
+      };
+    });
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
@@ -293,10 +408,11 @@ export class GuildsService {
         },
       });
     } catch (error) {
-      this.logger.error(
-        'Failed to create/update guild',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to create/update guild',
+        error: error instanceof Error ? error.stack : error,
+      });
       throw error;
     }
 
@@ -319,10 +435,11 @@ export class GuildsService {
         },
       });
     } catch (error) {
-      this.logger.error(
-        'Failed to update guild',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to update guild',
+        error: error instanceof Error ? error.stack : error,
+      });
       throw error;
     }
   }
@@ -345,10 +462,11 @@ export class GuildsService {
         });
       });
     } catch (error) {
-      this.logger.error(
-        'Failed to delete guild',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to delete guild',
+        error: error instanceof Error ? error.stack : error,
+      });
       throw error;
     }
   }

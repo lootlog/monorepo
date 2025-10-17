@@ -4,7 +4,7 @@ import { SidebarProvider } from "@lootlog/ui/components/sidebar";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { GuildContextProvider } from "@/contexts/guild.context";
 import { FC } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "@tanstack/react-router";
 
 export const GuildLayout: FC = () => {
   return (

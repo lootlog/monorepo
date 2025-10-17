@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
 import { UsersService } from 'src/users/users.service';
+import { UserLootlogConfigEntity } from 'src/shared/entities/user-lootlog-config.entity';
 
 @Injectable()
 export class UserLootlogConfigService {
@@ -22,13 +24,15 @@ export class UserLootlogConfigService {
         },
       });
 
-    return accountConfig.reduce((acc, config) => {
+    const result = accountConfig.reduce((acc, config) => {
       const { characterId } = config;
       return {
         ...acc,
-        [characterId]: config,
+        [characterId]: plainToInstance(UserLootlogConfigEntity, config),
       };
     }, {});
+
+    return result;
   }
 
   async getLootlogCharacterConfig(
@@ -77,6 +81,6 @@ export class UserLootlogConfigService {
       },
     });
 
-    return config;
+    return plainToInstance(UserLootlogConfigEntity, config);
   }
 }

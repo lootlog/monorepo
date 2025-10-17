@@ -1,9 +1,11 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { UpdateUserPreferencesDto } from 'src/users/dto/update-user-preferences.dto';
 import { UsersService } from 'src/users/users.service';
+import { UserPreferencesEntity } from 'src/shared/entities/user-preferences.entity';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -12,18 +14,12 @@ import { UsersService } from 'src/users/users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('/@me/scopes')
-  @ApiOperation({ summary: 'Get user IDP token scopes', description: 'Retrieve authentication token scopes for the user' })
-  @ApiResponse({ status: 200, description: 'User token scopes' })
-  async getUserIdpTokenScopes(@UserId() userId: string) {
-    return this.usersService.getUserIdpTokenScopes(userId);
-  }
-
   @Get('/@me/preferences')
   @ApiOperation({ summary: 'Get user preferences', description: 'Retrieve user preferences' })
   @ApiResponse({ status: 200, description: 'User preferences' })
   async getUserPreferences(@UserId() userId: string) {
-    return this.usersService.getUserPreferences(userId);
+    const preferences = await this.usersService.getUserPreferences(userId);
+    return plainToInstance(UserPreferencesEntity, preferences);
   }
 
   @Patch('/@me/preferences')
@@ -33,6 +29,7 @@ export class UsersController {
     @UserId() userId: string,
     @Body() preferences: UpdateUserPreferencesDto,
   ) {
-    return this.usersService.updateUserPreferences(userId, preferences);
+    const updatedPreferences = await this.usersService.updateUserPreferences(userId, preferences);
+    return plainToInstance(UserPreferencesEntity, updatedPreferences);
   }
 }

@@ -86,27 +86,59 @@ export class Gateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() { data: player }: JoinGatewayDto,
   ): Promise<any> {
-    const guilds = await this.guildsService.getUserGuilds({
-      discordId,
-      userId,
-    });
+    const startTime = Date.now();
+    this.logger.log(`User ${discordId} attempting to join gateway`);
 
-    if (guilds.length === 0) {
-      this.logger.warn(`No guilds found for user ${discordId}`);
+    try {
+      const guilds = await this.guildsService.getUserGuilds({
+        discordId,
+        userId,
+      });
+
+      if (guilds.length === 0) {
+        this.logger.warn(
+          `No guilds found for user ${discordId}. User may not have LOOTLOG_READ permission in any guild.`,
+        );
+        client.emit(GatewayEvent.JOIN, {
+          status: 'error',
+          message:
+            'No guilds found. Please ensure you have access to at least one guild.',
+        });
+        return;
+      }
+
+      const guildIds = getGuildIds(guilds);
+      const user = buildUser(client, player, guilds);
+
+      client.data = user;
+      client.join(guildIds);
+      this.emitPresenceToRooms(
+        client,
+        user,
+        GatewayEvent.UPDATE_SERVER_PRESENCE,
+      );
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `User ${discordId} successfully joined ${guilds.length} guilds in ${duration}ms`,
+      );
+
+      client.emit(GatewayEvent.JOIN, {
+        status: 'success',
+        guildsCount: guilds.length,
+      });
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to join gateway for user ${discordId} after ${duration}ms: ${error.message}`,
+        error.stack,
+      );
+
       client.emit(GatewayEvent.JOIN, {
         status: 'error',
-        message: 'No guilds found',
+        message: 'Failed to join gateway. Please try again.',
       });
-      return;
     }
-    const guildIds = getGuildIds(guilds);
-    const user = buildUser(client, player, guilds);
-
-    client.data = user;
-    client.join(guildIds);
-    this.emitPresenceToRooms(client, user, GatewayEvent.UPDATE_SERVER_PRESENCE);
-    client.emit(GatewayEvent.JOIN, { status: 'success' });
-    return;
   }
 
   @UseFilters(new BaseWsExceptionFilter())

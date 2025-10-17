@@ -17,17 +17,17 @@ spec:
           image: kamilwronka7/lootlog-api:latest
           resources:
             requests:
-              memory: '512Mi'
-              cpu: '500m'
+              memory: "512Mi"
+              cpu: "500m"
             limits:
-              memory: '768Mi'
-              cpu: '700m'
+              memory: "768Mi"
+              cpu: "700m"
           ports:
             - name: container-port
               containerPort: 4000
           env:
             - name: PORT
-              value: '4000'
+              value: "4000"
             - name: ENV
               valueFrom:
                 secretKeyRef:
@@ -66,7 +66,12 @@ spec:
             - name: REDIS_HOST
               value: dragonfly
             - name: REDIS_PORT
-              value: '6379'
+              value: "6379"
+            - name: AUTH_SERVICE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-api-secrets
+                  key: authServiceUrl
 
           livenessProbe:
             httpGet:

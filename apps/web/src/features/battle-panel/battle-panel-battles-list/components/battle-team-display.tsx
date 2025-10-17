@@ -1,5 +1,5 @@
 import { Warrior } from "@/hooks/api/battle-log/use-battles";
-import { PlayerTile } from "@/screens/guild/components/loots-list/player-tile";
+import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { cn } from "@/utils/cn";
 import { FC } from "react";
 

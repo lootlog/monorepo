@@ -15,7 +15,6 @@ export enum Queue {
   GUILDS_INITIALIZE = 'backend-guilds-initialize',
   GUILDS_INITIALIZE_DLQ = 'backend-guilds-initialize.dlq',
   GUILDS_INITIALIZE_RETRY = 'backend-guilds-initialize.retry',
-  GUILDS_RPC_GET_USER_GUILDS = 'backend-guilds-rpc-get-user-guilds',
   // roles
   GUILDS_CREATE_ROLE = 'backend-guilds-create-role',
   GUILDS_CREATE_ROLE_DLQ = 'backend-guilds-create-role.dlq',
@@ -42,4 +41,8 @@ export enum Queue {
   GUILDS_MEMBERS_REMOVE_ROLE = 'backend-guilds-members-remove-role',
   GUILDS_MEMBERS_REMOVE_ROLE_DLQ = 'backend-guilds-members-remove-role.dlq',
   GUILDS_MEMBERS_REMOVE_ROLE_RETRY = 'backend-guilds-members-remove-role.retry',
+  GUILDS_MEMBERS_BULK_REFRESH = 'backend-guilds-members-bulk-refresh',
+  GUILDS_MEMBERS_BULK_REFRESH_DLQ = 'backend-guilds-members-bulk-refresh.dlq',
+  GUILDS_MEMBERS_REFRESH = 'backend-guilds-members-refresh',
+  GUILDS_MEMBERS_REFRESH_DLQ = 'backend-guilds-members-refresh.dlq',
 }

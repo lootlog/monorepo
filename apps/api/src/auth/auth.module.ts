@@ -1,17 +1,9 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { AuthService } from './auth.service';
-import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { ConfigService } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
 
 @Module({
-  imports: [
-    RabbitMQModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) =>
-        configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
-    }),
-  ],
+  imports: [HttpModule],
   providers: [AuthService],
   exports: [AuthService],
 })

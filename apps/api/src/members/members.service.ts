@@ -5,39 +5,91 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { PrismaService } from 'src/db/prisma.service';
 import {
-  MEMBER_CACHE_TTL,
-  REFRESH_PERMISSIONS_TTL,
+  getMemberCacheTtl,
+  getRefreshPermissionsTtl,
+  getAdminBulkRefreshRateLimit,
 } from 'src/members/constants/member-cache.constant';
-import { DiscordService } from 'src/discord/discord.service';
 import { APIGuildMember } from 'discord-api-types/v10';
 import { ErrorKey } from 'src/members/enum/error-key.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { Member, Role } from 'generated/client';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
+import { ConfigKey } from 'src/config/config-key.enum';
+import { ServiceConfig } from 'src/config/service.config';
+import { RuntimeEnvironment } from 'src/types/runtime.types';
+import { DiscordService } from 'src/discord/discord.service';
 
-type MemberWithRoles = Member & { roles: Role[] };
+type MemberWithRoles = Member & {
+  roles: Role[];
+  isStale?: boolean;
+  staleWarning?: string;
+};
 
 @Injectable()
 export class MembersService {
-  private readonly logger = new Logger(MembersService.name);
+  private readonly env: RuntimeEnvironment;
 
   constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
     private readonly discordService: DiscordService,
     @Inject(forwardRef(() => GuildsService))
     private readonly guildsService: GuildsService,
-  ) {}
+    private readonly amqpConnection: AmqpConnection,
+    private readonly configService: ConfigService,
+  ) {
+    const serviceConfig = this.configService.get<ServiceConfig>(
+      ConfigKey.SERVICE,
+    );
+    this.env = serviceConfig?.env || RuntimeEnvironment.LOCAL;
+  }
 
+  private async getStaleMember(
+    discordId: string,
+    guildId: string,
+    warningMessage: string,
+  ): Promise<MemberWithRoles | null> {
+    const staleMember = await this.prisma.member.findUnique({
+      where: {
+        memberId: { userId: discordId, guildId },
+      },
+      include: { roles: true },
+    });
+
+    if (staleMember) {
+      const memberWithWarning = {
+        ...staleMember,
+        isStale: true,
+        staleWarning: warningMessage,
+      };
+      return memberWithWarning as any;
+    }
+
+    return null;
+  }
+
+  /**
+   * Caching strategy: standard TTL (5min) vs refresh TTL (30s)
+   * Fallback: serves stale data on API failures with warning flag
+   * Auto-deactivates members on NotFoundException or 401 Unauthorized
+   */
   async getGuildMemberById(options: {
     discordId: string;
     guildId: string;
     userId: string;
     refresh?: boolean;
     standalone?: boolean;
+    skipTtlCheck?: boolean;
   }): Promise<MemberWithRoles | null> {
     const {
       discordId,
@@ -45,17 +97,19 @@ export class MembersService {
       userId,
       refresh = false,
       standalone = false,
+      skipTtlCheck = false,
     } = options;
 
     let desiredGuildId = guildId;
-
     if (refresh || standalone) {
       const guild = await this.guildsService.getGuildById(guildId);
       desiredGuildId = guild.id;
     }
 
     const now = new Date();
-    const cacheTtl = refresh ? REFRESH_PERMISSIONS_TTL : MEMBER_CACHE_TTL;
+    const cacheTtl = refresh
+      ? getRefreshPermissionsTtl(this.env)
+      : getMemberCacheTtl(this.env);
     const cacheExpiry = new Date(now.getTime() - cacheTtl);
 
     const member = await this.prisma.member.findUnique({
@@ -67,11 +121,11 @@ export class MembersService {
       include: { roles: true },
     });
 
-    if (member && refresh) {
+    if (member && refresh && !skipTtlCheck) {
       throw new BadRequestException(ErrorKey.MEMBER_TTL_ACTIVE);
     }
 
-    if (!member) {
+    if (!member || skipTtlCheck) {
       try {
         const discordMember = await this.discordService.getGuildMember({
           guildId: desiredGuildId,
@@ -79,51 +133,125 @@ export class MembersService {
         });
 
         if (!discordMember) {
+          this.logger.log({
+            level: 'warn',
+            message:
+              'Discord API returned null, attempting to serve stale data',
+            guildId: desiredGuildId,
+            userId: discordId,
+          });
+
+          const staleMember = await this.getStaleMember(
+            discordId,
+            desiredGuildId,
+            'Using cached data due to Discord API rate limiting or errors',
+          );
+
+          if (staleMember && staleMember.active) {
+            return staleMember;
+          }
+
           return null;
         }
 
-        return this.createOrUpdateMember({
+        const createdMember = await this.createOrUpdateMember({
           ...discordMember,
           guildId: desiredGuildId,
           globalUserId: userId,
         });
-      } catch (error) {
-        this.logger.error(
-          'Failed to fetch member from Discord, serving stale data',
-          (error as Error).stack,
-        );
 
+        return createdMember;
+      } catch (error) {
         if (error instanceof NotFoundException) {
-          await this.deactivateMember({
-            discordId,
-            guildId,
+          const existingMember = await this.prisma.member.findUnique({
+            where: {
+              memberId: { userId: discordId, guildId: desiredGuildId },
+            },
           });
+
+          if (existingMember && existingMember.active) {
+            await this.prisma.member.update({
+              where: {
+                memberId: { userId: discordId, guildId: desiredGuildId },
+              },
+              data: { active: false, roles: { set: [] } },
+            });
+          }
 
           return null;
         }
 
-        if (refresh) {
-          throw new HttpException(
-            'Member TTL is active',
-            HttpStatus.TOO_MANY_REQUESTS,
+        if (
+          error instanceof HttpException &&
+          error.getStatus() === HttpStatus.UNAUTHORIZED
+        ) {
+          this.logger.log({
+            level: 'warn',
+            message:
+              'User authentication failed (token expired/invalid), deactivating member',
+            guildId: desiredGuildId,
+            userId: discordId,
+          });
+
+          const existingMember = await this.prisma.member.findUnique({
+            where: {
+              memberId: { userId: discordId, guildId: desiredGuildId },
+            },
+          });
+
+          if (existingMember && existingMember.active) {
+            await this.prisma.member.update({
+              where: {
+                memberId: { userId: discordId, guildId: desiredGuildId },
+              },
+              data: { active: false, roles: { set: [] } },
+            });
+          }
+
+          return null;
+        }
+
+        if (error instanceof ServiceUnavailableException) {
+          this.logger.log({
+            level: 'warn',
+            message: 'Auth service unavailable, serving stale data',
+            guildId: desiredGuildId,
+            userId,
+          });
+
+          return this.getStaleMember(
+            discordId,
+            desiredGuildId,
+            'Data may be outdated due to service issues',
           );
         }
 
-        const staleMember = await this.prisma.member.findUnique({
-          where: {
-            memberId: { userId: discordId, guildId: desiredGuildId },
-          },
-          include: { roles: true },
+        this.logger.log({
+          level: 'error',
+          message: 'Failed to fetch member from Discord, serving stale data',
+          stack: (error as Error).stack,
         });
 
-        return staleMember;
+        if (refresh) {
+          throw error;
+        }
+
+        return this.getStaleMember(
+          discordId,
+          desiredGuildId,
+          'Using cached data due to API error',
+        );
       }
     }
 
-    return member;
+    return member as any;
   }
 
-  async refreshMember(options: { discordId: string; guildId: string }) {
+  async refreshMember(options: {
+    discordId: string;
+    guildId: string;
+    skipTtlCheck?: boolean;
+  }) {
     const member = await this.prisma.member.findUnique({
       where: {
         memberId: { userId: options.discordId, guildId: options.guildId },
@@ -137,16 +265,22 @@ export class MembersService {
     }
 
     return this.getGuildMemberById({
-      ...options,
+      discordId: options.discordId,
+      guildId: options.guildId,
       userId: member.globalUserId,
       refresh: true,
       standalone: true,
+      skipTtlCheck: options.skipTtlCheck,
     });
   }
 
-  async getGuildMembers(guildId: string): Promise<MemberWithRoles[]> {
-    return this.prisma.member.findMany({
-      where: { guildId, active: true, globalUserId: { not: null } },
+  async getGuildMembers(guildId: string, includeInactive = false): Promise<MemberWithRoles[]> {
+    const members = await this.prisma.member.findMany({
+      where: {
+        guildId,
+        ...(includeInactive ? {} : { active: true }),
+        globalUserId: { not: null }
+      },
       include: {
         roles: {
           orderBy: { position: 'desc' },
@@ -154,6 +288,8 @@ export class MembersService {
       },
       orderBy: { name: 'asc' },
     });
+
+    return members;
   }
 
   async createOrUpdateMember({
@@ -171,12 +307,16 @@ export class MembersService {
     const { id } = user;
 
     try {
-      const existingRoles = await this.prisma.role.findMany({
-        where: { id: { in: roleIds } },
-        select: { id: true },
-      });
+      const existingRoleIds =
+        roleIds.length > 0
+          ? (
+              await this.prisma.role.findMany({
+                where: { id: { in: roleIds } },
+                select: { id: true },
+              })
+            ).map((role) => role.id)
+          : [];
 
-      const existingRoleIds = existingRoles.map((role) => role.id);
       const memberName = nick || user.global_name || user.username;
       const memberAvatar = avatar || user.avatar;
 
@@ -203,12 +343,24 @@ export class MembersService {
         include: { roles: true },
       });
 
+      await this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_MEMBERS_UPDATE,
+        {
+          id: id,
+          discordId: id,
+          userId: globalUserId,
+          guildId,
+        },
+      );
+
       return member;
     } catch (error) {
-      this.logger.error(
-        `Failed to create/update member ${id}`,
-        (error as Error).stack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Failed to create/update member ${id}`,
+        stack: (error as Error).stack,
+      });
       throw error;
     }
   }
@@ -228,7 +380,7 @@ export class MembersService {
       throw new NotFoundException('Member not found');
     }
 
-    if (!member?.active) {
+    if (!member.active) {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
@@ -245,14 +397,84 @@ export class MembersService {
         data: { active: false },
       });
 
-      this.logger.log(`Deleted ${result.count} members from guild ${guildId}`);
+      this.logger.log({
+        level: 'info',
+        message: `Deactivated ${result.count} members from guild ${guildId}`,
+      });
       return result.count;
     } catch (error) {
-      this.logger.error(
-        `Failed to delete members for guild ${guildId}`,
-        (error as Error).stack,
-      );
+      this.logger.log({
+        level: 'error',
+        message: `Failed to deactivate members for guild ${guildId}`,
+        stack: (error as Error).stack,
+      });
       throw error;
     }
+  }
+
+  async createBulkRefreshJob(guildId: string, requestedBy: string) {
+    const rateLimit = getAdminBulkRefreshRateLimit(this.env);
+    const recentJob = await this.prisma.memberRefreshJob.findFirst({
+      where: {
+        guildId,
+        createdAt: {
+          gte: new Date(Date.now() - rateLimit),
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (recentJob) {
+      throw new BadRequestException({
+        message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
+        nextAvailableAt: new Date(recentJob.createdAt.getTime() + rateLimit),
+      });
+    }
+
+    const members = await this.getGuildMembers(guildId);
+
+    const job = await this.prisma.memberRefreshJob.create({
+      data: {
+        guildId,
+        requestedBy,
+        status: 'PENDING',
+        totalMembers: members.length,
+      },
+    });
+
+    await this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_MEMBERS_BULK_REFRESH,
+      {
+        jobId: job.id,
+        guildId,
+        memberIds: members.map((m) => m.userId),
+      },
+    );
+
+    return job;
+  }
+
+  async getLatestRefreshJob(guildId: string) {
+    const job = await this.prisma.memberRefreshJob.findFirst({
+      where: { guildId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return job;
+  }
+
+  async getRefreshJobStatus(jobId: number) {
+    const job = await this.prisma.memberRefreshJob.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) {
+      throw new NotFoundException({
+        message: ErrorKey.REFRESH_JOB_NOT_FOUND,
+      });
+    }
+
+    return job;
   }
 }

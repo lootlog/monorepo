@@ -3,7 +3,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { Separator } from "@lootlog/ui/components/separator";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Fragment } from "react/jsx-runtime";
 
 export interface MenuItem {

@@ -1,8 +1,11 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
 } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { createHash } from 'crypto';
 import { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
@@ -47,6 +50,7 @@ export class LootsService {
     private readonly prisma: PrismaService,
     private readonly lootlogConfigService: LootlogConfigService,
     private readonly userLootlogConfigService: UserLootlogConfigService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
   async createLoot(discordId: string, userId: string, body: CreateLootDto) {
@@ -105,18 +109,43 @@ export class LootsService {
 
     let loot = await this.prisma.loot.findUnique({ where: { uniqueId } });
 
-    let npcs: any, players: any, items: any, share: any;
-    if (!loot) {
-      npcs = npcData.mapped;
-      players = this.mapPlayers(body.players);
-      items = this.mapItems(body.loots);
-      share =
+    const submissionData = filteredGuilds
+      .map((guild) => {
+        const config = lootlogConfigs.find((c) => c.id === guild.id);
+        if (!config) return null;
+
+        const calculatedLoot = this.getLootForGivenConfig(
+          body.loots,
+          config.npcs,
+          highestWtNpcType,
+        );
+        if (calculatedLoot.length === 0) return null;
+
+        const member = members.find(({ guildId }) => guildId === guild.id);
+        if (!member) return null;
+
+        return {
+          guildId: guild.id,
+          memberId: member.id,
+        };
+      })
+      .filter(Boolean);
+
+    if (!loot && submissionData.length === 0) {
+      throw new BadRequestException(
+        ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
+      );
+    }
+
+    if (!loot && submissionData.length > 0) {
+      const npcs = npcData.mapped;
+      const players = this.mapPlayers(body.players);
+      const items = this.mapItems(body.loots);
+      const share =
         highestWtNpcType === NpcType.COLOSSUS
           ? this.mapLootShare(body.loots, body.players)
           : {};
-    }
 
-    if (!loot) {
       try {
         loot = await this.prisma.loot.create({
           data: {
@@ -138,41 +167,16 @@ export class LootsService {
           throw e;
         }
       }
-    }
 
-    const submissionData = filteredGuilds
-      .map((guild) => {
-        const config = lootlogConfigs.find((c) => c.id === guild.id);
-        if (!config) return null;
-
-        const calculatedLoot = this.getLootForGivenConfig(
-          body.loots,
-          config.npcs,
-          highestWtNpcType,
-        );
-        if (calculatedLoot.length === 0) return null;
-
-        const member = members.find(({ guildId }) => guildId === guild.id);
-        if (!member) return null;
-
-        return {
-          lootId: loot.id,
-          guildId: guild.id,
-          memberId: member.id,
-        };
-      })
-      .filter(Boolean);
-
-    if (submissionData.length > 0) {
-      await this.prisma.lootSubmission.createMany({
-        data: submissionData,
-        skipDuplicates: true,
-      });
-    }
-
-    if (players && npcs) {
       this.playersService.bulkIndexPlayers(players);
       this.npcsService.bulkIndexNpcs(npcs);
+    }
+
+    if (submissionData.length > 0 && loot) {
+      await this.prisma.lootSubmission.createMany({
+        data: submissionData.map((sd) => ({ ...sd, lootId: loot.id })),
+        skipDuplicates: true,
+      });
     }
 
     return { id: loot.id };
@@ -256,7 +260,7 @@ export class LootsService {
       throw new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT);
     }
 
-    return this.prisma.lootComment.create({
+    const comment = await this.prisma.lootComment.create({
       data: {
         content: body.content,
         guildId,
@@ -275,6 +279,8 @@ export class LootsService {
         },
       },
     });
+
+    return comment;
   }
 
   async updateLoot(discordId: string, lootId: number, data: UpdateLootDto) {
@@ -322,10 +328,14 @@ export class LootsService {
     }
 
     if (Object.keys(mappedLootShare).length < parsedLoot.length) {
-      console.warn(
-        'Loot share does not include all items, some items may not be shared.',
-      );
-      console.log(data.msg);
+      this.logger.log({
+        level: 'warn',
+        message: 'Loot share does not include all items, some items may not be shared',
+        lootId,
+        lootShareMsg: data.msg,
+        mappedItemsCount: Object.keys(mappedLootShare).length,
+        totalItemsCount: parsedLoot.length,
+      });
     }
 
     await this.prisma.loot.update({
@@ -375,6 +385,9 @@ export class LootsService {
             const hasReadTitans = role.permissions?.includes(
               Permission.LOOTLOG_READ_LOOTS_TITANS,
             );
+            const hasReadHeroes = role.permissions?.includes(
+              Permission.LOOTLOG_READ_LOOTS_HEROES,
+            );
             return Prisma.sql`
           (
             (npc->>'lvl')::int >= ${role.lvlRangeFrom}
@@ -382,6 +395,10 @@ export class LootsService {
             AND (
             (npc->>'type') != 'TITAN'
             OR (${hasReadTitans ? Prisma.sql`TRUE` : Prisma.sql`FALSE`})
+            )
+            AND (
+            (npc->>'type') NOT IN ('HERO', 'EVENT_HERO')
+            OR (${hasReadHeroes ? Prisma.sql`TRUE` : Prisma.sql`FALSE`})
             )
           )
           `;
@@ -486,10 +503,12 @@ export class LootsService {
       {} as Record<number, typeof submissions>,
     );
 
-    return loots.map((loot) => ({
+    const lootsWithSubmissions = loots.map((loot) => ({
       ...loot,
       submissions: submissionsByLootId[loot.id] || [],
     }));
+
+    return lootsWithSubmissions;
   }
 
   createUniqueLootId(loots: CreateLootDto['loots'], world: string): string {

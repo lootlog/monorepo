@@ -9,9 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
-import { useUser } from "@/hooks/api/use-user";
 import { Loader2, LogOut, Settings, User2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { useUser } from "@/hooks/api/user/use-user";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
