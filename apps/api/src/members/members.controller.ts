@@ -1,10 +1,11 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, UseGuards, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { MembersService } from './members.service';
@@ -104,6 +105,33 @@ export class MembersController {
     return plainToInstance(MemberEntity, member);
   }
 
+  @Permissions(Permission.ADMIN, Permission.OWNER)
+  @UseGuards(PermissionsGuard)
+  @Patch('/:discordId/deactivate')
+  @ApiOperation({
+    summary: 'Deactivate member',
+    description: 'Deactivate a specific member (admin only)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: 'discordId', description: 'Discord user ID', example: 'user_123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member deactivated successfully',
+    type: MemberEntity,
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
+  @ApiResponse({ status: 404, description: 'Member not found' })
+  async deactivateMember(
+    @Param('discordId') discordId: string,
+    @GuildData() guild: Guild,
+  ) {
+    const member = await this.membersService.deactivateMember({
+      discordId,
+      guildId: guild.id,
+    });
+    return plainToInstance(MemberEntity, member);
+  }
+
   @Permissions(Permission.LOOTLOG_READ)
   @UseGuards(PermissionsGuard)
   @Get()
@@ -112,14 +140,19 @@ export class MembersController {
     description: 'Retrieve all members for a guild',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiQuery({ name: 'includeInactive', required: false, type: Boolean, description: 'Include inactive members' })
   @ApiResponse({
     status: 200,
     description: 'List of guild members',
     type: [MemberEntity],
   })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
-  async getGuildMembers(@GuildData() guild: Guild) {
-    const members = await this.membersService.getGuildMembers(guild.id);
+  async getGuildMembers(
+    @GuildData() guild: Guild,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    const includeInactiveBool = includeInactive === 'true';
+    const members = await this.membersService.getGuildMembers(guild.id, includeInactiveBool);
     return plainToInstance(MemberEntity, members);
   }
 

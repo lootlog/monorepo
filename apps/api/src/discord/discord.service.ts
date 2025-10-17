@@ -20,7 +20,6 @@ import {
   AuthServiceUnavailableError,
   InvalidScopesError,
 } from 'src/auth/errors';
-import { retry, RetryableError } from 'src/lib/retry/retry.util';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { ServiceConfig } from 'src/config/service.config';
 import { RuntimeEnvironment } from 'src/types/runtime.types';
@@ -29,36 +28,25 @@ import { RuntimeEnvironment } from 'src/types/runtime.types';
 export class DiscordService implements OnModuleInit {
   private redlock: Redlock;
 
-  // Lock configuration
-  private readonly lockTtl = 6000; // 6s - slightly more than REST timeout
-  private readonly lockAcquireTimeout = 8000; // 8s - maximum time to wait for lock
-  private readonly cacheCheckInterval = 100; // Check cache every 100ms when waiting
+  private readonly lockTtl = 6000;
 
-  // Cache TTL configuration (in seconds)
   private readonly guildsCacheTtlLocal = 10;
-  private readonly guildsCacheTtlProd = 60 * 5; // 5 minutes
+  private readonly guildsCacheTtlProd = 300;
   private readonly memberCacheTtlLocal = 10;
-  private readonly memberCacheTtlProd = 300; // 5 minutes
+  private readonly memberCacheTtlProd = 300;
   private readonly errorCacheTtlLocal = 5;
-  private readonly errorCacheTtlProd = 60; // 1 minute
+  private readonly errorCacheTtlProd = 60;
   private readonly notFoundCacheTtlLocal = 30;
-  private readonly notFoundCacheTtlProd = 300; // 5 minutes
+  private readonly notFoundCacheTtlProd = 300;
+  private readonly staleCacheTtl = 300;
 
-  // Retry configuration
-  private readonly retryMaxAttempts = 3;
-  private readonly retryInitialDelay = 1000; // 1 second
-  private readonly retryMaxDelay = 5000; // 5 seconds
-  private readonly retryBackoffFactor = 2;
-
-  // Redlock configuration
   private readonly redlockDriftFactor = 0.01;
   private readonly redlockRetryCount = 3;
   private readonly redlockRetryDelay = 100;
   private readonly redlockRetryJitter = 50;
   private readonly redlockExtensionThreshold = 3000;
 
-  // REST client configuration
-  private readonly restTimeout = 5000; // 5 seconds
+  private readonly restTimeout = 5000;
 
   private readonly requiredScopes = [
     'guilds.members.read',
@@ -96,36 +84,9 @@ export class DiscordService implements OnModuleInit {
     return this.isLocal ? localTtl : prodTtl;
   }
 
-  private async waitForCache<T>(
-    cacheKey: string,
-    startTime: number,
-  ): Promise<T | null> {
-    const elapsed = Date.now() - startTime;
-    if (elapsed >= this.lockAcquireTimeout) {
-      return null;
-    }
-
-    await new Promise((resolve) =>
-      setTimeout(resolve, this.cacheCheckInterval),
-    );
-
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached) as T;
-    }
-
-    if (Date.now() - startTime < this.lockAcquireTimeout) {
-      return this.waitForCache<T>(cacheKey, startTime);
-    }
-
-    return null;
-  }
-
   async getRestClient(userId: string) {
     try {
       const token = await this.authService.getIdpToken(userId);
-
-      console.log(token.accessToken);
 
       if (!this.requiredScopes.every((scope) => token.scopes.includes(scope))) {
         throw new InvalidScopesError(this.requiredScopes, token.scopes);
@@ -137,44 +98,6 @@ export class DiscordService implements OnModuleInit {
         timeout: this.restTimeout,
         rejectOnRateLimit: ['/users'],
       }).setToken(token.accessToken);
-
-      // Pass userId to rate limiter for per-user tracking
-      rest.on('response', async (request, response) => {
-        try {
-          const headers = {
-            'x-ratelimit-bucket': response.headers.get('x-ratelimit-bucket'),
-            'x-ratelimit-limit': response.headers.get('x-ratelimit-limit'),
-            'x-ratelimit-remaining': response.headers.get(
-              'x-ratelimit-remaining',
-            ),
-            'x-ratelimit-reset': response.headers.get('x-ratelimit-reset'),
-            'x-ratelimit-reset-after': response.headers.get(
-              'x-ratelimit-reset-after',
-            ),
-            'x-ratelimit-scope': response.headers.get('x-ratelimit-scope'),
-            'x-ratelimit-global': response.headers.get('x-ratelimit-global'),
-          };
-
-          await this.rateLimiter.updateFromHeaders(
-            request.path,
-            headers,
-            userId, // Pass userId for per-user rate limit tracking
-            request.method, // Pass HTTP method for accurate bucket mapping
-          );
-
-          // TODO [LOW PRIORITY]: Track invalid requests (401, 403, 429) to prevent Cloudflare bans
-          // Discord limits: 10,000 invalid requests per 10 minutes
-          // Note: 429 with X-RateLimit-Scope: shared are NOT counted
-          // Implement when application scales to >16 req/s sustained
-          // See: /improvements/discord-rate-limiter.md section 4 for implementation details
-        } catch (error) {
-          this.logger.log({
-            level: 'error',
-            message: 'Failed to update rate limit from headers',
-            error: (error as Error).stack,
-          });
-        }
-      });
 
       return rest;
     } catch (error) {
@@ -210,78 +133,66 @@ export class DiscordService implements OnModuleInit {
       this.guildsCacheTtlProd,
     );
     const cacheKey = `user:${userId}:discord-guilds:data`;
+    const staleCacheKey = `user:${userId}:discord-guilds:stale`;
     const lockKey = `user:${userId}:discord-guilds:lock`;
 
-    // Check cache first
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
       return JSON.parse(cached) as APIGuild[];
     }
 
-    // Use Redlock to prevent multiple concurrent Discord API calls
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
-    const startTime = Date.now();
 
     try {
-      // Try to acquire lock
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
 
-      // Double-check cache after acquiring lock (another request might have filled it)
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
         return JSON.parse(cachedAfterLock) as APIGuild[];
       }
 
+      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(userId, 'guilds');
+
+      if (isRateLimited) {
+        const staleData = await this.redisService.get(staleCacheKey);
+        if (staleData) {
+          this.logger.log({
+            level: 'info',
+            message: `Returning stale guilds data due to rate limit for user ${userId}`,
+          });
+          return JSON.parse(staleData) as APIGuild[];
+        }
+
+        this.logger.log({
+          level: 'warn',
+          message: `Rate limited and no stale data available for user ${userId}`,
+        });
+        return [];
+      }
+
       const rest = await this.getRestClient(userId);
       const path = Routes.userGuilds();
 
-      // Check rate limit with userId for per-user tracking
-      await this.rateLimiter.checkRateLimitForPath(path, userId, 'GET');
+      let guilds: APIGuild[];
+      try {
+        guilds = (await rest.get(path)) as APIGuild[];
+      } catch (error: any) {
+        if (error instanceof RateLimitError) {
+          await this.rateLimiter.setRateLimitForUser(userId, 'guilds', error.retryAfter);
 
-      const guilds = await retry(
-        async () => {
-          try {
-            return (await rest.get(path)) as APIGuild[];
-          } catch (error: any) {
-            if (error instanceof RateLimitError) {
-              await this.rateLimiter.updateFromRateLimitError(
-                path,
-                {
-                  retryAfter: error.retryAfter,
-                  limit: error.limit,
-                  hash: error.hash,
-                  scope: error.scope,
-                  global: error.global,
-                },
-                userId,
-                'GET',
-              );
-              // Don't sleep here - rate limiter already updated the cache
-              // The retry mechanism will handle the delay
-              throw new RetryableError(
-                `Rate limit exceeded, will retry after ${error.retryAfter}ms`,
-              );
-            }
-            if (error.status >= 500 || error.code === 'ECONNRESET') {
-              throw new RetryableError(`Discord API error: ${error.message}`);
-            }
-            throw error;
-          }
-        },
-        {
-          maxAttempts: this.retryMaxAttempts,
-          initialDelay: this.retryInitialDelay,
-          maxDelay: this.retryMaxDelay,
-          backoffFactor: this.retryBackoffFactor,
-          retryableErrors: [RetryableError],
-          onRetry: (attempt, error) => {
+          const staleData = await this.redisService.get(staleCacheKey);
+          if (staleData) {
             this.logger.log({
-              level: 'warn',
-              message: `Retrying getUserGuilds (attempt ${attempt}): ${error.message}`,
+              level: 'info',
+              message: `Returning stale guilds data after rate limit error for user ${userId}`,
             });
-          },
-        },
-      );
+            return JSON.parse(staleData) as APIGuild[];
+          }
+
+          throw error;
+        }
+        throw error;
+      }
 
       if (!guilds || guilds.length === 0) {
         this.logger.log({
@@ -291,33 +202,24 @@ export class DiscordService implements OnModuleInit {
         return [];
       }
 
-      // Cache the result
-      await this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl);
+      await Promise.all([
+        this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl),
+        this.redisService.set(staleCacheKey, JSON.stringify(guilds), this.staleCacheTtl),
+      ]);
 
       return guilds;
     } catch (error) {
       if ((error as any)?.name === 'ExecutionError') {
         this.logger.log({
-          level: 'warn',
-          message: `Lock acquisition failed for getUserGuilds, waiting for cache to be populated by another request`,
-          userId,
-        });
-
-        const cachedData = await this.waitForCache<APIGuild[]>(
-          cacheKey,
-          startTime,
-        );
-
-        if (cachedData) {
-          return cachedData;
-        }
-
-        this.logger.log({
           level: 'error',
-          message: `Cache was not populated within timeout for getUserGuilds`,
+          message: `Lock acquisition failed for getUserGuilds`,
           userId,
         });
         return [];
+      }
+
+      if (error instanceof RateLimitError) {
+        throw error;
       }
 
       if (error instanceof UnauthorizedException) {
@@ -350,19 +252,6 @@ export class DiscordService implements OnModuleInit {
     await this.redisService.del(cacheKey);
   }
 
-  /**
-   * Check if user's rate limit bucket has capacity for guild member requests
-   * Used by background jobs to avoid consuming user's rate limit
-   */
-  async hasGuildMemberBucketCapacity(
-    guildId: string,
-    userId: string,
-    threshold: number = 3,
-  ): Promise<boolean> {
-    const path = Routes.userGuildMember(guildId);
-    return this.rateLimiter.hasBucketCapacity(path, userId, threshold, 'GET');
-  }
-
   async getGuildMember(options: {
     guildId: string;
     userId: string;
@@ -373,24 +262,19 @@ export class DiscordService implements OnModuleInit {
     );
     const { guildId, userId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
+    const staleCacheKey = `guild:${guildId}:member:${userId}:stale`;
     const lockKey = `guild:${guildId}:member:${userId}:lock`;
 
-    // Check cache first
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
       return parsed === null ? null : (parsed as APIGuildMember);
     }
 
-    // Use Redlock to prevent multiple concurrent Discord API calls
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
-    const startTime = Date.now();
 
     try {
-      // Try to acquire lock
       lock = await this.redlock.acquire([lockKey], this.lockTtl);
-
-      // Double-check cache after acquiring lock (another request might have filled it)
 
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
@@ -398,97 +282,78 @@ export class DiscordService implements OnModuleInit {
         return parsed === null ? null : (parsed as APIGuildMember);
       }
 
+      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(userId, 'guild-member');
+
+      if (isRateLimited) {
+        const staleData = await this.redisService.get(staleCacheKey);
+        if (staleData) {
+          const parsed = JSON.parse(staleData);
+          this.logger.log({
+            level: 'info',
+            message: `Returning stale member data due to rate limit for guild ${guildId}, user ${userId}`,
+          });
+          return parsed === null ? null : (parsed as APIGuildMember);
+        }
+
+        this.logger.log({
+          level: 'warn',
+          message: `Rate limited and no stale data available for guild ${guildId}, user ${userId}`,
+        });
+        return null;
+      }
+
       const rest = await this.getRestClient(userId);
       const path = Routes.userGuildMember(guildId);
 
-      await this.rateLimiter.checkRateLimitForPath(path, userId, 'GET');
+      let member: APIGuildMember;
+      try {
+        member = (await rest.get(path)) as APIGuildMember;
+        this.logger.log({
+          level: 'info',
+          message: 'Discord API returned member data',
+          path,
+        });
+      } catch (error: any) {
+        if (error.status === 404) {
+          throw error;
+        }
+        if (error instanceof RateLimitError) {
+          await this.rateLimiter.setRateLimitForUser(userId, 'guild-member', error.retryAfter);
 
-      const member = await retry(
-        async () => {
-          try {
-            const result = (await rest.get(path)) as APIGuildMember;
+          const staleData = await this.redisService.get(staleCacheKey);
+          if (staleData) {
+            const parsed = JSON.parse(staleData);
             this.logger.log({
               level: 'info',
-              message: 'Discord API returned member data',
-              path,
-              hasResult: !!result,
-              resultKeys: result ? Object.keys(result) : [],
-              result: JSON.stringify(result),
+              message: `Returning stale member data after rate limit error for guild ${guildId}, user ${userId}`,
             });
-            return result;
-          } catch (error: any) {
-            if (error.status === 404) {
-              throw error;
-            }
-            if (error instanceof RateLimitError) {
-              await this.rateLimiter.updateFromRateLimitError(
-                path,
-                {
-                  retryAfter: error.retryAfter,
-                  limit: error.limit,
-                  hash: error.hash,
-                  scope: error.scope,
-                  global: error.global,
-                },
-                userId,
-                'GET',
-              );
-              // Don't sleep here - rate limiter already updated the cache
-              // The retry mechanism will handle the delay
-              throw new RetryableError(
-                `Rate limit exceeded, will retry after ${error.retryAfter}ms`,
-              );
-            }
-            if (error.status >= 500 || error.code === 'ECONNRESET') {
-              throw new RetryableError(`Discord API error: ${error.message}`);
-            }
-            throw error;
+            return parsed === null ? null : (parsed as APIGuildMember);
           }
-        },
-        {
-          maxAttempts: this.retryMaxAttempts,
-          initialDelay: this.retryInitialDelay,
-          maxDelay: this.retryMaxDelay,
-          backoffFactor: this.retryBackoffFactor,
-          retryableErrors: [RetryableError],
-          onRetry: (attempt, error) => {
-            this.logger.log({
-              level: 'warn',
-              message: `Retrying getGuildMember (attempt ${attempt}): ${error.message}`,
-            });
-          },
-        },
-      );
 
-      // Cache the result
-      await this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl);
+          throw error;
+        }
+        throw error;
+      }
+
+      await Promise.all([
+        this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl),
+        this.redisService.set(staleCacheKey, JSON.stringify(member), this.staleCacheTtl),
+      ]);
 
       return member;
     } catch (error: any) {
       if (error?.name === 'ExecutionError') {
         this.logger.log({
-          level: 'warn',
-          message: `Lock acquisition failed for getGuildMember, waiting for cache to be populated by another request`,
-          guildId,
-          userId,
-        });
-
-        const cachedData = await this.waitForCache<APIGuildMember | null>(
-          cacheKey,
-          startTime,
-        );
-
-        if (cachedData !== null) {
-          return cachedData;
-        }
-
-        this.logger.log({
           level: 'error',
-          message: `Cache was not populated within timeout for getGuildMember`,
+          message: `Lock acquisition failed for getGuildMember`,
           guildId,
           userId,
         });
         return null;
+      }
+
+      if (error instanceof RateLimitError) {
+        throw error;
       }
 
       if (error.status === 404) {

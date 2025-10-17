@@ -36,7 +36,11 @@ export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
   return {
     level: 'info',
     format: isLocal ? localFormat : prodFormat,
-    defaultMeta: { service: `${ENV}-api-service-${HOSTNAME ?? 'api'}` },
+    ...(isLocal
+      ? {}
+      : {
+          defaultMeta: { service: `${ENV}-api-service-${HOSTNAME ?? 'api'}` },
+        }),
     transports,
   };
 });

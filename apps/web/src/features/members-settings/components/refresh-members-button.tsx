@@ -3,14 +3,16 @@ import { RefreshCw, Clock } from "lucide-react";
 import { useBulkMemberRefresh } from "@/hooks/api/use-bulk-member-refresh";
 import { useRefreshJob } from "@/hooks/use-refresh-job";
 import { useGuildId } from "@/hooks/use-guild-id";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { cn } from "@/utils/cn";
 import { useCountdown } from "@/hooks/use-countdown";
+import { useRefreshStatus } from "@/features/members-settings/contexts/refresh-status-context";
 
 const ADMIN_BULK_REFRESH_RATE_LIMIT = 1000 * 60 * 10; // 10 minutes
 
 export const RefreshMembersButton = () => {
   const guildId = useGuildId();
+  const { markAsRefreshed, markAsFailed } = useRefreshStatus();
   const {
     mutate: startRefresh,
     isPending,
@@ -36,7 +38,21 @@ export const RefreshMembersButton = () => {
     return currentJob?.id;
   }, [currentJob?.id, countdown.isExpired]);
 
-  const { jobStatus } = useRefreshJob(guildId, currentJobId);
+  const handleRefreshedIds = useCallback(
+    (ids: string[]) => {
+      markAsRefreshed(ids);
+    },
+    [markAsRefreshed]
+  );
+
+  const handleFailedIds = useCallback(
+    (ids: string[]) => {
+      markAsFailed(ids);
+    },
+    [markAsFailed]
+  );
+
+  const { jobStatus } = useRefreshJob(guildId, currentJobId, handleRefreshedIds, handleFailedIds);
 
   const displayJob = jobStatus || currentJob;
   const isRefreshing = displayJob?.status === 'PROCESSING' || displayJob?.status === 'PENDING';

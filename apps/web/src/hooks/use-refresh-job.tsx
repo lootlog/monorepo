@@ -3,7 +3,12 @@ import { RefreshJobUpdate } from '@/types/refresh-job';
 import { useGateway } from '@/hooks/use-gateway';
 import { GatewayEvent } from '@/config/gateway';
 
-export const useRefreshJob = (guildId: string | undefined, jobId: number | undefined) => {
+export const useRefreshJob = (
+  guildId: string | undefined,
+  jobId: number | undefined,
+  onRefreshedIds?: (ids: string[]) => void,
+  onFailedIds?: (ids: string[]) => void
+) => {
   const [jobStatus, setJobStatus] = useState<RefreshJobUpdate | null>(null);
   const { socket, connected } = useGateway();
 
@@ -16,6 +21,14 @@ export const useRefreshJob = (guildId: string | undefined, jobId: number | undef
       if (!jobId || data.jobId === jobId) {
         console.log('[useRefreshJob] Received job update:', data);
         setJobStatus(data);
+
+        if (data.refreshedIds && data.refreshedIds.length > 0) {
+          onRefreshedIds?.(data.refreshedIds);
+        }
+
+        if (data.failedIds && data.failedIds.length > 0) {
+          onFailedIds?.(data.failedIds);
+        }
       }
     };
 
@@ -24,7 +37,7 @@ export const useRefreshJob = (guildId: string | undefined, jobId: number | undef
     return () => {
       socket.off(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleRefreshJobUpdate);
     };
-  }, [guildId, jobId, socket, connected]);
+  }, [guildId, jobId, socket, connected, onRefreshedIds, onFailedIds]);
 
   return {
     jobStatus,

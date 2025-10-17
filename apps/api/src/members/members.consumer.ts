@@ -1,13 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue as BullQueue } from 'bullmq';
 import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { MembersService } from 'src/members/members.service';
 import { PrismaService } from 'src/db/prisma.service';
-import { DiscordService } from 'src/discord/discord.service';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { Queue } from 'src/enum/queue.enum';
+import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
 
 interface BulkRefreshPayload {
   jobId: number;
@@ -24,14 +26,14 @@ interface MemberRefreshPayload {
 @Injectable()
 export class MembersConsumer {
   private readonly MEMBER_REFRESH_DELAY_MS = 200;
-  private readonly JOB_UPDATE_INTERVAL = 5;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
+    private readonly bulkRefreshQueue: BullQueue,
     private readonly membersService: MembersService,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
-    private readonly discordService: DiscordService,
   ) {}
 
   @RabbitSubscribe({
@@ -44,80 +46,34 @@ export class MembersConsumer {
 
     this.logger.log({
       level: 'info',
-      message: `Starting bulk refresh job ${jobId} for guild ${guildId} with ${memberIds.length} members`,
+      message: `Queueing bulk refresh job ${jobId} for guild ${guildId} with ${memberIds.length} members to BullMQ`,
     });
 
     try {
-      await this.prisma.memberRefreshJob.update({
-        where: { id: jobId },
-        data: { status: 'PROCESSING' },
-      });
-
-      await this.emitJobUpdate(jobId);
-
-      let processedCount = 0;
-
-      for (const memberId of memberIds) {
-        try {
-          await this.sleep(this.MEMBER_REFRESH_DELAY_MS);
-
-          await this.membersService.refreshMember({
-            discordId: memberId,
-            guildId,
-            skipTtlCheck: true,
-          });
-
-          processedCount++;
-
-          if (processedCount % this.JOB_UPDATE_INTERVAL === 0) {
-            await this.prisma.memberRefreshJob.update({
-              where: { id: jobId },
-              data: { processedMembers: processedCount },
-            });
-            await this.emitJobUpdate(jobId);
-          }
-
-          this.logger.log({
-            level: 'debug',
-            message: `Successfully refreshed member ${memberId} in job ${jobId}`,
-          });
-        } catch (error) {
-          this.logger.log({
-            level: 'error',
-            message: `Failed to refresh member ${memberId} in job ${jobId}`,
-            error,
-          });
-
-          await this.prisma.memberRefreshJob.update({
-            where: { id: jobId },
-            data: { failedMembers: { increment: 1 } },
-          });
-
-          if (processedCount % this.JOB_UPDATE_INTERVAL === 0) {
-            await this.emitJobUpdate(jobId);
-          }
-        }
-      }
-
-      await this.prisma.memberRefreshJob.update({
-        where: { id: jobId },
-        data: {
-          status: 'COMPLETED',
-          processedMembers: processedCount,
-          completedAt: new Date(),
+      await this.bulkRefreshQueue.add(
+        'bulk-refresh',
+        {
+          jobId,
+          guildId,
+          memberIds,
         },
-      });
-
-      await this.emitJobUpdate(jobId);
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+        },
+      );
 
       this.logger.log({
         level: 'info',
-        message: `Completed bulk refresh job ${jobId} for guild ${guildId}`,
+        message: `Successfully queued bulk refresh job ${jobId} to BullMQ`,
       });
     } catch (error) {
       this.logger.log({
         level: 'error',
-        message: `Fatal error in bulk refresh job ${jobId}`,
+        message: `Failed to queue bulk refresh job ${jobId} to BullMQ`,
         stack: (error as Error).stack,
       });
 
@@ -147,24 +103,6 @@ export class MembersConsumer {
     });
 
     try {
-      // Check if user's rate limit bucket has capacity before making request
-      // This prevents background jobs from blocking user's interactive requests
-      const hasCapacity = await this.discordService.hasGuildMemberBucketCapacity(
-        guildId,
-        userId,
-        3, // Require at least 3 remaining requests
-      );
-
-      if (!hasCapacity) {
-        this.logger.log({
-          level: 'debug',
-          message: `Skipping background refresh for member ${discordId} in guild ${guildId} - rate limit bucket is busy`,
-        });
-        return;
-      }
-
-      // Add delay to prevent overwhelming Discord API rate limits
-      // This ensures background refreshes don't compete with user requests
       await this.sleep(this.MEMBER_REFRESH_DELAY_MS);
 
       await this.membersService.getGuildMemberById({

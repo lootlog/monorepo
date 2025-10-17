@@ -3,13 +3,15 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/use-guild-id";
 import { GuildMember } from "@/hooks/api/use-guild-member";
 
-export const useGuildMembers = () => {
+export const useGuildMembers = (includeInactive = false) => {
   const guildId = useGuildId();
   const { client } = useApiClient();
 
   const query = useQuery({
-    queryKey: ["members", guildId],
-    queryFn: () => client.get<GuildMember[]>(`/guilds/${guildId}/members`),
+    queryKey: ["members", guildId, includeInactive],
+    queryFn: () => client.get<GuildMember[]>(`/guilds/${guildId}/members`, {
+      params: { includeInactive: includeInactive.toString() }
+    }),
     enabled: !!guildId,
     select: (response) => response.data,
   });

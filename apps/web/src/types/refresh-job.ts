@@ -8,4 +8,7 @@ export interface RefreshJobUpdate {
   processedMembers: number;
   failedMembers: number;
   completedAt?: Date;
+  refreshedIds?: string[];
+  skippedIds?: string[];
+  failedIds?: string[];
 }

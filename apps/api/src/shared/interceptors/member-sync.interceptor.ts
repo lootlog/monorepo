@@ -11,16 +11,20 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from 'src/db/prisma.service';
+import { RedisService } from 'src/lib/redis/redis.service';
 import { MEMBER_CACHE_SOFT_TTL } from 'src/members/constants/member-cache.constant';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 
 @Injectable()
 export class MemberSyncInterceptor implements NestInterceptor {
+  private readonly SYNC_THROTTLE_TTL = 150;
+
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly redis: RedisService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -66,6 +70,17 @@ export class MemberSyncInterceptor implements NestInterceptor {
     userId: string,
     guilds: Array<{ id: string }>,
   ) {
+    const throttleKey = `member:sync:throttle:${discordId}`;
+    const isThrottled = await this.redis.get(throttleKey);
+
+    if (isThrottled) {
+      this.logger.log({
+        level: 'debug',
+        message: `Sync throttled for user ${discordId}, skipping refresh`,
+      });
+      return;
+    }
+
     const guildIds = guilds.map((g) => g.id);
     const staleThreshold = new Date(Date.now() - MEMBER_CACHE_SOFT_TTL);
 
@@ -92,6 +107,8 @@ export class MemberSyncInterceptor implements NestInterceptor {
       });
       return;
     }
+
+    await this.redis.set(throttleKey, '1', this.SYNC_THROTTLE_TTL);
 
     this.logger.log({
       level: 'info',

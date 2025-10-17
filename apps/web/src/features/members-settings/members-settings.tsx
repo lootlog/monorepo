@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { cn } from "@/utils/cn";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { GuildMember } from "@/hooks/api/use-guild-member";
@@ -11,9 +12,11 @@ import { MemberItem } from "@/features/members-settings/components/member-item";
 import { RefreshMembersButton } from "@/features/members-settings/components/refresh-members-button";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { useGuild } from "@/hooks/api/use-guild";
+import { RefreshStatusProvider } from "@/features/members-settings/contexts/refresh-status-context";
 
-export const MembersSettings = () => {
-  const { data: members } = useGuildMembers();
+const MembersSettingsContent = () => {
+  const [showInactive, setShowInactive] = useState(false);
+  const { data: members } = useGuildMembers(showInactive);
   const [searchValue, setSearchValue] = useState("");
   const [selectedMember, setSelectedMember] = useState<GuildMember | null>(
     null
@@ -31,10 +34,14 @@ export const MembersSettings = () => {
   const filteredMembers = useMemo(() => {
     if (!members) return [];
     const search = searchValue.trim().toLowerCase();
-    if (!search) return members;
-    return members.filter((member) =>
-      member.name.toLowerCase().includes(search)
-    );
+    let filtered = search
+      ? members.filter((member) => member.name.toLowerCase().includes(search))
+      : members;
+
+    return filtered.sort((a, b) => {
+      if (a.active === b.active) return 0;
+      return a.active ? -1 : 1;
+    });
   }, [members, searchValue]);
 
   const selectedMemberColor = useMemo(() => {
@@ -58,11 +65,19 @@ export const MembersSettings = () => {
           <RefreshMembersButton />
         </div>
       </div>
-      <div className="p-4 border-t box-border">
+      <div className="p-4 border-t box-border flex gap-2 items-center">
         <SearchInput
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Szukaj członka..."
+          className="flex-1"
         />
+        <label className="flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap">
+          <Checkbox
+            checked={showInactive}
+            onCheckedChange={(checked) => setShowInactive(checked === true)}
+          />
+          Pokaż nieaktywnych
+        </label>
       </div>
       <div
         className={cn(
@@ -175,5 +190,13 @@ export const MembersSettings = () => {
         )}
       </AnimatePresence>
     </div>
+  );
+};
+
+export const MembersSettings = () => {
+  return (
+    <RefreshStatusProvider>
+      <MembersSettingsContent />
+    </RefreshStatusProvider>
   );
 };
