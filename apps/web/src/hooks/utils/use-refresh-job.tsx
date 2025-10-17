@@ -19,7 +19,6 @@ export const useRefreshJob = (
 
     const handleRefreshJobUpdate = (data: RefreshJobUpdate) => {
       if (!jobId || data.jobId === jobId) {
-        console.log("[useRefreshJob] Received job update:", data);
         setJobStatus(data);
 
         if (data.refreshedIds && data.refreshedIds.length > 0) {

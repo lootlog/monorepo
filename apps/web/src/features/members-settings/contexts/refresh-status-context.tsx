@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useGateway } from '@/hooks/utils/use-gateway';
+import { useGuildId } from '@/hooks/context/use-guild-id';
+import { GatewayEvent } from '@/config/gateway';
+import { RefreshJobUpdate } from '@/types/refresh-job';
+import { GuildMember } from '@/hooks/api/members/use-guild-member';
 
 interface RefreshStatusContextValue {
   refreshedIds: Set<string>;
@@ -9,7 +15,7 @@ interface RefreshStatusContextValue {
   clearAll: () => void;
 }
 
-const RefreshStatusContext = createContext<RefreshStatusContextValue | undefined>(undefined);
+export const RefreshStatusContext = createContext<RefreshStatusContextValue | undefined>(undefined);
 
 export const useRefreshStatus = () => {
   const context = useContext(RefreshStatusContext);
@@ -23,11 +29,72 @@ interface RefreshStatusProviderProps {
   children: ReactNode;
 }
 
-const REFRESH_INDICATOR_DURATION = 3000;
-
 export const RefreshStatusProvider = ({ children }: RefreshStatusProviderProps) => {
   const [refreshedIds, setRefreshedIds] = useState<Set<string>>(new Set());
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
+  const { socket, connected } = useGateway();
+  const guildId = useGuildId();
+
+  useEffect(() => {
+    if (!guildId || !connected) {
+      return;
+    }
+
+    const handleRefreshJobUpdate = (data: RefreshJobUpdate) => {
+      const now = new Date().toISOString();
+
+      if (data.refreshedIds && data.refreshedIds.length > 0) {
+        queryClient.setQueriesData(
+          { queryKey: ['members', guildId] },
+          (oldData: { data: GuildMember[] } | undefined) => {
+            if (!oldData?.data) return oldData;
+
+            return {
+              ...oldData,
+              data: oldData.data.map((member) =>
+                data.refreshedIds?.includes(member.userId)
+                  ? { ...member, updatedAt: now, isStale: false }
+                  : member
+              ),
+            };
+          }
+        );
+
+        setRefreshedIds((prev) => {
+          const newSet = new Set(prev);
+          data.refreshedIds?.forEach((id) => newSet.add(id));
+          return newSet;
+        });
+
+        setFailedIds((prev) => {
+          const newSet = new Set(prev);
+          data.refreshedIds?.forEach((id) => newSet.delete(id));
+          return newSet;
+        });
+      }
+
+      if (data.failedIds && data.failedIds.length > 0) {
+        setFailedIds((prev) => {
+          const newSet = new Set(prev);
+          data.failedIds?.forEach((id) => newSet.add(id));
+          return newSet;
+        });
+
+        setRefreshedIds((prev) => {
+          const newSet = new Set(prev);
+          data.failedIds?.forEach((id) => newSet.delete(id));
+          return newSet;
+        });
+      }
+    };
+
+    socket.on(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleRefreshJobUpdate);
+
+    return () => {
+      socket.off(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleRefreshJobUpdate);
+    };
+  }, [guildId, socket, connected, queryClient]);
 
   const markAsRefreshed = useCallback((ids: string[]) => {
     setRefreshedIds((prev) => {
@@ -35,15 +102,10 @@ export const RefreshStatusProvider = ({ children }: RefreshStatusProviderProps) 
       ids.forEach((id) => newSet.add(id));
       return newSet;
     });
-
-    ids.forEach((id) => {
-      setTimeout(() => {
-        setRefreshedIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
-      }, REFRESH_INDICATOR_DURATION);
+    setFailedIds((prev) => {
+      const newSet = new Set(prev);
+      ids.forEach((id) => newSet.delete(id));
+      return newSet;
     });
   }, []);
 
@@ -53,15 +115,10 @@ export const RefreshStatusProvider = ({ children }: RefreshStatusProviderProps) 
       ids.forEach((id) => newSet.add(id));
       return newSet;
     });
-
-    ids.forEach((id) => {
-      setTimeout(() => {
-        setFailedIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
-      }, REFRESH_INDICATOR_DURATION);
+    setRefreshedIds((prev) => {
+      const newSet = new Set(prev);
+      ids.forEach((id) => newSet.delete(id));
+      return newSet;
     });
   }, []);
 
