@@ -23,6 +23,7 @@ import {
   Permission,
   useGuildPermissions,
 } from "@/hooks/api/use-guild-permissions";
+import { NpcType } from "@/hooks/api/use-npcs";
 
 export type TimerWithTimeLeft = Timer & {
   maxTimeLeft: number;
@@ -229,7 +230,10 @@ export const Timers = () => {
           : true
       )
       .filter(
-        (t) => filters.selectedNpcTypes.includes(t.npc.type) || t.npc.lvl === 0
+        (t) =>
+          filters.selectedNpcTypes.includes(t.npc.type) ||
+          t.npc.lvl === 0 ||
+          t.npc.type === NpcType.NPC
       )
       .filter(
         (t) =>
