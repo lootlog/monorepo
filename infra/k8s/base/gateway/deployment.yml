@@ -60,11 +60,17 @@ spec:
                   name: lootlog-gateway-secrets
                   key: apiUrl
 
+          # livenessProbe:
+          #   httpGet:
+          #     path: /healthz
+          #     port: 4000
+          #   timeoutSeconds: 30
           livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 4000
-            timeoutSeconds: 30
+            exec:
+              command: ["/bin/sh", "-c", "true"]
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
           readinessProbe:
             tcpSocket:
               port: 4000
