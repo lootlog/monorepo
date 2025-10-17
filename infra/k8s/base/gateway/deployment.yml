@@ -64,6 +64,7 @@ spec:
             httpGet:
               path: /healthz
               port: 4000
+            timeoutSeconds: 30
           readinessProbe:
             tcpSocket:
               port: 4000
