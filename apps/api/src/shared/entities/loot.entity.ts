@@ -95,6 +95,13 @@ export class LootEntity {
   })
   createdAt: Date;
 
+  @Expose()
+  @ApiProperty({
+    example: '10',
+    description: 'Number of comments on the loot',
+  })
+  commentsCount: string;
+
   @Exclude()
   uniqueId: string;
 

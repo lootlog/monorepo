@@ -26,7 +26,7 @@ export class GuildEntity {
   })
   vanityUrl?: string;
 
-  @Exclude()
+  @Expose()
   ownerId: string;
 
   @Exclude()

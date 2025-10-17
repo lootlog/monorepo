@@ -11,6 +11,7 @@ export type GuildMember = {
   roles: GuildRole[];
   userId: string;
   globalUserId?: string;
+  active: boolean;
   isStale?: boolean;
   staleWarning?: string;
 };

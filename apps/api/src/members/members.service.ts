@@ -18,7 +18,6 @@ import {
   getRefreshPermissionsTtl,
   getAdminBulkRefreshRateLimit,
 } from 'src/members/constants/member-cache.constant';
-import { DiscordService } from 'src/discord/discord.service';
 import { APIGuildMember } from 'discord-api-types/v10';
 import { ErrorKey } from 'src/members/enum/error-key.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
@@ -28,6 +27,7 @@ import { RoutingKey } from 'src/enum/routing-key.enum';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { ServiceConfig } from 'src/config/service.config';
 import { RuntimeEnvironment } from 'src/types/runtime.types';
+import { DiscordService } from 'src/discord/discord.service';
 
 type MemberWithRoles = Member & {
   roles: Role[];
@@ -135,7 +135,8 @@ export class MembersService {
         if (!discordMember) {
           this.logger.log({
             level: 'warn',
-            message: 'Discord API returned null, attempting to serve stale data',
+            message:
+              'Discord API returned null, attempting to serve stale data',
             guildId: desiredGuildId,
             userId: discordId,
           });
@@ -186,7 +187,8 @@ export class MembersService {
         ) {
           this.logger.log({
             level: 'warn',
-            message: 'User authentication failed (token expired/invalid), deactivating member',
+            message:
+              'User authentication failed (token expired/invalid), deactivating member',
             guildId: desiredGuildId,
             userId: discordId,
           });
@@ -272,9 +274,13 @@ export class MembersService {
     });
   }
 
-  async getGuildMembers(guildId: string): Promise<MemberWithRoles[]> {
+  async getGuildMembers(guildId: string, includeInactive = false): Promise<MemberWithRoles[]> {
     const members = await this.prisma.member.findMany({
-      where: { guildId, active: true, globalUserId: { not: null } },
+      where: {
+        guildId,
+        ...(includeInactive ? {} : { active: true }),
+        globalUserId: { not: null }
+      },
       include: {
         roles: {
           orderBy: { position: 'desc' },

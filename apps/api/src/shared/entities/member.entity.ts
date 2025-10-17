@@ -4,11 +4,14 @@ import { MemberType } from 'generated/client';
 import { RoleEntity } from './role.entity';
 
 export class MemberEntity {
-  @Exclude()
+  @Expose()
   id: number;
 
   @Expose()
-  @ApiProperty({ example: 'discord_user_id_123', description: 'Discord user ID' })
+  @ApiProperty({
+    example: 'discord_user_id_123',
+    description: 'Discord user ID',
+  })
   userId: string;
 
   @Expose()
@@ -52,12 +55,12 @@ export class MemberEntity {
   @ApiProperty({ type: [RoleEntity], description: 'Member roles' })
   roles?: RoleEntity[];
 
-  @Exclude()
+  @Expose()
   globalUserId?: string;
 
   @Exclude()
   createdAt: Date;
 
-  @Exclude()
+  @Expose()
   updatedAt: Date;
 }
