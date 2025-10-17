@@ -40,7 +40,7 @@ export class GatewayService {
       .then((sockets) => {
         const npcLevel = npc?.lvl ?? 0;
         sockets.forEach((socket) => {
-          const desiredGuild = socket.data.guilds.find(
+          const desiredGuild = socket.data.guilds?.find(
             (g: any) => g.guild.id === guildId,
           );
           if (!desiredGuild) return;
