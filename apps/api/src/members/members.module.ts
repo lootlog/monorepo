@@ -37,7 +37,10 @@ import {
             port: redisConfig.port,
             password: redisConfig.password,
             username: redisConfig.username,
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
           },
+          prefix: '{bull}',
         };
       },
     }),
