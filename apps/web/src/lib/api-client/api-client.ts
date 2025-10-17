@@ -1,17 +1,39 @@
 import axios, { type AxiosInstance } from "axios";
-import { API_URL, BATTLELOG_API_URL, SEARCH_API_URL } from "@/config/api";
+import { API_URL, BATTLELOG_API_URL, SEARCH_API_URL, AUTH_API_URL } from "@/config/api";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { REQUIRED_SCOPES } from "@/constants/required-scopes";
 
-type ApiName = "default" | "battlelog" | "search";
+type ApiName = "default" | "battlelog" | "search" | "auth";
 
 const BASE_URLS: Record<ApiName, string | undefined> = {
   default: API_URL,
   battlelog: BATTLELOG_API_URL,
   search: SEARCH_API_URL,
+  auth: AUTH_API_URL,
 };
 
 const clients = new Map<ApiName, AxiosInstance>();
 const intercepted = new WeakSet<AxiosInstance>();
+
+let isReauthenticating = false;
+
+const handleReauthentication = async () => {
+  if (isReauthenticating) return;
+
+  isReauthenticating = true;
+
+  try {
+    await authClient.signIn.social({
+      provider: "discord",
+      callbackURL: window.location.href,
+      scopes: REQUIRED_SCOPES,
+    });
+  } catch (error) {
+    console.error("Reauthentication failed:", error);
+    isReauthenticating = false;
+  }
+};
 
 const attachInterceptors = (instance: AxiosInstance) => {
   if (intercepted.has(instance)) return instance;
@@ -20,6 +42,14 @@ const attachInterceptors = (instance: AxiosInstance) => {
     (response) => response,
     (error) => {
       const status = error?.response?.status;
+      const requiresReauth = error?.response?.data?.requiresReauth;
+
+      if (status === 401 || requiresReauth) {
+        toast.error("Sesja wygasła. Przekierowywanie do logowania...");
+        handleReauthentication();
+        return Promise.reject(error);
+      }
+
       if (status === 403) {
         toast.error("Brak dostępu");
       }
@@ -49,6 +79,8 @@ export const getApiClient = (api: ApiName = "default"): AxiosInstance => {
 export const apiClient = getApiClient("default");
 
 export const battlelogApiClient = getApiClient("battlelog");
+
+export const authApiClient = getApiClient("auth");
 
 let interceptorsInitialized = false;
 

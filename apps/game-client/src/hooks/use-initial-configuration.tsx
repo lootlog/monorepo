@@ -1,5 +1,4 @@
 import { useCharacterList } from "@/hooks/api/use-character-list";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { getAccountId } from "@/lib/game/get-account-id";
 import { getCharacterId } from "@/lib/game/get-character-id";
 import { getInitializeState } from "@/lib/game/get-initialize-state";
@@ -19,6 +18,7 @@ import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { gameEventsManager } from "@/lib/game-events-manager";
 import { isEmpty } from "lodash";
 import { useEffect, useRef } from "react";
+import { useGuilds } from "@/hooks/api/use-guilds";
 
 export const useInitialConfiguration = () => {
   const { setGameState, gameState } = useGlobalStore();
@@ -28,9 +28,9 @@ export const useInitialConfiguration = () => {
     useNotificationsStore();
   const { data: guilds } = useGuilds();
   const { data: characterList } = useCharacterList();
-  const initializationRef = useRef({ 
+  const initializationRef = useRef({
     initialized: false,
-    timeoutId: null as NodeJS.Timeout | null
+    timeoutId: null as NodeJS.Timeout | null,
   });
 
   const scheduleInitCheck = () => {

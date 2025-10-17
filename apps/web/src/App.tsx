@@ -1,42 +1,16 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
-import { Navigation } from "./navigation/navigation";
+import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { routeTree } from "./routeTree.gen";
 
-import "@lootlog/ui/globals.css";
-import "@/i18n/config";
-import { BrowserRouter } from "react-router-dom";
-import { GlobalContextProvider } from "@/contexts/global-context";
-import { ThemeProvider } from "next-themes";
+const router = createRouter({ routeTree });
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-    },
-  },
-});
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
 
 function App() {
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <NuqsAdapter>
-        <GlobalContextProvider>
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <Navigation />
-              <ReactQueryDevtools initialIsOpen={false} />
-            </BrowserRouter>
-          </QueryClientProvider>
-        </GlobalContextProvider>
-      </NuqsAdapter>
-    </ThemeProvider>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

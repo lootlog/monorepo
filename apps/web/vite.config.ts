@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -24,12 +25,14 @@ export default defineConfig({
       "@/lib": path.resolve(__dirname, "./src/lib"),
       "@/navigation": path.resolve(__dirname, "./src/navigation"),
       "@/providers": path.resolve(__dirname, "./src/providers"),
-      "@/screens": path.resolve(__dirname, "./src/screens"),
       "@/store": path.resolve(__dirname, "./src/store"),
       "@/types": path.resolve(__dirname, "./src/types"),
       "@/utils": path.resolve(__dirname, "./src/utils"),
     },
   },
-  plugins: [react(), tailwindcss()],
+  optimizeDeps: {
+    include: ["react", "react-dom", "react-dom/client"],
+  },
+  plugins: [TanStackRouterVite(), react(), tailwindcss()],
   base: "/",
 });

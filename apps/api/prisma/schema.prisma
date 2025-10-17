@@ -39,6 +39,8 @@ enum Permission {
   LOOTLOG_WRITE
   LOOTLOG_READ_TIMERS_TITANS
   LOOTLOG_READ_LOOTS_TITANS
+  LOOTLOG_READ_TIMERS_HEROES
+  LOOTLOG_READ_LOOTS_HEROES
   LOOTLOG_CHAT_READ
   LOOTLOG_CHAT_WRITE
   LOOTLOG_NOTIFICATIONS_SEND
@@ -272,4 +274,27 @@ model UserSettings {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+enum RefreshJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model MemberRefreshJob {
+  id               Int              @id @default(autoincrement())
+  guildId          String
+  requestedBy      String
+  status           RefreshJobStatus @default(PENDING)
+  totalMembers     Int              @default(0)
+  processedMembers Int              @default(0)
+  failedMembers    Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  completedAt      DateTime?
+
+  @@index([guildId])
+  @@index([status])
 }

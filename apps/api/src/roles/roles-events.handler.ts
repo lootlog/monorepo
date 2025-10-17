@@ -2,7 +2,9 @@ import {
   MessageHandlerErrorBehavior,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { CreateRoleDto } from 'src/roles/dto/create-role.dto';
 import { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
 import { UpdateRoleDto } from 'src/roles/dto/update-role.dto';
@@ -21,6 +23,7 @@ export class RolesEventsHandler {
   constructor(
     private readonly rolesService: RolesService,
     private readonly retryService: RetryService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
   @RabbitSubscribe({
@@ -49,7 +52,12 @@ export class RolesEventsHandler {
     }
 
     await this.rolesService.createOrUpdateRole(data);
-    console.log(`Role created successfully: ${data.id}`);
+    this.logger.log({
+      level: 'info',
+      message: 'Role created successfully',
+      roleId: data.id,
+      guildId: data.guildId,
+    });
   }
 
   @RabbitSubscribe({
@@ -78,7 +86,12 @@ export class RolesEventsHandler {
     }
 
     await this.rolesService.createOrUpdateRole(data);
-    console.log(`Role updated successfully: ${data.id}`);
+    this.logger.log({
+      level: 'info',
+      message: 'Role updated successfully',
+      roleId: data.id,
+      guildId: data.guildId,
+    });
   }
 
   @RabbitSubscribe({
@@ -107,7 +120,12 @@ export class RolesEventsHandler {
     }
 
     await this.rolesService.deleteRole(data);
-    console.log(`Role deleted successfully: ${data.id}`);
+    this.logger.log({
+      level: 'info',
+      message: 'Role deleted successfully',
+      roleId: data.id,
+      guildId: data.guildId,
+    });
   }
 
   // DLQ Handlers
@@ -120,8 +138,11 @@ export class RolesEventsHandler {
     },
   })
   async handleRoleCreateDLQ(data: CreateRoleDto, amqpMsg: any) {
-    console.error('Message sent to DLQ - Create Role:', {
-      data,
+    this.logger.log({
+      level: 'error',
+      message: 'Message sent to DLQ - Create Role',
+      roleId: data.id,
+      guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
       ),
@@ -138,8 +159,11 @@ export class RolesEventsHandler {
     },
   })
   async handleRoleUpdateDLQ(data: UpdateRoleDto, amqpMsg: any) {
-    console.error('Message sent to DLQ - Update Role:', {
-      data,
+    this.logger.log({
+      level: 'error',
+      message: 'Message sent to DLQ - Update Role',
+      roleId: data.id,
+      guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
       ),
@@ -156,8 +180,11 @@ export class RolesEventsHandler {
     },
   })
   async handleRoleDeleteDLQ(data: DeleteRoleDto, amqpMsg: any) {
-    console.error('Message sent to DLQ - Delete Role:', {
-      data,
+    this.logger.log({
+      level: 'error',
+      message: 'Message sent to DLQ - Delete Role',
+      roleId: data.id,
+      guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
       ),

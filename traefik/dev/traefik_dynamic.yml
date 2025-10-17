@@ -79,6 +79,17 @@ http:
       entryPoints:
         - "web"
 
+    api-internal:
+      rule: "PathPrefix(`/api/lootlog/internal/guilds/user-permissions`)"
+      service: "api"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiCompress"
+      priority: 15
+      entryPoints:
+        - "web"
+
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
@@ -98,36 +109,36 @@ http:
     #   middlewares:
     #     - "cors"
     #     - "apiCompress"
-        
+
   services:
     web-client:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:3000"
+          - url: "http://host.docker.internal:3000"
     landing:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:3003"
+          - url: "http://host.docker.internal:3003"
     auth:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:4001"
+          - url: "http://host.docker.internal:4001"
     search:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:4002"
+          - url: "http://host.docker.internal:4002"
     api:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:4003"
+          - url: "http://host.docker.internal:4003"
     gateway:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:4004"
+          - url: "http://host.docker.internal:4004"
     battlelog:
       loadBalancer:
         servers:
-        - url: "http://host.docker.internal:4005"
+          - url: "http://host.docker.internal:4005"
   middlewares:
     apiStripPrefix:
       stripPrefix:
@@ -145,8 +156,8 @@ http:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"
         authRequestHeaders:
-        - "Authorization"
-        - "Cookie"
+          - "Authorization"
+          - "Cookie"
     apiCompress:
       compress:
         includedContentTypes:

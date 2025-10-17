@@ -1,9 +1,12 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Permission, Prisma } from 'generated/client';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { PrismaService } from 'src/db/prisma.service';
 import { GuildRoleDto } from 'src/guilds/dto/create-guild.dto';
 import { CreateRoleDto } from 'src/roles/dto/create-role.dto';
@@ -12,7 +15,10 @@ import { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.
 
 @Injectable()
 export class RolesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   async getRolesByGuildId(guildId: string) {
     const roles = await this.prisma.role.findMany({
@@ -46,7 +52,12 @@ export class RolesService {
         }),
       });
     } catch (error) {
-      console.log(error);
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to bulk create roles',
+        guildId,
+        error: error instanceof Error ? error.stack : error,
+      });
     }
   }
 
@@ -75,7 +86,13 @@ export class RolesService {
         },
       });
     } catch (error) {
-      console.log(error);
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to create or update role',
+        roleId: data.id,
+        guildId: data.guildId,
+        error: error instanceof Error ? error.stack : error,
+      });
     }
 
     return;
@@ -143,7 +160,12 @@ export class RolesService {
         where: { guildId },
       });
     } catch (error) {
-      console.log(error);
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to delete roles by guild ID',
+        guildId,
+        error: error instanceof Error ? error.stack : error,
+      });
     }
 
     return;

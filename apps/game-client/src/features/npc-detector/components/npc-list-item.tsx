@@ -1,6 +1,5 @@
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
-import { NpcType } from "@/hooks/api/use-npcs";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/global.store";
 import {
@@ -18,6 +17,7 @@ import {
   getBackgroundColor,
   getGradient,
 } from "@/utils/notifications-and-detector/background";
+import { NpcType } from "@/hooks/api/use-npcs";
 
 export type NpcListItemProps = {
   npc: GameNpcWithLocation;

@@ -2,7 +2,7 @@ import { BattlesList } from "@/features/battle-panel/battle-panel-battles-list/c
 import { Button } from "@lootlog/ui/components/button";
 import { Separator } from "@lootlog/ui/components/separator";
 import { ChevronRight } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import type { BattleFilters } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list-filters";
@@ -30,7 +30,7 @@ export const RecentBattles = () => {
       characterId: filters.characterId ?? null,
     });
 
-    navigate(`/@me/battle-panel/battles${queryString}`);
+    navigate({ to: `/@me/battle-panel/battles${queryString}` as any });
   };
 
   return (

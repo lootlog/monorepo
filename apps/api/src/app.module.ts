@@ -14,12 +14,12 @@ import { NpcsModule } from './npcs/npcs.module';
 import { LootlogConfigModule } from './lootlog-config/lootlog-config.module';
 import { UserLootlogConfigModule } from './user-lootlog-config/user-lootlog-config.module';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { LoggerMiddleware } from 'src/middleware/logger.middleware';
 import { ChatModule } from 'src/chat/chat.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { DiscordModule } from './discord/discord.module';
 import { AuthModule } from './auth/auth.module';
+import { LoggerMiddleware } from 'src/shared/middleware/logger.middleware';
 
 @Module({
   imports: [

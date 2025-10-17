@@ -1,11 +1,11 @@
 import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
-import { NpcType } from "@/hooks/api/use-npcs";
 import { composeNpcChatMessage } from "@/utils/chat/compose-npc-chat-message";
 import { NpcLocation } from "./types";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { NpcType } from "@/hooks/api/use-npcs";
 
 export const useMessagingHandlers = () => {
   const { mutate: sendChatMessage } = useSendChatMessage();

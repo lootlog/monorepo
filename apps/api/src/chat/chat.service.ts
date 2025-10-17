@@ -1,18 +1,21 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { SendMessageDto } from 'src/chat/dto/send-message.dto';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { v6 } from 'uuid';
 
-const MAX_MESSAGES = 100; // Maximum number of messages to store per guild
+const MAX_MESSAGES = 100;
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
   async sendMessage(discordId: string, guildId: string, data: SendMessageDto) {
@@ -47,7 +50,12 @@ export class ChatService {
 
       return JSON.parse(messages);
     } catch (error) {
-      console.error(error);
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to parse chat messages from Redis',
+        guildId,
+        error: error instanceof Error ? error.stack : error,
+      });
       return [];
     }
   }

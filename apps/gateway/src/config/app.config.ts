@@ -1,5 +1,6 @@
 import { ConfigModuleOptions } from '@nestjs/config';
 import * as Joi from 'joi';
+import apiConfig from 'src/config/api.config';
 import rabbitmqConfig from 'src/config/rabbitmq.config';
 import redisConfig from 'src/config/redis.config';
 import serviceConfig from 'src/config/service.config';
@@ -8,7 +9,7 @@ import { RuntimeEnvironment } from 'src/types/common.types';
 export const APP_CONFIG: ConfigModuleOptions = {
   envFilePath: `.env`,
   isGlobal: true,
-  load: [serviceConfig, rabbitmqConfig, redisConfig],
+  load: [serviceConfig, rabbitmqConfig, redisConfig, apiConfig],
   cache: true,
   validationSchema: Joi.object({
     ENV: Joi.string()
@@ -20,6 +21,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
       )
       .default(RuntimeEnvironment.LOCAL),
     PORT: Joi.number().required(),
+    API_URL: Joi.string().uri().required(),
     RABBITMQ_URI: Joi.string().required(),
     SERVICE_NAME: Joi.string().default('gateway'),
     REDIS_HOST: Joi.string().required(),

@@ -30,4 +30,6 @@ export enum Queue {
   GUILDS_SEND_NOTIFICATION = 'gateway-guilds-send-notification',
   GUILDS_SEND_NOTIFICATION_DLQ = 'gateway-guilds-send-notification.dlq',
   GUILDS_SEND_NOTIFICATION_RETRY = 'gateway-guilds-send-notification.retry',
+
+  GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'gateway-guilds-members-refresh-job-update',
 }

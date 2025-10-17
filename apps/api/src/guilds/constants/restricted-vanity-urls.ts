@@ -1,1 +1,1 @@
-export const RESTRICTED_VANITY_URLS = ['@me'];
+export const RESTRICTED_VANITY_URLS = ['@me', 'battles'];

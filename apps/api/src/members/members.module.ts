@@ -1,5 +1,8 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { MembersService } from './members.service';
+import { MembersConsumer } from './members.consumer';
+import { MemberBulkRefreshProcessor } from './member-bulk-refresh.processor';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
 import { RolesModule } from 'src/roles/roles.module';
@@ -9,6 +12,11 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { DiscordModule } from 'src/discord/discord.module';
 import { PrismaModule } from 'src/db/prisma.module';
+import { RedisConfig } from 'src/config/redis.config';
+import {
+  MEMBER_BULK_REFRESH_QUEUE,
+  MEMBER_REFRESH_QUEUE,
+} from './constants/member-refresh-queue.constant';
 
 @Module({
   imports: [
@@ -19,11 +27,37 @@ import { PrismaModule } from 'src/db/prisma.module';
       useFactory: async (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const redisConfig = configService.get<RedisConfig>(ConfigKey.REDIS);
+        return {
+          connection: {
+            host: redisConfig.host,
+            port: redisConfig.port,
+            password: redisConfig.password,
+            username: redisConfig.username,
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+          },
+          prefix: '{bull}',
+        };
+      },
+    }),
+    BullModule.registerQueue(
+      { name: MEMBER_REFRESH_QUEUE },
+      { name: MEMBER_BULK_REFRESH_QUEUE },
+    ),
     DiscordModule,
     PrismaModule,
   ],
   controllers: [MembersController],
-  providers: [MembersService, RetryService],
+  providers: [
+    MembersService,
+    MembersConsumer,
+    MemberBulkRefreshProcessor,
+    RetryService,
+  ],
   exports: [MembersService],
 })
 export class MembersModule {}

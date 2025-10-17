@@ -196,6 +196,7 @@ export class TimersService {
 
       return canViewNpcTimer(npc, roles);
     });
+
     return filteredTimers;
   }
 
@@ -248,6 +249,7 @@ export class TimersService {
 
       results.push(...filtered);
     }
+
     return results;
   }
 
@@ -296,6 +298,8 @@ export class TimersService {
       },
     });
     this.emitUpdateTimer(updatedTimer);
+
+    return updatedTimer;
   }
 
   async deleteTimer(guildId: string, npcId: string, world: string) {
