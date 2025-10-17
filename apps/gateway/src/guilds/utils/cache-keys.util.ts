@@ -3,9 +3,12 @@ export const CACHE_KEYS = {
 } as const;
 
 export const CACHE_TTL = {
-  USER_GUILDS: 1800,
+  USER_GUILDS: 60,
 } as const;
 
-export function getUserGuildsCacheKey(discordId: string, userId: string): string {
+export function getUserGuildsCacheKey(
+  discordId: string,
+  userId: string,
+): string {
   return `${CACHE_KEYS.USER_GUILDS}:${discordId}:${userId}`;
 }

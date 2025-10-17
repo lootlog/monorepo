@@ -23,8 +23,8 @@ import { RolesService } from 'src/roles/roles.service';
 import { generateSlug } from 'src/shared/utils/generate-slug';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
-import { DiscordService } from 'src/discord/discord.service';
 import { UsersService } from 'src/users/users.service';
+import { DiscordService } from 'src/discord/discord.service';
 
 @Injectable()
 export class GuildsService {
