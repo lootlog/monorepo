@@ -8,7 +8,7 @@ import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
 import { Npc } from 'src/gateway/types/npc.type';
 import { canViewNpcTimer } from 'src/gateway/utils/can-view-npc-timer';
-import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
+import { isAdministrativeUserFromRoles, isOwnerOrAdminFromRoles } from 'src/guilds/utils/is-administrative-user';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
@@ -104,9 +104,29 @@ export class GatewayService {
   }
 
   async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
-    this.gateway.server
-      .to(data.guildId)
-      .emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
+    const sockets = await this.gateway.server
+      .in(data.guildId)
+      .fetchSockets();
+
+    sockets.forEach((socket) => {
+      const desiredGuild = socket.data.guilds?.find(
+        (g: any) => g.guild.id === data.guildId,
+      );
+
+      if (!desiredGuild) return;
+
+      const roles = desiredGuild.roles || [];
+      const hasPermission = isOwnerOrAdminFromRoles(roles);
+
+      if (!hasPermission) {
+        this.logger.debug(
+          `User ${socket.data.discordId} does not have OWNER/ADMIN permissions for refresh job in guild ${data.guildId}`,
+        );
+        return;
+      }
+
+      socket.emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
+    });
   }
 
   async invalidateUserGuildsCache(discordId: string, userId: string) {
