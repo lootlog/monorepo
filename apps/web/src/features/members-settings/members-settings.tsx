@@ -5,13 +5,13 @@ import { cn } from "@/utils/cn";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { AnimatePresence, motion } from "framer-motion";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
-import { GuildMember } from "@/hooks/api/use-guild-member";
+import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MembersPanelContent } from "@/features/members-settings/components/members-panel";
 import { MemberItem } from "@/features/members-settings/components/member-item";
 import { RefreshMembersButton } from "@/features/members-settings/components/refresh-members-button";
 import { getColorFromRole } from "@/utils/get-color-from-role";
-import { useGuild } from "@/hooks/api/use-guild";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { RefreshStatusProvider } from "@/features/members-settings/contexts/refresh-status-context";
 
 const MembersSettingsContent = () => {

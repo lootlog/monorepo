@@ -12,12 +12,12 @@ import {
 } from "@lootlog/ui/components/form";
 import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
-import { useGuild } from "@/hooks/api/use-guild";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { AnimatePresence, motion } from "framer-motion";
 import { generateSlug } from "@/utils/generate-slug";
-import { useUpdateGuild } from "@/hooks/api/use-update-guild";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useUpdateGuild } from "@/hooks/api/guilds/use-update-guild";
 
 const RESTRICTED_NAMES = ["@me"];
 

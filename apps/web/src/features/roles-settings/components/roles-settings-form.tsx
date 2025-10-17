@@ -15,13 +15,13 @@ import {
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { GuildRole } from "@/hooks/api/use-guild-roles";
-import { useUpdateGuildRole } from "@/hooks/api/use-update-guild-role";
-import { Permission } from "@/hooks/api/use-guild-permissions";
+import { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import { Permission } from "@/hooks/api/guilds/use-guild-permissions";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import { useUpdateGuildRole } from "@/hooks/api/guilds/use-update-guild-role";
 
 const PERMISSIONS = [
   {
@@ -114,10 +114,13 @@ const formSchema = z.object({
       if (num < 0) return DEFAULT_LVL_RANGE_FROM;
       return String(num);
     }),
-  ...PERMISSIONS.reduce((acc, p) => {
-    acc[p.key] = z.boolean();
-    return acc;
-  }, {} as Record<string, z.ZodTypeAny>),
+  ...PERMISSIONS.reduce(
+    (acc, p) => {
+      acc[p.key] = z.boolean();
+      return acc;
+    },
+    {} as Record<string, z.ZodTypeAny>
+  ),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;

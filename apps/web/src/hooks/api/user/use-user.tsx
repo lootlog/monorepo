@@ -1,8 +1,8 @@
-import { useSession } from "@/hooks/auth/use-session";
 import {
-  useUserPreferences,
   UserPreferences,
-} from "@/hooks/api/use-user-preferences";
+  useUserPreferences,
+} from "@/hooks/api/user/use-user-preferences";
+import { useSession } from "@/hooks/auth/use-session";
 
 export type SessionUser = {
   id: string;

@@ -1,4 +1,4 @@
-import { LootComment } from "@/hooks/api/use-loot-comments";
+import { LootComment } from "@/hooks/api/loots/use-loot-comments";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";

@@ -2,9 +2,9 @@ import { Button } from "@lootlog/ui/components/button";
 import { FC, useState } from "react";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { LootSingleComment } from "@/features/guild/components/loots-list/loot-single-comment";
-import { useLootComments } from "@/hooks/api/use-loot-comments";
-import { useCreateLootComment } from "@/hooks/api/use-create-loot-comment";
 import { Loader2 } from "lucide-react";
+import { useLootComments } from "@/hooks/api/loots/use-loot-comments";
+import { useCreateLootComment } from "@/hooks/api/loots/use-create-loot-comment";
 
 const MAX_LENGTH = 256;
 

@@ -1,5 +1,5 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { GuildMember } from "@/hooks/api/use-guild-member";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MemberData } from "@/features/members-settings/components/member-data";
 import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
 import { ArrowLeft } from "lucide-react";

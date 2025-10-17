@@ -1,4 +1,4 @@
-import { Loot } from "@/hooks/api/use-loots";
+import { Loot } from "@/hooks/api/loots/use-loots";
 import { cn } from "@lootlog/ui/lib/utils";
 import { FC } from "react";
 

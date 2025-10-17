@@ -1,4 +1,4 @@
-import { useGuild } from "@/hooks/api/use-guild";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { GeneralSettingsForm } from "@/features/general-settings/general-settings-form";
 
 export const GeneralSettings = () => {

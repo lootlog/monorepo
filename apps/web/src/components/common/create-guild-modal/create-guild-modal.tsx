@@ -8,25 +8,27 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SearchInput } from "@/components/ui/search-input";
-import { useManageableGuilds } from "@/hooks/api/use-manageable-guilds";
 import { FC, useState } from "react";
 import { getGuildIconById } from "@/utils/get-guild-icon-by-id";
 import { useDebounceValue } from "usehooks-ts";
 import { DISCORD_BOT_PERMISSIONS, DISCORD_CLIENT_ID } from "@/config/discord";
-import { useGlobalContext } from "@/hooks/use-global-context";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useGlobalContext } from "@/hooks/context/use-global-context";
+import { useManageableGuilds } from "@/hooks/api/guilds/use-manageable-guilds";
 
 export const CreateGuildModal: FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [debouncedValue] = useDebounceValue<string>(searchValue, 200);
   const { createGuildModal } = useGlobalContext();
 
-  const { data: manageableGuilds } = useManageableGuilds(createGuildModal.state.isOpen);
+  const { data: manageableGuilds } = useManageableGuilds(
+    createGuildModal.state.isOpen
+  );
 
   const handleAddToGuild = (guildId: string) => {
     const searchParams = new URLSearchParams();
@@ -37,7 +39,9 @@ export const CreateGuildModal: FC = () => {
     searchParams.set("guild_id", guildId);
     searchParams.set("redirect_uri", `${window.location.origin}/init`);
 
-    window.location.assign(`https://discord.com/api/oauth2/authorize?${searchParams.toString()}`);
+    window.location.assign(
+      `https://discord.com/api/oauth2/authorize?${searchParams.toString()}`
+    );
   };
 
   const handleModalClose = () => {

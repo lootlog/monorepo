@@ -1,5 +1,5 @@
-import { Guild } from "@/hooks/api/use-guild";
-import { useGuildId } from "@/hooks/use-guild-id";
+import { Guild } from "@/hooks/api/guilds/use-guild";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { cn } from "@/utils/cn";
 import {
   Avatar,

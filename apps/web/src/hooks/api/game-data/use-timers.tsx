@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Npc } from "@/hooks/api/use-npcs";
-import { GuildMember } from "@/hooks/api/use-guild-member";
+import { Npc } from "@/hooks/api/game-data/use-npcs";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { stringify } from "qs";
-import { useGuildContext } from "@/hooks/use-guild-context";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { useGuildId } from "@/hooks/use-guild-id";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
 
 export type Timer = {
   minSpawnTime: Date;

@@ -13,7 +13,6 @@ import {
 import { LootsList } from "@/features/guild/components/loots-list/loots-list";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
   DrawerClose,
@@ -29,7 +28,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@lootlog/ui/components/sheet";
-import { useLg } from "@/hooks/use-lg";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { useLg } from "@/hooks/ui/use-lg";
 
 export const Guild: React.FC = () => {
   const [timersVisible, setTimersVisible] = useState(false);

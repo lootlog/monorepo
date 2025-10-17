@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { stringify } from "qs";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { GuildMember } from "@/hooks/api/use-guild-members";
 import { Npc } from "@/hooks/api/use-npcs";
 import { API_URL } from "@/config/api";
+import { GuildMember } from "@/hooks/api/use-guild-members";
 
 export type UseTimersOptions = {
   world?: string;

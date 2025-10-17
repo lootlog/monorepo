@@ -1,5 +1,5 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { useGuildId } from "@/hooks/use-guild-id";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { toast } from "sonner";

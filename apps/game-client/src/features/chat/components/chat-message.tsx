@@ -1,6 +1,5 @@
 import { NPC_NAMES } from "@/constants/margonem";
 import { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
-import { GuildMember } from "@/hooks/api/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
 import { decomposeChatMessage } from "@/utils/chat/decompose-chat-message";
@@ -8,6 +7,7 @@ import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { format } from "date-fns";
 import { FC } from "react";
 import { isYesterday } from "date-fns";
+import { GuildMember } from "@/hooks/api/use-guild-members";
 
 export type ChatMessageProps = {
   message: ChatMessageType;

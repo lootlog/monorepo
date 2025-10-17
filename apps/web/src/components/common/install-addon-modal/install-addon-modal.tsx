@@ -6,8 +6,8 @@ import {
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
 import { FC } from "react";
-import { useGlobalContext } from "@/hooks/use-global-context";
 import { ADDON_INSTALL_URL } from "@/config/addon";
+import { useGlobalContext } from "@/hooks/context/use-global-context";
 
 export const InstallAddonModal: FC = () => {
   const { installAddonModal } = useGlobalContext();

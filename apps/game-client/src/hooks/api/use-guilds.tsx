@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Guild } from "@/hooks/api/use-guild";
 import { API_URL } from "@/config/api";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { Guild } from "@/hooks/api/use-guild";
 
 export const useGuilds = () => {
   const { client } = useAuthenticatedApiClient();

@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import { useGuildId } from "@/hooks/use-guild-id";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Outlet } from "@tanstack/react-router";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
 

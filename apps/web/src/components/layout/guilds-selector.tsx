@@ -4,11 +4,11 @@ import { InstallButton } from "@/components/layout/install-button";
 import { UserNavItem } from "@/components/layout/user-nav-item";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
-import { useGuilds } from "@/hooks/api/use-guilds";
-import { useUpdateUserPreferences } from "@/hooks/api/use-update-user-preferences";
-import { useUser } from "@/hooks/api/use-user";
+import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import { Reorder } from "framer-motion";
 import { FC, useState, useEffect, useCallback, useMemo } from "react";
+import { useUser } from "@/hooks/api/user/use-user";
+import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
 
 export const GuildsSelector: FC = () => {
   const { data: guilds } = useGuilds();

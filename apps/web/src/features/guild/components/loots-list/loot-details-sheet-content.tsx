@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { Loot } from "@/hooks/api/use-loots";
+import { Loot } from "@/hooks/api/loots/use-loots";
 import {
   SheetContent,
   SheetHeader,
@@ -9,11 +9,11 @@ import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { LootComments } from "@/features/guild/components/loots-list/loot-comments";
 import { LootDetails } from "@/features/guild/components/loots-list/loot-details";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { LootDetailsActions } from "@/features/guild/components/loots-list/loot-details-actions";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 
 export type LootDetailsSheetProps = {
   loot: Loot;

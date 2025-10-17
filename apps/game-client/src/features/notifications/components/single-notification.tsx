@@ -6,10 +6,8 @@ import {
   useNotificationsStore,
 } from "@/store/notifications.store";
 import { Separator } from "@radix-ui/react-select";
-import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useGlobalStore } from "@/store/global.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
-import { useGuilds } from "@/hooks/api/use-guilds";
 import { format } from "date-fns";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
@@ -18,6 +16,8 @@ import {
   getGradient,
 } from "@/utils/notifications-and-detector/background";
 import { Progress } from "@/components/ui/progress";
+import { useGuildMembers } from "@/hooks/api/use-guild-members";
+import { useGuilds } from "@/hooks/api/use-guilds";
 
 export type SingleNotificationProps = {
   notification: NotificationWithServers;

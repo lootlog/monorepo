@@ -1,5 +1,4 @@
 import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { NpcType } from "@/hooks/api/use-npcs";
 import { GameNpc } from "@/types/margonem/npcs";
 import { NpcTpl } from "@/types/margonem/npc-tpl-manager";
 import { Npcs } from "@/types/margonem/game-events/npcs";
@@ -12,6 +11,7 @@ import { LootDto } from "@/hooks/api/use-create-loot";
 import { PartyMember, Npc } from "@/utils/game/get-battle-participants";
 import { ChatEventMsg } from "@/types/margonem/game-events/chat";
 import { W } from "@/types/margonem/game-events/f";
+import { NpcType } from "@/hooks/api/use-npcs";
 
 export type EventNpc = Npcs[0];
 

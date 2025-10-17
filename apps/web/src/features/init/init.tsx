@@ -1,5 +1,5 @@
 import { FullScreenLoading } from "@/components/ui/full-screen-loading";
-import { useGuild } from "@/hooks/api/use-guild";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 

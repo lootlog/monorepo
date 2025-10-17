@@ -1,4 +1,4 @@
-import { useGuilds } from "@/hooks/api/use-guilds";
+import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import { CreateNewGuildCard } from "@/features/home/components/create-new-guild-card";
 import { GuildCard } from "@/features/home/components/guild-card";
 

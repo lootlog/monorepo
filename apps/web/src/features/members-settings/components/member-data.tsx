@@ -1,5 +1,5 @@
-import { GuildMember } from "@/hooks/api/use-guild-member";
-import { Permission } from "@/hooks/api/use-guild-permissions";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { Permission } from "@/hooks/api/guilds/use-guild-permissions";
 
 import { useTranslation } from "react-i18next";
 

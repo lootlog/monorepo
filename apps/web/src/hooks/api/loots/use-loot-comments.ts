@@ -1,6 +1,6 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { GuildMember } from "@/hooks/api/use-guild-member";
-import { useGuildId } from "@/hooks/use-guild-id";
+import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQuery } from "@tanstack/react-query";
 
 export type GetLootCommentsOptions = {

@@ -1,5 +1,5 @@
-import { useDeleteLoot } from "@/hooks/api/use-delete-loot";
-import { Loot } from "@/hooks/api/use-loots";
+import { useDeleteLoot } from "@/hooks/api/loots/use-delete-loot";
+import { Loot } from "@/hooks/api/loots/use-loots";
 import { Button } from "@lootlog/ui/components/button";
 import { Loader2 } from "lucide-react";
 import { FC } from "react";
