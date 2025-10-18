@@ -5,6 +5,8 @@ export type UserPreferences = {
   id: number;
   userId: string;
   guildsOrder: string[];
+  theme?: string;
+  colorMode?: string;
   createdAt: string;
   updatedAt: string;
 };

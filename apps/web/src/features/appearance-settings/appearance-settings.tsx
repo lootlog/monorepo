@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { useTheme } from "@/contexts/theme-context";
+import { useTheme } from "@/hooks/context/use-theme";
 import { ThemeCard } from "@lootlog/ui/components/theme-card";
 import { Label } from "@lootlog/ui/components/label";
 
@@ -59,6 +59,14 @@ const themes = [
     colors: ["#F4C542", "#FF6B8A", "#FFB347"],
     backgroundImage:
       "https://a-static.besthdwallpaper.com/my-dress-up-darling-anime-marin-kitagawa-wallpaper-3554x1999-89573_53.jpg",
+  },
+  {
+    name: "goth",
+    title: "Gothic",
+    description: "Mroczny i elegancki",
+    colors: ["#1A1A1A", "#8B1A3D", "#6A0DAD"],
+    backgroundImage:
+      "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='gothGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23000000;stop-opacity:0.12' /%3E%3Cstop offset='50%25' style='stop-color:%238B1A3D;stop-opacity:0.08' /%3E%3Cstop offset='100%25' style='stop-color:%236A0DAD;stop-opacity:0.10' /%3E%3C/linearGradient%3E%3Cpattern id='crosses' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 30 10 L 30 50 M 10 30 L 50 30' stroke='%238B1A3D' stroke-width='1.5' opacity='0.04'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23gothGrad)'/%3E%3Crect width='400' height='300' fill='url(%23crosses)'/%3E%3Ccircle cx='100' cy='100' r='35' fill='%236A0DAD' opacity='0.04'/%3E%3Ccircle cx='320' cy='220' r='45' fill='%238B1A3D' opacity='0.05'/%3E%3Cpath d='M 200 80 Q 220 100 200 120 Q 180 100 200 80' fill='%238B1A3D' opacity='0.03'/%3E%3Cpath d='M 280 150 L 290 140 L 300 150 L 290 160 Z' fill='%236A0DAD' opacity='0.04'/%3E%3C/svg%3E",
   },
 ];
 

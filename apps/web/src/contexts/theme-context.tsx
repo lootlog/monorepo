@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useState, FC, ReactNode } from "react";
+import { createContext, useEffect, useState, FC, ReactNode } from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
+import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
 
-type Theme = "default" | "cyberpunk" | "pastel" | "fantasy" | "shonen" | "onepiece" | "anime";
+type Theme = "default" | "cyberpunk" | "pastel" | "fantasy" | "shonen" | "onepiece" | "anime" | "goth";
 type ColorMode = "light" | "dark";
 
 interface ThemeContextType {
@@ -12,7 +14,7 @@ interface ThemeContextType {
   isLoading: boolean;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = "lootlog-theme";
 const COLOR_MODE_STORAGE_KEY = "lootlog-color-mode";
@@ -22,54 +24,35 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>("default");
-  const [colorMode, setColorModeState] = useState<ColorMode>("dark");
-  const [isLoading, setIsLoading] = useState(true);
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
+    return savedTheme || "default";
+  });
+  const [colorMode, setColorModeState] = useState<ColorMode>(() => {
+    const savedColorMode = localStorage.getItem(COLOR_MODE_STORAGE_KEY) as ColorMode;
+    return savedColorMode || "dark";
+  });
+
+  const { data: preferences, isLoading } = useUserPreferences();
+  const updatePreferences = useUpdateUserPreferences();
 
   useEffect(() => {
-    const loadPreferences = async () => {
-      try {
-        const response = await fetch("/api/users/@me/preferences", {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.theme) {
-            setThemeState(data.theme as Theme);
-            localStorage.setItem(THEME_STORAGE_KEY, data.theme);
-          }
-          if (data.colorMode) {
-            setColorModeState(data.colorMode as ColorMode);
-            localStorage.setItem(COLOR_MODE_STORAGE_KEY, data.colorMode);
-          }
-        } else {
-          const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
-          const savedColorMode = localStorage.getItem(COLOR_MODE_STORAGE_KEY) as ColorMode;
-
-          if (savedTheme) setThemeState(savedTheme);
-          if (savedColorMode) setColorModeState(savedColorMode);
-        }
-      } catch (error) {
-        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
-        const savedColorMode = localStorage.getItem(COLOR_MODE_STORAGE_KEY) as ColorMode;
-
-        if (savedTheme) setThemeState(savedTheme);
-        if (savedColorMode) setColorModeState(savedColorMode);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPreferences();
-  }, []);
+    if (preferences?.theme) {
+      setThemeState(preferences.theme as Theme);
+      localStorage.setItem(THEME_STORAGE_KEY, preferences.theme);
+    }
+    if (preferences?.colorMode) {
+      setColorModeState(preferences.colorMode as ColorMode);
+      localStorage.setItem(COLOR_MODE_STORAGE_KEY, preferences.colorMode);
+    }
+  }, [preferences]);
 
   useEffect(() => {
     if (isLoading) return;
 
     const root = document.documentElement;
 
-    root.classList.remove("light", "dark", "default", "cyberpunk", "pastel", "fantasy", "shonen", "onepiece", "anime");
+    root.classList.remove("light", "dark", "default", "cyberpunk", "pastel", "fantasy", "shonen", "onepiece", "anime", "goth");
 
     root.classList.add(colorMode);
     if (theme !== "default") {
@@ -77,40 +60,16 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [theme, colorMode, isLoading]);
 
-  const setTheme = async (newTheme: Theme) => {
+  const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-
-    try {
-      await fetch("/api/users/@me/preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ theme: newTheme }),
-      });
-    } catch (error) {
-      console.error("Failed to sync theme preference:", error);
-    }
+    updatePreferences.mutate({ theme: newTheme });
   };
 
-  const setColorMode = async (newMode: ColorMode) => {
+  const setColorMode = (newMode: ColorMode) => {
     setColorModeState(newMode);
     localStorage.setItem(COLOR_MODE_STORAGE_KEY, newMode);
-
-    try {
-      await fetch("/api/users/@me/preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ colorMode: newMode }),
-      });
-    } catch (error) {
-      console.error("Failed to sync color mode preference:", error);
-    }
+    updatePreferences.mutate({ colorMode: newMode });
   };
 
   return (
@@ -128,12 +87,4 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       </NextThemesProvider>
     </ThemeContext.Provider>
   );
-};
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
 };

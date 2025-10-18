@@ -1,6 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "@/contexts/theme-context";
+import { useTheme } from "@/hooks/context/use-theme";
 
 export function ThemeSwitcher() {
   const { colorMode, setColorMode } = useTheme();

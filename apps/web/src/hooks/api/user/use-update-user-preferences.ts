@@ -1,8 +1,10 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export type UserPreferences = {
-  guildsOrder: string[];
+export type UpdateUserPreferences = {
+  guildsOrder?: string[];
+  theme?: string;
+  colorMode?: string;
 };
 
 export const useUpdateUserPreferences = () => {
@@ -11,7 +13,7 @@ export const useUpdateUserPreferences = () => {
 
   return useMutation({
     mutationKey: ["update-user-preferences"],
-    mutationFn: async (preferences: UserPreferences) => {
+    mutationFn: async (preferences: UpdateUserPreferences) => {
       return client.patch("/users/@me/preferences", {
         ...preferences,
       });
