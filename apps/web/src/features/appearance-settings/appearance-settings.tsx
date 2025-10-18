@@ -63,7 +63,7 @@ const themes = [
 ];
 
 export const AppearanceSettings: FC = () => {
-  const { theme, colorMode, setTheme, setColorMode } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="space-y-8 p-6 overflow-y-auto h-full">
