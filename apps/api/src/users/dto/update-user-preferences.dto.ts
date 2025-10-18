@@ -4,6 +4,7 @@ import {
   IsArray,
   ArrayNotEmpty,
   ArrayUnique,
+  IsIn,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -20,4 +21,26 @@ export class UpdateUserPreferencesDto {
   @ArrayUnique()
   @IsString({ each: true })
   guildsOrder?: string[];
+
+  @ApiProperty({
+    description: 'Theme preference',
+    example: 'cyberpunk',
+    required: false,
+    enum: ['default', 'cyberpunk', 'pastel', 'fantasy', 'shonen', 'onepiece', 'anime']
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['default', 'cyberpunk', 'pastel', 'fantasy', 'shonen', 'onepiece', 'anime'])
+  theme?: string;
+
+  @ApiProperty({
+    description: 'Color mode preference',
+    example: 'dark',
+    required: false,
+    enum: ['light', 'dark']
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['light', 'dark'])
+  colorMode?: string;
 }

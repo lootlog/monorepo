@@ -1,15 +1,15 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/theme-context";
 
 export function ThemeSwitcher() {
-  const { setTheme, theme } = useTheme();
+  const { colorMode, setColorMode } = useTheme();
 
   const toggleTheme = () => {
-    if (theme === "dark") {
-      setTheme("light");
+    if (colorMode === "dark") {
+      setColorMode("light");
     } else {
-      setTheme("dark");
+      setColorMode("dark");
     }
   };
 
