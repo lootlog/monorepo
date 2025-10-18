@@ -96,16 +96,12 @@ export class GuildsService {
       userPreferences?.guildsOrder &&
       Array.isArray(userPreferences.guildsOrder)
     ) {
-      const guildOrderMap = new Map(
-        userPreferences.guildsOrder.map((id: string, idx: number) => [id, idx]),
+      const guildOrderMap = new Map<string, number>(
+        userPreferences.guildsOrder.map((id: string, idx: number) => [id, idx] as const),
       );
       guilds.sort((a, b) => {
-        const aIdx = guildOrderMap.has(a.id)
-          ? guildOrderMap.get(a.id)
-          : Number.MAX_SAFE_INTEGER;
-        const bIdx = guildOrderMap.has(b.id)
-          ? guildOrderMap.get(b.id)
-          : Number.MAX_SAFE_INTEGER;
+        const aIdx = guildOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bIdx = guildOrderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
         return aIdx - bIdx;
       });
     }
