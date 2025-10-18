@@ -270,6 +270,8 @@ model UserSettings {
   id          Int      @id @default(autoincrement())
   userId      String   @unique
   guildsOrder String[] @default([])
+  theme       String   @default("default")
+  colorMode   String   @default("dark")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -5,11 +5,6 @@ import { HorizontalMenu } from "@/components/layout/horizontal-menu";
 
 const NAV_ELEMENTS = [
   {
-    id: "general",
-    label: "Ogólne",
-    href: "/settings",
-  },
-  {
     id: "appearance",
     label: "Wygląd",
     href: "/settings/appearance",

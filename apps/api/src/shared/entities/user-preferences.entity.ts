@@ -14,6 +14,22 @@ export class UserPreferencesEntity {
   })
   guildsOrder: string[];
 
+  @Expose()
+  @ApiProperty({
+    example: 'cyberpunk',
+    description: 'Theme preference',
+    enum: ['default', 'cyberpunk', 'pastel', 'fantasy', 'shonen', 'onepiece', 'anime'],
+  })
+  theme: string;
+
+  @Expose()
+  @ApiProperty({
+    example: 'dark',
+    description: 'Color mode preference',
+    enum: ['light', 'dark'],
+  })
+  colorMode: string;
+
   @Exclude()
   id: number;
 

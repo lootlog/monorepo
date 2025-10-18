@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { UserSettings } from "@/features/user-settings/user-settings";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/@me/settings/")({
-  component: UserSettings,
+  component: () => <Navigate to="/@me/settings/appearance" />,
 });
