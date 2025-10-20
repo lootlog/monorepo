@@ -579,8 +579,8 @@ importers:
         specifier: ^4.1.14
         version: 4.1.14(vite@7.1.9(@types/node@24.7.2)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
       '@tanstack/query-sync-storage-persister':
-        specifier: ^5.90.4
-        version: 5.90.4
+        specifier: ^5.90.7
+        version: 5.90.7
       '@tanstack/react-query':
         specifier: ^5.90.2
         version: 5.90.2(react@19.2.0)
@@ -4308,14 +4308,20 @@ packages:
   '@tanstack/query-core@5.90.2':
     resolution: {integrity: sha512-k/TcR3YalnzibscALLwxeiLUub6jN5EDLwKDiO7q5f4ICEoptJ+n9+7vcEFy5/x/i6Q+Lb/tXrsKCggf5uQJXQ==}
 
+  '@tanstack/query-core@5.90.5':
+    resolution: {integrity: sha512-wLamYp7FaDq6ZnNehypKI5fNvxHPfTYylE0m/ZpuuzJfJqhR5Pxg9gvGBHZx4n7J+V5Rg5mZxHHTlv25Zt5u+w==}
+
   '@tanstack/query-devtools@5.90.1':
     resolution: {integrity: sha512-GtINOPjPUH0OegJExZ70UahT9ykmAhmtNVcmtdnOZbxLwT7R5OmRztR5Ahe3/Cu7LArEmR6/588tAycuaWb1xQ==}
 
   '@tanstack/query-persist-client-core@5.91.1':
     resolution: {integrity: sha512-/aLUfL2CG8F/sk5BO7ITIgo556v2amgq0ThgVnch9dWvoFqUY9DrlQxM7ocSCh2xDOiNjZsSUiL9hNfWYz912A==}
 
-  '@tanstack/query-sync-storage-persister@5.90.4':
-    resolution: {integrity: sha512-B6a6ehg6u0zje+XNTppxeVJ36olJTfWVwjlJSK7j3wgtvRi4q1kLezF1sCG+K6H7iguzoQDqic3HHe3N5zV5Og==}
+  '@tanstack/query-persist-client-core@5.91.4':
+    resolution: {integrity: sha512-HZ8kvAbhttLZKUO4ASHl49u7dQXzRVEogi7/6CCZ5BBItWh2hoEUqy9QHUS4ji7iZiuXe4jwTJNzq2VIuxlnsQ==}
+
+  '@tanstack/query-sync-storage-persister@5.90.7':
+    resolution: {integrity: sha512-Go4QSOv0wz5RNaJR54wvCp5D+mVUBYidKTYj4zvUU8GGkLxL1E+yx0lBkGNvfRmFRjdgWrJb5XS+0Clc5tKzpQ==}
 
   '@tanstack/react-query-devtools@5.90.2':
     resolution: {integrity: sha512-vAXJzZuBXtCQtrY3F/yUNJCV4obT/A/n81kb3+YqLbro5Z2+phdAbceO+deU3ywPw8B42oyJlp4FhO0SoivDFQ==}
@@ -12685,7 +12691,7 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@reduxjs/toolkit@2.9.0(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)':
+  '@reduxjs/toolkit@2.9.0(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0)(redux@5.0.1))(react@19.2.0)':
     dependencies:
       '@standard-schema/spec': 1.0.0
       '@standard-schema/utils': 0.3.0
@@ -13346,16 +13352,22 @@ snapshots:
 
   '@tanstack/query-core@5.90.2': {}
 
+  '@tanstack/query-core@5.90.5': {}
+
   '@tanstack/query-devtools@5.90.1': {}
 
   '@tanstack/query-persist-client-core@5.91.1':
     dependencies:
       '@tanstack/query-core': 5.90.2
 
-  '@tanstack/query-sync-storage-persister@5.90.4':
+  '@tanstack/query-persist-client-core@5.91.4':
     dependencies:
-      '@tanstack/query-core': 5.90.2
-      '@tanstack/query-persist-client-core': 5.91.1
+      '@tanstack/query-core': 5.90.5
+
+  '@tanstack/query-sync-storage-persister@5.90.7':
+    dependencies:
+      '@tanstack/query-core': 5.90.5
+      '@tanstack/query-persist-client-core': 5.91.4
 
   '@tanstack/react-query-devtools@5.90.2(@tanstack/react-query@5.90.2(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -18067,7 +18079,7 @@ snapshots:
 
   recharts@3.2.1(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react-is@18.3.1)(react@19.2.0)(redux@5.0.1):
     dependencies:
-      '@reduxjs/toolkit': 2.9.0(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)
+      '@reduxjs/toolkit': 2.9.0(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
       clsx: 2.1.1
       decimal.js-light: 2.5.1
       es-toolkit: 1.40.0
