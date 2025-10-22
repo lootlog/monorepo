@@ -25,6 +25,8 @@ import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service'
 import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
 import { UsersService } from 'src/users/users.service';
 import { DiscordService } from 'src/discord/discord.service';
+import { RedisService } from 'src/lib/redis/redis.service';
+import { getPermissionsCachePattern } from 'src/shared/constants/cache.constant';
 
 @Injectable()
 export class GuildsService {
@@ -39,6 +41,7 @@ export class GuildsService {
     private readonly discordService: DiscordService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
   ) {}
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
@@ -430,6 +433,10 @@ export class GuildsService {
           ownerId: data.ownerId,
         },
       });
+
+      await this.redisService.deleteByPattern(
+        getPermissionsCachePattern(data.guildId),
+      );
     } catch (error) {
       this.logger.log({
         level: 'error',
