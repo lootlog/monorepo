@@ -26,7 +26,11 @@ import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-u
 import { UsersService } from 'src/users/users.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { RedisService } from 'src/lib/redis/redis.service';
-import { getPermissionsCachePattern } from 'src/shared/constants/cache.constant';
+import {
+  getPermissionsCachePattern,
+  getGuildCacheKey,
+  GUILD_CACHE_TTL_SECONDS,
+} from 'src/shared/constants/cache.constant';
 
 @Injectable()
 export class GuildsService {
@@ -100,7 +104,9 @@ export class GuildsService {
       Array.isArray(userPreferences.guildsOrder)
     ) {
       const guildOrderMap = new Map<string, number>(
-        userPreferences.guildsOrder.map((id: string, idx: number) => [id, idx] as const),
+        userPreferences.guildsOrder.map(
+          (id: string, idx: number) => [id, idx] as const,
+        ),
       );
       guilds.sort((a, b) => {
         const aIdx = guildOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
@@ -163,6 +169,21 @@ export class GuildsService {
    * Returns raw Guild from Prisma with ALL fields including ownerId
    */
   async getGuildByIdInternal(idOrVanityURL: string) {
+    const cacheKey = getGuildCacheKey(idOrVanityURL);
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (err) {
+        this.logger.warn({
+          message: `Failed to parse cached guild data for key ${cacheKey}`,
+          error: err,
+        });
+        await this.redisService.del(cacheKey);
+      }
+    }
+
     const guild = await this.prisma.guild.findFirst({
       where: {
         active: true,
@@ -173,6 +194,27 @@ export class GuildsService {
     if (!guild) {
       throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
     }
+
+    const guildData = JSON.stringify(guild);
+    const cacheOperations = [
+      this.redisService.set(
+        getGuildCacheKey(guild.id),
+        guildData,
+        GUILD_CACHE_TTL_SECONDS,
+      ),
+    ];
+
+    if (guild.vanityUrl) {
+      cacheOperations.push(
+        this.redisService.set(
+          getGuildCacheKey(guild.vanityUrl),
+          guildData,
+          GUILD_CACHE_TTL_SECONDS,
+        ),
+      );
+    }
+
+    await Promise.all(cacheOperations);
 
     return guild;
   }
@@ -360,12 +402,29 @@ export class GuildsService {
       });
     }
 
+    const oldGuild = await this.prisma.guild.findUnique({
+      where: { id: guildId },
+      select: { vanityUrl: true },
+    });
+
     const guild = await this.prisma.guild.update({
       where: { id: guildId },
       data: {
         vanityUrl: generateSlug(data.vanityUrl),
       },
     });
+
+    const cacheInvalidations = [
+      this.redisService.del(getGuildCacheKey(guildId)),
+    ];
+
+    if (oldGuild?.vanityUrl && oldGuild.vanityUrl !== guild.vanityUrl) {
+      cacheInvalidations.push(
+        this.redisService.del(getGuildCacheKey(oldGuild.vanityUrl)),
+      );
+    }
+
+    await Promise.all(cacheInvalidations);
 
     return guild;
   }
@@ -425,6 +484,11 @@ export class GuildsService {
 
   async updateGuild(data: UpdateGuildDto) {
     try {
+      const oldGuild = await this.prisma.guild.findUnique({
+        where: { id: data.guildId },
+        select: { vanityUrl: true },
+      });
+
       await this.prisma.guild.update({
         where: { id: data.guildId },
         data: {
@@ -434,9 +498,15 @@ export class GuildsService {
         },
       });
 
-      await this.redisService.deleteByPattern(
-        getPermissionsCachePattern(data.guildId),
-      );
+      await Promise.all([
+        this.redisService.deleteByPattern(
+          getPermissionsCachePattern(data.guildId),
+        ),
+        this.redisService.del(getGuildCacheKey(data.guildId)),
+        oldGuild?.vanityUrl
+          ? this.redisService.del(getGuildCacheKey(oldGuild.vanityUrl))
+          : Promise.resolve(),
+      ]);
     } catch (error) {
       this.logger.log({
         level: 'error',
@@ -449,6 +519,11 @@ export class GuildsService {
 
   async deleteGuild({ guildId }: DeleteGuildDto) {
     try {
+      const guild = await this.prisma.guild.findUnique({
+        where: { id: guildId },
+        select: { vanityUrl: true },
+      });
+
       await this.prisma.$transaction(async (tx) => {
         await tx.lootlogConfigNpc.deleteMany({
           where: { lootlogConfigId: guildId },
@@ -464,6 +539,14 @@ export class GuildsService {
           data: { active: false },
         });
       });
+
+      await Promise.all([
+        this.redisService.deleteByPattern(getPermissionsCachePattern(guildId)),
+        this.redisService.del(getGuildCacheKey(guildId)),
+        guild?.vanityUrl
+          ? this.redisService.del(getGuildCacheKey(guild.vanityUrl))
+          : Promise.resolve(),
+      ]);
     } catch (error) {
       this.logger.log({
         level: 'error',
