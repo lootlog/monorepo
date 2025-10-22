@@ -194,11 +194,26 @@ export class GuildsService {
       throw new NotFoundException({ message: ErrorKey.GUILD_NOT_FOUND });
     }
 
-    await this.redisService.set(
-      cacheKey,
-      JSON.stringify(guild),
-      GUILD_CACHE_TTL_SECONDS,
-    );
+    const guildData = JSON.stringify(guild);
+    const cacheOperations = [
+      this.redisService.set(
+        getGuildCacheKey(guild.id),
+        guildData,
+        GUILD_CACHE_TTL_SECONDS,
+      ),
+    ];
+
+    if (guild.vanityUrl) {
+      cacheOperations.push(
+        this.redisService.set(
+          getGuildCacheKey(guild.vanityUrl),
+          guildData,
+          GUILD_CACHE_TTL_SECONDS,
+        ),
+      );
+    }
+
+    await Promise.all(cacheOperations);
 
     return guild;
   }
@@ -408,7 +423,7 @@ export class GuildsService {
       );
     }
 
-    if (guild.vanityUrl) {
+    if (guild.vanityUrl && oldGuild?.vanityUrl !== guild.vanityUrl) {
       cacheInvalidations.push(
         this.redisService.del(getGuildCacheKey(guild.vanityUrl)),
       );
