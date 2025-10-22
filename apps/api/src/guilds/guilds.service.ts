@@ -379,6 +379,7 @@ export class GuildsService {
 
     const oldGuild = await this.prisma.guild.findUnique({
       where: { id: guildId },
+      select: { vanityUrl: true },
     });
 
     const guild = await this.prisma.guild.update({
@@ -458,6 +459,7 @@ export class GuildsService {
     try {
       const oldGuild = await this.prisma.guild.findUnique({
         where: { id: data.guildId },
+        select: { vanityUrl: true },
       });
 
       await this.prisma.guild.update({
@@ -492,6 +494,7 @@ export class GuildsService {
     try {
       const guild = await this.prisma.guild.findUnique({
         where: { id: guildId },
+        select: { vanityUrl: true },
       });
 
       await this.prisma.$transaction(async (tx) => {
