@@ -104,7 +104,9 @@ export class GuildsService {
       Array.isArray(userPreferences.guildsOrder)
     ) {
       const guildOrderMap = new Map<string, number>(
-        userPreferences.guildsOrder.map((id: string, idx: number) => [id, idx] as const),
+        userPreferences.guildsOrder.map(
+          (id: string, idx: number) => [id, idx] as const,
+        ),
       );
       guilds.sort((a, b) => {
         const aIdx = guildOrderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
@@ -171,7 +173,14 @@ export class GuildsService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      try {
+        return JSON.parse(cached);
+      } catch (err) {
+        this.logger.warn({
+          message: `Failed to parse cached guild data for key ${cacheKey}`,
+          error: err,
+        });
+      }
     }
 
     const guild = await this.prisma.guild.findFirst({
@@ -389,15 +398,23 @@ export class GuildsService {
       },
     });
 
-    await Promise.all([
+    const cacheInvalidations = [
       this.redisService.del(getGuildCacheKey(guildId)),
-      oldGuild?.vanityUrl
-        ? this.redisService.del(getGuildCacheKey(oldGuild.vanityUrl))
-        : Promise.resolve(),
-      guild.vanityUrl
-        ? this.redisService.del(getGuildCacheKey(guild.vanityUrl))
-        : Promise.resolve(),
-    ]);
+    ];
+
+    if (oldGuild?.vanityUrl && oldGuild.vanityUrl !== guild.vanityUrl) {
+      cacheInvalidations.push(
+        this.redisService.del(getGuildCacheKey(oldGuild.vanityUrl)),
+      );
+    }
+
+    if (guild.vanityUrl) {
+      cacheInvalidations.push(
+        this.redisService.del(getGuildCacheKey(guild.vanityUrl)),
+      );
+    }
+
+    await Promise.all(cacheInvalidations);
 
     return guild;
   }
@@ -514,9 +531,7 @@ export class GuildsService {
       });
 
       await Promise.all([
-        this.redisService.deleteByPattern(
-          getPermissionsCachePattern(guildId),
-        ),
+        this.redisService.deleteByPattern(getPermissionsCachePattern(guildId)),
         this.redisService.del(getGuildCacheKey(guildId)),
         guild?.vanityUrl
           ? this.redisService.del(getGuildCacheKey(guild.vanityUrl))
