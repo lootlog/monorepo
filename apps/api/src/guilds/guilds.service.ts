@@ -180,6 +180,7 @@ export class GuildsService {
           message: `Failed to parse cached guild data for key ${cacheKey}`,
           error: err,
         });
+        await this.redisService.del(cacheKey);
       }
     }
 
@@ -420,12 +421,6 @@ export class GuildsService {
     if (oldGuild?.vanityUrl && oldGuild.vanityUrl !== guild.vanityUrl) {
       cacheInvalidations.push(
         this.redisService.del(getGuildCacheKey(oldGuild.vanityUrl)),
-      );
-    }
-
-    if (guild.vanityUrl && oldGuild?.vanityUrl !== guild.vanityUrl) {
-      cacheInvalidations.push(
-        this.redisService.del(getGuildCacheKey(guild.vanityUrl)),
       );
     }
 
