@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-config.module';
 import { PrismaModule } from 'src/db/prisma.module';
+import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PrismaModule } from 'src/db/prisma.module';
     }),
     UserLootlogConfigModule,
     PrismaModule,
+    RedisModule,
   ],
   providers: [TimersService],
   controllers: [TimersController],
