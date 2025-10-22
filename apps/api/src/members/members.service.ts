@@ -28,6 +28,8 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { ServiceConfig } from 'src/config/service.config';
 import { RuntimeEnvironment } from 'src/types/runtime.types';
 import { DiscordService } from 'src/discord/discord.service';
+import { RedisService } from 'src/lib/redis/redis.service';
+import { getPermissionsCacheKey } from 'src/shared/constants/cache.constant';
 
 type MemberWithRoles = Member & {
   roles: Role[];
@@ -47,6 +49,7 @@ export class MembersService {
     private readonly guildsService: GuildsService,
     private readonly amqpConnection: AmqpConnection,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {
     const serviceConfig = this.configService.get<ServiceConfig>(
       ConfigKey.SERVICE,
@@ -274,12 +277,15 @@ export class MembersService {
     });
   }
 
-  async getGuildMembers(guildId: string, includeInactive = false): Promise<MemberWithRoles[]> {
+  async getGuildMembers(
+    guildId: string,
+    includeInactive = false,
+  ): Promise<MemberWithRoles[]> {
     const members = await this.prisma.member.findMany({
       where: {
         guildId,
         ...(includeInactive ? {} : { active: true }),
-        globalUserId: { not: null }
+        globalUserId: { not: null },
       },
       include: {
         roles: {
@@ -343,16 +349,19 @@ export class MembersService {
         include: { roles: true },
       });
 
-      await this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_MEMBERS_UPDATE,
-        {
-          id: id,
-          discordId: id,
-          userId: globalUserId,
-          guildId,
-        },
-      );
+      await Promise.all([
+        this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.GUILDS_MEMBERS_UPDATE,
+          {
+            id: id,
+            discordId: id,
+            userId: globalUserId,
+            guildId,
+          },
+        ),
+        this.redisService.del(getPermissionsCacheKey(globalUserId, guildId)),
+      ]);
 
       return member;
     } catch (error) {

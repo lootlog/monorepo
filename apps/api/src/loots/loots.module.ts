@@ -8,6 +8,7 @@ import { GuildsModule } from 'src/guilds/guilds.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
 import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-config.module';
 import { PrismaModule } from 'src/db/prisma.module';
+import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PrismaModule } from 'src/db/prisma.module';
     LootlogConfigModule,
     UserLootlogConfigModule,
     PrismaModule,
+    RedisModule,
   ],
   controllers: [LootsController],
   providers: [LootsService],

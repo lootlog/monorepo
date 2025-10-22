@@ -19,18 +19,18 @@ const queryClient = new QueryClient({
 
 function RootComponent() {
   return (
-    <ThemeProvider>
-      <NuqsAdapter>
-        <GlobalContextProvider>
-          <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <NuqsAdapter>
+          <GlobalContextProvider>
             <GatewayProvider>
               <Outlet />
               <ReactQueryDevtools initialIsOpen={false} />
             </GatewayProvider>
-          </QueryClientProvider>
-        </GlobalContextProvider>
-      </NuqsAdapter>
-    </ThemeProvider>
+          </GlobalContextProvider>
+        </NuqsAdapter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

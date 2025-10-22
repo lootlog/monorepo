@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RefreshJobUpdate } from "@/types/refresh-job";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
-import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 export const useRefreshJob = (
   guildId: string | undefined,
@@ -12,7 +12,10 @@ export const useRefreshJob = (
 ) => {
   const [jobStatus, setJobStatus] = useState<RefreshJobUpdate | null>(null);
   const { socket, connected } = useGateway();
-  const currentGuildId = useGuildId();
+
+  const { data: guild } = useGuild({});
+  const currentGuildIdRef = useRef<string | undefined>(null);
+  currentGuildIdRef.current = guild?.id;
 
   useEffect(() => {
     if (!guildId || !connected) {
@@ -20,7 +23,7 @@ export const useRefreshJob = (
     }
 
     const handleRefreshJobUpdate = (data: RefreshJobUpdate) => {
-      if (currentGuildId !== guildId) {
+      if (currentGuildIdRef.current !== data.guildId) {
         return;
       }
 
@@ -45,7 +48,7 @@ export const useRefreshJob = (
         handleRefreshJobUpdate
       );
     };
-  }, [guildId, jobId, socket, connected, onRefreshedIds, onFailedIds, currentGuildId]);
+  }, [guildId, jobId, socket, connected, onRefreshedIds, onFailedIds]);
 
   return {
     jobStatus,
