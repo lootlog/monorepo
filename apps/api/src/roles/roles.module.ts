@@ -9,6 +9,7 @@ import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { PrismaModule } from 'src/db/prisma.module';
+import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PrismaModule } from 'src/db/prisma.module';
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
     PrismaModule,
+    RedisModule,
   ],
   controllers: [RolesController],
   providers: [RolesService, RolesEventsHandler, RetryService],
