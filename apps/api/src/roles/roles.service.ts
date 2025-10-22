@@ -12,12 +12,15 @@ import { GuildRoleDto } from 'src/guilds/dto/create-guild.dto';
 import { CreateRoleDto } from 'src/roles/dto/create-role.dto';
 import { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
 import { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
+import { RedisService } from 'src/lib/redis/redis.service';
+import { getPermissionsCachePattern } from 'src/shared/constants/cache.constant';
 
 @Injectable()
 export class RolesService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly redisService: RedisService,
   ) {}
 
   async getRolesByGuildId(guildId: string) {
@@ -85,6 +88,10 @@ export class RolesService {
           permissions,
         },
       });
+
+      await this.redisService.deleteByPattern(
+        getPermissionsCachePattern(data.guildId),
+      );
     } catch (error) {
       this.logger.log({
         level: 'error',
@@ -135,6 +142,10 @@ export class RolesService {
       },
     });
 
+    await this.redisService.deleteByPattern(
+      getPermissionsCachePattern(guildId),
+    );
+
     return updatedRole;
   }
 
@@ -151,6 +162,10 @@ export class RolesService {
       where: { id: data.id },
     });
 
+    await this.redisService.deleteByPattern(
+      getPermissionsCachePattern(data.guildId),
+    );
+
     return;
   }
 
@@ -159,6 +174,10 @@ export class RolesService {
       await this.prisma.role.deleteMany({
         where: { guildId },
       });
+
+      await this.redisService.deleteByPattern(
+        getPermissionsCachePattern(guildId),
+      );
     } catch (error) {
       this.logger.log({
         level: 'error',
