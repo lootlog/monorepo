@@ -13,7 +13,7 @@ export class UpdateUserPreferencesDto {
     description: 'Ordered list of guild IDs for user preferences',
     example: ['guild1', 'guild2', 'guild3'],
     required: false,
-    type: [String]
+    type: [String],
   })
   @IsOptional()
   @IsArray()
@@ -26,18 +26,36 @@ export class UpdateUserPreferencesDto {
     description: 'Theme preference',
     example: 'cyberpunk',
     required: false,
-    enum: ['default', 'cyberpunk', 'pastel', 'fantasy', 'shonen', 'onepiece', 'anime']
+    enum: [
+      'default',
+      'cyberpunk',
+      'pastel',
+      'fantasy',
+      'shonen',
+      'onepiece',
+      'anime',
+      'goth',
+    ],
   })
   @IsOptional()
   @IsString()
-  @IsIn(['default', 'cyberpunk', 'pastel', 'fantasy', 'shonen', 'onepiece', 'anime'])
+  @IsIn([
+    'default',
+    'cyberpunk',
+    'pastel',
+    'fantasy',
+    'shonen',
+    'onepiece',
+    'anime',
+    'goth',
+  ])
   theme?: string;
 
   @ApiProperty({
     description: 'Color mode preference',
     example: 'dark',
     required: false,
-    enum: ['light', 'dark']
+    enum: ['light', 'dark'],
   })
   @IsOptional()
   @IsString()

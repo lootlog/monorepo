@@ -45,7 +45,11 @@ export class GuildsService {
       return this.pendingRequests.get(dedupeKey)!;
     }
 
-    const promise = this.fetchUserGuildsWithFallback(options, cacheKey, startTime);
+    const promise = this.fetchUserGuildsWithFallback(
+      options,
+      cacheKey,
+      startTime,
+    );
     this.pendingRequests.set(dedupeKey, promise);
 
     try {
@@ -65,10 +69,6 @@ export class GuildsService {
     try {
       const cached = await this.getCachedGuilds(cacheKey);
       if (cached) {
-        this.refreshInBackground(options, cacheKey).catch((err) => {
-          this.logger.warn(`Background refresh failed: ${err.message}`);
-        });
-
         return cached.guilds;
       }
 
@@ -87,9 +87,7 @@ export class GuildsService {
       const staleCache = await this.getStaleCache(cacheKey);
       if (staleCache) {
         const age = Math.floor((Date.now() - staleCache.cachedAt) / 1000);
-        this.logger.warn(
-          `Using stale cache for ${discordId} (${age}s old)`,
-        );
+        this.logger.warn(`Using stale cache for ${discordId} (${age}s old)`);
         return staleCache.guilds;
       }
 
@@ -140,7 +138,9 @@ export class GuildsService {
     }
   }
 
-  private async getCachedGuilds(cacheKey: string): Promise<CachedGuildData | null> {
+  private async getCachedGuilds(
+    cacheKey: string,
+  ): Promise<CachedGuildData | null> {
     try {
       const cached = await this.redis.get(cacheKey);
       if (!cached) return null;
@@ -159,7 +159,9 @@ export class GuildsService {
     }
   }
 
-  private async getStaleCache(cacheKey: string): Promise<CachedGuildData | null> {
+  private async getStaleCache(
+    cacheKey: string,
+  ): Promise<CachedGuildData | null> {
     try {
       const cached = await this.redis.get(cacheKey);
       if (!cached) return null;
@@ -171,7 +173,10 @@ export class GuildsService {
     }
   }
 
-  private async cacheGuilds(cacheKey: string, guilds: UserGuildData[]): Promise<void> {
+  private async cacheGuilds(
+    cacheKey: string,
+    guilds: UserGuildData[],
+  ): Promise<void> {
     try {
       const data: CachedGuildData = {
         guilds,
@@ -187,7 +192,10 @@ export class GuildsService {
     }
   }
 
-  async invalidateUserGuildsCache(discordId: string, userId: string): Promise<void> {
+  async invalidateUserGuildsCache(
+    discordId: string,
+    userId: string,
+  ): Promise<void> {
     const cacheKey = getUserGuildsCacheKey(discordId, userId);
     try {
       await this.redis.del(cacheKey);
