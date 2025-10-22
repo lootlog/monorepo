@@ -13,6 +13,7 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { DiscordModule } from 'src/discord/discord.module';
 import { PrismaModule } from 'src/db/prisma.module';
 import { RedisConfig } from 'src/config/redis.config';
+import { RedisModule } from 'src/lib/redis/redis.module';
 import {
   MEMBER_BULK_REFRESH_QUEUE,
   MEMBER_REFRESH_QUEUE,
@@ -50,6 +51,7 @@ import {
     ),
     DiscordModule,
     PrismaModule,
+    RedisModule,
   ],
   controllers: [MembersController],
   providers: [

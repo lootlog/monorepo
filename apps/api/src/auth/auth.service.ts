@@ -11,6 +11,11 @@ import {
 } from 'src/auth/errors';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { AuthConfig } from 'src/config/auth.config';
+import { RedisService } from 'src/lib/redis/redis.service';
+import {
+  getAuthTokenCacheKey,
+  AUTH_TOKEN_CACHE_TTL_SECONDS,
+} from 'src/shared/constants/cache.constant';
 
 const DEFAULT_REQUEST_TIMEOUT = 5000;
 
@@ -22,6 +27,7 @@ export class AuthService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {
     const authConfig = this.configService.get<AuthConfig>(ConfigKey.AUTH);
     this.authServiceUrl = authConfig.serviceUrl;
@@ -85,6 +91,13 @@ export class AuthService {
   async getIdpToken(
     userId: string,
   ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
+    const cacheKey = getAuthTokenCacheKey(userId);
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
     try {
       const response = await this.fetchIdpToken(userId);
 
@@ -102,7 +115,18 @@ export class AuthService {
         }
       }
 
-      return response as Extract<GetIdpTokenResponse, { accessToken: string }>;
+      const tokenResponse = response as Extract<
+        GetIdpTokenResponse,
+        { accessToken: string }
+      >;
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(tokenResponse),
+        AUTH_TOKEN_CACHE_TTL_SECONDS,
+      );
+
+      return tokenResponse;
     } catch (err) {
       if (err instanceof TokenExpiredError) {
         throw err;
@@ -123,5 +147,10 @@ export class AuthService {
         `Failed to fetch IDP token: ${errorMessage}`,
       );
     }
+  }
+
+  async invalidateIdpTokenCache(userId: string): Promise<void> {
+    const cacheKey = getAuthTokenCacheKey(userId);
+    await this.redisService.del(cacheKey);
   }
 }
