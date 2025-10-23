@@ -811,7 +811,7 @@ body {
     background-image: url("https://a-static.besthdwallpaper.com/my-dress-up-darling-anime-marin-kitagawa-wallpaper-3554x1999-89573_53.jpg");
     background-size: cover;
     background-attachment: fixed;
-    background-position: center;
+    background-position: 200px 70%;
     filter: brightness(0.25);
     z-index: -1;
   }
@@ -830,7 +830,7 @@ body {
     background-image: url("https://a-static.besthdwallpaper.com/my-dress-up-darling-anime-marin-kitagawa-wallpaper-3554x1999-89573_53.jpg");
     background-size: cover;
     background-attachment: fixed;
-    background-position: center;
+    background-position: 200px 10%;
     filter: brightness(0.12);
     z-index: -1;
   }
