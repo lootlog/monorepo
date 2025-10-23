@@ -28,10 +28,10 @@
     "turbo": "^2.5.8",
     "typescript": "5.9.3"
   },
-  "packageManager": "pnpm@10.18.3",
+  "packageManager": "pnpm@10.19.0",
   "pnpm": {
     "overrides": {
-      "discord-api-types": "0.38.15",
+      "discord-api-types": "0.38.30",
       "multer": "^2.0.1",
       "cross-spawn": "^7.0.5",
       "body-parser": "^1.20.3",
