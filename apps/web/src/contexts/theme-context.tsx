@@ -3,7 +3,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
 
-type Theme = "default" | "cyberpunk" | "pastel" | "fantasy" | "shonen" | "onepiece" | "anime" | "goth";
+type Theme = "default" | "cyberpunk" | "pastel" | "fantasy" | "shonen" | "onepiece" | "anime" | "goth" | "halloween" | "realmadrid" | "realmadrid-3rd" | "barcelona";
 type ColorMode = "light" | "dark";
 
 interface ThemeContextType {
@@ -52,7 +52,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
 
     const root = document.documentElement;
 
-    root.classList.remove("light", "dark", "default", "cyberpunk", "pastel", "fantasy", "shonen", "onepiece", "anime", "goth");
+    root.classList.remove("light", "dark", "default", "cyberpunk", "pastel", "fantasy", "shonen", "onepiece", "anime", "goth", "halloween", "realmadrid", "realmadrid-3rd", "barcelona");
 
     root.classList.add(colorMode);
     if (theme !== "default") {

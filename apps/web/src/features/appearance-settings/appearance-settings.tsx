@@ -68,6 +68,38 @@ const themes = [
     backgroundImage:
       "data:image/svg+xml,%3Csvg width='400' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='gothGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23000000;stop-opacity:0.12' /%3E%3Cstop offset='50%25' style='stop-color:%238B1A3D;stop-opacity:0.08' /%3E%3Cstop offset='100%25' style='stop-color:%236A0DAD;stop-opacity:0.10' /%3E%3C/linearGradient%3E%3Cpattern id='crosses' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 30 10 L 30 50 M 10 30 L 50 30' stroke='%238B1A3D' stroke-width='1.5' opacity='0.04'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23gothGrad)'/%3E%3Crect width='400' height='300' fill='url(%23crosses)'/%3E%3Ccircle cx='100' cy='100' r='35' fill='%236A0DAD' opacity='0.04'/%3E%3Ccircle cx='320' cy='220' r='45' fill='%238B1A3D' opacity='0.05'/%3E%3Cpath d='M 200 80 Q 220 100 200 120 Q 180 100 200 80' fill='%238B1A3D' opacity='0.03'/%3E%3Cpath d='M 280 150 L 290 140 L 300 150 L 290 160 Z' fill='%236A0DAD' opacity='0.04'/%3E%3C/svg%3E",
   },
+  {
+    name: "halloween",
+    title: "Halloween",
+    description: "Dynie, duchy i księżyc",
+    colors: ["#FF8C1A", "#FFD9B3", "#1A1A1A"],
+    backgroundImage:
+      "https://www.baltana.com/files/wallpapers-4/Halloween-Background-Wallpaper-HD-14401.jpg",
+  },
+  {
+    name: "realmadrid",
+    title: "Real Madrid",
+    description: "Calma y ganando",
+    colors: ["#001F3F", "#FFFFFF", "#E5E5E5"],
+    backgroundImage:
+      "https://assets.goal.com/images/v3/blt05c464fcca9f63b6/Cristiano_Ronaldo_Real_Madrid_2012.jpg?auto=webp&format=pjpg&width=3840&quality=60",
+  },
+  {
+    name: "realmadrid-3rd",
+    title: "Real Madrid vs Juventus",
+    description: "La Duodécima",
+    colors: ["#7B3FF2", "#FFFFFF", "#E6D9FF"],
+    backgroundImage:
+      "https://assets-cms.thescore.com/uploads/image/file/401278/w768xh576_GettyImages-941534222.jpg",
+  },
+  {
+    name: "barcelona",
+    title: "FC Barcelona",
+    description: "Blaugrana",
+    colors: ["#A50044", "#004D98", "#5A0025"],
+    backgroundImage:
+      "https://s.france24.com/media/display/451ed2b8-eed6-11ea-afdd-005056bf87d6/w:1280/p:16x9/messi-1805.jpg",
+  },
 ];
 
 export const AppearanceSettings: FC = () => {
