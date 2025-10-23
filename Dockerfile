@@ -1,7 +1,7 @@
 FROM node:22-alpine3.22 AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.18.3 --activate
+RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
 
 FROM base AS build
 WORKDIR /usr/src/app
