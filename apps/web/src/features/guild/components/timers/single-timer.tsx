@@ -50,7 +50,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const imageHasDomain = timer.npc.icon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
   return (
-    <div className="flex flex-row justify-between px-2 py-2 gap-3 min-h-12 items-center hover:bg-accent cursor-pointer">
+    <div className="flex flex-row justify-between px-2 py-2 gap-3 min-h-12 items-center hover:bg-secondary/50 cursor-pointer">
       <span
         className={cn(
           "font-semibold text-xs transition-all flex flex-row gap-2 items-center",

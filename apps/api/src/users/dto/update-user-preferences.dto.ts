@@ -35,6 +35,10 @@ export class UpdateUserPreferencesDto {
       'onepiece',
       'anime',
       'goth',
+      'halloween',
+      'realmadrid',
+      'realmadrid-3rd',
+      'barcelona',
     ],
   })
   @IsOptional()
@@ -48,6 +52,10 @@ export class UpdateUserPreferencesDto {
     'onepiece',
     'anime',
     'goth',
+    'halloween',
+    'realmadrid',
+    'realmadrid-3rd',
+    'barcelona',
   ])
   theme?: string;
 

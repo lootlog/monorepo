@@ -16,12 +16,12 @@
     "build": "pkgroll"
   },
   "dependencies": {
-    "hono": "^4.9.12",
+    "hono": "^4.10.2",
     "jose": "^6.1.0",
     "jwks-rsa": "^3.2.0"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "pkgroll": "^2.18.1"
+    "pkgroll": "^2.20.1"
   }
 }
