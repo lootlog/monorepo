@@ -9,10 +9,10 @@
     "configure:env": "tsx src/index.ts"
   },
   "dependencies": {
-    "zx": "^8.8.4"
+    "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@types/node": "^24.7.2",
+    "@types/node": "^24.9.1",
     "tsx": "^4.20.6"
   }
 }
