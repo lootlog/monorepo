@@ -14,7 +14,7 @@
     "@lootlog/api-helpers": "workspace:*",
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3",
-    "hono": "^4.10.2",
+    "hono": "^4.10.3",
     "jwks-rsa": "^3.2.0",
     "meilisearch": "^0.53.0",
     "zod": "^4.1.12"
