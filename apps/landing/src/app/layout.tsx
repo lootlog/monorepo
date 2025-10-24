@@ -88,6 +88,12 @@ export default function RootLayout({
                 >
                   Regulamin
                 </a>
+                <a
+                  href="https://buycoffee.to/lootlog"
+                  className="hover:text-white transition-colors"
+                >
+                  Donate
+                </a>
               </div>
             </div>
           </footer>
