@@ -39,7 +39,7 @@ const parseArguments = (args: string[]): CliOptions => {
 const processEnvFile = async (
   envFile: { path: string; samplePath: string; name: string },
   sharedValues: Map<string, string>,
-  options: CliOptions
+  options: CliOptions,
 ): Promise<boolean> => {
   const exists = envFileExists(envFile.path);
 
@@ -50,7 +50,9 @@ const processEnvFile = async (
 
   if (exists && !options.force) {
     const overwrite = await question(
-      chalk.yellow(`⚠️  ${envFile.name}/.env already exists. Overwrite? (y/n): `)
+      chalk.yellow(
+        `⚠️  ${envFile.name}/.env already exists. Overwrite? (y/n): `,
+      ),
     );
     if (overwrite.toLowerCase() !== "y") {
       console.log(chalk.gray(`   Skipped ${envFile.name}`));
@@ -76,7 +78,7 @@ const processEnvFile = async (
 };
 
 const promptForValues = async (
-  variables: EnvVariable[]
+  variables: EnvVariable[],
 ): Promise<EnvVariable[]> => {
   const updatedVariables: EnvVariable[] = [];
 
@@ -87,7 +89,9 @@ const promptForValues = async (
     }
 
     const input = await question(
-      chalk.cyan(`Enter value for ${variable.key} (default: ${variable.value}): `)
+      chalk.cyan(
+        `Enter value for ${variable.key} (default: ${variable.value}): `,
+      ),
     );
 
     updatedVariables.push({
@@ -99,7 +103,7 @@ const promptForValues = async (
   return updatedVariables;
 };
 
-const generate = async (args: string[]): Promise<void> => {
+export const generate = async (args: string[]): Promise<void> => {
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
 ${chalk.bold("env generate - Generate environment files")}
@@ -169,7 +173,9 @@ ${chalk.bold("Note:")}
       }
 
       console.log(
-        chalk.gray(`\n✨ Extracted ${sharedValues.size} shared values for apps\n`)
+        chalk.gray(
+          `\n✨ Extracted ${sharedValues.size} shared values for apps\n`,
+        ),
       );
     } else {
       const created = await processEnvFile(envFile, sharedValues, options);
@@ -188,23 +194,28 @@ ${chalk.bold("Note:")}
   if (options.auto) {
     console.log(
       chalk.yellow(
-        `\n⚠️  Note: Some values (Discord tokens, external API keys) are set to placeholders.`
-      )
+        `\n⚠️  Note: Some values (Discord tokens, external API keys) are set to placeholders.`,
+      ),
     );
     console.log(
-      chalk.yellow(`   Please update them manually in the respective .env files.\n`)
+      chalk.yellow(
+        `   Please update them manually in the respective .env files.\n`,
+      ),
     );
   }
 
   console.log(chalk.green(`\n🎉 You can now run: docker compose up -d\n`));
 };
 
-const main = async (): Promise<void> => {
-  const args = process.argv.slice(2);
-  await generate(args);
-};
+// Only run main when this file is executed directly, not when imported
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const main = async (): Promise<void> => {
+    const args = process.argv.slice(2);
+    await generate(args);
+  };
 
-main().catch((error) => {
-  console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
-  process.exit(1);
-});
+  main().catch((error) => {
+    console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
+    process.exit(1);
+  });
+}
