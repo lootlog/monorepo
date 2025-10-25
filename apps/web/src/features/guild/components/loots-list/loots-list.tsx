@@ -2,7 +2,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useLoots } from "@/hooks/api/loots/use-loots";
 import { Frown, Loader2 } from "lucide-react";
-import { FC, Fragment, useEffect, useMemo, useRef } from "react";
+import { FC, Fragment, useEffect, useRef } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
 import { useIntersectionObserver } from "usehooks-ts";
@@ -16,41 +16,36 @@ import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 
 const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
-const INFINITE_SCROLL_THRESHOLD = 0.5;
-const INFINITE_SCROLL_ROOT_MARGIN = "100px";
-const LOOTS_PAGE_LIMIT = 25;
+const LOOTS_PAGE_LIMIT = 20;
 
 export const LootsList: FC = () => {
   const {
     data: loots,
     fetchNextPage,
     hasNextPage,
-    isFetchedAfterMount,
     isFetchingNextPage,
+    isLoading,
   } = useLoots({ limit: LOOTS_PAGE_LIMIT });
+
   const { data: permissions, error: permissionsError } = useGuildPermissions();
   const { world } = useGuildContext();
   const { data: member, isPending } = useGuildMember();
   const isOwner = useIsOwner();
   const isFetchingRef = useRef(false);
 
-  const canManageLoots = useMemo(
-    () =>
-      permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner,
-    [permissions, isOwner],
-  );
+  const canManageLoots =
+    permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
 
   const { isIntersecting, ref } = useIntersectionObserver({
-    threshold: INFINITE_SCROLL_THRESHOLD,
-    rootMargin: INFINITE_SCROLL_ROOT_MARGIN,
+    threshold: 0,
   });
 
   useEffect(() => {
     if (
       isIntersecting &&
       hasNextPage &&
-      isFetchedAfterMount &&
       !isFetchingNextPage &&
+      !isLoading &&
       !isFetchingRef.current
     ) {
       isFetchingRef.current = true;
@@ -61,8 +56,8 @@ export const LootsList: FC = () => {
   }, [
     isIntersecting,
     hasNextPage,
-    isFetchedAfterMount,
     isFetchingNextPage,
+    isLoading,
     fetchNextPage,
   ]);
 
@@ -81,9 +76,9 @@ export const LootsList: FC = () => {
     );
   }
 
-  const hasLoots = loots?.pages?.[0]?.data?.length ?? 0 >= 0;
+  const hasLoots = (loots?.pages?.[0]?.data?.length ?? 0) > 0;
 
-  if (!hasLoots) {
+  if (!isLoading && !hasLoots) {
     return (
       <div className="flex flex-col justify-center gap-8 items-center flex-1">
         <Frown size="72" />
@@ -105,39 +100,56 @@ export const LootsList: FC = () => {
 
   return (
     <ScrollArea id="loots-list" className="h-24 flex-1 relative">
-      {loots && (
-        <ul className="flex flex-col">
-          {loots.pages.map((page) =>
-            page.data.map((loot) => {
-              return (
-                <Fragment key={loot.id}>
-                  <LootsListItem
-                    key={loot.id}
-                    loot={loot}
-                    canManageLoots={canManageLoots}
-                  />
-                  <Separator />
-                </Fragment>
-              );
-            }),
-          )}
-        </ul>
-      )}
-
-      {!isFetchedAfterMount && (
+      {isLoading ? (
         <ul>
-          {Array.from({ length: 12 }).map((_, index) => {
-            return <LootsListItemSkeleton key={index} index={index} />;
-          })}
+          {Array.from({ length: 12 }).map((_, index) => (
+            <LootsListItemSkeleton key={index} index={index} />
+          ))}
         </ul>
-      )}
-      {hasNextPage && (
-        <div
-          ref={ref}
-          className="min-h-[200px] flex items-center justify-center py-8"
-        >
-          {isFetchingNextPage && <Loader2 className="h-8 w-8 animate-spin" />}
-        </div>
+      ) : (
+        <>
+          {loots && (
+            <ul className="flex flex-col">
+              {loots.pages.map((page) =>
+                page.data.map((loot) => (
+                  <Fragment key={loot.id}>
+                    <LootsListItem
+                      loot={loot}
+                      canManageLoots={canManageLoots}
+                    />
+                    <Separator />
+                  </Fragment>
+                )),
+              )}
+            </ul>
+          )}
+
+          {hasNextPage && (
+            <div
+              className="relative flex items-center justify-center gap-3 border-t border-border/50 bg-secondary/30"
+              style={{ height: "137px" }}
+            >
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground font-medium">
+                Ładowanie kolejnych lootów...
+              </span>
+              {/* Trigger element 20px from bottom */}
+              <div
+                ref={ref}
+                className="absolute bottom-[20px] h-px w-full"
+                aria-hidden="true"
+              />
+            </div>
+          )}
+
+          {!hasNextPage && loots && loots.pages.length > 0 && (
+            <div className="flex items-center justify-center py-6 border-t border-border/50">
+              <span className="text-xs text-muted-foreground">
+                To już wszystkie looty
+              </span>
+            </div>
+          )}
+        </>
       )}
     </ScrollArea>
   );

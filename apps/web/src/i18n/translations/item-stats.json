@@ -90,5 +90,21 @@
   "timelimit_upgmax": "Minimalny czas odnawiania: <value>{{value}}</value> min",
   "ttl": "Działa <value>{{value}}</value> min",
   "binds": "Wiąże po założeniu",
-  "pdmg": "Atak fizyczny: <value>{{value}}</value>"
+  "pdmg": "Atak fizyczny: <value>{{value}}</value>",
+  "noauction": "Tego przedmiotu nie można wystawić na aukcję",
+  "outfit": "Zmienia twój wygląd na stałe",
+  "lvlupgs": "Ilość przekuć: <value>{{value}}</value>",
+  "lvlupgcost": "Koszt przekucia: <value>{{value}}</value>",
+  "lvlnext": "Poziom po przekuciu: <value>{{value}}</value>",
+  "quest_expbon": "Zwiększa ilość zdobytych punktów doświadczenia za questy o <value>+{{value}}%</value>",
+  "perheal": "Leczy <value>{{value}}%</value> punktów życia",
+  "artisan_worthless": "Bezużyteczny składnik rzemieślniczy",
+  "npc_lootbon": "Zmniejsza szansę na brak łupu z walki o: <value>{{value}}%</value>. Działa tylko na samotnie walczącego gracza.",
+  "enhancement_add": "Dodaje <value>{{value}}%</value> punktów wymaganych do ulepszenia przedmiotu",
+  "target_rarity": "Wymagana rzadkość przedmiotu: <value>{{value}}</value>",
+  "force_binding": "Wiąże z właścicielem ulepszany przedmiot",
+  "pet": "<value>{{value}}</value>",
+  "honorbon": "Zwiększa <value>{{value}}</value> razy ilość otrzymywanych punktów honoru",
+  "adest": "Obniża właścicielowi <value>{{value}}</value> punktów przywracania życia podczas walki",
+  "fullheal": "Pełne leczenie, pozostało <value>{{value}}</value> punktów uleczania."
 }

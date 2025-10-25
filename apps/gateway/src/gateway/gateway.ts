@@ -152,8 +152,18 @@ export class Gateway {
       return {};
     }
     const socketsInRoom = await this.server.in(guildId).fetchSockets();
-    const users = socketsInRoom
-      .filter((s) => s.data.player.world === world)
+
+    let filteredSockets = socketsInRoom.filter(
+      (s) => s.data.player?.world === world,
+    );
+
+    if (client.data.platform === Platform.GAME) {
+      filteredSockets = filteredSockets.filter(
+        (s) => s.data.platform === Platform.GAME,
+      );
+    }
+
+    const users = filteredSockets
       .map((s) => omit(s.data, ['sessionId', 'userId', 'guilds']))
       .sort((a, b) => b.player.lvl - a.player.lvl);
     const groupedUsers = groupBy(users, 'discordId');
