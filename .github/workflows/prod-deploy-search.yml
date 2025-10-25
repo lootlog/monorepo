@@ -1,5 +1,9 @@
 name: Deploy Search to prod
 
+permissions:
+  contents: write
+  security-events: write
+
 on:
   workflow_dispatch:
 

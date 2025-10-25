@@ -1,6 +1,7 @@
 name: Deploy Auth to dev
 permissions:
-  contents: read
+  contents: write
+  security-events: write
 
 on:
   push:
