@@ -25,7 +25,6 @@ describe('DiscordService', () => {
   let authService: jest.Mocked<AuthService>;
   let redisService: jest.Mocked<RedisService>;
   let rateLimiter: jest.Mocked<DiscordRateLimiterService>;
-  let configService: jest.Mocked<ConfigService>;
   let mockLogger: any;
   let mockRedlock: any;
 
@@ -116,7 +115,6 @@ describe('DiscordService', () => {
     authService = module.get(AuthService);
     redisService = module.get(RedisService);
     rateLimiter = module.get(DiscordRateLimiterService);
-    configService = module.get(ConfigService);
 
     service['redlock'] = mockRedlock;
   });

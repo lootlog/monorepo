@@ -1,6 +1,7 @@
 import { ADDON_URL } from "@/src/config/addon";
 import { Metadata } from "next";
 import { JSX } from "react";
+import Image from "next/image";
 import LiquidEther from "@lootlog/ui/components/liquid-ether-bg";
 import Bento, { BentoCardProps } from "@lootlog/ui/components/bento";
 import { Button } from "@lootlog/ui/components/button";
@@ -18,10 +19,12 @@ const cardData: BentoCardProps[] = [
     title: "Timery respawnu",
     description: "Śledzenie czasów respawnu potworów w czasie rzeczywistym.",
     image: (
-      <img
+      <Image
         src="/screenshots/timers.png"
         alt="Screenshot - Interfejs Timera Respawnu"
         className="rounded-lg"
+        width={800}
+        height={600}
       />
     ),
   },
@@ -31,10 +34,12 @@ const cardData: BentoCardProps[] = [
     description:
       "Automatyczne wykrywanie potworów na mapie z informacjami o typie i poziomie.",
     image: (
-      <img
+      <Image
         src="/screenshots/detector.png"
         alt="Screenshot - Interfejs Wykrywacza NPC"
         className="rounded-lg"
+        width={800}
+        height={600}
       />
     ),
   },
@@ -43,10 +48,12 @@ const cardData: BentoCardProps[] = [
     title: "Panel Lootloga",
     description: "Wyświetlanie, wyszukiwanie i filtrowanie zebranych łupów.",
     image: (
-      <img
+      <Image
         src="/screenshots/dashboard.png"
         alt="Screenshot - Interfejs Panelu Lootloga"
         className="rounded-lg"
+        width={800}
+        height={600}
       />
     ),
   },
@@ -55,10 +62,12 @@ const cardData: BentoCardProps[] = [
     title: "Zarządzanie rolami",
     description: "Rozbudowane zarządzanie rolami i uprawnieniami w klanie.",
     image: (
-      <img
+      <Image
         src="/screenshots/roles.png"
         alt="Screenshot - Interfejs Zarządzania Rolami"
         className="rounded-lg"
+        width={800}
+        height={600}
       />
     ),
   },
@@ -68,10 +77,12 @@ const cardData: BentoCardProps[] = [
     description:
       "Szybka komunikacja z członkami klanu dzięki wbudowanemu chatowi.",
     image: (
-      <img
+      <Image
         src="/screenshots/chat.png"
         alt="Screenshot - Interfejs Chatu"
         className="rounded-lg"
+        width={800}
+        height={600}
       />
     ),
   },
@@ -80,10 +91,12 @@ const cardData: BentoCardProps[] = [
     title: "Powiadomienia",
     description: "Natychmiastowe powiadomienia o ważnych wydarzeniach w grze.",
     image: (
-      <img
+      <Image
         src="/screenshots/notifications.png"
         alt="Screenshot - Interfejs Powiadomień"
         className="w-full h-auto rounded-lg"
+        width={800}
+        height={600}
       />
     ),
   },
