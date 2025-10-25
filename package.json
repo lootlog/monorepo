@@ -42,9 +42,13 @@
     "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
     "env:generate": "turbo run env:generate",
     "build:game-client": "turbo run build:game-client",
-    "copy-entrypoint": "turbo run copy-entrypoint"
+    "copy-entrypoint": "turbo run copy-entrypoint",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@lootlog/eslint-config": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "prettier": "^3.6.2",
