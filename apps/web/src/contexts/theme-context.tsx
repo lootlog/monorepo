@@ -57,7 +57,8 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       setThemeState(preferences.theme as Theme);
       localStorage.setItem(THEME_STORAGE_KEY, preferences.theme);
     }
-  }, [preferences?.theme, isLoading, theme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferences?.theme, isLoading]);
 
   useEffect(() => {
     if (
@@ -68,7 +69,8 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       setColorModeState(preferences.colorMode as ColorMode);
       localStorage.setItem(COLOR_MODE_STORAGE_KEY, preferences.colorMode);
     }
-  }, [preferences?.colorMode, isLoading, colorMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferences?.colorMode, isLoading]);
 
   useEffect(() => {
     if (isLoading) return;
