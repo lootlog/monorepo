@@ -189,8 +189,8 @@ export default function TermsOfService(): JSX.Element {
               </h3>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>
-                  Serwis jest świadczony "jak jest" bez gwarancji ciągłości
-                  działania
+                  Serwis jest świadczony &quot;jak jest&quot; bez gwarancji
+                  ciągłości działania
                 </li>
                 <li>
                   Jako projekt hobbystyczny, nie gwarantujemy bezbłędności

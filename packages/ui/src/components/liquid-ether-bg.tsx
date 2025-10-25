@@ -91,7 +91,6 @@ export default function LiquidEther({
     function makePaletteTexture(stops: string[]): THREE.DataTexture {
       let arr: string[];
       if (Array.isArray(stops) && stops.length > 0) {
-        // @ts-ignore - filter out undefined values
         arr = stops.length === 1 ? [stops[0], stops[0]] : stops;
       } else {
         arr = ["#ffffff", "#ffffff"];
@@ -119,6 +118,7 @@ export default function LiquidEther({
     // Hard-code transparent background vector (alpha 0)
     const bgVec4 = new THREE.Vector4(0, 0, 0, 0);
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class CommonClass {
       width = 0;
       height = 0;
@@ -170,6 +170,7 @@ export default function LiquidEther({
     }
     const Common = new CommonClass();
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class MouseClass {
       mouseMoved = false;
       coords = new THREE.Vector2();
@@ -254,7 +255,7 @@ export default function LiquidEther({
         if (event.touches.length === 1) {
           const t = event.touches[0];
           if (t && this.onInteract) this.onInteract();
-          // @ts-ignore - t is checked above
+          // @ts-expect-error - t is checked above
           this.setCoords(t.pageX, t.pageY);
           this.hasUserControl = true;
         }
@@ -263,7 +264,7 @@ export default function LiquidEther({
         if (event.touches.length === 1) {
           const t = event.touches[0];
           if (t && this.onInteract) this.onInteract();
-          // @ts-ignore - t is checked above
+          // @ts-expect-error - t is checked above
           this.setCoords(t.pageX, t.pageY);
         }
       }
@@ -301,6 +302,7 @@ export default function LiquidEther({
     }
     const Mouse = new MouseClass();
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class AutoDriver {
       mouse: MouseClass;
       manager: WebGLManager;
@@ -323,7 +325,7 @@ export default function LiquidEther({
           speed: number;
           resumeDelay: number;
           rampDuration: number;
-        }
+        },
       ) {
         this.mouse = mouse;
         this.manager = manager;
@@ -337,7 +339,7 @@ export default function LiquidEther({
         const r = Math.random;
         this.target.set(
           (r() * 2 - 1) * (1 - this.margin),
-          (r() * 2 - 1) * (1 - this.margin)
+          (r() * 2 - 1) * (1 - this.margin),
         );
       }
       forceStop() {
@@ -378,7 +380,7 @@ export default function LiquidEther({
         if (this.rampDurationMs > 0) {
           const t = Math.min(
             1,
-            (now - this.activationTime) / this.rampDurationMs
+            (now - this.activationTime) / this.rampDurationMs,
           );
           ramp = t * t * (3 - 2 * t);
         }
@@ -560,9 +562,11 @@ export default function LiquidEther({
 }
 `;
 
-    type Uniforms = Record<string, { value: any }>;
+    type Uniforms = Record<string, { value: unknown }>;
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class ShaderPass {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       props: any;
       uniforms?: Uniforms;
       scene: THREE.Scene | null = null;
@@ -570,11 +574,12 @@ export default function LiquidEther({
       material: THREE.RawShaderMaterial | null = null;
       geometry: THREE.BufferGeometry | null = null;
       plane: THREE.Mesh | null = null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(props: any) {
         this.props = props || {};
         this.uniforms = this.props.material?.uniforms;
       }
-      init(..._args: any[]) {
+      init() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.Camera();
         if (this.uniforms) {
@@ -584,7 +589,7 @@ export default function LiquidEther({
           this.scene.add(this.plane);
         }
       }
-      update(..._args: any[]) {
+      update() {
         if (!Common.renderer || !this.scene || !this.camera) return;
         Common.renderer.setRenderTarget(this.props.output || null);
         Common.renderer.render(this.scene, this.camera);
@@ -592,8 +597,10 @@ export default function LiquidEther({
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class Advection extends ShaderPass {
       line!: THREE.LineSegments;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(simProps: any) {
         super({
           material: {
@@ -625,7 +632,7 @@ export default function LiquidEther({
         ]);
         boundaryG.setAttribute(
           "position",
-          new THREE.BufferAttribute(vertices_boundary, 3)
+          new THREE.BufferAttribute(vertices_boundary, 3),
         );
         const boundaryM = new THREE.RawShaderMaterial({
           vertexShader: line_vert,
@@ -635,6 +642,7 @@ export default function LiquidEther({
         this.line = new THREE.LineSegments(boundaryG, boundaryM);
         this.scene!.add(this.line);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
         const { dt, isBounce, BFECC } = (args[0] || {}) as {
           dt?: number;
@@ -642,21 +650,24 @@ export default function LiquidEther({
           BFECC?: boolean;
         };
         if (!this.uniforms) return;
-        // @ts-ignore - uniforms is checked above
+        // @ts-expect-error - uniforms is checked above
         if (typeof dt === "number") this.uniforms.dt.value = dt;
         if (typeof isBounce === "boolean") this.line.visible = isBounce;
-        // @ts-ignore - uniforms is checked above
+        // @ts-expect-error - uniforms is checked above
         if (typeof BFECC === "boolean") this.uniforms.isBFECC.value = BFECC;
         super.update();
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class ExternalForce extends ShaderPass {
       mouse!: THREE.Mesh;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(simProps: any) {
         super({ output: simProps.dst });
         this.init(simProps);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       init(simProps: any) {
         super.init();
         const mouseG = new THREE.PlaneGeometry(1, 1);
@@ -672,7 +683,7 @@ export default function LiquidEther({
             scale: {
               value: new THREE.Vector2(
                 simProps.cursor_size,
-                simProps.cursor_size
+                simProps.cursor_size,
               ),
             },
           },
@@ -680,6 +691,7 @@ export default function LiquidEther({
         this.mouse = new THREE.Mesh(mouseG, mouseM);
         this.scene!.add(this.mouse);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
         const props = args[0] || {};
         const forceX = (Mouse.diff.x / 2) * (props.mouse_force || 0);
@@ -690,25 +702,27 @@ export default function LiquidEther({
         const cursorSizeY = cursorSize * cellScale.y;
         const centerX = Math.min(
           Math.max(Mouse.coords.x, -1 + cursorSizeX + cellScale.x * 2),
-          1 - cursorSizeX - cellScale.x * 2
+          1 - cursorSizeX - cellScale.x * 2,
         );
         const centerY = Math.min(
           Math.max(Mouse.coords.y, -1 + cursorSizeY + cellScale.y * 2),
-          1 - cursorSizeY - cellScale.y * 2
+          1 - cursorSizeY - cellScale.y * 2,
         );
         const uniforms = (this.mouse.material as THREE.RawShaderMaterial)
           .uniforms;
-        // @ts-ignore - uniforms properties exist
+        // @ts-expect-error - uniforms properties exist
         uniforms.force.value.set(forceX, forceY);
-        // @ts-ignore - uniforms properties exist
+        // @ts-expect-error - uniforms properties exist
         uniforms.center.value.set(centerX, centerY);
-        // @ts-ignore - uniforms properties exist
+        // @ts-expect-error - uniforms properties exist
         uniforms.scale.value.set(cursorSize, cursorSize);
         super.update();
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class Viscous extends ShaderPass {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(simProps: any) {
         super({
           material: {
@@ -729,6 +743,7 @@ export default function LiquidEther({
         });
         this.init();
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
         const { viscous, iterations, dt } = (args[0] || {}) as {
           viscous?: number;
@@ -736,8 +751,9 @@ export default function LiquidEther({
           dt?: number;
         };
         if (!this.uniforms) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let fbo_in: any, fbo_out: any;
-        // @ts-ignore - uniforms is checked above
+        // @ts-expect-error - uniforms is checked above
         if (typeof viscous === "number") this.uniforms.v.value = viscous;
         const iter = iterations ?? 0;
         for (let i = 0; i < iter; i++) {
@@ -748,10 +764,10 @@ export default function LiquidEther({
             fbo_in = this.props.output1;
             fbo_out = this.props.output0;
           }
-          // @ts-ignore - uniforms is checked above
+          // @ts-expect-error - uniforms is checked above
           this.uniforms.velocity_new.value = fbo_in.texture;
           this.props.output = fbo_out;
-          // @ts-ignore - uniforms is checked above
+          // @ts-expect-error - uniforms is checked above
           if (typeof dt === "number") this.uniforms.dt.value = dt;
           super.update();
         }
@@ -759,7 +775,9 @@ export default function LiquidEther({
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class Divergence extends ShaderPass {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(simProps: any) {
         super({
           material: {
@@ -776,17 +794,21 @@ export default function LiquidEther({
         });
         this.init();
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { vel } = (args[0] || {}) as { vel?: any };
         if (this.uniforms && vel) {
-          // @ts-ignore - uniforms is checked above
+          // @ts-expect-error - uniforms is checked above
           this.uniforms.velocity.value = vel.texture;
         }
         super.update();
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class Poisson extends ShaderPass {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(simProps: any) {
         super({
           material: {
@@ -805,8 +827,10 @@ export default function LiquidEther({
         });
         this.init();
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
         const { iterations } = (args[0] || {}) as { iterations?: number };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let p_in: any, p_out: any;
         const iter = iterations ?? 0;
         for (let i = 0; i < iter; i++) {
@@ -818,7 +842,7 @@ export default function LiquidEther({
             p_out = this.props.output0;
           }
           if (this.uniforms) {
-            // @ts-ignore - uniforms is checked above
+            // @ts-expect-error - uniforms is checked above
             this.uniforms.pressure.value = p_in.texture;
           }
           this.props.output = p_out;
@@ -828,7 +852,9 @@ export default function LiquidEther({
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class Pressure extends ShaderPass {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(simProps: any) {
         super({
           material: {
@@ -846,21 +872,25 @@ export default function LiquidEther({
         });
         this.init();
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
         const { vel, pressure } = (args[0] || {}) as {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           vel?: any;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           pressure?: any;
         };
         if (this.uniforms && vel && pressure) {
-          // @ts-ignore - uniforms is checked above
+          // @ts-expect-error - uniforms is checked above
           this.uniforms.velocity.value = vel.texture;
-          // @ts-ignore - uniforms is checked above
+          // @ts-expect-error - uniforms is checked above
           this.uniforms.pressure.value = pressure.texture;
         }
         super.update();
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class Simulation {
       options: SimOptions;
       fbos: Record<string, THREE.WebGLRenderTarget | null> = {
@@ -921,7 +951,7 @@ export default function LiquidEther({
           this.fbos[key] = new THREE.WebGLRenderTarget(
             this.fboSize.x,
             this.fboSize.y,
-            opts
+            opts,
           );
         }
       }
@@ -973,11 +1003,11 @@ export default function LiquidEther({
       calcSize() {
         const width = Math.max(
           1,
-          Math.round(this.options.resolution * Common.width)
+          Math.round(this.options.resolution * Common.width),
         );
         const height = Math.max(
           1,
-          Math.round(this.options.resolution * Common.height)
+          Math.round(this.options.resolution * Common.height),
         );
         this.cellScale.set(1 / width, 1 / height);
         this.fboSize.set(width, height);
@@ -1001,6 +1031,7 @@ export default function LiquidEther({
           mouse_force: this.options.mouse_force,
           cellScale: this.cellScale,
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let vel: any = this.fbos.vel_1;
         if (this.options.isViscous) {
           vel = this.viscous.update({
@@ -1017,6 +1048,7 @@ export default function LiquidEther({
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class Output {
       simulation: Simulation;
       scene: THREE.Scene;
@@ -1039,7 +1071,7 @@ export default function LiquidEther({
               palette: { value: paletteTex },
               bgColor: { value: bgVec4 },
             },
-          })
+          }),
         );
         this.scene.add(this.output);
       }
@@ -1057,7 +1089,9 @@ export default function LiquidEther({
       }
     }
 
+    // eslint-disable-next-line react-hooks/unsupported-syntax
     class WebGLManager implements LiquidEtherWebGL {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       props: any;
       output!: Output;
       autoDriver?: AutoDriver;
@@ -1066,6 +1100,7 @@ export default function LiquidEther({
       private _loop = this.loop.bind(this);
       private _resize = this.resize.bind(this);
       private _onVisibility?: () => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(props: any) {
         this.props = props;
         Common.init(props.$wrapper);
@@ -1076,6 +1111,7 @@ export default function LiquidEther({
           this.lastUserInteraction = performance.now();
           if (this.autoDriver) this.autoDriver.forceStop();
         };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.autoDriver = new AutoDriver(Mouse, this as any, {
           enabled: props.autoDemo,
           speed: props.autoSpeed,
@@ -1132,7 +1168,7 @@ export default function LiquidEther({
           if (this._onVisibility)
             document.removeEventListener(
               "visibilitychange",
-              this._onVisibility
+              this._onVisibility,
             );
           Mouse.dispose();
           if (Common.renderer) {
@@ -1188,7 +1224,7 @@ export default function LiquidEther({
       (entries) => {
         const entry = entries[0];
         if (!entry) return;
-        // @ts-ignore - entry is checked above
+        // @ts-expect-error - entry is checked above
         const isVisible = entry.isIntersecting && entry.intersectionRatio > 0;
         isVisibleRef.current = isVisible;
         if (!webglRef.current) return;
@@ -1198,7 +1234,7 @@ export default function LiquidEther({
           webglRef.current.pause();
         }
       },
-      { threshold: [0, 0.01, 0.1] }
+      { threshold: [0, 0.01, 0.1] },
     );
     io.observe(container);
     intersectionObserverRef.current = io;

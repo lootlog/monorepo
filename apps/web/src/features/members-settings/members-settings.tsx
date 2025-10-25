@@ -19,7 +19,7 @@ const MembersSettingsContent = () => {
   const { data: members } = useGuildMembers(showInactive);
   const [searchValue, setSearchValue] = useState("");
   const [selectedMember, setSelectedMember] = useState<GuildMember | null>(
-    null
+    null,
   );
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const { data: guild } = useGuild({});
@@ -34,7 +34,7 @@ const MembersSettingsContent = () => {
   const filteredMembers = useMemo(() => {
     if (!members) return [];
     const search = searchValue.trim().toLowerCase();
-    let filtered = search
+    const filtered = search
       ? members.filter((member) => member.name.toLowerCase().includes(search))
       : members;
 
@@ -84,13 +84,13 @@ const MembersSettingsContent = () => {
           "border-t grid flex-1 box-border min-h-0 transition-[grid-template-columns]",
           selectedMember
             ? "grid-cols-1 md:grid-cols-[theme(width.64)_1fr]"
-            : "grid-cols-1 md:grid-cols-[1fr]"
+            : "grid-cols-1 md:grid-cols-[1fr]",
         )}
       >
         <ScrollArea
           className={cn(
             "flex flex-col h-full min-h-0",
-            selectedMember && "hidden md:flex"
+            selectedMember && "hidden md:flex",
           )}
         >
           {filteredMembers?.map((member) => (
@@ -110,7 +110,7 @@ const MembersSettingsContent = () => {
               <motion.div
                 className={cn(
                   "border-l min-h-0 flex flex-col",
-                  "md:border-l border-l-0"
+                  "md:border-l border-l-0",
                 )}
                 initial={{ opacity: 0, x: 32 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -129,7 +129,7 @@ const MembersSettingsContent = () => {
               <div
                 className={cn(
                   "border-l min-h-0 flex flex-col",
-                  "md:border-l border-l-0"
+                  "md:border-l border-l-0",
                 )}
                 key={selectedMember.id}
               >

@@ -38,7 +38,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
       <TooltipTrigger asChild>
         <div className="w-full flex items-center justify-center mb-1">
           <Link
-            to={`/${guild.vanityUrl ?? guild.id}` as any}
+            to={`/${guild.vanityUrl ?? guild.id}` as string}
             draggable={false}
             className="block"
             onClick={handleClick}
@@ -47,7 +47,7 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
             <Avatar
               className={cn(
                 "size-12 border-solid border-4 transition-all border-transparent box-border rounded-xl hover:rounded-lg",
-                { "border-primary rounded-lg": isActive }
+                { "border-primary rounded-lg": isActive },
               )}
             >
               <AvatarImage

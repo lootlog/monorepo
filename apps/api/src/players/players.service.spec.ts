@@ -4,7 +4,6 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 describe('PlayersService', () => {
   let service: PlayersService;
-  let amqpConnection: AmqpConnection;
 
   const mockAmqpConnection = {
     publish: jest.fn(),
@@ -22,7 +21,6 @@ describe('PlayersService', () => {
     }).compile();
 
     service = module.get<PlayersService>(PlayersService);
-    amqpConnection = module.get<AmqpConnection>(AmqpConnection);
   });
 
   it('should be defined', () => {

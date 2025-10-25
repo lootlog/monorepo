@@ -4,7 +4,6 @@ import { HealthzService } from './healthz.service';
 
 describe('HealthzController', () => {
   let controller: HealthzController;
-  let healthzService: HealthzService;
 
   const mockHealthzService = {
     healthCheck: jest.fn(),
@@ -22,7 +21,6 @@ describe('HealthzController', () => {
     }).compile();
 
     controller = module.get<HealthzController>(HealthzController);
-    healthzService = module.get<HealthzService>(HealthzService);
   });
 
   it('should be defined', () => {

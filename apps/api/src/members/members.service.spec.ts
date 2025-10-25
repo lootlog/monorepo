@@ -26,7 +26,6 @@ describe('MembersService', () => {
   let discordService: jest.Mocked<DiscordService>;
   let guildsService: jest.Mocked<GuildsService>;
   let amqpConnection: jest.Mocked<AmqpConnection>;
-  let configService: jest.Mocked<ConfigService>;
 
   const mockGuild: Guild = {
     id: 'guild-123',
@@ -142,7 +141,6 @@ describe('MembersService', () => {
     discordService = module.get(DiscordService);
     guildsService = module.get(GuildsService);
     amqpConnection = module.get(AmqpConnection);
-    configService = module.get(ConfigService);
 
     // Suppress logger output
     jest.spyOn(service['logger'], 'warn').mockImplementation();
