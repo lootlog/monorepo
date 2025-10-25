@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
-  "description": "Full-stack microservices application for Margonem guild loot tracking, battle logging, and Discord bot integration",
+  "description": "Full-stack microservices application for Margonem clan loot tracking, battle logging, and Discord bot integration",
   "author": "Kamil <kamilwronka7@gmail.com>",
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
   "keywords": [
     "margonem",
     "lootlog",
-    "guild-management",
+    "clan-management",
     "battle-logging",
     "discord-bot",
     "microservices",
