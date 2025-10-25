@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import { IsOptional, IsString, IsIn } from 'class-validator';
 
 export class QueryBattleAnalyticsDto {

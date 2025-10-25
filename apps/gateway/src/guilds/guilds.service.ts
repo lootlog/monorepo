@@ -130,12 +130,8 @@ export class GuildsService {
     options: GetUserGuildsOptions,
     cacheKey: string,
   ): Promise<void> {
-    try {
-      const guilds = await this.fetchFromHttpWithRetry(options);
-      await this.cacheGuilds(cacheKey, guilds);
-    } catch (error) {
-      throw error;
-    }
+    const guilds = await this.fetchFromHttpWithRetry(options);
+    await this.cacheGuilds(cacheKey, guilds);
   }
 
   private async getCachedGuilds(

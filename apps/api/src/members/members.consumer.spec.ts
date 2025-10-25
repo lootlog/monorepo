@@ -4,7 +4,6 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { MembersConsumer } from './members.consumer';
 import { MembersService } from './members.service';
 import { PrismaService } from 'src/db/prisma.service';
-import { NotFoundException } from '@nestjs/common';
 import { MemberType } from 'generated/client';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
@@ -155,7 +154,9 @@ describe('MembersConsumer', () => {
       });
       expect(consumer['logger'].log).toHaveBeenCalledWith({
         level: 'info',
-        message: expect.stringContaining('Successfully queued bulk refresh job'),
+        message: expect.stringContaining(
+          'Successfully queued bulk refresh job',
+        ),
       });
     });
 
@@ -184,7 +185,6 @@ describe('MembersConsumer', () => {
         },
       });
     });
-
   });
 
   describe('handleMemberRefresh', () => {
@@ -235,7 +235,9 @@ describe('MembersConsumer', () => {
         new Error('Network error'),
       );
 
-      await expect(consumer.handleMemberRefresh(payload)).resolves.not.toThrow();
+      await expect(
+        consumer.handleMemberRefresh(payload),
+      ).resolves.not.toThrow();
     });
   });
 
