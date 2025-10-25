@@ -2,9 +2,11 @@
 
 import { chalk } from "zx";
 import { env } from "./commands/env/index.js";
+import { seedCommand } from "./commands/seed/index.js";
 
 const COMMANDS = {
   env,
+  seed: seedCommand,
 } as const;
 
 const CLI_VERSION = "1.0.0";
@@ -18,10 +20,13 @@ ${chalk.bold("Usage:")}
 
 ${chalk.bold("Commands:")}
   env         Environment management (generate .env files)
+  seed        Database seeding (scrape data, generate mocks, populate DB)
 
 ${chalk.bold("Examples:")}
   pnpm env generate              # Generate all .env files
   pnpm env generate --help       # Show help for specific command
+  pnpm seed setup                # Complete database setup
+  pnpm seed --help               # Show seed command help
 
 ${chalk.bold("Global Options:")}
   -h, --help                     Show this help message
@@ -35,17 +40,26 @@ ${chalk.bold("Documentation:")}
 const main = async (): Promise<void> => {
   const args = process.argv.slice(2);
 
-  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
-    displayMainHelp();
-    return;
-  }
-
+  // Show version
   if (args.includes("--version") || args.includes("-v")) {
     console.log(`v${CLI_VERSION}`);
     return;
   }
 
+  // Show main help only if no command provided
+  if (args.length === 0) {
+    displayMainHelp();
+    return;
+  }
+
   const [command, ...commandArgs] = args;
+
+  // Show main help if help flag without command
+  if ((command === "--help" || command === "-h") && commandArgs.length === 0) {
+    displayMainHelp();
+    return;
+  }
+
   const commandHandler = COMMANDS[command as keyof typeof COMMANDS];
 
   if (!commandHandler) {
