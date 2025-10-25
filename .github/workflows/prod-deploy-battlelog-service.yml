@@ -1,4 +1,6 @@
 name: Deploy Battlelog Service to prod
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
