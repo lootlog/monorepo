@@ -61,7 +61,7 @@
       "cache": false,
       "interactive": false
     },
-    "configure:env": {
+    "env:generate": {
       "cache": false,
       "interactive": true
     },

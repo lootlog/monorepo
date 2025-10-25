@@ -1,85 +1,63 @@
-import { readFileSync } from "fs";
-import { createEnvFile } from "./create-env-file.js";
+#!/usr/bin/env node
 
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-import { replaceEnvWithValues } from "./replace-env-with-values.js";
+import { chalk } from "zx";
+import { env } from "./commands/env/index.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const COMMANDS = {
+  env,
+} as const;
 
-const BASE_PATH = "/../../..";
+const CLI_VERSION = "1.0.0";
 
-const SERVICES_SAMPLE_ENV_PATH = `${BASE_PATH}/.env.sample`;
-const SERVICE_ENV_PATH = `${BASE_PATH}/.env`;
+const displayMainHelp = (): void => {
+  console.log(`
+${chalk.bold.blue("Lootlog CLI")} ${chalk.gray(`v${CLI_VERSION}`)}
 
-const AUTH_SERVICE_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/auth/.env.sample`;
-const AUTH_SERVICE_ENV_PATH = `${BASE_PATH}/apps/auth/.env`;
+${chalk.bold("Usage:")}
+  pnpm <command> [subcommand] [options]
 
-const SEARCH_SERVICE_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/search/.env.sample`;
-const SEARCH_SERVICE_ENV_PATH = `${BASE_PATH}/apps/search/.env`;
+${chalk.bold("Commands:")}
+  env         Environment management (generate .env files)
 
-const API_SERVICE_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/api/.env.sample`;
-const API_SERVICE_ENV_PATH = `${BASE_PATH}/apps/api/.env`;
+${chalk.bold("Examples:")}
+  pnpm env generate              # Generate all .env files
+  pnpm env generate --help       # Show help for specific command
 
-const WEB_CLIENT_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/web/.env.sample`;
-const WEB_CLIENT_ENV_PATH = `${BASE_PATH}/apps/web/.env`;
+${chalk.bold("Global Options:")}
+  -h, --help                     Show this help message
+  -v, --version                  Show CLI version
 
-const GAME_CLIENT_SAMPLE_ENV_PATH = `${BASE_PATH}/apps/game-client/.env.sample`;
-const GAME_CLIENT_ENV_PATH = `${BASE_PATH}/apps/game-client/.env`;
+${chalk.bold("Documentation:")}
+  For more information, see packages/cli/README.md
+  `);
+};
 
-const servicesSampleEnv = readFileSync(
-  __dirname + SERVICES_SAMPLE_ENV_PATH,
-  "utf-8"
-);
-const authServiceSampleEnv = readFileSync(
-  __dirname + AUTH_SERVICE_SAMPLE_ENV_PATH,
-  "utf-8"
-);
-const searchServiceSampleEnv = readFileSync(
-  __dirname + SEARCH_SERVICE_SAMPLE_ENV_PATH,
-  "utf-8"
-);
-const apiServiceSampleEnv = readFileSync(
-  __dirname + API_SERVICE_SAMPLE_ENV_PATH,
-  "utf-8"
-);
-const webClientSampleEnv = readFileSync(
-  __dirname + WEB_CLIENT_SAMPLE_ENV_PATH,
-  "utf-8"
-);
-const gameClientSampleEnv = readFileSync(
-  __dirname + GAME_CLIENT_SAMPLE_ENV_PATH,
-  "utf-8"
-);
+const main = async (): Promise<void> => {
+  const args = process.argv.slice(2);
 
-console.log("\n");
-console.log("Creating env files for Lootlog Base Services...");
-const servicesEnv = await replaceEnvWithValues(servicesSampleEnv);
-await createEnvFile(__dirname + SERVICE_ENV_PATH, servicesEnv);
+  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
+    displayMainHelp();
+    return;
+  }
 
-console.log("\n");
-console.log("Creating env files for Web Client...");
-const webClientEnv = await replaceEnvWithValues(webClientSampleEnv);
-await createEnvFile(__dirname + WEB_CLIENT_ENV_PATH, webClientEnv);
+  if (args.includes("--version") || args.includes("-v")) {
+    console.log(`v${CLI_VERSION}`);
+    return;
+  }
 
-console.log("\n");
-console.log("Creating env files for Game Client...");
-const gameClientEnv = await replaceEnvWithValues(gameClientSampleEnv);
-await createEnvFile(__dirname + GAME_CLIENT_ENV_PATH, gameClientEnv);
+  const [command, ...commandArgs] = args;
+  const commandHandler = COMMANDS[command as keyof typeof COMMANDS];
 
-console.log("\n");
-console.log("Creating env files for Api Service...");
-const apiServiceEnv = await replaceEnvWithValues(apiServiceSampleEnv);
-await createEnvFile(__dirname + API_SERVICE_ENV_PATH, apiServiceEnv);
+  if (!commandHandler) {
+    console.error(chalk.red(`\n❌ Unknown command: ${command}\n`));
+    console.log(chalk.gray(`Run 'pnpm --help' to see available commands.\n`));
+    process.exit(1);
+  }
 
-console.log("\n");
-console.log("Creating env files for Search Service...");
-const searchServiceEnv = await replaceEnvWithValues(searchServiceSampleEnv);
-await createEnvFile(__dirname + SEARCH_SERVICE_ENV_PATH, searchServiceEnv);
+  await commandHandler(commandArgs);
+};
 
-console.log("\n");
-console.log("Creating env files for Auth Service...");
-const authServiceEnv = await replaceEnvWithValues(authServiceSampleEnv);
-
-await createEnvFile(__dirname + AUTH_SERVICE_ENV_PATH, authServiceEnv);
+main().catch((error) => {
+  console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
+  process.exit(1);
+});

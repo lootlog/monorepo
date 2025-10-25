@@ -17,7 +17,7 @@
     "battlelog:studio": "turbo run battlelog:studio",
     "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
     "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
-    "configure:env": "turbo run configure:env",
+    "env:generate": "turbo run env:generate",
     "build:game-client": "turbo run build:game-client",
     "copy-entrypoint": "turbo run copy-entrypoint"
   },
@@ -46,6 +46,7 @@
       "@tailwindcss/oxide",
       "core-js-pure",
       "esbuild",
+      "msgpackr-extract",
       "necord",
       "prisma",
       "sharp",
