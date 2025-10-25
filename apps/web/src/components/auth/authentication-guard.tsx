@@ -10,6 +10,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import { useEffect } from "react";
 
 type Props = {
   children: React.ReactNode;
@@ -19,16 +20,22 @@ export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
   const { data: session, isPending } = useSession();
   const { data: scopes, isPending: isScopesPending } = useAuthScopes();
 
+  useEffect(() => {
+    if (!isPending && !session) {
+      window.location.href = "/";
+    }
+  }, [isPending, session]);
+
   if (isPending || isScopesPending) {
     return <FullScreenLoading />;
   }
 
   if (!session) {
-    window.location.href = "/";
+    return <FullScreenLoading />;
   }
 
   const hasRequiredScopes = REQUIRED_SCOPES.every((scope) =>
-    scopes?.includes(scope)
+    scopes?.includes(scope),
   );
 
   const handleLoginAction = async () => {

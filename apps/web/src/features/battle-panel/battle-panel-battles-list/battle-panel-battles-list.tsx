@@ -1,26 +1,9 @@
 import { BattlesList } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list";
-import {
-  parseAsInteger,
-  parseAsString,
-  parseAsBoolean,
-  parseAsStringLiteral,
-  parseAsArrayOf,
-  useQueryStates,
-} from "nuqs";
+import { useQueryStates } from "nuqs";
 import type { BattleFilters } from "./components/battles-list-filters";
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
-
-// Define query state parsers
-export const battleQueryParsers = {
-  page: parseAsInteger.withDefault(1),
-  world: parseAsString,
-  type: parseAsArrayOf(parseAsStringLiteral(["solo", "group"] as const)),
-  search: parseAsString,
-  result: parseAsArrayOf(parseAsStringLiteral(["won", "lost", "flee"] as const)),
-  ph: parseAsBoolean,
-  characterId: parseAsArrayOf(parseAsString),
-};
+import { battleQueryParsers } from "./battle-query-parsers";
 
 export const BattlePanelBattlesList = () => {
   const [queryState, setQueryState] = useQueryStates(battleQueryParsers);

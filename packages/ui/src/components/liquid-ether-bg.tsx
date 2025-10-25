@@ -91,7 +91,7 @@ export default function LiquidEther({
     function makePaletteTexture(stops: string[]): THREE.DataTexture {
       let arr: string[];
       if (Array.isArray(stops) && stops.length > 0) {
-        arr = stops.length === 1 ? [stops[0], stops[0]] : stops;
+        arr = stops.length === 1 ? [stops[0]!, stops[0]!] : stops;
       } else {
         arr = ["#ffffff", "#ffffff"];
       }
@@ -665,10 +665,10 @@ export default function LiquidEther({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       constructor(simProps: any) {
         super({ output: simProps.dst });
-        this.init(simProps);
+        this.initialize(simProps);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      init(simProps: any) {
+      initialize(simProps: any) {
         super.init();
         const mouseG = new THREE.PlaneGeometry(1, 1);
         const mouseM = new THREE.RawShaderMaterial({
@@ -1224,7 +1224,6 @@ export default function LiquidEther({
       (entries) => {
         const entry = entries[0];
         if (!entry) return;
-        // @ts-expect-error - entry is checked above
         const isVisible = entry.isIntersecting && entry.intersectionRatio > 0;
         isVisibleRef.current = isVisible;
         if (!webglRef.current) return;
