@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+echo "🚀 Running pre-commit checks..."
+
+echo "\n📝 Formatting staged files..."
+pnpm lint-staged
+
+echo "\n🔍 Linting changed packages..."
+pnpm turbo run lint --filter=[HEAD]
+
+echo "\n🧪 Running tests for changed packages..."
+pnpm turbo run test --filter=[HEAD]
+
+echo "\n✅ All pre-commit checks passed!"

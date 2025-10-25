@@ -9,10 +9,7 @@ import { Logger } from 'winston';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { createHash } from 'crypto';
 import { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
-import {
-  DEFAULT_PAGE_LIMIT,
-  MAX_PAGE_LIMIT,
-} from './config/pagination';
+import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from './config/pagination';
 import { ErrorKey } from './enum/error-key.enum';
 import { PlayersService } from 'src/players/players.service';
 import { NpcsService } from 'src/npcs/npcs.service';
@@ -132,9 +129,7 @@ export class LootsService {
       .filter(Boolean);
 
     if (!loot && submissionData.length === 0) {
-      throw new BadRequestException(
-        ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT,
-      );
+      throw new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT);
     }
 
     if (!loot && submissionData.length > 0) {
@@ -330,7 +325,8 @@ export class LootsService {
     if (Object.keys(mappedLootShare).length < parsedLoot.length) {
       this.logger.log({
         level: 'warn',
-        message: 'Loot share does not include all items, some items may not be shared',
+        message:
+          'Loot share does not include all items, some items may not be shared',
         lootId,
         lootShareMsg: data.msg,
         mappedItemsCount: Object.keys(mappedLootShare).length,
@@ -667,7 +663,7 @@ export class LootsService {
   }
 
   getLootShareFromMsg(msg: string) {
-    let share = {};
+    const share = {};
     let match;
 
     while ((match = LOOT_SHARE_MSG_REGEX.exec(msg)) !== null) {

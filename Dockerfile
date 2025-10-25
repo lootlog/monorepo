@@ -48,7 +48,7 @@ LABEL org.opencontainers.image.title="Lootlog Auth Service"
 LABEL org.opencontainers.image.description="Authentication service with Discord OAuth and JWT"
 LABEL org.opencontainers.image.vendor="Lootlog"
 
-COPY --from=build --chown=nodejs:nodejs /prod/auth /prod/auth
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/auth /prod/auth
 WORKDIR /prod/auth
 
 USER nodejs
@@ -65,7 +65,7 @@ LABEL org.opencontainers.image.title="Lootlog Search Service"
 LABEL org.opencontainers.image.description="Meilisearch indexing service"
 LABEL org.opencontainers.image.vendor="Lootlog"
 
-COPY --from=build --chown=nodejs:nodejs /prod/search /prod/search
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/search /prod/search
 WORKDIR /prod/search
 
 USER nodejs
@@ -82,7 +82,7 @@ LABEL org.opencontainers.image.title="Lootlog API Service"
 LABEL org.opencontainers.image.description="Main API service for guilds, loots, timers, and NPCs"
 LABEL org.opencontainers.image.vendor="Lootlog"
 
-COPY --from=build --chown=nodejs:nodejs /prod/api /prod/api
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/api /prod/api
 WORKDIR /prod/api
 
 USER nodejs
@@ -99,7 +99,7 @@ LABEL org.opencontainers.image.title="Lootlog Discord Bot"
 LABEL org.opencontainers.image.description="Discord bot for guild notifications and commands"
 LABEL org.opencontainers.image.vendor="Lootlog"
 
-COPY --from=build --chown=nodejs:nodejs /prod/discord-bot /prod/discord-bot
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/discord-bot /prod/discord-bot
 WORKDIR /prod/discord-bot
 
 USER nodejs
@@ -116,7 +116,7 @@ LABEL org.opencontainers.image.title="Lootlog Gateway Service"
 LABEL org.opencontainers.image.description="Socket.IO gateway for real-time events"
 LABEL org.opencontainers.image.vendor="Lootlog"
 
-COPY --from=build --chown=nodejs:nodejs /prod/gateway /prod/gateway
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/gateway /prod/gateway
 WORKDIR /prod/gateway
 
 USER nodejs
@@ -133,7 +133,7 @@ LABEL org.opencontainers.image.title="Lootlog Battlelog Service"
 LABEL org.opencontainers.image.description="Battle statistics and warrior tracking service"
 LABEL org.opencontainers.image.vendor="Lootlog"
 
-COPY --from=build --chown=nodejs:nodejs /prod/battlelog-service /prod/battlelog-service
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/battlelog-service /prod/battlelog-service
 WORKDIR /prod/battlelog-service
 
 USER nodejs
