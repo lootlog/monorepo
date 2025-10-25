@@ -1,4 +1,6 @@
 name: Deploy Auth to dev
+permissions:
+  contents: read
 
 on:
   push:
