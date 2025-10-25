@@ -128,7 +128,7 @@ jobs:
         run: pnpm test --filter=@lootlog/api
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./apps/api/coverage/lcov.info
@@ -164,7 +164,7 @@ jobs:
         run: pnpm test --filter=@lootlog/auth
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./apps/auth/coverage/lcov.info
@@ -200,7 +200,7 @@ jobs:
         run: pnpm test --filter=@lootlog/gateway
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./apps/gateway/coverage/lcov.info
@@ -236,7 +236,7 @@ jobs:
         run: pnpm test --filter=@lootlog/discord-bot
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./apps/discord-bot/coverage/lcov.info
@@ -272,7 +272,7 @@ jobs:
         run: pnpm test --filter=@lootlog/search
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./apps/search/coverage/lcov.info
@@ -308,7 +308,7 @@ jobs:
         run: pnpm test --filter=@lootlog/battlelog-service
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./apps/battlelog-service/coverage/lcov.info
