@@ -861,13 +861,11 @@ export class BattleProcessor {
     if (hpBefore == null || hpBefore === hpAfter) return;
 
     const hpDrop = hpBefore - hpAfter;
-    if (hpDrop <= 0) return; // HP nie spadło (healing w tym samym move?)
+    if (hpDrop <= 0) return;
 
-    // maxHP = damage / (hpDrop / 100)
     const calculatedMaxHp = Math.round(damageReceived / (hpDrop / 100));
 
     if (calculatedMaxHp > 0 && calculatedMaxHp < 1000000) {
-      // Weź maksimum z dotychczas obliczonych wartości
       if (warrior.maxHp === 0 || calculatedMaxHp > warrior.maxHp) {
         warrior.maxHp = calculatedMaxHp;
       }

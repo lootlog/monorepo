@@ -1,13 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RolesController } from './roles.controller';
+import { RolesService } from './roles.service';
+import { AuthGuard } from 'src/shared/guards/auth.guard';
+import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 
 describe('RolesController', () => {
   let controller: RolesController;
 
+  const mockRolesService = {
+    getRolesByGuildId: jest.fn(),
+    updateRolePermissions: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RolesController],
-    }).compile();
+      providers: [
+        {
+          provide: RolesService,
+          useValue: mockRolesService,
+        },
+      ],
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(PermissionsGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<RolesController>(RolesController);
   });

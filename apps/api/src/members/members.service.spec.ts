@@ -8,10 +8,12 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { MembersService } from './members.service';
 import { PrismaService } from 'src/db/prisma.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { GuildsService } from 'src/guilds/guilds.service';
+import { RedisService } from 'src/lib/redis/redis.service';
 import { ErrorKey } from './enum/error-key.enum';
 import { RuntimeEnvironment } from 'src/types/runtime.types';
 import { ConfigKey } from 'src/config/config-key.enum';
@@ -109,14 +111,29 @@ describe('MembersService', () => {
       }),
     };
 
+    const mockLogger = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+    };
+
+    const mockRedisService = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
+        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
@@ -211,7 +228,12 @@ describe('MembersService', () => {
         staleWarning:
           'Using cached data due to Discord API rate limiting or errors',
       });
-      expect(service['logger'].warn).toHaveBeenCalled();
+      expect(service['logger'].log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'warn',
+          message: expect.stringContaining('Discord API returned null'),
+        }),
+      );
     });
 
     it('should deactivate member and return null when Discord returns NotFoundException', async () => {
@@ -244,9 +266,11 @@ describe('MembersService', () => {
       const result = await service.getGuildMemberById(options);
 
       expect(result).toBeNull();
-      expect(service['logger'].warn).toHaveBeenCalledWith(
-        'User authentication failed (token expired/invalid), deactivating member',
-        expect.any(Object),
+      expect(service['logger'].log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'warn',
+          message: 'User authentication failed (token expired/invalid), deactivating member',
+        }),
       );
     });
 
@@ -266,9 +290,11 @@ describe('MembersService', () => {
         isStale: true,
         staleWarning: 'Data may be outdated due to service issues',
       });
-      expect(service['logger'].warn).toHaveBeenCalledWith(
-        'Auth service unavailable, serving stale data',
-        expect.any(Object),
+      expect(service['logger'].log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'warn',
+          message: 'Auth service unavailable, serving stale data',
+        }),
       );
     });
 
@@ -299,7 +325,12 @@ describe('MembersService', () => {
         isStale: true,
         staleWarning: 'Using cached data due to API error',
       });
-      expect(service['logger'].error).toHaveBeenCalled();
+      expect(service['logger'].log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'error',
+          message: expect.stringContaining('Failed to fetch member from Discord'),
+        }),
+      );
     });
 
     it('should call getGuildById when refresh=true', async () => {
@@ -473,7 +504,12 @@ describe('MembersService', () => {
       await expect(service.createOrUpdateMember(memberData)).rejects.toThrow(
         error,
       );
-      expect(service['logger'].error).toHaveBeenCalled();
+      expect(service['logger'].log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'error',
+          message: expect.stringContaining('Failed to create/update member'),
+        }),
+      );
     });
   });
 
@@ -529,9 +565,10 @@ describe('MembersService', () => {
         where: { guildId: 'guild-123' },
         data: { active: false },
       });
-      expect(service['logger'].log).toHaveBeenCalledWith(
-        'Deactivated 5 members from guild guild-123',
-      );
+      expect(service['logger'].log).toHaveBeenCalledWith({
+        level: 'info',
+        message: 'Deactivated 5 members from guild guild-123',
+      });
     });
 
     it('should log error and rethrow on failure', async () => {
@@ -541,7 +578,12 @@ describe('MembersService', () => {
       await expect(
         service.deleteMembersByGuildId('guild-123'),
       ).rejects.toThrow(error);
-      expect(service['logger'].error).toHaveBeenCalled();
+      expect(service['logger'].log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'error',
+          message: expect.stringContaining('Failed to deactivate members'),
+        }),
+      );
     });
   });
 

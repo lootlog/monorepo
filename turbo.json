@@ -15,7 +15,7 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "api:generate", "battlelog:generate"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "env": ["GAME_CLIENT_URL"],
       "outputs": [
@@ -29,10 +29,27 @@
     "build:game-client": {},
     "copy-entrypoint": {},
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "**/*.ts",
+        "**/*.tsx",
+        ".eslintrc*",
+        "eslint.config.*"
+      ]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "**/*.ts",
+        "**/*.tsx",
+        "tsconfig.json"
+      ]
     },
     "dev": {
       "dependsOn": [],
@@ -66,8 +83,17 @@
       "interactive": true
     },
     "test": {
-      "dependsOn": ["^test"],
-      "cache": false
+      "dependsOn": ["^test", "api:generate", "battlelog:generate"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "test/**/*.ts",
+        "**/*.spec.ts",
+        "jest.config.*",
+        "vitest.config.*",
+        "tsconfig.json"
+      ]
     },
     "battlelog:migrate:dev": {
       "cache": false,

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { LootsService } from './loots.service';
 import { PlayersService } from '../players/players.service';
 import { NpcsService } from '../npcs/npcs.service';
@@ -11,14 +12,14 @@ import { CreateLootDto } from './dto/create-loot.dto';
 import { UpdateLootDto } from './dto/update-loot.dto';
 import { CreateCommentDto } from './dto/create-comment-dto';
 import { FetchLootsParamsDto } from './dto/fetch-loots-params.dto';
-import { 
-  ItemRarity, 
-  Profession, 
-  Permission, 
-  NpcType, 
+import {
+  ItemRarity,
+  Profession,
+  Permission,
+  NpcType,
   LootSource,
   Guild,
-  Role 
+  Role
 } from 'generated/client';
 import { ErrorKey } from './enum/error-key.enum';
 
@@ -143,6 +144,12 @@ describe('LootsService', () => {
       getLootlogCharacterConfig: jest.fn()
     };
 
+    const mockLogger = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LootsService,
@@ -151,7 +158,8 @@ describe('LootsService', () => {
         { provide: NpcsService, useValue: mockNpcsService },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: LootlogConfigService, useValue: mockLootlogConfigService },
-        { provide: UserLootlogConfigService, useValue: mockUserLootlogConfigService }
+        { provide: UserLootlogConfigService, useValue: mockUserLootlogConfigService },
+        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger }
       ],
     }).compile();
 
