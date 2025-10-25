@@ -93,7 +93,7 @@ async function seedGuilds(count: number) {
       }
 
       console.log(
-        `📍 Using development guild ID: ${devGuildId} with owner: ${devUserId}`,
+        `📍 Using development guild ID: ${devGuildId} with owner: [REDACTED]`,
       );
       guild.id = devGuildId;
       guild.ownerId = devUserId;
