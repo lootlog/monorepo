@@ -22,7 +22,6 @@ export class PaginationService {
   ): Promise<PaginationResult<any>> {
     const startTime = Date.now();
 
-    // Determine the best pagination strategy
     const strategy = await this.determinePaginationStrategy(where, options);
 
     let result: PaginationResult<any>;

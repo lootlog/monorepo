@@ -37,8 +37,6 @@ export class BotService {
       }),
     };
 
-    console.log(JSON.stringify(payload));
-
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_CREATE,

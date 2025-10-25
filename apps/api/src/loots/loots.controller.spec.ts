@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { plainToInstance } from 'class-transformer';
 import { LootsController } from './loots.controller';
 import { LootsService } from './loots.service';
 import { CreateLootDto } from './dto/create-loot.dto';
@@ -14,6 +15,8 @@ import { BadRequestException } from '@nestjs/common';
 import { ErrorKey } from './enum/error-key.enum';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+import { LootCommentEntity } from 'src/shared/entities/loot-comment.entity';
+import { LootEntity } from 'src/shared/entities/loot.entity';
 
 describe('LootsController', () => {
   let controller: LootsController;
@@ -220,7 +223,8 @@ describe('LootsController', () => {
         [mockRole],
         params,
       );
-      expect(result).toEqual(mockLoots);
+      const expectedResult = plainToInstance(LootEntity, mockLoots);
+      expect(result).toEqual(expectedResult);
     });
 
     it('should handle empty results', async () => {
@@ -274,7 +278,8 @@ describe('LootsController', () => {
         lootId,
         guildId: mockGuild.id,
       });
-      expect(result).toEqual(mockComments);
+      const expectedResult = plainToInstance(LootCommentEntity, mockComments);
+      expect(result).toEqual(expectedResult);
     });
   });
 
@@ -311,7 +316,8 @@ describe('LootsController', () => {
         body,
         guildId: mockGuild.id,
       });
-      expect(result).toEqual(mockComment);
+      const expectedResult = plainToInstance(LootCommentEntity, mockComment);
+      expect(result).toEqual(expectedResult);
     });
   });
 

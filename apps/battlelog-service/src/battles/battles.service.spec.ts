@@ -1,12 +1,58 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BattlesService } from './battles.service';
+import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
+import { R2Service } from 'src/shared/modules/r2/r2.service';
+import { PaginationService } from './services/pagination.service';
 
 describe('BattlesService', () => {
   let service: BattlesService;
 
   beforeEach(async () => {
+    const mockPrismaService = {
+      battle: {
+        findMany: jest.fn(),
+        count: jest.fn(),
+        findUniqueOrThrow: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      userCharacter: {
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
+        upsert: jest.fn(),
+      },
+      battleWarrior: {
+        findMany: jest.fn(),
+      },
+    };
+
+    const mockR2Service = {
+      uploadBattleData: jest.fn(),
+      getBattleData: jest.fn(),
+      deleteBattleData: jest.fn(),
+    };
+
+    const mockPaginationService = {
+      paginateBattles: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BattlesService],
+      providers: [
+        BattlesService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
+          provide: R2Service,
+          useValue: mockR2Service,
+        },
+        {
+          provide: PaginationService,
+          useValue: mockPaginationService,
+        },
+      ],
     }).compile();
 
     service = module.get<BattlesService>(BattlesService);
