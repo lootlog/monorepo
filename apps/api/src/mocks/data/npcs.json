@@ -2,7 +2,7 @@
   {
     "icon": "e2/st-puma.gif",
     "id": 146914,
-    "prof": "w",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -13,7 +13,7 @@
   {
     "icon": "e1/kotolak_lowca.gif",
     "id": 18984,
-    "prof": "w",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -24,7 +24,7 @@
   {
     "icon": "e2/demonszef.gif",
     "id": 222511,
-    "prof": "p",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -35,7 +35,7 @@
   {
     "icon": "e2/zbir-e2-zorg.gif",
     "id": 256372,
-    "prof": "h",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -45,8 +45,8 @@
   },
   {
     "icon": "e2/gobmag2.gif",
-    "id": 207678,
-    "prof": "h",
+    "id": 264342,
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -57,7 +57,7 @@
   {
     "icon": "e2/gobsamurai.gif",
     "id": 207860,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -68,7 +68,7 @@
   {
     "icon": "e2/dzik.gif",
     "id": 160694,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -79,7 +79,7 @@
   {
     "icon": "e2/tollok_shimger.gif",
     "id": 235051,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -90,7 +90,7 @@
   {
     "icon": "e2/zbir-szczet.gif",
     "id": 62345,
-    "prof": "w",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -101,7 +101,7 @@
   {
     "icon": "e2/glut_agar.gif",
     "id": 190472,
-    "prof": "w",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -112,7 +112,7 @@
   {
     "icon": "e2/razuglag.gif",
     "id": 16818,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -123,7 +123,7 @@
   {
     "icon": "e2/kobold07.gif",
     "id": 80749,
-    "prof": "w",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -134,7 +134,7 @@
   {
     "icon": "e2/zadlak-e2-owadzia-matka.gif",
     "id": 256374,
-    "prof": "b",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -145,7 +145,7 @@
   {
     "icon": "e2/gnoll11.gif",
     "id": 76767,
-    "prof": "h",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -156,7 +156,7 @@
   {
     "icon": "e2/gnoll12.gif",
     "id": 37049,
-    "prof": "b",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -167,7 +167,7 @@
   {
     "icon": "e2/kam_olbrzym-b.gif",
     "id": 268359,
-    "prof": "h",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -178,7 +178,7 @@
   {
     "icon": "e2/tollok_jask_utumatu.gif",
     "id": 271630,
-    "prof": "b",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -189,7 +189,7 @@
   {
     "icon": "e2/tollok_jask_atamatu.gif",
     "id": 271629,
-    "prof": "h",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -200,7 +200,7 @@
   {
     "icon": "e2/lisz_demilisze.gif",
     "id": 271623,
-    "prof": "p",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -211,7 +211,7 @@
   {
     "icon": "e2/nieu_mnich_grabarz.gif",
     "id": 271624,
-    "prof": "m",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -222,7 +222,7 @@
   {
     "icon": "e2/wlochacze_wielka_stopa.gif",
     "id": 271628,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -233,7 +233,7 @@
   {
     "icon": "e2/magaz_zbrojmistrz.gif",
     "id": 271625,
-    "prof": "p",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -244,7 +244,7 @@
   {
     "icon": "e2/dlawiciel5.gif",
     "id": 271626,
-    "prof": "w",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -255,7 +255,7 @@
   {
     "icon": "e2/nadzorczyni_krasnoludow.gif",
     "id": 278128,
-    "prof": "p",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -266,7 +266,7 @@
   {
     "icon": "e2/krasnolud_boss.gif",
     "id": 278129,
-    "prof": "p",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -277,7 +277,7 @@
   {
     "icon": "e2/lesne_widmo.gif",
     "id": 278190,
-    "prof": "b",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -299,7 +299,7 @@
   {
     "icon": "e2/goplana.gif",
     "id": 32613,
-    "prof": "b",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -310,7 +310,7 @@
   {
     "icon": "e2/gnom_figlid.gif",
     "id": 13324,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -321,7 +321,7 @@
   {
     "icon": "e2/cent-zyfryd.gif",
     "id": 15835,
-    "prof": "b",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -332,7 +332,7 @@
   {
     "icon": "e2/kambion.gif",
     "id": 198558,
-    "prof": "h",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -343,7 +343,7 @@
   {
     "icon": "e2/moloch-jertek.gif",
     "id": 45696,
-    "prof": "p",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -354,7 +354,7 @@
   {
     "icon": "e2/blotniaki_milosnik_rycerzy.gif",
     "id": 273386,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -365,7 +365,7 @@
   {
     "icon": "e2/blotniaki_milosnik_magii.gif",
     "id": 273385,
-    "prof": "w",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -376,7 +376,7 @@
   {
     "icon": "e2/blotniaki_milosnik_lowcow.gif",
     "id": 273384,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -387,7 +387,7 @@
   {
     "icon": "e2/alghul-czaszka-1a.gif",
     "id": 296118,
-    "prof": "m",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -398,7 +398,7 @@
   {
     "icon": "e2/mumia-ozirus.gif",
     "id": 296267,
-    "prof": "t",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -409,7 +409,7 @@
   {
     "icon": "e2/osmiornica-1b.gif",
     "id": 318402,
-    "prof": "m",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -419,19 +419,19 @@
   },
   {
     "icon": "e2/krab_big3.gif",
-    "id": 235569,
+    "id": 318548,
     "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 124,
     "name": "Krab pustelnik",
-    "location": "Wyspa Rem"
+    "location": "Opuszczony statek - pokład"
   },
   {
     "icon": "e2/ingotia_minotaur-7a.gif",
     "id": 319132,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -442,7 +442,7 @@
   {
     "icon": "e2/stworzyciel.gif",
     "id": 318758,
-    "prof": "h",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -453,7 +453,7 @@
   {
     "icon": "e2/magradit_ifryt.gif",
     "id": 296266,
-    "prof": "m",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -464,7 +464,7 @@
   {
     "icon": "e2/pirat01.gif",
     "id": 120472,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -475,7 +475,7 @@
   {
     "icon": "e2/pirat-2b.gif",
     "id": 296269,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -486,7 +486,7 @@
   {
     "icon": "e1/pirat5b.gif",
     "id": 296270,
-    "prof": "p",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -497,7 +497,7 @@
   {
     "icon": "e2/piaskowy_potwor-6a.gif",
     "id": 318760,
-    "prof": "b",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -517,20 +517,20 @@
     "location": "Kopalnia Żółtego Kruszcu p.2 - sala 2"
   },
   {
-    "icon": "e2/amuno.gif",
-    "id": 18614,
-    "prof": "t",
+    "icon": "e2/worundriel02.gif",
+    "id": 333058,
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 139,
-    "name": "Berserker Amuno",
-    "location": "Cenotaf Berserkerów p.2"
+    "name": "Mistrz Worundriel",
+    "location": "Kuźnia Worundriela - Komnata Żaru"
   },
   {
     "icon": "e2/goral-e2-wojt-fistula.gif",
     "id": 319133,
-    "prof": "p",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -541,7 +541,7 @@
   {
     "icon": "e2/goral-e2-tesciowa-rumcajsa.gif",
     "id": 319134,
-    "prof": "b",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -550,31 +550,42 @@
     "location": "Chata Teściowej"
   },
   {
-    "icon": "e2/worundriel02.gif",
-    "id": 231573,
-    "prof": "t",
+    "icon": "e2/amuno.gif",
+    "id": 333107,
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 148,
-    "name": "Mistrz Worundriel",
-    "location": "Kuźnia Worundriela p.7 - sala 4"
+    "name": "Berserker Amuno",
+    "location": "Cenotaf Berserkerów p.1 - sala 2"
   },
   {
-    "icon": "e2/mechgoblin4.gif",
-    "id": 18992,
-    "prof": "h",
+    "icon": "e2/fodug_zolash.gif",
+    "id": 333060,
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 150,
+    "name": "Fodug Zolash",
+    "location": "Mała Twierdza - sala główna"
+  },
+  {
+    "icon": "e2/goons_asterus-1a.gif",
+    "id": 333264,
+    "prof": "b",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 154,
     "name": "Goons Asterus",
-    "location": "Lokum Złych Goblinów"
+    "location": "Lokum Złych Goblinów - warsztat"
   },
   {
     "icon": "e2/tri_adariel.gif",
     "id": 154609,
-    "prof": "h",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -583,20 +594,9 @@
     "location": "Laboratorium Adariel"
   },
   {
-    "icon": "e2/duch_wladcy_kl.gif",
-    "id": 227363,
-    "prof": "p",
-    "hpp": 0,
-    "type": 2,
-    "wt": 20,
-    "lvl": 160,
-    "name": "Duch Władcy Klanów",
-    "location": "Nawiedzone Kazamaty p.4"
-  },
-  {
     "icon": "e2/orkczd.gif",
     "id": 320880,
-    "prof": "b",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -605,15 +605,37 @@
     "location": "Grota Orczej Hordy p.2 s.3"
   },
   {
-    "icon": "e2/ogr_drapak.gif",
-    "id": 72002,
+    "icon": "e2/r_orc_sheba.gif",
+    "id": 333108,
     "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
+    "lvl": 160,
+    "name": "Sheba Orcza Szamanka",
+    "location": "Grota Orczych Szamanów p.3 s.1"
+  },
+  {
+    "icon": "e2/r_orc_shakkru.gif",
+    "id": 228348,
+    "prof": "t",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 160,
+    "name": "Shakkru",
+    "location": "Grota Orczych Szamanów p.3 s.1"
+  },
+  {
+    "icon": "e2/duch_wladcy_kl.gif",
+    "id": 227363,
+    "prof": "m",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
     "lvl": 165,
-    "name": "Ogr Stalowy Pazur",
-    "location": "Ogrza Kawerna p.3"
+    "name": "Duch Władcy Klanów",
+    "location": "Nawiedzone Kazamaty p.4"
   },
   {
     "icon": "e2/praork_low_elita.gif",
@@ -629,7 +651,7 @@
   {
     "icon": "e2/praork_mag_elita.gif",
     "id": 227435,
-    "prof": "h",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -640,7 +662,7 @@
   {
     "icon": "e2/praork_woj_elita.gif",
     "id": 227434,
-    "prof": "p",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -651,7 +673,7 @@
   {
     "icon": "e2/prakrolowa.gif",
     "id": 227417,
-    "prof": "b",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -662,7 +684,7 @@
   {
     "icon": "e2/krolowa-sniegu.gif",
     "id": 320746,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -671,42 +693,53 @@
     "location": "Kryształowa Grota - Sala Smutku"
   },
   {
-    "icon": "e2/chryzoprenia.gif",
-    "id": 240606,
-    "prof": "p",
+    "icon": "e2/wrzosera-1b.gif",
+    "id": 344659,
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
-    "lvl": 178,
+    "lvl": 177,
+    "name": "Wrzosera",
+    "location": "Drzewo Dusz p.2"
+  },
+  {
+    "icon": "e2/chryzoprenia-1a.gif",
+    "id": 344657,
+    "prof": "w",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 177,
     "name": "Chryzoprenia",
     "location": "Drzewo Dusz p.2"
   },
   {
-    "icon": "e2/drzewoe2.gif",
-    "id": 240516,
-    "prof": "b",
+    "icon": "e2/cantedewia-1a.gif",
+    "id": 344679,
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
-    "lvl": 180,
-    "name": "Cerasus",
-    "location": "Grota Arbor s.2"
+    "lvl": 177,
+    "name": "Cantedewia",
+    "location": "Drzewo Dusz p.2"
   },
   {
-    "icon": "e2/forbol03.gif",
-    "id": 52950,
-    "prof": "p",
+    "icon": "e2/ogr_stalowy_pazur-1a.gif",
+    "id": 342484,
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 183,
-    "name": "Czempion Furboli",
-    "location": "Zalana Grota"
+    "name": "Ogr Stalowy Pazur",
+    "location": "Ogrza Kawerna p.4"
   },
   {
     "icon": "e2/thuz-patr1.gif",
     "id": 241643,
-    "prof": "w",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -715,9 +748,20 @@
     "location": "Krypty Bezsennych p.3"
   },
   {
+    "icon": "e2/zmutowana-roslinka.gif",
+    "id": 345546,
+    "prof": "w",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 189,
+    "name": "Pięknotka Mięsożerna",
+    "location": "Skarpa Trzech Słów"
+  },
+  {
     "icon": "e2/draki-breheret-1b.gif",
     "id": 58697,
-    "prof": "w",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -726,75 +770,86 @@
     "location": "Przysiółek Valmirów"
   },
   {
-    "icon": "e2/krolszczur.gif",
-    "id": 21217,
-    "prof": "h",
+    "icon": "e2/cerasus-1a.gif",
+    "id": 342481,
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 193,
-    "name": "Mysiur Myświórowy Król",
-    "location": "Szlamowe Kanały"
+    "name": "Cerasus",
+    "location": "Starodrzew Przedwiecznych p.2"
   },
   {
-    "icon": "e2/sekta-sadolia.gif",
-    "id": 234251,
-    "prof": "m",
-    "hpp": 0,
-    "type": 2,
-    "wt": 20,
-    "lvl": 197,
-    "name": "Sadolia Nadzorczyni Hurys",
-    "location": "Przerażające Sypialnie"
-  },
-  {
-    "icon": "e2/sekta-gothardus.gif",
-    "id": 234431,
-    "prof": "m",
-    "hpp": 0,
-    "type": 2,
-    "wt": 20,
-    "lvl": 200,
-    "name": "Gothardus Kolekcjoner Głów",
-    "location": "Tajemnicza Siedziba"
-  },
-  {
-    "icon": "e2/sekta-annaniel.gif",
-    "id": 234429,
-    "prof": "m",
-    "hpp": 0,
-    "type": 2,
-    "wt": 20,
-    "lvl": 200,
-    "name": "Annaniel Wysysacz Marzeń",
-    "location": "Tajemnicza Siedziba"
-  },
-  {
-    "icon": "e2/sekta-sataniel.gif",
-    "id": 234424,
-    "prof": "b",
-    "hpp": 0,
-    "type": 2,
-    "wt": 20,
-    "lvl": 200,
-    "name": "Sataniel Skrytobójca",
-    "location": "Sala Spowiedzi Konających"
-  },
-  {
-    "icon": "e2/sekta-bergermona.gif",
-    "id": 234361,
+    "icon": "e2/mysiur_myswiorowy_krol-1a.gif",
+    "id": 342482,
     "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
+    "lvl": 197,
+    "name": "Mysiur Myświórowy Król",
+    "location": "Szlamowe Kanały p.2 - sala 3"
+  },
+  {
+    "icon": "e2/sekta-sadolia.gif",
+    "id": 234251,
+    "prof": "t",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
     "lvl": 200,
+    "name": "Sadolia Nadzorczyni Hurys",
+    "location": "Przerażające Sypialnie"
+  },
+  {
+    "icon": "e2/sekta-sataniel.gif",
+    "id": 234424,
+    "prof": "t",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 204,
+    "name": "Sataniel Skrytobójca",
+    "location": "Sala Skaryfikacji Grzeszników"
+  },
+  {
+    "icon": "e2/sekta-bergermona.gif",
+    "id": 234361,
+    "prof": "b",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 204,
     "name": "Bergermona Krwawa Hrabina",
     "location": "Sale Rozdzierania"
   },
   {
+    "icon": "e2/sekta-annaniel.gif",
+    "id": 234429,
+    "prof": "b",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 204,
+    "name": "Annaniel Wysysacz Marzeń",
+    "location": "Tajemnicza Siedziba"
+  },
+  {
+    "icon": "e2/sekta-gothardus.gif",
+    "id": 234431,
+    "prof": "p",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 204,
+    "name": "Gothardus Kolekcjoner Głów",
+    "location": "Tajemnicza Siedziba"
+  },
+  {
     "icon": "e2/sekta-zufulus.gif",
     "id": 234421,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -803,53 +858,86 @@
     "location": "Sala Tysiąca Świec"
   },
   {
-    "icon": "e2/marlloth.gif",
-    "id": 82769,
-    "prof": "h",
+    "icon": "e2/forbol03.gif",
+    "id": 52950,
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
-    "lvl": 214,
-    "name": "Marlloth Malignitas",
-    "location": "Ołtarz Pajęczej Bogini"
-  },
-  {
-    "icon": "e2/maddok5.gif",
-    "id": 35654,
-    "prof": "b",
-    "hpp": 0,
-    "type": 2,
-    "wt": 20,
-    "lvl": 218,
-    "name": "Mocny Maddoks",
-    "location": "Grota Błotnej Magii"
+    "lvl": 210,
+    "name": "Czempion Furboli",
+    "location": "Zalana Grota"
   },
   {
     "icon": "e2/regina-e2.gif",
     "id": 25041,
+    "prof": "w",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 214,
+    "name": "Arachniregina Colosseus",
+    "location": "Arachnitopia p.6"
+  },
+  {
+    "icon": "e2/pajeczy16.gif",
+    "id": 25124,
+    "prof": "w",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 214,
+    "name": "Rycerz z za małym mieczem",
+    "location": "Arachnitopia p.6"
+  },
+  {
+    "icon": "e2/drow-aldiphrin-wladca.gif",
+    "id": 360457,
+    "prof": "h",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 218,
+    "name": "Al'diphrin Ilythirahel",
+    "location": "Erem Aldiphrina"
+  },
+  {
+    "icon": "e2/drider-marlloth.gif",
+    "id": 365024,
     "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 220,
-    "name": "Arachniregina Colosseus",
-    "location": "Arachnitopia p.5"
+    "name": "Marlloth Malignitas",
+    "location": "Ołtarz Pajęczej Bogini"
   },
   {
-    "icon": "e2/maddok_roz.gif",
-    "id": 127765,
-    "prof": "t",
+    "icon": "e2/arytodam_olbrzymi-1b.gif",
+    "id": 368335,
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
     "lvl": 226,
-    "name": "Pancerny Maddok",
-    "location": "Jaszczurze Korytarze p.3 - sala 3"
+    "name": "Arytodam olbrzymi",
+    "location": "Gnijące Topielisko"
+  },
+  {
+    "icon": "e2/mocny_maddoks-1b.gif",
+    "id": 368336,
+    "prof": "h",
+    "hpp": 0,
+    "type": 2,
+    "wt": 20,
+    "lvl": 231,
+    "name": "Mocny Maddoks",
+    "location": "Jaszczurze Korytarze p.2 - sala 5"
   },
   {
     "icon": "e2/silvanasus.gif",
     "id": 127763,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -871,7 +959,7 @@
   {
     "icon": "e2/bolita.gif",
     "id": 188257,
-    "prof": "h",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -882,7 +970,7 @@
   {
     "icon": "e2/maho-cuaitl.gif",
     "id": 53398,
-    "prof": "w",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -915,7 +1003,7 @@
   {
     "icon": "e2/quetzalcoatl.gif",
     "id": 54716,
-    "prof": "t",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -926,7 +1014,7 @@
   {
     "icon": "e2/chopesh2.gif",
     "id": 185508,
-    "prof": "p",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -937,7 +1025,7 @@
   {
     "icon": "e2/szkiel_set.gif",
     "id": 60538,
-    "prof": "w",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -948,7 +1036,7 @@
   {
     "icon": "e2/terrorzaur_pus.gif",
     "id": 207430,
-    "prof": "w",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -959,7 +1047,7 @@
   {
     "icon": "e2/bar_smoczyca.gif",
     "id": 115103,
-    "prof": "p",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -970,7 +1058,7 @@
   {
     "icon": "e2/bar_smokoszef.gif",
     "id": 115000,
-    "prof": "h",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -981,7 +1069,7 @@
   {
     "icon": "e2/nymphemonia.gif",
     "id": 240586,
-    "prof": "m",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -992,7 +1080,7 @@
   {
     "icon": "e2/wl-mrozu03.gif",
     "id": 63630,
-    "prof": "t",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -1003,7 +1091,7 @@
   {
     "icon": "e2/wl-mrozu02.gif",
     "id": 63629,
-    "prof": "m",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -1014,7 +1102,7 @@
   {
     "icon": "e2/wl-mrozu01.gif",
     "id": 63628,
-    "prof": "w",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 20,
@@ -1025,7 +1113,7 @@
   {
     "icon": "tyt/dziewicza_orlica.gif",
     "id": 49550,
-    "prof": "t",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1036,7 +1124,7 @@
   {
     "icon": "tyt/zabojczy_krolik.gif",
     "id": 47071,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1047,7 +1135,7 @@
   {
     "icon": "tyt/renegat_baulus.gif",
     "id": 51534,
-    "prof": "b",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1067,20 +1155,20 @@
     "location": "Wulkan Politraki - Piekielne Czeluście"
   },
   {
-    "icon": "tyt/titangoblin.gif",
-    "id": 52553,
-    "prof": "w",
+    "icon": "tyt/versus-zoons.gif",
+    "id": 333269,
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 100,
     "lvl": 154,
     "name": "Versus Zoons",
-    "location": "Goblińskie lokum - siedziba"
+    "location": "Lokum Złych Goblinów - pracownia"
   },
   {
     "icon": "tyt/lowcz-wspo-driady.gif",
     "id": 240524,
-    "prof": "b",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1091,7 +1179,7 @@
   {
     "icon": "tyt/przyz_demon_sekta.gif",
     "id": 237283,
-    "prof": "b",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1100,20 +1188,20 @@
     "location": "Komnata Krwawych Obrzędów"
   },
   {
-    "icon": "tyt/maddok-tytan.gif",
-    "id": 2395,
+    "icon": "tyt/maddok_magua-1b.gif",
+    "id": 368337,
     "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 100,
     "lvl": 231,
     "name": "Maddok Magua",
-    "location": "Dolina Potoku Śmierci"
+    "location": "Nora Jaszczurzych Koszmarów - źródło"
   },
   {
     "icon": "tyt/tezcatlipoca.gif",
     "id": 75381,
-    "prof": "b",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1124,7 +1212,7 @@
   {
     "icon": "tyt/hebrehoth_smokoludzie.gif",
     "id": 257037,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1135,7 +1223,7 @@
   {
     "icon": "tyt/ice_king.gif",
     "id": 4876,
-    "prof": "m",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 100,
@@ -1146,7 +1234,7 @@
   {
     "icon": "e1/st-wilczyca.gif",
     "id": 20469,
-    "prof": "h",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1157,7 +1245,7 @@
   {
     "icon": "e1/szkielet6.gif",
     "id": 11638,
-    "prof": "h",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1179,7 +1267,7 @@
   {
     "icon": "e1/dk-tigrios.gif",
     "id": 144842,
-    "prof": "m",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1190,7 +1278,7 @@
   {
     "icon": "e1/mrowka-kro01a.gif",
     "id": 83567,
-    "prof": "p",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1201,7 +1289,7 @@
   {
     "icon": "e1/apostata.gif",
     "id": 19091,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1212,7 +1300,7 @@
   {
     "icon": "e1/dzikus10.gif",
     "id": 207915,
-    "prof": "m",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1223,7 +1311,7 @@
   {
     "icon": "e1/dzikus9.gif",
     "id": 27681,
-    "prof": "w",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1234,7 +1322,7 @@
   {
     "icon": "e1/dzikus8.gif",
     "id": 27494,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1256,7 +1344,7 @@
   {
     "icon": "e1/zbir-herszt.gif",
     "id": 18990,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1267,7 +1355,7 @@
   {
     "icon": "e1/gobbloker.gif",
     "id": 207647,
-    "prof": "b",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1278,7 +1366,7 @@
   {
     "icon": "e1/puff-3b.gif",
     "id": 174801,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1289,7 +1377,7 @@
   {
     "icon": "e1/ghul-elita-a.gif",
     "id": 264317,
-    "prof": "t",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1300,7 +1388,7 @@
   {
     "icon": "e1/wilk_paszcza.gif",
     "id": 11501,
-    "prof": "p",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1311,7 +1399,7 @@
   {
     "icon": "e1/wilk_jagoda.gif",
     "id": 262386,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1333,7 +1421,7 @@
   {
     "icon": "e1/orkkrogor.gif",
     "id": 10774,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1353,15 +1441,15 @@
     "location": "Kopalnia Kapiącego Miodu p.1 - sala 2"
   },
   {
-    "icon": "e1/bazyl_mroku-a.gif",
-    "id": 260940,
-    "prof": "h",
+    "icon": "e1/bazyl-mroku-b.gif",
+    "id": 260939,
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
     "lvl": 63,
     "name": "Bazyliszek Mroku",
-    "location": "Pieczara Szaleńców - sala 4"
+    "location": "Pieczara Szaleńców - sala 2"
   },
   {
     "icon": "e1/gnoll19.gif",
@@ -1377,7 +1465,7 @@
   {
     "icon": "e1/mrowka-kro02a.gif",
     "id": 44064,
-    "prof": "m",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1399,7 +1487,7 @@
   {
     "icon": "e1/mnich_selder.gif",
     "id": 271620,
-    "prof": "p",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1410,7 +1498,7 @@
   {
     "icon": "e1/magaz_zarzadca.gif",
     "id": 271622,
-    "prof": "b",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1421,7 +1509,7 @@
   {
     "icon": "e1/magaz_lowca_skor.gif",
     "id": 271621,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1443,7 +1531,7 @@
   {
     "icon": "e1/nieum_mnich-7a.gif",
     "id": 271648,
-    "prof": "b",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1454,7 +1542,7 @@
   {
     "icon": "e1/krasnolud-11b.gif",
     "id": 278178,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1465,7 +1553,7 @@
   {
     "icon": "e1/krasnolud-10a.gif",
     "id": 278177,
-    "prof": "w",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1487,7 +1575,7 @@
   {
     "icon": "e1/darhoun-4b.gif",
     "id": 278181,
-    "prof": "t",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1509,7 +1597,7 @@
   {
     "icon": "e1/brzeginia.gif",
     "id": 278543,
-    "prof": "h",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1520,7 +1608,7 @@
   {
     "icon": "pot/ogniki05.gif",
     "id": 280909,
-    "prof": "p",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1531,7 +1619,7 @@
   {
     "icon": "e1/moloch-6a.gif",
     "id": 289564,
-    "prof": "h",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1542,7 +1630,7 @@
   {
     "icon": "e1/olbrzm_dwug-4a.gif",
     "id": 291608,
-    "prof": "w",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1553,7 +1641,7 @@
   {
     "icon": "e1/krzyz_pust_szkiel.gif",
     "id": 296120,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1564,7 +1652,7 @@
   {
     "icon": "e1/mumia-7b.gif",
     "id": 298864,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1586,7 +1674,7 @@
   {
     "icon": "e1/osmiornica-e1-a.gif",
     "id": 321235,
-    "prof": "w",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1597,7 +1685,7 @@
   {
     "icon": "e1/caneum_demiurg-3a.gif",
     "id": 320044,
-    "prof": "m",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1608,7 +1696,7 @@
   {
     "icon": "e1/caneum_demiurg-2a.gif",
     "id": 320040,
-    "prof": "w",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1619,7 +1707,7 @@
   {
     "icon": "e1/caneum_demiurg-1b.gif",
     "id": 320009,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1630,7 +1718,7 @@
   {
     "icon": "e1/magradit_marid_1b.gif",
     "id": 296557,
-    "prof": "w",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1641,7 +1729,7 @@
   {
     "icon": "e1/piaskowy_potwor-5b.gif",
     "id": 320526,
-    "prof": "w",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1650,9 +1738,20 @@
     "location": "Dolina Pustynnych Kręgów"
   },
   {
+    "icon": "hum/golem06.gif",
+    "id": 336892,
+    "prof": "t",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 139,
+    "name": "Golem władca lawy",
+    "location": "Kuźnia Worundriela p.2"
+  },
+  {
     "icon": "pot/wazka2b.gif",
     "id": 320385,
-    "prof": "p",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1663,7 +1762,7 @@
   {
     "icon": "pot/wazka1b.gif",
     "id": 320237,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1674,7 +1773,7 @@
   {
     "icon": "e1/goral-9b.gif",
     "id": 319188,
-    "prof": "p",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1685,7 +1784,7 @@
   {
     "icon": "e1/goral-11b.gif",
     "id": 319144,
-    "prof": "b",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1694,37 +1793,48 @@
     "location": "Wyjący Wąwóz"
   },
   {
-    "icon": "hum/golem06.gif",
-    "id": 231497,
-    "prof": "m",
-    "hpp": 0,
-    "type": 2,
-    "wt": 10,
-    "lvl": 147,
-    "name": "Golem władca lawy",
-    "location": "Kuźnia Worundriela p.7 - sala 3"
-  },
-  {
-    "icon": "pot/kielich1a.gif",
-    "id": 289863,
-    "prof": "t",
-    "hpp": 0,
-    "type": 2,
-    "wt": 10,
-    "lvl": 150,
-    "name": "Mięsówka tyczkowa",
-    "location": "Ukwiecona Skarpa"
-  },
-  {
-    "icon": "pot/mucholowka3a.gif",
-    "id": 289845,
+    "icon": "hum/grilull2.gif",
+    "id": 335492,
     "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
-    "lvl": 158,
-    "name": "Urwigłówka",
-    "location": "Ukwiecona Skarpa"
+    "lvl": 146,
+    "name": "Berserker Grilull",
+    "location": "Zaginiona Dolina"
+  },
+  {
+    "icon": "hum/okel1.gif",
+    "id": 335001,
+    "prof": "t",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 147,
+    "name": "Berserker Okel",
+    "location": "Opuszczona Twierdza"
+  },
+  {
+    "icon": "e1/duch_eterycz-7a.gif",
+    "id": 336198,
+    "prof": "b",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 152,
+    "name": "Biała Dama",
+    "location": "Sala Ukrytych Paktów"
+  },
+  {
+    "icon": "e1/duch_eterycz-8a.gif",
+    "id": 336702,
+    "prof": "p",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 152,
+    "name": "Upadły Lord",
+    "location": "Korytarze Milczących Intryg p.2 - sala 1"
   },
   {
     "icon": "hum/cz_e_ork1a.gif",
@@ -1740,29 +1850,18 @@
   {
     "icon": "e1/praork_duch3a.gif",
     "id": 227394,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
-    "lvl": 159,
+    "lvl": 164,
     "name": "Duch Pradawnego Egzekutora",
     "location": "Nawiedzone Kazamaty p.3 s.1"
   },
   {
-    "icon": "pot/kwiat2b.gif",
-    "id": 66625,
-    "prof": "w",
-    "hpp": 0,
-    "type": 2,
-    "wt": 10,
-    "lvl": 162,
-    "name": "Pąkówka zębata",
-    "location": "Las Zadumy"
-  },
-  {
     "icon": "e1/praork_woj_1a.gif",
     "id": 230481,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1773,7 +1872,7 @@
   {
     "icon": "e1/czarna_gwardia_1.gif",
     "id": 227461,
-    "prof": "p",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1782,152 +1881,174 @@
     "location": "Komnata Czarnej Perły"
   },
   {
+    "icon": "e1/ice_nymph-3b.gif",
+    "id": 347168,
+    "prof": "w",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 175,
+    "name": "Patronka szronu",
+    "location": "Kryształowa Grota p.1"
+  },
+  {
     "icon": "e1/driada_e1a.gif",
-    "id": 242153,
-    "prof": "m",
+    "id": 346331,
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
     "lvl": 177,
     "name": "Córa Dębu",
-    "location": "Głusza Świstu"
+    "location": "Ruiny Tass Zhil"
   },
   {
-    "icon": "e1/forbol15.gif",
-    "id": 243043,
-    "prof": "p",
+    "icon": "e1/ogr-6a.gif",
+    "id": 346255,
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
     "lvl": 182,
-    "name": "Potężny Furbol",
-    "location": "Terytorium Furii"
+    "name": "Zielone Karczycho",
+    "location": "Ogrza Kawerna p.3"
   },
   {
-    "icon": "hum/thuz-patr5-p.gif",
-    "id": 241589,
-    "prof": "m",
-    "hpp": 0,
-    "type": 2,
-    "wt": 10,
-    "lvl": 185,
-    "name": "Bezsenny patrycjusz",
-    "location": "Krypty Bezsennych p.2 s.2"
-  },
-  {
-    "icon": "e1/e-thuz-pat1-b.gif",
-    "id": 241546,
-    "prof": "p",
-    "hpp": 0,
-    "type": 2,
-    "wt": 10,
-    "lvl": 185,
-    "name": "Madame Pompadour",
-    "location": "Krypty Bezsennych p.1 s.2"
-  },
-  {
-    "icon": "e1/e-thuz-drak-2a.gif",
-    "id": 242537,
-    "prof": "m",
-    "hpp": 0,
-    "type": 2,
-    "wt": 10,
-    "lvl": 190,
-    "name": "Wilcza Zamieć",
-    "location": "Śnieżna Granica"
-  },
-  {
-    "icon": "e1/e-thuz-drak-1a.gif",
-    "id": 242420,
+    "icon": "pot/mucholowka4a.gif",
+    "id": 347502,
     "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 10,
-    "lvl": 190,
-    "name": "Aragoth Władca Śnieżyc",
-    "location": "Szczerba Samobójców"
+    "lvl": 188,
+    "name": "Urwigłówka trójgłowa",
+    "location": "Głuchy Las"
   },
   {
-    "icon": "hum/szczur_woj-a.gif",
-    "id": 237460,
+    "icon": "e1/forest_monster-6b.gif",
+    "id": 347836,
     "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
     "lvl": 192,
-    "name": "Myświór Byku",
-    "location": "Kanały Nithal"
+    "name": "Ściółkowe monstrum",
+    "location": "Zbocze Starych Bogów"
   },
   {
-    "icon": "hum/sekta-hurysa1a.gif",
-    "id": 234176,
+    "icon": "e1/myswior-9a.gif",
+    "id": 346920,
     "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
     "lvl": 197,
-    "name": "Hurysa Achajeta",
-    "location": "Mroczne Komnaty"
+    "name": "Myświór Byku",
+    "location": "Kanały Nithal p.1 - sala 3"
   },
   {
-    "icon": "hum/sekta-wdowiec1b.gif",
-    "id": 234897,
-    "prof": "p",
+    "icon": "hum/sekta-hurysa1a.gif",
+    "id": 234176,
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
     "lvl": 200,
-    "name": "Czarny Wdowiec",
-    "location": "Lochy Kultu"
+    "name": "Hurysa Achajeta",
+    "location": "Mroczne Komnaty"
   },
   {
-    "icon": "hum/sekta-bractwo1a.gif",
-    "id": 234564,
-    "prof": "h",
+    "icon": "hum/sekta-wdowiec1a.gif",
+    "id": 234897,
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
     "lvl": 205,
-    "name": "Demoniczny Strażnik",
-    "location": "Sala Tysiąca Świec"
+    "name": "Czarny Wdowiec",
+    "location": "Lochy Kultu"
   },
   {
-    "icon": "hum/maddok2.gif",
-    "id": 36500,
-    "prof": "b",
-    "hpp": 0,
-    "type": 2,
-    "wt": 10,
-    "lvl": 218,
-    "name": "Strażnik Maddoków",
-    "location": "Głuchy Las"
-  },
-  {
-    "icon": "e1/madbagna_1.gif",
-    "id": 228399,
+    "icon": "e1/forbol15.gif",
+    "id": 243043,
     "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 10,
-    "lvl": 227,
-    "name": "Anurak Rechotliwy",
-    "location": "Grzęzawisko Rozpaczy"
+    "lvl": 209,
+    "name": "Potężny Furbol",
+    "location": "Terytorium Furii"
   },
   {
-    "icon": "e1/madbagna_5a.gif",
-    "id": 110956,
-    "prof": "b",
+    "icon": "e1/arachn_pajak-11a.gif",
+    "id": 362553,
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
-    "lvl": 230,
-    "name": "Pantherania Rzeczna",
-    "location": "Bagna Umarłych"
+    "lvl": 213,
+    "name": "Phoneutria",
+    "location": "Otchłań Pajęczych Sieci"
+  },
+  {
+    "icon": "hum/drow-mez08a.gif",
+    "id": 361898,
+    "prof": "w",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 217,
+    "name": "Wyznawca pajęczej bogini",
+    "location": "Porzucone Noiridum p.3 - sala 2"
+  },
+  {
+    "icon": "e1/drider-e-3a.gif",
+    "id": 362257,
+    "prof": "p",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 220,
+    "name": "Wysłanniczka matrony",
+    "location": "Zamierzchłe Arterie p.3"
+  },
+  {
+    "icon": "e1/bagna_zaba-2a.gif",
+    "id": 368600,
+    "prof": "p",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 225,
+    "name": "Yaramaja krwiopijna",
+    "location": "Urwisko Vapora"
+  },
+  {
+    "icon": "e1/bagna_krokodyl-1a.gif",
+    "id": 368552,
+    "prof": "t",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 225,
+    "name": "Krokozaur jasnobrzuchy",
+    "location": "Zatrute Torfowiska"
+  },
+  {
+    "icon": "e1/maddok-7b.gif",
+    "id": 369986,
+    "prof": "h",
+    "hpp": 0,
+    "type": 2,
+    "wt": 10,
+    "lvl": 229,
+    "name": "Pancerny maddok",
+    "location": "Dolina Potoku Śmierci"
   },
   {
     "icon": "e1/e236_dendro-a.gif",
     "id": 221029,
-    "prof": "m",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1938,7 +2059,7 @@
   {
     "icon": "e1/mahoptek9-b.gif",
     "id": 221355,
-    "prof": "m",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1949,7 +2070,7 @@
   {
     "icon": "e1/mahoptek8-a.gif",
     "id": 220487,
-    "prof": "m",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1960,7 +2081,7 @@
   {
     "icon": "e2/drakosep_pus.gif",
     "id": 207942,
-    "prof": "p",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1982,7 +2103,7 @@
   {
     "icon": "e1/hamadriada_e1-a.gif",
     "id": 240380,
-    "prof": "t",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -1993,7 +2114,7 @@
   {
     "icon": "e1/hamadriada_e2-b.gif",
     "id": 240249,
-    "prof": "p",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 10,
@@ -2004,71 +2125,72 @@
   {
     "icon": "her/domina.gif",
     "id": 81268,
-    "prof": "b",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 253,
+    "lvl": 258,
     "name": "Domina Ecclesiae"
   },
   {
     "icon": "her/zulek.gif",
     "id": 19789,
-    "prof": "t",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 80,
     "lvl": 25,
-    "name": "Mietek Żul"
+    "name": "Mietek Żul",
+    "location": "Fort Eder"
   },
   {
     "icon": "her/bardzozlypatryk.gif",
     "id": 17405,
-    "prof": "b",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 103,
+    "lvl": 149,
     "name": "Mroczny Patryk"
   },
   {
     "icon": "her/gnom_msciciel.gif",
     "id": 17439,
-    "prof": "b",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 268,
+    "lvl": 74,
     "name": "Karmazynowy Mściciel"
   },
   {
     "icon": "her/zlodziej.gif",
     "id": 40601,
-    "prof": "w",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 190,
+    "lvl": 127,
     "name": "Złodziej"
   },
   {
     "icon": "her/mnich-zly2.gif",
     "id": 17402,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 224,
+    "lvl": 202,
     "name": "Zły Przewodnik"
   },
   {
     "icon": "her/opetanypaladyn02.gif",
     "id": 17494,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 64,
+    "lvl": 294,
     "name": "Opętany Paladyn"
   },
   {
@@ -2078,37 +2200,37 @@
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 216,
+    "lvl": 201,
     "name": "Piekielny Kościej"
   },
   {
     "icon": "her/koziec_maciciel_sciezek.gif",
     "id": 278168,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 170,
+    "lvl": 204,
     "name": "Koziec Mąciciel Ścieżek"
   },
   {
     "icon": "her/kochanka-nocy.gif",
     "id": 17438,
-    "prof": "b",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 49,
+    "lvl": 200,
     "name": "Kochanka Nocy"
   },
   {
     "icon": "her/ksiaze-kasim.gif",
     "id": 27031,
-    "prof": "b",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 5,
+    "lvl": 174,
     "name": "Książe Kasim"
   },
   {
@@ -2118,127 +2240,137 @@
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 5,
+    "lvl": 43,
     "name": "Święty Braciszek"
   },
   {
     "icon": "her/szkielet_pirata.gif",
     "id": 322260,
-    "prof": "m",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 118,
+    "lvl": 224,
     "name": "Złoty Roger"
   },
   {
     "icon": "her/baca-bez-lowiec.gif",
     "id": 322261,
-    "prof": "t",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 192,
+    "lvl": 198,
     "name": "Baca bez Łowiec"
   },
   {
-    "icon": "her/tri_atalia.gif",
+    "icon": "her/czarujaca-atalia.gif",
     "id": 30003,
-    "prof": "p",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 185,
+    "lvl": 273,
     "name": "Czarująca Atalia"
   },
   {
     "icon": "her/oblakany_ac1dae9d.gif",
     "id": 322262,
-    "prof": "m",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 161,
+    "lvl": 92,
     "name": "Obłąkany Łowca Orków"
   },
   {
     "icon": "her/lichwiarz_grauhaz.gif",
     "id": 322263,
-    "prof": "p",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 33,
+    "lvl": 223,
     "name": "Lichwiarz Grauhaz"
   },
   {
     "icon": "her/viv_nandin_i3bd1.gif",
     "id": 60397,
+    "prof": "p",
+    "hpp": 0,
+    "type": 2,
+    "wt": 80,
+    "lvl": 244,
+    "name": "Viviana Nandin"
+  },
+  {
+    "icon": "her/przeraza.gif",
+    "id": 361809,
     "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 196,
-    "name": "Viviana Nandin"
-  },
-  {
-    "icon": "her/mulher_ma.gif",
-    "id": 83103,
-    "prof": "p",
-    "hpp": 0,
-    "type": 2,
-    "wt": 80,
-    "lvl": 150,
-    "name": "Mulher Ma"
+    "lvl": 24,
+    "name": "Przeraza"
   },
   {
     "icon": "her/sekta_demon_cz_s.gif",
     "id": 21034,
-    "prof": "b",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 17,
+    "lvl": 21,
     "name": "Demonis Pan Nicości"
+  },
+  {
+    "icon": "her/mulher_ma.gif",
+    "id": 364063,
+    "prof": "m",
+    "hpp": 0,
+    "type": 2,
+    "wt": 80,
+    "lvl": 156,
+    "name": "Mulher Ma"
   },
   {
     "icon": "her/joziniec_bagienny.gif",
     "id": 109046,
-    "prof": "p",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 62,
+    "lvl": 149,
     "name": "Vapor Veneno"
   },
   {
     "icon": "her/zwierz_kniei.gif",
     "id": 127764,
-    "prof": "h",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 285,
+    "lvl": 250,
     "name": "Dęborożec"
   },
   {
     "icon": "her/tep_35ecb966.gif",
     "id": 100347,
-    "prof": "w",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 66,
+    "lvl": 32,
     "name": "Tepeyollotl"
   },
   {
     "icon": "her/negthotep.gif",
     "id": 189044,
-    "prof": "h",
+    "prof": "m",
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 100,
+    "lvl": 107,
     "name": "Negthotep Czarny Kapłan"
   },
   {
@@ -2248,13 +2380,13 @@
     "hpp": 0,
     "type": 2,
     "wt": 80,
-    "lvl": 72,
+    "lvl": 268,
     "name": "Młody Smok"
   },
   {
     "icon": "kol/mamlambo_final2.gif",
     "id": 116743,
-    "prof": "b",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 90,
@@ -2276,7 +2408,7 @@
   {
     "icon": "kol/soploreki.gif",
     "id": 324458,
-    "prof": "m",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 90,
@@ -2298,7 +2430,7 @@
   {
     "icon": "kol/kolos-wazka.gif",
     "id": 324467,
-    "prof": "p",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 90,
@@ -2309,7 +2441,7 @@
   {
     "icon": "kol/hydrokora.gif",
     "id": 160354,
-    "prof": "m",
+    "prof": "t",
     "hpp": 0,
     "type": 2,
     "wt": 90,
@@ -2320,29 +2452,29 @@
   {
     "icon": "kol/kolkrucz.gif",
     "id": 169043,
-    "prof": "b",
+    "prof": "h",
     "hpp": 0,
     "type": 2,
     "wt": 90,
-    "lvl": 198,
+    "lvl": 190,
     "name": "Lulukav",
     "location": "Grobowiec Przeklętego Krakania - sala"
   },
   {
     "icon": "kol/kolos-pajak.gif",
     "id": 172099,
-    "prof": "h",
+    "prof": "p",
     "hpp": 0,
     "type": 2,
     "wt": 90,
-    "lvl": 225,
+    "lvl": 213,
     "name": "Arachin Podstępny",
     "location": "Grota Przebiegłego Tkacza - sala"
   },
   {
     "icon": "kol/kolos-dendro.gif",
     "id": 173652,
-    "prof": "m",
+    "prof": "w",
     "hpp": 0,
     "type": 2,
     "wt": 90,
@@ -2353,7 +2485,7 @@
   {
     "icon": "kol/kolos-drakolisz.gif",
     "id": 173890,
-    "prof": "t",
+    "prof": "b",
     "hpp": 0,
     "type": 2,
     "wt": 90,

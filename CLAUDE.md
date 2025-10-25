@@ -509,3 +509,5 @@ git log infra/k8s/prod/api/kustomization.yml
 - `apps/*/package.json` - Per-app scripts and dependencies
 - `apps/api/prisma/schema.prisma` - Main database schema
 - `apps/battlelog-service/prisma/schema.prisma` - Battlelog database schema
+- Dont use memo or useMemo, because its already handled by react compiler.
+- Avoid extensive comments.
