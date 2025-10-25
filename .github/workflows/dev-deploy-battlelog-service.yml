@@ -1,4 +1,6 @@
 name: Deploy Battlelog Service to dev
+permissions:
+  contents: read
 
 on:
   push:
