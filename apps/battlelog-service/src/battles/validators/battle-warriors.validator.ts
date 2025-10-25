@@ -7,14 +7,14 @@ import {
 import { CreateBattleFightEventWarriorDto } from 'src/battles/dto/create-battle.dto';
 
 export function ValidateWarriorsRecord(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'validateWarriorsRecord',
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        async validate(value: any, args: ValidationArguments) {
+        async validate(value: any) {
           if (!value || typeof value !== 'object') {
             return false;
           }

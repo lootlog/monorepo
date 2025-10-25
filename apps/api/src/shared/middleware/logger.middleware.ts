@@ -10,7 +10,7 @@ export class LoggerMiddleware implements NestMiddleware {
   ) {}
 
   use(req: FastifyRequest['raw'], res: FastifyReply['raw'], next: () => void) {
-    // @ts-ignore
+    // @ts-expect-error - FastifyRequest['raw'] doesn't have method and originalUrl in types
     const { method, originalUrl } = req;
     const requestStartTime = new Date().getTime();
 

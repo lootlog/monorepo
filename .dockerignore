@@ -1,11 +1,77 @@
+# Dependencies
 **/node_modules
 node_modules
+
+# Git
 **/.git
 .git
 **/.gitignore
 .gitignore
+
+# Documentation
 *.md
+!README.md
+
+# Build outputs
 **/dist
 dist
-
+**/build
+build
 **/generated
+generated
+**/.next
+.next
+**/.turbo
+.turbo
+
+# Environment files (CRITICAL - Security)
+.env*
+!.env.sample
+**/.env*
+!**/.env.sample
+
+# Tests
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/coverage
+coverage
+**/.nyc_output
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Misc
+.cache
+.parcel-cache

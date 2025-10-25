@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { PaginationStrategy, SortField, SortOrder } from '../dto/query-battles.dto';
+import {
+  PaginationStrategy,
+  SortField,
+  SortOrder,
+} from '../dto/query-battles.dto';
 import {
   CursorPagination,
   OffsetPagination,
@@ -22,7 +26,6 @@ export class PaginationService {
   ): Promise<PaginationResult<any>> {
     const startTime = Date.now();
 
-    // Determine the best pagination strategy
     const strategy = await this.determinePaginationStrategy(where, options);
 
     let result: PaginationResult<any>;
@@ -47,7 +50,10 @@ export class PaginationService {
       return options.strategy;
     }
 
-    if (options.cursor || (options.page && options.limit && options.page > 50)) {
+    if (
+      options.cursor ||
+      (options.page && options.limit && options.page > 50)
+    ) {
       return PaginationStrategy.CURSOR;
     }
 
@@ -117,8 +123,10 @@ export class PaginationService {
     let cursorData: any = null;
     if (cursor) {
       try {
-        cursorData = JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'));
-      } catch (error) {
+        cursorData = JSON.parse(
+          Buffer.from(cursor, 'base64').toString('utf-8'),
+        );
+      } catch {
         this.logger.warn(`Invalid cursor: ${cursor}`);
       }
     }
@@ -141,7 +149,9 @@ export class PaginationService {
         id: lastItem.id,
         [options.sortField]: lastItem[options.sortField],
       };
-      nextCursor = Buffer.from(JSON.stringify(cursorPayload)).toString('base64');
+      nextCursor = Buffer.from(JSON.stringify(cursorPayload)).toString(
+        'base64',
+      );
     }
 
     let total: number | undefined;
@@ -174,7 +184,11 @@ export class PaginationService {
     };
   }
 
-  private buildCursorWhere(where: any, cursorData: any, options: PaginationOptions): any {
+  private buildCursorWhere(
+    where: any,
+    cursorData: any,
+    options: PaginationOptions,
+  ): any {
     if (!cursorData) {
       return where;
     }
@@ -208,7 +222,9 @@ export class PaginationService {
   private async getEstimatedCount(where: any): Promise<number> {
     try {
       if (Object.keys(where).length === 0) {
-        const result = await this.prisma.$queryRaw<[{ estimated_count: bigint }]>`
+        const result = await this.prisma.$queryRaw<
+          [{ estimated_count: bigint }]
+        >`
           SELECT reltuples::BIGINT AS estimated_count
           FROM pg_class
           WHERE relname = 'battles';

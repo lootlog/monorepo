@@ -1,7 +1,12 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
-import { Outlet, useLocation, useNavigate, useParams } from "@tanstack/react-router";
+import {
+  Outlet,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
@@ -19,7 +24,7 @@ export const BattlePanelLayout = () => {
     // Scroll to top when location changes (navigation between battle pages)
     if (scrollAreaRef.current) {
       const viewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
+        "[data-radix-scroll-area-viewport]",
       );
       if (viewport) {
         viewport.scrollTo({ top: 0, behavior: "smooth" });
@@ -80,7 +85,7 @@ export const BattlePanelLayout = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate({ to: navInfo.backPath! as any })}
+                  onClick={() => navigate({ to: navInfo.backPath! as string })}
                   className="p-1 h-8 w-8"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -90,18 +95,23 @@ export const BattlePanelLayout = () => {
 
             <div className="flex items-center gap-1 text-sm flex-1 min-w-0 justify-center overflow-hidden">
               {navInfo.breadcrumbs.map((crumb, index) => (
-                <div key={index} className="flex items-center gap-1 min-w-0 shrink-0 last:shrink">
+                <div
+                  key={index}
+                  className="flex items-center gap-1 min-w-0 shrink-0 last:shrink"
+                >
                   {crumb.path ? (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate({ to: crumb.path! as any })}
+                      onClick={() => navigate({ to: crumb.path! as string })}
                       className="text-sm h-auto p-1 font-semibold hover:bg-accent/50 whitespace-nowrap"
                     >
                       {crumb.label}
                     </Button>
                   ) : (
-                    <span className="font-semibold px-1 truncate">{crumb.label}</span>
+                    <span className="font-semibold px-1 truncate">
+                      {crumb.label}
+                    </span>
                   )}
                   {index < navInfo.breadcrumbs.length - 1 && (
                     <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />

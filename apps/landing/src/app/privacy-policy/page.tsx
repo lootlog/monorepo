@@ -230,7 +230,7 @@ export default function PrivacyPolicy(): JSX.Element {
                 <li>Utrzymania sesji logowania</li>
                 <li>Zapamiętywania preferencji użytkownika</li>
                 <li>Przechowywania ustawień interfejsu (motywy, layouty)</li>
-                <li>Cache'owania danych w celu poprawy wydajności</li>
+                <li>Cache&apos;owania danych w celu poprawy wydajności</li>
                 <li>Analizy ruchu na stronie</li>
                 <li>Zapewnienia bezpieczeństwa</li>
               </ul>

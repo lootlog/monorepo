@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { getQueueToken } from '@nestjs/bullmq';
 import { MembersConsumer } from './members.consumer';
 import { MembersService } from './members.service';
 import { PrismaService } from 'src/db/prisma.service';
-import { NotFoundException } from '@nestjs/common';
 import { MemberType } from 'generated/client';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
 
 describe('MembersConsumer', () => {
   let consumer: MembersConsumer;
@@ -57,6 +59,17 @@ describe('MembersConsumer', () => {
       publish: jest.fn(),
     };
 
+    const mockBullQueue = {
+      add: jest.fn(),
+    };
+
+    const mockLogger = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersConsumer,
@@ -72,6 +85,14 @@ describe('MembersConsumer', () => {
           provide: AmqpConnection,
           useValue: mockAmqpConnection,
         },
+        {
+          provide: getQueueToken(MEMBER_BULK_REFRESH_QUEUE),
+          useValue: mockBullQueue,
+        },
+        {
+          provide: WINSTON_MODULE_PROVIDER,
+          useValue: mockLogger,
+        },
       ],
     }).compile();
 
@@ -79,12 +100,6 @@ describe('MembersConsumer', () => {
     membersService = module.get(MembersService);
     prismaService = module.get(PrismaService);
     amqpConnection = module.get(AmqpConnection);
-
-    // Suppress logger output
-    jest.spyOn(consumer['logger'], 'log').mockImplementation();
-    jest.spyOn(consumer['logger'], 'debug').mockImplementation();
-    jest.spyOn(consumer['logger'], 'warn').mockImplementation();
-    jest.spyOn(consumer['logger'], 'error').mockImplementation();
 
     // Mock sleep to avoid delays in tests
     jest.spyOn(consumer as any, 'sleep').mockResolvedValue(undefined);
@@ -111,220 +126,64 @@ describe('MembersConsumer', () => {
       prismaService.memberRefreshJob.findUnique.mockResolvedValue(mockJob);
     });
 
-    it('should process all members successfully', async () => {
-      membersService.refreshMember.mockResolvedValue(mockMember);
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
+    it('should queue job to BullMQ successfully', async () => {
+      const bullQueue = consumer['bulkRefreshQueue'];
+      bullQueue.add = jest.fn().mockResolvedValue({});
 
       await consumer.handleBulkRefresh(payload);
 
-      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
-        where: { id: payload.jobId },
-        data: { status: 'PROCESSING' },
-      });
-
-      expect(membersService.refreshMember).toHaveBeenCalledTimes(3);
-      expect(membersService.refreshMember).toHaveBeenCalledWith({
-        discordId: 'discord-123',
-        guildId: 'guild-123',
-        skipTtlCheck: true,
-      });
-      expect(membersService.refreshMember).toHaveBeenCalledWith({
-        discordId: 'discord-456',
-        guildId: 'guild-123',
-        skipTtlCheck: true,
-      });
-      expect(membersService.refreshMember).toHaveBeenCalledWith({
-        discordId: 'discord-789',
-        guildId: 'guild-123',
-        skipTtlCheck: true,
-      });
-
-      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
-        where: { id: payload.jobId },
-        data: {
-          status: 'COMPLETED',
-          processedMembers: expect.any(Number),
-          completedAt: expect.any(Date),
+      expect(bullQueue.add).toHaveBeenCalledWith(
+        'bulk-refresh',
+        {
+          jobId: payload.jobId,
+          guildId: payload.guildId,
+          memberIds: payload.memberIds,
         },
-      });
-
-      expect(consumer['logger'].log).toHaveBeenCalledWith(
-        expect.stringContaining('Starting bulk refresh job'),
-      );
-      expect(consumer['logger'].log).toHaveBeenCalledWith(
-        expect.stringContaining('Completed bulk refresh job'),
-      );
-    });
-
-    it('should batch update processedMembers counter', async () => {
-      const largeBatchPayload = {
-        ...payload,
-        memberIds: Array(12).fill(null).map((_, i) => `discord-${i}`),
-      };
-      membersService.refreshMember.mockResolvedValue(mockMember);
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
-
-      await consumer.handleBulkRefresh(largeBatchPayload);
-
-      const batchUpdateCalls = prismaService.memberRefreshJob.update.mock.calls.filter(
-        (call: any) => typeof call[0].data?.processedMembers === 'number',
-      );
-
-      // Should have batch updates: one at member 5, one at member 10, and final at completion
-      expect(batchUpdateCalls.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it('should handle individual member refresh failures gracefully', async () => {
-      membersService.refreshMember
-        .mockResolvedValueOnce(mockMember)
-        .mockRejectedValueOnce(new Error('Refresh failed'))
-        .mockResolvedValueOnce(mockMember);
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
-
-      await consumer.handleBulkRefresh(payload);
-
-      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
-        where: { id: payload.jobId },
-        data: { failedMembers: { increment: 1 } },
-      });
-
-      expect(consumer['logger'].error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to refresh member'),
-        expect.any(Error),
-      );
-
-      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
-        where: { id: payload.jobId },
-        data: {
-          status: 'COMPLETED',
-          processedMembers: expect.any(Number),
-          completedAt: expect.any(Date),
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
         },
+      );
+
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'info',
+        message: expect.stringContaining('Queueing bulk refresh job'),
+      });
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'info',
+        message: expect.stringContaining(
+          'Successfully queued bulk refresh job',
+        ),
       });
     });
 
-    it('should emit job updates periodically (every 5 members)', async () => {
-      const largeBatchPayload = {
-        ...payload,
-        memberIds: Array(12).fill(null).map((_, i) => `discord-${i}`),
-      };
-      membersService.refreshMember.mockResolvedValue(mockMember);
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
-      prismaService.memberRefreshJob.findUnique.mockResolvedValue(mockJob);
-
-      await consumer.handleBulkRefresh(largeBatchPayload);
-
-      // Should emit update at start, after 5 members, after 10 members, and at completion
-      const emitCalls = amqpConnection.publish.mock.calls;
-      expect(emitCalls.length).toBeGreaterThanOrEqual(3);
-    });
-
-    it('should handle fatal errors and set job status to FAILED', async () => {
-      const fatalError = new Error('Database connection lost');
-      let updateCallCount = 0;
-
-      prismaService.memberRefreshJob.update.mockImplementation(async (args: any) => {
-        updateCallCount++;
-        if (updateCallCount === 1) {
-          return mockJob; // First update to PROCESSING succeeds
-        }
-        // Allow the final FAILED status update to succeed
-        if (args.data?.status === 'FAILED') {
-          return { ...mockJob, status: 'FAILED' };
-        }
-        throw fatalError; // Second update fails (incrementing processedMembers)
+    it('should handle BullMQ queue errors', async () => {
+      const bullQueue = consumer['bulkRefreshQueue'];
+      const queueError = new Error('Queue connection failed');
+      bullQueue.add = jest.fn().mockRejectedValue(queueError);
+      prismaService.memberRefreshJob.update.mockResolvedValue({
+        ...mockJob,
+        status: 'FAILED',
       });
-
-      // Mock findUnique for emitJobUpdate calls
-      prismaService.memberRefreshJob.findUnique.mockResolvedValue(mockJob);
-
-      membersService.refreshMember.mockResolvedValue(mockMember);
 
       await consumer.handleBulkRefresh(payload);
 
-      expect(consumer['logger'].error).toHaveBeenCalledWith(
-        expect.stringContaining('Fatal error in bulk refresh job'),
-        expect.any(String),
-      );
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'error',
+        message: expect.stringContaining('Failed to queue bulk refresh job'),
+        stack: expect.any(String),
+      });
 
-      const failedUpdateCall = prismaService.memberRefreshJob.update.mock.calls.find(
-        (call: any) => call[0].data?.status === 'FAILED',
-      );
-      expect(failedUpdateCall).toBeDefined();
-      expect(failedUpdateCall[0]).toMatchObject({
+      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
         where: { id: payload.jobId },
         data: {
           status: 'FAILED',
           completedAt: expect.any(Date),
         },
       });
-    });
-
-    it('should call sleep between member refreshes', async () => {
-      membersService.refreshMember.mockResolvedValue(mockMember);
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
-
-      await consumer.handleBulkRefresh(payload);
-
-      expect(consumer['sleep']).toHaveBeenCalledTimes(3);
-      expect(consumer['sleep']).toHaveBeenCalledWith(200);
-    });
-
-    it('should handle empty member list', async () => {
-      const emptyPayload = {
-        ...payload,
-        memberIds: [],
-      };
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
-
-      await consumer.handleBulkRefresh(emptyPayload);
-
-      expect(membersService.refreshMember).not.toHaveBeenCalled();
-      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
-        where: { id: emptyPayload.jobId },
-        data: {
-          status: 'COMPLETED',
-          processedMembers: 0,
-          completedAt: expect.any(Date),
-        },
-      });
-    });
-
-    it('should continue processing after individual failures', async () => {
-      membersService.refreshMember
-        .mockRejectedValueOnce(new NotFoundException('Member not found'))
-        .mockResolvedValueOnce(mockMember)
-        .mockRejectedValueOnce(new Error('Network error'));
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
-
-      await consumer.handleBulkRefresh(payload);
-
-      expect(membersService.refreshMember).toHaveBeenCalledTimes(3);
-      expect(prismaService.memberRefreshJob.update).toHaveBeenCalledWith({
-        where: { id: payload.jobId },
-        data: {
-          status: 'COMPLETED',
-          processedMembers: expect.any(Number),
-          completedAt: expect.any(Date),
-        },
-      });
-    });
-
-    it('should log progress for each successfully processed member', async () => {
-      membersService.refreshMember.mockResolvedValue(mockMember);
-      prismaService.memberRefreshJob.update.mockResolvedValue(mockJob);
-
-      await consumer.handleBulkRefresh(payload);
-
-      expect(consumer['logger'].debug).toHaveBeenCalledWith(
-        expect.stringContaining('Successfully refreshed member discord-123'),
-      );
-      expect(consumer['logger'].debug).toHaveBeenCalledWith(
-        expect.stringContaining('Successfully refreshed member discord-456'),
-      );
-      expect(consumer['logger'].debug).toHaveBeenCalledWith(
-        expect.stringContaining('Successfully refreshed member discord-789'),
-      );
     });
   });
 
@@ -348,12 +207,14 @@ describe('MembersConsumer', () => {
         standalone: false,
       });
 
-      expect(consumer['logger'].debug).toHaveBeenCalledWith(
-        expect.stringContaining('Processing background refresh'),
-      );
-      expect(consumer['logger'].debug).toHaveBeenCalledWith(
-        expect.stringContaining('Successfully refreshed member'),
-      );
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'debug',
+        message: expect.stringContaining('Processing background refresh'),
+      });
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'debug',
+        message: expect.stringContaining('Successfully refreshed member'),
+      });
     });
 
     it('should handle errors gracefully', async () => {
@@ -362,10 +223,11 @@ describe('MembersConsumer', () => {
 
       await consumer.handleMemberRefresh(payload);
 
-      expect(consumer['logger'].error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to refresh member'),
-        expect.any(String),
-      );
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'error',
+        message: expect.stringContaining('Failed to refresh member'),
+        stack: expect.any(String),
+      });
     });
 
     it('should not throw error on failure', async () => {
@@ -373,7 +235,9 @@ describe('MembersConsumer', () => {
         new Error('Network error'),
       );
 
-      await expect(consumer.handleMemberRefresh(payload)).resolves.not.toThrow();
+      await expect(
+        consumer.handleMemberRefresh(payload),
+      ).resolves.not.toThrow();
     });
   });
 
@@ -406,9 +270,10 @@ describe('MembersConsumer', () => {
         },
       );
 
-      expect(consumer['logger'].debug).toHaveBeenCalledWith(
-        expect.stringContaining('Emitted job update for job 1'),
-      );
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'debug',
+        message: expect.stringContaining('Emitted job update for job 1'),
+      });
     });
 
     it('should handle job not found gracefully', async () => {
@@ -416,9 +281,10 @@ describe('MembersConsumer', () => {
 
       await consumer['emitJobUpdate'](999);
 
-      expect(consumer['logger'].warn).toHaveBeenCalledWith(
-        'Job 999 not found when emitting update',
-      );
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'warn',
+        message: 'Job 999 not found when emitting update',
+      });
       expect(amqpConnection.publish).not.toHaveBeenCalled();
     });
 
@@ -430,10 +296,11 @@ describe('MembersConsumer', () => {
 
       await consumer['emitJobUpdate'](1);
 
-      expect(consumer['logger'].error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to emit job update for job 1'),
-        expect.any(String),
-      );
+      expect(consumer['logger'].log).toHaveBeenCalledWith({
+        level: 'error',
+        message: expect.stringContaining('Failed to emit job update for job 1'),
+        stack: expect.any(String),
+      });
     });
   });
 

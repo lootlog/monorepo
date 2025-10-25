@@ -49,13 +49,13 @@ export const GeneralSettingsForm = () => {
       {
         onSuccess: ({ data }) => {
           toast.success("Zaktualizowano konfigurację lootloga");
-          navigate({ to: `/${data.vanityUrl ?? data.id}/settings` as any });
+          navigate({ to: `/${data.vanityUrl ?? data.id}/settings` as string });
           form.resetField("vanityUrl", { defaultValue: data.vanityUrl });
         },
         onError: () => {
           toast.error("Nie udało się zaktualizować konfiguracji lootloga");
         },
-      }
+      },
     );
   }
 

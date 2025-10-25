@@ -26,11 +26,11 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   const defendingTeam = battle.warriors.filter((w) => w.team === 2);
 
   const userTeam = battle.warriors.find(
-    (w) => w.originalId === battle.characterId
+    (w) => w.originalId === battle.characterId,
   );
 
   const warrior = battle.warriors.find(
-    (w) => w.originalId === battle.characterId
+    (w) => w.originalId === battle.characterId,
   );
 
   const leftTeam = userTeam?.team === 1 ? attackingTeam : defendingTeam;
@@ -72,7 +72,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   return (
     <Link
       key={battle.id}
-      to={`/@me/battle-panel/battles/${battle.id}` as any}
+      to={`/@me/battle-panel/battles/${battle.id}` as string}
       className="block"
     >
       <div
@@ -81,7 +81,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
           {
             "hover:via-green-400/10": isWon || battle.hasFlee,
             "hover:via-red-400/10": isLost,
-          }
+          },
         )}
       >
         <div className="p-4 pb-4">
@@ -133,10 +133,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
                   <Sword className="h-4 w-4" />
                   Twoja drużyna
                 </div>
-                <TeamDisplay
-                  team={leftTeam}
-                  characterId={battle.characterId}
-                />
+                <TeamDisplay team={leftTeam} characterId={battle.characterId} />
               </div>
 
               <div className="space-y-2">

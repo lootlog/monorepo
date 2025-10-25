@@ -11,11 +11,22 @@
     "REDIS_HOST",
     "REDIS_PASSWORD",
     "REDIS_PORT",
-    "REDIS_USERNAME"
+    "REDIS_USERNAME",
+    "DISCORD_BOT_TOKEN",
+    "DISCORD_DEVELOPMENT_GUILD_ID",
+    "API_URL",
+    "SERVICE_NAME",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_ENDPOINT",
+    "R2_REGION",
+    "R2_BUCKET_NAME",
+    "GOOGLE_TAG_ID",
+    "AUTH_SERVICE_URL"
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "api:generate", "battlelog:generate"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "env": ["GAME_CLIENT_URL"],
       "outputs": [
@@ -29,10 +40,27 @@
     "build:game-client": {},
     "copy-entrypoint": {},
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "**/*.ts",
+        "**/*.tsx",
+        ".eslintrc*",
+        "eslint.config.*"
+      ]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "**/*.ts",
+        "**/*.tsx",
+        "tsconfig.json"
+      ]
     },
     "dev": {
       "dependsOn": [],
@@ -61,13 +89,22 @@
       "cache": false,
       "interactive": false
     },
-    "configure:env": {
+    "env:generate": {
       "cache": false,
       "interactive": true
     },
     "test": {
-      "dependsOn": ["^test"],
-      "cache": false
+      "dependsOn": ["^test", "api:generate", "battlelog:generate"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "test/**/*.ts",
+        "**/*.spec.ts",
+        "jest.config.*",
+        "vitest.config.*",
+        "tsconfig.json"
+      ]
     },
     "battlelog:migrate:dev": {
       "cache": false,

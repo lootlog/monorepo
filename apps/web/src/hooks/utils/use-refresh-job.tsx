@@ -8,14 +8,17 @@ export const useRefreshJob = (
   guildId: string | undefined,
   jobId: number | undefined,
   onRefreshedIds?: (ids: string[]) => void,
-  onFailedIds?: (ids: string[]) => void
+  onFailedIds?: (ids: string[]) => void,
 ) => {
   const [jobStatus, setJobStatus] = useState<RefreshJobUpdate | null>(null);
   const { socket, connected } = useGateway();
 
   const { data: guild } = useGuild({});
   const currentGuildIdRef = useRef<string | undefined>(null);
-  currentGuildIdRef.current = guild?.id;
+
+  useEffect(() => {
+    currentGuildIdRef.current = guild?.id;
+  }, [guild?.id]);
 
   useEffect(() => {
     if (!guildId || !connected) {
@@ -45,7 +48,7 @@ export const useRefreshJob = (
     return () => {
       socket.off(
         GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
-        handleRefreshJobUpdate
+        handleRefreshJobUpdate,
       );
     };
   }, [guildId, jobId, socket, connected, onRefreshedIds, onFailedIds]);

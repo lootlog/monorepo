@@ -47,10 +47,15 @@ export const LootsFilters: React.FC = () => {
 
     if (joinedOptions === currentParam) return;
 
-    const newParams = { ...searchParams, [name]: joinedOptions };
     document.querySelector("#loots-list > div")?.scrollTo(0, 0);
 
-    navigate({ search: newParams as any });
+    navigate({
+      // @ts-expect-error - TanStack Router type inference issue with dynamic search params
+      search: (prev) => ({
+        ...prev,
+        [name]: joinedOptions,
+      }),
+    });
   };
 
   const playersOptions =

@@ -15,7 +15,6 @@ export const useCountdown = (targetDate: string | null): TimeRemaining => {
 
   useEffect(() => {
     if (!targetDate) {
-      setTimeRemaining({ minutes: 0, seconds: 0, isExpired: true });
       return;
     }
 

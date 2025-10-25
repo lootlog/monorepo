@@ -13,7 +13,7 @@ import {
   RefreshCcw,
   Settings,
 } from "lucide-react";
-import { FC, useMemo } from "react";
+import { FC, useEffect, useState } from "react";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import {
   Tooltip,
@@ -33,50 +33,47 @@ export const GuildsSidebarNav: FC = () => {
   const { setOpenMobile } = useSidebar();
   const { mutate: refreshMember } = useMemberRefresh();
 
-  const menuItems: MenuItem[] = useMemo(
-    () => [
-      {
-        label: "Lootlog",
-        icon: <ClipboardList className="mr-1 h-4 w-4" />,
-        path: "",
-        available: true,
-        enabled: true,
-      },
-      {
-        label: "Timery",
-        icon: <Clock className="mr-1 h-4 w-4" />,
-        path: "/timers",
-        available: false,
-        enabled: true,
-      },
-      {
-        label: "Rezerwacje",
-        icon: <CalendarClock className="mr-1 h-4 w-4" />,
-        path: "/reservations",
-        available: false,
-        enabled: true,
-      },
-      {
-        label: "Statystyki",
-        icon: <BarChart4 className="mr-1 h-4 w-4" />,
-        path: "/stats",
-        available: false,
-        enabled: true,
-      },
-      {
-        divided: true,
-        label: "Ustawienia",
-        icon: <Settings className="mr-1 h-4 w-4" />,
-        path: "/settings",
-        available: true,
-        enabled: Boolean(
-          permissions?.includes(Permission.ADMIN) ||
-            permissions?.includes(Permission.OWNER)
-        ),
-      },
-    ],
-    [permissions]
-  );
+  const menuItems: MenuItem[] = [
+    {
+      label: "Lootlog",
+      icon: <ClipboardList className="mr-1 h-4 w-4" />,
+      path: "",
+      available: true,
+      enabled: true,
+    },
+    {
+      label: "Timery",
+      icon: <Clock className="mr-1 h-4 w-4" />,
+      path: "/timers",
+      available: false,
+      enabled: true,
+    },
+    {
+      label: "Rezerwacje",
+      icon: <CalendarClock className="mr-1 h-4 w-4" />,
+      path: "/reservations",
+      available: false,
+      enabled: true,
+    },
+    {
+      label: "Statystyki",
+      icon: <BarChart4 className="mr-1 h-4 w-4" />,
+      path: "/stats",
+      available: false,
+      enabled: true,
+    },
+    {
+      divided: true,
+      label: "Ustawienia",
+      icon: <Settings className="mr-1 h-4 w-4" />,
+      path: "/settings",
+      available: true,
+      enabled: Boolean(
+        permissions?.includes(Permission.ADMIN) ||
+          permissions?.includes(Permission.OWNER),
+      ),
+    },
+  ];
 
   const handleRefreshPermissions = () => {
     if (!guildId) return;
@@ -89,12 +86,23 @@ export const GuildsSidebarNav: FC = () => {
   };
 
   const guild = guilds?.find(
-    (g) => g.id === guildId || g.vanityUrl === guildId
+    (g) => g.id === guildId || g.vanityUrl === guildId,
   );
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const canTriggerRefresh =
     member?.updatedAt &&
-    new Date(member.updatedAt).getTime() < Date.now() - REFRESH_PERMISSIONS_TTL;
-  const getRefreshText = () => {
+    new Date(member.updatedAt).getTime() <
+      currentTime - REFRESH_PERMISSIONS_TTL;
+
+  const getCanTriggerRefreshText = () => {
     if (canTriggerRefresh) {
       return "Odśwież swoje uprawnienia";
     }
@@ -103,7 +111,7 @@ export const GuildsSidebarNav: FC = () => {
       const nextRefreshTime =
         new Date(member.updatedAt).getTime() + REFRESH_PERMISSIONS_TTL;
       const timeUntilRefresh = Math.ceil(
-        (nextRefreshTime - Date.now()) / (1000 * 60)
+        (nextRefreshTime - currentTime) / (1000 * 60),
       );
       return `Spróbuj ponownie za ${timeUntilRefresh} min`;
     }
@@ -111,7 +119,7 @@ export const GuildsSidebarNav: FC = () => {
     return "Uprawnienia są aktualne";
   };
 
-  const canTriggerRefreshText = getRefreshText();
+  const canTriggerRefreshText = getCanTriggerRefreshText();
 
   const header = (
     <>

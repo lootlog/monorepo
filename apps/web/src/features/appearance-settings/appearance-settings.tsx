@@ -125,7 +125,7 @@ export const AppearanceSettings: FC = () => {
               colors={themeOption.colors}
               backgroundImage={themeOption.backgroundImage}
               isActive={theme === themeOption.name}
-              onClick={() => setTheme(themeOption.name as any)}
+              onClick={() => setTheme(themeOption.name as typeof theme)}
             />
           ))}
         </div>

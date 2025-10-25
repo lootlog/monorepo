@@ -2,6 +2,29 @@
   "name": "@lootlog/app",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
+  "description": "Full-stack microservices application for Margonem clan loot tracking, battle logging, and Discord bot integration",
+  "author": "Kamil <kamilwronka7@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lootlog/lootlog.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lootlog/lootlog/issues"
+  },
+  "homepage": "https://lootlog.pl",
+  "keywords": [
+    "margonem",
+    "lootlog",
+    "clan-management",
+    "battle-logging",
+    "discord-bot",
+    "microservices",
+    "turborepo",
+    "nestjs",
+    "react",
+    "typescript"
+  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --concurrency 11",
@@ -17,13 +40,20 @@
     "battlelog:studio": "turbo run battlelog:studio",
     "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
     "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
-    "configure:env": "turbo run configure:env",
+    "env:generate": "turbo run env:generate",
     "build:game-client": "turbo run build:game-client",
-    "copy-entrypoint": "turbo run copy-entrypoint"
+    "copy-entrypoint": "turbo run copy-entrypoint",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo build && changeset publish",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@lootlog/eslint-config": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
     "turbo": "^2.5.8",
     "typescript": "5.9.3"
@@ -31,7 +61,7 @@
   "packageManager": "pnpm@10.19.0",
   "pnpm": {
     "overrides": {
-      "discord-api-types": "0.38.30",
+      "discord-api-types": "0.38.31",
       "multer": "^2.0.1",
       "cross-spawn": "^7.0.5",
       "body-parser": "^1.20.3",
@@ -46,6 +76,7 @@
       "@tailwindcss/oxide",
       "core-js-pure",
       "esbuild",
+      "msgpackr-extract",
       "necord",
       "prisma",
       "sharp",
