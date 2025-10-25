@@ -22,8 +22,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
 
   const { refetch } = useTimers();
-  const [timeLeft, setTimeLeft] = useState(maxSpawnTime - Date.now());
-  const [minTimeLeft, setMinTimeLeft] = useState(minSpawnTime - Date.now());
+  const [timeLeft, setTimeLeft] = useState(() => maxSpawnTime - Date.now());
+  const [minTimeLeft, setMinTimeLeft] = useState(
+    () => minSpawnTime - Date.now(),
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,7 +47,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
     return () => clearInterval(interval);
   }, [maxSpawnTime, minSpawnTime, refetch]);
 
-  const isMinSpawnTime = minSpawnTime - Date.now() < 0;
+  const isMinSpawnTime = minSpawnTime < maxSpawnTime && minTimeLeft <= 0;
   const hasPassedRedThreshold = timeLeft < THRESHOLD;
   const imageHasDomain = timer.npc.icon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
@@ -57,7 +59,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
           {
             "text-orange-400": isMinSpawnTime,
             "text-red-500": hasPassedRedThreshold,
-          }
+          },
         )}
       >
         {timer.npc.icon && (
@@ -101,7 +103,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
                 {
                   "text-orange-400": isMinSpawnTime,
                   "text-red-500": hasPassedRedThreshold,
-                }
+                },
               )}
             >
               <ClockArrowUp size="14px" />

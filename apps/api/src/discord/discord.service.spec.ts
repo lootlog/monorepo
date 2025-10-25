@@ -25,7 +25,6 @@ describe('DiscordService', () => {
   let authService: jest.Mocked<AuthService>;
   let redisService: jest.Mocked<RedisService>;
   let rateLimiter: jest.Mocked<DiscordRateLimiterService>;
-  let configService: jest.Mocked<ConfigService>;
   let mockLogger: any;
   let mockRedlock: any;
 
@@ -116,7 +115,6 @@ describe('DiscordService', () => {
     authService = module.get(AuthService);
     redisService = module.get(RedisService);
     rateLimiter = module.get(DiscordRateLimiterService);
-    configService = module.get(ConfigService);
 
     service['redlock'] = mockRedlock;
   });
@@ -210,9 +208,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockResolvedValue(mockGuilds),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       const result = await service.getUserGuilds(userId);
 
@@ -241,9 +237,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockResolvedValue(mockGuilds),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       await service.getUserGuilds(userId);
 
@@ -260,9 +254,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockResolvedValue([]),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       const result = await service.getUserGuilds(userId);
 
@@ -290,7 +282,9 @@ describe('DiscordService', () => {
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
         level: 'info',
-        message: expect.stringContaining('Returning stale guilds data due to rate limit'),
+        message: expect.stringContaining(
+          'Returning stale guilds data due to rate limit',
+        ),
       });
     });
 
@@ -303,7 +297,9 @@ describe('DiscordService', () => {
       expect(result).toEqual([]);
       expect(mockLogger.log).toHaveBeenCalledWith({
         level: 'warn',
-        message: expect.stringContaining('Rate limited and no stale data available'),
+        message: expect.stringContaining(
+          'Rate limited and no stale data available',
+        ),
       });
     });
 
@@ -332,9 +328,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       const result = await service.getUserGuilds(userId);
 
@@ -346,7 +340,9 @@ describe('DiscordService', () => {
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
         level: 'info',
-        message: expect.stringContaining('Returning stale guilds data after rate limit error'),
+        message: expect.stringContaining(
+          'Returning stale guilds data after rate limit error',
+        ),
       });
     });
 
@@ -371,9 +367,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       await expect(service.getUserGuilds(userId)).rejects.toThrow(
         RateLimitError,
@@ -432,9 +426,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockResolvedValue(mockGuildMember),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       const result = await service.getGuildMember(options);
 
@@ -463,9 +455,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockRejectedValue(notFoundError),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         NotFoundException,
@@ -495,7 +485,9 @@ describe('DiscordService', () => {
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
         level: 'info',
-        message: expect.stringContaining('Returning stale member data due to rate limit'),
+        message: expect.stringContaining(
+          'Returning stale member data due to rate limit',
+        ),
       });
     });
 
@@ -508,7 +500,9 @@ describe('DiscordService', () => {
       expect(result).toBeNull();
       expect(mockLogger.log).toHaveBeenCalledWith({
         level: 'warn',
-        message: expect.stringContaining('Rate limited and no stale data available'),
+        message: expect.stringContaining(
+          'Rate limited and no stale data available',
+        ),
       });
     });
 
@@ -537,9 +531,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       const result = await service.getGuildMember(options);
 
@@ -551,7 +543,9 @@ describe('DiscordService', () => {
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
         level: 'info',
-        message: expect.stringContaining('Returning stale member data after rate limit error'),
+        message: expect.stringContaining(
+          'Returning stale member data after rate limit error',
+        ),
       });
     });
 
@@ -576,9 +570,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         RateLimitError,
@@ -613,9 +605,7 @@ describe('DiscordService', () => {
       const mockRest = {
         get: jest.fn().mockResolvedValue(mockGuildMember),
       };
-      jest
-        .spyOn(service, 'getRestClient')
-        .mockResolvedValue(mockRest as any);
+      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
 
       await service.getGuildMember(options);
 

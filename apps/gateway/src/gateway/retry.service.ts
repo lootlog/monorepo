@@ -8,9 +8,7 @@ export interface RetryConfig {
   dlqExchange?: string;
 }
 
-const DEFAULT_EXCHANGE_NAME = 'default';
 const DEAD_LETTER_EXCHANGE_NAME = 'dlx';
-const RETRY_EXCHANGE_NAME = 'retry';
 
 @Injectable()
 export class RetryService {

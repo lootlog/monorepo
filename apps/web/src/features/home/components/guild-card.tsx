@@ -41,7 +41,7 @@ export const GuildCard: React.FC<Props> = ({ guild }) => {
           </Avatar>
         </CardContent>
         <CardFooter className="flex justify-center items-center">
-          <Link to={`/${guild.vanityUrl ?? guild.id}` as any}>
+          <Link to={`/${guild.vanityUrl ?? guild.id}` as string}>
             <Button>Przejdź do lootloga</Button>
           </Link>
         </CardFooter>

@@ -10,7 +10,7 @@ export class UsersService {
     private readonly discordService: DiscordService,
   ) {}
 
-  async getUserById(userId: string) {}
+  async getUserById() {}
 
   async getUserPreferences(userId: string) {
     const userSettings = await this.prisma.userSettings.findUnique({

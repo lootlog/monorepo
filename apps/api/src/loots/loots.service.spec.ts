@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { LootsService } from './loots.service';
 import { PlayersService } from '../players/players.service';
 import { NpcsService } from '../npcs/npcs.service';
@@ -11,19 +12,14 @@ import { CreateLootDto } from './dto/create-loot.dto';
 import { UpdateLootDto } from './dto/update-loot.dto';
 import { CreateCommentDto } from './dto/create-comment-dto';
 import { FetchLootsParamsDto } from './dto/fetch-loots-params.dto';
-import { 
-  ItemRarity, 
-  Profession, 
-  Permission, 
-  NpcType, 
+import {
+  ItemRarity,
+  Profession,
+  NpcType,
   LootSource,
   Guild,
-  Role 
 } from 'generated/client';
 import { ErrorKey } from './enum/error-key.enum';
-
-// Mock constants to avoid import issues
-const MAX_PAGE_LIMIT = 100;
 
 describe('LootsService', () => {
   let service: LootsService;
@@ -42,61 +38,54 @@ describe('LootsService', () => {
     ownerId: 'owner123',
     active: true,
     createdAt: new Date(),
-    updatedAt: new Date()
-  };
-
-  const mockRole: Role = {
-    id: 'role1',
-    name: 'Test Role',
-    color: 16711680, // #FF0000 as number
-    position: 1,
-    permissions: [Permission.LOOTLOG_READ],
-    lvlRangeFrom: 1,
-    lvlRangeTo: 100,
-    guildId: 'guild1',
-    createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 
   const mockCreateLootDto: CreateLootDto = {
-    loots: [{
-      id: 1,
-      hid: 'item1',
-      name: 'Test Item',
-      icon: 'item.png',
-      pr: 1000,
-      prc: '1k',
-      stat: 'lvl=50;rarity=UNIQUE',
-      cl: 1,
-      own: 1
-    }],
-    npcs: [{
-      id: 1,
-      name: 'Test NPC',
-      location: 'Test Location',
-      lvl: 50,
-      prof: 'w',
-      wt: 5,
-      hpp: 5000,
-      icon: 'npc.png',
-      type: 1,
-      x: 100,
-      y: 200
-    }],
-    players: [{
-      id: 1,
-      accountId: 123,
-      name: 'Test Player',
-      lvl: 50,
-      prof: 'w',
-      icon: 'player.png',
-      hpp: 3000
-    }],
+    loots: [
+      {
+        id: 1,
+        hid: 'item1',
+        name: 'Test Item',
+        icon: 'item.png',
+        pr: 1000,
+        prc: '1k',
+        stat: 'lvl=50;rarity=UNIQUE',
+        cl: 1,
+        own: 1,
+      },
+    ],
+    npcs: [
+      {
+        id: 1,
+        name: 'Test NPC',
+        location: 'Test Location',
+        lvl: 50,
+        prof: 'w',
+        wt: 5,
+        hpp: 5000,
+        icon: 'npc.png',
+        type: 1,
+        x: 100,
+        y: 200,
+      },
+    ],
+    players: [
+      {
+        id: 1,
+        accountId: 123,
+        name: 'Test Player',
+        lvl: 50,
+        prof: 'w',
+        icon: 'player.png',
+        hpp: 3000,
+      },
+    ],
     world: 'testworld',
     source: LootSource.FIGHT,
     location: 'Test Location',
     accountId: '123',
-    characterId: '1'
+    characterId: '1',
   };
 
   beforeEach(async () => {
@@ -105,42 +94,48 @@ describe('LootsService', () => {
         findUnique: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
-        findFirst: jest.fn()
+        findFirst: jest.fn(),
       },
       lootSubmission: {
         createMany: jest.fn(),
         upsert: jest.fn(),
         deleteMany: jest.fn(),
-        findMany: jest.fn()
+        findMany: jest.fn(),
       },
       lootComment: {
         create: jest.fn(),
-        findMany: jest.fn()
+        findMany: jest.fn(),
       },
       member: {
-        findMany: jest.fn()
+        findMany: jest.fn(),
       },
-      $queryRaw: jest.fn()
+      $queryRaw: jest.fn(),
     };
 
     const mockPlayersService = {
-      bulkIndexPlayers: jest.fn()
+      bulkIndexPlayers: jest.fn(),
     };
 
     const mockNpcsService = {
-      bulkIndexNpcs: jest.fn()
+      bulkIndexNpcs: jest.fn(),
     };
 
     const mockGuildsService = {
-      getGuildsForRequiredPermissions: jest.fn()
+      getGuildsForRequiredPermissions: jest.fn(),
     };
 
     const mockLootlogConfigService = {
-      getMultipleLootlogConfigs: jest.fn()
+      getMultipleLootlogConfigs: jest.fn(),
     };
 
     const mockUserLootlogConfigService = {
-      getLootlogCharacterConfig: jest.fn()
+      getLootlogCharacterConfig: jest.fn(),
+    };
+
+    const mockLogger = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -151,7 +146,11 @@ describe('LootsService', () => {
         { provide: NpcsService, useValue: mockNpcsService },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: LootlogConfigService, useValue: mockLootlogConfigService },
-        { provide: UserLootlogConfigService, useValue: mockUserLootlogConfigService }
+        {
+          provide: UserLootlogConfigService,
+          useValue: mockUserLootlogConfigService,
+        },
+        { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
       ],
     }).compile();
 
@@ -179,41 +178,53 @@ describe('LootsService', () => {
     const userId = 'user123';
 
     beforeEach(() => {
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([mockGuild]);
-      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(null);
-      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([{
-        id: 'guild1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        npcs: [{
-          id: 1,
-          npcType: NpcType.COMMON,
-          allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
-          lootlogConfigId: 'config1',
+      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        mockGuild,
+      ]);
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
+        null,
+      );
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: 'guild1',
           createdAt: new Date(),
-          updatedAt: new Date()
-        }]
-      } as any]);
-      prismaService.member.findMany.mockResolvedValue([{
-        id: 'member1',
-        guildId: 'guild1',
-        userId: discordId
-      }]);
+          updatedAt: new Date(),
+          npcs: [
+            {
+              id: 1,
+              npcType: NpcType.COMMON,
+              allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
+              lootlogConfigId: 'config1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
+        } as any,
+      ]);
+      prismaService.member.findMany.mockResolvedValue([
+        {
+          id: 'member1',
+          guildId: 'guild1',
+          userId: discordId,
+        },
+      ]);
     });
 
     it('should throw BadRequestException when too many loots', async () => {
       const tooManyLoots = Array(11).fill(mockCreateLootDto.loots[0]);
       const dto = { ...mockCreateLootDto, loots: tooManyLoots };
 
-      await expect(service.createLoot(discordId, userId, dto))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.createLoot(discordId, userId, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw ForbiddenException when user has no guilds with write permission', async () => {
       guildsService.getGuildsForRequiredPermissions.mockResolvedValue([]);
 
-      await expect(service.createLoot(discordId, userId, mockCreateLootDto))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        service.createLoot(discordId, userId, mockCreateLootDto),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should create new loot when it does not exist', async () => {
@@ -221,7 +232,11 @@ describe('LootsService', () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(discordId, userId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(prismaService.loot.create).toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalled();
@@ -234,7 +249,11 @@ describe('LootsService', () => {
       const mockLoot = { id: 1, uniqueId: 'unique123' };
       prismaService.loot.findUnique.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(discordId, userId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(prismaService.loot.create).not.toHaveBeenCalled();
       expect(playersService.bulkIndexPlayers).not.toHaveBeenCalled();
@@ -247,12 +266,16 @@ describe('LootsService', () => {
       prismaService.loot.findUnique
         .mockResolvedValueOnce(null) // First call returns null
         .mockResolvedValueOnce(mockLoot); // Second call after P2002 returns loot
-      
+
       const p2002Error = new Error('Unique constraint failed');
       (p2002Error as any).code = 'P2002';
       prismaService.loot.create.mockRejectedValue(p2002Error);
 
-      const result = await service.createLoot(discordId, userId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(prismaService.loot.findUnique).toHaveBeenCalledTimes(2);
       expect(result).toEqual({ id: mockLoot.id });
@@ -262,31 +285,41 @@ describe('LootsService', () => {
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([]);
       prismaService.loot.findUnique.mockResolvedValue(null);
 
-      await expect(service.createLoot(discordId, userId, mockCreateLootDto))
-        .rejects.toThrow(new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT));
+      await expect(
+        service.createLoot(discordId, userId, mockCreateLootDto),
+      ).rejects.toThrow(
+        new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
+      );
 
       expect(prismaService.loot.create).not.toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when no guild config accepts the loot', async () => {
-      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([{
-        id: 'guild1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        npcs: [{
-          id: 1,
-          npcType: NpcType.COMMON,
-          allowedRarities: [ItemRarity.HEROIC],
-          lootlogConfigId: 'config1',
+      lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
+        {
+          id: 'guild1',
           createdAt: new Date(),
-          updatedAt: new Date()
-        }]
-      } as any]);
+          updatedAt: new Date(),
+          npcs: [
+            {
+              id: 1,
+              npcType: NpcType.COMMON,
+              allowedRarities: [ItemRarity.HEROIC],
+              lootlogConfigId: 'config1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
+        } as any,
+      ]);
       prismaService.loot.findUnique.mockResolvedValue(null);
 
-      await expect(service.createLoot(discordId, userId, mockCreateLootDto))
-        .rejects.toThrow(new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT));
+      await expect(
+        service.createLoot(discordId, userId, mockCreateLootDto),
+      ).rejects.toThrow(
+        new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
+      );
 
       expect(prismaService.loot.create).not.toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).not.toHaveBeenCalled();
@@ -315,14 +348,14 @@ describe('LootsService', () => {
 
       prismaService.loot.findUnique.mockResolvedValue(mockLoot);
 
-      const requests = Array(5).fill(null).map(() =>
-        service.createLoot(discordId, userId, mockCreateLootDto)
-      );
+      const requests = Array(5)
+        .fill(null)
+        .map(() => service.createLoot(discordId, userId, mockCreateLootDto));
 
       const results = await Promise.all(requests);
 
       expect(results).toHaveLength(5);
-      results.forEach(result => expect(result.id).toBe(mockLoot.id));
+      results.forEach((result) => expect(result.id).toBe(mockLoot.id));
       expect(createCallCount).toBeLessThanOrEqual(5);
     });
 
@@ -335,51 +368,58 @@ describe('LootsService', () => {
         ownerId: 'owner456',
         active: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([mockGuild, guild2]);
+      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        mockGuild,
+        guild2,
+      ]);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
           id: 'guild1',
           createdAt: new Date(),
           updatedAt: new Date(),
-          npcs: [{
-            id: 1,
-            npcType: NpcType.COMMON,
-            allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
-            lootlogConfigId: 'config1',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }]
+          npcs: [
+            {
+              id: 1,
+              npcType: NpcType.COMMON,
+              allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
+              lootlogConfigId: 'config1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
         } as any,
         {
           id: 'guild2',
           createdAt: new Date(),
           updatedAt: new Date(),
-          npcs: [{
-            id: 2,
-            npcType: NpcType.COMMON,
-            allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
-            lootlogConfigId: 'config2',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }]
-        } as any
+          npcs: [
+            {
+              id: 2,
+              npcType: NpcType.COMMON,
+              allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
+              lootlogConfigId: 'config2',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
+        } as any,
       ]);
 
       prismaService.member.findMany.mockResolvedValue([
         {
           id: 'member1',
           guildId: 'guild1',
-          userId: discordId
+          userId: discordId,
         },
         {
           id: 'member2',
           guildId: 'guild2',
-          userId: discordId
-        }
+          userId: discordId,
+        },
       ]);
 
       const mockLoot = { id: 1, uniqueId: 'unique123' };
@@ -393,15 +433,15 @@ describe('LootsService', () => {
           {
             lootId: mockLoot.id,
             guildId: 'guild1',
-            memberId: 'member1'
+            memberId: 'member1',
           },
           {
             lootId: mockLoot.id,
             guildId: 'guild2',
-            memberId: 'member2'
-          }
+            memberId: 'member2',
+          },
         ],
-        skipDuplicates: true
+        skipDuplicates: true,
       });
     });
 
@@ -414,13 +454,16 @@ describe('LootsService', () => {
         ownerId: 'owner456',
         active: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([mockGuild, guild2]);
+      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        mockGuild,
+        guild2,
+      ]);
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootBlaclistGuildIds: ['guild2']
+        collectLootBlaclistGuildIds: ['guild2'],
       } as any);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
@@ -428,23 +471,25 @@ describe('LootsService', () => {
           id: 'guild1',
           createdAt: new Date(),
           updatedAt: new Date(),
-          npcs: [{
-            id: 1,
-            npcType: NpcType.COMMON,
-            allowedRarities: [ItemRarity.UNIQUE],
-            lootlogConfigId: 'config1',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }]
-        } as any
+          npcs: [
+            {
+              id: 1,
+              npcType: NpcType.COMMON,
+              allowedRarities: [ItemRarity.UNIQUE],
+              lootlogConfigId: 'config1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
+        } as any,
       ]);
 
       prismaService.member.findMany.mockResolvedValue([
         {
           id: 'member1',
           guildId: 'guild1',
-          userId: discordId
-        }
+          userId: discordId,
+        },
       ]);
 
       const mockLoot = { id: 1, uniqueId: 'unique123' };
@@ -453,16 +498,18 @@ describe('LootsService', () => {
 
       await service.createLoot(discordId, userId, mockCreateLootDto);
 
-      expect(lootlogConfigService.getMultipleLootlogConfigs).toHaveBeenCalledWith(['guild1']);
+      expect(
+        lootlogConfigService.getMultipleLootlogConfigs,
+      ).toHaveBeenCalledWith(['guild1']);
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({
         data: [
           {
             lootId: mockLoot.id,
             guildId: 'guild1',
-            memberId: 'member1'
-          }
+            memberId: 'member1',
+          },
         ],
-        skipDuplicates: true
+        skipDuplicates: true,
       });
     });
 
@@ -475,51 +522,58 @@ describe('LootsService', () => {
         ownerId: 'owner456',
         active: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
-      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([mockGuild, guild2]);
+      guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
+        mockGuild,
+        guild2,
+      ]);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
           id: 'guild1',
           createdAt: new Date(),
           updatedAt: new Date(),
-          npcs: [{
-            id: 1,
-            npcType: NpcType.COMMON,
-            allowedRarities: [ItemRarity.HEROIC],
-            lootlogConfigId: 'config1',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }]
+          npcs: [
+            {
+              id: 1,
+              npcType: NpcType.COMMON,
+              allowedRarities: [ItemRarity.HEROIC],
+              lootlogConfigId: 'config1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
         } as any,
         {
           id: 'guild2',
           createdAt: new Date(),
           updatedAt: new Date(),
-          npcs: [{
-            id: 2,
-            npcType: NpcType.COMMON,
-            allowedRarities: [ItemRarity.UNIQUE],
-            lootlogConfigId: 'config2',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }]
-        } as any
+          npcs: [
+            {
+              id: 2,
+              npcType: NpcType.COMMON,
+              allowedRarities: [ItemRarity.UNIQUE],
+              lootlogConfigId: 'config2',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ],
+        } as any,
       ]);
 
       prismaService.member.findMany.mockResolvedValue([
         {
           id: 'member1',
           guildId: 'guild1',
-          userId: discordId
+          userId: discordId,
         },
         {
           id: 'member2',
           guildId: 'guild2',
-          userId: discordId
-        }
+          userId: discordId,
+        },
       ]);
 
       const mockLoot = { id: 1, uniqueId: 'unique123' };
@@ -534,10 +588,10 @@ describe('LootsService', () => {
           {
             lootId: mockLoot.id,
             guildId: 'guild2',
-            memberId: 'member2'
-          }
+            memberId: 'member2',
+          },
         ],
-        skipDuplicates: true
+        skipDuplicates: true,
       });
     });
   });
@@ -546,20 +600,22 @@ describe('LootsService', () => {
     const options = {
       discordId: 'discord123',
       guildId: 'guild1',
-      lootId: 1
+      lootId: 1,
     };
 
     it('should return comments for loot', async () => {
-      const mockComments = [{
-        id: 'comment1',
-        content: 'Test comment',
-        member: {
-          name: 'Test User',
-          avatar: 'avatar.png',
-          userId: 'user123',
-          roles: [{ color: 16711680 }]
-        }
-      }];
+      const mockComments = [
+        {
+          id: 'comment1',
+          content: 'Test comment',
+          member: {
+            name: 'Test User',
+            avatar: 'avatar.png',
+            userId: 'user123',
+            roles: [{ color: 16711680 }],
+          },
+        },
+      ];
       prismaService.lootComment.findMany.mockResolvedValue(mockComments);
 
       const result = await service.getComments(options);
@@ -575,11 +631,11 @@ describe('LootsService', () => {
               userId: true,
               roles: {
                 select: { color: true },
-                orderBy: { position: 'desc' }
-              }
-            }
-          }
-        }
+                orderBy: { position: 'desc' },
+              },
+            },
+          },
+        },
       });
       expect(result).toEqual(mockComments);
     });
@@ -595,15 +651,16 @@ describe('LootsService', () => {
       await service.deleteLoot(options);
 
       expect(prismaService.lootSubmission.deleteMany).toHaveBeenCalledWith({
-        where: { lootId: options.lootId, guildId: options.guildId }
+        where: { lootId: options.lootId, guildId: options.guildId },
       });
     });
 
     it('should throw ForbiddenException when loot does not exist', async () => {
       prismaService.loot.findFirst.mockResolvedValue(null);
 
-      await expect(service.deleteLoot(options))
-        .rejects.toThrow(new ForbiddenException(ErrorKey.CANT_DELETE_LOOT));
+      await expect(service.deleteLoot(options)).rejects.toThrow(
+        new ForbiddenException(ErrorKey.CANT_DELETE_LOOT),
+      );
     });
   });
 
@@ -613,7 +670,7 @@ describe('LootsService', () => {
       userId: 'user123',
       guildId: 'guild1',
       lootId: 1,
-      body: { content: 'Test comment' } as CreateCommentDto
+      body: { content: 'Test comment' } as CreateCommentDto,
     };
 
     it('should create comment when loot exists', async () => {
@@ -631,8 +688,9 @@ describe('LootsService', () => {
     it('should throw ForbiddenException when loot does not exist', async () => {
       prismaService.loot.findFirst.mockResolvedValue(null);
 
-      await expect(service.createComment(options))
-        .rejects.toThrow(new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT));
+      await expect(service.createComment(options)).rejects.toThrow(
+        new ForbiddenException(ErrorKey.CANT_CREATE_COMMENT),
+      );
     });
   });
 
@@ -640,7 +698,7 @@ describe('LootsService', () => {
     const discordId = 'discord123';
     const lootId = 1;
     const updateData: UpdateLootDto = {
-      msg: 'Test Player otrzymał ITEM#abc123:"Test Item"'
+      msg: 'Test Player otrzymał ITEM#abc123:"Test Item"',
     };
 
     it('should update loot share when valid', async () => {
@@ -648,7 +706,7 @@ describe('LootsService', () => {
         id: 1,
         lootShare: {},
         players: JSON.stringify([{ id: '1123', name: 'Test Player' }]),
-        items: JSON.stringify([{ hid: 'abc123', name: 'Test Item' }])
+        items: JSON.stringify([{ hid: 'abc123', name: 'Test Item' }]),
       };
       const mockUpdatedLoot = { lootShare: { '1123': ['abc123'] } };
 
@@ -659,7 +717,7 @@ describe('LootsService', () => {
 
       expect(prismaService.loot.update).toHaveBeenCalledWith({
         where: { id: lootId },
-        data: { lootShare: { '1123': ['abc123'] } }
+        data: { lootShare: { '1123': ['abc123'] } },
       });
       expect(result).toEqual({ '1123': ['abc123'] });
     });
@@ -667,8 +725,9 @@ describe('LootsService', () => {
     it('should throw ForbiddenException when loot not found', async () => {
       prismaService.loot.findFirst.mockResolvedValue(null);
 
-      await expect(service.updateLoot(discordId, lootId, updateData))
-        .rejects.toThrow(new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT));
+      await expect(
+        service.updateLoot(discordId, lootId, updateData),
+      ).rejects.toThrow(new ForbiddenException(ErrorKey.CANT_UPDATE_LOOT));
     });
 
     it('should throw BadRequestException when no loot share found in message', async () => {
@@ -676,14 +735,15 @@ describe('LootsService', () => {
         id: 1,
         lootShare: {},
         players: JSON.stringify([]),
-        items: JSON.stringify([])
+        items: JSON.stringify([]),
       };
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
       const invalidUpdateData = { msg: 'Invalid message' };
 
-      await expect(service.updateLoot(discordId, lootId, invalidUpdateData))
-        .rejects.toThrow(new BadRequestException(ErrorKey.MISSING_LOOT_SHARE));
+      await expect(
+        service.updateLoot(discordId, lootId, invalidUpdateData),
+      ).rejects.toThrow(new BadRequestException(ErrorKey.MISSING_LOOT_SHARE));
     });
   });
 
@@ -695,39 +755,58 @@ describe('LootsService', () => {
       npcs: [],
       players: [],
       rarities: [],
-      world: 'testworld'
+      world: 'testworld',
     };
 
     it('should throw BadRequestException when limit too high', async () => {
       const highLimitParams = { ...params, limit: 1000 };
 
-      await expect(service.fetchLootsByGuildId(mockGuild, [], [], highLimitParams))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.fetchLootsByGuildId(mockGuild, [], [], highLimitParams),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should return loots with submissions', async () => {
       const mockLoots = [{ id: 1, uniqueId: 'unique1' }];
-      const mockSubmissions = [{
-        lootId: 1,
-        member: { name: 'Test User', avatar: 'avatar.png', userId: 'user123' }
-      }];
+      const mockSubmissions = [
+        {
+          lootId: 1,
+          member: {
+            name: 'Test User',
+            avatar: 'avatar.png',
+            userId: 'user123',
+          },
+        },
+      ];
 
       prismaService.$queryRaw.mockResolvedValue(mockLoots);
       prismaService.lootSubmission.findMany.mockResolvedValue(mockSubmissions);
 
-      const result = await service.fetchLootsByGuildId(mockGuild, [], [], params);
+      const result = await service.fetchLootsByGuildId(
+        mockGuild,
+        [],
+        [],
+        params,
+      );
 
-      expect(result).toEqual([{
-        id: 1,
-        uniqueId: 'unique1',
-        submissions: [mockSubmissions[0]]
-      }]);
+      expect(result).toEqual([
+        {
+          id: 1,
+          uniqueId: 'unique1',
+          submissions: [mockSubmissions[0]],
+        },
+      ]);
     });
 
     it('should return empty array when no loots found', async () => {
       prismaService.$queryRaw.mockResolvedValue([]);
 
-      const result = await service.fetchLootsByGuildId(mockGuild, [], [], params);
+      const result = await service.fetchLootsByGuildId(
+        mockGuild,
+        [],
+        [],
+        params,
+      );
 
       expect(result).toEqual([]);
       expect(prismaService.lootSubmission.findMany).not.toHaveBeenCalled();
@@ -762,13 +841,13 @@ describe('LootsService', () => {
     describe('parseItemStats', () => {
       it('should parse item stats correctly', () => {
         const stats = 'lvl=50;rarity=UNIQUE;reqp=w';
-        
+
         const result = service.parseItemStats(stats);
 
         expect(result).toEqual({
           lvl: '50',
           rarity: 'UNIQUE',
-          reqp: 'w'
+          reqp: 'w',
         });
       });
 
@@ -779,12 +858,12 @@ describe('LootsService', () => {
 
       it('should ignore malformed entries', () => {
         const stats = 'lvl=50;invalidentry;rarity=UNIQUE';
-        
+
         const result = service.parseItemStats(stats);
 
         expect(result).toEqual({
           lvl: '50',
-          rarity: 'UNIQUE'
+          rarity: 'UNIQUE',
         });
       });
     });
@@ -793,7 +872,7 @@ describe('LootsService', () => {
       it('should extract item statistics correctly', () => {
         const item = {
           stat: 'lvl=50;rarity=UNIQUE;reqp=w',
-          cl: 1
+          cl: 1,
         } as any;
 
         const result = service.getItemStats(item);
@@ -802,14 +881,14 @@ describe('LootsService', () => {
           lvl: 50,
           rarity: ItemRarity.UNIQUE,
           prof: [Profession.WARRIOR],
-          type: expect.any(String) // Depends on getItemTypeByCl implementation
+          type: expect.any(String), // Depends on getItemTypeByCl implementation
         });
       });
 
       it('should handle missing level', () => {
         const item = {
           stat: 'rarity=UNIQUE',
-          cl: 1
+          cl: 1,
         } as any;
 
         const result = service.getItemStats(item);
@@ -820,7 +899,7 @@ describe('LootsService', () => {
       it('should default to all professions when no reqp specified', () => {
         const item = {
           stat: 'lvl=50;rarity=UNIQUE',
-          cl: 1
+          cl: 1,
         } as any;
 
         const result = service.getItemStats(item);
@@ -832,7 +911,7 @@ describe('LootsService', () => {
     describe('parseJsonField', () => {
       it('should parse JSON string', () => {
         const jsonString = '{"test": "value"}';
-        
+
         const result = service['parseJsonField'](jsonString);
 
         expect(result).toEqual({ test: 'value' });
@@ -840,7 +919,7 @@ describe('LootsService', () => {
 
       it('should return non-string values as-is', () => {
         const objectValue = { test: 'value' };
-        
+
         const result = service['parseJsonField'](objectValue);
 
         expect(result).toBe(objectValue);
@@ -850,8 +929,32 @@ describe('LootsService', () => {
     describe('processNpcs', () => {
       it('should sort NPCs by wt descending and return processed data', () => {
         const npcs = [
-          { id: 1, wt: 100, name: 'NPC1', lvl: 10, prof: 'w', icon: 'icon1.png', location: 'loc1', type: 1, hpp: 1000, x: 100, y: 200 },
-          { id: 2, wt: 200, name: 'NPC2', lvl: 20, prof: 'p', icon: 'icon2.png', location: 'loc2', type: 2, hpp: 2000, x: 150, y: 250 }
+          {
+            id: 1,
+            wt: 100,
+            name: 'NPC1',
+            lvl: 10,
+            prof: 'w',
+            icon: 'icon1.png',
+            location: 'loc1',
+            type: 1,
+            hpp: 1000,
+            x: 100,
+            y: 200,
+          },
+          {
+            id: 2,
+            wt: 200,
+            name: 'NPC2',
+            lvl: 20,
+            prof: 'p',
+            icon: 'icon2.png',
+            location: 'loc2',
+            type: 2,
+            hpp: 2000,
+            x: 150,
+            y: 250,
+          },
         ];
 
         const result = service['processNpcs'](npcs);
@@ -865,12 +968,13 @@ describe('LootsService', () => {
 
     describe('getLootShareFromMsg', () => {
       it('should parse loot share message correctly', () => {
-        const msg = 'Test Player otrzymał ITEM#abc123:"Item One", ITEM#def456:"Item Two"';
+        const msg =
+          'Test Player otrzymał ITEM#abc123:"Item One", ITEM#def456:"Item Two"';
 
         const result = service.getLootShareFromMsg(msg);
 
         expect(result).toEqual({
-          'Test Player': ['abc123', 'def456']
+          'Test Player': ['abc123', 'def456'],
         });
       });
 
@@ -880,13 +984,14 @@ describe('LootsService', () => {
       });
 
       it('should handle multiple players', () => {
-        const msg = 'Player1 otrzymał ITEM#abc123:"Item One" Player2 otrzymała ITEM#def456:"Item Two"';
+        const msg =
+          'Player1 otrzymał ITEM#abc123:"Item One" Player2 otrzymała ITEM#def456:"Item Two"';
 
         const result = service.getLootShareFromMsg(msg);
 
         expect(result).toEqual({
-          'Player1': ['abc123'],
-          'Player2': ['def456']
+          Player1: ['abc123'],
+          Player2: ['def456'],
         });
       });
     });

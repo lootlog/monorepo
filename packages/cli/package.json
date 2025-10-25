@@ -5,8 +5,11 @@
   "type": "module",
   "module": "ESNext",
   "exports": "./dist/index.mjs",
+  "bin": {
+    "lootlog": "./dist/index.mjs"
+  },
   "scripts": {
-    "configure:env": "tsx src/index.ts"
+    "env:generate": "tsx src/commands/env/generate.ts"
   },
   "dependencies": {
     "zx": "^8.8.5"

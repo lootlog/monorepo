@@ -4,14 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import {
-  Permission,
-  Prisma,
-  Timer,
-  NpcType,
-  Guild,
-  Role,
-} from 'generated/client';
+import { Permission, Prisma, Timer, Guild, Role } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { PrismaService } from 'src/db/prisma.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';

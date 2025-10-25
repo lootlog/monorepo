@@ -6,7 +6,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useBattles } from "@/hooks/api/battle-log/use-battles";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import type { BattleFilters } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list-filters";
-import { battleQueryParsers } from "@/features/battle-panel/battle-panel-battles-list/battle-panel-battles-list";
+import { battleQueryParsers } from "@/features/battle-panel/battle-panel-battles-list/battle-query-parsers";
 import { createSerializer } from "nuqs";
 
 export const RecentBattles = () => {
@@ -30,7 +30,7 @@ export const RecentBattles = () => {
       characterId: filters.characterId ?? null,
     });
 
-    navigate({ to: `/@me/battle-panel/battles${queryString}` as any });
+    navigate({ to: `/@me/battle-panel/battles${queryString}` as string });
   };
 
   return (

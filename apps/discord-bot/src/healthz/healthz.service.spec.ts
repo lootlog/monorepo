@@ -15,4 +15,11 @@ describe('HealthzService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  describe('healthCheck', () => {
+    it('should return OK', () => {
+      const result = service.healthCheck();
+      expect(result).toBe('OK');
+    });
+  });
 });

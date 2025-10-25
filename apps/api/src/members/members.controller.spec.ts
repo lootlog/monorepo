@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { plainToInstance } from 'class-transformer';
 import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
 import { Guild, Member, MemberType } from 'generated/client';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+import { MemberEntity } from 'src/shared/entities/member.entity';
+import { MemberRefreshJobEntity } from 'src/shared/entities/member-refresh-job.entity';
 
 describe('MembersController', () => {
   let controller: MembersController;
@@ -93,7 +96,8 @@ describe('MembersController', () => {
 
       const result = await controller.getMe('discord-123', 'user-123', 'guild-123');
 
-      expect(result).toEqual(mockMember);
+      const expectedResult = plainToInstance(MemberEntity, mockMember);
+      expect(result).toEqual(expectedResult);
       expect(membersService.getGuildMemberById).toHaveBeenCalledWith({
         discordId: 'discord-123',
         guildId: 'guild-123',
@@ -107,7 +111,7 @@ describe('MembersController', () => {
 
       const result = await controller.getMe('discord-123', 'user-123', 'guild-123');
 
-      expect(result).toBeNull();
+      expect(result).toEqual(plainToInstance(MemberEntity, null));
     });
   });
 
@@ -122,7 +126,8 @@ describe('MembersController', () => {
         'guild-123',
       );
 
-      expect(result).toEqual(refreshedMember);
+      const expectedResult = plainToInstance(MemberEntity, refreshedMember);
+      expect(result).toEqual(expectedResult);
       expect(membersService.getGuildMemberById).toHaveBeenCalledWith({
         discordId: 'discord-123',
         guildId: 'guild-123',
@@ -140,7 +145,8 @@ describe('MembersController', () => {
 
       const result = await controller.refreshMember('discord-456', mockGuild);
 
-      expect(result).toEqual(refreshedMember);
+      const expectedResult = plainToInstance(MemberEntity, refreshedMember);
+      expect(result).toEqual(expectedResult);
       expect(membersService.refreshMember).toHaveBeenCalledWith({
         discordId: 'discord-456',
         guildId: mockGuild.id,
@@ -159,8 +165,9 @@ describe('MembersController', () => {
 
       const result = await controller.getGuildMembers(mockGuild);
 
-      expect(result).toEqual(members);
-      expect(membersService.getGuildMembers).toHaveBeenCalledWith(mockGuild.id);
+      const expectedResult = plainToInstance(MemberEntity, members);
+      expect(result).toEqual(expectedResult);
+      expect(membersService.getGuildMembers).toHaveBeenCalledWith(mockGuild.id, false);
     });
 
     it('should return empty array when no members found', async () => {
@@ -168,7 +175,7 @@ describe('MembersController', () => {
 
       const result = await controller.getGuildMembers(mockGuild);
 
-      expect(result).toEqual([]);
+      expect(result).toEqual(plainToInstance(MemberEntity, []));
     });
   });
 
@@ -178,7 +185,8 @@ describe('MembersController', () => {
 
       const result = await controller.refreshAllMembers(mockGuild, 'discord-123');
 
-      expect(result).toEqual(mockRefreshJob);
+      const expectedResult = plainToInstance(MemberRefreshJobEntity, mockRefreshJob);
+      expect(result).toEqual(expectedResult);
       expect(membersService.createBulkRefreshJob).toHaveBeenCalledWith(
         mockGuild.id,
         'discord-123',
@@ -198,7 +206,8 @@ describe('MembersController', () => {
 
       const result = await controller.getLatestRefreshJob(mockGuild);
 
-      expect(result).toEqual(completedJob);
+      const expectedResult = plainToInstance(MemberRefreshJobEntity, completedJob);
+      expect(result).toEqual(expectedResult);
       expect(membersService.getLatestRefreshJob).toHaveBeenCalledWith(
         mockGuild.id,
       );
@@ -224,7 +233,8 @@ describe('MembersController', () => {
 
       const result = await controller.getRefreshJobStatus('1');
 
-      expect(result).toEqual(processingJob);
+      const expectedResult = plainToInstance(MemberRefreshJobEntity, processingJob);
+      expect(result).toEqual(expectedResult);
       expect(membersService.getRefreshJobStatus).toHaveBeenCalledWith(1);
     });
 
@@ -248,7 +258,8 @@ describe('MembersController', () => {
 
       const result = await controller.getRefreshJobStatus('1');
 
-      expect(result).toEqual(failedJob);
+      const expectedResult = plainToInstance(MemberRefreshJobEntity, failedJob);
+      expect(result).toEqual(expectedResult);
       expect(result.status).toBe('FAILED');
       expect(result.failedMembers).toBe(7);
     });
