@@ -3,7 +3,19 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
 
-type Theme = "default" | "cyberpunk" | "pastel" | "fantasy" | "shonen" | "onepiece" | "anime" | "goth" | "halloween" | "realmadrid" | "realmadrid-3rd" | "barcelona";
+type Theme =
+  | "default"
+  | "cyberpunk"
+  | "pastel"
+  | "fantasy"
+  | "shonen"
+  | "onepiece"
+  | "anime"
+  | "goth"
+  | "halloween"
+  | "realmadrid"
+  | "realmadrid-3rd"
+  | "barcelona";
 type ColorMode = "light" | "dark";
 
 interface ThemeContextType {
@@ -14,7 +26,9 @@ interface ThemeContextType {
   isLoading: boolean;
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(
+  undefined,
+);
 
 const THEME_STORAGE_KEY = "lootlog-theme";
 const COLOR_MODE_STORAGE_KEY = "lootlog-color-mode";
@@ -24,35 +38,59 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
+  const { data: preferences, isLoading } = useUserPreferences();
+  const updatePreferences = useUpdateUserPreferences();
+
   const [theme, setThemeState] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
     return savedTheme || "default";
   });
   const [colorMode, setColorModeState] = useState<ColorMode>(() => {
-    const savedColorMode = localStorage.getItem(COLOR_MODE_STORAGE_KEY) as ColorMode;
+    const savedColorMode = localStorage.getItem(
+      COLOR_MODE_STORAGE_KEY,
+    ) as ColorMode;
     return savedColorMode || "dark";
   });
 
-  const { data: preferences, isLoading } = useUserPreferences();
-  const updatePreferences = useUpdateUserPreferences();
-
   useEffect(() => {
-    if (preferences?.theme) {
+    if (!isLoading && preferences?.theme && preferences.theme !== theme) {
       setThemeState(preferences.theme as Theme);
       localStorage.setItem(THEME_STORAGE_KEY, preferences.theme);
     }
-    if (preferences?.colorMode) {
+  }, [preferences?.theme, isLoading, theme]);
+
+  useEffect(() => {
+    if (
+      !isLoading &&
+      preferences?.colorMode &&
+      preferences.colorMode !== colorMode
+    ) {
       setColorModeState(preferences.colorMode as ColorMode);
       localStorage.setItem(COLOR_MODE_STORAGE_KEY, preferences.colorMode);
     }
-  }, [preferences]);
+  }, [preferences?.colorMode, isLoading, colorMode]);
 
   useEffect(() => {
     if (isLoading) return;
 
     const root = document.documentElement;
 
-    root.classList.remove("light", "dark", "default", "cyberpunk", "pastel", "fantasy", "shonen", "onepiece", "anime", "goth", "halloween", "realmadrid", "realmadrid-3rd", "barcelona");
+    root.classList.remove(
+      "light",
+      "dark",
+      "default",
+      "cyberpunk",
+      "pastel",
+      "fantasy",
+      "shonen",
+      "onepiece",
+      "anime",
+      "goth",
+      "halloween",
+      "realmadrid",
+      "realmadrid-3rd",
+      "barcelona",
+    );
 
     root.classList.add(colorMode);
     if (theme !== "default") {
