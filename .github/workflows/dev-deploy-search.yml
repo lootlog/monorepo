@@ -1,4 +1,6 @@
 name: Deploy Search to dev
+permissions:
+  contents: read
 
 on:
   push:
