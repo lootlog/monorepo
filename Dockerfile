@@ -40,8 +40,6 @@ RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway && \
     pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service
 
-RUN chown -R nodejs:nodejs /prod
-
 FROM base AS auth
 
 LABEL org.opencontainers.image.title="Lootlog Auth Service"
