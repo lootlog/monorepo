@@ -1,4 +1,6 @@
 name: Deploy Discord Bot to dev
+permissions:
+  contents: read
 
 on:
   push:
