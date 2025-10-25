@@ -7,6 +7,9 @@ concurrency:
   group: deploy-discord-bot-prod
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     uses: ./.github/workflows/deploy-service.yml
