@@ -8,7 +8,8 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
+  security-events: write
 jobs:
   deploy:
     uses: ./.github/workflows/deploy-service.yml

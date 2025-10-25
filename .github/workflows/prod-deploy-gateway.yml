@@ -1,7 +1,8 @@
 name: Deploy Gateway to prod
 
 permissions:
-  contents: read
+  contents: write
+  security-events: write
 on:
   workflow_dispatch:
 
