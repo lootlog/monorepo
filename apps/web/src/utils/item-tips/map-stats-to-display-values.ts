@@ -9,6 +9,7 @@ export type ItemDisplayValue = {
 export type StatBlocks = {
   baseStatsBlock: ItemDisplayValue[];
   usageStatsBlock: ItemDisplayValue[];
+  enhancementStatsBlock: ItemDisplayValue[];
   legendaryBonusBlock: ItemDisplayValue[];
   descriptionBlock: ItemDisplayValue[];
   metadataBlock: ItemDisplayValue[];
@@ -24,6 +25,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
   const blocks: StatBlocks = {
     baseStatsBlock: [],
     usageStatsBlock: [],
+    enhancementStatsBlock: [],
     legendaryBonusBlock: [],
     descriptionBlock: [],
     metadataBlock: [],
@@ -70,9 +72,22 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "runes":
       case "bag":
       case "wound":
+      case "outfit":
+      case "timelimit":
+      case "quest_expbon":
+      case "perheal":
+      case "npc_lootbon":
+      case "enhancement_add":
+      case "target_rarity":
+      case "pet":
+      case "honorbon":
+      case "adest":
+      case "fullheal":
+      case "timelimit_upgmax":
         acc.baseStatsBlock.push(displayValue);
         return acc;
       case "lvl":
+      case "lvlnext":
         acc.requirementsBlock.push(displayValue);
         return acc;
       case "reqp":
@@ -101,7 +116,10 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
         return acc;
       case "nodepo":
       case "permbound":
+      case "noauction":
       case "binds":
+      case "artisan_worthless":
+      case "force_binding":
         acc.metadataBlock.push(displayValue);
         return acc;
       case "created":
@@ -117,6 +135,25 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "ttl":
         acc.usageStatsBlock.push(displayValue);
         return acc;
+      case "lvlupgcost":
+      case "lvlupgs":
+        acc.enhancementStatsBlock.push(displayValue);
+        return acc;
+      // Stats we want to ignore
+      case "quest":
+      case "outfit_selector":
+      case "townlimit":
+      case "expire_date":
+      case "expire_duration":
+      case "lootbox2":
+      case "battlestats":
+      case "recipe":
+      case "action":
+      case "play":
+      case "bonus_reselect":
+      case "lootbox":
+      case "canpreview":
+        return acc;
       default:
         console.warn("Unrecognized stat key:", stat.key, stat.value);
         acc.unrecognizedBlock.push(displayValue);
@@ -129,7 +166,7 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
 
 const mapStatDisplayValue = (
   { key, value }: ItemStat,
-  stats: ItemStat[]
+  stats: ItemStat[],
 ): ItemDisplayValue => {
   const date = stats.find((s) => s.key === "created")?.value;
   const createdDate = isString(date) ? parseInt(date, 10) * 1000 : Date.now();
