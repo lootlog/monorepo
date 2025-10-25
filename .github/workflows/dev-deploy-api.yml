@@ -15,6 +15,9 @@ concurrency:
   group: deploy-api-dev
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     uses: ./.github/workflows/deploy-service.yml
