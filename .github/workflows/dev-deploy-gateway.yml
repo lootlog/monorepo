@@ -1,4 +1,6 @@
 name: Deploy Gateway to dev
+permissions:
+  contents: read
 
 on:
   push:
