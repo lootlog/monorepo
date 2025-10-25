@@ -1,4 +1,4 @@
-import { BattleProcessor, ParsedMove } from './battle-processor';
+import { BattleProcessor } from './battle-processor';
 import { CreateBattleDto } from './dto/create-battle.dto';
 
 describe('BattleProcessor', () => {
@@ -38,7 +38,9 @@ describe('BattleProcessor', () => {
         events: [],
       };
 
-      expect(() => processor.processBattle(battleData)).toThrow('No events found in battle data');
+      expect(() => processor.processBattle(battleData)).toThrow(
+        'No events found in battle data',
+      );
     });
   });
 

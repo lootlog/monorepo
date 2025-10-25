@@ -5,7 +5,6 @@ import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.interceptor';
 import { CallHandler, ExecutionContext } from '@nestjs/common';
-import { of } from 'rxjs';
 
 describe('GuildsController', () => {
   let controller: GuildsController;

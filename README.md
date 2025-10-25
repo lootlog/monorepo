@@ -28,6 +28,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 ## Features
 
 ### Clan Management
+
 - Multi-clan support with role-based permissions
 - Loot tracking with item database integration
 - Boss timer tracking and notifications
@@ -35,18 +36,21 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 - Member activity tracking
 
 ### Battle System
+
 - Comprehensive battle logging
 - Warrior statistics and leaderboards
 - Character performance analytics
 - Historical battle data
 
 ### Discord Bot
+
 - Discord server data synchronization
 - Clan member role management
 - Discord to database integration
 - Slash commands for server management
 
 ### Developer Experience
+
 - Turborepo monorepo with hot reload
 - CLI tool for environment setup with smart defaults
 - Docker Compose for one-command infrastructure
@@ -56,6 +60,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 ## Tech Stack
 
 ### Backend
+
 - **NestJS** (Fastify) - API, Battlelog, Discord Bot, Gateway
 - **Hono** - Auth, Search services
 - **Prisma** - ORM for API and Battlelog databases
@@ -65,6 +70,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 - **Socket.IO** - Real-time WebSocket connections
 
 ### Frontend
+
 - **React 19** - Web dashboard and game client
 - **Next.js 16** - Marketing landing page
 - **TanStack Router/Query** - Type-safe routing and data fetching
@@ -72,6 +78,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 - **Tailwind CSS** - Utility-first styling
 
 ### Infrastructure
+
 - **PostgreSQL 17** - Three separate databases (Users, Lootlog, Battlelog)
 - **Redis** - Caching and session storage
 - **Meilisearch** - Full-text search engine
@@ -79,6 +86,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 - **Turborepo** - Monorepo build system
 
 ### DevOps
+
 - **GitHub Actions** - CI/CD pipelines
 - **Dependabot** - Automated dependency updates
 - **ESLint + Prettier** - Code quality and formatting
@@ -159,12 +167,14 @@ pnpm env:generate --force
 ```
 
 The CLI generates secure random values for:
+
 - Database passwords
 - JWT secrets
 - Redis passwords
 - RabbitMQ credentials
 
 You'll need to manually configure:
+
 - Discord bot token and client credentials
 - Discord webhook URLs
 - External API keys
@@ -220,17 +230,20 @@ packages/
 ### Inter-Service Communication
 
 **Authentication Flow**
+
 1. User authenticates via Auth service (Discord OAuth or email/password)
 2. Auth returns JWT with user claims
 3. Other services validate JWT using JWKS from `packages/api-helpers`
 4. Clients include `Authorization: Bearer <token>` header
 
 **Event-Driven Communication (RabbitMQ)**
+
 - Discord Bot publishes server data → API syncs to database
 - API publishes new loot → Search service indexes in Meilisearch
 - Member changes → Gateway broadcasts via Socket.IO
 
 **Real-Time Updates (Socket.IO)**
+
 - Live timer updates
 - New loot notifications
 - Battle event streaming
@@ -286,6 +299,199 @@ pnpm dev                    # Runs vite
 
 cd apps/auth
 pnpm dev                    # Runs Hono dev server
+```
+
+## Version Management with Changesets
+
+This project uses [Changesets](https://github.com/changesets/changesets) to manage versions, changelogs, and releases across all packages and apps in the monorepo.
+
+### What are Changesets?
+
+Changesets is a tool that helps track which packages need to be released and what version bump they need (major, minor, or patch). It generates changelogs automatically based on the changes you describe.
+
+### Workflow
+
+#### 1. Making Changes
+
+When you make changes to any package or app, you need to create a changeset to document what changed:
+
+```bash
+# After making your changes, create a changeset
+pnpm changeset
+```
+
+This will:
+
+1. Prompt you to select which packages have changed
+2. Ask whether the change is a major, minor, or patch
+3. Request a description of the changes (used in the changelog)
+
+**Versioning Guidelines:**
+
+- **Major** (1.0.0 → 2.0.0) - Breaking changes that require users to modify their code
+- **Minor** (1.0.0 → 1.1.0) - New features that are backwards compatible
+- **Patch** (1.0.0 → 1.0.1) - Bug fixes and small improvements
+
+#### 2. Changeset Files
+
+After running `pnpm changeset`, a new markdown file will be created in `.changeset/` directory:
+
+```markdown
+---
+"@lootlog/api": patch
+"@lootlog/types": patch
+---
+
+Fixed authentication bug in API service
+```
+
+Commit this file along with your code changes:
+
+```bash
+git add .
+git commit -m "fix: authentication bug + changeset"
+```
+
+#### 3. Versioning Packages
+
+When you're ready to create a new version (typically before a release):
+
+```bash
+# Update package versions and generate changelogs
+pnpm version
+```
+
+This command:
+
+- Reads all changeset files
+- Updates `package.json` versions for affected packages
+- Updates `CHANGELOG.md` files
+- Removes consumed changeset files
+
+**Commit the version changes:**
+
+```bash
+git add .
+git commit -m "chore: version packages"
+git push
+```
+
+#### 4. Publishing (Optional)
+
+If you're publishing packages to npm:
+
+```bash
+# Build all packages and publish to npm
+pnpm release
+```
+
+**Note:** This project uses `"access": "restricted"` in changeset config, meaning packages are private by default.
+
+### Common Scenarios
+
+#### Single Package Change
+
+```bash
+# 1. Make your changes to apps/api
+# 2. Create changeset
+pnpm changeset
+# Select: @lootlog/api
+# Version: patch
+# Description: "Fixed guild sync bug"
+
+# 3. Commit
+git add .
+git commit -m "fix(api): guild sync bug"
+```
+
+#### Multiple Package Changes
+
+```bash
+# 1. Make changes to apps/api and packages/types
+# 2. Create changeset
+pnpm changeset
+# Select: @lootlog/api, @lootlog/types
+# Version: minor (for new feature)
+# Description: "Added support for custom guild roles"
+
+# 3. Commit
+git add .
+git commit -m "feat: custom guild roles"
+```
+
+#### No Changeset Needed
+
+If your changes don't affect any package functionality (docs, tests, config):
+
+```bash
+# Just commit normally without creating a changeset
+git add .
+git commit -m "docs: update README"
+```
+
+### Configuration
+
+Changeset configuration is in `.changeset/config.json`:
+
+- **Base Branch**: `develop` - all changesets are based on this branch
+- **Commit**: `false` - changesets won't auto-commit (you control commits)
+- **Access**: `restricted` - packages are private by default
+- **Update Internal Dependencies**: `patch` - internal package updates trigger patch versions
+
+### Commands Reference
+
+```bash
+# Create a new changeset
+pnpm changeset
+
+# Version packages (consume changesets)
+pnpm version
+
+# Build and publish to npm
+pnpm release
+
+# View changeset status
+pnpm changeset status
+```
+
+### Best Practices
+
+1. **Create changesets for every functional change** - Don't batch multiple unrelated changes in one changeset
+2. **Write clear descriptions** - They become your changelog entries
+3. **Version appropriately** - Be conservative with major versions
+4. **Review generated changelogs** - Check `CHANGELOG.md` files after running `pnpm version`
+5. **Commit changesets with your code** - Don't create changesets in separate commits
+
+### Example Workflow
+
+```bash
+# Day 1: Add new feature
+git checkout -b feat/notifications
+# ... make changes ...
+pnpm changeset
+# Select packages, choose minor, describe feature
+git add .
+git commit -m "feat: add notification system"
+git push
+
+# Day 2: Fix bug found in review
+# ... make changes ...
+pnpm changeset
+# Select packages, choose patch, describe fix
+git add .
+git commit -m "fix: notification timing issue"
+git push
+
+# Day 3: Ready to release
+git checkout develop
+git pull
+pnpm version  # Consumes all changesets, updates versions
+git add .
+git commit -m "chore: version packages"
+git push
+
+# Optional: Publish to npm (if applicable)
+pnpm release
 ```
 
 ## Documentation

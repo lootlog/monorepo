@@ -14,9 +14,6 @@ import { Permission } from '../guilds/enum/permission.type';
 
 describe('GatewayService', () => {
   let service: GatewayService;
-  let gateway: Gateway;
-  let redisService: RedisService;
-  let guildsService: GuildsService;
 
   const mockSocket = {
     id: 'socket-123',
@@ -72,9 +69,6 @@ describe('GatewayService', () => {
     }).compile();
 
     service = module.get<GatewayService>(GatewayService);
-    gateway = module.get<Gateway>(Gateway);
-    redisService = module.get<RedisService>(RedisService);
-    guildsService = module.get<GuildsService>(GuildsService);
   });
 
   it('should be defined', () => {

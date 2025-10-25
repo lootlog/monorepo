@@ -14,7 +14,7 @@ export function ValidateWarriorsRecord(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        async validate(value: any, args: ValidationArguments) {
+        async validate(value: any) {
           if (!value || typeof value !== 'object') {
             return false;
           }

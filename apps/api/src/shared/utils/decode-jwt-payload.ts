@@ -6,7 +6,7 @@ export const decodeJwtPayload = (token: string) => {
 
   try {
     return JSON.parse(decoded);
-  } catch (error) {
+  } catch {
     throw new UnauthorizedException('Invalid token');
   }
 };

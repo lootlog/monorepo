@@ -252,14 +252,19 @@ describe('MembersService', () => {
 
       expect(result).toBeNull();
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: { memberId: { userId: options.discordId, guildId: options.guildId } },
+        where: {
+          memberId: { userId: options.discordId, guildId: options.guildId },
+        },
         data: { active: false, roles: { set: [] } },
       });
     });
 
     it('should deactivate member when authentication fails (401)', async () => {
       prismaService.member.findUnique.mockResolvedValue(null);
-      const unauthorizedError = new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      const unauthorizedError = new HttpException(
+        'Unauthorized',
+        HttpStatus.UNAUTHORIZED,
+      );
       discordService.getGuildMember.mockRejectedValue(unauthorizedError);
       prismaService.member.update.mockResolvedValue(mockMember);
 
@@ -269,7 +274,8 @@ describe('MembersService', () => {
       expect(service['logger'].log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: 'warn',
-          message: 'User authentication failed (token expired/invalid), deactivating member',
+          message:
+            'User authentication failed (token expired/invalid), deactivating member',
         }),
       );
     });
@@ -301,7 +307,9 @@ describe('MembersService', () => {
     it('should throw error when refresh=true and general error occurs', async () => {
       guildsService.getGuildById.mockResolvedValue(mockGuild);
       prismaService.member.findUnique.mockResolvedValue(null);
-      discordService.getGuildMember.mockRejectedValue(new Error('Network error'));
+      discordService.getGuildMember.mockRejectedValue(
+        new Error('Network error'),
+      );
 
       await expect(
         service.getGuildMemberById({ ...options, refresh: true }),
@@ -316,7 +324,9 @@ describe('MembersService', () => {
       prismaService.member.findUnique
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(staleMember);
-      discordService.getGuildMember.mockRejectedValue(new Error('Network error'));
+      discordService.getGuildMember.mockRejectedValue(
+        new Error('Network error'),
+      );
 
       const result = await service.getGuildMemberById(options);
 
@@ -328,7 +338,9 @@ describe('MembersService', () => {
       expect(service['logger'].log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: 'error',
-          message: expect.stringContaining('Failed to fetch member from Discord'),
+          message: expect.stringContaining(
+            'Failed to fetch member from Discord',
+          ),
         }),
       );
     });
@@ -406,7 +418,11 @@ describe('MembersService', () => {
 
       expect(result).toEqual(members);
       expect(prismaService.member.findMany).toHaveBeenCalledWith({
-        where: { guildId: 'guild-123', active: true, globalUserId: { not: null } },
+        where: {
+          guildId: 'guild-123',
+          active: true,
+          globalUserId: { not: null },
+        },
         include: {
           roles: {
             orderBy: { position: 'desc' },
@@ -489,7 +505,10 @@ describe('MembersService', () => {
       await service.createOrUpdateMember(memberWithRoles);
 
       const upsertCall = prismaService.member.upsert.mock.calls[0][0];
-      expect(upsertCall.update.roles.set).toEqual([{ id: 'role-1' }, { id: 'role-2' }]);
+      expect(upsertCall.update.roles.set).toEqual([
+        { id: 'role-1' },
+        { id: 'role-2' },
+      ]);
       expect(upsertCall.create.roles.connect).toEqual([
         { id: 'role-1' },
         { id: 'role-2' },
@@ -548,7 +567,9 @@ describe('MembersService', () => {
 
       expect(result).toEqual(deactivatedMember);
       expect(prismaService.member.update).toHaveBeenCalledWith({
-        where: { memberId: { userId: options.discordId, guildId: options.guildId } },
+        where: {
+          memberId: { userId: options.discordId, guildId: options.guildId },
+        },
         data: { active: false, roles: { set: [] } },
       });
     });
@@ -575,9 +596,9 @@ describe('MembersService', () => {
       const error = new Error('Database error');
       prismaService.member.updateMany.mockRejectedValue(error);
 
-      await expect(
-        service.deleteMembersByGuildId('guild-123'),
-      ).rejects.toThrow(error);
+      await expect(service.deleteMembersByGuildId('guild-123')).rejects.toThrow(
+        error,
+      );
       expect(service['logger'].log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: 'error',

@@ -76,12 +76,7 @@ export class RetryService {
   /**
    * Konfiguruje queue options dla retry z TTL
    */
-  getRetryQueueOptions(
-    mainRoutingKey: string,
-    retryDelayMs: number = 30000,
-    config: RetryConfig = {},
-  ) {
-    const retryExchange = config.retryExchange || RETRY_EXCHANGE_NAME;
+  getRetryQueueOptions(mainRoutingKey: string, retryDelayMs: number = 30000) {
     const mainExchange = DEFAULT_EXCHANGE_NAME;
 
     return {

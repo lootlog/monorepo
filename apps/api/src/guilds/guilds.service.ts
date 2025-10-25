@@ -1,4 +1,3 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
   BadRequestException,
   Inject,

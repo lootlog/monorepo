@@ -25,15 +25,12 @@ import {
   type Warrior,
 } from './battle-processor';
 import type {
-  BattleNotFoundError,
-  BattleProcessingError,
   BattleWithRelations,
   CreateBattleParams,
   CreateBattleResult,
   DeleteBattleResult,
   GetAllBattlesResult,
   IBattlesService,
-  R2StorageError,
   RawBattleData,
 } from './interfaces/battle-service.interface';
 
