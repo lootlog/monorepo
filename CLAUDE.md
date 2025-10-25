@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Lootlog** is a full-stack microservices application for the game "Margonem" that provides guild loot tracking, battle logging, Discord bot integration, and real-time game client features.
 
 ### Technology Stack
+
 - **Monorepo**: Turborepo + pnpm workspaces
 - **Backend**: NestJS (Fastify), Hono
 - **Frontend**: React 19, Vite, Next.js 16
@@ -43,6 +44,7 @@ pnpm dev
 ## Common Commands
 
 ### Development
+
 ```bash
 pnpm dev                    # Start all apps/services with hot reload (concurrency 11)
 pnpm build                  # Build all apps/services
@@ -54,6 +56,7 @@ pnpm test                   # Run all tests
 ### Database Operations
 
 **API Service (Lootlog DB - port 5433)**
+
 ```bash
 pnpm api:migrate:dev        # Run Prisma migrations (interactive)
 pnpm api:generate           # Generate Prisma client
@@ -61,12 +64,14 @@ pnpm api:studio             # Open Prisma Studio
 ```
 
 **Auth Service (Users DB - port 5432)**
+
 ```bash
 pnpm auth:migrate:dev       # Run Better-Auth migrations
 pnpm auth:migrate:prod      # Production migrations
 ```
 
 **Battlelog Service (Battle Log DB - port 5434)**
+
 ```bash
 pnpm battlelog:migrate:dev  # Run Prisma migrations
 pnpm battlelog:generate     # Generate Prisma client
@@ -76,6 +81,7 @@ pnpm battlelog:studio       # Open Prisma Studio
 ### Testing
 
 **Backend (Jest)**
+
 ```bash
 cd apps/api                 # or any NestJS service
 pnpm test                   # Run all tests
@@ -85,12 +91,14 @@ pnpm test:e2e               # E2E tests
 ```
 
 **Frontend (Vitest)**
+
 ```bash
 cd apps/web
 pnpm test                   # Run tests (if configured)
 ```
 
 ### Infrastructure
+
 ```bash
 docker compose up -d        # Start all infrastructure services
 docker compose down         # Stop all services
@@ -102,6 +110,7 @@ docker compose logs -f      # Follow logs
 ### Monorepo Structure
 
 **Apps** (`apps/*`)
+
 - `api` - Main NestJS backend (guilds, loots, timers, NPCs)
 - `auth` - Hono auth service (Better-Auth, Discord OAuth, JWT)
 - `battlelog-service` - NestJS service for battle statistics
@@ -113,6 +122,7 @@ docker compose logs -f      # Follow logs
 - `landing` - Next.js 16 marketing site
 
 **Packages** (`packages/*`)
+
 - `ui` - Shared Radix UI + Tailwind components
 - `types` - Shared TypeScript types
 - `api-helpers` - JWT/JWKS auth utilities for services
@@ -141,12 +151,14 @@ docker compose logs -f      # Follow logs
 ### Inter-Service Communication
 
 **Authentication Flow**
+
 1. User authenticates via Auth service (Discord OAuth or email/password)
 2. Auth returns JWT token with `id`, `email`, `role`, `discordId`
 3. Other services validate JWT using JWKS from `packages/api-helpers`
 4. Clients include `Authorization: Bearer <token>` in requests
 
 **Event-Driven Communication (RabbitMQ)**
+
 - Library: `@golevelup/nestjs-rabbitmq` (NestJS), `amqplib` (Hono)
 - Pattern: Publish/Subscribe for async operations
 - Examples:
@@ -155,11 +167,13 @@ docker compose logs -f      # Follow logs
   - Members module changes → Gateway broadcasts via Socket.IO
 
 **Real-Time Updates (Socket.IO)**
+
 - API and Gateway expose WebSocket endpoints
 - Clients subscribe to guild/battle events
 - Used for: Live timer updates, new loots, battle notifications
 
 **Search (Meilisearch)**
+
 - Search service maintains indices
 - RabbitMQ events trigger index updates
 - Web/game-client query via search service HTTP API
@@ -171,6 +185,7 @@ docker compose logs -f      # Follow logs
 The monorepo includes a modular CLI (`packages/cli`) with environment generation:
 
 **Features:**
+
 - Auto-discovers all `.env.sample` files in the monorepo
 - Generates secure random values for passwords and secrets
 - Shares common values (DB credentials, RabbitMQ, Redis) across services
@@ -178,6 +193,7 @@ The monorepo includes a modular CLI (`packages/cli`) with environment generation
 - Modular design - easy to add new commands
 
 **Usage:**
+
 ```bash
 pnpm env:generate                      # Auto-generate with smart defaults (recommended)
 pnpm env:generate --interactive        # Prompt for each value
@@ -187,6 +203,7 @@ pnpm env:generate --help               # Show help
 ```
 
 **What it does:**
+
 1. Processes root `.env.sample` and generates secure credentials
 2. Extracts shared values (database credentials, RabbitMQ, Redis config)
 3. Creates `.env` files for all apps, reusing shared values
@@ -199,6 +216,7 @@ pnpm env:generate --help               # Show help
 When modifying database schemas:
 
 1. **For API service**:
+
    ```bash
    # Edit apps/api/prisma/schema.prisma
    pnpm api:migrate:dev       # Create and apply migration
@@ -206,6 +224,7 @@ When modifying database schemas:
    ```
 
 2. **For Battlelog service**:
+
    ```bash
    # Edit apps/battlelog-service/prisma/schema.prisma
    pnpm battlelog:migrate:dev
@@ -232,6 +251,7 @@ When modifying database schemas:
 ### Working with Shared Packages
 
 **To modify UI components**:
+
 ```bash
 cd packages/ui
 # Edit components, exported from index.ts
@@ -239,6 +259,7 @@ cd packages/ui
 ```
 
 **To add shared types**:
+
 ```bash
 cd packages/types
 # Add to appropriate file
@@ -262,16 +283,19 @@ pnpm dev                    # Runs Hono dev server
 ## Important Conventions
 
 ### Turbo Task Dependencies
+
 - Build tasks depend on upstream builds: `"dependsOn": ["^build"]`
 - Database generation runs before build: `api:generate`, `battlelog:generate`
 - Turbo caches outputs in `.next/`, `dist/`, `generated/`
 
 ### Module Organization (NestJS)
+
 - Feature modules in `src/modules/*` (e.g., `guilds`, `loots`, `timers`)
 - Each module: controller, service, module file, DTOs, entities
 - Shared modules: `prisma`, `config`, `logger`, `rabbitmq`, `redis`
 
 ### Frontend Patterns
+
 - TanStack Router for routing (`apps/web`)
 - TanStack Query for data fetching
 - Zod for validation
@@ -279,12 +303,14 @@ pnpm dev                    # Runs Hono dev server
 - Socket.IO client for real-time updates
 
 ### Environment Variables
+
 - Sample file: `.env.sample`
 - Configure via: `pnpm configure:env`
 - Global vars in `turbo.json`: `RABBITMQ_URI`, `REDIS_HOST`, `REDIS_PASSWORD`, etc.
 - Service-specific vars in each app's `.env` files
 
 ### Code Quality
+
 - ESLint config: `@lootlog/eslint-config`
 - Prettier for formatting
 - Lint-staged hooks for pre-commit checks
@@ -293,6 +319,7 @@ pnpm dev                    # Runs Hono dev server
 ## Troubleshooting
 
 ### Database Connection Issues
+
 ```bash
 # Check if containers are running
 docker compose ps
@@ -308,6 +335,7 @@ docker compose logs -f redis
 ```
 
 ### Migration Issues
+
 ```bash
 # Reset database (DESTRUCTIVE - dev only)
 cd apps/api
@@ -318,6 +346,7 @@ pnpm api:migrate:dev
 ```
 
 ### Prisma Client Errors
+
 ```bash
 # Regenerate clients after schema changes
 pnpm api:generate
@@ -325,11 +354,13 @@ pnpm battlelog:generate
 ```
 
 ### RabbitMQ Connection Issues
+
 - Management UI: http://localhost:15672
 - Default credentials in `.env`
 - Check `RABBITMQ_URI` environment variable
 
 ### Port Conflicts
+
 - PostgreSQL (Users): 5432
 - PostgreSQL (Lootlog): 5433
 - PostgreSQL (Battlelog): 5434
@@ -337,6 +368,137 @@ pnpm battlelog:generate
 - Redis: 6379
 - Meilisearch: 7700
 - Traefik: 80, 8080
+
+## Deployment
+
+### CI/CD Architecture
+
+The monorepo uses GitHub Actions for automated deployments with a reusable workflow pattern:
+
+**Workflow Structure**:
+
+- Single reusable workflow: `.github/workflows/deploy-service.yml`
+- Per-service triggers: `dev-deploy-*.yml` and `prod-deploy-*.yml`
+- Automatic deployments on push to `develop` (dev) or manual triggers (prod)
+
+**Deployment Pipeline** (per service):
+
+1. **Test Stage**: Runs linters and tests
+2. **Build Stage**: Builds Docker image with Buildx cache
+3. **Security Stage**: Scans image with Trivy for vulnerabilities
+4. **Kustomize Stage**: Updates Kubernetes manifests with new image tag
+5. **Notification Stage**: (Optional) Sends deployment status to Discord/Slack
+
+**Services with CI/CD**:
+
+- `api` - Main API service
+- `auth` - Authentication service
+- `gateway` - Socket.IO gateway
+- `discord-bot` - Discord bot
+- `search` - Meilisearch indexing service
+- `battlelog-service` - Battle statistics service
+
+### GitHub Environments Setup
+
+To enable environment protection rules and secrets scoping, configure GitHub Environments:
+
+**1. Create Environments** (Repository Settings → Environments):
+
+**Development Environment (`dev`)**:
+
+- Protection rules: None (auto-deploy on push)
+- Environment secrets:
+  - `DOCKER_REGISTRY_USERNAME`: Docker Hub username
+  - `DOCKER_REGISTRY_PASSWORD`: Docker Hub password/token
+  - `NOTIFICATION_WEBHOOK` (optional): Discord/Slack webhook URL
+
+**Production Environment (`prod`)**:
+
+- Protection rules:
+  - Required reviewers: Add team members who must approve
+  - Wait timer: 5 minutes (optional safety delay)
+  - Deployment branches: Only `main` branch
+- Environment secrets:
+  - `DOCKER_REGISTRY_USERNAME`: Docker Hub username
+  - `DOCKER_REGISTRY_PASSWORD`: Docker Hub password/token
+  - `NOTIFICATION_WEBHOOK` (optional): Discord/Slack webhook URL
+
+**2. Update Workflows** (if using environments):
+
+Modify each deployment workflow to use the environment:
+
+```yaml
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service: api
+      environment: prod
+      enable_notifications: true
+    secrets:
+      DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+    environment: prod # Add this line to use GitHub Environment
+```
+
+### Manual Deployments
+
+**Deploy to Development**:
+
+```bash
+# Via GitHub UI: Actions → Select service → Run workflow
+# Or via gh CLI:
+gh workflow run dev-deploy-api.yml
+gh workflow run dev-deploy-auth.yml
+```
+
+**Deploy to Production**:
+
+```bash
+# Production deployments require manual trigger
+gh workflow run prod-deploy-api.yml --ref main
+```
+
+### Security Scanning
+
+All images are scanned with Trivy before deployment:
+
+- **Severity levels**: CRITICAL, HIGH
+- **Fails deployment**: If critical vulnerabilities found
+- **Reports**: Uploaded to GitHub Security tab (Code scanning alerts)
+
+### Docker Image Tagging
+
+Each build produces multiple tags:
+
+- `{env}-{sha}`: Primary immutable tag (e.g., `dev-abc123`)
+- `{env}-latest`: Latest build for environment
+- `{env}-sha-{short}`: Short SHA reference
+
+### Rollback Procedure
+
+**Via Kubernetes**:
+
+```bash
+# List recent deployments
+kubectl rollout history deployment/api -n lootlog-dev
+
+# Rollback to previous version
+kubectl rollback deployment/api -n lootlog-dev
+
+# Rollback to specific revision
+kubectl rollback deployment/api --to-revision=3 -n lootlog-dev
+```
+
+**Via Git** (update Kustomize manually):
+
+```bash
+# Find previous working image tag
+git log infra/k8s/prod/api/kustomization.yml
+
+# Manually update to previous tag
+# Commit and push to trigger ArgoCD sync
+```
 
 ## Key Files
 
