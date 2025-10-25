@@ -2,10 +2,10 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useLoots } from "@/hooks/api/loots/use-loots";
 import { Frown, Loader2 } from "lucide-react";
-import { FC, Fragment, useEffect, useMemo } from "react";
+import { FC, Fragment, useEffect, useMemo, useRef } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
-import { useDebounceValue, useIntersectionObserver } from "usehooks-ts";
+import { useIntersectionObserver } from "usehooks-ts";
 import {
   Permission,
   useGuildPermissions,
@@ -16,6 +16,9 @@ import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 
 const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
+const INFINITE_SCROLL_THRESHOLD = 0.5;
+const INFINITE_SCROLL_ROOT_MARGIN = "100px";
+const LOOTS_PAGE_LIMIT = 25;
 
 export const LootsList: FC = () => {
   const {
@@ -23,28 +26,45 @@ export const LootsList: FC = () => {
     fetchNextPage,
     hasNextPage,
     isFetchedAfterMount,
-  } = useLoots({});
+    isFetchingNextPage,
+  } = useLoots({ limit: LOOTS_PAGE_LIMIT });
   const { data: permissions, error: permissionsError } = useGuildPermissions();
   const { world } = useGuildContext();
   const { data: member, isPending } = useGuildMember();
   const isOwner = useIsOwner();
+  const isFetchingRef = useRef(false);
 
   const canManageLoots = useMemo(
     () =>
       permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner,
-    [permissions, isOwner]
+    [permissions, isOwner],
   );
 
   const { isIntersecting, ref } = useIntersectionObserver({
-    threshold: 1,
+    threshold: INFINITE_SCROLL_THRESHOLD,
+    rootMargin: INFINITE_SCROLL_ROOT_MARGIN,
   });
-  const [value] = useDebounceValue(isIntersecting, 100);
 
   useEffect(() => {
-    if (value && hasNextPage && isFetchedAfterMount) {
-      fetchNextPage();
+    if (
+      isIntersecting &&
+      hasNextPage &&
+      isFetchedAfterMount &&
+      !isFetchingNextPage &&
+      !isFetchingRef.current
+    ) {
+      isFetchingRef.current = true;
+      fetchNextPage().finally(() => {
+        isFetchingRef.current = false;
+      });
     }
-  }, [value, fetchNextPage, isFetchedAfterMount, hasNextPage]);
+  }, [
+    isIntersecting,
+    hasNextPage,
+    isFetchedAfterMount,
+    isFetchingNextPage,
+    fetchNextPage,
+  ]);
 
   if (permissionsError?.response?.status === 403) {
     return (
@@ -99,7 +119,7 @@ export const LootsList: FC = () => {
                   <Separator />
                 </Fragment>
               );
-            })
+            }),
           )}
         </ul>
       )}
@@ -112,8 +132,11 @@ export const LootsList: FC = () => {
         </ul>
       )}
       {hasNextPage && (
-        <div ref={ref} className="h-24 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div
+          ref={ref}
+          className="min-h-[200px] flex items-center justify-center py-8"
+        >
+          {isFetchingNextPage && <Loader2 className="h-8 w-8 animate-spin" />}
         </div>
       )}
     </ScrollArea>
