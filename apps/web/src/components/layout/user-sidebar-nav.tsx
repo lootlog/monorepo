@@ -1,6 +1,7 @@
 import { useSession } from "@/hooks/auth/use-session";
 import { LayoutDashboard, Settings, Swords } from "lucide-react";
 import { SidebarNav, MenuItem } from "./sidebar-nav";
+import { ROUTE_SEGMENTS } from "@/config/routes";
 
 const menuItems: MenuItem[] = [
   {
@@ -14,7 +15,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Panel walk",
     icon: <Swords className="mr-1 h-4 w-4" />,
-    path: "/battle-panel",
+    path: ROUTE_SEGMENTS.user.battlePanel,
     available: true,
     enabled: true,
     divided: false,
@@ -23,7 +24,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Ustawienia",
     icon: <Settings className="mr-1 h-4 w-4" />,
-    path: "/settings",
+    path: ROUTE_SEGMENTS.user.settings,
     available: true,
     enabled: true,
     divided: true,
@@ -39,5 +40,11 @@ export const UserSidebarNav = () => {
     </span>
   );
 
-  return <SidebarNav items={menuItems} basePath="/@me" header={header} />;
+  return (
+    <SidebarNav
+      items={menuItems}
+      basePath={ROUTE_SEGMENTS.user.base}
+      header={header}
+    />
+  );
 };

@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@lootlog/ui/components/card";
 import { Link } from "@tanstack/react-router";
+import { ROUTES } from "@/config/routes";
 
 type Props = {
   guild: Guild;
@@ -41,7 +42,7 @@ export const GuildCard: React.FC<Props> = ({ guild }) => {
           </Avatar>
         </CardContent>
         <CardFooter className="flex justify-center items-center">
-          <Link to={`/${guild.vanityUrl ?? guild.id}` as string}>
+          <Link to={ROUTES.guild.base(guild.vanityUrl ?? guild.id) as string}>
             <Button>Przejdź do lootloga</Button>
           </Link>
         </CardFooter>

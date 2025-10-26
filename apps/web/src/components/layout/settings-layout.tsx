@@ -1,29 +1,28 @@
-import { PageHeader } from "@/components/layout/page-header";
-import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { Outlet } from "@tanstack/react-router";
 import { HorizontalMenu } from "@/components/layout/horizontal-menu";
+import { ROUTE_SEGMENTS } from "@/config/routes";
 
 const NAV_ELEMENTS = [
   {
     id: "general",
     label: "Ogólne",
-    href: "/settings",
+    href: ROUTE_SEGMENTS.guild.settings,
   },
   {
     id: "roles",
     label: "Role",
-    href: "/settings/roles",
+    href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.roles}`,
   },
   {
     id: "lootlog",
     label: "Ustawienia potworów i NPC",
-    href: "/settings/npcs",
+    href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.npcs}`,
   },
   {
     id: "members",
     label: "Członkowie",
-    href: "/settings/members",
+    href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.members}`,
   },
 ];
 
@@ -31,24 +30,14 @@ export const SettingsLayout: React.FC = () => {
   const guildId = useGuildId();
 
   return (
-    <div className="flex flex-row w-full h-full min-h-0">
-      <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
-        <PageHeader>
-          <div className="flex flex-row gap-2">
-            <SidebarTrigger />
-            <h1 className="font-semibold p-0">Ustawienia</h1>
-          </div>
-        </PageHeader>
-        <HorizontalMenu
-          items={NAV_ELEMENTS}
-          basePath={`/${guildId}`}
-          ariaLabel="Ustawienia"
-        />
-        <div className="flex-1 min-h-0 flex overflow-hidden">
-          <div className="w-full flex-1 min-h-0 overflow-hidden">
-            <Outlet />
-          </div>
-        </div>
+    <div className="w-full h-full flex flex-col min-h-0">
+      <HorizontalMenu
+        items={NAV_ELEMENTS}
+        basePath={`/${guildId}`}
+        ariaLabel="Ustawienia"
+      />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <Outlet />
       </div>
     </div>
   );

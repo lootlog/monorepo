@@ -2,6 +2,7 @@ import { FullScreenLoading } from "@/components/ui/full-screen-loading";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { ROUTES } from "@/config/routes";
 
 export const Init: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export const Init: React.FC = () => {
 
   useEffect(() => {
     if (guildData) {
-      navigate({ to: `/${guildData.id}` });
+      navigate({ to: ROUTES.guild.base(guildData.id) });
     }
   }, [navigate, guildData]);
 
