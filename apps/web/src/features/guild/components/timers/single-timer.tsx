@@ -6,10 +6,10 @@ import {
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { format } from "date-fns";
 import { ClockArrowDown, ClockArrowUp } from "lucide-react";
-import { FC, useEffect, useState } from "react";
+import { useEffect, useState, type FC } from "react";
 import { cn } from "@/utils/cn";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
-import { Timer, useTimers } from "@/hooks/api/game-data/use-timers";
+import { useTimers, type Timer } from "@/hooks/api/game-data/use-timers";
 
 type SingleTimerProps = {
   timer: Timer;
@@ -64,8 +64,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
       >
         {timer.npc.icon && (
           <div className="w-8">
+            {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
             <img
-              className={"relative cursor-pointer rounded-lg max-h-10 max-w-8"}
+              className="relative cursor-pointer rounded-lg max-h-10 max-w-8"
               src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${timer.npc.icon}`}
               alt={timer.npc.name}
             />

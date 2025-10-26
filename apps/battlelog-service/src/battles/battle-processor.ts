@@ -1,4 +1,4 @@
-import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
+import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 
 export type Warrior = {
   turns: number;
@@ -175,8 +175,12 @@ export class BattleProcessor {
       return {
         attackerId: attackerId !== '0' ? attackerId : null,
         defenderId: defenderId !== '0' ? defenderId : null,
-        attackerHpPercentage: attackerHp ? parseInt(attackerHp, 10) : null,
-        defenderHpPercentage: defenderHp ? parseInt(defenderHp, 10) : null,
+        attackerHpPercentage: attackerHp
+          ? Number.parseInt(attackerHp, 10)
+          : null,
+        defenderHpPercentage: defenderHp
+          ? Number.parseInt(defenderHp, 10)
+          : null,
         actions: actions.map((action) => {
           const [actionType, param = ''] = action.split('=');
           return { actionType, param };
@@ -214,7 +218,10 @@ export class BattleProcessor {
     }
   }
 
-  private processTurnTracking(move: ParsedMove, tspellAction?: { actionType: string; param: string }) {
+  private processTurnTracking(
+    move: ParsedMove,
+    tspellAction?: { actionType: string; param: string },
+  ) {
     if (tspellAction) {
       if (move.attackerId && move.defenderId) {
         const attacker = this.warriors.get(move.attackerId);
@@ -222,15 +229,21 @@ export class BattleProcessor {
           attacker.turns++;
           attacker.spellsUsed++;
           const spellName = tspellAction.param || 'unknown';
-          attacker.spellsUsedMap[spellName] = (attacker.spellsUsedMap[spellName] || 0) + 1;
+          attacker.spellsUsedMap[spellName] =
+            (attacker.spellsUsedMap[spellName] || 0) + 1;
         }
       }
 
-      const skillId = tspellAction.param ? parseInt(tspellAction.param, 10) : 0;
-      this.remainingFollowUpAttacks = (skillId === 97 || skillId === 239) ? 2 : 1;
+      const skillId = tspellAction.param
+        ? Number.parseInt(tspellAction.param, 10)
+        : 0;
+      this.remainingFollowUpAttacks = skillId === 97 || skillId === 239 ? 2 : 1;
       this.lastAttackerId = move.attackerId;
     } else {
-      if (this.remainingFollowUpAttacks > 0 && move.attackerId === this.lastAttackerId) {
+      if (
+        this.remainingFollowUpAttacks > 0 &&
+        move.attackerId === this.lastAttackerId
+      ) {
         this.remainingFollowUpAttacks--;
       } else {
         if (move.attackerId && move.defenderId) {
@@ -247,14 +260,14 @@ export class BattleProcessor {
   }
 
   private updateHpTracking(move: ParsedMove) {
-    if (move.attackerId && move.attackerHpPercentage != null) {
+    if (move.attackerId && move.attackerHpPercentage !== null) {
       const attacker = this.warriors.get(move.attackerId);
       if (attacker && move.attackerHpPercentage <= 0) {
         attacker.isDead = true;
       }
       this.lastHp.set(move.attackerId, move.attackerHpPercentage);
     }
-    if (move.defenderId && move.defenderHpPercentage != null) {
+    if (move.defenderId && move.defenderHpPercentage !== null) {
       const defender = this.warriors.get(move.defenderId);
       if (defender && move.defenderHpPercentage <= 0) {
         defender.isDead = true;
@@ -269,10 +282,10 @@ export class BattleProcessor {
     battleMeta: { characterId: string },
   ) {
     const attacker = move.attackerId
-      ? this.warriors.get(move.attackerId) ?? null
+      ? (this.warriors.get(move.attackerId) ?? null)
       : null;
     const defender = move.defenderId
-      ? this.warriors.get(move.defenderId) ?? null
+      ? (this.warriors.get(move.defenderId) ?? null)
       : null;
 
     for (const { actionType, param } of move.actions) {
@@ -308,9 +321,9 @@ export class BattleProcessor {
 
       if (!attacker) continue;
 
-      const value = parseInt(param, 10);
+      const value = Number.parseInt(param, 10);
       const [firstParam] = param.split(',');
-      const firstValue = firstParam ? parseInt(firstParam, 10) : 0;
+      const firstValue = firstParam ? Number.parseInt(firstParam, 10) : 0;
 
       const damageDealtMap: Record<string, keyof Warrior> = {
         '+dmgd': 'distanceDamage',
@@ -344,13 +357,16 @@ export class BattleProcessor {
           defender.damageTaken += value;
           (defender[damageTakenMap[actionType]] as number) += value;
           defender.flatDamageTaken += value;
-          this.tryCalculateMaxHp(move.defenderId!, value, move.defenderHpPercentage);
+          this.tryCalculateMaxHp(
+            move.defenderId!,
+            value,
+            move.defenderHpPercentage,
+          );
         }
         continue;
       }
 
       switch (actionType) {
-
         case '+oth_dmg':
           if (hasSpell) {
             this.handleSpellTrueDamage(attacker, param, firstValue, defender);
@@ -553,7 +569,7 @@ export class BattleProcessor {
     if (parts.length >= 3) {
       const targetNameWithHp = parts[2].trim();
       const hpMatch = targetNameWithHp.match(/\((\d+)%\)$/);
-      const targetHp = hpMatch ? parseInt(hpMatch[1], 10) : null;
+      const targetHp = hpMatch ? Number.parseInt(hpMatch[1], 10) : null;
       const targetName = targetNameWithHp.split('(')[0].trim();
 
       const found = this.findWarrior(targetName, true);
@@ -593,7 +609,14 @@ export class BattleProcessor {
     }
   }
 
-  private createWarrior(data: { originalId: number; name: string; lvl: number; prof: string; icon: string; team: number }): Warrior {
+  private createWarrior(data: {
+    originalId: number;
+    name: string;
+    lvl: number;
+    prof: string;
+    icon: string;
+    team: number;
+  }): Warrior {
     return {
       turns: 0,
       turnsLost: 0,
@@ -711,7 +734,10 @@ export class BattleProcessor {
 
   private determineOutcomeTeams() {
     const splitNames = (s: string): string[] =>
-      s.split(',').map((n) => n.trim()).filter(Boolean);
+      s
+        .split(',')
+        .map((n) => n.trim())
+        .filter(Boolean);
 
     const getTeamFromNames = (names: string[]): number | null => {
       if (names.length === 0) return null;
@@ -749,13 +775,13 @@ export class BattleProcessor {
     const inferTeam = (team: number | null): number | null =>
       team === 1 ? 2 : team === 2 ? 1 : null;
 
-    if (winningTeam == null && losingTeam != null) {
+    if (winningTeam === null && losingTeam !== null) {
       winningTeam = inferTeam(losingTeam);
-    } else if (losingTeam == null && winningTeam != null) {
+    } else if (losingTeam === null && winningTeam !== null) {
       losingTeam = inferTeam(winningTeam);
     }
 
-    if (winningTeam == null || losingTeam == null) {
+    if (winningTeam === null || losingTeam === null) {
       const teams = Array.from(this.warriors.entries()).reduce(
         (acc, [id, w]) => {
           const hp = this.lastHp.get(id);
@@ -784,7 +810,7 @@ export class BattleProcessor {
       const taken1 = teams.dmgTaken[t1] ?? 0;
       const taken2 = teams.dmgTaken[t2] ?? 0;
 
-      if (winningTeam == null && losingTeam == null) {
+      if (winningTeam === null && losingTeam === null) {
         if (alive1 !== alive2) {
           winningTeam = alive1 > alive2 ? t1 : t2;
           losingTeam = winningTeam === t1 ? t2 : t1;
@@ -802,9 +828,9 @@ export class BattleProcessor {
           winningTeam = t1;
           losingTeam = t2;
         }
-      } else if (winningTeam == null) {
+      } else if (winningTeam === null) {
         winningTeam = losingTeam === t1 ? t2 : t1;
-      } else if (losingTeam == null) {
+      } else if (losingTeam === null) {
         losingTeam = winningTeam === t1 ? t2 : t1;
       }
     }
@@ -817,7 +843,9 @@ export class BattleProcessor {
     for (const warrior of this.warriors.values()) {
       warrior.damageDealtAfterDefensivePercentage =
         warrior.damageDealt > 0
-          ? Math.round((warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000) / 100
+          ? Math.round(
+              (warrior.damageDealtAfterDefensive / warrior.damageDealt) * 10000,
+            ) / 100
           : 0;
       warrior.legbons = this.getLegendaryTotal(warrior);
 
@@ -832,12 +860,18 @@ export class BattleProcessor {
   }
 
   private normalize(s: string): string {
-    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   private findWarrior(name: string): Warrior | null;
   private findWarrior(name: string, withId: true): [string, Warrior] | null;
-  private findWarrior(name: string, withId = false): Warrior | [string, Warrior] | null {
+  private findWarrior(
+    name: string,
+    withId = false,
+  ): Warrior | [string, Warrior] | null {
     const normalizedName = this.normalize(name);
 
     for (const [id, warrior] of this.warriors.entries()) {
@@ -855,10 +889,11 @@ export class BattleProcessor {
     hpAfter: number | null,
   ): void {
     const warrior = this.warriors.get(warriorId);
-    if (!warrior || damageReceived <= 0 || hpAfter == null) return;
+    if (!warrior || damageReceived <= 0 || hpAfter === null) return;
 
     const hpBefore = this.lastHp.get(warriorId);
-    if (hpBefore == null || hpBefore === hpAfter) return;
+    if (hpBefore === null || hpBefore === undefined || hpBefore === hpAfter)
+      return;
 
     const hpDrop = hpBefore - hpAfter;
     if (hpDrop <= 0) return;

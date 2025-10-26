@@ -1,5 +1,5 @@
 import { MultiSelect } from "@/components/ui/multi-select";
-import { FC, useState } from "react";
+import { useState, type FC } from "react";
 
 type FilterComboboxProps = {
   placeholder: string;

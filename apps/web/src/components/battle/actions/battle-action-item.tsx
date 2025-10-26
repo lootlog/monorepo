@@ -1,13 +1,13 @@
 import { cn } from "@lootlog/ui/lib/utils";
-import { FC, memo, ReactNode } from "react";
+import { memo, type FC, type ReactNode } from "react";
 import { Trans } from "react-i18next";
 import {
-  DynamicValuesConfig,
   generateDynamicValuesAndComponents,
+  type DynamicValuesConfig,
 } from "../utils/dynamic-values-helper";
 import { roundHpPercentage, roundValue } from "../utils/value-utils";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
-import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleActionItemProps = {
   action: { type: string; value: string };
@@ -40,7 +40,7 @@ export const BattleActionItem: FC<BattleActionItemProps> = memo(
     const dynamicData = generateDynamicValuesAndComponents(
       action.value,
       dynamicValuesConfig?.prefix || "v",
-      dynamicValuesConfig?.component || <span className="font-semibold" />
+      dynamicValuesConfig?.component || <span className="font-semibold" />,
     );
 
     return (
@@ -65,7 +65,7 @@ export const BattleActionItem: FC<BattleActionItemProps> = memo(
         />
       </div>
     );
-  }
+  },
 );
 
 BattleActionItem.displayName = "BattleActionItem";

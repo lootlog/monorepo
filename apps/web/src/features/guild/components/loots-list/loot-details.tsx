@@ -1,9 +1,9 @@
-import { Loot } from "@/hooks/api/loots/use-loots";
+import type { Loot } from "@/hooks/api/loots/use-loots";
 import { ItemTile } from "@/features/guild/components/loots-list/item-tile";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Copy } from "lucide-react";
-import { FC, useState } from "react";
+import { useState, type FC } from "react";
 import {
   Collapsible,
   CollapsibleContent,

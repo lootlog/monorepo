@@ -1,6 +1,6 @@
-import { ConfigService, registerAs } from '@nestjs/config';
+import { registerAs, type ConfigService } from '@nestjs/config';
 import { ServiceConfig } from './service.config';
-import { NecordModuleOptions } from 'necord';
+import type { NecordModuleOptions } from 'necord';
 import { IntentsBitField } from 'discord.js';
 import { ConfigKey } from './config-key.enum';
 import { RuntimeEnvironment } from 'src/types/common.types';

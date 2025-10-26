@@ -16,28 +16,31 @@ export class RetryService {
 
   constructor(private readonly amqp: AmqpConnection) {}
 
-  shouldRetry(headers: Record<string, any>, maxRetries: number = 3): boolean {
+  shouldRetry(
+    headers: Record<string, unknown>,
+    maxRetries: number = 3,
+  ): boolean {
     const retryCount = this.getRetryCount(headers);
     return retryCount < maxRetries;
   }
 
-  getRetryCount(headers: Record<string, any>): number {
+  getRetryCount(headers: Record<string, unknown>): number {
     if (headers['x-retry-count']) {
-      return headers['x-retry-count'];
+      return headers['x-retry-count'] as number;
     }
 
     const xDeath = headers['x-death'];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
-      return xDeath[0].count || 0;
+      return (xDeath[0].count as number) || 0;
     }
 
     return 0;
   }
 
   async sendToDlq(
-    message: any,
+    message: unknown,
     dlqRoutingKey: string,
-    headers: Record<string, any> = {},
+    headers: Record<string, unknown> = {},
     config: RetryConfig = {},
   ): Promise<void> {
     const dlqExchange = config.dlqExchange || DEAD_LETTER_EXCHANGE_NAME;
@@ -54,8 +57,8 @@ export class RetryService {
   }
 
   async handleRetryLogic(
-    data: any,
-    headers: Record<string, any>,
+    data: unknown,
+    headers: Record<string, unknown>,
     dlqRoutingKey: string,
     identifier: string,
     config: RetryConfig = {},

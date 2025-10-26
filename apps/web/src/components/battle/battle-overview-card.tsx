@@ -1,10 +1,10 @@
-import { FC } from "react";
+import type { FC } from "react";
 import { BattleOverviewHeader } from "./battle-overview-header";
 import { BattleTeamSection } from "./battle-team-section";
 import { AnimatedTrophy } from "./animated-trophy";
 import { BattleMetadata } from "./battle-metadata";
 import { DEFAULT_BATTLE_LABELS, type BattleLabels } from "./battle-labels";
-import { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleOverviewCardProps = {
   battle: Battle;
@@ -42,7 +42,7 @@ export const BattleOverviewCard: FC<BattleOverviewCardProps> = ({
 
   const userTeam = battle.warriors.find(
     (w: Warrior) =>
-      w.originalId === (currentUserCharacterId || battle.characterId)
+      w.originalId === (currentUserCharacterId || battle.characterId),
   );
 
   const leftTeam = userTeam?.team === 1 ? attackingTeam : defendingTeam;

@@ -1,8 +1,8 @@
-import { FC, memo, useMemo } from "react";
+import { memo, useMemo, type FC } from "react";
 import { BattleEventEntry } from "./battle-event-entry";
 import { BattleHeader } from "./battle-header";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
-import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleLogListProps = {
   events?: RawBattleParsedEvent[];
@@ -15,7 +15,7 @@ export const BattleLogList: FC<BattleLogListProps> = memo(
   ({ events, warriors, characterId, userTeam }) => {
     const warriorsMap = useMemo(
       () => new Map(warriors.map((w) => [w.originalId, w])),
-      [warriors]
+      [warriors],
     );
 
     return (
@@ -38,7 +38,7 @@ export const BattleLogList: FC<BattleLogListProps> = memo(
         })}
       </ul>
     );
-  }
+  },
 );
 
 BattleLogList.displayName = "BattleLogList";

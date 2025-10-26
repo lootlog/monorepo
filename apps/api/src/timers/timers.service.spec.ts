@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { TimersService } from './timers.service';
 import { PrismaService } from 'src/db/prisma.service';

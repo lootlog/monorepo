@@ -1,7 +1,7 @@
 import { NpcType } from 'src/gateway/enums/npc-type.enum';
-import { Npc } from 'src/gateway/types/npc.type';
+import type { Npc } from 'src/gateway/types/npc.type';
 import { Permission } from 'src/guilds/enum/permission.type';
-import { Role } from 'src/guilds/types/role.type';
+import type { Role } from 'src/guilds/types/role.type';
 
 export const canViewNpcTimer = (npc: Npc, roles: Role[]) => {
   if (!npc) return false;

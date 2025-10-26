@@ -1,8 +1,8 @@
 import { canViewNpcTimer } from './can-view-npc-timer';
 import { NpcType } from '../enums/npc-type.enum';
 import { Permission } from '../../guilds/enum/permission.type';
-import { Npc } from '../types/npc.type';
-import { Role } from '../../guilds/types/role.type';
+import type { Npc } from '../types/npc.type';
+import type { Role } from '../../guilds/types/role.type';
 
 describe('canViewNpcTimer', () => {
   const createNpc = (type: NpcType, lvl: number): Npc => ({

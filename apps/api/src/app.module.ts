@@ -1,6 +1,6 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { Module, type MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { WinstonModule, WinstonModuleOptions } from 'nest-winston';
+import { WinstonModule, type WinstonModuleOptions } from 'nest-winston';
 import { APP_CONFIG } from 'src/config/app.config';
 import { UsersModule } from './users/users.module';
 import { TimersModule } from './timers/timers.module';

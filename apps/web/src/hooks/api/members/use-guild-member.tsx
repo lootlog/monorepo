@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 
 export type GuildMember = {
   id: number;

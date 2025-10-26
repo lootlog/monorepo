@@ -1,5 +1,5 @@
-import { FC } from "react";
-import { Loot } from "@/hooks/api/loots/use-loots";
+import type { FC } from "react";
+import type { Loot } from "@/hooks/api/loots/use-loots";
 import {
   SheetContent,
   SheetHeader,

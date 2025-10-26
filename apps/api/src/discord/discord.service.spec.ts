@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import {
   UnauthorizedException,
   NotFoundException,
@@ -18,15 +18,15 @@ import {
 } from 'src/auth/errors';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { RuntimeEnvironment } from 'src/types/runtime.types';
-import { APIGuild, APIGuildMember } from 'discord-api-types/v10';
+import type { APIGuild, APIGuildMember } from 'discord-api-types/v10';
 
 describe('DiscordService', () => {
   let service: DiscordService;
   let authService: jest.Mocked<AuthService>;
   let redisService: jest.Mocked<RedisService>;
   let rateLimiter: jest.Mocked<DiscordRateLimiterService>;
-  let mockLogger: any;
-  let mockRedlock: any;
+  let mockLogger: unknown;
+  let mockRedlock: unknown;
 
   const mockGuilds: APIGuild[] = [
     {

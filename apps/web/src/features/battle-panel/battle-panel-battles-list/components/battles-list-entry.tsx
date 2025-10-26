@@ -1,10 +1,10 @@
-import { Battle } from "@/hooks/api/battle-log/use-battles";
+import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { TeamDisplay } from "@/features/battle-panel/battle-panel-battles-list/components/battle-team-display";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Sword } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { BattleMetadata } from "@/components/battle/battle-metadata";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";

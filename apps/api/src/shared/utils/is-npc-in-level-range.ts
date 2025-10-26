@@ -1,5 +1,5 @@
 export function isNpcInLevelRanges(
-  npc: any,
+  npc: { lvl: number },
   ranges: { from: number; to: number }[],
 ): boolean {
   const npcLevel = npc.lvl || 0;

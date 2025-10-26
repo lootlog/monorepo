@@ -1,4 +1,4 @@
-import { RabbitMQConfig } from '@golevelup/nestjs-rabbitmq';
+import type { RabbitMQConfig } from '@golevelup/nestjs-rabbitmq';
 import { registerAs } from '@nestjs/config';
 import { Queue } from 'src/enum/queue.enum';
 import { RoutingKey } from 'src/enum/routing-key.enum';

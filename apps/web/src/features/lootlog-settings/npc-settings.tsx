@@ -1,6 +1,6 @@
 import {
-  LootlogConfigNpc,
   useGuildLootlogConfig,
+  type LootlogConfigNpc,
 } from "@/hooks/api/guilds/use-guild-lootlog-settings";
 
 import { useState } from "react";
@@ -39,7 +39,7 @@ export const NpcSettings = () => {
           // Base: single column; when selected on md+ show two columns.
           selectedNpc
             ? "grid-cols-1 md:grid-cols-[theme(width.64)_1fr]"
-            : "grid-cols-1 md:grid-cols-[1fr]"
+            : "grid-cols-1 md:grid-cols-[1fr]",
         )}
       >
         <ScrollArea
@@ -56,7 +56,7 @@ export const NpcSettings = () => {
                     "border-b flex flex-row justify-between py-4 px-6 items-center hover:bg-secondary cursor-pointer text-sm",
                     {
                       "bg-secondary": active,
-                    }
+                    },
                   )}
                   onClick={() => handleSelectNpc(npc)}
                 >
@@ -108,7 +108,7 @@ export const NpcSettings = () => {
               <motion.div
                 className={cn(
                   "border-l min-h-0 h-full overflow-hidden",
-                  "md:border-l border-l-0"
+                  "md:border-l border-l-0",
                 )}
                 initial={{ opacity: 0, x: 32 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -125,7 +125,7 @@ export const NpcSettings = () => {
               <div
                 className={cn(
                   "border-l min-h-0 h-full overflow-hidden",
-                  "md:border-l border-l-0"
+                  "md:border-l border-l-0",
                 )}
                 key={selectedNpc.id}
               >

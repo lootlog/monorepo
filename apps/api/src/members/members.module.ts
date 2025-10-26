@@ -7,12 +7,15 @@ import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
 import { RolesModule } from 'src/roles/roles.module';
 import { RetryService } from 'src/rabbitmq/retry.service';
-import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import {
+  RabbitMQModule,
+  type RabbitMQConfig,
+} from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { DiscordModule } from 'src/discord/discord.module';
 import { PrismaModule } from 'src/db/prisma.module';
-import { RedisConfig } from 'src/config/redis.config';
+import type { RedisConfig } from 'src/config/redis.config';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import {
   MEMBER_BULK_REFRESH_QUEUE,
@@ -25,7 +28,7 @@ import {
     forwardRef(() => RolesModule),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) =>
+      useFactory: (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
     BullModule.forRootAsync({

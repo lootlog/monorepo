@@ -1,4 +1,4 @@
-import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 
 export const getColorFromRole = (roles: GuildMember["roles"]) => {
   const color = roles[0]?.color;

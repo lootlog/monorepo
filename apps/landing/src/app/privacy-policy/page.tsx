@@ -1,5 +1,5 @@
-import { Metadata } from "next";
-import { JSX } from "react";
+import type { Metadata } from "next";
+import type { JSX } from "react";
 
 export const metadata: Metadata = {
   title: "Lootlog.pl - Polityka Prywatności",

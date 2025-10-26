@@ -1,5 +1,10 @@
 import axios, { type AxiosInstance } from "axios";
-import { API_URL, BATTLELOG_API_URL, SEARCH_API_URL, AUTH_API_URL } from "@/config/api";
+import {
+  API_URL,
+  BATTLELOG_API_URL,
+  SEARCH_API_URL,
+  AUTH_API_URL,
+} from "@/config/api";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { REQUIRED_SCOPES } from "@/constants/required-scopes";
@@ -29,8 +34,7 @@ const handleReauthentication = async () => {
       callbackURL: window.location.href,
       scopes: REQUIRED_SCOPES,
     });
-  } catch (error) {
-    console.error("Reauthentication failed:", error);
+  } catch {
     isReauthenticating = false;
   }
 };
@@ -57,7 +61,7 @@ const attachInterceptors = (instance: AxiosInstance) => {
         toast.error("Nie znaleziono");
       }
       return Promise.reject(error);
-    }
+    },
   );
 
   intercepted.add(instance);
@@ -70,7 +74,7 @@ export const getApiClient = (api: ApiName = "default"): AxiosInstance => {
 
   const baseURL = BASE_URLS[api] ?? API_URL;
   const instance = attachInterceptors(
-    axios.create({ baseURL, withCredentials: true })
+    axios.create({ baseURL, withCredentials: true }),
   );
   clients.set(api, instance);
   return instance;

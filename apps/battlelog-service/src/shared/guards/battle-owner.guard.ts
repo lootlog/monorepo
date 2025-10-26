@@ -1,9 +1,9 @@
 import {
-  CanActivate,
-  ExecutionContext,
   ForbiddenException,
   Injectable,
   NotFoundException,
+  type CanActivate,
+  type ExecutionContext,
 } from '@nestjs/common';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 

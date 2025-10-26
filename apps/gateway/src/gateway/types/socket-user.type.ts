@@ -1,6 +1,6 @@
-import { Platform } from 'src/gateway/enums/platform.enum';
-import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
-import { Socket as SocketIOSocket } from 'socket.io';
+import type { Platform } from 'src/gateway/enums/platform.enum';
+import type { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
+import type { Socket as SocketIOSocket } from 'socket.io';
 
 export type SocketUserPlayerLocation = {
   x: number;

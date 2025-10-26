@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { FC } from "react";
+import type { FC } from "react";
 import { ADDON_INSTALL_URL } from "@/config/addon";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 

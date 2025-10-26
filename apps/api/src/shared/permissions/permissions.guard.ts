@@ -1,13 +1,27 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  type CanActivate,
+  type ExecutionContext,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from './permissions.decorator';
 import { GuildsService } from 'src/guilds/guilds.service';
-import { Permission } from 'generated/client';
+import type { Permission } from 'generated/client';
 import { RedisService } from 'src/lib/redis/redis.service';
 import {
   getPermissionsCacheKey,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from 'src/shared/constants/cache.constant';
+
+interface RequestWithPermissions {
+  userId?: string;
+  discordId?: string;
+  params: { guildId?: string };
+  permissions?: Permission[];
+  guild?: unknown;
+  roles?: unknown;
+  member?: unknown;
+}
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -38,7 +52,7 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
 
-    return this.verifyPermissions({
+    return await this.verifyPermissions({
       requiredPermissions,
       discordId,
       userId,
@@ -52,7 +66,7 @@ export class PermissionsGuard implements CanActivate {
     discordId: string;
     guildId: string;
     userId: string;
-    request: any;
+    request: RequestWithPermissions;
   }) {
     const { requiredPermissions, discordId, guildId, userId, request } =
       options;

@@ -36,7 +36,7 @@ export const BattlePanelDashboard = () => {
           <EmptyDescription>
             Nie masz jeszcze żadnej zapisanej walki. Aby rozpocząć zbieranie
             danych o walkach, włącz panel walk w dodatku w grze w ustawieniach w
-            zakładce "Panel walk".
+            zakładce &ldquo;Panel walk&rdquo;.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

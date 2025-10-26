@@ -1,6 +1,6 @@
 import { useSession } from "@/hooks/auth/use-session";
 import { LayoutDashboard, Settings, Swords } from "lucide-react";
-import { SidebarNav, MenuItem } from "./sidebar-nav";
+import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 
 const menuItems: MenuItem[] = [

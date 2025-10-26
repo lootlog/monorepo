@@ -1,5 +1,8 @@
 import { SearchInput } from "@/components/ui/search-input";
-import { GuildRole, useGuildRoles } from "@/hooks/api/guilds/use-guild-roles";
+import {
+  useGuildRoles,
+  type GuildRole,
+} from "@/hooks/api/guilds/use-guild-roles";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
 import { Button } from "@lootlog/ui/components/button";
@@ -48,7 +51,7 @@ export const RolesSettings = () => {
           "border-t grid flex-1 min-h-0 transition-[grid-template-columns] overflow-hidden",
           selectedRole
             ? "grid-cols-1 md:grid-cols-[theme(width.64)_1fr]"
-            : "grid-cols-1 md:grid-cols-[1fr]"
+            : "grid-cols-1 md:grid-cols-[1fr]",
         )}
       >
         <ScrollArea
@@ -66,7 +69,7 @@ export const RolesSettings = () => {
                     "border-b flex flex-row justify-between py-3 px-5 items-center hover:bg-secondary cursor-pointer text-sm",
                     {
                       "bg-secondary": active,
-                    }
+                    },
                   )}
                   onClick={() => handleSelectRole(role)}
                 >
@@ -102,7 +105,7 @@ export const RolesSettings = () => {
               <motion.div
                 className={cn(
                   "border-l min-h-0 h-full overflow-hidden",
-                  "md:border-l border-l-0"
+                  "md:border-l border-l-0",
                 )}
                 initial={{ opacity: 0, x: 32 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -120,7 +123,7 @@ export const RolesSettings = () => {
               <div
                 className={cn(
                   "border-l min-h-0 h-full overflow-hidden",
-                  "md:border-l border-l-0"
+                  "md:border-l border-l-0",
                 )}
                 key={selectedRole.id}
               >

@@ -1,5 +1,5 @@
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
-import { Battle } from "@/hooks/api/battle-log/use-battles";
+import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { useQuery } from "@tanstack/react-query";
 
 export type GetBattleResponse = Battle;
@@ -17,7 +17,11 @@ export const useBattle = (options: UseBattleOptions) => {
     : `/battles/${options.battleId}`;
 
   const query = useQuery({
-    queryKey: ["battles", options.battleId, options.isPublic ? "public" : "private"],
+    queryKey: [
+      "battles",
+      options.battleId,
+      options.isPublic ? "public" : "private",
+    ],
     queryFn: () => client.get<GetBattleResponse>(endpoint),
     enabled: !!options.battleId,
     select: (response) => response.data,

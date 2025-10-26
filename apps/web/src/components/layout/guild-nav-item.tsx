@@ -1,4 +1,4 @@
-import { Guild } from "@/hooks/api/guilds/use-guild";
+import type { Guild } from "@/hooks/api/guilds/use-guild";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { cn } from "@/utils/cn";
 import {
@@ -11,7 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { FC, memo } from "react";
+import { memo, type FC } from "react";
 import { Link } from "@tanstack/react-router";
 
 export type GuildNavItemProps = {

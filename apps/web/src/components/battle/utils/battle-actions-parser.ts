@@ -1,4 +1,4 @@
-import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import {
   ATTACK_ACTIONS_SORT_ORDER,
   isAttackActionInContext,
@@ -39,7 +39,7 @@ const createEmptyParsedActions = (): ParsedActions => ({
 
 const createParsedAction = (
   actionType: string,
-  param: string
+  param: string,
 ): ParsedAction => ({
   type: actionType,
   value: param,
@@ -58,7 +58,7 @@ const categorizeAction = (
   parsedActions: ParsedActions,
   actionType: string,
   param: string,
-  allActionTypes: string[]
+  allActionTypes: string[],
 ): void => {
   const action = createParsedAction(actionType, param);
 
@@ -75,16 +75,12 @@ const categorizeAction = (
   } else if (isOutcomeAction(actionType)) {
     parsedActions.outcomeActions.push(action);
   } else if (isIgnoredAction(actionType)) {
-    // Skip ignored actions like "skillId"
     return;
-  } else {
-    // Log unknown action types for debugging
-    console.warn(`Unknown action type: ${actionType}, param: ${param}`);
   }
 };
 
 export const parseActions = (
-  actions: RawBattleParsedEvent["actions"]
+  actions: RawBattleParsedEvent["actions"],
 ): ParsedActions => {
   const parsedActions = createEmptyParsedActions();
   const allActionTypes = actions.map((action) => action.actionType);
@@ -94,7 +90,7 @@ export const parseActions = (
       parsedActions,
       action.actionType,
       action.param,
-      allActionTypes
+      allActionTypes,
     );
   });
 
@@ -131,7 +127,7 @@ export const getActionsCount = (parsedActions: ParsedActions): number => {
 
 export const getActionsByCategory = (
   parsedActions: ParsedActions,
-  category: keyof ParsedActions
+  category: keyof ParsedActions,
 ): ParsedAction[] => {
   return parsedActions[category];
 };

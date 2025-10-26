@@ -4,26 +4,37 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { Permission, Prisma, Timer, Guild, Role } from 'generated/client';
+import {
+  NpcType,
+  Permission,
+  Prisma,
+  type Timer,
+  type Guild,
+  type Role,
+} from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { PrismaService } from 'src/db/prisma.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
-import { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
+import type { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
 import { ErrorKey } from 'src/timers/enum/error-key.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
-import { GetTimersDto } from 'src/timers/dto/get-timers.dto';
+import type { GetTimersDto } from 'src/timers/dto/get-timers.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
-import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
+import type { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
 import { DEFAULT_RESPAWN_RANDOMNESS } from 'src/timers/constants/respawn';
-import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
+import type { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
 import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
 import { canViewNpcTimer } from 'src/shared/utils/can-view-npc-timer';
 
-function parseNpc(npc: any) {
-  return typeof npc === 'string' ? JSON.parse(npc) : npc;
+function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
+  if (!npc) return null;
+  if (typeof npc === 'string') {
+    return JSON.parse(npc);
+  }
+  return npc as { lvl: number; type: NpcType };
 }
 
 @Injectable()
@@ -258,7 +269,7 @@ export class TimersService {
         timerId: {
           guildId: guildId,
           world: data.world,
-          npcId: parseInt(npcId, 10),
+          npcId: Number.parseInt(npcId, 10),
         },
       },
     });
@@ -274,7 +285,7 @@ export class TimersService {
         timerId: {
           guildId: guildId,
           world: data.world,
-          npcId: parseInt(npcId, 10),
+          npcId: Number.parseInt(npcId, 10),
         },
       },
       data: {
@@ -302,11 +313,15 @@ export class TimersService {
           timerId: {
             guildId,
             world,
-            npcId: parseInt(npcId, 10),
+            npcId: Number.parseInt(npcId, 10),
           },
         },
       });
-      this.emitDeleteTimer({ npcId: parseInt(npcId, 10), world, guildId });
+      this.emitDeleteTimer({
+        npcId: Number.parseInt(npcId, 10),
+        world,
+        guildId,
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {

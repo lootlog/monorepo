@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from "@lootlog/ui/components/alert-dialog";
 import { Copy, Share2, Users, Lock } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type BattleOverviewHeaderProps = {
   isPublic: boolean;

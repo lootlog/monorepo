@@ -41,7 +41,7 @@ export const Timers = () => {
         Array.from({ length: 8 }).map((_, index) => {
           return (
             <div className="flex flex-row justify-between border-b" key={index}>
-              <Skeleton className={`w-24 h-5 m-2`} />{" "}
+              <Skeleton className="w-24 h-5 m-2" />{" "}
               <Skeleton className="w-12 h-5 m-2" />
             </div>
           );

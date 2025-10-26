@@ -7,8 +7,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { ChatService } from 'src/chat/chat.service';
-import { SendMessageDto } from 'src/chat/dto/send-message.dto';
-import { Guild, Permission } from 'generated/client';
+import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
+import { type Guild, Permission } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -34,7 +34,10 @@ export class ChatController {
     status: 200,
     description: 'List of chat messages',
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   async getChatMessages(@GuildData() guild: Guild) {
     return this.chatService.getMessages(guild.id);
   }
@@ -51,7 +54,10 @@ export class ChatController {
     status: 201,
     description: 'Message sent successfully',
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   async sendChatMessage(
     @Body() data: SendMessageDto,
     @GuildData() guild: Guild,

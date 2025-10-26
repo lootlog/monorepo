@@ -1,12 +1,12 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
-  ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
+  type ChartConfig,
 } from "@lootlog/ui/components/chart";
 
 export const description = "An area chart with a legend";
@@ -61,7 +61,7 @@ export function BattlesChart() {
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
+              content=<ChartTooltipContent indicator="line" />
             />
             <Area
               dataKey="battles"
@@ -79,7 +79,7 @@ export function BattlesChart() {
               stroke="var(--color-winrate)"
               stackId="a"
             />
-            <ChartLegend content={<ChartLegendContent />} />
+            <ChartLegend content=<ChartLegendContent /> />
           </AreaChart>
         </ChartContainer>
       </div>

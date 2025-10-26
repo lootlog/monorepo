@@ -1,6 +1,6 @@
 import {
-  UserPreferences,
   useUserPreferences,
+  type UserPreferences,
 } from "@/hooks/api/user/use-user-preferences";
 import { useSession } from "@/hooks/auth/use-session";
 

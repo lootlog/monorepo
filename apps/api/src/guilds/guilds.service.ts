@@ -9,13 +9,13 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
-import { Guild, Permission } from 'generated/client';
+import type { Logger } from 'winston';
+import { type Guild, Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
-import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
-import { DeleteGuildDto } from 'src/guilds/dto/delete-guild.dto';
-import { UpdateGuildDto } from 'src/guilds/dto/update-guild.dto';
-import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
+import type { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
+import type { DeleteGuildDto } from 'src/guilds/dto/delete-guild.dto';
+import type { UpdateGuildDto } from 'src/guilds/dto/update-guild.dto';
+import type { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
 import { ErrorKey } from 'src/guilds/enum/error-key.enum';
 import { MembersService } from 'src/members/members.service';
 import { RolesService } from 'src/roles/roles.service';
@@ -130,7 +130,7 @@ export class GuildsService {
       }
 
       return discordGuilds
-        .filter((guild) => parseInt(guild.permissions, 10) & 0x8)
+        .filter((guild) => Number.parseInt(guild.permissions, 10) & 0x8)
         .map((guild) => {
           return {
             id: guild.id,
@@ -174,10 +174,10 @@ export class GuildsService {
     if (cached) {
       try {
         return JSON.parse(cached);
-      } catch (err) {
+      } catch (error) {
         this.logger.warn({
           message: `Failed to parse cached guild data for key ${cacheKey}`,
-          error: err,
+          error: error,
         });
         await this.redisService.del(cacheKey);
       }

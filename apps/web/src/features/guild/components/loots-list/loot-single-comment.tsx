@@ -1,8 +1,8 @@
-import { LootComment } from "@/hooks/api/loots/use-loot-comments";
+import type { LootComment } from "@/hooks/api/loots/use-loot-comments";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type LootSingleCommentProps = {
   comment: LootComment;
@@ -11,7 +11,7 @@ export type LootSingleCommentProps = {
 export const LootSingleComment: FC<LootSingleCommentProps> = ({ comment }) => {
   const avatarUrl = getDiscordAvatarUrl(
     comment.member.userId,
-    comment.member.avatar
+    comment.member.avatar,
   );
   const relativeTime = getRelativeTime(comment.createdAt);
   const color =

@@ -1,7 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { PaginationService } from './pagination.service';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { PaginationStrategy, SortField, SortOrder } from '../dto/query-battles.dto';
+import {
+  PaginationStrategy,
+  SortField,
+  SortOrder,
+} from '../dto/query-battles.dto';
 
 describe('PaginationService', () => {
   let service: PaginationService;
