@@ -12,7 +12,7 @@ export const useInitializeGuild = () => {
   const { client } = useApiClient();
 
   return useMutation({
-    mutationFn: async ({ guildId, ...rest }: InitializeGuildOptions) => {
+    mutationFn: ({ guildId, ...rest }: InitializeGuildOptions) => {
       return client.post(`${API_URL}/guilds/${guildId}/initialize`, {
         ...rest,
       });

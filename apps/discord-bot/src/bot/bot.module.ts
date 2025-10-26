@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { BotService } from './bot.service';
 import { BotDiscordEventsHandler } from 'src/bot/bot-discord-events.handler';
-import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import {
+  RabbitMQModule,
+  type RabbitMQConfig,
+} from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 

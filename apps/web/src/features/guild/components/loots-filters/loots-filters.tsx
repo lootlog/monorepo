@@ -41,7 +41,7 @@ export const LootsFilters: React.FC = () => {
     selectedNpcs: npcs,
   });
 
-  const handleSelect = async (name: string, options: string[]) => {
+  const handleSelect = (name: string, options: string[]) => {
     const joinedOptions = options.join(",");
     const currentParam = searchParams[name] ?? "";
 

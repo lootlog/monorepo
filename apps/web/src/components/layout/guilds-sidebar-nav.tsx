@@ -13,7 +13,7 @@ import {
   RefreshCcw,
   Settings,
 } from "lucide-react";
-import { FC, useEffect, useState } from "react";
+import { useEffect, useState, type FC } from "react";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import {
   Tooltip,
@@ -22,7 +22,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
-import { SidebarNav, MenuItem } from "./sidebar-nav";
+import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 

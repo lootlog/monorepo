@@ -1,17 +1,21 @@
 import { REST, RateLimitError } from '@discordjs/rest';
 import {
   Injectable,
-  OnModuleInit,
   Inject,
   UnauthorizedException,
   NotFoundException,
   ServiceUnavailableException,
+  type OnModuleInit,
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/auth/auth.service';
-import { Routes, APIGuild, APIGuildMember } from 'discord-api-types/v10';
+import {
+  Routes,
+  type APIGuild,
+  type APIGuildMember,
+} from 'discord-api-types/v10';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { DiscordRateLimiterService } from './discord-rate-limiter.service';
 import Redlock from 'redlock';
@@ -151,7 +155,10 @@ export class DiscordService implements OnModuleInit {
         return JSON.parse(cachedAfterLock) as APIGuild[];
       }
 
-      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(userId, 'guilds');
+      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
+        userId,
+        'guilds',
+      );
 
       if (isRateLimited) {
         const staleData = await this.redisService.get(staleCacheKey);
@@ -176,9 +183,13 @@ export class DiscordService implements OnModuleInit {
       let guilds: APIGuild[];
       try {
         guilds = (await rest.get(path)) as APIGuild[];
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error instanceof RateLimitError) {
-          await this.rateLimiter.setRateLimitForUser(userId, 'guilds', error.retryAfter);
+          await this.rateLimiter.setRateLimitForUser(
+            userId,
+            'guilds',
+            error.retryAfter,
+          );
 
           const staleData = await this.redisService.get(staleCacheKey);
           if (staleData) {
@@ -204,12 +215,21 @@ export class DiscordService implements OnModuleInit {
 
       await Promise.all([
         this.redisService.set(cacheKey, JSON.stringify(guilds), cacheTtl),
-        this.redisService.set(staleCacheKey, JSON.stringify(guilds), this.staleCacheTtl),
+        this.redisService.set(
+          staleCacheKey,
+          JSON.stringify(guilds),
+          this.staleCacheTtl,
+        ),
       ]);
 
       return guilds;
-    } catch (error) {
-      if ((error as any)?.name === 'ExecutionError') {
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        error.name === 'ExecutionError'
+      ) {
         this.logger.log({
           level: 'error',
           message: `Lock acquisition failed for getUserGuilds`,
@@ -282,7 +302,10 @@ export class DiscordService implements OnModuleInit {
         return parsed === null ? null : (parsed as APIGuildMember);
       }
 
-      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(userId, 'guild-member');
+      const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
+        userId,
+        'guild-member',
+      );
 
       if (isRateLimited) {
         const staleData = await this.redisService.get(staleCacheKey);
@@ -313,12 +336,22 @@ export class DiscordService implements OnModuleInit {
           message: 'Discord API returned member data',
           path,
         });
-      } catch (error: any) {
-        if (error.status === 404) {
+      } catch (error: unknown) {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'status' in error &&
+          error.status === 404
+        ) {
           throw error;
         }
+
         if (error instanceof RateLimitError) {
-          await this.rateLimiter.setRateLimitForUser(userId, 'guild-member', error.retryAfter);
+          await this.rateLimiter.setRateLimitForUser(
+            userId,
+            'guild-member',
+            error.retryAfter,
+          );
 
           const staleData = await this.redisService.get(staleCacheKey);
           if (staleData) {
@@ -337,12 +370,21 @@ export class DiscordService implements OnModuleInit {
 
       await Promise.all([
         this.redisService.set(cacheKey, JSON.stringify(member), cacheTtl),
-        this.redisService.set(staleCacheKey, JSON.stringify(member), this.staleCacheTtl),
+        this.redisService.set(
+          staleCacheKey,
+          JSON.stringify(member),
+          this.staleCacheTtl,
+        ),
       ]);
 
       return member;
-    } catch (error: any) {
-      if (error?.name === 'ExecutionError') {
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        error.name === 'ExecutionError'
+      ) {
         this.logger.log({
           level: 'error',
           message: `Lock acquisition failed for getGuildMember`,
@@ -356,7 +398,12 @@ export class DiscordService implements OnModuleInit {
         throw error;
       }
 
-      if (error.status === 404) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'status' in error &&
+        error.status === 404
+      ) {
         this.logger.log({
           level: 'debug',
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,

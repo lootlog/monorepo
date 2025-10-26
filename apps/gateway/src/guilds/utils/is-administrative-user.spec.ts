@@ -5,7 +5,7 @@ import {
   isOwnerOrAdminFromRoles,
 } from './is-administrative-user';
 import { Permission } from '../enum/permission.type';
-import { GuildRole } from '../types/guild.types';
+import type { GuildRole } from '../types/guild.types';
 
 describe('isAdministrativeUser', () => {
   it('should return true for OWNER permission', () => {

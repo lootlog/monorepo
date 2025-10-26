@@ -1,4 +1,4 @@
-import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
@@ -14,6 +14,16 @@ import {
   DropdownMenuTrigger,
 } from "@lootlog/ui/components/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@lootlog/ui/components/alert-dialog";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -26,7 +36,7 @@ import {
   XCircle,
   UserX,
 } from "lucide-react";
-import { FC } from "react";
+import { useState, type FC } from "react";
 import { useDeactivateMember } from "@/hooks/api/members/use-deactivate-member";
 
 export type MemberItemProps = {
@@ -48,15 +58,19 @@ export const MemberItem: FC<MemberItemProps> = ({
   const avatarUrl = getDiscordAvatarUrl(member.userId, member.avatar);
   const { refreshedIds, failedIds } = useRefreshStatus();
   const { mutate: deactivate, isPending } = useDeactivateMember();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const isRefreshed = refreshedIds.has(member.userId);
   const isFailed = failedIds.has(member.userId);
 
-  const handleDeactivate = (e: React.MouseEvent) => {
+  const handleDeactivateClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm(`Czy na pewno chcesz dezaktywować ${member.name}?`)) {
-      deactivate(member.userId);
-    }
+    setIsDialogOpen(true);
+  };
+
+  const handleConfirmDeactivate = () => {
+    deactivate(member.userId);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -67,7 +81,7 @@ export const MemberItem: FC<MemberItemProps> = ({
         {
           "bg-secondary": active,
           "opacity-50": !member.active,
-        }
+        },
       )}
       onClick={onSelect}
     >
@@ -146,7 +160,7 @@ export const MemberItem: FC<MemberItemProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onClick={handleDeactivate}
+                onClick={handleDeactivateClick}
                 disabled={isPending || !member.active}
                 className="text-red-600 focus:text-red-600"
               >
@@ -157,6 +171,24 @@ export const MemberItem: FC<MemberItemProps> = ({
           </DropdownMenu>
         </div>
       )}
+
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dezaktywacja członka</AlertDialogTitle>
+            <AlertDialogDescription>
+              Czy na pewno chcesz dezaktywować {member.name}? Ta akcja
+              spowoduje, że członek nie będzie już aktywny w gildii.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeactivate}>
+              Dezaktywuj
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
-import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MembersPanelContent } from "@/features/members-settings/components/members-panel";
 import { MemberItem } from "@/features/members-settings/components/member-item";
 import { RefreshMembersButton } from "@/features/members-settings/components/refresh-members-button";

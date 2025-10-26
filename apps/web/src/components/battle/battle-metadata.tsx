@@ -15,9 +15,9 @@ import {
   Users,
 } from "lucide-react";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
-import { FC } from "react";
+import type { FC } from "react";
 import { formatSeconds } from "@/utils/date/format-seconds";
-import { Battle } from "@/hooks/api/battle-log/use-battles";
+import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 export type BattleMetadataProps = {
@@ -49,7 +49,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
   },
 }) => {
   const warrior = battle.warriors.find(
-    (w) => w.originalId === battle.characterId
+    (w) => w.originalId === battle.characterId,
   );
 
   return (

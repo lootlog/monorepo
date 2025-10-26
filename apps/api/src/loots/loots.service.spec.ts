@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { LootsService } from './loots.service';
@@ -8,22 +8,22 @@ import { GuildsService } from '../guilds/guilds.service';
 import { PrismaService } from '../db/prisma.service';
 import { LootlogConfigService } from '../lootlog-config/lootlog-config.service';
 import { UserLootlogConfigService } from '../user-lootlog-config/user-lootlog-config.service';
-import { CreateLootDto } from './dto/create-loot.dto';
-import { UpdateLootDto } from './dto/update-loot.dto';
-import { CreateCommentDto } from './dto/create-comment-dto';
-import { FetchLootsParamsDto } from './dto/fetch-loots-params.dto';
+import type { CreateLootDto } from './dto/create-loot.dto';
+import type { UpdateLootDto } from './dto/update-loot.dto';
+import type { CreateCommentDto } from './dto/create-comment-dto';
+import type { FetchLootsParamsDto } from './dto/fetch-loots-params.dto';
 import {
   ItemRarity,
   Profession,
   NpcType,
+  type Guild,
   LootSource,
-  Guild,
 } from 'generated/client';
 import { ErrorKey } from './enum/error-key.enum';
 
 describe('LootsService', () => {
   let service: LootsService;
-  let prismaService: any;
+  let prismaService: unknown;
   let playersService: jest.Mocked<PlayersService>;
   let npcsService: jest.Mocked<NpcsService>;
   let guildsService: jest.Mocked<GuildsService>;

@@ -7,8 +7,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { Guild, Permission } from 'generated/client';
-import { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
+import { type Guild, Permission } from 'generated/client';
+import type { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
 import { RolesService } from 'src/roles/roles.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
@@ -37,7 +37,10 @@ export class RolesController {
     description: 'List of guild roles',
     type: [RoleEntity],
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - admin permission required',
+  })
   async getGuildRoles(@GuildData() guild: Guild) {
     const roles = await this.rolesService.getRolesByGuildId(guild.id);
     return plainToInstance(RoleEntity, roles);
@@ -57,7 +60,10 @@ export class RolesController {
     description: 'Role permissions updated successfully',
     type: RoleEntity,
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - admin permission required',
+  })
   @ApiResponse({ status: 404, description: 'Role not found' })
   async updateGuildRole(
     @GuildData() guild: Guild,

@@ -1,9 +1,9 @@
 import {
   createParamDecorator,
-  ExecutionContext,
   ForbiddenException,
+  type ExecutionContext,
 } from '@nestjs/common';
-import { Role } from 'generated/client';
+import type { Role } from 'generated/client';
 
 export const MemberRoles = createParamDecorator(function (
   data: unknown,

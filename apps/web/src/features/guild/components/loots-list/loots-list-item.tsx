@@ -1,4 +1,4 @@
-import { Loot } from "@/hooks/api/loots/use-loots";
+import type { Loot } from "@/hooks/api/loots/use-loots";
 import { ItemTile } from "@/features/guild/components/loots-list/item-tile";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";

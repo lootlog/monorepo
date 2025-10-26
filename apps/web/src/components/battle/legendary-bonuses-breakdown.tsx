@@ -1,4 +1,4 @@
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 import {
   Table,
   TableBody,
@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { FC } from "react";
+import type { FC } from "react";
 
 interface LegendaryBonusesBreakdownProps {
   warrior: Warrior;

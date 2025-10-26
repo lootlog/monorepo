@@ -4,7 +4,10 @@ import { TimersController } from './timers.controller';
 import { MembersModule } from 'src/members/members.module';
 import { NpcsModule } from 'src/npcs/npcs.module';
 import { GuildsModule } from 'src/guilds/guilds.module';
-import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import {
+  RabbitMQModule,
+  type RabbitMQConfig,
+} from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-config.module';
@@ -18,7 +21,7 @@ import { RedisModule } from 'src/lib/redis/redis.module';
     GuildsModule,
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) =>
+      useFactory: (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
     UserLootlogConfigModule,

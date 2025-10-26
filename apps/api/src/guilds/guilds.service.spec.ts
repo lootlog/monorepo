@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { GuildsService } from './guilds.service';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { PrismaService } from 'src/db/prisma.service';
 import { MembersService } from 'src/members/members.service';
-import { RolesService } from 'src/roles/roles.service';
+import type { RolesService } from 'src/roles/roles.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { DiscordService } from 'src/discord/discord.service';
 import { UsersService } from 'src/users/users.service';

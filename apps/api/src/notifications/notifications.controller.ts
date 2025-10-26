@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { CreateNotificationDto } from 'src/notifications/dto/create-notification.dto';
+import type { CreateNotificationDto } from 'src/notifications/dto/create-notification.dto';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { UserId } from 'src/shared/decorators/user-id.decorator';

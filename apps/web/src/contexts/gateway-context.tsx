@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useEffect, useState } from "react";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
@@ -16,7 +16,7 @@ type Props = {
 };
 
 export const GatewayContext = createContext<GatewayProviderValue | undefined>(
-  undefined
+  undefined,
 );
 GatewayContext.displayName = "GatewayContext";
 
@@ -28,23 +28,19 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
   const setupBaseListeners = useCallback(() => {
     socket.on(GatewayEvent.CONNECT, () => {
-      console.log("[Gateway] Connected");
       setConnected(true);
     });
 
     socket.on(GatewayEvent.DISCONNECT, () => {
-      console.log("[Gateway] Disconnected");
       setConnected(false);
       setJoined(false);
     });
 
     socket.on(GatewayEvent.JOIN, (data) => {
       if (data.status === "error") {
-        console.error("[Gateway] Join error:", data.message);
         return;
       }
 
-      console.log("[Gateway] Joined guild rooms");
       setJoined(true);
     });
 

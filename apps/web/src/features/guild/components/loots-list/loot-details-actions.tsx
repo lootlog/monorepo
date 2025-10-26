@@ -1,8 +1,8 @@
 import { useDeleteLoot } from "@/hooks/api/loots/use-delete-loot";
-import { Loot } from "@/hooks/api/loots/use-loots";
+import type { Loot } from "@/hooks/api/loots/use-loots";
 import { Button } from "@lootlog/ui/components/button";
 import { Loader2 } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type LootDetailsActionsProps = {
   loot: Loot;

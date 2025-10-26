@@ -11,17 +11,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import { PrismaService } from 'src/db/prisma.service';
 import {
   getMemberCacheTtl,
   getRefreshPermissionsTtl,
   getAdminBulkRefreshRateLimit,
 } from 'src/members/constants/member-cache.constant';
-import { APIGuildMember } from 'discord-api-types/v10';
+import type { APIGuildMember } from 'discord-api-types/v10';
 import { ErrorKey } from 'src/members/enum/error-key.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
-import { Member, Role } from 'generated/client';
+import type { Member, Role } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { ConfigKey } from 'src/config/config-key.enum';

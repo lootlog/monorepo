@@ -1,8 +1,8 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { Sword } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import { TeamDisplay } from "./team-display";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleTeamSectionProps = {
   team: Warrior[];

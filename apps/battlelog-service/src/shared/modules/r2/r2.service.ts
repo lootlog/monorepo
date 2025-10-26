@@ -1,8 +1,12 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { R2Config } from 'src/config/r2.config';
+import type { R2Config } from 'src/config/r2.config';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
@@ -31,7 +35,9 @@ export class R2Service {
       },
     });
 
-    this.logger.log(`R2 client initialized for bucket: ${this.config.bucketName}`);
+    this.logger.log(
+      `R2 client initialized for bucket: ${this.config.bucketName}`,
+    );
   }
 
   async uploadBattleData(battleId: string, data: any): Promise<void> {
@@ -50,7 +56,9 @@ export class R2Service {
       });
 
       await this.client.send(command);
-      this.logger.log(`Battle data uploaded successfully for battle ${battleId}`);
+      this.logger.log(
+        `Battle data uploaded successfully for battle ${battleId}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to upload battle data for ${battleId}:`, error);
       throw error;
@@ -86,11 +94,16 @@ export class R2Service {
       const parsedData = JSON.parse(data);
 
       await this.cacheData(battleId, data);
-      this.logger.log(`Battle data retrieved from R2 and cached for battle ${battleId}`);
+      this.logger.log(
+        `Battle data retrieved from R2 and cached for battle ${battleId}`,
+      );
 
       return parsedData;
     } catch (error) {
-      this.logger.error(`Failed to retrieve battle data for ${battleId}:`, error);
+      this.logger.error(
+        `Failed to retrieve battle data for ${battleId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -107,7 +120,9 @@ export class R2Service {
 
       await this.client.send(command);
       await this.deleteCachedData(battleId);
-      this.logger.log(`Battle data deleted successfully for battle ${battleId}`);
+      this.logger.log(
+        `Battle data deleted successfully for battle ${battleId}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to delete battle data for ${battleId}:`, error);
       throw error;
@@ -185,7 +200,10 @@ export class R2Service {
       await pipeline.exec();
       this.logger.debug(`Removed battle ${battleId} from cache`);
     } catch (error) {
-      this.logger.warn(`Failed to delete cached data for battle ${battleId}:`, error);
+      this.logger.warn(
+        `Failed to delete cached data for battle ${battleId}:`,
+        error,
+      );
     }
   }
 }

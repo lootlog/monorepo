@@ -135,7 +135,7 @@ export const BattlesListFilters = ({
 
     if (isSelected) {
       newSelectedWarriors = selectedWarriors.filter(
-        (w) => w.name !== warrior.name
+        (w) => w.name !== warrior.name,
       );
     } else {
       newSelectedWarriors = [...selectedWarriors, warrior];
@@ -153,7 +153,7 @@ export const BattlesListFilters = ({
 
   const handleRemoveWarrior = (warriorName: string) => {
     const newSelectedWarriors = selectedWarriors.filter(
-      (w) => w.name !== warriorName
+      (w) => w.name !== warriorName,
     );
     setSelectedWarriors(newSelectedWarriors);
 
@@ -214,7 +214,7 @@ export const BattlesListFilters = ({
                 <Popover
                   open={warriorSearchOpen}
                   onOpenChange={setWarriorSearchOpen}
-                  modal={true}
+                  modal
                 >
                   <PopoverTrigger asChild>
                     <Button
@@ -252,7 +252,7 @@ export const BattlesListFilters = ({
                         <CommandGroup>
                           {searchResults.map((warrior) => {
                             const isSelected = selectedWarriors.some(
-                              (w) => w.name === warrior.name
+                              (w) => w.name === warrior.name,
                             );
                             return (
                               <CommandItem
@@ -264,7 +264,7 @@ export const BattlesListFilters = ({
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    isSelected ? "opacity-100" : "opacity-0"
+                                    isSelected ? "opacity-100" : "opacity-0",
                                   )}
                                 />
                                 <PlayerTile
@@ -288,11 +288,7 @@ export const BattlesListFilters = ({
               {/* World */}
               <div className="space-y-2">
                 <Label>Świat</Label>
-                <Popover
-                  open={worldOpen}
-                  onOpenChange={setWorldOpen}
-                  modal={true}
-                >
+                <Popover open={worldOpen} onOpenChange={setWorldOpen} modal>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -328,7 +324,7 @@ export const BattlesListFilters = ({
                                   "mr-2 h-4 w-4",
                                   filters.world === world
                                     ? "opacity-100"
-                                    : "opacity-0"
+                                    : "opacity-0",
                                 )}
                               />
                               {capitalizeFirstLetter(world)}
@@ -343,11 +339,7 @@ export const BattlesListFilters = ({
 
               <div className="space-y-2">
                 <Label>Wynik walki</Label>
-                <Popover
-                  open={resultOpen}
-                  onOpenChange={setResultOpen}
-                  modal={true}
-                >
+                <Popover open={resultOpen} onOpenChange={setResultOpen} modal>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -382,7 +374,7 @@ export const BattlesListFilters = ({
                                   "mr-2 h-4 w-4",
                                   filters.result?.includes(result.value)
                                     ? "opacity-100"
-                                    : "opacity-0"
+                                    : "opacity-0",
                                 )}
                               />
                               {result.label}
@@ -401,7 +393,7 @@ export const BattlesListFilters = ({
                 <Popover
                   open={characterOpen}
                   onOpenChange={setCharacterOpen}
-                  modal={true}
+                  modal
                 >
                   <PopoverTrigger asChild>
                     <Button
@@ -439,7 +431,7 @@ export const BattlesListFilters = ({
                                   "mr-2 h-4 w-4",
                                   filters.characterId?.includes(char.id)
                                     ? "opacity-100"
-                                    : "opacity-0"
+                                    : "opacity-0",
                                 )}
                               />
                               <PlayerTile
@@ -459,11 +451,7 @@ export const BattlesListFilters = ({
 
               <div className="space-y-2">
                 <Label>Typ walki</Label>
-                <Popover
-                  open={typeOpen}
-                  onOpenChange={setTypeOpen}
-                  modal={true}
-                >
+                <Popover open={typeOpen} onOpenChange={setTypeOpen} modal>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -498,7 +486,7 @@ export const BattlesListFilters = ({
                                   "mr-2 h-4 w-4",
                                   filters.type?.includes(type.value)
                                     ? "opacity-100"
-                                    : "opacity-0"
+                                    : "opacity-0",
                                 )}
                               />
                               {type.label}
@@ -577,7 +565,7 @@ export const BattlesListFilters = ({
                 <CommandGroup>
                   {searchResults.map((warrior) => {
                     const isSelected = selectedWarriors.some(
-                      (w) => w.name === warrior.name
+                      (w) => w.name === warrior.name,
                     );
                     return (
                       <CommandItem
@@ -589,7 +577,7 @@ export const BattlesListFilters = ({
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            isSelected ? "opacity-100" : "opacity-0"
+                            isSelected ? "opacity-100" : "opacity-0",
                           )}
                         />
                         <PlayerTile
@@ -643,7 +631,7 @@ export const BattlesListFilters = ({
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          filters.world === world ? "opacity-100" : "opacity-0"
+                          filters.world === world ? "opacity-100" : "opacity-0",
                         )}
                       />
                       {capitalizeFirstLetter(world)}
@@ -690,7 +678,7 @@ export const BattlesListFilters = ({
                           "mr-2 h-4 w-4",
                           filters.result?.includes(result.value)
                             ? "opacity-100"
-                            : "opacity-0"
+                            : "opacity-0",
                         )}
                       />
                       {result.label}
@@ -739,7 +727,7 @@ export const BattlesListFilters = ({
                           "mr-2 h-4 w-4",
                           filters.characterId?.includes(char.id)
                             ? "opacity-100"
-                            : "opacity-0"
+                            : "opacity-0",
                         )}
                       />{" "}
                       <PlayerTile
@@ -791,7 +779,7 @@ export const BattlesListFilters = ({
                           "mr-2 h-4 w-4",
                           filters.type?.includes(type.value)
                             ? "opacity-100"
-                            : "opacity-0"
+                            : "opacity-0",
                         )}
                       />
                       {type.label}

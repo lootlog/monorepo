@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/lib/redis/redis.service';
-import {
+import type {
   UserGuildData,
   GetUserGuildsOptions,
   CachedGuildData,
@@ -12,7 +12,7 @@ import {
   CACHE_TTL,
 } from 'src/guilds/utils/cache-keys.util';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { ApiConfig } from 'src/config/api.config';
+import type { ApiConfig } from 'src/config/api.config';
 import { firstValueFrom } from 'rxjs';
 
 const MAX_RETRIES = 3;

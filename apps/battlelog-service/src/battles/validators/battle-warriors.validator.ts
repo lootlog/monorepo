@@ -1,8 +1,8 @@
 import {
   registerDecorator,
-  ValidationOptions,
-  ValidationArguments,
   validate,
+  type ValidationOptions,
+  type ValidationArguments,
 } from 'class-validator';
 import { CreateBattleFightEventWarriorDto } from 'src/battles/dto/create-battle.dto';
 

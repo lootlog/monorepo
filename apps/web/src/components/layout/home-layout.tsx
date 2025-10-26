@@ -3,7 +3,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@lootlog/ui/components/sidebar";
-import { FC } from "react";
+import type { FC } from "react";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -89,7 +89,7 @@ export const HomeLayout: FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() =>
-                        navigate({ to: navInfo.backPath! as string })
+                        navigate({ to: navInfo.backPath as string })
                       }
                       className="p-1 h-8 w-8"
                     >
@@ -108,9 +108,7 @@ export const HomeLayout: FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
-                            navigate({ to: crumb.path! as string })
-                          }
+                          onClick={() => navigate({ to: crumb.path as string })}
                           className="text-sm h-auto p-1 font-semibold hover:bg-accent/50 whitespace-nowrap"
                         >
                           {crumb.label}

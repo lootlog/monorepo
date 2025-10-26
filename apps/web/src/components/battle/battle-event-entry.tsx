@@ -1,13 +1,13 @@
 import { BattleLogAttackActions } from "./actions/battle-log-attack-action";
-import { FC, memo, useMemo } from "react";
+import { memo, useMemo, type FC } from "react";
 import { parseActions } from "./utils/battle-actions-parser";
 import { BattleBuffActions } from "./actions/battle-buff-actions";
 import { BattleOutcomeActions } from "./actions/battle-outcome-actions";
 import { BattlePassiveActions } from "./actions/battle-passive-actions";
 import { BattleSpellActions } from "./actions/battle-spell-actions";
 import { BattleSystemActions } from "./actions/battle-system-actions";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
-import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleEventEntryProps = {
   event: RawBattleParsedEvent;
@@ -21,7 +21,7 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = memo(
   ({ event, attacker, defender, eventIndex, userTeam }) => {
     const parsedActions = useMemo(
       () => parseActions(event.actions),
-      [event.actions]
+      [event.actions],
     );
 
     return (
@@ -73,7 +73,7 @@ export const BattleEventEntry: FC<BattleEventEntryProps> = memo(
         />
       </li>
     );
-  }
+  },
 );
 
 BattleEventEntry.displayName = "BattleEventEntry";

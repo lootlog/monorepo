@@ -5,7 +5,10 @@ import { RolesController } from './roles.controller';
 import { MembersModule } from 'src/members/members.module';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { RetryService } from 'src/rabbitmq/retry.service';
-import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import {
+  RabbitMQModule,
+  type RabbitMQConfig,
+} from '@golevelup/nestjs-rabbitmq';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { PrismaModule } from 'src/db/prisma.module';
@@ -17,7 +20,7 @@ import { RedisModule } from 'src/lib/redis/redis.module';
     forwardRef(() => MembersModule),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) =>
+      useFactory: (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
     PrismaModule,

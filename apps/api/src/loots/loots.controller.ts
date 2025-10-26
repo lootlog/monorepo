@@ -19,10 +19,10 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { Guild, Permission, Role } from 'generated/client';
-import { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
-import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
-import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
+import { type Guild, Permission, type Role } from 'generated/client';
+import type { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
+import type { CreateLootDto } from 'src/loots/dto/create-loot.dto';
+import type { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
 import { LootsService } from 'src/loots/loots.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
@@ -51,19 +51,50 @@ export class LootsController {
     description: 'Retrieve paginated loots for a guild with optional filters',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
-  @ApiQuery({ name: 'cursor', description: 'Pagination cursor', required: false })
-  @ApiQuery({ name: 'limit', description: 'Number of results per page', required: false })
-  @ApiQuery({ name: 'world', description: 'World name filter', required: false })
-  @ApiQuery({ name: 'npcTypes', description: 'NPC types filter (comma-separated)', required: false })
-  @ApiQuery({ name: 'rarities', description: 'Item rarities filter (comma-separated)', required: false })
-  @ApiQuery({ name: 'players', description: 'Player names filter (comma-separated)', required: false })
-  @ApiQuery({ name: 'npcs', description: 'NPC names filter (comma-separated)', required: false })
+  @ApiQuery({
+    name: 'cursor',
+    description: 'Pagination cursor',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of results per page',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'world',
+    description: 'World name filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'npcTypes',
+    description: 'NPC types filter (comma-separated)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'rarities',
+    description: 'Item rarities filter (comma-separated)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'players',
+    description: 'Player names filter (comma-separated)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'npcs',
+    description: 'NPC names filter (comma-separated)',
+    required: false,
+  })
   @ApiResponse({
     status: 200,
     description: 'Paginated list of loots',
     type: [LootEntity],
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   async fetchLootsByGuildId(
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
@@ -80,15 +111,20 @@ export class LootsController {
     @Query('npcs', new ArrayValidationPipe())
     npcs: string[],
   ) {
-    const loots = await this.lootsService.fetchLootsByGuildId(guild, permissions, roles, {
-      cursor,
-      limit,
-      npcTypes,
-      rarities,
-      players,
-      npcs,
-      world,
-    });
+    const loots = await this.lootsService.fetchLootsByGuildId(
+      guild,
+      permissions,
+      roles,
+      {
+        cursor,
+        limit,
+        npcTypes,
+        rarities,
+        players,
+        npcs,
+        world,
+      },
+    );
     return plainToInstance(LootEntity, loots);
   }
 
@@ -124,7 +160,10 @@ export class LootsController {
     description: 'List of loot comments',
     type: [LootCommentEntity],
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   @ApiResponse({ status: 404, description: 'Loot not found' })
   async getComments(
     @DiscordId() discordId: string,
@@ -153,7 +192,10 @@ export class LootsController {
     description: 'Comment created successfully',
     type: LootCommentEntity,
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   @ApiResponse({ status: 404, description: 'Loot not found' })
   async createComment(
     @DiscordId() discordId: string,
@@ -185,7 +227,10 @@ export class LootsController {
     status: 200,
     description: 'Loot deleted successfully',
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - admin or manage permission required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - admin or manage permission required',
+  })
   @ApiResponse({ status: 404, description: 'Loot not found' })
   async deleteLoot(
     @Param('lootId', new ParseIntPipe()) lootId: number,

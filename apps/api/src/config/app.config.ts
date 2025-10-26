@@ -1,4 +1,4 @@
-import { ConfigModuleOptions } from '@nestjs/config';
+import type { ConfigModuleOptions } from '@nestjs/config';
 import * as Joi from 'joi';
 import authConfig from 'src/config/auth.config';
 import rabbitmqConfig from 'src/config/rabbitmq.config';

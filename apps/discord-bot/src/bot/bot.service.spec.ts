@@ -1,6 +1,6 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Client, Collection, Guild, Role } from 'discord.js';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { Client, Collection, type Guild, type Role } from 'discord.js';
 import { BotService } from './bot.service';
 import { RoutingKey } from './enums/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from '../config/rabbitmq.config';

@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-import { RuntimeEnvironment } from 'src/types/common.types';
+import type { RuntimeEnvironment } from 'src/types/common.types';
 import { ConfigKey } from './config-key.enum';
 
 export interface ServiceConfig {
@@ -12,6 +12,6 @@ export default registerAs(ConfigKey.SERVICE, (): ServiceConfig => {
 
   return {
     env: ENV,
-    port: parseInt(PORT, 10) || 4000,
+    port: Number.parseInt(PORT, 10) || 4000,
   };
 });

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { Guild } from "@/hooks/api/guilds/use-guild";
+import type { Guild } from "@/hooks/api/guilds/use-guild";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 
 type UpdateGuildConfigOptions = {
@@ -20,7 +20,7 @@ export const useUpdateGuild = () => {
     unknown,
     UpdateGuildConfigOptions
   >({
-    mutationFn: async ({ vanityUrl }) => {
+    mutationFn: ({ vanityUrl }) => {
       return client.patch(`/guilds/${guildId}/config`, {
         vanityUrl,
       });

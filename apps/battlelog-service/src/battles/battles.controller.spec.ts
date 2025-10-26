@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { BattlesController } from './battles.controller';
 import { BattlesService } from './battles.service';
 import { AuthGuard } from 'src/shared/guards/auth.guard';

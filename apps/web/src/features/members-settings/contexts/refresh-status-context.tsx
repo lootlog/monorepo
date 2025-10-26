@@ -1,10 +1,17 @@
-import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useGateway } from '@/hooks/utils/use-gateway';
-import { useGuildId } from '@/hooks/context/use-guild-id';
-import { GatewayEvent } from '@/config/gateway';
-import { RefreshJobUpdate } from '@/types/refresh-job';
-import { GuildMember } from '@/hooks/api/members/use-guild-member';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGateway } from "@/hooks/utils/use-gateway";
+import { useGuildId } from "@/hooks/context/use-guild-id";
+import { GatewayEvent } from "@/config/gateway";
+import type { RefreshJobUpdate } from "@/types/refresh-job";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 
 interface RefreshStatusContextValue {
   refreshedIds: Set<string>;
@@ -15,12 +22,16 @@ interface RefreshStatusContextValue {
   clearAll: () => void;
 }
 
-export const RefreshStatusContext = createContext<RefreshStatusContextValue | undefined>(undefined);
+export const RefreshStatusContext = createContext<
+  RefreshStatusContextValue | undefined
+>(undefined);
 
 export const useRefreshStatus = () => {
   const context = useContext(RefreshStatusContext);
   if (!context) {
-    throw new Error('useRefreshStatus must be used within RefreshStatusProvider');
+    throw new Error(
+      "useRefreshStatus must be used within RefreshStatusProvider",
+    );
   }
   return context;
 };
@@ -29,7 +40,9 @@ interface RefreshStatusProviderProps {
   children: ReactNode;
 }
 
-export const RefreshStatusProvider = ({ children }: RefreshStatusProviderProps) => {
+export const RefreshStatusProvider = ({
+  children,
+}: RefreshStatusProviderProps) => {
   const [refreshedIds, setRefreshedIds] = useState<Set<string>>(new Set());
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
@@ -46,7 +59,7 @@ export const RefreshStatusProvider = ({ children }: RefreshStatusProviderProps) 
 
       if (data.refreshedIds && data.refreshedIds.length > 0) {
         queryClient.setQueriesData(
-          { queryKey: ['members', guildId] },
+          { queryKey: ["members", guildId] },
           (oldData: { data: GuildMember[] } | undefined) => {
             if (!oldData?.data) return oldData;
 
@@ -55,10 +68,10 @@ export const RefreshStatusProvider = ({ children }: RefreshStatusProviderProps) 
               data: oldData.data.map((member) =>
                 data.refreshedIds?.includes(member.userId)
                   ? { ...member, updatedAt: now, isStale: false }
-                  : member
+                  : member,
               ),
             };
-          }
+          },
         );
 
         setRefreshedIds((prev) => {
@@ -92,7 +105,10 @@ export const RefreshStatusProvider = ({ children }: RefreshStatusProviderProps) 
     socket.on(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleRefreshJobUpdate);
 
     return () => {
-      socket.off(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, handleRefreshJobUpdate);
+      socket.off(
+        GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
+        handleRefreshJobUpdate,
+      );
     };
   }, [guildId, socket, connected, queryClient]);
 

@@ -1,4 +1,4 @@
-import { Guild } from "@/hooks/api/guilds/use-guild";
+import type { Guild } from "@/hooks/api/guilds/use-guild";
 import {
   Avatar,
   AvatarFallback,

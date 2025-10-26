@@ -2,15 +2,15 @@ import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import { firstValueFrom } from 'rxjs';
-import { GetIdpTokenResponse } from 'src/auth/types/get-idp-token-response.type';
+import type { GetIdpTokenResponse } from 'src/auth/types/get-idp-token-response.type';
 import {
   TokenExpiredError,
   AuthServiceUnavailableError,
 } from 'src/auth/errors';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { AuthConfig } from 'src/config/auth.config';
+import type { AuthConfig } from 'src/config/auth.config';
 import { RedisService } from 'src/lib/redis/redis.service';
 import {
   getAuthTokenCacheKey,
@@ -127,17 +127,18 @@ export class AuthService {
       );
 
       return tokenResponse;
-    } catch (err) {
-      if (err instanceof TokenExpiredError) {
-        throw err;
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw error;
       }
 
-      if (err instanceof AuthServiceUnavailableError) {
-        throw err;
+      if (error instanceof AuthServiceUnavailableError) {
+        throw error;
       }
 
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      const errorStack = err instanceof Error ? err.stack : undefined;
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.log({
         level: 'error',
         message: `Failed to fetch IDP token for user ${userId}: ${errorMessage}`,

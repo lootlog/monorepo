@@ -1,6 +1,6 @@
-import { Loot } from "@/hooks/api/loots/use-loots";
+import type { Loot } from "@/hooks/api/loots/use-loots";
 import { cn } from "@lootlog/ui/lib/utils";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type LootNpcsProps = {
   npcs: Loot["npcs"];

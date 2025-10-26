@@ -1,8 +1,8 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable } from '@nestjs/common';
-import { Job } from 'bullmq';
+import type { Job } from 'bullmq';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import { MembersService } from './members.service';
 import { PrismaService } from 'src/db/prisma.service';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';

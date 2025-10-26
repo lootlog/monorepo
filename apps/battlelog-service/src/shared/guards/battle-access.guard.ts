@@ -1,9 +1,9 @@
 import {
-  CanActivate,
-  ExecutionContext,
   ForbiddenException,
   Injectable,
   NotFoundException,
+  type CanActivate,
+  type ExecutionContext,
 } from '@nestjs/common';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 
@@ -34,7 +34,9 @@ export class BattleAccessGuard implements CanActivate {
         return true;
       }
 
-      throw new ForbiddenException('Access denied: Battle is private and you are not the owner');
+      throw new ForbiddenException(
+        'Access denied: Battle is private and you are not the owner',
+      );
     } catch (error) {
       if (error.name === 'NotFoundError') {
         throw new NotFoundException(`Battle with ID ${battleId} not found`);

@@ -6,7 +6,10 @@ import { GuildsEventsHandler } from 'src/guilds/guilds-events.handler';
 import { MembersModule } from 'src/members/members.module';
 import { RolesModule } from 'src/roles/roles.module';
 import { ConfigService } from '@nestjs/config';
-import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import {
+  RabbitMQModule,
+  type RabbitMQConfig,
+} from '@golevelup/nestjs-rabbitmq';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { UsersModule } from 'src/users/users.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
@@ -24,7 +27,7 @@ import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.inter
     forwardRef(() => LootlogConfigModule),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) =>
+      useFactory: (configService: ConfigService) =>
         configService.get<RabbitMQConfig>(ConfigKey.RABBITMQ),
     }),
     RedisModule,

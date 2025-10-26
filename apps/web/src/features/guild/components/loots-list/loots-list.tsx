@@ -2,7 +2,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useLoots } from "@/hooks/api/loots/use-loots";
 import { Frown, Loader2 } from "lucide-react";
-import { FC, Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef, type FC } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
 import { useIntersectionObserver } from "usehooks-ts";

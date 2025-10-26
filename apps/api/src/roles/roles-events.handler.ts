@@ -4,10 +4,10 @@ import {
 } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
-import { CreateRoleDto } from 'src/roles/dto/create-role.dto';
-import { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
-import { UpdateRoleDto } from 'src/roles/dto/update-role.dto';
+import type { Logger } from 'winston';
+import type { CreateRoleDto } from 'src/roles/dto/create-role.dto';
+import type { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
+import type { UpdateRoleDto } from 'src/roles/dto/update-role.dto';
 import { Queue } from 'src/enum/queue.enum';
 import { RolesService } from 'src/roles/roles.service';
 import { RoutingKey } from 'src/enum/routing-key.enum';
@@ -17,6 +17,12 @@ import {
   RETRY_EXCHANGE_NAME,
 } from 'src/config/rabbitmq.config';
 import { RetryService } from 'src/rabbitmq/retry.service';
+
+interface AmqpMessage {
+  properties: {
+    headers?: Record<string, unknown>;
+  };
+}
 
 @Injectable()
 export class RolesEventsHandler {
@@ -37,7 +43,7 @@ export class RolesEventsHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_CREATE_ROLE_RETRY,
     },
   })
-  async handleRoleCreate(data: CreateRoleDto, amqpMsg: any) {
+  async handleRoleCreate(data: CreateRoleDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
@@ -71,7 +77,7 @@ export class RolesEventsHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_UPDATE_ROLE_RETRY,
     },
   })
-  async handleRoleUpdate(data: UpdateRoleDto, amqpMsg: any) {
+  async handleRoleUpdate(data: UpdateRoleDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
@@ -105,7 +111,7 @@ export class RolesEventsHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_DELETE_ROLE_RETRY,
     },
   })
-  async handleRoleDelete(data: DeleteRoleDto, amqpMsg: any) {
+  async handleRoleDelete(data: DeleteRoleDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
@@ -137,7 +143,7 @@ export class RolesEventsHandler {
       durable: true,
     },
   })
-  async handleRoleCreateDLQ(data: CreateRoleDto, amqpMsg: any) {
+  handleRoleCreateDLQ(data: CreateRoleDto, amqpMsg: AmqpMessage) {
     this.logger.log({
       level: 'error',
       message: 'Message sent to DLQ - Create Role',
@@ -158,7 +164,7 @@ export class RolesEventsHandler {
       durable: true,
     },
   })
-  async handleRoleUpdateDLQ(data: UpdateRoleDto, amqpMsg: any) {
+  handleRoleUpdateDLQ(data: UpdateRoleDto, amqpMsg: AmqpMessage) {
     this.logger.log({
       level: 'error',
       message: 'Message sent to DLQ - Update Role',
@@ -179,7 +185,7 @@ export class RolesEventsHandler {
       durable: true,
     },
   })
-  async handleRoleDeleteDLQ(data: DeleteRoleDto, amqpMsg: any) {
+  handleRoleDeleteDLQ(data: DeleteRoleDto, amqpMsg: AmqpMessage) {
     this.logger.log({
       level: 'error',
       message: 'Message sent to DLQ - Delete Role',

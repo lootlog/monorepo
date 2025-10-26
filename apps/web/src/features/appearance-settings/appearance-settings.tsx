@@ -1,4 +1,4 @@
-import { FC } from "react";
+import type { FC } from "react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { ThemeCard } from "@lootlog/ui/components/theme-card";
 import { Label } from "@lootlog/ui/components/label";

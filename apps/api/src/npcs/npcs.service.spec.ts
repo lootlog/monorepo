@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { NpcsService } from './npcs.service';
 
 describe('NpcsService', () => {

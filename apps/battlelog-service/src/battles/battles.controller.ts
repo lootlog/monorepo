@@ -10,10 +10,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BattlesService } from 'src/battles/battles.service';
-import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
-import { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
-import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
-import { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
+import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
+import type { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
+import type { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
+import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { BattleAccessGuard } from 'src/shared/guards/battle-access.guard';
@@ -57,10 +57,7 @@ export class BattlesController {
   }
 
   @Get('/@me/warriors/search')
-  searchWarriors(
-    @Query('q') query: string,
-    @UserId() userId: string,
-  ) {
+  searchWarriors(@Query('q') query: string, @UserId() userId: string) {
     return this.battlesService.searchWarriors(query, userId);
   }
 

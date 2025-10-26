@@ -11,7 +11,11 @@ class UserGuildPermissionsRole {
   @ApiProperty({ description: 'Maximum level for the role' })
   lvlRangeTo: number;
 
-  @ApiProperty({ description: 'Permissions granted by this role', enum: Permission, isArray: true })
+  @ApiProperty({
+    description: 'Permissions granted by this role',
+    enum: Permission,
+    isArray: true,
+  })
   permissions: Permission[];
 }
 
@@ -21,9 +25,15 @@ class UserGuildPermissionsGuild {
 }
 
 export class UserGuildPermissionsDto {
-  @ApiProperty({ description: 'Guild basic information', type: UserGuildPermissionsGuild })
+  @ApiProperty({
+    description: 'Guild basic information',
+    type: UserGuildPermissionsGuild,
+  })
   guild: UserGuildPermissionsGuild;
 
-  @ApiProperty({ description: 'User roles in the guild with their permissions', type: [UserGuildPermissionsRole] })
+  @ApiProperty({
+    description: 'User roles in the guild with their permissions',
+    type: [UserGuildPermissionsRole],
+  })
   roles: UserGuildPermissionsRole[];
 }

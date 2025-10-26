@@ -1,8 +1,8 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
-import { SendMessageDto } from 'src/chat/dto/send-message.dto';
+import type { Logger } from 'winston';
+import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { RedisService } from 'src/lib/redis/redis.service';

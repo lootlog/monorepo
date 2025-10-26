@@ -1,7 +1,7 @@
 import { cn } from "@lootlog/ui/lib/utils";
-import { FC } from "react";
+import type { FC } from "react";
 import { PlayerTile } from "./player-tile";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type TeamDisplayProps = {
   team: Warrior[];
@@ -25,7 +25,7 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
             "flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1 box-border pr-4",
             {
               "border border-green-500": member.originalId === characterId,
-            }
+            },
           )}
         >
           <PlayerTile

@@ -7,8 +7,8 @@ import {
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { cn } from "@lootlog/ui/lib/utils";
 
-import { FC } from "react";
-import { Player } from "@/hooks/api/game-data/use-guild-players";
+import type { FC } from "react";
+import type { Player } from "@/hooks/api/game-data/use-guild-players";
 
 type PlayerTileProps = {
   player: Partial<Player>;
@@ -30,7 +30,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
           <div className={cn("relative", className)}>
             <div
               className={cn(
-                "w-[32px] h-[48px] relative cursor-pointer rounded-lg"
+                "w-[32px] h-[48px] relative cursor-pointer rounded-lg",
               )}
               style={{
                 backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${icon})`,

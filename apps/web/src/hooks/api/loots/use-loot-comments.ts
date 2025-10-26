@@ -1,5 +1,5 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useQuery } from "@tanstack/react-query";
 
@@ -31,7 +31,7 @@ export const useLootComments = (options: GetLootCommentsOptions) => {
     queryKey: ["loot-comments", guildId, options.lootId],
     queryFn: () =>
       client.get<GetLootCommentsResponse>(
-        `/guilds/${guildId}/loots/${options.lootId}/comments`
+        `/guilds/${guildId}/loots/${options.lootId}/comments`,
       ),
     select: (response) => response.data,
     enabled: !!guildId && !!options.lootId,

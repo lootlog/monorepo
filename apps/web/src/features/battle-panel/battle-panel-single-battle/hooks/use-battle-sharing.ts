@@ -17,8 +17,7 @@ export const useBattleSharing = () => {
       toast.success("Link do walki został skopiowany do schowka!", {
         duration: 3000,
       });
-    } catch (error) {
-      console.warn("Failed to copy: ", error);
+    } catch {
       toast.error("Wystąpił błąd podczas kopiowania linku.", {
         duration: 3000,
       });
@@ -39,7 +38,7 @@ export const useBattleSharing = () => {
             duration: 3000,
           });
         },
-      }
+      },
     );
   };
 
@@ -60,7 +59,7 @@ export const useBattleSharing = () => {
             duration: 3000,
           });
         },
-      }
+      },
     );
   };
 

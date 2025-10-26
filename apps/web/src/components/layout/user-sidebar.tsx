@@ -9,7 +9,7 @@ import {
   SidebarGroupContent,
   SidebarMenu,
 } from "@lootlog/ui/components/sidebar";
-import { FC } from "react";
+import type { FC } from "react";
 
 export const UserSidebar: FC = () => {
   return (

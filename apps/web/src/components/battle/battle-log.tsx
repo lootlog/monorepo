@@ -1,8 +1,8 @@
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 import { BattleLogList } from "./battle-log-list";
 import { Sword } from "lucide-react";
-import { FC, useMemo } from "react";
-import { RawBattle } from "@/hooks/api/battle-log/use-battle-raw";
+import { useMemo, type FC } from "react";
+import type { RawBattle } from "@/hooks/api/battle-log/use-battle-raw";
 
 export type BattleLogProps = {
   rawBattle: RawBattle;

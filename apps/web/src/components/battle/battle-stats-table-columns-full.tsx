@@ -1,13 +1,8 @@
-import { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
 import { Button } from "@lootlog/ui/components/button";
 import { cn } from "@lootlog/ui/lib/utils";
-import { ColumnDef } from "@tanstack/react-table";
-import {
-  ChevronDown,
-  ChevronRight,
-  Flag,
-  Skull,
-} from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ChevronDown, ChevronRight, Flag, Skull } from "lucide-react";
 import { EmergencyExitIcon } from "@lootlog/ui/components/emergency-exit-icon";
 
 export const getBattleStatsTableColumns = (
@@ -21,7 +16,7 @@ export const getBattleStatsTableColumns = (
   toggleTurnsExpansion: (warriorId: string) => void,
   toggleBlocksExpansion: (warriorId: string) => void,
   toggleDetailsExpansion: (warriorId: string) => void,
-  toggleDamageDealtExpansion: (warriorId: string) => void
+  toggleDamageDealtExpansion: (warriorId: string) => void,
 ): ColumnDef<Warrior>[] => [
   {
     accessorKey: "name",
@@ -37,7 +32,7 @@ export const getBattleStatsTableColumns = (
               "flex items-center gap-1 bg-transparent p-1 rounded transition-colors",
               {
                 "bg-secondary": isExpanded,
-              }
+              },
             )}
             variant="secondary"
             size="sm"
@@ -71,7 +66,7 @@ export const getBattleStatsTableColumns = (
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
                 "bg-secondary": isExpanded,
-              }
+              },
             )}
             variant="secondary"
             size="sm"
@@ -102,7 +97,7 @@ export const getBattleStatsTableColumns = (
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
                 "bg-secondary": isExpanded,
-              }
+              },
             )}
             variant="secondary"
             size="sm"
@@ -153,7 +148,7 @@ export const getBattleStatsTableColumns = (
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
                 "bg-secondary": isExpanded,
-              }
+              },
             )}
             variant="secondary"
             size="sm"
@@ -192,7 +187,7 @@ export const getBattleStatsTableColumns = (
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
                 "bg-secondary": isExpanded,
-              }
+              },
             )}
             variant="secondary"
             size="sm"
@@ -233,7 +228,7 @@ export const getBattleStatsTableColumns = (
               "flex items-center gap-2 bg-transparent p-1 rounded transition-colors",
               {
                 "bg-secondary": isExpanded,
-              }
+              },
             )}
             variant="secondary"
             size="sm"

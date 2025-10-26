@@ -1,6 +1,6 @@
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 import { cn } from "@lootlog/ui/lib/utils";
-import { FC, memo } from "react";
+import { memo, type FC } from "react";
 
 export type BattleHeaderProps = {
   warriors: Warrior[];
@@ -46,7 +46,7 @@ export const BattleHeader: FC<BattleHeaderProps> = memo(
         </li>
       </>
     );
-  }
+  },
 );
 
 BattleHeader.displayName = "BattleHeader";

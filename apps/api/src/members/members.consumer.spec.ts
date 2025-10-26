@@ -1,17 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { getQueueToken } from '@nestjs/bullmq';
 import { MembersConsumer } from './members.consumer';
 import { MembersService } from './members.service';
 import { PrismaService } from 'src/db/prisma.service';
-import { MemberType } from 'generated/client';
+import type { MemberType } from 'generated/client';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
 
 describe('MembersConsumer', () => {
   let consumer: MembersConsumer;
   let membersService: jest.Mocked<MembersService>;
-  let prismaService: any;
+  let prismaService: unknown;
   let amqpConnection: jest.Mocked<AmqpConnection>;
 
   const mockMember = {

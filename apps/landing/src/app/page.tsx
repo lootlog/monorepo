@@ -1,9 +1,9 @@
 import { ADDON_URL } from "@/src/config/addon";
-import { Metadata } from "next";
-import { JSX } from "react";
+import type { Metadata } from "next";
+import type { JSX } from "react";
 import Image from "next/image";
 import LiquidEther from "@lootlog/ui/components/liquid-ether-bg";
-import Bento, { BentoCardProps } from "@lootlog/ui/components/bento";
+import Bento, { type BentoCardProps } from "@lootlog/ui/components/bento";
 import { Button } from "@lootlog/ui/components/button";
 import { PageHeader } from "@/src/components/page-header";
 
@@ -116,19 +116,19 @@ export default function Home(): JSX.Element {
           colors={["#5227FF", "#C786EC", "#AB2FEE"]}
           mouseForce={20}
           cursorSize={100}
-          isViscous={true}
+          isViscous
           viscous={30}
           iterationsViscous={32}
           iterationsPoisson={32}
           resolution={0.5}
           isBounce={false}
-          autoDemo={true}
+          autoDemo
           autoSpeed={0.5}
           autoIntensity={2.6}
           takeoverDuration={0.25}
           autoResumeDelay={3000}
           autoRampDuration={0.6}
-          BFECC={true}
+          BFECC
           // dt={0.001666}
         />
         <div className="absolute inset-0 px-4 pointer-events-auto lg:pointer-events-none">
@@ -165,8 +165,8 @@ export default function Home(): JSX.Element {
         <Bento
           textAutoHide={false}
           enableStars={false}
-          enableSpotlight={true}
-          enableBorderGlow={true}
+          enableSpotlight
+          enableBorderGlow
           enableTilt={false}
           enableMagnetism={false}
           clickEffect={false}

@@ -5,7 +5,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { Button } from "@lootlog/ui/components/button";
 import { PlusCircleIcon } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import { useGlobalContext } from "@/hooks/context/use-global-context";
 
 export const GuildNavCreate: FC = () => {

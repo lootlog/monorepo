@@ -1,4 +1,4 @@
-import { MemberType } from 'generated/client';
+import type { MemberType } from 'generated/client';
 
 export class GuildMemberDto {
   id: string;

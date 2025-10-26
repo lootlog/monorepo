@@ -1,8 +1,8 @@
 import {
   Injectable,
-  CanActivate,
-  ExecutionContext,
   UnauthorizedException,
+  type CanActivate,
+  type ExecutionContext,
 } from '@nestjs/common';
 
 @Injectable()

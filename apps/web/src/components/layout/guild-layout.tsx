@@ -5,7 +5,7 @@ import {
 } from "@lootlog/ui/components/sidebar";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { GuildContextProvider } from "@/contexts/guild.context";
-import { FC } from "react";
+import type { FC } from "react";
 import {
   Outlet,
   useLocation,
@@ -133,12 +133,12 @@ export const GuildLayout: FC = () => {
                 <div className="flex flex-row gap-2 items-center justify-between w-full">
                   <div className="flex flex-row gap-2 items-center">
                     <SidebarTrigger />
-                    {navInfo.showBack && (
+                    {navInfo.showBack && navInfo.backPath && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          navigate({ to: navInfo.backPath! as string })
+                          navigate({ to: navInfo.backPath as string })
                         }
                         className="p-1 h-8 w-8"
                       >
@@ -158,7 +158,7 @@ export const GuildLayout: FC = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              navigate({ to: crumb.path! as string })
+                              navigate({ to: crumb.path as string })
                             }
                             className="text-sm h-auto p-1 font-semibold hover:bg-accent/50 whitespace-nowrap"
                           >

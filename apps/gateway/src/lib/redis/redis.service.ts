@@ -1,8 +1,12 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  type OnModuleInit,
+  type OnModuleDestroy,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { RedisConfig } from 'src/config/redis.config';
+import type { RedisConfig } from 'src/config/redis.config';
 import { ServiceConfig } from 'src/config/service.config';
 
 @Injectable()
@@ -12,7 +16,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly configService: ConfigService) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     const redisConfig = this.configService.get<RedisConfig>(ConfigKey.REDIS);
     const { serviceName, env } = this.configService.get<ServiceConfig>(
       ConfigKey.SERVICE,
@@ -35,12 +39,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async get(key: string): Promise<string | null> {
+  get(key: string): Promise<string | null> {
     const prefixedKey = `${this.prefix}:${key}`;
     return this.client.get(prefixedKey);
   }
 
-  async del(key: string): Promise<number> {
+  del(key: string): Promise<number> {
     const prefixedKey = `${this.prefix}:${key}`;
     return this.client.del(prefixedKey);
   }

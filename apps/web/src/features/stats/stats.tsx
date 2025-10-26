@@ -2,7 +2,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { SidebarTrigger } from "@lootlog/ui/components/sidebar";
 
 export const Stats: React.FC = () => {
-  console.log("Stats");
   return (
     <div className="flex flex-row w-full h-[calc(100%-65px)]">
       <div className="w-full h-full">

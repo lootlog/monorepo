@@ -16,8 +16,8 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { Guild, Permission } from 'generated/client';
-import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
+import { type Guild, Permission } from 'generated/client';
+import type { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
 import { UserGuildPermissionsDto } from 'src/guilds/dto/user-guild-permissions.dto';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
@@ -54,14 +54,19 @@ export class GuildsController {
     @UserId() userId: string,
     @Query('source') source: string,
   ) {
-    const guilds = await this.guildsService.getUserGuilds(discordId, userId, source);
+    const guilds = await this.guildsService.getUserGuilds(
+      discordId,
+      userId,
+      source,
+    );
     return plainToInstance(GuildEntity, guilds);
   }
 
   @Get('/@me/permissions')
   @ApiOperation({
     summary: 'Get user guilds with permissions',
-    description: 'Retrieve all guilds with permissions and roles for the authenticated user',
+    description:
+      'Retrieve all guilds with permissions and roles for the authenticated user',
   })
   @ApiResponse({
     status: 200,
@@ -104,7 +109,10 @@ export class GuildsController {
     @GuildData() guild: Guild,
     @Body() data: UpdateGuildConfigDto,
   ) {
-    const updatedGuild = await this.guildsService.updateGuildConfig(guild.id, data);
+    const updatedGuild = await this.guildsService.updateGuildConfig(
+      guild.id,
+      data,
+    );
     return plainToInstance(GuildEntity, updatedGuild);
   }
 

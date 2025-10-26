@@ -1,8 +1,8 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 import { RolesSettingsForm } from "@/features/roles-settings/components/roles-settings-form";
 import { ArrowLeft } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type RolePanelContentProps = {
   selectedRole: GuildRole;

@@ -1,4 +1,4 @@
-import { NpcType } from 'src/gateway/enums/npc-type.enum';
+import type { NpcType } from 'src/gateway/enums/npc-type.enum';
 
 export type Npc = {
   id: number;

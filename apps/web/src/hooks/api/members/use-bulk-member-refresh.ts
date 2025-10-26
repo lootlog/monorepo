@@ -1,7 +1,7 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
+import type { AxiosError } from "axios";
 import { toast } from "sonner";
 
 export interface RefreshJob {
@@ -26,7 +26,7 @@ export const useLatestRefreshJob = () => {
     queryFn: async () => {
       try {
         const response = await client.get<RefreshJob>(
-          `/guilds/${guildId}/members/refresh-jobs/latest`
+          `/guilds/${guildId}/members/refresh-jobs/latest`,
         );
         return response.data;
       } catch {
@@ -81,7 +81,7 @@ export const useRefreshJobStatus = (jobId: number | undefined) => {
     queryFn: async () => {
       if (!jobId) return null;
       const response = await client.get<RefreshJob>(
-        `/guilds/${guildId}/members/refresh-jobs/${jobId}`
+        `/guilds/${guildId}/members/refresh-jobs/${jobId}`,
       );
       return response.data;
     },

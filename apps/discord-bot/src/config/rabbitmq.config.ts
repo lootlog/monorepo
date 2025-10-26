@@ -1,4 +1,4 @@
-import { RabbitMQConfig } from '@golevelup/nestjs-rabbitmq';
+import type { RabbitMQConfig } from '@golevelup/nestjs-rabbitmq';
 import { registerAs } from '@nestjs/config';
 
 export const DEFAULT_EXCHANGE_NAME = 'default';

@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
-import { FC } from "react";
+import type { FC } from "react";
 
 type PlayerTileProps = {
   player: {
@@ -35,7 +35,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
           <div className={cn("relative", className)}>
             <div
               className={cn(
-                "w-[32px] h-[48px] relative cursor-pointer rounded-lg"
+                "w-[32px] h-[48px] relative cursor-pointer rounded-lg",
               )}
               style={{
                 backgroundImage: `url(${cdnBaseUrl}${icon})`,
