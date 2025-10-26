@@ -1,6 +1,6 @@
+// oxlint-disable-next-line consistent-type-imports
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { Client } from 'discord.js';
 import type { Guild, Role } from 'discord.js';
 import { RoutingKey } from 'src/bot/enums/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
@@ -9,10 +9,7 @@ import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 export class BotService {
   private readonly logger = new Logger(BotService.name);
 
-  constructor(
-    private readonly client: Client,
-    private readonly amqpConnection: AmqpConnection,
-  ) {}
+  constructor(private readonly amqpConnection: AmqpConnection) {}
 
   public async handleGuildCreate(guild: Guild) {
     this.logger.log(`Bot is added to the new guild`, guild.name);
