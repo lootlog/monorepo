@@ -5,7 +5,7 @@ import {
 } from "@lootlog/ui/components/sidebar";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { GuildContextProvider } from "@/contexts/guild.context";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import {
   Outlet,
   useLocation,
@@ -13,13 +13,30 @@ import {
   useParams,
 } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Button } from "@lootlog/ui/components/button";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, TimerIcon } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { ROUTES } from "@/config/routes";
+import { WorldSwitcher } from "@/components/common/world-switcher";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
+import { Timers } from "@/features/guild/components/timers/timers";
+import { cn } from "@/utils/cn";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@lootlog/ui/components/sheet";
+import { useLg } from "@/hooks/ui/use-lg";
 
 export const GuildLayout: FC = () => {
+  const [timersVisible, setTimersVisible] = useState(false);
+  const isLg = useLg();
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
@@ -122,6 +139,17 @@ export const GuildLayout: FC = () => {
 
   const navInfo = getNavigationInfo();
 
+  const toggleTimers = () => {
+    setTimersVisible((prev) => !prev);
+  };
+
+  const getTooltipContent = () => {
+    return timersVisible ? "Ukryj timery" : "Pokaż timery";
+  };
+
+  const isGuildIndexPage =
+    location.pathname === ROUTES.guild.base(params.guildId || "");
+
   return (
     <GuildContextProvider>
       <div className="h-screen max-h-screen overflow-hidden flex flex-row">
@@ -176,18 +204,54 @@ export const GuildLayout: FC = () => {
                     ))}
                   </div>
 
-                  <div className="w-8" />
+                  {isGuildIndexPage && (
+                    <div className="flex items-center gap-2">
+                      <WorldSwitcher />
+                      <span onClick={toggleTimers} className="cursor-pointer">
+                        <TooltipProvider>
+                          <Tooltip delayDuration={100}>
+                            <TooltipTrigger asChild>
+                              <TimerIcon className="h-5 w-5" />
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                              {getTooltipContent()}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </span>
+                    </div>
+                  )}
+                  {!isGuildIndexPage && <div className="w-8" />}
                 </div>
               </PageHeader>
-              <ScrollArea className="flex-1 min-h-0 flex flex-col gap-4 w-full max-w-full h-full">
-                <div className="h-full">
-                  <Outlet />
-                </div>
-              </ScrollArea>
+              <div className="flex-1 min-h-0 flex flex-col gap-4 w-full max-w-full h-full overflow-hidden">
+                <Outlet />
+              </div>
             </div>
+            {isGuildIndexPage && !isLg && (
+              <div
+                className={cn("w-72 min-w-72 border-l hidden lg:block", {
+                  "w-0 min-w-0": !timersVisible,
+                })}
+              >
+                {timersVisible && <Timers />}
+              </div>
+            )}
           </div>
         </SidebarProvider>
       </div>
+      {isGuildIndexPage && isLg && (
+        <Sheet onOpenChange={setTimersVisible} open={timersVisible}>
+          <SheetContent className="w-72 p-0">
+            <SheetHeader className="p-4">
+              <SheetTitle>Timery</SheetTitle>
+            </SheetHeader>
+            <div className="py-4">
+              <Timers />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
       <Toaster />
     </GuildContextProvider>
   );
