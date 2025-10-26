@@ -23,7 +23,7 @@ export const LootsList: FC = () => {
     data: loots,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage,
+    isFetching,
     isLoading,
   } = useLoots({ limit: LOOTS_PAGE_LIMIT });
 
@@ -31,35 +31,33 @@ export const LootsList: FC = () => {
   const { world } = useGuildContext();
   const { data: member, isPending } = useGuildMember();
   const isOwner = useIsOwner();
-  const isFetchingRef = useRef(false);
+  const fetchTimeoutRef = useRef<number | null>(null);
 
   const canManageLoots =
     permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
 
   const { isIntersecting, ref } = useIntersectionObserver({
     threshold: 0,
+    rootMargin: "200px",
   });
 
   useEffect(() => {
-    if (
-      isIntersecting &&
-      hasNextPage &&
-      !isFetchingNextPage &&
-      !isLoading &&
-      !isFetchingRef.current
-    ) {
-      isFetchingRef.current = true;
-      fetchNextPage().finally(() => {
-        isFetchingRef.current = false;
-      });
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
     }
-  }, [
-    isIntersecting,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    fetchNextPage,
-  ]);
+
+    if (isIntersecting && hasNextPage && !isFetching) {
+      fetchTimeoutRef.current = window.setTimeout(() => {
+        fetchNextPage();
+      }, 100);
+    }
+
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+  }, [isIntersecting, hasNextPage, isFetching, fetchNextPage]);
 
   if (permissionsError?.response?.status === 403) {
     return (
@@ -133,7 +131,6 @@ export const LootsList: FC = () => {
               <span className="text-sm text-muted-foreground font-medium">
                 Ładowanie kolejnych lootów...
               </span>
-              {/* Trigger element 20px from bottom */}
               <div
                 ref={ref}
                 className="absolute bottom-[20px] h-px w-full"
