@@ -8,8 +8,7 @@
     "build": "next build",
     "export:landing": "next export",
     "start": "next start",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "oxlint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -24,13 +23,10 @@
     "react-i18next": "^16.2.0"
   },
   "devDependencies": {
-    "@lootlog/eslint-config": "workspace:^",
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "eslint": "^9.38.0",
-    "eslint-config-next": "^16.0.0",
     "typescript": "^5.9.3"
   }
 }
