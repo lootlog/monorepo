@@ -17,8 +17,7 @@
   },
   "dependencies": {
     "hono": "^4.10.3",
-    "jose": "^6.1.0",
-    "jwks-rsa": "^3.2.0"
+    "jose": "^6.1.0"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
