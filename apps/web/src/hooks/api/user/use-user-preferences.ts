@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import { apiClient } from "@/lib/api-client/api-client";
+import { useSession } from "@/hooks/auth/use-session";
 
 export type UserPreferences = {
   id: number;
@@ -11,14 +13,22 @@ export type UserPreferences = {
   updatedAt: string;
 };
 
+export const userPreferencesQueryOptions = queryOptions({
+  queryKey: ["user-preferences"],
+  queryFn: () =>
+    apiClient
+      .get<UserPreferences>("/users/@me/preferences")
+      .then((res) => res.data),
+  retry: 1,
+});
+
 export const useUserPreferences = () => {
-  const { client } = useApiClient();
+  useApiClient();
+  const { data: session } = useSession();
 
   const query = useQuery({
-    queryKey: ["user-preferences"],
-    queryFn: () => client.get<UserPreferences>("/users/@me/preferences"),
-    select: (response) => response.data,
-    retry: 1,
+    ...userPreferencesQueryOptions,
+    enabled: !!session?.user,
   });
 
   return query;

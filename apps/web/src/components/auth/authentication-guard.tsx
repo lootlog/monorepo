@@ -1,7 +1,5 @@
-import { FullScreenLoading } from "@/components/ui/full-screen-loading";
 import { REQUIRED_SCOPES } from "@/constants/required-scopes";
 import { useAuthScopes } from "@/hooks/api/use-auth-scopes";
-import { useSession } from "@/hooks/auth/use-session";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -10,29 +8,13 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
-import { useEffect } from "react";
 
 type Props = {
   children: React.ReactNode;
 };
 
 export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
-  const { data: session, isPending } = useSession();
-  const { data: scopes, isPending: isScopesPending } = useAuthScopes();
-
-  useEffect(() => {
-    if (!isPending && !session) {
-      window.location.href = "/";
-    }
-  }, [isPending, session]);
-
-  if (isPending || isScopesPending) {
-    return <FullScreenLoading />;
-  }
-
-  if (!session) {
-    return <FullScreenLoading />;
-  }
+  const { data: scopes } = useAuthScopes();
 
   const hasRequiredScopes = REQUIRED_SCOPES.every((scope) =>
     scopes?.includes(scope),

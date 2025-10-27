@@ -1,5 +1,5 @@
 import { SearchInput } from "@/components/ui/search-input";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { cn } from "@/utils/cn";
 
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
@@ -13,6 +13,7 @@ import { RefreshMembersButton } from "@/features/members-settings/components/ref
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { RefreshStatusProvider } from "@/features/members-settings/contexts/refresh-status-context";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 const MembersSettingsContent = () => {
   const [showInactive, setShowInactive] = useState(false);
@@ -48,6 +49,15 @@ const MembersSettingsContent = () => {
     if (!selectedMember) return undefined;
     return getColorFromRole(selectedMember.roles);
   }, [selectedMember]);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: filteredMembers.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 90,
+    overscan: 5,
+  });
 
   const isDirty = false;
 
@@ -88,21 +98,46 @@ const MembersSettingsContent = () => {
         )}
       >
         <ScrollArea
+          ref={parentRef}
           className={cn(
             "flex flex-col h-full min-h-0",
             selectedMember && "hidden md:flex",
           )}
         >
-          {filteredMembers?.map((member) => (
-            <MemberItem
-              key={member.id}
-              member={member}
-              active={selectedMember?.id === member.id}
-              onSelect={() => handleSelectMember(member)}
-              showActions={!selectedMember}
-              isOwner={member.userId === guild?.ownerId}
-            />
-          ))}
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: "100%",
+              position: "relative",
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const member = filteredMembers[virtualItem.index];
+
+              if (!member) return null;
+
+              return (
+                <div
+                  key={member.id}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  <MemberItem
+                    member={member}
+                    active={selectedMember?.id === member.id}
+                    onSelect={() => handleSelectMember(member)}
+                    showActions={!selectedMember}
+                    isOwner={member.userId === guild?.ownerId}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </ScrollArea>
         <AnimatePresence mode="popLayout">
           {selectedMember &&

@@ -1,32 +1,25 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { GlobalContextProvider } from "@/contexts/global-context";
-import { GatewayProvider } from "@/contexts/gateway-context";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { setupApiInterceptors } from "@/lib/api-client/api-client";
+import type { RouterContext } from "@/App";
 
 import "@lootlog/ui/globals.css";
 import "@/i18n/config";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-    },
-  },
-});
-
 function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <NuqsAdapter>
           <GlobalContextProvider>
-            <GatewayProvider>
-              <Outlet />
-              <ReactQueryDevtools initialIsOpen={false} />
-            </GatewayProvider>
+            <Outlet />
+            <ReactQueryDevtools initialIsOpen={false} />
           </GlobalContextProvider>
         </NuqsAdapter>
       </ThemeProvider>
@@ -34,6 +27,9 @@ function RootComponent() {
   );
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
+  beforeLoad: () => {
+    setupApiInterceptors();
+  },
   component: RootComponent,
 });

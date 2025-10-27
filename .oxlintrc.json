@@ -1,5 +1,19 @@
 {
   "plugins": ["react", "typescript", "unicorn", "jest", "nextjs"],
+  "ignorePatterns": [
+    "**/node_modules",
+    "**/dist",
+    "**/.next",
+    "**/out",
+    "**/build",
+    "**/coverage",
+    "**/.source",
+    "**/*.tsbuildinfo",
+    "**/next-env.d.ts",
+    "**/pnpm-lock.yaml",
+    "apps/landing/.source/source.config.mjs",
+    "apps/landing/source.config.ts"
+  ],
   "env": {
     "browser": true,
     "node": true,
