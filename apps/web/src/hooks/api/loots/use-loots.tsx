@@ -113,6 +113,7 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
     initialPageParam: 0,
     enabled: !!guildId && !!world,
     refetchOnMount: "always",
+    staleTime: 0,
   });
 
   return query;
