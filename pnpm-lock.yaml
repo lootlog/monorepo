@@ -186,10 +186,10 @@ importers:
         version: 1.19.5(hono@4.10.3)
       "@lootlog/api-helpers":
         specifier: workspace:*
-        version: file:packages/api-helpers
+        version: link:../../packages/api-helpers
       better-auth:
         specifier: ^1.3.32
-        version: 1.3.32
+        version: 1.3.32(next@16.0.0(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -208,10 +208,10 @@ importers:
     devDependencies:
       "@lootlog/types":
         specifier: workspace:*
-        version: file:packages/types
+        version: link:../../packages/types
       "@lootlog/typescript-config":
         specifier: workspace:*
-        version: file:packages/typescript-config
+        version: link:../../packages/typescript-config
       "@types/pg":
         specifier: ^8.15.5
         version: 8.15.5
@@ -285,6 +285,9 @@ importers:
       "@nestjs/testing":
         specifier: ^11.1.8
         version: 11.1.8(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(@nestjs/microservices@11.1.8)(@nestjs/platform-express@11.1.8)
+      "@types/jest":
+        specifier: ^30.0.0
+        version: 30.0.0
       "@types/node":
         specifier: ^24.9.1
         version: 24.9.1
@@ -355,6 +358,9 @@ importers:
       "@nestjs/testing":
         specifier: ^11.1.8
         version: 11.1.8(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(@nestjs/microservices@11.1.8)(@nestjs/platform-express@11.1.8)
+      "@types/jest":
+        specifier: ^30.0.0
+        version: 30.0.0
       "@types/node":
         specifier: ^24.9.1
         version: 24.9.1
@@ -441,7 +447,7 @@ importers:
         version: 1.12.2
       better-auth:
         specifier: ^1.3.32
-        version: 1.3.32(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 1.3.32(next@16.0.0(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -582,6 +588,9 @@ importers:
       "@nestjs/testing":
         specifier: ^11.1.8
         version: 11.1.8(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(@nestjs/microservices@11.1.8)(@nestjs/platform-express@11.1.8)
+      "@types/jest":
+        specifier: ^30.0.0
+        version: 30.0.0
       "@types/node":
         specifier: ^24.9.1
         version: 24.9.1
@@ -614,7 +623,7 @@ importers:
     dependencies:
       "@lootlog/ui":
         specifier: workspace:*
-        version: file:packages/ui(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-is@18.3.1)(redux@5.0.1)(typescript@5.9.3)
+        version: file:packages/ui(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-is@18.3.1)(redux@5.0.1)
       better-auth:
         specifier: ^1.3.32
         version: 1.3.32(next@16.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -623,7 +632,7 @@ importers:
         version: 0.548.0(react@19.2.0)
       next:
         specifier: ^16.0.0
-        version: 16.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        version: 16.0.0(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -633,7 +642,7 @@ importers:
     devDependencies:
       "@lootlog/typescript-config":
         specifier: workspace:*
-        version: file:packages/typescript-config
+        version: link:../../packages/typescript-config
       "@types/react":
         specifier: ^19.2.2
         version: 19.2.2
@@ -648,7 +657,7 @@ importers:
         version: 1.19.5(hono@4.10.3)
       "@lootlog/api-helpers":
         specifier: workspace:*
-        version: file:packages/api-helpers
+        version: link:../../packages/api-helpers
       amqplib:
         specifier: ^0.10.9
         version: 0.10.9
@@ -667,10 +676,10 @@ importers:
     devDependencies:
       "@lootlog/types":
         specifier: workspace:*
-        version: file:packages/types
+        version: link:../../packages/types
       "@lootlog/typescript-config":
         specifier: workspace:*
-        version: file:packages/typescript-config
+        version: link:../../packages/typescript-config
       "@types/amqplib":
         specifier: ^0.10.8
         version: 0.10.8
@@ -691,7 +700,7 @@ importers:
         version: 5.2.2(react-hook-form@7.65.0(react@19.2.0))
       "@lootlog/ui":
         specifier: workspace:*
-        version: file:packages/ui(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-is@18.3.1)(redux@5.0.1)(typescript@5.9.3)
+        version: link:../../packages/ui
       "@tailwindcss/vite":
         specifier: ^4.1.16
         version: 4.1.16(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
@@ -822,7 +831,7 @@ importers:
     devDependencies:
       "@lootlog/typescript-config":
         specifier: workspace:*
-        version: file:packages/typescript-config
+        version: link:../typescript-config
       pkgroll:
         specifier: ^2.20.1
         version: 2.20.1(typescript@5.9.3)
@@ -973,7 +982,7 @@ importers:
     devDependencies:
       "@lootlog/typescript-config":
         specifier: workspace:*
-        version: file:packages/typescript-config
+        version: link:../typescript-config
       "@types/react":
         specifier: ^19.2.2
         version: 19.2.2
@@ -3042,15 +3051,6 @@ packages:
       {
         integrity: sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==,
       }
-
-  "@lootlog/api-helpers@file:packages/api-helpers":
-    resolution: { directory: packages/api-helpers, type: directory }
-
-  "@lootlog/types@file:packages/types":
-    resolution: { directory: packages/types, type: directory }
-
-  "@lootlog/typescript-config@file:packages/typescript-config":
-    resolution: { directory: packages/typescript-config, type: directory }
 
   "@lootlog/ui@file:packages/ui":
     resolution: { directory: packages/ui, type: directory }
@@ -5685,22 +5685,10 @@ packages:
         integrity: sha512-Jhy+MWRlro6UjVi578V/4ZGNfeCOcNCp0YaFNIUGFKlImowqwb1O/22wDVk3FDGMLqxdpOV3qQHD5fPEH4hK6A==,
       }
 
-  "@types/body-parser@1.19.6":
-    resolution:
-      {
-        integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==,
-      }
-
   "@types/chai@5.2.3":
     resolution:
       {
         integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==,
-      }
-
-  "@types/connect@3.4.38":
-    resolution:
-      {
-        integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==,
       }
 
   "@types/cookiejar@2.1.5":
@@ -5793,24 +5781,6 @@ packages:
         integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==,
       }
 
-  "@types/express-serve-static-core@4.19.7":
-    resolution:
-      {
-        integrity: sha512-FvPtiIf1LfhzsaIXhv/PHan/2FeQBbtBDtfX2QfvPxdUelMDEckK08SM6nqo1MIZY3RUlfA+HV8+hFUSio78qg==,
-      }
-
-  "@types/express@4.17.24":
-    resolution:
-      {
-        integrity: sha512-Mbrt4SRlXSTWryOnHAh2d4UQ/E7n9lZyGSi6KgX+4hkuL9soYbLOVXVhnk/ODp12YsGc95f4pOvqywJ6kngUwg==,
-      }
-
-  "@types/http-errors@2.0.5":
-    resolution:
-      {
-        integrity: sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg==,
-      }
-
   "@types/ioredis@4.28.10":
     resolution:
       {
@@ -5853,12 +5823,6 @@ packages:
         integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==,
       }
 
-  "@types/jsonwebtoken@9.0.10":
-    resolution:
-      {
-        integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==,
-      }
-
   "@types/lodash@4.17.20":
     resolution:
       {
@@ -5869,18 +5833,6 @@ packages:
     resolution:
       {
         integrity: sha512-ymXWVrDiCxTBE3+RIrrP533E70eA+9qu7zdWoHuOmGujkYtzf4HQF96b8nwHLqhuf4ykX61IGRIB38CC6/sImQ==,
-      }
-
-  "@types/mime@1.3.5":
-    resolution:
-      {
-        integrity: sha512-/pyBZWSLD2n0dcHE3hq8s8ZvcETHtEuF+3E7XVt0Ig2nvsVQXdghHVcEkIWjy9A0wKfTn97a/PSDYohKIlnP/w==,
-      }
-
-  "@types/ms@2.1.0":
-    resolution:
-      {
-        integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==,
       }
 
   "@types/node@12.20.55":
@@ -5905,12 +5857,6 @@ packages:
     resolution:
       {
         integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==,
-      }
-
-  "@types/range-parser@1.2.7":
-    resolution:
-      {
-        integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==,
       }
 
   "@types/react-dom@19.2.2":
@@ -5943,24 +5889,6 @@ packages:
     resolution:
       {
         integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==,
-      }
-
-  "@types/send@0.17.6":
-    resolution:
-      {
-        integrity: sha512-Uqt8rPBE8SY0RK8JB1EzVOIZ32uqy8HwdxCnoCOsYrvnswqmFZ/k+9Ikidlk/ImhsdvBsloHbAlewb2IEBV/Og==,
-      }
-
-  "@types/send@1.2.1":
-    resolution:
-      {
-        integrity: sha512-arsCikDvlU99zl1g69TcAB3mzZPpxgw0UQnaHeC1Nwb015xp8bknZv5rIfri9xTOcMuaVgvabfIRA7PSZVuZIQ==,
-      }
-
-  "@types/serve-static@1.15.10":
-    resolution:
-      {
-        integrity: sha512-tRs1dB+g8Itk72rlSI2ZrW6vZg0YrLI81iQSTkMmOqnqCaNr/8Ek4VwWcN5vZgCYWbg/JJSGBlUaYGAOP73qBw==,
       }
 
   "@types/stack-utils@2.0.3":
@@ -9261,12 +9189,6 @@ packages:
       }
     engines: { node: ">= 20" }
 
-  jose@4.15.9:
-    resolution:
-      {
-        integrity: sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==,
-      }
-
   jose@6.1.0:
     resolution:
       {
@@ -9368,13 +9290,6 @@ packages:
       {
         integrity: sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg==,
       }
-
-  jwks-rsa@3.2.0:
-    resolution:
-      {
-        integrity: sha512-PwchfHcQK/5PSydeKCs1ylNym0w/SSv8a62DgHJ//7x2ZclCoinlsjAfDxAAbpoTPybOum/Jgy+vkvMmKz89Ww==,
-      }
-    engines: { node: ">=14" }
 
   kuler@2.0.0:
     resolution:
@@ -9514,12 +9429,6 @@ packages:
       }
     engines: { node: ">= 12.0.0" }
 
-  limiter@1.1.5:
-    resolution:
-      {
-        integrity: sha512-FWWMIEOxz3GwUI4Ts/IvgVy6LPvoMPgjMdQ185nN6psJyBJ4yOpzqm695/h5umdLJg2vW3GR5iG11MAkR2AzJA==,
-      }
-
   lines-and-columns@1.2.4:
     resolution:
       {
@@ -9561,12 +9470,6 @@ packages:
         integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==,
       }
     engines: { node: ">=8" }
-
-  lodash.clonedeep@4.5.0:
-    resolution:
-      {
-        integrity: sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==,
-      }
 
   lodash.debounce@4.0.8:
     resolution:
@@ -9648,19 +9551,6 @@ packages:
     resolution:
       {
         integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==,
-      }
-
-  lru-cache@6.0.0:
-    resolution:
-      {
-        integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==,
-      }
-    engines: { node: ">=10" }
-
-  lru-memoizer@2.3.0:
-    resolution:
-      {
-        integrity: sha512-GXn7gyHAMhO13WSKrIiNfztwxodVsP8IoZ3XfrJV4yH2x0/OeTO/FIaAHTY5YekdGgW94njfuKmyyt1E0mR6Ug==,
       }
 
   lucide-react@0.548.0:
@@ -12851,12 +12741,6 @@ packages:
         integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==,
       }
 
-  yallist@4.0.0:
-    resolution:
-      {
-        integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==,
-      }
-
   yaml@2.8.1:
     resolution:
       {
@@ -14696,21 +14580,8 @@ snapshots:
 
   "@levischuck/tiny-cbor@0.2.11": {}
 
-  "@lootlog/api-helpers@file:packages/api-helpers":
+  "@lootlog/ui@file:packages/ui(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-is@18.3.1)(redux@5.0.1)":
     dependencies:
-      hono: 4.10.3
-      jose: 6.1.0
-      jwks-rsa: 3.2.0
-    transitivePeerDependencies:
-      - supports-color
-
-  "@lootlog/types@file:packages/types": {}
-
-  "@lootlog/typescript-config@file:packages/typescript-config": {}
-
-  "@lootlog/ui@file:packages/ui(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-is@18.3.1)(redux@5.0.1)(typescript@5.9.3)":
-    dependencies:
-      "@hookform/resolvers": 5.2.2(react-hook-form@7.65.0(react@19.2.0))
       "@radix-ui/react-alert-dialog": 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-avatar": 1.1.10(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-checkbox": 1.3.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -14728,15 +14599,11 @@ snapshots:
       "@radix-ui/react-switch": 1.2.6(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-tabs": 1.1.13(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-tooltip": 1.2.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      "@tanstack/react-table": 8.21.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@types/lodash": 4.17.20
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       cmdk: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      date-fns: 4.1.0
-      framer-motion: 12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       gsap: 3.13.0
-      i18next: 25.6.0(typescript@5.9.3)
       lodash: 4.17.21
       lucide-react: 0.548.0(react@19.2.0)
       motion: 12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -14744,23 +14611,18 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       react-hook-form: 7.65.0(react@19.2.0)
-      react-i18next: 16.2.1(i18next@25.6.0(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
       react-medium-image-zoom: 5.4.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       recharts: 3.3.0(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react-is@18.3.1)(react@19.2.0)(redux@5.0.1)
       sonner: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       tailwind-merge: 3.3.1
-      tailwindcss: 4.1.16
       three: 0.180.0
       vaul: 1.1.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      zod: 4.1.12
     transitivePeerDependencies:
       - "@emotion/is-prop-valid"
       - "@types/react"
       - "@types/react-dom"
       - react-is
-      - react-native
       - redux
-      - typescript
 
   "@lukeed/csprng@1.1.0": {}
 
@@ -15816,7 +15678,7 @@ snapshots:
 
   "@radix-ui/rect@1.1.1": {}
 
-  "@reduxjs/toolkit@2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0)(redux@5.0.1))(react@19.2.0)":
+  "@reduxjs/toolkit@2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)":
     dependencies:
       "@standard-schema/spec": 1.0.0
       "@standard-schema/utils": 0.3.0
@@ -16645,19 +16507,10 @@ snapshots:
 
   "@types/bluebird@3.5.42": {}
 
-  "@types/body-parser@1.19.6":
-    dependencies:
-      "@types/connect": 3.4.38
-      "@types/node": 24.9.1
-
   "@types/chai@5.2.3":
     dependencies:
       "@types/deep-eql": 4.0.2
       assertion-error: 2.0.1
-
-  "@types/connect@3.4.38":
-    dependencies:
-      "@types/node": 24.9.1
 
   "@types/cookiejar@2.1.5": {}
 
@@ -16703,22 +16556,6 @@ snapshots:
 
   "@types/estree@1.0.8": {}
 
-  "@types/express-serve-static-core@4.19.7":
-    dependencies:
-      "@types/node": 24.9.1
-      "@types/qs": 6.14.0
-      "@types/range-parser": 1.2.7
-      "@types/send": 1.2.1
-
-  "@types/express@4.17.24":
-    dependencies:
-      "@types/body-parser": 1.19.6
-      "@types/express-serve-static-core": 4.19.7
-      "@types/qs": 6.14.0
-      "@types/serve-static": 1.15.10
-
-  "@types/http-errors@2.0.5": {}
-
   "@types/ioredis@4.28.10":
     dependencies:
       "@types/node": 24.9.1
@@ -16742,18 +16579,9 @@ snapshots:
 
   "@types/json-schema@7.0.15": {}
 
-  "@types/jsonwebtoken@9.0.10":
-    dependencies:
-      "@types/ms": 2.1.0
-      "@types/node": 24.9.1
-
   "@types/lodash@4.17.20": {}
 
   "@types/methods@1.1.4": {}
-
-  "@types/mime@1.3.5": {}
-
-  "@types/ms@2.1.0": {}
 
   "@types/node@12.20.55": {}
 
@@ -16768,8 +16596,6 @@ snapshots:
       pg-types: 2.2.0
 
   "@types/qs@6.14.0": {}
-
-  "@types/range-parser@1.2.7": {}
 
   "@types/react-dom@19.2.2(@types/react@19.2.2)":
     dependencies:
@@ -16790,21 +16616,6 @@ snapshots:
       "@types/redis": 2.8.32
 
   "@types/resolve@1.20.2": {}
-
-  "@types/send@0.17.6":
-    dependencies:
-      "@types/mime": 1.3.5
-      "@types/node": 24.9.1
-
-  "@types/send@1.2.1":
-    dependencies:
-      "@types/node": 24.9.1
-
-  "@types/serve-static@1.15.10":
-    dependencies:
-      "@types/http-errors": 2.0.5
-      "@types/node": 24.9.1
-      "@types/send": 0.17.6
 
   "@types/stack-utils@2.0.3": {}
 
@@ -17264,23 +17075,6 @@ snapshots:
 
   baseline-browser-mapping@2.8.20: {}
 
-  better-auth@1.3.32:
-    dependencies:
-      "@better-auth/core": 1.3.32(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.0.19)(jose@6.1.0)(kysely@0.28.8)(nanostores@1.0.1)
-      "@better-auth/telemetry": 1.3.32(better-call@1.0.19)(jose@6.1.0)(kysely@0.28.8)(nanostores@1.0.1)
-      "@better-auth/utils": 0.3.0
-      "@better-fetch/fetch": 1.1.18
-      "@noble/ciphers": 2.0.1
-      "@noble/hashes": 2.0.1
-      "@simplewebauthn/browser": 13.2.2
-      "@simplewebauthn/server": 13.2.2
-      better-call: 1.0.19
-      defu: 6.1.4
-      jose: 6.1.0
-      kysely: 0.28.8
-      nanostores: 1.0.1
-      zod: 4.1.12
-
   better-auth@1.3.32(next@16.0.0(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       "@better-auth/core": 1.3.32(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.0.19)(jose@6.1.0)(kysely@0.28.8)(nanostores@1.0.1)
@@ -17319,27 +17113,7 @@ snapshots:
       nanostores: 1.0.1
       zod: 4.1.12
     optionalDependencies:
-      next: 16.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-
-  better-auth@1.3.32(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
-    dependencies:
-      "@better-auth/core": 1.3.32(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.18)(better-call@1.0.19)(jose@6.1.0)(kysely@0.28.8)(nanostores@1.0.1)
-      "@better-auth/telemetry": 1.3.32(better-call@1.0.19)(jose@6.1.0)(kysely@0.28.8)(nanostores@1.0.1)
-      "@better-auth/utils": 0.3.0
-      "@better-fetch/fetch": 1.1.18
-      "@noble/ciphers": 2.0.1
-      "@noble/hashes": 2.0.1
-      "@simplewebauthn/browser": 13.2.2
-      "@simplewebauthn/server": 13.2.2
-      better-call: 1.0.19
-      defu: 6.1.4
-      jose: 6.1.0
-      kysely: 0.28.8
-      nanostores: 1.0.1
-      zod: 4.1.12
-    optionalDependencies:
+      next: 16.0.0(@babel/core@7.28.5)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
@@ -18993,8 +18767,6 @@ snapshots:
       "@hapi/topo": 6.0.2
       "@standard-schema/spec": 1.0.0
 
-  jose@4.15.9: {}
-
   jose@6.1.0: {}
 
   js-cookie@2.2.1: {}
@@ -19064,17 +18836,6 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
-  jwks-rsa@3.2.0:
-    dependencies:
-      "@types/express": 4.17.24
-      "@types/jsonwebtoken": 9.0.10
-      debug: 4.4.3
-      jose: 4.15.9
-      limiter: 1.1.5
-      lru-memoizer: 2.3.0
-    transitivePeerDependencies:
-      - supports-color
-
   kuler@2.0.0: {}
 
   kysely@0.28.8: {}
@@ -19138,8 +18899,6 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.30.2
       lightningcss-win32-x64-msvc: 1.30.2
 
-  limiter@1.1.5: {}
-
   lines-and-columns@1.2.4: {}
 
   lint-staged@16.2.6:
@@ -19168,8 +18927,6 @@ snapshots:
   locate-path@5.0.0:
     dependencies:
       p-locate: 4.1.0
-
-  lodash.clonedeep@4.5.0: {}
 
   lodash.debounce@4.0.8: {}
 
@@ -19214,15 +18971,6 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
-
-  lru-cache@6.0.0:
-    dependencies:
-      yallist: 4.0.0
-
-  lru-memoizer@2.3.0:
-    dependencies:
-      lodash.clonedeep: 4.5.0
-      lru-cache: 6.0.0
 
   lucide-react@0.548.0(react@19.2.0):
     dependencies:
@@ -19444,30 +19192,6 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       styled-jsx: 5.1.6(@babel/core@7.28.5)(react@19.2.0)
-    optionalDependencies:
-      "@next/swc-darwin-arm64": 16.0.0
-      "@next/swc-darwin-x64": 16.0.0
-      "@next/swc-linux-arm64-gnu": 16.0.0
-      "@next/swc-linux-arm64-musl": 16.0.0
-      "@next/swc-linux-x64-gnu": 16.0.0
-      "@next/swc-linux-x64-musl": 16.0.0
-      "@next/swc-win32-arm64-msvc": 16.0.0
-      "@next/swc-win32-x64-msvc": 16.0.0
-      sharp: 0.34.4
-    transitivePeerDependencies:
-      - "@babel/core"
-      - babel-plugin-macros
-    optional: true
-
-  next@16.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
-    dependencies:
-      "@next/env": 16.0.0
-      "@swc/helpers": 0.5.15
-      caniuse-lite: 1.0.30001751
-      postcss: 8.4.31
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-      styled-jsx: 5.1.6(react@19.2.0)
     optionalDependencies:
       "@next/swc-darwin-arm64": 16.0.0
       "@next/swc-darwin-x64": 16.0.0
@@ -20012,7 +19736,7 @@ snapshots:
 
   recharts@3.3.0(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react-is@18.3.1)(react@19.2.0)(redux@5.0.1):
     dependencies:
-      "@reduxjs/toolkit": 2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
+      "@reduxjs/toolkit": 2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)
       clsx: 2.1.1
       decimal.js-light: 2.5.1
       es-toolkit: 1.41.0
@@ -20496,12 +20220,6 @@ snapshots:
       react: 19.2.0
     optionalDependencies:
       "@babel/core": 7.28.5
-    optional: true
-
-  styled-jsx@5.1.6(react@19.2.0):
-    dependencies:
-      client-only: 0.0.1
-      react: 19.2.0
 
   stylis@4.3.6: {}
 
@@ -21174,8 +20892,6 @@ snapshots:
   y18n@5.0.8: {}
 
   yallist@3.1.1: {}
-
-  yallist@4.0.0: {}
 
   yaml@2.8.1: {}
 
