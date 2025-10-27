@@ -31,6 +31,7 @@ export const useTimers = (enabled = true) => {
     enabled: !!world && enabled,
     select: (response) => response.data,
     refetchOnMount: "always",
+    staleTime: 0,
   });
 
   return query;

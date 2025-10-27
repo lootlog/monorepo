@@ -5,6 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lootlog.pl</title>
+    <script>
+      (function() {
+        const theme = localStorage.getItem('lootlog-theme') || 'default';
+        const colorMode = localStorage.getItem('lootlog-color-mode') || 'dark';
+        const root = document.documentElement;
+
+        root.classList.add(colorMode);
+        if (theme !== 'default') {
+          root.classList.add(theme);
+        }
+      })();
+    </script>
   </head>
   <body class="overflow-hidden">
     <div id="root"></div>
