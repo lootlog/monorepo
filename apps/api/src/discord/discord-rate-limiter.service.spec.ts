@@ -5,8 +5,18 @@ import { RedisService } from 'src/lib/redis/redis.service';
 
 describe('DiscordRateLimiterService', () => {
   let service: DiscordRateLimiterService;
-  let redisService: jest.Mocked<RedisService>;
-  let mockLogger: unknown;
+  let redisService: {
+    get: jest.Mock;
+    set: jest.Mock;
+    del: jest.Mock;
+    getClient: jest.Mock;
+  };
+  let mockLogger: {
+    log: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+    debug: jest.Mock;
+  };
 
   beforeEach(async () => {
     mockLogger = {

@@ -1,5 +1,5 @@
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { question, chalk } from "zx";
 import type { CliOptions, EnvVariable } from "../../types.js";
 import {

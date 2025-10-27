@@ -22,11 +22,28 @@ import type { APIGuild, APIGuildMember } from 'discord-api-types/v10';
 
 describe('DiscordService', () => {
   let service: DiscordService;
-  let authService: jest.Mocked<AuthService>;
-  let redisService: jest.Mocked<RedisService>;
-  let rateLimiter: jest.Mocked<DiscordRateLimiterService>;
-  let mockLogger: unknown;
-  let mockRedlock: unknown;
+  let authService: {
+    getIdpToken: jest.Mock;
+  };
+  let redisService: {
+    get: jest.Mock;
+    set: jest.Mock;
+    del: jest.Mock;
+    getClient: jest.Mock;
+  };
+  let rateLimiter: {
+    checkRateLimitForUser: jest.Mock;
+    setRateLimitForUser: jest.Mock;
+  };
+  let mockLogger: {
+    log: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+    debug: jest.Mock;
+  };
+  let mockRedlock: {
+    acquire: jest.Mock;
+  };
 
   const mockGuilds: APIGuild[] = [
     {
@@ -116,7 +133,7 @@ describe('DiscordService', () => {
     redisService = module.get(RedisService);
     rateLimiter = module.get(DiscordRateLimiterService);
 
-    service['redlock'] = mockRedlock;
+    service['redlock'] = mockRedlock as any;
   });
 
   afterEach(() => {

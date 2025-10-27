@@ -1,9 +1,11 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { glob } from "zx";
-import path from "path";
-import type { EnvFile, EnvVariable } from "./types.js";
+import path from "node:path";
+import type { EnvFile, EnvVariable } from "../types.js";
 
-export const discoverEnvFiles = async (rootPath: string): Promise<EnvFile[]> => {
+export const discoverEnvFiles = async (
+  rootPath: string,
+): Promise<EnvFile[]> => {
   const envFiles: EnvFile[] = [];
 
   const rootSamplePath = path.join(rootPath, ".env.sample");

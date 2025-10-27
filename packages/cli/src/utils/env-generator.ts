@@ -1,5 +1,5 @@
-import { randomBytes } from "crypto";
-import type { EnvVariable } from "./types.js";
+import { randomBytes } from "node:crypto";
+import type { EnvVariable } from "../types.js";
 
 const PASSWORD_LENGTH = 32;
 const SECRET_KEY_LENGTH = 64;
@@ -35,7 +35,7 @@ const shouldGenerateValue = (key: string): boolean => {
 const generateSmartDefault = (
   key: string,
   originalValue: string,
-  sharedValues: Map<string, string>
+  sharedValues: Map<string, string>,
 ): string => {
   const lowerKey = key.toLowerCase();
 
@@ -91,7 +91,11 @@ const generateSmartDefault = (
     return originalValue;
   }
 
-  if (originalValue === "xxx" || originalValue === "your_" || originalValue.startsWith("your_")) {
+  if (
+    originalValue === "xxx" ||
+    originalValue === "your_" ||
+    originalValue.startsWith("your_")
+  ) {
     return originalValue;
   }
 
@@ -101,7 +105,7 @@ const generateSmartDefault = (
 export const generateEnvValues = (
   variables: EnvVariable[],
   sharedValues: Map<string, string> = new Map(),
-  autoMode: boolean = true
+  autoMode: boolean = true,
 ): EnvVariable[] => {
   return variables.map((variable) => {
     if (variable.isEmpty || variable.isComment || !variable.key) {
@@ -115,7 +119,7 @@ export const generateEnvValues = (
     const generatedValue = generateSmartDefault(
       variable.key,
       variable.value,
-      sharedValues
+      sharedValues,
     );
 
     return {
@@ -125,7 +129,9 @@ export const generateEnvValues = (
   });
 };
 
-export const extractSharedValues = (variables: EnvVariable[]): Map<string, string> => {
+export const extractSharedValues = (
+  variables: EnvVariable[],
+): Map<string, string> => {
   const sharedValues = new Map<string, string>();
 
   const sharedKeys = [
@@ -165,7 +171,7 @@ export const buildRabbitMQUri = (
   user: string,
   password: string,
   host: string = "localhost",
-  port: string = "5672"
+  port: string = "5672",
 ): string => {
   return `amqp://${user}:${password}@${host}:${port}`;
 };
@@ -175,21 +181,22 @@ export const buildPostgreSQLUri = (
   password: string,
   database: string,
   host: string = "localhost",
-  port: string = "5432"
+  port: string = "5432",
 ): string => {
   return `postgresql://${user}:${password}@${host}:${port}/${database}`;
 };
 
 export const enhanceVariablesWithDerivedValues = (
   variables: EnvVariable[],
-  sharedValues: Map<string, string>
+  sharedValues: Map<string, string>,
 ): EnvVariable[] => {
   return variables.map((variable) => {
     if (!variable.key) return variable;
 
     if (variable.key === "RABBITMQ_URI") {
       const user = sharedValues.get("RABBITMQ_DEFAULT_USER") || "rabbitmq_user";
-      const password = sharedValues.get("RABBITMQ_DEFAULT_PASS") || "rabbitmq_password";
+      const password =
+        sharedValues.get("RABBITMQ_DEFAULT_PASS") || "rabbitmq_password";
       return {
         ...variable,
         value: buildRabbitMQUri(user, password),
@@ -204,17 +211,26 @@ export const enhanceVariablesWithDerivedValues = (
       let database = "database";
       let port = "5432";
 
-      if (originalValue.includes("battle_log") || originalValue.includes("5434")) {
+      if (
+        originalValue.includes("battle_log") ||
+        originalValue.includes("5434")
+      ) {
         user = sharedValues.get("BATTLE_LOG_DB_USER") || "user";
         password = sharedValues.get("BATTLE_LOG_DB_PASSWORD") || "password";
         database = sharedValues.get("BATTLE_LOG_DB_NAME") || "battle_log";
         port = "5434";
-      } else if (originalValue.includes("lootlog") || originalValue.includes("5433")) {
+      } else if (
+        originalValue.includes("lootlog") ||
+        originalValue.includes("5433")
+      ) {
         user = sharedValues.get("LOOTLOG_DB_USER") || "user";
         password = sharedValues.get("LOOTLOG_DB_PASSWORD") || "password";
         database = sharedValues.get("LOOTLOG_DB_NAME") || "lootlog";
         port = "5433";
-      } else if (originalValue.includes("users") || originalValue.includes("5432")) {
+      } else if (
+        originalValue.includes("users") ||
+        originalValue.includes("5432")
+      ) {
         user = sharedValues.get("USERS_DB_USER") || "user";
         password = sharedValues.get("USERS_DB_PASSWORD") || "password";
         database = sharedValues.get("USERS_DB_NAME") || "users";

@@ -32,7 +32,7 @@ export const SEED_CONFIG = {
     },
   },
   loots: {
-    count: 20000,
+    count: 5000,
     itemsPerLoot: {
       fight: { min: 1, max: 10 },
       dialog: { min: 1, max: 3 },

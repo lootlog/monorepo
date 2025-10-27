@@ -1,8 +1,8 @@
 import { generate } from "random-words";
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { v7 as uuidv7 } from "uuid";
 import { SEED_CONFIG } from "../config.js";
-import type { Permission } from "../../../../../apps/api/generated/client/index.js";
+import { Permission } from "../../../../../../apps/api/generated/client/index.js";
 
 export interface GeneratedRole {
   id: string;
@@ -34,18 +34,18 @@ export interface GeneratedGuild {
 }
 
 const AVAILABLE_PERMISSIONS: Permission[] = [
-  "ADMIN",
-  "LOOTLOG_MANAGE",
-  "LOOTLOG_READ",
-  "LOOTLOG_WRITE",
-  "LOOTLOG_READ_TIMERS_TITANS",
-  "LOOTLOG_READ_LOOTS_TITANS",
-  "LOOTLOG_READ_TIMERS_HEROES",
-  "LOOTLOG_READ_LOOTS_HEROES",
-  "LOOTLOG_CHAT_READ",
-  "LOOTLOG_CHAT_WRITE",
-  "LOOTLOG_NOTIFICATIONS_SEND",
-  "LOOTLOG_NOTIFICATIONS_READ",
+  Permission.ADMIN,
+  Permission.LOOTLOG_MANAGE,
+  Permission.LOOTLOG_READ,
+  Permission.LOOTLOG_WRITE,
+  Permission.LOOTLOG_READ_TIMERS_TITANS,
+  Permission.LOOTLOG_READ_LOOTS_TITANS,
+  Permission.LOOTLOG_READ_TIMERS_HEROES,
+  Permission.LOOTLOG_READ_LOOTS_HEROES,
+  Permission.LOOTLOG_CHAT_READ,
+  Permission.LOOTLOG_CHAT_WRITE,
+  Permission.LOOTLOG_NOTIFICATIONS_SEND,
+  Permission.LOOTLOG_NOTIFICATIONS_READ,
 ];
 
 const ROLE_COLORS = [
@@ -67,7 +67,7 @@ export class GuildGenerator {
         AVAILABLE_PERMISSIONS[
           crypto.randomInt(0, AVAILABLE_PERMISSIONS.length)
         ];
-      if (!permissions.includes(perm)) {
+      if (perm && !permissions.includes(perm)) {
         permissions.push(perm);
       }
     }
@@ -78,7 +78,7 @@ export class GuildGenerator {
     return {
       id,
       name,
-      color,
+      color: color || 0,
       position,
       permissions,
       lvlRangeFrom,
@@ -99,7 +99,7 @@ export class GuildGenerator {
     for (let i = 0; i < roleCount; i++) {
       const roleId =
         availableRoleIds[crypto.randomInt(0, availableRoleIds.length)];
-      if (!roleIds.includes(roleId)) {
+      if (roleId && !roleIds.includes(roleId)) {
         roleIds.push(roleId);
       }
     }

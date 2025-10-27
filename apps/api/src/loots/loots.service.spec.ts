@@ -23,12 +23,43 @@ import { ErrorKey } from './enum/error-key.enum';
 
 describe('LootsService', () => {
   let service: LootsService;
-  let prismaService: unknown;
-  let playersService: jest.Mocked<PlayersService>;
-  let npcsService: jest.Mocked<NpcsService>;
-  let guildsService: jest.Mocked<GuildsService>;
-  let lootlogConfigService: jest.Mocked<LootlogConfigService>;
-  let userLootlogConfigService: jest.Mocked<UserLootlogConfigService>;
+  let prismaService: {
+    loot: {
+      findUnique: jest.Mock;
+      create: jest.Mock;
+      update: jest.Mock;
+      findFirst: jest.Mock;
+    };
+    lootSubmission: {
+      createMany: jest.Mock;
+      upsert: jest.Mock;
+      deleteMany: jest.Mock;
+      findMany: jest.Mock;
+    };
+    lootComment: {
+      create: jest.Mock;
+      findMany: jest.Mock;
+    };
+    member: {
+      findMany: jest.Mock;
+    };
+    $queryRaw: jest.Mock;
+  };
+  let playersService: {
+    bulkIndexPlayers: jest.Mock;
+  };
+  let npcsService: {
+    bulkIndexNpcs: jest.Mock;
+  };
+  let guildsService: {
+    getGuildsForRequiredPermissions: jest.Mock;
+  };
+  let lootlogConfigService: {
+    getMultipleLootlogConfigs: jest.Mock;
+  };
+  let userLootlogConfigService: {
+    getLootlogCharacterConfig: jest.Mock;
+  };
 
   const mockGuild: Guild = {
     id: 'guild1',
