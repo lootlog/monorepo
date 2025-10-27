@@ -2,10 +2,10 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useLoots } from "@/hooks/api/loots/use-loots";
 import { Frown, Loader2 } from "lucide-react";
-import { Fragment, useEffect, useRef, type FC } from "react";
+import { useEffect, useRef, type FC } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
-import { useIntersectionObserver } from "usehooks-ts";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Permission,
   useGuildPermissions,
@@ -23,7 +23,7 @@ export const LootsList: FC = () => {
     data: loots,
     fetchNextPage,
     hasNextPage,
-    isFetching,
+    isFetchingNextPage,
     isLoading,
   } = useLoots({ limit: LOOTS_PAGE_LIMIT });
 
@@ -31,33 +31,43 @@ export const LootsList: FC = () => {
   const { world } = useGuildContext();
   const { data: member, isPending } = useGuildMember();
   const isOwner = useIsOwner();
-  const fetchTimeoutRef = useRef<number | null>(null);
+  const scrollElementRef = useRef<HTMLDivElement>(null);
 
   const canManageLoots =
     permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
 
-  const { isIntersecting, ref } = useIntersectionObserver({
-    threshold: 0,
-    rootMargin: "200px",
+  const allLoots = loots?.pages.flatMap((page) => page.data) ?? [];
+  const totalCount = allLoots.length;
+
+  const virtualizer = useVirtualizer({
+    count: totalCount + 1,
+    getScrollElement: () => scrollElementRef.current,
+    estimateSize: (index) => (index === totalCount ? 60 : 138),
+    overscan: 5,
+    useAnimationFrameWithResizeObserver: true,
   });
 
+  const virtualItems = virtualizer.getVirtualItems();
+
   useEffect(() => {
-    if (fetchTimeoutRef.current) {
-      clearTimeout(fetchTimeoutRef.current);
-    }
+    const [lastItem] = [...virtualItems].reverse();
 
-    if (isIntersecting && hasNextPage && !isFetching) {
-      fetchTimeoutRef.current = window.setTimeout(() => {
-        fetchNextPage();
-      }, 100);
-    }
+    if (!lastItem) return;
 
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-    };
-  }, [isIntersecting, hasNextPage, isFetching, fetchNextPage]);
+    if (
+      lastItem.index >= totalCount - 1 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage();
+    }
+  }, [
+    hasNextPage,
+    fetchNextPage,
+    totalCount,
+    isFetchingNextPage,
+    virtualItems,
+  ]);
 
   if (permissionsError?.response?.status === 403) {
     return (
@@ -97,7 +107,11 @@ export const LootsList: FC = () => {
   }
 
   return (
-    <ScrollArea id="loots-list" className="h-24 flex-1 relative">
+    <ScrollArea
+      id="loots-list"
+      className="h-24 flex-1 relative"
+      ref={scrollElementRef}
+    >
       {isLoading ? (
         <ul>
           {Array.from({ length: 12 }).map((_, index) => (
@@ -105,48 +119,64 @@ export const LootsList: FC = () => {
           ))}
         </ul>
       ) : (
-        <>
-          {loots && (
-            <ul className="flex flex-col">
-              {loots.pages.map((page) =>
-                page.data.map((loot) => (
-                  <Fragment key={loot.id}>
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {virtualItems.map((virtualItem) => {
+            const isLoaderRow = virtualItem.index > totalCount - 1;
+            const loot = allLoots[virtualItem.index];
+
+            return (
+              <div
+                key={virtualItem.key}
+                data-index={virtualItem.index}
+                ref={virtualizer.measureElement}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              >
+                {isLoaderRow ? (
+                  hasNextPage ? (
+                    <div
+                      className="relative flex items-center justify-center gap-3 border-t border-border/50 bg-secondary/30"
+                      style={{ height: "60px" }}
+                    >
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="text-sm text-muted-foreground font-medium">
+                        Ładowanie kolejnych lootów...
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      className="flex items-center justify-center border-t border-border/50"
+                      style={{ height: "60px" }}
+                    >
+                      <span className="text-xs text-muted-foreground">
+                        To już wszystkie looty
+                      </span>
+                    </div>
+                  )
+                ) : loot ? (
+                  <>
                     <LootsListItem
                       loot={loot}
                       canManageLoots={canManageLoots}
                     />
                     <Separator />
-                  </Fragment>
-                )),
-              )}
-            </ul>
-          )}
-
-          {hasNextPage && (
-            <div
-              className="relative flex items-center justify-center gap-3 border-t border-border/50 bg-secondary/30"
-              style={{ height: "137px" }}
-            >
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground font-medium">
-                Ładowanie kolejnych lootów...
-              </span>
-              <div
-                ref={ref}
-                className="absolute bottom-[20px] h-px w-full"
-                aria-hidden="true"
-              />
-            </div>
-          )}
-
-          {!hasNextPage && loots && loots.pages.length > 0 && (
-            <div className="flex items-center justify-center py-6 border-t border-border/50">
-              <span className="text-xs text-muted-foreground">
-                To już wszystkie looty
-              </span>
-            </div>
-          )}
-        </>
+                  </>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
       )}
     </ScrollArea>
   );

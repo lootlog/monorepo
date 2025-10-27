@@ -490,6 +490,12 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
+      tailwindcss:
+        specifier: ^4.1.16
+        version: 4.1.16
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
       zod:
         specifier: ^4.1.12
         version: 4.1.12
@@ -701,6 +707,9 @@ importers:
       "@lootlog/ui":
         specifier: workspace:*
         version: link:../../packages/ui
+      "@tailwindcss/postcss":
+        specifier: ^4.1.16
+        version: 4.1.16
       "@tailwindcss/vite":
         specifier: ^4.1.16
         version: 4.1.16(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
@@ -716,6 +725,9 @@ importers:
       "@tanstack/react-table":
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      "@tanstack/react-virtual":
+        specifier: ^3.13.12
+        version: 3.13.12(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       axios:
         specifier: ^1.12.2
         version: 1.12.2
@@ -925,6 +937,9 @@ importers:
       "@radix-ui/react-tooltip":
         specifier: ^1.2.8
         version: 1.2.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      "@tailwindcss/postcss":
+        specifier: ^4.1.16
+        version: 4.1.16
       "@types/lodash":
         specifier: ^4.17.20
         version: 4.17.20
@@ -973,9 +988,15 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
+      tailwindcss:
+        specifier: ^4.1.16
+        version: 4.1.16
       three:
         specifier: ^0.180.0
         version: 0.180.0
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -999,6 +1020,13 @@ packages:
       {
         integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==,
       }
+
+  "@alloc/quick-lru@5.2.0":
+    resolution:
+      {
+        integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==,
+      }
+    engines: { node: ">=10" }
 
   "@angular-devkit/core@19.2.15":
     resolution:
@@ -5434,6 +5462,12 @@ packages:
       }
     engines: { node: ">= 10" }
 
+  "@tailwindcss/postcss@4.1.16":
+    resolution:
+      {
+        integrity: sha512-Qn3SFGPXYQMKR/UtqS+dqvPrzEeBZHrFA92maT4zijCVggdsXnDBMsPFJo1eArX3J+O+Gi+8pV4PkqjLCNBk3A==,
+      }
+
   "@tailwindcss/vite@4.1.16":
     resolution:
       {
@@ -5528,6 +5562,15 @@ packages:
       react: ">=16.8"
       react-dom: ">=16.8"
 
+  "@tanstack/react-virtual@3.13.12":
+    resolution:
+      {
+        integrity: sha512-Gd13QdxPSukP8ZrkbgS2RwoZseTTbQPLnQEn7HY/rqtM+8Zt95f7xKC7N0EsKs7aoz0WzZ+fditZux+F8EzYxA==,
+      }
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   "@tanstack/router-core@1.133.28":
     resolution:
       {
@@ -5585,6 +5628,12 @@ packages:
         integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==,
       }
     engines: { node: ">=12" }
+
+  "@tanstack/virtual-core@3.13.12":
+    resolution:
+      {
+        integrity: sha512-1YBOJfRHV4sXUmWsFSf5rQor4Ss82G8dQWLRbnk3GA4jeP8hQt1hxXh0tmflpC0dz3VgEv/1+qwPyLeWkQuPFA==,
+      }
 
   "@tanstack/virtual-file-routes@1.133.19":
     resolution:
@@ -12138,6 +12187,12 @@ packages:
       }
     hasBin: true
 
+  tw-animate-css@1.4.0:
+    resolution:
+      {
+        integrity: sha512-7bziOlRqH0hJx80h/3mbicLW7o8qLsH5+RaLR2t+OHM3D0JlWGODQKQ4cxbK7WlvmUxpcj6Kgu6EKqjrGFe3QQ==,
+      }
+
   type-detect@4.0.8:
     resolution:
       {
@@ -12827,6 +12882,8 @@ packages:
 
 snapshots:
   "@adobe/css-tools@4.4.4": {}
+
+  "@alloc/quick-lru@5.2.0": {}
 
   "@angular-devkit/core@19.2.15(chokidar@4.0.3)":
     dependencies:
@@ -14599,6 +14656,7 @@ snapshots:
       "@radix-ui/react-switch": 1.2.6(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-tabs": 1.1.13(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-tooltip": 1.2.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      "@tailwindcss/postcss": 4.1.16
       "@types/lodash": 4.17.20
       class-variance-authority: 0.7.1
       clsx: 2.1.1
@@ -14615,7 +14673,9 @@ snapshots:
       recharts: 3.3.0(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react-is@18.3.1)(react@19.2.0)(redux@5.0.1)
       sonner: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       tailwind-merge: 3.3.1
+      tailwindcss: 4.1.16
       three: 0.180.0
+      tw-animate-css: 1.4.0
       vaul: 1.1.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
     transitivePeerDependencies:
       - "@emotion/is-prop-valid"
@@ -16318,6 +16378,14 @@ snapshots:
       "@tailwindcss/oxide-win32-arm64-msvc": 4.1.16
       "@tailwindcss/oxide-win32-x64-msvc": 4.1.16
 
+  "@tailwindcss/postcss@4.1.16":
+    dependencies:
+      "@alloc/quick-lru": 5.2.0
+      "@tailwindcss/node": 4.1.16
+      "@tailwindcss/oxide": 4.1.16
+      postcss: 8.5.6
+      tailwindcss: 4.1.16
+
   "@tailwindcss/vite@4.1.16(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))":
     dependencies:
       "@tailwindcss/node": 4.1.16
@@ -16378,6 +16446,12 @@ snapshots:
   "@tanstack/react-table@8.21.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)":
     dependencies:
       "@tanstack/table-core": 8.21.3
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+
+  "@tanstack/react-virtual@3.13.12(react-dom@19.2.0(react@19.2.0))(react@19.2.0)":
+    dependencies:
+      "@tanstack/virtual-core": 3.13.12
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
@@ -16443,6 +16517,8 @@ snapshots:
   "@tanstack/store@0.7.7": {}
 
   "@tanstack/table-core@8.21.3": {}
+
+  "@tanstack/virtual-core@3.13.12": {}
 
   "@tanstack/virtual-file-routes@1.133.19": {}
 
@@ -20471,6 +20547,8 @@ snapshots:
       turbo-linux-arm64: 2.5.8
       turbo-windows-64: 2.5.8
       turbo-windows-arm64: 2.5.8
+
+  tw-animate-css@1.4.0: {}
 
   type-detect@4.0.8: {}
 
