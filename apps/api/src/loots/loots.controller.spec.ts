@@ -15,12 +15,19 @@ import { BadRequestException } from '@nestjs/common';
 import { ErrorKey } from './enum/error-key.enum';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import type { LootCommentEntity } from 'src/shared/entities/loot-comment.entity';
-import type { LootEntity } from 'src/shared/entities/loot.entity';
+import { LootCommentEntity } from 'src/shared/entities/loot-comment.entity';
+import { LootEntity } from 'src/shared/entities/loot.entity';
 
 describe('LootsController', () => {
   let controller: LootsController;
-  let service: jest.Mocked<LootsService>;
+  let service: {
+    createLoot: jest.Mock;
+    fetchLootsByGuildId: jest.Mock;
+    getComments: jest.Mock;
+    createComment: jest.Mock;
+    deleteLoot: jest.Mock;
+    updateLoot: jest.Mock;
+  };
 
   const mockGuild: Guild = {
     id: 'guild1',

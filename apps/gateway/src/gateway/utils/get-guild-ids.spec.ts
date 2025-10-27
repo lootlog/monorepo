@@ -45,13 +45,25 @@ describe('getGuildIds', () => {
     const guilds = [
       {
         guild: { id: 'guild-1', name: 'Guild One' },
-        roles: [{ name: 'admin' }],
-        members: [],
+        roles: [
+          {
+            id: 'role-1',
+            lvlRangeFrom: 1,
+            lvlRangeTo: 100,
+            permissions: [],
+          },
+        ],
       },
       {
         guild: { id: 'guild-2', name: 'Guild Two' },
-        roles: [{ name: 'member' }],
-        settings: {},
+        roles: [
+          {
+            id: 'role-2',
+            lvlRangeFrom: 50,
+            lvlRangeTo: 200,
+            permissions: [],
+          },
+        ],
       },
     ];
 

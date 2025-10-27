@@ -3,8 +3,9 @@ import { scrapeItems } from "./scrapers/items-scraper.js";
 import { scrapeNpcs } from "./scrapers/npcs-scraper.js";
 import { generatePlayers } from "./generators/players-generator.js";
 import { seed } from "./seed.js";
-import { writeFile } from "fs/promises";
-import path from "path";
+import { writeFile, access } from "node:fs/promises";
+import path from "node:path";
+import { constants } from "node:fs";
 
 const displaySeedHelp = (): void => {
   console.log(`
@@ -24,7 +25,7 @@ ${chalk.bold("Subcommands:")}
 ${chalk.bold("Options:")}
   --force, -f               Force re-scraping even if files exist
   --guilds <number>         Number of guilds to create (default: 5)
-  --loots <number>          Number of loots to create (default: 20000)
+  --loots <number>          Number of loots to create (default: 5000)
   --players <number>        Number of players to generate (default: 1000)
   --no-clean                Don't clean database before seeding
   --skip-scrape             Skip scraping (use existing data)
@@ -61,23 +62,44 @@ const parseOptions = (args: string[]) => {
     if (arg === "--force" || arg === "-f") {
       options.force = true;
     } else if (arg === "--guilds") {
-      options.guilds = parseInt(args[++i], 10);
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.guilds = Number.parseInt(nextArg, 10);
+      }
     } else if (arg === "--loots") {
-      options.loots = parseInt(args[++i], 10);
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.loots = Number.parseInt(nextArg, 10);
+      }
     } else if (arg === "--players") {
-      options.players = parseInt(args[++i], 10);
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.players = Number.parseInt(nextArg, 10);
+      }
     } else if (arg === "--no-clean") {
       options.clean = false;
     } else if (arg === "--skip-scrape") {
       options.skipScrape = true;
     } else if (arg === "--items-output") {
-      options.itemsOutput = args[++i];
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.itemsOutput = nextArg;
+      }
     } else if (arg === "--npcs-output") {
-      options.npcsOutput = args[++i];
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.npcsOutput = nextArg;
+      }
     } else if (arg === "-o" || arg === "--output") {
-      options.output = args[++i];
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.output = nextArg;
+      }
     } else if (arg === "-c" || arg === "--count") {
-      options.count = parseInt(args[++i], 10);
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.count = Number.parseInt(nextArg, 10);
+      }
     }
   }
 
@@ -96,13 +118,15 @@ export const seedCommand = async (args: string[]): Promise<void> => {
   try {
     switch (subcommand) {
       case "scrape:items": {
-        const output = options.output || "./apps/api/src/mocks/data/items.json";
+        const output =
+          options.output || "./packages/cli/src/mocks/data/items.json";
         await scrapeItems(output, options.force);
         break;
       }
 
       case "scrape:npcs": {
-        const output = options.output || "./apps/api/src/mocks/data/npcs.json";
+        const output =
+          options.output || "./packages/cli/src/mocks/data/npcs.json";
         await scrapeNpcs(output, options.force);
         break;
       }
@@ -111,9 +135,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
         console.log(chalk.blue("🔄 Starting complete scraping process...\n"));
 
         const itemsOutput =
-          options.itemsOutput || "./apps/api/src/mocks/data/items.json";
+          options.itemsOutput || "./packages/cli/src/mocks/data/items.json";
         const npcsOutput =
-          options.npcsOutput || "./apps/api/src/mocks/data/npcs.json";
+          options.npcsOutput || "./packages/cli/src/mocks/data/npcs.json";
 
         await scrapeItems(itemsOutput, options.force);
         console.log();
@@ -128,12 +152,29 @@ export const seedCommand = async (args: string[]): Promise<void> => {
       case "generate:players": {
         const count = options.count || options.players || 1000;
         const output =
-          options.output || "./apps/api/src/mocks/data/players.json";
+          options.output || "./packages/cli/src/mocks/data/players.json";
+        const outputPath = path.resolve(output);
+
+        let fileExists = false;
+        try {
+          await access(outputPath, constants.R_OK);
+          fileExists = true;
+        } catch {
+          fileExists = false;
+        }
+
+        if (fileExists && !options.force) {
+          console.log(
+            chalk.yellow(
+              `⏭️  Players file already exists at ${outputPath}. Use --force to regenerate.`,
+            ),
+          );
+          break;
+        }
 
         console.log(chalk.blue(`Generating ${count} players...`));
 
         const players = generatePlayers(count);
-        const outputPath = path.resolve(output);
         await writeFile(outputPath, JSON.stringify(players, null, 2));
 
         console.log(
@@ -162,13 +203,13 @@ export const seedCommand = async (args: string[]): Promise<void> => {
             chalk.blue("📥 Step 1: Scraping data from margoworld.pl"),
           );
           await scrapeItems(
-            "./apps/api/src/mocks/data/items.json",
+            "./packages/cli/src/mocks/data/items.json",
             options.force,
           );
           console.log();
 
           await scrapeNpcs(
-            "./apps/api/src/mocks/data/npcs.json",
+            "./packages/cli/src/mocks/data/npcs.json",
             options.force,
           );
           console.log();
@@ -180,17 +221,34 @@ export const seedCommand = async (args: string[]): Promise<void> => {
 
         console.log(chalk.blue("👥 Step 2: Generating players"));
         const playerCount = options.players || 1000;
-        const players = generatePlayers(playerCount);
-        await writeFile(
-          "./apps/api/src/mocks/data/players.json",
-          JSON.stringify(players, null, 2),
+        const playersPath = path.resolve(
+          "./packages/cli/src/mocks/data/players.json",
         );
-        console.log(chalk.green(`✅ Generated ${players.length} players\n`));
+
+        let playersFileExists = false;
+        try {
+          await access(playersPath, constants.R_OK);
+          playersFileExists = true;
+        } catch {
+          playersFileExists = false;
+        }
+
+        if (playersFileExists && !options.force) {
+          console.log(
+            chalk.gray(
+              `⏭️  Players file already exists. Use --force to regenerate.\n`,
+            ),
+          );
+        } else {
+          const players = generatePlayers(playerCount);
+          await writeFile(playersPath, JSON.stringify(players, null, 2));
+          console.log(chalk.green(`✅ Generated ${players.length} players\n`));
+        }
 
         console.log(chalk.blue("🌱 Step 3: Seeding database"));
         await seed({
           guildsCount: options.guilds || 5,
-          lootsCount: options.loots || 20000,
+          lootsCount: options.loots || 5000,
           playersCount: playerCount,
           clean: true,
         });

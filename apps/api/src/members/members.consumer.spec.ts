@@ -1,18 +1,28 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import type { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { getQueueToken } from '@nestjs/bullmq';
 import { MembersConsumer } from './members.consumer';
 import { MembersService } from './members.service';
 import { PrismaService } from 'src/db/prisma.service';
-import type { MemberType } from 'generated/client';
+import { MemberType } from 'generated/client';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
 
 describe('MembersConsumer', () => {
   let consumer: MembersConsumer;
-  let membersService: jest.Mocked<MembersService>;
-  let prismaService: unknown;
-  let amqpConnection: jest.Mocked<AmqpConnection>;
+  let membersService: {
+    refreshMember: jest.Mock;
+    getGuildMemberById: jest.Mock;
+  };
+  let prismaService: {
+    memberRefreshJob: {
+      update: jest.Mock;
+      findUnique: jest.Mock;
+    };
+  };
+  let amqpConnection: {
+    publish: jest.Mock;
+  };
 
   const mockMember = {
     id: 123,
@@ -101,7 +111,6 @@ describe('MembersConsumer', () => {
     prismaService = module.get(PrismaService);
     amqpConnection = module.get(AmqpConnection);
 
-    // Mock sleep to avoid delays in tests
     jest.spyOn(consumer as any, 'sleep').mockResolvedValue(undefined);
   });
 

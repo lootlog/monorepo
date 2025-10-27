@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PlayersService } from './players.service';
-import type { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 describe('PlayersService', () => {
   let service: PlayersService;

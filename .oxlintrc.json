@@ -1,5 +1,4 @@
 {
-  "$schema": "https://oxc.rs/schema.json",
   "plugins": ["react", "typescript", "unicorn", "jest", "nextjs"],
   "env": {
     "browser": true,

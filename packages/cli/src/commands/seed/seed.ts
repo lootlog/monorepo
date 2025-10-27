@@ -161,10 +161,7 @@ async function seedGuilds(count: number) {
 async function seedLoots(count: number, guilds: any[]) {
   console.log(`🎁 Seeding ${count} loots...`);
 
-  const dataPath = path.join(
-    __dirname,
-    "../../../../../apps/api/src/mocks/data",
-  );
+  const dataPath = path.join(__dirname, "../../mocks/data");
   const lootGenerator = new LootGenerator();
 
   try {
@@ -201,7 +198,7 @@ async function seedLoots(count: number, guilds: any[]) {
         location: loot.location,
         players: loot.players as any,
         npcs: loot.npcs as any,
-        lootShare: {},
+        lootShare: loot.lootShare,
       },
     });
 
@@ -247,10 +244,7 @@ async function seedLoots(count: number, guilds: any[]) {
 async function seedTimers(guilds: any[]) {
   console.log("⏱️  Seeding timers...");
 
-  const dataPath = path.join(
-    __dirname,
-    "../../../../../apps/api/src/mocks/data",
-  );
+  const dataPath = path.join(__dirname, "../../mocks/data");
   const npcsPath = path.join(dataPath, "npcs.json");
 
   let npcs = [];

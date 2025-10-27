@@ -2,15 +2,22 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
 import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
-import type { Guild, Member, MemberType } from 'generated/client';
+import { type Guild, type Member, MemberType } from 'generated/client';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import type { MemberEntity } from 'src/shared/entities/member.entity';
-import type { MemberRefreshJobEntity } from 'src/shared/entities/member-refresh-job.entity';
+import { MemberEntity } from 'src/shared/entities/member.entity';
+import { MemberRefreshJobEntity } from 'src/shared/entities/member-refresh-job.entity';
 
 describe('MembersController', () => {
   let controller: MembersController;
-  let membersService: jest.Mocked<MembersService>;
+  let membersService: {
+    getGuildMemberById: jest.Mock;
+    refreshMember: jest.Mock;
+    getGuildMembers: jest.Mock;
+    createBulkRefreshJob: jest.Mock;
+    getLatestRefreshJob: jest.Mock;
+    getRefreshJobStatus: jest.Mock;
+  };
 
   const mockGuild: Guild = {
     id: 'guild-123',
