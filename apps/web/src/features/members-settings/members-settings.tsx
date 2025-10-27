@@ -55,7 +55,7 @@ const MembersSettingsContent = () => {
   const virtualizer = useVirtualizer({
     count: filteredMembers.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 90,
+    estimateSize: () => 70,
     overscan: 5,
   });
 
