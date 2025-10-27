@@ -37,6 +37,7 @@ export const LootDetailsSheetContent: FC<LootDetailsSheetProps> = ({
         "w-full": isMobile,
       })}
       onOpenAutoFocus={(e) => e.preventDefault()}
+      aria-describedby={undefined}
     >
       <SheetHeader className="border-b">
         <SheetTitle className="pb-4 flex flex-col items-start">
