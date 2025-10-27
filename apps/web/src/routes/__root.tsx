@@ -1,10 +1,11 @@
-import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { setupApiInterceptors } from "@/lib/api-client/api-client";
+import { persister } from "@/lib/query-client";
 import type { RouterContext } from "@/App";
 
 import "@lootlog/ui/globals.css";
@@ -14,7 +15,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+    >
       <ThemeProvider>
         <NuqsAdapter>
           <GlobalContextProvider>
@@ -23,7 +27,7 @@ function RootComponent() {
           </GlobalContextProvider>
         </NuqsAdapter>
       </ThemeProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 
