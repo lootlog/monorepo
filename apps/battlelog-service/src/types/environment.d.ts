@@ -1,4 +1,4 @@
-import { RuntimeEnvironment } from 'src/types/runtime.types';
+import type { RuntimeEnvironment } from 'src/types/runtime.types';
 
 declare global {
   namespace NodeJS {

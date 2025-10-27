@@ -45,7 +45,7 @@ export class LootEntity {
       },
     ],
   })
-  items: any;
+  items: unknown;
 
   @Expose()
   @ApiProperty({
@@ -62,7 +62,7 @@ export class LootEntity {
       },
     ],
   })
-  players: any;
+  players: unknown;
 
   @Expose()
   @ApiProperty({
@@ -78,7 +78,7 @@ export class LootEntity {
       },
     ],
   })
-  npcs: any;
+  npcs: unknown;
 
   @Expose()
   @ApiProperty({
@@ -86,7 +86,7 @@ export class LootEntity {
     example: {},
     required: false,
   })
-  lootShare?: any;
+  lootShare?: unknown;
 
   @Expose()
   @ApiProperty({

@@ -1,6 +1,6 @@
 import * as winston from 'winston';
 import { registerAs } from '@nestjs/config';
-import { WinstonModuleOptions } from 'nest-winston';
+import type { WinstonModuleOptions } from 'nest-winston';
 import { WinstonTransport as AxiomTransport } from '@axiomhq/winston';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { RuntimeEnvironment } from 'src/types/runtime.types';

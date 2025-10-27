@@ -1,17 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
-import { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
-import { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
-import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
-import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
+import type { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
+import type { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
+import type { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
+import type { SendMessageDto } from 'src/gateway/dto/send-message.dto';
+import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
-import { Npc } from 'src/gateway/types/npc.type';
+import type { Npc } from 'src/gateway/types/npc.type';
 import { canViewNpcTimer } from 'src/gateway/utils/can-view-npc-timer';
-import { isAdministrativeUserFromRoles, isOwnerOrAdminFromRoles } from 'src/guilds/utils/is-administrative-user';
+import {
+  isAdministrativeUserFromRoles,
+  isOwnerOrAdminFromRoles,
+} from 'src/guilds/utils/is-administrative-user';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
+import type { UserGuildData } from 'src/guilds/types/guild.types';
 
 @Injectable()
 export class GatewayService {
@@ -32,7 +36,7 @@ export class GatewayService {
     guildId: string;
     npc: Npc;
     event: GatewayEvent;
-    data: any;
+    data: unknown;
   }) {
     this.gateway.server
       .in(guildId)
@@ -41,7 +45,7 @@ export class GatewayService {
         const npcLevel = npc?.lvl ?? 0;
         sockets.forEach((socket) => {
           const desiredGuild = socket.data.guilds?.find(
-            (g: any) => g.guild.id === guildId,
+            (g: UserGuildData) => g.guild.id === guildId,
           );
           if (!desiredGuild) return;
           if (!npc) {
@@ -73,7 +77,7 @@ export class GatewayService {
       });
   }
 
-  async handleGuildsTimerUpdate(data: CreateTimerDto) {
+  handleGuildsTimerUpdate(data: CreateTimerDto) {
     this.emitToEligibleSockets({
       guildId: data.guildId,
       npc: data.npc,
@@ -82,15 +86,15 @@ export class GatewayService {
     });
   }
 
-  async handleGuildsTimerDelete(data: DeleteTimerDto) {
+  handleGuildsTimerDelete(data: DeleteTimerDto) {
     this.gateway.server.to(data.guildId).emit(GatewayEvent.TIMERS_DELETE, data);
   }
 
-  async handleGuildMessageSend(data: SendMessageDto) {
+  handleGuildMessageSend(data: SendMessageDto) {
     this.gateway.server.to(data.guildId).emit(GatewayEvent.CHAT_MESSAGE, data);
   }
 
-  async handleGuildNotificationSend(data: SendNotificationDto) {
+  handleGuildNotificationSend(data: SendNotificationDto) {
     this.emitToEligibleSockets({
       guildId: data.guildId,
       npc: data.npc,
@@ -104,9 +108,7 @@ export class GatewayService {
   }
 
   async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
-    const sockets = await this.gateway.server
-      .in(data.guildId)
-      .fetchSockets();
+    const sockets = await this.gateway.server.in(data.guildId).fetchSockets();
 
     sockets.forEach((socket) => {
       const desiredGuild = socket.data.guilds?.find(

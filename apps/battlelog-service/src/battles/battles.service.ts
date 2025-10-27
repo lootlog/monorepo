@@ -8,21 +8,21 @@ import { Prisma } from '../../generated/client';
 import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import {
   PaginationStrategy,
-  QueryBattlesDto,
   SortField,
   SortOrder,
+  type QueryBattlesDto,
 } from 'src/battles/dto/query-battles.dto';
-import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
+import type { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
 import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import type { PaginationOptions } from 'src/battles/interfaces/pagination.interface';
 import { PaginationService } from 'src/battles/services/pagination.service';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import { R2Service } from 'src/shared/modules/r2/r2.service';
 import {
-  BattleAnalysis,
   BattleProcessor,
-  ParsedMove,
   type Warrior,
+  type BattleAnalysis,
+  type ParsedMove,
 } from './battle-processor';
 import type {
   BattleWithRelations,
@@ -272,10 +272,10 @@ export class BattlesService implements IBattlesService {
 
       try {
         await this.r2Service.deleteBattleData(battleId);
-      } catch (r2Error) {
+      } catch (error) {
         this.logger.warn(
           `Failed to delete R2 data for battle ${battleId}`,
-          r2Error,
+          error,
         );
       }
 

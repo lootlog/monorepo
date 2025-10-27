@@ -1,13 +1,13 @@
 import {
   Inject,
   Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type NestInterceptor,
+  type ExecutionContext,
+  type CallHandler,
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
-import { Observable } from 'rxjs';
+import type { Logger } from 'winston';
+import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from 'src/db/prisma.service';

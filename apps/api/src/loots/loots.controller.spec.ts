@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
 import { LootsController } from './loots.controller';
 import { LootsService } from './loots.service';
-import { CreateLootDto } from './dto/create-loot.dto';
-import { UpdateLootDto } from './dto/update-loot.dto';
-import { CreateCommentDto } from './dto/create-comment-dto';
+import type { CreateLootDto } from './dto/create-loot.dto';
+import type { UpdateLootDto } from './dto/update-loot.dto';
+import type { CreateCommentDto } from './dto/create-comment-dto';
 import {
   Permission,
   LootSource,
-  Guild,
-  Role,
+  type Guild,
+  type Role,
 } from 'generated/client';
 import { BadRequestException } from '@nestjs/common';
 import { ErrorKey } from './enum/error-key.enum';
@@ -20,7 +20,14 @@ import { LootEntity } from 'src/shared/entities/loot.entity';
 
 describe('LootsController', () => {
   let controller: LootsController;
-  let service: jest.Mocked<LootsService>;
+  let service: {
+    createLoot: jest.Mock;
+    fetchLootsByGuildId: jest.Mock;
+    getComments: jest.Mock;
+    createComment: jest.Mock;
+    deleteLoot: jest.Mock;
+    updateLoot: jest.Mock;
+  };
 
   const mockGuild: Guild = {
     id: 'guild1',

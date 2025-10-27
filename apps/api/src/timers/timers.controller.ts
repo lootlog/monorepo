@@ -18,7 +18,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { Guild, Permission, Role } from 'generated/client';
+import { type Guild, Permission, type Role } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
@@ -27,9 +27,9 @@ import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
-import { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
-import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
+import type { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
+import type { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
+import type { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
 import { TimersService } from 'src/timers/timers.service';
 import { TimerEntity } from 'src/shared/entities/timer.entity';
 
@@ -43,9 +43,14 @@ export class TimersController {
   @Get('/timers')
   @ApiOperation({
     summary: 'Get all user timers',
-    description: 'Retrieve all timers accessible to the authenticated user across all guilds',
+    description:
+      'Retrieve all timers accessible to the authenticated user across all guilds',
   })
-  @ApiQuery({ name: 'world', description: 'World name filter', required: false })
+  @ApiQuery({
+    name: 'world',
+    description: 'World name filter',
+    required: false,
+  })
   @ApiResponse({
     status: 200,
     description: 'List of timers',
@@ -70,13 +75,20 @@ export class TimersController {
     description: 'Retrieve timers for a specific guild',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
-  @ApiQuery({ name: 'world', description: 'World name filter', required: false })
+  @ApiQuery({
+    name: 'world',
+    description: 'World name filter',
+    required: false,
+  })
   @ApiResponse({
     status: 200,
     description: 'List of guild timers',
     type: [TimerEntity],
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   async getTimers(
     @Query('world') world: string,
     @MemberPermissions() permissions: Permission[],
@@ -109,7 +121,10 @@ export class TimersController {
     description: 'Timer reset successfully',
     type: TimerEntity,
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   @ApiResponse({ status: 404, description: 'Timer not found' })
   async resetTimer(
     @Query('world') world: string,
@@ -118,7 +133,12 @@ export class TimersController {
     @Param('npcId') npcId: string,
     @Body() data: ResetTimerDto,
   ) {
-    const timer = await this.timersService.resetTimer(discordId, guildId, npcId, data);
+    const timer = await this.timersService.resetTimer(
+      discordId,
+      guildId,
+      npcId,
+      data,
+    );
     return plainToInstance(TimerEntity, timer);
   }
 
@@ -136,7 +156,10 @@ export class TimersController {
     status: 200,
     description: 'Timer deleted successfully',
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - manage permission required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - manage permission required',
+  })
   @ApiResponse({ status: 404, description: 'Timer not found' })
   async deleteTimer(
     @Query('world') world: string,
@@ -177,7 +200,10 @@ export class TimersController {
     description: 'Manual timer created successfully',
     type: TimerEntity,
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
   async createManualTimer(
     @Body() data: CreateManualTimerDto,
     @DiscordId() discordId: string,

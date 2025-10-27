@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue as BullQueue } from 'bullmq';
+import type { Queue as BullQueue } from 'bullmq';
 import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import { MembersService } from 'src/members/members.service';
 import { PrismaService } from 'src/db/prisma.service';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';

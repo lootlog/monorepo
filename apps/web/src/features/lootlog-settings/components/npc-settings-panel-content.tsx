@@ -1,8 +1,8 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
+import type { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
 import { NpcSettingsForm } from "@/features/lootlog-settings/npc-settings-form";
 import { ArrowLeft } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 
 export type NpcSettingsPanelContentProps = {

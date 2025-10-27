@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { LootlogConfigService } from './lootlog-config.service';
 import { PrismaService } from 'src/db/prisma.service';
 

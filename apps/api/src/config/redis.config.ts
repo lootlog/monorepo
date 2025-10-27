@@ -14,7 +14,7 @@ export default registerAs(ConfigKey.REDIS, (): RedisConfig => {
 
   return {
     host: REDIS_HOST,
-    port: parseInt(REDIS_PORT, 10),
+    port: Number.parseInt(REDIS_PORT, 10),
     password: REDIS_PASSWORD,
     username: REDIS_USERNAME,
   };

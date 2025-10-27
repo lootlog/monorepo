@@ -14,7 +14,11 @@ export class GuildsInternalController {
     description:
       'Internal endpoint for gateway service to retrieve user guilds with permissions. Does not require authentication.',
   })
-  @ApiQuery({ name: 'discordId', required: true, description: 'Discord user ID' })
+  @ApiQuery({
+    name: 'discordId',
+    required: true,
+    description: 'Discord user ID',
+  })
   @ApiQuery({ name: 'userId', required: true, description: 'User ID' })
   @ApiResponse({
     status: 200,

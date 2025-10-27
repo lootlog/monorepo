@@ -1,13 +1,13 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { Npc } from "@/hooks/api/game-data/use-npcs";
+import type { Npc } from "@/hooks/api/game-data/use-npcs";
 import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
 import { stringify } from "qs";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
-import { Player } from "@/hooks/api/game-data/use-guild-players";
+import type { Player } from "@/hooks/api/game-data/use-guild-players";
 
 export enum ItemRarity {
   COMMON = "COMMON",
@@ -103,7 +103,7 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
       const cursor = pageParam ? `&cursor=${pageParam}` : "";
 
       return client.get<UseLootsResponse>(
-        `/guilds/${guildId}/loots?${queryString}${cursor}`
+        `/guilds/${guildId}/loots?${queryString}${cursor}`,
       );
     },
     getNextPageParam: (lastPage) =>
@@ -112,6 +112,7 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
         : undefined,
     initialPageParam: 0,
     enabled: !!guildId && !!world,
+    refetchOnMount: "always",
   });
 
   return query;

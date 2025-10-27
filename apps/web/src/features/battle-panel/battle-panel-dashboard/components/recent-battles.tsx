@@ -8,6 +8,7 @@ import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-character
 import type { BattleFilters } from "@/features/battle-panel/battle-panel-battles-list/components/battles-list-filters";
 import { battleQueryParsers } from "@/features/battle-panel/battle-panel-battles-list/battle-query-parsers";
 import { createSerializer } from "nuqs";
+import { ROUTES } from "@/config/routes";
 
 export const RecentBattles = () => {
   const navigate = useNavigate();
@@ -30,7 +31,9 @@ export const RecentBattles = () => {
       characterId: filters.characterId ?? null,
     });
 
-    navigate({ to: `/@me/battle-panel/battles${queryString}` as string });
+    navigate({
+      to: `${ROUTES.user.battlePanel.battles}${queryString}` as string,
+    });
   };
 
   return (
@@ -45,7 +48,7 @@ export const RecentBattles = () => {
           </div>
 
           <Button variant="outline" size="sm" asChild>
-            <Link to="/@me/battle-panel/battles">
+            <Link to={ROUTES.user.battlePanel.battles}>
               Zobacz wszystkie
               <ChevronRight className="h-4 w-4 ml-2" />
             </Link>

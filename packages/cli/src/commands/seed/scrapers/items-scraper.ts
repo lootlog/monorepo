@@ -1,7 +1,7 @@
 import { parse } from "node-html-parser";
 import { v7 as uuidv7 } from "uuid";
-import { writeFile, access } from "fs/promises";
-import path from "path";
+import { writeFile, access } from "node:fs/promises";
+import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 
 interface ScrapedItem {

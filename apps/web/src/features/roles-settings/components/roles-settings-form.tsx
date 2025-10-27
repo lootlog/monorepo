@@ -13,9 +13,9 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { FC, useEffect } from "react";
+import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
-import { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
+import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 import { Permission } from "@/hooks/api/guilds/use-guild-permissions";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
@@ -98,7 +98,7 @@ const formSchema = z.object({
     .max(500)
     .transform((val) => {
       const num = Number(val);
-      if (isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
+      if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
       if (num > 500) return DEFAULT_LVL_RANGE_TO;
       if (num < 0) return DEFAULT_LVL_RANGE_FROM;
       return String(num);
@@ -109,7 +109,7 @@ const formSchema = z.object({
     .max(500)
     .transform((val) => {
       const num = Number(val);
-      if (isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
+      if (Number.isNaN(num)) return DEFAULT_LVL_RANGE_FROM;
       if (num > 500) return DEFAULT_LVL_RANGE_TO;
       if (num < 0) return DEFAULT_LVL_RANGE_FROM;
       return String(num);
@@ -119,7 +119,7 @@ const formSchema = z.object({
       acc[p.key] = z.boolean();
       return acc;
     },
-    {} as Record<string, z.ZodTypeAny>
+    {} as Record<string, z.ZodTypeAny>,
   ),
 });
 
@@ -143,7 +143,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
           ...acc,
           [p.key]: !!role.permissions.includes(p.key),
         }),
-        {} as Record<PermissionKey, boolean>
+        {} as Record<PermissionKey, boolean>,
       ),
     },
   });
@@ -157,7 +157,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
           ...acc,
           [p.key]: !!role.permissions.includes(p.key),
         }),
-        {} as Record<PermissionKey, boolean>
+        {} as Record<PermissionKey, boolean>,
       ),
     });
   }, [role, form]);
@@ -169,7 +169,7 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
           (p) =>
             values[
               p.key as unknown as keyof FormSchemaType
-            ] as unknown as boolean
+            ] as unknown as boolean,
         ).map((p) => p.key),
         roleId: role.id,
         lvlRangeFrom: Number(values.lvlRangeFrom),
@@ -188,14 +188,14 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
                 ...acc,
                 [p.key]: response.data.permissions.includes(p.key),
               }),
-              {} as Record<PermissionKey, boolean>
+              {} as Record<PermissionKey, boolean>,
             ),
           });
         },
         onError: () => {
           toast.error("Nie udało się zaktualizować ustawień");
         },
-      }
+      },
     );
   }
 

@@ -1,22 +1,10 @@
 import {
-  UserPreferences,
   useUserPreferences,
+  type UserPreferences,
 } from "@/hooks/api/user/use-user-preferences";
-import { useSession } from "@/hooks/auth/use-session";
+import { useSession, type SessionData } from "@/hooks/auth/use-session";
 
-export type SessionUser = {
-  id: string;
-  email: string;
-  name: string;
-  emailVerified: boolean;
-  image?: string | null;
-  firstName?: string;
-  lastName?: string;
-  discordId: string;
-  role?: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type SessionUser = NonNullable<SessionData>["user"];
 
 export type User = SessionUser & {
   preferences?: UserPreferences;
@@ -24,7 +12,7 @@ export type User = SessionUser & {
 
 export const useUser = () => {
   const { data: session, isPending: sessionPending } = useSession();
-  const { data: preferences, isPending: preferencesPending } =
+  const { data: preferences, isLoading: preferencesLoading } =
     useUserPreferences();
 
   const user: User | undefined = session?.user
@@ -36,6 +24,6 @@ export const useUser = () => {
 
   return {
     user,
-    isPending: sessionPending || preferencesPending,
+    isPending: sessionPending || preferencesLoading,
   };
 };

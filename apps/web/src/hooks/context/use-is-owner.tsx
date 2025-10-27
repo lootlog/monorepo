@@ -3,7 +3,7 @@ import { useSession } from "@/hooks/auth/use-session";
 
 export const useIsOwner = () => {
   const { data: guild } = useGuild({});
-  const session = useSession();
+  const { data: session } = useSession();
 
-  return guild?.ownerId === session.data?.user?.discordId;
+  return guild?.ownerId === session?.user?.discordId;
 };

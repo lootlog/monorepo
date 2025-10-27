@@ -1,4 +1,4 @@
-import { FC } from "react";
+import type { FC } from "react";
 import { Check, Eye } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -30,7 +30,7 @@ export const ThemeCard: FC<ThemeCardProps> = ({
         "hover:shadow-md hover:scale-[1.02]",
         isActive
           ? "border-primary shadow-md ring-2 ring-primary ring-offset-2"
-          : "border-border hover:border-primary/50"
+          : "border-border hover:border-primary/50",
       )}
     >
       {isActive && (
@@ -44,12 +44,14 @@ export const ThemeCard: FC<ThemeCardProps> = ({
           <div
             className="h-full w-full"
             style={{
-              backgroundImage: backgroundImage.startsWith('data:') || backgroundImage.startsWith('http')
-                ? `url("${backgroundImage}")`
-                : `url(${backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
+              backgroundImage:
+                backgroundImage.startsWith("data:") ||
+                backgroundImage.startsWith("http")
+                  ? `url("${backgroundImage}")`
+                  : `url(${backgroundImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
             }}
           />
           <div className="absolute inset-0 flex items-center justify-center">

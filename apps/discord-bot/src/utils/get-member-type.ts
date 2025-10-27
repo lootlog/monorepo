@@ -1,4 +1,4 @@
-import { GuildMember } from 'discord.js';
+import type { GuildMember } from 'discord.js';
 import { MemberType } from 'src/bot/enums/member-type.enum';
 
 export const getMemberType = (member: GuildMember) => {

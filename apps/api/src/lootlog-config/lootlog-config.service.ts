@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { ItemRarity, NpcType } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
-import { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
-import { UpdateLootlogConfigDto } from 'src/lootlog-config/dto/update-lootlog-config.dto';
+import type { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
+import type { UpdateLootlogConfigDto } from 'src/lootlog-config/dto/update-lootlog-config.dto';
 import { LootlogConfigEntity } from 'src/shared/entities/lootlog-config.entity';
 import { LootlogConfigNpcEntity } from 'src/shared/entities/lootlog-config-npc.entity';
 
@@ -25,7 +25,9 @@ export class LootlogConfigService {
       },
     });
 
-    return lootlogConfig ? plainToInstance(LootlogConfigEntity, lootlogConfig) : null;
+    return lootlogConfig
+      ? plainToInstance(LootlogConfigEntity, lootlogConfig)
+      : null;
   }
 
   async getMultipleLootlogConfigs(guildIds: string[]) {

@@ -47,8 +47,7 @@
         "src/**/*.tsx",
         "**/*.ts",
         "**/*.tsx",
-        ".eslintrc*",
-        "eslint.config.*"
+        ".oxlintrc.json"
       ]
     },
     "check-types": {

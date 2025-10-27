@@ -1,5 +1,5 @@
 import { Permission } from 'src/guilds/enum/permission.type';
-import { GuildRole } from 'src/guilds/types/guild.types';
+import type { GuildRole } from 'src/guilds/types/guild.types';
 
 export const isAdministrativeUser = (permissions: Permission[]) => {
   return (

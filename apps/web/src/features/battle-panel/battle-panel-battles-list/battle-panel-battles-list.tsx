@@ -66,8 +66,8 @@ export const BattlePanelBattlesList = () => {
         }}
         onPageChange={handlePageChange}
         onFiltersChange={handleFiltersChange}
-        showPagination={true}
-        showFilters={true}
+        showPagination
+        showFilters
         isLoading={isBattlesLoading}
       />
     </div>

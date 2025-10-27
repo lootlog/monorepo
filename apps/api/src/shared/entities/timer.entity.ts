@@ -40,10 +40,17 @@ export class TimerEntity {
       icon: 'npc_icon',
     },
   })
-  npc: any;
+  npc: {
+    id: number;
+    name: string;
+    location: string;
+    lvl: number;
+    type: number;
+    icon: string;
+  };
 
   @Expose()
-  member: any;
+  member: unknown;
 
   @Exclude()
   createdById: number;

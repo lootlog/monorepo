@@ -2,10 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import {
   PaginationStrategy,
-  SortField,
   SortOrder,
+  type SortField,
 } from '../dto/query-battles.dto';
-import {
+import type {
   CursorPagination,
   OffsetPagination,
   PaginationOptions,

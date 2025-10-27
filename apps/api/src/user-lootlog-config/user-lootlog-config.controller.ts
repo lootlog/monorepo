@@ -8,7 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
+import type { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { UserLootlogConfigEntity } from 'src/shared/entities/user-lootlog-config.entity';
 
@@ -26,7 +26,11 @@ export class UserLootlogConfigController {
     summary: 'Get user lootlog configuration',
     description: 'Retrieve lootlog configuration for a specific account',
   })
-  @ApiParam({ name: 'accountId', description: 'Account ID', example: 'account_123' })
+  @ApiParam({
+    name: 'accountId',
+    description: 'Account ID',
+    example: 'account_123',
+  })
   @ApiResponse({
     status: 200,
     description: 'User lootlog configuration',
@@ -48,7 +52,11 @@ export class UserLootlogConfigController {
     summary: 'Create or update lootlog character configuration',
     description: 'Create or update lootlog configuration for a character',
   })
-  @ApiParam({ name: 'accountId', description: 'Account ID', example: 'account_123' })
+  @ApiParam({
+    name: 'accountId',
+    description: 'Account ID',
+    example: 'account_123',
+  })
   @ApiResponse({
     status: 200,
     description: 'Configuration created/updated successfully',

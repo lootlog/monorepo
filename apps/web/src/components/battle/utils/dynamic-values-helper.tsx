@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { roundValue } from "./value-utils";
 
 export const generateDynamicValues = (
   value: string,
-  prefix: string = "v"
+  prefix: string = "v",
 ): Record<string, string> => {
   const values = value.split(",");
   const dynamicValues: Record<string, string> = {};
@@ -18,7 +18,7 @@ export const generateDynamicValues = (
 export const generateDynamicComponents = (
   value: string,
   prefix: string = "v",
-  component: ReactNode = <span className="font-semibold" />
+  component: ReactNode = <span className="font-semibold" />,
 ): Record<string, ReactNode> => {
   const values = value.split(",");
   const dynamicComponents: Record<string, ReactNode> = {};
@@ -33,7 +33,7 @@ export const generateDynamicComponents = (
 export const generateDynamicValuesAndComponents = (
   value: string,
   prefix: string = "v",
-  component: ReactNode = <span className="font-semibold" />
+  component: ReactNode = <span className="font-semibold" />,
 ) => ({
   values: generateDynamicValues(value, prefix),
   components: generateDynamicComponents(value, prefix, component),

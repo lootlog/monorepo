@@ -1,12 +1,18 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
 } from 'src/config/rabbitmq.config';
+
+interface AmqpMessage {
+  properties: {
+    headers?: Record<string, unknown>;
+  };
+}
 
 export interface RetryConfig {
   maxRetries?: number;
@@ -25,7 +31,10 @@ export class RetryService {
   /**
    * Sprawdza czy należy wykonać retry czy wysłać do DLQ
    */
-  shouldRetry(headers: Record<string, any>, maxRetries: number = 3): boolean {
+  shouldRetry(
+    headers: Record<string, unknown>,
+    maxRetries: number = 3,
+  ): boolean {
     const retryCount = this.getRetryCount(headers);
     return retryCount < maxRetries;
   }
@@ -33,16 +42,20 @@ export class RetryService {
   /**
    * Pobiera aktualną liczbę prób na podstawie x-death headers
    */
-  getRetryCount(headers: Record<string, any>): number {
+  getRetryCount(headers: Record<string, unknown>): number {
     // Sprawdź najpierw x-retry-count (jeśli jest ustawiony manualnie)
-    if (headers['x-retry-count']) {
+    if (
+      headers['x-retry-count'] &&
+      typeof headers['x-retry-count'] === 'number'
+    ) {
       return headers['x-retry-count'];
     }
 
     // Jeśli nie ma x-retry-count, użyj x-death count
     const xDeath = headers['x-death'];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
-      return xDeath[0].count || 0;
+      const count = xDeath[0]?.count;
+      return typeof count === 'number' ? count : 0;
     }
 
     return 0;
@@ -52,9 +65,9 @@ export class RetryService {
    * Wysyła wiadomość do DLQ
    */
   async sendToDlq(
-    message: any,
+    message: unknown,
     dlqRoutingKey: string,
-    headers: Record<string, any> = {},
+    headers: Record<string, unknown> = {},
     config: RetryConfig = {},
   ): Promise<void> {
     const dlqExchange = config.dlqExchange || DEAD_LETTER_EXCHANGE_NAME;
@@ -104,8 +117,8 @@ export class RetryService {
    * Zwraca true jeśli handler ma kontynuować, false jeśli wiadomość została wysłana do DLQ
    */
   async handleRetryLogic(
-    data: any,
-    headers: Record<string, any>,
+    data: unknown,
+    headers: Record<string, unknown>,
     dlqRoutingKey: string,
     identifier: string,
     config: RetryConfig = {},
@@ -132,12 +145,12 @@ export class RetryService {
   /**
    * Obsługuje logikę retry w retry queue
    */
-  async handleRetryQueue(
-    data: any,
-    amqpMsg: any,
+  handleRetryQueue(
+    _data: unknown,
+    amqpMsg: AmqpMessage,
     identifier: string,
     config: RetryConfig = {},
-  ): Promise<void> {
+  ): void {
     const headers = amqpMsg.properties.headers || {};
     const currentRetryCount = this.getRetryCount(headers);
     const retryDelayMs = config.retryDelayMs || 30000;

@@ -6,8 +6,8 @@ import {
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
 import { Button } from "@lootlog/ui/components/button";
 import { RefreshCcw } from "lucide-react";
-import { FC, useCallback } from "react";
-import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import { useCallback, type FC } from "react";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 
 export type MemberSyncButtonProps = {
@@ -28,7 +28,7 @@ const getRefreshInfo = (member: GuildMember) => {
   } else if (updatedAt) {
     const nextRefreshTime = updatedAt + REFRESH_PERMISSIONS_TTL;
     const timeUntilRefresh = Math.ceil(
-      (nextRefreshTime - Date.now()) / (1000 * 60)
+      (nextRefreshTime - Date.now()) / (1000 * 60),
     );
     if (timeUntilRefresh > 0) {
       canTriggerRefreshText = `Spróbuj ponownie za ${timeUntilRefresh} min`;
@@ -53,10 +53,10 @@ export const MemberSyncButton: FC<MemberSyncButtonProps> = ({ member }) => {
         {
           onSuccess: () => {},
           onError: () => {},
-        }
+        },
       );
     },
-    [refreshMember]
+    [refreshMember],
   );
 
   const { canRefresh, canTriggerRefresh, canTriggerRefreshText } =

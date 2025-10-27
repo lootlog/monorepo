@@ -7,13 +7,13 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  Row,
   getSortedRowModel,
-  SortingState,
+  type ColumnDef,
+  type Row,
+  type SortingState,
 } from "@tanstack/react-table";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useState } from "react";
@@ -62,13 +62,18 @@ export function DataTable<TData, TValue>({
                         <div
                           className={cn(
                             "flex items-center gap-2",
-                            canSort && "cursor-pointer select-none hover:bg-accent/50 p-2 -m-2 rounded"
+                            canSort &&
+                              "cursor-pointer select-none hover:bg-accent/50 p-2 -m-2 rounded",
                           )}
-                          onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                          onClick={
+                            canSort
+                              ? header.column.getToggleSortingHandler()
+                              : undefined
+                          }
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                           {canSort && (
                             <span className="ml-auto">
@@ -103,7 +108,7 @@ export function DataTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

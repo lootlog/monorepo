@@ -1,6 +1,6 @@
 import { MARGONEM_CDN_ITEMS_URL } from "@/constants/margonem";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
-import { FC } from "react";
+import type { FC } from "react";
 import { cn } from "@/utils/cn";
 
 type ItemImageProps = {
@@ -28,7 +28,7 @@ export const ItemImage: FC<ItemImageProps> = ({
               rarity === ItemRarity.HEROIC,
             "shadow-[inset_0_0_6px_0.5px_rgb(252,211,77,1)] border-amber-300 bg-amber-300/30":
               rarity === ItemRarity.UNIQUE,
-          }
+          },
         )}
         style={{
           backgroundImage: `url(${MARGONEM_CDN_ITEMS_URL}/${icon})`,
@@ -37,7 +37,7 @@ export const ItemImage: FC<ItemImageProps> = ({
       {(shareIndex || shareIndex === 0) && (
         <div
           className={cn(
-            "top-7 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center"
+            "top-7 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center",
           )}
           style={{
             backgroundColor: color ? `${color}` : "transparent",

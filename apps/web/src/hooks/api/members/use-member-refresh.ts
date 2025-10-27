@@ -2,7 +2,7 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { GuildMember } from "@/hooks/api/members/use-guild-member";
+import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useContext } from "react";
 import { RefreshStatusContext } from "@/features/members-settings/contexts/refresh-status-context";
 
@@ -32,10 +32,10 @@ export const useMemberRefresh = () => {
             data: oldData.data.map((member) =>
               member.userId === variables.memberId
                 ? { ...member, updatedAt: now, isStale: false }
-                : member
+                : member,
             ),
           };
-        }
+        },
       );
 
       if (refreshStatusContext) {

@@ -2,7 +2,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Separator } from "@lootlog/ui/components/separator";
 import { cn } from "@lootlog/ui/lib/utils";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Fragment } from "react/jsx-runtime";
 
@@ -59,10 +59,10 @@ export const SidebarNav = ({
                     key={path}
                     onClick={(e) => {
                       if (!available) e.preventDefault();
-                      onItemClick?.(
-                        items.find((item) => item.path === path)!,
-                        e
-                      );
+                      const item = items.find((item) => item.path === path);
+                      if (item) {
+                        onItemClick?.(item, e);
+                      }
                     }}
                     className={cn({
                       "hover:cursor-not-allowed": !available,
@@ -72,7 +72,7 @@ export const SidebarNav = ({
                       variant={isActive ? "default" : "ghost"}
                       size="sm"
                       className={cn(
-                        "justify-between w-full font-semibold transition"
+                        "justify-between w-full font-semibold transition",
                       )}
                       disabled={!available}
                     >
@@ -82,7 +82,9 @@ export const SidebarNav = ({
                       </div>
                       {badge && (
                         <Badge
-                          variant={isActive ? "white" : (badge.variant || "default")}
+                          variant={
+                            isActive ? "white" : badge.variant || "default"
+                          }
                           className="ml-auto"
                         >
                           {badge.content}
@@ -94,7 +96,7 @@ export const SidebarNav = ({
               </Fragment>
             )
           );
-        }
+        },
       )}
     </div>
   );

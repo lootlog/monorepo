@@ -1,6 +1,6 @@
 import { parse } from "node-html-parser";
-import { writeFile, access } from "fs/promises";
-import path from "path";
+import { writeFile, access } from "node:fs/promises";
+import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 
 interface ScrapedNpc {
@@ -30,7 +30,7 @@ const NPC_TYPE_WT_MAP: Record<string, number> = {
 
 function getRandomProfession(): string {
   const { professions } = SCRAPER_CONFIG;
-  return professions[Math.floor(Math.random() * professions.length)];
+  return professions[Math.floor(Math.random() * professions.length)] ?? "w";
 }
 
 function getWtByType(type: string): number {
@@ -38,8 +38,8 @@ function getWtByType(type: string): number {
 }
 
 function getNpcLevelFromMeta(meta: string): number {
-  const regex = /<\/i>(.*?)\lvl<div>/g;
-  const grpRegex = /<\/i>(.*?)\lvl,/g;
+  const regex = /<\/i>(.*?)lvl<div>/g;
+  const grpRegex = /<\/i>(.*?)lvl,/g;
 
   const lvl = regex.exec(meta) ?? grpRegex.exec(meta);
 
@@ -53,7 +53,7 @@ function parseMeta(meta: string) {
 
   const name = parsed.querySelector("b")?.textContent ?? "Unknown";
   const type = parsed.querySelector("i")?.textContent ?? "unknown";
-  const location = parsed
+  const locationText = parsed
     .querySelector("div div")
     ?.textContent.replace(/\((.*?)\)/, "")
     .trim();
@@ -62,7 +62,7 @@ function parseMeta(meta: string) {
   return {
     name,
     type,
-    location,
+    location: locationText ?? undefined,
     lvl,
   };
 }
@@ -81,38 +81,36 @@ async function scrapeNpcsByType(npcType: string): Promise<ScrapedNpc[]> {
     const html = await response.text();
     const parsed = parse(html);
 
-    const npcs = Array.from(parsed.querySelectorAll("table tr"))
-      .map((npc) => {
-        try {
-          const img = npc.querySelector("td .npc");
-          const icon = img?.getAttribute("src")?.replace(URL_MATCH, "") ?? "";
-          const meta = parseMeta(img?.getAttribute("data-tip") ?? "");
+    const npcs: ScrapedNpc[] = [];
 
-          const idHref = npc.querySelector("td a")?.getAttribute("href");
-          const id = idHref?.split("/")[3];
+    for (const npcElement of parsed.querySelectorAll("table tr")) {
+      try {
+        const img = npcElement.querySelector("td .npc");
+        const icon = img?.getAttribute("src")?.replace(URL_MATCH, "") ?? "";
+        const meta = parseMeta(img?.getAttribute("data-tip") ?? "");
 
-          if (!id || !meta.lvl) {
-            return null;
-          }
+        const idHref = npcElement.querySelector("td a")?.getAttribute("href");
+        const id = idHref?.split("/")[3];
 
-          return {
-            icon,
-            id: Number(id),
-            prof: getRandomProfession(),
-            hpp: 0,
-            type: 2,
-            wt: getWtByType(meta.type),
-            lvl: meta.lvl,
-            name: meta.name,
-            location: meta.location,
-          };
-        } catch (error) {
-          console.warn(`Failed to parse NPC in ${npcType}:`, error);
-          return null;
+        if (!id || !meta.lvl) {
+          continue;
         }
-      })
-      .filter((npc): npc is ScrapedNpc => npc !== null)
-      .filter((npc) => Boolean(npc.id) && Boolean(npc.lvl));
+
+        npcs.push({
+          icon,
+          id: Number(id),
+          prof: getRandomProfession(),
+          hpp: 0,
+          type: 2,
+          wt: getWtByType(meta.type),
+          lvl: meta.lvl,
+          name: meta.name,
+          location: meta.location,
+        });
+      } catch (error) {
+        console.warn(`Failed to parse NPC in ${npcType}:`, error);
+      }
+    }
 
     console.log(`Scraped ${npcs.length} NPCs of type ${npcType}`);
     return npcs;
@@ -143,7 +141,7 @@ export async function scrapeNpcs(
       console.log(`⏭️  NPCs file already exists at ${fullPath}`);
       console.log("💡 Use --force flag to re-scrape");
 
-      const fs = await import("fs/promises");
+      const fs = await import("node:fs/promises");
       const existingData = await fs.readFile(fullPath, "utf-8");
       return JSON.parse(existingData);
     }

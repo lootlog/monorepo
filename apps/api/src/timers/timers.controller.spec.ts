@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { TimersController } from './timers.controller';
 import { TimersService } from './timers.service';
 import { AuthGuard } from 'src/shared/guards/auth.guard';

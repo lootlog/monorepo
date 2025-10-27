@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
 import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
-import { Guild, Member, MemberType } from 'generated/client';
+import { type Guild, type Member, MemberType } from 'generated/client';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { MemberEntity } from 'src/shared/entities/member.entity';
@@ -10,7 +10,14 @@ import { MemberRefreshJobEntity } from 'src/shared/entities/member-refresh-job.e
 
 describe('MembersController', () => {
   let controller: MembersController;
-  let membersService: jest.Mocked<MembersService>;
+  let membersService: {
+    getGuildMemberById: jest.Mock;
+    refreshMember: jest.Mock;
+    getGuildMembers: jest.Mock;
+    createBulkRefreshJob: jest.Mock;
+    getLatestRefreshJob: jest.Mock;
+    getRefreshJobStatus: jest.Mock;
+  };
 
   const mockGuild: Guild = {
     id: 'guild-123',
@@ -23,7 +30,7 @@ describe('MembersController', () => {
     updatedAt: new Date(),
   };
 
-  const mockMember: Member & { roles: any[] } = {
+  const mockMember: Member & { roles: unknown[] } = {
     id: 123,
     userId: 'discord-123',
     guildId: 'guild-123',
@@ -94,7 +101,11 @@ describe('MembersController', () => {
     it('should return current member', async () => {
       membersService.getGuildMemberById.mockResolvedValue(mockMember);
 
-      const result = await controller.getMe('discord-123', 'user-123', 'guild-123');
+      const result = await controller.getMe(
+        'discord-123',
+        'user-123',
+        'guild-123',
+      );
 
       const expectedResult = plainToInstance(MemberEntity, mockMember);
       expect(result).toEqual(expectedResult);
@@ -109,7 +120,11 @@ describe('MembersController', () => {
     it('should return null when member not found', async () => {
       membersService.getGuildMemberById.mockResolvedValue(null);
 
-      const result = await controller.getMe('discord-123', 'user-123', 'guild-123');
+      const result = await controller.getMe(
+        'discord-123',
+        'user-123',
+        'guild-123',
+      );
 
       expect(result).toEqual(plainToInstance(MemberEntity, null));
     });
@@ -167,7 +182,10 @@ describe('MembersController', () => {
 
       const expectedResult = plainToInstance(MemberEntity, members);
       expect(result).toEqual(expectedResult);
-      expect(membersService.getGuildMembers).toHaveBeenCalledWith(mockGuild.id, false);
+      expect(membersService.getGuildMembers).toHaveBeenCalledWith(
+        mockGuild.id,
+        false,
+      );
     });
 
     it('should return empty array when no members found', async () => {
@@ -183,9 +201,15 @@ describe('MembersController', () => {
     it('should create bulk refresh job', async () => {
       membersService.createBulkRefreshJob.mockResolvedValue(mockRefreshJob);
 
-      const result = await controller.refreshAllMembers(mockGuild, 'discord-123');
+      const result = await controller.refreshAllMembers(
+        mockGuild,
+        'discord-123',
+      );
 
-      const expectedResult = plainToInstance(MemberRefreshJobEntity, mockRefreshJob);
+      const expectedResult = plainToInstance(
+        MemberRefreshJobEntity,
+        mockRefreshJob,
+      );
       expect(result).toEqual(expectedResult);
       expect(membersService.createBulkRefreshJob).toHaveBeenCalledWith(
         mockGuild.id,
@@ -206,7 +230,10 @@ describe('MembersController', () => {
 
       const result = await controller.getLatestRefreshJob(mockGuild);
 
-      const expectedResult = plainToInstance(MemberRefreshJobEntity, completedJob);
+      const expectedResult = plainToInstance(
+        MemberRefreshJobEntity,
+        completedJob,
+      );
       expect(result).toEqual(expectedResult);
       expect(membersService.getLatestRefreshJob).toHaveBeenCalledWith(
         mockGuild.id,
@@ -233,7 +260,10 @@ describe('MembersController', () => {
 
       const result = await controller.getRefreshJobStatus('1');
 
-      const expectedResult = plainToInstance(MemberRefreshJobEntity, processingJob);
+      const expectedResult = plainToInstance(
+        MemberRefreshJobEntity,
+        processingJob,
+      );
       expect(result).toEqual(expectedResult);
       expect(membersService.getRefreshJobStatus).toHaveBeenCalledWith(1);
     });

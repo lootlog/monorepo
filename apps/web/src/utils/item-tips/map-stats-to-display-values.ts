@@ -1,4 +1,4 @@
-import { ItemStat } from "utils/item-tips/parse-item-stats";
+import type { ItemStat } from "utils/item-tips/parse-item-stats";
 
 export type ItemDisplayValue = {
   key: string | undefined;
@@ -155,7 +155,6 @@ export const mapStatsToDisplayValues = (stats: ItemStat[]) => {
       case "canpreview":
         return acc;
       default:
-        console.warn("Unrecognized stat key:", stat.key, stat.value);
         acc.unrecognizedBlock.push(displayValue);
         return acc;
     }
@@ -169,13 +168,15 @@ const mapStatDisplayValue = (
   stats: ItemStat[],
 ): ItemDisplayValue => {
   const date = stats.find((s) => s.key === "created")?.value;
-  const createdDate = isString(date) ? parseInt(date, 10) * 1000 : Date.now();
+  const createdDate = isString(date)
+    ? Number.parseInt(date, 10) * 1000
+    : Date.now();
   const year = new Date(createdDate).getFullYear().toString();
 
   switch (key) {
     case "sa":
     case "slow":
-      return { key, value: parseInt(value as string, 10) / 100 };
+      return { key, value: Number.parseInt(value as string, 10) / 100 };
     case "legbon":
       return {
         key: `legbon.${
@@ -219,7 +220,7 @@ const mapStatDisplayValue = (
         value: isString(value)
           ? value
               .split(",")
-              .map((e, i) => (i === 0 ? `${parseInt(e, 10) / 100}` : e))
+              .map((e, i) => (i === 0 ? `${Number.parseInt(e, 10) / 100}` : e))
           : [],
       };
     case "resfire":
@@ -229,7 +230,7 @@ const mapStatDisplayValue = (
       return {
         key,
         value: isString(value)
-          ? parseInt(value, 10) > 0
+          ? Number.parseInt(value, 10) > 0
             ? `+${value}`
             : value
           : value,

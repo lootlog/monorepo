@@ -1,3 +1,5 @@
+import { createMDX } from "fumadocs-mdx/next";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@lootlog/ui"],
@@ -5,6 +7,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
-export default nextConfig;
+const withMDX = createMDX();
+
+export default withMDX(nextConfig);
