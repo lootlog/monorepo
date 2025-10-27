@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { NpcType } from "@/hooks/api/game-data/use-npcs";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import type { NpcType } from "@/hooks/api/game-data/use-npcs";
+import type { ItemRarity } from "@/hooks/api/loots/use-loots";
 
 export type LootlogConfigNpc = {
   id: number;

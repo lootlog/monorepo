@@ -4,8 +4,8 @@ import {
 } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
-import { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
+import type { Logger } from 'winston';
+import type { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
 import { Queue } from 'src/enum/queue.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
 import {
@@ -15,6 +15,12 @@ import {
 } from 'src/config/rabbitmq.config';
 import { RetryService } from 'src/rabbitmq/retry.service';
 import { RoutingKey } from 'src/enum/routing-key.enum';
+
+interface AmqpMessage {
+  properties: {
+    headers?: Record<string, unknown>;
+  };
+}
 
 @Injectable()
 export class GuildsEventsHandler {
@@ -35,7 +41,7 @@ export class GuildsEventsHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_CREATE_RETRY,
     },
   })
-  async handleGuildsCreate(data: CreateGuildDto, amqpMsg: any) {
+  async handleGuildsCreate(data: CreateGuildDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
     // RetryService obsługuje całą logikę retry/DLQ
@@ -121,7 +127,7 @@ export class GuildsEventsHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_UPDATE_RETRY,
     },
   })
-  async handleGuildsUpdate(data: CreateGuildDto, amqpMsg: any) {
+  async handleGuildsUpdate(data: CreateGuildDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
     // RetryService obsługuje całą logikę retry/DLQ
@@ -156,7 +162,7 @@ export class GuildsEventsHandler {
       deadLetterRoutingKey: RoutingKey.GUILDS_DELETE_RETRY,
     },
   })
-  async handleGuildsDelete(data: CreateGuildDto, amqpMsg: any) {
+  async handleGuildsDelete(data: CreateGuildDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
     // RetryService obsługuje całą logikę retry/DLQ

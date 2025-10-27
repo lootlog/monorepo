@@ -13,7 +13,7 @@ export const useUpdateUserPreferences = () => {
 
   return useMutation({
     mutationKey: ["update-user-preferences"],
-    mutationFn: async (preferences: UpdateUserPreferences) => {
+    mutationFn: (preferences: UpdateUserPreferences) => {
       return client.patch("/users/@me/preferences", {
         ...preferences,
       });

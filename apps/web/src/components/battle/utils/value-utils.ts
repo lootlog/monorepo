@@ -3,9 +3,9 @@ export const roundValue = (value: string | number): string => {
 
   strValue = strValue.replace(",", ".");
 
-  const numValue = parseFloat(strValue);
+  const numValue = Number.parseFloat(strValue);
 
-  if (isNaN(numValue)) {
+  if (Number.isNaN(numValue)) {
     return typeof value === "string" ? value : String(value);
   }
 
@@ -62,15 +62,15 @@ export const roundHpPercentage = (value: string | number): string => {
 
 export const transformAndRoundEnergyMana = (value: string): string => {
   const strValue = value.replace(",", ".");
-  const numValue = parseFloat(strValue);
-  if (isNaN(numValue)) return value;
+  const numValue = Number.parseFloat(strValue);
+  if (Number.isNaN(numValue)) return value;
 
   return Math.round(numValue * -1).toString();
 };
 
 export const processDamageValue = (
   value: string,
-  prefix: string = ""
+  prefix: string = "",
 ): string => {
   const rounded = roundValue(value);
   return prefix + rounded;

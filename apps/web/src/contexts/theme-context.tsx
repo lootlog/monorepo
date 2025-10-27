@@ -1,4 +1,10 @@
-import { createContext, useEffect, useState, FC, ReactNode } from "react";
+import {
+  createContext,
+  useEffect,
+  useState,
+  type FC,
+  type ReactNode,
+} from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useUserPreferences } from "@/hooks/api/user/use-user-preferences";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";

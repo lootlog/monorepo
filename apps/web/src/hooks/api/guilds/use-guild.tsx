@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/hooks/api/use-api-client";
+import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { apiClient } from "@/lib/api-client/api-client";
 
 export type Guild = {
   id: string;
@@ -14,15 +14,21 @@ type UseGuildOptions = {
   retry?: boolean;
 };
 
-export const useGuild = ({ retry = true }: UseGuildOptions) => {
+export const guildQueryOptions = (guildId: string) =>
+  queryOptions({
+    queryKey: ["guilds", guildId],
+    queryFn: async () => {
+      const response = await apiClient.get<Guild>(`/guilds/${guildId}`);
+      return response.data;
+    },
+    enabled: !!guildId,
+  });
+
+export const useGuild = ({ retry = true }: UseGuildOptions = {}) => {
   const guildId = useGuildId();
-  const { client } = useApiClient();
 
   const query = useQuery({
-    queryKey: ["guilds", guildId],
-    queryFn: () => client.get<Guild>(`/guilds/${guildId}`),
-    enabled: !!guildId,
-    select: (response) => response.data,
+    ...guildQueryOptions(guildId ?? ""),
     retry,
   });
 

@@ -1,12 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DiscordRateLimiterService } from './discord-rate-limiter.service';
 import { RedisService } from 'src/lib/redis/redis.service';
 
 describe('DiscordRateLimiterService', () => {
   let service: DiscordRateLimiterService;
-  let redisService: jest.Mocked<RedisService>;
-  let mockLogger: any;
+  let redisService: {
+    get: jest.Mock;
+    set: jest.Mock;
+    del: jest.Mock;
+    getClient: jest.Mock;
+  };
+  let mockLogger: {
+    log: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+    debug: jest.Mock;
+  };
 
   beforeEach(async () => {
     mockLogger = {

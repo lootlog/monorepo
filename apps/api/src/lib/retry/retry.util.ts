@@ -3,11 +3,13 @@ export interface RetryOptions {
   initialDelay?: number;
   maxDelay?: number;
   backoffFactor?: number;
-  retryableErrors?: Array<new (...args: any[]) => Error>;
+  retryableErrors?: Array<new (...args: unknown[]) => Error>;
   onRetry?: (attempt: number, error: Error) => void;
 }
 
-const DEFAULT_OPTIONS: Required<Omit<RetryOptions, 'retryableErrors' | 'onRetry'>> = {
+const DEFAULT_OPTIONS: Required<
+  Omit<RetryOptions, 'retryableErrors' | 'onRetry'>
+> = {
   maxAttempts: 3,
   initialDelay: 1000,
   maxDelay: 10000,
@@ -18,12 +20,7 @@ export async function retry<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {},
 ): Promise<T> {
-  const {
-    maxAttempts,
-    initialDelay,
-    maxDelay,
-    backoffFactor,
-  } = {
+  const { maxAttempts, initialDelay, maxDelay, backoffFactor } = {
     ...DEFAULT_OPTIONS,
     ...options,
   };
@@ -62,7 +59,7 @@ export async function retry<T>(
     }
   }
 
-  throw lastError!;
+  throw new Error(lastError?.message || 'Retry failed');
 }
 
 function sleep(ms: number): Promise<void> {
@@ -76,9 +73,9 @@ export class RetryableError extends Error {
   }
 }
 
-export function withRetry<T extends (...args: any[]) => Promise<any>>(
+export function withRetry<T extends (...args: unknown[]) => Promise<any>>(
   fn: T,
   options: RetryOptions = {},
 ): T {
-  return ((...args: any[]) => retry(() => fn(...args), options)) as T;
+  return ((...args: unknown[]) => retry(() => fn(...args), options)) as T;
 }

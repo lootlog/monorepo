@@ -311,10 +311,24 @@ pnpm dev                    # Runs Hono dev server
 
 ### Code Quality
 
-- ESLint config: `@lootlog/eslint-config`
+- Linter: Oxlint (fast Rust-based linter)
+- Configuration: `.oxlintrc.json` (see `.oxlintrc.md` for detailed rules)
 - Prettier for formatting
 - Lint-staged hooks for pre-commit checks
 - Commitlint enforces conventional commits
+
+**When writing code, always follow the linting rules defined in `.oxlintrc.md`:**
+
+- Use `===` instead of `==` (eqeqeq)
+- Always handle Promises (no floating promises)
+- Use `const` instead of `let` when possible (prefer-const)
+- Use `import type` for type-only imports
+- Prefer nullish coalescing (`??`) over logical OR (`||`)
+- Prefer optional chaining (`?.`) over AND chains (`&&`)
+- Avoid `any` type, use `unknown` instead
+- Use `_` prefix for intentionally unused variables
+- Self-closing tags for components without children
+- Always provide `key` prop in list renders
 
 ## Troubleshooting
 

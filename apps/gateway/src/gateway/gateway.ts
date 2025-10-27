@@ -7,9 +7,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
-import { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
-import { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
+import type { Server } from 'socket.io';
+import type { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
+import type { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
 import { WsDiscordId, WsUserId } from 'src/shared/decorators/user-id.decorator';
@@ -18,7 +18,7 @@ import { RuntimeEnvironment } from 'src/types/common.types';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
 import { Platform } from 'src/gateway/enums/platform.enum';
-import { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
+import type { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
 import { groupBy, omit } from 'lodash';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { buildUser } from 'src/gateway/utils/build-user';
@@ -85,7 +85,7 @@ export class Gateway {
     @WsUserId() userId: string,
     @ConnectedSocket() client: Socket,
     @MessageBody() { data: player }: JoinGatewayDto,
-  ): Promise<any> {
+  ): Promise<unknown> {
     const startTime = Date.now();
     this.logger.log(`User ${discordId} attempting to join gateway`);
 
@@ -145,9 +145,9 @@ export class Gateway {
   @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.REQUEST_SERVER_PRESENCE)
   async handlePresenceFetch(
-    @ConnectedSocket() client: any,
+    @ConnectedSocket() client: Socket,
     @MessageBody() { guildId, world }: RequestServerPresenceDto,
-  ): Promise<any> {
+  ): Promise<unknown> {
     if (!client.rooms.has(guildId)) {
       return {};
     }

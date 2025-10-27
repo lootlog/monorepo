@@ -1,31 +1,19 @@
-import { authClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query";
+import { sessionQueryOptions } from "@/hooks/auth/use-session-query";
+import type { authClient } from "@/lib/auth-client";
 
-export type SessionData = {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    emailVerified: boolean;
-    image?: string | null;
-    firstName?: string;
-    lastName?: string;
-    discordId: string;
-    role?: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-  session: {
-    id: string;
-    userId: string;
-    expiresAt: Date;
-    token: string;
-    ipAddress?: string;
-    userAgent?: string;
-  };
-};
+export type SessionData = typeof authClient.$Infer.Session;
 
 export const useSession = () => {
-  return authClient.useSession() as ReturnType<typeof authClient.useSession> & {
-    data: SessionData | null;
+  const query = useQuery({
+    ...sessionQueryOptions,
+    select: (data) => data?.data ?? null,
+  });
+
+  return {
+    data: query.data,
+    isPending: query.isPending,
+    isLoading: query.isLoading,
+    error: query.error,
   };
 };

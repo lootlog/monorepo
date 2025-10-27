@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { RefreshJobUpdate } from "@/types/refresh-job";
+import type { RefreshJobUpdate } from "@/types/refresh-job";
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { useGuild } from "@/hooks/api/guilds/use-guild";

@@ -6,11 +6,11 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import { Permission } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { GuildsService } from 'src/guilds/guilds.service';
-import { CreateNotificationDto } from 'src/notifications/dto/create-notification.dto';
+import type { CreateNotificationDto } from 'src/notifications/dto/create-notification.dto';
 import { Error } from 'src/notifications/enum/error.enum';
 import { omit } from 'lodash';
 import { v4 as uuid } from 'uuid';
@@ -87,7 +87,7 @@ export class NotificationsService {
     });
   }
 
-  async emitNotification(payload: any) {
+  async emitNotification(payload: unknown) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_NOTIFICATIONS_SEND,

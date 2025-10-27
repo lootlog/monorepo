@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { LootlogConfigController } from './lootlog-config.controller';
 import { LootlogConfigService } from './lootlog-config.service';
 import { AuthGuard } from 'src/shared/guards/auth.guard';

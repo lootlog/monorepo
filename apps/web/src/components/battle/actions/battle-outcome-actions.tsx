@@ -1,7 +1,7 @@
-import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
-import { FC, memo } from "react";
+import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import { memo, type FC } from "react";
 import { BattleActionItem } from "./battle-action-item";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleOutcomeActionsProps = {
   actions: { type: string; value: string }[];
@@ -29,7 +29,7 @@ export const BattleOutcomeActions: FC<BattleOutcomeActionsProps> = memo(
         ))}
       </>
     );
-  }
+  },
 );
 
 BattleOutcomeActions.displayName = "BattleOutcomeActions";

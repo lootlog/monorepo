@@ -13,7 +13,7 @@ import {
   RefreshCcw,
   Settings,
 } from "lucide-react";
-import { FC, useEffect, useState } from "react";
+import { useEffect, useState, type FC } from "react";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import {
   Tooltip,
@@ -22,8 +22,9 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
-import { SidebarNav, MenuItem } from "./sidebar-nav";
+import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
+import { ROUTE_SEGMENTS } from "@/config/routes";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -44,21 +45,21 @@ export const GuildsSidebarNav: FC = () => {
     {
       label: "Timery",
       icon: <Clock className="mr-1 h-4 w-4" />,
-      path: "/timers",
+      path: ROUTE_SEGMENTS.guild.timers,
       available: false,
       enabled: true,
     },
     {
       label: "Rezerwacje",
       icon: <CalendarClock className="mr-1 h-4 w-4" />,
-      path: "/reservations",
+      path: ROUTE_SEGMENTS.guild.reservations,
       available: false,
       enabled: true,
     },
     {
       label: "Statystyki",
       icon: <BarChart4 className="mr-1 h-4 w-4" />,
-      path: "/stats",
+      path: ROUTE_SEGMENTS.guild.stats,
       available: false,
       enabled: true,
     },
@@ -66,7 +67,7 @@ export const GuildsSidebarNav: FC = () => {
       divided: true,
       label: "Ustawienia",
       icon: <Settings className="mr-1 h-4 w-4" />,
-      path: "/settings",
+      path: ROUTE_SEGMENTS.guild.settings,
       available: true,
       enabled: Boolean(
         permissions?.includes(Permission.ADMIN) ||

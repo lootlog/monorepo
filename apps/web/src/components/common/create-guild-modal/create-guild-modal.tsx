@@ -8,7 +8,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { SearchInput } from "@/components/ui/search-input";
-import { FC, useState } from "react";
+import { useState, type FC } from "react";
 import { getGuildIconById } from "@/utils/get-guild-icon-by-id";
 import { useDebounceValue } from "usehooks-ts";
 import { DISCORD_BOT_PERMISSIONS, DISCORD_CLIENT_ID } from "@/config/discord";
@@ -27,7 +27,7 @@ export const CreateGuildModal: FC = () => {
   const { createGuildModal } = useGlobalContext();
 
   const { data: manageableGuilds } = useManageableGuilds(
-    createGuildModal.state.isOpen
+    createGuildModal.state.isOpen,
   );
 
   const handleAddToGuild = (guildId: string) => {
@@ -40,7 +40,7 @@ export const CreateGuildModal: FC = () => {
     searchParams.set("redirect_uri", `${window.location.origin}/init`);
 
     window.location.assign(
-      `https://discord.com/api/oauth2/authorize?${searchParams.toString()}`
+      `https://discord.com/api/oauth2/authorize?${searchParams.toString()}`,
     );
   };
 
@@ -49,7 +49,7 @@ export const CreateGuildModal: FC = () => {
   };
 
   const filteredGuilds = manageableGuilds?.filter((guild) =>
-    guild.name.toLowerCase().includes(debouncedValue.toLowerCase())
+    guild.name.toLowerCase().includes(debouncedValue.toLowerCase()),
   );
 
   return (
@@ -85,7 +85,7 @@ export const CreateGuildModal: FC = () => {
                     "p-4 px-4 flex flex-row justify-between items-center border-b",
                     {
                       "border-none": index === filteredGuilds.length - 1,
-                    }
+                    },
                   )}
                 >
                   <div className="flex flex-row gap-4 items-center">

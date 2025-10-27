@@ -1,5 +1,5 @@
 import { Button } from "@lootlog/ui/components/button";
-import { FC, useState } from "react";
+import { useState, type FC } from "react";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { LootSingleComment } from "@/features/guild/components/loots-list/loot-single-comment";
 import { Loader2 } from "lucide-react";

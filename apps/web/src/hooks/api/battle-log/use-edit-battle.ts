@@ -1,5 +1,5 @@
 import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
-import { Battle } from "@/hooks/api/battle-log/use-battles";
+import type { Battle } from "@/hooks/api/battle-log/use-battles";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export type EditBattleOptions = {

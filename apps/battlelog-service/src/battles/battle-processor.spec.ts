@@ -1,5 +1,5 @@
 import { BattleProcessor } from './battle-processor';
-import { CreateBattleDto } from './dto/create-battle.dto';
+import type { CreateBattleDto } from './dto/create-battle.dto';
 
 describe('BattleProcessor', () => {
   let processor: BattleProcessor;

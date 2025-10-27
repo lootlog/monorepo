@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
   HttpException,
@@ -17,8 +17,8 @@ import { RedisService } from 'src/lib/redis/redis.service';
 import { ErrorKey } from './enum/error-key.enum';
 import { RuntimeEnvironment } from 'src/types/runtime.types';
 import { ConfigKey } from 'src/config/config-key.enum';
-import { APIGuildMember } from 'discord-api-types/v10';
-import { Member, Guild, MemberType } from 'generated/client';
+import type { APIGuildMember } from 'discord-api-types/v10';
+import { type Member, type Guild, MemberType } from 'generated/client';
 
 describe('MembersService', () => {
   let service: MembersService;
@@ -38,7 +38,7 @@ describe('MembersService', () => {
     updatedAt: new Date(),
   };
 
-  const mockMember: Member & { roles: any[] } = {
+  const mockMember: Member & { roles: unknown[] } = {
     id: 123,
     userId: 'discord-123',
     guildId: 'guild-123',
@@ -655,7 +655,7 @@ describe('MembersService', () => {
 
       const error = await service
         .createBulkRefreshJob(guildId, requestedBy)
-        .catch((e) => e);
+        .catch((error) => error);
       expect(error.getResponse()).toMatchObject({
         message: ErrorKey.BULK_REFRESH_RATE_LIMIT_ACTIVE,
         nextAvailableAt: expect.any(Date),
@@ -717,7 +717,9 @@ describe('MembersService', () => {
         NotFoundException,
       );
 
-      const error = await service.getRefreshJobStatus(999).catch((e) => e);
+      const error = await service
+        .getRefreshJobStatus(999)
+        .catch((error) => error);
       expect(error.getResponse()).toMatchObject({
         message: ErrorKey.REFRESH_JOB_NOT_FOUND,
       });

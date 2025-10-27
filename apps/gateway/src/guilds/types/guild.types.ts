@@ -1,4 +1,4 @@
-import { Permission } from 'src/guilds/enum/permission.type';
+import type { Permission } from 'src/guilds/enum/permission.type';
 
 export interface GuildRole {
   id: string;

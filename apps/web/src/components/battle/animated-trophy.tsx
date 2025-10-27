@@ -1,7 +1,7 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type AnimatedTrophyProps = {
   show: boolean;

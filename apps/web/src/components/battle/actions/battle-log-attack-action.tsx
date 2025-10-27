@@ -1,10 +1,10 @@
-import { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
+import type { RawBattleParsedEvent } from "@/hooks/api/battle-log/use-battle-raw";
 import { cn } from "@lootlog/ui/lib/utils";
-import { FC } from "react";
+import type { FC } from "react";
 import { Trans } from "react-i18next";
 import { generateDynamicValuesAndComponents } from "../utils/dynamic-values-helper";
 import { processDamageValue, roundHpPercentage } from "../utils/value-utils";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 export type BattleLogAttackActionsProps = {
   actions: { type: string; value: string }[];
@@ -128,7 +128,7 @@ export const BattleLogAttackActions: FC<BattleLogAttackActionsProps> = ({
                 const dynamicData = generateDynamicValuesAndComponents(
                   action.value,
                   "v",
-                  <span className="font-semibold" />
+                  <span className="font-semibold" />,
                 );
                 return (
                   <span key={sIndex}>

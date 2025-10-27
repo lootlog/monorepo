@@ -5,10 +5,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
-import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
-import { createHash } from 'crypto';
-import { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
+import type { Logger } from 'winston';
+import type { CreateLootDto } from 'src/loots/dto/create-loot.dto';
+import { createHash } from 'node:crypto';
+import type { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
 import { DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT } from './config/pagination';
 import { ErrorKey } from './enum/error-key.enum';
 import { PlayersService } from 'src/players/players.service';
@@ -17,26 +17,65 @@ import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 import { PrismaService } from 'src/db/prisma.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import {
-  ItemRarity,
   Profession,
   Permission,
   Prisma,
-  LootlogConfigNpc,
-  Guild,
-  Role,
   NpcType,
+  type ItemRarity,
+  type Guild,
+  type Role,
+  type LootlogConfigNpc,
 } from 'generated/client';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
+import type { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
 } from 'src/loots/constants/loot-share-msg-regex';
-import { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
+import type { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
+
+interface ParsedPlayer {
+  id: string;
+  name: string;
+  lvl: number;
+  prof: Profession;
+  icon: string;
+  characterId: string;
+  accountId: string;
+}
+
+interface ParsedLootItem {
+  id: string;
+  hid: string;
+  name: string;
+  icon: string;
+  stat: string;
+  pr: number;
+  prc: number;
+  lvl: number;
+  rarity: ItemRarity;
+  prof: Profession[];
+  type: string;
+}
+
+interface LootQueryResult {
+  id: number;
+  uniqueId: string;
+  items: unknown;
+  world: string;
+  source: string;
+  location: string;
+  players: unknown;
+  npcs: unknown;
+  lootShare: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  commentsCount: bigint;
+}
 
 @Injectable()
 export class LootsService {
@@ -154,12 +193,17 @@ export class LootsService {
             lootShare: share,
           },
         });
-      } catch (e: any) {
-        if (e.code === 'P2002') {
+      } catch (error) {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          error.code === 'P2002'
+        ) {
           loot = await this.prisma.loot.findUnique({ where: { uniqueId } });
-          if (!loot) throw e;
+          if (!loot) throw error;
         } else {
-          throw e;
+          throw error;
         }
       }
 
@@ -214,7 +258,7 @@ export class LootsService {
     return comments;
   }
 
-  async deleteLoot(options) {
+  async deleteLoot(options: { guildId: string; lootId: number }) {
     const { guildId, lootId } = options;
 
     const loot = await this.prisma.loot.findFirst({
@@ -298,8 +342,8 @@ export class LootsService {
       throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE);
     }
 
-    const parsedPlayers = this.parseJsonField(loot.players);
-    const parsedLoot = this.parseJsonField(loot.items);
+    const parsedPlayers = this.parseJsonField(loot.players) as ParsedPlayer[];
+    const parsedLoot = this.parseJsonField(loot.items) as ParsedLootItem[];
 
     const mappedLootShare = Object.entries(lootShare).reduce(
       (acc, [nick, hids]) => {
@@ -315,7 +359,7 @@ export class LootsService {
         acc[playerId] = itemIds;
         return acc;
       },
-      {},
+      {} as Record<string, string[]>,
     );
 
     if (Object.keys(mappedLootShare).length === 0) {
@@ -450,7 +494,7 @@ export class LootsService {
       `
       : Prisma.sql``;
 
-    const loots: any[] = await this.prisma.$queryRaw(Prisma.sql`
+    const loots = await this.prisma.$queryRaw<LootQueryResult[]>(Prisma.sql`
     SELECT DISTINCT ON (l."id") l.*,
       (
       SELECT COUNT(*)
@@ -542,7 +586,7 @@ export class LootsService {
     return { lvl, rarity, prof: requiredProfArray, type };
   }
 
-  private parseJsonField(field: any): any {
+  private parseJsonField(field: unknown): unknown {
     return typeof field === 'string' ? JSON.parse(field) : field;
   }
 
@@ -663,14 +707,14 @@ export class LootsService {
   }
 
   getLootShareFromMsg(msg: string) {
-    const share = {};
-    let match;
+    const share: Record<string, string[]> = {};
+    let match: RegExpExecArray | null;
 
     while ((match = LOOT_SHARE_MSG_REGEX.exec(msg)) !== null) {
       const nick = match[1].trim();
       const itemsStr = match[2];
 
-      let itemMatch;
+      let itemMatch: RegExpExecArray | null;
       while ((itemMatch = LOOT_SHARE_ITEM_REGEX.exec(itemsStr)) !== null) {
         const itemId = itemMatch[1];
         if (share[nick]) {

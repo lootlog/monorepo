@@ -4,7 +4,7 @@ import { ChartArea } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@lootlog/ui/lib/utils";
-import { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
 
 interface BattleStatsTableProps {
   battle: Battle;
@@ -13,7 +13,10 @@ interface BattleStatsTableProps {
 
 export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
   const [expandedRows, setExpandedRows] = useState<
-    Map<string, "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt">
+    Map<
+      string,
+      "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
+    >
   >(new Map());
 
   const userTeam = useMemo(() => {
@@ -110,7 +113,7 @@ export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
       toggleTurnsExpansion,
       toggleBlocksExpansion,
       toggleDetailsExpansion,
-      toggleDamageDealtExpansion
+      toggleDamageDealtExpansion,
     );
   }, [battle, expandedRows]);
 
@@ -129,7 +132,7 @@ export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
       <ScrollArea
         className={cn(
           "max-w-[100dvw] sm:max-w-[calc(100dvw-20rem)]",
-          className
+          className,
         )}
       >
         <ExpandableDataTable

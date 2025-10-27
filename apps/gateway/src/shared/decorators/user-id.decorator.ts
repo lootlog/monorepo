@@ -1,6 +1,6 @@
-import { ExecutionContext, createParamDecorator } from '@nestjs/common';
+import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { Socket } from 'src/gateway/types/socket-user.type';
+import type { Socket } from 'src/gateway/types/socket-user.type';
 
 export const UserId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {

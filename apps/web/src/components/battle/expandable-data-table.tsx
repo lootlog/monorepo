@@ -7,13 +7,13 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  Row,
   getSortedRowModel,
-  SortingState,
+  type ColumnDef,
+  type Row,
+  type SortingState,
 } from "@tanstack/react-table";
 import { cn } from "@lootlog/ui/lib/utils";
 import React, { useState } from "react";
@@ -25,14 +25,17 @@ import { TurnsBreakdown } from "./turns-breakdown";
 import { BlocksBreakdown } from "./blocks-breakdown";
 import { WarriorDetailsBreakdown } from "./warrior-details-breakdown";
 import { DamageDealtBreakdown } from "./damage-dealt-breakdown";
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 
 interface ExpandableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   getRowClassName?: (row: Row<TData>) => string;
   forceHorizontalScroll?: boolean;
-  expandedRows: Map<string, "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt">;
+  expandedRows: Map<
+    string,
+    "damage" | "legendary" | "turns" | "blocks" | "details" | "damageDealt"
+  >;
 }
 
 export function ExpandableDataTable<TData, TValue>({
@@ -73,7 +76,7 @@ export function ExpandableDataTable<TData, TValue>({
                           className={cn(
                             "flex items-center gap-2",
                             canSort &&
-                              "cursor-pointer select-none hover:bg-gray-400/10 p-2 -m-2 rounded"
+                              "cursor-pointer select-none hover:bg-gray-400/10 p-2 -m-2 rounded",
                           )}
                           onClick={
                             canSort
@@ -83,7 +86,7 @@ export function ExpandableDataTable<TData, TValue>({
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                           {canSort && (
                             <span className="ml-auto">
@@ -115,7 +118,7 @@ export function ExpandableDataTable<TData, TValue>({
                     <TableRow
                       className={cn(
                         "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-                        getRowClassName ? getRowClassName(row) : undefined
+                        getRowClassName ? getRowClassName(row) : undefined,
                       )}
                       data-state={row.getIsSelected() && "selected"}
                     >
@@ -123,7 +126,7 @@ export function ExpandableDataTable<TData, TValue>({
                         <TableCell key={cell.id}>
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </TableCell>
                       ))}
@@ -182,7 +185,9 @@ export function ExpandableDataTable<TData, TValue>({
                                     <BlocksBreakdown warrior={warrior} />
                                   )}
                                   {expansionType === "details" && (
-                                    <WarriorDetailsBreakdown warrior={warrior} />
+                                    <WarriorDetailsBreakdown
+                                      warrior={warrior}
+                                    />
                                   )}
                                   {expansionType === "damageDealt" && (
                                     <DamageDealtBreakdown warrior={warrior} />

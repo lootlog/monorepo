@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '../../../../generated/client';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 

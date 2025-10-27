@@ -1,9 +1,9 @@
 import {
   createParamDecorator,
-  ExecutionContext,
   ForbiddenException,
+  type ExecutionContext,
 } from '@nestjs/common';
-import { Guild } from 'generated/client';
+import type { Guild } from 'generated/client';
 
 export const GuildData = createParamDecorator(function (
   data: unknown,

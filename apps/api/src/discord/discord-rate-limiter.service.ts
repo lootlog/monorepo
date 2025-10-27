@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
+import type { Logger } from 'winston';
 import { RedisService } from 'src/lib/redis/redis.service';
 
 interface UserRateLimitData {
@@ -17,7 +17,10 @@ export class DiscordRateLimiterService {
     private readonly redis: RedisService,
   ) {}
 
-  async checkRateLimitForUser(userId: string, endpoint: string): Promise<boolean> {
+  async checkRateLimitForUser(
+    userId: string,
+    endpoint: string,
+  ): Promise<boolean> {
     const key = this.getUserKey(userId, endpoint);
     const data = await this.redis.get(key);
 
@@ -45,7 +48,11 @@ export class DiscordRateLimiterService {
     return true;
   }
 
-  async setRateLimitForUser(userId: string, endpoint: string, retryAfterMs: number): Promise<void> {
+  async setRateLimitForUser(
+    userId: string,
+    endpoint: string,
+    retryAfterMs: number,
+  ): Promise<void> {
     const now = Date.now();
     const resetAt = now + retryAfterMs;
     const key = this.getUserKey(userId, endpoint);
@@ -69,7 +76,10 @@ export class DiscordRateLimiterService {
     });
   }
 
-  async clearRateLimitForUser(userId: string, endpoint?: string): Promise<void> {
+  async clearRateLimitForUser(
+    userId: string,
+    endpoint?: string,
+  ): Promise<void> {
     if (endpoint) {
       const key = this.getUserKey(userId, endpoint);
       await this.redis.del(key);

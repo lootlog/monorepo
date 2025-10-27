@@ -1,4 +1,4 @@
-import { Guild } from "@/hooks/api/guilds/use-guild";
+import type { Guild } from "@/hooks/api/guilds/use-guild";
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "config/api";
 import { useApiClient } from "hooks/api/use-api-client";

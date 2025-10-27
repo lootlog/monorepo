@@ -1,5 +1,5 @@
-import { FC } from "react";
-import { Loot } from "@/hooks/api/loots/use-loots";
+import type { FC } from "react";
+import type { Loot } from "@/hooks/api/loots/use-loots";
 import {
   SheetContent,
   SheetHeader,
@@ -37,6 +37,7 @@ export const LootDetailsSheetContent: FC<LootDetailsSheetProps> = ({
         "w-full": isMobile,
       })}
       onOpenAutoFocus={(e) => e.preventDefault()}
+      aria-describedby={undefined}
     >
       <SheetHeader className="border-b">
         <SheetTitle className="pb-4 flex flex-col items-start">

@@ -57,10 +57,7 @@ export class BattlesController {
   }
 
   @Get('/@me/warriors/search')
-  searchWarriors(
-    @Query('q') query: string,
-    @UserId() userId: string,
-  ) {
+  searchWarriors(@Query('q') query: string, @UserId() userId: string) {
     return this.battlesService.searchWarriors(query, userId);
   }
 

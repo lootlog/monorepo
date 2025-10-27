@@ -6,7 +6,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Separator } from "@lootlog/ui/components/separator";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
 import { Reorder } from "framer-motion";
-import { FC, useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, type FC } from "react";
 import { useUser } from "@/hooks/api/user/use-user";
 import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-preferences";
 
@@ -96,7 +96,7 @@ export const GuildsSelector: FC = () => {
                 zIndex: 50,
                 transition: { type: "spring", stiffness: 300, damping: 30 },
               }}
-              dragListener={true}
+              dragListener
               dragControls={undefined}
             >
               <GuildNavItem guild={guild} isDragging={isDragging} />

@@ -12,9 +12,9 @@ import {
   FormMessage,
 } from "@lootlog/ui/components/form";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
-import { FC } from "react";
+import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
+import type { LootlogConfigNpc } from "@/hooks/api/guilds/use-guild-lootlog-settings";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { cn } from "@/utils/cn";
 import { toast } from "sonner";
@@ -50,7 +50,7 @@ export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
     updateGuildLootlogNpc(
       {
         allowedRarities: Object.keys(values).filter(
-          (key) => values[key as keyof typeof values]
+          (key) => values[key as keyof typeof values],
         ) as ItemRarity[],
         npcId: npc.id,
       },
@@ -61,7 +61,7 @@ export const NpcSettingsForm: FC<NpcSettingsFormProps> = ({ npc }) => {
         onError: () => {
           toast.error("Nie udało się zaktualizować ustawień");
         },
-      }
+      },
     );
   }
 

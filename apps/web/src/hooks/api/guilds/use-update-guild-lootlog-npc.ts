@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import type { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 
 type UpdateGuildLootlogNpcOptions = {
@@ -20,7 +20,7 @@ export const useUpdateGuildLootlogNpc = () => {
     unknown,
     UpdateGuildLootlogNpcOptions
   >({
-    mutationFn: async ({ allowedRarities, npcId }) => {
+    mutationFn: ({ allowedRarities, npcId }) => {
       return client.put(`/guilds/${guildId}/lootlog-config/${npcId}`, {
         allowedRarities,
       });

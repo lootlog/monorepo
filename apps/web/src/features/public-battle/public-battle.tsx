@@ -45,7 +45,7 @@ export const PublicBattle = () => {
           </h1>
           <p className="text-muted-foreground">
             {battleError?.message ||
-              "The battle you're looking for doesn't exist."}
+              "Przepraszamy, nie mogliśmy znaleźć tej walki."}
           </p>
         </div>
       </div>

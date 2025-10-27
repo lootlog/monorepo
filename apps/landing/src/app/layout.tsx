@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@lootlog/ui/globals.css";
+import "fumadocs-ui/style.css";
 import type { JSX, ReactNode } from "react";
 
-import { ThemeProvider } from "@lootlog/ui/components/next-theme-provider";
+import { RootProvider } from "fumadocs-ui/provider/next";
+import { CookieConsent } from "@/src/components/cookie-consent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,13 +49,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-white`}
       >
-        <ThemeProvider
-          enableSystem
-          defaultTheme="dark"
-          attribute="class"
-          disableTransitionOnChange
-        >
+        <RootProvider>
           {children}
+          <CookieConsent />
           <footer className="py-8 px-4 bg-background">
             <div className="max-w-6xl mx-auto text-center text-gray-400">
               <p>
@@ -97,7 +95,7 @@ export default function RootLayout({
               </div>
             </div>
           </footer>
-        </ThemeProvider>
+        </RootProvider>
       </body>
     </html>
   );

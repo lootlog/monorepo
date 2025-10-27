@@ -1,5 +1,5 @@
-import { Permission } from 'src/guilds/enum/permission.type';
-import { Role } from 'src/guilds/types/role.type';
+import type { Permission } from 'src/guilds/enum/permission.type';
+import type { Role } from 'src/guilds/types/role.type';
 
 export function mergeLevelRanges(
   roles: Role[],

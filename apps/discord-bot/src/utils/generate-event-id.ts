@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 
 export const generateEventId = (data: any) => {
   const stringifiedData = JSON.stringify(data);

@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import { useApiClient } from "@/hooks/api/use-api-client";
-import { Permission } from "@/hooks/api/guilds/use-guild-permissions";
+import { apiClient } from "@/lib/api-client/api-client";
+import type { Permission } from "@/hooks/api/guilds/use-guild-permissions";
 
 export type GuildRole = {
   id: string;
@@ -13,15 +13,23 @@ export type GuildRole = {
   lvlRangeTo: number;
 };
 
+export const guildRolesQueryOptions = (guildId: string) =>
+  queryOptions({
+    queryKey: ["guild-roles", guildId],
+    queryFn: async () => {
+      const response = await apiClient.get<GuildRole[]>(
+        `/guilds/${guildId}/roles`,
+      );
+      return response.data;
+    },
+    enabled: !!guildId,
+  });
+
 export const useGuildRoles = () => {
   const guildId = useGuildId();
-  const { client } = useApiClient();
 
   const query = useQuery({
-    queryKey: ["guild-roles", guildId],
-    queryFn: () => client.get<GuildRole[]>(`/guilds/${guildId}/roles`),
-    enabled: !!guildId,
-    select: (response) => response.data,
+    ...guildRolesQueryOptions(guildId ?? ""),
   });
 
   return query;

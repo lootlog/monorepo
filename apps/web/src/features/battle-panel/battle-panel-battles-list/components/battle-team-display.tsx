@@ -1,7 +1,7 @@
-import { Warrior } from "@/hooks/api/battle-log/use-battles";
+import type { Warrior } from "@/hooks/api/battle-log/use-battles";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { cn } from "@/utils/cn";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type TeamDisplayProps = {
   team: Warrior[];
@@ -23,7 +23,7 @@ export const TeamDisplay: FC<TeamDisplayProps> = ({
             "flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1 box-border pr-4",
             {
               "border border-green-500": member.originalId === characterId,
-            }
+            },
           )}
         >
           <PlayerTile player={member} className="scale-90" />

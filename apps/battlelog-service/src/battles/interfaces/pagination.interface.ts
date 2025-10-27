@@ -1,4 +1,8 @@
-import { PaginationStrategy, SortField, SortOrder } from '../dto/query-battles.dto';
+import type {
+  PaginationStrategy,
+  SortField,
+  SortOrder,
+} from '../dto/query-battles.dto';
 
 export interface CursorData {
   id: string;

@@ -1,7 +1,7 @@
 import {
   createParamDecorator,
-  ExecutionContext,
   UnauthorizedException,
+  type ExecutionContext,
 } from '@nestjs/common';
 
 export const UserId = createParamDecorator(function (

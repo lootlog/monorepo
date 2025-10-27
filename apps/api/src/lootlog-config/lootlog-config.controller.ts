@@ -6,8 +6,8 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
-import { Guild, Permission } from 'generated/client';
-import { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
+import { type Guild, Permission } from 'generated/client';
+import type { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -35,7 +35,10 @@ export class LootlogConfigController {
     description: 'Lootlog configuration',
     type: LootlogConfigEntity,
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - admin permission required',
+  })
   @ApiResponse({ status: 404, description: 'Configuration not found' })
   async getLootlogConfig(@GuildData() guild: Guild) {
     return this.lootlogConfigService.getLootlogConfig(guild.id);
@@ -46,15 +49,23 @@ export class LootlogConfigController {
   @Put(':npcId')
   @ApiOperation({
     summary: 'Update NPC configuration',
-    description: 'Update allowed rarities for a specific NPC type in lootlog configuration',
+    description:
+      'Update allowed rarities for a specific NPC type in lootlog configuration',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
-  @ApiParam({ name: 'npcId', description: 'NPC configuration ID', example: '1' })
+  @ApiParam({
+    name: 'npcId',
+    description: 'NPC configuration ID',
+    example: '1',
+  })
   @ApiResponse({
     status: 200,
     description: 'NPC configuration updated successfully',
   })
-  @ApiResponse({ status: 403, description: 'Forbidden - admin permission required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - admin permission required',
+  })
   @ApiResponse({ status: 404, description: 'NPC configuration not found' })
   async updateNpc(
     @GuildData() guild: Guild,

@@ -1,5 +1,5 @@
-import { Battle } from "@/hooks/api/battle-log/use-battles";
-import { FC } from "react";
+import type { Battle } from "@/hooks/api/battle-log/use-battles";
+import type { FC } from "react";
 import { useBattleSharing } from "../hooks/use-battle-sharing";
 import { useDeleteBattle } from "@/hooks/api/battle-log/use-delete-battle";
 import { toast } from "sonner";
@@ -37,13 +37,12 @@ export const BattleOverview: FC<BattleOverviewProps> = ({ battle }) => {
           toast.success("Walka została usunięta.", { duration: 3000 });
           navigate({ to: "/@me/battle-panel/battles" });
         },
-        onError: (error) => {
-          console.warn("Error deleting battle:", error);
+        onError: () => {
           toast.error("Wystąpił błąd podczas usuwania walki.", {
             duration: 3000,
           });
         },
-      }
+      },
     );
   };
 
