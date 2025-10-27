@@ -10,6 +10,7 @@ export const useManageableGuilds = (enabled = true) => {
     queryFn: () => client.get<Guild[]>(`/guilds/@me/manageable`),
     select: (response) => response.data,
     enabled,
+    staleTime: 0,
   });
 
   return query;
