@@ -47,14 +47,15 @@ const attachInterceptors = (instance: AxiosInstance) => {
     (error) => {
       const status = error?.response?.status;
       const requiresReauth = error?.response?.data?.requiresReauth;
+      const isPublicEndpoint = error?.config?.url?.includes("/public/");
 
-      if (status === 401 || requiresReauth) {
+      if ((status === 401 || requiresReauth) && !isPublicEndpoint) {
         toast.error("Sesja wygasła. Przekierowywanie do logowania...");
         handleReauthentication();
         return Promise.reject(error);
       }
 
-      if (status === 403) {
+      if (status === 403 && !isPublicEndpoint) {
         toast.error("Brak dostępu");
       }
       if (status === 404) {

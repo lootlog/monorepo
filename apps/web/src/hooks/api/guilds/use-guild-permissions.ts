@@ -1,8 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "@/hooks/api/use-api-client";
+import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import type { AxiosError, AxiosResponse } from "axios";
-import type { ApiClientGenericErrorResponse } from "@/lib/api-client/api-client.types";
+import { apiClient } from "@/lib/api-client/api-client";
 
 export enum Permission {
   OWNER = "OWNER",
@@ -20,19 +18,23 @@ export enum Permission {
   LOOTLOG_NOTIFICATIONS_READ = "LOOTLOG_NOTIFICATIONS_READ",
 }
 
+export const guildPermissionsQueryOptions = (guildId: string) =>
+  queryOptions({
+    queryKey: ["guild-permissions", guildId],
+    queryFn: async () => {
+      const response = await apiClient.get<Permission[]>(
+        `/guilds/${guildId}/permissions`,
+      );
+      return response.data;
+    },
+    enabled: !!guildId,
+  });
+
 export const useGuildPermissions = () => {
   const guildId = useGuildId();
-  const { client } = useApiClient();
 
-  const query = useQuery<
-    AxiosResponse<Permission[]>,
-    AxiosError<ApiClientGenericErrorResponse>,
-    Permission[]
-  >({
-    queryKey: ["guild-permissions", guildId],
-    queryFn: () => client.get<Permission[]>(`/guilds/${guildId}/permissions`),
-    enabled: !!guildId,
-    select: (response) => response.data,
+  const query = useQuery({
+    ...guildPermissionsQueryOptions(guildId ?? ""),
   });
 
   return query;

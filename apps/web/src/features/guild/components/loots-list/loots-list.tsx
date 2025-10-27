@@ -14,6 +14,7 @@ import { MemberSyncButton } from "@/features/members-settings/components/member-
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { useGuildId } from "@/hooks/context/use-guild-id";
 
 const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 const LOOTS_PAGE_LIMIT = 20;
@@ -31,6 +32,7 @@ export const LootsList: FC = () => {
   const { world } = useGuildContext();
   const { data: member, isPending } = useGuildMember();
   const isOwner = useIsOwner();
+  const guildId = useGuildId();
   const scrollElementRef = useRef<HTMLDivElement>(null);
 
   const canManageLoots =
@@ -69,7 +71,18 @@ export const LootsList: FC = () => {
     virtualItems,
   ]);
 
-  if (permissionsError?.response?.status === 403) {
+  useEffect(() => {
+    scrollElementRef.current?.scrollTo(0, 0);
+  }, [guildId]);
+
+  if (
+    permissionsError &&
+    "response" in permissionsError &&
+    permissionsError.response &&
+    typeof permissionsError.response === "object" &&
+    "status" in permissionsError.response &&
+    permissionsError.response.status === 403
+  ) {
     return (
       <div className="flex flex-col justify-center gap-8 items-center flex-1">
         <Frown size="72" />

@@ -30,6 +30,7 @@ export const useTimers = (enabled = true) => {
       client.get<Timer[]>(`/guilds/${guildId}/timers?${queryString}`),
     enabled: !!world && enabled,
     select: (response) => response.data,
+    refetchOnMount: "always",
   });
 
   return query;
