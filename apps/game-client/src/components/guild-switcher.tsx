@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type FC, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { useDeepCompareEffect } from "react-use";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -56,11 +56,21 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     setGuildId(characterId!, newGuildId);
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    if (!scrollContainerRef.current) return;
-    e.preventDefault();
-    scrollContainerRef.current.scrollLeft += e.deltaY;
-  };
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      scrollContainer.scrollLeft += e.deltaY;
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
   const getGuildInitial = (name: string) => {
     return name.charAt(0).toUpperCase();
@@ -72,7 +82,6 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
         className={cn("ll:w-full", className)}
         ref={scrollContainerRef}
         type="hover"
-        onWheel={handleWheel}
       >
         <div className="ll:flex ll:gap-1 ll:mt-1">
           {guilds?.map((guild) => {
@@ -89,7 +98,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
                       "ll:flex ll:items-center ll:justify-center ll:transition-all ll:border ll:rounded-sm",
                       "hover:ll:scale-105",
                       "disabled:ll:opacity-50 disabled:ll:cursor-not-allowed",
-                      "ll:size-8 ll:p-0 ll:shrink-0",
+                      "ll:size-7 ll:p-0 ll:shrink-0",
                       "ll:border-gray-600 ll:bg-gray-800/50 hover:ll:border-muted/20",
                       !disabled && "ll-custom-cursor-pointer",
                       {
