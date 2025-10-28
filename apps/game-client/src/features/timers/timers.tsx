@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Filter, PlusIcon, SortAsc, SortDesc } from "lucide-react";
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { DraggableWindow } from "@/components/draggable-window";
-import { GuildSelector } from "@/components/guild-selector";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleTimer } from "@/features/timers/components/single-timer";
-import { useTimers, Timer } from "@/hooks/api/use-timers";
+import { useTimers, type Timer } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useGlobalStore } from "@/store/global.store";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
@@ -18,12 +17,13 @@ import { TimersFilters } from "@/features/timers/components/timers-filters";
 import { cn } from "@/lib/utils";
 import { WorldSelector } from "@/components/world-selector";
 import { useSettingsStore } from "@/store/settings.store";
-import { GuildMember } from "@/hooks/api/use-guild-members";
+import type { GuildMember } from "@/hooks/api/use-guild-members";
 import {
   Permission,
   useGuildPermissions,
 } from "@/hooks/api/use-guild-permissions";
 import { NpcType } from "@/hooks/api/use-npcs";
+import { GuildSwitcher } from "@/components/guild-switcher";
 
 export type TimerWithTimeLeft = Timer & {
   maxTimeLeft: number;
@@ -121,16 +121,16 @@ export const Timers = () => {
   const queryClient = useQueryClient();
 
   const [calculatedTimers, setCalculatedTimers] = useState<TimerWithTimeLeft[]>(
-    []
+    [],
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
   const canDeleteTimers = useMemo(
     () =>
       REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-        guildPermissions?.includes(perm)
+        guildPermissions?.includes(perm),
       ),
-    [guildPermissions]
+    [guildPermissions],
   );
 
   const activeTimers = useMemo(() => {
@@ -163,11 +163,11 @@ export const Timers = () => {
           (t) =>
             t.npcId === data.npcId &&
             t.guildId === data.guildId &&
-            t.world === data.world
+            t.world === data.world,
         );
         index !== -1 ? (updated[index] = data) : updated.push(data);
         return { data: updated };
-      }
+      },
     );
   };
 
@@ -183,10 +183,10 @@ export const Timers = () => {
                 t.npcId === data.npcId &&
                 t.world === data.world &&
                 t.guildId === data.guildId
-              )
+              ),
           ) || [];
         return { data: filtered };
-      }
+      },
     );
   };
 
@@ -200,7 +200,7 @@ export const Timers = () => {
             maxTimeLeft: new Date(timer.maxSpawnTime).getTime() - now,
             minTimeLeft: new Date(timer.minSpawnTime).getTime() - now,
           }))
-          .filter((t) => t.maxTimeLeft > -generalConfig.removeTimerAfterMs)
+          .filter((t) => t.maxTimeLeft > -generalConfig.removeTimerAfterMs),
       );
     }, 1000);
     return () => clearInterval(interval);
@@ -216,6 +216,31 @@ export const Timers = () => {
     };
   }, [connected]);
 
+  const areFiltersActive = useMemo(() => {
+    const hasSearchText = !!timerFiltersSearchText;
+    const hasHiddenTimers = (hiddenTimers[settingsKey]?.length ?? 0) > 0;
+    const hasCustomLvlRange =
+      filters.minLvl !== DEFAULT_TIMERS_FILTERS.minLvl ||
+      filters.maxLvl !== DEFAULT_TIMERS_FILTERS.maxLvl;
+    const hasCustomNpcTypes =
+      filters.selectedNpcTypes.length !==
+        DEFAULT_TIMERS_FILTERS.selectedNpcTypes.length ||
+      !filters.selectedNpcTypes.every((type) =>
+        DEFAULT_TIMERS_FILTERS.selectedNpcTypes.includes(type),
+      );
+
+    return (
+      hasSearchText || hasHiddenTimers || hasCustomLvlRange || hasCustomNpcTypes
+    );
+  }, [
+    timerFiltersSearchText,
+    hiddenTimers,
+    settingsKey,
+    filters.minLvl,
+    filters.maxLvl,
+    filters.selectedNpcTypes,
+  ]);
+
   const sortedTimers = useMemo(() => {
     return calculatedTimers
       .filter((t) => generalConfig.timersGrouping || t.guildId === guildId)
@@ -227,18 +252,18 @@ export const Timers = () => {
           ? t.npc.name
               .toLowerCase()
               .includes(timerFiltersSearchText.toLowerCase())
-          : true
+          : true,
       )
       .filter(
         (t) =>
           filters.selectedNpcTypes.includes(t.npc.type) ||
           t.npc.lvl === 0 ||
-          t.npc.type === NpcType.NPC
+          t.npc.type === NpcType.NPC,
       )
       .filter(
         (t) =>
           (t.npc.lvl >= filters.minLvl && t.npc.lvl <= filters.maxLvl) ||
-          t.npc.lvl === 0
+          t.npc.lvl === 0,
       )
       .sort((a, b) => {
         const pinA = pinnedTimers[settingsKey]?.includes?.(a.npc.name);
@@ -272,30 +297,25 @@ export const Timers = () => {
         className={cn(
           "ll:h-full ll:flex ll:flex-1 ll:flex-col ll:box-border ll:pt-1 ll:w-full",
           {
-            "ll:!pt-0": generalConfig.timersUnderBag,
-          }
+            "ll:pt-0!": generalConfig.timersUnderBag,
+          },
         )}
       >
+        {!generalConfig.timersGrouping && (
+          <GuildSwitcher
+            disabled={addTimerOpen}
+            className="ll:bg-black/20 ll:mb-1!"
+          />
+        )}
+        {allowWorldSelection && !generalConfig.timersGrouping && (
+          <WorldSelector />
+        )}
         {timerFiltersEnabled && <TimersFilters filtersKey={settingsKey} />}
-        <span className="ll:flex ll:gap-1 ll:w-full">
-          {!generalConfig.timersGrouping && (
-            <GuildSelector
-              disabled={addTimerOpen}
-              className="ll:bg-black/20 ll:!mb-1"
-            />
-          )}
-          {allowWorldSelection && !generalConfig.timersGrouping && (
-            <WorldSelector className="ll:w-1/3" />
-          )}
-        </span>
 
-        <ScrollArea
-          className="ll:pb-1 ll:!w-full ll:py-1 ll:flex-1"
-          type="hover"
-        >
+        <ScrollArea className="ll:py-1 ll:w-full! ll:flex-1" type="hover">
           {sortedTimers.length === 0 ? (
-            <span className="ll:text-white ll:w-full ll:flex ll:justify-center">
-              ----
+            <span className="ll:w-full ll:flex ll:justify-center ll:text-center ll:mt-6 ll:text-gray-400">
+              {areFiltersActive ? "Brak timerów dla wybranych filtrów" : "----"}
             </span>
           ) : (
             <span
@@ -355,7 +375,7 @@ export const Timers = () => {
             />
           )}
         </div>
-        <div className="ll:bg-[0_0] ll:top-1 ll:leading-[28px] ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
+        <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
           <p className="ll:text-[11px] ll:text-[beige] ll:text-shadow-[1px_1px_1px_black]">
             Timery
           </p>

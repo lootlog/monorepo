@@ -1,13 +1,12 @@
 import { NPC_NAMES } from "@/constants/margonem";
-import { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
+import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
 import { decomposeChatMessage } from "@/utils/chat/decompose-chat-message";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
-import { format } from "date-fns";
-import { FC } from "react";
-import { isYesterday } from "date-fns";
-import { GuildMember } from "@/hooks/api/use-guild-members";
+import { format, isYesterday } from "date-fns";
+import type { FC } from "react";
+import type { GuildMember } from "@/hooks/api/use-guild-members";
 
 export type ChatMessageProps = {
   message: ChatMessageType;
@@ -32,7 +31,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       return (
         <span
           style={{ color }}
-          className={cn({ "ll:opacity-50": isMsgYesterday })}
+          className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
         >
           [{shortname}] {messageData.npc.npcName}{" "}
           {messageData.npc.npcLocation
@@ -46,7 +45,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       const color = getTextColor("message", true);
       return (
         <span
-          className={cn({ "ll:opacity-50": isMsgYesterday })}
+          className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
           style={{ color }}
         >
           [P] {messageData.baseMessage.slice(1)}
@@ -55,7 +54,9 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
     }
 
     return (
-      <span className={cn({ "ll:opacity-50": isMsgYesterday })}>
+      <span
+        className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
+      >
         {messageData.baseMessage}
       </span>
     );
@@ -66,18 +67,18 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
   return (
     <div
       key={message.id}
-      className="ll:text-white ll:text-xs ll:whitespace-pre-wrap ll:break-words ll:[overflow-wrap:anywhere] ll:w-[calc(100%-1rem)]"
+      className="ll:text-white ll:text-xs ll:whitespace-pre-wrap ll:wrap-break-word ll:w-[calc(100%-1rem)] ll:select-text ll:cursor-text"
     >
-      <span className="ll:inline-block ll:whitespace-nowrap">
+      <span className="ll:inline-block ll:whitespace-nowrap ll:select-text">
         <span
-          className={cn("ll:text-[11px]", {
+          className={cn("ll:text-[11px] ll:select-text", {
             "ll:opacity-50": isMsgYesterday,
           })}
         >
           [{format(new Date(message.timestamp), "HH:mm")}]
         </span>{" "}
         <span
-          className={cn("ll:font-bold ll:mx-1", {
+          className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
             "ll:opacity-50": isMsgYesterday,
           })}
           style={{ color: `#${memberColor}` }}
@@ -85,7 +86,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
           {member?.name || "Nieznany"}:
         </span>
       </span>{" "}
-      <span className="ll:break-words ll:[overflow-wrap:anywhere]">
+      <span className="ll:wrap-break-word ll:select-text">
         {renderChatMessage(message)}
       </span>
     </div>

@@ -21,7 +21,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   className = "",
 }) => {
   const { world: defaultWorld, characterId } = useGlobalStore(
-    (state) => state.gameState
+    (state) => state.gameState,
   );
   const { guildIdByCharId, world, setWorld } = useSettingsStore();
   const guildId = guildIdByCharId[characterId!];
@@ -51,8 +51,8 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     <Select value={world} onValueChange={setWorld} disabled={disabled}>
       <SelectTrigger
         className={cn(
-          "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll-custom-cursor-pointer",
-          className
+          "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-6 ll:mb-1 ll-custom-cursor-pointer",
+          className,
         )}
       >
         <SelectValue
