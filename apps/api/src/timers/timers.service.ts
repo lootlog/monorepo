@@ -170,7 +170,9 @@ export class TimersService {
           connect: { memberId: { userId: discordId, guildId: guildId } },
         },
       },
+      include: { member: true },
     });
+
     this.emitUpdateTimer(newTimer);
     return;
   }
