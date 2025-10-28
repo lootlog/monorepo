@@ -2,7 +2,7 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { LOOTLOG_APP_URL } from "@/config/app";
 import {
   QuickAccessButton,
-  QuickAccessButtonProps,
+  type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
 import {
   MessagesSquare,
@@ -46,7 +46,7 @@ export const QuickAccess = () => {
     <DraggableWindow
       id="quick-access"
       title="Lootlog"
-      minHeight={48}
+      minHeight={56}
       minWidth={184}
       closable={false}
     >

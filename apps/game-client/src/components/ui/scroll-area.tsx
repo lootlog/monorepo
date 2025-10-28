@@ -12,7 +12,7 @@ const ScrollArea = React.forwardRef<
     {...props}
   >
     <ScrollAreaPrimitive.Viewport
-      className="ll:h-full ll:w-full ll:rounded-[inherit]"
+      className="ll:h-full ll:w-full ll:rounded-[inherit] ll:select-text"
       ref={ref}
     >
       {children}
@@ -37,10 +37,10 @@ const ScrollBar = React.forwardRef<
     className={cn(
       "ll:flex ll:touch-none ll:select-none ll:transition-colors ll-custom-cursor-pointer ll:bg-gray-600/60 ll:rounded-md",
       orientation === "vertical" &&
-        "ll:h-full ll:w-1.5 ll:border-l ll:border-l-transparent ll:p-[1px]",
+        "ll:h-[calc(100%-0.5rem)] ll:w-1 ll:mr-1 ll:my-1",
       orientation === "horizontal" &&
-        "ll:h-1.5 ll:flex-col ll:border-t ll:border-t-transparent ll:p-[1px]",
-      className
+        "ll:w-[calc(100%-0.5rem)] ll:h-1 ll:flex-col ll:mb-1 ll:mx-1",
+      className,
     )}
     {...props}
   >

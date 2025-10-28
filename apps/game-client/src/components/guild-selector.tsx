@@ -9,7 +9,7 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { FC } from "react";
+import type { FC } from "react";
 import { useDeepCompareEffect } from "react-use";
 
 export type GuildSelectorProps = {
@@ -59,7 +59,7 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
       <SelectTrigger
         className={cn(
           "ll:w-[231px] ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-4 ll:mb-1 ll-custom-cursor-pointer",
-          className
+          className,
         )}
       >
         <SelectValue

@@ -4,7 +4,7 @@ import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useGlobalStore } from "@/store/global.store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FC } from "react";
+import type { FC } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -60,7 +60,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       onSubmit={handleSubmit(onSubmit)}
       className="ll:flex ll:justify-center ll:flex-col"
     >
-      <Label className="ll:!text-[10px]">
+      <Label className="ll:text-[9px] ll:text-gray-400">
         (zacznij od !, aby wysłać powiadomienie)
       </Label>
       <Input

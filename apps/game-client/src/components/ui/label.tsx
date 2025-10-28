@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 export const Label = ({
   className,
@@ -9,7 +9,7 @@ export const Label = ({
   return (
     <label
       htmlFor="text"
-      className={cn("ll:!text-xs ll:font-semibold", className)}
+      className={cn("ll:text-xs ll:font-semibold", className)}
       {...props}
     >
       {children}
