@@ -20,17 +20,17 @@ export function HeroSection() {
       <div className="absolute inset-0 px-4 pointer-events-auto lg:pointer-events-none">
         <PageHeader />
         <div className="max-w-6xl mx-auto text-center flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
             <span className="bg-gradient-to-r from-purple-400 via-violet-400 to-purple-500 bg-clip-text text-transparent">
               lootlog.pl
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
             Otwartoźródłowy, zaawansowany dodatek do gry Margonem, który
             automatycznie śledzi łupy i timery respawnu potworów, oraz ułatwia
             organizację w klanie.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-in fade-in slide-in-from-bottom-12 duration-700 delay-300">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={ADDON_URL}>
               <Button className="pointer-events-auto">
                 Zainstaluj dodatek
