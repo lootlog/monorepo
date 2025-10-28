@@ -1,6 +1,7 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { LanguageVersion, useGlobalStore } from "@/store/global.store";
 import { useQuery } from "@tanstack/react-query";
+import { get } from "lodash";
 
 const MARGONEM_CHARTACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
@@ -21,7 +22,9 @@ export type MargonemCharacter = {
 };
 
 export const useCharacterList = () => {
-  const { world, languageVersion } = useGlobalStore((state) => state.gameState);
+  const { world, languageVersion, accountId } = useGlobalStore(
+    (state) => state.gameState,
+  );
   const { client } = useApiClient();
   const hs3 = window.getCookie?.("hs3");
   const url =
@@ -31,17 +34,46 @@ export const useCharacterList = () => {
 
   const query = useQuery({
     queryKey: ["characters", world],
-    queryFn: async () =>
-      client.get<MargonemCharacter[]>(`${url}?hs3=${hs3}`, {
-        withCredentials: true,
-      }),
-    enabled: !!hs3 && !!languageVersion,
+    queryFn: async () => {
+      const margonemEntry = window.localStorage?.getItem("Margonem");
+      const parsed = margonemEntry ? JSON.parse(margonemEntry) : null;
+
+      const charlist = get(parsed, "charlist", null) as Record<
+        string,
+        MargonemCharacter[]
+      > | null;
+
+      const cached = accountId ? (charlist?.[accountId] ?? null) : null;
+
+      if (cached) {
+        return { data: cached };
+      }
+
+      const apiResponse = await client.get<MargonemCharacter[]>(
+        `${url}?hs3=${hs3}`,
+        {
+          withCredentials: true,
+        },
+      );
+
+      const isEmptyResponse =
+        !apiResponse.data || apiResponse.data.length === 0;
+
+      if (isEmptyResponse) {
+        throw new Error("Empty character list received from API");
+      }
+
+      return apiResponse;
+    },
+
+    enabled: !!hs3 && !!languageVersion && !!accountId,
     select: (response) =>
       response.data
-        .filter((char) => char.world === world)
-        .sort((a, b) => {
+        .filter((char: MargonemCharacter) => char.world === world)
+        .sort((a: MargonemCharacter, b: MargonemCharacter) => {
           return b.lvl - a.lvl;
         }),
+    staleTime: 60 * 1000, // 1 minute
   });
 
   return query;

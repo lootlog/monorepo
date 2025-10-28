@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { stringify } from "qs";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { Npc } from "@/hooks/api/use-npcs";
+import type { Npc } from "@/hooks/api/use-npcs";
 import { API_URL } from "@/config/api";
-import { GuildMember } from "@/hooks/api/use-guild-members";
+import type { GuildMember } from "@/hooks/api/use-guild-members";
 
 export type UseTimersOptions = {
   world?: string;
@@ -35,6 +35,7 @@ export const useTimers = ({ world }: UseTimersOptions) => {
     queryFn: () => client.get<Timer[]>(`${API_URL}/timers?${queryString}`),
     enabled: !!world,
     select: (response) => response.data,
+    staleTime: 0,
   });
 
   return query;

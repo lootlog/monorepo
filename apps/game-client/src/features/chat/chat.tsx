@@ -1,10 +1,9 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { useChatMessages } from "@/hooks/api/use-chat-messages";
-import { useRef, useLayoutEffect } from "react";
-import { Viewport } from "@radix-ui/react-scroll-area";
+import { useRef, useLayoutEffect, useMemo } from "react";
+import type { Viewport } from "@radix-ui/react-scroll-area";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
-import { GuildSelector } from "@/components/guild-selector";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { ChatMessage } from "@/features/chat/components/chat-message";
@@ -12,6 +11,8 @@ import { ChatInput } from "@/features/chat/components/chat-input";
 import { useGlobalStore } from "@/store/global.store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
+import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
+import { GuildSwitcher } from "@/components/guild-switcher";
 
 export const Chat = () => {
   const { accountId, characterId } = useGlobalStore((state) => state.gameState);
@@ -21,12 +22,21 @@ export const Chat = () => {
   } = useWindowsStore();
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     `ll:chat:selected-guild:${accountId}:${characterId}`,
-    ""
+    "",
   );
   const { data: messages } = useChatMessages({
     guildId: selectedGuildId ?? "",
   });
   const { data: guildMembers } = useGuildMembers(selectedGuildId);
+
+  const missingSenderIds = useMemo(() => {
+    if (!messages || !guildMembers) return [];
+    const uniqueSenders = Array.from(new Set(messages.map((m) => m.senderId)));
+    return uniqueSenders.filter((senderId) => !guildMembers[senderId]);
+  }, [messages, guildMembers]);
+
+  useMemberInvalidation(selectedGuildId, missingSenderIds);
+
   useChatMessagesListener(selectedGuildId ?? "");
 
   const scrollAreaRef = useRef<React.ElementRef<typeof Viewport>>(null);
@@ -57,34 +67,43 @@ export const Chat = () => {
             onClose={() => setOpen("chat", false)}
           >
             <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-              <div className="ll:flex-shrink-0 ll:pt-2">
-                <GuildSelector
+              <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
+                <GuildSwitcher
                   value={selectedGuildId}
                   onChange={setSelectedGuildId}
                 />
               </div>
               <div className="ll:flex-1 ll:overflow-hidden">
                 <ScrollArea
-                  className="ll:h-full ll:w-full ll:box-border"
+                  className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400"
                   ref={scrollAreaRef}
-                  type="auto"
+                  type={messages?.length === 0 ? "auto" : "always"}
                 >
-                  <div className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg">
-                    {messages?.map((message) => {
-                      const guildMember = guildMembers?.[message.senderId];
+                  <div
+                    className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
+                    data-draggable="false"
+                  >
+                    {messages?.length === 0 ? (
+                      <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
+                        Brak wiadomości
+                      </div>
+                    ) : (
+                      messages?.map((message) => {
+                        const guildMember = guildMembers?.[message.senderId];
 
-                      return (
-                        <ChatMessage
-                          key={message.id}
-                          message={message}
-                          member={guildMember}
-                        />
-                      );
-                    })}
+                        return (
+                          <ChatMessage
+                            key={message.id}
+                            message={message}
+                            member={guildMember}
+                          />
+                        );
+                      })
+                    )}
                   </div>
                 </ScrollArea>
               </div>
-              <div className="ll:flex-shrink-0 ll:pb-1 ll:mt-1">
+              <div className="ll:shrink-0 ll:pb-1 ll:mt-2">
                 <ChatInput
                   selectedGuildId={selectedGuildId}
                   autofocus={autofocus}

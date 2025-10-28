@@ -1,8 +1,8 @@
-import { GuildMember } from "@/hooks/api/use-guild-members";
+import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { NotificationWithServers } from "@/store/notifications.store";
+import type { NotificationWithServers } from "@/store/notifications.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
-import { FC } from "react";
+import type { FC } from "react";
 
 export type SingleNotificationMessageProps = {
   notification: NotificationWithServers;

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { User } from "@/hooks/api/use-user";
+import type { User } from "@/hooks/api/use-user";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type GuildMember = {
@@ -23,6 +23,8 @@ export const useGuildMembers = (guildId?: string) => {
     queryKey: ["guild-members", guildId],
     queryFn: () => client.get<GuildMember[]>(`/guilds/${guildId}/members`),
     enabled: !!guildId,
+    gcTime: Infinity,
+    staleTime: 5 * 60 * 1000,
     select: (response) => {
       const keyValue: Record<string, GuildMember> = {};
       response.data.forEach((member) => {

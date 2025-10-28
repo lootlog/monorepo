@@ -1,4 +1,4 @@
-import { GameNpc } from "@/types/margonem/npcs";
+import type { GameNpc } from "@/types/margonem/npcs";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
@@ -132,7 +132,7 @@ export const useWindowsStore = create<WindowsState>()(
       "quick-access": {
         open: true,
         position: DEFAULT_POSITION,
-        size: { width: 180, height: 48 },
+        size: { width: 180, height: 56 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -187,6 +187,6 @@ export const useWindowsStore = create<WindowsState>()(
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
-    }
-  )
+    },
+  ),
 );

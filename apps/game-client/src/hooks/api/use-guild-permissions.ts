@@ -29,6 +29,7 @@ export const useGuildPermissions = ({
     queryFn: () => client.get<Permission[]>(`/guilds/${guildId}/permissions`),
     enabled: !!guildId,
     select: (response) => response.data,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   return query;
