@@ -302,6 +302,7 @@ export class TimersService {
           },
         },
       },
+      include: { member: true },
     });
     this.emitUpdateTimer(updatedTimer);
 
