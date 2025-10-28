@@ -1,6 +1,6 @@
 import {
-  MouseEvent as ReactMouseEvent,
-  TouchEvent as ReactTouchEvent,
+  type MouseEvent as ReactMouseEvent,
+  type TouchEvent as ReactTouchEvent,
   useCallback,
   useEffect,
   useState,
@@ -47,16 +47,16 @@ export const useDrag = ({
           x: Math.max(
             Math.min(
               window.innerWidth - width,
-              window.innerWidth - (x + width)
+              window.innerWidth - (x + width),
             ),
-            0
+            0,
           ),
           y: Math.max(
             Math.min(
               window.innerHeight - height,
-              window.innerHeight - (y + height)
+              window.innerHeight - (y + height),
             ),
-            0
+            0,
           ),
         };
       } else {
@@ -76,7 +76,7 @@ export const useDrag = ({
         });
       }
     },
-    [calculateFor]
+    [calculateFor],
   );
 
   const startDrag = (x: number, y: number) => {
@@ -107,11 +107,12 @@ export const useDrag = ({
 
   const handleMouseDown = (evt: ReactMouseEvent<HTMLElement>) => {
     if (isLocked) return;
-    evt.stopPropagation();
     if (!(evt.target instanceof HTMLElement)) return;
     if (evt.target.getAttribute("data-state") === "input") return;
     if (evt.target.getAttribute("data-slot") === "hidden") return;
+    if (evt.target.closest("[data-draggable='false']")) return;
 
+    evt.stopPropagation();
     startDrag(evt.clientX, evt.clientY);
   };
 
@@ -128,7 +129,7 @@ export const useDrag = ({
       evt.preventDefault();
       dragTo(evt.clientX, evt.clientY);
     },
-    [isDragging, dragInfo]
+    [isDragging, dragInfo],
   );
 
   const handleTouchMove = useCallback(
@@ -137,7 +138,7 @@ export const useDrag = ({
       evt.preventDefault();
       dragTo(evt.touches[0].clientX, evt.touches[0].clientY);
     },
-    [isDragging, dragInfo]
+    [isDragging, dragInfo],
   );
 
   const handleMouseUp = useCallback(() => endDrag(), [endDrag]);
@@ -215,5 +216,6 @@ export const useDrag = ({
     handleMouseDown,
     handleTouchStart,
     recalculate,
+    isDragging,
   };
 };

@@ -17,6 +17,7 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { Progress } from "@/components/ui/progress";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
+import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useGuilds } from "@/hooks/api/use-guilds";
 
 export type SingleNotificationProps = {
@@ -37,6 +38,10 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   const { data: members } = useGuildMembers(notification.guildId);
   const { data: guilds } = useGuilds();
   const guildMember = members?.[notification.discordId];
+  useMemberInvalidation(
+    notification.guildId,
+    !guildMember ? notification.discordId : undefined,
+  );
 
   const npcType = notification.npc
     ? getNpcTypeByWt(notification.npc.wt!)
@@ -53,7 +58,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const createdAtMs = useMemo(
     () => new Date(notification.createdAt).getTime(),
-    [notification.createdAt]
+    [notification.createdAt],
   );
   const secondsLeft = useMemo(() => {
     if (!autoHideTimeout || autoHideTimeout <= 0) return 0;
@@ -68,7 +73,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
       notification.servers
         .map((server) => guilds?.find((g) => g.id === server)?.name || "")
         .filter(Boolean),
-    [notification.servers, guilds]
+    [notification.servers, guilds],
   );
 
   const handleRemoveNotification = () =>
@@ -112,7 +117,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
         {showCloseButton && (
           <XIcon
             className={cn(
-              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors"
+              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors",
             )}
             size="16"
             onClick={handleRemoveNotification}

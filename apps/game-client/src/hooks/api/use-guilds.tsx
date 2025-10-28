@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/config/api";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { Guild } from "@/hooks/api/use-guild";
+import type { Guild } from "@/hooks/api/use-guild";
 
 export const useGuilds = () => {
   const { client } = useAuthenticatedApiClient();
@@ -14,6 +14,7 @@ export const useGuilds = () => {
       }),
     select: (response) => response.data,
     refetchOnMount: true,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 
   return query;
