@@ -68,12 +68,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       <div className="ll:flex ll:flex-col ll:gap-0.5 ll:pb-1 ll:border-gray-600">
         <div className="ll:text-sm ll:font-bold ll:text-white">
           {timer.npc.name}{" "}
-          {!isNil(timer.npc.lvl) && timer.npc.lvl > 0 && (
-            <span>
-              ({timer.npc.lvl}
-              {NPC_NAMES[timer.npc.type]?.shortname})
-            </span>
-          )}
           <span className="ll:text-gray-300">{levelSuffix}</span>
         </div>
       </div>
