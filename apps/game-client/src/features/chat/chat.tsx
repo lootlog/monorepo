@@ -45,9 +45,15 @@ export const Chat = () => {
   selectedGuildIdRef.current = selectedGuildId ?? "";
 
   useLayoutEffect(() => {
-    scrollAreaRef.current?.scrollTo({
-      top: scrollAreaRef.current.scrollHeight + 2000,
-      behavior: "instant",
+    const scroll = () => {
+      scrollAreaRef.current?.scrollTo({
+        top: scrollAreaRef.current.scrollHeight + 2000,
+        behavior: "instant",
+      });
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scroll);
     });
   }, [messages, open]);
 
