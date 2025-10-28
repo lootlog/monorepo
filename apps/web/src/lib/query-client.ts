@@ -8,10 +8,22 @@ import type {
 export function createIDBPersister(idbValidKey: IDBValidKey = "lootlog-cache") {
   return {
     persistClient: async (client: PersistedClient) => {
-      await set(idbValidKey, client);
+      const filteredClient = {
+        ...client,
+        clientState: {
+          ...client.clientState,
+          queries: client.clientState.queries.filter((query) => {
+            return query.meta?.persist !== false;
+          }),
+        },
+      };
+      const serialized = JSON.stringify(filteredClient);
+      await set(idbValidKey, serialized);
     },
     restoreClient: async () => {
-      return await get<PersistedClient>(idbValidKey);
+      const serialized = await get<string>(idbValidKey);
+      if (!serialized) return undefined;
+      return JSON.parse(serialized) as PersistedClient;
     },
     removeClient: async () => {
       await del(idbValidKey);

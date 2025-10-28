@@ -10,8 +10,6 @@ import {
   Permission,
   useGuildPermissions,
 } from "@/hooks/api/guilds/use-guild-permissions";
-import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
-import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
@@ -28,15 +26,14 @@ export const LootsList: FC = () => {
     isLoading,
   } = useLoots({ limit: LOOTS_PAGE_LIMIT });
 
-  const { data: permissions, error: permissionsError } = useGuildPermissions();
+  const { data: permissions } = useGuildPermissions();
   const { world } = useGuildContext();
-  const { data: member, isPending } = useGuildMember();
   const isOwner = useIsOwner();
   const guildId = useGuildId();
   const scrollElementRef = useRef<HTMLDivElement>(null);
 
   const canManageLoots =
-    permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
+    permissions.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
 
   const allLoots = loots?.pages.flatMap((page) => page.data) ?? [];
   const totalCount = allLoots.length;
@@ -74,28 +71,6 @@ export const LootsList: FC = () => {
   useEffect(() => {
     scrollElementRef.current?.scrollTo(0, 0);
   }, [guildId]);
-
-  if (
-    permissionsError &&
-    "response" in permissionsError &&
-    permissionsError.response &&
-    typeof permissionsError.response === "object" &&
-    "status" in permissionsError.response &&
-    permissionsError.response.status === 403
-  ) {
-    return (
-      <div className="flex flex-col justify-center gap-8 items-center flex-1">
-        <Frown size="72" />
-        <span className="font-semibold text-center">
-          Nie masz uprawnień do przeglądania lootów w tej gildii. <br /> Odśwież
-          swoje uprawnienia jeśli dostałeś już odpowiednią rolę.
-        </span>
-        {!isPending && member && (
-          <MemberSyncButton member={{ ...member, userId: "@me" }} />
-        )}
-      </div>
-    );
-  }
 
   const hasLoots = (loots?.pages?.[0]?.data?.length ?? 0) > 0;
 

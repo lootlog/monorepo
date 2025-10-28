@@ -1,4 +1,4 @@
-import { useQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient } from "@/lib/api-client/api-client";
 
@@ -27,13 +27,13 @@ export const guildPermissionsQueryOptions = (guildId: string) =>
       );
       return response.data;
     },
-    enabled: !!guildId,
+    staleTime: 0,
   });
 
 export const useGuildPermissions = () => {
   const guildId = useGuildId();
 
-  const query = useQuery({
+  const query = useSuspenseQuery({
     ...guildPermissionsQueryOptions(guildId ?? ""),
   });
 
