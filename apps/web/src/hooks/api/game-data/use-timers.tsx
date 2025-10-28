@@ -32,6 +32,7 @@ export const useTimers = (enabled = true) => {
     select: (response) => response.data,
     refetchOnMount: "always",
     staleTime: 0,
+    meta: { persist: false },
   });
 
   return query;
