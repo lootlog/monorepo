@@ -95,7 +95,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
                     onClick={() => handleChange(guild.id)}
                     disabled={disabled}
                     className={cn(
-                      "ll:flex ll:items-center ll:justify-center ll:transition-all ll:border ll:rounded-sm",
+                      "ll:flex ll:items-center ll:justify-center ll:transition-all ll:border-2 ll:rounded-sm",
                       "hover:ll:scale-105",
                       "disabled:ll:opacity-50 disabled:ll:cursor-not-allowed",
                       "ll:size-7 ll:p-0 ll:shrink-0",
