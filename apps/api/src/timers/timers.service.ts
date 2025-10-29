@@ -28,6 +28,9 @@ import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
 import { canViewNpcTimer } from 'src/shared/utils/can-view-npc-timer';
+import type { CreateTimerFromGameClientDto } from 'src/timers/dto/create-timer-from-game-client.dto';
+import { validateAndCalculateSpawnTimes } from 'src/timers/utils/validate-spawn-times';
+import { TIMER_LIMITS, TIMER_TYPES } from 'src/timers/constants/timer-limits';
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -48,7 +51,7 @@ export class TimersService {
 
   async createTimer(discordId: string, userId: string, data: CreateTimerDto) {
     const now = new Date();
-    if (data.npc.wt < 19)
+    if (data.npc.wt < TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS)
       throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
     const [guilds, config] = await Promise.all([
       this.guildsService.getGuildsForRequiredPermissions(discordId, userId, [
@@ -133,6 +136,80 @@ export class TimersService {
     return newTimersUpsert;
   }
 
+  async createTimerForGuild(
+    discordId: string,
+    guildId: string,
+    data: CreateTimerFromGameClientDto,
+  ) {
+    const now = new Date();
+    if (data.npc.wt < TIMER_LIMITS.MIN_NPC_WT_FOR_TIMERS)
+      throw new BadRequestException({ message: ErrorKey.WT_TOO_LOW });
+
+    const { minSpawnTime, maxSpawnTime } = validateAndCalculateSpawnTimes(
+      data,
+      now,
+    );
+
+    const newTimer = await this.prisma.timer.upsert({
+      where: {
+        timerId: {
+          guildId,
+          world: data.world,
+          npcId: data.npc.id,
+        },
+      },
+      create: {
+        maxSpawnTime,
+        minSpawnTime,
+        world: data.world,
+        npcId: data.npc.id,
+        latestRespBaseSeconds: data.respBaseSeconds,
+        latestRespawnRandomness:
+          data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+        guild: { connect: { id: guildId } },
+        member: {
+          connect: { memberId: { userId: discordId, guildId } },
+        },
+        npc: {
+          id: data.npc.id,
+          name: data.npc.name,
+          prof: getProfByShortname(data.npc.prof),
+          location: data.npc.location,
+          wt: data.npc.wt,
+          lvl: data.npc.lvl,
+          type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
+          icon: data.npc.icon,
+          margonemType: data.npc.type,
+        },
+      },
+      update: {
+        maxSpawnTime,
+        minSpawnTime,
+        npc: {
+          id: data.npc.id,
+          name: data.npc.name,
+          prof: getProfByShortname(data.npc.prof),
+          location: data.npc.location,
+          wt: data.npc.wt,
+          lvl: data.npc.lvl,
+          type: getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type),
+          icon: data.npc.icon,
+          margonemType: data.npc.type,
+        },
+        latestRespBaseSeconds: data.respBaseSeconds,
+        latestRespawnRandomness:
+          data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS,
+        member: {
+          connect: { memberId: { userId: discordId, guildId } },
+        },
+      },
+      include: { member: true },
+    });
+
+    this.emitUpdateTimer(newTimer);
+    return newTimer;
+  }
+
   async createManualTimer(
     discordId: string,
     guildId: string,
@@ -159,7 +236,7 @@ export class TimersService {
           lvl: 0,
           type: '',
           icon: '',
-          margonemType: 999,
+          margonemType: TIMER_TYPES.CUSTOM_MANUAL,
         },
         world: data.world,
         latestRespBaseSeconds: data.respBaseSeconds,
