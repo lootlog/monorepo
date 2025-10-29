@@ -540,6 +540,41 @@
   --sidebar-ring: oklch(0.52 0.16 15);
 }
 
+.dark.waguri {
+  --background: oklch(12.904% 0.06635 306.952);
+  --foreground: oklch(0.96 0.03 40);
+  --card: oklch(13.289% 0.06698 310.701);
+  --card-foreground: oklch(0.96 0.03 40);
+  --popover: oklch(0.18 0.05 15);
+  --popover-foreground: oklch(0.96 0.03 40);
+  --primary: oklch(20.771% 0.0998 319.837);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.24 0.08 20);
+  --secondary-foreground: oklch(0.96 0.03 40);
+  --muted: oklch(0.26 0.05 15);
+  --muted-foreground: oklch(0.72 0.07 35);
+  --accent: oklch(0.76 0.18 85);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.68 0.22 15);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(22.626% 0.11057 316.582);
+  --input: oklch(0.34 0.08 20);
+  --ring: oklch(0.75 0.22 10);
+  --chart-1: oklch(0.75 0.22 10);
+  --chart-2: oklch(0.76 0.18 85);
+  --chart-3: oklch(0.73 0.18 35);
+  --chart-4: oklch(0.7 0.2 60);
+  --chart-5: oklch(0.78 0.16 15);
+  --sidebar: oklch(12.746% 0.06346 313.027);
+  --sidebar-foreground: oklch(0.96 0.03 40);
+  --sidebar-primary: oklch(0.75 0.22 10);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.26 0.05 15);
+  --sidebar-accent-foreground: oklch(0.96 0.03 40);
+  --sidebar-border: oklch(0.3 0.06 20);
+  --sidebar-ring: oklch(0.52 0.16 15);
+}
+
 .goth {
   --background: oklch(0.96 0.01 330);
   --foreground: oklch(0.18 0.02 330);
@@ -831,6 +866,25 @@ body {
     background-size: cover;
     background-attachment: fixed;
     background-position: 200px 10%;
+    filter: brightness(0.12);
+    z-index: -1;
+  }
+
+  .dark.waguri body {
+    background-image: none;
+  }
+
+  .dark.waguri body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://images7.alphacoders.com/139/1398235.png");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
     filter: brightness(0.12);
     z-index: -1;
   }
