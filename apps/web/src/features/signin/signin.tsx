@@ -15,7 +15,7 @@ export const SignIn: React.FC = () => {
         callbackURL: search.redirect ?? "/",
       });
     } catch (error) {
-      console.error("Sign in failed:", error);
+      console.error("Sign in failed for a reason:", error);
       setIsLoading(false);
     }
   };
