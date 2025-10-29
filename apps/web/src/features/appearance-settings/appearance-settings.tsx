@@ -61,6 +61,13 @@ const themes = [
       "https://a-static.besthdwallpaper.com/my-dress-up-darling-anime-marin-kitagawa-wallpaper-3554x1999-89573_53.jpg",
   },
   {
+    name: "waguri",
+    title: "Kaoruko Waguri",
+    description: "Słodka i stylowa",
+    colors: ["#FF69B4", "#8A2BE2", "#FFB6C1"],
+    backgroundImage: "https://images7.alphacoders.com/139/1398235.png",
+  },
+  {
     name: "goth",
     title: "Gothic",
     description: "Mroczny i elegancki",
