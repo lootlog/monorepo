@@ -22,7 +22,7 @@ import { useTimersStore } from "@/store/timers.store";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { format } from "date-fns";
 import { isNil } from "lodash";
-import { ClockArrowDown, ClockArrowUp } from "lucide-react";
+import { ClockArrowDown, ClockArrowUp, Loader2 } from "lucide-react";
 import type { FC } from "react";
 
 type SingleTimerProps = {
@@ -55,6 +55,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   const { mutate: resetTimer } = useResetTimer();
   const { mutate: deleteTimer } = useDeleteTimer();
 
+  const isPending = timer.isPending === true;
   const isMinSpawnTime = minTimeLeft < 0;
   const hasPassedRedThreshold = maxTimeLeft < 0;
 
@@ -75,6 +76,12 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         <div className="ll:text-xs ll:text-gray-300">
           <span className="ll:text-gray-400">Dodane przez:</span>{" "}
           <span className="ll:font-semibold">{timer?.member?.name ?? ""}</span>
+        </div>
+      )}
+
+      {timer.wasReset && (
+        <div className="ll:text-xs ll:text-orange-400 ll:flex ll:items-center ll:gap-1">
+          <span className="ll:font-semibold">⟳ Timer został zresetowany</span>
         </div>
       )}
 
@@ -186,90 +193,110 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       <ContextMenu>
         <TooltipTrigger asChild>
           <ContextMenuTrigger className="ll:h-full ll:pr-px">
-            <Tile
-              id={timer.npc.id.toString()}
-              color={selectedColor as keyof typeof TIMERS_COLORS}
-            >
-              <span
-                className={cn(
-                  "ll:flex ll:justify-between ll:w-full ll:text-[11px] ll:px-1 ll:box-border ll:h-full ll:min-w-0",
-                  {
-                    "ll:text-red-500": hasPassedRedThreshold,
-                    "ll:text-orange-400": isMinSpawnTime,
-                    "ll:text-white": !hasPassedRedThreshold && !isMinSpawnTime,
-                    "ll:py-1": document.body.classList.contains("si"),
-                    "ll:flex-col ll:py-0 ll:px-0 ll:leading-[1.05] ll:items-center":
-                      displayConfig.singleTimerDisplayMode === "column",
-                  },
-                )}
+            <div className="ll:relative ll:h-full">
+              {isPending && (
+                <div className="ll:absolute ll:inset-0 ll:flex ll:items-center ll:justify-center ll:z-10 ll:bg-black/20">
+                  <Loader2 className="ll:h-3 ll:w-3 ll:animate-spin ll:text-orange-500" />
+                </div>
+              )}
+              <Tile
+                id={timer.npc.id.toString()}
+                color={selectedColor as keyof typeof TIMERS_COLORS}
               >
                 <span
                   className={cn(
-                    "ll:whitespace-nowrap ll:truncate ll:min-w-0 ll:max-w-full",
+                    "ll:flex ll:justify-between ll:w-full ll:text-[11px] ll:px-1 ll:box-border ll:h-full ll:min-w-0",
                     {
-                      "ll:w-full ll:text-center":
+                      "ll:text-red-500": hasPassedRedThreshold,
+                      "ll:text-orange-400": isMinSpawnTime,
+                      "ll:text-white":
+                        !hasPassedRedThreshold && !isMinSpawnTime,
+                      "ll:py-1": document.body.classList.contains("si"),
+                      "ll:flex-col ll:py-0 ll:px-0 ll:leading-[1.05] ll:items-center":
                         displayConfig.singleTimerDisplayMode === "column",
+                      "ll:opacity-60 ll:blur-[0.5px]": isPending,
                     },
                   )}
-                  style={{
-                    fontSize: `${displayConfig.fontSize}px`,
-                  }}
                 >
-                  {shortname} {timer.npc.name} {npcDetails}
+                  <span
+                    className={cn(
+                      "ll:whitespace-nowrap ll:truncate ll:min-w-0 ll:max-w-full",
+                      {
+                        "ll:w-full ll:text-center":
+                          displayConfig.singleTimerDisplayMode === "column",
+                      },
+                    )}
+                    style={{
+                      fontSize: `${displayConfig.fontSize}px`,
+                    }}
+                  >
+                    {shortname} {timer.npc.name} {npcDetails}
+                  </span>
+                  <div
+                    style={{
+                      fontSize: `${displayConfig.fontSize}px`,
+                    }}
+                  >
+                    {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
+                  </div>
                 </span>
-                <div
-                  style={{
-                    fontSize: `${displayConfig.fontSize}px`,
-                  }}
-                >
-                  {parseMsToTime(timeLeft <= 0 ? 0 : timeLeft)}
-                </div>
-              </span>
-            </Tile>
+              </Tile>
+            </div>
           </ContextMenuTrigger>
         </TooltipTrigger>
 
         <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
-          <div className="ll:flex ll:gap-1 ll:my-1.5 ll:w-full ll:justify-center ll:flex-wrap">
-            {Object.entries(TIMERS_COLORS).map(([id, color]) => (
-              <div
-                key={id}
-                className={cn(
-                  "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer",
-                  color?.bgNoOpacity,
-                  {
-                    " ll:ring-2 ll:ring-white": selectedColor === id,
-                  },
-                )}
-                onClick={() => handleTimerColorChange(id)}
-              />
-            ))}
-          </div>
-          <ContextMenuItem onClick={handlePinTimer}>
-            {isPinned ? "Odepnij" : "Przypnij"}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={isPinned ? handleUnpinTimerForAll : handlePinTimerForAll}
-          >
-            {isPinned
-              ? "Odepnij na wszystkich serwerach"
-              : "Przypnij na wszystkich serwerach"}
-          </ContextMenuItem>
-          <ContextMenuItem onClick={handleHideTimer}>Ukryj</ContextMenuItem>
-          <ContextMenuItem onClick={handleHideTimerForAll}>
-            Ukryj na wszystkich serwerach
-          </ContextMenuItem>
-          {!generalConfig.timersGrouping && (
-            <ContextMenuItem onClick={handleRestartTimer}>
-              Odliczaj od początku
-            </ContextMenuItem>
+          {isPending ? (
+            <div className="ll:p-4 ll:text-center ll:text-sm ll:text-gray-400">
+              <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin ll:mx-auto ll:mb-2 ll:text-orange-500" />
+              <p>Tworzenie timera...</p>
+            </div>
+          ) : (
+            <>
+              <div className="ll:flex ll:gap-1 ll:my-1.5 ll:w-full ll:justify-center ll:flex-wrap">
+                {Object.entries(TIMERS_COLORS).map(([id, color]) => (
+                  <div
+                    key={id}
+                    className={cn(
+                      "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer",
+                      color?.bgNoOpacity,
+                      {
+                        " ll:ring-2 ll:ring-white": selectedColor === id,
+                      },
+                    )}
+                    onClick={() => handleTimerColorChange(id)}
+                  />
+                ))}
+              </div>
+              <ContextMenuItem onClick={handlePinTimer}>
+                {isPinned ? "Odepnij" : "Przypnij"}
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={
+                  isPinned ? handleUnpinTimerForAll : handlePinTimerForAll
+                }
+              >
+                {isPinned
+                  ? "Odepnij na wszystkich serwerach"
+                  : "Przypnij na wszystkich serwerach"}
+              </ContextMenuItem>
+              <ContextMenuItem onClick={handleHideTimer}>Ukryj</ContextMenuItem>
+              <ContextMenuItem onClick={handleHideTimerForAll}>
+                Ukryj na wszystkich serwerach
+              </ContextMenuItem>
+              {!generalConfig.timersGrouping && (
+                <ContextMenuItem onClick={handleRestartTimer}>
+                  Odliczaj od początku
+                </ContextMenuItem>
+              )}
+              {!generalConfig.timersGrouping && canDelete && (
+                <ContextMenuItem onClick={handleDeleteTimer}>
+                  Usuń timer
+                </ContextMenuItem>
+              )}
+              <ContextMenuItem disabled>Włącz dźwięk</ContextMenuItem>
+            </>
           )}
-          {!generalConfig.timersGrouping && canDelete && (
-            <ContextMenuItem onClick={handleDeleteTimer}>
-              Usuń timer
-            </ContextMenuItem>
-          )}
-          <ContextMenuItem disabled>Włącz dźwięk</ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
 

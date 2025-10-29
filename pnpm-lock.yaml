@@ -57,6 +57,9 @@ importers:
       "@golevelup/nestjs-rabbitmq":
         specifier: ^6.0.2
         version: 6.0.2(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      "@lootlog/api-helpers":
+        specifier: workspace:*
+        version: link:../../packages/api-helpers
       "@nestjs/axios":
         specifier: ^4.0.1
         version: 4.0.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.12.2)(rxjs@7.8.2)
@@ -78,6 +81,9 @@ importers:
       "@nestjs/platform-fastify":
         specifier: ^11.1.8
         version: 11.1.8(@fastify/static@8.3.0)(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)
+      "@nestjs/schedule":
+        specifier: ^6.0.1
+        version: 6.0.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)
       "@nestjs/swagger":
         specifier: ^11.2.1
         version: 11.2.1(@fastify/static@8.3.0)(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)
@@ -545,6 +551,9 @@ importers:
       "@golevelup/nestjs-rabbitmq":
         specifier: ^6.0.2
         version: 6.0.2(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      "@lootlog/api-helpers":
+        specifier: workspace:*
+        version: link:../../packages/api-helpers
       "@nestjs/axios":
         specifier: ^4.0.1
         version: 4.0.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.12.2)(rxjs@7.8.2)
@@ -3456,6 +3465,15 @@ packages:
       "@nestjs/websockets": ^11.0.0
       rxjs: ^7.1.0
 
+  "@nestjs/schedule@6.0.1":
+    resolution:
+      {
+        integrity: sha512-v3yO6cSPAoBSSyH67HWnXHzuhPhSNZhRmLY38JvCt2sqY8sPMOODpcU1D79iUMFf7k16DaMEbL4Mgx61ZhiC8Q==,
+      }
+    peerDependencies:
+      "@nestjs/common": ^10.0.0 || ^11.0.0
+      "@nestjs/core": ^10.0.0 || ^11.0.0
+
   "@nestjs/schematics@11.0.9":
     resolution:
       {
@@ -6155,6 +6173,12 @@ packages:
         integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==,
       }
 
+  "@types/luxon@3.7.1":
+    resolution:
+      {
+        integrity: sha512-H3iskjFIAn5SlJU7OuxUmTEpebK6TKB8rxZShDslBMZJ5u9S//KM1sbdAisiSrqwLQncVjnpi2OK2J51h+4lsg==,
+      }
+
   "@types/mdast@4.0.4":
     resolution:
       {
@@ -7925,6 +7949,13 @@ packages:
         integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==,
       }
     engines: { node: ">=12.0.0" }
+
+  cron@4.3.3:
+    resolution:
+      {
+        integrity: sha512-B/CJj5yL3sjtlun6RtYHvoSB26EmQ2NUmhq9ZiJSyKIM4K/fqfh9aelDFlIayD2YMeFZqWLi9hHV+c+pq2Djkw==,
+      }
+    engines: { node: ">=18.x" }
 
   cross-spawn@7.0.6:
     resolution:
@@ -16635,6 +16666,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  "@nestjs/schedule@6.0.1(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.8)":
+    dependencies:
+      "@nestjs/common": 11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      "@nestjs/core": 11.1.8(@nestjs/common@11.1.8(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.8)(@nestjs/platform-express@11.1.8)(@nestjs/websockets@11.1.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      cron: 4.3.3
+
   "@nestjs/schematics@11.0.9(chokidar@4.0.3)(typescript@5.8.3)":
     dependencies:
       "@angular-devkit/core": 19.2.17(chokidar@4.0.3)
@@ -18523,6 +18560,8 @@ snapshots:
 
   "@types/lodash@4.17.20": {}
 
+  "@types/luxon@3.7.1": {}
+
   "@types/mdast@4.0.4":
     dependencies:
       "@types/unist": 3.0.3
@@ -19565,6 +19604,11 @@ snapshots:
 
   cron-parser@4.9.0:
     dependencies:
+      luxon: 3.7.2
+
+  cron@4.3.3:
+    dependencies:
+      "@types/luxon": 3.7.1
       luxon: 3.7.2
 
   cross-spawn@7.0.6:

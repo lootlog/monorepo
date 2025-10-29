@@ -30,13 +30,22 @@ export function validateAndCalculateSpawnTimes(
   now: Date = new Date(),
 ): SpawnTimes {
   if (dto.customMinSpawnTime && dto.customMaxSpawnTime) {
-    if (dto.customMaxSpawnTime <= dto.customMinSpawnTime) {
+    const customMin =
+      dto.customMinSpawnTime instanceof Date
+        ? dto.customMinSpawnTime
+        : new Date(dto.customMinSpawnTime);
+    const customMax =
+      dto.customMaxSpawnTime instanceof Date
+        ? dto.customMaxSpawnTime
+        : new Date(dto.customMaxSpawnTime);
+
+    if (customMax <= customMin) {
       throw new BadRequestException({
         message: ErrorKey.INVALID_CUSTOM_SPAWN_TIME,
       });
     }
 
-    if (dto.customMinSpawnTime < now) {
+    if (customMin < now) {
       throw new BadRequestException({
         message: ErrorKey.SPAWN_TIME_IN_PAST,
       });
@@ -44,8 +53,7 @@ export function validateAndCalculateSpawnTimes(
 
     const maxDurationMs =
       TIMER_LIMITS.MAX_SPAWN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-    const duration =
-      dto.customMaxSpawnTime.getTime() - dto.customMinSpawnTime.getTime();
+    const duration = customMax.getTime() - customMin.getTime();
 
     if (duration > maxDurationMs) {
       throw new BadRequestException({
@@ -54,8 +62,8 @@ export function validateAndCalculateSpawnTimes(
     }
 
     return {
-      minSpawnTime: dto.customMinSpawnTime,
-      maxSpawnTime: dto.customMaxSpawnTime,
+      minSpawnTime: customMin,
+      maxSpawnTime: customMax,
     };
   }
 
