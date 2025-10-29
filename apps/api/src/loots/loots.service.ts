@@ -114,10 +114,10 @@ export class LootsService {
 
     const { filteredGuildIds, filteredGuilds } = guilds.reduce(
       (acc, guild) => {
-        const isOnBlacklist = config?.collectLootBlaclistGuildIds?.includes(
+        const isOnWhitelist = config?.collectLootWhitelistGuildIds?.includes(
           guild.id,
         );
-        if (!isOnBlacklist) {
+        if (isOnWhitelist) {
           acc.filteredGuilds.push(guild);
           acc.filteredGuildIds.push(guild.id);
         }

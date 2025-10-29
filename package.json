@@ -32,6 +32,7 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
     "api:migrate:dev": "turbo run api:migrate:dev",
     "api:generate": "turbo run api:generate",
     "api:studio": "turbo run api:studio",

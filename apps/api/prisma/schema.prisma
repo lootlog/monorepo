@@ -260,8 +260,8 @@ model UserCharactersLootlogSettings {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  collectLootBlaclistGuildIds String[] @default([])
-  addTimersBlacklistGuildIds  String[] @default([])
+  collectLootWhitelistGuildIds String[] @default([])
+  addTimersWhitelistGuildIds   String[] @default([])
 
   @@unique([userId, accountId, characterId])
 }

@@ -121,6 +121,7 @@ describe('MembersService', () => {
       get: jest.fn(),
       set: jest.fn(),
       del: jest.fn(),
+      deleteByPattern: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({

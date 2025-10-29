@@ -6,9 +6,11 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
-import type { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
+import { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { UserLootlogConfigEntity } from 'src/shared/entities/user-lootlog-config.entity';
 
@@ -39,12 +41,26 @@ export class UserLootlogConfigController {
   @ApiResponse({ status: 404, description: 'Configuration not found' })
   async getUserLootlogConfigByAccountId(
     @DiscordId() discordId: string,
+    @UserId() userId: string,
     @Param('accountId') accountId: string,
   ) {
-    return this.userLootlogConfigService.getLootlogAccountConfig(
+    const configs = await this.userLootlogConfigService.getLootlogAccountConfig(
       discordId,
       accountId,
+      userId,
     );
+
+    const serialized = Object.entries(configs).reduce(
+      (acc, [characterId, config]) => {
+        return {
+          ...acc,
+          [characterId]: plainToInstance(UserLootlogConfigEntity, config),
+        };
+      },
+      {},
+    );
+
+    return serialized;
   }
 
   @Put('accounts/:accountId')
@@ -67,10 +83,13 @@ export class UserLootlogConfigController {
     @Param('accountId') accountId: string,
     @Body() data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
-    return this.userLootlogConfigService.createOrUpdateLootlogCharacterConfig(
-      discordId,
-      accountId,
-      data,
-    );
+    const config =
+      await this.userLootlogConfigService.createOrUpdateLootlogCharacterConfig(
+        discordId,
+        accountId,
+        data,
+      );
+
+    return plainToInstance(UserLootlogConfigEntity, config);
   }
 }
