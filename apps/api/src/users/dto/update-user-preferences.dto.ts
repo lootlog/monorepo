@@ -39,6 +39,7 @@ export class UpdateUserPreferencesDto {
       'realmadrid',
       'realmadrid-3rd',
       'barcelona',
+      'waguri',
     ],
   })
   @IsOptional()
