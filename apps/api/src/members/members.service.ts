@@ -29,7 +29,10 @@ import { ServiceConfig } from 'src/config/service.config';
 import { RuntimeEnvironment } from 'src/types/runtime.types';
 import { DiscordService } from 'src/discord/discord.service';
 import { RedisService } from 'src/lib/redis/redis.service';
-import { getPermissionsCacheKey } from 'src/shared/constants/cache.constant';
+import {
+  getPermissionsCacheKey,
+  getUserLootlogConfigCachePattern,
+} from 'src/shared/constants/cache.constant';
 
 type MemberWithRoles = Member & {
   roles: Role[];
@@ -361,6 +364,7 @@ export class MembersService {
           },
         ),
         this.redisService.del(getPermissionsCacheKey(globalUserId, guildId)),
+        this.redisService.deleteByPattern(getUserLootlogConfigCachePattern(id)),
       ]);
 
       return member;
@@ -393,10 +397,16 @@ export class MembersService {
       throw new BadRequestException(ErrorKey.MEMBER_ALREADY_DEACTIVATED);
     }
 
-    return this.prisma.member.update({
+    const deactivatedMember = await this.prisma.member.update({
       where: { memberId: { userId: discordId, guildId } },
       data: { active: false, roles: { set: [] } },
     });
+
+    await this.redisService.deleteByPattern(
+      getUserLootlogConfigCachePattern(discordId),
+    );
+
+    return deactivatedMember;
   }
 
   async deleteMembersByGuildId(guildId: string): Promise<number> {

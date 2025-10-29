@@ -212,9 +212,9 @@ describe('LootsService', () => {
       guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
         mockGuild,
       ]);
-      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
-        null,
-      );
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        collectLootWhitelistGuildIds: ['guild1'],
+      } as any);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
           id: 'guild1',
@@ -313,6 +313,9 @@ describe('LootsService', () => {
     });
 
     it('should throw BadRequestException when no valid configs found', async () => {
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        collectLootWhitelistGuildIds: ['guild1'],
+      } as any);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([]);
       prismaService.loot.findUnique.mockResolvedValue(null);
 
@@ -327,6 +330,9 @@ describe('LootsService', () => {
     });
 
     it('should throw BadRequestException when no guild config accepts the loot', async () => {
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        collectLootWhitelistGuildIds: ['guild1'],
+      } as any);
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
           id: 'guild1',
@@ -406,6 +412,10 @@ describe('LootsService', () => {
         mockGuild,
         guild2,
       ]);
+
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        collectLootWhitelistGuildIds: ['guild1', 'guild2'],
+      } as any);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {
@@ -494,7 +504,7 @@ describe('LootsService', () => {
       ]);
 
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootBlaclistGuildIds: ['guild2'],
+        collectLootWhitelistGuildIds: ['guild1'],
       } as any);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
@@ -560,6 +570,10 @@ describe('LootsService', () => {
         mockGuild,
         guild2,
       ]);
+
+      userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
+        collectLootWhitelistGuildIds: ['guild1', 'guild2'],
+      } as any);
 
       lootlogConfigService.getMultipleLootlogConfigs.mockResolvedValue([
         {

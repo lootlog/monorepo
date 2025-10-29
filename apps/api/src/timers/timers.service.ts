@@ -62,8 +62,8 @@ export class TimersService {
     ]);
 
     if (guilds.length === 0) throw new ForbiddenException();
-    const filteredGuilds = guilds.filter(
-      (guild) => !config?.addTimersBlacklistGuildIds?.includes(guild.id),
+    const filteredGuilds = guilds.filter((guild) =>
+      config?.addTimersWhitelistGuildIds?.includes(guild.id),
     );
 
     const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
@@ -130,7 +130,7 @@ export class TimersService {
       newTimers.map((timer) => this.prisma.timer.upsert(timer)),
     );
     newTimersUpsert.forEach((newTimer) => this.emitUpdateTimer(newTimer));
-    return;
+    return newTimersUpsert;
   }
 
   async createManualTimer(

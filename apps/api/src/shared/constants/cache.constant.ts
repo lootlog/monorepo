@@ -5,6 +5,7 @@ export const GUILD_CACHE_TTL_SECONDS = 3600;
 export const PERMISSIONS_CACHE_KEY_PREFIX = 'perms';
 export const AUTH_TOKEN_CACHE_KEY_PREFIX = 'auth:idp-token';
 export const GUILD_CACHE_KEY_PREFIX = 'guild';
+export const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = 'user-lootlog-config';
 
 export function getPermissionsCacheKey(
   userId: string,
@@ -23,4 +24,8 @@ export function getAuthTokenCacheKey(userId: string): string {
 
 export function getGuildCacheKey(idOrVanityUrl: string): string {
   return `${GUILD_CACHE_KEY_PREFIX}:${idOrVanityUrl}`;
+}
+
+export function getUserLootlogConfigCachePattern(discordId: string): string {
+  return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:*`;
 }

@@ -105,6 +105,19 @@
         "tsconfig.json"
       ]
     },
+    "test:e2e": {
+      "dependsOn": ["api:generate", "battlelog:generate"],
+      "cache": false,
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "test/**/*.e2e-spec.ts",
+        "jest.config.*",
+        "jest-e2e.json",
+        "tsconfig.json"
+      ]
+    },
     "battlelog:migrate:dev": {
       "cache": false,
       "interactive": true
