@@ -43,7 +43,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Prerequisites
 
 - Node.js >= 20
-- pnpm >= 10.19.0
+- pnpm >= 10.20.0
 - Docker & Docker Compose
 
 ### Initial Setup
