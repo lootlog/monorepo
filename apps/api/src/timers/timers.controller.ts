@@ -32,6 +32,7 @@ import type { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
 import type { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
 import { TimersService } from 'src/timers/timers.service';
 import { TimerEntity } from 'src/shared/entities/timer.entity';
+import type { CreateTimerFromGameClientDto } from 'src/timers/dto/create-timer-from-game-client.dto';
 
 @ApiTags('timers')
 @ApiBearerAuth()
@@ -171,8 +172,11 @@ export class TimersController {
 
   @Post('/timers')
   @ApiOperation({
-    summary: 'Create user timer',
-    description: 'Create a timer submitted by user from game client',
+    summary: 'Create user timer (DEPRECATED)',
+    description:
+      'DEPRECATED: This endpoint creates timers in ALL whitelisted guilds and is being phased out. ' +
+      'Please use POST /guilds/:guildId/timers/from-game-client instead for per-guild timer creation with better error handling.',
+    deprecated: true,
   })
   @ApiResponse({
     status: 201,
@@ -210,5 +214,40 @@ export class TimersController {
     @Param('guildId') guildId: string,
   ) {
     return this.timersService.createManualTimer(discordId, guildId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/timers/from-game-client')
+  @ApiOperation({
+    summary: 'Create timer from game client for specific guild',
+    description:
+      'Create a timer submitted by user from game client for a specific guild. Supports custom spawn times.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiResponse({
+    status: 201,
+    description: 'Timer created successfully',
+    type: TimerEntity,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error (invalid spawn times, wt too low, etc.)',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async createTimerFromGameClient(
+    @Body() data: CreateTimerFromGameClientDto,
+    @DiscordId() discordId: string,
+    @Param('guildId') guildId: string,
+  ) {
+    const timer = await this.timersService.createTimerForGuild(
+      discordId,
+      guildId,
+      data,
+    );
+    return plainToInstance(TimerEntity, timer);
   }
 }
