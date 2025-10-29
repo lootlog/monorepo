@@ -93,7 +93,7 @@
       "interactive": true
     },
     "test": {
-      "dependsOn": ["^test", "api:generate", "battlelog:generate"],
+      "dependsOn": ["^build", "api:generate", "battlelog:generate"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -106,7 +106,7 @@
       ]
     },
     "test:e2e": {
-      "dependsOn": ["api:generate", "battlelog:generate"],
+      "dependsOn": ["^build", "api:generate", "battlelog:generate"],
       "cache": false,
       "outputs": [],
       "inputs": [
