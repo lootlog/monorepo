@@ -18,7 +18,21 @@ export class UserPreferencesEntity {
   @ApiProperty({
     example: 'cyberpunk',
     description: 'Theme preference',
-    enum: ['default', 'cyberpunk', 'pastel', 'fantasy', 'shonen', 'onepiece', 'anime'],
+    enum: [
+      'default',
+      'cyberpunk',
+      'pastel',
+      'fantasy',
+      'shonen',
+      'onepiece',
+      'anime',
+      'goth',
+      'halloween',
+      'realmadrid',
+      'realmadrid-3rd',
+      'barcelona',
+      'waguri',
+    ],
   })
   theme: string;
 
