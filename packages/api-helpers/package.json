@@ -7,9 +7,21 @@
   "module": "dist/index.mjs",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
+    },
+    "./permissions": {
+      "types": "./dist/permissions.d.ts",
+      "import": "./dist/permissions.mjs",
+      "require": "./dist/permissions.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "permissions": [
+        "./dist/permissions.d.ts"
+      ]
     }
   },
   "scripts": {

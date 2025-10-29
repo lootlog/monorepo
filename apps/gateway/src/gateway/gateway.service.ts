@@ -7,7 +7,7 @@ import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto'
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
 import type { Npc } from 'src/gateway/types/npc.type';
-import { canViewNpcTimer } from 'src/gateway/utils/can-view-npc-timer';
+import { canViewNpcTimer } from '@lootlog/api-helpers/permissions';
 import {
   isAdministrativeUserFromRoles,
   isOwnerOrAdminFromRoles,

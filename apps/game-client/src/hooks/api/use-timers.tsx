@@ -19,6 +19,10 @@ export type Timer = {
   members?: GuildMember[];
   world: string;
   guildId: string;
+  isCustomTime?: boolean;
+  isPending?: boolean;
+  tempId?: string;
+  wasReset?: boolean;
 };
 
 export const useTimers = ({ world }: UseTimersOptions) => {

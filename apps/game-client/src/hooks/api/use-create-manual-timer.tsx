@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { toast } from "sonner";
 
 export type UseCreateTimerOptions = {
   name: string;
@@ -7,6 +8,8 @@ export type UseCreateTimerOptions = {
   respawnRandomness: number;
   world: string;
   guildId: string;
+  customMinSpawnTime?: Date;
+  customMaxSpawnTime?: Date;
 };
 
 export const useCreateManualTimer = () => {
@@ -15,12 +18,15 @@ export const useCreateManualTimer = () => {
   const mutation = useMutation({
     mutationKey: ["create-manual-timer"],
     mutationFn: ({ guildId, ...rest }: UseCreateTimerOptions) =>
-      client.post(`/guilds/${guildId}/timers`, rest),
+      client.post(`/guilds/${guildId}/timers/manual`, rest),
     onSuccess: () => {
-      console.log("onSuccess");
+      toast.success("Timer został dodany pomyślnie");
     },
-    onError: () => {
-      console.log("onError");
+    onError: (error: unknown) => {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Nie udało się utworzyć timera";
+      toast.error(errorMessage);
     },
   });
 

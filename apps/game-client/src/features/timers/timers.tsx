@@ -159,13 +159,31 @@ export const Timers = () => {
       (old: AxiosResponse<Timer[]>) => {
         if (data.world !== desiredWorldRef.current) return old;
         const updated = [...(old?.data || [])];
-        const index = updated.findIndex(
+
+        const pendingIndex = updated.findIndex(
           (t) =>
+            t.isPending &&
             t.npcId === data.npcId &&
             t.guildId === data.guildId &&
             t.world === data.world,
         );
-        index !== -1 ? (updated[index] = data) : updated.push(data);
+
+        const existingIndex = updated.findIndex(
+          (t) =>
+            !t.isPending &&
+            t.npcId === data.npcId &&
+            t.guildId === data.guildId &&
+            t.world === data.world,
+        );
+
+        if (pendingIndex !== -1) {
+          updated[pendingIndex] = { ...data, isPending: false };
+        } else if (existingIndex !== -1) {
+          updated[existingIndex] = data;
+        } else {
+          updated.push(data);
+        }
+
         return { data: updated };
       },
     );

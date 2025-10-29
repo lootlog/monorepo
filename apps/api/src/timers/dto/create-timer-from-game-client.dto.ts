@@ -46,4 +46,8 @@ export class CreateTimerFromGameClientDto {
   @IsNotEmpty()
   @IsString()
   accountId: string;
+
+  @IsOptional()
+  @IsString()
+  tempId?: string;
 }
