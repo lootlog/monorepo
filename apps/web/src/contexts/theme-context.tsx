@@ -17,6 +17,7 @@ type Theme =
   | "shonen"
   | "onepiece"
   | "anime"
+  | "waguri"
   | "goth"
   | "halloween"
   | "realmadrid"
@@ -57,26 +58,30 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     ) as ColorMode;
     return savedColorMode || "dark";
   });
+  const [isUserInitiated, setIsUserInitiated] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && preferences?.theme && preferences.theme !== theme) {
-      setThemeState(preferences.theme as Theme);
-      localStorage.setItem(THEME_STORAGE_KEY, preferences.theme);
+    if (!isLoading && preferences?.theme && !isUserInitiated) {
+      const localTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (localTheme !== preferences.theme) {
+        setThemeState(preferences.theme as Theme);
+        localStorage.setItem(THEME_STORAGE_KEY, preferences.theme);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preferences?.theme, isLoading]);
+    if (isUserInitiated) {
+      setIsUserInitiated(false);
+    }
+  }, [preferences?.theme, isLoading, isUserInitiated]);
 
   useEffect(() => {
-    if (
-      !isLoading &&
-      preferences?.colorMode &&
-      preferences.colorMode !== colorMode
-    ) {
-      setColorModeState(preferences.colorMode as ColorMode);
-      localStorage.setItem(COLOR_MODE_STORAGE_KEY, preferences.colorMode);
+    if (!isLoading && preferences?.colorMode && !isUserInitiated) {
+      const localColorMode = localStorage.getItem(COLOR_MODE_STORAGE_KEY);
+      if (localColorMode !== preferences.colorMode) {
+        setColorModeState(preferences.colorMode as ColorMode);
+        localStorage.setItem(COLOR_MODE_STORAGE_KEY, preferences.colorMode);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preferences?.colorMode, isLoading]);
+  }, [preferences?.colorMode, isLoading, isUserInitiated]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -93,6 +98,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       "shonen",
       "onepiece",
       "anime",
+      "waguri",
       "goth",
       "halloween",
       "realmadrid",
@@ -107,12 +113,14 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   }, [theme, colorMode, isLoading]);
 
   const setTheme = (newTheme: Theme) => {
+    setIsUserInitiated(true);
     setThemeState(newTheme);
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
     updatePreferences.mutate({ theme: newTheme });
   };
 
   const setColorMode = (newMode: ColorMode) => {
+    setIsUserInitiated(true);
     setColorModeState(newMode);
     localStorage.setItem(COLOR_MODE_STORAGE_KEY, newMode);
     updatePreferences.mutate({ colorMode: newMode });
