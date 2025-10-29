@@ -540,6 +540,41 @@
   --sidebar-ring: oklch(0.52 0.16 15);
 }
 
+.dark.waguri {
+  --background: oklch(12.904% 0.06635 306.952);
+  --foreground: oklch(0.96 0.03 307);
+  --card: oklch(14% 0.07 307);
+  --card-foreground: oklch(0.96 0.03 307);
+  --popover: oklch(15% 0.065 307);
+  --popover-foreground: oklch(0.96 0.03 307);
+  --primary: oklch(0.6 0.12 30);
+  --primary-foreground: oklch(0.98 0.01 307);
+  --secondary: oklch(18% 0.08 307);
+  --secondary-foreground: oklch(0.96 0.03 307);
+  --muted: oklch(16% 0.06 307);
+  --muted-foreground: oklch(0.65 0.05 307);
+  --accent: oklch(38% 0.16 290);
+  --accent-foreground: oklch(0.98 0.01 290);
+  --destructive: oklch(0.55 0.2 15);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(22% 0.1 307);
+  --input: oklch(20% 0.09 307);
+  --ring: oklch(32% 0.14 307);
+  --chart-1: oklch(38% 0.16 307);
+  --chart-2: oklch(42% 0.15 290);
+  --chart-3: oklch(40% 0.14 320);
+  --chart-4: oklch(45% 0.13 275);
+  --chart-5: oklch(35% 0.17 310);
+  --sidebar: oklch(13% 0.065 307);
+  --sidebar-foreground: oklch(0.96 0.03 307);
+  --sidebar-primary: oklch(32% 0.14 307);
+  --sidebar-primary-foreground: oklch(0.98 0.01 307);
+  --sidebar-accent: oklch(18% 0.08 307);
+  --sidebar-accent-foreground: oklch(0.96 0.03 307);
+  --sidebar-border: oklch(20% 0.09 307);
+  --sidebar-ring: oklch(28% 0.12 307);
+}
+
 .goth {
   --background: oklch(0.96 0.01 330);
   --foreground: oklch(0.18 0.02 330);
@@ -831,6 +866,25 @@ body {
     background-size: cover;
     background-attachment: fixed;
     background-position: 200px 10%;
+    filter: brightness(0.12);
+    z-index: -1;
+  }
+
+  .dark.waguri body {
+    background-image: none;
+  }
+
+  .dark.waguri body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("https://images7.alphacoders.com/139/1398235.png");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
     filter: brightness(0.12);
     z-index: -1;
   }
