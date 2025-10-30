@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { AxiosResponse } from "axios";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { toast } from "sonner";
 import type { Timer } from "@/hooks/api/use-timers";
@@ -17,12 +18,11 @@ export type UseCreateTimerOptions = {
     name: string;
     icon: string;
     prof: string;
-    type: NpcType;
+    type: number;
     lvl: number;
     location: string;
     hpp: number;
     wt: number;
-    margonemType: number;
   };
 };
 
@@ -30,6 +30,7 @@ type CreateTimerForGuildsParams = {
   timer: UseCreateTimerOptions;
   guildIds: string[];
   tempIds: string[];
+  npcType?: NpcType;
 };
 
 type CreateTimerResult = {
@@ -72,11 +73,30 @@ export const useCreateTimer = () => {
       guildIds,
       tempIds,
     }: CreateTimerForGuildsParams): Promise<CreateTimerResult> => {
+      if (!guildIds || guildIds.length === 0) {
+        throw new Error("Brak wybranych gildii");
+      }
+
       const results = await Promise.allSettled(
         guildIds.map(async (guildId, index) => {
+          const payload = {
+            respBaseSeconds: timer.respBaseSeconds,
+            respawnRandomness: timer.respawnRandomness,
+            world: timer.world,
+            npc: timer.npc,
+            characterId: timer.characterId,
+            accountId: timer.accountId,
+            ...(timer.customMinSpawnTime && {
+              customMinSpawnTime: timer.customMinSpawnTime.toISOString(),
+            }),
+            ...(timer.customMaxSpawnTime && {
+              customMaxSpawnTime: timer.customMaxSpawnTime.toISOString(),
+            }),
+            tempId: tempIds[index],
+          };
           const response = await client.post<Timer>(
             `/guilds/${guildId}/timers`,
-            { ...timer, tempId: tempIds[index] },
+            payload,
           );
           return { guildId, timer: response.data };
         }),
@@ -114,17 +134,17 @@ export const useCreateTimer = () => {
         tempIds,
       };
     },
-    onMutate: async ({ timer, guildIds, tempIds }) => {
+    onMutate: async ({ timer, guildIds, tempIds, npcType }) => {
       await queryClient.cancelQueries({ queryKey: ["guild-timers"] });
 
-      const previousTimers = queryClient.getQueryData<Timer[]>([
+      const previousTimers = queryClient.getQueryData<AxiosResponse<Timer[]>>([
         "guild-timers",
         timer.world,
       ]);
 
       const { minSpawnTime, maxSpawnTime } = calculateSpawnTimes(timer);
 
-      const optimisticTimers: Timer[] = guildIds.map((guildId, index) => ({
+      const optimisticTimers = guildIds.map((guildId, index) => ({
         id: 0,
         tempId: tempIds[index],
         isPending: true,
@@ -135,12 +155,12 @@ export const useCreateTimer = () => {
           name: timer.npc.name,
           icon: timer.npc.icon,
           prof: timer.npc.prof,
-          type: timer.npc.type,
+          type: npcType ?? ("COMMON" as NpcType),
           lvl: timer.npc.lvl,
           location: timer.npc.location,
           hpp: timer.npc.hpp,
           wt: timer.npc.wt,
-          margonemType: timer.npc.margonemType,
+          margonemType: timer.npc.type,
         },
         npcId: timer.npc.id,
         member: {
@@ -153,13 +173,15 @@ export const useCreateTimer = () => {
         world: timer.world,
         guildId,
         isCustomTime: !!(timer.customMinSpawnTime && timer.customMaxSpawnTime),
-      }));
+      })) satisfies Timer[];
 
-      queryClient.setQueryData<Timer[]>(
+      queryClient.setQueryData<AxiosResponse<Timer[]>>(
         ["guild-timers", timer.world],
         (old) => {
-          if (!old) return optimisticTimers;
-          return [...old, ...optimisticTimers];
+          const existingTimers = old?.data || [];
+          return {
+            data: [...existingTimers, ...optimisticTimers],
+          } as AxiosResponse<Timer[]>;
         },
       );
 
@@ -176,10 +198,10 @@ export const useCreateTimer = () => {
     },
     onSuccess: (result, variables, context) => {
       if (context?.optimisticTimers && result.tempIds) {
-        queryClient.setQueryData<Timer[]>(
+        queryClient.setQueryData<AxiosResponse<Timer[]>>(
           ["guild-timers", variables.timer.world],
           (old) => {
-            if (!old) return result.successful.map((s) => s.timer);
+            const existingTimers = old?.data || [];
 
             const successfulTempIds = result.successful.map(
               (s) => s.timer.tempId,
@@ -188,7 +210,7 @@ export const useCreateTimer = () => {
               .filter((t) => result.failed.some((f) => f.guildId === t.guildId))
               .map((t) => t.tempId);
 
-            const updatedTimers = old.map((timer) => {
+            const updatedTimers = existingTimers.map((timer) => {
               if (timer.tempId && successfulTempIds.includes(timer.tempId)) {
                 const realTimer = result.successful.find(
                   (s) => s.timer.tempId === timer.tempId,
@@ -198,9 +220,11 @@ export const useCreateTimer = () => {
               return timer;
             });
 
-            return updatedTimers.filter(
+            const filteredTimers = updatedTimers.filter(
               (t) => !t.tempId || !failedTempIds.includes(t.tempId),
             );
+
+            return { data: filteredTimers } as AxiosResponse<Timer[]>;
           },
         );
       }

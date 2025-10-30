@@ -21,9 +21,23 @@ import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { format } from "date-fns";
-import { isNil } from "lodash";
 import { ClockArrowDown, ClockArrowUp, Loader2 } from "lucide-react";
 import type { FC } from "react";
+
+const DEFAULT_COLOR_NAMES: Record<string, string> = {
+  red: "Czerwony",
+  orange: "Pomarańczowy",
+  yellow: "Żółty",
+  lime: "Limonkowy",
+  green: "Zielony",
+  teal: "Turkusowy",
+  sky: "Niebieski",
+  blue: "Granatowy",
+  violet: "Fioletowy",
+  purple: "Purpurowy",
+  pink: "Różowy",
+  white: "Biały",
+};
 
 type SingleTimerProps = {
   timer: Timer;
@@ -31,6 +45,7 @@ type SingleTimerProps = {
   minTimeLeft?: number;
   maxTimeLeft?: number;
   canDelete?: boolean;
+  isHidden?: boolean;
 };
 
 export const SingleTimer: FC<SingleTimerProps> = ({
@@ -39,6 +54,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   maxTimeLeft = 0,
   canDelete = false,
   settingsKey,
+  isHidden = false,
 }) => {
   const { world } = useGlobalStore((state) => state.gameState);
   const { data: guilds } = useGuilds();
@@ -49,6 +65,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     pinnedTimers,
     setTimerColor,
     timersColors,
+    customColors,
+    defaultColorNames,
+    overriddenDefaultColors,
+    hiddenDefaultColors,
     displayConfig,
     generalConfig,
   } = useTimersStore();
@@ -82,6 +102,15 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       {timer.wasReset && (
         <div className="ll:text-xs ll:text-orange-400 ll:flex ll:items-center ll:gap-1">
           <span className="ll:font-semibold">⟳ Timer został zresetowany</span>
+        </div>
+      )}
+
+      {timer.updatedAt && (
+        <div className="ll:text-xs ll:text-gray-400">
+          <span className="ll:text-gray-500">Dodano:</span>{" "}
+          <span className="ll:text-gray-300">
+            {format(new Date(timer.updatedAt), "dd.MM.yyyy - HH:mm:ss")}
+          </span>
         </div>
       )}
 
@@ -172,7 +201,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   };
 
   const selectedColor = timersColors[timer.npc.name] ?? "white";
+  const customColor = customColors[selectedColor];
+  const overriddenColor = overriddenDefaultColors[selectedColor];
   const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
+
+  const resetIndicator = timer.wasReset ? "[R] " : "";
 
   const shortname = displayConfig.showType
     ? `[${NPC_NAMES[timer.npc.type]?.shortname ?? "M"}]`
@@ -193,7 +226,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({
       <ContextMenu>
         <TooltipTrigger asChild>
           <ContextMenuTrigger className="ll:h-full ll:pr-px">
-            <div className="ll:relative ll:h-full">
+            <div
+              className={cn("ll:relative ll:h-full", {
+                "ll:opacity-50": isHidden,
+              })}
+            >
               {isPending && (
                 <div className="ll:absolute ll:inset-0 ll:flex ll:items-center ll:justify-center ll:z-10 ll:bg-black/20">
                   <Loader2 className="ll:h-3 ll:w-3 ll:animate-spin ll:text-orange-500" />
@@ -201,7 +238,18 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               )}
               <Tile
                 id={timer.npc.id.toString()}
-                color={selectedColor as keyof typeof TIMERS_COLORS}
+                color={
+                  customColor || overriddenColor
+                    ? undefined
+                    : (selectedColor as keyof typeof TIMERS_COLORS)
+                }
+                customBorderColor={
+                  customColor?.borderColor || overriddenColor?.borderColor
+                }
+                customBackgroundColor={
+                  customColor?.backgroundColor ||
+                  overriddenColor?.backgroundColor
+                }
               >
                 <span
                   className={cn(
@@ -230,6 +278,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                       fontSize: `${displayConfig.fontSize}px`,
                     }}
                   >
+                    {resetIndicator}
                     {shortname} {timer.npc.name} {npcDetails}
                   </span>
                   <div
@@ -254,18 +303,59 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           ) : (
             <>
               <div className="ll:flex ll:gap-1 ll:my-1.5 ll:w-full ll:justify-center ll:flex-wrap">
-                {Object.entries(TIMERS_COLORS).map(([id, color]) => (
-                  <div
-                    key={id}
-                    className={cn(
-                      "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer",
-                      color?.bgNoOpacity,
-                      {
-                        " ll:ring-2 ll:ring-white": selectedColor === id,
-                      },
-                    )}
-                    onClick={() => handleTimerColorChange(id)}
-                  />
+                {Object.entries(TIMERS_COLORS)
+                  .filter(([id]) => !hiddenDefaultColors.includes(id))
+                  .map(([id, color]) => {
+                    const overridden = overriddenDefaultColors[id];
+
+                    return (
+                      <Tooltip key={id}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer",
+                              !overridden && color?.bgNoOpacity,
+                              {
+                                " ll:ring-2 ll:ring-white":
+                                  selectedColor === id,
+                              },
+                            )}
+                            style={
+                              overridden
+                                ? {
+                                    backgroundColor: overridden.backgroundColor,
+                                    borderColor: overridden.borderColor,
+                                  }
+                                : undefined
+                            }
+                            onClick={() => handleTimerColorChange(id)}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="ll:text-xs">
+                          {defaultColorNames[id] || DEFAULT_COLOR_NAMES[id]}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                {Object.values(customColors).map((color) => (
+                  <Tooltip key={color.id}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer",
+                          {
+                            " ll:ring-2 ll:ring-white":
+                              selectedColor === color.id,
+                          },
+                        )}
+                        style={{ backgroundColor: color.backgroundColor }}
+                        onClick={() => handleTimerColorChange(color.id)}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="ll:text-xs">
+                      {color.name}
+                    </TooltipContent>
+                  </Tooltip>
                 ))}
               </div>
               <ContextMenuItem onClick={handlePinTimer}>

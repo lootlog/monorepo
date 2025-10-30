@@ -23,6 +23,7 @@ export type Timer = {
   isPending?: boolean;
   tempId?: string;
   wasReset?: boolean;
+  updatedAt?: Date;
 };
 
 export const useTimers = ({ world }: UseTimersOptions) => {

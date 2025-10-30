@@ -154,7 +154,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         const map = Game.map.id;
         const elite2Name =
           SpecialE2[map as keyof typeof SpecialE2] || data.nick;
-        const npcType = getNpcTypeByWt(data.wt);
+        const npcType = getNpcTypeByWt(data.wt, data.prof, data.type);
         const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 
         if (characterId && accountId && world) {
@@ -174,15 +174,15 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
                 prof: data.prof,
                 wt: data.wt,
                 hpp: 0,
-                type: npcType,
+                type: data.type,
                 lvl: data.lvl,
                 name: npcName,
                 location: Game.map.name,
-                margonemType: data.type,
               },
             },
             guildIds,
             tempIds,
+            npcType,
           });
         }
       });

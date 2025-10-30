@@ -1,14 +1,12 @@
-import type { NpcType } from 'src/gateway/enums/npc-type.enum';
-
 export type Npc = {
   id: number;
   name: string;
   lvl: number;
   prof: string;
-  type: NpcType;
-  margonemType: number;
+  type: string;
+  margonemType: string;
   location: string;
-  wt: number;
+  wt: string;
   icon: string;
   createdAt: Date;
   updatedAt: Date;

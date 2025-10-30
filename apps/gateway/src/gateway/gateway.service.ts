@@ -52,6 +52,16 @@ export class GatewayService {
             socket.emit(event, data);
             return;
           }
+          const isOwner = desiredGuild.guild.ownerId === socket.data.discordId;
+
+          if (isOwner) {
+            this.logger.debug(
+              `Guild owner ${socket.data.discordId} sending event ${event} in guild ${guildId}`,
+            );
+            socket.emit(event, data);
+            return;
+          }
+
           const roles = desiredGuild.roles || [];
           const administrativeUser = isAdministrativeUserFromRoles(roles);
 
