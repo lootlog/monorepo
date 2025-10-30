@@ -97,8 +97,8 @@ export class TimersService {
     }
   }
 
-  private getLockKey(world: string, npcId: number): string {
-    return `timer:lock:${world}:${npcId}`;
+  private getLockKey(world: string, npcId: number, guildId: string): string {
+    return `timer:lock:${guildId}:${world}:${npcId}`;
   }
 
   private getDedupKey(
@@ -163,8 +163,8 @@ export class TimersService {
       data.world,
       guildId,
     );
-    const cached = await this.redis.get(dedupKey);
 
+    const cached = await this.redis.get(dedupKey);
     if (cached) {
       this.logger.log({
         level: 'debug',
@@ -173,11 +173,39 @@ export class TimersService {
       return JSON.parse(cached) as Timer;
     }
 
-    const lockKey = this.getLockKey(data.world, data.npc.id);
+    const dedupLockKey = `${dedupKey}:lock`;
+    const dedupLockValue = randomUUID();
+    const dedupAcquired = await this.redis.setNX(
+      dedupLockKey,
+      dedupLockValue,
+      DEDUP_TTL_SECONDS,
+    );
+
+    if (!dedupAcquired) {
+      const maxRetries = 3;
+      const retryDelayMs = 100;
+
+      for (let i = 0; i < maxRetries; i++) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+        const result = await this.redis.get(dedupKey);
+        if (result) {
+          this.logger.log({
+            level: 'debug',
+            message: `Deduplication hit after retry ${i + 1} for ${dedupKey}`,
+          });
+          return JSON.parse(result) as Timer;
+        }
+      }
+
+      throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
+    }
+
+    const lockKey = this.getLockKey(data.world, data.npc.id, guildId);
     const lockValue = randomUUID();
     const acquired = await this.acquireLock(lockKey, lockValue);
 
     if (!acquired) {
+      await this.redis.del(dedupLockKey);
       throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
     }
 
@@ -218,7 +246,10 @@ export class TimersService {
       this.emitUpdateTimer(newTimer);
       return newTimer;
     } finally {
-      await this.releaseLock(lockKey, lockValue);
+      await Promise.all([
+        this.releaseLock(lockKey, lockValue),
+        this.releaseLock(dedupLockKey, dedupLockValue),
+      ]);
     }
   }
 
@@ -389,7 +420,7 @@ export class TimersService {
   ) {
     const now = new Date();
     const npcIdNum = Number.parseInt(npcId, 10);
-    const lockKey = this.getLockKey(data.world, npcIdNum);
+    const lockKey = this.getLockKey(data.world, npcIdNum, guildId);
     const lockValue = randomUUID();
     const acquired = await this.acquireLock(lockKey, lockValue);
 
