@@ -487,7 +487,7 @@ describe('TimersService', () => {
 
       mockRedisService.setNX.mockImplementation(
         async (key: string, _value: string) => {
-          if (key.startsWith('timer:lock:')) {
+          if (key.startsWith('timer:lock:') || key.startsWith('timer:dedup:')) {
             return true;
           }
           return false;
