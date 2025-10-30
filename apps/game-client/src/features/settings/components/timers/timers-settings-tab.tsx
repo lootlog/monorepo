@@ -24,19 +24,19 @@ export const TimersSettingsTab: FC = () => {
         </TabsList>
         <TabsContent
           value="general"
-          className="ll:p-3 ll:bg-muted/40 ll:rounded-md ll:border ll:border-solid ll:border-accent-foreground/40 ll:shadow-sm ll:grow"
+          className="ll:pt-2 ll:rounded-md ll:shadow-sm ll:grow ll:pr-1"
         >
           <TimersSettingsGeneral />
         </TabsContent>
         <TabsContent
           value="appearance"
-          className="ll:p-3 ll:bg-muted/40 ll:rounded-md ll:border ll:border-solid ll:border-accent-foreground/40 ll:shadow-sm ll:grow"
+          className="ll:pt-2 ll:rounded-md ll:shadow-sm ll:grow ll:pr-1"
         >
           <TimersSettingsAppearance />
         </TabsContent>
         <TabsContent
           value="colors"
-          className="ll:p-3 ll:bg-muted/40 ll:rounded-md ll:border ll:border-solid ll:border-accent-foreground/40 ll:shadow-sm ll:grow"
+          className="ll:pt-2 ll:rounded-md ll:shadow-sm ll:grow ll:pr-1"
         >
           <TimersSettingsColors />
         </TabsContent>

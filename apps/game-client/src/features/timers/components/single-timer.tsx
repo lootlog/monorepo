@@ -302,7 +302,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             </div>
           ) : (
             <>
-              <div className="ll:flex ll:gap-1 ll:my-1.5 ll:w-full ll:justify-center ll:flex-wrap">
+              <div className="ll:flex ll:gap-1 ll:my-1.5 ll:w-full ll:justify-start ll:flex-wrap">
                 {Object.entries(TIMERS_COLORS)
                   .filter(([id]) => !hiddenDefaultColors.includes(id))
                   .map(([id, color]) => {
@@ -313,8 +313,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer",
+                              "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer",
                               !overridden && color?.bgNoOpacity,
+                              !overridden && color?.border,
                               {
                                 " ll:ring-2 ll:ring-white":
                                   selectedColor === id,
@@ -342,13 +343,16 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                     <TooltipTrigger asChild>
                       <div
                         className={cn(
-                          "ll:size-3 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer",
+                          "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer",
                           {
                             " ll:ring-2 ll:ring-white":
                               selectedColor === color.id,
                           },
                         )}
-                        style={{ backgroundColor: color.backgroundColor }}
+                        style={{
+                          backgroundColor: color.backgroundColor,
+                          borderColor: color.borderColor,
+                        }}
                         onClick={() => handleTimerColorChange(color.id)}
                       />
                     </TooltipTrigger>

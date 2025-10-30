@@ -1,6 +1,7 @@
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { useGlobalStore } from "@/store/global.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
 
 export type UseUpdateLootlogCharacterSettings = {
   characterId: string;
@@ -18,18 +19,43 @@ export const useUpdateLootlogCharactersConfig = () => {
     mutationFn: (options: UseUpdateLootlogCharacterSettings) => {
       return client.put(
         `/users/@me/lootlog-config/accounts/${accountId}`,
-        options
+        options,
       );
     },
-    onSuccess: () => {
-      console.log("onSuccess");
-      queryClient.invalidateQueries({
-        queryKey: ["lootlog-characters-config"],
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({
+        queryKey: ["lootlog-characters-config", accountId],
       });
-      window.message("Zaktualizowano konfigurację postaci w Lootlogu");
+
+      const previousData =
+        queryClient.getQueryData<LootlogCharacterConfigResponse>([
+          "lootlog-characters-config",
+          accountId,
+        ]);
+
+      if (previousData) {
+        queryClient.setQueryData<LootlogCharacterConfigResponse>(
+          ["lootlog-characters-config", accountId],
+          {
+            ...previousData,
+            [variables.characterId]: {
+              ...previousData[variables.characterId],
+              collectLootWhitelistGuildIds: variables.lootGuildIds,
+              addTimersWhitelistGuildIds: variables.timerGuildIds,
+            },
+          },
+        );
+      }
+
+      return { previousData };
     },
-    onError: () => {
-      console.log("onError");
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["lootlog-characters-config", accountId],
+          context.previousData,
+        );
+      }
     },
   });
 

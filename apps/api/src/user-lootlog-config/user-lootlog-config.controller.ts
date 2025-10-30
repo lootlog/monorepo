@@ -80,6 +80,7 @@ export class UserLootlogConfigController {
   })
   async createOrUpdateLootlogCharacterConfig(
     @DiscordId() discordId: string,
+    @UserId() userId: string,
     @Param('accountId') accountId: string,
     @Body() data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
@@ -87,6 +88,7 @@ export class UserLootlogConfigController {
       await this.userLootlogConfigService.createOrUpdateLootlogCharacterConfig(
         discordId,
         accountId,
+        userId,
         data,
       );
 
