@@ -83,11 +83,14 @@
       "@swc/core",
       "@tailwindcss/oxide",
       "core-js-pure",
+      "cpu-features",
       "esbuild",
       "msgpackr-extract",
       "necord",
       "prisma",
+      "protobufjs",
       "sharp",
+      "ssh2",
       "unrs-resolver",
       "workerd"
     ]

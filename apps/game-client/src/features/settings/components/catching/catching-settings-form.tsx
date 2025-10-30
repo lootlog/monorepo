@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,9 +23,9 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
 }) => {
   const { data: guilds } = useGuilds();
   const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
-  const { mutate: updateLootlogCharacterConfig, isPending } =
+  const { mutate: updateLootlogCharacterConfig } =
     useUpdateLootlogCharactersConfig();
-  const { register, handleSubmit, watch, reset } = useForm<FormData>({
+  const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       lootGuildIds: [],
@@ -33,87 +33,91 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     },
   });
   const configByCharacterId = lootlogCharactersConfig?.[characterId];
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitializedRef = useRef(false);
+  const mutateRef = useRef(updateLootlogCharacterConfig);
 
-  const onSubmit = (values: z.infer<typeof FormSchema>) => {
-    console.log(values);
-    console.log(lootlogCharactersConfig);
-    updateLootlogCharacterConfig({
-      characterId,
-      lootGuildIds: values.lootGuildIds,
-      timerGuildIds: values.timersGuildIds,
-    });
-  };
+  mutateRef.current = updateLootlogCharacterConfig;
 
   useEffect(() => {
     if (guilds && guilds.length > 0) {
       reset({
-        lootGuildIds: configByCharacterId?.collectLootBlaclistGuildIds || [],
-        timersGuildIds: configByCharacterId?.addTimersBlacklistGuildIds || [],
+        lootGuildIds: configByCharacterId?.collectLootWhitelistGuildIds || [],
+        timersGuildIds: configByCharacterId?.addTimersWhitelistGuildIds || [],
       });
+      isInitializedRef.current = true;
     }
-  }, [guilds, lootlogCharactersConfig, reset]);
+  }, [guilds, lootlogCharactersConfig, reset, characterId]);
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      if (!isInitializedRef.current) return;
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        const lootGuildIds = (value.lootGuildIds || []).filter(
+          (id): id is string => typeof id === "string",
+        );
+        const timerGuildIds = (value.timersGuildIds || []).filter(
+          (id): id is string => typeof id === "string",
+        );
+
+        mutateRef.current({
+          characterId,
+          lootGuildIds,
+          timerGuildIds,
+        });
+      }, 500);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [characterId]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="ll:py-4">
-      <span className="ll:grid ll:grid-cols-2 ll:gap-2">
-        <div>
-          <h4 className="ll:mb-2">Nie łap timerów na:</h4>
-          <ScrollArea className="ll:flex ll:flex-col ll:h-32" type="auto">
-            {guilds?.map((guild) => {
-              const id = `${guild.id}-timers`;
-
-              return (
-                <div
-                  key={guild.id}
-                  className="checkbox-custom c-checkbox"
-                  onClick={console.log}
-                >
+    <div className="ll:py-4">
+      <h4 className="ll:mb-2">Wybierz serwery na które zbierać dane:</h4>
+      <ScrollArea className="ll:h-64" type="auto">
+        <div className="ll:grid ll:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] ll:gap-3">
+          {guilds?.map((guild) => (
+            <div
+              key={guild.id}
+              className="ll:border ll:border-gray-600 ll:rounded ll:p-2"
+            >
+              <div className="ll:font-semibold ll:mb-2 ll:text-sm">
+                {guild.name}
+              </div>
+              <div className="ll:flex ll:flex-col ll:gap-1">
+                <div className="checkbox-custom c-checkbox">
                   <input
-                    id={id}
+                    id={`${guild.id}-timers`}
                     type="checkbox"
                     value={guild.id}
-                    {...register(`timersGuildIds`)}
+                    {...register("timersGuildIds")}
                   />
-                  <label htmlFor={id}>{guild.name}</label>
+                  <label htmlFor={`${guild.id}-timers`}>Łap timery</label>
                 </div>
-              );
-            })}
-          </ScrollArea>
-        </div>
-        <div>
-          <h4 className="ll:mb-2">Nie łap lootu na:</h4>
-          <ScrollArea className="ll:flex ll:flex-col ll:h-32" type="auto">
-            {guilds?.map((guild) => {
-              const id = `${guild.id}-loots`;
-
-              return (
-                <div
-                  key={guild.id}
-                  className="checkbox-custom c-checkbox"
-                  onClick={() => console.log(guild.id)}
-                >
+                <div className="checkbox-custom c-checkbox">
                   <input
-                    id={id}
+                    id={`${guild.id}-loot`}
                     type="checkbox"
                     value={guild.id}
                     {...register("lootGuildIds")}
                   />
-                  <label htmlFor={id}>{guild.name}</label>
+                  <label htmlFor={`${guild.id}-loot`}>Łap loot</label>
                 </div>
-              );
-            })}
-          </ScrollArea>
+              </div>
+            </div>
+          ))}
         </div>
-      </span>
-      <div className="ll:w-full ll:flex ll:justify-center ll:mt-4">
-        <button
-          type="submit"
-          className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white"
-          disabled={isPending}
-        >
-          {isPending ? "Zapisywanie..." : "Zapisz"}
-        </button>
-      </div>
-    </form>
+      </ScrollArea>
+    </div>
   );
 };

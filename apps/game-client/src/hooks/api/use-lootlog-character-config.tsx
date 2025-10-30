@@ -11,8 +11,8 @@ export type LootlogCharacterConfig = {
   userId: string;
   accountId: string;
   characterId: string;
-  collectLootBlaclistGuildIds: string[];
-  addTimersBlacklistGuildIds: string[];
+  collectLootWhitelistGuildIds: string[];
+  addTimersWhitelistGuildIds: string[];
 };
 
 export type LootlogCharacterConfigResponse = Record<
@@ -29,7 +29,7 @@ export const useLootlogCharactersConfig = () => {
     queryFn: () =>
       client.get<LootlogCharacterConfigResponse>(
         `${API_URL}/users/@me/lootlog-config/accounts/${accountId}`,
-        { withCredentials: true }
+        { withCredentials: true },
       ),
     select: (response) => response.data,
     enabled: !!accountId,

@@ -51,6 +51,8 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     setTimersFilters,
     customColors,
     defaultColorNames,
+    overriddenDefaultColors,
+    hiddenDefaultColors,
   } = useTimersStore();
 
   const filters = timersFilters[filtersKey] || DEFAULT_TIMERS_FILTERS;
@@ -175,30 +177,42 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
         </div>
       </div>
       <div className="ll:flex ll:flex-row ll:gap-1 ll:flex-wrap ll:border-solid ll:border-gray-400 ll:box-border ll:border ll:rounded-sm ll:p-1">
-        {Object.entries(TIMERS_COLORS).map(([colorId, color]) => {
-          const isSelected = filters.selectedColors.includes(colorId);
-          return (
-            <Tooltip key={colorId}>
-              <TooltipTrigger asChild>
-                <div
-                  role="button"
-                  onClick={() => handleToggleColor(colorId)}
-                  className={cn(
-                    "ll:size-4 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer ll:transition-all",
-                    color?.bgNoOpacity,
-                    {
-                      "ll:ring-2 ll:ring-white": isSelected,
-                      "ll:opacity-50": !isSelected,
-                    },
-                  )}
-                />
-              </TooltipTrigger>
-              <TooltipContent side="top" className="ll:text-xs">
-                {defaultColorNames[colorId] || DEFAULT_COLOR_NAMES[colorId]}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
+        {Object.entries(TIMERS_COLORS)
+          .filter(([colorId]) => !hiddenDefaultColors.includes(colorId))
+          .map(([colorId, color]) => {
+            const isSelected = filters.selectedColors.includes(colorId);
+            const overridden = overriddenDefaultColors[colorId];
+            return (
+              <Tooltip key={colorId}>
+                <TooltipTrigger asChild>
+                  <div
+                    role="button"
+                    onClick={() => handleToggleColor(colorId)}
+                    className={cn(
+                      "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer ll:transition-all",
+                      !overridden && color?.bgNoOpacity,
+                      !overridden && color?.border,
+                      {
+                        "ll:ring-2 ll:ring-white": isSelected,
+                        "ll:opacity-50": !isSelected,
+                      },
+                    )}
+                    style={
+                      overridden
+                        ? {
+                            backgroundColor: overridden.backgroundColor,
+                            borderColor: overridden.borderColor,
+                          }
+                        : undefined
+                    }
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="ll:text-xs">
+                  {defaultColorNames[colorId] || DEFAULT_COLOR_NAMES[colorId]}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
         {Object.values(customColors).map((color) => {
           const isSelected = filters.selectedColors.includes(color.id);
           return (
@@ -208,13 +222,16 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                   role="button"
                   onClick={() => handleToggleColor(color.id)}
                   className={cn(
-                    "ll:size-4 ll:rounded-md ll:box-border ll:border-transparent ll-custom-cursor-pointer ll:transition-all",
+                    "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer ll:transition-all",
                     {
                       "ll:ring-2 ll:ring-white": isSelected,
                       "ll:opacity-50": !isSelected,
                     },
                   )}
-                  style={{ backgroundColor: color.backgroundColor }}
+                  style={{
+                    backgroundColor: color.backgroundColor,
+                    borderColor: color.borderColor,
+                  }}
                 />
               </TooltipTrigger>
               <TooltipContent side="top" className="ll:text-xs">

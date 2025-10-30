@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Filter, SortAsc, SortDesc, Info } from "lucide-react";
+import { Filter, SortAsc, SortDesc, Info, Eye, EyeOff } from "lucide-react";
 import type { AxiosResponse } from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { DraggableWindow } from "@/components/draggable-window";
@@ -106,6 +106,7 @@ export const Timers = () => {
     timersColors,
     customColors,
     defaultColorNames,
+    overriddenDefaultColors,
   } = useTimersStore();
   const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
   const guildId = guildIdByCharId[characterId!];
@@ -416,15 +417,23 @@ export const Timers = () => {
 
     const stats: Record<
       string,
-      { total: number; active: number; name: string; bgColor?: string }
+      {
+        total: number;
+        active: number;
+        name: string;
+        bgColor?: string;
+        borderColor?: string;
+      }
     > = {};
 
     Object.keys(TIMERS_COLORS).forEach((color) => {
+      const overridden = overriddenDefaultColors[color];
       stats[color] = {
         total: 0,
         active: 0,
         name: defaultColorNames[color] || defaultNames[color] || color,
-        bgColor: undefined,
+        bgColor: overridden?.backgroundColor,
+        borderColor: overridden?.borderColor,
       };
     });
 
@@ -434,10 +443,11 @@ export const Timers = () => {
         active: 0,
         name: color.name,
         bgColor: color.backgroundColor,
+        borderColor: color.borderColor,
       };
     });
 
-    Object.entries(timersColors).forEach(([npcName, color]) => {
+    Object.entries(timersColors).forEach(([_npcName, color]) => {
       if (color && stats[color]) {
         stats[color].total++;
       }
@@ -456,7 +466,13 @@ export const Timers = () => {
         color,
         ...stat,
       }));
-  }, [timersColors, sortedTimers, customColors, defaultColorNames]);
+  }, [
+    timersColors,
+    sortedTimers,
+    customColors,
+    defaultColorNames,
+    overriddenDefaultColors,
+  ]);
 
   const renderTimers = () => {
     return (
@@ -527,31 +543,37 @@ export const Timers = () => {
                     Brak ustawionych kolorów
                   </p>
                 ) : (
-                  colorStatistics.map((stat) => (
-                    <div
-                      key={stat.color}
-                      className="ll:flex ll:items-center ll:gap-2 ll:text-xs"
-                    >
+                  colorStatistics.map((stat) => {
+                    const defaultColor =
+                      TIMERS_COLORS[stat.color as keyof typeof TIMERS_COLORS];
+                    const hasCustomColors = stat.bgColor || stat.borderColor;
+
+                    return (
                       <div
-                        className={cn(
-                          "ll:size-3 ll:rounded-sm",
-                          stat.bgColor
-                            ? undefined
-                            : TIMERS_COLORS[
-                                stat.color as keyof typeof TIMERS_COLORS
-                              ]?.bgNoOpacity,
-                        )}
-                        style={
-                          stat.bgColor
-                            ? { backgroundColor: stat.bgColor }
-                            : undefined
-                        }
-                      />
-                      <span className="ll:text-gray-200">
-                        {stat.name}: {stat.active}/{stat.total}
-                      </span>
-                    </div>
-                  ))
+                        key={stat.color}
+                        className="ll:flex ll:items-center ll:gap-2 ll:text-xs"
+                      >
+                        <div
+                          className={cn(
+                            "ll:size-3 ll:rounded-sm ll:border",
+                            !hasCustomColors && defaultColor?.bgNoOpacity,
+                            !hasCustomColors && defaultColor?.border,
+                          )}
+                          style={
+                            hasCustomColors
+                              ? {
+                                  backgroundColor: stat.bgColor,
+                                  borderColor: stat.borderColor,
+                                }
+                              : undefined
+                          }
+                        />
+                        <span className="ll:text-gray-200">
+                          {stat.name}: {stat.active}/{stat.total}
+                        </span>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </TooltipContent>
@@ -572,26 +594,68 @@ export const Timers = () => {
     return (
       <UnderBagTimers>
         <div className="ll:flex ll:gap-1">
-          <Filter
-            key="filters"
-            className="ll-custom-cursor-pointer ll:-mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors ll:h-5 ll:mb-1"
-            size="14"
-            onClick={toggleTimerFiltersEnabled}
-          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Filter
+                key="filters"
+                className="ll-custom-cursor-pointer ll:-mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors ll:h-5 ll:mb-1"
+                size="14"
+                onClick={toggleTimerFiltersEnabled}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {timerFiltersEnabled ? "Ukryj filtry" : "Pokaż filtry"}
+            </TooltipContent>
+          </Tooltip>
           {timersSortOrder === "desc" ? (
-            <SortDesc
-              key="sort-desc"
-              className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-              size="14"
-              onClick={() => setTimersSortOrder("asc")}
-            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SortDesc
+                  key="sort-desc"
+                  className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+                  size="14"
+                  onClick={() => setTimersSortOrder("asc")}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top">Sortuj rosnąco</TooltipContent>
+            </Tooltip>
           ) : (
-            <SortAsc
-              key="sort-asc"
-              className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-              size="14"
-              onClick={() => setTimersSortOrder("desc")}
-            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SortAsc
+                  key="sort-asc"
+                  className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+                  size="14"
+                  onClick={() => setTimersSortOrder("desc")}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top">Sortuj malejąco</TooltipContent>
+            </Tooltip>
+          )}
+          {showHiddenTimers ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Eye
+                  key="show-hidden"
+                  className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+                  size="14"
+                  onClick={() => setShowHiddenTimers(false)}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top">Ukryj ukryte timery</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <EyeOff
+                  key="hide-hidden"
+                  className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+                  size="14"
+                  onClick={() => setShowHiddenTimers(true)}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top">Pokaż ukryte timery</TooltipContent>
+            </Tooltip>
           )}
         </div>
         <div className="ll:bg-[0_0] ll:top-1 ll:leading-7 ll:-mt-1.5 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">

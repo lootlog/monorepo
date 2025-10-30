@@ -48,10 +48,11 @@ export class UserLootlogConfigService {
 
     const guildIdsWithWriteAccess = guilds
       .filter((guildData) => {
+        const isOwner = guildData.guild.ownerId === discordId;
         const hasLootlogWrite = guildData.roles.some((role) =>
           role.permissions.includes(Permission.LOOTLOG_WRITE),
         );
-        return hasLootlogWrite;
+        return isOwner || hasLootlogWrite;
       })
       .map((guildData) => guildData.guild.id);
 
@@ -179,8 +180,21 @@ export class UserLootlogConfigService {
   async createOrUpdateLootlogCharacterConfig(
     discordId: string,
     accountId: string,
+    userId: string,
     data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
+    const userGuildsWithWriteAccess = await this.getUserGuildsWithWriteAccess(
+      discordId,
+      userId,
+    );
+
+    const validLootGuildIds = data.lootGuildIds.filter((guildId) =>
+      userGuildsWithWriteAccess.has(guildId),
+    );
+    const validTimerGuildIds = data.timerGuildIds.filter((guildId) =>
+      userGuildsWithWriteAccess.has(guildId),
+    );
+
     const config = await this.prisma.userCharactersLootlogSettings.upsert({
       where: {
         userId_accountId_characterId: {
@@ -190,15 +204,15 @@ export class UserLootlogConfigService {
         },
       },
       update: {
-        collectLootWhitelistGuildIds: data.lootGuildIds,
-        addTimersWhitelistGuildIds: data.timerGuildIds,
+        collectLootWhitelistGuildIds: validLootGuildIds,
+        addTimersWhitelistGuildIds: validTimerGuildIds,
       },
       create: {
         userId: discordId,
         accountId,
         characterId: data.characterId,
-        collectLootWhitelistGuildIds: data.lootGuildIds,
-        addTimersWhitelistGuildIds: data.timerGuildIds,
+        collectLootWhitelistGuildIds: validLootGuildIds,
+        addTimersWhitelistGuildIds: validTimerGuildIds,
       },
     });
 

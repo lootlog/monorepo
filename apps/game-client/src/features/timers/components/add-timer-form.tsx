@@ -22,6 +22,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { GuildMultiSelector } from "@/components/guild-multi-selector";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
+import { NPC_NAMES } from "@/constants/margonem";
 
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
@@ -341,20 +342,30 @@ export const AddTimerForm: React.FC = () => {
               onSelect={handleNpcSelect}
               selectedIndex={selectedIndex}
               keyExtractor={(npc) => npc.npcId}
-              renderItem={(npc, _index, isSelected) => (
-                <div
-                  className={`ll:px-3 ll:py-2 ll:text-xs ll:border-b ll:border-gray-600/50 last:ll:border-b-0 ${
-                    isSelected ? "ll:bg-blue-500/30" : "ll:hover:bg-gray-700/50"
-                  }`}
-                >
-                  <div className="ll:font-semibold ll:text-white">
-                    {npc.name}
+              renderItem={(npc, _index, isSelected) => {
+                const longname = NPC_NAMES[npc.type]?.longname ?? "mob";
+                const npcDetails =
+                  npc.lvl > 0 && npc.prof
+                    ? ` ${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
+                    : "";
+
+                return (
+                  <div
+                    className={`ll:px-3 ll:py-2 ll:text-xs ll:border-b ll:border-gray-600/50 last:ll:border-b-0 ${
+                      isSelected
+                        ? "ll:bg-blue-500/30"
+                        : "ll:hover:bg-gray-700/50"
+                    }`}
+                  >
+                    <div className="ll:font-semibold ll:text-white">
+                      {npc.name}
+                    </div>
+                    <div className="ll:text-gray-400 ll:text-[10px]">
+                      {longname} • {npcDetails}
+                    </div>
                   </div>
-                  <div className="ll:text-gray-400 ll:text-[10px]">
-                    {npc.location} • Lvl {npc.lvl}
-                  </div>
-                </div>
-              )}
+                );
+              }}
               noResultsMessage="Nie znaleziono potwora"
               showNoResults={showNoResults}
             />
@@ -419,7 +430,7 @@ export const AddTimerForm: React.FC = () => {
           </div>
 
           {customDatesEnabled && (
-            <div className="ll:space-y-3 ll:w-full ll:box-border">
+            <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:box-border">
               <div className="ll:w-full ll:box-border">
                 <Label htmlFor="startDate">Data startu</Label>
                 <Input

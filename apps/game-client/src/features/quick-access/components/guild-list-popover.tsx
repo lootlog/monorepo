@@ -49,7 +49,7 @@ export const GuildListPopover = () => {
         </TooltipContent>
       </Tooltip>
 
-      <PopoverContent className="ll:w-48 ll:p-1" align="start">
+      <PopoverContent className="ll:w-48 ll:p-1 ll:bg-black" align="start">
         {isLoading ? (
           <div className="ll:flex ll:items-center ll:justify-center ll:py-3">
             <Loader2 className="ll:h-4 ll:w-4 ll:animate-spin ll:text-gray-300" />
