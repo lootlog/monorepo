@@ -4,6 +4,7 @@ import { WinstonModule, type WinstonModuleOptions } from 'nest-winston';
 import { APP_CONFIG } from 'src/config/app.config';
 import { UsersModule } from './users/users.module';
 import { TimersModule } from './timers/timers.module';
+import { TimerSettingsModule } from './timer-settings/timer-settings.module';
 import { LootsModule } from './loots/loots.module';
 import { HealthzModule } from 'src/healthz/healthz.module';
 import { GuildsModule } from './guilds/guilds.module';
@@ -32,6 +33,7 @@ import { LoggerMiddleware } from 'src/shared/middleware/logger.middleware';
     ConfigModule.forRoot(APP_CONFIG),
     UsersModule,
     TimersModule,
+    TimerSettingsModule,
     LootsModule,
     HealthzModule,
     GuildsModule,

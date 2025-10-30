@@ -305,3 +305,36 @@ model MemberRefreshJob {
   @@index([guildId])
   @@index([status])
 }
+
+model UserTimerSettings {
+  id                      Int      @id @default(autoincrement())
+  userId                  String   @unique
+  generalConfig           Json
+  displayConfig           Json
+  customColors            Json
+  timersColors            Json
+  defaultColorNames       Json
+  overriddenDefaultColors Json
+  hiddenDefaultColors     Json
+  timerFiltersEnabled     Boolean  @default(true)
+  timersSortOrder         String   @default("desc")
+  syncEnabled             Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserGuildTimerSettings {
+  id           Int      @id @default(autoincrement())
+  userId       String
+  guildId      String
+  hiddenTimers String[] @default([])
+  pinnedTimers String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, guildId])
+  @@index([userId])
+  @@index([guildId])
+}

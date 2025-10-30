@@ -84,7 +84,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   return (
     <div className="ll:py-4">
       <h4 className="ll:mb-2">Wybierz serwery na które zbierać dane:</h4>
-      <ScrollArea className="ll:h-64" type="auto">
+      <div>
         <div className="ll:grid ll:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] ll:gap-3">
           {guilds?.map((guild) => (
             <div
@@ -117,7 +117,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
             </div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
