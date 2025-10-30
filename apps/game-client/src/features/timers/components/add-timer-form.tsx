@@ -302,178 +302,183 @@ export const AddTimerForm: React.FC = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="ll:flex ll:flex-col ll:h-full ll:box-border ll:overflow-hidden"
+      className="ll:flex ll:flex-col ll:h-full ll:box-border ll:overflow-hidden ll:w-full"
     >
-      <ScrollArea className="ll:flex-1 ll:mt-2 ll:mb-2">
-        <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:px-1 ll:box-border">
-          <div className="ll:w-full ll:box-border">
-            <Label>Serwery</Label>
-            <GuildMultiSelector
-              value={selectedGuildIds}
-              onChange={handleGuildSelectionChange}
-              disabled={isPending}
-            />
-            {selectedGuildIds.length === 0 && (
-              <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                Wybierz przynajmniej jeden serwer
-              </p>
-            )}
-          </div>
+      <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
+        <Label>Serwery</Label>
+        <GuildMultiSelector
+          value={selectedGuildIds}
+          onChange={handleGuildSelectionChange}
+          disabled={isPending}
+        />
+        {selectedGuildIds.length === 0 && (
+          <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+            Wybierz przynajmniej jeden serwer
+          </p>
+        )}
+      </div>
 
-          <div className="ll:relative ll:w-full ll:box-border">
-            <Label htmlFor="npcSearch">Szukaj potwora</Label>
-            <Input
-              id="npcSearch"
-              autoComplete="off"
-              placeholder="Wpisz nazwę potwora..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onKeyDown={handleSearchKeyDown}
-              onBlur={() => {
-                setTimeout(() => setShowSuggestions(false), 200);
-              }}
-            />
-            <AutocompleteSuggestions<NpcSearchResult>
-              items={npcResults ?? []}
-              isOpen={showSuggestions && !!hasSearchResults}
-              onSelect={handleNpcSelect}
-              selectedIndex={selectedIndex}
-              keyExtractor={(npc) => npc.npcId}
-              renderItem={(npc, _index, isSelected) => {
-                const longname = NPC_NAMES[npc.type]?.longname ?? "mob";
-                const npcDetails =
-                  npc.lvl > 0 && npc.prof
-                    ? ` ${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
-                    : "";
+      <div className="ll:flex-1 ll:overflow-hidden">
+        <ScrollArea className="ll:h-full ll:w-full">
+          <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:px-1 ll:box-border">
+            <div className="ll:relative ll:w-full ll:box-border">
+              <Label htmlFor="npcSearch">Szukaj potwora</Label>
+              <Input
+                id="npcSearch"
+                autoComplete="off"
+                placeholder="Wpisz nazwę potwora..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onKeyDown={handleSearchKeyDown}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+              />
+              <AutocompleteSuggestions<NpcSearchResult>
+                items={npcResults ?? []}
+                isOpen={showSuggestions && !!hasSearchResults}
+                onSelect={handleNpcSelect}
+                selectedIndex={selectedIndex}
+                keyExtractor={(npc) => npc.npcId}
+                renderItem={(npc, _index, isSelected) => {
+                  const longname = NPC_NAMES[npc.type]?.longname ?? "mob";
+                  const npcDetails =
+                    npc.lvl > 0 && npc.prof
+                      ? ` ${npc.lvl}${npc.prof.charAt(0).toLowerCase()}`
+                      : "";
 
-                return (
-                  <div
-                    className={`ll:px-3 ll:py-2 ll:text-xs ll:border-b ll:border-gray-600/50 last:ll:border-b-0 ${
-                      isSelected
-                        ? "ll:bg-blue-500/30"
-                        : "ll:hover:bg-gray-700/50"
-                    }`}
-                  >
-                    <div className="ll:font-semibold ll:text-white">
-                      {npc.name}
+                  return (
+                    <div
+                      className={`ll:px-3 ll:py-2 ll:text-xs ll:border-b ll:border-gray-600/50 last:ll:border-b-0 ${
+                        isSelected
+                          ? "ll:bg-blue-500/30"
+                          : "ll:hover:bg-gray-700/50"
+                      }`}
+                    >
+                      <div className="ll:font-semibold ll:text-white">
+                        {npc.name}
+                      </div>
+                      <div className="ll:text-gray-400 ll:text-[10px]">
+                        {longname} • {npcDetails}
+                      </div>
                     </div>
-                    <div className="ll:text-gray-400 ll:text-[10px]">
-                      {longname} • {npcDetails}
-                    </div>
-                  </div>
-                );
-              }}
-              noResultsMessage="Nie znaleziono potwora"
-              showNoResults={showNoResults}
-            />
-          </div>
+                  );
+                }}
+                noResultsMessage="Nie znaleziono potwora"
+                showNoResults={showNoResults}
+              />
+            </div>
 
-          <div className="ll:w-full ll:box-border">
-            <Label htmlFor="name">Nazwa</Label>
-            <Input
-              id="name"
-              autoComplete="off"
-              placeholder="np. Młody Smok"
-              maxLength={20}
-              {...register("name")}
-            />
-            {errors.name && (
-              <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                {errors.name.message}
-              </p>
-            )}
-          </div>
-
-          <div className="ll:w-full ll:box-border">
-            <Label htmlFor="minDuration">Minimalny czas (max 300h)</Label>
-            <Input
-              id="minDuration"
-              placeholder="np. 2h 30m 45s"
-              autoComplete="off"
-              disabled={customDatesEnabled}
-              {...register("minDuration")}
-            />
-            {errors.minDuration && (
-              <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                {errors.minDuration.message}
-              </p>
-            )}
-          </div>
-
-          <div className="ll:w-full ll:box-border">
-            <Label htmlFor="maxDuration">Maksymalny czas (max 300h)</Label>
-            <Input
-              id="maxDuration"
-              placeholder="np. 3h 15m 30s"
-              autoComplete="off"
-              disabled={customDatesEnabled}
-              {...register("maxDuration")}
-            />
-            {errors.maxDuration && (
-              <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                {errors.maxDuration.message}
-              </p>
-            )}
-          </div>
-
-          <div className="ll:mt-2">
-            <Checkbox
-              id="customDates"
-              checked={customDatesEnabled}
-              onChange={(e) => handleCustomDatesToggle(e.currentTarget.checked)}
-            >
-              Niestandardowe daty spawnu
-            </Checkbox>
-          </div>
-
-          {customDatesEnabled && (
-            <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:box-border">
-              <div className="ll:w-full ll:box-border">
-                <Label htmlFor="startDate">Data startu</Label>
-                <Input
-                  id="startDate"
-                  type="datetime-local"
-                  {...register("startDate")}
-                  className="ll:text-xs"
-                />
-                {errors.startDate && (
-                  <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                    {errors.startDate.message}
-                  </p>
-                )}
-              </div>
-              <div className="ll:w-full ll:box-border">
-                <Label htmlFor="endDate">Data końca</Label>
-                <Input
-                  id="endDate"
-                  type="datetime-local"
-                  {...register("endDate")}
-                  className="ll:text-xs"
-                />
-                {errors.endDate && (
-                  <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-                    {errors.endDate.message}
-                  </p>
-                )}
-              </div>
-              {startDate && endDate && (
-                <p className="ll:text-xs ll:text-gray-400">
-                  Okno:{" "}
-                  {new Date(endDate).getTime() - new Date(startDate).getTime() >
-                  0
-                    ? `${Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / 60000)}m`
-                    : "Nieprawidłowy zakres"}
+            <div className="ll:w-full ll:box-border">
+              <Label htmlFor="name">Nazwa</Label>
+              <Input
+                id="name"
+                autoComplete="off"
+                placeholder="np. Młody Smok"
+                maxLength={20}
+                {...register("name")}
+              />
+              {errors.name && (
+                <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+                  {errors.name.message}
                 </p>
               )}
             </div>
-          )}
-        </div>
-      </ScrollArea>
 
-      <div className="ll:flex ll:justify-center ll:border-t ll:border-gray-600 ll:pt-1 ll:pb-0.5 ll:px-1">
+            <div className="ll:w-full ll:box-border">
+              <Label htmlFor="minDuration">Minimalny czas (max 300h)</Label>
+              <Input
+                id="minDuration"
+                placeholder="np. 2h 30m 45s"
+                autoComplete="off"
+                disabled={customDatesEnabled}
+                {...register("minDuration")}
+              />
+              {errors.minDuration && (
+                <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+                  {errors.minDuration.message}
+                </p>
+              )}
+            </div>
+
+            <div className="ll:w-full ll:box-border">
+              <Label htmlFor="maxDuration">Maksymalny czas (max 300h)</Label>
+              <Input
+                id="maxDuration"
+                placeholder="np. 3h 15m 30s"
+                autoComplete="off"
+                disabled={customDatesEnabled}
+                {...register("maxDuration")}
+              />
+              {errors.maxDuration && (
+                <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+                  {errors.maxDuration.message}
+                </p>
+              )}
+            </div>
+
+            <div className="ll:mt-2">
+              <Checkbox
+                id="customDates"
+                checked={customDatesEnabled}
+                onChange={(e) =>
+                  handleCustomDatesToggle(e.currentTarget.checked)
+                }
+              >
+                Niestandardowe daty spawnu
+              </Checkbox>
+            </div>
+
+            {customDatesEnabled && (
+              <div className="ll:flex ll:flex-col ll:gap-2 ll:w-full ll:box-border">
+                <div className="ll:w-full ll:box-border">
+                  <Label htmlFor="startDate">Data startu</Label>
+                  <Input
+                    id="startDate"
+                    type="datetime-local"
+                    {...register("startDate")}
+                    className="ll:text-xs"
+                  />
+                  {errors.startDate && (
+                    <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+                      {errors.startDate.message}
+                    </p>
+                  )}
+                </div>
+                <div className="ll:w-full ll:box-border">
+                  <Label htmlFor="endDate">Data końca</Label>
+                  <Input
+                    id="endDate"
+                    type="datetime-local"
+                    {...register("endDate")}
+                    className="ll:text-xs"
+                  />
+                  {errors.endDate && (
+                    <p className="ll:text-xs ll:text-red-500 ll:mt-1">
+                      {errors.endDate.message}
+                    </p>
+                  )}
+                </div>
+                {startDate && endDate && (
+                  <p className="ll:text-xs ll:text-gray-400">
+                    Okno:{" "}
+                    {new Date(endDate).getTime() -
+                      new Date(startDate).getTime() >
+                    0
+                      ? `${Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / 60000)}m`
+                      : "Nieprawidłowy zakres"}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      <div className="ll:flex ll:justify-center ll:border-t ll:border-gray-600 ll:pt-1 ll:pb-0.5 ll:px-1 ll:shrink-0">
         <button
           type="submit"
           className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:px-4"

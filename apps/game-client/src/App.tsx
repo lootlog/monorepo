@@ -11,12 +11,14 @@ import { Notifications } from "@/features/notifications/notifications";
 import { QuickAccess } from "@/features/quick-access/quick-access";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { Toaster } from "@/components/ui/toaster";
+import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
 
 function App() {
   useGameEventsParser();
   useInitialConfiguration();
   useHotkeys();
 
+  const { ConflictDialog } = useTimerSettingsSync();
   const { gameInitialized } = useGlobalStore((state) => state.gameState);
 
   return (
@@ -31,6 +33,7 @@ function App() {
         <Notifications />
         <QuickAccess />
         <Toaster />
+        {ConflictDialog}
       </>
     )
   );

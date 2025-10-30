@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DeleteTimerPopover } from "@/components/delete-timer-popover";
 import { NPC_NAMES } from "@/constants/margonem";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
@@ -92,12 +93,32 @@ export const SingleTimer: FC<SingleTimerProps> = ({
         </div>
       </div>
 
-      {!generalConfig.timersGrouping && (
-        <div className="ll:text-xs ll:text-gray-300">
-          <span className="ll:text-gray-400">Dodane przez:</span>{" "}
-          <span className="ll:font-semibold">{timer?.member?.name ?? ""}</span>
-        </div>
-      )}
+      {(() => {
+        const members =
+          timer.members && timer.members.length > 0
+            ? timer.members
+            : timer.member
+              ? [timer.member]
+              : [];
+
+        if (members.length === 0) return null;
+
+        const membersWithGuilds = members
+          .map((m) => {
+            const guildName = guilds?.find((g) => g.id === m.guildId)?.name;
+            return guildName ? `${m.name} (${guildName})` : m.name;
+          })
+          .join(", ");
+
+        return (
+          <div className="ll:text-xs ll:text-gray-300">
+            <span className="ll:text-gray-400">
+              {members.length > 1 ? "Dodane przez:" : "Dodane przez:"}
+            </span>{" "}
+            <span className="ll:font-semibold">{membersWithGuilds}</span>
+          </div>
+        );
+      })()}
 
       {timer.wasReset && (
         <div className="ll:text-xs ll:text-orange-400 ll:flex ll:items-center ll:gap-1">
@@ -190,13 +211,13 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     });
   };
 
-  const handleDeleteTimer = () => {
+  const handleDeleteTimer = (guildIdOverride?: string) => {
     if (!world) return;
 
     deleteTimer({
       world,
       npcId: timer.npc.id,
-      guildId: timer.guildId,
+      guildId: guildIdOverride || timer.guildId,
     });
   };
 
@@ -378,15 +399,20 @@ export const SingleTimer: FC<SingleTimerProps> = ({
               <ContextMenuItem onClick={handleHideTimerForAll}>
                 Ukryj na wszystkich serwerach
               </ContextMenuItem>
-              {!generalConfig.timersGrouping && (
-                <ContextMenuItem onClick={handleRestartTimer}>
-                  Odliczaj od początku
-                </ContextMenuItem>
-              )}
-              {!generalConfig.timersGrouping && canDelete && (
-                <ContextMenuItem onClick={handleDeleteTimer}>
-                  Usuń timer
-                </ContextMenuItem>
+              <ContextMenuItem onClick={handleRestartTimer}>
+                Odliczaj od początku
+              </ContextMenuItem>
+              {generalConfig.timersGrouping ? (
+                <DeleteTimerPopover
+                  timer={timer}
+                  onDeleteTimer={handleDeleteTimer}
+                />
+              ) : (
+                canDelete && (
+                  <ContextMenuItem onClick={() => handleDeleteTimer()}>
+                    Usuń timer
+                  </ContextMenuItem>
+                )
               )}
               <ContextMenuItem disabled>Włącz dźwięk</ContextMenuItem>
             </>
