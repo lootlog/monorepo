@@ -64,6 +64,10 @@ export class TimerEntity {
   @Exclude()
   createdAt: Date;
 
-  @Exclude()
+  @Expose()
+  @ApiProperty({
+    example: '2025-09-01T10:00:00Z',
+    description: 'Last updated timestamp',
+  })
   updatedAt: Date;
 }

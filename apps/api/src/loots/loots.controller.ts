@@ -20,9 +20,9 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { type Guild, Permission, type Role } from 'generated/client';
-import type { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
-import type { CreateLootDto } from 'src/loots/dto/create-loot.dto';
-import type { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
+import { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
+import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
+import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
 import { LootsService } from 'src/loots/loots.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';

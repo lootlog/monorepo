@@ -228,11 +228,22 @@ export class TimersService {
     data: CreateManualTimerDto,
   ): Promise<Timer> {
     const now = new Date();
-    const { minSpawnTime, maxSpawnTime } = this.calculateRespawnTime(
-      data.respBaseSeconds,
-      data.respawnRandomness,
-      now,
-    );
+
+    let minSpawnTime: Date;
+    let maxSpawnTime: Date;
+
+    if (data.customMinSpawnTime && data.customMaxSpawnTime) {
+      minSpawnTime = data.customMinSpawnTime;
+      maxSpawnTime = data.customMaxSpawnTime;
+    } else {
+      const calculated = this.calculateRespawnTime(
+        data.respBaseSeconds,
+        data.respawnRandomness,
+        now,
+      );
+      minSpawnTime = calculated.minSpawnTime;
+      maxSpawnTime = calculated.maxSpawnTime;
+    }
 
     const npcId = generateUniqueIntId();
     const respawnRandomness =
@@ -464,6 +475,7 @@ export class TimersService {
     limit = 10,
   ) {
     const limitNum = Number(limit) || 10;
+    const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
     const timers = await this.prisma.$queryRaw<Timer[]>`
       SELECT DISTINCT ON (t."npcId")
         t."npc",
@@ -474,6 +486,7 @@ export class TimersService {
       WHERE t."guildId" = ${guildId}
         AND t."world" = ${world}
         AND t."npc"->>'name' ILIKE ${'%' + search + '%'}
+        AND COALESCE(t."npc"->>'margonemType', '0') != ${manualTimerType}
       ORDER BY t."npcId", t."updatedAt" DESC
       LIMIT ${limitNum}
     `;

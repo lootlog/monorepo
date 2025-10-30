@@ -9,6 +9,7 @@ export interface GuildRole {
 
 export interface Guild {
   id: string;
+  ownerId: string;
 }
 
 export interface UserGuildData {

@@ -6,6 +6,7 @@ type TimersFilters = {
   minLvl: number;
   maxLvl: number;
   selectedNpcTypes: NpcType[];
+  selectedColors: string[];
 };
 
 type TimersGeneralConfig = {
@@ -26,10 +27,24 @@ type TimersDisplayConfig = {
 type HiddenTimers = Record<string, string[]>;
 type PinnedTimers = Record<string, string[]>;
 
+export type CustomTimerColor = {
+  id: string;
+  name: string;
+  borderColor: string;
+  backgroundColor: string;
+};
+
 interface TimersState {
   hiddenTimers: HiddenTimers;
   pinnedTimers: PinnedTimers;
   timersColors: Record<string, string | undefined>;
+  customColors: Record<string, CustomTimerColor>;
+  defaultColorNames: Record<string, string>;
+  overriddenDefaultColors: Record<
+    string,
+    { borderColor: string; backgroundColor: string }
+  >;
+  hiddenDefaultColors: string[];
   timersFilters: Record<string, TimersFilters>;
   timerFiltersEnabled?: boolean;
   timerFiltersSearchText?: string;
@@ -47,11 +62,23 @@ interface TimersState {
   pinTimer: (guildId: string, timerId: string) => void;
   unpinTimer: (guildId: string, timerId: string) => void;
   setTimerColor: (npcName: string, color?: string) => void;
+  addCustomColor: (color: CustomTimerColor) => void;
+  updateCustomColor: (id: string, color: CustomTimerColor) => void;
+  deleteCustomColor: (id: string) => void;
+  setDefaultColorName: (colorId: string, name: string) => void;
+  updateDefaultColor: (
+    colorId: string,
+    borderColor: string,
+    backgroundColor: string,
+  ) => void;
+  deleteDefaultColor: (colorId: string) => void;
+  restoreDefaultColor: (colorId: string) => void;
 }
 
 const DEFAULT_REMOVE_TIMER_AFTER_MS = 30000;
 
 const DEFAULT_SELECTED_NPC_TYPES = [
+  NpcType.ELITE3,
   NpcType.ELITE2,
   NpcType.HERO,
   NpcType.TITAN,
@@ -61,6 +88,7 @@ export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   minLvl: 0,
   maxLvl: 300,
   selectedNpcTypes: DEFAULT_SELECTED_NPC_TYPES,
+  selectedColors: [],
 };
 
 export const useTimersStore = create<TimersState>()(
@@ -69,6 +97,10 @@ export const useTimersStore = create<TimersState>()(
       hiddenTimers: {},
       pinnedTimers: {},
       timersColors: {},
+      customColors: {},
+      defaultColorNames: {},
+      overriddenDefaultColors: {},
+      hiddenDefaultColors: [],
       generalConfig: {
         removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
         timersGrouping: false,
@@ -79,7 +111,7 @@ export const useTimersStore = create<TimersState>()(
         set({ generalConfig: config });
       },
       displayConfig: {
-        showType: false,
+        showType: true,
         showLevel: false,
         fontSize: 11,
         minColumnWidth: 120,
@@ -159,6 +191,87 @@ export const useTimersStore = create<TimersState>()(
           },
         }));
       },
+      addCustomColor: (color: CustomTimerColor) => {
+        set((state) => ({
+          customColors: {
+            ...state.customColors,
+            [color.id]: color,
+          },
+        }));
+      },
+      updateCustomColor: (id: string, color: CustomTimerColor) => {
+        set((state) => ({
+          customColors: {
+            ...state.customColors,
+            [id]: color,
+          },
+        }));
+      },
+      deleteCustomColor: (id: string) => {
+        set((state) => {
+          const newCustomColors = { ...state.customColors };
+          delete newCustomColors[id];
+
+          const newTimersColors = { ...state.timersColors };
+          Object.keys(newTimersColors).forEach((npcName) => {
+            if (newTimersColors[npcName] === id) {
+              newTimersColors[npcName] = undefined;
+            }
+          });
+
+          return {
+            customColors: newCustomColors,
+            timersColors: newTimersColors,
+          };
+        });
+      },
+      setDefaultColorName: (colorId: string, name: string) => {
+        set((state) => ({
+          defaultColorNames: {
+            ...state.defaultColorNames,
+            [colorId]: name,
+          },
+        }));
+      },
+      updateDefaultColor: (
+        colorId: string,
+        borderColor: string,
+        backgroundColor: string,
+      ) => {
+        set((state) => ({
+          overriddenDefaultColors: {
+            ...state.overriddenDefaultColors,
+            [colorId]: { borderColor, backgroundColor },
+          },
+        }));
+      },
+      deleteDefaultColor: (colorId: string) => {
+        set((state) => ({
+          hiddenDefaultColors: [...state.hiddenDefaultColors, colorId],
+          timersColors: Object.fromEntries(
+            Object.entries(state.timersColors).map(([key, value]) =>
+              value === colorId ? [key, undefined] : [key, value],
+            ),
+          ),
+        }));
+      },
+      restoreDefaultColor: (colorId: string) => {
+        set((state) => ({
+          hiddenDefaultColors: state.hiddenDefaultColors.filter(
+            (id) => id !== colorId,
+          ),
+          overriddenDefaultColors: (() => {
+            const newOverriddenColors = { ...state.overriddenDefaultColors };
+            delete newOverriddenColors[colorId];
+            return newOverriddenColors;
+          })(),
+          defaultColorNames: (() => {
+            const newDefaultColorNames = { ...state.defaultColorNames };
+            delete newDefaultColorNames[colorId];
+            return newDefaultColorNames;
+          })(),
+        }));
+      },
     }),
     {
       name: "ll-timers-state",
@@ -166,6 +279,10 @@ export const useTimersStore = create<TimersState>()(
         hiddenTimers: state.hiddenTimers,
         pinnedTimers: state.pinnedTimers,
         timersColors: state.timersColors,
+        customColors: state.customColors,
+        defaultColorNames: state.defaultColorNames,
+        overriddenDefaultColors: state.overriddenDefaultColors,
+        hiddenDefaultColors: state.hiddenDefaultColors,
         timerFiltersEnabled: state.timerFiltersEnabled,
         timersSortOrder: state.timersSortOrder,
         timersFilters: state.timersFilters,
@@ -173,7 +290,7 @@ export const useTimersStore = create<TimersState>()(
         displayConfig: state.displayConfig,
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 2,
-    }
-  )
+      version: 5,
+    },
+  ),
 );
