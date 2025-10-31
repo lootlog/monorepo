@@ -145,7 +145,6 @@ export const useCreateTimer = () => {
       const { minSpawnTime, maxSpawnTime } = calculateSpawnTimes(timer);
 
       const optimisticTimers = guildIds.map((guildId, index) => ({
-        id: 0,
         tempId: tempIds[index],
         isPending: true,
         minSpawnTime,

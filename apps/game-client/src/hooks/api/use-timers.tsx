@@ -10,7 +10,6 @@ export type UseTimersOptions = {
 };
 
 export type Timer = {
-  id: number;
   minSpawnTime: Date;
   maxSpawnTime: Date;
   npc: Npc;
@@ -37,9 +36,28 @@ export const useTimers = ({ world }: UseTimersOptions) => {
 
   const query = useQuery({
     queryKey: ["guild-timers", world],
-    queryFn: () => client.get<Timer[]>(`${API_URL}/timers?${queryString}`),
+    queryFn: async () => {
+      const response = await client.get<Timer[]>(
+        `${API_URL}/timers?${queryString}`,
+      );
+      console.log("[USE_TIMERS] Fetched timers from API:", {
+        count: response.data.length,
+        timersWithIsPending: response.data.filter((t) => t.isPending).length,
+        timersWithTempId: response.data.filter((t) => t.tempId).length,
+      });
+      return response;
+    },
     enabled: !!world,
-    select: (response) => response.data,
+    select: (response) => {
+      const cleanedTimers = response.data.map((timer) => ({
+        ...timer,
+        isPending: false,
+      }));
+      console.log(
+        "[USE_TIMERS] Cleaned timers, ensuring isPending: false for all",
+      );
+      return cleanedTimers;
+    },
     staleTime: 0,
   });
 

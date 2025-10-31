@@ -184,7 +184,7 @@ export class TimerSettingsService {
       overriddenDefaultColors: {},
       hiddenDefaultColors: [],
       timerFiltersEnabled: true,
-      timersSortOrder: 'desc',
+      timersSortOrder: 'asc',
       syncEnabled: true,
     };
   }

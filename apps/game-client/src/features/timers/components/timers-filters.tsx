@@ -3,7 +3,7 @@ import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { cn } from "@/lib/utils";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
-import { FC, useCallback } from "react";
+import { FC } from "react";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import {
   Tooltip,
@@ -57,67 +57,52 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
 
   const filters = timersFilters[filtersKey] || DEFAULT_TIMERS_FILTERS;
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTimerFiltersSearchText(e.target.value);
-    },
-    [setTimerFiltersSearchText],
-  );
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTimerFiltersSearchText(e.target.value);
+  };
 
-  const handleMinLvlChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const numericValue = Number(e.target.value);
+  const handleMinLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = Number(e.target.value);
 
-      if (isNaN(numericValue)) return;
+    if (isNaN(numericValue)) return;
 
-      const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
+    const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
 
-      setTimersFilters(filtersKey, {
-        ...filters,
-        minLvl: clampedValue,
-      });
-    },
-    [setTimersFilters, filters, filtersKey],
-  );
+    setTimersFilters(filtersKey, {
+      ...filters,
+      minLvl: clampedValue,
+    });
+  };
 
-  const handleMaxLvlChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const numericValue = Number(e.target.value);
+  const handleMaxLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const numericValue = Number(e.target.value);
 
-      if (isNaN(numericValue)) return;
+    if (isNaN(numericValue)) return;
 
-      const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
-      setTimersFilters(filtersKey, {
-        ...filters,
-        maxLvl: clampedValue,
-      });
-    },
-    [setTimersFilters, filters, filtersKey],
-  );
+    const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
+    setTimersFilters(filtersKey, {
+      ...filters,
+      maxLvl: clampedValue,
+    });
+  };
 
-  const handleToggleNpcType = useCallback(
-    (npcType: NpcType) => {
-      setTimersFilters(filtersKey, {
-        ...filters,
-        selectedNpcTypes: filters.selectedNpcTypes.includes(npcType)
-          ? filters.selectedNpcTypes.filter((type) => type !== npcType)
-          : [...filters.selectedNpcTypes, npcType],
-      });
-    },
-    [setTimersFilters, filters.selectedNpcTypes, filtersKey],
-  );
+  const handleToggleNpcType = (npcType: NpcType) => {
+    setTimersFilters(filtersKey, {
+      ...filters,
+      selectedNpcTypes: filters.selectedNpcTypes.includes(npcType)
+        ? filters.selectedNpcTypes.filter((type) => type !== npcType)
+        : [...filters.selectedNpcTypes, npcType],
+    });
+  };
 
-  const handleToggleColor = useCallback(
-    (colorId: string) => {
-      setTimersFilters(filtersKey, {
-        ...filters,
-        selectedColors: filters.selectedColors.includes(colorId)
-          ? filters.selectedColors.filter((id) => id !== colorId)
-          : [...filters.selectedColors, colorId],
-      });
-    },
-    [setTimersFilters, filters.selectedColors, filtersKey],
-  );
+  const handleToggleColor = (colorId: string) => {
+    setTimersFilters(filtersKey, {
+      ...filters,
+      selectedColors: filters.selectedColors.includes(colorId)
+        ? filters.selectedColors.filter((id) => id !== colorId)
+        : [...filters.selectedColors, colorId],
+    });
+  };
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-1 ll:mb-1">
