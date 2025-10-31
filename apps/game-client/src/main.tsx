@@ -37,7 +37,7 @@ ReactDOM.createRoot(
       "ll:absolute ll:top-0 ll:left-0 ll:z-20 ll:h-screen ll:w-screen ll:pointer-events-none";
     document.body.append(app);
     return app;
-  })()
+  })(),
 ).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="dark-theme" storageKey="lootlog-theme">
@@ -47,5 +47,5 @@ ReactDOM.createRoot(
         </GatewayProvider>
       </QueryClientProvider>
     </ThemeProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

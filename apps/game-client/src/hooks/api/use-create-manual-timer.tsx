@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { toast } from "sonner";
 
 export type UseCreateManualTimerOptions = {
   name: string;
@@ -78,26 +77,8 @@ export const useCreateManualTimer = () => {
         failureCount: failed.length,
       };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["guild-timers"] });
-
-      if (result.failureCount === 0) {
-        toast.success(
-          `Timer utworzony w ${result.successCount} ${result.successCount === 1 ? "gildii" : "gildiach"}`,
-        );
-      } else if (result.successCount === 0) {
-        toast.error("Nie udało się utworzyć timera w żadnej gildii");
-      } else {
-        toast.warning(
-          `Timer utworzony w ${result.successCount}/${result.totalGuilds} gildiach`,
-        );
-      }
-    },
-    onError: (error: unknown) => {
-      const errorMessage =
-        (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message || "Nie udało się utworzyć timera";
-      toast.error(errorMessage);
     },
   });
 
