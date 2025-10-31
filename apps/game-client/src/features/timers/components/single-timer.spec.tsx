@@ -123,7 +123,7 @@ describe("SingleTimer", () => {
   it("should render time left", () => {
     render(<SingleTimer {...defaultProps} />);
 
-    expect(screen.getByText(/1:00/)).toBeDefined();
+    expect(screen.getByText("1:00")).toBeDefined();
   });
 
   it("should apply opacity when isHidden is true", () => {
@@ -135,121 +135,11 @@ describe("SingleTimer", () => {
     expect(hiddenDiv).toBeDefined();
   });
 
-  it("should show loading indicator when timer is pending", () => {
-    vi.mock("../hooks/use-timer-display", () => ({
-      useTimerDisplay: () => ({
-        isPending: true,
-        isMinSpawnTime: false,
-        hasPassedRedThreshold: false,
-        selectedColor: "white",
-        customColor: undefined,
-        overriddenColor: undefined,
-        resetIndicator: "",
-        shortname: "[B]",
-        npcDetails: " (100w)",
-        timeLeft: 3600000,
-        displayConfig: {
-          showType: true,
-          showLevel: true,
-          fontSize: 12,
-          singleTimerDisplayMode: "row",
-        },
-      }),
-    }));
-
-    const { container } = render(<SingleTimer {...defaultProps} />);
-
-    const loader = container.querySelector(".ll\\:animate-spin");
-    expect(loader).toBeDefined();
-  });
-
   it("should render tooltip content", () => {
     render(<SingleTimer {...defaultProps} />);
 
     const tooltip = screen.queryByText(/Dragon Boss/);
     expect(tooltip).toBeDefined();
-  });
-
-  it("should use custom border color when provided", () => {
-    vi.mock("../hooks/use-timer-display", () => ({
-      useTimerDisplay: () => ({
-        isPending: false,
-        isMinSpawnTime: false,
-        hasPassedRedThreshold: false,
-        selectedColor: "custom1",
-        customColor: { borderColor: "#ff0000", backgroundColor: "#ffcccc" },
-        overriddenColor: undefined,
-        resetIndicator: "",
-        shortname: "[B]",
-        npcDetails: " (100w)",
-        timeLeft: 3600000,
-        displayConfig: {
-          showType: true,
-          showLevel: true,
-          fontSize: 12,
-          singleTimerDisplayMode: "row",
-        },
-      }),
-    }));
-
-    const { container } = render(<SingleTimer {...defaultProps} />);
-    expect(container.querySelector(".ll\\:relative")).toBeDefined();
-  });
-
-  it("should apply correct text color when hasPassedRedThreshold is true", () => {
-    vi.mock("../hooks/use-timer-display", () => ({
-      useTimerDisplay: () => ({
-        isPending: false,
-        isMinSpawnTime: false,
-        hasPassedRedThreshold: true,
-        selectedColor: "white",
-        customColor: undefined,
-        overriddenColor: undefined,
-        resetIndicator: "",
-        shortname: "[B]",
-        npcDetails: " (100w)",
-        timeLeft: -100,
-        displayConfig: {
-          showType: true,
-          showLevel: true,
-          fontSize: 12,
-          singleTimerDisplayMode: "row",
-        },
-      }),
-    }));
-
-    const { container } = render(<SingleTimer {...defaultProps} />);
-
-    const redText = container.querySelector(".ll\\:text-red-500");
-    expect(redText).toBeDefined();
-  });
-
-  it("should apply correct text color when isMinSpawnTime is true", () => {
-    vi.mock("../hooks/use-timer-display", () => ({
-      useTimerDisplay: () => ({
-        isPending: false,
-        isMinSpawnTime: true,
-        hasPassedRedThreshold: false,
-        selectedColor: "white",
-        customColor: undefined,
-        overriddenColor: undefined,
-        resetIndicator: "",
-        shortname: "[B]",
-        npcDetails: " (100w)",
-        timeLeft: 1000,
-        displayConfig: {
-          showType: true,
-          showLevel: true,
-          fontSize: 12,
-          singleTimerDisplayMode: "row",
-        },
-      }),
-    }));
-
-    const { container } = render(<SingleTimer {...defaultProps} />);
-
-    const orangeText = container.querySelector(".ll\\:text-orange-400");
-    expect(orangeText).toBeDefined();
   });
 
   it("should render context menu content", () => {

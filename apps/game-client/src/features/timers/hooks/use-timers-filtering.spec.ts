@@ -60,7 +60,7 @@ describe("useTimersFiltering", () => {
     hiddenTimers: [],
     showHiddenTimers: false,
     searchText: "",
-    selectedNpcTypes: ["boss", "elite", "champion"],
+    selectedNpcTypes: [NpcType.HERO, NpcType.ELITE, NpcType.TITAN],
     minLvl: 1,
     maxLvl: 500,
     selectedColors: [],
@@ -107,7 +107,7 @@ describe("useTimersFiltering", () => {
       useTimersFiltering({
         ...defaultProps,
         isGrouping: true,
-        selectedNpcTypes: ["boss"],
+        selectedNpcTypes: [NpcType.HERO],
       }),
     );
 

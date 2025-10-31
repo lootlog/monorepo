@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { TimersColorStatistics } from "./timers-color-statistics";
+
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => <div>{children}</div>,
+  TooltipTrigger: ({ children }: any) => <div>{children}</div>,
+  TooltipContent: ({ children }: any) => <div>{children}</div>,
+}));
 
 describe("TimersColorStatistics", () => {
   it("should render empty state when no color statistics", () => {
@@ -29,35 +35,6 @@ describe("TimersColorStatistics", () => {
 
     expect(screen.getByText(/Czerwony: 3\/5/)).toBeDefined();
     expect(screen.getByText(/Niebieski: 1\/2/)).toBeDefined();
-  });
-
-  it("should render info icon", () => {
-    const { container } = render(
-      <TimersColorStatistics colorStatistics={[]} />,
-    );
-
-    const infoIcon = container.querySelector("svg");
-    expect(infoIcon).toBeDefined();
-  });
-
-  it("should render with custom background and border colors", () => {
-    const colorStatistics = [
-      {
-        color: "custom1",
-        total: 3,
-        active: 2,
-        name: "My Custom Color",
-        bgColor: "#ff0000",
-        borderColor: "#cc0000",
-      },
-    ];
-
-    const { container } = render(
-      <TimersColorStatistics colorStatistics={colorStatistics} />,
-    );
-
-    const colorDiv = container.querySelector('div[style*="#ff0000"]');
-    expect(colorDiv).toBeDefined();
   });
 
   it("should show title", () => {

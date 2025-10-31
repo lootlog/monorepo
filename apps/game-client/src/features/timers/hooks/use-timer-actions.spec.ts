@@ -16,7 +16,7 @@ vi.mock("@/store/timers.store", () => ({
     hideTimer: vi.fn(),
     pinTimer: vi.fn(),
     unpinTimer: vi.fn(),
-    pinnedTimers: {},
+    pinnedTimers: { guild1: [] },
     setTimerColor: vi.fn(),
   }),
 }));

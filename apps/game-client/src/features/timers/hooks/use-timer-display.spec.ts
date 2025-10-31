@@ -23,9 +23,12 @@ vi.mock("@/store/timers.store", () => ({
 
 vi.mock("@/constants/margonem", () => ({
   NPC_NAMES: {
-    boss: { shortname: "B" },
-    elite: { shortname: "E" },
-    champion: { shortname: "C" },
+    HERO: { shortname: "B" },
+    ELITE: { shortname: "E" },
+    ELITE2: { shortname: "E2" },
+    ELITE3: { shortname: "E3" },
+    TITAN: { shortname: "T" },
+    COLOSSUS: { shortname: "C" },
   },
 }));
 
