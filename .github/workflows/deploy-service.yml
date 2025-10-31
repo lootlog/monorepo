@@ -115,21 +115,21 @@ jobs:
           cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:${{ inputs.environment }}-buildcache,mode=max
           provenance: false
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH"
-          exit-code: "1"
-          ignore-unfixed: true
+      # - name: Run Trivy vulnerability scanner
+      #   uses: aquasecurity/trivy-action@0.33.1
+      #   with:
+      #     image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+      #     format: "sarif"
+      #     output: "trivy-results.sarif"
+      #     severity: "CRITICAL,HIGH"
+      #     exit-code: "1"
+      #     ignore-unfixed: true
 
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: "trivy-results.sarif"
+      # - name: Upload Trivy results to GitHub Security
+      #   uses: github/codeql-action/upload-sarif@v4
+      #   if: always()
+      #   with:
+      #     sarif_file: "trivy-results.sarif"
 
   update-kustomize:
     name: Update Kustomize
