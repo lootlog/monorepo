@@ -1,9 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, userEvent } from "@/test/test-utils";
 import type { Timer } from "@/hooks/api/use-timers";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { createMockTimer } from "../__tests__/test-helpers";
+
+vi.mock("@/components/ui/context-menu", () => ({
+  ContextMenuItem: ({ children, onClick, disabled }: any) => (
+    <button onClick={onClick} data-disabled={disabled || undefined}>
+      {children}
+    </button>
+  ),
+}));
+
+vi.mock("@/hooks/api/use-guilds", () => ({
+  useGuilds: () => ({ data: [] }),
+}));
 
 describe("TimerContextMenuContent", () => {
   const mockTimer = createMockTimer();
