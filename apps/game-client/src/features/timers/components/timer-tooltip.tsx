@@ -18,7 +18,7 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({ timer, guilds }) => {
   const levelSuffix = getLevelSuffix(timer.npc);
   const members = getTimerMembers(timer);
   const membersWithGuilds =
-    members.length > 0 ? getMembersWithGuilds(members, guilds) : null;
+    members.length > 0 ? getMembersWithGuilds(members, guilds) : [];
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-1">
@@ -28,12 +28,16 @@ export const TimerTooltip: FC<TimerTooltipProps> = ({ timer, guilds }) => {
         </div>
       </div>
 
-      {membersWithGuilds && (
+      {membersWithGuilds.length > 0 && (
         <div className="ll:text-xs ll:text-gray-300">
-          <span className="ll:text-gray-400">Dodane przez:</span>{" "}
-          <span className="ll:font-semibold ll:wrap-break-word">
-            {membersWithGuilds}
-          </span>
+          <span className="ll:text-gray-400">Dodane przez:</span>
+          <div className="ll:mt-0.5 ll:flex ll:flex-col ll:gap-0.5">
+            {membersWithGuilds.map(({ id, label }) => (
+              <span className="ll:font-semibold ll:wrap-break-word" key={id}>
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

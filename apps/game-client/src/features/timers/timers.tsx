@@ -8,7 +8,6 @@ import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useSettingsStore } from "@/store/settings.store";
-import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { TimersActions } from "@/features/timers/components/timers-actions";
 import { TimersContent } from "@/features/timers/components/timers-content";
 import { TimersUnderBagActions } from "@/features/timers/components/timers-under-bag-actions";
@@ -22,32 +21,21 @@ import {
 } from "@/features/timers/utils/timers-utils";
 import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
-import { REQUIRED_DELETE_PERMISSIONS } from "@/features/timers/constants/required-delete-permissions";
 
 export type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 
 export const Timers = () => {
-  console.log("[TIMERS] === Component render start ===");
-
   const {
     world: defaultWorld,
     gameInterface,
     characterId,
   } = useGlobalStore((s) => s.gameState);
 
-  console.log("[TIMERS] Global state:", {
-    defaultWorld,
-    gameInterface,
-    characterId,
-  });
-
   const {
     timers: { open },
     toggleOpen,
     setOpen,
   } = useWindowsStore();
-
-  console.log("[TIMERS] Windows state:", { open });
 
   const {
     hiddenTimers,
@@ -66,47 +54,21 @@ export const Timers = () => {
     overriddenDefaultColors,
   } = useTimersStore();
 
-  console.log("[TIMERS] Timers store:", {
-    generalConfig,
-    timerFiltersEnabled,
-    timerFiltersSearchText,
-    timersSortOrder,
-    displayConfig,
-  });
-
   const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
   const guildId = guildIdByCharId[characterId!];
   const desiredWorld = generalConfig.timersGrouping
     ? defaultWorld
     : world || defaultWorld;
 
-  console.log("[TIMERS] Settings:", { world, guildId, desiredWorld });
-
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId!;
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
-  console.log("[TIMERS] Settings key:", settingsKey);
-  console.log("[TIMERS] Filters:", filters);
-
-  const { data: guildPermissions } = useGuildPermissions({ guildId });
   const { data: timers } = useTimers({ world: desiredWorld });
   const { socket, connected } = useGateway();
 
-  console.log("[TIMERS] API data:", {
-    timersCount: timers?.length ?? 0,
-    permissionsCount: guildPermissions?.length ?? 0,
-    socketConnected: connected,
-    socketId: socket?.id,
-  });
-
-  const canDeleteTimers = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
-    guildPermissions?.includes(perm),
-  );
-
   const rawTimers = timers ?? [];
-  console.log("[TIMERS] Raw timers count:", rawTimers.length);
 
   const deduplicatedTimers = generalConfig.timersGrouping
     ? rawTimers
@@ -119,16 +81,6 @@ export const Timers = () => {
         ).values(),
       );
 
-  if (
-    !generalConfig.timersGrouping &&
-    rawTimers.length !== deduplicatedTimers.length
-  ) {
-    console.warn("[TIMERS] Removed duplicate timers:", {
-      original: rawTimers.length,
-      deduplicated: deduplicatedTimers.length,
-    });
-  }
-
   const merged = generalConfig.timersGrouping
     ? mergeTimers(deduplicatedTimers)
     : deduplicatedTimers.map((timer) => ({
@@ -137,27 +89,19 @@ export const Timers = () => {
         minTimeLeft: 0,
         maxTimeLeft: 0,
       }));
-  console.log("[TIMERS] Merged timers count:", merged.length);
 
   const withTimeLeft = calculateTimeLeft(merged);
-  console.log("[TIMERS] With time left count:", withTimeLeft.length);
 
   const activeTimers = filterTimersByRemovalTime(
     withTimeLeft,
     generalConfig.removeTimerAfterMs,
   );
-  console.log("[TIMERS] Active timers count:", activeTimers.length);
-  console.log("[TIMERS] Active timers reference:", activeTimers);
 
-  console.log("[TIMERS] Calling useTimersUpdate with activeTimers");
   const calculatedTimers = useTimersUpdate(
     activeTimers,
     generalConfig.removeTimerAfterMs,
   );
-  console.log("[TIMERS] Calculated timers count:", calculatedTimers.length);
-  console.log("[TIMERS] Calculated timers reference:", calculatedTimers);
 
-  console.log("[TIMERS] Calling useTimersSocket");
   useTimersSocket(socket ?? null, connected ?? false, desiredWorld ?? "");
 
   const areFiltersActive = checkFiltersActive(
@@ -165,9 +109,6 @@ export const Timers = () => {
     hiddenTimers[settingsKey]?.length ?? 0,
     filters,
   );
-
-  console.log("[TIMERS] Filters active:", areFiltersActive);
-  console.log("[TIMERS] Calling useTimersFiltering");
 
   const sortedTimers = useTimersFiltering({
     calculatedTimers,
@@ -185,8 +126,6 @@ export const Timers = () => {
     sortOrder: timersSortOrder ?? "asc",
   });
 
-  console.log("[TIMERS] Sorted timers count:", sortedTimers.length);
-
   const colorStatistics = calculateColorStatistics(
     timersColors as Record<string, string>,
     sortedTimers,
@@ -194,9 +133,6 @@ export const Timers = () => {
     defaultColorNames as Record<string, string>,
     overriddenDefaultColors,
   );
-
-  console.log("[TIMERS] Color statistics:", colorStatistics);
-  console.log("[TIMERS] === Component render end ===\n");
 
   if (generalConfig.timersUnderBag && gameInterface === "ni") {
     return (
@@ -218,7 +154,6 @@ export const Timers = () => {
           sortedTimers={sortedTimers}
           settingsKey={settingsKey}
           hiddenTimers={hiddenTimers[settingsKey] || []}
-          canDeleteTimers={canDeleteTimers}
           areFiltersActive={areFiltersActive}
           colorStatistics={colorStatistics}
           isGrouping={generalConfig.timersGrouping}
@@ -261,7 +196,6 @@ export const Timers = () => {
                 sortedTimers={sortedTimers}
                 settingsKey={settingsKey}
                 hiddenTimers={hiddenTimers[settingsKey] || []}
-                canDeleteTimers={canDeleteTimers}
                 areFiltersActive={areFiltersActive}
                 colorStatistics={colorStatistics}
                 isGrouping={generalConfig.timersGrouping}

@@ -23,6 +23,7 @@ describe("TimerContextMenuContent", () => {
     timer: mockTimer,
     isPending: false,
     isPinned: false,
+    isHidden: false,
     canDelete: true,
     timersGrouping: false,
     selectedColor: "white",
@@ -36,6 +37,8 @@ describe("TimerContextMenuContent", () => {
     onUnpinAll: vi.fn(),
     onHide: vi.fn(),
     onHideAll: vi.fn(),
+    onShow: vi.fn(),
+    onShowAll: vi.fn(),
     onReset: vi.fn(),
     onDelete: vi.fn(),
   };
@@ -75,14 +78,82 @@ describe("TimerContextMenuContent", () => {
     expect(onPin).toHaveBeenCalledTimes(1);
   });
 
+  it("should show 'Ukryj' when timer is not hidden", () => {
+    render(<TimerContextMenuContent {...defaultProps} isHidden={false} />);
+
+    expect(screen.getByText("Ukryj")).toBeDefined();
+    expect(screen.getByText("Ukryj na wszystkich serwerach")).toBeDefined();
+  });
+
+  it("should show 'Pokaż' when timer is hidden", () => {
+    render(<TimerContextMenuContent {...defaultProps} isHidden={true} />);
+
+    expect(screen.getByText("Pokaż")).toBeDefined();
+    expect(screen.getByText("Pokaż na wszystkich serwerach")).toBeDefined();
+  });
+
   it("should call onHide when hide button is clicked", async () => {
     const onHide = vi.fn();
-    render(<TimerContextMenuContent {...defaultProps} onHide={onHide} />);
+    render(
+      <TimerContextMenuContent
+        {...defaultProps}
+        isHidden={false}
+        onHide={onHide}
+      />,
+    );
 
     const hideButton = screen.getByText("Ukryj");
     await userEvent.click(hideButton);
 
     expect(onHide).toHaveBeenCalledTimes(1);
+  });
+
+  it("should call onShow when show button is clicked", async () => {
+    const onShow = vi.fn();
+    render(
+      <TimerContextMenuContent
+        {...defaultProps}
+        isHidden={true}
+        onShow={onShow}
+      />,
+    );
+
+    const showButton = screen.getByText("Pokaż");
+    await userEvent.click(showButton);
+
+    expect(onShow).toHaveBeenCalledTimes(1);
+  });
+
+  it("should call onHideAll when hide all button is clicked", async () => {
+    const onHideAll = vi.fn();
+    render(
+      <TimerContextMenuContent
+        {...defaultProps}
+        isHidden={false}
+        onHideAll={onHideAll}
+      />,
+    );
+
+    const hideAllButton = screen.getByText("Ukryj na wszystkich serwerach");
+    await userEvent.click(hideAllButton);
+
+    expect(onHideAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("should call onShowAll when show all button is clicked", async () => {
+    const onShowAll = vi.fn();
+    render(
+      <TimerContextMenuContent
+        {...defaultProps}
+        isHidden={true}
+        onShowAll={onShowAll}
+      />,
+    );
+
+    const showAllButton = screen.getByText("Pokaż na wszystkich serwerach");
+    await userEvent.click(showAllButton);
+
+    expect(onShowAll).toHaveBeenCalledTimes(1);
   });
 
   it("should call onReset when reset button is clicked", async () => {

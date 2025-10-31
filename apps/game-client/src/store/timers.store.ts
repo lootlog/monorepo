@@ -39,6 +39,7 @@ export type CustomTimerColor = {
 };
 
 interface TimersState {
+  updatedAt?: number;
   hiddenTimers: HiddenTimers;
   pinnedTimers: PinnedTimers;
   timersColors: Record<string, string | undefined>;
@@ -97,265 +98,294 @@ export const DEFAULT_TIMERS_FILTERS: TimersFilters = {
   selectedColors: [],
 };
 
+const updateTimestamp = (
+  set: (
+    partial:
+      | Partial<TimersState>
+      | ((state: TimersState) => Partial<TimersState>),
+  ) => void,
+) => {
+  return (
+    partial:
+      | Partial<TimersState>
+      | ((state: TimersState) => Partial<TimersState>),
+  ) => {
+    if (typeof partial === "function") {
+      set((state) => ({ ...partial(state), updatedAt: Date.now() }));
+    } else {
+      set({ ...partial, updatedAt: Date.now() });
+    }
+  };
+};
+
 export const useTimersStore = create<TimersState>()(
   persist(
-    (set, get) => ({
-      hiddenTimers: {},
-      pinnedTimers: {},
-      timersColors: {},
-      customColors: {},
-      defaultColorNames: {},
-      overriddenDefaultColors: {},
-      hiddenDefaultColors: [],
-      generalConfig: {
-        removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
-        timersGrouping: false,
-        timersUnderBag: false,
-        countdownMode: "max",
-      },
-      setGeneralConfig: (config: TimersGeneralConfig) => {
-        set({ generalConfig: config });
-        debouncedSyncGlobalSettings({
-          generalConfig: config,
-        });
-      },
-      displayConfig: {
-        showType: true,
-        showLevel: false,
-        fontSize: 11,
-        minColumnWidth: 120,
-        singleTimerDisplayMode: "row",
-      },
-      setDisplayConfig: (config: TimersDisplayConfig) => {
-        set({ displayConfig: config });
-        debouncedSyncGlobalSettings({
-          displayConfig: config,
-        });
-      },
-      timerFiltersEnabled: false,
-      timerFiltersSearchText: "",
-      timersSortOrder: "asc",
-      syncEnabled: true,
-      timersFilters: {},
-      setTimersFilters: (guildId: string, filters: TimersFilters) => {
-        set((state) => ({
-          timersFilters: {
-            ...state.timersFilters,
-            [guildId]: filters,
-          },
-        }));
-      },
-      setTimersSortOrder: (order: "asc" | "desc") => {
-        set({ timersSortOrder: order });
-        debouncedSyncGlobalSettings({
-          timersSortOrder: order,
-        });
-      },
-      toggleTimerFiltersEnabled: () => {
-        set((state) => ({ timerFiltersEnabled: !state.timerFiltersEnabled }));
-        const state = get();
-        debouncedSyncGlobalSettings({
-          timerFiltersEnabled: state.timerFiltersEnabled,
-        });
-      },
-      setTimerFiltersSearchText: (text: string) => {
-        set({ timerFiltersSearchText: text });
-      },
-      setSyncEnabled: (enabled: boolean) => {
-        set({ syncEnabled: enabled });
-        debouncedSyncGlobalSettings({
-          syncEnabled: enabled,
-        });
-      },
-      hideTimer: (guildId: string, timerId: string) => {
-        const currentHidden = get().hiddenTimers[guildId] || [];
-        const updatedHidden = [...new Set([...currentHidden, timerId])];
+    (set, get) => {
+      const setWithTimestamp = updateTimestamp(set);
 
-        set({
-          hiddenTimers: {
-            ...get().hiddenTimers,
-            [guildId]: updatedHidden,
-          },
-        });
+      return {
+        hiddenTimers: {},
+        pinnedTimers: {},
+        timersColors: {},
+        customColors: {},
+        defaultColorNames: {},
+        overriddenDefaultColors: {},
+        hiddenDefaultColors: [],
+        generalConfig: {
+          removeTimerAfterMs: DEFAULT_REMOVE_TIMER_AFTER_MS,
+          timersGrouping: false,
+          timersUnderBag: false,
+          countdownMode: "max",
+        },
+        setGeneralConfig: (config: TimersGeneralConfig) => {
+          setWithTimestamp({ generalConfig: config });
+          debouncedSyncGlobalSettings({
+            generalConfig: config,
+          });
+        },
+        displayConfig: {
+          showType: true,
+          showLevel: false,
+          fontSize: 11,
+          minColumnWidth: 120,
+          singleTimerDisplayMode: "row",
+        },
+        setDisplayConfig: (config: TimersDisplayConfig) => {
+          setWithTimestamp({ displayConfig: config });
+          debouncedSyncGlobalSettings({
+            displayConfig: config,
+          });
+        },
+        timerFiltersEnabled: false,
+        timerFiltersSearchText: "",
+        timersSortOrder: "asc",
+        syncEnabled: true,
+        timersFilters: {},
+        setTimersFilters: (guildId: string, filters: TimersFilters) => {
+          setWithTimestamp((state) => ({
+            timersFilters: {
+              ...state.timersFilters,
+              [guildId]: filters,
+            },
+          }));
+        },
+        setTimersSortOrder: (order: "asc" | "desc") => {
+          setWithTimestamp({ timersSortOrder: order });
+          debouncedSyncGlobalSettings({
+            timersSortOrder: order,
+          });
+        },
+        toggleTimerFiltersEnabled: () => {
+          setWithTimestamp((state) => ({
+            timerFiltersEnabled: !state.timerFiltersEnabled,
+          }));
+          const state = get();
+          debouncedSyncGlobalSettings({
+            timerFiltersEnabled: state.timerFiltersEnabled,
+          });
+        },
+        setTimerFiltersSearchText: (text: string) => {
+          set({ timerFiltersSearchText: text });
+        },
+        setSyncEnabled: (enabled: boolean) => {
+          setWithTimestamp({ syncEnabled: enabled });
+          debouncedSyncGlobalSettings({
+            syncEnabled: enabled,
+          });
+        },
+        hideTimer: (guildId: string, timerId: string) => {
+          const currentHidden = get().hiddenTimers[guildId] || [];
+          const updatedHidden = [...new Set([...currentHidden, timerId])];
 
-        debouncedSyncGuildSettings(guildId, {
-          hiddenTimers: updatedHidden,
-        });
-      },
-      revealTimer: (guildId: string, timerId: string) => {
-        const currentHidden = get().hiddenTimers[guildId] || [];
-        const updatedHidden = currentHidden.filter((id) => id !== timerId);
+          setWithTimestamp({
+            hiddenTimers: {
+              ...get().hiddenTimers,
+              [guildId]: updatedHidden,
+            },
+          });
 
-        set({
-          hiddenTimers: {
-            ...get().hiddenTimers,
-            [guildId]: updatedHidden,
-          },
-        });
+          debouncedSyncGuildSettings(guildId, {
+            hiddenTimers: updatedHidden,
+          });
+        },
+        revealTimer: (guildId: string, timerId: string) => {
+          const currentHidden = get().hiddenTimers[guildId] || [];
+          const updatedHidden = currentHidden.filter((id) => id !== timerId);
 
-        debouncedSyncGuildSettings(guildId, {
-          hiddenTimers: updatedHidden,
-        });
-      },
-      pinTimer: (guildId: string, timerId: string) => {
-        const currentPinned = get().pinnedTimers[guildId] || [];
-        const updatedPinned = [...new Set([...currentPinned, timerId])];
+          setWithTimestamp({
+            hiddenTimers: {
+              ...get().hiddenTimers,
+              [guildId]: updatedHidden,
+            },
+          });
 
-        set({
-          pinnedTimers: {
-            ...get().pinnedTimers,
-            [guildId]: updatedPinned,
-          },
-        });
+          debouncedSyncGuildSettings(guildId, {
+            hiddenTimers: updatedHidden,
+          });
+        },
+        pinTimer: (guildId: string, timerId: string) => {
+          const currentPinned = get().pinnedTimers[guildId] || [];
+          const updatedPinned = [...new Set([...currentPinned, timerId])];
 
-        debouncedSyncGuildSettings(guildId, {
-          pinnedTimers: updatedPinned,
-        });
-      },
-      unpinTimer: (guildId: string, timerId: string) => {
-        const currentPinned = get().pinnedTimers[guildId] || [];
-        const updatedPinned = currentPinned.filter((id) => id !== timerId);
+          setWithTimestamp({
+            pinnedTimers: {
+              ...get().pinnedTimers,
+              [guildId]: updatedPinned,
+            },
+          });
 
-        set({
-          pinnedTimers: {
-            ...get().pinnedTimers,
-            [guildId]: updatedPinned,
-          },
-        });
+          debouncedSyncGuildSettings(guildId, {
+            pinnedTimers: updatedPinned,
+          });
+        },
+        unpinTimer: (guildId: string, timerId: string) => {
+          const currentPinned = get().pinnedTimers[guildId] || [];
+          const updatedPinned = currentPinned.filter((id) => id !== timerId);
 
-        debouncedSyncGuildSettings(guildId, {
-          pinnedTimers: updatedPinned,
-        });
-      },
-      setTimerColor: (npcName: string, color?: string) => {
-        const updatedTimersColors = {
-          ...get().timersColors,
-          [npcName]: color,
-        };
-        set({ timersColors: updatedTimersColors });
+          setWithTimestamp({
+            pinnedTimers: {
+              ...get().pinnedTimers,
+              [guildId]: updatedPinned,
+            },
+          });
 
-        debouncedSyncGlobalSettings({
-          timersColors: updatedTimersColors,
-        });
-      },
-      addCustomColor: (color: CustomTimerColor) => {
-        const updatedCustomColors = {
-          ...get().customColors,
-          [color.id]: color,
-        };
-        set({ customColors: updatedCustomColors });
+          debouncedSyncGuildSettings(guildId, {
+            pinnedTimers: updatedPinned,
+          });
+        },
+        setTimerColor: (npcName: string, color?: string) => {
+          const updatedTimersColors = {
+            ...get().timersColors,
+            [npcName]: color,
+          };
+          setWithTimestamp({ timersColors: updatedTimersColors });
 
-        debouncedSyncGlobalSettings({
-          customColors: updatedCustomColors,
-        });
-      },
-      updateCustomColor: (id: string, color: CustomTimerColor) => {
-        const updatedCustomColors = {
-          ...get().customColors,
-          [id]: color,
-        };
-        set({ customColors: updatedCustomColors });
+          debouncedSyncGlobalSettings({
+            timersColors: updatedTimersColors,
+          });
+        },
+        addCustomColor: (color: CustomTimerColor) => {
+          const updatedCustomColors = {
+            ...get().customColors,
+            [color.id]: color,
+          };
+          setWithTimestamp({ customColors: updatedCustomColors });
 
-        debouncedSyncGlobalSettings({
-          customColors: updatedCustomColors,
-        });
-      },
-      deleteCustomColor: (id: string) => {
-        const state = get();
-        const newCustomColors = { ...state.customColors };
-        delete newCustomColors[id];
+          debouncedSyncGlobalSettings({
+            customColors: updatedCustomColors,
+          });
+        },
+        updateCustomColor: (id: string, color: CustomTimerColor) => {
+          const updatedCustomColors = {
+            ...get().customColors,
+            [id]: color,
+          };
+          setWithTimestamp({ customColors: updatedCustomColors });
 
-        const newTimersColors = { ...state.timersColors };
-        Object.keys(newTimersColors).forEach((npcName) => {
-          if (newTimersColors[npcName] === id) {
-            newTimersColors[npcName] = undefined;
-          }
-        });
+          debouncedSyncGlobalSettings({
+            customColors: updatedCustomColors,
+          });
+        },
+        deleteCustomColor: (id: string) => {
+          const state = get();
+          const newCustomColors = { ...state.customColors };
+          delete newCustomColors[id];
 
-        set({
-          customColors: newCustomColors,
-          timersColors: newTimersColors,
-        });
+          const newTimersColors = { ...state.timersColors };
+          Object.keys(newTimersColors).forEach((npcName) => {
+            if (newTimersColors[npcName] === id) {
+              newTimersColors[npcName] = undefined;
+            }
+          });
 
-        debouncedSyncGlobalSettings({
-          customColors: newCustomColors,
-          timersColors: newTimersColors,
-        });
-      },
-      setDefaultColorName: (colorId: string, name: string) => {
-        const updatedDefaultColorNames = {
-          ...get().defaultColorNames,
-          [colorId]: name,
-        };
-        set({ defaultColorNames: updatedDefaultColorNames });
+          setWithTimestamp({
+            customColors: newCustomColors,
+            timersColors: newTimersColors,
+          });
 
-        debouncedSyncGlobalSettings({
-          defaultColorNames: updatedDefaultColorNames,
-        });
-      },
-      updateDefaultColor: (
-        colorId: string,
-        borderColor: string,
-        backgroundColor: string,
-      ) => {
-        const updatedOverriddenDefaultColors = {
-          ...get().overriddenDefaultColors,
-          [colorId]: { borderColor, backgroundColor },
-        };
-        set({ overriddenDefaultColors: updatedOverriddenDefaultColors });
+          debouncedSyncGlobalSettings({
+            customColors: newCustomColors,
+            timersColors: newTimersColors,
+          });
+        },
+        setDefaultColorName: (colorId: string, name: string) => {
+          const updatedDefaultColorNames = {
+            ...get().defaultColorNames,
+            [colorId]: name,
+          };
+          setWithTimestamp({ defaultColorNames: updatedDefaultColorNames });
 
-        debouncedSyncGlobalSettings({
-          overriddenDefaultColors: updatedOverriddenDefaultColors,
-        });
-      },
-      deleteDefaultColor: (colorId: string) => {
-        const state = get();
-        const updatedHiddenDefaultColors = [
-          ...state.hiddenDefaultColors,
-          colorId,
-        ];
-        const updatedTimersColors = Object.fromEntries(
-          Object.entries(state.timersColors).map(([key, value]) =>
-            value === colorId ? [key, undefined] : [key, value],
-          ),
-        );
+          debouncedSyncGlobalSettings({
+            defaultColorNames: updatedDefaultColorNames,
+          });
+        },
+        updateDefaultColor: (
+          colorId: string,
+          borderColor: string,
+          backgroundColor: string,
+        ) => {
+          const updatedOverriddenDefaultColors = {
+            ...get().overriddenDefaultColors,
+            [colorId]: { borderColor, backgroundColor },
+          };
+          setWithTimestamp({
+            overriddenDefaultColors: updatedOverriddenDefaultColors,
+          });
 
-        set({
-          hiddenDefaultColors: updatedHiddenDefaultColors,
-          timersColors: updatedTimersColors,
-        });
+          debouncedSyncGlobalSettings({
+            overriddenDefaultColors: updatedOverriddenDefaultColors,
+          });
+        },
+        deleteDefaultColor: (colorId: string) => {
+          const state = get();
+          const updatedHiddenDefaultColors = [
+            ...state.hiddenDefaultColors,
+            colorId,
+          ];
+          const updatedTimersColors = Object.fromEntries(
+            Object.entries(state.timersColors).map(([key, value]) =>
+              value === colorId ? [key, undefined] : [key, value],
+            ),
+          );
 
-        debouncedSyncGlobalSettings({
-          hiddenDefaultColors: updatedHiddenDefaultColors,
-          timersColors: updatedTimersColors,
-        });
-      },
-      restoreDefaultColor: (colorId: string) => {
-        const state = get();
-        const updatedHiddenDefaultColors = state.hiddenDefaultColors.filter(
-          (id) => id !== colorId,
-        );
-        const newOverriddenColors = { ...state.overriddenDefaultColors };
-        delete newOverriddenColors[colorId];
-        const newDefaultColorNames = { ...state.defaultColorNames };
-        delete newDefaultColorNames[colorId];
+          setWithTimestamp({
+            hiddenDefaultColors: updatedHiddenDefaultColors,
+            timersColors: updatedTimersColors,
+          });
 
-        set({
-          hiddenDefaultColors: updatedHiddenDefaultColors,
-          overriddenDefaultColors: newOverriddenColors,
-          defaultColorNames: newDefaultColorNames,
-        });
+          debouncedSyncGlobalSettings({
+            hiddenDefaultColors: updatedHiddenDefaultColors,
+            timersColors: updatedTimersColors,
+          });
+        },
+        restoreDefaultColor: (colorId: string) => {
+          const state = get();
+          const updatedHiddenDefaultColors = state.hiddenDefaultColors.filter(
+            (id) => id !== colorId,
+          );
+          const newOverriddenColors = { ...state.overriddenDefaultColors };
+          delete newOverriddenColors[colorId];
+          const newDefaultColorNames = { ...state.defaultColorNames };
+          delete newDefaultColorNames[colorId];
 
-        debouncedSyncGlobalSettings({
-          hiddenDefaultColors: updatedHiddenDefaultColors,
-          overriddenDefaultColors: newOverriddenColors,
-          defaultColorNames: newDefaultColorNames,
-        });
-      },
-    }),
+          setWithTimestamp({
+            hiddenDefaultColors: updatedHiddenDefaultColors,
+            overriddenDefaultColors: newOverriddenColors,
+            defaultColorNames: newDefaultColorNames,
+          });
+
+          debouncedSyncGlobalSettings({
+            hiddenDefaultColors: updatedHiddenDefaultColors,
+            overriddenDefaultColors: newOverriddenColors,
+            defaultColorNames: newDefaultColorNames,
+          });
+        },
+      };
+    },
     {
       name: "ll-timers-state",
       partialize: (state) => ({
+        updatedAt: state.updatedAt,
         hiddenTimers: state.hiddenTimers,
         pinnedTimers: state.pinnedTimers,
         timersColors: state.timersColors,
@@ -371,7 +401,7 @@ export const useTimersStore = create<TimersState>()(
         displayConfig: state.displayConfig,
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      version: 6,
     },
   ),
 );

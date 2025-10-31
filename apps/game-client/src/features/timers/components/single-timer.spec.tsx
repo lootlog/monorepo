@@ -8,6 +8,17 @@ vi.mock("@/hooks/api/use-guilds", () => ({
   useGuilds: () => ({ data: [] }),
 }));
 
+vi.mock("@/hooks/api/use-guild-permissions", () => ({
+  useGuildPermissions: () => ({
+    data: ["LOOTLOG_MANAGE"],
+  }),
+  Permission: {
+    OWNER: "OWNER",
+    ADMIN: "ADMIN",
+    LOOTLOG_MANAGE: "LOOTLOG_MANAGE",
+  },
+}));
+
 vi.mock("@/store/global.store", () => ({
   useGlobalStore: () => ({ gameState: { world: "world1" } }),
 }));
@@ -94,7 +105,6 @@ describe("SingleTimer", () => {
     settingsKey: "guild1",
     minTimeLeft: 3600000,
     maxTimeLeft: 7200000,
-    canDelete: true,
     isHidden: false,
   };
 

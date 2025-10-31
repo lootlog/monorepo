@@ -27,23 +27,26 @@ export const useUpdateLootlogCharactersConfig = () => {
         queryKey: ["lootlog-characters-config", accountId],
       });
 
-      const previousData =
-        queryClient.getQueryData<LootlogCharacterConfigResponse>([
-          "lootlog-characters-config",
-          accountId,
-        ]);
+      const previousData = queryClient.getQueryData<{
+        data: LootlogCharacterConfigResponse;
+      }>(["lootlog-characters-config", accountId]);
 
-      if (previousData) {
-        queryClient.setQueryData<LootlogCharacterConfigResponse>(
-          ["lootlog-characters-config", accountId],
-          {
-            ...previousData,
+      if (previousData?.data) {
+        const newData = {
+          ...previousData,
+          data: {
+            ...previousData.data,
             [variables.characterId]: {
-              ...previousData[variables.characterId],
+              ...previousData.data[variables.characterId],
               collectLootWhitelistGuildIds: variables.lootGuildIds,
               addTimersWhitelistGuildIds: variables.timerGuildIds,
             },
           },
+        };
+
+        queryClient.setQueryData(
+          ["lootlog-characters-config", accountId],
+          newData,
         );
       }
 

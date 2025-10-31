@@ -9,12 +9,12 @@ import { ContextMenuItem } from "@/components/ui/context-menu";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { Permission } from "@/hooks/api/use-guild-permissions";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { cn } from "@/lib/utils";
 
 type DeleteTimerPopoverProps = {
-  timer: Timer;
-  onDeleteTimer: (guildId: string) => void;
+  timer: TimerWithTimeLeft;
+  onDeleteTimer: (guildId: string, npcId: number) => void;
 };
 
 const REQUIRED_DELETE_PERMISSIONS = [
@@ -31,14 +31,14 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
   const { data: guilds } = useGuilds();
   const { client } = useAuthenticatedApiClient();
 
+  const guildEntries = useMemo(
+    () => timer.mergedGuildIds || [],
+    [timer.mergedGuildIds],
+  );
+
   const uniqueGuildIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (timer.members || []).map((member) => member.guildId).filter(Boolean),
-        ),
-      ),
-    [timer.members],
+    () => Array.from(new Set(guildEntries.map((entry) => entry.guildId))),
+    [guildEntries],
   );
 
   const permissionsQueries = useQueries({
@@ -57,23 +57,26 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
         const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
           permissions?.includes(perm),
         );
+        const entry = guildEntries.find((e) => e.guildId === guildId);
         return {
           guildId,
+          npcId: entry?.npcId ?? 0,
           permissions,
           canDelete,
         };
       })
-      .filter((g) => g.canDelete);
-  }, [uniqueGuildIds, permissionsQueries]);
+      .filter((g) => g.canDelete && g.npcId !== 0);
+  }, [uniqueGuildIds, permissionsQueries, guildEntries]);
 
   if (guildsWithPermissions.length === 0) {
     return null;
   }
 
   if (guildsWithPermissions.length === 1) {
+    const guild = guildsWithPermissions[0];
     return (
       <ContextMenuItem
-        onClick={() => onDeleteTimer(guildsWithPermissions[0].guildId)}
+        onClick={() => onDeleteTimer(guild.guildId, guild.npcId)}
       >
         Usuń timer
       </ContextMenuItem>
@@ -92,7 +95,21 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
           Usuń timer
         </ContextMenuItem>
       </PopoverTrigger>
-      <PopoverContent className="ll:w-64 ll:p-2" side="right" align="start">
+      <PopoverContent
+        className="ll:w-64 ll:p-2"
+        side="right"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          if (
+            e.target instanceof Element &&
+            e.target.closest('[role="menu"]')
+          ) {
+            e.preventDefault();
+          }
+        }}
+      >
         <div className="ll:flex ll:flex-col ll:gap-1">
           <p className="ll:text-xs ll:font-semibold ll:mb-1 ll:text-gray-400">
             Wybierz serwer do usunięcia timera:
@@ -110,7 +127,7 @@ export const DeleteTimerPopover: FC<DeleteTimerPopoverProps> = ({
                   "ll:text-white",
                 )}
                 onClick={() => {
-                  onDeleteTimer(guild.guildId);
+                  onDeleteTimer(guild.guildId, guild.npcId);
                   setOpen(false);
                 }}
               >

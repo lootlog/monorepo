@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { RotateCcw } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import { DEFAULT_COLOR_NAMES } from "./color-utils";
 
 interface HiddenColorsListProps {
@@ -25,7 +25,7 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
         {hiddenColors.map((colorId) => (
           <div
             key={colorId}
-            className="ll:flex ll:items-center ll:gap-2 ll:p-1.5 ll:bg-muted/40 ll:rounded-md ll:border ll:border-solid ll:border-accent-foreground/40 ll:opacity-60"
+            className="ll:flex ll:items-end ll:gap-2 ll:p-1.5 ll:bg-muted/40 ll:rounded-md ll:border ll:border-solid ll:border-accent-foreground/40 ll:opacity-60"
           >
             <div className="ll:flex-1 ll:flex ll:flex-col ll:justify-between ll:h-full">
               <span className="ll:text-xs ll:font-medium ll:truncate">
@@ -33,10 +33,11 @@ export const HiddenColorsList: FC<HiddenColorsListProps> = ({
               </span>
               <Tile
                 color={colorId as keyof typeof TIMERS_COLORS}
-                className="ll:h-6"
+                className="ll:h-6 ll:w-full ll:items-center ll:justify-center ll:mt-1"
               >
-                <span className="ll:text-[10px] ll:text-white">
-                  [T] Tanroth 00:21:37
+                <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
+                  <span>[T] Tanroth</span>
+                  <span> 00:21:37</span>
                 </span>
               </Tile>
             </div>

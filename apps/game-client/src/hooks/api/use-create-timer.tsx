@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { toast } from "sonner";
 import type { Timer } from "@/hooks/api/use-timers";
 import type { NpcType } from "@/hooks/api/use-npcs";
+import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 
 export type UseCreateTimerOptions = {
   respawnRandomness?: number;
@@ -53,11 +53,15 @@ const calculateSpawnTimes = (
   }
 
   const now = new Date();
-  const respawnRandomness = timer.respawnRandomness ?? 0;
-  const minSpawnTime = new Date(now.getTime() + timer.respBaseSeconds * 1000);
-  const maxSpawnTime = new Date(
-    minSpawnTime.getTime() + respawnRandomness * 1000,
-  );
+  const respawnRandomness =
+    timer.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
+  const baseRespawnMs = timer.respBaseSeconds * 1000;
+  const multiplier = respawnRandomness / 100;
+  const variance = Math.round(baseRespawnMs * multiplier);
+  const baseSpawnTimeMs = now.getTime() + baseRespawnMs;
+
+  const minSpawnTime = new Date(baseSpawnTimeMs - variance);
+  const maxSpawnTime = new Date(baseSpawnTimeMs + variance);
 
   return { minSpawnTime, maxSpawnTime };
 };
@@ -193,7 +197,6 @@ export const useCreateTimer = () => {
           context.previousTimers,
         );
       }
-      toast.error("Nie udało się utworzyć timera");
     },
     onSuccess: (result, variables, context) => {
       if (context?.optimisticTimers && result.tempIds) {
@@ -225,18 +228,6 @@ export const useCreateTimer = () => {
 
             return { data: filteredTimers } as AxiosResponse<Timer[]>;
           },
-        );
-      }
-
-      if (result.failureCount === 0) {
-        toast.success(
-          `Timer utworzony w ${result.successCount} ${result.successCount === 1 ? "gildii" : "gildiach"}`,
-        );
-      } else if (result.successCount === 0) {
-        toast.error("Nie udało się utworzyć timera w żadnej gildii");
-      } else {
-        toast.warning(
-          `Timer utworzony w ${result.successCount}/${result.totalGuilds} gildiach`,
         );
       }
 

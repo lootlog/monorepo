@@ -53,7 +53,6 @@ describe("TimersGrid", () => {
         timers={mockTimers}
         settingsKey="guild1"
         hiddenTimers={[]}
-        canDeleteTimers={true}
         minColumnWidth={200}
       />,
     );
@@ -68,7 +67,6 @@ describe("TimersGrid", () => {
         timers={mockTimers}
         settingsKey="guild1"
         hiddenTimers={[]}
-        canDeleteTimers={true}
         minColumnWidth={250}
       />,
     );
@@ -87,7 +85,6 @@ describe("TimersGrid", () => {
         timers={[]}
         settingsKey="guild1"
         hiddenTimers={[]}
-        canDeleteTimers={true}
         minColumnWidth={200}
       />,
     );
@@ -102,7 +99,6 @@ describe("TimersGrid", () => {
         timers={mockTimers}
         settingsKey="guild1"
         hiddenTimers={["Dragon Boss"]}
-        canDeleteTimers={true}
         minColumnWidth={200}
       />,
     );

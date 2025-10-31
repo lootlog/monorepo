@@ -40,11 +40,6 @@ export const useTimers = ({ world }: UseTimersOptions) => {
       const response = await client.get<Timer[]>(
         `${API_URL}/timers?${queryString}`,
       );
-      console.log("[USE_TIMERS] Fetched timers from API:", {
-        count: response.data.length,
-        timersWithIsPending: response.data.filter((t) => t.isPending).length,
-        timersWithTempId: response.data.filter((t) => t.tempId).length,
-      });
       return response;
     },
     enabled: !!world,
@@ -53,9 +48,6 @@ export const useTimers = ({ world }: UseTimersOptions) => {
         ...timer,
         isPending: false,
       }));
-      console.log(
-        "[USE_TIMERS] Cleaned timers, ensuring isPending: false for all",
-      );
       return cleanedTimers;
     },
     staleTime: 0,

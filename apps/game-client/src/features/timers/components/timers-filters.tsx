@@ -3,7 +3,7 @@ import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { cn } from "@/lib/utils";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
-import { FC } from "react";
+import type { FC } from "react";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import {
   Tooltip,
@@ -64,7 +64,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   const handleMinLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const numericValue = Number(e.target.value);
 
-    if (isNaN(numericValue)) return;
+    if (Number.isNaN(numericValue)) return;
 
     const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
 
@@ -77,7 +77,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
   const handleMaxLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const numericValue = Number(e.target.value);
 
-    if (isNaN(numericValue)) return;
+    if (Number.isNaN(numericValue)) return;
 
     const clampedValue = clampValue(numericValue, MIN_LVL, MAX_LVL);
     setTimersFilters(filtersKey, {
@@ -112,7 +112,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
           value={timerFiltersSearchText}
           onChange={handleSearchChange}
         />
-        <div className="ll:w-[4.5rem]">
+        <div className="ll:w-18">
           <Input
             placeholder="Od"
             value={filters.minLvl.toString()}
@@ -124,7 +124,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
             inputMode="numeric"
           />
         </div>
-        <div className="ll:w-[4.5rem]">
+        <div className="ll:w-18">
           <Input
             placeholder="Do"
             value={filters.maxLvl.toString()}
@@ -179,7 +179,6 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
                       !overridden && color?.border,
                       {
                         "ll:ring-2 ll:ring-white": isSelected,
-                        "ll:opacity-50": !isSelected,
                       },
                     )}
                     style={

@@ -26,14 +26,29 @@ export const useLootlogCharactersConfig = () => {
 
   const query = useQuery({
     queryKey: ["lootlog-characters-config", accountId],
-    queryFn: () =>
-      client.get<LootlogCharacterConfigResponse>(
+    queryFn: () => {
+      console.log(
+        "[useLootlogCharactersConfig] Fetching config for accountId:",
+        accountId,
+      );
+      return client.get<LootlogCharacterConfigResponse>(
         `${API_URL}/users/@me/lootlog-config/accounts/${accountId}`,
         { withCredentials: true },
-      ),
+      );
+    },
     select: (response) => response.data,
     enabled: !!accountId,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+
+  console.log("[useLootlogCharactersConfig] Query state:", {
+    accountId,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isError: query.isError,
+    data: query.data,
   });
 
   return query;

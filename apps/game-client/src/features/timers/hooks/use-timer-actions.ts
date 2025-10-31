@@ -1,17 +1,24 @@
 import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import type { Guild } from "@/hooks/api/use-guild";
 import { useTimersStore } from "@/store/timers.store";
 
 export const useTimerActions = (
-  timer: Timer,
+  timer: TimerWithTimeLeft,
   settingsKey: string,
   world: string | undefined,
   guilds: Guild[] | undefined,
+  timersGrouping = false,
 ) => {
-  const { hideTimer, pinTimer, unpinTimer, pinnedTimers, setTimerColor } =
-    useTimersStore();
+  const {
+    hideTimer,
+    revealTimer,
+    pinTimer,
+    unpinTimer,
+    pinnedTimers,
+    setTimerColor,
+  } = useTimersStore();
   const { mutate: resetTimer } = useResetTimer();
   const { mutate: deleteTimer } = useDeleteTimer();
 
@@ -30,6 +37,21 @@ export const useTimerActions = (
     });
 
     hideTimer("global", timer.npc.name);
+  };
+
+  const handleShowTimer = () => {
+    if (!settingsKey) return;
+    revealTimer(settingsKey, timer.npc.name);
+  };
+
+  const handleShowTimerForAll = () => {
+    if (!settingsKey || !guilds) return;
+
+    guilds.forEach((guild) => {
+      revealTimer(guild.id, timer.npc.name);
+    });
+
+    revealTimer("global", timer.npc.name);
   };
 
   const handlePinTimer = () => {
@@ -64,8 +86,21 @@ export const useTimerActions = (
     setTimerColor(timer.npc.name, color);
   };
 
+  console.log(timer);
+
   const handleRestartTimer = () => {
     if (!world) return;
+
+    if (timersGrouping && timer.mergedGuildIds) {
+      timer.mergedGuildIds.forEach(({ guildId, npcId }) => {
+        resetTimer({
+          world,
+          npcId,
+          guildId,
+        });
+      });
+      return;
+    }
 
     resetTimer({
       world,
@@ -74,13 +109,13 @@ export const useTimerActions = (
     });
   };
 
-  const handleDeleteTimer = (guildIdOverride?: string) => {
+  const handleDeleteTimer = (guildId: string, npcId: number) => {
     if (!world) return;
 
     deleteTimer({
       world,
-      npcId: timer.npc.id,
-      guildId: guildIdOverride || timer.guildId,
+      npcId,
+      guildId,
     });
   };
 
@@ -88,6 +123,8 @@ export const useTimerActions = (
     isPinned,
     handleHideTimer,
     handleHideTimerForAll,
+    handleShowTimer,
+    handleShowTimerForAll,
     handlePinTimer,
     handlePinTimerForAll,
     handleUnpinTimerForAll,

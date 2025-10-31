@@ -6,7 +6,6 @@ type TimersGridProps = {
   timers: TimerWithTimeLeft[];
   settingsKey: string;
   hiddenTimers: string[];
-  canDeleteTimers: boolean;
   minColumnWidth: number;
 };
 
@@ -14,7 +13,6 @@ export const TimersGrid: FC<TimersGridProps> = ({
   timers,
   settingsKey,
   hiddenTimers,
-  canDeleteTimers,
   minColumnWidth,
 }) => {
   return (
@@ -32,7 +30,6 @@ export const TimersGrid: FC<TimersGridProps> = ({
             timer={timer}
             maxTimeLeft={timer.maxTimeLeft}
             minTimeLeft={timer.minTimeLeft}
-            canDelete={canDeleteTimers}
             settingsKey={settingsKey}
             isHidden={isHidden}
           />

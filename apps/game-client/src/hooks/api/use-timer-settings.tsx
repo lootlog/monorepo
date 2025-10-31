@@ -16,7 +16,7 @@ const GUILD_TIMER_SETTINGS_QUERY_KEY = (guildId: string) => [
   guildId,
 ];
 
-export const useTimerSettings = () => {
+export const useTimerSettings = (enabled = true) => {
   const { client } = useAuthenticatedApiClient();
 
   const query = useQuery({
@@ -25,6 +25,7 @@ export const useTimerSettings = () => {
     select: (response) => response.data,
     staleTime: 5 * 60 * 1000,
     refetchOnMount: "always",
+    enabled,
   });
 
   return query;

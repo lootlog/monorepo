@@ -1,6 +1,6 @@
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import { DeleteTimerPopover } from "@/components/delete-timer-popover";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 import { Loader2 } from "lucide-react";
 import type { FC } from "react";
 import { TimerColorPicker } from "./timer-color-picker";
@@ -18,9 +18,10 @@ type OverriddenColor = {
 };
 
 type TimerContextMenuContentProps = {
-  timer: Timer;
+  timer: TimerWithTimeLeft;
   isPending: boolean;
   isPinned: boolean;
+  isHidden: boolean;
   canDelete: boolean;
   timersGrouping: boolean;
   selectedColor: string;
@@ -34,14 +35,17 @@ type TimerContextMenuContentProps = {
   onUnpinAll: () => void;
   onHide: () => void;
   onHideAll: () => void;
+  onShow: () => void;
+  onShowAll: () => void;
   onReset: () => void;
-  onDelete: (guildIdOverride?: string) => void;
+  onDelete: (guildId: string, npcId: number) => void;
 };
 
 export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   timer,
   isPending,
   isPinned,
+  isHidden,
   canDelete,
   timersGrouping,
   selectedColor,
@@ -55,6 +59,8 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   onUnpinAll,
   onHide,
   onHideAll,
+  onShow,
+  onShowAll,
   onReset,
   onDelete,
 }) => {
@@ -85,16 +91,20 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
           ? "Odepnij na wszystkich serwerach"
           : "Przypnij na wszystkich serwerach"}
       </ContextMenuItem>
-      <ContextMenuItem onClick={onHide}>Ukryj</ContextMenuItem>
-      <ContextMenuItem onClick={onHideAll}>
-        Ukryj na wszystkich serwerach
+      <ContextMenuItem onClick={isHidden ? onShow : onHide}>
+        {isHidden ? "Pokaż" : "Ukryj"}
+      </ContextMenuItem>
+      <ContextMenuItem onClick={isHidden ? onShowAll : onHideAll}>
+        {isHidden
+          ? "Pokaż na wszystkich serwerach"
+          : "Ukryj na wszystkich serwerach"}
       </ContextMenuItem>
       <ContextMenuItem onClick={onReset}>Odliczaj od początku</ContextMenuItem>
       {timersGrouping ? (
         <DeleteTimerPopover timer={timer} onDeleteTimer={onDelete} />
       ) : (
         canDelete && (
-          <ContextMenuItem onClick={() => onDelete()}>
+          <ContextMenuItem onClick={() => onDelete(timer.guildId, timer.npcId)}>
             Usuń timer
           </ContextMenuItem>
         )

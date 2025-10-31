@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
 import type { CustomTimerColor } from "@/store/timers.store";
 import { Edit2, Trash2 } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import { ColorEditForm } from "./color-edit-form";
 import type { ColorEditData } from "./color-utils";
 
@@ -45,10 +45,11 @@ export const CustomColorItem: FC<CustomColorItemProps> = ({
             <Tile
               customBorderColor={color.borderColor}
               customBackgroundColor={color.backgroundColor}
-              className="ll:h-6"
+              className="ll:h-6 ll:w-full ll:items-center ll:justify-center"
             >
-              <span className="ll:text-[10px] ll:text-white">
-                [T] Tanroth 00:21:37
+              <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
+                <span>[T] Tanroth</span>
+                <span> 00:21:37</span>
               </span>
             </Tile>
           </>

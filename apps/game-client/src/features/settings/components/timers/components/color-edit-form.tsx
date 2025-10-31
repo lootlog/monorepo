@@ -67,10 +67,11 @@ export const ColorEditForm: FC<ColorEditFormProps> = ({
       <Tile
         customBorderColor={data.borderColor}
         customBackgroundColor={`${data.backgroundColor}${alphaToHex(data.backgroundAlpha)}`}
-        className="ll:h-6 ll:mb-1"
+        className="ll:h-6 ll:w-full ll:items-center ll:justify-center ll:mb-2"
       >
-        <span className="ll:text-[10px] ll:text-white">
-          [T] Tanroth 00:21:37
+        <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
+          <span>[T] Tanroth</span>
+          <span> 00:21:37</span>
         </span>
       </Tile>
       <div className="ll:flex ll:gap-1">

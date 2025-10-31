@@ -136,7 +136,10 @@ describe("timer-helpers", () => {
       ];
 
       const result = getMembersWithGuilds(members, guilds);
-      expect(result).toBe("Player1 (Guild One), Player2 (Guild Two)");
+      expect(result).toEqual([
+        { id: 1, label: "Player1 (Guild One)" },
+        { id: 2, label: "Player2 (Guild Two)" },
+      ]);
     });
 
     it("should show only member name if guild not found", () => {
@@ -152,7 +155,7 @@ describe("timer-helpers", () => {
       const guilds: Guild[] = [];
 
       const result = getMembersWithGuilds(members, guilds);
-      expect(result).toBe("Player1");
+      expect(result).toEqual([{ id: 1, label: "Player1" }]);
     });
 
     it("should handle undefined guilds", () => {
@@ -167,7 +170,7 @@ describe("timer-helpers", () => {
       ];
 
       const result = getMembersWithGuilds(members, undefined);
-      expect(result).toBe("Player1");
+      expect(result).toEqual([{ id: 1, label: "Player1" }]);
     });
   });
 

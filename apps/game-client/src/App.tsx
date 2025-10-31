@@ -12,11 +12,13 @@ import { QuickAccess } from "@/features/quick-access/quick-access";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { Toaster } from "@/components/ui/toaster";
 import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
+import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mutations-registry";
 
 function App() {
   useGameEventsParser();
   useInitialConfiguration();
   useHotkeys();
+  useTimerSettingsMutationsRegistry();
 
   const { ConflictDialog } = useTimerSettingsSync();
   const { gameInitialized } = useGlobalStore((state) => state.gameState);

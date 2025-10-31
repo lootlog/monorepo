@@ -22,7 +22,6 @@ type TimersContentProps = {
   sortedTimers: TimerWithTimeLeft[];
   settingsKey: string;
   hiddenTimers: string[];
-  canDeleteTimers: boolean;
   areFiltersActive: boolean;
   colorStatistics: ColorStat[];
   isGrouping: boolean;
@@ -37,7 +36,6 @@ export const TimersContent: FC<TimersContentProps> = ({
   sortedTimers,
   settingsKey,
   hiddenTimers,
-  canDeleteTimers,
   areFiltersActive,
   colorStatistics,
   isGrouping,
@@ -53,6 +51,7 @@ export const TimersContent: FC<TimersContentProps> = ({
         "ll:h-full ll:flex ll:flex-1 ll:flex-col ll:box-border ll:pt-1 ll:w-full",
         {
           "ll:pt-0!": isUnderBag,
+          "ll:max-h-[376px]": isUnderBag,
         },
       )}
     >
@@ -68,7 +67,6 @@ export const TimersContent: FC<TimersContentProps> = ({
             timers={sortedTimers}
             settingsKey={settingsKey}
             hiddenTimers={hiddenTimers}
-            canDeleteTimers={canDeleteTimers}
             minColumnWidth={minColumnWidth}
           />
         )}

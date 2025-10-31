@@ -263,6 +263,67 @@ describe("timers-utils", () => {
       expect(result[0].maxSpawnTime).toEqual(maxTime5);
       expect(result[0].npc.name).toBe("Manual Boss");
       expect(result[0].npc.margonemType).toBe(999);
+      expect(result[0].mergedGuildIds).toEqual([
+        { guildId: "guild1", npcId: 1 },
+        { guildId: "guild2", npcId: 2 },
+        { guildId: "guild3", npcId: 3 },
+        { guildId: "guild4", npcId: 4 },
+        { guildId: "guild5", npcId: 5 },
+      ]);
+    });
+
+    it("should set mergedGuildIds for all timers when merged", () => {
+      const maxTime1 = new Date("2024-01-01T10:00:00Z");
+      const minTime1 = new Date("2024-01-01T09:00:00Z");
+      const maxTime2 = new Date("2024-01-01T11:00:00Z");
+      const minTime2 = new Date("2024-01-01T10:00:00Z");
+
+      const timers: Timer[] = [
+        createMockTimer({
+          npcId: 1,
+          guildId: "guild1",
+          world: "world1",
+          npc: {
+            id: 1,
+            name: "Dragon Boss",
+            type: NpcType.HERO,
+            lvl: 150,
+            prof: "warrior",
+            icon: "dragon.png",
+            wt: 3600,
+            margonemType: 1,
+          },
+          maxSpawnTime: maxTime1,
+          minSpawnTime: minTime1,
+        }),
+        createMockTimer({
+          npcId: 1,
+          guildId: "guild2",
+          world: "world1",
+          npc: {
+            id: 1,
+            name: "Dragon Boss",
+            type: NpcType.HERO,
+            lvl: 150,
+            prof: "warrior",
+            icon: "dragon.png",
+            wt: 3600,
+            margonemType: 1,
+          },
+          maxSpawnTime: maxTime2,
+          minSpawnTime: minTime2,
+        }),
+      ];
+
+      const result = mergeTimers(timers);
+
+      expect(result.length).toBe(1);
+      expect(result[0].mergedGuildIds).toBeDefined();
+      expect(result[0].mergedGuildIds?.length).toBe(2);
+      expect(result[0].mergedGuildIds).toEqual([
+        { guildId: "guild1", npcId: 1 },
+        { guildId: "guild2", npcId: 1 },
+      ]);
     });
 
     it("should merge 5 timers with same npcId but different guildIds", () => {
@@ -429,7 +490,7 @@ describe("timers-utils", () => {
       ]);
     });
 
-    it("should keep reset timer separate from non-reset timers with same npcId", () => {
+    it("should merge reset and non-reset timers with same npcId together", () => {
       const resetTime = new Date("2024-01-01T08:00:00Z");
       const resetMinTime = new Date("2024-01-01T07:00:00Z");
       const regularTime1 = new Date("2024-01-01T10:00:00Z");
@@ -576,28 +637,17 @@ describe("timers-utils", () => {
 
       const result = mergeTimers(timers);
 
-      expect(result.length).toBe(2);
-
-      const resetTimer = result.find((t) => t.wasReset);
-      const regularTimer = result.find((t) => !t.wasReset);
-
-      expect(resetTimer).toBeDefined();
-      expect(regularTimer).toBeDefined();
-
-      expect(resetTimer?.members?.length).toBe(1);
-      expect(resetTimer?.members?.[0].name).toBe("Player3");
-      expect(resetTimer?.maxSpawnTime).toEqual(resetTime);
-      expect(resetTimer?.wasReset).toBe(true);
-
-      expect(regularTimer?.members?.length).toBe(4);
-      expect(regularTimer?.members?.map((m) => m.name)).toEqual([
+      expect(result.length).toBe(1);
+      expect(result[0].members?.length).toBe(5);
+      expect(result[0].maxSpawnTime).toEqual(regularTime4);
+      expect(result[0].minSpawnTime).toEqual(regularMinTime4);
+      expect(result[0].members?.map((m) => m.name)).toEqual([
         "Player1",
         "Player2",
+        "Player3",
         "Player4",
         "Player5",
       ]);
-      expect(regularTimer?.maxSpawnTime).toEqual(regularTime4);
-      expect(regularTimer?.wasReset).toBe(false);
     });
   });
 

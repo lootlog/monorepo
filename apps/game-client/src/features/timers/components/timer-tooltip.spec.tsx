@@ -44,9 +44,8 @@ describe("TimerTooltip", () => {
     render(<TimerTooltip timer={timerWithMembers} guilds={mockGuilds} />);
 
     expect(screen.getByText("Dodane przez:")).toBeDefined();
-    expect(
-      screen.getByText(/Player1 \(Test Guild\), Player2 \(Another Guild\)/),
-    ).toBeDefined();
+    expect(screen.getByText("Player1 (Test Guild)")).toBeDefined();
+    expect(screen.getByText("Player2 (Another Guild)")).toBeDefined();
   });
 
   it("should show reset indicator when timer was reset", () => {

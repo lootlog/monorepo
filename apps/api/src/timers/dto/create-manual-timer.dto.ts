@@ -15,13 +15,15 @@ export class CreateManualTimerDto {
   @MaxLength(20)
   name: string;
 
+  @IsOptional()
   @IsNumber()
-  @Min(2)
-  respBaseSeconds: number;
+  @Min(1)
+  minSeconds?: number;
 
   @IsOptional()
   @IsNumber()
-  respawnRandomness?: number;
+  @Min(1)
+  maxSeconds?: number;
 
   @IsOptional()
   @IsDate()

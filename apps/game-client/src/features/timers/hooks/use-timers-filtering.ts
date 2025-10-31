@@ -40,22 +40,6 @@ export const useTimersFiltering = ({
   pinnedTimers,
   sortOrder,
 }: UseTimersFilteringProps) => {
-  console.log("[USE_TIMERS_FILTERING] Hook called with:", {
-    calculatedTimersCount: calculatedTimers.length,
-    calculatedTimersRef: calculatedTimers,
-    isGrouping,
-    guildId,
-    hiddenTimersCount: hiddenTimers.length,
-    showHiddenTimers,
-    searchText,
-    selectedNpcTypesCount: selectedNpcTypes.length,
-    minLvl,
-    maxLvl,
-    selectedColorsCount: selectedColors.length,
-    pinnedTimersCount: pinnedTimers.length,
-    sortOrder,
-  });
-
   let filtered = calculatedTimers;
 
   if (!isGrouping) {
@@ -69,12 +53,6 @@ export const useTimersFiltering = ({
   filtered = filterTimersByColor(filtered, selectedColors, timersColors);
 
   const sorted = sortTimersByPinnedAndTime(filtered, pinnedTimers, sortOrder);
-
-  console.log("[USE_TIMERS_FILTERING] Returning sorted timers:", {
-    inputCount: calculatedTimers.length,
-    outputCount: sorted.length,
-    outputRef: sorted,
-  });
 
   return sorted;
 };

@@ -18,8 +18,8 @@ export const useUpdateUserPreferences = () => {
         ...preferences,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-preferences"] });
+    onSuccess: (response) => {
+      queryClient.setQueryData(["user-preferences"], response.data);
     },
   });
 };
