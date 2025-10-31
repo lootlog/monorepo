@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { SingleTimer } from "./single-timer";
-import { createMockTimer } from "../__tests__/test-helpers";
+import { createMockTimerWithTimeLeft } from "../__tests__/test-helpers";
 
 vi.mock("@/hooks/api/use-guilds", () => ({
   useGuilds: () => ({ data: [] }),
@@ -98,7 +98,7 @@ vi.mock("@/constants/margonem", () => ({
 }));
 
 describe("SingleTimer", () => {
-  const mockTimer = createMockTimer();
+  const mockTimer = createMockTimerWithTimeLeft();
 
   const defaultProps = {
     timer: mockTimer,
