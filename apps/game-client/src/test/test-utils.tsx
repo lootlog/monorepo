@@ -5,7 +5,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement, ReactNode } from "react";
 import { vi } from "vitest";
-import { io, type Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   queryClient?: QueryClient;
@@ -23,11 +23,6 @@ function createTestQueryClient() {
       mutations: {
         retry: false,
       },
-    },
-    logger: {
-      log: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
     },
   });
 }
@@ -58,6 +53,8 @@ export interface MockSocket extends Socket {
 }
 
 export function createMockSocket(): MockSocket {
+  const listeners = new Map<string, Array<(...args: unknown[]) => void>>();
+
   const socket = {
     id: "test-socket-id",
     connected: true,
@@ -67,18 +64,17 @@ export function createMockSocket(): MockSocket {
     connect: vi.fn(),
     disconnect: vi.fn(),
     listenerCount: vi.fn((event: string) => {
-      const listeners = socket._listeners.get(event);
-      return listeners ? listeners.length : 0;
+      const eventListeners = listeners.get(event);
+      return eventListeners ? eventListeners.length : 0;
     }),
-    _listeners: new Map<string, Array<(...args: unknown[]) => void>>(),
   } as unknown as MockSocket;
 
   socket.on.mockImplementation(
     (event: string, handler: (...args: unknown[]) => void) => {
-      if (!socket._listeners.has(event)) {
-        socket._listeners.set(event, []);
+      if (!listeners.has(event)) {
+        listeners.set(event, []);
       }
-      socket._listeners.get(event)?.push(handler);
+      listeners.get(event)?.push(handler);
       return socket;
     },
   );
@@ -86,24 +82,24 @@ export function createMockSocket(): MockSocket {
   socket.off.mockImplementation(
     (event: string, handler?: (...args: unknown[]) => void) => {
       if (handler) {
-        const listeners = socket._listeners.get(event);
-        if (listeners) {
-          const index = listeners.indexOf(handler);
+        const eventListeners = listeners.get(event);
+        if (eventListeners) {
+          const index = eventListeners.indexOf(handler);
           if (index !== -1) {
-            listeners.splice(index, 1);
+            eventListeners.splice(index, 1);
           }
         }
       } else {
-        socket._listeners.delete(event);
+        listeners.delete(event);
       }
       return socket;
     },
   );
 
   socket.emit.mockImplementation((event: string, ...args: unknown[]) => {
-    const listeners = socket._listeners.get(event);
-    if (listeners) {
-      listeners.forEach((listener) => listener(...args));
+    const eventListeners = listeners.get(event);
+    if (eventListeners) {
+      eventListeners.forEach((listener) => listener(...args));
     }
     return socket;
   });
