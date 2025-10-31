@@ -6,16 +6,16 @@ export type TimerWithTimeLeft = Timer & {
   maxTimeLeft: number;
   minTimeLeft: number;
   members?: GuildMember[];
+  mergedGuildIds?: Array<{ guildId: string; npcId: number }>;
 };
 
 const MANUAL_TIMER_MARGONEM_TYPE = 999;
 
 const getTimerKey = (timer: Timer): string => {
-  const resetSuffix = timer.wasReset ? "_reset" : "";
   if (timer.npc.margonemType === MANUAL_TIMER_MARGONEM_TYPE) {
-    return `manual_${timer.npc.name}_${timer.world}_${timer.npc.margonemType}${resetSuffix}`;
+    return `manual_${timer.npc.name}_${timer.world}_${timer.npc.margonemType}`;
   }
-  return `npc_${timer.npcId}${resetSuffix}`;
+  return `npc_${timer.npcId}`;
 };
 
 export const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
@@ -31,6 +31,7 @@ export const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
         members: timer.member ? [timer.member] : [],
         minTimeLeft: 0,
         maxTimeLeft: 0,
+        mergedGuildIds: [{ guildId: timer.guildId, npcId: timer.npcId }],
       });
     } else {
       if (new Date(timer.maxSpawnTime) > new Date(existing.maxSpawnTime)) {
@@ -42,11 +43,19 @@ export const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
           ],
           minTimeLeft: 0,
           maxTimeLeft: 0,
+          mergedGuildIds: [
+            ...(existing.mergedGuildIds || []),
+            { guildId: timer.guildId, npcId: timer.npcId },
+          ],
         });
       } else {
         existing.members = [
           ...(existing.members || []),
           ...(timer.member ? [timer.member] : []),
+        ];
+        existing.mergedGuildIds = [
+          ...(existing.mergedGuildIds || []),
+          { guildId: timer.guildId, npcId: timer.npcId },
         ];
       }
     }

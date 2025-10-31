@@ -1,5 +1,4 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { FC, useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -35,23 +34,34 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   const configByCharacterId = lootlogCharactersConfig?.[characterId];
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitializedRef = useRef(false);
+  const isResettingRef = useRef(false);
   const mutateRef = useRef(updateLootlogCharacterConfig);
 
   mutateRef.current = updateLootlogCharacterConfig;
 
   useEffect(() => {
     if (guilds && guilds.length > 0) {
+      isResettingRef.current = true;
       reset({
         lootGuildIds: configByCharacterId?.collectLootWhitelistGuildIds || [],
         timersGuildIds: configByCharacterId?.addTimersWhitelistGuildIds || [],
       });
-      isInitializedRef.current = true;
+      setTimeout(() => {
+        isResettingRef.current = false;
+        isInitializedRef.current = true;
+      }, 0);
     }
-  }, [guilds, lootlogCharactersConfig, reset, characterId]);
+  }, [
+    guilds,
+    lootlogCharactersConfig,
+    reset,
+    characterId,
+    configByCharacterId,
+  ]);
 
   useEffect(() => {
     const subscription = watch((value) => {
-      if (!isInitializedRef.current) return;
+      if (!isInitializedRef.current || isResettingRef.current) return;
 
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -79,7 +89,7 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [characterId]);
+  }, [characterId, watch]);
 
   return (
     <div className="ll:py-4">

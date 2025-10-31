@@ -1,5 +1,6 @@
 import { useCallback } from "react";
-import { MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
+import { useQueryClient } from "@tanstack/react-query";
+import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
 import { Game } from "@/lib/game";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
@@ -14,6 +15,10 @@ import { useCreateTimer } from "@/hooks/api/use-create-timer";
 import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { NpcType } from "@/hooks/api/use-npcs";
+import {
+  useLootlogCharactersConfig,
+  type LootlogCharacterConfigResponse,
+} from "@/hooks/api/use-lootlog-character-config";
 
 import { useGuilds } from "@/hooks/api/use-guilds";
 
@@ -23,6 +28,9 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
   const { data: guilds } = useGuilds();
   const { addNpc, removeNpc } = useNpcDetectorStore();
   const { setOpen } = useWindowsStore();
+  const queryClient = useQueryClient();
+
+  useLootlogCharactersConfig();
 
   const {
     isValidGameState,
@@ -144,7 +152,8 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
 
       event.npcs_del?.forEach((npc) => {
         const data = Game.getNpc(npc.id);
-        if (!data || !npc.respBaseSeconds || !world) return;
+        if (!data || !npc.respBaseSeconds || !world || data.wt < MIN_NPC_WT)
+          return;
 
         removeNpc(npc.id);
         removeNotificationByNpcId(npc.id, world);
@@ -158,7 +167,21 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 
         if (characterId && accountId && world) {
-          const guildIds = guilds.map((g) => g.id);
+          const charactersConfigResponse = queryClient.getQueryData<{
+            data: LootlogCharacterConfigResponse;
+          }>(["lootlog-characters-config", accountId]);
+
+          const charactersConfig = charactersConfigResponse?.data;
+          const characterConfig = charactersConfig?.[characterId];
+          const whitelistedGuildIds =
+            characterConfig?.addTimersWhitelistGuildIds ?? [];
+
+          const guildIds = guilds
+            .filter((g) => whitelistedGuildIds.includes(g.id))
+            .map((g) => g.id);
+
+          if (guildIds.length === 0) return;
+
           const tempIds = guildIds.map(() => crypto.randomUUID());
 
           createTimer({
@@ -196,6 +219,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
       removeNotificationByNpcId,
       createTimer,
       guilds,
+      queryClient,
     ],
   );
 

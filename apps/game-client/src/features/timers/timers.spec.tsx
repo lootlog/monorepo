@@ -229,6 +229,9 @@ describe("Timers Component", () => {
     it("7.1 should deduplicate timers when grouping is OFF (HIGH PRIORITY)", async () => {
       const { useTimers } = await import("@/hooks/api/use-timers");
 
+      const futureDate1 = new Date(Date.now() + 3600000);
+      const futureDate2 = new Date(Date.now() + 1800000);
+
       const duplicateTimers = [
         createMockTimer({
           tempId: "1",
@@ -236,6 +239,8 @@ describe("Timers Component", () => {
           guildId: "guild1",
           world: "world1",
           isPending: false,
+          maxSpawnTime: futureDate1,
+          minSpawnTime: futureDate2,
         }),
         createMockTimer({
           tempId: "2",
@@ -243,6 +248,8 @@ describe("Timers Component", () => {
           guildId: "guild1",
           world: "world1",
           isPending: false,
+          maxSpawnTime: futureDate1,
+          minSpawnTime: futureDate2,
         }),
       ];
 
@@ -252,23 +259,12 @@ describe("Timers Component", () => {
         error: null,
       } as ReturnType<typeof useTimers>);
 
-      const consoleWarnSpy = vi
-        .spyOn(console, "warn")
-        .mockImplementation(() => {});
-
-      render(<Timers />);
+      const { getByTestId } = render(<Timers />);
 
       await waitFor(() => {
-        expect(consoleWarnSpy).toHaveBeenCalledWith(
-          "[TIMERS] Removed duplicate timers:",
-          expect.objectContaining({
-            original: 2,
-            deduplicated: 1,
-          }),
-        );
+        const timersCount = getByTestId("timers-count");
+        expect(timersCount.textContent).toBe("1");
       });
-
-      consoleWarnSpy.mockRestore();
     });
 
     it("7.2 should merge timers from different guilds when grouping is ON (HIGH PRIORITY)", async () => {

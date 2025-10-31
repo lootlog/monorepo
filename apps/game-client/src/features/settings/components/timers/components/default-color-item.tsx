@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
-import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
+import type { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { Edit2, Trash2 } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import { ColorEditForm } from "./color-edit-form";
 import { DEFAULT_COLOR_NAMES, type ColorEditData } from "./color-utils";
 
@@ -55,10 +55,11 @@ export const DefaultColorItem: FC<DefaultColorItemProps> = ({
               }
               customBorderColor={overridden?.borderColor}
               customBackgroundColor={overridden?.backgroundColor}
-              className="ll:h-6"
+              className="ll:h-6 ll:w-full ll:items-center ll:justify-center"
             >
-              <span className="ll:text-[10px] ll:text-white">
-                [T] Tanroth 00:21:37
+              <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full">
+                <span>[T] Tanroth</span>
+                <span> 00:21:37</span>
               </span>
             </Tile>
           </>

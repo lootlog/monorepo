@@ -9,6 +9,7 @@ import {
 import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
+import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 import { useSettingsStore } from "@/store/settings.store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -163,24 +164,32 @@ export const AddTimerForm: React.FC = () => {
 
   const currentGuildId = characterId ? guildIdByCharId[characterId] : undefined;
 
+  const searchGuildId = selectedGuildIds[0] ?? currentGuildId ?? "";
+
   const { data: npcResults } = useSearchNpcs(
-    currentGuildId ?? "",
+    searchGuildId,
     world ?? "",
     debouncedSearch,
-    debouncedSearch.length >= 2 && !!currentGuildId,
+    debouncedSearch.length >= 2 && !!searchGuildId,
   );
 
   useEffect(() => {
-    if (!characterId || !guilds) return;
+    if (!characterId || !guilds || guilds.length === 0) return;
 
     const savedGuildIds = selectedGuildIdsForTimersByCharId[characterId] || [];
-    if (savedGuildIds.length > 0) {
-      const validGuildIds = savedGuildIds.filter((id: string) =>
-        guilds.some((guild) => guild.id === id),
-      );
+    const validGuildIds = savedGuildIds.filter((id: string) =>
+      guilds.some((guild) => guild.id === id),
+    );
+
+    if (validGuildIds.length > 0) {
       setSelectedGuildIds(validGuildIds);
-    } else if (currentGuildId) {
+    } else if (
+      currentGuildId &&
+      guilds.some((guild) => guild.id === currentGuildId)
+    ) {
       setSelectedGuildIds([currentGuildId]);
+    } else {
+      setSelectedGuildIds([guilds[0].id]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [characterId, selectedGuildIdsForTimersByCharId, guilds]);
@@ -210,12 +219,15 @@ export const AddTimerForm: React.FC = () => {
   });
 
   const handleNpcSelect = (npc: NpcSearchResult) => {
+    const baseSeconds = npc.latestRespBaseSeconds;
+    const respawnRandomness =
+      npc.latestRespawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
+    const variance = Math.round((baseSeconds * respawnRandomness) / 100);
+    const minSeconds = Math.max(baseSeconds - variance, 0);
+    const maxSeconds = baseSeconds + variance;
+
     setValue("name", npc.name);
-    setValue("minDuration", formatSecondsToHHMMSS(npc.latestRespBaseSeconds));
-    const maxSeconds = Math.round(
-      npc.latestRespBaseSeconds +
-        (npc.latestRespBaseSeconds * npc.latestRespawnRandomness) / 100,
-    );
+    setValue("minDuration", formatSecondsToHHMMSS(minSeconds));
     setValue("maxDuration", formatSecondsToHHMMSS(maxSeconds));
     setSearchQuery("");
     setShowSuggestions(false);
@@ -264,8 +276,6 @@ export const AddTimerForm: React.FC = () => {
 
     const timerData: UseCreateManualTimerOptions = {
       name: data.name,
-      respBaseSeconds: 0,
-      respawnRandomness: 0,
       world,
       guildIds: selectedGuildIds,
     };
@@ -273,16 +283,9 @@ export const AddTimerForm: React.FC = () => {
     if (customDatesEnabled && data.startDate && data.endDate) {
       timerData.customMinSpawnTime = new Date(data.startDate);
       timerData.customMaxSpawnTime = new Date(data.endDate);
-      timerData.respBaseSeconds = 1;
-      timerData.respawnRandomness = 0;
     } else if (data.minDuration && data.maxDuration) {
-      const minSeconds = parseDurationToSeconds(data.minDuration);
-      const maxSeconds = parseDurationToSeconds(data.maxDuration);
-      timerData.respBaseSeconds = minSeconds;
-      timerData.respawnRandomness =
-        maxSeconds > minSeconds
-          ? Math.round(((maxSeconds - minSeconds) / minSeconds) * 100)
-          : 0;
+      timerData.minSeconds = parseDurationToSeconds(data.minDuration);
+      timerData.maxSeconds = parseDurationToSeconds(data.maxDuration);
     }
 
     createManualTimer(timerData, {
@@ -478,7 +481,7 @@ export const AddTimerForm: React.FC = () => {
         </ScrollArea>
       </div>
 
-      <div className="ll:flex ll:justify-center ll:border-t ll:border-gray-600 ll:pt-1 ll:pb-0.5 ll:px-1 ll:shrink-0">
+      <div className="ll:flex ll:justify-center ll:border-gray-600 ll:pt-1 ll:pb-0.5 ll:px-1 ll:shrink-0">
         <button
           type="submit"
           className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:px-4"

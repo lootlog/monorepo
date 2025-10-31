@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
-import { FC, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import { stripAlphaChannel, alphaToHex } from "./color-utils";
 
 interface AddColorFormProps {
@@ -20,15 +20,14 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
   const [backgroundColor, setBackgroundColor] = useState("#3b82f6");
   const [backgroundAlpha, setBackgroundAlpha] = useState(20);
 
+  const bgWithAlpha = useMemo(
+    () => `${backgroundColor}${alphaToHex(backgroundAlpha)}`,
+    [backgroundColor, backgroundAlpha],
+  );
+
   const handleAdd = () => {
     if (!name.trim()) return;
-
-    onAdd({
-      name: name.trim(),
-      borderColor,
-      backgroundColor: `${backgroundColor}${alphaToHex(backgroundAlpha)}`,
-    });
-
+    onAdd({ name: name.trim(), borderColor, backgroundColor: bgWithAlpha });
     setName("");
     setBorderColor("#3b82f6");
     setBackgroundColor("#3b82f6");
@@ -36,67 +35,97 @@ export const AddColorForm: FC<AddColorFormProps> = ({ onAdd }) => {
   };
 
   return (
-    <div className="ll:flex ll:flex-col ll:gap-2 ll:pt-2 ll:border-t ll:border-gray-600">
-      <h3 className="ll:text-sm ll:font-semibold">Dodaj nowy kolor</h3>
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Nazwa koloru"
-      />
-      <div className="ll:grid ll:grid-cols-2 ll:gap-2">
-        <div className="ll:flex ll:flex-col ll:gap-1">
-          <Label className="ll:text-xs">Ramka</Label>
+    <div className="ll:pt-2 ll:border-t ll:border-gray-600 ll:space-y-2">
+      <h3 className="ll:text-sm ll:font-semibold">Dodaj kolor</h3>
+
+      <div className="ll:flex ll:flex-wrap ll:items-center ll:gap-2">
+        <div className="ll:flex ll:gap-4 ll:items-center">
           <Input
-            type="color"
-            value={stripAlphaChannel(borderColor)}
-            onChange={(e) => setBorderColor(e.target.value)}
-            className="ll:h-7 ll:p-0"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nazwa"
+            className="ll:text-xs ll:flex-1"
           />
+          <div className="ll:flex ll:items-center ll:gap-1">
+            <Label className="ll:text-[11px]">Ramka</Label>
+            <Input
+              type="color"
+              value={stripAlphaChannel(borderColor)}
+              onChange={(e) => setBorderColor(e.target.value)}
+              className="ll:h-8 ll:w-8 ll:p-0 ll:border-0 ll:bg-transparent"
+              aria-label="Kolor ramki"
+            />
+          </div>
+
+          <div className="ll:flex ll:items-center ll:gap-1">
+            <Label className="ll:text-[11px]">Tło</Label>
+            <Input
+              type="color"
+              value={stripAlphaChannel(backgroundColor)}
+              onChange={(e) => setBackgroundColor(e.target.value)}
+              className="ll:h-8 ll:w-8 ll:p-0 ll:border-0 ll:bg-transparent"
+              aria-label="Kolor tła"
+            />
+          </div>
         </div>
-        <div className="ll:flex ll:flex-col ll:gap-1">
-          <Label className="ll:text-xs">Tło</Label>
-          <Input
-            type="color"
-            value={stripAlphaChannel(backgroundColor)}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            className="ll:h-7 ll:p-0"
-          />
+
+        <div className="ll:flex ll:gap-1 ll:flex-col ll:w-full">
+          <Label className="ll:text-[11px]">Przezroczystość</Label>
+          <div className="ll:flex ll:gap-4">
+            <div className="ll:w-full">
+              <Slider
+                min={0}
+                max={100}
+                step={1}
+                value={[backgroundAlpha]}
+                onValueChange={(v) => setBackgroundAlpha(v[0])}
+                className="ll:h-6"
+                aria-label="Przezroczystość tła"
+              />
+            </div>
+            <div className="ll:flex ll:items-center ll:gap-1">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={backgroundAlpha}
+                onChange={(e) =>
+                  setBackgroundAlpha(
+                    Math.max(0, Math.min(100, Number(e.target.value) || 0)),
+                  )
+                }
+                className="ll:w-12"
+              />
+              <span className="ll:text-muted-foreground ll:text-sm">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="ll:grid ll:grid-cols-2 ll:items-end ll:w-full ll:gap-4">
+          <div className="ll:gap-1 ll:flex ll:flex-col">
+            <Label className="ll:text-[11px]">Podgląd</Label>
+
+            <Tile
+              customBorderColor={borderColor}
+              customBackgroundColor={bgWithAlpha}
+              className="ll:h-6 ll:w-full ll:items-center ll:justify-center"
+            >
+              <span className="ll:text-[10px] ll:text-white ll:whitespace-nowrap ll:flex ll:justify-between ll:w-full ll:px-1 ll:items-center ll:h-full ll:mt-1">
+                <span>[T] Tanroth</span>
+                <span> 00:21:37</span>
+              </span>
+            </Tile>
+          </div>
+
+          <Button
+            onClick={handleAdd}
+            disabled={!name.trim()}
+            className="ll:h-6 ll:w-full"
+          >
+            Dodaj
+          </Button>
         </div>
       </div>
-      <div className="ll:flex ll:flex-col ll:gap-1">
-        <div className="ll:flex ll:items-center ll:justify-between">
-          <Label className="ll:text-xs">Przezroczystość tła</Label>
-          <span className="ll:text-xs ll:text-muted-foreground">
-            {backgroundAlpha}%
-          </span>
-        </div>
-        <Slider
-          min={0}
-          max={100}
-          step={1}
-          value={[backgroundAlpha]}
-          onValueChange={(value) => setBackgroundAlpha(value[0])}
-        />
-      </div>
-      <div className="ll:flex ll:flex-col ll:gap-1">
-        <Label className="ll:text-xs">Podgląd</Label>
-        <Tile
-          customBorderColor={borderColor}
-          customBackgroundColor={`${backgroundColor}${alphaToHex(backgroundAlpha)}`}
-          className="ll:h-6"
-        >
-          <span className="ll:text-[10px] ll:text-white">
-            [T] Tanroth 00:21:37
-          </span>
-        </Tile>
-      </div>
-      <Button
-        onClick={handleAdd}
-        disabled={!name.trim()}
-        className="ll:h-7 ll:text-xs"
-      >
-        Dodaj
-      </Button>
     </div>
   );
 };

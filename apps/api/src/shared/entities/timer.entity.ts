@@ -50,6 +50,13 @@ export class TimerEntity {
   };
 
   @Expose()
+  @ApiProperty({
+    example: false,
+    description: 'Indicates if the timer was manually reset',
+  })
+  wasReset: boolean;
+
+  @Expose()
   member: unknown;
 
   @Exclude()

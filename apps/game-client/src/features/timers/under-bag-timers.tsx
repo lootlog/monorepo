@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren } from "react";
+import type { FC, PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
 
 export const UnderBagTimers: FC<PropsWithChildren> = ({ children }) => {
@@ -10,7 +10,7 @@ export const UnderBagTimers: FC<PropsWithChildren> = ({ children }) => {
     bottomWrapper &&
     createPortal(
       <div
-        className="ll:pl-4 ll:py-1 ll:box-border ll:h-full ll:max-h-full ll:pr-[6px] ll:bg-black/70 ll:relative ll:flex ll:flex-col"
+        className="ll:pl-4 ll:py-1 ll:box-border ll:h-full ll:pr-1.5 ll:max-h-full ll:bg-black/70 ll:relative ll:flex ll:flex-col"
         onWheel={(e) => e.stopPropagation()}
       >
         {children}

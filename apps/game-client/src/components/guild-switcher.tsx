@@ -43,6 +43,18 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
     }
   }, [guilds, isFetched, guildId]);
 
+  useDeepCompareEffect(() => {
+    if (!isFetched || !guilds || guilds.length === 0 || !value) return;
+    const exists = guilds.some((guild) => guild.id === value);
+    if (!exists) {
+      if (onChange) {
+        onChange(guilds[0].id);
+      } else {
+        setGuildId(characterId!, guilds[0].id);
+      }
+    }
+  }, [guilds, isFetched, value]);
+
   const selectedValue = value !== undefined ? value : guildId;
 
   const handleChange = (newGuildId: string) => {

@@ -124,4 +124,93 @@ describe("useTimerActions", () => {
       });
     }).not.toThrow();
   });
+
+  it("should reset timer only for current guild when timersGrouping is false", () => {
+    const { result } = renderHook(() =>
+      useTimerActions(mockTimer, settingsKey, world, mockGuilds, false),
+    );
+
+    expect(() => {
+      act(() => {
+        result.current.handleRestartTimer();
+      });
+    }).not.toThrow();
+  });
+
+  it("should reset timer for all guilds when timersGrouping is true", () => {
+    const { result } = renderHook(() =>
+      useTimerActions(mockTimer, settingsKey, world, mockGuilds, true),
+    );
+
+    expect(() => {
+      act(() => {
+        result.current.handleRestartTimer();
+      });
+    }).not.toThrow();
+  });
+
+  it("should not throw when timersGrouping is true but guilds is undefined", () => {
+    const { result } = renderHook(() =>
+      useTimerActions(mockTimer, settingsKey, world, undefined, true),
+    );
+
+    expect(() => {
+      act(() => {
+        result.current.handleRestartTimer();
+      });
+    }).not.toThrow();
+  });
+
+  it("should reset timer for all merged guild ids when mergedGuildIds is present", () => {
+    const mockTimerWithMergedIds = {
+      ...mockTimer,
+      mergedGuildIds: [
+        { guildId: "guild1", npcId: 1 },
+        { guildId: "guild2", npcId: 2 },
+        { guildId: "guild3", npcId: 3 },
+      ],
+    };
+
+    const { result } = renderHook(() =>
+      useTimerActions(
+        mockTimerWithMergedIds,
+        settingsKey,
+        world,
+        mockGuilds,
+        true,
+      ),
+    );
+
+    expect(() => {
+      act(() => {
+        result.current.handleRestartTimer();
+      });
+    }).not.toThrow();
+  });
+
+  it("should use mergedGuildIds over guilds array when both are available", () => {
+    const mockTimerWithMergedIds = {
+      ...mockTimer,
+      mergedGuildIds: [
+        { guildId: "guild1", npcId: 1 },
+        { guildId: "guild2", npcId: 2 },
+      ],
+    };
+
+    const { result } = renderHook(() =>
+      useTimerActions(
+        mockTimerWithMergedIds,
+        settingsKey,
+        world,
+        mockGuilds,
+        true,
+      ),
+    );
+
+    expect(() => {
+      act(() => {
+        result.current.handleRestartTimer();
+      });
+    }).not.toThrow();
+  });
 });

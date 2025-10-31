@@ -1,5 +1,3 @@
-import axios from "axios";
-import { API_URL } from "@/config/api";
 import type {
   UpdateTimerSettingsPayload,
   UpdateGuildTimerSettingsPayload,
@@ -11,6 +9,27 @@ let guildSyncTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
 const SYNC_DEBOUNCE_MS = 500;
 
+type MutateGlobalFn = (payload: UpdateTimerSettingsPayload) => void;
+type MutateGuildFn = (payload: UpdateGuildTimerSettingsPayload) => void;
+
+let globalMutateFn: MutateGlobalFn | null = null;
+let guildMutateFns: Map<string, MutateGuildFn> = new Map();
+
+export const registerGlobalSettingsMutation = (mutateFn: MutateGlobalFn) => {
+  globalMutateFn = mutateFn;
+};
+
+export const registerGuildSettingsMutation = (
+  guildId: string,
+  mutateFn: MutateGuildFn,
+) => {
+  guildMutateFns.set(guildId, mutateFn);
+};
+
+export const unregisterGuildSettingsMutation = (guildId: string) => {
+  guildMutateFns.delete(guildId);
+};
+
 export const debouncedSyncGlobalSettings = (
   payload: UpdateTimerSettingsPayload,
 ) => {
@@ -18,21 +37,23 @@ export const debouncedSyncGlobalSettings = (
     clearTimeout(syncTimeoutId);
   }
 
-  syncTimeoutId = setTimeout(async () => {
-    const { syncEnabled } = useTimersStore.getState();
-    if (!syncEnabled) {
-      console.log("[TimerSync] Sync disabled, skipping global settings sync");
+  syncTimeoutId = setTimeout(() => {
+    if (payload.syncEnabled === false) {
+      console.log("[TimerSync] Sending syncEnabled=false to backend");
+    } else if (payload.syncEnabled === undefined) {
+      const { syncEnabled } = useTimersStore.getState();
+      if (!syncEnabled) {
+        console.log("[TimerSync] Sync disabled, skipping global settings sync");
+        return;
+      }
+    }
+
+    if (!globalMutateFn) {
+      console.warn("[TimerSync] Global mutation not registered, skipping sync");
       return;
     }
 
-    try {
-      await axios.patch(`${API_URL}/timer-settings`, payload, {
-        withCredentials: true,
-      });
-      console.log("[TimerSync] Global settings synced successfully");
-    } catch (error) {
-      console.error("[TimerSync] Failed to sync global settings:", error);
-    }
+    globalMutateFn(payload);
   }, SYNC_DEBOUNCE_MS);
 };
 
@@ -45,7 +66,7 @@ export const debouncedSyncGuildSettings = (
     clearTimeout(existingTimeout);
   }
 
-  const timeoutId = setTimeout(async () => {
+  const timeoutId = setTimeout(() => {
     const { syncEnabled } = useTimersStore.getState();
     if (!syncEnabled) {
       console.log("[TimerSync] Sync disabled, skipping guild settings sync");
@@ -53,24 +74,17 @@ export const debouncedSyncGuildSettings = (
       return;
     }
 
-    try {
-      await axios.patch(
-        `${API_URL}/timer-settings/guilds/${guildId}`,
-        payload,
-        {
-          withCredentials: true,
-        },
-      );
-      console.log(
-        `[TimerSync] Guild settings synced successfully for guild ${guildId}`,
+    const mutateFn = guildMutateFns.get(guildId);
+    if (!mutateFn) {
+      console.warn(
+        `[TimerSync] Guild mutation not registered for ${guildId}, skipping sync`,
       );
       guildSyncTimeouts.delete(guildId);
-    } catch (error) {
-      console.error(
-        `[TimerSync] Failed to sync guild settings for ${guildId}:`,
-        error,
-      );
+      return;
     }
+
+    mutateFn(payload);
+    guildSyncTimeouts.delete(guildId);
   }, SYNC_DEBOUNCE_MS);
 
   guildSyncTimeouts.set(guildId, timeoutId);

@@ -17,3 +17,4 @@ export const NPC_NAMES: {
 };
 
 export const MIN_RESP_BASE_SECONDS = 2;
+export const MIN_NPC_WT = 20;

@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGuilds } from "@/hooks/api/use-guilds";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
@@ -21,13 +21,14 @@ import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
+import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
+import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 
 type SingleTimerProps = {
-  timer: Timer;
+  timer: TimerWithTimeLeft;
   settingsKey: string;
   minTimeLeft?: number;
   maxTimeLeft?: number;
-  canDelete?: boolean;
   isHidden?: boolean;
 };
 
@@ -35,7 +36,6 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   timer,
   minTimeLeft = 0,
   maxTimeLeft = 0,
-  canDelete = false,
   settingsKey,
   isHidden = false,
 }) => {
@@ -49,17 +49,33 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     generalConfig,
   } = useTimersStore();
 
+  const { data: guildPermissions } = useGuildPermissions({
+    guildId: timer.guildId,
+  });
+
+  const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
+    guildPermissions?.includes(perm),
+  );
+
   const {
     isPinned,
     handleHideTimer,
     handleHideTimerForAll,
+    handleShowTimer,
+    handleShowTimerForAll,
     handlePinTimer,
     handlePinTimerForAll,
     handleUnpinTimerForAll,
     handleTimerColorChange,
     handleRestartTimer,
     handleDeleteTimer,
-  } = useTimerActions(timer, settingsKey, world, guilds);
+  } = useTimerActions(
+    timer,
+    settingsKey,
+    world,
+    guilds,
+    generalConfig.timersGrouping,
+  );
 
   const {
     isPending,
@@ -151,6 +167,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             timer={timer}
             isPending={isPending}
             isPinned={isPinned}
+            isHidden={isHidden}
             canDelete={canDelete}
             timersGrouping={generalConfig.timersGrouping}
             selectedColor={selectedColor}
@@ -164,6 +181,8 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             onUnpinAll={handleUnpinTimerForAll}
             onHide={handleHideTimer}
             onHideAll={handleHideTimerForAll}
+            onShow={handleShowTimer}
+            onShowAll={handleShowTimerForAll}
             onReset={handleRestartTimer}
             onDelete={handleDeleteTimer}
           />

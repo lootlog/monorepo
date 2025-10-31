@@ -4,8 +4,8 @@ import { toast } from "sonner";
 
 export type UseCreateManualTimerOptions = {
   name: string;
-  respBaseSeconds: number;
-  respawnRandomness: number;
+  minSeconds?: number;
+  maxSeconds?: number;
   world: string;
   guildIds: string[];
   customMinSpawnTime?: Date;

@@ -16,13 +16,23 @@ export const getTimerMembers = (timer: Timer): GuildMember[] => {
 export const getMembersWithGuilds = (
   members: GuildMember[],
   guilds?: Guild[],
-): string => {
-  return members
-    .map((m) => {
-      const guildName = guilds?.find((g) => g.id === m.guildId)?.name;
-      return guildName ? `${m.name} (${guildName})` : m.name;
-    })
-    .join(", ");
+): { id: GuildMember["id"]; label: string }[] => {
+  const memberMap = new Map<
+    GuildMember["id"],
+    { id: GuildMember["id"]; label: string }
+  >();
+
+  for (const member of members) {
+    if (!memberMap.has(member.id)) {
+      const guildName = guilds?.find((g) => g.id === member.guildId)?.name;
+      memberMap.set(member.id, {
+        id: member.id,
+        label: guildName ? `${member.name} (${guildName})` : member.name,
+      });
+    }
+  }
+
+  return Array.from(memberMap.values());
 };
 
 export const calculateTimeLeft = (

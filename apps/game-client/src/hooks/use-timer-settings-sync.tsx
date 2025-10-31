@@ -6,17 +6,57 @@ import {
 } from "./api/use-timer-settings";
 import { TimerSettingsConflictDialog } from "@/components/timer-settings-conflict-dialog";
 
+type LocalSettingsSnapshot = {
+  generalConfig: ReturnType<typeof useTimersStore.getState>["generalConfig"];
+  displayConfig: ReturnType<typeof useTimersStore.getState>["displayConfig"];
+  customColors: ReturnType<typeof useTimersStore.getState>["customColors"];
+  timersColors: ReturnType<typeof useTimersStore.getState>["timersColors"];
+  defaultColorNames: ReturnType<
+    typeof useTimersStore.getState
+  >["defaultColorNames"];
+  overriddenDefaultColors: ReturnType<
+    typeof useTimersStore.getState
+  >["overriddenDefaultColors"];
+  hiddenDefaultColors: ReturnType<
+    typeof useTimersStore.getState
+  >["hiddenDefaultColors"];
+  timerFiltersEnabled: ReturnType<
+    typeof useTimersStore.getState
+  >["timerFiltersEnabled"];
+  timersSortOrder: ReturnType<
+    typeof useTimersStore.getState
+  >["timersSortOrder"];
+  syncEnabled: ReturnType<typeof useTimersStore.getState>["syncEnabled"];
+  hiddenTimers: ReturnType<typeof useTimersStore.getState>["hiddenTimers"];
+  pinnedTimers: ReturnType<typeof useTimersStore.getState>["pinnedTimers"];
+};
+
 export const useTimerSettingsSync = () => {
   const [showConflict, setShowConflict] = useState(false);
   const [remoteUpdatedAt, setRemoteUpdatedAt] = useState<Date>();
   const [localUpdatedAt, setLocalUpdatedAt] = useState<number>();
+  const [localSnapshot, setLocalSnapshot] =
+    useState<LocalSettingsSnapshot | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const syncEnabled = useTimersStore((state) => state.syncEnabled);
 
-  const { data: remoteSettings, isLoading, isFetching } = useTimerSettings();
+  const {
+    data: remoteSettings,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useTimerSettings(syncEnabled ?? true);
   const { mutateAsync: migrateSettings } = useMigrateTimerSettings();
 
   useEffect(() => {
-    if (isLoading || isFetching || isInitialized) return;
+    if (syncEnabled === false) {
+      setIsInitialized(false);
+      setLocalSnapshot(null);
+      setShowConflict(false);
+      return;
+    }
+
+    if (isLoading || isFetching) return;
 
     const initializeSettings = async () => {
       const localStore = useTimersStore.getState();
@@ -33,7 +73,7 @@ export const useTimerSettingsSync = () => {
         }
       }
 
-      if (!remoteSettings && localTimestamp) {
+      if (!remoteSettings && localTimestamp && !isInitialized) {
         await migrateSettings({
           localData: {
             generalConfig: localStore.generalConfig,
@@ -62,17 +102,40 @@ export const useTimerSettingsSync = () => {
         const localTime = localTimestamp ?? 0;
 
         const timeDiff = Math.abs(remoteTimestamp - localTime);
-        const hasSignificantDiff = timeDiff > 60000;
+        const hasSignificantDiff = timeDiff > 5000;
 
-        if (hasSignificantDiff && localTimestamp) {
+        if (
+          !isInitialized &&
+          hasSignificantDiff &&
+          localTimestamp &&
+          remoteTimestamp
+        ) {
+          setLocalSnapshot({
+            generalConfig: localStore.generalConfig,
+            displayConfig: localStore.displayConfig,
+            customColors: localStore.customColors,
+            timersColors: localStore.timersColors,
+            defaultColorNames: localStore.defaultColorNames,
+            overriddenDefaultColors: localStore.overriddenDefaultColors,
+            hiddenDefaultColors: localStore.hiddenDefaultColors,
+            timerFiltersEnabled: localStore.timerFiltersEnabled,
+            timersSortOrder: localStore.timersSortOrder,
+            syncEnabled: localStore.syncEnabled,
+            hiddenTimers: localStore.hiddenTimers,
+            pinnedTimers: localStore.pinnedTimers,
+          });
           setRemoteUpdatedAt(remoteSettings.updatedAt);
           setLocalUpdatedAt(localTimestamp);
           setShowConflict(true);
+          setIsInitialized(false);
           return;
         }
 
         // Always apply remote settings (backend is source of truth)
         useTimersStore.setState({
+          updatedAt: remoteSettings.updatedAt
+            ? new Date(remoteSettings.updatedAt).getTime()
+            : undefined,
           generalConfig:
             remoteSettings.generalConfig as typeof localStore.generalConfig,
           displayConfig:
@@ -95,36 +158,42 @@ export const useTimerSettingsSync = () => {
           syncEnabled: remoteSettings.syncEnabled,
         });
 
-        setIsInitialized(true);
+        if (!isInitialized) {
+          setIsInitialized(true);
+        }
       }
     };
 
     initializeSettings();
-  }, [remoteSettings, isLoading, isFetching, isInitialized, migrateSettings]);
+  }, [
+    remoteSettings,
+    isLoading,
+    isFetching,
+    isInitialized,
+    syncEnabled,
+    showConflict,
+    migrateSettings,
+  ]);
 
   const handleConflictResolve = async (choice: "local" | "remote") => {
-    const localStore = useTimersStore.getState();
-
     if (choice === "local") {
+      if (!localSnapshot) {
+        console.error(
+          "[TimerSync] Local snapshot is missing, cannot resolve conflict",
+        );
+        return;
+      }
+
       await migrateSettings({
-        localData: {
-          generalConfig: localStore.generalConfig,
-          displayConfig: localStore.displayConfig,
-          customColors: localStore.customColors,
-          timersColors: localStore.timersColors,
-          defaultColorNames: localStore.defaultColorNames,
-          overriddenDefaultColors: localStore.overriddenDefaultColors,
-          hiddenDefaultColors: localStore.hiddenDefaultColors,
-          timerFiltersEnabled: localStore.timerFiltersEnabled,
-          timersSortOrder: localStore.timersSortOrder,
-          syncEnabled: localStore.syncEnabled,
-          hiddenTimers: localStore.hiddenTimers,
-          pinnedTimers: localStore.pinnedTimers,
-        },
+        localData: localSnapshot,
         conflictResolution: "local",
       });
     } else if (remoteSettings) {
+      const localStore = useTimersStore.getState();
       useTimersStore.setState({
+        updatedAt: remoteSettings.updatedAt
+          ? new Date(remoteSettings.updatedAt).getTime()
+          : undefined,
         generalConfig:
           remoteSettings.generalConfig as typeof localStore.generalConfig,
         displayConfig:
@@ -150,6 +219,7 @@ export const useTimerSettingsSync = () => {
 
     setShowConflict(false);
     setIsInitialized(true);
+    setLocalSnapshot(null);
   };
 
   return {

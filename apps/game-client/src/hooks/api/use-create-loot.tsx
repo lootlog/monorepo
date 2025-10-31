@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { Item } from "@/types/margonem/game-events/item";
-import { Npc, PartyMember } from "@/utils/game/get-battle-participants";
+import type { Item } from "@/types/margonem/game-events/item";
+import type { Npc, PartyMember } from "@/utils/game/get-battle-participants";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 
 export type LootDto = {
@@ -41,12 +41,6 @@ export const useCreateLoot = () => {
     mutationKey: ["create-loot"],
     mutationFn: (options: UseCreateLootOptions) => {
       return client.post<CreateLootResponse>("/loots", options);
-    },
-    onSuccess: () => {
-      console.log("onSuccess");
-    },
-    onError: () => {
-      console.log("onError");
     },
   });
 

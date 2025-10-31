@@ -262,23 +262,34 @@ export class TimersService {
 
     let minSpawnTime: Date;
     let maxSpawnTime: Date;
+    let latestRespBaseSeconds: number;
+    let latestRespawnRandomness: number;
 
     if (data.customMinSpawnTime && data.customMaxSpawnTime) {
       minSpawnTime = data.customMinSpawnTime;
       maxSpawnTime = data.customMaxSpawnTime;
+
+      const diffMs = maxSpawnTime.getTime() - minSpawnTime.getTime();
+      const midpointSeconds = Math.round(diffMs / 2000);
+      latestRespBaseSeconds = midpointSeconds;
+      latestRespawnRandomness = midpointSeconds > 0 ? 100 : 0;
+    } else if (data.minSeconds && data.maxSeconds) {
+      minSpawnTime = new Date(now.getTime() + data.minSeconds * 1000);
+      maxSpawnTime = new Date(now.getTime() + data.maxSeconds * 1000);
+
+      const avgSeconds = Math.round((data.minSeconds + data.maxSeconds) / 2);
+      const varianceSeconds = data.maxSeconds - avgSeconds;
+      latestRespBaseSeconds = avgSeconds;
+      latestRespawnRandomness =
+        avgSeconds > 0 ? Math.round((varianceSeconds / avgSeconds) * 100) : 0;
     } else {
-      const calculated = this.calculateRespawnTime(
-        data.respBaseSeconds,
-        data.respawnRandomness,
-        now,
-      );
-      minSpawnTime = calculated.minSpawnTime;
-      maxSpawnTime = calculated.maxSpawnTime;
+      throw new BadRequestException({
+        message:
+          'Either minSeconds/maxSeconds or customMinSpawnTime/customMaxSpawnTime must be provided',
+      });
     }
 
     const npcId = generateUniqueIntId();
-    const respawnRandomness =
-      data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
 
     const newTimer = await this.prisma.timer.create({
       data: {
@@ -286,8 +297,8 @@ export class TimersService {
         minSpawnTime,
         npcId,
         world: data.world,
-        latestRespBaseSeconds: data.respBaseSeconds,
-        latestRespawnRandomness: respawnRandomness,
+        latestRespBaseSeconds,
+        latestRespawnRandomness,
         wasReset: false,
         npc: {
           id: npcId,
