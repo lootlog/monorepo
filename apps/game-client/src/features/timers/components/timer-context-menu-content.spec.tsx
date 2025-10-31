@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, userEvent } from "@/test/test-utils";
-import type { Timer } from "@/hooks/api/use-timers";
+import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { TimerContextMenuContent } from "./timer-context-menu-content";
-import { createMockTimer } from "../__tests__/test-helpers";
+import { createMockTimerWithTimeLeft } from "../__tests__/test-helpers";
 
 vi.mock("@/components/ui/context-menu", () => ({
   ContextMenuItem: ({ children, onClick, disabled }: any) => (
@@ -17,7 +17,7 @@ vi.mock("@/hooks/api/use-guilds", () => ({
 }));
 
 describe("TimerContextMenuContent", () => {
-  const mockTimer = createMockTimer();
+  const mockTimer = createMockTimerWithTimeLeft();
 
   const defaultProps = {
     timer: mockTimer,

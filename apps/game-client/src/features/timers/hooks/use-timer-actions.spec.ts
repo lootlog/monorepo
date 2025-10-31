@@ -21,10 +21,10 @@ vi.mock("@/store/timers.store", () => ({
   }),
 }));
 
-import { createMockTimer } from "../__tests__/test-helpers";
+import { createMockTimerWithTimeLeft } from "../__tests__/test-helpers";
 
 describe("useTimerActions", () => {
-  const mockTimer = createMockTimer();
+  const mockTimer = createMockTimerWithTimeLeft();
 
   const mockGuilds: Guild[] = [
     { id: "guild1", name: "Guild One" } as Guild,
@@ -82,7 +82,7 @@ describe("useTimerActions", () => {
     expect(() => {
       act(() => {
         result.current.handleRestartTimer();
-        result.current.handleDeleteTimer();
+        result.current.handleDeleteTimer("guild1", 1);
       });
     }).not.toThrow();
   });
@@ -112,15 +112,15 @@ describe("useTimerActions", () => {
     }).not.toThrow();
   });
 
-  it("should handle delete with optional guildId override", () => {
+  it("should handle delete with guildId and npcId parameters", () => {
     const { result } = renderHook(() =>
       useTimerActions(mockTimer, settingsKey, world, mockGuilds),
     );
 
     expect(() => {
       act(() => {
-        result.current.handleDeleteTimer();
-        result.current.handleDeleteTimer("guild2");
+        result.current.handleDeleteTimer("guild1", 1);
+        result.current.handleDeleteTimer("guild2", 2);
       });
     }).not.toThrow();
   });
@@ -162,14 +162,13 @@ describe("useTimerActions", () => {
   });
 
   it("should reset timer for all merged guild ids when mergedGuildIds is present", () => {
-    const mockTimerWithMergedIds = {
-      ...mockTimer,
+    const mockTimerWithMergedIds = createMockTimerWithTimeLeft({
       mergedGuildIds: [
         { guildId: "guild1", npcId: 1 },
         { guildId: "guild2", npcId: 2 },
         { guildId: "guild3", npcId: 3 },
       ],
-    };
+    });
 
     const { result } = renderHook(() =>
       useTimerActions(
@@ -189,13 +188,12 @@ describe("useTimerActions", () => {
   });
 
   it("should use mergedGuildIds over guilds array when both are available", () => {
-    const mockTimerWithMergedIds = {
-      ...mockTimer,
+    const mockTimerWithMergedIds = createMockTimerWithTimeLeft({
       mergedGuildIds: [
         { guildId: "guild1", npcId: 1 },
         { guildId: "guild2", npcId: 2 },
       ],
-    };
+    });
 
     const { result } = renderHook(() =>
       useTimerActions(
