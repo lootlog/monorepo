@@ -86,8 +86,6 @@ export const useTimerActions = (
     setTimerColor(timer.npc.name, color);
   };
 
-  console.log(timer);
-
   const handleRestartTimer = () => {
     if (!world) return;
 
