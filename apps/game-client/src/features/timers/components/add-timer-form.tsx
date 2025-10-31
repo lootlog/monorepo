@@ -20,7 +20,7 @@ import {
   type NpcSearchResult,
 } from "@/hooks/api/use-search-npcs";
 import { useDebounce } from "@/hooks/use-debounce";
-import { GuildMultiSelector } from "@/components/guild-multi-selector";
+import { GuildSwitcher } from "@/components/guild-switcher";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
@@ -159,12 +159,12 @@ export const AddTimerForm: React.FC = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [customDatesEnabled, setCustomDatesEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [selectedGuildIds, setSelectedGuildIds] = useState<string[]>([]);
+  const [selectedGuildId, setSelectedGuildId] = useState<string>("");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const currentGuildId = characterId ? guildIdByCharId[characterId] : undefined;
 
-  const searchGuildId = selectedGuildIds[0] ?? currentGuildId ?? "";
+  const searchGuildId = selectedGuildId || currentGuildId || "";
 
   const { data: npcResults } = useSearchNpcs(
     searchGuildId,
@@ -177,27 +177,28 @@ export const AddTimerForm: React.FC = () => {
     if (!characterId || !guilds || guilds.length === 0) return;
 
     const savedGuildIds = selectedGuildIdsForTimersByCharId[characterId] || [];
-    const validGuildIds = savedGuildIds.filter((id: string) =>
-      guilds.some((guild) => guild.id === id),
-    );
+    const savedGuildId = savedGuildIds[0];
 
-    if (validGuildIds.length > 0) {
-      setSelectedGuildIds(validGuildIds);
+    const isValidSavedGuild =
+      savedGuildId && guilds.some((guild) => guild.id === savedGuildId);
+
+    if (isValidSavedGuild) {
+      setSelectedGuildId(savedGuildId);
     } else if (
       currentGuildId &&
       guilds.some((guild) => guild.id === currentGuildId)
     ) {
-      setSelectedGuildIds([currentGuildId]);
+      setSelectedGuildId(currentGuildId);
     } else {
-      setSelectedGuildIds([guilds[0].id]);
+      setSelectedGuildId(guilds[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [characterId, selectedGuildIdsForTimersByCharId, guilds]);
 
-  const handleGuildSelectionChange = (guildIds: string[]) => {
-    setSelectedGuildIds(guildIds);
+  const handleGuildSelectionChange = (guildId: string) => {
+    setSelectedGuildId(guildId);
     if (characterId) {
-      setSelectedGuildIdsForTimers(characterId, guildIds);
+      setSelectedGuildIdsForTimers(characterId, [guildId]);
     }
   };
 
@@ -272,12 +273,12 @@ export const AddTimerForm: React.FC = () => {
   }, [debouncedSearch]);
 
   const onSubmit = (data: FormValues) => {
-    if (!world || selectedGuildIds.length === 0) return;
+    if (!world || !selectedGuildId) return;
 
     const timerData: UseCreateManualTimerOptions = {
       name: data.name,
       world,
-      guildIds: selectedGuildIds,
+      guildIds: [selectedGuildId],
     };
 
     if (customDatesEnabled && data.startDate && data.endDate) {
@@ -308,16 +309,14 @@ export const AddTimerForm: React.FC = () => {
       className="ll:flex ll:flex-col ll:h-full ll:box-border ll:overflow-hidden ll:w-full"
     >
       <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
-        <Label>Serwery</Label>
-        <GuildMultiSelector
-          value={selectedGuildIds}
+        <Label>Serwer</Label>
+        <GuildSwitcher
+          value={selectedGuildId}
           onChange={handleGuildSelectionChange}
           disabled={isPending}
         />
-        {selectedGuildIds.length === 0 && (
-          <p className="ll:text-xs ll:text-red-500 ll:mt-1">
-            Wybierz przynajmniej jeden serwer
-          </p>
+        {!selectedGuildId && (
+          <p className="ll:text-xs ll:text-red-500 ll:mt-1">Wybierz serwer</p>
         )}
       </div>
 
@@ -485,7 +484,7 @@ export const AddTimerForm: React.FC = () => {
         <button
           type="submit"
           className="ll:text-[12px] ll:border ll:border-gray-400 ll:bg-gray-400/30 ll:hover:bg-gray-400/50 ll:rounded-sm ll:h-5 ll:text-white ll:px-4"
-          disabled={isPending || selectedGuildIds.length === 0}
+          disabled={isPending || !selectedGuildId}
         >
           {isPending ? "Dodawanie..." : "Dodaj"}
         </button>
