@@ -5,15 +5,9 @@ import {
   type WindowId,
   type WindowOpacity,
 } from "@/store/windows.store";
-import { Blend, Lock, Unlock, XIcon } from "lucide-react";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
+import { WindowTitleBar } from "./window-title-bar";
+import { WindowResizeHandle } from "./window-resize-handle";
 
 export type DraggableWindowProps = {
   children: React.ReactNode;
@@ -48,27 +42,40 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   closable = true,
   disableTitle = false,
 }) => {
-  const state = useWindowsStore();
-  const opacity = state[id].opacity;
-  const rawDefaultPosition = state[id].position;
-  const defaultSize = state[id].size;
-  const isLocked = state[id].locked;
+  const opacity = useWindowsStore((state) => state[id].opacity);
+  const rawDefaultPosition = useWindowsStore((state) => state[id].position);
+  const defaultSize = useWindowsStore((state) => state[id].size);
+  const isLocked = useWindowsStore((state) => state[id].locked);
+  const currentWindowFocus = useWindowsStore(
+    (state) => state.currentWindowFocus,
+  );
 
-  const [size, setSize] = useState({
+  const setPositionInStore = useWindowsStore((state) => state.setPosition);
+  const setSizeInStore = useWindowsStore((state) => state.setSize);
+  const setOpacityInStore = useWindowsStore((state) => state.setOpacity);
+  const setLockedInStore = useWindowsStore((state) => state.setLocked);
+  const setCurrentWindowFocus = useWindowsStore(
+    (state) => state.setCurrentWindowFocus,
+  );
+
+  const [localSize, setLocalSize] = useState({
     width: resizable ? defaultSize.width : minWidth,
     height: resizable ? defaultSize.height : minHeight,
   });
   const [isResizing, setIsResizing] = useState(false);
 
-  const getClampedPosition = (pos: { x: number; y: number }) => {
-    if (typeof window === "undefined") return pos;
-    const maxX = window.innerWidth - size.width;
-    const maxY = window.innerHeight - size.height;
-    return {
-      x: Math.max(0, Math.min(pos.x, maxX)),
-      y: Math.max(0, Math.min(pos.y, maxY)),
-    };
-  };
+  const getClampedPosition = useCallback(
+    (pos: { x: number; y: number }) => {
+      if (typeof window === "undefined") return pos;
+      const maxX = window.innerWidth - localSize.width;
+      const maxY = window.innerHeight - localSize.height;
+      return {
+        x: Math.max(0, Math.min(pos.x, maxX)),
+        y: Math.max(0, Math.min(pos.y, maxY)),
+      };
+    },
+    [localSize.width, localSize.height],
+  );
 
   const defaultPosition = isLocked
     ? rawDefaultPosition
@@ -78,9 +85,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const onDragStop = useCallback(
     (position: { x: number; y: number }) => {
-      state.setPosition(id, position);
+      setPositionInStore(id, position);
     },
-    [id, state],
+    [id, setPositionInStore],
   );
 
   const { position, handleMouseDown, handleTouchStart, isDragging } = useDrag({
@@ -90,73 +97,60 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     isLocked,
   });
 
-  const handleResize = (e: React.MouseEvent) => {
-    if (!resizable || isLocked) return;
-    e.preventDefault();
-    e.stopPropagation();
+  const handleResize = useCallback(
+    (newSize: { width: number; height: number }) => {
+      setLocalSize(newSize);
+    },
+    [],
+  );
+
+  const handleResizeStart = useCallback(() => {
     setIsResizing(true);
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startWidth = size.width;
-    const startHeight = size.height;
-    const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = Math.max(
-        minWidth,
-        Math.min(
-          maxWidth || window.innerWidth,
-          startWidth + (e.clientX - startX),
-        ),
-      );
-      const newHeight = Math.max(
-        minHeight,
-        Math.min(
-          maxHeight || window.innerHeight,
-          startHeight + (e.clientY - startY),
-        ),
-      );
-      setSize({ width: newWidth, height: newHeight });
-    };
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
+  }, []);
 
-  const handleOpacityChange = () => {
-    const currentIndex = OPACITY_LEVELS.indexOf(opacity);
-    const nextIndex = (currentIndex + 1) % OPACITY_LEVELS.length;
-    state.setOpacity(id, OPACITY_LEVELS[nextIndex]);
-  };
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+  }, []);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleOpacityChange = useCallback(
+    (newOpacity: WindowOpacity) => {
+      setOpacityInStore(id, newOpacity);
+    },
+    [id, setOpacityInStore],
+  );
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-  };
+  }, []);
 
-  const onMouseDown = (e: React.MouseEvent) => {
-    state.setCurrentWindowFocus(id);
-    handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
-  };
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      setCurrentWindowFocus(id);
+      handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
+    },
+    [id, setCurrentWindowFocus, handleMouseDown],
+  );
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    state.setCurrentWindowFocus(id);
-    handleTouchStart(e as React.TouchEvent<HTMLElement>);
-  };
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      setCurrentWindowFocus(id);
+      handleTouchStart(e as React.TouchEvent<HTMLElement>);
+    },
+    [id, setCurrentWindowFocus, handleTouchStart],
+  );
 
   useEffect(() => {
     if (isResizing) return;
-    state.setSize(id, { height: size.height, width: size.width });
-  }, [size.height, size.width, isResizing]);
+    setSizeInStore(id, { height: localSize.height, width: localSize.width });
+  }, [localSize.height, localSize.width, isResizing, id, setSizeInStore]);
 
   const style = dynamicHeight
-    ? { height: "auto", width: size.width }
-    : { width: size.width, height: size.height };
+    ? { height: "auto", width: localSize.width }
+    : { width: localSize.width, height: localSize.height };
 
-  const handleLockToggle = () => {
-    state.setLocked(id, !isLocked);
-  };
+  const handleLockToggle = useCallback(() => {
+    setLockedInStore(id, !isLocked);
+  }, [id, isLocked, setLockedInStore]);
 
   return (
     <div
@@ -167,7 +161,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         maxHeight,
         top: position.y,
         left: position.x,
-        zIndex: state.currentWindowFocus === id ? 1 : 0,
+        zIndex: currentWindowFocus === id ? 1 : 0,
         cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
       }}
       onMouseDown={onMouseDown}
@@ -188,70 +182,27 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         )}
       >
         {!disableTitle && (
-          <div className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:shrink-0">
-            <div className="ll:flex ll:items-center ll:gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Blend
-                    className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-                    size="14"
-                    onClick={handleOpacityChange}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>Zmień przezroczystość</TooltipContent>
-              </Tooltip>
-              {actions}
-            </div>
-            <div className="ll:bg-transparent ll:leading-7 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
-              <p className="ll:text-[12px] ll:text-[beige] ll:[text-shadow:1px_1px_1px_black] ll:top-1">
-                {title}
-              </p>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {isLocked ? (
-                    <Lock
-                      className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
-                      size="14"
-                      onClick={handleLockToggle}
-                    />
-                  ) : (
-                    <Unlock
-                      className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
-                      size="14"
-                      onClick={handleLockToggle}
-                    />
-                  )}
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isLocked ? "Odblokuj okno" : "Zablokuj okno"}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            {closable && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <XIcon
-                    size="18"
-                    type="button"
-                    className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-                    onClick={onClose}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>Zamknij okno</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
+          <WindowTitleBar
+            title={title}
+            actions={actions}
+            closable={closable}
+            opacity={opacity}
+            isLocked={isLocked}
+            onOpacityChange={handleOpacityChange}
+            onLockToggle={handleLockToggle}
+            onClose={onClose}
+          />
         )}
         <div className="ll:flex-1 ll:overflow-hidden">{children}</div>
         {resizable && !isLocked && (
-          <div
-            className="ll:absolute ll:bottom-0 ll:right-0 ll:w-4 ll:h-4 ll:cursor-se-resize ll:bg-transparent"
-            onMouseDown={handleResize}
-            style={{
-              background:
-                "linear-gradient(-45deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)",
-            }}
+          <WindowResizeHandle
+            minWidth={minWidth}
+            minHeight={minHeight}
+            maxWidth={maxWidth}
+            maxHeight={maxHeight}
+            onResize={handleResize}
+            onResizeStart={handleResizeStart}
+            onResizeEnd={handleResizeEnd}
           />
         )}
       </div>

@@ -6,6 +6,9 @@ import { useTimersStore } from "./timers.store";
 
 let syncTimeoutId: NodeJS.Timeout | null = null;
 let guildSyncTimeouts: Map<string, NodeJS.Timeout> = new Map();
+let pendingGlobalPayload: UpdateTimerSettingsPayload = {};
+let pendingGuildPayloads: Map<string, UpdateGuildTimerSettingsPayload> =
+  new Map();
 
 const SYNC_DEBOUNCE_MS = 500;
 
@@ -33,14 +36,19 @@ export const unregisterGuildSettingsMutation = (guildId: string) => {
 export const debouncedSyncGlobalSettings = (
   payload: UpdateTimerSettingsPayload,
 ) => {
+  pendingGlobalPayload = { ...pendingGlobalPayload, ...payload };
+
   if (syncTimeoutId) {
     clearTimeout(syncTimeoutId);
   }
 
   syncTimeoutId = setTimeout(() => {
-    if (payload.syncEnabled === false) {
+    const payloadToSend = { ...pendingGlobalPayload };
+    pendingGlobalPayload = {};
+
+    if (payloadToSend.syncEnabled === false) {
       console.log("[TimerSync] Sending syncEnabled=false to backend");
-    } else if (payload.syncEnabled === undefined) {
+    } else if (payloadToSend.syncEnabled === undefined) {
       const { syncEnabled } = useTimersStore.getState();
       if (!syncEnabled) {
         console.log("[TimerSync] Sync disabled, skipping global settings sync");
@@ -53,7 +61,7 @@ export const debouncedSyncGlobalSettings = (
       return;
     }
 
-    globalMutateFn(payload);
+    globalMutateFn(payloadToSend);
   }, SYNC_DEBOUNCE_MS);
 };
 
@@ -61,12 +69,18 @@ export const debouncedSyncGuildSettings = (
   guildId: string,
   payload: UpdateGuildTimerSettingsPayload,
 ) => {
+  const existingPayload = pendingGuildPayloads.get(guildId) || {};
+  pendingGuildPayloads.set(guildId, { ...existingPayload, ...payload });
+
   const existingTimeout = guildSyncTimeouts.get(guildId);
   if (existingTimeout) {
     clearTimeout(existingTimeout);
   }
 
   const timeoutId = setTimeout(() => {
+    const payloadToSend = { ...pendingGuildPayloads.get(guildId) };
+    pendingGuildPayloads.delete(guildId);
+
     const { syncEnabled } = useTimersStore.getState();
     if (!syncEnabled) {
       console.log("[TimerSync] Sync disabled, skipping guild settings sync");
@@ -83,7 +97,7 @@ export const debouncedSyncGuildSettings = (
       return;
     }
 
-    mutateFn(payload);
+    mutateFn(payloadToSend);
     guildSyncTimeouts.delete(guildId);
   }, SYNC_DEBOUNCE_MS);
 
@@ -95,9 +109,11 @@ export const clearAllSyncTimeouts = () => {
     clearTimeout(syncTimeoutId);
     syncTimeoutId = null;
   }
+  pendingGlobalPayload = {};
 
   for (const timeoutId of guildSyncTimeouts.values()) {
     clearTimeout(timeoutId);
   }
   guildSyncTimeouts.clear();
+  pendingGuildPayloads.clear();
 };

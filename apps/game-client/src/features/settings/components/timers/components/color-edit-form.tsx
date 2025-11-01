@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Tile } from "@/components/ui/tile";
 import { Check, X } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 import {
   stripAlphaChannel,
   alphaToHex,
