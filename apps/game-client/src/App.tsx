@@ -13,6 +13,7 @@ import { useHotkeys } from "@/hooks/use-hotkeys";
 import { Toaster } from "@/components/ui/toaster";
 import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
 import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mutations-registry";
+import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
 
 function App() {
   useGameEventsParser();
@@ -34,6 +35,7 @@ function App() {
         <NpcDetector />
         <Notifications />
         <QuickAccess />
+        <CatchingWhitelistWarning />
         <Toaster />
         {ConflictDialog}
       </>
