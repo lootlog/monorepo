@@ -28,6 +28,8 @@ import { NPC_NAMES } from "@/constants/margonem";
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
 
+const MAX_NPC_NAME_LENGTH = 50;
+
 const formatSecondsToHHMMSS = (seconds: number): string => {
   const h = Math.floor(seconds / SECONDS_IN_HOUR);
   const m = Math.floor((seconds % SECONDS_IN_HOUR) / SECONDS_IN_MINUTE);
@@ -40,7 +42,10 @@ const formSchema = z
     name: z
       .string()
       .min(1, "Nazwa jest wymagana")
-      .max(20, "Nazwa może mieć maksymalnie 20 znaków"),
+      .max(
+        MAX_NPC_NAME_LENGTH,
+        `Nazwa może mieć maksymalnie ${MAX_NPC_NAME_LENGTH} znaków`,
+      ),
     minDuration: z.string().optional(),
     maxDuration: z.string().optional(),
     startDate: z.string().optional(),
