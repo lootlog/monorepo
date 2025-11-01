@@ -1,25 +1,36 @@
 import { useCallback } from "react";
-import { MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
+import { useQueryClient } from "@tanstack/react-query";
+import { MIN_NPC_WT, MIN_RESP_BASE_SECONDS } from "@/constants/margonem";
 import { SpecialE2 } from "@/constants/special-e2";
 import { Game } from "@/lib/game";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
-import { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@/types/margonem/game-events/game-event";
 import {
-  GameNpcWithLocation,
+  type GameNpcWithLocation,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
-import { EventHandlersConfig } from "./types";
+import type { EventHandlersConfig } from "./types";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
 import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { NpcType } from "@/hooks/api/use-npcs";
+import {
+  useLootlogCharactersConfig,
+  type LootlogCharacterConfigResponse,
+} from "@/hooks/api/use-lootlog-character-config";
+
+import { useGuilds } from "@/hooks/api/use-guilds";
 
 export const useEventHandlers = (config: EventHandlersConfig) => {
   const { characterId, accountId, world } = useGlobalStore((s) => s.gameState);
   const { mutate: createTimer } = useCreateTimer();
+  const { data: guilds } = useGuilds();
   const { addNpc, removeNpc } = useNpcDetectorStore();
   const { setOpen } = useWindowsStore();
+  const queryClient = useQueryClient();
+
+  useLootlogCharactersConfig();
 
   const {
     isValidGameState,
@@ -62,7 +73,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
             npcType,
             processedSettings.guildIds,
             processedSettings.autoSendMessage,
-            processedSettings.autoSendNotification
+            processedSettings.autoSendNotification,
           );
 
           acc.push(composedNpc);
@@ -81,7 +92,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
       processNpcActions,
       setOpen,
       addNpc,
-    ]
+    ],
   );
 
   const handleInitialNpcsDetection = useCallback(() => {
@@ -107,7 +118,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
           npcType,
           processedSettings.guildIds,
           processedSettings.autoSendMessage,
-          processedSettings.autoSendNotification
+          processedSettings.autoSendNotification,
         );
 
         acc.push(composedNpc);
@@ -120,7 +131,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
     }
   }, [
     characterId,
-    processNpcSettings,
+    processGameNpcSettings,
     composeNpcFromGame,
     processNpcActions,
     setOpen,
@@ -133,43 +144,70 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         !isValidGameState ||
         !createTimer ||
         !removeNpc ||
-        !removeNotificationByNpcId
+        !removeNotificationByNpcId ||
+        !guilds ||
+        guilds.length === 0
       )
         return;
 
       event.npcs_del?.forEach((npc) => {
         const data = Game.getNpc(npc.id);
-        if (!data || !npc.respBaseSeconds) return;
+        if (!data || !npc.respBaseSeconds || !world || data.wt < MIN_NPC_WT)
+          return;
 
         removeNpc(npc.id);
-        removeNotificationByNpcId(npc.id, world!);
+        removeNotificationByNpcId(npc.id, world);
 
         if (npc.respBaseSeconds < MIN_RESP_BASE_SECONDS) return;
 
         const map = Game.map.id;
         const elite2Name =
           SpecialE2[map as keyof typeof SpecialE2] || data.nick;
-        const npcType = getNpcTypeByWt(data.wt);
+        const npcType = getNpcTypeByWt(data.wt, data.prof, data.type);
         const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 
-        createTimer({
-          respawnRandomness: data.resp_rand,
-          respBaseSeconds: npc.respBaseSeconds,
-          characterId: characterId!,
-          accountId: accountId!,
-          world: world!,
-          npc: {
-            icon: data.icon,
-            id: data.id,
-            prof: data.prof,
-            wt: data.wt,
-            hpp: 0,
-            type: data.type,
-            lvl: data.lvl,
-            name: npcName,
-            location: Game.map.name,
-          },
-        });
+        if (characterId && accountId && world) {
+          const charactersConfigResponse = queryClient.getQueryData<{
+            data: LootlogCharacterConfigResponse;
+          }>(["lootlog-characters-config", accountId]);
+
+          const charactersConfig = charactersConfigResponse?.data;
+          const characterConfig = charactersConfig?.[characterId];
+          const whitelistedGuildIds =
+            characterConfig?.addTimersWhitelistGuildIds ?? [];
+
+          const guildIds = guilds
+            .filter((g) => whitelistedGuildIds.includes(g.id))
+            .map((g) => g.id);
+
+          if (guildIds.length === 0) return;
+
+          const tempIds = guildIds.map(() => crypto.randomUUID());
+
+          createTimer({
+            timer: {
+              respawnRandomness: data.resp_rand,
+              respBaseSeconds: npc.respBaseSeconds,
+              characterId,
+              accountId,
+              world,
+              npc: {
+                icon: data.icon,
+                id: data.id,
+                prof: data.prof,
+                wt: data.wt,
+                hpp: 0,
+                type: data.type,
+                lvl: data.lvl,
+                name: npcName,
+                location: Game.map.name,
+              },
+            },
+            guildIds,
+            tempIds,
+            npcType,
+          });
+        }
       });
     },
     [
@@ -180,7 +218,9 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
       removeNpc,
       removeNotificationByNpcId,
       createTimer,
-    ]
+      guilds,
+      queryClient,
+    ],
   );
 
   const handleChatEvents = useCallback(
@@ -188,13 +228,13 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
       if (!handleUpdateLoot || !isLootDistributionMessage) return;
 
       const hasLootDistribution = event.chat?.channels?.system?.msg?.some(
-        isLootDistributionMessage
+        isLootDistributionMessage,
       );
       if (hasLootDistribution) {
         handleUpdateLoot(event);
       }
     },
-    [isLootDistributionMessage, handleUpdateLoot]
+    [isLootDistributionMessage, handleUpdateLoot],
   );
 
   const handleDialogEvents = useCallback(
@@ -203,7 +243,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         talkingNpcId.current = event.d[2];
       }
     },
-    [talkingNpcId]
+    [talkingNpcId],
   );
 
   const handleBattleEvents = useCallback(
@@ -224,7 +264,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         createLootFromBattle?.(event);
       }
     },
-    [createLootFromBattle, latestLootId, pendingBattle]
+    [createLootFromBattle, latestLootId, pendingBattle],
   );
 
   return {

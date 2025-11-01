@@ -8,14 +8,15 @@ import { FC, useState } from "react";
 const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 
 export const TimersSettingsGeneral: FC = () => {
-  const { generalConfig, setGeneralConfig } = useTimersStore();
+  const { generalConfig, setGeneralConfig, syncEnabled, setSyncEnabled } =
+    useTimersStore();
 
   const [inputValue, setInputValue] = useState<string>(
-    (generalConfig.removeTimerAfterMs / 1000).toString()
+    (generalConfig.removeTimerAfterMs / 1000).toString(),
   );
 
   const handleRemoveTimerAfterMsChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = e.target.value;
     setInputValue(value);
@@ -45,6 +46,19 @@ export const TimersSettingsGeneral: FC = () => {
 
   return (
     <div className="ll:flex ll:flex-col ll:gap-3">
+      <div className="ll:flex ll:flex-col ll:gap-2">
+        <div>
+          <Label htmlFor="sync-enabled">Synchronizuj ustawienia</Label>
+          <p className="ll:text-muted-foreground">
+            Synchronizuje ustawienia timerów z serwerem.
+          </p>
+        </div>
+        <Switch
+          checked={syncEnabled ?? true}
+          onCheckedChange={setSyncEnabled}
+          id="sync-enabled"
+        />
+      </div>
       <div className="ll:flex ll:flex-col ll:gap-2">
         <div>
           <Label htmlFor="show-type">Grupuj timery</Label>

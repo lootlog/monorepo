@@ -1,8 +1,8 @@
 import { useCallback, useRef } from "react";
 import { useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
-import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { W } from "@/types/margonem/game-events/f";
+import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { W } from "@/types/margonem/game-events/f";
 
 import { useValidationHelpers } from "./use-validation-helpers";
 import { useMessagingHandlers } from "./use-messaging-handlers";
@@ -13,7 +13,7 @@ import { useBattleEventHandler } from "@/hooks/game-events/use-battle-event-hand
 
 export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
   const { gameInitialized, characterId, accountId, world } = useGlobalStore(
-    (s) => s.gameState
+    (s) => s.gameState,
   );
 
   const { removeNotificationByNpcId } = useNotificationsStore();
@@ -27,7 +27,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
   const { isValidGameState, isLootDistributionMessage } = useValidationHelpers(
     world,
     characterId,
-    accountId
+    accountId,
   );
 
   const { handleSendMessage, handleSendNotification } = useMessagingHandlers();
@@ -101,7 +101,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
       handleNpcDetection,
       handleDialogLoot,
       handleRespawnTimers,
-    ]
+    ],
   );
 
   return {

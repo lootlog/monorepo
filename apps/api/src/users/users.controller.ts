@@ -8,7 +8,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
-import type { UpdateUserPreferencesDto } from 'src/users/dto/update-user-preferences.dto';
+import { UpdateUserPreferencesDto } from 'src/users/dto/update-user-preferences.dto';
 import { UsersService } from 'src/users/users.service';
 import { UserPreferencesEntity } from 'src/shared/entities/user-preferences.entity';
 

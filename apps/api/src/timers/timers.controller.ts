@@ -27,11 +27,12 @@ import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import type { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
-import type { CreateTimerDto } from 'src/timers/dto/create-timer.dto';
-import type { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
+import { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
+import { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
 import { TimersService } from 'src/timers/timers.service';
 import { TimerEntity } from 'src/shared/entities/timer.entity';
+import { CreateTimerFromGameClientDto } from 'src/timers/dto/create-timer-from-game-client.dto';
+import { SearchTimersNpcsDto } from 'src/timers/dto/search-timers-npcs.dto';
 
 @ApiTags('timers')
 @ApiBearerAuth()
@@ -106,6 +107,46 @@ export class TimersController {
     return plainToInstance(TimerEntity, timers);
   }
 
+  @Permissions(Permission.LOOTLOG_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/timers/npcs/search')
+  @ApiOperation({
+    summary: 'Search NPCs with timer data',
+    description:
+      'Search for NPCs that have been timed in this guild/world, returning their latest respawn configuration',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiQuery({
+    name: 'search',
+    description: 'NPC name search term',
+    required: true,
+  })
+  @ApiQuery({ name: 'world', description: 'World name', required: true })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Result limit (1-50)',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of NPCs with timer metadata',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async searchNpcsWithTimerData(
+    @Param('guildId') guildId: string,
+    @Query() query: SearchTimersNpcsDto,
+  ) {
+    return this.timersService.searchNpcsWithTimerData(
+      guildId,
+      query.world,
+      query.search,
+      query.limit,
+    );
+  }
+
   @Permissions(Permission.LOOTLOG_WRITE)
   @UseGuards(PermissionsGuard)
   @Patch('/guilds/:guildId/timers/:npcId/reset')
@@ -115,7 +156,6 @@ export class TimersController {
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
   @ApiParam({ name: 'npcId', description: 'NPC ID', example: '12345' })
-  @ApiQuery({ name: 'world', description: 'World name', required: false })
   @ApiResponse({
     status: 200,
     description: 'Timer reset successfully',
@@ -127,7 +167,6 @@ export class TimersController {
   })
   @ApiResponse({ status: 404, description: 'Timer not found' })
   async resetTimer(
-    @Query('world') world: string,
     @DiscordId() discordId: string,
     @Param('guildId') guildId: string,
     @Param('npcId') npcId: string,
@@ -169,27 +208,9 @@ export class TimersController {
     return this.timersService.deleteTimer(guildId, npcId, world);
   }
 
-  @Post('/timers')
-  @ApiOperation({
-    summary: 'Create user timer',
-    description: 'Create a timer submitted by user from game client',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Timer created successfully',
-    type: TimerEntity,
-  })
-  async createTimer(
-    @Body() data: CreateTimerDto,
-    @DiscordId() discordId: string,
-    @UserId() userId: string,
-  ) {
-    return this.timersService.createTimer(discordId, userId, data);
-  }
-
   @Permissions(Permission.LOOTLOG_WRITE)
   @UseGuards(PermissionsGuard)
-  @Post('/guilds/:guildId/timers')
+  @Post('/guilds/:guildId/timers/manual')
   @ApiOperation({
     summary: 'Create manual timer',
     description: 'Manually create a timer for a guild',
@@ -210,5 +231,40 @@ export class TimersController {
     @Param('guildId') guildId: string,
   ) {
     return this.timersService.createManualTimer(discordId, guildId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/timers')
+  @ApiOperation({
+    summary: 'Create timer from game client for specific guild',
+    description:
+      'Create a timer submitted by user from game client for a specific guild. Supports custom spawn times.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiResponse({
+    status: 201,
+    description: 'Timer created successfully',
+    type: TimerEntity,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error (invalid spawn times, wt too low, etc.)',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async createTimerFromGameClient(
+    @Body() data: CreateTimerFromGameClientDto,
+    @DiscordId() discordId: string,
+    @Param('guildId') guildId: string,
+  ) {
+    const timer = await this.timersService.createTimerForGuild(
+      discordId,
+      guildId,
+      data,
+    );
+    return plainToInstance(TimerEntity, timer);
   }
 }

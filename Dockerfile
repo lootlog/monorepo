@@ -7,7 +7,7 @@ RUN addgroup -g 1001 -S nodejs && \
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN npm install -g pnpm@10.19.0
+RUN npm install -g pnpm@10.20.0
 
 FROM base AS build
 WORKDIR /usr/src/app

@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
@@ -33,6 +33,14 @@ export default defineConfig({
   optimizeDeps: {
     include: ["react", "react-dom", "react-dom/client"],
   },
-  plugins: [TanStackRouterVite(), react(), tailwindcss()],
+  plugins: [
+    TanStackRouterVite(),
+    react({
+      babel: {
+        plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
+    tailwindcss(),
+  ],
   base: "/",
 });

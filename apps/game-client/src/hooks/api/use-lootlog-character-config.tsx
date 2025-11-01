@@ -11,8 +11,8 @@ export type LootlogCharacterConfig = {
   userId: string;
   accountId: string;
   characterId: string;
-  collectLootBlaclistGuildIds: string[];
-  addTimersBlacklistGuildIds: string[];
+  collectLootWhitelistGuildIds: string[];
+  addTimersWhitelistGuildIds: string[];
 };
 
 export type LootlogCharacterConfigResponse = Record<
@@ -26,14 +26,17 @@ export const useLootlogCharactersConfig = () => {
 
   const query = useQuery({
     queryKey: ["lootlog-characters-config", accountId],
-    queryFn: () =>
-      client.get<LootlogCharacterConfigResponse>(
+    queryFn: () => {
+      return client.get<LootlogCharacterConfigResponse>(
         `${API_URL}/users/@me/lootlog-config/accounts/${accountId}`,
-        { withCredentials: true }
-      ),
+        { withCredentials: true },
+      );
+    },
     select: (response) => response.data,
     enabled: !!accountId,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   return query;

@@ -1,6 +1,7 @@
 import {
   createContext,
   useEffect,
+  useLayoutEffect,
   useState,
   type FC,
   type ReactNode,
@@ -83,9 +84,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [preferences?.colorMode, isLoading, isUserInitiated]);
 
-  useEffect(() => {
-    if (isLoading) return;
-
+  useLayoutEffect(() => {
     const root = document.documentElement;
 
     root.classList.remove(
@@ -110,7 +109,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
     if (theme !== "default") {
       root.classList.add(theme);
     }
-  }, [theme, colorMode, isLoading]);
+  }, [theme, colorMode]);
 
   const setTheme = (newTheme: Theme) => {
     setIsUserInitiated(true);

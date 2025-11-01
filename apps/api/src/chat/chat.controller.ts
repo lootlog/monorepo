@@ -7,7 +7,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { ChatService } from 'src/chat/chat.service';
-import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
+import { SendMessageDto } from 'src/chat/dto/send-message.dto';
 import { type Guild, Permission } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';

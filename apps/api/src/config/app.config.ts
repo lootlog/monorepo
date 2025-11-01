@@ -28,8 +28,8 @@ export const APP_CONFIG: ConfigModuleOptions = {
     AXIOM_TOKEN: Joi.string(),
     REDIS_HOST: Joi.string().required(),
     REDIS_PORT: Joi.number().required(),
-    REDIS_PASSWORD: Joi.string().required(),
-    REDIS_USERNAME: Joi.string().required(),
+    REDIS_PASSWORD: Joi.string().allow('').required(),
+    REDIS_USERNAME: Joi.string().allow('').required(),
     AUTH_SERVICE_URL: Joi.string().required(),
   }),
   validationOptions: {

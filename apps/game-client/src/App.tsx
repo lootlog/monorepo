@@ -11,12 +11,17 @@ import { Notifications } from "@/features/notifications/notifications";
 import { QuickAccess } from "@/features/quick-access/quick-access";
 import { useHotkeys } from "@/hooks/use-hotkeys";
 import { Toaster } from "@/components/ui/toaster";
+import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
+import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mutations-registry";
+import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
 
 function App() {
   useGameEventsParser();
   useInitialConfiguration();
   useHotkeys();
+  useTimerSettingsMutationsRegistry();
 
+  const { ConflictDialog } = useTimerSettingsSync();
   const { gameInitialized } = useGlobalStore((state) => state.gameState);
 
   return (
@@ -30,7 +35,9 @@ function App() {
         <NpcDetector />
         <Notifications />
         <QuickAccess />
+        <CatchingWhitelistWarning />
         <Toaster />
+        {ConflictDialog}
       </>
     )
   );

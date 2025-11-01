@@ -5,8 +5,13 @@ import {
   type WindowId,
   type WindowOpacity,
 } from "@/store/windows.store";
-import { Blend, Pin, PinOff, XIcon } from "lucide-react";
+import { Blend, Lock, Unlock, XIcon } from "lucide-react";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const OPACITY_LEVELS: WindowOpacity[] = [1, 2, 3, 4, 5];
 
@@ -185,39 +190,56 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         {!disableTitle && (
           <div className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:shrink-0">
             <div className="ll:flex ll:items-center ll:gap-1">
-              <Blend
-                className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-                size="14"
-                onClick={handleOpacityChange}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Blend
+                    className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+                    size="14"
+                    onClick={handleOpacityChange}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>Zmień przezroczystość</TooltipContent>
+              </Tooltip>
               {actions}
             </div>
             <div className="ll:bg-transparent ll:leading-7 ll-custom-cursor-pointer ll:absolute ll:left-1/2 ll:transform ll:-translate-x-1/2 ll:flex ll:gap-2 ll:items-center">
-              <p className="ll:text-[11px] ll:text-[beige] ll:[text-shadow:1px_1px_1px_black]">
+              <p className="ll:text-[12px] ll:text-[beige] ll:[text-shadow:1px_1px_1px_black] ll:top-1">
                 {title}
               </p>
 
-              {isLocked ? (
-                <PinOff
-                  className="ll:stroke-gray-400! ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-200!"
-                  size="14"
-                  onClick={handleLockToggle}
-                />
-              ) : (
-                <Pin
-                  className="ll:stroke-gray-400! ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-200!"
-                  size="14"
-                  onClick={handleLockToggle}
-                />
-              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {isLocked ? (
+                    <Lock
+                      className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
+                      size="14"
+                      onClick={handleLockToggle}
+                    />
+                  ) : (
+                    <Unlock
+                      className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
+                      size="14"
+                      onClick={handleLockToggle}
+                    />
+                  )}
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isLocked ? "Odblokuj okno" : "Zablokuj okno"}
+                </TooltipContent>
+              </Tooltip>
             </div>
             {closable && (
-              <XIcon
-                size="14"
-                type="button"
-                className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
-                onClick={onClose}
-              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <XIcon
+                    size="18"
+                    type="button"
+                    className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
+                    onClick={onClose}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>Zamknij okno</TooltipContent>
+              </Tooltip>
             )}
           </div>
         )}
