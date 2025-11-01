@@ -59,6 +59,13 @@ export class TimerEntity {
   @Expose()
   member: unknown;
 
+  @Expose()
+  @ApiProperty({
+    example: 'temp-id-123',
+    description: 'Temporary ID for client-side tracking',
+  })
+  tempId?: string;
+
   @Exclude()
   createdById: number;
 
