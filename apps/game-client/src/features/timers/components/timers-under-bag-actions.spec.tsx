@@ -7,6 +7,8 @@ describe("TimersUnderBagActions", () => {
   const defaultProps = {
     timerFiltersEnabled: false,
     toggleTimerFiltersEnabled: vi.fn(),
+    colorFiltersEnabled: false,
+    toggleColorFiltersEnabled: vi.fn(),
     timersSortOrder: "asc" as const,
     setTimersSortOrder: vi.fn(),
     showHiddenTimers: false,
@@ -17,7 +19,7 @@ describe("TimersUnderBagActions", () => {
     const { container } = render(<TimersUnderBagActions {...defaultProps} />);
 
     const buttons = container.querySelectorAll("svg");
-    expect(buttons.length).toBe(3);
+    expect(buttons.length).toBe(4);
   });
 
   it("should call toggleTimerFiltersEnabled when filter button clicked", async () => {

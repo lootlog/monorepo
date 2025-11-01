@@ -52,6 +52,7 @@ interface TimersState {
   hiddenDefaultColors: string[];
   timersFilters: Record<string, TimersFilters>;
   timerFiltersEnabled?: boolean;
+  colorFiltersEnabled?: boolean;
   timerFiltersSearchText?: string;
   timersSortOrder?: "asc" | "desc";
   syncEnabled?: boolean;
@@ -62,6 +63,7 @@ interface TimersState {
   setTimersFilters: (guildId: string, filters: TimersFilters) => void;
   setTimersSortOrder: (order: "asc" | "desc") => void;
   toggleTimerFiltersEnabled: () => void;
+  toggleColorFiltersEnabled: () => void;
   setTimerFiltersSearchText: (text: string) => void;
   setSyncEnabled: (enabled: boolean) => void;
   hideTimer: (guildId: string, timerId: string) => void;
@@ -157,6 +159,7 @@ export const useTimersStore = create<TimersState>()(
           });
         },
         timerFiltersEnabled: false,
+        colorFiltersEnabled: false,
         timerFiltersSearchText: "",
         timersSortOrder: "asc",
         syncEnabled: true,
@@ -182,6 +185,15 @@ export const useTimersStore = create<TimersState>()(
           const state = get();
           debouncedSyncGlobalSettings({
             timerFiltersEnabled: state.timerFiltersEnabled,
+          });
+        },
+        toggleColorFiltersEnabled: () => {
+          setWithTimestamp((state) => ({
+            colorFiltersEnabled: !state.colorFiltersEnabled,
+          }));
+          const state = get();
+          debouncedSyncGlobalSettings({
+            colorFiltersEnabled: state.colorFiltersEnabled,
           });
         },
         setTimerFiltersSearchText: (text: string) => {
@@ -394,6 +406,7 @@ export const useTimersStore = create<TimersState>()(
         overriddenDefaultColors: state.overriddenDefaultColors,
         hiddenDefaultColors: state.hiddenDefaultColors,
         timerFiltersEnabled: state.timerFiltersEnabled,
+        colorFiltersEnabled: state.colorFiltersEnabled,
         timersSortOrder: state.timersSortOrder,
         syncEnabled: state.syncEnabled,
         timersFilters: state.timersFilters,

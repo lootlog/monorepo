@@ -20,6 +20,7 @@ type UseTimersFilteringProps = {
   minLvl: number;
   maxLvl: number;
   selectedColors: string[];
+  colorFiltersEnabled: boolean;
   timersColors: Record<string, string>;
   pinnedTimers: string[];
   sortOrder: "asc" | "desc";
@@ -36,6 +37,7 @@ export const useTimersFiltering = ({
   minLvl,
   maxLvl,
   selectedColors,
+  colorFiltersEnabled,
   timersColors,
   pinnedTimers,
   sortOrder,
@@ -50,7 +52,10 @@ export const useTimersFiltering = ({
   filtered = filterTimersBySearchText(filtered, searchText);
   filtered = filterTimersByNpcType(filtered, selectedNpcTypes);
   filtered = filterTimersByLevel(filtered, minLvl, maxLvl);
-  filtered = filterTimersByColor(filtered, selectedColors, timersColors);
+
+  if (colorFiltersEnabled) {
+    filtered = filterTimersByColor(filtered, selectedColors, timersColors);
+  }
 
   const sorted = sortTimersByPinnedAndTime(filtered, pinnedTimers, sortOrder);
 

@@ -87,6 +87,13 @@ export class TimerSettingsEntity {
 
   @Expose()
   @ApiProperty({
+    description: 'Color filter toggle',
+    example: false,
+  })
+  colorFiltersEnabled: boolean;
+
+  @Expose()
+  @ApiProperty({
     description: 'Global sort order',
     example: 'desc',
     enum: ['asc', 'desc'],
