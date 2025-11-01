@@ -104,32 +104,33 @@ export const useTimerSettingsSync = () => {
         const timeDiff = Math.abs(remoteTimestamp - localTime);
         const hasSignificantDiff = timeDiff > 5000;
 
-        if (
-          !isInitialized &&
-          hasSignificantDiff &&
-          localTimestamp &&
-          remoteTimestamp
-        ) {
-          setLocalSnapshot({
-            generalConfig: localStore.generalConfig,
-            displayConfig: localStore.displayConfig,
-            customColors: localStore.customColors,
-            timersColors: localStore.timersColors,
-            defaultColorNames: localStore.defaultColorNames,
-            overriddenDefaultColors: localStore.overriddenDefaultColors,
-            hiddenDefaultColors: localStore.hiddenDefaultColors,
-            timerFiltersEnabled: localStore.timerFiltersEnabled,
-            timersSortOrder: localStore.timersSortOrder,
-            syncEnabled: localStore.syncEnabled,
-            hiddenTimers: localStore.hiddenTimers,
-            pinnedTimers: localStore.pinnedTimers,
-          });
-          setRemoteUpdatedAt(remoteSettings.updatedAt);
-          setLocalUpdatedAt(localTimestamp);
-          setShowConflict(true);
-          setIsInitialized(false);
-          return;
-        }
+        // Temporarily disabled: always use server settings instead of showing conflict dialog
+        // if (
+        //   !isInitialized &&
+        //   hasSignificantDiff &&
+        //   localTimestamp &&
+        //   remoteTimestamp
+        // ) {
+        //   setLocalSnapshot({
+        //     generalConfig: localStore.generalConfig,
+        //     displayConfig: localStore.displayConfig,
+        //     customColors: localStore.customColors,
+        //     timersColors: localStore.timersColors,
+        //     defaultColorNames: localStore.defaultColorNames,
+        //     overriddenDefaultColors: localStore.overriddenDefaultColors,
+        //     hiddenDefaultColors: localStore.hiddenDefaultColors,
+        //     timerFiltersEnabled: localStore.timerFiltersEnabled,
+        //     timersSortOrder: localStore.timersSortOrder,
+        //     syncEnabled: localStore.syncEnabled,
+        //     hiddenTimers: localStore.hiddenTimers,
+        //     pinnedTimers: localStore.pinnedTimers,
+        //   });
+        //   setRemoteUpdatedAt(remoteSettings.updatedAt);
+        //   setLocalUpdatedAt(localTimestamp);
+        //   setShowConflict(true);
+        //   setIsInitialized(false);
+        //   return;
+        // }
 
         // Always apply remote settings (backend is source of truth)
         useTimersStore.setState({
