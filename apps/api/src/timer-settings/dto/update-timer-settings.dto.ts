@@ -205,6 +205,15 @@ export class UpdateTimerSettingsDto {
   timerFiltersEnabled?: boolean;
 
   @ApiProperty({
+    description: 'Color filter toggle',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  colorFiltersEnabled?: boolean;
+
+  @ApiProperty({
     description: 'Global sort order',
     example: 'desc',
     required: false,

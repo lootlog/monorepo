@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Filter, SortAsc, SortDesc } from "lucide-react";
+import { Eye, EyeOff, Filter, Palette, SortAsc, SortDesc } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -9,6 +9,8 @@ import type { FC } from "react";
 type TimersActionsProps = {
   timerFiltersEnabled?: boolean;
   toggleTimerFiltersEnabled: () => void;
+  colorFiltersEnabled?: boolean;
+  toggleColorFiltersEnabled: () => void;
   timersSortOrder: "asc" | "desc";
   setTimersSortOrder: (order: "asc" | "desc") => void;
   showHiddenTimers: boolean;
@@ -18,6 +20,8 @@ type TimersActionsProps = {
 export const TimersActions: FC<TimersActionsProps> = ({
   timerFiltersEnabled,
   toggleTimerFiltersEnabled,
+  colorFiltersEnabled,
+  toggleColorFiltersEnabled,
   timersSortOrder,
   setTimersSortOrder,
   showHiddenTimers,
@@ -35,6 +39,26 @@ export const TimersActions: FC<TimersActionsProps> = ({
       </TooltipTrigger>
       <TooltipContent side="top">
         {timerFiltersEnabled ? "Ukryj filtry" : "Pokaż filtry"}
+      </TooltipContent>
+    </Tooltip>,
+
+    <Tooltip key="color-filters-tooltip">
+      <TooltipTrigger asChild>
+        <Palette
+          key="color-filters"
+          className={`ll-custom-cursor-pointer ll:mt-0.5 ll:hover:stroke-gray-100 ll:transition-colors ${
+            colorFiltersEnabled
+              ? "ll:stroke-blue-400 ll:fill-blue-400/20"
+              : "ll:stroke-gray-300"
+          }`}
+          size="14"
+          onClick={toggleColorFiltersEnabled}
+        />
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        {colorFiltersEnabled
+          ? "Wyłącz filtry po kolorze"
+          : "Włącz filtry po kolorze"}
       </TooltipContent>
     </Tooltip>,
 

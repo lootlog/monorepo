@@ -64,6 +64,7 @@ describe("useTimersFiltering", () => {
     minLvl: 1,
     maxLvl: 500,
     selectedColors: [],
+    colorFiltersEnabled: false,
     timersColors: {},
     pinnedTimers: [],
     sortOrder: "asc" as const,
@@ -138,6 +139,7 @@ describe("useTimersFiltering", () => {
       useTimersFiltering({
         ...defaultProps,
         isGrouping: true,
+        colorFiltersEnabled: true,
         selectedColors: ["red"],
         timersColors: {
           "Dragon Boss": "red",

@@ -43,6 +43,8 @@ export const Timers = () => {
     generalConfig,
     timerFiltersEnabled,
     toggleTimerFiltersEnabled,
+    colorFiltersEnabled,
+    toggleColorFiltersEnabled,
     timerFiltersSearchText,
     timersSortOrder,
     setTimersSortOrder,
@@ -121,6 +123,7 @@ export const Timers = () => {
     minLvl: filters.minLvl,
     maxLvl: filters.maxLvl,
     selectedColors: filters.selectedColors,
+    colorFiltersEnabled: colorFiltersEnabled ?? false,
     timersColors: timersColors as Record<string, string>,
     pinnedTimers: pinnedTimers[settingsKey] || [],
     sortOrder: timersSortOrder ?? "asc",
@@ -140,6 +143,8 @@ export const Timers = () => {
         <TimersUnderBagActions
           timerFiltersEnabled={timerFiltersEnabled ?? false}
           toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+          colorFiltersEnabled={colorFiltersEnabled ?? false}
+          toggleColorFiltersEnabled={toggleColorFiltersEnabled}
           timersSortOrder={timersSortOrder ?? "asc"}
           setTimersSortOrder={setTimersSortOrder}
           showHiddenTimers={showHiddenTimers}
@@ -185,6 +190,8 @@ export const Timers = () => {
             actions=<TimersActions
               timerFiltersEnabled={timerFiltersEnabled}
               toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+              colorFiltersEnabled={colorFiltersEnabled}
+              toggleColorFiltersEnabled={toggleColorFiltersEnabled}
               timersSortOrder={timersSortOrder ?? "asc"}
               setTimersSortOrder={setTimersSortOrder}
               showHiddenTimers={showHiddenTimers}
