@@ -72,9 +72,7 @@ export const TimersSettingsColors: FC = () => {
 
   const handleSaveDefaultColor = (colorId: string) => {
     if (editingDefaultColorData) {
-      if (editingDefaultColorData.name.trim()) {
-        setDefaultColorName(colorId, editingDefaultColorData.name.trim());
-      }
+      setDefaultColorName(colorId, editingDefaultColorData.name.trim());
       updateDefaultColor(
         colorId,
         editingDefaultColorData.borderColor,
