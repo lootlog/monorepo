@@ -50,7 +50,21 @@ export class TimerEntity {
   };
 
   @Expose()
+  @ApiProperty({
+    example: false,
+    description: 'Indicates if the timer was manually reset',
+  })
+  wasReset: boolean;
+
+  @Expose()
   member: unknown;
+
+  @Expose()
+  @ApiProperty({
+    example: 'temp-id-123',
+    description: 'Temporary ID for client-side tracking',
+  })
+  tempId?: string;
 
   @Exclude()
   createdById: number;
@@ -64,6 +78,10 @@ export class TimerEntity {
   @Exclude()
   createdAt: Date;
 
-  @Exclude()
+  @Expose()
+  @ApiProperty({
+    example: '2025-09-01T10:00:00Z',
+    description: 'Last updated timestamp',
+  })
   updatedAt: Date;
 }

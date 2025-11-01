@@ -1,16 +1,10 @@
 import { DraggableWindow } from "@/components/draggable-window";
-import { LOOTLOG_APP_URL } from "@/config/app";
 import {
   QuickAccessButton,
   type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
-import {
-  MessagesSquare,
-  Settings,
-  SquareArrowOutUpRight,
-  Timer,
-  Users,
-} from "lucide-react";
+import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { MessagesSquare, Settings, Timer, Users } from "lucide-react";
 
 const BUTTONS: QuickAccessButtonProps[] = [
   {
@@ -33,12 +27,6 @@ const BUTTONS: QuickAccessButtonProps[] = [
     title: "Ustawienia",
     icon: <Settings size="16" />,
   },
-  {
-    id: "lootlog-app",
-    title: "Strona Lootloga",
-    icon: <SquareArrowOutUpRight size="16" />,
-    href: `${LOOTLOG_APP_URL}/@me`,
-  },
 ];
 
 export const QuickAccess = () => {
@@ -60,6 +48,7 @@ export const QuickAccess = () => {
             href={button.href}
           />
         ))}
+        <GuildListPopover />
       </div>
     </DraggableWindow>
   );

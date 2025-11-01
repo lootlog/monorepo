@@ -19,7 +19,9 @@ export type WindowId =
   | "npc-detector"
   | "notifications"
   | "create-notification"
-  | "quick-access";
+  | "quick-access"
+  | "timer-settings-conflict"
+  | "catching-whitelist-warning";
 
 interface WindowPositionState {
   x: number;
@@ -52,6 +54,8 @@ interface WindowsState {
   notifications: WindowData;
   "create-notification": WindowData & { state: CreateNotificationState };
   "quick-access": WindowData;
+  "timer-settings-conflict": WindowData;
+  "catching-whitelist-warning": WindowData;
   currentWindowFocus?: WindowId;
   setCurrentWindowFocus: (key: WindowId) => void;
   setOpen: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
@@ -136,6 +140,20 @@ export const useWindowsStore = create<WindowsState>()(
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
+      "timer-settings-conflict": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: { width: 420, height: 320 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "catching-whitelist-warning": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: { width: 400, height: 240 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
       currentWindowFocus: undefined,
       setCurrentWindowFocus: (key: WindowId) =>
         set({ currentWindowFocus: key }),
@@ -184,6 +202,8 @@ export const useWindowsStore = create<WindowsState>()(
           opacity: state["create-notification"].opacity,
         },
         "quick-access": state["quick-access"],
+        "timer-settings-conflict": state["timer-settings-conflict"],
+        "catching-whitelist-warning": state["catching-whitelist-warning"],
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,

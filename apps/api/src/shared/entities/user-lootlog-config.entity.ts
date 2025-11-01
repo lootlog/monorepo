@@ -17,18 +17,18 @@ export class UserLootlogConfigEntity {
   @Expose()
   @ApiProperty({
     example: ['guild_1', 'guild_2'],
-    description: 'Guild IDs to exclude from loot collection',
+    description: 'Guild IDs to include for loot collection',
     type: [String],
   })
-  collectLootBlaclistGuildIds: string[];
+  collectLootWhitelistGuildIds: string[];
 
   @Expose()
   @ApiProperty({
     example: ['guild_3', 'guild_4'],
-    description: 'Guild IDs to exclude from timer creation',
+    description: 'Guild IDs to include for timer creation',
     type: [String],
   })
-  addTimersBlacklistGuildIds: string[];
+  addTimersWhitelistGuildIds: string[];
 
   @Exclude()
   id: number;

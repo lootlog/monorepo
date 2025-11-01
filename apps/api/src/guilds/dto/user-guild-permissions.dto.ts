@@ -22,6 +22,9 @@ class UserGuildPermissionsRole {
 class UserGuildPermissionsGuild {
   @ApiProperty({ description: 'Guild ID' })
   id: string;
+
+  @ApiProperty({ description: 'Guild owner Discord ID' })
+  ownerId: string;
 }
 
 export class UserGuildPermissionsDto {

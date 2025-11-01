@@ -32,6 +32,7 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
     "api:migrate:dev": "turbo run api:migrate:dev",
     "api:generate": "turbo run api:generate",
     "api:studio": "turbo run api:studio",
@@ -65,7 +66,7 @@
     "turbo": "^2.5.8",
     "typescript": "5.9.3"
   },
-  "packageManager": "pnpm@10.19.0",
+  "packageManager": "pnpm@10.20.0",
   "pnpm": {
     "overrides": {
       "discord-api-types": "0.38.31",
@@ -82,11 +83,14 @@
       "@swc/core",
       "@tailwindcss/oxide",
       "core-js-pure",
+      "cpu-features",
       "esbuild",
       "msgpackr-extract",
       "necord",
       "prisma",
+      "protobufjs",
       "sharp",
+      "ssh2",
       "unrs-resolver",
       "workerd"
     ]

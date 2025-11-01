@@ -3,9 +3,9 @@ import { getGuildIds } from './get-guild-ids';
 describe('getGuildIds', () => {
   it('should extract guild IDs from guilds array', () => {
     const guilds = [
-      { guild: { id: 'guild-1' }, roles: [] },
-      { guild: { id: 'guild-2' }, roles: [] },
-      { guild: { id: 'guild-3' }, roles: [] },
+      { guild: { id: 'guild-1', ownerId: 'owner-1' }, roles: [] },
+      { guild: { id: 'guild-2', ownerId: 'owner-2' }, roles: [] },
+      { guild: { id: 'guild-3', ownerId: 'owner-3' }, roles: [] },
     ];
 
     const result = getGuildIds(guilds);
@@ -20,7 +20,9 @@ describe('getGuildIds', () => {
   });
 
   it('should handle single guild', () => {
-    const guilds = [{ guild: { id: 'guild-only' }, roles: [] }];
+    const guilds = [
+      { guild: { id: 'guild-only', ownerId: 'owner-only' }, roles: [] },
+    ];
 
     const result = getGuildIds(guilds);
 
@@ -29,9 +31,9 @@ describe('getGuildIds', () => {
 
   it('should preserve order of guild IDs', () => {
     const guilds = [
-      { guild: { id: 'guild-first' }, roles: [] },
-      { guild: { id: 'guild-second' }, roles: [] },
-      { guild: { id: 'guild-third' }, roles: [] },
+      { guild: { id: 'guild-first', ownerId: 'owner-1' }, roles: [] },
+      { guild: { id: 'guild-second', ownerId: 'owner-2' }, roles: [] },
+      { guild: { id: 'guild-third', ownerId: 'owner-3' }, roles: [] },
     ];
 
     const result = getGuildIds(guilds);
@@ -44,7 +46,7 @@ describe('getGuildIds', () => {
   it('should work with guilds having different properties', () => {
     const guilds = [
       {
-        guild: { id: 'guild-1', name: 'Guild One' },
+        guild: { id: 'guild-1', ownerId: 'owner-1', name: 'Guild One' },
         roles: [
           {
             id: 'role-1',
@@ -55,7 +57,7 @@ describe('getGuildIds', () => {
         ],
       },
       {
-        guild: { id: 'guild-2', name: 'Guild Two' },
+        guild: { id: 'guild-2', ownerId: 'owner-2', name: 'Guild Two' },
         roles: [
           {
             id: 'role-2',
@@ -74,8 +76,8 @@ describe('getGuildIds', () => {
 
   it('should handle numeric guild IDs', () => {
     const guilds = [
-      { guild: { id: '123' }, roles: [] },
-      { guild: { id: '456' }, roles: [] },
+      { guild: { id: '123', ownerId: 'owner-123' }, roles: [] },
+      { guild: { id: '456', ownerId: 'owner-456' }, roles: [] },
     ];
 
     const result = getGuildIds(guilds);

@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsDate,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -13,12 +15,25 @@ export class CreateManualTimerDto {
   @MaxLength(20)
   name: string;
 
+  @IsOptional()
   @IsNumber()
-  @Min(2)
-  respBaseSeconds: number;
+  @Min(1)
+  minSeconds?: number;
 
   @IsOptional()
-  respawnRandomness: number;
+  @IsNumber()
+  @Min(1)
+  maxSeconds?: number;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  customMinSpawnTime?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  customMaxSpawnTime?: Date;
 
   @IsNotEmpty()
   @IsString()

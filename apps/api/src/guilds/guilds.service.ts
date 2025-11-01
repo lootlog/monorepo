@@ -361,7 +361,7 @@ export class GuildsService {
       if (!member) {
         if (isOwner) {
           return {
-            guild: { id: guild.id },
+            guild: { id: guild.id, ownerId: guild.ownerId },
             roles: [
               {
                 id: 'owner',
@@ -373,7 +373,7 @@ export class GuildsService {
           };
         }
         return {
-          guild: { id: guild.id },
+          guild: { id: guild.id, ownerId: guild.ownerId },
           roles: [],
         };
       }
@@ -388,7 +388,7 @@ export class GuildsService {
         .filter((role) => role.permissions.length > 0);
 
       return {
-        guild: { id: guild.id },
+        guild: { id: guild.id, ownerId: guild.ownerId },
         roles: rolesWithPermissions,
       };
     });

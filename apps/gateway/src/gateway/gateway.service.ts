@@ -7,7 +7,7 @@ import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto'
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
 import type { Npc } from 'src/gateway/types/npc.type';
-import { canViewNpcTimer } from 'src/gateway/utils/can-view-npc-timer';
+import { canViewNpcTimer } from '@lootlog/api-helpers/permissions';
 import {
   isAdministrativeUserFromRoles,
   isOwnerOrAdminFromRoles,
@@ -52,6 +52,16 @@ export class GatewayService {
             socket.emit(event, data);
             return;
           }
+          const isOwner = desiredGuild.guild.ownerId === socket.data.discordId;
+
+          if (isOwner) {
+            this.logger.debug(
+              `Guild owner ${socket.data.discordId} sending event ${event} in guild ${guildId}`,
+            );
+            socket.emit(event, data);
+            return;
+          }
+
           const roles = desiredGuild.roles || [];
           const administrativeUser = isAdministrativeUserFromRoles(roles);
 

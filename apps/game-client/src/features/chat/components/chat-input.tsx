@@ -27,12 +27,14 @@ export const ChatInput: FC<ChatInputProps> = ({
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
 
-  const { register, handleSubmit, reset } = useForm<FormData>({
+  const { watch, setValue, handleSubmit } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       message: "",
     },
   });
+
+  const messageValue = watch("message");
 
   const onSubmit = (data: FormData) => {
     if (!selectedGuildId || !world) return;
@@ -44,15 +46,11 @@ export const ChatInput: FC<ChatInputProps> = ({
         world,
       });
       sendChatMessage({ guildIds: [selectedGuildId], message: data.message });
-
-      reset();
-      return;
+    } else {
+      sendChatMessage({ guildIds: [selectedGuildId], message: data.message });
     }
 
-    sendChatMessage({ guildIds: [selectedGuildId], message: data.message });
-
-    reset();
-    return;
+    setValue("message", "");
   };
 
   return (
@@ -67,7 +65,8 @@ export const ChatInput: FC<ChatInputProps> = ({
         autoComplete="off"
         placeholder="Wiadomość..."
         autoFocus={autofocus}
-        {...register("message")}
+        value={messageValue}
+        onChange={(e) => setValue("message", e.target.value)}
       />
     </form>
   );

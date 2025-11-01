@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { useWindowsStore, WindowId } from "@/store/windows.store";
-import { FC, ReactNode, useEffect } from "react";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { useWindowsStore, type WindowId } from "@/store/windows.store";
+import type { FC, ReactNode } from "react";
 
 export type QuickAccessButtonProps = {
   id: WindowId | "lootlog-app";
@@ -16,14 +21,6 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
   href,
 }) => {
   const { toggleOpen } = useWindowsStore();
-  const key = `${id}-quick-access-button`;
-
-  useEffect(() => {
-    // @ts-ignore
-    $(`#${key}`).tip(`
-        <span>${title}</span>
-      `);
-  }, [key]);
 
   const handleClick = () => {
     if (href) {
@@ -34,12 +31,18 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
   };
 
   return (
-    <Button
-      id={key}
-      className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6"
-      onClick={handleClick}
-    >
-      {icon}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          className="ll:quick-access-button ll-custom-cursor-pointer ll:h-6"
+          onClick={handleClick}
+        >
+          {icon}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <span>{title}</span>
+      </TooltipContent>
+    </Tooltip>
   );
 };

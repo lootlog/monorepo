@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TimersService } from './timers.service';
 import { TimersController } from './timers.controller';
+import { TimersCleanupService } from './timers-cleanup.service';
 import { MembersModule } from 'src/members/members.module';
 import { NpcsModule } from 'src/npcs/npcs.module';
 import { GuildsModule } from 'src/guilds/guilds.module';
@@ -16,6 +18,7 @@ import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     MembersModule,
     NpcsModule,
     GuildsModule,
@@ -28,7 +31,7 @@ import { RedisModule } from 'src/lib/redis/redis.module';
     PrismaModule,
     RedisModule,
   ],
-  providers: [TimersService],
+  providers: [TimersService, TimersCleanupService],
   controllers: [TimersController],
 })
 export class TimersModule {}
