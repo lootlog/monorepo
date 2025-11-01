@@ -160,7 +160,8 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
         {} as Record<PermissionKey, boolean>,
       ),
     });
-  }, [role, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
 
   function onSubmit(values: FormSchemaType) {
     updateGuildRole(
