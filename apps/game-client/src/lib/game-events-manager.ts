@@ -39,8 +39,6 @@ class GameEventsManager {
       return;
     }
 
-    console.log(`Processing ${this.eventQueue.length} queued game events`);
-
     const events = [...this.eventQueue];
     this.eventQueue = [];
 
@@ -181,7 +179,7 @@ class GameEventsManager {
         console.warn(
           "Failed to setup game init proxy after",
           maxAttempts,
-          "attempts"
+          "attempts",
         );
         return;
       }
@@ -198,8 +196,11 @@ class GameEventsManager {
     setTimeout(retry, baseDelay);
   }
 
+  private gameInitCallbackExecuted = false;
+
   private onGameInitChange() {
-    if (this.gameInitCallback) {
+    if (this.gameInitCallback && !this.gameInitCallbackExecuted) {
+      this.gameInitCallbackExecuted = true;
       this.gameInitCallback();
     }
   }
@@ -208,6 +209,7 @@ class GameEventsManager {
 
   setGameInitCallback(callback: () => void) {
     this.gameInitCallback = callback;
+    this.gameInitCallbackExecuted = false;
   }
 
   cleanup() {
@@ -217,6 +219,7 @@ class GameEventsManager {
     this.eventProcessor = null;
     this.isReady = false;
     this.gameInitCallback = null;
+    this.gameInitCallbackExecuted = false;
   }
 }
 
