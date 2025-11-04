@@ -2,16 +2,31 @@ import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { ItemRarity, NpcType } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
+import { RedisService } from 'src/lib/redis/redis.service';
 import type { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
 import type { UpdateLootlogConfigDto } from 'src/lootlog-config/dto/update-lootlog-config.dto';
 import { LootlogConfigEntity } from 'src/shared/entities/lootlog-config.entity';
 import { LootlogConfigNpcEntity } from 'src/shared/entities/lootlog-config-npc.entity';
+import {
+  getLootlogConfigCacheKey,
+  LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
+} from 'src/shared/constants/cache.constant';
 
 @Injectable()
 export class LootlogConfigService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async getLootlogConfig(guildId: string) {
+    const cacheKey = getLootlogConfigCacheKey(guildId);
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
     const lootlogConfig = await this.prisma.lootlogConfig.findUnique({
       where: {
         id: guildId,
@@ -25,9 +40,19 @@ export class LootlogConfigService {
       },
     });
 
-    return lootlogConfig
+    const result = lootlogConfig
       ? plainToInstance(LootlogConfigEntity, lootlogConfig)
       : null;
+
+    if (result) {
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
+      );
+    }
+
+    return result;
   }
 
   async getMultipleLootlogConfigs(guildIds: string[]) {
@@ -67,7 +92,7 @@ export class LootlogConfigService {
       })),
     };
 
-    const config = this.prisma.lootlogConfig.create({
+    const config = await this.prisma.lootlogConfig.create({
       data: {
         id: guildId,
         npcs: {
@@ -82,11 +107,14 @@ export class LootlogConfigService {
       },
     });
 
+    const cacheKey = getLootlogConfigCacheKey(guildId);
+    await this.redisService.del(cacheKey);
+
     return config;
   }
 
   async updateLootlogConfig(guildId: string, { npcs }: UpdateLootlogConfigDto) {
-    const config = this.prisma.lootlogConfig.update({
+    const config = await this.prisma.lootlogConfig.update({
       where: {
         id: guildId,
       },
@@ -105,6 +133,9 @@ export class LootlogConfigService {
       },
     });
 
+    const cacheKey = getLootlogConfigCacheKey(guildId);
+    await this.redisService.del(cacheKey);
+
     return config;
   }
 
@@ -113,13 +144,16 @@ export class LootlogConfigService {
     npcId: string,
     data: UpdateLootlogConfigNpcDto,
   ) {
-    const npcConfig = this.prisma.lootlogConfigNpc.update({
+    const npcConfig = await this.prisma.lootlogConfigNpc.update({
       where: {
         lootlogConfigId: guildId,
         id: +npcId,
       },
       data,
     });
+
+    const cacheKey = getLootlogConfigCacheKey(guildId);
+    await this.redisService.del(cacheKey);
 
     return plainToInstance(LootlogConfigNpcEntity, npcConfig);
   }

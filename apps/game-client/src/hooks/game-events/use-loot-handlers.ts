@@ -12,38 +12,26 @@ import { CreateLootResponse, useCreateLoot } from "@/hooks/api/use-create-loot";
 import { LootHandlersConfig } from "./types";
 import { useGlobalStore } from "@/store/global.store";
 import { useUpdateLoot } from "@/hooks/api/use-update-loot";
+import { gameEventsStore } from "@/store/game-store/game-events.store";
 
 export const useLootHandlers = (config: LootHandlersConfig) => {
   const { world, characterId, accountId } = useGlobalStore(
-    (state) => state.gameState
+    (state) => state.gameState,
   );
   const { mutate: createLoot } = useCreateLoot();
   const { mutate: updateLoot } = useUpdateLoot();
-  const {
-    isValidGameState,
-    pendingBattle,
-    talkingNpcId,
-    latestLootId,
-    isLootDistributionMessage,
-  } = config;
+  const { isValidGameState, isLootDistributionMessage } = config;
 
   const createLootFromBattle = useCallback(
     (event: GameEvent) => {
-      if (
-        !createLoot ||
-        !pendingBattle ||
-        !latestLootId ||
-        !pendingBattle.current
-      )
-        return;
+      const pendingBattle = gameEventsStore.pendingBattle;
+
+      if (!createLoot || !pendingBattle) return;
 
       const loots = getLoot(event.item);
       if (!loots.length || !isValidGameState || !event.loot || !event.f) return;
 
-      const { npcs, party } = getBattleParticipants(
-        pendingBattle.current,
-        event.f.w
-      );
+      const { npcs, party } = getBattleParticipants(pendingBattle, event.f.w);
 
       createLoot(
         {
@@ -58,25 +46,17 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
         },
         {
           onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
-            latestLootId.current = response.data.id;
+            gameEventsStore.setLatestLootId(response.data.id);
           },
-        }
+        },
       );
     },
-    [
-      isValidGameState,
-      world,
-      accountId,
-      characterId,
-      createLoot,
-      pendingBattle,
-      latestLootId,
-    ]
+    [isValidGameState, world, accountId, characterId, createLoot],
   );
 
   const createLootFromDialog = useCallback(
     (event: GameEvent) => {
-      if (!createLoot || !latestLootId) return;
+      if (!createLoot) return;
 
       const loots = getLoot(event.item);
       if (!loots.length || !isValidGameState || !event.loot) return;
@@ -107,7 +87,7 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
           icon: hero.img,
           prof: hero.prof,
           hpp: Math.floor(
-            (hero.warrior_stats.hp / hero.warrior_stats.maxhp) * 100
+            (hero.warrior_stats.hp / hero.warrior_stats.maxhp) * 100,
           ),
           lvl: hero.lvl,
           accountId: hero.account,
@@ -127,58 +107,57 @@ export const useLootHandlers = (config: LootHandlersConfig) => {
         },
         {
           onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
-            latestLootId.current = response.data.id;
+            gameEventsStore.setLatestLootId(response.data.id);
           },
-        }
+        },
       );
     },
-    [isValidGameState, world, accountId, characterId, createLoot, latestLootId]
+    [isValidGameState, world, accountId, characterId, createLoot],
   );
 
   const handleUpdateLoot = useCallback(
     (event: GameEvent) => {
-      if (!updateLoot || !isLootDistributionMessage || !latestLootId) return;
-      if (!isValidGameState || !event.chat || !latestLootId.current) return;
+      const latestLootId = gameEventsStore.latestLootId;
+
+      if (!updateLoot || !isLootDistributionMessage) return;
+      if (!isValidGameState || !event.chat || !latestLootId) return;
 
       const desiredMsg = event.chat.channels?.system?.msg?.find(
-        isLootDistributionMessage
+        isLootDistributionMessage,
       );
       if (!desiredMsg) return;
 
       updateLoot(
-        { msg: desiredMsg.msg, id: latestLootId.current },
+        { msg: desiredMsg.msg, id: latestLootId },
         {
           onSuccess: () => {
-            latestLootId.current = null;
+            gameEventsStore.setLatestLootId(null);
           },
-        }
+        },
       );
     },
-    [isValidGameState, isLootDistributionMessage, updateLoot, latestLootId]
+    [isValidGameState, isLootDistributionMessage, updateLoot],
   );
 
   const handleDialogLoot = useCallback(
     (event: GameEvent) => {
-      if (
-        !event.item ||
-        event.loot?.source !== "dialog" ||
-        !latestLootId ||
-        !talkingNpcId
-      )
-        return;
+      if (!event.item || event.loot?.source !== "dialog") return;
 
-      latestLootId.current = null;
+      gameEventsStore.setLatestLootId(null);
 
       if (event.npcs_del?.length) {
         createLootFromDialog(event);
-      } else if (talkingNpcId.current) {
-        const npc = Game.getNpc(+talkingNpcId.current);
-        if (npc) {
-          createLootFromDialog({ ...event, npcs_del: [{ id: npc.id }] });
+      } else {
+        const talkingNpcId = gameEventsStore.talkingNpcId;
+        if (talkingNpcId) {
+          const npc = Game.getNpc(+talkingNpcId);
+          if (npc) {
+            createLootFromDialog({ ...event, npcs_del: [{ id: npc.id }] });
+          }
         }
       }
     },
-    [createLootFromDialog, latestLootId, talkingNpcId]
+    [createLootFromDialog],
   );
 
   return {

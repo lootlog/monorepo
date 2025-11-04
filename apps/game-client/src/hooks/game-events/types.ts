@@ -54,33 +54,30 @@ export interface EventHandlersConfig {
   processNpcSettings: (
     npc: EventNpc,
     npcType: NpcType,
-    event?: GameEvent
+    event?: GameEvent,
   ) => ProcessedNpcSettings | null;
   processGameNpcSettings: (
     npc: GameNpc,
-    npcType: NpcType
+    npcType: NpcType,
   ) => ProcessedNpcSettings | null;
   composeNpcFromEvent: (
     npc: EventNpc,
     tpl: NpcTpl,
-    processedSettings: ProcessedNpcSettings
+    processedSettings: ProcessedNpcSettings,
   ) => GameNpcWithLocation;
   composeNpcFromGame: (
     npc: GameNpc,
-    processedSettings: ProcessedNpcSettings
+    processedSettings: ProcessedNpcSettings,
   ) => GameNpcWithLocation;
   processNpcActions: (
     composedNpc: GameNpcWithLocation,
     npcType: NpcType,
     guildIds: string[],
     autoSendMessage: boolean,
-    autoSendNotification: boolean
+    autoSendNotification: boolean,
   ) => void;
   removeNpc?: (npcId: number | number[]) => void;
   removeNotificationByNpcId?: (npcId: number, world?: string) => void;
-  pendingBattle?: React.RefObject<W | null>;
-  talkingNpcId?: React.RefObject<string | null>;
-  latestLootId?: React.RefObject<number | null>;
   createLootFromBattle?: (event: GameEvent) => void;
   handleUpdateLoot?: (event: GameEvent) => void;
   handleDialogLoot?: (event: GameEvent) => void;
@@ -89,19 +86,15 @@ export interface EventHandlersConfig {
 
 export interface LootHandlersConfig {
   isValidGameState: boolean;
-  pendingBattle?: React.RefObject<W | null>;
-  talkingNpcId?: React.RefObject<string | null>;
-  latestLootId?: React.RefObject<number | null>;
   isLootDistributionMessage?: (msgData: ChatEventMsg) => boolean;
 }
 
 export interface NpcProcessorsConfig {
-  settingsRef: React.RefObject<Record<string, NpcDetectorSettings>>;
   handleSendMessage: (
     npcType: NpcType,
     baseMessage: string,
     npcLocation: NpcLocation,
-    guildIds: string[]
+    guildIds: string[],
   ) => void;
   handleSendNotification: (npc: GameNpc, guildIds: string[]) => void;
 }

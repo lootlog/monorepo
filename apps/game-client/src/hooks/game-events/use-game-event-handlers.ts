@@ -1,8 +1,8 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import type { W } from "@/types/margonem/game-events/f";
+import { gameEventsStore } from "@/store/game-store/game-events.store";
 
 import { useValidationHelpers } from "./use-validation-helpers";
 import { useMessagingHandlers } from "./use-messaging-handlers";
@@ -11,19 +11,13 @@ import { useLootHandlers } from "./use-loot-handlers";
 import { useEventHandlers } from "./use-event-handlers";
 import { useBattleEventHandler } from "@/hooks/game-events/use-battle-event-handler";
 
-export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
+export const useGameEventHandlers = () => {
   const { gameInitialized, characterId, accountId, world } = useGlobalStore(
     (s) => s.gameState,
   );
 
   const { removeNotificationByNpcId } = useNotificationsStore();
 
-  // Refs for tracking state
-  const pendingBattle = useRef<W | null>(null);
-  const talkingNpcId = useRef<string | null>(null);
-  const latestLootId = useRef<number | null>(null);
-
-  // Custom hooks
   const { isValidGameState, isLootDistributionMessage } = useValidationHelpers(
     world,
     characterId,
@@ -39,7 +33,6 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
     composeNpcFromGame,
     processNpcActions,
   } = useNpcProcessors({
-    settingsRef,
     handleSendMessage,
     handleSendNotification,
   });
@@ -47,9 +40,6 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
   const { createLootFromBattle, handleUpdateLoot, handleDialogLoot } =
     useLootHandlers({
       isValidGameState,
-      pendingBattle,
-      talkingNpcId,
-      latestLootId,
       isLootDistributionMessage,
     });
 
@@ -68,9 +58,6 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
     composeNpcFromGame,
     processNpcActions,
     removeNotificationByNpcId,
-    pendingBattle,
-    talkingNpcId,
-    latestLootId,
     createLootFromBattle,
     handleUpdateLoot,
     handleDialogLoot,
@@ -81,10 +68,12 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
 
   const handleEvent = useCallback(
     (event: GameEvent) => {
-      // Early return for invalid events
       if (!isValidGameState || Object.keys(event).length <= 2) return;
 
-      // Process different event types
+      if (import.meta.env.DEV) {
+        gameEventsStore.addEvent(event);
+      }
+
       if (event.chat) handleChatEvents(event);
       if (event.d) handleDialogEvents(event);
       if (event.f) handleBattleEvents(event);
@@ -98,6 +87,7 @@ export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
       handleChatEvents,
       handleDialogEvents,
       handleBattleEvents,
+      handleBattleEventsV2,
       handleNpcDetection,
       handleDialogLoot,
       handleRespawnTimers,

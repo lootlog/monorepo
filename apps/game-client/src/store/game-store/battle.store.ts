@@ -1,4 +1,4 @@
-import { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@/types/margonem/game-events/game-event";
 
 class BattleStore {
   events: GameEvent[] = [];

@@ -26,6 +26,7 @@ import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
 import { LootsService } from 'src/loots/loots.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
+import { MemberData } from 'src/shared/decorators/member-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
@@ -128,22 +129,43 @@ export class LootsController {
     return plainToInstance(LootEntity, loots);
   }
 
-  @Post('/loots')
+  @Permissions(Permission.LOOTLOG_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/loots')
   @ApiOperation({
-    summary: 'Create loot',
-    description: 'Submit a loot from game client',
+    summary: 'Create loot for guild',
+    description: 'Submit a loot for a specific guild from game client',
   })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
   @ApiResponse({
     status: 201,
     description: 'Loot created successfully',
     type: LootEntity,
   })
-  async createLoot(
+  @ApiResponse({
+    status: 400,
+    description:
+      'Bad Request - guild config rejects this loot (wrong rarity, NPC type, etc.)',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden - insufficient permissions OR guild not whitelisted for this character',
+  })
+  async createLootForGuild(
     @DiscordId() discordId: string,
     @UserId() userId: string,
+    @GuildData() guild: Guild,
+    @MemberData() member: any,
     @Body() body: CreateLootDto,
   ) {
-    return this.lootsService.createLoot(discordId, userId, body);
+    return this.lootsService.createLootForGuild(
+      discordId,
+      userId,
+      guild.id,
+      member,
+      body,
+    );
   }
 
   @Permissions(Permission.LOOTLOG_READ)

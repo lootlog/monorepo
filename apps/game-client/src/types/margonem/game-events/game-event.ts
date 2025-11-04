@@ -1,14 +1,14 @@
-import { ChatEvent } from "@/types/margonem/game-events/chat";
-import { D } from "@/types/margonem/game-events/d";
-import { F } from "@/types/margonem/game-events/f";
-import { Icon } from "@/types/margonem/game-events/icons";
-import { ItemEvent } from "@/types/margonem/game-events/item";
-import { Loot } from "@/types/margonem/game-events/loot";
-import { NpcTpl } from "@/types/margonem/game-events/npc_tpls";
-import { Npcs } from "@/types/margonem/game-events/npcs";
-import { NpcsDel } from "@/types/margonem/game-events/npcs_del";
-import { Other } from "@/types/margonem/game-events/other";
-import { PartyEvent } from "@/types/margonem/game-events/party";
+import type { ChatEvent } from "@/types/margonem/game-events/chat";
+import type { D } from "@/types/margonem/game-events/d";
+import type { F } from "@/types/margonem/game-events/f";
+import type { Icon } from "@/types/margonem/game-events/icons";
+import type { ItemEvent } from "@/types/margonem/game-events/item";
+import type { Loot } from "@/types/margonem/game-events/loot";
+import type { NpcTpl } from "@/types/margonem/game-events/npc_tpls";
+import type { Npcs } from "@/types/margonem/game-events/npcs";
+import type { NpcsDel } from "@/types/margonem/game-events/npcs_del";
+import type { Other } from "@/types/margonem/game-events/other";
+import type { PartyEvent } from "@/types/margonem/game-events/party";
 
 export type GameEvent = {
   d: D;

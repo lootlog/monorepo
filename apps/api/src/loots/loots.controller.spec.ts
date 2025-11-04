@@ -134,7 +134,7 @@ describe('LootsController', () => {
     });
   });
 
-  describe('createLoot', () => {
+  describe.skip('createLoot - REMOVED (bulk endpoint deprecated)', () => {
     const discordId = 'discord123';
     const userId = 'user123';
 
@@ -142,7 +142,7 @@ describe('LootsController', () => {
       const mockResult = { id: 1 };
       service.createLoot.mockResolvedValue(mockResult);
 
-      const result = await controller.createLoot(
+      const result = await (controller as any).createLoot(
         discordId,
         userId,
         mockCreateLootDto,
@@ -158,11 +158,11 @@ describe('LootsController', () => {
 
     it('should handle service errors', async () => {
       service.createLoot.mockRejectedValue(
-        new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
+        new BadRequestException('NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT'),
       );
 
       await expect(
-        controller.createLoot(discordId, userId, mockCreateLootDto),
+        (controller as any).createLoot(discordId, userId, mockCreateLootDto),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -172,7 +172,9 @@ describe('LootsController', () => {
 
       const requests = Array(5)
         .fill(null)
-        .map(() => controller.createLoot(discordId, userId, mockCreateLootDto));
+        .map(() =>
+          (controller as any).createLoot(discordId, userId, mockCreateLootDto),
+        );
 
       const results = await Promise.all(requests);
 

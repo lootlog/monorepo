@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useTimerSettingsSync } from "@/hooks/use-timer-settings-sync";
 import { useTimerSettingsMutationsRegistry } from "@/hooks/use-timer-settings-mutations-registry";
 import { CatchingWhitelistWarning } from "@/features/catching-whitelist-warning/catching-whitelist-warning";
+import { GameEventsDevTools } from "@/devtools/game-events";
 
 function App() {
   useGameEventsParser();
@@ -38,6 +39,7 @@ function App() {
         <CatchingWhitelistWarning />
         <Toaster />
         {ConflictDialog}
+        <GameEventsDevTools />
       </>
     )
   );

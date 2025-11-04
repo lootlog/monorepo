@@ -19,6 +19,7 @@ import {
   useLootlogCharactersConfig,
   type LootlogCharacterConfigResponse,
 } from "@/hooks/api/use-lootlog-character-config";
+import { gameEventsStore } from "@/store/game-store/game-events.store";
 
 import { useGuilds } from "@/hooks/api/use-guilds";
 
@@ -28,9 +29,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
   const { data: guilds } = useGuilds();
   const { addNpc, removeNpc } = useNpcDetectorStore();
   const { setOpen } = useWindowsStore();
-  const queryClient = useQueryClient();
-
-  useLootlogCharactersConfig();
+  const { data: charactersConfig } = useLootlogCharactersConfig();
 
   const {
     isValidGameState,
@@ -40,9 +39,6 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
     composeNpcFromGame,
     processNpcActions,
     removeNotificationByNpcId,
-    pendingBattle,
-    talkingNpcId,
-    latestLootId,
     createLootFromBattle,
     handleUpdateLoot,
     isLootDistributionMessage,
@@ -167,11 +163,6 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 
         if (characterId && accountId && world) {
-          const charactersConfigResponse = queryClient.getQueryData<{
-            data: LootlogCharacterConfigResponse;
-          }>(["lootlog-characters-config", accountId]);
-
-          const charactersConfig = charactersConfigResponse?.data;
           const characterConfig = charactersConfig?.[characterId];
           const whitelistedGuildIds =
             characterConfig?.addTimersWhitelistGuildIds ?? [];
@@ -219,7 +210,7 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
       removeNotificationByNpcId,
       createTimer,
       guilds,
-      queryClient,
+      charactersConfig,
     ],
   );
 
@@ -237,22 +228,17 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
     [isLootDistributionMessage, handleUpdateLoot],
   );
 
-  const handleDialogEvents = useCallback(
-    (event: GameEvent) => {
-      if (event.d?.[2] && talkingNpcId) {
-        talkingNpcId.current = event.d[2];
-      }
-    },
-    [talkingNpcId],
-  );
+  const handleDialogEvents = useCallback((event: GameEvent) => {
+    if (event.d?.[2]) {
+      gameEventsStore.setTalkingNpcId(event.d[2]);
+    }
+  }, []);
 
   const handleBattleEvents = useCallback(
     (event: GameEvent) => {
-      if (!latestLootId || !pendingBattle) return;
-
       if (event.f?.w && event.f.init === "1") {
-        latestLootId.current = null;
-        pendingBattle.current = event.f.w;
+        gameEventsStore.setLatestLootId(null);
+        gameEventsStore.setPendingBattle(event.f.w);
       }
 
       if (
@@ -260,11 +246,11 @@ export const useEventHandlers = (config: EventHandlersConfig) => {
         event.item &&
         event.loot?.source === "fight"
       ) {
-        latestLootId.current = null;
+        gameEventsStore.setLatestLootId(null);
         createLootFromBattle?.(event);
       }
     },
-    [createLootFromBattle, latestLootId, pendingBattle],
+    [createLootFromBattle],
   );
 
   return {

@@ -2,7 +2,11 @@ import { useCallback } from "react";
 import { Game } from "@/lib/game";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { PickedNpcType, GameNpcWithLocation } from "@/store/npc-detector.store";
+import {
+  PickedNpcType,
+  GameNpcWithLocation,
+  useNpcDetectorStore,
+} from "@/store/npc-detector.store";
 import { GameNpc } from "@/types/margonem/npcs";
 import { NpcTpl } from "@/types/margonem/npc-tpl-manager";
 import { ProcessedNpcSettings, NpcProcessorsConfig, EventNpc } from "./types";
@@ -20,18 +24,19 @@ const isPickedNpcType = (npcType: NpcType): npcType is PickedNpcType => {
 
 export const useNpcProcessors = (config: NpcProcessorsConfig) => {
   const { characterId } = useGlobalStore((s) => s.gameState);
+  const { settings } = useNpcDetectorStore();
 
-  const { settingsRef, handleSendMessage, handleSendNotification } = config;
+  const { handleSendMessage, handleSendNotification } = config;
   const processNpcSettings = useCallback(
     (
       npc: EventNpc,
       npcType: NpcType,
-      event?: GameEvent
+      event?: GameEvent,
     ): ProcessedNpcSettings | null => {
       if (!characterId || !isPickedNpcType(npcType)) return null;
 
-      const settings = settingsRef.current?.[characterId]?.[npcType];
-      if (!settings?.detect) return null;
+      const npcSettings = settings[characterId]?.[npcType];
+      if (!npcSettings?.detect) return null;
 
       const icon = event
         ? getNpcIconFromEvent(event, npc.icon.id) ||
@@ -39,50 +44,50 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
           ""
         : Game.getNpcIcon(npc.icon.id) || "";
 
-      const autoSendMessage = settings.autoNotifyChat ?? false;
-      const autoSendNotification = settings.autoNotifyClan ?? false;
-      const guildIds = settings.guildIds ?? [];
+      const autoSendMessage = npcSettings.autoNotifyChat ?? false;
+      const autoSendNotification = npcSettings.autoNotifyClan ?? false;
+      const guildIds = npcSettings.guildIds ?? [];
 
       return {
-        settings,
+        settings: npcSettings,
         icon,
         autoSendMessage,
         autoSendNotification,
         guildIds,
       };
     },
-    [characterId]
+    [characterId, settings],
   );
 
   const processGameNpcSettings = useCallback(
     (npc: GameNpc, npcType: NpcType): ProcessedNpcSettings | null => {
       if (!characterId || !isPickedNpcType(npcType)) return null;
 
-      const settings = settingsRef.current?.[characterId]?.[npcType];
-      if (!settings?.detect) return null;
+      const npcSettings = settings[characterId]?.[npcType];
+      if (!npcSettings?.detect) return null;
 
       const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
 
-      const autoSendMessage = settings.autoNotifyChat ?? false;
-      const autoSendNotification = settings.autoNotifyClan ?? false;
-      const guildIds = settings.guildIds ?? [];
+      const autoSendMessage = npcSettings.autoNotifyChat ?? false;
+      const autoSendNotification = npcSettings.autoNotifyClan ?? false;
+      const guildIds = npcSettings.guildIds ?? [];
 
       return {
-        settings,
+        settings: npcSettings,
         icon,
         autoSendMessage,
         autoSendNotification,
         guildIds,
       };
     },
-    [characterId]
+    [characterId, settings],
   );
 
   const composeNpcFromEvent = useCallback(
     (
       npc: EventNpc,
       tpl: NpcTpl,
-      processedSettings: ProcessedNpcSettings
+      processedSettings: ProcessedNpcSettings,
     ): GameNpcWithLocation => ({
       ...npc,
       icon: processedSettings.icon,
@@ -95,13 +100,13 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
       notificationSent: processedSettings.autoSendNotification,
       msgSent: processedSettings.autoSendMessage,
     }),
-    []
+    [],
   );
 
   const composeNpcFromGame = useCallback(
     (
       npc: GameNpc,
-      processedSettings: ProcessedNpcSettings
+      processedSettings: ProcessedNpcSettings,
     ): GameNpcWithLocation => ({
       ...npc,
       icon: processedSettings.icon,
@@ -114,7 +119,7 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
       notificationSent: processedSettings.autoSendNotification,
       msgSent: processedSettings.autoSendMessage,
     }),
-    []
+    [],
   );
 
   const processNpcActions = useCallback(
@@ -123,7 +128,7 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
       npcType: NpcType,
       guildIds: string[],
       autoSendMessage: boolean,
-      autoSendNotification: boolean
+      autoSendNotification: boolean,
     ) => {
       if (autoSendMessage) {
         handleSendMessage(
@@ -134,7 +139,7 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
             x: composedNpc.x,
             y: composedNpc.y,
           },
-          guildIds
+          guildIds,
         );
       }
 
@@ -142,7 +147,7 @@ export const useNpcProcessors = (config: NpcProcessorsConfig) => {
         handleSendNotification(composedNpc, guildIds);
       }
     },
-    [handleSendMessage, handleSendNotification]
+    [handleSendMessage, handleSendNotification],
   );
 
   return {

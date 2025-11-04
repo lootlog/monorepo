@@ -24,10 +24,28 @@ export class UserLootlogConfigService {
     return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:${accountId}`;
   }
 
+  private getUserLootlogCharacterConfigCacheKey(
+    discordId: string,
+    accountId: string,
+    characterId: string,
+  ): string {
+    return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:${accountId}:${characterId}`;
+  }
+
   async invalidateUserLootlogConfigCache(
     discordId: string,
     accountId?: string,
+    characterId?: string,
   ): Promise<void> {
+    if (accountId && characterId) {
+      const characterCacheKey = this.getUserLootlogCharacterConfigCacheKey(
+        discordId,
+        accountId,
+        characterId,
+      );
+      await this.redisService.del(characterCacheKey);
+    }
+
     if (accountId) {
       const cacheKey = this.getUserLootlogConfigCacheKey(discordId, accountId);
       await this.redisService.del(cacheKey);
@@ -162,6 +180,17 @@ export class UserLootlogConfigService {
     accountId: string,
     characterId: string,
   ) {
+    const cacheKey = this.getUserLootlogCharacterConfigCacheKey(
+      discordId,
+      accountId,
+      characterId,
+    );
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
     const characterConfig =
       await this.prisma.userCharactersLootlogSettings.findFirst({
         where: {
@@ -173,6 +202,14 @@ export class UserLootlogConfigService {
           createdAt: 'desc',
         },
       });
+
+    if (characterConfig) {
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(characterConfig),
+        USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
+      );
+    }
 
     return characterConfig;
   }
@@ -216,7 +253,11 @@ export class UserLootlogConfigService {
       },
     });
 
-    await this.invalidateUserLootlogConfigCache(discordId, accountId);
+    await this.invalidateUserLootlogConfigCache(
+      discordId,
+      accountId,
+      data.characterId,
+    );
 
     return config;
   }
