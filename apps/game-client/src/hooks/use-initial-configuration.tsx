@@ -6,7 +6,7 @@ import { getInterfaceName } from "@/lib/game/get-interface-name";
 import { getWorldName } from "@/lib/game/get-world-name";
 import { useGlobalStore } from "@/store/global.store";
 import {
-  NotificationsSettings,
+  type NotificationsSettings,
   recommendedSettings as recommendedNotificationsSettings,
   useNotificationsStore,
 } from "@/store/notifications.store";
@@ -16,8 +16,7 @@ import {
 } from "@/store/npc-detector.store";
 import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { gameEventsManager } from "@/lib/game-events-manager";
-import { isEmpty } from "lodash";
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useGuilds } from "@/hooks/api/use-guilds";
 
 export const useInitialConfiguration = () => {
@@ -33,7 +32,7 @@ export const useInitialConfiguration = () => {
     timeoutId: null as NodeJS.Timeout | null,
   });
 
-  const scheduleInitCheck = () => {
+  const scheduleInitCheck = useEffectEvent(() => {
     if (initializationRef.current.timeoutId) {
       clearTimeout(initializationRef.current.timeoutId);
     }
@@ -41,15 +40,19 @@ export const useInitialConfiguration = () => {
     initializationRef.current.timeoutId = setTimeout(() => {
       checkAndInitialize();
     }, 0);
-  };
+  });
 
   const checkAndInitialize = () => {
-    if (initializationRef.current.initialized) return;
+    if (initializationRef.current.initialized) {
+      return;
+    }
 
     const interfaceName = getInterfaceName();
     const initialized = getInitializeState(interfaceName);
 
-    if (!initialized) return;
+    if (!initialized) {
+      return;
+    }
 
     initializationRef.current.initialized = true;
 
@@ -78,42 +81,43 @@ export const useInitialConfiguration = () => {
     }
   };
 
-  const initNotificationsConfiguration = () => {
-    if (isEmpty(notificationsSettings)) {
-      const recommendedNotificationsSettingsWithGuilds = Object.entries(
-        recommendedNotificationsSettings
-      ).reduce((acc, [key, value]) => {
-        acc[key as keyof NotificationsSettings] = {
-          ...value,
-          guildIds: guilds?.map((guild) => guild.id) || [],
-        };
-        return acc;
-      }, {} as NotificationsSettings);
-
-      const charactersSettings = characterList?.reduce(
-        (acc, character) => {
-          acc[character.id] = recommendedNotificationsSettingsWithGuilds;
+  const initNotificationsConfiguration = useEffectEvent(
+    (characterId: string) => {
+      if (!notificationsSettings[characterId]) {
+        const recommendedNotificationsSettingsWithGuilds = Object.entries(
+          recommendedNotificationsSettings,
+        ).reduce((acc, [key, value]) => {
+          acc[key as keyof NotificationsSettings] = {
+            ...value,
+            guildIds: guilds?.map((guild) => guild.id) || [],
+          };
           return acc;
-        },
-        {} as Record<string, NotificationsSettings>
-      );
+        }, {} as NotificationsSettings);
 
-      setNotificationsState(charactersSettings || {});
-    }
-  };
+        setNotificationsState({
+          ...notificationsSettings,
+          [characterId]: recommendedNotificationsSettingsWithGuilds,
+        });
+      }
+    },
+  );
 
   useEffect(() => {
+    const init = initializationRef;
+
     gameEventsManager.setupProxies();
+
     gameEventsManager.setGameInitCallback(() => {
-      if (!initializationRef.current.initialized) {
+      if (!init.current.initialized) {
         scheduleInitCheck();
       }
     });
 
     return () => {
       gameEventsManager.cleanup();
-      if (initializationRef.current.timeoutId) {
-        clearTimeout(initializationRef.current.timeoutId);
+      const timeoutId = init.current.timeoutId;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
     };
   }, []);
@@ -125,7 +129,7 @@ export const useInitialConfiguration = () => {
       characterList &&
       guilds
     ) {
-      initNotificationsConfiguration();
+      initNotificationsConfiguration(gameState.characterId);
     }
   }, [gameState.characterId, gameState.gameInitialized, characterList, guilds]);
 };
