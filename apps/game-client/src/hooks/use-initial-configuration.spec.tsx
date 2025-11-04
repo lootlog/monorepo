@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useInitialConfiguration } from "./use-initial-configuration";
-import { useGlobalStore } from "@/store/global.store";
+import { LanguageVersion, useGlobalStore } from "@/store/global.store";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import { useGuilds } from "@/hooks/api/use-guilds";
@@ -94,12 +94,12 @@ describe("useInitialConfiguration", () => {
     vi.mocked(gameEventsManager).setReady = mockSetReady;
     vi.mocked(gameEventsManager).cleanup = mockCleanup;
 
-    vi.mocked(getInterfaceName).mockReturnValue("interface1");
+    vi.mocked(getInterfaceName).mockReturnValue("ni");
     vi.mocked(getInitializeState).mockReturnValue(false);
     vi.mocked(getWorldName).mockReturnValue("world1");
     vi.mocked(getAccountId).mockReturnValue("account1");
     vi.mocked(getCharacterId).mockReturnValue("char1");
-    vi.mocked(getLanguageVersion).mockReturnValue("pl");
+    vi.mocked(getLanguageVersion).mockReturnValue(LanguageVersion.PL);
   });
 
   afterEach(() => {
@@ -229,7 +229,7 @@ describe("useInitialConfiguration", () => {
       vi.mocked(useGlobalStore).mockReturnValue({
         gameState: {
           gameInitialized: true,
-          gameInterface: "interface1",
+          gameInterface: "ni",
           world: "world1",
           accountId: "account1",
           characterId: "char1",
@@ -294,7 +294,7 @@ describe("useInitialConfiguration", () => {
       vi.mocked(useGlobalStore).mockReturnValue({
         gameState: {
           gameInitialized: true,
-          gameInterface: "interface1",
+          gameInterface: "ni",
           world: "world1",
           accountId: "account1",
           characterId: "char1",
@@ -319,7 +319,7 @@ describe("useInitialConfiguration", () => {
       vi.mocked(useGlobalStore).mockReturnValue({
         gameState: {
           gameInitialized: true,
-          gameInterface: "interface1",
+          gameInterface: "ni",
           world: "world1",
           accountId: "account1",
           characterId: "char1",
@@ -376,7 +376,7 @@ describe("useInitialConfiguration", () => {
     it("should set recommended detector settings only for current character when they don't exist", () => {
       vi.mocked(getInitializeState).mockReturnValue(true);
 
-      const { result } = renderHook(() => useInitialConfiguration());
+      renderHook(() => useInitialConfiguration());
 
       const gameInitCallback = mockSetGameInitCallback.mock.calls[0][0];
       gameInitCallback();
@@ -504,7 +504,7 @@ describe("useInitialConfiguration", () => {
 
       expect(mockSetGameState).toHaveBeenCalledWith({
         gameInitialized: true,
-        gameInterface: "interface1",
+        gameInterface: "ni",
         world: "world1",
         accountId: "account1",
         characterId: "char1",
