@@ -12,7 +12,7 @@ import {
 export class CreateManualTimerDto {
   @IsString()
   @IsNotEmpty()
-  @MaxLength(20)
+  @MaxLength(50)
   name: string;
 
   @IsOptional()

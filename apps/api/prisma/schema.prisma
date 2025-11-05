@@ -317,6 +317,7 @@ model UserTimerSettings {
   overriddenDefaultColors Json
   hiddenDefaultColors     Json
   timerFiltersEnabled     Boolean  @default(true)
+  colorFiltersEnabled     Boolean  @default(false)
   timersSortOrder         String   @default("asc")
   syncEnabled             Boolean  @default(true)
   createdAt               DateTime @default(now())
