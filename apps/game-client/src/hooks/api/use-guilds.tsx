@@ -14,7 +14,7 @@ export const useGuilds = () => {
       }),
     select: (response) => response.data,
     refetchOnMount: true,
-    staleTime: 1 * 30 * 1000, // 30 seconds
+    staleTime: 0,
   });
 
   return query;

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useEffect, useState } from "react";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useGlobalStore } from "@/store/global.store";
@@ -16,12 +16,13 @@ type Props = {
 };
 
 export const GatewayContext = createContext<GatewayProviderValue | undefined>(
-  undefined
+  undefined,
 );
 GatewayContext.displayName = "GatewayContext";
 
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
-  const { gameState } = useGlobalStore((state) => state);
+  const { gameInitialized } = useGlobalStore((s) => s.gameState);
+
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
 
@@ -50,7 +51,9 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   }, []);
 
   const emitJoin = useCallback(() => {
-    const { world, gameInitialized, characterId, accountId } = gameState;
+    const world = Game.getWorldName();
+    const characterId = String(Game.hero.id);
+    const accountId = String(Game.hero.account);
 
     if (connected && gameInitialized) {
       socket.emit(GatewayEvent.JOIN, {
@@ -70,7 +73,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
         },
       });
     }
-  }, [connected, gameState]);
+  }, [connected, gameInitialized]);
 
   useEffect(() => {
     const cleanup = setupBaseListeners();

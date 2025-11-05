@@ -168,7 +168,7 @@ export const useCreateTimer = () => {
         npcId: timer.npc.id,
         member: {
           id: 0,
-          userId: timer.characterId,
+          userId: String(timer.characterId),
           name: "",
           type: "",
           guildId,

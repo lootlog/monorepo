@@ -1,12 +1,11 @@
-import { FC, Fragment, useMemo } from "react";
+import { type FC, Fragment, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
-  NotificationWithServers,
+  type NotificationWithServers,
   useNotificationsStore,
 } from "@/store/notifications.store";
 import { Separator } from "@radix-ui/react-select";
-import { useGlobalStore } from "@/store/global.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { format } from "date-fns";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
@@ -19,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { Game } from "@/lib/game";
 
 export type SingleNotificationProps = {
   notification: NotificationWithServers;
@@ -34,7 +34,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
   now,
 }) => {
   const { removeNotification, settings } = useNotificationsStore();
-  const { characterId } = useGlobalStore((s) => s.gameState);
+  const characterId = String(Game.hero.id);
   const { data: members } = useGuildMembers(notification.guildId);
   const { data: guilds } = useGuilds();
   const guildMember = members?.[notification.discordId];
@@ -124,12 +124,12 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
           />
         )}
       </span>
-      <span className="ll:flex ll:flex-col ll:justify-center"></span>
+      <span className="ll:flex ll:flex-col ll:justify-center" />
       {autoHideTimeout > 0 && secondsLeft > 0 && (
         <>
-          <Separator className="ll:bg-black/70 ll:h-[1px]" />
+          <Separator className="ll:bg-black/70 ll:h-px" />
           <Progress value={secondsLeftPercentage} indicatorColor={color} />
-          <Separator className="ll:bg-black/70 ll:h-[1px]" />
+          <Separator className="ll:bg-black/70 ll:h-px" />
         </>
       )}
     </Fragment>

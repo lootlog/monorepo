@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { Npc } from "@/utils/game/get-battle-participants";
+import type { Npc } from "@/utils/game/get-battle-participants";
 
 export type UseCreateNotificationOptions = {
   npc?: Npc;

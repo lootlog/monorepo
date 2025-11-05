@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useNotificationsStore,
-  NotificationWithServers,
+  type NotificationWithServers,
 } from "@/store/notifications.store";
-import { useGlobalStore } from "@/store/global.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
-import { Notification } from "@/features/notifications/hooks/use-notifications";
+import type { Notification } from "@/features/notifications/hooks/use-notifications";
+import { Game } from "@/lib/game";
 
 export interface UseVisibleNotificationsOptions {
   autoCleanup?: boolean;
@@ -29,7 +29,8 @@ export const useVisibleNotifications = ({
 }: UseVisibleNotificationsOptions = {}): UseVisibleNotificationsResult => {
   const { notifications, settings, removeNotification } =
     useNotificationsStore();
-  const { characterId, world } = useGlobalStore((s) => s.gameState);
+  const characterId = String(Game.hero.id);
+  const world = Game.getWorldName();
 
   const [now, setNow] = useState(() => Date.now());
 

@@ -1,10 +1,9 @@
 import { NpcTile } from "@/components/npc-tile";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useGlobalStore } from "@/store/global.store";
 import {
-  GameNpcWithLocation,
-  PickedNpcType,
+  type DetectorNpcType,
+  type GameNpcWithLocation,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
@@ -18,6 +17,7 @@ import {
   getGradient,
 } from "@/utils/notifications-and-detector/background";
 import { NpcType } from "@/hooks/api/use-npcs";
+import { Game } from "@/lib/game";
 
 export type NpcListItemProps = {
   npc: GameNpcWithLocation;
@@ -28,14 +28,15 @@ export const NPCS_WITH_LOCATION = [NpcType.HERO];
 
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { npcs, removeNpc, settings, setNpcState } = useNpcDetectorStore();
-  const { characterId, world } = useGlobalStore((s) => s.gameState);
+  const characterId = String(Game.hero.id);
+  const world = Game.getWorldName();
   const { mutate: sendChatMessage, isPending: isSendChatMessagePending } =
     useSendChatMessage();
   const { mutate: createNotification, isPending: isCreateNotificationPending } =
     useCreateNotification();
 
   const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
-  const settingsByNpcType = settings[characterId!][npcType as PickedNpcType];
+  const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
   const key = npcType;
 
   const handleRemoveNpc = (npcId: number) => {
@@ -93,7 +94,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
     const chatMessage = composeNpcChatMessage(
       npcType,
       `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
-      location
+      location,
     );
 
     sendChatMessage(
@@ -108,7 +109,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
             msgSent: true,
           });
         },
-      }
+      },
     );
   };
 
@@ -160,7 +161,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         {npcs.length > 1 && (
           <XIcon
             className={cn(
-              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors"
+              "ll-custom-cursor-pointer ll:text-gray-300 ll:hover:text-gray-100 ll:transition-colors",
             )}
             size="16"
             onClick={() => handleRemoveNpc(npc.id)}
@@ -168,7 +169,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         )}
       </span>
 
-      {npcs.length > 1 && <Separator className="ll:bg-gray-600 ll:h-[1px]" />}
+      {npcs.length > 1 && <Separator className="ll:bg-gray-600 ll:h-px" />}
     </span>
   );
 };

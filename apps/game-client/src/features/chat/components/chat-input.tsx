@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
-import { useGlobalStore } from "@/store/global.store";
+import { Game } from "@/lib/game";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FC } from "react";
 import { useForm } from "react-hook-form";
@@ -23,7 +23,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   selectedGuildId,
   autofocus,
 }) => {
-  const { world } = useGlobalStore((state) => state.gameState);
+  const world = Game.getWorldName();
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
 

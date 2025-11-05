@@ -6,8 +6,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
-import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import { useDeepCompareEffect } from "react-use";
@@ -25,17 +25,17 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
   onChange,
   value,
 }) => {
-  const { characterId } = useGlobalStore((state) => state.gameState);
+  const characterId = String(Game.hero.id);
   const { data: guilds, isFetched } = useGuilds();
   const { setGuildId, guildIdByCharId } = useSettingsStore();
 
-  const guildId = guildIdByCharId[characterId!];
+  const guildId = guildIdByCharId[characterId];
 
   useDeepCompareEffect(() => {
     if (!isFetched || !guilds || guilds.length === 0 || value) return;
     const exists = guilds.some((guild) => guild.id === guildId);
     if (!exists) {
-      setGuildId(characterId!, guilds[0].id);
+      setGuildId(characterId, guilds[0].id);
     }
   }, [guilds, isFetched, guildId]);
 
@@ -47,7 +47,7 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
       return;
     }
 
-    setGuildId(characterId!, newGuildId);
+    setGuildId(characterId, newGuildId);
   };
 
   return (
@@ -67,7 +67,7 @@ export const GuildSelector: FC<GuildSelectorProps> = ({
           className="ll:h-4 ll:text-sm ll:text-white"
         />
       </SelectTrigger>
-      <SelectContent className="ll:font-sans ll:z-[500] ll:w-[232px] ll:py-1">
+      <SelectContent className="ll:font-sans ll:z-500 ll:w-[232px] ll:py-1">
         {guilds?.map((guild) => {
           return (
             <SelectItem

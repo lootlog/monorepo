@@ -3,8 +3,8 @@ import { useLocalStorage } from "react-use";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
-import { useGlobalStore } from "@/store/global.store";
 import { Button } from "@/components/ui/button";
+import { Game } from "@/lib/game";
 
 const STORAGE_KEY = "ll-catching-whitelist-warning-dismissed";
 
@@ -17,7 +17,7 @@ export const CatchingWhitelistWarning: FC = () => {
   const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: lootlogCharactersConfig, isSuccess } =
     useLootlogCharactersConfig();
-  const characterId = useGlobalStore((state) => state.gameState.characterId);
+  const characterId = String(Game.hero.id);
   const [dismissedCharacters, setDismissedCharacters] =
     useLocalStorage<DismissedCharacters>(STORAGE_KEY, {});
   const [hasChecked, setHasChecked] = useState(false);

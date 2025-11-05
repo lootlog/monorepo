@@ -1,5 +1,5 @@
 import { NpcType } from "@/hooks/api/use-npcs";
-import { GameNpc } from "@/types/margonem/npcs";
+import type { GameNpc } from "@/types/margonem/npcs";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -8,12 +8,6 @@ export type GameNpcWithLocation = GameNpc & {
   msgSent: boolean;
   notificationSent: boolean;
 };
-
-export type PickedNpcType =
-  | NpcType.HERO
-  | NpcType.COLOSSUS
-  | NpcType.TITAN
-  | NpcType.ELITE2;
 
 export interface NpcDetectorSettingByNpc {
   detect: boolean;
@@ -25,9 +19,15 @@ export interface NpcDetectorSettingByNpc {
   guildIds: string[];
 }
 
+export type DetectorNpcType =
+  | NpcType.HERO
+  | NpcType.COLOSSUS
+  | NpcType.TITAN
+  | NpcType.ELITE2;
+
 export type NpcDetectorSettings = Pick<
   Record<NpcType, NpcDetectorSettingByNpc>,
-  PickedNpcType
+  DetectorNpcType
 >;
 
 interface NpcDetectorState {
@@ -99,7 +99,7 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
       removeNpc: (npcId: number | number[]) =>
         set((state) => ({
           npcs: state.npcs.filter((npc) =>
-            Array.isArray(npcId) ? !npcId.includes(npc.id) : npc.id !== npcId
+            Array.isArray(npcId) ? !npcId.includes(npc.id) : npc.id !== npcId,
           ),
         })),
       clearNpcs: () => set({ npcs: [] }),
@@ -120,14 +120,14 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
               acc[characterId] = settings;
               return acc;
             },
-            {} as Record<string, NpcDetectorSettings>
+            {} as Record<string, NpcDetectorSettings>,
           );
           return { settings: newSettings };
         }),
       setNpcState: (npcId: number, npc: GameNpcWithLocation) => {
         set((state) => {
           const npcs = state.npcs.map((n) =>
-            n.id === npcId ? { ...n, ...npc } : n
+            n.id === npcId ? { ...n, ...npc } : n,
           );
           return { npcs };
         });
@@ -140,6 +140,6 @@ export const useNpcDetectorStore = create<NpcDetectorState>()(
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
-    }
-  )
+    },
+  ),
 );
