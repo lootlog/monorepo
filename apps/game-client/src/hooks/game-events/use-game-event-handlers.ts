@@ -1,112 +1,82 @@
-import { useCallback, useRef } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useGlobalStore } from "@/store/global.store";
-import { useNotificationsStore } from "@/store/notifications.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import type { W } from "@/types/margonem/game-events/f";
 
-import { useValidationHelpers } from "./use-validation-helpers";
-import { useMessagingHandlers } from "./use-messaging-handlers";
-import { useNpcProcessors } from "./use-npc-processors";
 import { useLootHandlers } from "./use-loot-handlers";
-import { useEventHandlers } from "./use-event-handlers";
 import { useBattleEventHandler } from "@/hooks/game-events/use-battle-event-handler";
+import { gameEventsManager } from "@/lib/game-events-manager";
+import { useChatEventsHandlers } from "@/hooks/game-events/use-chat-events-handler";
+import { useDialogHandlers } from "@/hooks/game-events/use-dialog-handlers";
+import { useNpcsHandlers } from "@/hooks/game-events/use-npcs-handler";
+import { useNpcsDeleteHandlers } from "@/hooks/game-events/use-npcs-delete-handlers";
 
-export const useGameEventHandlers = (settingsRef: React.RefObject<any>) => {
-  const { gameInitialized, characterId, accountId, world } = useGlobalStore(
-    (s) => s.gameState,
-  );
+const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
+  "chat",
+  "d",
+  "npcs",
+  "npcs_del",
+  "item",
+  "loot",
+  "f",
+];
 
-  const { removeNotificationByNpcId } = useNotificationsStore();
+export const useGameEventHandlers = () => {
+  const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
+  const [initialized, setInitialized] = useState(false);
 
-  // Refs for tracking state
-  const pendingBattle = useRef<W | null>(null);
-  const talkingNpcId = useRef<string | null>(null);
-  const latestLootId = useRef<number | null>(null);
+  const { handleChatEvents } = useChatEventsHandlers();
+  const { handleDialogEvents } = useDialogHandlers();
+  const { handleNpcDetection, handleInitialNpcsDetection } = useNpcsHandlers();
+  const { handleLootFromBattle, handleDialogLoot } = useLootHandlers();
+  const { handleBattleEvents } = useBattleEventHandler();
+  const { handleNpcsDelete } = useNpcsDeleteHandlers();
 
-  // Custom hooks
-  const { isValidGameState, isLootDistributionMessage } = useValidationHelpers(
-    world,
-    characterId,
-    accountId,
-  );
+  const handleEvent = (event: GameEvent) => {
+    // Check for relevant event keys
+    const hasRelevantKey = RELEVANT_EVENT_KEYS.some(
+      (key) => event[key] !== undefined,
+    );
+    if (!hasRelevantKey) return;
 
-  const { handleSendMessage, handleSendNotification } = useMessagingHandlers();
-
-  const {
-    processNpcSettings,
-    processGameNpcSettings,
-    composeNpcFromEvent,
-    composeNpcFromGame,
-    processNpcActions,
-  } = useNpcProcessors({
-    settingsRef,
-    handleSendMessage,
-    handleSendNotification,
-  });
-
-  const { createLootFromBattle, handleUpdateLoot, handleDialogLoot } =
-    useLootHandlers({
-      isValidGameState,
-      pendingBattle,
-      talkingNpcId,
-      latestLootId,
-      isLootDistributionMessage,
-    });
-
-  const {
-    handleNpcDetection,
-    handleInitialNpcsDetection,
-    handleRespawnTimers,
-    handleChatEvents,
-    handleDialogEvents,
-    handleBattleEvents,
-  } = useEventHandlers({
-    isValidGameState,
-    processNpcSettings,
-    processGameNpcSettings,
-    composeNpcFromEvent,
-    composeNpcFromGame,
-    processNpcActions,
-    removeNotificationByNpcId,
-    pendingBattle,
-    talkingNpcId,
-    latestLootId,
-    createLootFromBattle,
-    handleUpdateLoot,
-    handleDialogLoot,
-    isLootDistributionMessage,
-  });
-
-  const { handleBattleEventsV2 } = useBattleEventHandler();
-
-  const handleEvent = useCallback(
-    (event: GameEvent) => {
-      // Early return for invalid events
-      if (!isValidGameState || Object.keys(event).length <= 2) return;
-
-      // Process different event types
-      if (event.chat) handleChatEvents(event);
-      if (event.d) handleDialogEvents(event);
-      if (event.f) handleBattleEvents(event);
-      if (event.f) handleBattleEventsV2(event);
-      if (event.npcs) handleNpcDetection(event);
-      if (event.item) handleDialogLoot(event);
-      if (event.npcs_del?.length) handleRespawnTimers(event);
-    },
-    [
-      isValidGameState,
-      handleChatEvents,
-      handleDialogEvents,
-      handleBattleEvents,
-      handleNpcDetection,
-      handleDialogLoot,
-      handleRespawnTimers,
-    ],
-  );
-
-  return {
-    gameInitialized,
-    handleEvent,
-    handleInitialNpcsDetection,
+    // Process different event types
+    handleChatEvents(event);
+    handleDialogEvents(event);
+    handleBattleEvents(event);
+    handleNpcDetection(event);
+    handleLootFromBattle(event);
+    handleDialogLoot(event);
+    handleNpcsDelete(event);
   };
+
+  const setupGameEventHandler = useEffectEvent(() => {
+    gameEventsManager.setProcessor(handleEvent);
+
+    setInitialized(true);
+  });
+
+  const removeGameEventsHandler = useEffectEvent(() => {
+    gameEventsManager.removeProcessor();
+  });
+
+  const handleInitialEvents = useEffectEvent(() => {
+    handleInitialNpcsDetection();
+  });
+
+  useEffect(() => {
+    if (!gameInitialized || !initialized) return;
+
+    handleInitialEvents();
+  }, [gameInitialized, initialized]);
+
+  useEffect(() => {
+    if (initialized) return;
+
+    setupGameEventHandler();
+  }, [initialized]);
+
+  useEffect(() => {
+    return () => {
+      removeGameEventsHandler();
+    };
+  }, []);
 };

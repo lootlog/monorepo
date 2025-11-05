@@ -2,6 +2,7 @@ import { type FC, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Loader2 } from "lucide-react";
 import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { useUpdateLootlogCharactersConfig } from "@/hooks/api/use-update-lootlog-characters-config";
 import { useGuilds } from "@/hooks/api/use-guilds";
@@ -21,9 +22,12 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
 }) => {
   const { data: guilds } = useGuilds();
-  const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
-  const { mutate: updateLootlogCharacterConfig } =
-    useUpdateLootlogCharactersConfig();
+  const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
+    useLootlogCharactersConfig();
+  const {
+    mutate: updateLootlogCharacterConfig,
+    isPending: isUpdatingLootlogConfig,
+  } = useUpdateLootlogCharactersConfig();
   const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -91,9 +95,16 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     };
   }, [characterId, watch]);
 
+  const isPending = isLootlogConfigLoading || isUpdatingLootlogConfig;
+
   return (
-    <div className="ll:py-4">
-      <h4 className="ll:mb-2">Wybierz serwery na które zbierać dane:</h4>
+    <div className="ll:py-4 ll:relative">
+      <div className="ll:flex ll:items-center ll:justify-between ll:mb-2 ll:h-4">
+        <h4>Wybierz serwery na które zbierać dane:</h4>
+        {isPending && (
+          <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />
+        )}
+      </div>
       <div>
         <div className="ll:grid ll:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] ll:gap-3">
           {guilds?.map((guild) => (

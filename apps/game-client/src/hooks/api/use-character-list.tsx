@@ -1,7 +1,9 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { LanguageVersion, useGlobalStore } from "@/store/global.store";
+import { Game } from "@/lib/game";
+import { LanguageVersion } from "@/store/global.store";
+import { getLanguageVersion } from "@/utils/game/get-language-version";
 import { useQuery } from "@tanstack/react-query";
-import { get } from "lodash";
+import get from "lodash/get";
 
 const MARGONEM_CHARTACTER_LIST_URL =
   "https://public-api.margonem.pl/account/charlist";
@@ -22,15 +24,11 @@ export type MargonemCharacter = {
 };
 
 export const useCharacterList = () => {
-  const { world, languageVersion, accountId } = useGlobalStore(
-    (state) => state.gameState,
-  );
   const { client } = useApiClient();
-  const hs3 = window.getCookie?.("hs3");
-  const url =
-    languageVersion === LanguageVersion.PL
-      ? MARGONEM_CHARTACTER_LIST_URL
-      : MARGONEM_CHARACTER_LIST_EN_URL;
+
+  const accountId = Game.hero.account;
+  const world = Game.getWorldName();
+  const languageVersion = getLanguageVersion(window.location.href);
 
   const query = useQuery({
     queryKey: ["characters", world],
@@ -49,6 +47,16 @@ export const useCharacterList = () => {
         return { data: cached };
       }
 
+      const hs3 = window.getCookie?.("hs3");
+      const url =
+        languageVersion === LanguageVersion.PL
+          ? MARGONEM_CHARTACTER_LIST_URL
+          : MARGONEM_CHARACTER_LIST_EN_URL;
+
+      if (!hs3) {
+        throw new Error("Missing required authentication cookie");
+      }
+
       const apiResponse = await client.get<MargonemCharacter[]>(
         `${url}?hs3=${hs3}`,
         {
@@ -65,15 +73,13 @@ export const useCharacterList = () => {
 
       return apiResponse;
     },
-
-    enabled: !!hs3 && !!languageVersion && !!accountId,
     select: (response) =>
       response.data
         .filter((char: MargonemCharacter) => char.world === world)
         .sort((a: MargonemCharacter, b: MargonemCharacter) => {
           return b.lvl - a.lvl;
         }),
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 0,
   });
 
   return query;

@@ -1,5 +1,5 @@
 import { Game } from "@/lib/game";
-import { W } from "@/types/margonem/game-events/f";
+import type { BattleWarriorsWithAccountId } from "@/store/game-store/battle.store";
 
 export type PartyMember = {
   id: number;
@@ -24,79 +24,55 @@ export type Npc = {
 };
 
 export const getBattleParticipants = (
-  initialParticipants: W | null,
-  endParticipants: W | null
+  battleWarriors: BattleWarriorsWithAccountId,
 ) => {
-  if (!initialParticipants) return { party: [], npcs: [] };
+  const party: PartyMember[] = [];
+  const npcs: Npc[] = [];
 
-  const { party, npcs } = Object.entries(initialParticipants).reduce(
-    (acc: { npcs: Npc[]; party: PartyMember[] }, [key, value]) => {
-      if (key === Game.hero.id.toString()) {
-        acc.party.push({
-          id: Game.hero.id,
-          name: Game.hero.nick,
-          icon: Game.hero.img,
+  Object.entries(battleWarriors).forEach(([key, value]) => {
+    if (key.startsWith("-")) {
+      const npcData = Game.getNpc(value.originalId);
+
+      if (!npcData) {
+        npcs.push({
+          id: value.originalId,
+          name: value.name,
+          icon: value.icon,
           hpp: value.hpp,
-          prof: Game.hero.prof,
-          lvl: Game.hero.lvl,
-          accountId: Game.hero.account,
-        });
-
-        return acc;
-      }
-
-      if (key.startsWith("-")) {
-        const hpp = endParticipants?.[key.replace("-", "")]?.hpp ?? 0;
-        const npcData = Game.getNpc(value.originalId);
-
-        if (!npcData) {
-          acc.npcs.push({
-            id: value.originalId,
-            name: value.name,
-            icon: value.icon,
-            hpp: hpp,
-            prof: value.prof,
-            lvl: value.lvl,
-            wt: value.wt,
-            location: Game.map.name,
-            type: value.type ?? 2,
-          });
-
-          return acc;
-        }
-
-        acc.npcs.push({
-          id: npcData.tpl,
-          name: npcData.nick,
-          icon: npcData.icon,
-          hpp: hpp,
-          prof: npcData.prof,
-          lvl: npcData.lvl,
-          wt: npcData.wt,
+          prof: value.prof,
+          lvl: value.lvl,
+          wt: value.wt,
           location: Game.map.name,
-          type: npcData.type,
+          type: value.type ?? 2,
         });
 
-        return acc;
+        return;
       }
 
-      let other = Game.getOther(key);
-      if (other) {
-        acc.party.push({
-          id: +other.id,
-          name: other.nick,
-          icon: other.icon,
-          hpp: value.hpp,
-          prof: other.prof,
-          lvl: other.lvl,
-          accountId: other.account,
-        });
-      }
+      npcs.push({
+        id: npcData.tpl,
+        name: npcData.nick,
+        icon: npcData.icon,
+        hpp: value.hpp,
+        prof: npcData.prof,
+        lvl: npcData.lvl,
+        wt: npcData.wt,
+        location: Game.map.name,
+        type: npcData.type,
+      });
+      return;
+    }
 
-      return acc;
-    },
-    { party: [], npcs: [] }
-  );
+    party.push({
+      id: value.originalId,
+      name: value.name,
+      icon: value.icon,
+      hpp: value.hpp,
+      prof: value.prof,
+      lvl: value.lvl,
+      accountId: value.accountId ?? 0,
+    });
+  });
 
   return { party, npcs };
 };

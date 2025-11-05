@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { useGuilds } from "@/hooks/api/use-guilds";
-import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import {
   Tooltip,
@@ -14,6 +13,7 @@ import { useDeepCompareEffect } from "react-use";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { Viewport } from "@radix-ui/react-scroll-area";
+import { Game } from "@/lib/game";
 
 export type GuildSwitcherProps = {
   disabled?: boolean;
@@ -29,17 +29,17 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   value,
 }) => {
   const scrollContainerRef = useRef<React.ElementRef<typeof Viewport>>(null);
-  const { characterId } = useGlobalStore((state) => state.gameState);
+  const characterId = String(Game.hero.id);
   const { data: guilds, isFetched } = useGuilds();
   const { setGuildId, guildIdByCharId } = useSettingsStore();
 
-  const guildId = guildIdByCharId[characterId!];
+  const guildId = guildIdByCharId[characterId];
 
   useDeepCompareEffect(() => {
     if (!isFetched || !guilds || guilds.length === 0 || value) return;
     const exists = guilds.some((guild) => guild.id === guildId);
     if (!exists) {
-      setGuildId(characterId!, guilds[0].id);
+      setGuildId(characterId, guilds[0].id);
     }
   }, [guilds, isFetched, guildId]);
 
@@ -50,7 +50,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       if (onChange) {
         onChange(guilds[0].id);
       } else {
-        setGuildId(characterId!, guilds[0].id);
+        setGuildId(characterId, guilds[0].id);
       }
     }
   }, [guilds, isFetched, value]);
@@ -65,7 +65,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
       return;
     }
 
-    setGuildId(characterId!, newGuildId);
+    setGuildId(characterId, newGuildId);
   };
 
   useEffect(() => {

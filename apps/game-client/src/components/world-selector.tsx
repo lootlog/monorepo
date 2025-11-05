@@ -6,10 +6,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWorlds } from "@/hooks/api/use-worlds";
+import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
-import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
-import { FC, useEffect } from "react";
+import { type FC, useEffect } from "react";
 
 export type WorldSelectorProps = {
   disabled?: boolean;
@@ -20,11 +20,11 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   disabled = false,
   className = "",
 }) => {
-  const { world: defaultWorld, characterId } = useGlobalStore(
-    (state) => state.gameState,
-  );
+  const characterId = String(Game.hero.id);
+  const defaultWorld = Game.getWorldName();
+
   const { guildIdByCharId, world, setWorld } = useSettingsStore();
-  const guildId = guildIdByCharId[characterId!];
+  const guildId = guildIdByCharId[characterId];
   const { data: worlds, isFetched } = useWorlds({ guildId });
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       </SelectTrigger>
       <SelectContent
         position="popper"
-        className="ll:font-sans ll:z-[500] ll:w-[120px] ll:py-1 ll:justify-center ll:items-center"
+        className="ll:font-sans ll:z-500 ll:w-[120px] ll:py-1 ll:justify-center ll:items-center"
       >
         {worlds?.map((world) => {
           return (

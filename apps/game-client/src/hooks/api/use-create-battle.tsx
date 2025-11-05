@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { GameEvent } from "@/types/margonem/game-events/game-event";
+import type { GameEvent } from "@/types/margonem/game-events/game-event";
 import { toast } from "sonner";
 import { LOOTLOG_APP_URL } from "@/config/app";
 
