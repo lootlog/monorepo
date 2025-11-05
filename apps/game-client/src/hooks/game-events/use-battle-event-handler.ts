@@ -52,8 +52,6 @@ export const useBattleEventHandler = () => {
 
       const battleHash = await createSHA256Hash(JSON.stringify(battleTurns));
 
-      console.log(battleHash);
-
       if (useBattleStore.getState().lastBattleHash !== battleHash) {
         const events = mapBattleEventsToPayload(
           useBattleStore.getState().events,
@@ -79,11 +77,6 @@ export const useBattleEventHandler = () => {
             });
           });
 
-          console.log("[BattleEventHandler] Creating battle", {
-            hasNegativeId,
-            teams: teams.size,
-          });
-
           if (!hasNegativeId && teams.size > 1) {
             createBattle({
               accountId,
@@ -94,8 +87,6 @@ export const useBattleEventHandler = () => {
           }
         }
       }
-
-      console.log("setting battle hash");
 
       battleStore.setLastBattleHash(battleHash);
 

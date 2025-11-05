@@ -27,11 +27,6 @@ export const useLootHandlers = () => {
 
     if (isEmpty(battleStore.battleWarriors)) return;
 
-    console.log(
-      "[LootHandlers] Handling battle loot",
-      battleStore.battleWarriors,
-    );
-
     lootStore.setLastLootId(null);
     createLootFromBattle(event);
   };
@@ -41,11 +36,6 @@ export const useLootHandlers = () => {
 
     const dialogStore = useDialogStore.getState();
     if (!dialogStore.talkingNpcId) return;
-
-    console.log(
-      "[LootHandlers] Handling dialog loot",
-      dialogStore.talkingNpcId,
-    );
 
     const lootStore = useLootStore.getState();
 
