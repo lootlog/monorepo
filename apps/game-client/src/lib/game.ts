@@ -10,10 +10,11 @@ export class Game {
   }
 
   static getInitializeState(): boolean {
-    return this.interface === "ni"
-      ? window.Engine?.interface?.alreadyInitialised ||
-          window.Engine?.interface?.getAlreadyInitialised?.()
-      : window.g?.init === 5;
+    return (
+      window.Engine?.interface?.alreadyInitialised ||
+      window.Engine?.interface?.getAlreadyInitialised?.() ||
+      window.g?.init === 5
+    );
   }
 
   static get hero(): GameHero {

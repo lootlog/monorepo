@@ -6,14 +6,12 @@ import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useWindowsStore } from "@/store/windows.store";
 import type { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
+import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 
 export const useMessagingHandlers = () => {
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
 
-  const world = Game.getWorldName();
-  const characterId = String(Game.hero.id);
-  const accountId = String(Game.hero.account);
   const { setOpen } = useWindowsStore();
 
   const handleSendMessage = (
@@ -22,8 +20,6 @@ export const useMessagingHandlers = () => {
     npcLocation: NpcLocation,
     guildIds: string[],
   ) => {
-    if (!sendChatMessage || !setOpen) return;
-
     let location = "";
 
     if (NPCS_WITH_LOCATION.includes(npcType)) {
@@ -45,8 +41,11 @@ export const useMessagingHandlers = () => {
     );
   };
 
-  const handleSendNotification = (npc: any, guildIds: string[]) => {
-    if (!createNotification || !world || !characterId || !accountId) return;
+  const handleSendNotification = (
+    npc: GameNpcWithLocation,
+    guildIds: string[],
+  ) => {
+    const world = Game.getWorldName();
 
     const payload = {
       npc: {

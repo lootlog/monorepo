@@ -22,9 +22,12 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
   characterId,
 }) => {
   const { data: guilds } = useGuilds();
-  const { data: lootlogCharactersConfig } = useLootlogCharactersConfig();
-  const { mutate: updateLootlogCharacterConfig, isPending } =
-    useUpdateLootlogCharactersConfig();
+  const { data: lootlogCharactersConfig, isPending: isLootlogConfigLoading } =
+    useLootlogCharactersConfig();
+  const {
+    mutate: updateLootlogCharacterConfig,
+    isPending: isUpdatingLootlogConfig,
+  } = useUpdateLootlogCharactersConfig();
   const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -92,9 +95,11 @@ export const CatchingSettingsForm: FC<CatchingSettingsFormProps> = ({
     };
   }, [characterId, watch]);
 
+  const isPending = isLootlogConfigLoading || isUpdatingLootlogConfig;
+
   return (
     <div className="ll:py-4 ll:relative">
-      <div className="ll:flex ll:items-center ll:justify-between ll:mb-2">
+      <div className="ll:flex ll:items-center ll:justify-between ll:mb-2 ll:h-4">
         <h4>Wybierz serwery na które zbierać dane:</h4>
         {isPending && (
           <Loader2 className="ll:size-4 ll:animate-spin ll:text-primary" />

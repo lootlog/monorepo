@@ -17,6 +17,21 @@ vi.mock("@/store/windows.store");
 vi.mock("@/store/timers.store");
 vi.mock("@/store/settings.store");
 
+vi.mock("@/lib/game", () => ({
+  Game: {
+    hero: { id: "char1" },
+    interface: "si",
+    getWorldName: () => "world1",
+    map: {},
+    npcs: [],
+    getOther: () => undefined,
+    getNpc: () => undefined,
+    getNpcTpl: () => undefined,
+    getNpcIcon: () => undefined,
+    getInitializeState: () => true,
+  },
+}));
+
 vi.mock("./components/timers-content", () => ({
   TimersContent: ({
     sortedTimers,

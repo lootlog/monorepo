@@ -25,8 +25,7 @@ export const useNpcsDeleteHandlers = () => {
       const characterId = Game.hero.id;
       const accountId = Game.hero.account;
 
-      if (!data || !npc.respBaseSeconds || !world || data.wt < MIN_NPC_WT)
-        return;
+      if (!data || !npc.respBaseSeconds || data.wt < MIN_NPC_WT) return;
 
       removeNpc(npc.id);
       removeNotificationByNpcId(npc.id, world);

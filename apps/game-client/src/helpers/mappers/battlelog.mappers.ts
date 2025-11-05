@@ -1,9 +1,10 @@
-import { UseCreateBattleOptions } from "@/hooks/api/use-create-battle";
-import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { isEmpty, map, pick } from "lodash";
+import type { UseCreateBattleOptions } from "@/hooks/api/use-create-battle";
+import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import isEmpty from "lodash/isEmpty";
+import pick from "lodash/pick";
 
 export const mapBattleEventsToPayload = (
-  events: GameEvent[]
+  events: GameEvent[],
 ): UseCreateBattleOptions["events"] | null => {
   if (!events || events.length === 0) return null;
 
@@ -40,8 +41,6 @@ export const mapBattleEventsToPayload = (
       party: !isEmpty(party) ? party : undefined,
     };
   });
-
-  //   console.log(result);
 
   // @ts-ignore
   return result;
