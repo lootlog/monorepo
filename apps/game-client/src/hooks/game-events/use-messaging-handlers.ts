@@ -1,25 +1,26 @@
 import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
 import { composeNpcChatMessage } from "@/utils/chat/compose-npc-chat-message";
-import { NpcLocation } from "./types";
+import type { NpcLocation } from "./types";
 import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
-import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { NpcType } from "@/hooks/api/use-npcs";
+import type { NpcType } from "@/hooks/api/use-npcs";
+import { Game } from "@/lib/game";
 
 export const useMessagingHandlers = () => {
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
-  const { world, characterId, accountId } = useGlobalStore(
-    (state) => state.gameState
-  );
+
+  const world = Game.getWorldName();
+  const characterId = String(Game.hero.id);
+  const accountId = String(Game.hero.account);
   const { setOpen } = useWindowsStore();
 
   const handleSendMessage = (
     npcType: NpcType,
     baseMessage: string,
     npcLocation: NpcLocation,
-    guildIds: string[]
+    guildIds: string[],
   ) => {
     if (!sendChatMessage || !setOpen) return;
 
@@ -40,7 +41,7 @@ export const useMessagingHandlers = () => {
         onSuccess: () => {
           setOpen("npc-detector", true);
         },
-      }
+      },
     );
   };
 

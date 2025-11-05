@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["packages/cli/src/index.ts"],
+      "project": ["packages/**/*.ts", "apps/**/*.ts"]
+    },
+    "apps/*": {
+      "entry": [
+        "src/index.ts",
+        "src/main.ts",
+        "src/app.tsx",
+        "src/App.tsx"
+      ]
+    },
+    "packages/*": {
+      "entry": ["src/index.ts", "index.ts"]
+    }
+  },
+  "ignore": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.e2e-spec.ts",
+    "**/dist/**",
+    "**/build/**",
+    "**/.next/**",
+    "**/generated/**",
+    "**/node_modules/**"
+  ],
+  "ignoreDependencies": [
+    "@changesets/cli",
+    "husky",
+    "lint-staged",
+    "prettier",
+    "turbo",
+    "tsx"
+  ]
+}

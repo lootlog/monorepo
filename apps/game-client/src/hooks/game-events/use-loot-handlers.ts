@@ -1,190 +1,163 @@
-import { useCallback } from "react";
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 import { Game } from "@/lib/game";
 import { getLoot } from "@/utils/game/get-loots";
 import {
   getBattleParticipants,
-  Npc,
-  PartyMember,
+  type Npc,
+  type PartyMember,
 } from "@/utils/game/get-battle-participants";
-import { GameEvent } from "@/types/margonem/game-events/game-event";
-import { CreateLootResponse, useCreateLoot } from "@/hooks/api/use-create-loot";
-import { LootHandlersConfig } from "./types";
-import { useGlobalStore } from "@/store/global.store";
-import { useUpdateLoot } from "@/hooks/api/use-update-loot";
+import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import {
+  type CreateLootResponse,
+  useCreateLoot,
+} from "@/hooks/api/use-create-loot";
+import { useBattleStore } from "@/store/game-store/battle.store";
+import isEmpty from "lodash/isEmpty";
+import { useLootStore } from "@/store/game-store/loot.store";
+import { useDialogStore } from "@/store/game-store/dialog.store";
 
-export const useLootHandlers = (config: LootHandlersConfig) => {
-  const { world, characterId, accountId } = useGlobalStore(
-    (state) => state.gameState
-  );
+export const useLootHandlers = () => {
   const { mutate: createLoot } = useCreateLoot();
-  const { mutate: updateLoot } = useUpdateLoot();
-  const {
-    isValidGameState,
-    pendingBattle,
-    talkingNpcId,
-    latestLootId,
-    isLootDistributionMessage,
-  } = config;
 
-  const createLootFromBattle = useCallback(
-    (event: GameEvent) => {
-      if (
-        !createLoot ||
-        !pendingBattle ||
-        !latestLootId ||
-        !pendingBattle.current
-      )
-        return;
+  const handleLootFromBattle = (event: GameEvent) => {
+    if (!event.item || event.loot?.source !== "fight") return;
 
-      const loots = getLoot(event.item);
-      if (!loots.length || !isValidGameState || !event.loot || !event.f) return;
+    const battleStore = useBattleStore.getState();
+    const lootStore = useLootStore.getState();
 
-      const { npcs, party } = getBattleParticipants(
-        pendingBattle.current,
-        event.f.w
-      );
+    if (isEmpty(battleStore.battleWarriors)) return;
 
-      createLoot(
-        {
-          world: world!,
-          source: event.loot.source.toUpperCase(),
-          location: Game.map.name,
-          npcs,
-          loots,
-          players: party,
-          accountId: accountId!,
-          characterId: characterId!,
-        },
-        {
-          onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
-            latestLootId.current = response.data.id;
-          },
-        }
-      );
-    },
-    [
-      isValidGameState,
-      world,
-      accountId,
-      characterId,
-      createLoot,
-      pendingBattle,
-      latestLootId,
-    ]
-  );
+    console.log(
+      "[LootHandlers] Handling battle loot",
+      battleStore.battleWarriors,
+    );
 
-  const createLootFromDialog = useCallback(
-    (event: GameEvent) => {
-      if (!createLoot || !latestLootId) return;
+    lootStore.setLastLootId(null);
+    createLootFromBattle(event);
+  };
 
-      const loots = getLoot(event.item);
-      if (!loots.length || !isValidGameState || !event.loot) return;
+  const handleDialogLoot = (event: GameEvent) => {
+    if (!event.item || event.loot?.source !== "dialog") return;
 
-      const npcs: Npc[] =
-        event.npcs_del
-          ?.map((npc) => Game.getNpc(npc.id))
-          .filter(Boolean)
-          .map((npcData) => ({
-            icon: npcData!.icon,
-            id: npcData!.id,
-            name: npcData!.nick,
-            prof: npcData!.prof,
-            hpp: 0,
-            type: npcData!.type,
-            wt: npcData!.wt,
-            lvl: npcData!.lvl,
-            location: Game.map.name,
-          })) ?? [];
+    const dialogStore = useDialogStore.getState();
+    if (!dialogStore.talkingNpcId) return;
 
-      if (npcs.length === 0) return;
+    console.log(
+      "[LootHandlers] Handling dialog loot",
+      dialogStore.talkingNpcId,
+    );
 
-      const hero = Game.hero;
-      const players: PartyMember[] = [
-        {
-          id: hero.id,
-          name: hero.nick,
-          icon: hero.img,
-          prof: hero.prof,
-          hpp: Math.floor(
-            (hero.warrior_stats.hp / hero.warrior_stats.maxhp) * 100
-          ),
-          lvl: hero.lvl,
-          accountId: hero.account,
-        },
-      ];
+    const lootStore = useLootStore.getState();
 
-      createLoot(
-        {
-          world: world!,
-          source: event.loot.source.toUpperCase(),
-          location: Game.map.name,
-          loots,
-          npcs,
-          players,
-          accountId: accountId!,
-          characterId: characterId!,
-        },
-        {
-          onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
-            latestLootId.current = response.data.id;
-          },
-        }
-      );
-    },
-    [isValidGameState, world, accountId, characterId, createLoot, latestLootId]
-  );
+    lootStore.setLastLootId(null);
 
-  const handleUpdateLoot = useCallback(
-    (event: GameEvent) => {
-      if (!updateLoot || !isLootDistributionMessage || !latestLootId) return;
-      if (!isValidGameState || !event.chat || !latestLootId.current) return;
-
-      const desiredMsg = event.chat.channels?.system?.msg?.find(
-        isLootDistributionMessage
-      );
-      if (!desiredMsg) return;
-
-      updateLoot(
-        { msg: desiredMsg.msg, id: latestLootId.current },
-        {
-          onSuccess: () => {
-            latestLootId.current = null;
-          },
-        }
-      );
-    },
-    [isValidGameState, isLootDistributionMessage, updateLoot, latestLootId]
-  );
-
-  const handleDialogLoot = useCallback(
-    (event: GameEvent) => {
-      if (
-        !event.item ||
-        event.loot?.source !== "dialog" ||
-        !latestLootId ||
-        !talkingNpcId
-      )
-        return;
-
-      latestLootId.current = null;
-
-      if (event.npcs_del?.length) {
-        createLootFromDialog(event);
-      } else if (talkingNpcId.current) {
-        const npc = Game.getNpc(+talkingNpcId.current);
-        if (npc) {
-          createLootFromDialog({ ...event, npcs_del: [{ id: npc.id }] });
-        }
+    if (event.npcs_del?.length) {
+      createLootFromDialog(event);
+    } else if (dialogStore.talkingNpcId) {
+      const npc = Game.getNpc(+dialogStore.talkingNpcId);
+      if (npc) {
+        createLootFromDialog({ ...event, npcs_del: [{ id: npc.id }] });
       }
-    },
-    [createLootFromDialog, latestLootId, talkingNpcId]
-  );
+    }
+  };
+
+  const createLootFromBattle = (event: GameEvent) => {
+    const battleStore = useBattleStore.getState();
+    const lootStore = useLootStore.getState();
+
+    const world = Game.getWorldName();
+    const accountId = Game.hero.account;
+    const characterId = Game.hero.id;
+
+    const loots = getLoot(event.item, event.loot!);
+    if (!loots.length || !event.loot || !event.f) return;
+
+    const { npcs, party } = getBattleParticipants(battleStore.battleWarriors);
+
+    createLoot(
+      {
+        world,
+        source: event.loot.source.toUpperCase(),
+        location: Game.map.name,
+        npcs,
+        loots,
+        players: party,
+        accountId: String(accountId),
+        characterId: String(characterId),
+      },
+      {
+        onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
+          lootStore.setLastLootId(response.data.id);
+        },
+      },
+    );
+  };
+
+  const createLootFromDialog = (event: GameEvent) => {
+    const world = Game.getWorldName();
+    const accountId = Game.hero.account;
+    const characterId = Game.hero.id;
+    const lootStore = useLootStore.getState();
+
+    const loots = getLoot(event.item, event.loot!);
+    if (!loots.length || !event.loot) return;
+
+    const npcs: Npc[] =
+      event.npcs_del
+        ?.map((npc) => Game.getNpc(npc.id))
+        .filter((npcData) => !isEmpty(npcData))
+        .map((npcData) => ({
+          icon: npcData.icon,
+          id: npcData.id,
+          name: npcData.nick,
+          prof: npcData.prof,
+          hpp: 0,
+          type: npcData.type,
+          wt: npcData.wt,
+          lvl: npcData.lvl,
+          location: Game.map.name,
+        })) ?? [];
+
+    if (npcs.length === 0) return;
+
+    const hero = Game.hero;
+    const players: PartyMember[] = [
+      {
+        id: hero.id,
+        name: hero.nick,
+        icon: hero.img,
+        prof: hero.prof,
+        hpp: Math.floor(
+          (hero.warrior_stats.hp / hero.warrior_stats.maxhp) * 100,
+        ),
+        lvl: hero.lvl,
+        accountId: hero.account,
+      },
+    ];
+
+    createLoot(
+      {
+        world,
+        source: event.loot.source.toUpperCase(),
+        location: Game.map.name,
+        loots,
+        npcs,
+        players,
+        accountId: String(accountId),
+        characterId: String(characterId),
+      },
+      {
+        onSuccess: (response: AxiosResponse<CreateLootResponse>) => {
+          lootStore.setLastLootId(response.data.id);
+        },
+      },
+    );
+  };
 
   return {
     createLootFromBattle,
     createLootFromDialog,
-    handleUpdateLoot,
+    handleLootFromBattle,
     handleDialogLoot,
   };
 };
