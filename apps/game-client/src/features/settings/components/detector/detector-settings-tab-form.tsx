@@ -4,13 +4,13 @@ import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { NpcType } from "@/hooks/api/use-npcs";
 import {
-  NpcDetectorSettings,
+  type NpcDetectorSettings,
   recommendedSettings,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, useEffect } from "react";
+import { type FC, useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
@@ -37,7 +37,7 @@ const FormSchema = z.object({
       // notifySound: z.boolean(),
       highlight: z.boolean(),
       guildIds: z.array(z.string()),
-    })
+    }),
   ),
 });
 
@@ -46,39 +46,44 @@ type FormData = z.infer<typeof FormSchema>;
 export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
   characterId,
 }) => {
-  const { settings, setSettings, setSettingsForAllCharacters } =
-    useNpcDetectorStore();
+  const { settings, setSettings } = useNpcDetectorStore();
   const { data: guilds } = useGuilds();
   const { data: characters } = useCharacterList();
 
   const currentSettings: NpcDetectorSettings =
     (characterId && settings?.[characterId]) || recommendedSettings;
 
-  const defaultValues: FormData = {
-    settingsByNpcType: currentSettings,
-  };
+  const defaultValues: FormData = useMemo(
+    () => ({
+      settingsByNpcType: currentSettings,
+    }),
+    [currentSettings],
+  );
 
-  const { register, watch, getValues, reset } = useForm<FormData>({
+  const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     defaultValues,
   });
 
   useEffect(() => {
     reset(defaultValues);
-  }, [characterId]);
+  }, [characterId, reset, defaultValues]);
 
-  function onSubmit(data: FormData) {
-    if (!characterId) return;
-    setSettings(
-      characterId?.toString(),
-      data.settingsByNpcType as NpcDetectorSettings
-    );
-  }
+  const onSubmit = useCallback(
+    (data: FormData) => {
+      if (!characterId) return;
+      setSettings(
+        characterId?.toString(),
+        data.settingsByNpcType as NpcDetectorSettings,
+      );
+    },
+    [characterId, setSettings],
+  );
 
   const watchedData = watch();
   useDeepCompareEffect(() => {
     onSubmit(watchedData);
-  }, [watchedData]);
+  }, [watchedData, onSubmit]);
 
   function applyToAll(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -161,7 +166,7 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
                           disabled={!watchDetect}
                           value={guild.id}
                           {...register(
-                            `settingsByNpcType.${field.key}.guildIds`
+                            `settingsByNpcType.${field.key}.guildIds`,
                           )}
                         >
                           {guild.name}

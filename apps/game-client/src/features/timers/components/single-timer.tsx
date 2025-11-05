@@ -12,7 +12,6 @@ import {
 import { useGuilds } from "@/hooks/api/use-guilds";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "@/lib/utils";
-import { useGlobalStore } from "@/store/global.store";
 import { useTimersStore } from "@/store/timers.store";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
 import { Loader2 } from "lucide-react";
@@ -23,6 +22,7 @@ import { TimerContextMenuContent } from "./timer-context-menu-content";
 import { TimerTooltip } from "./timer-tooltip";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
+import { Game } from "@/lib/game";
 
 type SingleTimerProps = {
   timer: TimerWithTimeLeft;
@@ -39,7 +39,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   settingsKey,
   isHidden = false,
 }) => {
-  const { world } = useGlobalStore((state) => state.gameState);
+  const world = Game.getWorldName();
   const { data: guilds } = useGuilds();
   const {
     customColors,

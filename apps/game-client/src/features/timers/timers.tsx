@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DraggableWindow } from "@/components/draggable-window";
 import { useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
-import { useGlobalStore } from "@/store/global.store";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
@@ -21,15 +20,14 @@ import {
 } from "@/features/timers/utils/timers-utils";
 import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
+import { Game } from "@/lib/game";
 
 export type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 
 export const Timers = () => {
-  const {
-    world: defaultWorld,
-    gameInterface,
-    characterId,
-  } = useGlobalStore((s) => s.gameState);
+  const characterId = String(Game.hero.id);
+  const gameInterface = Game.interface;
+  const defaultWorld = Game.getWorldName();
 
   const {
     timers: { open },
@@ -55,14 +53,14 @@ export const Timers = () => {
   } = useTimersStore();
 
   const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
-  const guildId = guildIdByCharId[characterId!];
+  const guildId = guildIdByCharId[characterId];
   const desiredWorld = generalConfig.timersGrouping
     ? defaultWorld
     : world || defaultWorld;
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
-  const settingsKey = generalConfig.timersGrouping ? "global" : guildId!;
+  const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
   const { data: timers } = useTimers({ world: desiredWorld });

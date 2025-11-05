@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/config/api";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { useGlobalStore } from "@/store/global.store";
+import { Game } from "@/lib/game";
 
 export type UseLootlogCharactersConfigOptions = {
   //   accountId?: string;
@@ -21,8 +21,8 @@ export type LootlogCharacterConfigResponse = Record<
 >;
 
 export const useLootlogCharactersConfig = () => {
-  const accountId = useGlobalStore((state) => state.gameState.accountId);
   const { client } = useAuthenticatedApiClient();
+  const accountId = Game.hero.account;
 
   const query = useQuery({
     queryKey: ["lootlog-characters-config", accountId],
@@ -33,7 +33,6 @@ export const useLootlogCharactersConfig = () => {
       );
     },
     select: (response) => response.data,
-    enabled: !!accountId,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0,

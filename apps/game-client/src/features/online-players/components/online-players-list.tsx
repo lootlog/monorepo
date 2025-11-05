@@ -4,19 +4,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { WorldSelector } from "@/components/world-selector";
 import { OnlinePlayersListEntry } from "@/features/online-players/components/online-players-list-entry";
 import { usePlayersPresence } from "@/features/online-players/hooks/use-players-presence";
-import { useGlobalStore } from "@/store/global.store";
 import { useSettingsStore } from "@/store/settings.store";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { Search } from "lucide-react";
 import { useState, useMemo, type FC } from "react";
+import { Game } from "@/lib/game";
 
 export const OnlinePlayersList: FC = () => {
-  const { world: defaultWorld, characterId } = useGlobalStore(
-    (state) => state.gameState,
-  );
+  const characterId = String(Game.hero.id);
+  const defaultWorld = Game.getWorldName();
+
   const { allowWorldSelection, guildIdByCharId, world } = useSettingsStore();
-  const guildId = guildIdByCharId[characterId!];
+  const guildId = guildIdByCharId[characterId];
   const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
   const { data: guildMembers } = useGuildMembers(guildId);
   const [searchQuery, setSearchQuery] = useState("");
