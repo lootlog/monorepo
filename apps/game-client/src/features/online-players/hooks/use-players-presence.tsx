@@ -1,6 +1,5 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useGateway } from "@/hooks/gateway/use-gateway";
-import { useGlobalStore } from "@/store/global.store";
 import { useEffect, useRef, useState } from "react";
 
 type PlayerPresenceResponse = Record<string, PlayerPresence[]>;
@@ -34,14 +33,14 @@ const getPresenceKey = (presence: PlayerPresence) => {
 
 export const usePlayersPresence = (
   selectedGuildId?: string,
-  world?: string
+  world?: string,
 ): [
   PlayerPresenceResponse,
   boolean,
   React.Dispatch<React.SetStateAction<PlayerPresenceResponse>>,
 ] => {
   const [onlinePlayers, setOnlinePlayers] = useState<PlayerPresenceResponse>(
-    {}
+    {},
   );
   const [loading, setLoading] = useState(false);
   const { socket, joined } = useGateway();

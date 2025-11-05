@@ -1,9 +1,9 @@
 import { GatewayEvent } from "@/config/gateway";
 import { useSession } from "@/hooks/auth/use-session";
 import { useGateway } from "@/hooks/gateway/use-gateway";
-import { useGlobalStore } from "@/store/global.store";
+import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
-import { GameNpc } from "@/types/margonem/npcs";
+import type { GameNpc } from "@/types/margonem/npcs";
 import { useEffect, useRef } from "react";
 
 export type Notification = {
@@ -20,9 +20,9 @@ export const useNotifications = () => {
   const { socket, connected } = useGateway();
   const { pushNotification } = useNotificationsStore();
   const { data: sessionData } = useSession();
-  const { characterId, world } = useGlobalStore((state) => state.gameState);
+  const characterId = String(Game.hero.id);
   const { settings: notificationsSettings } = useNotificationsStore();
-  const settings = notificationsSettings[characterId!];
+  const settings = notificationsSettings[characterId];
 
   const settingsRef = useRef(settings);
   const sessionDataRef = useRef(sessionData);

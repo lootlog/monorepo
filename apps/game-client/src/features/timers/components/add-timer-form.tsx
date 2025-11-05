@@ -6,7 +6,6 @@ import {
   useCreateManualTimer,
   type UseCreateManualTimerOptions,
 } from "@/hooks/api/use-create-manual-timer";
-import { useGlobalStore } from "@/store/global.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { parseDurationToSeconds } from "@/features/timers/helpers/add-timer-form-helpers";
 import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
@@ -24,6 +23,7 @@ import { GuildSwitcher } from "@/components/guild-switcher";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { AutocompleteSuggestions } from "@/components/ui/autocomplete-suggestions";
 import { NPC_NAMES } from "@/constants/margonem";
+import { Game } from "@/lib/game";
 
 const SECONDS_IN_HOUR = 3600;
 const SECONDS_IN_MINUTE = 60;
@@ -151,7 +151,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 export const AddTimerForm: React.FC = () => {
   const { mutate: createManualTimer, isPending } = useCreateManualTimer();
-  const { world, characterId } = useGlobalStore((state) => state.gameState);
+  const world = Game.getWorldName();
+  const characterId = String(Game.hero.id);
   const {
     selectedGuildIdsForTimersByCharId,
     setSelectedGuildIdsForTimers,

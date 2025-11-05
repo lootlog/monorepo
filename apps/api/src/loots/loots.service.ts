@@ -703,6 +703,7 @@ export class LootsService {
       icon: player.icon,
       characterId: player.id,
       accountId: player.accountId,
+      hpp: player.hpp,
     }));
   }
 

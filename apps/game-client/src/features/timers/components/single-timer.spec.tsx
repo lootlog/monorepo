@@ -4,6 +4,21 @@ import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { SingleTimer } from "./single-timer";
 import { createMockTimerWithTimeLeft } from "../__tests__/test-helpers";
 
+vi.mock("@/lib/game", () => ({
+  Game: {
+    hero: { id: "char1" },
+    interface: "si",
+    getWorldName: () => "world1",
+    map: {},
+    npcs: [],
+    getOther: () => undefined,
+    getNpc: () => undefined,
+    getNpcTpl: () => undefined,
+    getNpcIcon: () => undefined,
+    getInitializeState: () => true,
+  },
+}));
+
 vi.mock("@/hooks/api/use-guilds", () => ({
   useGuilds: () => ({ data: [] }),
 }));

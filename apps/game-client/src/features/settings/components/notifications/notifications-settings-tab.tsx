@@ -2,11 +2,11 @@ import { CharacterTile } from "@/components/character-tile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NotificationsSettingsTabForm } from "@/features/settings/components/notifications/notifications-settings-tab-form";
 import { useCharacterList } from "@/hooks/api/use-character-list";
-import { useGlobalStore } from "@/store/global.store";
+import { Game } from "@/lib/game";
 
 export const NotificationsSettingsTab = () => {
   const { data: characterList } = useCharacterList();
-  const { characterId } = useGlobalStore((state) => state.gameState);
+  const characterId = String(Game.hero.id);
 
   return (
     <div className="ll:w-full ll:pt-2">

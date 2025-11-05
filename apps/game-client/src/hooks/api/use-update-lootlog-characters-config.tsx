@@ -1,7 +1,7 @@
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { useGlobalStore } from "@/store/global.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
+import { Game } from "@/lib/game";
 
 export type UseUpdateLootlogCharacterSettings = {
   characterId: string;
@@ -11,7 +11,7 @@ export type UseUpdateLootlogCharacterSettings = {
 
 export const useUpdateLootlogCharactersConfig = () => {
   const { client } = useAuthenticatedApiClient();
-  const accountId = useGlobalStore((state) => state.gameState.accountId);
+  const accountId = String(Game.hero.account);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({

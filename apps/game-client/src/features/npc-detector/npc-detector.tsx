@@ -1,7 +1,10 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
-import { useGlobalStore } from "@/store/global.store";
-import { PickedNpcType, useNpcDetectorStore } from "@/store/npc-detector.store";
+import { Game } from "@/lib/game";
+import {
+  type DetectorNpcType,
+  useNpcDetectorStore,
+} from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 
@@ -17,12 +20,12 @@ export const NpcDetector = () => {
     clearNpcs();
   };
 
-  const { characterId } = useGlobalStore((s) => s.gameState);
+  const characterId = String(Game.hero.id);
 
   const filteredNpcs = npcs.filter((npc) => {
     const npcType = getNpcTypeByWt(npc.wt);
-    const settingsByNpcType = settings[characterId!][npcType as PickedNpcType];
-    return settingsByNpcType.notifyWindow && settingsByNpcType.detect;
+    const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
+    return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
   });
 
   return (
