@@ -8,14 +8,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { ChatMessage } from "@/features/chat/components/chat-message";
 import { ChatInput } from "@/features/chat/components/chat-input";
-import { useGlobalStore } from "@/store/global.store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { GuildSwitcher } from "@/components/guild-switcher";
+import { Game } from "@/lib/game";
 
 export const Chat = () => {
-  const { accountId, characterId } = useGlobalStore((state) => state.gameState);
+  const characterId = String(Game.hero.id);
+  const accountId = String(Game.hero.account);
   const {
     chat: { open, autofocus },
     setOpen,

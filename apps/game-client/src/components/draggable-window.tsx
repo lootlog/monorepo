@@ -6,6 +6,7 @@ import {
   type WindowOpacity,
 } from "@/store/windows.store";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { WindowTitleBar } from "./window-title-bar";
 import { WindowResizeHandle } from "./window-resize-handle";
 
@@ -42,13 +43,16 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   closable = true,
   disableTitle = false,
 }) => {
-  const opacity = useWindowsStore((state) => state[id].opacity);
-  const rawDefaultPosition = useWindowsStore((state) => state[id].position);
-  const defaultSize = useWindowsStore((state) => state[id].size);
-  const isLocked = useWindowsStore((state) => state[id].locked);
-  const currentWindowFocus = useWindowsStore(
-    (state) => state.currentWindowFocus,
-  );
+  const { opacity, rawDefaultPosition, defaultSize, isLocked, currentWindowFocus } =
+    useWindowsStore(
+      useShallow((state) => ({
+        opacity: state[id].opacity,
+        rawDefaultPosition: state[id].position,
+        defaultSize: state[id].size,
+        isLocked: state[id].locked,
+        currentWindowFocus: state.currentWindowFocus,
+      })),
+    );
 
   const setPositionInStore = useWindowsStore((state) => state.setPosition);
   const setSizeInStore = useWindowsStore((state) => state.setSize);

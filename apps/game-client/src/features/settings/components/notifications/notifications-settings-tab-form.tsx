@@ -6,13 +6,13 @@ import { useCharacterList } from "@/hooks/api/use-character-list";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { NpcType } from "@/hooks/api/use-npcs";
 import {
-  NotificationsSettings,
+  type NotificationsSettings,
   recommendedSettings,
   useNotificationsStore,
 } from "@/store/notifications.store";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, useEffect, useRef } from "react";
+import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useDeepCompareEffect } from "react-use";
 import { z } from "zod";
@@ -44,7 +44,7 @@ const FormSchema = z.object({
       ignoreOtherWorlds: z.boolean(),
       autoHideTimeout: z.number().min(0).optional(),
       guildIds: z.array(z.string()),
-    })
+    }),
   ),
 });
 
@@ -60,9 +60,12 @@ export const NotificationsSettingsTabForm: FC<
   const currentSettings: NotificationsSettings =
     (characterId && settings?.[characterId]) || recommendedSettings;
 
-  const defaultValues: FormData = {
-    settingsByNpcType: currentSettings,
-  };
+  const defaultValues: FormData = useMemo(
+    () => ({
+      settingsByNpcType: currentSettings,
+    }),
+    [currentSettings],
+  );
 
   const { register, watch, reset } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
@@ -71,11 +74,10 @@ export const NotificationsSettingsTabForm: FC<
 
   useEffect(() => {
     reset(defaultValues);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterId]);
+  }, [characterId, reset, defaultValues]);
 
   const lastSettingsRef = useRef<NotificationsSettings | undefined>(
-    currentSettings
+    currentSettings,
   );
   useDeepCompareEffect(() => {
     if (!characterId) return;
@@ -83,20 +85,23 @@ export const NotificationsSettingsTabForm: FC<
       lastSettingsRef.current = currentSettings;
       reset({ settingsByNpcType: currentSettings });
     }
-  }, [currentSettings, characterId]);
+  }, [currentSettings, characterId, reset]);
 
-  function onSubmit(data: FormData) {
-    if (!characterId) return;
-    setSettings(
-      characterId.toString(),
-      data.settingsByNpcType as NotificationsSettings
-    );
-  }
+  const onSubmit = useCallback(
+    (data: FormData) => {
+      if (!characterId) return;
+      setSettings(
+        characterId.toString(),
+        data.settingsByNpcType as NotificationsSettings,
+      );
+    },
+    [characterId, setSettings],
+  );
 
   const watchedData = watch();
   useDeepCompareEffect(() => {
     onSubmit(watchedData);
-  }, [watchedData]);
+  }, [watchedData, onSubmit]);
 
   function applyToAll(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -110,12 +115,12 @@ export const NotificationsSettingsTabForm: FC<
               field.key,
               watchedData.settingsByNpcType[field.key] ??
                 recommendedSettings[field.key],
-            ])
+            ]),
           ) as NotificationsSettings;
           return acc;
         },
-        {} as Record<string, NotificationsSettings>
-      )
+        {} as Record<string, NotificationsSettings>,
+      ),
     );
   }
 
@@ -153,7 +158,7 @@ export const NotificationsSettingsTabForm: FC<
             id={`${field.key}-auto-hide-timeout`}
             type="number"
             disabled={!watchShow}
-            className="ll:!w-16 ll:!mt-1"
+            className="ll:w-16! ll:mt-1!"
             placeholder="0"
             {...register(`settingsByNpcType.${field.key}.autoHideTimeout`)}
           />

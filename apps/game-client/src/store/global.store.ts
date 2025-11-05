@@ -8,11 +8,6 @@ export enum LanguageVersion {
 
 interface GameState {
   gameInitialized: boolean;
-  gameInterface?: GameInterface;
-  world?: string;
-  accountId?: string;
-  characterId?: string;
-  languageVersion?: LanguageVersion;
 }
 interface GlobalState {
   gameState: GameState;
@@ -22,11 +17,6 @@ interface GlobalState {
 export const useGlobalStore = create<GlobalState>((set) => ({
   gameState: {
     gameInitialized: false,
-    gameInterface: undefined,
-    world: undefined,
-    accountId: undefined,
-    characterId: undefined,
-    languageVersion: undefined,
   },
   setGameState: (gameState) => set({ gameState }),
 }));
