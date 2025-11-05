@@ -184,6 +184,7 @@ export class TimerSettingsService {
       overriddenDefaultColors: {},
       hiddenDefaultColors: [],
       timerFiltersEnabled: true,
+      colorFiltersEnabled: false,
       timersSortOrder: 'asc',
       syncEnabled: true,
     };
@@ -208,6 +209,7 @@ export class TimerSettingsService {
         (localData.overriddenDefaultColors as Record<string, unknown>) ?? {},
       hiddenDefaultColors: (localData.hiddenDefaultColors as string[]) ?? [],
       timerFiltersEnabled: (localData.timerFiltersEnabled as boolean) ?? true,
+      colorFiltersEnabled: (localData.colorFiltersEnabled as boolean) ?? false,
       timersSortOrder: (localData.timersSortOrder as string) ?? 'desc',
       syncEnabled: (localData.syncEnabled as boolean) ?? true,
     };

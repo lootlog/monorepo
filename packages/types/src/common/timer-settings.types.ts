@@ -51,6 +51,7 @@ export interface UserTimerSettings {
   >;
   hiddenDefaultColors: string[];
   timerFiltersEnabled: boolean;
+  colorFiltersEnabled: boolean;
   timersSortOrder: "asc" | "desc";
   syncEnabled: boolean;
   createdAt?: Date;
@@ -83,6 +84,7 @@ export interface UpdateTimerSettingsPayload {
   >;
   hiddenDefaultColors?: string[];
   timerFiltersEnabled?: boolean;
+  colorFiltersEnabled?: boolean;
   timersSortOrder?: "asc" | "desc";
   syncEnabled?: boolean;
 }
