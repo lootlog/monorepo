@@ -25,7 +25,7 @@ export const NpcDetector = () => {
   const filteredNpcs = npcs.filter((npc) => {
     const npcType = getNpcTypeByWt(npc.wt);
     const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
-    return settingsByNpcType.notifyWindow && settingsByNpcType.detect;
+    return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
   });
 
   return (

@@ -44,7 +44,7 @@ export const useNpcsDeleteHandlers = () => {
       }>(["lootlog-characters-config", accountId]);
 
       const charactersConfig = charactersConfigResponse?.data;
-      const characterConfig = charactersConfig?.[characterId];
+      const characterConfig = charactersConfig?.[String(characterId)];
       const whitelistedGuildIds =
         characterConfig?.addTimersWhitelistGuildIds ?? [];
 
