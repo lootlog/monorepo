@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { LOOTLOG_APP_URL } from "@/config/app";
 
 export type UseCreateBattleOptions = {
-  accountId: number;
-  characterId: number;
+  accountId: string;
+  characterId: string;
   world: string;
   events: Pick<GameEvent, "f" | "ev" | "party">[];
 };
