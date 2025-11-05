@@ -79,14 +79,15 @@ export const useBattleEventHandler = () => {
 
           if (!hasNegativeId && teams.size > 1) {
             createBattle({
-              accountId,
-              characterId,
+              accountId: String(accountId),
+              characterId: String(characterId),
               world,
               events,
             });
           }
         }
       }
+      ``;
 
       battleStore.setLastBattleHash(battleHash);
 
