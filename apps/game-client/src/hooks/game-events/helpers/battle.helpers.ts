@@ -9,23 +9,14 @@ export const addAccountIdsToWarriors = (
   const copy = { ...warriors } as BattleWarriorsWithAccountId;
 
   Object.entries(copy).forEach(([key, warrior]) => {
-    if (currentWarriors[key]?.accountId) return;
-    if (key === String(Game.hero.id)) {
-      copy[key] = {
-        ...warrior,
-        accountId: Game.hero.account,
-      };
-      return;
-    }
-
-    const other = Game.getOther(key);
-
-    if (other) {
-      copy[key] = {
-        ...warrior,
-        accountId: other.account,
-      };
-    }
+    copy[key] = {
+      ...warrior,
+      accountId:
+        currentWarriors[key]?.accountId ||
+        (key === String(Game.hero.id)
+          ? Game.hero.account
+          : Game.getOther(key)?.account),
+    };
   });
 
   return copy;

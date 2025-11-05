@@ -53,8 +53,8 @@ export const useCharacterList = () => {
           ? MARGONEM_CHARTACTER_LIST_URL
           : MARGONEM_CHARACTER_LIST_EN_URL;
 
-      if (!hs3 || !url) {
-        throw new Error("Missing required authentication cookie or URL");
+      if (!hs3) {
+        throw new Error("Missing required authentication cookie");
       }
 
       const apiResponse = await client.get<MargonemCharacter[]>(
