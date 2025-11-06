@@ -1,4 +1,5 @@
 import { DraggableWindow } from "@/components/draggable-window";
+import { AnimatedWindow } from "@/components/animated-window";
 import { NpcsList } from "@/features/npc-detector/components/npcs-list";
 import { Game } from "@/lib/game";
 import {
@@ -29,8 +30,10 @@ export const NpcDetector = () => {
   });
 
   return (
-    open &&
-    filteredNpcs.length > 0 && (
+    <AnimatedWindow
+      isOpen={open && filteredNpcs.length > 0}
+      windowKey="npc-detector"
+    >
       <DraggableWindow
         id="npc-detector"
         title="Wykrywacz"
@@ -45,6 +48,6 @@ export const NpcDetector = () => {
           <NpcsList npcs={filteredNpcs} />
         </div>
       </DraggableWindow>
-    )
+    </AnimatedWindow>
   );
 };
