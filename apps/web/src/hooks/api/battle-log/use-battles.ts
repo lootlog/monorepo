@@ -106,27 +106,27 @@ export type Battle = {
 export type GetBattlesResponse = {
   battles: Battle[];
   pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+    size: number;
     hasNext: boolean;
     hasPrev: boolean;
+    nextCursor?: string;
+    total?: number;
   };
   meta: {
-    strategy: string;
     performance: {
       queryTime: number;
-      countTime: number;
-      totalItems: number;
-      estimatedTotal: boolean;
+      countTime?: number;
+      totalItems?: number;
+      estimatedTotal?: boolean;
     };
   };
 };
 
 export type UseBattlesParams = {
-  page?: number;
-  limit?: number;
+  cursor?: string;
+  size?: number;
+  sortOrder?: "asc" | "desc";
+  includeTotal?: boolean;
   world?: string;
   type?: Array<"solo" | "group">;
   search?: string;
@@ -137,17 +137,19 @@ export type UseBattlesParams = {
 
 export const useBattles = (params?: UseBattlesParams) => {
   const { client } = useBattleLogApiClient();
-  const page = params?.page ?? 1;
-  const limit = params?.limit ?? 10;
+  const size = params?.size ?? 20;
+  const sortOrder = params?.sortOrder ?? "desc";
 
   const query = useQuery({
     queryKey: ["battles", "@me", params],
     queryFn: () => {
       const searchParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+        size: size.toString(),
+        sortOrder,
       });
 
+      if (params?.cursor) searchParams.append("cursor", params.cursor);
+      if (params?.includeTotal) searchParams.append("includeTotal", "true");
       if (params?.world) searchParams.append("world", params.world);
       if (params?.type && params.type.length > 0) {
         params.type.forEach((t) => searchParams.append("type", t));
@@ -158,7 +160,9 @@ export const useBattles = (params?: UseBattlesParams) => {
       }
       if (params?.ph) searchParams.append("ph", "true");
       if (params?.characterId && params.characterId.length > 0) {
-        params.characterId.forEach((id) => searchParams.append("characterId", id));
+        params.characterId.forEach((id) =>
+          searchParams.append("characterId", id),
+        );
       }
 
       return client.get<GetBattlesResponse>(`/battles/@me?${searchParams}`);

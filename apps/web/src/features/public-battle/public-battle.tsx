@@ -53,7 +53,7 @@ export const PublicBattle = () => {
   }
 
   return (
-    <div className="h-screen bg-background">
+    <div className="h-dvh bg-background">
       <ScrollArea className="h-full">
         <BattleOverviewCard
           battle={battle}

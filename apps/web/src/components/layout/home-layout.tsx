@@ -35,7 +35,10 @@ export const HomeLayout: FC = () => {
       };
     }
 
-    if (path === ROUTES.user.battlePanel.battles) {
+    const normalizedPath = path.replace(/\/$/, "");
+    const battlesPath = ROUTES.user.battlePanel.battles;
+
+    if (normalizedPath === battlesPath) {
       return {
         breadcrumbs: [
           { label: "Panel walk", path: ROUTES.user.battlePanel.base },
@@ -46,17 +49,19 @@ export const HomeLayout: FC = () => {
       };
     }
 
-    if (path.startsWith(`${ROUTES.user.battlePanel.battles}/`)) {
-      const battleId = path.split("/").pop();
-      return {
-        breadcrumbs: [
-          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
-          { label: "Walki", path: ROUTES.user.battlePanel.battles },
-          { label: `Walka #${battleId}`, path: null },
-        ],
-        showBack: true,
-        backPath: ROUTES.user.battlePanel.battles,
-      };
+    if (normalizedPath.startsWith(`${battlesPath}/`)) {
+      const battleId = normalizedPath.split("/").pop();
+      if (battleId && battleId.length > 0) {
+        return {
+          breadcrumbs: [
+            { label: "Panel walk", path: ROUTES.user.battlePanel.base },
+            { label: "Walki", path: ROUTES.user.battlePanel.battles },
+            { label: `Walka #${battleId}`, path: null },
+          ],
+          showBack: true,
+          backPath: ROUTES.user.battlePanel.battles,
+        };
+      }
     }
 
     if (path.startsWith(ROUTES.user.settings.base)) {
@@ -75,7 +80,7 @@ export const HomeLayout: FC = () => {
   const navInfo = getNavigationInfo();
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-row">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-row">
       <SidebarProvider>
         <UserSidebar />
         <div className="flex flex-row w-full h-full min-h-0">

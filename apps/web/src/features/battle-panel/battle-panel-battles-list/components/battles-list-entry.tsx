@@ -112,7 +112,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
               >
                 {capitalizeFirstLetter(battle.world)}
               </Badge>
-              {warrior?.ph !== 0 && (
+              {warrior?.ph !== 0 && warrior?.ph !== undefined && (
                 <Badge
                   onClick={handlePhClick}
                   variant="outline"
