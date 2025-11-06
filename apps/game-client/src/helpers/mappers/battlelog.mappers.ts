@@ -1,7 +1,6 @@
 import type { UseCreateBattleOptions } from "@/hooks/api/use-create-battle";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import isEmpty from "lodash/isEmpty";
-import pick from "lodash/pick";
+import { isEmpty, pick } from "@/utils/object-utils";
 
 export const mapBattleEventsToPayload = (
   events: GameEvent[],
@@ -27,13 +26,10 @@ export const mapBattleEventsToPayload = (
       fightWarriors[key] = entry;
     });
 
-    const party = pick(event.party, [
-      "id",
-      "name",
-      "icon",
-      "team",
-      "commander",
-    ]);
+    const party = pick(
+      event.party as Record<string, unknown>,
+      ["id", "name", "icon", "team", "commander"] as const,
+    );
 
     return {
       f: { ...fight, w: !isEmpty(fightWarriors) ? fightWarriors : undefined },

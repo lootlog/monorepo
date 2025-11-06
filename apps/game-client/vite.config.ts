@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import monkey from "vite-plugin-monkey";
 import tailwindcss from "@tailwindcss/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,6 +18,17 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  build: {
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        passes: 1,
+      },
+    },
+    target: "es2020",
   },
   plugins: [
     react({
@@ -48,6 +60,11 @@ export default defineConfig({
         ],
       },
       build: {},
+    }),
+    visualizer({
+      filename: "dist/stats.html",
+      gzipSize: true,
+      brotliSize: true,
     }),
   ],
 });
