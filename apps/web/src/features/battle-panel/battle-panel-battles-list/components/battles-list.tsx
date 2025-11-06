@@ -59,11 +59,17 @@ export const BattlesList = ({
   };
 
   useEffect(() => {
-    if (enableScrollToTop) {
-      containerRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+    if (enableScrollToTop && containerRef.current) {
+      const scrollViewport = containerRef.current.closest(
+        '[data-slot="scroll-area-viewport"]',
+      ) as HTMLElement | null;
+
+      if (scrollViewport) {
+        scrollViewport.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
     }
   }, [params?.cursor, enableScrollToTop]);
 

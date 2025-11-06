@@ -80,7 +80,7 @@ export const HomeLayout: FC = () => {
   const navInfo = getNavigationInfo();
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-row">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-row">
       <SidebarProvider>
         <UserSidebar />
         <div className="flex flex-row w-full h-full min-h-0">
