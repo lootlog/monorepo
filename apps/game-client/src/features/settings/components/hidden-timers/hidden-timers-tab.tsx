@@ -1,7 +1,7 @@
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
-import { GuildSelector } from "@/components/guild-selector";
 import { useState } from "react";
 import { useTimersStore } from "@/store/timers.store";
+import { GuildSwitcher } from "@/components/guild-switcher";
 
 export const HiddenTimersTab = () => {
   const { generalConfig } = useTimersStore();
@@ -16,7 +16,7 @@ export const HiddenTimersTab = () => {
       </label>
       {!generalConfig.timersGrouping && (
         <span className="ll:w-2/3">
-          <GuildSelector
+          <GuildSwitcher
             className="ll:mb-2"
             onChange={setSelectedGuildId}
             value={selectedGuildId}
