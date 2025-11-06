@@ -221,7 +221,7 @@ const STAT_CATEGORIES: StatCategory[] = [
       { key: "legbonGlare", label: "Oślepienie", color: "text-yellow-400" },
       {
         key: "legbonHolytouch",
-        label: "Dotyk anioła (liczba)",
+        label: "Dotyk anioła (ilość)",
         color: "text-blue-300",
       },
       {
