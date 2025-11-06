@@ -138,7 +138,7 @@ export const filterTimersByColor = (
 ): TimerWithTimeLeft[] => {
   if (selectedColors.length === 0) return timers;
   return timers.filter((t) => {
-    const timerColor = timersColors[t.npc.name];
+    const timerColor = timersColors[t.npc.name] ?? "white";
     return timerColor && selectedColors.includes(timerColor);
   });
 };

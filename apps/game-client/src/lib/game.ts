@@ -61,8 +61,20 @@ export class Game {
   }
 
   static getWorldName(): string {
-    return this.interface === "ni"
-      ? window.Engine.worldConfig.getWorldName()
-      : window.g.worldConfig.getWorldName();
+    try {
+      return this.interface === "ni"
+        ? window.Engine.worldConfig.getWorldName()
+        : window.g.worldConfig.getWorldName();
+    } catch {
+      // subdomain from url as fallback
+      // https://<world>.margonem.pl || https://<world>.margonem.com
+      const host = window.location.hostname;
+      const match = host.match(/^(.*?)\.margonem\.(pl|com)$/);
+      if (match && match[1]) {
+        return match[1];
+      }
+
+      return "unknown";
+    }
   }
 }
