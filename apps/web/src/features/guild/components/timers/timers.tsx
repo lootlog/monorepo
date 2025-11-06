@@ -9,9 +9,11 @@ const SORT_ORDER = [
   NpcType.TITAN,
   NpcType.COLOSSUS,
   NpcType.HERO,
+  NpcType.ELITE3,
   NpcType.ELITE2,
   NpcType.ELITE,
 ];
+
 const NPC_NAMES: { [key: string]: string } = {
   TITAN: "Tytan",
   COLOSSUS: "Kolos",
