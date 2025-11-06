@@ -12,7 +12,7 @@ import {
   useCreateLoot,
 } from "@/hooks/api/use-create-loot";
 import { useBattleStore } from "@/store/game-store/battle.store";
-import isEmpty from "lodash/isEmpty";
+import { isEmpty } from "@/utils/object-utils";
 import { useLootStore } from "@/store/game-store/loot.store";
 import { useDialogStore } from "@/store/game-store/dialog.store";
 
@@ -95,7 +95,10 @@ export const useLootHandlers = () => {
     const npcs: Npc[] =
       event.npcs_del
         ?.map((npc) => Game.getNpc(npc.id))
-        .filter((npcData) => !isEmpty(npcData))
+        .filter(
+          (npcData): npcData is NonNullable<typeof npcData> =>
+            npcData !== null && npcData !== undefined && !isEmpty(npcData),
+        )
         .map((npcData) => ({
           icon: npcData.icon,
           id: npcData.id,
