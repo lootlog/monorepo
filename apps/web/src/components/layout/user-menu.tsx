@@ -12,12 +12,15 @@ import {
 import { Loader2, LogOut, Settings, User2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useUser } from "@/hooks/api/user/use-user";
+import { useNavigate } from "@tanstack/react-router";
 
 export const UserMenu = () => {
   const { user, isPending } = useUser();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await authClient.signOut();
+    navigate({ to: "/@me" });
   };
 
   return (
