@@ -1,31 +1,34 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox, type ComboboxGroup } from "@/components/ui/combobox";
 import { useWorlds } from "@/hooks/api/use-worlds";
 import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/store/settings.store";
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useMemo } from "react";
+import { useLocalStorage } from "react-use";
 
 export type WorldSelectorProps = {
   disabled?: boolean;
   className?: string;
 };
 
+const MAX_RECENT_WORLDS = 3;
+
 export const WorldSelector: FC<WorldSelectorProps> = ({
   disabled = false,
   className = "",
 }) => {
   const characterId = String(Game.hero.id);
+  const accountId = String(Game.hero.account);
   const defaultWorld = Game.getWorldName();
 
   const { guildIdByCharId, world, setWorld } = useSettingsStore();
   const guildId = guildIdByCharId[characterId];
   const { data: worlds, isFetched } = useWorlds({ guildId });
+
+  const [recentWorlds, setRecentWorlds] = useLocalStorage<string[]>(
+    `ll:recent-worlds:${accountId}:${characterId}`,
+    [],
+  );
 
   useEffect(() => {
     if (!isFetched || !guildId || !worlds) return;
@@ -47,35 +50,64 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     }
   }, [guildId, isFetched, worlds, world, defaultWorld, setWorld]);
 
+  const worldGroups = useMemo<ComboboxGroup[]>(() => {
+    if (!worlds || worlds.length === 0) return [];
+
+    const recent =
+      recentWorlds
+        ?.filter((w) => worlds.includes(w))
+        .map((w) => ({
+          value: w,
+          label: w.charAt(0).toUpperCase() + w.slice(1),
+        })) ?? [];
+
+    const recentValues = new Set(recent.map((w) => w.value));
+    const rest = worlds
+      .filter((w) => !recentValues.has(w))
+      .map((w) => ({
+        value: w,
+        label: w.charAt(0).toUpperCase() + w.slice(1),
+      }));
+
+    const groups: ComboboxGroup[] = [];
+
+    if (recent.length > 0) {
+      groups.push({ label: "Ostatnio używane", options: recent });
+    }
+
+    if (rest.length > 0) {
+      groups.push({ label: "Wszystkie światy", options: rest });
+    }
+
+    return groups;
+  }, [worlds, recentWorlds]);
+
+  const handleWorldChange = (newWorld: string) => {
+    if (newWorld) {
+      const updatedRecent = [
+        newWorld,
+        ...(recentWorlds?.filter((w) => w !== newWorld) ?? []),
+      ].slice(0, MAX_RECENT_WORLDS);
+      setRecentWorlds(updatedRecent);
+    }
+
+    setWorld(newWorld);
+  };
+
   return (
-    <Select value={world} onValueChange={setWorld} disabled={disabled}>
-      <SelectTrigger
-        className={cn(
-          "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-6 ll:mb-1 ll-custom-cursor-pointer",
-          className,
-        )}
-      >
-        <SelectValue
-          placeholder="Wybierz świat..."
-          className="ll:h-4 ll:text-sm ll:text-white"
-        />
-      </SelectTrigger>
-      <SelectContent
-        position="popper"
-        className="ll:font-sans ll:z-500 ll:w-[120px] ll:py-1 ll:justify-center ll:items-center"
-      >
-        {worlds?.map((world) => {
-          return (
-            <SelectItem
-              key={world}
-              value={world}
-              className="ll:text-xs ll:font-semibold ll:w-full ll:h-5"
-            >
-              {world.charAt(0).toUpperCase() + world.slice(1)}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+    <Combobox
+      value={world}
+      onValueChange={handleWorldChange}
+      groups={worldGroups}
+      placeholder="Wybierz świat..."
+      searchPlaceholder="Szukaj świata..."
+      emptyText="Nie znaleziono światów."
+      disabled={disabled}
+      triggerClassName={cn(
+        "ll:text-white ll:text-xs ll:border-gray-400 ll:rounded-xs ll:h-6 ll:mb-1 ll-custom-cursor-pointer ll:w-full",
+        className,
+      )}
+      contentClassName="ll:font-sans ll:z-500"
+    />
   );
 };
