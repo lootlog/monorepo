@@ -9,10 +9,8 @@ import {
 
 const DEFAULT_STATE = { x: 0, y: 0 };
 const DEFAULT_DRAG_INFO = {
-  startX: 0,
-  startY: 0,
-  top: 0,
-  left: 0,
+  offsetX: 0,
+  offsetY: 0,
   width: 0,
   height: 0,
 };
@@ -86,17 +84,23 @@ export const useDrag = ({
     const { top, left, width, height } = current.getBoundingClientRect();
 
     setIsDragging(true);
-    setDragInfo({ startX: x, startY: y, top, left, width, height });
+    setDragInfo({
+      offsetX: x - left,
+      offsetY: y - top,
+      width,
+      height,
+    });
   };
 
-  const dragTo = (x: number, y: number) => {
-    if (!isDragging) return;
-    const { startX, startY, top, left, width, height } = dragInfo;
-    const deltaX = startX - x;
-    const deltaY = startY - y;
+  const dragTo = useCallback(
+    (x: number, y: number) => {
+      if (!isDragging) return;
+      const { offsetX, offsetY, width, height } = dragInfo;
 
-    updateFinalPosition(width, height, left - deltaX, top - deltaY);
-  };
+      updateFinalPosition(width, height, x - offsetX, y - offsetY);
+    },
+    [isDragging, dragInfo, updateFinalPosition],
+  );
 
   const endDrag = useCallback(() => {
     if (isDragging) {
@@ -129,7 +133,7 @@ export const useDrag = ({
       evt.preventDefault();
       dragTo(evt.clientX, evt.clientY);
     },
-    [isDragging, dragInfo],
+    [isDragging, dragTo],
   );
 
   const handleTouchMove = useCallback(
@@ -138,7 +142,7 @@ export const useDrag = ({
       evt.preventDefault();
       dragTo(evt.touches[0].clientX, evt.touches[0].clientY);
     },
-    [isDragging, dragInfo],
+    [isDragging, dragTo],
   );
 
   const handleMouseUp = useCallback(() => endDrag(), [endDrag]);
@@ -200,7 +204,7 @@ export const useDrag = ({
         rafRef.current = null;
       }
     };
-  }, [handleMouseMove, handleTouchMove]);
+  }, [handleMouseMove, handleTouchMove, handleMouseUp, handleTouchEnd]);
 
   // Usunięto clampowanie pozycji i setFinalPosition z efektu mount/ref
 
