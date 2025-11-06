@@ -6,7 +6,7 @@ export { BattlesModule } from './battles.module';
 // DTOs
 export { CreateBattleDto } from './dto/create-battle.dto';
 export { UpdateBattleDto } from './dto/update-battle.dto';
-export { QueryBattlesDto, PaginationStrategy, SortField, SortOrder } from './dto/query-battles.dto';
+export { QueryBattlesDto, SortOrder } from './dto/query-battles.dto';
 
 // Interfaces
 export type {
@@ -19,7 +19,10 @@ export type {
   IBattlesService,
 } from './interfaces/battle-service.interface';
 
-export type { PaginationResult, PaginationOptions } from './interfaces/pagination.interface';
+export type {
+  PaginationResult,
+  PaginationOptions,
+} from './interfaces/pagination.interface';
 
 // Battle processor types
 export type { BattleAnalysis, Warrior } from './battle-processor';

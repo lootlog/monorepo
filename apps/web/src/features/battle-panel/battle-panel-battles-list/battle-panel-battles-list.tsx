@@ -7,12 +7,13 @@ import { battleQueryParsers } from "./battle-query-parsers";
 
 export const BattlePanelBattlesList = () => {
   const [queryState, setQueryState] = useQueryStates(battleQueryParsers);
-  const pageLimit = 20;
+  const pageSize = 20;
 
   // Fetch battles and characters
   const { data: battlesResponse, isLoading: isBattlesLoading } = useBattles({
-    page: queryState.page,
-    limit: pageLimit,
+    cursor: queryState.cursor ?? undefined,
+    size: pageSize,
+    includeTotal: true,
     world: queryState.world ?? undefined,
     type: queryState.type ?? undefined,
     search: queryState.search ?? undefined,
@@ -32,14 +33,14 @@ export const BattlePanelBattlesList = () => {
     characterId: queryState.characterId ?? undefined,
   };
 
-  const handlePageChange = (page: number) => {
-    setQueryState({ page });
+  const handleCursorChange = (cursor: string | undefined) => {
+    setQueryState({ cursor: cursor ?? null });
   };
 
   const handleFiltersChange = (newFilters: BattleFilters) => {
-    // Reset to first page when filters change
+    // Reset to first page when filters change (clear cursor)
     setQueryState({
-      page: 1,
+      cursor: null,
       world: newFilters.world ?? null,
       type: newFilters.type ?? null,
       search: newFilters.search ?? null,
@@ -55,8 +56,8 @@ export const BattlePanelBattlesList = () => {
         battlesResponse={battlesResponse}
         characters={characters}
         params={{
-          page: queryState.page,
-          limit: pageLimit,
+          cursor: queryState.cursor ?? undefined,
+          size: pageSize,
           world: filters.world,
           type: filters.type,
           search: filters.search,
@@ -64,11 +65,12 @@ export const BattlePanelBattlesList = () => {
           ph: filters.ph,
           characterId: filters.characterId,
         }}
-        onPageChange={handlePageChange}
+        onCursorChange={handleCursorChange}
         onFiltersChange={handleFiltersChange}
         showPagination
         showFilters
         isLoading={isBattlesLoading}
+        enableScrollToTop
       />
     </div>
   );

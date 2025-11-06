@@ -1,5 +1,4 @@
 import {
-  parseAsInteger,
   parseAsString,
   parseAsBoolean,
   parseAsStringLiteral,
@@ -7,7 +6,7 @@ import {
 } from "nuqs";
 
 export const battleQueryParsers = {
-  page: parseAsInteger.withDefault(1),
+  cursor: parseAsString,
   world: parseAsString,
   type: parseAsArrayOf(parseAsStringLiteral(["solo", "group"] as const)),
   search: parseAsString,

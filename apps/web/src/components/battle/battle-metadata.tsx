@@ -118,7 +118,7 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
           </TooltipContent>
         </Tooltip>
 
-        {warrior?.ph !== 0 && (
+        {warrior?.ph !== 0 && warrior?.ph !== undefined && (
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 cursor-help whitespace-nowrap">
