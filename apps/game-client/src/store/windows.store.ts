@@ -57,6 +57,7 @@ interface WindowsState {
   "timer-settings-conflict": WindowData;
   "catching-whitelist-warning": WindowData;
   currentWindowFocus?: WindowId;
+  windowFocusHistory: WindowId[];
   setCurrentWindowFocus: (key: WindowId) => void;
   setOpen: <T = unknown>(window: WindowId, open: boolean, state?: T) => void;
   setPosition: (window: WindowId, pos: WindowPositionState) => void;
@@ -155,13 +156,29 @@ export const useWindowsStore = create<WindowsState>()(
         locked: false,
       },
       currentWindowFocus: undefined,
+      windowFocusHistory: [],
       setCurrentWindowFocus: (key: WindowId) =>
-        set({ currentWindowFocus: key }),
+        set((state) => {
+          const newHistory = [
+            key,
+            ...state.windowFocusHistory.filter((id) => id !== key),
+          ];
+          return {
+            currentWindowFocus: key,
+            windowFocusHistory: newHistory,
+          };
+        }),
       setOpen: <T = unknown>(key: WindowId, open: boolean, windowState?: T) => {
-        return set((state) => ({
-          [key]: { ...state[key], open, state: open ? windowState : [] },
-          currentWindowFocus: key,
-        }));
+        return set((state) => {
+          const newHistory = open
+            ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
+            : state.windowFocusHistory.filter((id) => id !== key);
+          return {
+            [key]: { ...state[key], open, state: open ? windowState : [] },
+            currentWindowFocus: open ? key : undefined,
+            windowFocusHistory: newHistory,
+          };
+        });
       },
       setPosition: (key: WindowId, pos) =>
         set((state) => ({ [key]: { ...state[key], position: pos } })),
@@ -175,14 +192,20 @@ export const useWindowsStore = create<WindowsState>()(
         set((state) => ({ [key]: { ...state[key], autofocus } })),
       toggleOpen: (key: WindowId, autofocus?: boolean) => {
         const curr = get()[key].open;
-        set((state) => ({
-          [key]: {
-            ...state[key],
-            open: !curr,
-            autofocus,
-          },
-          currentWindowFocus: !curr ? key : undefined,
-        }));
+        set((state) => {
+          const newHistory = !curr
+            ? [key, ...state.windowFocusHistory.filter((id) => id !== key)]
+            : state.windowFocusHistory.filter((id) => id !== key);
+          return {
+            [key]: {
+              ...state[key],
+              open: !curr,
+              autofocus,
+            },
+            currentWindowFocus: !curr ? key : undefined,
+            windowFocusHistory: newHistory,
+          };
+        });
       },
     }),
     {
@@ -196,6 +219,7 @@ export const useWindowsStore = create<WindowsState>()(
         "npc-detector": state["npc-detector"],
         notifications: state["notifications"],
         currentWindowFocus: state.currentWindowFocus,
+        windowFocusHistory: state.windowFocusHistory,
         "create-notification": {
           size: state["create-notification"].size,
           position: state["create-notification"].position,

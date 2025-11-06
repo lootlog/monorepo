@@ -43,16 +43,21 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   closable = true,
   disableTitle = false,
 }) => {
-  const { opacity, rawDefaultPosition, defaultSize, isLocked, currentWindowFocus } =
-    useWindowsStore(
-      useShallow((state) => ({
-        opacity: state[id].opacity,
-        rawDefaultPosition: state[id].position,
-        defaultSize: state[id].size,
-        isLocked: state[id].locked,
-        currentWindowFocus: state.currentWindowFocus,
-      })),
-    );
+  const {
+    opacity,
+    rawDefaultPosition,
+    defaultSize,
+    isLocked,
+    windowFocusHistory,
+  } = useWindowsStore(
+    useShallow((state) => ({
+      opacity: state[id].opacity,
+      rawDefaultPosition: state[id].position,
+      defaultSize: state[id].size,
+      isLocked: state[id].locked,
+      windowFocusHistory: state.windowFocusHistory,
+    })),
+  );
 
   const setPositionInStore = useWindowsStore((state) => state.setPosition);
   const setSizeInStore = useWindowsStore((state) => state.setSize);
@@ -156,6 +161,14 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     setLockedInStore(id, !isLocked);
   }, [id, isLocked, setLockedInStore]);
 
+  const onContentClick = useCallback(() => {
+    setCurrentWindowFocus(id);
+  }, [id, setCurrentWindowFocus]);
+
+  const windowZIndex = windowFocusHistory.indexOf(id);
+  const zIndex =
+    windowZIndex === -1 ? 0 : windowFocusHistory.length - windowZIndex;
+
   return (
     <div
       className="ll:pointer-events-auto ll:absolute"
@@ -165,7 +178,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         maxHeight,
         top: position.y,
         left: position.x,
-        zIndex: currentWindowFocus === id ? 1 : 0,
+        zIndex,
         cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
       }}
       onMouseDown={onMouseDown}
@@ -197,7 +210,14 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             onClose={onClose}
           />
         )}
-        <div className="ll:flex-1 ll:overflow-hidden">{children}</div>
+        <div
+          className="ll:flex-1 ll:overflow-hidden ll:cursor-auto"
+          onTouchStart={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={onContentClick}
+        >
+          {children}
+        </div>
         {resizable && !isLocked && (
           <WindowResizeHandle
             minWidth={minWidth}
