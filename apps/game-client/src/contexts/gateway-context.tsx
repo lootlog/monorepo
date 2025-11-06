@@ -51,11 +51,11 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
   }, []);
 
   const emitJoin = useCallback(() => {
-    const world = Game.getWorldName();
-    const characterId = String(Game.hero.id);
-    const accountId = String(Game.hero.account);
-
     if (connected && gameInitialized) {
+      const world = Game.getWorldName();
+      const characterId = String(Game.hero.id);
+      const accountId = String(Game.hero.account);
+
       socket.emit(GatewayEvent.JOIN, {
         data: {
           world,
