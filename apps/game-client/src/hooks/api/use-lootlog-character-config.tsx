@@ -22,7 +22,7 @@ export type LootlogCharacterConfigResponse = Record<
 
 export const useLootlogCharactersConfig = () => {
   const { client } = useAuthenticatedApiClient();
-  const accountId = Game.hero.account;
+  const accountId = String(Game.hero.account);
 
   const query = useQuery({
     queryKey: ["lootlog-characters-config", accountId],

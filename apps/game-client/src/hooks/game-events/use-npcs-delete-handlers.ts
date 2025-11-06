@@ -41,7 +41,7 @@ export const useNpcsDeleteHandlers = () => {
 
       const charactersConfigResponse = queryClient.getQueryData<{
         data: LootlogCharacterConfigResponse;
-      }>(["lootlog-characters-config", accountId]);
+      }>(["lootlog-characters-config", String(accountId)]);
 
       const charactersConfig = charactersConfigResponse?.data;
       const characterConfig = charactersConfig?.[String(characterId)];
