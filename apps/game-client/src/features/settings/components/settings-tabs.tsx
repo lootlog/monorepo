@@ -2,6 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BattlePanelSettingsTab } from "@/features/settings/components/battle-panel/battle-panel-settings-tab";
 import { CatchingSettings } from "@/features/settings/components/catching/catching-settings";
+import { DebugTab } from "@/features/settings/components/debug/debug-tab";
 import { DetectorSettingsTab } from "@/features/settings/components/detector/detector-settings-tab";
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
@@ -46,6 +47,11 @@ const TABS_LIST = [
     value: "battle-panel",
     label: "Panel walk (beta)",
     content: <BattlePanelSettingsTab />,
+  },
+  {
+    value: "debug",
+    label: "Debug",
+    content: <DebugTab />,
   },
 ];
 
