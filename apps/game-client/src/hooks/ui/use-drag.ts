@@ -4,8 +4,14 @@ import {
   useCallback,
   useEffect,
   useState,
-  useRef,
 } from "react";
+
+const getScale = () => {
+  if (typeof window.getZoomFactor === "function") {
+    return window.getZoomFactor();
+  }
+  return window.visualViewport?.scale ?? 1;
+};
 
 const DEFAULT_STATE = { x: 0, y: 0 };
 const DEFAULT_DRAG_INFO = {
@@ -32,47 +38,46 @@ export const useDrag = ({
 }: UseDragConfig) => {
   const [dragInfo, setDragInfo] = useState(DEFAULT_DRAG_INFO);
   const [finalPosition, setFinalPosition] = useState(defaultState);
-  const rafRef = useRef<number | null>(null);
-  const nextPosRef = useRef<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [wasJustDragging, setWasJustDragging] = useState(false);
 
   const updateFinalPosition = useCallback(
     (width: number, height: number, x: number, y: number) => {
+      const scale = getScale();
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      const viewportHeight =
+        window.visualViewport?.height ?? window.innerHeight;
+
+      const scaledViewportWidth = viewportWidth * scale;
+      const scaledViewportHeight = viewportHeight * scale;
+      const scaledWidth = width * scale;
+      const scaledHeight = height * scale;
+
       let newPos: { x: number; y: number };
       if (calculateFor === "bottomRight") {
         newPos = {
           x: Math.max(
             Math.min(
-              window.innerWidth - width,
-              window.innerWidth - (x + width),
+              scaledViewportWidth - scaledWidth,
+              scaledViewportWidth - (x + scaledWidth),
             ),
             0,
           ),
           y: Math.max(
             Math.min(
-              window.innerHeight - height,
-              window.innerHeight - (y + height),
+              scaledViewportHeight - scaledHeight,
+              scaledViewportHeight - (y + scaledHeight),
             ),
             0,
           ),
         };
       } else {
         newPos = {
-          x: Math.min(Math.max(0, x), window.innerWidth - width),
-          y: Math.min(Math.max(0, y), window.innerHeight - height),
+          x: Math.min(Math.max(0, x), scaledViewportWidth - scaledWidth),
+          y: Math.min(Math.max(0, y), scaledViewportHeight - scaledHeight),
         };
       }
-      nextPosRef.current = newPos;
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          if (nextPosRef.current) {
-            setFinalPosition(nextPosRef.current);
-            nextPosRef.current = null;
-          }
-          rafRef.current = null;
-        });
-      }
+      setFinalPosition(newPos);
     },
     [calculateFor],
   );
@@ -124,7 +129,10 @@ export const useDrag = ({
     if (isLocked) return;
     if (evt.touches.length > 1) return;
     const touch = evt.touches[0];
-    startDrag(touch.clientX, touch.clientY);
+    const scale = getScale();
+    const clientX = (touch.pageX - window.scrollX) * scale;
+    const clientY = (touch.pageY - window.scrollY) * scale;
+    startDrag(clientX, clientY);
   };
 
   const handleMouseMove = useCallback(
@@ -140,7 +148,10 @@ export const useDrag = ({
     (evt: TouchEvent) => {
       if (!isDragging || evt.touches.length > 1) return;
       evt.preventDefault();
-      dragTo(evt.touches[0].clientX, evt.touches[0].clientY);
+      const scale = getScale();
+      const clientX = (evt.touches[0].pageX - window.scrollX) * scale;
+      const clientY = (evt.touches[0].pageY - window.scrollY) * scale;
+      dragTo(clientX, clientY);
     },
     [isDragging, dragTo],
   );
@@ -199,10 +210,6 @@ export const useDrag = ({
       document.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
     };
   }, [handleMouseMove, handleTouchMove, handleMouseUp, handleTouchEnd]);
 
