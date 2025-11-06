@@ -81,12 +81,12 @@ export const useDrag = ({
     if (isLocked) return;
     const { current } = ref;
     if (!current) return;
-    const { top, left, width, height } = current.getBoundingClientRect();
+    const { width, height } = current.getBoundingClientRect();
 
     setIsDragging(true);
     setDragInfo({
-      offsetX: x - left,
-      offsetY: y - top,
+      offsetX: x - finalPosition.x,
+      offsetY: y - finalPosition.y,
       width,
       height,
     });
