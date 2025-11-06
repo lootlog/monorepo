@@ -1,10 +1,10 @@
 import { DraggableWindow } from "@/components/draggable-window";
+import { AnimatedWindow } from "@/components/animated-window";
 import { useChatMessages } from "@/hooks/api/use-chat-messages";
 import { useRef, useLayoutEffect, useMemo } from "react";
 import type { Viewport } from "@radix-ui/react-scroll-area";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
-import { AnimatePresence, motion } from "framer-motion";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
 import { ChatMessage } from "@/features/chat/components/chat-message";
 import { ChatInput } from "@/features/chat/components/chat-input";
@@ -59,67 +59,57 @@ export const Chat = () => {
   }, [messages, open]);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          key="chat"
-          initial={{ opacity: 0, scaleY: 1.01 }}
-          animate={{ opacity: 1, scaleY: 1 }}
-          exit={{ opacity: 0, scaleY: 1.01 }}
-          transition={{ duration: 0.1 }}
-        >
-          <DraggableWindow
-            id="chat"
-            title="Chat"
-            onClose={() => setOpen("chat", false)}
-          >
-            <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-              <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
-                <GuildSwitcher
-                  value={selectedGuildId}
-                  onChange={setSelectedGuildId}
-                />
-              </div>
-              <div className="ll:flex-1 ll:overflow-hidden">
-                <ScrollArea
-                  className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400"
-                  ref={scrollAreaRef}
-                  type={messages?.length === 0 ? "auto" : "always"}
-                >
-                  <div
-                    className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
-                    data-draggable="false"
-                  >
-                    {messages?.length === 0 ? (
-                      <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
-                        Brak wiadomości
-                      </div>
-                    ) : (
-                      messages?.map((message) => {
-                        const guildMember = guildMembers?.[message.senderId];
-
-                        return (
-                          <ChatMessage
-                            key={message.id}
-                            message={message}
-                            member={guildMember}
-                          />
-                        );
-                      })
-                    )}
+    <AnimatedWindow isOpen={open} windowKey="chat">
+      <DraggableWindow
+        id="chat"
+        title="Chat"
+        onClose={() => setOpen("chat", false)}
+      >
+        <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
+          <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
+            <GuildSwitcher
+              value={selectedGuildId}
+              onChange={setSelectedGuildId}
+            />
+          </div>
+          <div className="ll:flex-1 ll:overflow-hidden">
+            <ScrollArea
+              className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400"
+              ref={scrollAreaRef}
+              type={messages?.length === 0 ? "auto" : "always"}
+            >
+              <div
+                className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
+                data-draggable="false"
+              >
+                {messages?.length === 0 ? (
+                  <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
+                    Brak wiadomości
                   </div>
-                </ScrollArea>
+                ) : (
+                  messages?.map((message) => {
+                    const guildMember = guildMembers?.[message.senderId];
+
+                    return (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        member={guildMember}
+                      />
+                    );
+                  })
+                )}
               </div>
-              <div className="ll:shrink-0 ll:pb-1 ll:mt-2">
-                <ChatInput
-                  selectedGuildId={selectedGuildId}
-                  autofocus={autofocus}
-                />
-              </div>
-            </div>
-          </DraggableWindow>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            </ScrollArea>
+          </div>
+          <div className="ll:shrink-0 ll:pb-1 ll:mt-2">
+            <ChatInput
+              selectedGuildId={selectedGuildId}
+              autofocus={autofocus}
+            />
+          </div>
+        </div>
+      </DraggableWindow>
+    </AnimatedWindow>
   );
 };

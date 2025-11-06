@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { DraggableWindow } from "@/components/draggable-window";
+import { AnimatedWindow } from "@/components/animated-window";
 import { useTimers } from "@/hooks/api/use-timers";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
@@ -171,49 +171,39 @@ export const Timers = () => {
   }
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          key="timers"
-          initial={{ opacity: 0, scaleY: 1.01 }}
-          animate={{ opacity: 1, scaleY: 1 }}
-          exit={{ opacity: 0, scaleY: 1.01 }}
-          transition={{ duration: 0.1 }}
-        >
-          <DraggableWindow
-            id="timers"
-            title="Timery"
-            onClose={() => setOpen("timers", false)}
-            minHeight={108}
-            actions=<TimersActions
-              timerFiltersEnabled={timerFiltersEnabled}
-              toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-              colorFiltersEnabled={colorFiltersEnabled}
-              toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-              timersSortOrder={timersSortOrder ?? "asc"}
-              setTimersSortOrder={setTimersSortOrder}
-              showHiddenTimers={showHiddenTimers}
-              setShowHiddenTimers={setShowHiddenTimers}
-            />
-          >
-            <div className="ll:flex ll:flex-col ll:h-full">
-              <TimersContent
-                sortedTimers={sortedTimers}
-                settingsKey={settingsKey}
-                hiddenTimers={hiddenTimers[settingsKey] || []}
-                areFiltersActive={areFiltersActive}
-                colorStatistics={colorStatistics}
-                isGrouping={generalConfig.timersGrouping}
-                allowWorldSelection={allowWorldSelection ?? false}
-                timerFiltersEnabled={timerFiltersEnabled ?? false}
-                isUnderBag={generalConfig.timersUnderBag}
-                minColumnWidth={displayConfig.minColumnWidth}
-                onAddTimer={() => toggleOpen("add-timer")}
-              />
-            </div>
-          </DraggableWindow>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <AnimatedWindow isOpen={open} windowKey="timers">
+      <DraggableWindow
+        id="timers"
+        title="Timery"
+        onClose={() => setOpen("timers", false)}
+        minHeight={108}
+        actions=<TimersActions
+          timerFiltersEnabled={timerFiltersEnabled}
+          toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+          colorFiltersEnabled={colorFiltersEnabled}
+          toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+          timersSortOrder={timersSortOrder ?? "asc"}
+          setTimersSortOrder={setTimersSortOrder}
+          showHiddenTimers={showHiddenTimers}
+          setShowHiddenTimers={setShowHiddenTimers}
+        />
+      >
+        <div className="ll:flex ll:flex-col ll:h-full">
+          <TimersContent
+            sortedTimers={sortedTimers}
+            settingsKey={settingsKey}
+            hiddenTimers={hiddenTimers[settingsKey] || []}
+            areFiltersActive={areFiltersActive}
+            colorStatistics={colorStatistics}
+            isGrouping={generalConfig.timersGrouping}
+            allowWorldSelection={allowWorldSelection ?? false}
+            timerFiltersEnabled={timerFiltersEnabled ?? false}
+            isUnderBag={generalConfig.timersUnderBag}
+            minColumnWidth={displayConfig.minColumnWidth}
+            onAddTimer={() => toggleOpen("add-timer")}
+          />
+        </div>
+      </DraggableWindow>
+    </AnimatedWindow>
   );
 };
