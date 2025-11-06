@@ -152,7 +152,7 @@ export const GuildLayout: FC = () => {
 
   return (
     <GuildContextProvider>
-      <div className="h-screen max-h-screen overflow-hidden flex flex-row">
+      <div className="h-dvh max-h-dvh overflow-hidden flex flex-row">
         <SidebarProvider>
           <GuildSidebar />
           <div className="flex flex-row w-full h-full min-h-0">

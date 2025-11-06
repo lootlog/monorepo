@@ -22,7 +22,7 @@ export const PageHeader: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-row items-center justify-between w-full h-16 px-4 text-white">
+    <div className="flex flex-row items-center justify-between w-full h-16 text-white">
       <Link href="/" className="text-xl font-bold">
         lootlog.pl
       </Link>

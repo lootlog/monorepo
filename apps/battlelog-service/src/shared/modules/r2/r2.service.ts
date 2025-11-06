@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import type { R2Config } from 'src/config/r2.config';
 import { RedisService } from '../redis/redis.service';
+import { gzipSync, gunzipSync } from 'zlib';
 
 @Injectable()
 export class R2Service {
@@ -43,21 +44,25 @@ export class R2Service {
   async uploadBattleData(battleId: string, data: any): Promise<void> {
     try {
       const key = `battles/${battleId}.json`;
+      const jsonString = JSON.stringify(data);
+      const compressedData = gzipSync(jsonString);
 
       const command = new PutObjectCommand({
         Bucket: this.config.bucketName,
         Key: key,
-        Body: JSON.stringify(data, null, 2),
+        Body: compressedData,
         ContentType: 'application/json',
+        ContentEncoding: 'gzip',
         Metadata: {
           'battle-id': battleId,
           'uploaded-at': new Date().toISOString(),
+          compressed: 'gzip',
         },
       });
 
       await this.client.send(command);
       this.logger.log(
-        `Battle data uploaded successfully for battle ${battleId}`,
+        `Battle data uploaded successfully for battle ${battleId} (compressed: ${jsonString.length} -> ${compressedData.length} bytes)`,
       );
     } catch (error) {
       this.logger.error(`Failed to upload battle data for ${battleId}:`, error);
@@ -90,10 +95,27 @@ export class R2Service {
         throw new Error(`No data found for battle ${battleId}`);
       }
 
-      const data = await response.Body.transformToString();
-      const parsedData = JSON.parse(data);
+      const isCompressed =
+        response.Metadata?.compressed === 'gzip' ||
+        response.ContentEncoding === 'gzip';
 
-      await this.cacheData(battleId, data);
+      let decompressedData: string;
+
+      if (isCompressed) {
+        const compressedBuffer = await response.Body.transformToByteArray();
+        const decompressedBuffer = gunzipSync(compressedBuffer);
+        decompressedData = decompressedBuffer.toString('utf-8');
+        this.logger.debug(`Decompressed battle ${battleId} data`);
+      } else {
+        decompressedData = await response.Body.transformToString();
+        this.logger.debug(
+          `Battle ${battleId} data is not compressed (legacy format)`,
+        );
+      }
+
+      const parsedData = JSON.parse(decompressedData);
+
+      await this.cacheData(battleId, decompressedData);
       this.logger.log(
         `Battle data retrieved from R2 and cached for battle ${battleId}`,
       );

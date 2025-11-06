@@ -1,5 +1,6 @@
 import { ExpandableDataTable } from "./expandable-data-table";
 import { getBattleStatsTableColumns } from "./battle-stats-table-columns-full";
+import { OneVsOneStatsTable } from "./one-vs-one-stats-table";
 import { ChartArea } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
@@ -116,6 +117,10 @@ export function BattleStatsTable({ battle, className }: BattleStatsTableProps) {
       toggleDamageDealtExpansion,
     );
   }, [battle, expandedRows]);
+
+  if (battle.type === "1v1") {
+    return <OneVsOneStatsTable battle={battle} />;
+  }
 
   return (
     <div className="w-full border-b">

@@ -24,7 +24,7 @@ export const UserMenu = () => {
   };
 
   return (
-    <div className="flex border-t w-full h-16 items-center p-3 justify-between bg-background">
+    <div className="flex border-t w-full h-14 items-center p-3 justify-between bg-background">
       {isPending && (
         <Avatar className="cursor-pointer size-10 rounded-lg">
           <AvatarImage src={undefined} />

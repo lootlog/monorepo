@@ -25,7 +25,6 @@ export interface GetAllBattlesResult {
   battles: BattleWithRelations[];
   pagination: PaginationResult<BattleWithRelations>['pagination'];
   meta: {
-    strategy: PaginationResult<BattleWithRelations>['strategy'];
     performance: PaginationResult<BattleWithRelations>['performance'];
   };
 }
