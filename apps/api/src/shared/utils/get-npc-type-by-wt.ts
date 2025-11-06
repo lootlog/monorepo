@@ -5,6 +5,10 @@ export const getNpcTypeByWt = (
   prof?: string,
   type?: number,
 ): NpcType => {
+  if (type === 0 && wt > 29 && wt < 80) {
+    return NpcType.ELITE3;
+  }
+
   if ((type === 5 || type === 0) && !prof) {
     return NpcType.NPC;
   }

@@ -234,6 +234,9 @@ export const GuildLayout: FC = () => {
                   "w-0 min-w-0": !timersVisible,
                 })}
               >
+                <div className="h-14 bg-background border-b flex items-center justify-center text-sm font-semibold">
+                  Timery
+                </div>
                 {timersVisible && <Timers />}
               </div>
             )}
