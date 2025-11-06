@@ -12,5 +12,6 @@ declare global {
     map: GameMap;
     getCookie: (name: string) => string | null;
     message: (text: string) => void;
+    getZoomFactor: () => number;
   }
 }
