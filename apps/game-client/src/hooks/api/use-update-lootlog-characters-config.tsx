@@ -22,8 +22,8 @@ export const useUpdateLootlogCharactersConfig = () => {
         options,
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ["lootlog-characters-config", accountId],
       });
     },

@@ -87,7 +87,6 @@ export const useBattleEventHandler = () => {
           }
         }
       }
-      ``;
 
       battleStore.setLastBattleHash(battleHash);
 
