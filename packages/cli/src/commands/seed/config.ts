@@ -45,4 +45,7 @@ export const SEED_CONFIG = {
   timers: {
     countPerGuild: 10,
   },
+  battles: {
+    count: 1000,
+  },
 } as const;

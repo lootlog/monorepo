@@ -1,11 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PaginationService } from './pagination.service';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import {
-  PaginationStrategy,
-  SortField,
-  SortOrder,
-} from '../dto/query-battles.dto';
+import { SortOrder } from '../dto/query-battles.dto';
 
 describe('PaginationService', () => {
   let service: PaginationService;
@@ -13,7 +9,7 @@ describe('PaginationService', () => {
 
   const mockBattles = [
     {
-      id: 1,
+      id: '1',
       accountId: 'acc1',
       characterId: 'char1',
       world: 'world1',
@@ -23,7 +19,7 @@ describe('PaginationService', () => {
       warriors: [],
     },
     {
-      id: 2,
+      id: '2',
       accountId: 'acc1',
       characterId: 'char1',
       world: 'world1',
@@ -57,116 +53,38 @@ describe('PaginationService', () => {
     prismaService = module.get(PrismaService) as jest.Mocked<PrismaService>;
   });
 
-  describe('offset pagination', () => {
-    it('should return paginated results with offset strategy', async () => {
+  describe('cursor pagination', () => {
+    it('should return paginated results without cursor', async () => {
       prismaService.battle.findMany.mockResolvedValue(mockBattles);
-      prismaService.battle.count.mockResolvedValue(10);
 
       const result = await service.paginateBattles(
         { accountId: 'acc1' },
         {
-          page: 1,
-          limit: 2,
-          includeTotal: true,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.CREATED_AT,
+          size: 2,
           sortOrder: SortOrder.DESC,
+          includeTotal: false,
         },
       );
 
       expect(result.data).toEqual(mockBattles);
-      expect(result.pagination).toEqual({
-        page: 1,
-        limit: 2,
-        total: 10,
-        totalPages: 5,
-        hasNext: true,
+      expect(result.pagination).toMatchObject({
+        size: 2,
+        hasNext: false,
         hasPrev: false,
       });
-      expect(result.strategy).toBe(PaginationStrategy.OFFSET);
+      expect(result.performance.queryTime).toBeDefined();
     });
 
-    it('should handle last page correctly', async () => {
-      prismaService.battle.findMany.mockResolvedValue(mockBattles);
-      prismaService.battle.count.mockResolvedValue(12);
-
-      const result = await service.paginateBattles(
-        { accountId: 'acc1' },
-        {
-          page: 6,
-          limit: 2,
-          includeTotal: true,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.CREATED_AT,
-          sortOrder: SortOrder.DESC,
-        },
-      );
-
-      expect(result.pagination).toMatchObject({
-        page: 6,
-        limit: 2,
-        total: 12,
-        totalPages: 6,
-        hasNext: false,
-        hasPrev: true,
-      });
-    });
-
-    it('should work without includeTotal', async () => {
-      prismaService.battle.findMany.mockResolvedValue(mockBattles);
-
-      const result = await service.paginateBattles(
-        { accountId: 'acc1' },
-        {
-          page: 1,
-          limit: 2,
-          includeTotal: false,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.CREATED_AT,
-          sortOrder: SortOrder.DESC,
-        },
-      );
-
-      expect(result.pagination.total).toBeUndefined();
-      expect(result.pagination.totalPages).toBeUndefined();
-      expect(prismaService.battle.count).not.toHaveBeenCalled();
-    });
-
-    it('should calculate skip correctly for different pages', async () => {
-      prismaService.battle.findMany.mockResolvedValue(mockBattles);
-
-      await service.paginateBattles(
-        { accountId: 'acc1' },
-        {
-          page: 3,
-          limit: 20,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.CREATED_AT,
-          sortOrder: SortOrder.DESC,
-        },
-      );
-
-      expect(prismaService.battle.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 40,
-          take: 20,
-        }),
-      );
-    });
-  });
-
-  describe('cursor pagination', () => {
-    it('should return paginated results with cursor strategy', async () => {
-      const battlesWithExtra = [...mockBattles, { ...mockBattles[0], id: 3 }];
+    it('should return paginated results with next cursor when more results exist', async () => {
+      const battlesWithExtra = [...mockBattles, { ...mockBattles[0], id: '3' }];
       prismaService.battle.findMany.mockResolvedValue(battlesWithExtra);
 
       const result = await service.paginateBattles(
         { accountId: 'acc1' },
         {
           size: 2,
-          strategy: PaginationStrategy.CURSOR,
-          sortField: SortField.CREATED_AT,
           sortOrder: SortOrder.DESC,
+          includeTotal: false,
         },
       );
 
@@ -175,122 +93,51 @@ describe('PaginationService', () => {
         size: 2,
         hasNext: true,
         hasPrev: false,
+        nextCursor: '2',
       });
-      expect(result.pagination.nextCursor).toBeDefined();
-      expect(result.strategy).toBe(PaginationStrategy.CURSOR);
     });
 
-    it('should handle cursor parameter', async () => {
-      const cursor = Buffer.from(
-        JSON.stringify({
-          id: 1,
-          createdAt: new Date('2024-01-01'),
-        }),
-      ).toString('base64');
-
+    it('should handle cursor parameter correctly', async () => {
       prismaService.battle.findMany.mockResolvedValue(mockBattles);
 
       const result = await service.paginateBattles(
         { accountId: 'acc1' },
         {
           size: 2,
-          cursor,
-          strategy: PaginationStrategy.CURSOR,
-          sortField: SortField.CREATED_AT,
+          cursor: '1',
           sortOrder: SortOrder.DESC,
+          includeTotal: false,
         },
       );
 
       expect(result.pagination.hasPrev).toBe(true);
+      expect(prismaService.battle.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            accountId: 'acc1',
+            id: {
+              lt: '1',
+            },
+          }),
+        }),
+      );
     });
 
-    it('should not return nextCursor when no more results', async () => {
+    it('should work without includeTotal', async () => {
       prismaService.battle.findMany.mockResolvedValue(mockBattles);
 
       const result = await service.paginateBattles(
-        { accountId: 'acc1' },
-        {
-          size: 5,
-          strategy: PaginationStrategy.CURSOR,
-          sortField: SortField.CREATED_AT,
-          sortOrder: SortOrder.DESC,
-        },
-      );
-
-      expect(result.pagination.hasNext).toBe(false);
-      expect(result.pagination.nextCursor).toBeUndefined();
-    });
-
-    it('should handle invalid cursor gracefully', async () => {
-      const invalidCursor = 'invalid-base64-cursor';
-
-      prismaService.battle.findMany.mockResolvedValue(mockBattles);
-
-      await service.paginateBattles(
         { accountId: 'acc1' },
         {
           size: 2,
-          cursor: invalidCursor,
-          strategy: PaginationStrategy.CURSOR,
-          sortField: SortField.CREATED_AT,
           sortOrder: SortOrder.DESC,
+          includeTotal: false,
         },
       );
 
-      expect(prismaService.battle.findMany).toHaveBeenCalled();
-    });
-  });
-
-  describe('auto pagination strategy', () => {
-    it('should use cursor pagination when cursor is provided', async () => {
-      const cursor = Buffer.from(JSON.stringify({ id: 1 })).toString('base64');
-      prismaService.battle.findMany.mockResolvedValue(mockBattles);
-
-      const result = await service.paginateBattles(
-        {},
-        {
-          cursor,
-          strategy: PaginationStrategy.AUTO,
-          sortField: SortField.CREATED_AT,
-          sortOrder: SortOrder.DESC,
-        },
-      );
-
-      expect(result.strategy).toBe(PaginationStrategy.CURSOR);
-    });
-
-    it('should use cursor pagination for deep pages (>50)', async () => {
-      prismaService.battle.findMany.mockResolvedValue(mockBattles);
-
-      const result = await service.paginateBattles(
-        {},
-        {
-          page: 51,
-          limit: 20,
-          strategy: PaginationStrategy.AUTO,
-          sortField: SortField.CREATED_AT,
-          sortOrder: SortOrder.DESC,
-        },
-      );
-
-      expect(result.strategy).toBe(PaginationStrategy.CURSOR);
-    });
-
-    it('should use offset pagination for shallow pages', async () => {
-      prismaService.battle.findMany.mockResolvedValue(mockBattles);
-
-      const result = await service.paginateBattles(
-        {},
-        {
-          page: 10,
-          limit: 20,
-          strategy: PaginationStrategy.AUTO,
-          sortField: SortField.CREATED_AT,
-          sortOrder: SortOrder.DESC,
-        },
-      );
-
-      expect(result.strategy).toBe(PaginationStrategy.OFFSET);
+      expect(result.pagination.total).toBeUndefined();
+      expect(result.performance.countTime).toBeUndefined();
+      expect(prismaService.battle.count).not.toHaveBeenCalled();
     });
   });
 
@@ -301,17 +148,15 @@ describe('PaginationService', () => {
       await service.paginateBattles(
         {},
         {
-          page: 1,
-          limit: 10,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.CREATED_AT,
+          size: 10,
           sortOrder: SortOrder.ASC,
+          includeTotal: false,
         },
       );
 
       expect(prismaService.battle.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          orderBy: { id: 'asc' },
         }),
       );
     });
@@ -322,17 +167,15 @@ describe('PaginationService', () => {
       await service.paginateBattles(
         {},
         {
-          page: 1,
-          limit: 10,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.DURATION,
+          size: 10,
           sortOrder: SortOrder.DESC,
+          includeTotal: false,
         },
       );
 
       expect(prismaService.battle.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: [{ duration: 'desc' }, { id: 'desc' }],
+          orderBy: { id: 'desc' },
         }),
       );
     });
@@ -345,11 +188,9 @@ describe('PaginationService', () => {
       const result = await service.paginateBattles(
         {},
         {
-          page: 1,
-          limit: 10,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.CREATED_AT,
+          size: 10,
           sortOrder: SortOrder.DESC,
+          includeTotal: false,
         },
       );
 
@@ -359,22 +200,60 @@ describe('PaginationService', () => {
 
     it('should track count time when includeTotal is true', async () => {
       prismaService.battle.findMany.mockResolvedValue(mockBattles);
-      prismaService.battle.count.mockResolvedValue(100);
+      prismaService.$queryRaw.mockResolvedValue([
+        { estimated_count: BigInt(100) },
+      ]);
 
       const result = await service.paginateBattles(
         {},
         {
-          page: 1,
-          limit: 10,
-          includeTotal: true,
-          strategy: PaginationStrategy.OFFSET,
-          sortField: SortField.CREATED_AT,
+          size: 10,
           sortOrder: SortOrder.DESC,
+          includeTotal: true,
         },
       );
 
       expect(result.performance.countTime).toBeDefined();
       expect(typeof result.performance.countTime).toBe('number');
+      expect(result.pagination.total).toBe(100);
+    });
+
+    it('should use estimated count for queries without filters', async () => {
+      prismaService.battle.findMany.mockResolvedValue(mockBattles);
+      prismaService.$queryRaw.mockResolvedValue([
+        { estimated_count: BigInt(1000) },
+      ]);
+
+      const result = await service.paginateBattles(
+        {},
+        {
+          size: 10,
+          sortOrder: SortOrder.DESC,
+          includeTotal: true,
+        },
+      );
+
+      expect(result.pagination.total).toBe(1000);
+      expect(prismaService.$queryRaw).toHaveBeenCalled();
+      expect(prismaService.battle.count).not.toHaveBeenCalled();
+    });
+
+    it('should use exact count for queries with filters', async () => {
+      prismaService.battle.findMany.mockResolvedValue(mockBattles);
+      prismaService.battle.count.mockResolvedValue(50);
+
+      const result = await service.paginateBattles(
+        { accountId: 'acc1' },
+        {
+          size: 10,
+          sortOrder: SortOrder.DESC,
+          includeTotal: true,
+        },
+      );
+
+      expect(result.pagination.total).toBe(50);
+      expect(prismaService.battle.count).toHaveBeenCalled();
+      expect(prismaService.$queryRaw).not.toHaveBeenCalled();
     });
   });
 });

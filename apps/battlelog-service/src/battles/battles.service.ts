@@ -7,8 +7,6 @@ import {
 import { Prisma } from '../../generated/client';
 import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import {
-  PaginationStrategy,
-  SortField,
   SortOrder,
   type QueryBattlesDto,
 } from 'src/battles/dto/query-battles.dto';
@@ -18,6 +16,7 @@ import type { PaginationOptions } from 'src/battles/interfaces/pagination.interf
 import { PaginationService } from 'src/battles/services/pagination.service';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import { R2Service } from 'src/shared/modules/r2/r2.service';
+import { RedisService } from 'src/shared/modules/redis/redis.service';
 import {
   BattleProcessor,
   type Warrior,
@@ -37,11 +36,14 @@ import type {
 @Injectable()
 export class BattlesService implements IBattlesService {
   private readonly logger = new Logger(BattlesService.name);
+  private readonly ANALYTICS_CACHE_PREFIX = 'analytics';
+  private readonly ANALYTICS_CACHE_TTL = 5 * 60; // 5 minutes
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly r2Service: R2Service,
     private readonly paginationService: PaginationService,
+    private readonly redisService: RedisService,
   ) {}
 
   async createBattle(params: CreateBattleParams): Promise<CreateBattleResult> {
@@ -59,6 +61,8 @@ export class BattlesService implements IBattlesService {
       };
 
       await this.storeRawBattleData(battle.id, rawBattleData);
+
+      await this.invalidateAnalyticsCache(userId);
 
       this.logger.log(
         `Battle ${battle.id} created successfully for user ${userId}`,
@@ -87,14 +91,13 @@ export class BattlesService implements IBattlesService {
       );
 
       this.logger.log(
-        `Paginated public battles using ${result.strategy} strategy in ${result.performance.queryTime}ms`,
+        `Paginated public battles in ${result.performance.queryTime}ms`,
       );
 
       return {
         battles: result.data,
         pagination: result.pagination,
         meta: {
-          strategy: result.strategy,
           performance: result.performance,
         },
       };
@@ -121,14 +124,13 @@ export class BattlesService implements IBattlesService {
       );
 
       this.logger.log(
-        `Paginated dashboard battles for user ${requestingUserId} using ${result.strategy} strategy in ${result.performance.queryTime}ms`,
+        `Paginated dashboard battles for user ${requestingUserId} in ${result.performance.queryTime}ms`,
       );
 
       return {
         battles: result.data,
         pagination: result.pagination,
         meta: {
-          strategy: result.strategy,
           performance: result.performance,
         },
       };
@@ -437,15 +439,8 @@ export class BattlesService implements IBattlesService {
 
   private buildPaginationOptions(query: QueryBattlesDto): PaginationOptions {
     return {
-      strategy: query.strategy ?? PaginationStrategy.AUTO,
-      sortField: query.sortBy ?? SortField.CREATED_AT,
       sortOrder: query.sortOrder ?? SortOrder.DESC,
-      includeTotal: query.includeTotal ?? true,
-      estimateTotal: query.estimateTotal ?? false,
-
-      page: query.page,
-      limit: query.limit,
-
+      includeTotal: query.includeTotal ?? false,
       cursor: query.cursor,
       size: query.size,
     };
@@ -727,6 +722,14 @@ export class BattlesService implements IBattlesService {
     totalPH: number;
   }> {
     try {
+      const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}`;
+
+      const cachedResult = await this.redisService.get(cacheKey);
+      if (cachedResult) {
+        this.logger.debug(`Analytics cache hit for user ${userId}`);
+        return JSON.parse(cachedResult);
+      }
+
       // Get character IDs to filter by
       let characterIds: string[] = [];
 
@@ -838,20 +841,48 @@ export class BattlesService implements IBattlesService {
       const totalBattles = wins + losses;
       const winRatio = totalBattles > 0 ? wins / totalBattles : 0;
 
-      this.logger.log(
-        `Analytics for user ${userId}: ${totalBattles} battles, ${wins} wins, ${losses} losses, ${totalPH} PH`,
-      );
-
-      return {
+      const result = {
         totalBattles,
         wins,
         losses,
         winRatio: Math.round(winRatio * 10000) / 100, // Round to 2 decimal places, as percentage
         totalPH,
       };
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.ANALYTICS_CACHE_TTL,
+      );
+
+      this.logger.log(
+        `Analytics for user ${userId}: ${totalBattles} battles, ${wins} wins, ${losses} losses, ${totalPH} PH (cached)`,
+      );
+
+      return result;
     } catch (error) {
       this.logger.error('Failed to retrieve battle analytics:', error);
       throw error;
+    }
+  }
+
+  private async invalidateAnalyticsCache(userId: string): Promise<void> {
+    try {
+      const pattern = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:*`;
+      const redis = await this.redisService.getClient();
+      const keys = await redis.keys(pattern);
+
+      if (keys.length > 0) {
+        await redis.del(...keys);
+        this.logger.debug(
+          `Invalidated ${keys.length} analytics cache entries for user ${userId}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to invalidate analytics cache for user ${userId}:`,
+        error,
+      );
     }
   }
 }

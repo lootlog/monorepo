@@ -26,6 +26,7 @@ ${chalk.bold("Options:")}
   --force, -f               Force re-scraping even if files exist
   --guilds <number>         Number of guilds to create (default: 5)
   --loots <number>          Number of loots to create (default: 5000)
+  --battles <number>        Number of battles to create (default: 1000)
   --players <number>        Number of players to generate (default: 1000)
   --no-clean                Don't clean database before seeding
   --skip-scrape             Skip scraping (use existing data)
@@ -35,6 +36,7 @@ ${chalk.bold("Environment Variables:")}
   DISCORD_DEVELOPMENT_GUILD_ID    Discord guild ID(s) for development
                                   (supports multiple IDs separated by commas)
   DISCORD_DEVELOPMENT_USER_ID     Discord user ID for development owner
+  SEEDING_USER_ID                 User ID for battles seeding (required for battles)
 
 ${chalk.bold("Examples:")}
   pnpm seed scrape:all                      # Scrape items and NPCs
@@ -70,6 +72,11 @@ const parseOptions = (args: string[]) => {
       const nextArg = args[++i];
       if (nextArg !== undefined) {
         options.loots = Number.parseInt(nextArg, 10);
+      }
+    } else if (arg === "--battles") {
+      const nextArg = args[++i];
+      if (nextArg !== undefined) {
+        options.battles = Number.parseInt(nextArg, 10);
       }
     } else if (arg === "--players") {
       const nextArg = args[++i];
@@ -189,6 +196,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
         await seed({
           guildsCount: options.guilds,
           lootsCount: options.loots,
+          battlesCount: options.battles,
           playersCount: options.players,
           clean: options.clean !== false,
         });
@@ -249,6 +257,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
         await seed({
           guildsCount: options.guilds || 5,
           lootsCount: options.loots || 5000,
+          battlesCount: options.battles || 1000,
           playersCount: playerCount,
           clean: true,
         });

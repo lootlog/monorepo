@@ -13,8 +13,7 @@ import { ROUTES } from "@/config/routes";
 export const RecentBattles = () => {
   const navigate = useNavigate();
   const { data: battlesResponse, isLoading } = useBattles({
-    page: 1,
-    limit: 10,
+    size: 10,
   });
   const { data: characters } = useBattleCharacters();
 
@@ -22,7 +21,7 @@ export const RecentBattles = () => {
     const serialize = createSerializer(battleQueryParsers);
 
     const queryString = serialize({
-      page: 1,
+      cursor: null,
       world: filters.world ?? null,
       type: filters.type ?? null,
       search: filters.search ?? null,
@@ -38,10 +37,10 @@ export const RecentBattles = () => {
 
   return (
     <div className="flex flex-col">
-      <div className="p-4">
+      <div className="p-4 bg-background">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-semibold text-lg">Ostatnie walki</h2>
+            <h2 className="font-semibold">Ostatnie walki</h2>
             <p className="text-muted-foreground text-sm">
               Twoje ostatnie walki dla wszystkich postaci
             </p>
@@ -59,7 +58,7 @@ export const RecentBattles = () => {
       <BattlesList
         battlesResponse={battlesResponse}
         characters={characters}
-        params={{ page: 1, limit: 10 }}
+        params={{ size: 10 }}
         showPagination={false}
         isLoading={isLoading}
         onFiltersChange={handleFiltersChange}

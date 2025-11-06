@@ -8,10 +8,8 @@ import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from "@lootlog/ui/components/pagination";
 import {
   Empty,
@@ -24,28 +22,32 @@ import { BattlesListFilters, type BattleFilters } from "./battles-list-filters";
 import { Swords } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { useEffect, useRef } from "react";
 
 type BattlesListProps = {
   battlesResponse?: GetBattlesResponse;
   characters?: BattleCharacter[];
   params?: UseBattlesParams;
-  onPageChange?: (page: number) => void;
+  onCursorChange?: (cursor: string | undefined) => void;
   onFiltersChange?: (filters: BattleFilters) => void;
   showPagination?: boolean;
   showFilters?: boolean;
   isLoading?: boolean;
+  enableScrollToTop?: boolean;
 };
 
 export const BattlesList = ({
   battlesResponse,
   characters,
   params,
-  onPageChange,
+  onCursorChange,
   onFiltersChange,
   showPagination = false,
   showFilters = false,
   isLoading = false,
+  enableScrollToTop = false,
 }: BattlesListProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const currentFilters: BattleFilters = {
     world: params?.world,
@@ -56,9 +58,24 @@ export const BattlesList = ({
     characterId: params?.characterId,
   };
 
-  const handlePageClick = (page: number) => {
-    if (onPageChange) {
-      onPageChange(page);
+  useEffect(() => {
+    if (enableScrollToTop) {
+      containerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [params?.cursor, enableScrollToTop]);
+
+  const handleNextPage = () => {
+    if (onCursorChange && battlesResponse?.pagination.nextCursor) {
+      onCursorChange(battlesResponse.pagination.nextCursor);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (onCursorChange) {
+      onCursorChange(undefined);
     }
   };
 
@@ -89,66 +106,8 @@ export const BattlesList = ({
     }
   };
 
-  const renderPaginationItems = () => {
-    if (!battlesResponse?.pagination) return null;
-
-    const { page, totalPages } = battlesResponse.pagination;
-    const items = [];
-
-    items.push(
-      <PaginationItem key={1}>
-        <PaginationLink
-          onClick={() => handlePageClick(1)}
-          isActive={page === 1}
-        >
-          1
-        </PaginationLink>
-      </PaginationItem>
-    );
-
-    if (page > 3) {
-      items.push(<PaginationEllipsis key="ellipsis-start" />);
-    }
-
-    for (
-      let i = Math.max(2, page - 1);
-      i <= Math.min(totalPages - 1, page + 1);
-      i++
-    ) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink
-            onClick={() => handlePageClick(i)}
-            isActive={page === i}
-          >
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-
-    if (page < totalPages - 2) {
-      items.push(<PaginationEllipsis key="ellipsis-end" />);
-    }
-
-    if (totalPages > 1) {
-      items.push(
-        <PaginationItem key={totalPages}>
-          <PaginationLink
-            onClick={() => handlePageClick(totalPages)}
-            isActive={page === totalPages}
-          >
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-
-    return items;
-  };
-
   return (
-    <div className="flex flex-col h-full">
+    <div ref={containerRef} className="flex flex-col h-full">
       {showFilters && onFiltersChange && (
         <BattlesListFilters
           filters={currentFilters}
@@ -195,16 +154,25 @@ export const BattlesList = ({
 
       {showPagination &&
         battlesResponse?.pagination &&
-        battlesResponse.pagination.totalPages > 1 && (
-          <div className="sticky bottom-0 mt-auto bg-background border-t h-16 flex items-center">
+        (battlesResponse.pagination.hasNext ||
+          battlesResponse.pagination.hasPrev) && (
+          <div
+            className="sticky h-14 bottom-0 mt-auto bg-background border-t py-4 flex items-center justify-center px-4 relative"
+            style={{
+              paddingBottom: "calc(1rem + env(safe-area-inset-bottom))",
+              marginBottom: "env(safe-area-inset-bottom)",
+            }}
+          >
+            <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
+              {battlesResponse.pagination.total && (
+                <span>Łącznie walk: {battlesResponse.pagination.total}</span>
+              )}
+            </div>
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() =>
-                      battlesResponse.pagination.hasPrev &&
-                      handlePageClick(battlesResponse.pagination.page - 1)
-                    }
+                    onClick={handlePreviousPage}
                     className={
                       !battlesResponse.pagination.hasPrev
                         ? "pointer-events-none opacity-50"
@@ -213,14 +181,9 @@ export const BattlesList = ({
                   />
                 </PaginationItem>
 
-                {renderPaginationItems()}
-
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() =>
-                      battlesResponse.pagination.hasNext &&
-                      handlePageClick(battlesResponse.pagination.page + 1)
-                    }
+                    onClick={handleNextPage}
                     className={
                       !battlesResponse.pagination.hasNext
                         ? "pointer-events-none opacity-50"

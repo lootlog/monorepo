@@ -3,6 +3,7 @@ import { BattlesService } from './battles.service';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import { R2Service } from 'src/shared/modules/r2/r2.service';
 import { PaginationService } from './services/pagination.service';
+import { RedisService } from 'src/shared/modules/redis/redis.service';
 
 describe('BattlesService', () => {
   let service: BattlesService;
@@ -37,6 +38,13 @@ describe('BattlesService', () => {
       paginateBattles: jest.fn(),
     };
 
+    const mockRedisService = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+      deleteByPattern: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BattlesService,
@@ -51,6 +59,10 @@ describe('BattlesService', () => {
         {
           provide: PaginationService,
           useValue: mockPaginationService,
+        },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
         },
       ],
     }).compile();

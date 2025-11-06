@@ -32,6 +32,12 @@ model Battle {
     // Relations
     warriors BattleWarrior[]
 
+    @@index([userId, createdAt(sort: Desc)])
+    @@index([world, createdAt(sort: Desc)])
+    @@index([userId, world, createdAt(sort: Desc)])
+    @@index([characterId, createdAt(sort: Desc)])
+    @@index([public, createdAt(sort: Desc)])
+    @@index([id])
     @@map("battles")
 }
 
@@ -160,5 +166,8 @@ model BattleWarrior {
     // Relations
     battle Battle @relation(fields: [battleId], references: [id], onDelete: Cascade)
 
+    @@index([originalId])
+    @@index([name])
+    @@index([battleId, team])
     @@map("battle_warriors")
 }
