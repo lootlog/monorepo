@@ -28,6 +28,7 @@ import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/
 import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from './routes/_authenticated/$guildId/settings/index'
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
 import { Route as AuthenticatedAtmeBattlePanelStatsRouteImport } from './routes/_authenticated/@me/battle-panel/stats'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './routes/_authenticated/@me/battle-panel/statistics'
 import { Route as AuthenticatedAtmeBattlePanelBattlesRouteImport } from './routes/_authenticated/@me/battle-panel/battles'
 import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from './routes/_authenticated/$guildId/settings/roles'
 import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from './routes/_authenticated/$guildId/settings/npcs'
@@ -141,6 +142,12 @@ const AuthenticatedAtmeBattlePanelStatsRoute =
     path: '/stats',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
   } as any)
+const AuthenticatedAtmeBattlePanelStatisticsRoute =
+  AuthenticatedAtmeBattlePanelStatisticsRouteImport.update({
+    id: '/statistics',
+    path: '/statistics',
+    getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
 const AuthenticatedAtmeBattlePanelBattlesRoute =
   AuthenticatedAtmeBattlePanelBattlesRouteImport.update({
     id: '/battles',
@@ -196,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
   '/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
   '/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/$guildId/settings': typeof AuthenticatedGuildIdSettingsIndexRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/_authenticated/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
   '/_authenticated/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  '/_authenticated/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/_authenticated/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/_authenticated/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/$guildId/settings/npcs'
     | '/$guildId/settings/roles'
     | '/@me/battle-panel/battles'
+    | '/@me/battle-panel/statistics'
     | '/@me/battle-panel/stats'
     | '/@me/settings/appearance'
     | '/$guildId/settings/'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/$guildId/settings/npcs'
     | '/$guildId/settings/roles'
     | '/@me/battle-panel/battles'
+    | '/@me/battle-panel/statistics'
     | '/@me/battle-panel/stats'
     | '/@me/settings/appearance'
     | '/$guildId/settings'
@@ -321,6 +333,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/settings/npcs'
     | '/_authenticated/$guildId/settings/roles'
     | '/_authenticated/@me/battle-panel/battles'
+    | '/_authenticated/@me/battle-panel/statistics'
     | '/_authenticated/@me/battle-panel/stats'
     | '/_authenticated/@me/settings/appearance'
     | '/_authenticated/$guildId/settings/'
@@ -472,6 +485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatsRouteImport
       parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
     }
+    '/_authenticated/@me/battle-panel/statistics': {
+      id: '/_authenticated/@me/battle-panel/statistics'
+      path: '/statistics'
+      fullPath: '/@me/battle-panel/statistics'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
     '/_authenticated/@me/battle-panel/battles': {
       id: '/_authenticated/@me/battle-panel/battles'
       path: '/battles'
@@ -578,6 +598,7 @@ const AuthenticatedGuildIdRouteWithChildren =
 
 interface AuthenticatedAtmeBattlePanelRouteChildren {
   AuthenticatedAtmeBattlePanelBattlesRoute: typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  AuthenticatedAtmeBattlePanelStatisticsRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   AuthenticatedAtmeBattlePanelStatsRoute: typeof AuthenticatedAtmeBattlePanelStatsRoute
   AuthenticatedAtmeBattlePanelIndexRoute: typeof AuthenticatedAtmeBattlePanelIndexRoute
   AuthenticatedAtmeBattlePanelBattlesBattleIdRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
@@ -587,6 +608,8 @@ const AuthenticatedAtmeBattlePanelRouteChildren: AuthenticatedAtmeBattlePanelRou
   {
     AuthenticatedAtmeBattlePanelBattlesRoute:
       AuthenticatedAtmeBattlePanelBattlesRoute,
+    AuthenticatedAtmeBattlePanelStatisticsRoute:
+      AuthenticatedAtmeBattlePanelStatisticsRoute,
     AuthenticatedAtmeBattlePanelStatsRoute:
       AuthenticatedAtmeBattlePanelStatsRoute,
     AuthenticatedAtmeBattlePanelIndexRoute:

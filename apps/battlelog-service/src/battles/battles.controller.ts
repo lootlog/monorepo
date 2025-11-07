@@ -13,6 +13,7 @@ import { BattlesService } from 'src/battles/battles.service';
 import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
 import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
+import { QueryBattleStatisticsDto } from 'src/battles/dto/query-battle-statistics.dto';
 import { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -54,6 +55,38 @@ export class BattlesController {
     @UserId() userId: string,
   ) {
     return this.battlesService.getBattleAnalytics(query, userId);
+  }
+
+  @Get('/@me/statistics/profession-win-rate')
+  getProfessionWinRate(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.calculateProfessionWinRate(query, userId);
+  }
+
+  @Get('/@me/statistics/head-to-head')
+  getHeadToHead(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getHeadToHeadRecords(query, userId);
+  }
+
+  @Get('/@me/statistics/streak')
+  getCurrentStreak(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getCurrentStreak(query, userId);
+  }
+
+  @Get('/@me/statistics/duration')
+  getBattleDuration(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getBattleDurationStats(query, userId);
   }
 
   @Get('/@me/warriors/search')

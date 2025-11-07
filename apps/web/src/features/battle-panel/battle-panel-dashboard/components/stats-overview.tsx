@@ -6,6 +6,8 @@ import {
   ChevronsUpDown,
   Calendar,
   Award,
+  ChevronRight,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -30,6 +32,8 @@ import { Separator } from "@lootlog/ui/components/separator";
 import CountUp from "@lootlog/ui/components/count-up";
 import { PlayerTile } from "@/components/battle";
 import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
+import { ROUTES } from "@/config/routes";
+import { Link } from "@tanstack/react-router";
 
 type Period = "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d";
 
@@ -204,8 +208,9 @@ export function StatsOverview() {
         </div>
       )}
       <Separator />
-      <div className="flex items-center gap-3 flex-wrap">
-        <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -316,6 +321,15 @@ export function StatsOverview() {
             </Command>
           </PopoverContent>
         </Popover>
+        </div>
+
+        <Button variant="outline" size="sm" asChild>
+          <Link to={ROUTES.user.battlePanel.statistics}>
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Zobacz szczegółowe statystyki
+            <ChevronRight className="h-4 w-4 ml-2" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

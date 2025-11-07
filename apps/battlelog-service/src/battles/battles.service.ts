@@ -11,6 +11,14 @@ import {
   type QueryBattlesDto,
 } from 'src/battles/dto/query-battles.dto';
 import type { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
+import type { QueryBattleStatisticsDto } from 'src/battles/dto/query-battle-statistics.dto';
+import type {
+  BattleStatisticsResponseDto,
+  ProfessionWinRateDto,
+  HeadToHeadRecordDto,
+  StreakDto,
+  BattleDurationStatsDto,
+} from 'src/battles/dto/battle-statistics-response.dto';
 import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import type { PaginationOptions } from 'src/battles/interfaces/pagination.interface';
 import { PaginationService } from 'src/battles/services/pagination.service';
@@ -527,6 +535,7 @@ export class BattlesService implements IBattlesService {
         winningTeam: analysis.outcome.winningTeam!,
         losingTeam: analysis.outcome.losingTeam!,
         hasFlee: analysis.outcome.hasFlee,
+        matchmaking: data.matchmaking ?? false,
         statistics: analysis.statistics as unknown as Prisma.InputJsonValue,
         warriors: {
           create: analysis.warriors.map(
@@ -883,6 +892,502 @@ export class BattlesService implements IBattlesService {
         `Failed to invalidate analytics cache for user ${userId}:`,
         error,
       );
+    }
+  }
+
+  private async getCharacterIds(
+    userId: string,
+    query: QueryBattleStatisticsDto,
+  ): Promise<string[]> {
+    if (query.characterId) {
+      const userCharacter = await this.prisma.userCharacter.findFirst({
+        where: {
+          userId,
+          characterId: query.characterId,
+          ...(query.world && { world: query.world }),
+        },
+      });
+
+      if (!userCharacter) {
+        throw new NotFoundException(
+          `Character ${query.characterId} not found for user`,
+        );
+      }
+
+      return [query.characterId];
+    }
+
+    const userCharacters = await this.prisma.userCharacter.findMany({
+      where: {
+        userId,
+        ...(query.world && { world: query.world }),
+      },
+      select: { characterId: true },
+    });
+
+    return userCharacters.map((c) => c.characterId);
+  }
+
+  private getDateFilter(period?: string): Date | undefined {
+    if (!period || period === 'all') return undefined;
+
+    const now = new Date();
+    const periodMap: Record<string, number> = {
+      '24h': 1,
+      '3d': 3,
+      '7d': 7,
+      '14d': 14,
+      '30d': 30,
+      '90d': 90,
+      '180d': 180,
+    };
+
+    const days = periodMap[period];
+    return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  }
+
+  async calculateProfessionWinRate(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<ProfessionWinRateDto[]> {
+    try {
+      const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}`;
+
+      const cachedResult = await this.redisService.get(cacheKey);
+      if (cachedResult) {
+        this.logger.debug(`Profession win rate cache hit for user ${userId}`);
+        return JSON.parse(cachedResult);
+      }
+
+      const characterIds = await this.getCharacterIds(userId, query);
+
+      if (characterIds.length === 0) {
+        return [];
+      }
+
+      const startDate = this.getDateFilter(query.period);
+
+      const where: Prisma.BattleWhereInput = {
+        userId,
+        type: '1v1',
+        hasFlee: false,
+        ...(query.world && { world: query.world }),
+        ...(startDate && { createdAt: { gte: startDate } }),
+        warriors: {
+          some: {
+            originalId: { in: characterIds },
+          },
+        },
+      };
+
+    const battles = await this.prisma.battle.findMany({
+      where,
+      include: {
+        warriors: true,
+      },
+    });
+
+    const professionStats = new Map<string, { wins: number; losses: number }>();
+
+    for (const battle of battles) {
+      const userWarrior = battle.warriors.find((w) =>
+        characterIds.includes(w.originalId),
+      );
+      const opponentWarrior = battle.warriors.find(
+        (w) => !characterIds.includes(w.originalId),
+      );
+
+      if (userWarrior && opponentWarrior) {
+        const prof = opponentWarrior.prof;
+        const stats = professionStats.get(prof) || { wins: 0, losses: 0 };
+
+        if (userWarrior.team === battle.winningTeam) {
+          stats.wins++;
+        } else if (userWarrior.team === battle.losingTeam) {
+          stats.losses++;
+        }
+
+        professionStats.set(prof, stats);
+      }
+    }
+
+      const result = Array.from(professionStats.entries())
+        .map(([prof, stats]) => {
+          const totalBattles = stats.wins + stats.losses;
+          return {
+            prof,
+            wins: stats.wins,
+            losses: stats.losses,
+            totalBattles,
+            winRate: totalBattles > 0 ? Math.round((stats.wins / totalBattles) * 10000) / 100 : 0,
+          };
+        })
+        .sort((a, b) => b.totalBattles - a.totalBattles);
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.ANALYTICS_CACHE_TTL,
+      );
+
+      this.logger.log(`Profession win rate calculated for user ${userId} (cached)`);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to calculate profession win rate:', error);
+      throw error;
+    }
+  }
+
+  async getHeadToHeadRecords(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<HeadToHeadRecordDto[]> {
+    try {
+      const cacheKey = `statistics:head-to-head:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}`;
+
+      const cachedResult = await this.redisService.get(cacheKey);
+      if (cachedResult) {
+        this.logger.debug(`Head-to-head cache hit for user ${userId}`);
+        return JSON.parse(cachedResult);
+      }
+
+      const characterIds = await this.getCharacterIds(userId, query);
+
+      if (characterIds.length === 0) {
+        return [];
+      }
+
+      const startDate = this.getDateFilter(query.period);
+
+      const where: Prisma.BattleWhereInput = {
+        userId,
+        type: '1v1',
+        hasFlee: false,
+        ...(query.world && { world: query.world }),
+        ...(startDate && { createdAt: { gte: startDate } }),
+        warriors: {
+          some: {
+            originalId: { in: characterIds },
+          },
+        },
+      };
+
+    const battles = await this.prisma.battle.findMany({
+      where,
+      include: {
+        warriors: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const opponentStats = new Map<
+      string,
+      {
+        name: string;
+        icon: string;
+        prof: string;
+        lvl: number;
+        wins: number;
+        losses: number;
+        lastBattleDate: Date;
+      }
+    >();
+
+    for (const battle of battles) {
+      const userWarrior = battle.warriors.find((w) =>
+        characterIds.includes(w.originalId),
+      );
+      const opponentWarrior = battle.warriors.find(
+        (w) => !characterIds.includes(w.originalId),
+      );
+
+      if (userWarrior && opponentWarrior) {
+        const opponentId = opponentWarrior.originalId;
+        const stats = opponentStats.get(opponentId) || {
+          name: opponentWarrior.name,
+          icon: opponentWarrior.icon,
+          prof: opponentWarrior.prof,
+          lvl: opponentWarrior.lvl,
+          wins: 0,
+          losses: 0,
+          lastBattleDate: battle.createdAt,
+        };
+
+        if (userWarrior.team === battle.winningTeam) {
+          stats.wins++;
+        } else if (userWarrior.team === battle.losingTeam) {
+          stats.losses++;
+        }
+
+        if (battle.createdAt > stats.lastBattleDate) {
+          stats.lastBattleDate = battle.createdAt;
+        }
+
+        opponentStats.set(opponentId, stats);
+      }
+    }
+
+      const result = Array.from(opponentStats.entries())
+        .map(([opponentId, stats]) => {
+          const totalBattles = stats.wins + stats.losses;
+          return {
+            opponentId,
+            opponentName: stats.name,
+            opponentIcon: stats.icon,
+            opponentProf: stats.prof,
+            opponentLvl: stats.lvl,
+            wins: stats.wins,
+            losses: stats.losses,
+            totalBattles,
+            winRate: totalBattles > 0 ? Math.round((stats.wins / totalBattles) * 10000) / 100 : 0,
+            lastBattleDate: stats.lastBattleDate.toISOString(),
+          };
+        })
+        .sort((a, b) => b.totalBattles - a.totalBattles)
+        .slice(0, 10);
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.ANALYTICS_CACHE_TTL,
+      );
+
+      this.logger.log(`Head-to-head records calculated for user ${userId} (cached)`);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to get head-to-head records:', error);
+      throw error;
+    }
+  }
+
+  async getCurrentStreak(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<StreakDto> {
+    try {
+      const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}`;
+
+      const cachedResult = await this.redisService.get(cacheKey);
+      if (cachedResult) {
+        this.logger.debug(`Streak cache hit for user ${userId}`);
+        return JSON.parse(cachedResult);
+      }
+
+      const characterIds = await this.getCharacterIds(userId, query);
+
+      if (characterIds.length === 0) {
+        return {
+          current: { type: 'none', count: 0 },
+          longest: { wins: 0, losses: 0 },
+        };
+      }
+
+      const startDate = this.getDateFilter(query.period);
+
+      const where: Prisma.BattleWhereInput = {
+        userId,
+        hasFlee: false,
+        ...(query.world && { world: query.world }),
+        ...(startDate && { createdAt: { gte: startDate } }),
+        warriors: {
+          some: {
+            originalId: { in: characterIds },
+          },
+        },
+      };
+
+    const battles = await this.prisma.battle.findMany({
+      where,
+      include: {
+        warriors: {
+          where: {
+            originalId: { in: characterIds },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (battles.length === 0) {
+      return {
+        current: { type: 'none', count: 0 },
+        longest: { wins: 0, losses: 0 },
+      };
+    }
+
+    let currentStreak = 0;
+    let currentType: 'wins' | 'losses' | 'none' = 'none';
+    let longestWinStreak = 0;
+    let longestLossStreak = 0;
+    let tempWinStreak = 0;
+    let tempLossStreak = 0;
+
+    for (const battle of battles) {
+      const userWarrior = battle.warriors[0];
+      if (!userWarrior) continue;
+
+      const isWin = userWarrior.team === battle.winningTeam;
+
+      if (currentType === 'none') {
+        currentType = isWin ? 'wins' : 'losses';
+        currentStreak = 1;
+      } else if ((currentType === 'wins' && isWin) || (currentType === 'losses' && !isWin)) {
+        currentStreak++;
+      } else {
+        break;
+      }
+
+      if (isWin) {
+        tempWinStreak++;
+        if (tempWinStreak > longestWinStreak) {
+          longestWinStreak = tempWinStreak;
+        }
+        tempLossStreak = 0;
+      } else {
+        tempLossStreak++;
+        if (tempLossStreak > longestLossStreak) {
+          longestLossStreak = tempLossStreak;
+        }
+        tempWinStreak = 0;
+      }
+    }
+
+      const result = {
+        current: { type: currentType, count: currentStreak },
+        longest: { wins: longestWinStreak, losses: longestLossStreak },
+      };
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.ANALYTICS_CACHE_TTL,
+      );
+
+      this.logger.log(`Streak calculated for user ${userId} (cached)`);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to get current streak:', error);
+      throw error;
+    }
+  }
+
+  async getBattleDurationStats(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<BattleDurationStatsDto> {
+    try {
+      const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}`;
+
+      const cachedResult = await this.redisService.get(cacheKey);
+      if (cachedResult) {
+        this.logger.debug(`Duration stats cache hit for user ${userId}`);
+        return JSON.parse(cachedResult);
+      }
+
+      const characterIds = await this.getCharacterIds(userId, query);
+
+      if (characterIds.length === 0) {
+        return {
+          avgWinDuration: 0,
+          avgLossDuration: 0,
+          fastest: null,
+          longest: null,
+        };
+      }
+
+      const startDate = this.getDateFilter(query.period);
+
+      const where: Prisma.BattleWhereInput = {
+        userId,
+        hasFlee: false,
+        ...(query.world && { world: query.world }),
+        ...(startDate && { createdAt: { gte: startDate } }),
+        warriors: {
+          some: {
+            originalId: { in: characterIds },
+          },
+        },
+      };
+
+    const battles = await this.prisma.battle.findMany({
+      where,
+      include: {
+        warriors: {
+          where: {
+            originalId: { in: characterIds },
+          },
+        },
+      },
+      orderBy: {
+        duration: 'asc',
+      },
+    });
+
+    if (battles.length === 0) {
+      return {
+        avgWinDuration: 0,
+        avgLossDuration: 0,
+        fastest: null,
+        longest: null,
+      };
+    }
+
+    let totalWinDuration = 0;
+    let totalLossDuration = 0;
+    let winCount = 0;
+    let lossCount = 0;
+
+    for (const battle of battles) {
+      const userWarrior = battle.warriors[0];
+      if (!userWarrior) continue;
+
+      const isWin = userWarrior.team === battle.winningTeam;
+
+      if (isWin) {
+        totalWinDuration += battle.duration;
+        winCount++;
+      } else {
+        totalLossDuration += battle.duration;
+        lossCount++;
+      }
+    }
+
+      const avgWinDuration = winCount > 0 ? Math.round(totalWinDuration / winCount) : 0;
+      const avgLossDuration = lossCount > 0 ? Math.round(totalLossDuration / lossCount) : 0;
+
+      const fastest = battles[0]
+        ? { duration: battles[0].duration, battleId: battles[0].id }
+        : null;
+      const longest = battles[battles.length - 1]
+        ? { duration: battles[battles.length - 1].duration, battleId: battles[battles.length - 1].id }
+        : null;
+
+      const result = {
+        avgWinDuration,
+        avgLossDuration,
+        fastest,
+        longest,
+      };
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.ANALYTICS_CACHE_TTL,
+      );
+
+      this.logger.log(`Duration stats calculated for user ${userId} (cached)`);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to get battle duration stats:', error);
+      throw error;
     }
   }
 }
