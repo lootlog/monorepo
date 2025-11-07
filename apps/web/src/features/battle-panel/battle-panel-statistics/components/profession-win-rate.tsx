@@ -19,8 +19,6 @@ interface ProfessionWinRate {
 interface ProfessionWinRateChartProps {
   data: ProfessionWinRate[];
   isLoading?: boolean;
-  characterId?: string;
-  onCharacterChange: (characterId: string | undefined) => void;
 }
 
 const chartConfig = {
@@ -33,8 +31,6 @@ const chartConfig = {
 export function ProfessionWinRateChart({
   data,
   isLoading,
-  characterId,
-  onCharacterChange,
 }: ProfessionWinRateChartProps) {
   const chartData = data.map((item) => ({
     ...item,
@@ -45,13 +41,11 @@ export function ProfessionWinRateChart({
     <StatCard
       title="Współczynnik wygranych vs profesja"
       description="Twój procent wygranych przeciwko każdej profesji w walkach 1v1"
-      characterId={characterId}
-      onCharacterChange={onCharacterChange}
       isLoading={isLoading}
       isEmpty={data.length === 0}
       emptyMessage="Brak danych o walkach"
     >
-      <div className="px-6">
+      <div>
         <div className="bg-muted/30 rounded-lg p-4">
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <BarChart

@@ -1,25 +1,13 @@
-import {
-  Flame,
-  Snowflake,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
+import { Flame, Snowflake, TrendingUp, TrendingDown } from "lucide-react";
 import type { Streak } from "@/hooks/api/battle-log/use-battle-statistics";
 import { StatCard } from "./stat-card";
 
 interface CurrentStreakCardProps {
   data: Streak;
   isLoading?: boolean;
-  characterId?: string;
-  onCharacterChange: (characterId: string | undefined) => void;
 }
 
-export function CurrentStreakCard({
-  data,
-  isLoading,
-  characterId,
-  onCharacterChange,
-}: CurrentStreakCardProps) {
+export function CurrentStreakCard({ data, isLoading }: CurrentStreakCardProps) {
   const isWinStreak = data.current.type === "wins";
   const hasStreak = data.current.type !== "none" && data.current.count > 0;
 
@@ -27,8 +15,6 @@ export function CurrentStreakCard({
     <StatCard
       title="Aktualna passa"
       description="Twoja bieżąca seria wygranych lub przegranych"
-      characterId={characterId}
-      onCharacterChange={onCharacterChange}
       isLoading={isLoading}
       isEmpty={false}
     >

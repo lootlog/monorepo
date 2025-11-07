@@ -17,8 +17,6 @@ interface PhGrowthDataPoint {
 interface PhGrowthChartProps {
   data: PhGrowthDataPoint[];
   isLoading?: boolean;
-  characterId?: string;
-  onCharacterChange: (characterId: string | undefined) => void;
 }
 
 const chartConfig = {
@@ -28,12 +26,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function PhGrowthChart({
-  data,
-  isLoading,
-  characterId,
-  onCharacterChange,
-}: PhGrowthChartProps) {
+export function PhGrowthChart({ data, isLoading }: PhGrowthChartProps) {
   const chartData = data.map((point) => ({
     date: new Date(point.date).toLocaleDateString("pl-PL", {
       day: "2-digit",
@@ -47,16 +40,14 @@ export function PhGrowthChart({
     <StatCard
       title="Wzrost PH w czasie"
       description="Historia zdobywania punktów honoru z walk"
-      characterId={characterId}
-      onCharacterChange={onCharacterChange}
       isLoading={isLoading}
       isEmpty={data.length === 0}
       emptyMessage="Brak danych o walkach z PH"
     >
-      <div className="px-6">
+      <div>
         <div className="bg-muted/30 rounded-lg">
           <div className="p-4">
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <ChartContainer config={chartConfig} className="h-72 w-full">
               <LineChart
                 accessibilityLayer
                 data={chartData}

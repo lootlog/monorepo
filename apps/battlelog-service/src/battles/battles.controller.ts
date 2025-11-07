@@ -10,10 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BattlesService } from 'src/battles/battles.service';
+import { BattleAnalyticsService } from 'src/battles/services/battle-analytics.service';
 import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
 import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
 import { QueryBattleStatisticsDto } from 'src/battles/dto/query-battle-statistics.dto';
+import { QueryHeadToHeadPaginatedDto } from 'src/battles/dto/query-head-to-head-paginated.dto';
 import { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -23,7 +25,10 @@ import { BattleOwnerGuard } from 'src/shared/guards/battle-owner.guard';
 @UseGuards(AuthGuard)
 @Controller('battles')
 export class BattlesController {
-  constructor(private readonly battlesService: BattlesService) {}
+  constructor(
+    private readonly battlesService: BattlesService,
+    private readonly battleAnalyticsService: BattleAnalyticsService,
+  ) {}
 
   @Post('/')
   createBattle(
@@ -54,7 +59,7 @@ export class BattlesController {
     @Query() query: QueryBattleAnalyticsDto,
     @UserId() userId: string,
   ) {
-    return this.battlesService.getBattleAnalytics(query, userId);
+    return this.battleAnalyticsService.getBattleAnalytics(query, userId);
   }
 
   @Get('/@me/statistics/profession-win-rate')
@@ -62,7 +67,10 @@ export class BattlesController {
     @Query() query: QueryBattleStatisticsDto,
     @UserId() userId: string,
   ) {
-    return this.battlesService.calculateProfessionWinRate(query, userId);
+    return this.battleAnalyticsService.calculateProfessionWinRate(
+      query,
+      userId,
+    );
   }
 
   @Get('/@me/statistics/head-to-head')
@@ -70,7 +78,15 @@ export class BattlesController {
     @Query() query: QueryBattleStatisticsDto,
     @UserId() userId: string,
   ) {
-    return this.battlesService.getHeadToHeadRecords(query, userId);
+    return this.battleAnalyticsService.getHeadToHeadRecords(query, userId);
+  }
+
+  @Get('/@me/statistics/head-to-head/paginated')
+  getHeadToHeadPaginated(
+    @Query() query: QueryHeadToHeadPaginatedDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getHeadToHeadPaginated(query, userId);
   }
 
   @Get('/@me/statistics/streak')
@@ -78,7 +94,7 @@ export class BattlesController {
     @Query() query: QueryBattleStatisticsDto,
     @UserId() userId: string,
   ) {
-    return this.battlesService.getCurrentStreak(query, userId);
+    return this.battleAnalyticsService.getCurrentStreak(query, userId);
   }
 
   @Get('/@me/statistics/duration')
@@ -86,7 +102,7 @@ export class BattlesController {
     @Query() query: QueryBattleStatisticsDto,
     @UserId() userId: string,
   ) {
-    return this.battlesService.getBattleDurationStats(query, userId);
+    return this.battleAnalyticsService.getBattleDurationStats(query, userId);
   }
 
   @Get('/@me/statistics/ph-growth')
@@ -94,7 +110,7 @@ export class BattlesController {
     @Query() query: QueryBattleStatisticsDto,
     @UserId() userId: string,
   ) {
-    return this.battlesService.getPhGrowthTimeSeries(query, userId);
+    return this.battleAnalyticsService.getPhGrowthTimeSeries(query, userId);
   }
 
   @Get('/@me/warriors/search')

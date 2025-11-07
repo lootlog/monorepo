@@ -16,15 +16,19 @@ interface UseBattleStreakParams {
   characterId?: string;
   world?: string;
   period?: string;
+  sameLevelOnly?: boolean;
 }
 
 export function useBattleStreak(params: UseBattleStreakParams) {
   return useQuery({
     queryKey: ["battle-streak", params],
     queryFn: async () => {
-      const response = await battlelogApiClient.get("/battles/@me/statistics/streak", {
-        params,
-      });
+      const response = await battlelogApiClient.get(
+        "/battles/@me/statistics/streak",
+        {
+          params,
+        },
+      );
       return response.data as Streak;
     },
     staleTime: 5 * 60 * 1000,

@@ -50,6 +50,25 @@ export interface PhGrowthDataPointDto {
   battleId: string;
 }
 
+export interface HeadToHeadPaginatedResponseDto {
+  records: HeadToHeadRecordDto[];
+  pagination: {
+    size: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+    nextCursor?: string;
+    total?: number;
+  };
+  meta: {
+    performance: {
+      queryTime: number;
+      countTime?: number;
+      totalItems?: number;
+      estimatedTotal?: boolean;
+    };
+  };
+}
+
 export interface BattleStatisticsResponseDto {
   professionWinRate: ProfessionWinRateDto[];
   headToHead: HeadToHeadRecordDto[];

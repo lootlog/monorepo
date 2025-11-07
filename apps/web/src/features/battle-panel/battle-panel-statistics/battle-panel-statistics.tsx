@@ -16,8 +16,6 @@ import { useStatisticsStore } from "@/store/statistics.store";
 type Period = "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d" | "all";
 
 export function BattlePanelStatistics() {
-  const [characterId, setCharacterId] = useState<string | undefined>(undefined);
-  const [world, setWorld] = useState<string | undefined>(undefined);
   const [period, setPeriod] = useState<Period>("30d");
 
   const { data: characters } = useBattleCharacters();
@@ -27,29 +25,9 @@ export function BattlePanelStatistics() {
   const setSelectedCharacterId = useStatisticsStore(
     (state) => state.setSelectedCharacterId,
   );
-  const headToHeadCharacterId = useStatisticsStore(
-    (state) => state.headToHeadCharacterId,
-  );
-  const setHeadToHeadCharacterId = useStatisticsStore(
-    (state) => state.setHeadToHeadCharacterId,
-  );
-  const streakCharacterId = useStatisticsStore(
-    (state) => state.streakCharacterId,
-  );
-  const setStreakCharacterId = useStatisticsStore(
-    (state) => state.setStreakCharacterId,
-  );
-  const durationCharacterId = useStatisticsStore(
-    (state) => state.durationCharacterId,
-  );
-  const setDurationCharacterId = useStatisticsStore(
-    (state) => state.setDurationCharacterId,
-  );
-  const phGrowthCharacterId = useStatisticsStore(
-    (state) => state.phGrowthCharacterId,
-  );
-  const setPhGrowthCharacterId = useStatisticsStore(
-    (state) => state.setPhGrowthCharacterId,
+  const sameLevelOnly = useStatisticsStore((state) => state.sameLevelOnly);
+  const setSameLevelOnly = useStatisticsStore(
+    (state) => state.setSameLevelOnly,
   );
 
   useEffect(() => {
@@ -58,64 +36,40 @@ export function BattlePanelStatistics() {
       if (!selectedCharacterId) {
         setSelectedCharacterId(firstCharId);
       }
-      if (!streakCharacterId) {
-        setStreakCharacterId(firstCharId);
-      }
-      if (!durationCharacterId) {
-        setDurationCharacterId(firstCharId);
-      }
-      if (!phGrowthCharacterId) {
-        setPhGrowthCharacterId(firstCharId);
-      }
     }
-  }, [
-    characters,
-    selectedCharacterId,
-    setSelectedCharacterId,
-    streakCharacterId,
-    setStreakCharacterId,
-    durationCharacterId,
-    setDurationCharacterId,
-    phGrowthCharacterId,
-    setPhGrowthCharacterId,
-  ]);
-
-  const professionCharacterId = selectedCharacterId || characters?.[0]?.id;
-  const streakCharIdToUse = streakCharacterId || characters?.[0]?.id;
-  const durationCharIdToUse = durationCharacterId || characters?.[0]?.id;
-  const phGrowthCharIdToUse = phGrowthCharacterId || characters?.[0]?.id;
+  }, [characters, selectedCharacterId, setSelectedCharacterId]);
 
   const { data: professionData, isLoading: isProfessionLoading } =
     useProfessionWinRate({
-      characterId: professionCharacterId,
-      world,
+      characterId: selectedCharacterId ?? characters?.[0]?.id,
       period,
+      sameLevelOnly,
     });
 
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
     useHeadToHead({
-      characterId: headToHeadCharacterId,
-      world,
+      characterId: selectedCharacterId ?? characters?.[0]?.id,
       period,
+      sameLevelOnly,
     });
 
   const { data: streakData, isLoading: isStreakLoading } = useBattleStreak({
-    characterId: streakCharIdToUse,
-    world,
+    characterId: selectedCharacterId ?? characters?.[0]?.id,
     period,
+    sameLevelOnly,
   });
 
   const { data: durationData, isLoading: isDurationLoading } =
     useBattleDuration({
-      characterId: durationCharIdToUse,
-      world,
+      characterId: selectedCharacterId ?? characters?.[0]?.id,
       period,
+      sameLevelOnly,
     });
 
   const { data: phGrowthData, isLoading: isPhGrowthLoading } = usePhGrowth({
-    characterId: phGrowthCharIdToUse,
-    world,
+    characterId: selectedCharacterId ?? characters?.[0]?.id,
     period,
+    sameLevelOnly,
   });
 
   return (
@@ -128,15 +82,15 @@ export function BattlePanelStatistics() {
       </div>
 
       <StatisticsFilters
-        characterId={characterId}
-        world={world}
+        characterId={selectedCharacterId}
         period={period}
-        onCharacterChange={setCharacterId}
-        onWorldChange={setWorld}
+        sameLevelOnly={sameLevelOnly}
+        onCharacterChange={setSelectedCharacterId}
         onPeriodChange={setPeriod}
+        onSameLevelOnlyChange={setSameLevelOnly}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
         <CurrentStreakCard
           data={
             streakData ?? {
@@ -145,8 +99,6 @@ export function BattlePanelStatistics() {
             }
           }
           isLoading={isStreakLoading}
-          characterId={streakCharIdToUse}
-          onCharacterChange={setStreakCharacterId}
         />
         <BattleDurationStatsCard
           data={
@@ -158,29 +110,21 @@ export function BattlePanelStatistics() {
             }
           }
           isLoading={isDurationLoading}
-          characterId={durationCharIdToUse}
-          onCharacterChange={setDurationCharacterId}
         />
         <PhGrowthChart
           data={phGrowthData ?? []}
           isLoading={isPhGrowthLoading}
-          characterId={phGrowthCharIdToUse}
-          onCharacterChange={setPhGrowthCharacterId}
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
         <ProfessionWinRateChart
           data={professionData ?? []}
           isLoading={isProfessionLoading}
-          characterId={professionCharacterId}
-          onCharacterChange={setSelectedCharacterId}
         />
         <HeadToHeadTable
           data={headToHeadData ?? []}
           isLoading={isHeadToHeadLoading}
-          characterId={headToHeadCharacterId}
-          onCharacterChange={setHeadToHeadCharacterId}
         />
       </div>
     </div>

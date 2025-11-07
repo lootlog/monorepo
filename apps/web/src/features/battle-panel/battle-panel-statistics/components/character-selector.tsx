@@ -80,11 +80,14 @@ export function CharacterSelector({
                     onCharacterChange(character.id);
                     setOpen(false);
                   }}
+                  className="py-0"
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      characterId === character.id ? "opacity-100" : "opacity-0",
+                      characterId === character.id
+                        ? "opacity-100"
+                        : "opacity-0",
                     )}
                   />
                   <div className="flex items-center gap-2">
