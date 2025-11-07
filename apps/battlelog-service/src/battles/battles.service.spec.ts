@@ -42,8 +42,7 @@ describe('BattlesService', () => {
     const mockBattleAnalyticsService = {
       getBattleAnalytics: jest.fn(),
       calculateProfessionWinRate: jest.fn(),
-      getHeadToHeadRecords: jest.fn(),
-      getHeadToHeadPaginated: jest.fn(),
+      getHeadToHead: jest.fn(),
       getCurrentStreak: jest.fn(),
       getBattleDurationStats: jest.fn(),
       getPhGrowthTimeSeries: jest.fn(),

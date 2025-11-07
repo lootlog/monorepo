@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsIn, IsBoolean } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsIn,
+  IsBoolean,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class QueryBattleStatisticsDto {
@@ -19,4 +26,40 @@ export class QueryBattleStatisticsDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   sameLevelOnly?: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  size?: number = 20;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['wins', 'losses', 'totalBattles', 'winRate', 'lastBattleDate'])
+  sortBy?: 'wins' | 'losses' | 'totalBattles' | 'winRate' | 'lastBattleDate' =
+    'totalBattles';
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'desc';
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  includeTotal?: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  minBattles?: number;
 }

@@ -39,9 +39,9 @@ import { PlayerTile } from "@/components/battle";
 import { getProfessionName } from "@/lib/utils/professions";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import {
-  useHeadToHeadPaginated,
+  useHeadToHead,
   type HeadToHeadRecord,
-} from "@/hooks/api/battle-log/use-head-to-head-paginated";
+} from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
 
 type Period = "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d" | "all";
@@ -62,7 +62,7 @@ export function HeadToHeadFullPage() {
   const sortBy = (sorting[0]?.id || "totalBattles") as SortBy;
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
 
-  const { data, isLoading } = useHeadToHeadPaginated({
+  const { data, isLoading } = useHeadToHead({
     cursor,
     size: 20,
     sortBy,

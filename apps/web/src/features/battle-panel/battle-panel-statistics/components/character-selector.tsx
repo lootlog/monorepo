@@ -75,7 +75,7 @@ export function CharacterSelector({
               {characters?.map((character) => (
                 <CommandItem
                   key={character.id}
-                  value={character.name}
+                  value={`${character.name}-${character.world}`}
                   onSelect={() => {
                     onCharacterChange(character.id);
                     setOpen(false);
