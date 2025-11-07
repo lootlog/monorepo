@@ -10,7 +10,6 @@ import type {
   BattleDurationStatsDto,
   PhGrowthDataPointDto,
 } from 'src/battles/dto/battle-statistics-response.dto';
-import type { QueryHeadToHeadPaginatedDto } from 'src/battles/dto/query-head-to-head-paginated.dto';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import { RedisService } from 'src/shared/modules/redis/redis.service';
 
@@ -257,140 +256,8 @@ export class BattleAnalyticsService {
     return result;
   }
 
-  async getHeadToHeadRecords(
+  async getHeadToHead(
     query: QueryBattleStatisticsDto,
-    userId: string,
-  ): Promise<HeadToHeadRecordDto[]> {
-    const cacheKey = `statistics:head-to-head:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${query.sameLevelOnly ? 'samelevel' : 'all'}`;
-
-    const cachedResult = await this.redisService.get(cacheKey);
-    if (cachedResult) {
-      this.logger.debug(`Head-to-head cache hit for user ${userId}`);
-      return JSON.parse(cachedResult);
-    }
-
-    const characterIds = await this.getCharacterIds(userId, query);
-
-    if (characterIds.length === 0) {
-      return [];
-    }
-
-    const startDate = this.getDateFilter(query.period);
-
-    const where: Prisma.BattleWhereInput = {
-      userId,
-      type: '1v1',
-      hasFlee: false,
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    let filteredBattles = battles;
-    if (query.sameLevelOnly) {
-      filteredBattles = battles.filter((battle) =>
-        this.isSameLevelBattle(battle, characterIds),
-      );
-    }
-
-    const opponentStats = new Map<
-      string,
-      {
-        name: string;
-        icon: string;
-        prof: string;
-        lvl: number;
-        wins: number;
-        losses: number;
-        lastBattleDate: Date;
-      }
-    >();
-
-    for (const battle of filteredBattles) {
-      const userWarrior = battle.warriors.find((w) =>
-        characterIds.includes(w.originalId),
-      );
-      const opponentWarrior = battle.warriors.find(
-        (w) => !characterIds.includes(w.originalId),
-      );
-
-      if (userWarrior && opponentWarrior) {
-        const opponentId = opponentWarrior.originalId;
-        const stats = opponentStats.get(opponentId) || {
-          name: opponentWarrior.name,
-          icon: opponentWarrior.icon,
-          prof: opponentWarrior.prof,
-          lvl: opponentWarrior.lvl,
-          wins: 0,
-          losses: 0,
-          lastBattleDate: battle.createdAt,
-        };
-
-        if (userWarrior.team === battle.winningTeam) {
-          stats.wins++;
-        } else if (userWarrior.team === battle.losingTeam) {
-          stats.losses++;
-        }
-
-        if (battle.createdAt > stats.lastBattleDate) {
-          stats.lastBattleDate = battle.createdAt;
-        }
-
-        opponentStats.set(opponentId, stats);
-      }
-    }
-
-    const result = Array.from(opponentStats.entries())
-      .map(([opponentId, stats]) => {
-        const totalBattles = stats.wins + stats.losses;
-        return {
-          opponentId,
-          opponentName: stats.name,
-          opponentIcon: stats.icon,
-          opponentProf: stats.prof,
-          opponentLvl: stats.lvl,
-          wins: stats.wins,
-          losses: stats.losses,
-          totalBattles,
-          winRate:
-            totalBattles > 0
-              ? Math.round((stats.wins / totalBattles) * 10000) / 100
-              : 0,
-          lastBattleDate: stats.lastBattleDate.toISOString(),
-        };
-      })
-      .sort((a, b) => b.totalBattles - a.totalBattles)
-      .slice(0, 10);
-
-    await this.redisService.set(
-      cacheKey,
-      JSON.stringify(result),
-      this.ANALYTICS_CACHE_TTL,
-    );
-
-    this.logger.log(
-      `Head-to-head records calculated for user ${userId} (cached)`,
-    );
-
-    return result;
-  }
-
-  async getHeadToHeadPaginated(
-    query: QueryHeadToHeadPaginatedDto,
     userId: string,
   ): Promise<HeadToHeadPaginatedResponseDto> {
     const startTime = Date.now();

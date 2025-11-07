@@ -123,7 +123,7 @@ export function BattlePanelStatistics() {
           isLoading={isProfessionLoading}
         />
         <HeadToHeadTable
-          data={headToHeadData ?? []}
+          data={headToHeadData?.records ?? []}
           isLoading={isHeadToHeadLoading}
         />
       </div>

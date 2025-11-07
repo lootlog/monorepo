@@ -15,7 +15,6 @@ import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
 import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
 import { QueryBattleStatisticsDto } from 'src/battles/dto/query-battle-statistics.dto';
-import { QueryHeadToHeadPaginatedDto } from 'src/battles/dto/query-head-to-head-paginated.dto';
 import { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -78,15 +77,7 @@ export class BattlesController {
     @Query() query: QueryBattleStatisticsDto,
     @UserId() userId: string,
   ) {
-    return this.battleAnalyticsService.getHeadToHeadRecords(query, userId);
-  }
-
-  @Get('/@me/statistics/head-to-head/paginated')
-  getHeadToHeadPaginated(
-    @Query() query: QueryHeadToHeadPaginatedDto,
-    @UserId() userId: string,
-  ) {
-    return this.battleAnalyticsService.getHeadToHeadPaginated(query, userId);
+    return this.battleAnalyticsService.getHeadToHead(query, userId);
   }
 
   @Get('/@me/statistics/streak')
