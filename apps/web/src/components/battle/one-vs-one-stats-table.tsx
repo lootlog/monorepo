@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ChartArea, EyeOff, Eye } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -10,6 +10,8 @@ import {
   TableRow,
 } from "@lootlog/ui/components/table";
 import type { Battle, Warrior } from "@/hooks/api/battle-log/use-battles";
+import { useStatsCustomization } from "@/hooks/use-stats-customization";
+import { StatsCustomizationModal } from "./stats-customization";
 
 interface OneVsOneStatsTableProps {
   battle: Battle;
@@ -343,41 +345,77 @@ const formatValue = (
 };
 
 export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
-  const [hideZeros, setHideZeros] = useState(false);
+  const [hideZeros, setHideZeros] = useState(true);
 
-  const { user, opponent } = useMemo(() => {
-    const userWarrior = battle.warriors.find(
-      (w) => w.originalId === battle.characterId,
-    );
-    const opponentWarrior = battle.warriors.find(
-      (w) => w.originalId !== battle.characterId,
-    );
+  const {
+    config,
+    updateCategoryOrder,
+    toggleCategoryVisibility,
+    updateCategoryName,
+    updateStatOrder,
+    addStatToCategory,
+    removeStatFromCategory,
+    addCategory,
+    removeCategory,
+    resetToDefaults,
+  } = useStatsCustomization(STAT_CATEGORIES);
 
-    return {
-      user: userWarrior,
-      opponent: opponentWarrior,
-    };
-  }, [battle.warriors, battle.characterId]);
+  const userWarrior = battle.warriors.find(
+    (w) => w.originalId === battle.characterId,
+  );
+  const opponentWarrior = battle.warriors.find(
+    (w) => w.originalId !== battle.characterId,
+  );
 
-  const visibleStats = useMemo(() => {
-    if (!hideZeros || !user || !opponent) {
-      return STAT_CATEGORIES;
+  const user = userWarrior;
+  const opponent = opponentWarrior;
+
+  const allStatsMap = new Map<string, StatDefinition>();
+  for (const category of STAT_CATEGORIES) {
+    for (const stat of category.stats) {
+      allStatsMap.set(stat.key, stat);
     }
+  }
 
-    return STAT_CATEGORIES.map((category) => ({
-      ...category,
-      stats: category.stats.filter((stat) => {
-        const userValue = user[stat.key];
-        const opponentValue = opponent[stat.key];
+  const visibleStats = config.categoryOrder
+    .map((categoryId) => {
+      const customization = config.categories[categoryId];
 
-        const userNum = typeof userValue === "number" ? userValue : 0;
-        const opponentNum =
-          typeof opponentValue === "number" ? opponentValue : 0;
+      if (!customization?.visible) {
+        return null;
+      }
 
-        return userNum !== 0 || opponentNum !== 0;
-      }),
-    })).filter((category) => category.stats.length > 0);
-  }, [hideZeros, user, opponent]);
+      const orderedStats = customization.statOrder
+        .map((statKey) => allStatsMap.get(statKey))
+        .filter((stat): stat is StatDefinition => stat !== undefined);
+
+      const filteredStats =
+        hideZeros && user && opponent
+          ? orderedStats.filter((stat) => {
+              const userValue = user[stat.key];
+              const opponentValue = opponent[stat.key];
+
+              const userNum = typeof userValue === "number" ? userValue : 0;
+              const opponentNum =
+                typeof opponentValue === "number" ? opponentValue : 0;
+
+              return userNum !== 0 || opponentNum !== 0;
+            })
+          : orderedStats;
+
+      if (filteredStats.length === 0) {
+        return null;
+      }
+
+      return {
+        id: categoryId,
+        name: customization.name,
+        stats: filteredStats,
+      };
+    })
+    .filter(
+      (category): category is NonNullable<typeof category> => category !== null,
+    );
 
   if (!user || !opponent) {
     return (
@@ -391,29 +429,44 @@ export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
     <div className="w-full border-b">
       <div className="sticky top-0 z-20 bg-background border-b w-full">
         <div className="p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-2 font-semibold">
               <ChartArea className="h-5 w-5" />
               Statystyki walki 1v1
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setHideZeros(!hideZeros)}
-              className="gap-2"
-            >
-              {hideZeros ? (
-                <>
-                  <Eye className="h-4 w-4" />
-                  Pokaż wszystkie
-                </>
-              ) : (
-                <>
-                  <EyeOff className="h-4 w-4" />
-                  Ukryj zerowe wartości
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <StatsCustomizationModal
+                config={config}
+                defaultCategories={STAT_CATEGORIES}
+                onUpdateCategoryOrder={updateCategoryOrder}
+                onToggleCategoryVisibility={toggleCategoryVisibility}
+                onUpdateCategoryName={updateCategoryName}
+                onUpdateStatOrder={updateStatOrder}
+                onAddStatToCategory={addStatToCategory}
+                onRemoveStatFromCategory={removeStatFromCategory}
+                onAddCategory={addCategory}
+                onRemoveCategory={removeCategory}
+                onResetToDefaults={resetToDefaults}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setHideZeros(!hideZeros)}
+                className="gap-2"
+              >
+                {hideZeros ? (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    Pokaż wszystkie
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="h-4 w-4" />
+                    Ukryj zerowe wartości
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -445,10 +498,7 @@ export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
           </TableHeader>
           <TableBody>
             {visibleStats.map((category) => [
-              <TableRow
-                key={`category-${category.name}`}
-                className="bg-muted/50"
-              >
+              <TableRow key={`category-${category.id}`} className="bg-muted/50">
                 <TableCell className="sticky left-0 z-10 font-semibold bg-muted/50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] border-r">
                   {category.name}
                 </TableCell>
@@ -460,7 +510,7 @@ export function OneVsOneStatsTable({ battle }: OneVsOneStatsTableProps) {
                 const opponentValue = opponent[stat.key];
 
                 return (
-                  <TableRow key={stat.key}>
+                  <TableRow key={`${category.id}-${stat.key}`}>
                     <TableCell
                       className={`sticky left-0 z-10 hover:bg-background/50 bg-background border-r font-medium shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] py-2 ${stat.color || ""}`}
                       style={{
