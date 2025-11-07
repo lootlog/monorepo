@@ -43,6 +43,13 @@ export interface BattleDurationStatsDto {
   } | null;
 }
 
+export interface PhGrowthDataPointDto {
+  date: string;
+  ph: number;
+  cumulativePh: number;
+  battleId: string;
+}
+
 export interface BattleStatisticsResponseDto {
   professionWinRate: ProfessionWinRateDto[];
   headToHead: HeadToHeadRecordDto[];
