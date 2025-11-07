@@ -168,6 +168,7 @@ export const useBattles = (params?: UseBattlesParams) => {
       return client.get<GetBattlesResponse>(`/battles/@me?${searchParams}`);
     },
     select: (response) => response.data,
+    staleTime: 1000 * 30, // 30 seconds
   });
 
   return query;
