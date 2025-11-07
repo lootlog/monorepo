@@ -18,6 +18,7 @@ import type {
   HeadToHeadRecordDto,
   StreakDto,
   BattleDurationStatsDto,
+  PhGrowthDataPointDto,
 } from 'src/battles/dto/battle-statistics-response.dto';
 import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import type { PaginationOptions } from 'src/battles/interfaces/pagination.interface';
@@ -1387,6 +1388,82 @@ export class BattlesService implements IBattlesService {
       return result;
     } catch (error) {
       this.logger.error('Failed to get battle duration stats:', error);
+      throw error;
+    }
+  }
+
+  async getPhGrowthTimeSeries(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<PhGrowthDataPointDto[]> {
+    try {
+      const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}`;
+
+      const cachedResult = await this.redisService.get(cacheKey);
+      if (cachedResult) {
+        this.logger.debug(`PH growth cache hit for user ${userId}`);
+        return JSON.parse(cachedResult);
+      }
+
+      const characterIds = await this.getCharacterIds(userId, query);
+
+      if (characterIds.length === 0) {
+        return [];
+      }
+
+      const startDate = this.getDateFilter(query.period);
+
+      const where: Prisma.BattleWhereInput = {
+        userId,
+        ...(query.world && { world: query.world }),
+        ...(startDate && { createdAt: { gte: startDate } }),
+        warriors: {
+          some: {
+            originalId: { in: characterIds },
+            ph: { gt: 0 },
+          },
+        },
+      };
+
+      const battles = await this.prisma.battle.findMany({
+        where,
+        include: {
+          warriors: {
+            where: {
+              originalId: { in: characterIds },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      let cumulativePh = 0;
+      const result: PhGrowthDataPointDto[] = battles.map((battle) => {
+        const userWarrior = battle.warriors[0];
+        const ph = userWarrior?.ph ?? 0;
+        cumulativePh += ph;
+
+        return {
+          date: battle.createdAt.toISOString(),
+          ph,
+          cumulativePh,
+          battleId: battle.id,
+        };
+      });
+
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.ANALYTICS_CACHE_TTL,
+      );
+
+      this.logger.log(`PH growth time series calculated for user ${userId} (cached)`);
+
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to get PH growth time series:', error);
       throw error;
     }
   }

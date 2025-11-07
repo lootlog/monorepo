@@ -175,10 +175,13 @@ export class LootsService {
       const npcs = npcData.mapped;
       const players = this.mapPlayers(body.players);
       const items = this.mapItems(body.loots);
-      const share =
-        highestWtNpcType === NpcType.COLOSSUS
-          ? this.mapLootShare(body.loots, body.players)
-          : {};
+
+      // Temporarily disabling loot share mapping
+      const share = {};
+      // const share =
+      //   highestWtNpcType === NpcType.COLOSSUS
+      //     ? this.mapLootShare(body.loots, body.players)
+      //     : {};
 
       try {
         loot = await this.prisma.loot.create({

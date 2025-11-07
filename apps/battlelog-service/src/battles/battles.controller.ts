@@ -89,6 +89,14 @@ export class BattlesController {
     return this.battlesService.getBattleDurationStats(query, userId);
   }
 
+  @Get('/@me/statistics/ph-growth')
+  getPhGrowth(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battlesService.getPhGrowthTimeSeries(query, userId);
+  }
+
   @Get('/@me/warriors/search')
   searchWarriors(@Query('q') query: string, @UserId() userId: string) {
     return this.battlesService.searchWarriors(query, userId);

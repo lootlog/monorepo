@@ -1,16 +1,12 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@lootlog/ui/components/card";
 import type { BattleDurationStats } from "@/hooks/api/battle-log/use-battle-statistics";
 import { Clock, Zap, Hourglass } from "lucide-react";
+import { StatCard } from "./stat-card";
 
 interface BattleDurationStatsCardProps {
   data: BattleDurationStats;
   isLoading?: boolean;
+  characterId?: string;
+  onCharacterChange: (characterId: string | undefined) => void;
 }
 
 const formatDuration = (milliseconds: number): string => {
@@ -23,61 +19,27 @@ const formatDuration = (milliseconds: number): string => {
 export function BattleDurationStatsCard({
   data,
   isLoading,
+  characterId,
+  onCharacterChange,
 }: BattleDurationStatsCardProps) {
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Czas trwania walk</CardTitle>
-          <CardDescription>
-            Porównanie średniego czasu walk i ekstrema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[200px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">Ładowanie...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const hasData =
     data.avgWinDuration > 0 ||
     data.avgLossDuration > 0 ||
     data.fastest ||
     data.longest;
 
-  if (!hasData) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Czas trwania walk</CardTitle>
-          <CardDescription>
-            Porównanie średniego czasu walk i ekstrema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[200px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">
-              Brak danych o walkach
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Czas trwania walk</CardTitle>
-        <CardDescription>
-          Porównanie średniego czasu walk i ekstrema
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
+    <StatCard
+      title="Czas trwania walk"
+      description="Porównanie średniego czasu walk i ekstrema"
+      characterId={characterId}
+      onCharacterChange={onCharacterChange}
+      isLoading={isLoading}
+      isEmpty={!hasData}
+      emptyMessage="Brak danych o walkach"
+    >
+      <div className="flex flex-col h-full">
+        <div className="grid grid-cols-2 gap-4 min-h-[160px] items-center">
           <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
             <div className="flex items-center justify-center mb-2">
               <Clock className="w-5 h-5 text-green-600 mr-2" />
@@ -105,8 +67,8 @@ export function BattleDurationStatsCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-          <div className="text-center">
+        <div className="grid grid-cols-2 gap-4 pt-6 mt-6 border-t">
+          <div className="text-center flex flex-col justify-center">
             <div className="flex items-center justify-center mb-2">
               <Zap className="w-4 h-4 text-yellow-600 mr-1" />
               <span className="text-sm font-medium">Najszybsza</span>
@@ -115,7 +77,7 @@ export function BattleDurationStatsCard({
               {data.fastest ? formatDuration(data.fastest.duration) : "-"}
             </p>
           </div>
-          <div className="text-center">
+          <div className="text-center flex flex-col justify-center">
             <div className="flex items-center justify-center mb-2">
               <Hourglass className="w-4 h-4 text-purple-600 mr-1" />
               <span className="text-sm font-medium">Najdłuższa</span>
@@ -125,7 +87,7 @@ export function BattleDurationStatsCard({
             </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </StatCard>
   );
 }

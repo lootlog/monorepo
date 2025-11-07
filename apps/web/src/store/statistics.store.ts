@@ -6,6 +6,12 @@ interface StatisticsState {
   setSelectedCharacterId: (characterId: string | undefined) => void;
   headToHeadCharacterId?: string;
   setHeadToHeadCharacterId: (characterId: string | undefined) => void;
+  streakCharacterId?: string;
+  setStreakCharacterId: (characterId: string | undefined) => void;
+  durationCharacterId?: string;
+  setDurationCharacterId: (characterId: string | undefined) => void;
+  phGrowthCharacterId?: string;
+  setPhGrowthCharacterId: (characterId: string | undefined) => void;
 }
 
 export const useStatisticsStore = create<StatisticsState>()(
@@ -17,11 +23,20 @@ export const useStatisticsStore = create<StatisticsState>()(
       headToHeadCharacterId: undefined,
       setHeadToHeadCharacterId: (characterId) =>
         set({ headToHeadCharacterId: characterId }),
+      streakCharacterId: undefined,
+      setStreakCharacterId: (characterId) =>
+        set({ streakCharacterId: characterId }),
+      durationCharacterId: undefined,
+      setDurationCharacterId: (characterId) =>
+        set({ durationCharacterId: characterId }),
+      phGrowthCharacterId: undefined,
+      setPhGrowthCharacterId: (characterId) =>
+        set({ phGrowthCharacterId: characterId }),
     }),
     {
       name: "battle-statistics-state",
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
     },
   ),
 );
