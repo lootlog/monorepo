@@ -1,0 +1,160 @@
+import { useState, useEffect, useRef } from "react";
+import { Reorder } from "framer-motion";
+import { Settings2, RotateCcw } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@lootlog/ui/components/dialog";
+import { Button } from "@lootlog/ui/components/button";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import type { StatsCustomizationConfig } from "@/types/stats-customization.types";
+import { CategoryItem } from "./category-item";
+import { AddCategoryForm } from "./add-category-form";
+
+interface StatCategory {
+  name: string;
+  stats: Array<{ key: string; label: string }>;
+}
+
+interface StatsCustomizationModalProps {
+  config: StatsCustomizationConfig;
+  defaultCategories: StatCategory[];
+  onUpdateCategoryOrder: (newOrder: string[]) => void;
+  onToggleCategoryVisibility: (categoryId: string) => void;
+  onUpdateCategoryName: (categoryId: string, newName: string) => void;
+  onUpdateStatOrder: (categoryId: string, newOrder: string[]) => void;
+  onAddStatToCategory: (categoryId: string, statKey: string) => void;
+  onRemoveStatFromCategory: (categoryId: string, statKey: string) => void;
+  onAddCategory: (categoryName: string) => void;
+  onRemoveCategory: (categoryId: string) => void;
+  onResetToDefaults: () => void;
+}
+
+export const StatsCustomizationModal = ({
+  config,
+  defaultCategories,
+  onUpdateCategoryOrder,
+  onToggleCategoryVisibility,
+  onUpdateCategoryName,
+  onUpdateStatOrder,
+  onAddStatToCategory,
+  onRemoveStatFromCategory,
+  onAddCategory,
+  onRemoveCategory,
+  onResetToDefaults,
+}: StatsCustomizationModalProps) => {
+  const [open, setOpen] = useState(false);
+  const [localCategoryOrder, setLocalCategoryOrder] = useState(
+    config.categoryOrder,
+  );
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setLocalCategoryOrder(config.categoryOrder);
+    }
+  }, [config.categoryOrder]);
+
+  const allAvailableStats = Array.from(
+    new Map(
+      defaultCategories.flatMap((cat) => cat.stats).map((s) => [s.key, s]),
+    ).values(),
+  );
+
+  const handleCategoryReorder = (newOrder: string[]) => {
+    setLocalCategoryOrder(newOrder);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Settings2 className="h-4 w-4" />
+          Dostosuj widok
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-sm:w-screen max-sm:h-screen max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0 py-4">
+          <DialogTitle>Dostosuj statystyki</DialogTitle>
+        </DialogHeader>
+
+        <ScrollArea className="flex-1 min-h-0 max-sm:px-2 sm:px-1">
+          <div className="space-y-4 p-4">
+            <div className="text-sm text-muted-foreground">
+              Przeciągnij kategorie aby zmienić ich kolejność, edytuj nazwy i
+              ukryj niepotrzebne sekcje.
+            </div>
+
+            <Reorder.Group
+              axis="y"
+              values={localCategoryOrder}
+              onReorder={handleCategoryReorder}
+              className="space-y-2"
+            >
+              {localCategoryOrder.map((categoryId) => {
+                const customization = config.categories[categoryId];
+
+                if (!customization) {
+                  return null;
+                }
+
+                return (
+                  <Reorder.Item
+                    key={categoryId}
+                    value={categoryId}
+                    onDragStart={() => {
+                      isDraggingRef.current = true;
+                    }}
+                    onDragEnd={() => {
+                      isDraggingRef.current = false;
+                      onUpdateCategoryOrder(localCategoryOrder);
+                    }}
+                  >
+                    <CategoryItem
+                      category={customization}
+                      allAvailableStats={allAvailableStats}
+                      onToggleVisibility={() =>
+                        onToggleCategoryVisibility(categoryId)
+                      }
+                      onUpdateName={(newName) =>
+                        onUpdateCategoryName(categoryId, newName)
+                      }
+                      onUpdateStatOrder={(newOrder) =>
+                        onUpdateStatOrder(categoryId, newOrder)
+                      }
+                      onAddStat={(statKey) =>
+                        onAddStatToCategory(categoryId, statKey)
+                      }
+                      onRemoveStat={(statKey) =>
+                        onRemoveStatFromCategory(categoryId, statKey)
+                      }
+                      onRemoveCategory={() => onRemoveCategory(categoryId)}
+                    />
+                  </Reorder.Item>
+                );
+              })}
+            </Reorder.Group>
+
+            <AddCategoryForm onAddCategory={onAddCategory} />
+          </div>
+        </ScrollArea>
+
+        <DialogFooter className="flex-shrink-0 gap-2 p-4">
+          <Button
+            variant="outline"
+            onClick={onResetToDefaults}
+            className="gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset
+          </Button>
+          <Button onClick={() => setOpen(false)}>Zamknij</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
