@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsNumber,
   IsObject,
   IsOptional,
@@ -103,6 +104,10 @@ export class CreateBattleDto {
 
   @IsString()
   world: string;
+
+  @IsOptional()
+  @IsBoolean()
+  matchmaking?: boolean;
 
   @IsArray()
   @ArrayMinSize(1)

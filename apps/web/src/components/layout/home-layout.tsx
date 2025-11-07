@@ -35,6 +35,17 @@ export const HomeLayout: FC = () => {
       };
     }
 
+    if (path === ROUTES.user.battlePanel.statistics) {
+      return {
+        breadcrumbs: [
+          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
+          { label: "Statystyki", path: null },
+        ],
+        showBack: true,
+        backPath: ROUTES.user.battlePanel.base,
+      };
+    }
+
     const normalizedPath = path.replace(/\/$/, "");
     const battlesPath = ROUTES.user.battlePanel.battles;
 

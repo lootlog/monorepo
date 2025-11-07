@@ -27,6 +27,7 @@ model Battle {
     losingTeam  Int
     honorPoints Int     @default(0)
     hasFlee     Boolean @default(false)
+    matchmaking Boolean @default(false)
     statistics  Json
 
     // Relations
