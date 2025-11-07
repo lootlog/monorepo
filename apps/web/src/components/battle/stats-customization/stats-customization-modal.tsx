@@ -77,7 +77,7 @@ export const StatsCustomizationModal = ({
           Dostosuj widok
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-sm:w-screen max-sm:h-screen max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-sm:w-screen max-sm:h-dvh max-sm:max-w-none max-sm:rounded-none sm:max-w-2xl sm:h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0 py-4">
           <DialogTitle>Dostosuj statystyki</DialogTitle>
         </DialogHeader>
