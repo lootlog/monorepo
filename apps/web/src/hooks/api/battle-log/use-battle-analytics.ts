@@ -13,6 +13,7 @@ export type GetBattleAnalyticsParams = {
   characterId?: string;
   world?: string;
   period?: "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d";
+  sameLevelOnly?: boolean;
 };
 
 export const useBattleAnalytics = (params: GetBattleAnalyticsParams = {}) => {

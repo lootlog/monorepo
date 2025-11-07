@@ -1,26 +1,23 @@
 import type { BattleDurationStats } from "@/hooks/api/battle-log/use-battle-statistics";
+import { intervalToDuration } from "date-fns";
 import { Clock, Zap, Hourglass } from "lucide-react";
 import { StatCard } from "./stat-card";
 
 interface BattleDurationStatsCardProps {
   data: BattleDurationStats;
   isLoading?: boolean;
-  characterId?: string;
-  onCharacterChange: (characterId: string | undefined) => void;
 }
 
-const formatDuration = (milliseconds: number): string => {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+const formatDuration = (seconds: number): string => {
+  const duration = intervalToDuration({ start: 0, end: seconds * 1000 });
+  const minutes = duration.minutes || 0;
+  const secs = duration.seconds || 0;
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
 export function BattleDurationStatsCard({
   data,
   isLoading,
-  characterId,
-  onCharacterChange,
 }: BattleDurationStatsCardProps) {
   const hasData =
     data.avgWinDuration > 0 ||
@@ -32,8 +29,6 @@ export function BattleDurationStatsCard({
     <StatCard
       title="Czas trwania walk"
       description="Porównanie średniego czasu walk i ekstrema"
-      characterId={characterId}
-      onCharacterChange={onCharacterChange}
       isLoading={isLoading}
       isEmpty={!hasData}
       emptyMessage="Brak danych o walkach"
@@ -43,7 +38,9 @@ export function BattleDurationStatsCard({
           <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
             <div className="flex items-center justify-center mb-2">
               <Clock className="w-5 h-5 text-green-600 mr-2" />
-              <span className="text-sm font-medium text-green-600">Wygrane</span>
+              <span className="text-sm font-medium text-green-600">
+                Wygrane
+              </span>
             </div>
             <p className="text-3xl font-bold">
               {data.avgWinDuration > 0
@@ -56,7 +53,9 @@ export function BattleDurationStatsCard({
           <div className="text-center p-4 bg-red-500/10 rounded-lg border border-red-500/20">
             <div className="flex items-center justify-center mb-2">
               <Clock className="w-5 h-5 text-red-600 mr-2" />
-              <span className="text-sm font-medium text-red-600">Przegrane</span>
+              <span className="text-sm font-medium text-red-600">
+                Przegrane
+              </span>
             </div>
             <p className="text-3xl font-bold">
               {data.avgLossDuration > 0

@@ -18,15 +18,19 @@ interface UseBattleDurationParams {
   characterId?: string;
   world?: string;
   period?: string;
+  sameLevelOnly?: boolean;
 }
 
 export function useBattleDuration(params: UseBattleDurationParams) {
   return useQuery({
     queryKey: ["battle-duration", params],
     queryFn: async () => {
-      const response = await battlelogApiClient.get("/battles/@me/statistics/duration", {
-        params,
-      });
+      const response = await battlelogApiClient.get(
+        "/battles/@me/statistics/duration",
+        {
+          params,
+        },
+      );
       return response.data as BattleDurationStats;
     },
     staleTime: 5 * 60 * 1000,

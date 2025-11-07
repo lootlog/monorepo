@@ -5,56 +5,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@lootlog/ui/components/card";
-import { CharacterSelector } from "./character-selector";
 import type { ReactNode } from "react";
 
 interface StatCardProps {
   title: string;
   description: string;
-  characterId?: string;
-  onCharacterChange?: (characterId: string | undefined) => void;
-  allowAllCharacters?: boolean;
   isLoading?: boolean;
   isEmpty?: boolean;
   emptyMessage?: string;
   children: ReactNode;
+  className?: string;
 }
 
 export function StatCard({
   title,
   description,
-  characterId,
-  onCharacterChange,
-  allowAllCharacters = false,
   isLoading = false,
   isEmpty = false,
   emptyMessage = "Brak danych",
   children,
+  className,
 }: StatCardProps) {
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-          {onCharacterChange && (
-            <CharacterSelector
-              characterId={characterId}
-              onCharacterChange={onCharacterChange}
-              allowAllCharacters={allowAllCharacters}
-            />
-          )}
+        <div className="flex gap-2 flex-col">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent
+        className={
+          className && !isLoading && !isEmpty
+            ? "flex-1 flex flex-col"
+            : undefined
+        }
+      >
         {isLoading ? (
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="h-72 flex items-center justify-center">
             <p className="text-sm text-muted-foreground">Ładowanie...</p>
           </div>
         ) : isEmpty ? (
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="h-72 flex items-center justify-center">
             <p className="text-sm text-muted-foreground">{emptyMessage}</p>
           </div>
         ) : (

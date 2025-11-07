@@ -7,7 +7,7 @@ import {
   Calendar,
   Award,
   ChevronRight,
-  BarChart3,
+  Shield,
 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -23,6 +23,12 @@ import {
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useState } from "react";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
@@ -87,6 +93,7 @@ export function StatsOverview() {
     string | undefined
   >(undefined);
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("30d");
+  const [sameLevelOnly, setSameLevelOnly] = useState(false);
 
   const { data: characters = [], isLoading: isLoadingCharacters } =
     useBattleCharacters();
@@ -95,12 +102,13 @@ export function StatsOverview() {
     {
       characterId: selectedCharacterId,
       period: selectedPeriod,
-    }
+      sameLevelOnly,
+    },
   );
 
   const handleCharacterChange = (characterId: string) => {
     setSelectedCharacterId(
-      characterId === selectedCharacterId ? undefined : characterId
+      characterId === selectedCharacterId ? undefined : characterId,
     );
     setCharacterOpen(false);
   };
@@ -111,7 +119,7 @@ export function StatsOverview() {
   };
 
   const selectedCharacter = characters.find(
-    (char) => char.id === selectedCharacterId
+    (char) => char.id === selectedCharacterId,
   );
 
   const selectedPeriodLabel =
@@ -159,177 +167,226 @@ export function StatsOverview() {
   }
 
   return (
-    <div className="p-4 space-y-4">
-      {isLoadingAnalytics ? (
-        <div className="flex items-center justify-center p-8">
-          <Spinner />
+    <div className="flex flex-col">
+      <div className="p-4 bg-background">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold">Przegląd statystyk</h2>
+            <p className="text-muted-foreground text-sm">
+              Statystyki walk dla wybranego okresu
+            </p>
+          </div>
+
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.user.battlePanel.statistics}>
+              Zobacz szczegółowe statystyki
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            const color = stat.gradientType
-              ? getGradientColor(stat.value, stat.gradientType)
-              : undefined;
-            return (
-              <div key={index} className="relative overflow-hidden">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </div>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <div
-                    className="text-2xl font-bold"
-                    style={color ? { color } : undefined}
-                  >
-                    <CountUp
-                      to={
-                        stat.decimals
-                          ? Number(stat.value.toFixed(stat.decimals))
-                          : stat.value
-                      }
-                      separator={stat.useSeparator ? " " : ""}
-                      className="inline"
-                      duration={0.8}
-                    />
-                    {stat.suffix && (
-                      <span className="ml-0.5">{stat.suffix}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{stat.description}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      </div>
       <Separator />
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={characterOpen}
-              className="w-[250px] justify-between h-10"
-            >
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm truncate">
-                  {selectedCharacter
-                    ? `${selectedCharacter.name} (${selectedCharacter.world})`
-                    : "Wszystkie postacie"}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[250px] p-0">
-            <Command>
-              <CommandInput placeholder="Szukaj postaci..." />
-              <CommandList>
-                <CommandEmpty>Brak postaci</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    value="all"
-                    onSelect={() => {
-                      setSelectedCharacterId(undefined);
-                      setCharacterOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        !selectedCharacterId ? "opacity-100" : "opacity-0"
+      <div className="p-4 space-y-4">
+        {isLoadingAnalytics ? (
+          <div className="flex items-center justify-center p-8">
+            <Spinner />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              const color = stat.gradientType
+                ? getGradientColor(stat.value, stat.gradientType)
+                : undefined;
+              return (
+                <div key={index} className="relative overflow-hidden">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      {stat.title}
+                    </div>
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <div
+                      className="text-2xl font-bold"
+                      style={color ? { color } : undefined}
+                    >
+                      <CountUp
+                        to={
+                          stat.decimals
+                            ? Number(stat.value.toFixed(stat.decimals))
+                            : stat.value
+                        }
+                        separator={stat.useSeparator ? " " : ""}
+                        className="inline"
+                        duration={0.8}
+                      />
+                      {stat.suffix && (
+                        <span className="ml-0.5">{stat.suffix}</span>
                       )}
-                    />
-                    Wszystkie postacie
-                  </CommandItem>
-                  {characters.map((char) => (
-                    <CommandItem
-                      key={char.id}
-                      value={`${char.name} ${char.world}`}
-                      onSelect={() => handleCharacterChange(char.id)}
-                      className="p-0 px-2 gap-0"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedCharacterId === char.id
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <PlayerTile
-                        player={char}
-                        cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
-                        className="scale-70 mr-2"
-                      />{" "}
-                      {char.name} ({char.world})
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{stat.description}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <Separator />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={characterOpen}
+                  className="w-[250px] justify-between h-10"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="text-sm truncate">
+                      {selectedCharacter
+                        ? `${selectedCharacter.name} (${selectedCharacter.world})`
+                        : "Wszystkie postacie"}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[250px] p-0">
+                <Command>
+                  <CommandInput placeholder="Szukaj postaci..." />
+                  <CommandList>
+                    <CommandEmpty>Brak postaci</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="all"
+                        onSelect={() => {
+                          setSelectedCharacterId(undefined);
+                          setCharacterOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            !selectedCharacterId ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        Wszystkie postacie
+                      </CommandItem>
+                      {characters.map((char) => (
+                        <CommandItem
+                          key={char.id}
+                          value={`${char.name} ${char.world}`}
+                          onSelect={() => handleCharacterChange(char.id)}
+                          className="p-0 px-2 gap-0"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedCharacterId === char.id
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          <PlayerTile
+                            player={char}
+                            cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
+                            className="scale-70 mr-2"
+                          />{" "}
+                          {char.name} ({char.world})
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
 
-        <Popover open={periodOpen} onOpenChange={setPeriodOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={periodOpen}
-              className="w-[220px] justify-between h-10"
-            >
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm truncate">{selectedPeriodLabel}</span>
-              </div>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[220px] p-0">
-            <Command>
-              <CommandList>
-                <CommandEmpty>Brak opcji</CommandEmpty>
-                <CommandGroup>
-                  {periods.map((period) => (
-                    <CommandItem
-                      key={period.value}
-                      value={period.value}
-                      onSelect={() => handlePeriodChange(period.value)}
+            <Popover open={periodOpen} onOpenChange={setPeriodOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={periodOpen}
+                  className="w-[220px] justify-between h-10"
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm truncate">
+                      {selectedPeriodLabel}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[220px] p-0">
+                <Command>
+                  <CommandList>
+                    <CommandEmpty>Brak opcji</CommandEmpty>
+                    <CommandGroup>
+                      {periods.map((period) => (
+                        <CommandItem
+                          key={period.value}
+                          value={period.value}
+                          onSelect={() => handlePeriodChange(period.value)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedPeriod === period.value
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {period.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSameLevelOnly(!sameLevelOnly)}
+                    className={cn(
+                      "justify-between gap-2 h-10",
+                      sameLevelOnly && "border-primary",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      <span>Walki na tym samym poziomie</span>
+                    </div>
+                    <div
+                      className={cn(
+                        "h-4 w-4 rounded-sm border border-primary ring-offset-background",
+                        sameLevelOnly
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-background",
+                      )}
                     >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedPeriod === period.value
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      {period.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                      {sameLevelOnly && (
+                        <Check className="h-3.5 w-3.5 text-primary-foreground" />
+                      )}
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>1v1 - według wzoru na punkty honoru</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
-
-        <Button variant="outline" size="sm" asChild>
-          <Link to={ROUTES.user.battlePanel.statistics}>
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Zobacz szczegółowe statystyki
-            <ChevronRight className="h-4 w-4 ml-2" />
-          </Link>
-        </Button>
       </div>
     </div>
   );

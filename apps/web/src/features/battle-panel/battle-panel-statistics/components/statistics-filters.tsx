@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, Calendar, User, Globe } from "lucide-react";
+import { Check, ChevronsUpDown, Calendar, Shield } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Popover,
@@ -7,27 +7,29 @@ import {
 } from "@lootlog/ui/components/popover";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@lootlog/ui/components/command";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useState } from "react";
-import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
-import { useBattleWorlds } from "@/hooks/api/battle-log/use-battle-worlds";
-import { PlayerTile } from "@/components/battle";
+import { CharacterSelector } from "./character-selector";
 
 type Period = "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d" | "all";
 
 interface StatisticsFiltersProps {
   characterId?: string;
-  world?: string;
   period: Period;
+  sameLevelOnly: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
-  onWorldChange: (world: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
+  onSameLevelOnlyChange: (sameLevelOnly: boolean) => void;
 }
 
 const periods: Array<{ value: Period; label: string }> = [
@@ -43,168 +45,24 @@ const periods: Array<{ value: Period; label: string }> = [
 
 export function StatisticsFilters({
   characterId,
-  world,
   period,
+  sameLevelOnly,
   onCharacterChange,
-  onWorldChange,
   onPeriodChange,
+  onSameLevelOnlyChange,
 }: StatisticsFiltersProps) {
-  const [characterOpen, setCharacterOpen] = useState(false);
-  const [worldOpen, setWorldOpen] = useState(false);
   const [periodOpen, setPeriodOpen] = useState(false);
 
-  const { data: characters } = useBattleCharacters();
-  const { data: worlds } = useBattleWorlds();
-
-  const selectedCharacter = characters?.find((c) => c.id === characterId);
   const selectedPeriod = periods.find((p) => p.value === period);
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 mb-6">
-      <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={characterOpen}
-            className="justify-between"
-          >
-            {selectedCharacter ? (
-              <div className="flex items-center gap-2">
-                <PlayerTile
-                  player={{
-                    name: selectedCharacter.name,
-                    icon: selectedCharacter.icon,
-                  }}
-                  className="scale-75"
-                />
-                <span>{selectedCharacter.name}</span>
-              </div>
-            ) : (
-              <>
-                <User className="mr-2 h-4 w-4" />
-                Wszystkie postacie
-              </>
-            )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Szukaj postaci..." />
-            <CommandList>
-              <CommandEmpty>Nie znaleziono postaci.</CommandEmpty>
-              <CommandGroup>
-                <CommandItem
-                  value="all-characters"
-                  onSelect={() => {
-                    onCharacterChange(undefined);
-                    setCharacterOpen(false);
-                  }}
-                  className="flex justify-between"
-                >
-                  <span>Wszystkie postacie</span>
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      !characterId ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-                {characters?.map((character) => (
-                  <CommandItem
-                    key={character.id}
-                    value={character.name}
-                    onSelect={() => {
-                      onCharacterChange(character.id);
-                      setCharacterOpen(false);
-                    }}
-                    className="p-0 flex justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <PlayerTile
-                        player={{
-                          name: character.name,
-                          icon: character.icon,
-                        }}
-                        className="scale-75"
-                      />
-                      <span>{character.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ({character.world})
-                      </span>
-                    </div>
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        characterId === character.id
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      <Popover open={worldOpen} onOpenChange={setWorldOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={worldOpen}
-            className="justify-between"
-          >
-            <Globe className="mr-2 h-4 w-4" />
-            {world || "Wszystkie światy"}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0">
-          <Command>
-            <CommandList>
-              <CommandGroup>
-                <CommandItem
-                  value="all-worlds"
-                  onSelect={() => {
-                    onWorldChange(undefined);
-                    setWorldOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      !world ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  Wszystkie światy
-                </CommandItem>
-                {worlds?.worlds.map((w) => (
-                  <CommandItem
-                    key={w}
-                    value={w}
-                    onSelect={() => {
-                      onWorldChange(w);
-                      setWorldOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        world === w ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {w}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+    <div className="flex flex-col sm:flex-row gap-2 mb-6 flex-wrap">
+      <CharacterSelector
+        characterId={characterId}
+        onCharacterChange={onCharacterChange}
+        allowAllCharacters
+        size="default"
+      />
 
       <Popover open={periodOpen} onOpenChange={setPeriodOpen}>
         <PopoverTrigger asChild>
@@ -246,6 +104,41 @@ export function StatisticsFilters({
           </Command>
         </PopoverContent>
       </Popover>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              onClick={() => onSameLevelOnlyChange(!sameLevelOnly)}
+              className={cn(
+                "justify-between gap-2",
+                sameLevelOnly && "border-primary",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                <span>Walki na tym samym poziomie</span>
+              </div>
+              <div
+                className={cn(
+                  "h-4 w-4 rounded-sm border border-primary ring-offset-background",
+                  sameLevelOnly
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background",
+                )}
+              >
+                {sameLevelOnly && (
+                  <Check className="h-3.5 w-3.5 text-primary-foreground" />
+                )}
+              </div>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>1v1 - według wzoru na punkty honoru</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

@@ -13,15 +13,19 @@ interface UseProfessionWinRateParams {
   characterId?: string;
   world?: string;
   period?: string;
+  sameLevelOnly?: boolean;
 }
 
 export function useProfessionWinRate(params: UseProfessionWinRateParams) {
   return useQuery({
     queryKey: ["profession-win-rate", params],
     queryFn: async () => {
-      const response = await battlelogApiClient.get("/battles/@me/statistics/profession-win-rate", {
-        params,
-      });
+      const response = await battlelogApiClient.get(
+        "/battles/@me/statistics/profession-win-rate",
+        {
+          params,
+        },
+      );
       return response.data as ProfessionWinRate[];
     },
     staleTime: 5 * 60 * 1000,

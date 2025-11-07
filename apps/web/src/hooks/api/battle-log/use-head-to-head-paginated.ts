@@ -1,0 +1,83 @@
+import { useQuery } from "@tanstack/react-query";
+import { useBattleLogApiClient } from "@/hooks/api/battle-log/use-battle-log-api-client";
+
+export interface HeadToHeadRecord {
+  opponentId: string;
+  opponentName: string;
+  opponentIcon: string;
+  opponentProf: string;
+  opponentLvl: number;
+  wins: number;
+  losses: number;
+  totalBattles: number;
+  winRate: number;
+  lastBattleDate: string;
+}
+
+export interface GetHeadToHeadResponse {
+  records: HeadToHeadRecord[];
+  pagination: {
+    size: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+    nextCursor?: string;
+    total?: number;
+  };
+  meta: {
+    performance: {
+      queryTime: number;
+      countTime?: number;
+      totalItems?: number;
+      estimatedTotal?: boolean;
+    };
+  };
+}
+
+export interface UseHeadToHeadPaginatedParams {
+  cursor?: string;
+  size?: number;
+  sortBy?: "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
+  sortOrder?: "asc" | "desc";
+  includeTotal?: boolean;
+  characterId?: string;
+  world?: string;
+  period?: string;
+  search?: string;
+  minBattles?: number;
+}
+
+export function useHeadToHeadPaginated(params?: UseHeadToHeadPaginatedParams) {
+  const { client } = useBattleLogApiClient();
+  const size = params?.size ?? 20;
+  const sortBy = params?.sortBy ?? "totalBattles";
+  const sortOrder = params?.sortOrder ?? "desc";
+
+  const query = useQuery({
+    queryKey: ["head-to-head-paginated", params],
+    queryFn: () => {
+      const searchParams = new URLSearchParams({
+        size: size.toString(),
+        sortBy,
+        sortOrder,
+      });
+
+      if (params?.cursor) searchParams.append("cursor", params.cursor);
+      if (params?.includeTotal) searchParams.append("includeTotal", "true");
+      if (params?.characterId)
+        searchParams.append("characterId", params.characterId);
+      if (params?.world) searchParams.append("world", params.world);
+      if (params?.period) searchParams.append("period", params.period);
+      if (params?.search) searchParams.append("search", params.search);
+      if (params?.minBattles)
+        searchParams.append("minBattles", params.minBattles.toString());
+
+      return client.get<GetHeadToHeadResponse>(
+        `/battles/@me/statistics/head-to-head/paginated?${searchParams.toString()}`,
+      );
+    },
+    select: (response) => response.data,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return query;
+}

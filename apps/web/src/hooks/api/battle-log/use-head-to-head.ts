@@ -18,15 +18,22 @@ interface UseHeadToHeadParams {
   characterId?: string;
   world?: string;
   period?: string;
+  limit?: number;
+  sameLevelOnly?: boolean;
 }
 
-export function useHeadToHead(params: UseHeadToHeadParams) {
+export function useHeadToHead(params: UseHeadToHeadParams = {}) {
+  const { limit = 5, ...restParams } = params;
+
   return useQuery({
     queryKey: ["head-to-head", params],
     queryFn: async () => {
-      const response = await battlelogApiClient.get("/battles/@me/statistics/head-to-head", {
-        params,
-      });
+      const response = await battlelogApiClient.get(
+        "/battles/@me/statistics/head-to-head",
+        {
+          params: { ...restParams, limit },
+        },
+      );
       return response.data as HeadToHeadRecord[];
     },
     staleTime: 5 * 60 * 1000,

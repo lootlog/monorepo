@@ -12,6 +12,7 @@ const ROUTES = {
       base: `${USER_BASE}/battle-panel`,
       stats: `${USER_BASE}/battle-panel/stats`,
       statistics: `${USER_BASE}/battle-panel/statistics`,
+      h2h: `${USER_BASE}/battle-panel/statistics/h2h`,
       battles: `${USER_BASE}/battle-panel/battles`,
       battle: (battleId: string) =>
         `${USER_BASE}/battle-panel/battles/${battleId}`,
