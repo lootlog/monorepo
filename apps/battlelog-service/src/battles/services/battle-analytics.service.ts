@@ -453,6 +453,11 @@ export class BattleAnalyticsService {
     const nextCursor = hasNext
       ? Buffer.from(endIndex.toString()).toString('base64')
       : undefined;
+    const previousCursor = hasPrev
+      ? Buffer.from(Math.max(0, startIndex - size).toString()).toString(
+          'base64',
+        )
+      : undefined;
 
     const queryTime = Date.now() - startTime;
 
@@ -463,6 +468,7 @@ export class BattleAnalyticsService {
         hasNext,
         hasPrev,
         nextCursor,
+        previousCursor,
         ...(query.includeTotal && { total: totalRecords }),
       },
       meta: {
