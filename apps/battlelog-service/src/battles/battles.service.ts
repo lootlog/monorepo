@@ -61,10 +61,6 @@ export class BattlesService implements IBattlesService {
 
       await this.battleAnalyticsService.invalidateAnalyticsCache(userId);
 
-      this.logger.log(
-        `Battle ${battle.id} created successfully for user ${userId}`,
-      );
-
       return {
         battleId: battle.id,
       };
@@ -85,10 +81,6 @@ export class BattlesService implements IBattlesService {
       const result = await this.paginationService.paginateBattles(
         where,
         paginationOptions,
-      );
-
-      this.logger.log(
-        `Paginated public battles in ${result.performance.queryTime}ms`,
       );
 
       return {
@@ -118,10 +110,6 @@ export class BattlesService implements IBattlesService {
       const result = await this.paginationService.paginateBattles(
         where,
         paginationOptions,
-      );
-
-      this.logger.log(
-        `Paginated dashboard battles for user ${requestingUserId} in ${result.performance.queryTime}ms`,
       );
 
       return {
@@ -166,10 +154,6 @@ export class BattlesService implements IBattlesService {
         icon: char.icon,
       }));
 
-      this.logger.log(
-        `Retrieved ${characters.length} characters for user ${userId}`,
-      );
-
       return { characters };
     } catch (error) {
       this.logger.error('Failed to retrieve user characters:', error);
@@ -190,8 +174,6 @@ export class BattlesService implements IBattlesService {
 
       const worlds = userCharacters.map((char) => char.world);
 
-      this.logger.log(`Retrieved ${worlds.length} worlds for user ${userId}`);
-
       return { worlds };
     } catch (error) {
       this.logger.error('Failed to retrieve user worlds:', error);
@@ -211,7 +193,6 @@ export class BattlesService implements IBattlesService {
       }
 
       const rawData = await this.r2Service.getBattleData(battleId);
-      this.logger.debug(`Retrieved raw data for battle ${battleId}`);
       return rawData;
     } catch (error) {
       this.logger.error(
@@ -255,9 +236,6 @@ export class BattlesService implements IBattlesService {
         include: { warriors: true },
       });
 
-      this.logger.log(
-        `Battle ${battleId} updated (public: ${updateData.public})`,
-      );
       return battle;
     } catch (error) {
       this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
@@ -278,7 +256,6 @@ export class BattlesService implements IBattlesService {
         );
       }
 
-      this.logger.log(`Battle ${battleId} deleted`);
       return { message: 'Battle deleted successfully' };
     } catch (error) {
       this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
@@ -322,9 +299,6 @@ export class BattlesService implements IBattlesService {
       const processor = new BattleProcessor();
       const analysis = processor.processBattle(dto);
 
-      this.logger.debug(
-        `Analyzed battle: ${analysis.type}, duration: ${analysis.duration}ms`,
-      );
       return analysis;
     } catch (error) {
       this.logger.error('Failed to analyze battle data:', error);
@@ -648,7 +622,6 @@ export class BattlesService implements IBattlesService {
         },
       });
 
-      this.logger.debug(`Battle stored in database with ID: ${battle.id}`);
       return battle;
     } catch (error) {
       this.logger.error('Failed to store battle in database:', error);
@@ -672,9 +645,6 @@ export class BattlesService implements IBattlesService {
       };
 
       await this.r2Service.uploadBattleData(battleId, rawBattleData);
-      this.logger.debug(
-        `Raw battle data stored successfully for battle ${battleId}`,
-      );
     } catch (error) {
       this.logger.error(
         `Failed to store raw battle data for ${battleId}:`,
@@ -719,10 +689,6 @@ export class BattlesService implements IBattlesService {
           name: 'asc',
         },
       });
-
-      this.logger.log(
-        `Found ${warriors.length} warriors matching "${query}" for user ${userId}`,
-      );
 
       return { warriors };
     } catch (error) {
