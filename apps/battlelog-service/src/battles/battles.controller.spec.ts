@@ -1,6 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { BattlesController } from './battles.controller';
 import { BattlesService } from './battles.service';
+import { BattleAnalyticsService } from './services/battle-analytics.service';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { BattleAccessGuard } from 'src/shared/guards/battle-access.guard';
 import { BattleOwnerGuard } from 'src/shared/guards/battle-owner.guard';
@@ -22,7 +23,15 @@ describe('BattlesController', () => {
       getPublicBattle: jest.fn(),
       getPublicBattleRaw: jest.fn(),
       searchWarriors: jest.fn(),
+    };
+
+    const mockBattleAnalyticsService = {
       getBattleAnalytics: jest.fn(),
+      calculateProfessionWinRate: jest.fn(),
+      getHeadToHead: jest.fn(),
+      getCurrentStreak: jest.fn(),
+      getBattleDurationStats: jest.fn(),
+      getPhGrowthTimeSeries: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -31,6 +40,10 @@ describe('BattlesController', () => {
         {
           provide: BattlesService,
           useValue: mockBattlesService,
+        },
+        {
+          provide: BattleAnalyticsService,
+          useValue: mockBattleAnalyticsService,
         },
       ],
     })

@@ -3,6 +3,7 @@ import { BattlesService } from './battles.service';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import { R2Service } from 'src/shared/modules/r2/r2.service';
 import { PaginationService } from './services/pagination.service';
+import { BattleAnalyticsService } from './services/battle-analytics.service';
 import { RedisService } from 'src/shared/modules/redis/redis.service';
 
 describe('BattlesService', () => {
@@ -38,6 +39,15 @@ describe('BattlesService', () => {
       paginateBattles: jest.fn(),
     };
 
+    const mockBattleAnalyticsService = {
+      getBattleAnalytics: jest.fn(),
+      calculateProfessionWinRate: jest.fn(),
+      getHeadToHead: jest.fn(),
+      getCurrentStreak: jest.fn(),
+      getBattleDurationStats: jest.fn(),
+      getPhGrowthTimeSeries: jest.fn(),
+    };
+
     const mockRedisService = {
       get: jest.fn(),
       set: jest.fn(),
@@ -59,6 +69,10 @@ describe('BattlesService', () => {
         {
           provide: PaginationService,
           useValue: mockPaginationService,
+        },
+        {
+          provide: BattleAnalyticsService,
+          useValue: mockBattleAnalyticsService,
         },
         {
           provide: RedisService,

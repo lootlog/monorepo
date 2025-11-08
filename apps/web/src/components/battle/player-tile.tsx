@@ -1,3 +1,4 @@
+import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import {
   Tooltip,
   TooltipContent,
@@ -18,7 +19,7 @@ type PlayerTileProps = {
   idx?: number;
   color?: string;
   className?: string;
-  cdnBaseUrl: string;
+  cdnBaseUrl?: string;
 };
 
 export const PlayerTile: FC<PlayerTileProps> = ({
@@ -26,7 +27,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
   idx,
   color,
   className = "",
-  cdnBaseUrl,
+  cdnBaseUrl = MARGONEM_CDN_CHARACTERS_URL,
 }) => {
   return (
     <TooltipProvider key={id}>

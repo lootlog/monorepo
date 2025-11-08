@@ -3,6 +3,7 @@ import {
   parseAsBoolean,
   parseAsStringLiteral,
   parseAsArrayOf,
+  parseAsInteger,
 } from "nuqs";
 
 export const battleQueryParsers = {
@@ -15,4 +16,6 @@ export const battleQueryParsers = {
   ),
   ph: parseAsBoolean,
   characterId: parseAsArrayOf(parseAsString),
+  minLevel: parseAsInteger.withDefault(1),
+  maxLevel: parseAsInteger.withDefault(500),
 };

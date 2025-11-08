@@ -1,4 +1,5 @@
-import { IsOptional, IsString, IsIn } from 'class-validator';
+import { IsOptional, IsString, IsIn, IsInt, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class QueryBattleAnalyticsDto {
   @IsOptional()
@@ -13,4 +14,16 @@ export class QueryBattleAnalyticsDto {
   @IsString()
   @IsIn(['24h', '3d', '7d', '14d', '30d', '90d', '180d'])
   period?: '24h' | '3d' | '7d' | '14d' | '30d' | '90d' | '180d'; // Time period filter
+
+  @IsOptional()
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  minLevel?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  maxLevel?: number;
 }

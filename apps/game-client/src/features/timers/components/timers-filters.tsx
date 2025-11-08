@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/tooltip";
 
 const NPC_TYPES_OPTIONS = [
-  NpcType.ELITE3,
   NpcType.ELITE2,
+  NpcType.ELITE3,
   NpcType.HERO,
   NpcType.TITAN,
 ];

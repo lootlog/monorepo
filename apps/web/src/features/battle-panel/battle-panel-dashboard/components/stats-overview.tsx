@@ -1,37 +1,23 @@
-import {
-  Swords,
-  Trophy,
-  User,
-  Check,
-  ChevronsUpDown,
-  Calendar,
-  Award,
-} from "lucide-react";
+import { Swords, Trophy, Award, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@lootlog/ui/components/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@lootlog/ui/components/command";
-import { cn } from "@lootlog/ui/lib/utils";
-import { useState } from "react";
+import { Label } from "@lootlog/ui/components/label";
+import { useState, useEffect } from "react";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { useBattleAnalytics } from "@/hooks/api/battle-log/use-battle-analytics";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { Separator } from "@lootlog/ui/components/separator";
 import CountUp from "@lootlog/ui/components/count-up";
-import { PlayerTile } from "@/components/battle";
-import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
-
-type Period = "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d";
+import { ROUTES } from "@/config/routes";
+import { Link } from "@tanstack/react-router";
+import {
+  useBattleFiltersStore,
+  type Period,
+} from "@/store/battle-filters.store";
+import {
+  CharacterSelector,
+  PeriodSelector,
+  LevelRangeFilter,
+} from "@/components/filters";
 
 interface Stat {
   title: string;
@@ -66,52 +52,58 @@ const getGradientColor = (value: number, type: "winRatio" | "ph"): string => {
   }
 };
 
-const periods: Array<{ value: Period; label: string }> = [
-  { value: "24h", label: "Ostatnie 24 godziny" },
-  { value: "3d", label: "Ostatnie 3 dni" },
-  { value: "7d", label: "Ostatni tydzień" },
-  { value: "14d", label: "Ostatnie 2 tygodnie" },
-  { value: "30d", label: "Ostatni miesiąc" },
-  { value: "90d", label: "Ostatnie 3 miesiące" },
-  { value: "180d", label: "Ostatnie pół roku" },
-];
+type DashboardPeriod = Exclude<Period, "all">;
 
 export function StatsOverview() {
-  const [characterOpen, setCharacterOpen] = useState(false);
-  const [periodOpen, setPeriodOpen] = useState(false);
-  const [selectedCharacterId, setSelectedCharacterId] = useState<
-    string | undefined
-  >(undefined);
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("30d");
+  const currentCharacterId = useBattleFiltersStore(
+    (state) => state.currentCharacterId,
+  );
+  const setCurrentCharacterId = useBattleFiltersStore(
+    (state) => state.setCurrentCharacterId,
+  );
+
+  const filters = useBattleFiltersStore((state) =>
+    state.getFilters(state.currentCharacterId),
+  );
+
+  const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>(
+    (filters.period === "all" ? "30d" : filters.period) || "30d",
+  );
+
+  const minLevel = filters.minLevel ?? 1;
+  const maxLevel = filters.maxLevel ?? 500;
 
   const { data: characters = [], isLoading: isLoadingCharacters } =
     useBattleCharacters();
 
+  useEffect(() => {
+    setSelectedPeriod(
+      (filters.period === "all" ? "30d" : filters.period) || "30d",
+    );
+  }, [currentCharacterId, filters.period]);
+
   const { data: analytics, isLoading: isLoadingAnalytics } = useBattleAnalytics(
     {
-      characterId: selectedCharacterId,
+      characterId: currentCharacterId,
       period: selectedPeriod,
-    }
+      minLevel,
+      maxLevel,
+    },
   );
 
-  const handleCharacterChange = (characterId: string) => {
-    setSelectedCharacterId(
-      characterId === selectedCharacterId ? undefined : characterId
-    );
-    setCharacterOpen(false);
-  };
-
   const handlePeriodChange = (period: Period) => {
-    setSelectedPeriod(period);
-    setPeriodOpen(false);
+    const dashboardPeriod =
+      period === "all" ? "30d" : (period as DashboardPeriod);
+    setSelectedPeriod(dashboardPeriod);
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { period: dashboardPeriod });
   };
 
   const selectedCharacter = characters.find(
-    (char) => char.id === selectedCharacterId
+    (char) => char.id === currentCharacterId,
   );
-
-  const selectedPeriodLabel =
-    periods.find((p) => p.value === selectedPeriod)?.label || "Ostatni miesiąc";
 
   const stats: Stat[] = [
     {
@@ -155,167 +147,122 @@ export function StatsOverview() {
   }
 
   return (
-    <div className="p-4 space-y-4">
-      {isLoadingAnalytics ? (
-        <div className="flex items-center justify-center p-8">
-          <Spinner />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            const color = stat.gradientType
-              ? getGradientColor(stat.value, stat.gradientType)
-              : undefined;
-            return (
-              <div key={index} className="relative overflow-hidden">
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </div>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <div
-                    className="text-2xl font-bold"
-                    style={color ? { color } : undefined}
-                  >
-                    <CountUp
-                      to={
-                        stat.decimals
-                          ? Number(stat.value.toFixed(stat.decimals))
-                          : stat.value
-                      }
-                      separator={stat.useSeparator ? " " : ""}
-                      className="inline"
-                      duration={0.8}
-                    />
-                    {stat.suffix && (
-                      <span className="ml-0.5">{stat.suffix}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{stat.description}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      <Separator />
-      <div className="flex items-center gap-3 flex-wrap">
-        <Popover open={characterOpen} onOpenChange={setCharacterOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={characterOpen}
-              className="w-[250px] justify-between h-10"
-            >
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm truncate">
-                  {selectedCharacter
-                    ? `${selectedCharacter.name} (${selectedCharacter.world})`
-                    : "Wszystkie postacie"}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[250px] p-0">
-            <Command>
-              <CommandInput placeholder="Szukaj postaci..." />
-              <CommandList>
-                <CommandEmpty>Brak postaci</CommandEmpty>
-                <CommandGroup>
-                  <CommandItem
-                    value="all"
-                    onSelect={() => {
-                      setSelectedCharacterId(undefined);
-                      setCharacterOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        !selectedCharacterId ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    Wszystkie postacie
-                  </CommandItem>
-                  {characters.map((char) => (
-                    <CommandItem
-                      key={char.id}
-                      value={`${char.name} ${char.world}`}
-                      onSelect={() => handleCharacterChange(char.id)}
-                      className="p-0 px-2 gap-0"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedCharacterId === char.id
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <PlayerTile
-                        player={char}
-                        cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
-                        className="scale-70 mr-2"
-                      />{" "}
-                      {char.name} ({char.world})
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+    <div className="flex flex-col">
+      <div className="p-4 bg-background">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="font-semibold">Przegląd statystyk</h2>
+            <p className="text-muted-foreground text-sm">
+              Statystyki walk dla wybranego okresu
+            </p>
+          </div>
 
-        <Popover open={periodOpen} onOpenChange={setPeriodOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={periodOpen}
-              className="w-[220px] justify-between h-10"
-            >
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm truncate">{selectedPeriodLabel}</span>
-              </div>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[220px] p-0">
-            <Command>
-              <CommandList>
-                <CommandEmpty>Brak opcji</CommandEmpty>
-                <CommandGroup>
-                  {periods.map((period) => (
-                    <CommandItem
-                      key={period.value}
-                      value={period.value}
-                      onSelect={() => handlePeriodChange(period.value)}
+          <Button variant="outline" size="sm" asChild>
+            <Link to={ROUTES.user.battlePanel.statistics}>
+              Zobacz szczegółowe statystyki
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+      <Separator />
+      <div className="p-4 space-y-4">
+        {isLoadingAnalytics ? (
+          <div className="flex items-center justify-center p-8">
+            <Spinner />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              const color = stat.gradientType
+                ? getGradientColor(stat.value, stat.gradientType)
+                : undefined;
+              return (
+                <div key={index} className="relative overflow-hidden">
+                  <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="text-sm font-medium text-muted-foreground">
+                      {stat.title}
+                    </div>
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <div
+                      className="text-2xl font-bold"
+                      style={color ? { color } : undefined}
                     >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedPeriod === period.value
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
+                      <CountUp
+                        to={
+                          stat.decimals
+                            ? Number(stat.value.toFixed(stat.decimals))
+                            : stat.value
+                        }
+                        separator={stat.useSeparator ? " " : ""}
+                        className="inline"
+                        duration={0.8}
                       />
-                      {period.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                      {stat.suffix && (
+                        <span className="ml-0.5">{stat.suffix}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{stat.description}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <Separator />
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex flex-col md:flex-row md:items-end gap-3 w-full md:w-auto">
+            <div className="space-y-1 w-full md:w-auto">
+              <Label className="text-xs invisible">Postać</Label>
+              <CharacterSelector
+                characterId={currentCharacterId}
+                onCharacterChange={setCurrentCharacterId}
+                allowAllCharacters
+                className="w-full md:w-[250px] h-10"
+              />
+            </div>
+
+            <div className="space-y-1 w-full md:w-auto">
+              <Label className="text-xs invisible">Okres</Label>
+              <PeriodSelector
+                value={selectedPeriod}
+                onValueChange={handlePeriodChange}
+                excludePeriods={["all"]}
+                width="w-full md:w-[220px]"
+              />
+            </div>
+
+            <div className="flex items-end gap-3">
+              <LevelRangeFilter
+                minLevel={minLevel}
+                maxLevel={maxLevel}
+                onMinLevelChange={(value) => {
+                  const currentId =
+                    useBattleFiltersStore.getState().currentCharacterId;
+                  useBattleFiltersStore
+                    .getState()
+                    .updateFilters(currentId, { minLevel: value ?? 1 });
+                }}
+                onMaxLevelChange={(value) => {
+                  const currentId =
+                    useBattleFiltersStore.getState().currentCharacterId;
+                  useBattleFiltersStore
+                    .getState()
+                    .updateFilters(currentId, { maxLevel: value ?? 500 });
+                }}
+                minLevelId="min-level-overview"
+                maxLevelId="max-level-overview"
+                inputClassName="w-full md:w-[140px]"
+                containerClassName="flex-1 md:flex-none"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
