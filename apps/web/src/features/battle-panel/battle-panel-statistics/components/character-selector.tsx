@@ -23,6 +23,7 @@ interface CharacterSelectorProps {
   onCharacterChange: (characterId: string | undefined) => void;
   allowAllCharacters?: boolean;
   size?: "sm" | "default";
+  className?: string;
 }
 
 export function CharacterSelector({
@@ -30,6 +31,7 @@ export function CharacterSelector({
   onCharacterChange,
   allowAllCharacters = false,
   size = "sm",
+  className,
 }: CharacterSelectorProps) {
   const [open, setOpen] = useState(false);
   const { data: characters } = useBattleCharacters();
@@ -39,10 +41,10 @@ export function CharacterSelector({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size={size} className="gap-2">
+        <Button variant="outline" size={size} className={cn("gap-2", className)}>
           <User className="h-4 w-4" />
           {selectedCharacter
-            ? selectedCharacter.name
+            ? `${selectedCharacter.name} (${selectedCharacter.world})`
             : allowAllCharacters
               ? "Wszystkie postacie"
               : "Wybierz postać"}

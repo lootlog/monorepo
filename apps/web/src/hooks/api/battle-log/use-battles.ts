@@ -133,6 +133,8 @@ export type UseBattlesParams = {
   result?: Array<"won" | "lost" | "flee">;
   ph?: boolean;
   characterId?: Array<string>;
+  minLevel?: number;
+  maxLevel?: number;
 };
 
 export const useBattles = (params?: UseBattlesParams) => {
@@ -164,6 +166,10 @@ export const useBattles = (params?: UseBattlesParams) => {
           searchParams.append("characterId", id),
         );
       }
+      if (params?.minLevel)
+        searchParams.append("minLevel", params.minLevel.toString());
+      if (params?.maxLevel)
+        searchParams.append("maxLevel", params.maxLevel.toString());
 
       return client.get<GetBattlesResponse>(`/battles/@me?${searchParams}`);
     },

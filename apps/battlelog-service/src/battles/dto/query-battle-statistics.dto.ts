@@ -23,9 +23,16 @@ export class QueryBattleStatisticsDto {
   period?: '24h' | '3d' | '7d' | '14d' | '30d' | '90d' | '180d' | 'all';
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
-  @IsBoolean()
-  sameLevelOnly?: boolean = false;
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  minLevel?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  maxLevel?: number;
 
   @IsOptional()
   @IsString()

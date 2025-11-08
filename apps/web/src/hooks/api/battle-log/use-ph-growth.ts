@@ -12,7 +12,8 @@ interface UsePhGrowthParams {
   characterId?: string;
   world?: string;
   period?: string;
-  sameLevelOnly?: boolean;
+  minLevel?: number;
+  maxLevel?: number;
 }
 
 export function usePhGrowth(params: UsePhGrowthParams) {
@@ -27,6 +28,6 @@ export function usePhGrowth(params: UsePhGrowthParams) {
       );
       return response.data as PhGrowthDataPoint[];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }

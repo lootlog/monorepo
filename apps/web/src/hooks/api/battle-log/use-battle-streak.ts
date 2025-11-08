@@ -16,7 +16,8 @@ interface UseBattleStreakParams {
   characterId?: string;
   world?: string;
   period?: string;
-  sameLevelOnly?: boolean;
+  minLevel?: number;
+  maxLevel?: number;
 }
 
 export function useBattleStreak(params: UseBattleStreakParams) {

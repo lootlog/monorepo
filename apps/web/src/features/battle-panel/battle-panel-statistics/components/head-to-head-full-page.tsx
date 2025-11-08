@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useBattleFiltersStore, type Period } from "@/store/battle-filters.store";
 import {
   useReactTable,
   getCoreRowModel,
@@ -31,6 +33,7 @@ import {
   SelectValue,
 } from "@lootlog/ui/components/select";
 import { Input } from "@lootlog/ui/components/input";
+import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Search, ArrowUpDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -44,32 +47,70 @@ import {
 } from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
 
-type Period = "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d" | "all";
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
 
 export function HeadToHeadFullPage() {
-  const [characterId, setCharacterId] = useState<string | undefined>(undefined);
-  const [period, setPeriod] = useState<Period>("30d");
+  const currentCharacterId = useBattleFiltersStore(
+    (state) => state.currentCharacterId,
+  );
+  const setCurrentCharacterId = useBattleFiltersStore(
+    (state) => state.setCurrentCharacterId,
+  );
+  const getFilters = useBattleFiltersStore((state) => state.getFilters);
+  const updateFilters = useBattleFiltersStore((state) => state.updateFilters);
+
+  const filters = getFilters(currentCharacterId);
+
+  const [period, setPeriod] = useState<Period>(filters.period || "30d");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [localMinLevel, setLocalMinLevel] = useState<number | undefined>(
+    filters.minLevel,
+  );
+  const [localMaxLevel, setLocalMaxLevel] = useState<number | undefined>(
+    filters.maxLevel,
+  );
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalBattles", desc: true },
   ]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
+
+  const debouncedMinLevel = useDebounce(localMinLevel, 500);
+  const debouncedMaxLevel = useDebounce(localMaxLevel, 500);
 
   const { data: characters } = useBattleCharacters();
 
   const sortBy = (sorting[0]?.id || "totalBattles") as SortBy;
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
 
+  useEffect(() => {
+    const loadedFilters = getFilters(currentCharacterId);
+    setPeriod(loadedFilters.period || "30d");
+    setLocalMinLevel(loadedFilters.minLevel);
+    setLocalMaxLevel(loadedFilters.maxLevel);
+  }, [currentCharacterId, getFilters]);
+
+  useEffect(() => {
+    setCursor(undefined);
+  }, [debouncedMinLevel, debouncedMaxLevel]);
+
+  useEffect(() => {
+    updateFilters(currentCharacterId, {
+      minLevel: debouncedMinLevel,
+      maxLevel: debouncedMaxLevel,
+    });
+  }, [debouncedMinLevel, debouncedMaxLevel, currentCharacterId, updateFilters]);
+
   const { data, isLoading } = useHeadToHead({
     cursor,
     size: 20,
     sortBy,
     sortOrder,
-    characterId,
+    characterId: currentCharacterId,
     period,
     search: search || undefined,
+    minLevel: debouncedMinLevel,
+    maxLevel: debouncedMaxLevel,
     includeTotal: true,
   });
 
@@ -91,6 +132,19 @@ export function HeadToHeadFullPage() {
   };
 
   const handlePreviousPage = () => {
+    setCursor(undefined);
+  };
+
+  const handleCharacterChange = (value: string) => {
+    const newCharacterId = value === "all" ? undefined : value;
+    setCurrentCharacterId(newCharacterId);
+    setCursor(undefined);
+  };
+
+  const handlePeriodChange = (value: string) => {
+    const newPeriod = value as Period;
+    setPeriod(newPeriod);
+    updateFilters(currentCharacterId, { period: newPeriod });
     setCursor(undefined);
   };
 
@@ -283,29 +337,27 @@ export function HeadToHeadFullPage() {
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
+      <div className="flex flex-col md:flex-row gap-4 flex-wrap items-end">
+        <div className="flex-1 min-w-[200px]">
           <div className="flex gap-2">
             <Input
               placeholder="Szukaj przeciwnika..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleSearchKeyDown}
+              className="h-10"
             />
-            <Button onClick={handleSearch} variant="outline" size="icon">
+            <Button onClick={handleSearch} variant="outline" size="icon" className="h-10 w-10">
               <Search className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         <Select
-          value={characterId || "all"}
-          onValueChange={(value) => {
-            setCharacterId(value === "all" ? undefined : value);
-            setCursor(undefined);
-          }}
+          value={currentCharacterId || "all"}
+          onValueChange={handleCharacterChange}
         >
-          <SelectTrigger className="w-full md:w-[240px]">
+          <SelectTrigger className="w-full md:w-[240px] h-10">
             <SelectValue placeholder="Wszystkie postacie" />
           </SelectTrigger>
           <SelectContent>
@@ -318,14 +370,8 @@ export function HeadToHeadFullPage() {
           </SelectContent>
         </Select>
 
-        <Select
-          value={period}
-          onValueChange={(value) => {
-            setPeriod(value as Period);
-            setCursor(undefined);
-          }}
-        >
-          <SelectTrigger className="w-full md:w-[180px]">
+        <Select value={period} onValueChange={handlePeriodChange}>
+          <SelectTrigger className="w-full md:w-[180px] h-10">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -339,6 +385,56 @@ export function HeadToHeadFullPage() {
             <SelectItem value="all">Cały czas</SelectItem>
           </SelectContent>
         </Select>
+
+        <div className="space-y-1">
+          <Label htmlFor="min-level-h2h" className="text-xs">
+            Min. poziom przeciwnika
+          </Label>
+          <Input
+            id="min-level-h2h"
+            type="number"
+            min="1"
+            max="500"
+            value={localMinLevel ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "") {
+                setLocalMinLevel(undefined);
+              } else {
+                const parsed = Number.parseInt(value, 10);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                  setLocalMinLevel(parsed);
+                }
+              }
+            }}
+            className="w-[140px] h-10"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="max-level-h2h" className="text-xs">
+            Max. poziom przeciwnika
+          </Label>
+          <Input
+            id="max-level-h2h"
+            type="number"
+            min="1"
+            max="500"
+            value={localMaxLevel ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "") {
+                setLocalMaxLevel(undefined);
+              } else {
+                const parsed = Number.parseInt(value, 10);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                  setLocalMaxLevel(parsed);
+                }
+              }
+            }}
+            className="w-[140px] h-10"
+          />
+        </div>
       </div>
 
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">

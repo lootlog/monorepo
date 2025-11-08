@@ -44,7 +44,8 @@ export interface UseHeadToHeadParams {
   period?: string;
   search?: string;
   minBattles?: number;
-  sameLevelOnly?: boolean;
+  minLevel?: number;
+  maxLevel?: number;
 }
 
 export function useHeadToHead(params?: UseHeadToHeadParams) {
@@ -71,14 +72,17 @@ export function useHeadToHead(params?: UseHeadToHeadParams) {
       if (params?.search) searchParams.append("search", params.search);
       if (params?.minBattles)
         searchParams.append("minBattles", params.minBattles.toString());
-      if (params?.sameLevelOnly) searchParams.append("sameLevelOnly", "true");
+      if (params?.minLevel)
+        searchParams.append("minLevel", params.minLevel.toString());
+      if (params?.maxLevel)
+        searchParams.append("maxLevel", params.maxLevel.toString());
 
       return client.get<GetHeadToHeadResponse>(
         `/battles/@me/statistics/head-to-head?${searchParams.toString()}`,
       );
     },
     select: (response) => response.data,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 
   return query;

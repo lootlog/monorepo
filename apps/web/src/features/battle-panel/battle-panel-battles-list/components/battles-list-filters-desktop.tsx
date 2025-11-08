@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
+import { Input } from "@lootlog/ui/components/input";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Popover,
@@ -81,6 +82,8 @@ type BattlesListFiltersDesktopProps = {
   }) => void;
   onPhToggle: (checked: boolean) => void;
   onWorldChange: (value: string) => void;
+  onMinLevelChange: (value: number | undefined) => void;
+  onMaxLevelChange: (value: number | undefined) => void;
 };
 
 export const BattlesListFiltersDesktop = ({
@@ -108,9 +111,11 @@ export const BattlesListFiltersDesktop = ({
   onWarriorToggle,
   onPhToggle,
   onWorldChange,
+  onMinLevelChange,
+  onMaxLevelChange,
 }: BattlesListFiltersDesktopProps) => {
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex items-end gap-3 flex-wrap">
       <Popover
         open={warriorSearchOpen}
         onOpenChange={onWarriorSearchOpenChange}
@@ -384,6 +389,56 @@ export const BattlesListFiltersDesktop = ({
           id="ph-checkbox"
           checked={filters.ph === true}
           onCheckedChange={onPhToggle}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="min-level-battles" className="text-xs">
+          Min. poziom przeciwnika
+        </Label>
+        <Input
+          id="min-level-battles"
+          type="number"
+          min="1"
+          max="500"
+          value={filters.minLevel ?? ""}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === "") {
+              onMinLevelChange(undefined);
+            } else {
+              const parsed = Number.parseInt(value, 10);
+              if (!Number.isNaN(parsed) && parsed > 0) {
+                onMinLevelChange(parsed);
+              }
+            }
+          }}
+          className="w-[140px] h-10"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="max-level-battles" className="text-xs">
+          Max. poziom przeciwnika
+        </Label>
+        <Input
+          id="max-level-battles"
+          type="number"
+          min="1"
+          max="500"
+          value={filters.maxLevel ?? ""}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === "") {
+              onMaxLevelChange(undefined);
+            } else {
+              const parsed = Number.parseInt(value, 10);
+              if (!Number.isNaN(parsed) && parsed > 0) {
+                onMaxLevelChange(parsed);
+              }
+            }
+          }}
+          className="w-[140px] h-10"
         />
       </div>
     </div>

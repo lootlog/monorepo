@@ -34,7 +34,7 @@ export const useSearchWarriors = (searchQuery: string, debounceMs = 300) => {
         `/battles/@me/warriors/search`,
         {
           params: { q: debouncedQuery },
-        }
+        },
       );
     },
     enabled: debouncedQuery.length >= 2,
