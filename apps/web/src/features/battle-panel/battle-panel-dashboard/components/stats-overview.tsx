@@ -61,7 +61,6 @@ export function StatsOverview() {
   const setCurrentCharacterId = useBattleFiltersStore(
     (state) => state.setCurrentCharacterId,
   );
-  const updateFilters = useBattleFiltersStore((state) => state.updateFilters);
 
   const filters = useBattleFiltersStore((state) =>
     state.getFilters(state.currentCharacterId),
@@ -96,7 +95,10 @@ export function StatsOverview() {
     const dashboardPeriod =
       period === "all" ? "30d" : (period as DashboardPeriod);
     setSelectedPeriod(dashboardPeriod);
-    updateFilters(currentCharacterId, { period: dashboardPeriod });
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { period: dashboardPeriod });
   };
 
   const selectedCharacter = characters.find(
@@ -239,12 +241,20 @@ export function StatsOverview() {
               <LevelRangeFilter
                 minLevel={minLevel}
                 maxLevel={maxLevel}
-                onMinLevelChange={(value) =>
-                  updateFilters(currentCharacterId, { minLevel: value ?? 1 })
-                }
-                onMaxLevelChange={(value) =>
-                  updateFilters(currentCharacterId, { maxLevel: value ?? 500 })
-                }
+                onMinLevelChange={(value) => {
+                  const currentId =
+                    useBattleFiltersStore.getState().currentCharacterId;
+                  useBattleFiltersStore
+                    .getState()
+                    .updateFilters(currentId, { minLevel: value ?? 1 });
+                }}
+                onMaxLevelChange={(value) => {
+                  const currentId =
+                    useBattleFiltersStore.getState().currentCharacterId;
+                  useBattleFiltersStore
+                    .getState()
+                    .updateFilters(currentId, { maxLevel: value ?? 500 });
+                }}
                 minLevelId="min-level-overview"
                 maxLevelId="max-level-overview"
                 inputClassName="w-full md:w-[140px]"

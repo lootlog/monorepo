@@ -50,7 +50,6 @@ export function HeadToHeadFullPage() {
   const setCurrentCharacterId = useBattleFiltersStore(
     (state) => state.setCurrentCharacterId,
   );
-  const updateFilters = useBattleFiltersStore((state) => state.updateFilters);
 
   const filterPeriod = useBattleFiltersStore(
     (state) => state.getFilters(state.currentCharacterId).period,
@@ -116,7 +115,10 @@ export function HeadToHeadFullPage() {
 
   const handlePeriodChange = (value: Period) => {
     setPeriod(value);
-    updateFilters(currentCharacterId, { period: value });
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { period: value });
     setCursor(undefined);
   };
 
@@ -321,11 +323,17 @@ export function HeadToHeadFullPage() {
         }}
         onPeriodChange={handlePeriodChange}
         onMinLevelChange={(value) => {
-          updateFilters(currentCharacterId, { minLevel: value });
+          const currentId = useBattleFiltersStore.getState().currentCharacterId;
+          useBattleFiltersStore
+            .getState()
+            .updateFilters(currentId, { minLevel: value });
           setCursor(undefined);
         }}
         onMaxLevelChange={(value) => {
-          updateFilters(currentCharacterId, { maxLevel: value });
+          const currentId = useBattleFiltersStore.getState().currentCharacterId;
+          useBattleFiltersStore
+            .getState()
+            .updateFilters(currentId, { maxLevel: value });
           setCursor(undefined);
         }}
         onWarriorToggle={handleWarriorToggle}
