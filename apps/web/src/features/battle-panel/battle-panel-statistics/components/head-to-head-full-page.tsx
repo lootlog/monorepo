@@ -19,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { Card, CardContent } from "@lootlog/ui/components/card";
 import {
   Pagination,
   PaginationContent,
@@ -110,7 +109,9 @@ export function HeadToHeadFullPage() {
   };
 
   const handlePreviousPage = () => {
-    setCursor(undefined);
+    if (data?.pagination.previousCursor) {
+      setCursor(data.pagination.previousCursor);
+    }
   };
 
   const handlePeriodChange = (value: Period) => {
@@ -303,7 +304,7 @@ export function HeadToHeadFullPage() {
   });
 
   return (
-    <div className="h-full flex flex-col max-w-full overflow-hidden">
+    <div className="h-full flex flex-col">
       <div className="p-4 pb-0 bg-background">
         <h1 className="text-xl font-bold">Pełny bilans bezpośrednich starć</h1>
         <p className="text-muted-foreground">
@@ -339,103 +340,82 @@ export function HeadToHeadFullPage() {
         onWarriorToggle={handleWarriorToggle}
       />
 
-      <div className="p-4 flex-1 flex flex-col min-h-0 max-w-screen overflow-hidden">
-        <Card className="flex-1 flex flex-col min-h-0 max-w-full overflow-hidden">
-          <CardContent className="flex-1 flex flex-col p-0 min-h-0 h-full max-w-full overflow-hidden">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-                <Spinner className="size-8" />
-                <p className="text-sm text-muted-foreground">
-                  Ładowanie danych...
-                </p>
-              </div>
-            ) : !data || data.records.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
-                <p className="text-muted-foreground">
-                  Brak danych do wyświetlenia
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="flex-1 min-h-0 w-full overflow-x-auto overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                          {headerGroup.headers.map((header) => (
-                            <TableHead
-                              key={header.id}
-                              className="whitespace-nowrap"
-                            >
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext(),
-                                  )}
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableHeader>
-                    <TableBody>
-                      {table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id}>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell
-                              key={cell.id}
-                              className="whitespace-nowrap"
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext(),
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+      <div className="flex-1 overflow-auto min-h-0">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+            <Spinner className="size-8" />
+            <p className="text-sm text-muted-foreground">Ładowanie danych...</p>
+          </div>
+        ) : !data || data.records.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
+            <p className="text-muted-foreground">Brak danych do wyświetlenia</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader className="bg-background">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="whitespace-nowrap">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="bg-background/30">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="whitespace-nowrap">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
 
-                {data.pagination &&
-                  (data.pagination.hasNext || data.pagination.hasPrev) && (
-                    <div className="sticky bottom-0 bg-background border-t py-4 flex items-center justify-between px-4">
-                      <div className="text-sm text-muted-foreground">
-                        {data.pagination.total && (
-                          <span>Łącznie rekordów: {data.pagination.total}</span>
-                        )}
-                      </div>
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              onClick={handlePreviousPage}
-                              className={
-                                !data.pagination.hasPrev
-                                  ? "pointer-events-none opacity-50"
-                                  : "cursor-pointer"
-                              }
-                            />
-                          </PaginationItem>
-                          <PaginationItem>
-                            <PaginationNext
-                              onClick={handleNextPage}
-                              className={
-                                !data.pagination.hasNext
-                                  ? "pointer-events-none opacity-50"
-                                  : "cursor-pointer"
-                              }
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
-                  )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+      <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
+        <div className="text-sm text-muted-foreground">
+          {data?.pagination?.total && (
+            <span>Łącznie rekordów: {data.pagination.total}</span>
+          )}
+        </div>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={handlePreviousPage}
+                className={
+                  !data?.pagination?.hasPrev
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
+              />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext
+                onClick={handleNextPage}
+                className={
+                  !data?.pagination?.hasNext
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );
