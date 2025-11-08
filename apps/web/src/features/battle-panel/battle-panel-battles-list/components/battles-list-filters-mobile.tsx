@@ -5,7 +5,6 @@ import {
   Award,
   Check,
   ChevronsUpDown,
-  Search,
   Globe,
   Filter,
 } from "lucide-react";
@@ -39,6 +38,8 @@ import { MARGONEM_CDN_CHARACTERS_URL } from "@/constants/margonem";
 import { Badge } from "@lootlog/ui/components/badge";
 import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 import type { BattleFilters } from "./battles-list-filters";
+import { WarriorSearchFilter } from "@/components/filters";
+import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 
 const battleTypes = [
   { value: "solo" as const, label: "Solo" },
@@ -58,38 +59,17 @@ type BattlesListFiltersMobileProps = {
   resultOpen: boolean;
   characterOpen: boolean;
   worldOpen: boolean;
-  warriorSearchOpen: boolean;
-  warriorSearchQuery: string;
-  selectedWarriors: Array<{
-    name: string;
-    icon: string;
-    prof: string;
-    lvl: number;
-  }>;
-  searchResults: Array<{
-    name: string;
-    icon: string;
-    prof: string;
-    lvl: number;
-  }>;
-  isSearching: boolean;
+  selectedWarriors: Warrior[];
   worlds: string[];
   characters: Array<{ id: string; name: string; world: string }>;
   onTypeOpenChange: (open: boolean) => void;
   onResultOpenChange: (open: boolean) => void;
   onCharacterOpenChange: (open: boolean) => void;
   onWorldOpenChange: (open: boolean) => void;
-  onWarriorSearchOpenChange: (open: boolean) => void;
-  onWarriorSearchQueryChange: (query: string) => void;
   onCharacterChange: (value: string) => void;
   onTypeChange: (value: "solo" | "group") => void;
   onResultChange: (value: "won" | "lost" | "flee") => void;
-  onWarriorToggle: (warrior: {
-    name: string;
-    icon: string;
-    prof: string;
-    lvl: number;
-  }) => void;
+  onWarriorToggle: (warrior: Warrior) => void;
   onPhToggle: (checked: boolean) => void;
   onWorldChange: (value: string) => void;
 };
@@ -101,19 +81,13 @@ export const BattlesListFiltersMobile = ({
   resultOpen,
   characterOpen,
   worldOpen,
-  warriorSearchOpen,
-  warriorSearchQuery,
   selectedWarriors,
-  searchResults,
-  isSearching,
   worlds,
   characters,
   onTypeOpenChange,
   onResultOpenChange,
   onCharacterOpenChange,
   onWorldOpenChange,
-  onWarriorSearchOpenChange,
-  onWarriorSearchQueryChange,
   onCharacterChange,
   onTypeChange,
   onResultChange,
@@ -143,78 +117,11 @@ export const BattlesListFiltersMobile = ({
         <div className="space-y-4 overflow-y-auto">
           <div className="space-y-2">
             <Label>Szukaj wojowników</Label>
-            <Popover
-              open={warriorSearchOpen}
-              onOpenChange={onWarriorSearchOpenChange}
-              modal={false}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={warriorSearchOpen}
-                  className="w-full justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4" />
-                    <span className="text-sm">
-                      {selectedWarriors.length > 0
-                        ? `${selectedWarriors.length} wybranych`
-                        : "Szukaj wojowników..."}
-                    </span>
-                  </div>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                <Command shouldFilter={false}>
-                  <CommandInput
-                    placeholder="Wpisz nazwę wojownika..."
-                    value={warriorSearchQuery}
-                    onValueChange={onWarriorSearchQueryChange}
-                  />
-                  <CommandList>
-                    <CommandEmpty>
-                      {isSearching
-                        ? "Wyszukiwanie..."
-                        : warriorSearchQuery.length < 2
-                          ? "Wpisz przynajmniej 2 znaki"
-                          : "Nie znaleziono"}
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {searchResults.map((warrior) => {
-                        const isSelected = selectedWarriors.some(
-                          (w) => w.name === warrior.name,
-                        );
-                        return (
-                          <CommandItem
-                            key={warrior.name}
-                            value={warrior.name}
-                            onSelect={() => onWarriorToggle(warrior)}
-                            className="p-0 px-2 gap-0"
-                          >
-                            <PlayerTile
-                              player={warrior}
-                              cdnBaseUrl={MARGONEM_CDN_CHARACTERS_URL}
-                              className="scale-70 mr-2"
-                            />
-                            <span>
-                              {warrior.name} ({warrior.lvl} lvl)
-                            </span>
-                            <Check
-                              className={cn(
-                                "ml-auto h-4 w-4",
-                                isSelected ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <WarriorSearchFilter
+              selectedWarriors={selectedWarriors}
+              onWarriorToggle={onWarriorToggle}
+              className="w-full"
+            />
           </div>
 
           <div className="space-y-2">

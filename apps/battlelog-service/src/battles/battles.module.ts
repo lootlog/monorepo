@@ -7,11 +7,12 @@ import {
   PublicBattlesController,
 } from './battles.controller';
 import { BattlesService } from './battles.service';
+import { BattleAnalyticsService } from './services/battle-analytics.service';
 import { PaginationService } from './services/pagination.service';
 
 @Module({
   imports: [PrismaModule, R2Module, RedisModule],
   controllers: [BattlesController, PublicBattlesController],
-  providers: [BattlesService, PaginationService],
+  providers: [BattlesService, BattleAnalyticsService, PaginationService],
 })
 export class BattlesModule {}

@@ -10,13 +10,12 @@ import {
   SortOrder,
   type QueryBattlesDto,
 } from 'src/battles/dto/query-battles.dto';
-import type { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
 import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import type { PaginationOptions } from 'src/battles/interfaces/pagination.interface';
+import { BattleAnalyticsService } from 'src/battles/services/battle-analytics.service';
 import { PaginationService } from 'src/battles/services/pagination.service';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import { R2Service } from 'src/shared/modules/r2/r2.service';
-import { RedisService } from 'src/shared/modules/redis/redis.service';
 import {
   BattleProcessor,
   type Warrior,
@@ -36,14 +35,12 @@ import type {
 @Injectable()
 export class BattlesService implements IBattlesService {
   private readonly logger = new Logger(BattlesService.name);
-  private readonly ANALYTICS_CACHE_PREFIX = 'analytics';
-  private readonly ANALYTICS_CACHE_TTL = 5 * 60; // 5 minutes
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly r2Service: R2Service,
     private readonly paginationService: PaginationService,
-    private readonly redisService: RedisService,
+    private readonly battleAnalyticsService: BattleAnalyticsService,
   ) {}
 
   async createBattle(params: CreateBattleParams): Promise<CreateBattleResult> {
@@ -62,11 +59,7 @@ export class BattlesService implements IBattlesService {
 
       await this.storeRawBattleData(battle.id, rawBattleData);
 
-      await this.invalidateAnalyticsCache(userId);
-
-      this.logger.log(
-        `Battle ${battle.id} created successfully for user ${userId}`,
-      );
+      await this.battleAnalyticsService.invalidateAnalyticsCache(userId);
 
       return {
         battleId: battle.id,
@@ -88,10 +81,6 @@ export class BattlesService implements IBattlesService {
       const result = await this.paginationService.paginateBattles(
         where,
         paginationOptions,
-      );
-
-      this.logger.log(
-        `Paginated public battles in ${result.performance.queryTime}ms`,
       );
 
       return {
@@ -121,10 +110,6 @@ export class BattlesService implements IBattlesService {
       const result = await this.paginationService.paginateBattles(
         where,
         paginationOptions,
-      );
-
-      this.logger.log(
-        `Paginated dashboard battles for user ${requestingUserId} in ${result.performance.queryTime}ms`,
       );
 
       return {
@@ -169,10 +154,6 @@ export class BattlesService implements IBattlesService {
         icon: char.icon,
       }));
 
-      this.logger.log(
-        `Retrieved ${characters.length} characters for user ${userId}`,
-      );
-
       return { characters };
     } catch (error) {
       this.logger.error('Failed to retrieve user characters:', error);
@@ -193,8 +174,6 @@ export class BattlesService implements IBattlesService {
 
       const worlds = userCharacters.map((char) => char.world);
 
-      this.logger.log(`Retrieved ${worlds.length} worlds for user ${userId}`);
-
       return { worlds };
     } catch (error) {
       this.logger.error('Failed to retrieve user worlds:', error);
@@ -214,7 +193,6 @@ export class BattlesService implements IBattlesService {
       }
 
       const rawData = await this.r2Service.getBattleData(battleId);
-      this.logger.debug(`Retrieved raw data for battle ${battleId}`);
       return rawData;
     } catch (error) {
       this.logger.error(
@@ -258,9 +236,6 @@ export class BattlesService implements IBattlesService {
         include: { warriors: true },
       });
 
-      this.logger.log(
-        `Battle ${battleId} updated (public: ${updateData.public})`,
-      );
       return battle;
     } catch (error) {
       this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
@@ -281,7 +256,6 @@ export class BattlesService implements IBattlesService {
         );
       }
 
-      this.logger.log(`Battle ${battleId} deleted`);
       return { message: 'Battle deleted successfully' };
     } catch (error) {
       this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
@@ -325,9 +299,6 @@ export class BattlesService implements IBattlesService {
       const processor = new BattleProcessor();
       const analysis = processor.processBattle(dto);
 
-      this.logger.debug(
-        `Analyzed battle: ${analysis.type}, duration: ${analysis.duration}ms`,
-      );
       return analysis;
     } catch (error) {
       this.logger.error('Failed to analyze battle data:', error);
@@ -430,6 +401,28 @@ export class BattlesService implements IBattlesService {
       });
     }
 
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
+      const levelFilter: Prisma.BattleWarriorWhereInput = {};
+
+      if (query.minLevel !== undefined && query.maxLevel !== undefined) {
+        levelFilter.lvl = { gte: query.minLevel, lte: query.maxLevel };
+      } else if (query.minLevel !== undefined) {
+        levelFilter.lvl = { gte: query.minLevel };
+      } else if (query.maxLevel !== undefined) {
+        levelFilter.lvl = { lte: query.maxLevel };
+      }
+
+      if (characterIds.length) {
+        levelFilter.originalId = {
+          notIn: characterIds,
+        };
+      }
+
+      andConditions.push({
+        warriors: { some: levelFilter },
+      });
+    }
+
     if (andConditions.length) {
       where.AND = andConditions;
     }
@@ -527,6 +520,7 @@ export class BattlesService implements IBattlesService {
         winningTeam: analysis.outcome.winningTeam!,
         losingTeam: analysis.outcome.losingTeam!,
         hasFlee: analysis.outcome.hasFlee,
+        matchmaking: data.matchmaking ?? false,
         statistics: analysis.statistics as unknown as Prisma.InputJsonValue,
         warriors: {
           create: analysis.warriors.map(
@@ -628,7 +622,6 @@ export class BattlesService implements IBattlesService {
         },
       });
 
-      this.logger.debug(`Battle stored in database with ID: ${battle.id}`);
       return battle;
     } catch (error) {
       this.logger.error('Failed to store battle in database:', error);
@@ -652,9 +645,6 @@ export class BattlesService implements IBattlesService {
       };
 
       await this.r2Service.uploadBattleData(battleId, rawBattleData);
-      this.logger.debug(
-        `Raw battle data stored successfully for battle ${battleId}`,
-      );
     } catch (error) {
       this.logger.error(
         `Failed to store raw battle data for ${battleId}:`,
@@ -700,189 +690,10 @@ export class BattlesService implements IBattlesService {
         },
       });
 
-      this.logger.log(
-        `Found ${warriors.length} warriors matching "${query}" for user ${userId}`,
-      );
-
       return { warriors };
     } catch (error) {
       this.logger.error('Failed to search warriors:', error);
       throw error;
-    }
-  }
-
-  async getBattleAnalytics(
-    query: QueryBattleAnalyticsDto,
-    userId: string,
-  ): Promise<{
-    totalBattles: number;
-    wins: number;
-    losses: number;
-    winRatio: number;
-    totalPH: number;
-  }> {
-    try {
-      const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}`;
-
-      const cachedResult = await this.redisService.get(cacheKey);
-      if (cachedResult) {
-        this.logger.debug(`Analytics cache hit for user ${userId}`);
-        return JSON.parse(cachedResult);
-      }
-
-      // Get character IDs to filter by
-      let characterIds: string[] = [];
-
-      if (query.characterId) {
-        // Verify the character belongs to the user
-        const userCharacter = await this.prisma.userCharacter.findFirst({
-          where: {
-            userId,
-            characterId: query.characterId,
-            ...(query.world && { world: query.world }),
-          },
-        });
-
-        if (!userCharacter) {
-          throw new NotFoundException(
-            `Character ${query.characterId} not found for user`,
-          );
-        }
-
-        characterIds = [query.characterId];
-      } else {
-        // Get all user's characters
-        const userCharacters = await this.prisma.userCharacter.findMany({
-          where: {
-            userId,
-            ...(query.world && { world: query.world }),
-          },
-          select: { characterId: true },
-        });
-
-        characterIds = userCharacters.map((c) => c.characterId);
-      }
-
-      if (characterIds.length === 0) {
-        return {
-          totalBattles: 0,
-          wins: 0,
-          losses: 0,
-          winRatio: 0,
-          totalPH: 0,
-        };
-      }
-
-      // Calculate date filter based on period
-      let startDate: Date | undefined;
-      if (query.period) {
-        const now = new Date();
-        const periodMap: Record<string, number> = {
-          '24h': 1,
-          '3d': 3,
-          '7d': 7,
-          '14d': 14,
-          '30d': 30,
-          '90d': 90,
-          '180d': 180,
-        };
-
-        const days = periodMap[query.period];
-        startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-      }
-
-      // Build filter for battles
-      const where: Prisma.BattleWhereInput = {
-        userId,
-        ...(query.world && { world: query.world }),
-        ...(startDate && { createdAt: { gte: startDate } }),
-        warriors: {
-          some: {
-            originalId: { in: characterIds },
-          },
-        },
-      };
-
-      // Get all battles with warriors data
-      const battles = await this.prisma.battle.findMany({
-        where,
-        include: {
-          warriors: {
-            where: {
-              originalId: { in: characterIds },
-            },
-          },
-        },
-      });
-
-      // Calculate analytics
-      let wins = 0;
-      let losses = 0;
-      let totalPH = 0;
-
-      for (const battle of battles) {
-        const userWarrior = battle.warriors[0]; // We filtered for user's characters only
-
-        if (userWarrior) {
-          // Calculate PH
-          totalPH += userWarrior.ph;
-
-          // Determine if won or lost (exclude flee battles)
-          if (!battle.hasFlee) {
-            if (userWarrior.team === battle.winningTeam) {
-              wins++;
-            } else if (userWarrior.team === battle.losingTeam) {
-              losses++;
-            }
-          }
-        }
-      }
-
-      const totalBattles = wins + losses;
-      const winRatio = totalBattles > 0 ? wins / totalBattles : 0;
-
-      const result = {
-        totalBattles,
-        wins,
-        losses,
-        winRatio: Math.round(winRatio * 10000) / 100, // Round to 2 decimal places, as percentage
-        totalPH,
-      };
-
-      await this.redisService.set(
-        cacheKey,
-        JSON.stringify(result),
-        this.ANALYTICS_CACHE_TTL,
-      );
-
-      this.logger.log(
-        `Analytics for user ${userId}: ${totalBattles} battles, ${wins} wins, ${losses} losses, ${totalPH} PH (cached)`,
-      );
-
-      return result;
-    } catch (error) {
-      this.logger.error('Failed to retrieve battle analytics:', error);
-      throw error;
-    }
-  }
-
-  private async invalidateAnalyticsCache(userId: string): Promise<void> {
-    try {
-      const pattern = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:*`;
-      const redis = await this.redisService.getClient();
-      const keys = await redis.keys(pattern);
-
-      if (keys.length > 0) {
-        await redis.del(...keys);
-        this.logger.debug(
-          `Invalidated ${keys.length} analytics cache entries for user ${userId}`,
-        );
-      }
-    } catch (error) {
-      this.logger.warn(
-        `Failed to invalidate analytics cache for user ${userId}:`,
-        error,
-      );
     }
   }
 }

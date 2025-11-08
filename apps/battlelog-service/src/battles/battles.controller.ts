@@ -10,9 +10,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BattlesService } from 'src/battles/battles.service';
+import { BattleAnalyticsService } from 'src/battles/services/battle-analytics.service';
 import { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
 import { QueryBattlesDto } from 'src/battles/dto/query-battles.dto';
 import { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
+import { QueryBattleStatisticsDto } from 'src/battles/dto/query-battle-statistics.dto';
 import { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -22,7 +24,10 @@ import { BattleOwnerGuard } from 'src/shared/guards/battle-owner.guard';
 @UseGuards(AuthGuard)
 @Controller('battles')
 export class BattlesController {
-  constructor(private readonly battlesService: BattlesService) {}
+  constructor(
+    private readonly battlesService: BattlesService,
+    private readonly battleAnalyticsService: BattleAnalyticsService,
+  ) {}
 
   @Post('/')
   createBattle(
@@ -53,7 +58,50 @@ export class BattlesController {
     @Query() query: QueryBattleAnalyticsDto,
     @UserId() userId: string,
   ) {
-    return this.battlesService.getBattleAnalytics(query, userId);
+    return this.battleAnalyticsService.getBattleAnalytics(query, userId);
+  }
+
+  @Get('/@me/statistics/profession-win-rate')
+  getProfessionWinRate(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.calculateProfessionWinRate(
+      query,
+      userId,
+    );
+  }
+
+  @Get('/@me/statistics/head-to-head')
+  getHeadToHead(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getHeadToHead(query, userId);
+  }
+
+  @Get('/@me/statistics/streak')
+  getCurrentStreak(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getCurrentStreak(query, userId);
+  }
+
+  @Get('/@me/statistics/duration')
+  getBattleDuration(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getBattleDurationStats(query, userId);
+  }
+
+  @Get('/@me/statistics/ph-growth')
+  getPhGrowth(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getPhGrowthTimeSeries(query, userId);
   }
 
   @Get('/@me/warriors/search')

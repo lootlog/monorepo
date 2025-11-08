@@ -38,7 +38,7 @@ export const RecentBattles = () => {
   return (
     <div className="flex flex-col">
       <div className="p-4 bg-background">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="font-semibold">Ostatnie walki</h2>
             <p className="text-muted-foreground text-sm">
