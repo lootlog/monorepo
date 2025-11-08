@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useSearchWarriors } from "@/hooks/api/battle-log/use-search-warriors";
 import { useUserWorlds } from "@/hooks/api/battle-log/use-user-worlds";
 import { BattlesListFiltersMobile } from "./battles-list-filters-mobile";
 import { BattlesListFiltersDesktop } from "./battles-list-filters-desktop";
+import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 
 export type BattleFilters = {
   world?: string;
@@ -31,19 +31,10 @@ export const BattlesListFilters = ({
   const [resultOpenMobile, setResultOpenMobile] = useState(false);
   const [characterOpenMobile, setCharacterOpenMobile] = useState(false);
   const [worldOpenMobile, setWorldOpenMobile] = useState(false);
-  const [warriorSearchOpenMobile, setWarriorSearchOpenMobile] = useState(false);
 
-  const [typeOpenDesktop, setTypeOpenDesktop] = useState(false);
-  const [resultOpenDesktop, setResultOpenDesktop] = useState(false);
   const [characterOpenDesktop, setCharacterOpenDesktop] = useState(false);
-  const [worldOpenDesktop, setWorldOpenDesktop] = useState(false);
-  const [warriorSearchOpenDesktop, setWarriorSearchOpenDesktop] =
-    useState(false);
 
-  const [warriorSearchQuery, setWarriorSearchQuery] = useState("");
-  const [selectedWarriors, setSelectedWarriors] = useState<
-    Array<{ name: string; icon: string; prof: string; lvl: number }>
-  >([]);
+  const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
 
   const [localMinLevel, setLocalMinLevel] = useState<number | undefined>(
     filters.minLevel,
@@ -57,8 +48,6 @@ export const BattlesListFilters = ({
 
   const lastStateChangeRef = useRef<Record<string, number>>({});
 
-  const { data: searchResults = [], isLoading: isSearching } =
-    useSearchWarriors(warriorSearchQuery);
   const { data: worlds = [] } = useUserWorlds();
 
   useEffect(() => {
@@ -118,12 +107,7 @@ export const BattlesListFilters = ({
     });
   };
 
-  const handleWarriorToggle = (warrior: {
-    name: string;
-    icon: string;
-    prof: string;
-    lvl: number;
-  }) => {
+  const handleWarriorToggle = (warrior: Warrior) => {
     const isSelected = selectedWarriors.some((w) => w.name === warrior.name);
     let newSelectedWarriors;
 
@@ -157,7 +141,6 @@ export const BattlesListFilters = ({
       world: filters.world === value ? undefined : value,
     });
     setWorldOpenMobile(false);
-    setWorldOpenDesktop(false);
   };
 
   const handleMinLevelChange = (value: number | undefined) => {
@@ -210,30 +193,10 @@ export const BattlesListFilters = ({
     "characterMobile",
     setCharacterOpenMobile,
   );
-  const handleWarriorSearchOpenMobile = createDebouncedHandler(
-    "warriorSearchMobile",
-    setWarriorSearchOpenMobile,
-  );
 
-  const handleWorldOpenDesktop = createDebouncedHandler(
-    "worldDesktop",
-    setWorldOpenDesktop,
-  );
-  const handleTypeOpenDesktop = createDebouncedHandler(
-    "typeDesktop",
-    setTypeOpenDesktop,
-  );
-  const handleResultOpenDesktop = createDebouncedHandler(
-    "resultDesktop",
-    setResultOpenDesktop,
-  );
   const handleCharacterOpenDesktop = createDebouncedHandler(
     "characterDesktop",
     setCharacterOpenDesktop,
-  );
-  const handleWarriorSearchOpenDesktop = createDebouncedHandler(
-    "warriorSearchDesktop",
-    setWarriorSearchOpenDesktop,
   );
 
   return (
@@ -246,19 +209,13 @@ export const BattlesListFilters = ({
           resultOpen={resultOpenMobile}
           characterOpen={characterOpenMobile}
           worldOpen={worldOpenMobile}
-          warriorSearchOpen={warriorSearchOpenMobile}
-          warriorSearchQuery={warriorSearchQuery}
           selectedWarriors={selectedWarriors}
-          searchResults={searchResults}
-          isSearching={isSearching}
           worlds={worlds}
           characters={characters}
           onTypeOpenChange={handleTypeOpenMobile}
           onResultOpenChange={handleResultOpenMobile}
           onCharacterOpenChange={handleCharacterOpenMobile}
           onWorldOpenChange={handleWorldOpenMobile}
-          onWarriorSearchOpenChange={handleWarriorSearchOpenMobile}
-          onWarriorSearchQueryChange={setWarriorSearchQuery}
           onCharacterChange={handleCharacterChange}
           onTypeChange={handleTypeChange}
           onResultChange={handleResultChange}
@@ -275,23 +232,11 @@ export const BattlesListFilters = ({
             minLevel: localMinLevel,
             maxLevel: localMaxLevel,
           }}
-          typeOpen={typeOpenDesktop}
-          resultOpen={resultOpenDesktop}
           characterOpen={characterOpenDesktop}
-          worldOpen={worldOpenDesktop}
-          warriorSearchOpen={warriorSearchOpenDesktop}
-          warriorSearchQuery={warriorSearchQuery}
           selectedWarriors={selectedWarriors}
-          searchResults={searchResults}
-          isSearching={isSearching}
           worlds={worlds}
           characters={characters}
-          onTypeOpenChange={handleTypeOpenDesktop}
-          onResultOpenChange={handleResultOpenDesktop}
           onCharacterOpenChange={handleCharacterOpenDesktop}
-          onWorldOpenChange={handleWorldOpenDesktop}
-          onWarriorSearchOpenChange={handleWarriorSearchOpenDesktop}
-          onWarriorSearchQueryChange={setWarriorSearchQuery}
           onCharacterChange={handleCharacterChange}
           onTypeChange={handleTypeChange}
           onResultChange={handleResultChange}

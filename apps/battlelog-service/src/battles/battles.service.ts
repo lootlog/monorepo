@@ -427,6 +427,28 @@ export class BattlesService implements IBattlesService {
       });
     }
 
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
+      const levelFilter: Prisma.BattleWarriorWhereInput = {};
+
+      if (query.minLevel !== undefined && query.maxLevel !== undefined) {
+        levelFilter.lvl = { gte: query.minLevel, lte: query.maxLevel };
+      } else if (query.minLevel !== undefined) {
+        levelFilter.lvl = { gte: query.minLevel };
+      } else if (query.maxLevel !== undefined) {
+        levelFilter.lvl = { lte: query.maxLevel };
+      }
+
+      if (characterIds.length) {
+        levelFilter.originalId = {
+          notIn: characterIds,
+        };
+      }
+
+      andConditions.push({
+        warriors: { some: levelFilter },
+      });
+    }
+
     if (andConditions.length) {
       where.AND = andConditions;
     }

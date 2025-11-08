@@ -89,4 +89,18 @@ export class QueryBattlesDto {
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   ph?: boolean; // Filter battles with honor points
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(1000)
+  minLevel?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(1000)
+  maxLevel?: number;
 }
