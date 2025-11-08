@@ -57,6 +57,7 @@ export interface HeadToHeadPaginatedResponseDto {
     hasNext: boolean;
     hasPrev: boolean;
     nextCursor?: string;
+    previousCursor?: string;
     total?: number;
   };
   meta: {

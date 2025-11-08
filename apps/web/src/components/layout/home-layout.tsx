@@ -156,11 +156,17 @@ export const HomeLayout: FC = () => {
                 <div className="w-8" />
               </div>
             </PageHeader>
-            <ScrollArea className="flex-1 min-h-0 flex flex-col gap-4 w-full max-w-full h-full">
-              <div className="h-full">
+            {location.pathname === ROUTES.user.battlePanel.h2h ? (
+              <div className="flex-1 min-h-0 overflow-auto">
                 <Outlet />
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea className="flex-1 min-h-0 flex flex-col gap-4 w-full max-w-full h-full">
+                <div className="h-full">
+                  <Outlet />
+                </div>
+              </ScrollArea>
+            )}
           </div>
         </div>
       </SidebarProvider>
