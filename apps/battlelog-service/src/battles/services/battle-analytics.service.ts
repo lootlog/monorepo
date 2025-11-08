@@ -4,7 +4,6 @@ import type { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analy
 import type { QueryBattleStatisticsDto } from 'src/battles/dto/query-battle-statistics.dto';
 import type {
   ProfessionWinRateDto,
-  HeadToHeadRecordDto,
   HeadToHeadPaginatedResponseDto,
   StreakDto,
   BattleDurationStatsDto,
@@ -34,7 +33,8 @@ export class BattleAnalyticsService {
     winRatio: number;
     totalPH: number;
   }> {
-    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${query.sameLevelOnly ? 'samelevel' : 'all'}`;
+    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
+    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -104,9 +104,14 @@ export class BattleAnalyticsService {
     });
 
     let filteredBattles = battles;
-    if (query.sameLevelOnly) {
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
       filteredBattles = battles.filter((battle) =>
-        this.isSameLevelBattle(battle, characterIds),
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
       );
     }
 
@@ -160,7 +165,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<ProfessionWinRateDto[]> {
-    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${query.sameLevelOnly ? 'samelevel' : 'all'}`;
+    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
+    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -197,9 +203,14 @@ export class BattleAnalyticsService {
     });
 
     let filteredBattles = battles;
-    if (query.sameLevelOnly) {
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
       filteredBattles = battles.filter((battle) =>
-        this.isSameLevelBattle(battle, characterIds),
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
       );
     }
 
@@ -309,9 +320,14 @@ export class BattleAnalyticsService {
     });
 
     let filteredBattles = battles;
-    if (query.sameLevelOnly) {
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
       filteredBattles = battles.filter((battle) =>
-        this.isSameLevelBattle(battle, characterIds),
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
       );
     }
 
@@ -476,7 +492,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<StreakDto> {
-    const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${query.sameLevelOnly ? 'samelevel' : 'all'}`;
+    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
+    const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -519,9 +536,14 @@ export class BattleAnalyticsService {
     });
 
     let filteredBattles = battles;
-    if (query.sameLevelOnly) {
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
       filteredBattles = battles.filter((battle) =>
-        this.isSameLevelBattle(battle, characterIds),
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
       );
     }
 
@@ -594,7 +616,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<BattleDurationStatsDto> {
-    const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${query.sameLevelOnly ? 'samelevel' : 'all'}`;
+    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
+    const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -639,9 +662,14 @@ export class BattleAnalyticsService {
     });
 
     let filteredBattles = battles;
-    if (query.sameLevelOnly) {
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
       filteredBattles = battles.filter((battle) =>
-        this.isSameLevelBattle(battle, characterIds),
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
       );
     }
 
@@ -716,7 +744,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<PhGrowthDataPointDto[]> {
-    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${query.sameLevelOnly ? 'samelevel' : 'all'}`;
+    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
+    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -756,9 +785,14 @@ export class BattleAnalyticsService {
     });
 
     let filteredBattles = battles;
-    if (query.sameLevelOnly) {
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
       filteredBattles = battles.filter((battle) =>
-        this.isSameLevelBattle(battle, characterIds),
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
       );
     }
 
@@ -868,28 +902,36 @@ export class BattleAnalyticsService {
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   }
 
-  private isSameLevelBattle(battle: any, characterIds: string[]): boolean {
+  private isOpponentLevelInRange(
+    battle: any,
+    characterIds: string[],
+    minLevel?: number,
+    maxLevel?: number,
+  ): boolean {
     if (battle.type !== '1v1') return false;
 
-    const userWarrior = battle.warriors.find((w: any) =>
-      characterIds.includes(w.originalId),
-    );
     const opponentWarrior = battle.warriors.find(
       (w: any) => !characterIds.includes(w.originalId),
     );
 
-    if (!userWarrior || !opponentWarrior) return false;
+    if (!opponentWarrior) return false;
 
-    const levelDiff = opponentWarrior.lvl - userWarrior.lvl;
+    const opponentLevel = opponentWarrior.lvl;
 
-    if (userWarrior.team === 1) {
-      return levelDiff <= 10;
+    if (minLevel !== undefined && opponentLevel < minLevel) {
+      this.logger.debug(
+        `Battle ${battle.id}: Opponent ${opponentWarrior.name}(lvl ${opponentLevel}) below minLevel ${minLevel} - FILTER`,
+      );
+      return false;
     }
 
-    if (userWarrior.team === 2) {
-      return levelDiff <= 2;
+    if (maxLevel !== undefined && opponentLevel > maxLevel) {
+      this.logger.debug(
+        `Battle ${battle.id}: Opponent ${opponentWarrior.name}(lvl ${opponentLevel}) above maxLevel ${maxLevel} - FILTER`,
+      );
+      return false;
     }
 
-    return false;
+    return true;
   }
 }

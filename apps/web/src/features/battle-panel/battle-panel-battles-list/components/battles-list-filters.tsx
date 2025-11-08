@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useSearchWarriors } from "@/hooks/api/battle-log/use-search-warriors";
 import { useUserWorlds } from "@/hooks/api/battle-log/use-user-worlds";
 import { BattlesListFiltersMobile } from "./battles-list-filters-mobile";
@@ -11,6 +12,8 @@ export type BattleFilters = {
   result?: Array<"won" | "lost" | "flee">;
   ph?: boolean;
   characterId?: Array<string>;
+  minLevel?: number;
+  maxLevel?: number;
 };
 
 type BattlesListFiltersProps = {
@@ -42,11 +45,42 @@ export const BattlesListFilters = ({
     Array<{ name: string; icon: string; prof: string; lvl: number }>
   >([]);
 
+  const [localMinLevel, setLocalMinLevel] = useState<number | undefined>(
+    filters.minLevel,
+  );
+  const [localMaxLevel, setLocalMaxLevel] = useState<number | undefined>(
+    filters.maxLevel,
+  );
+
+  const debouncedMinLevel = useDebounce(localMinLevel, 500);
+  const debouncedMaxLevel = useDebounce(localMaxLevel, 500);
+
   const lastStateChangeRef = useRef<Record<string, number>>({});
 
   const { data: searchResults = [], isLoading: isSearching } =
     useSearchWarriors(warriorSearchQuery);
   const { data: worlds = [] } = useUserWorlds();
+
+  useEffect(() => {
+    setLocalMinLevel(filters.minLevel);
+  }, [filters.minLevel]);
+
+  useEffect(() => {
+    setLocalMaxLevel(filters.maxLevel);
+  }, [filters.maxLevel]);
+
+  useEffect(() => {
+    if (
+      debouncedMinLevel !== filters.minLevel ||
+      debouncedMaxLevel !== filters.maxLevel
+    ) {
+      onFiltersChange({
+        ...filters,
+        minLevel: debouncedMinLevel,
+        maxLevel: debouncedMaxLevel,
+      });
+    }
+  }, [debouncedMinLevel, debouncedMaxLevel]);
 
   const handleCharacterChange = (value: string) => {
     const currentCharacters = filters.characterId || [];
@@ -124,6 +158,14 @@ export const BattlesListFilters = ({
     });
     setWorldOpenMobile(false);
     setWorldOpenDesktop(false);
+  };
+
+  const handleMinLevelChange = (value: number | undefined) => {
+    setLocalMinLevel(value);
+  };
+
+  const handleMaxLevelChange = (value: number | undefined) => {
+    setLocalMaxLevel(value);
   };
 
   const activeFiltersCount =
@@ -228,7 +270,11 @@ export const BattlesListFilters = ({
 
       <div className="hidden md:block">
         <BattlesListFiltersDesktop
-          filters={filters}
+          filters={{
+            ...filters,
+            minLevel: localMinLevel,
+            maxLevel: localMaxLevel,
+          }}
           typeOpen={typeOpenDesktop}
           resultOpen={resultOpenDesktop}
           characterOpen={characterOpenDesktop}
@@ -252,6 +298,8 @@ export const BattlesListFilters = ({
           onWarriorToggle={handleWarriorToggle}
           onPhToggle={handlePhToggle}
           onWorldChange={handleWorldChange}
+          onMinLevelChange={handleMinLevelChange}
+          onMaxLevelChange={handleMaxLevelChange}
         />
       </div>
     </div>

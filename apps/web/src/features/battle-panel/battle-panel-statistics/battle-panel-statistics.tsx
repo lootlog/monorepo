@@ -1,4 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import {
+  parseAsInteger,
+  parseAsString,
+  parseAsStringEnum,
+  useQueryStates,
+} from "nuqs";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { useProfessionWinRate } from "@/hooks/api/battle-log/use-profession-win-rate";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
@@ -11,65 +17,96 @@ import { HeadToHeadTable } from "./components/head-to-head-table";
 import { CurrentStreakCard } from "./components/current-streak-card";
 import { BattleDurationStatsCard } from "./components/battle-duration-stats";
 import { PhGrowthChart } from "./components/ph-growth-chart";
-import { useStatisticsStore } from "@/store/statistics.store";
+import type { Period } from "@/store/battle-filters.store";
 
-type Period = "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d" | "all";
+const filtersParser = {
+  characterId: parseAsString,
+  period: parseAsStringEnum<Period>([
+    "24h",
+    "3d",
+    "7d",
+    "14d",
+    "30d",
+    "90d",
+    "180d",
+    "all",
+  ]).withDefault("30d"),
+  minLevel: parseAsInteger.withOptions({ throttleMs: 1000 }),
+  maxLevel: parseAsInteger.withOptions({ throttleMs: 1000 }),
+};
 
 export function BattlePanelStatistics() {
-  const [period, setPeriod] = useState<Period>("30d");
-
   const { data: characters } = useBattleCharacters();
-  const selectedCharacterId = useStatisticsStore(
-    (state) => state.selectedCharacterId,
-  );
-  const setSelectedCharacterId = useStatisticsStore(
-    (state) => state.setSelectedCharacterId,
-  );
-  const sameLevelOnly = useStatisticsStore((state) => state.sameLevelOnly);
-  const setSameLevelOnly = useStatisticsStore(
-    (state) => state.setSameLevelOnly,
-  );
+
+  const [filters, setFilters] = useQueryStates(filtersParser, {
+    history: "push",
+    shallow: false,
+  });
+
+  const { characterId, period, minLevel, maxLevel } = filters;
+
+  const normalizedCharacterId = characterId ?? undefined;
+  const normalizedMinLevel = minLevel ?? undefined;
+  const normalizedMaxLevel = maxLevel ?? undefined;
 
   useEffect(() => {
-    if (characters && characters.length > 0) {
-      const firstCharId = characters[0]?.id;
-      if (!selectedCharacterId) {
-        setSelectedCharacterId(firstCharId);
-      }
+    if (characters?.length && !characterId) {
+      setFilters({ characterId: characters[0]?.id });
     }
-  }, [characters, selectedCharacterId, setSelectedCharacterId]);
+  }, [characters, characterId, setFilters]);
+
+  const handleCharacterChange = (newCharacterId: string | undefined) => {
+    setFilters({ characterId: newCharacterId ?? null });
+  };
+
+  const handlePeriodChange = (newPeriod: Period) => {
+    setFilters({ period: newPeriod });
+  };
+
+  const handleMinLevelChange = (newMinLevel: number | undefined) => {
+    setFilters({ minLevel: newMinLevel ?? null });
+  };
+
+  const handleMaxLevelChange = (newMaxLevel: number | undefined) => {
+    setFilters({ maxLevel: newMaxLevel ?? null });
+  };
 
   const { data: professionData, isLoading: isProfessionLoading } =
     useProfessionWinRate({
-      characterId: selectedCharacterId ?? characters?.[0]?.id,
+      characterId: normalizedCharacterId ?? characters?.[0]?.id,
       period,
-      sameLevelOnly,
+      minLevel: normalizedMinLevel,
+      maxLevel: normalizedMaxLevel,
     });
 
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
     useHeadToHead({
-      characterId: selectedCharacterId ?? characters?.[0]?.id,
+      characterId: normalizedCharacterId ?? characters?.[0]?.id,
       period,
-      sameLevelOnly,
+      minLevel: normalizedMinLevel,
+      maxLevel: normalizedMaxLevel,
     });
 
   const { data: streakData, isLoading: isStreakLoading } = useBattleStreak({
-    characterId: selectedCharacterId ?? characters?.[0]?.id,
+    characterId: normalizedCharacterId ?? characters?.[0]?.id,
     period,
-    sameLevelOnly,
+    minLevel: normalizedMinLevel,
+    maxLevel: normalizedMaxLevel,
   });
 
   const { data: durationData, isLoading: isDurationLoading } =
     useBattleDuration({
-      characterId: selectedCharacterId ?? characters?.[0]?.id,
+      characterId: normalizedCharacterId ?? characters?.[0]?.id,
       period,
-      sameLevelOnly,
+      minLevel: normalizedMinLevel,
+      maxLevel: normalizedMaxLevel,
     });
 
   const { data: phGrowthData, isLoading: isPhGrowthLoading } = usePhGrowth({
-    characterId: selectedCharacterId ?? characters?.[0]?.id,
+    characterId: normalizedCharacterId ?? characters?.[0]?.id,
     period,
-    sameLevelOnly,
+    minLevel: normalizedMinLevel,
+    maxLevel: normalizedMaxLevel,
   });
 
   return (
@@ -82,12 +119,14 @@ export function BattlePanelStatistics() {
       </div>
 
       <StatisticsFilters
-        characterId={selectedCharacterId}
+        characterId={normalizedCharacterId}
         period={period}
-        sameLevelOnly={sameLevelOnly}
-        onCharacterChange={setSelectedCharacterId}
-        onPeriodChange={setPeriod}
-        onSameLevelOnlyChange={setSameLevelOnly}
+        minLevel={normalizedMinLevel}
+        maxLevel={normalizedMaxLevel}
+        onCharacterChange={handleCharacterChange}
+        onPeriodChange={handlePeriodChange}
+        onMinLevelChange={handleMinLevelChange}
+        onMaxLevelChange={handleMaxLevelChange}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">

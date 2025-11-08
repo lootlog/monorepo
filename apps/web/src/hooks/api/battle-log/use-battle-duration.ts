@@ -18,7 +18,8 @@ interface UseBattleDurationParams {
   characterId?: string;
   world?: string;
   period?: string;
-  sameLevelOnly?: boolean;
+  minLevel?: number;
+  maxLevel?: number;
 }
 
 export function useBattleDuration(params: UseBattleDurationParams) {
@@ -33,6 +34,6 @@ export function useBattleDuration(params: UseBattleDurationParams) {
       );
       return response.data as BattleDurationStats;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }

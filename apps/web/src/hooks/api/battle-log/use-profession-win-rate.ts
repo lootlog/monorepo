@@ -13,7 +13,8 @@ interface UseProfessionWinRateParams {
   characterId?: string;
   world?: string;
   period?: string;
-  sameLevelOnly?: boolean;
+  minLevel?: number;
+  maxLevel?: number;
 }
 
 export function useProfessionWinRate(params: UseProfessionWinRateParams) {
@@ -28,6 +29,6 @@ export function useProfessionWinRate(params: UseProfessionWinRateParams) {
       );
       return response.data as ProfessionWinRate[];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }
