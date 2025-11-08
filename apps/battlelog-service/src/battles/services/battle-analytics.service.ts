@@ -38,7 +38,6 @@ export class BattleAnalyticsService {
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
-      this.logger.debug(`Analytics cache hit for user ${userId}`);
       return JSON.parse(cachedResult);
     }
 
@@ -154,10 +153,6 @@ export class BattleAnalyticsService {
       this.ANALYTICS_CACHE_TTL,
     );
 
-    this.logger.log(
-      `Analytics for user ${userId}: ${totalBattles} battles, ${wins} wins, ${losses} losses, ${totalPH} PH (cached)`,
-    );
-
     return result;
   }
 
@@ -170,7 +165,6 @@ export class BattleAnalyticsService {
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
-      this.logger.debug(`Profession win rate cache hit for user ${userId}`);
       return JSON.parse(cachedResult);
     }
 
@@ -258,10 +252,6 @@ export class BattleAnalyticsService {
       cacheKey,
       JSON.stringify(result),
       this.ANALYTICS_CACHE_TTL,
-    );
-
-    this.logger.log(
-      `Profession win rate calculated for user ${userId} (cached)`,
     );
 
     return result;
@@ -466,10 +456,6 @@ export class BattleAnalyticsService {
 
     const queryTime = Date.now() - startTime;
 
-    this.logger.log(
-      `Head-to-head paginated for user ${userId}: ${paginatedRecords.length} records, ${queryTime}ms`,
-    );
-
     return {
       records: paginatedRecords,
       pagination: {
@@ -497,7 +483,6 @@ export class BattleAnalyticsService {
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
-      this.logger.debug(`Streak cache hit for user ${userId}`);
       return JSON.parse(cachedResult);
     }
 
@@ -607,8 +592,6 @@ export class BattleAnalyticsService {
       this.ANALYTICS_CACHE_TTL,
     );
 
-    this.logger.log(`Streak calculated for user ${userId} (cached)`);
-
     return result;
   }
 
@@ -621,7 +604,6 @@ export class BattleAnalyticsService {
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
-      this.logger.debug(`Duration stats cache hit for user ${userId}`);
       return JSON.parse(cachedResult);
     }
 
@@ -735,8 +717,6 @@ export class BattleAnalyticsService {
       this.ANALYTICS_CACHE_TTL,
     );
 
-    this.logger.log(`Duration stats calculated for user ${userId} (cached)`);
-
     return result;
   }
 
@@ -749,7 +729,6 @@ export class BattleAnalyticsService {
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
-      this.logger.debug(`PH growth cache hit for user ${userId}`);
       return JSON.parse(cachedResult);
     }
 
@@ -818,10 +797,6 @@ export class BattleAnalyticsService {
       this.ANALYTICS_CACHE_TTL,
     );
 
-    this.logger.log(
-      `PH growth time series calculated for user ${userId} (cached)`,
-    );
-
     return result;
   }
 
@@ -838,9 +813,6 @@ export class BattleAnalyticsService {
         const keys = await redis.keys(pattern);
         if (keys.length > 0) {
           await redis.del(...keys);
-          this.logger.debug(
-            `Invalidated ${keys.length} cache entries for pattern ${pattern}`,
-          );
         }
       }
     } catch (error) {
@@ -919,16 +891,10 @@ export class BattleAnalyticsService {
     const opponentLevel = opponentWarrior.lvl;
 
     if (minLevel !== undefined && opponentLevel < minLevel) {
-      this.logger.debug(
-        `Battle ${battle.id}: Opponent ${opponentWarrior.name}(lvl ${opponentLevel}) below minLevel ${minLevel} - FILTER`,
-      );
       return false;
     }
 
     if (maxLevel !== undefined && opponentLevel > maxLevel) {
-      this.logger.debug(
-        `Battle ${battle.id}: Opponent ${opponentWarrior.name}(lvl ${opponentLevel}) above maxLevel ${maxLevel} - FILTER`,
-      );
       return false;
     }
 
