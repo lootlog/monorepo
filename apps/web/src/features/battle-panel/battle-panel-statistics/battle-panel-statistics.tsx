@@ -25,7 +25,6 @@ export function BattlePanelStatistics() {
   const setCurrentCharacterId = useBattleFiltersStore(
     (state) => state.setCurrentCharacterId,
   );
-  const updateFilters = useBattleFiltersStore((state) => state.updateFilters);
 
   const filters = useBattleFiltersStore((state) =>
     state.getFilters(state.currentCharacterId),
@@ -46,15 +45,24 @@ export function BattlePanelStatistics() {
   };
 
   const handlePeriodChange = (newPeriod: Period) => {
-    updateFilters(currentCharacterId, { period: newPeriod });
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { period: newPeriod });
   };
 
   const handleMinLevelChange = (newMinLevel: number | undefined) => {
-    updateFilters(currentCharacterId, { minLevel: newMinLevel ?? 1 });
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { minLevel: newMinLevel ?? 1 });
   };
 
   const handleMaxLevelChange = (newMaxLevel: number | undefined) => {
-    updateFilters(currentCharacterId, { maxLevel: newMaxLevel ?? 500 });
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { maxLevel: newMaxLevel ?? 500 });
   };
 
   const { data: professionData, isLoading: isProfessionLoading } =

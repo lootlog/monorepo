@@ -17,7 +17,6 @@ export const BattlePanelBattlesList = () => {
   const setCurrentCharacterId = useBattleFiltersStore(
     (state) => state.setCurrentCharacterId,
   );
-  const updateFilters = useBattleFiltersStore((state) => state.updateFilters);
 
   useEffect(() => {
     if (queryState.characterId && queryState.characterId.length > 0) {
@@ -61,7 +60,8 @@ export const BattlePanelBattlesList = () => {
   };
 
   const handleFiltersChange = (newFilters: BattleFilters) => {
-    updateFilters(currentCharacterId, {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore.getState().updateFilters(currentId, {
       world: newFilters.world,
       type: newFilters.type,
       result: newFilters.result,
