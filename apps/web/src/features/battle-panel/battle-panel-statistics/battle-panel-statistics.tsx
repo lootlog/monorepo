@@ -71,6 +71,7 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      size: 5,
     });
 
   const { data: streakData, isLoading: isStreakLoading } = useBattleStreak({
@@ -96,8 +97,8 @@ export function BattlePanelStatistics() {
   });
 
   return (
-    <div className="p-4 space-y-6">
-      <div>
+    <div>
+      <div className="p-4 pb-0 bg-background">
         <h1 className="text-xl font-bold">Statystyki walk</h1>
         <p className="text-muted-foreground">
           Szczegółowa analiza i statystyki z historii twoich walk
@@ -115,42 +116,44 @@ export function BattlePanelStatistics() {
         onMaxLevelChange={handleMaxLevelChange}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-        <CurrentStreakCard
-          data={
-            streakData ?? {
-              current: { type: "none", count: 0 },
-              longest: { wins: 0, losses: 0 },
+      <div className="p-4 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <CurrentStreakCard
+            data={
+              streakData ?? {
+                current: { type: "none", count: 0 },
+                longest: { wins: 0, losses: 0 },
+              }
             }
-          }
-          isLoading={isStreakLoading}
-        />
-        <BattleDurationStatsCard
-          data={
-            durationData ?? {
-              avgWinDuration: 0,
-              avgLossDuration: 0,
-              fastest: null,
-              longest: null,
+            isLoading={isStreakLoading}
+          />
+          <BattleDurationStatsCard
+            data={
+              durationData ?? {
+                avgWinDuration: 0,
+                avgLossDuration: 0,
+                fastest: null,
+                longest: null,
+              }
             }
-          }
-          isLoading={isDurationLoading}
-        />
-        <PhGrowthChart
-          data={phGrowthData ?? []}
-          isLoading={isPhGrowthLoading}
-        />
-      </div>
+            isLoading={isDurationLoading}
+          />
+          <PhGrowthChart
+            data={phGrowthData ?? []}
+            isLoading={isPhGrowthLoading}
+          />
+        </div>
 
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
-        <ProfessionWinRateChart
-          data={professionData ?? []}
-          isLoading={isProfessionLoading}
-        />
-        <HeadToHeadTable
-          data={headToHeadData?.records ?? []}
-          isLoading={isHeadToHeadLoading}
-        />
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+          <ProfessionWinRateChart
+            data={professionData ?? []}
+            isLoading={isProfessionLoading}
+          />
+          <HeadToHeadTable
+            data={headToHeadData?.records ?? []}
+            isLoading={isHeadToHeadLoading}
+          />
+        </div>
       </div>
     </div>
   );

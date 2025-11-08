@@ -147,7 +147,7 @@ export function StatsOverview() {
   return (
     <div className="flex flex-col">
       <div className="p-4 bg-background">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="font-semibold">Przegląd statystyk</h2>
             <p className="text-muted-foreground text-sm">
@@ -214,39 +214,43 @@ export function StatsOverview() {
         )}
         <Separator />
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-end gap-3 flex-wrap">
-            <div className="space-y-1">
+          <div className="flex flex-col md:flex-row md:items-end gap-3 w-full md:w-auto">
+            <div className="space-y-1 w-full md:w-auto">
               <Label className="text-xs invisible">Postać</Label>
               <CharacterSelector
                 characterId={currentCharacterId}
                 onCharacterChange={setCurrentCharacterId}
                 allowAllCharacters
-                className="w-[250px] h-10"
+                className="w-full md:w-[250px] h-10"
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 w-full md:w-auto">
               <Label className="text-xs invisible">Okres</Label>
               <PeriodSelector
                 value={selectedPeriod}
                 onValueChange={handlePeriodChange}
                 excludePeriods={["all"]}
-                width="w-[220px]"
+                width="w-full md:w-[220px]"
               />
             </div>
 
-            <LevelRangeFilter
-              minLevel={minLevel}
-              maxLevel={maxLevel}
-              onMinLevelChange={(value) =>
-                updateFilters(currentCharacterId, { minLevel: value ?? 1 })
-              }
-              onMaxLevelChange={(value) =>
-                updateFilters(currentCharacterId, { maxLevel: value ?? 500 })
-              }
-              minLevelId="min-level-overview"
-              maxLevelId="max-level-overview"
-            />
+            <div className="flex items-end gap-3">
+              <LevelRangeFilter
+                minLevel={minLevel}
+                maxLevel={maxLevel}
+                onMinLevelChange={(value) =>
+                  updateFilters(currentCharacterId, { minLevel: value ?? 1 })
+                }
+                onMaxLevelChange={(value) =>
+                  updateFilters(currentCharacterId, { maxLevel: value ?? 500 })
+                }
+                minLevelId="min-level-overview"
+                maxLevelId="max-level-overview"
+                inputClassName="w-full md:w-[140px]"
+                containerClassName="flex-1 md:flex-none"
+              />
+            </div>
           </div>
         </div>
       </div>

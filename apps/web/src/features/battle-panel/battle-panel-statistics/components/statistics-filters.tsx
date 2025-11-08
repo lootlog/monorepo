@@ -1,10 +1,6 @@
-import { Label } from "@lootlog/ui/components/label";
-import {
-  CharacterSelector,
-  PeriodSelector,
-  LevelRangeFilter,
-} from "@/components/filters";
 import type { Period } from "@/store/battle-filters.store";
+import { StatisticsFiltersMobile } from "./statistics-filters-mobile";
+import { StatisticsFiltersDesktop } from "./statistics-filters-desktop";
 
 interface StatisticsFiltersProps {
   characterId?: string;
@@ -28,35 +24,32 @@ export function StatisticsFilters({
   onMaxLevelChange,
 }: StatisticsFiltersProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-2 mb-6 flex-wrap items-end">
-      <div className="space-y-1">
-        <Label className="text-xs invisible">Postać</Label>
-        <CharacterSelector
+    <div className="sticky top-0 z-10 bg-background border-b p-4">
+      <div className="md:hidden">
+        <StatisticsFiltersMobile
           characterId={characterId}
+          period={period}
+          minLevel={minLevel}
+          maxLevel={maxLevel}
           onCharacterChange={onCharacterChange}
-          allowAllCharacters={false}
-          size="default"
-          className="h-10"
+          onPeriodChange={onPeriodChange}
+          onMinLevelChange={onMinLevelChange}
+          onMaxLevelChange={onMaxLevelChange}
         />
       </div>
 
-      <div className="space-y-1">
-        <Label className="text-xs invisible">Okres</Label>
-        <PeriodSelector
-          value={period}
-          onValueChange={onPeriodChange}
-          width="w-[240px]"
+      <div className="hidden md:block">
+        <StatisticsFiltersDesktop
+          characterId={characterId}
+          period={period}
+          minLevel={minLevel}
+          maxLevel={maxLevel}
+          onCharacterChange={onCharacterChange}
+          onPeriodChange={onPeriodChange}
+          onMinLevelChange={onMinLevelChange}
+          onMaxLevelChange={onMaxLevelChange}
         />
       </div>
-
-      <LevelRangeFilter
-        minLevel={minLevel}
-        maxLevel={maxLevel}
-        onMinLevelChange={onMinLevelChange}
-        onMaxLevelChange={onMaxLevelChange}
-        minLevelId="min-level"
-        maxLevelId="max-level"
-      />
     </div>
   );
 }
