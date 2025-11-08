@@ -17,7 +17,8 @@ import {
 } from "@/store/battle-filters.store";
 
 export function BattlePanelStatistics() {
-  const { data: characters } = useBattleCharacters();
+  const { data: characters, isLoading: isLoadingCharacters } =
+    useBattleCharacters();
 
   const currentCharacterId = useBattleFiltersStore(
     (state) => state.currentCharacterId,
@@ -26,44 +27,29 @@ export function BattlePanelStatistics() {
     (state) => state.setCurrentCharacterId,
   );
 
-  const filters = useBattleFiltersStore((state) =>
-    state.getFilters(state.currentCharacterId),
-  );
-
-  const period = filters.period ?? "30d";
-  const minLevel = filters.minLevel ?? 1;
-  const maxLevel = filters.maxLevel ?? 500;
-
   useEffect(() => {
-    if (characters?.length && !currentCharacterId) {
-      setCurrentCharacterId(characters[0]?.id);
+    if (!isLoadingCharacters && characters?.length && !currentCharacterId) {
+      const firstCharacterId = characters[0]?.id;
+      if (firstCharacterId) {
+        setCurrentCharacterId(firstCharacterId);
+      }
     }
-  }, [characters, currentCharacterId, setCurrentCharacterId]);
+  }, [
+    characters,
+    currentCharacterId,
+    setCurrentCharacterId,
+    isLoadingCharacters,
+  ]);
 
-  const handleCharacterChange = (newCharacterId: string | undefined) => {
-    setCurrentCharacterId(newCharacterId);
-  };
-
-  const handlePeriodChange = (newPeriod: Period) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { period: newPeriod });
-  };
-
-  const handleMinLevelChange = (newMinLevel: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { minLevel: newMinLevel ?? 1 });
-  };
-
-  const handleMaxLevelChange = (newMaxLevel: number | undefined) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { maxLevel: newMaxLevel ?? 500 });
-  };
+  const period = useBattleFiltersStore(
+    (state) => state.getFilters(currentCharacterId).period ?? "30d",
+  );
+  const minLevel = useBattleFiltersStore(
+    (state) => state.getFilters(currentCharacterId).minLevel ?? 1,
+  );
+  const maxLevel = useBattleFiltersStore(
+    (state) => state.getFilters(currentCharacterId).maxLevel ?? 500,
+  );
 
   const { data: professionData, isLoading: isProfessionLoading } =
     useProfessionWinRate({
@@ -103,6 +89,35 @@ export function BattlePanelStatistics() {
     minLevel,
     maxLevel,
   });
+
+  const handleCharacterChange = (newCharacterId: string | undefined) => {
+    setCurrentCharacterId(newCharacterId);
+  };
+
+  const handlePeriodChange = (newPeriod: Period) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { period: newPeriod });
+  };
+
+  const handleMinLevelChange = (newMinLevel: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { minLevel: newMinLevel ?? 1 });
+  };
+
+  const handleMaxLevelChange = (newMaxLevel: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { maxLevel: newMaxLevel ?? 500 });
+  };
+
+  if (isLoadingCharacters) {
+    return null;
+  }
 
   return (
     <div>
