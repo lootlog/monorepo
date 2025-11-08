@@ -29,7 +29,10 @@ interface BattleFiltersState {
 
   setCurrentCharacterId: (characterId: string | undefined) => void;
   getFilters: (characterId: string | undefined) => BattleFilters;
-  updateFilters: (characterId: string | undefined, filters: Partial<BattleFilters>) => void;
+  updateFilters: (
+    characterId: string | undefined,
+    filters: Partial<BattleFilters>,
+  ) => void;
   resetFilters: (characterId: string | undefined) => void;
 }
 
@@ -54,7 +57,7 @@ export const useBattleFiltersStore = create<BattleFiltersState>()(
         if (!characterId) {
           return state.globalFilters;
         }
-        return state.characterFilters[characterId] || { ...DEFAULT_FILTERS };
+        return state.characterFilters[characterId] ?? DEFAULT_FILTERS;
       },
 
       updateFilters: (characterId, filters) =>
@@ -68,7 +71,8 @@ export const useBattleFiltersStore = create<BattleFiltersState>()(
             };
           }
 
-          const currentFilters = state.characterFilters[characterId] || { ...DEFAULT_FILTERS };
+          const currentFilters =
+            state.characterFilters[characterId] ?? DEFAULT_FILTERS;
           return {
             characterFilters: {
               ...state.characterFilters,
