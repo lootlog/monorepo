@@ -1,6 +1,7 @@
 import { LootSource } from 'generated/client';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsEnum,
@@ -137,6 +138,7 @@ export class CreateLootDto {
   @IsArray()
   @ValidateNested({ each: true })
   @ArrayMinSize(1)
+  @ArrayMaxSize(10)
   @Type(() => LootDto)
   loots: LootDto[];
 

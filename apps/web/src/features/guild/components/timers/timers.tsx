@@ -1,4 +1,3 @@
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { NpcType } from "@/hooks/api/game-data/use-npcs";
 import { groupBy } from "lodash";
@@ -38,7 +37,7 @@ export const Timers = () => {
   const groups = groupBy(sorted, "npc.type");
 
   return (
-    <ScrollArea className="h-[calc(100dvh_-_64px)]">
+    <div className="h-full">
       {isPending &&
         Array.from({ length: 8 }).map((_, index) => {
           return (
@@ -71,6 +70,6 @@ export const Timers = () => {
           })}
         </div>
       )}
-    </ScrollArea>
+    </div>
   );
 };
