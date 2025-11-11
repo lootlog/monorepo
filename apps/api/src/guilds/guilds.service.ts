@@ -52,7 +52,7 @@ export class GuildsService {
 
     let guilds: Guild[] = [];
     if (source === 'game') {
-      guilds = await this.getGuildsForRequiredPermissions(discordId, userId, [
+      guilds = await this.getGuildsForRequiredPermissions(discordId, [
         Permission.LOOTLOG_READ,
       ]);
     } else {
@@ -154,19 +154,11 @@ export class GuildsService {
     }
   }
 
-  /**
-   * Get guild by ID or vanity URL
-   * Returns raw Guild from Prisma
-   */
   async getGuildById(idOrVanityURL: string) {
     const guild = await this.getGuildByIdInternal(idOrVanityURL);
     return guild;
   }
 
-  /**
-   * Get guild by ID or vanity URL (for internal use)
-   * Returns raw Guild from Prisma with ALL fields including ownerId
-   */
   async getGuildByIdInternal(idOrVanityURL: string) {
     const cacheKey = getGuildCacheKey(idOrVanityURL);
     const cached = await this.redisService.get(cacheKey);
@@ -220,7 +212,6 @@ export class GuildsService {
 
   async getGuildsForRequiredPermissions(
     discordId: string,
-    userId: string,
     requiredPermissions: Permission[],
   ) {
     const guilds = await this.prisma.guild.findMany({
@@ -326,12 +317,10 @@ export class GuildsService {
     return result;
   }
 
-  async getUserGuildsWithPermissions(discordId: string, userId: string) {
-    const guilds = await this.getGuildsForRequiredPermissions(
-      discordId,
-      userId,
-      [Permission.LOOTLOG_READ],
-    );
+  async getUserGuildsWithPermissions(discordId: string) {
+    const guilds = await this.getGuildsForRequiredPermissions(discordId, [
+      Permission.LOOTLOG_READ,
+    ]);
 
     const guildIds = guilds.map((guild) => guild.id);
     const members = await this.prisma.member.findMany({

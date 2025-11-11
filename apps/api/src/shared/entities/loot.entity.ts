@@ -14,7 +14,7 @@ export class LootEntity {
   })
   world: string;
 
-  @Expose()
+  @Exclude()
   @ApiProperty({
     example: 'FIGHT',
     enum: LootSource,
