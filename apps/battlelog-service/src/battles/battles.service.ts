@@ -520,7 +520,7 @@ export class BattlesService implements IBattlesService {
         winningTeam: analysis.outcome.winningTeam!,
         losingTeam: analysis.outcome.losingTeam!,
         hasFlee: analysis.outcome.hasFlee,
-        matchmaking: data.matchmaking ?? false,
+        matchmaking: !!analysis.matchmaking,
         statistics: analysis.statistics as unknown as Prisma.InputJsonValue,
         ...(analysis.matchmaking && {
           difficultyRank: analysis.matchmaking.difficultyRank,
