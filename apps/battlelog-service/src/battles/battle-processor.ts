@@ -113,6 +113,17 @@ export type BattleStatistics = {
   untouchable: StatisticEntry | null;
 };
 
+export type MatchmakingInfo = {
+  difficultyRank: number;
+  result: number;
+  ratingDelta: number;
+  opponentLvl: number;
+  opponentOplvl: number;
+  opponentRating: number;
+  rating: number;
+  status: number;
+};
+
 export type BattleAnalysis = {
   duration: number;
   warriors: Warrior[];
@@ -126,6 +137,7 @@ export type BattleAnalysis = {
   };
   type: string;
   statistics: BattleStatistics;
+  matchmaking?: MatchmakingInfo;
 };
 
 export class BattleProcessor {
@@ -146,6 +158,7 @@ export class BattleProcessor {
     const duration = this.calculateBattleDuration(battleData.events);
     this.initializeBattleWarriors(battleData.events);
     this.determineBattleType();
+    const matchmakingInfo = this.getMatchmakingInfo(battleData.events);
 
     const moves = this.extractAndParseMoves(battleData.events);
     this.calculateBattleStats(moves, { characterId: battleData.characterId });
@@ -161,6 +174,7 @@ export class BattleProcessor {
       outcome: this.battleOutcome,
       type: this.battleType,
       statistics,
+      matchmaking: matchmakingInfo,
     };
   }
 
@@ -730,6 +744,28 @@ export class BattleProcessor {
     const team2Count = warriors.filter((w) => w.team === 2).length;
 
     this.battleType = `${team1Count}v${team2Count}`;
+  }
+
+  private getMatchmakingInfo(
+    events: CreateBattleDto['events'],
+  ): MatchmakingInfo | undefined {
+    for (const event of events) {
+      if (event.match_summary) {
+        const summary = event.match_summary;
+        return {
+          difficultyRank: summary.difficulty_rank,
+          result: summary.result,
+          ratingDelta: summary.rating_delta,
+          opponentLvl: summary.opponent_lvl,
+          opponentOplvl: summary.opponent_oplvl,
+          opponentRating: summary.opponent_rating,
+          rating: summary.rating,
+          status: summary.status,
+        };
+      }
+    }
+
+    return undefined;
   }
 
   private determineOutcomeTeams() {

@@ -4,6 +4,7 @@ import type { F } from "@/types/margonem/game-events/f";
 import type { Icon } from "@/types/margonem/game-events/icons";
 import type { ItemEvent } from "@/types/margonem/game-events/item";
 import type { LootEvent } from "@/types/margonem/game-events/loot";
+import type { MatchSummary } from "@/types/margonem/game-events/match-summary";
 import type { NpcTpl } from "@/types/margonem/game-events/npc_tpls";
 import type { Npcs } from "@/types/margonem/game-events/npcs";
 import type { NpcsDel } from "@/types/margonem/game-events/npcs_del";
@@ -24,4 +25,11 @@ export type GameEvent = {
   other?: Other;
   chat?: ChatEvent;
   party?: PartyEvent;
+  match_summary?: MatchSummary;
+  matchmaking_state?: number;
+  matchmaking_search?: {
+    since: number;
+    avg_duration: number;
+    avg_timeframe: number;
+  };
 };
