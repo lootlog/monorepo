@@ -166,11 +166,11 @@ export class UserLootlogConfigService {
       accountId,
       characterId,
     );
-    const cached = await this.redisService.get(cacheKey);
+    // const cached = await this.redisService.get(cacheKey);
 
-    if (cached) {
-      return JSON.parse(cached);
-    }
+    // if (cached) {
+    //   return JSON.parse(cached);
+    // }
 
     const characterConfig =
       await this.prisma.userCharactersLootlogSettings.findFirst({
