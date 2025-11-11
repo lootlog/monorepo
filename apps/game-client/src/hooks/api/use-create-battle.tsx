@@ -3,12 +3,22 @@ import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
 import { toast } from "sonner";
 import { LOOTLOG_APP_URL } from "@/config/app";
+import type { MatchSummary } from "@/types/margonem/game-events/match-summary";
+import type { F } from "@/types/margonem/game-events/f";
+
+export type BattleEventPayload = {
+  f?: Pick<F, "m" | "endBattle" | "init" | "auto" | "w">;
+  ev: number;
+  party?: GameEvent["party"];
+  match_summary?: Partial<MatchSummary>;
+  matchmaking_state?: number;
+};
 
 export type UseCreateBattleOptions = {
   accountId: string;
   characterId: string;
   world: string;
-  events: Pick<GameEvent, "f" | "ev" | "party">[];
+  events: BattleEventPayload[];
 };
 
 export type CreateBattleResponse = {
