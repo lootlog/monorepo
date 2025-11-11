@@ -42,7 +42,6 @@ export interface CreateMockTimerOptions {
   member?: GuildMember;
   npc?: Partial<Npc>;
   isPending?: boolean;
-  tempId?: string;
   wasReset?: boolean;
   updatedAt?: Date;
 }
@@ -57,7 +56,6 @@ export function createMockTimer(options: CreateMockTimerOptions = {}): Timer {
     member = createMockMember(),
     npc = {},
     isPending = false,
-    tempId,
     wasReset = false,
     updatedAt = new Date(),
   } = options;
@@ -71,7 +69,6 @@ export function createMockTimer(options: CreateMockTimerOptions = {}): Timer {
     member,
     npc: createMockNpc({ id: npcId, ...npc }),
     isPending,
-    tempId,
     wasReset,
     updatedAt,
   };

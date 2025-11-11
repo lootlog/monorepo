@@ -37,8 +37,6 @@ export const useNpcsDeleteHandlers = () => {
       const npcType = getNpcTypeByWt(data.wt, data.prof, data.type);
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 
-      // TODO - important
-
       const charactersConfigResponse = queryClient.getQueryData<{
         data: LootlogCharacterConfigResponse;
       }>(["lootlog-characters-config", String(accountId)]);
@@ -49,8 +47,6 @@ export const useNpcsDeleteHandlers = () => {
         characterConfig?.addTimersWhitelistGuildIds ?? [];
 
       if (whitelistedGuildIds.length === 0) return;
-
-      const tempIds = whitelistedGuildIds.map(() => crypto.randomUUID());
 
       createTimer({
         timer: {
@@ -72,7 +68,6 @@ export const useNpcsDeleteHandlers = () => {
           },
         },
         guildIds: whitelistedGuildIds,
-        tempIds,
         npcType,
       });
     });

@@ -20,7 +20,6 @@ export type Timer = {
   guildId: string;
   isCustomTime?: boolean;
   isPending?: boolean;
-  tempId?: string;
   wasReset?: boolean;
   updatedAt?: Date;
 };

@@ -30,10 +30,6 @@ export const useTimersSocket = (
 
           let timerIndex = -1;
 
-          if (data.tempId) {
-            timerIndex = updated.findIndex((t) => t.tempId === data.tempId);
-          }
-
           if (timerIndex === -1) {
             timerIndex = updated.findIndex(
               (t) =>
