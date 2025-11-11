@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SendMessageDto {
@@ -13,4 +19,6 @@ export class SendMessageDto {
   @MinLength(1)
   @MaxLength(128)
   message: string;
+  @IsBoolean()
+  notification: boolean;
 }

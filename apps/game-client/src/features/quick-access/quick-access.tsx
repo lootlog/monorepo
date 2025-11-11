@@ -4,7 +4,13 @@ import {
   type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
-import { MessagesSquare, Settings, Timer, Users } from "lucide-react";
+import {
+  MessageSquareWarning,
+  MessagesSquare,
+  Settings,
+  Timer,
+  Users,
+} from "lucide-react";
 
 const BUTTONS: QuickAccessButtonProps[] = [
   {
@@ -21,6 +27,11 @@ const BUTTONS: QuickAccessButtonProps[] = [
     id: "chat",
     title: "Chat",
     icon: <MessagesSquare size="16" />,
+  },
+  {
+    id: "chat-input",
+    title: "Napisz wiadomość",
+    icon: <MessageSquareWarning size="16" />,
   },
   {
     id: "settings",

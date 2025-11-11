@@ -17,6 +17,7 @@ import { Game } from "@/lib/game";
 
 export type GuildSwitcherProps = {
   disabled?: boolean;
+  allowAll?: boolean;
   className?: string;
   onChange?: (guildId: string) => void;
   value?: string;
@@ -24,6 +25,7 @@ export type GuildSwitcherProps = {
 
 export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   disabled = false,
+  allowAll = false,
   className = "",
   onChange,
   value,
@@ -44,7 +46,14 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
   }, [guilds, isFetched, guildId]);
 
   useDeepCompareEffect(() => {
-    if (!isFetched || !guilds || guilds.length === 0 || !value) return;
+    if (
+      !isFetched ||
+      !guilds ||
+      guilds.length === 0 ||
+      !value ||
+      (allowAll && value === "all")
+    )
+      return;
     const exists = guilds.some((guild) => guild.id === value);
     if (!exists) {
       if (onChange) {
@@ -96,6 +105,38 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
         type="hover"
       >
         <div className="ll:flex ll:gap-1 ll:mt-1">
+          {allowAll && (
+            <Tooltip key="all">
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  onClick={() => handleChange("all")}
+                  disabled={disabled}
+                  className={cn(
+                    "ll:flex ll:items-center ll:justify-center ll:transition-all ll:border-2 ll:rounded-sm",
+                    "hover:ll:scale-105",
+                    "disabled:ll:opacity-50 disabled:ll:cursor-not-allowed",
+                    "ll:size-7 ll:p-0 ll:shrink-0",
+                    "ll:border-gray-600 ll:bg-gray-800/50 hover:ll:border-muted/20",
+                    !disabled && "ll-custom-cursor-pointer",
+                    {
+                      "ll:border-primary ll:bg-blue-600/20 ll:shadow-primary/50":
+                        "all" === selectedValue,
+                    },
+                  )}
+                >
+                  <Avatar className="ll:size-full ll:flex ll:items-center ll:justify-center">
+                    <AvatarFallback className="ll:text-xs ll:font-semibold">
+                      P
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="ll:z-500">
+                <p className="ll:text-xs ll:font-semibold">Połączone</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           {guilds?.map((guild) => {
             const isSelected = guild.id === selectedValue;
 
