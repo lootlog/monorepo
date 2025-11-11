@@ -51,7 +51,20 @@ describe('TimersService', () => {
     verbose: jest.fn(),
   };
 
+  const mockRedlock = {
+    acquire: jest.fn(),
+    release: jest.fn(),
+  };
+
+  const mockRedlockLock = {
+    release: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
+    // Setup redlock mock to return a lock object
+    mockRedlock.acquire.mockResolvedValue(mockRedlockLock);
+    mockRedlock.release.mockResolvedValue(undefined);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TimersService,
@@ -79,6 +92,10 @@ describe('TimersService', () => {
     }).compile();
 
     service = module.get<TimersService>(TimersService);
+
+    // Inject mock redlock (bypassing onModuleInit)
+    (service as any).redlock = mockRedlock;
+
     jest.clearAllMocks();
     mockRedisService.deleteByPattern.mockResolvedValue(0);
   });
@@ -125,29 +142,8 @@ describe('TimersService', () => {
     };
 
     it('should create timer with calculated spawn times', async () => {
-      let storedLockValue: string | null = null;
-
-      mockRedisService.get.mockImplementation(async (key: string) => {
-        if (key.startsWith('timer:dedup:')) {
-          return null;
-        }
-        if (key.startsWith('timer:lock:')) {
-          return storedLockValue;
-        }
-        return null;
-      });
-
-      mockRedisService.setNX.mockImplementation(
-        async (key: string, value: string) => {
-          if (key.startsWith('timer:lock:')) {
-            storedLockValue = value;
-          }
-          return true;
-        },
-      );
-
+      mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockRedisService.del.mockResolvedValue(1);
       mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
 
       const result = await service.createTimerForGuild(
@@ -157,7 +153,7 @@ describe('TimersService', () => {
       );
 
       expect(result).toBeDefined();
-      expect(mockRedisService.setNX).toHaveBeenCalled();
+      expect(mockRedlock.acquire).toHaveBeenCalled();
       expect(mockPrismaService.timer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
@@ -170,7 +166,7 @@ describe('TimersService', () => {
         }),
       );
       expect(mockAmqpConnection.publish).toHaveBeenCalled();
-      expect(mockRedisService.del).toHaveBeenCalled();
+      expect(mockRedlockLock.release).toHaveBeenCalled();
     });
 
     it('should use custom spawn times when provided', async () => {
@@ -182,10 +178,7 @@ describe('TimersService', () => {
         customMaxSpawnTime: customMax,
       };
 
-      mockRedisService.get
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce('mock-uuid');
-      mockRedisService.setNX.mockResolvedValue(true);
+      mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockRedisService.del.mockResolvedValue(1);
       mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
@@ -222,10 +215,7 @@ describe('TimersService', () => {
     });
 
     it('should emit update timer event after creation', async () => {
-      mockRedisService.get
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce('mock-uuid');
-      mockRedisService.setNX.mockResolvedValue(true);
+      mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockRedisService.del.mockResolvedValue(1);
       mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
@@ -240,8 +230,9 @@ describe('TimersService', () => {
     });
 
     it('should throw ConflictException when lock cannot be acquired', async () => {
+      const ExecutionError = require('redlock').ExecutionError;
       mockRedisService.get.mockResolvedValue(null);
-      mockRedisService.setNX.mockResolvedValue(false);
+      mockRedlock.acquire.mockRejectedValue(new ExecutionError('Lock failed'));
 
       await expect(
         service.createTimerForGuild('discord123', 'guild1', mockDto),
@@ -270,10 +261,7 @@ describe('TimersService', () => {
     });
 
     it('should cache timer result after creation', async () => {
-      mockRedisService.get
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce('mock-uuid');
-      mockRedisService.setNX.mockResolvedValue(true);
+      mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
       mockRedisService.del.mockResolvedValue(1);
       mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
@@ -288,28 +276,7 @@ describe('TimersService', () => {
     });
 
     it('should release lock even if upsert fails', async () => {
-      let storedLockValue: string | null = null;
-
-      mockRedisService.get.mockImplementation(async (key: string) => {
-        if (key.startsWith('timer:dedup:')) {
-          return null;
-        }
-        if (key.startsWith('timer:lock:')) {
-          return storedLockValue;
-        }
-        return null;
-      });
-
-      mockRedisService.setNX.mockImplementation(
-        async (key: string, value: string) => {
-          if (key.startsWith('timer:lock:')) {
-            storedLockValue = value;
-          }
-          return true;
-        },
-      );
-
-      mockRedisService.del.mockResolvedValue(1);
+      mockRedisService.get.mockResolvedValue(null);
       mockPrismaService.timer.upsert.mockRejectedValue(
         new Error('Database error'),
       );
@@ -318,7 +285,7 @@ describe('TimersService', () => {
         service.createTimerForGuild('discord123', 'guild1', mockDto),
       ).rejects.toThrow('Database error');
 
-      expect(mockRedisService.del).toHaveBeenCalled();
+      expect(mockRedlockLock.release).toHaveBeenCalled();
     });
   });
 
@@ -475,27 +442,8 @@ describe('TimersService', () => {
     };
 
     it('should invalidate cache when timer is created', async () => {
-      mockRedisService.get.mockImplementation(async (key: string) => {
-        if (key.startsWith('timer:dedup:')) {
-          return null;
-        }
-        if (key.startsWith('timer:lock:')) {
-          return 'mock-lock-value';
-        }
-        return null;
-      });
-
-      mockRedisService.setNX.mockImplementation(
-        async (key: string, _value: string) => {
-          if (key.startsWith('timer:lock:') || key.startsWith('timer:dedup:')) {
-            return true;
-          }
-          return false;
-        },
-      );
-
+      mockRedisService.get.mockResolvedValue(null);
       mockRedisService.set.mockResolvedValue(undefined);
-      mockRedisService.del.mockResolvedValue(1);
       mockRedisService.deleteByPattern.mockResolvedValue(2);
       mockPrismaService.timer.upsert.mockResolvedValue({
         ...mockTimer,
@@ -510,25 +458,6 @@ describe('TimersService', () => {
     });
 
     it('should invalidate cache when timer is reset', async () => {
-      let storedLockValue: string | null = null;
-
-      mockRedisService.get.mockImplementation(async (key: string) => {
-        if (key.startsWith('timer:lock:')) {
-          return storedLockValue;
-        }
-        return null;
-      });
-
-      mockRedisService.setNX.mockImplementation(
-        async (key: string, value: string) => {
-          if (key.startsWith('timer:lock:')) {
-            storedLockValue = value;
-          }
-          return true;
-        },
-      );
-
-      mockRedisService.del.mockResolvedValue(1);
       mockRedisService.deleteByPattern.mockResolvedValue(1);
       mockPrismaService.timer.findUnique.mockResolvedValue({
         ...mockTimer,
