@@ -369,15 +369,10 @@ export class TimersService {
     });
   }
 
-  async getAllTimers(
-    discordId: string,
-    userId: string,
-    { world }: GetTimersDto,
-  ) {
+  async getAllTimers(discordId: string, { world }: GetTimersDto) {
     const now = new Date();
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
-      userId,
       [Permission.LOOTLOG_READ],
     );
 

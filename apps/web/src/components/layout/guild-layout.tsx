@@ -1,4 +1,5 @@
 import { GuildSidebar } from "@/components/layout/guild-sidebar";
+import { TimersSidebar } from "@/components/layout/timers-sidebar";
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -18,25 +19,9 @@ import { ArrowLeft, ChevronRight, TimerIcon } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { ROUTES } from "@/config/routes";
 import { WorldSwitcher } from "@/components/common/world-switcher";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
-import { Timers } from "@/features/guild/components/timers/timers";
-import { cn } from "@/utils/cn";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@lootlog/ui/components/sheet";
-import { useLg } from "@/hooks/ui/use-lg";
 
 export const GuildLayout: FC = () => {
-  const [timersVisible, setTimersVisible] = useState(false);
-  const isLg = useLg();
+  const [timersOpen, setTimersOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
@@ -139,14 +124,6 @@ export const GuildLayout: FC = () => {
 
   const navInfo = getNavigationInfo();
 
-  const toggleTimers = () => {
-    setTimersVisible((prev) => !prev);
-  };
-
-  const getTooltipContent = () => {
-    return timersVisible ? "Ukryj timery" : "Pokaż timery";
-  };
-
   const isGuildIndexPage =
     location.pathname === ROUTES.guild.base(params.guildId || "");
 
@@ -207,18 +184,14 @@ export const GuildLayout: FC = () => {
                   {isGuildIndexPage && (
                     <div className="flex items-center gap-2">
                       <WorldSwitcher />
-                      <span onClick={toggleTimers} className="cursor-pointer">
-                        <TooltipProvider>
-                          <Tooltip delayDuration={100}>
-                            <TooltipTrigger asChild>
-                              <TimerIcon className="h-5 w-5" />
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                              {getTooltipContent()}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setTimersOpen(!timersOpen)}
+                        className="size-7"
+                      >
+                        <TimerIcon className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
                   {!isGuildIndexPage && <div className="w-8" />}
@@ -228,33 +201,12 @@ export const GuildLayout: FC = () => {
                 <Outlet />
               </div>
             </div>
-            {isGuildIndexPage && !isLg && (
-              <div
-                className={cn("w-72 min-w-72 border-l hidden lg:block", {
-                  "w-0 min-w-0": !timersVisible,
-                })}
-              >
-                <div className="h-14 bg-background border-b flex items-center justify-center text-sm font-semibold">
-                  Timery
-                </div>
-                {timersVisible && <Timers />}
-              </div>
+            {isGuildIndexPage && (
+              <TimersSidebar open={timersOpen} onOpenChange={setTimersOpen} />
             )}
           </div>
         </SidebarProvider>
       </div>
-      {isGuildIndexPage && isLg && (
-        <Sheet onOpenChange={setTimersVisible} open={timersVisible}>
-          <SheetContent className="w-72 p-0">
-            <SheetHeader className="p-4">
-              <SheetTitle>Timery</SheetTitle>
-            </SheetHeader>
-            <div className="py-4">
-              <Timers />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
       <Toaster />
     </GuildContextProvider>
   );

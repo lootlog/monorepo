@@ -9,6 +9,10 @@ import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
 import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-config.module';
 import { PrismaModule } from 'src/db/prisma.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
+import { LootMappingService } from './services/loot-mapping.service';
+import { LootValidationService } from './services/loot-validation.service';
+import { LootQueryService } from './services/loot-query.service';
+import { LootCommentService } from './services/loot-comment.service';
 
 @Module({
   imports: [
@@ -22,6 +26,12 @@ import { RedisModule } from 'src/lib/redis/redis.module';
     RedisModule,
   ],
   controllers: [LootsController],
-  providers: [LootsService],
+  providers: [
+    LootsService,
+    LootMappingService,
+    LootValidationService,
+    LootQueryService,
+    LootCommentService,
+  ],
 })
 export class LootsModule {}
