@@ -21,6 +21,7 @@ import { GatewayProvider } from "@/contexts/gateway-context";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QUERY_CLIENT_CACHE_TIME_MS } from "@/constants/query-client";
+import { ChatInput } from "./features/chat/chat-input";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +60,7 @@ function AppContent() {
         <AddTimer />
         <Settings />
         <Chat />
+        <ChatInput />
         <OnlinePlayers />
         <NpcDetector />
         <Notifications />
