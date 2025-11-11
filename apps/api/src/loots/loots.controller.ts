@@ -28,7 +28,6 @@ import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
-import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -140,10 +139,9 @@ export class LootsController {
   })
   async createLoot(
     @DiscordId() discordId: string,
-    @UserId() userId: string,
     @Body() body: CreateLootDto,
   ) {
-    return this.lootsService.createLoot(discordId, userId, body);
+    return this.lootsService.createLoot(discordId, body);
   }
 
   @Permissions(Permission.LOOTLOG_READ)
@@ -199,14 +197,12 @@ export class LootsController {
   @ApiResponse({ status: 404, description: 'Loot not found' })
   async createComment(
     @DiscordId() discordId: string,
-    @UserId() userId: string,
     @Param('lootId', new ParseIntPipe()) lootId: number,
     @Body() body: CreateCommentDto,
     @GuildData() guild: Guild,
   ) {
     const comment = await this.lootsService.createComment({
       discordId,
-      userId,
       lootId,
       body,
       guildId: guild.id,

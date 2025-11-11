@@ -136,21 +136,15 @@ describe('LootsController', () => {
 
   describe('createLoot', () => {
     const discordId = 'discord123';
-    const userId = 'user123';
 
     it('should create a new loot', async () => {
       const mockResult = { id: 1 };
       service.createLoot.mockResolvedValue(mockResult);
 
-      const result = await controller.createLoot(
-        discordId,
-        userId,
-        mockCreateLootDto,
-      );
+      const result = await controller.createLoot(discordId, mockCreateLootDto);
 
       expect(service.createLoot).toHaveBeenCalledWith(
         discordId,
-        userId,
         mockCreateLootDto,
       );
       expect(result).toEqual(mockResult);
@@ -162,7 +156,7 @@ describe('LootsController', () => {
       );
 
       await expect(
-        controller.createLoot(discordId, userId, mockCreateLootDto),
+        controller.createLoot(discordId, mockCreateLootDto),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -172,7 +166,7 @@ describe('LootsController', () => {
 
       const requests = Array(5)
         .fill(null)
-        .map(() => controller.createLoot(discordId, userId, mockCreateLootDto));
+        .map(() => controller.createLoot(discordId, mockCreateLootDto));
 
       const results = await Promise.all(requests);
 
@@ -292,7 +286,6 @@ describe('LootsController', () => {
 
   describe('createComment', () => {
     const discordId = 'discord123';
-    const userId = 'user123';
     const lootId = 1;
     const body: CreateCommentDto = { content: 'Test comment' };
 
@@ -310,7 +303,6 @@ describe('LootsController', () => {
 
       const result = await controller.createComment(
         discordId,
-        userId,
         lootId,
         body,
         mockGuild,
@@ -318,7 +310,6 @@ describe('LootsController', () => {
 
       expect(service.createComment).toHaveBeenCalledWith({
         discordId,
-        userId,
         lootId,
         body,
         guildId: mockGuild.id,

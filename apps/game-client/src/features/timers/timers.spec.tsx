@@ -249,7 +249,6 @@ describe("Timers Component", () => {
 
       const duplicateTimers = [
         createMockTimer({
-          tempId: "1",
           npcId: 1,
           guildId: "guild1",
           world: "world1",
@@ -258,7 +257,6 @@ describe("Timers Component", () => {
           minSpawnTime: futureDate2,
         }),
         createMockTimer({
-          tempId: "2",
           npcId: 1,
           guildId: "guild1",
           world: "world1",
@@ -288,14 +286,12 @@ describe("Timers Component", () => {
 
       const timersFromDifferentGuilds = [
         createMockTimer({
-          tempId: "1",
           npcId: 1,
           guildId: "guild1",
           world: "world1",
           isPending: false,
         }),
         createMockTimer({
-          tempId: "2",
           npcId: 1,
           guildId: "guild2",
           world: "world1",
@@ -374,7 +370,7 @@ describe("Timers Component", () => {
     it("9.4 should handle invalid timer data (HIGH PRIORITY)", async () => {
       const { useTimers } = await import("@/hooks/api/use-timers");
 
-      const invalidTimers = [{ tempId: "1", npcId: null, guildId: "guild1" }];
+      const invalidTimers = [{ npcId: null, guildId: "guild1" }];
 
       vi.mocked(useTimers).mockReturnValue({
         data: invalidTimers,
@@ -475,7 +471,6 @@ describe("Timers Component", () => {
 
       const largeDataset = Array.from({ length: 150 }, (_, i) =>
         createMockTimer({
-          tempId: `timer-${i}`,
           npcId: i,
           isPending: false,
           npc: {
