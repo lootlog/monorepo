@@ -46,9 +46,23 @@ export class QueryBattleStatisticsDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['wins', 'losses', 'totalBattles', 'winRate', 'lastBattleDate'])
-  sortBy?: 'wins' | 'losses' | 'totalBattles' | 'winRate' | 'lastBattleDate' =
-    'totalBattles';
+  @IsIn([
+    'wins',
+    'losses',
+    'totalBattles',
+    'winRate',
+    'lastBattleDate',
+    'totalRatingDelta',
+    'avgRatingDelta',
+  ])
+  sortBy?:
+    | 'wins'
+    | 'losses'
+    | 'totalBattles'
+    | 'winRate'
+    | 'lastBattleDate'
+    | 'totalRatingDelta'
+    | 'avgRatingDelta' = 'totalBattles';
 
   @IsOptional()
   @IsString()

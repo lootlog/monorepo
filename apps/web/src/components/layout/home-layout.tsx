@@ -58,6 +58,32 @@ export const HomeLayout: FC = () => {
       };
     }
 
+    if (path === ROUTES.user.battlePanel.matchmakingH2h) {
+      return {
+        breadcrumbs: [
+          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
+          { label: "Statystyki", path: ROUTES.user.battlePanel.statistics },
+          { label: "Matchmaking H2H", path: null },
+        ],
+        showBack: true,
+        backPath: ROUTES.user.battlePanel.statistics,
+      };
+    }
+
+    if (
+      path.startsWith(`${ROUTES.user.battlePanel.statistics}/player-vs-player/`)
+    ) {
+      return {
+        breadcrumbs: [
+          { label: "Panel walk", path: ROUTES.user.battlePanel.base },
+          { label: "Statystyki", path: ROUTES.user.battlePanel.statistics },
+          { label: "Gracz vs Gracz", path: null },
+        ],
+        showBack: true,
+        backPath: ROUTES.user.battlePanel.statistics,
+      };
+    }
+
     const normalizedPath = path.replace(/\/$/, "");
     const battlesPath = ROUTES.user.battlePanel.battles;
 
@@ -156,7 +182,11 @@ export const HomeLayout: FC = () => {
                 <div className="w-8" />
               </div>
             </PageHeader>
-            {location.pathname === ROUTES.user.battlePanel.h2h ? (
+            {location.pathname === ROUTES.user.battlePanel.h2h ||
+            location.pathname === ROUTES.user.battlePanel.matchmakingH2h ||
+            location.pathname.startsWith(
+              `${ROUTES.user.battlePanel.statistics}/player-vs-player/`,
+            ) ? (
               <div className="flex-1 min-h-0 overflow-auto">
                 <Outlet />
               </div>

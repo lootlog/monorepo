@@ -38,6 +38,8 @@ type HeadToHeadFiltersMobileProps = {
   ph?: boolean;
   matchmaking?: boolean;
   selectedWarriors: Warrior[];
+  showPhFilter?: boolean;
+  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
@@ -62,6 +64,8 @@ export const HeadToHeadFiltersMobile = ({
   ph,
   matchmaking,
   selectedWarriors,
+  showPhFilter = true,
+  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
@@ -176,38 +180,45 @@ export const HeadToHeadFiltersMobile = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between border rounded-md p-3">
-            <div className="flex items-center gap-2">
-              <Award className="h-4 w-4" />
-              <Label htmlFor="ph-filter-h2h-mobile" className="cursor-pointer">
-                Punkty Honoru
-              </Label>
+          {showPhFilter && (
+            <div className="flex items-center justify-between border rounded-md p-3">
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                <Label
+                  htmlFor="ph-filter-h2h-mobile"
+                  className="cursor-pointer"
+                >
+                  Punkty Honoru
+                </Label>
+              </div>
+              <Checkbox
+                id="ph-filter-h2h-mobile"
+                checked={ph === true}
+                onCheckedChange={(checked) => onPhChange(checked === true)}
+              />
             </div>
-            <Checkbox
-              id="ph-filter-h2h-mobile"
-              checked={ph === true}
-              onCheckedChange={(checked) => onPhChange(checked === true)}
-            />
-          </div>
+          )}
 
-          <div className="flex items-center justify-between border rounded-md p-3">
-            <div className="flex items-center gap-2">
-              <Swords className="h-4 w-4" />
-              <Label
-                htmlFor="matchmaking-filter-h2h-mobile"
-                className="cursor-pointer"
-              >
-                Otchłań
-              </Label>
+          {showMatchmakingFilter && (
+            <div className="flex items-center justify-between border rounded-md p-3">
+              <div className="flex items-center gap-2">
+                <Swords className="h-4 w-4" />
+                <Label
+                  htmlFor="matchmaking-filter-h2h-mobile"
+                  className="cursor-pointer"
+                >
+                  Otchłań
+                </Label>
+              </div>
+              <Checkbox
+                id="matchmaking-filter-h2h-mobile"
+                checked={matchmaking === true}
+                onCheckedChange={(checked) =>
+                  onMatchmakingChange(checked === true)
+                }
+              />
             </div>
-            <Checkbox
-              id="matchmaking-filter-h2h-mobile"
-              checked={matchmaking === true}
-              onCheckedChange={(checked) =>
-                onMatchmakingChange(checked === true)
-              }
-            />
-          </div>
+          )}
         </div>
         <div className="mt-6">
           <DrawerClose asChild>

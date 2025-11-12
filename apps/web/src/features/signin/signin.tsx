@@ -13,7 +13,7 @@ export const SignIn: React.FC = () => {
       await authClient.signIn.social({
         provider: "discord",
         callbackURL: search.redirect
-          ? `${window.location.origin}/${search.redirect}`
+          ? `${window.location.origin}${search.redirect}`
           : `${window.location.origin}/@me`,
       });
     } catch (error) {
