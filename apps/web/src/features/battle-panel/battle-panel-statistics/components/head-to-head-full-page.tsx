@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   useBattleFiltersStore,
   type Period,
@@ -8,7 +8,6 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   flexRender,
-  type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
 import {
@@ -26,19 +25,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
-import { Button } from "@lootlog/ui/components/button";
-import { ArrowUpDown } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
-import { PlayerTile } from "@/components/battle";
-import { getProfessionName } from "@/lib/utils/professions";
-import {
-  useHeadToHead,
-  type HeadToHeadRecord,
-} from "@/hooks/api/battle-log/use-head-to-head";
+import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import { HeadToHeadFilters } from "./head-to-head-filters";
+import { headToHeadColumns } from "./head-to-head-columns";
 
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
 
@@ -123,174 +114,33 @@ export function HeadToHeadFullPage() {
     setCursor(undefined);
   };
 
-  const columns: ColumnDef<HeadToHeadRecord>[] = [
-    {
-      id: "avatar",
-      header: "",
-      cell: ({ row }) => (
-        <PlayerTile
-          player={{
-            name: row.original.opponentName,
-            lvl: row.original.opponentLvl,
-            prof: row.original.opponentProf,
-            icon: row.original.opponentIcon,
-          }}
-          className="scale-75"
-        />
-      ),
-      enableSorting: false,
+  const handleCharacterChange = useCallback(
+    (id: string | undefined) => {
+      setCurrentCharacterId(id);
+      setCursor(undefined);
     },
-    {
-      accessorKey: "opponentName",
-      header: "Nazwa",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.opponentName}</span>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "opponentLvl",
-      header: () => <div className="text-center">Poziom</div>,
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.opponentLvl}</div>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "opponentProf",
-      header: () => <div className="text-center">Profesja</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          {getProfessionName(row.original.opponentProf)}
-        </div>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "wins",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Wygrane
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span className="text-green-600 font-medium">
-            {row.original.wins}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "losses",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Przegrane
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span className="text-red-600 font-medium">
-            {row.original.losses}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "totalBattles",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Łącznie
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.original.totalBattles}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "winRate",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Win %
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span
-            className={
-              row.original.winRate >= 50
-                ? "text-green-600 font-medium"
-                : "text-red-600 font-medium"
-            }
-          >
-            {row.original.winRate.toFixed(1)}%
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "lastBattleDate",
-      header: ({ column }) => (
-        <div className="text-right">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Ostatnia walka
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-right text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(row.original.lastBattleDate), {
-            addSuffix: true,
-            locale: pl,
-          })}
-        </div>
-      ),
-    },
-  ];
+    [setCurrentCharacterId],
+  );
+
+  const handleMinLevelChange = useCallback((value: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { minLevel: value });
+    setCursor(undefined);
+  }, []);
+
+  const handleMaxLevelChange = useCallback((value: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { maxLevel: value });
+    setCursor(undefined);
+  }, []);
 
   const table = useReactTable({
     data: data?.records || [],
-    columns,
+    columns: headToHeadColumns,
     state: {
       sorting,
     },
@@ -318,25 +168,10 @@ export function HeadToHeadFullPage() {
         minLevel={minLevel}
         maxLevel={maxLevel}
         selectedWarriors={selectedWarriors}
-        onCharacterChange={(id) => {
-          setCurrentCharacterId(id);
-          setCursor(undefined);
-        }}
+        onCharacterChange={handleCharacterChange}
         onPeriodChange={handlePeriodChange}
-        onMinLevelChange={(value) => {
-          const currentId = useBattleFiltersStore.getState().currentCharacterId;
-          useBattleFiltersStore
-            .getState()
-            .updateFilters(currentId, { minLevel: value });
-          setCursor(undefined);
-        }}
-        onMaxLevelChange={(value) => {
-          const currentId = useBattleFiltersStore.getState().currentCharacterId;
-          useBattleFiltersStore
-            .getState()
-            .updateFilters(currentId, { maxLevel: value });
-          setCursor(undefined);
-        }}
+        onMinLevelChange={handleMinLevelChange}
+        onMaxLevelChange={handleMaxLevelChange}
         onWarriorToggle={handleWarriorToggle}
       />
 
