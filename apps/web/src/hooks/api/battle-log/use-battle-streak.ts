@@ -34,6 +34,6 @@ export function useBattleStreak(params: UseBattleStreakParams) {
       );
       return response.data as Streak;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }

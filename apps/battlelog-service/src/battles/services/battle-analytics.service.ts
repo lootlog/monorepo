@@ -532,10 +532,10 @@ export class BattleAnalyticsService {
     const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
     const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
-    const cachedResult = await this.redisService.get(cacheKey);
-    if (cachedResult) {
-      return JSON.parse(cachedResult);
-    }
+    // const cachedResult = await this.redisService.get(cacheKey);
+    // if (cachedResult) {
+    //   return JSON.parse(cachedResult);
+    // }
 
     const characterIds = await this.getCharacterIds(userId, query);
 
@@ -600,6 +600,7 @@ export class BattleAnalyticsService {
     let longestLossStreak = 0;
     let tempWinStreak = 0;
     let tempLossStreak = 0;
+    let isCurrentStreakActive = true;
 
     for (const battle of filteredBattles) {
       const userWarrior = battle.warriors.find((w) =>
@@ -609,16 +610,18 @@ export class BattleAnalyticsService {
 
       const isWin = userWarrior.team === battle.winningTeam;
 
-      if (currentType === 'none') {
-        currentType = isWin ? 'wins' : 'losses';
-        currentStreak = 1;
-      } else if (
-        (currentType === 'wins' && isWin) ||
-        (currentType === 'losses' && !isWin)
-      ) {
-        currentStreak++;
-      } else {
-        break;
+      if (isCurrentStreakActive) {
+        if (currentType === 'none') {
+          currentType = isWin ? 'wins' : 'losses';
+          currentStreak = 1;
+        } else if (
+          (currentType === 'wins' && isWin) ||
+          (currentType === 'losses' && !isWin)
+        ) {
+          currentStreak++;
+        } else {
+          isCurrentStreakActive = false;
+        }
       }
 
       if (isWin) {
