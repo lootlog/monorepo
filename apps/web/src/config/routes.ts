@@ -13,6 +13,9 @@ const ROUTES = {
       stats: `${USER_BASE}/battle-panel/stats`,
       statistics: `${USER_BASE}/battle-panel/statistics`,
       h2h: `${USER_BASE}/battle-panel/statistics/h2h`,
+      matchmakingH2h: `${USER_BASE}/battle-panel/statistics/matchmaking-h2h`,
+      playerVsPlayer: (myId: string, opponentId: string) =>
+        `${USER_BASE}/battle-panel/statistics/player-vs-player/${myId}/${opponentId}`,
       battles: `${USER_BASE}/battle-panel/battles`,
       battle: (battleId: string) =>
         `${USER_BASE}/battle-panel/battles/${battleId}`,

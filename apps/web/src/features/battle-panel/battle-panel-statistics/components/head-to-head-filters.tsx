@@ -11,6 +11,8 @@ type HeadToHeadFiltersProps = {
   ph?: boolean;
   matchmaking?: boolean;
   selectedWarriors: Warrior[];
+  showPhFilter?: boolean;
+  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
@@ -28,6 +30,8 @@ export const HeadToHeadFilters = ({
   ph,
   matchmaking,
   selectedWarriors,
+  showPhFilter = true,
+  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
@@ -47,6 +51,8 @@ export const HeadToHeadFilters = ({
           ph={ph}
           matchmaking={matchmaking}
           selectedWarriors={selectedWarriors}
+          showPhFilter={showPhFilter}
+          showMatchmakingFilter={showMatchmakingFilter}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}
@@ -66,6 +72,8 @@ export const HeadToHeadFilters = ({
           ph={ph}
           matchmaking={matchmaking}
           selectedWarriors={selectedWarriors}
+          showPhFilter={showPhFilter}
+          showMatchmakingFilter={showMatchmakingFilter}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}

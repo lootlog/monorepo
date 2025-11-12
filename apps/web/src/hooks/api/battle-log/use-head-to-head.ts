@@ -12,6 +12,8 @@ export interface HeadToHeadRecord {
   totalBattles: number;
   winRate: number;
   lastBattleDate: string;
+  totalRatingDelta?: number;
+  avgRatingDelta?: number;
 }
 
 export interface GetHeadToHeadResponse {
@@ -37,7 +39,14 @@ export interface GetHeadToHeadResponse {
 export interface UseHeadToHeadParams {
   cursor?: string;
   size?: number;
-  sortBy?: "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
+  sortBy?:
+    | "wins"
+    | "losses"
+    | "totalBattles"
+    | "winRate"
+    | "lastBattleDate"
+    | "totalRatingDelta"
+    | "avgRatingDelta";
   sortOrder?: "asc" | "desc";
   includeTotal?: boolean;
   characterId?: string;

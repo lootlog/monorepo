@@ -214,10 +214,13 @@ export function HeadToHeadFullPage() {
             <p className="text-muted-foreground">Brak danych do wyświetlenia</p>
           </div>
         ) : (
-          <Table>
+          <Table className="border-b">
             <TableHeader className="bg-background">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow
+                  key={headerGroup.id}
+                  className="border-b-1! border-border"
+                >
                   {headerGroup.headers.map((header) => (
                     <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
@@ -233,7 +236,10 @@ export function HeadToHeadFullPage() {
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="bg-background/30">
+                <TableRow
+                  key={row.id}
+                  className="bg-background/30 border-b border-border"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="whitespace-nowrap">
                       {flexRender(
