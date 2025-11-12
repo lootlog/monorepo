@@ -18,6 +18,8 @@ interface UseBattleStreakParams {
   period?: string;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
 }
 
 export function useBattleStreak(params: UseBattleStreakParams) {
@@ -32,6 +34,6 @@ export function useBattleStreak(params: UseBattleStreakParams) {
       );
       return response.data as Streak;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }

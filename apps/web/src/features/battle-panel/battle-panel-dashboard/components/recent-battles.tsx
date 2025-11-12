@@ -28,6 +28,7 @@ export const RecentBattles = () => {
       result: filters.result ?? null,
       ph: filters.ph ?? null,
       characterId: filters.characterId ?? null,
+      matchmaking: filters.matchmaking ?? null,
     });
 
     navigate({

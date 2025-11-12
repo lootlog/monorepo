@@ -1,5 +1,6 @@
 import { Timers } from "@/features/guild/components/timers/timers";
 import { Sheet, SheetContent } from "@lootlog/ui/components/sheet";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { cn } from "@/utils/cn";
 import type { FC } from "react";
@@ -18,11 +19,13 @@ export const TimersSidebar: FC<TimersSidebarProps> = ({
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-80 p-0">
+        <SheetContent side="right" className="w-80 p-0 flex flex-col">
           <div className="h-14 border-b flex items-center justify-center text-sm font-semibold shrink-0">
             Timery
           </div>
-          <Timers />
+          <ScrollArea className="flex-1 h-0">
+            <Timers />
+          </ScrollArea>
         </SheetContent>
       </Sheet>
     );
@@ -45,9 +48,9 @@ export const TimersSidebar: FC<TimersSidebarProps> = ({
         <div className="h-14 border-b flex items-center justify-center text-sm font-semibold shrink-0">
           Timery
         </div>
-        <div className="flex-1 overflow-auto">
+        <ScrollArea className="flex-1 h-0">
           <Timers />
-        </div>
+        </ScrollArea>
       </div>
     </>
   );

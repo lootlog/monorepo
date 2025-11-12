@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   useBattleFiltersStore,
   type Period,
@@ -8,7 +8,6 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   flexRender,
-  type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
 import {
@@ -26,19 +25,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
-import { Button } from "@lootlog/ui/components/button";
-import { ArrowUpDown } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
-import { PlayerTile } from "@/components/battle";
-import { getProfessionName } from "@/lib/utils/professions";
-import {
-  useHeadToHead,
-  type HeadToHeadRecord,
-} from "@/hooks/api/battle-log/use-head-to-head";
+import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
+import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import { HeadToHeadFilters } from "./head-to-head-filters";
+import { headToHeadColumns } from "./head-to-head-columns";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
 
@@ -59,6 +52,12 @@ export function HeadToHeadFullPage() {
   const maxLevel = useBattleFiltersStore(
     (state) => state.getFilters(state.currentCharacterId).maxLevel,
   );
+  const ph = useBattleFiltersStore(
+    (state) => state.getFilters(state.currentCharacterId).ph,
+  );
+  const matchmaking = useBattleFiltersStore(
+    (state) => state.getFilters(state.currentCharacterId).matchmaking,
+  );
 
   const [period, setPeriod] = useState<Period>(filterPeriod || "30d");
   const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
@@ -76,7 +75,7 @@ export function HeadToHeadFullPage() {
 
   useEffect(() => {
     setCursor(undefined);
-  }, [minLevel, maxLevel]);
+  }, [minLevel, maxLevel, ph, matchmaking]);
 
   const { data, isLoading } = useHeadToHead({
     cursor,
@@ -88,6 +87,8 @@ export function HeadToHeadFullPage() {
     search: selectedWarriors[0]?.name,
     minLevel,
     maxLevel,
+    ph,
+    matchmaking,
     includeTotal: true,
   });
 
@@ -123,174 +124,47 @@ export function HeadToHeadFullPage() {
     setCursor(undefined);
   };
 
-  const columns: ColumnDef<HeadToHeadRecord>[] = [
-    {
-      id: "avatar",
-      header: "",
-      cell: ({ row }) => (
-        <PlayerTile
-          player={{
-            name: row.original.opponentName,
-            lvl: row.original.opponentLvl,
-            prof: row.original.opponentProf,
-            icon: row.original.opponentIcon,
-          }}
-          className="scale-75"
-        />
-      ),
-      enableSorting: false,
+  const handleCharacterChange = useCallback(
+    (id: string | undefined) => {
+      setCurrentCharacterId(id);
+      setCursor(undefined);
     },
-    {
-      accessorKey: "opponentName",
-      header: "Nazwa",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.opponentName}</span>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "opponentLvl",
-      header: () => <div className="text-center">Poziom</div>,
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.opponentLvl}</div>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "opponentProf",
-      header: () => <div className="text-center">Profesja</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          {getProfessionName(row.original.opponentProf)}
-        </div>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "wins",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Wygrane
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span className="text-green-600 font-medium">
-            {row.original.wins}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "losses",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Przegrane
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span className="text-red-600 font-medium">
-            {row.original.losses}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "totalBattles",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Łącznie
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.original.totalBattles}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "winRate",
-      header: ({ column }) => (
-        <div className="text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Win %
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span
-            className={
-              row.original.winRate >= 50
-                ? "text-green-600 font-medium"
-                : "text-red-600 font-medium"
-            }
-          >
-            {row.original.winRate.toFixed(1)}%
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "lastBattleDate",
-      header: ({ column }) => (
-        <div className="text-right">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8"
-          >
-            Ostatnia walka
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-right text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(row.original.lastBattleDate), {
-            addSuffix: true,
-            locale: pl,
-          })}
-        </div>
-      ),
-    },
-  ];
+    [setCurrentCharacterId],
+  );
+
+  const handleMinLevelChange = useCallback((value: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { minLevel: value });
+    setCursor(undefined);
+  }, []);
+
+  const handleMaxLevelChange = useCallback((value: number | undefined) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { maxLevel: value });
+    setCursor(undefined);
+  }, []);
+
+  const handlePhChange = useCallback((value: boolean) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore.getState().updateFilters(currentId, { ph: value });
+    setCursor(undefined);
+  }, []);
+
+  const handleMatchmakingChange = useCallback((value: boolean) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { matchmaking: value });
+    setCursor(undefined);
+  }, []);
 
   const table = useReactTable({
     data: data?.records || [],
-    columns,
+    columns: headToHeadColumns,
     state: {
       sorting,
     },
@@ -317,30 +191,19 @@ export function HeadToHeadFullPage() {
         period={period}
         minLevel={minLevel}
         maxLevel={maxLevel}
+        ph={ph}
+        matchmaking={matchmaking}
         selectedWarriors={selectedWarriors}
-        onCharacterChange={(id) => {
-          setCurrentCharacterId(id);
-          setCursor(undefined);
-        }}
+        onCharacterChange={handleCharacterChange}
         onPeriodChange={handlePeriodChange}
-        onMinLevelChange={(value) => {
-          const currentId = useBattleFiltersStore.getState().currentCharacterId;
-          useBattleFiltersStore
-            .getState()
-            .updateFilters(currentId, { minLevel: value });
-          setCursor(undefined);
-        }}
-        onMaxLevelChange={(value) => {
-          const currentId = useBattleFiltersStore.getState().currentCharacterId;
-          useBattleFiltersStore
-            .getState()
-            .updateFilters(currentId, { maxLevel: value });
-          setCursor(undefined);
-        }}
+        onMinLevelChange={handleMinLevelChange}
+        onMaxLevelChange={handleMaxLevelChange}
+        onPhChange={handlePhChange}
+        onMatchmakingChange={handleMatchmakingChange}
         onWarriorToggle={handleWarriorToggle}
       />
 
-      <div className="flex-1 overflow-auto min-h-0">
+      <ScrollArea className={cn("max-w-full flex-1 w-full")}>
         {isLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
             <Spinner className="size-8" />
@@ -351,10 +214,13 @@ export function HeadToHeadFullPage() {
             <p className="text-muted-foreground">Brak danych do wyświetlenia</p>
           </div>
         ) : (
-          <Table>
+          <Table className="border-b">
             <TableHeader className="bg-background">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow
+                  key={headerGroup.id}
+                  className="border-b-1! border-border"
+                >
                   {headerGroup.headers.map((header) => (
                     <TableHead key={header.id} className="whitespace-nowrap">
                       {header.isPlaceholder
@@ -370,7 +236,10 @@ export function HeadToHeadFullPage() {
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="bg-background/30">
+                <TableRow
+                  key={row.id}
+                  className="bg-background/30 border-b border-border"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="whitespace-nowrap">
                       {flexRender(
@@ -384,13 +253,13 @@ export function HeadToHeadFullPage() {
             </TableBody>
           </Table>
         )}
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground">
-          {data?.pagination?.total && (
-            <span>Łącznie rekordów: {data.pagination.total}</span>
-          )}
+        <div className="text-sm text-muted-foreground whitespace-nowrap">
+          Łącznie:&nbsp;
+          {data?.pagination?.total && <span>{data.pagination.total}</span>}
         </div>
         <Pagination>
           <PaginationContent>

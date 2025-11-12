@@ -55,7 +55,10 @@ export const BattlesList = ({
     search: params?.search,
     result: params?.result,
     ph: params?.ph,
+    matchmaking: params?.matchmaking,
     characterId: params?.characterId,
+    minLevel: params?.minLevel,
+    maxLevel: params?.maxLevel,
   };
 
   useEffect(() => {
@@ -112,6 +115,15 @@ export const BattlesList = ({
     }
   };
 
+  const handleMatchmakingClick = () => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        ...currentFilters,
+        matchmaking: true,
+      });
+    }
+  };
+
   return (
     <div ref={containerRef} className="flex flex-col h-full">
       {showFilters && onFiltersChange && (
@@ -153,6 +165,7 @@ export const BattlesList = ({
               onResultClick={handleResultClick}
               onWorldClick={handleWorldClick}
               onPhClick={handlePhClick}
+              onMatchmakingClick={handleMatchmakingClick}
             />
           ))
         )}
@@ -162,13 +175,7 @@ export const BattlesList = ({
         battlesResponse?.pagination &&
         (battlesResponse.pagination.hasNext ||
           battlesResponse.pagination.hasPrev) && (
-          <div
-            className="sticky h-14 bottom-0 mt-auto bg-background border-t py-4 flex items-center justify-center px-4 relative"
-            style={{
-              paddingBottom: "calc(1rem + env(safe-area-inset-bottom))",
-              marginBottom: "env(safe-area-inset-bottom)",
-            }}
-          >
+          <div className="sticky h-14 bottom-0 bg-background border-t flex items-center justify-center px-4 relative">
             <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
               {battlesResponse.pagination.total && (
                 <span>Łącznie walk: {battlesResponse.pagination.total}</span>

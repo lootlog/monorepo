@@ -1,6 +1,14 @@
-import { Filter, Calendar, TrendingUp, User } from "lucide-react";
+import {
+  Filter,
+  Calendar,
+  TrendingUp,
+  User,
+  Swords,
+  Award,
+} from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
+import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
   Drawer,
   DrawerClose,
@@ -25,10 +33,14 @@ type StatisticsFiltersMobileProps = {
   period: Period;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
+  onPhChange: (ph: boolean) => void;
+  onMatchmakingChange: (matchmaking: boolean) => void;
 };
 
 const periodOptions = [
@@ -43,10 +55,14 @@ export const StatisticsFiltersMobile = ({
   period,
   minLevel,
   maxLevel,
+  ph,
+  matchmaking,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
   onMaxLevelChange,
+  onPhChange,
+  onMatchmakingChange,
 }: StatisticsFiltersMobileProps) => {
   const { data: characters = [] } = useBattleCharacters();
 
@@ -141,6 +157,39 @@ export const StatisticsFiltersMobile = ({
                 />
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <div className="flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              <Label htmlFor="ph-filter-mobile" className="cursor-pointer">
+                Punkty Honoru
+              </Label>
+            </div>
+            <Checkbox
+              id="ph-filter-mobile"
+              checked={ph === true}
+              onCheckedChange={(checked) => onPhChange(checked === true)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <div className="flex items-center gap-2">
+              <Swords className="h-4 w-4" />
+              <Label
+                htmlFor="matchmaking-filter-mobile"
+                className="cursor-pointer"
+              >
+                Otchłań
+              </Label>
+            </div>
+            <Checkbox
+              id="matchmaking-filter-mobile"
+              checked={matchmaking === true}
+              onCheckedChange={(checked) =>
+                onMatchmakingChange(checked === true)
+              }
+            />
           </div>
         </div>
         <div className="mt-6">

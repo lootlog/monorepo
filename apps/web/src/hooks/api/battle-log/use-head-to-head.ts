@@ -12,6 +12,8 @@ export interface HeadToHeadRecord {
   totalBattles: number;
   winRate: number;
   lastBattleDate: string;
+  totalRatingDelta?: number;
+  avgRatingDelta?: number;
 }
 
 export interface GetHeadToHeadResponse {
@@ -37,7 +39,14 @@ export interface GetHeadToHeadResponse {
 export interface UseHeadToHeadParams {
   cursor?: string;
   size?: number;
-  sortBy?: "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
+  sortBy?:
+    | "wins"
+    | "losses"
+    | "totalBattles"
+    | "winRate"
+    | "lastBattleDate"
+    | "totalRatingDelta"
+    | "avgRatingDelta";
   sortOrder?: "asc" | "desc";
   includeTotal?: boolean;
   characterId?: string;
@@ -47,6 +56,8 @@ export interface UseHeadToHeadParams {
   minBattles?: number;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
 }
 
 export function useHeadToHead(params?: UseHeadToHeadParams) {
@@ -77,6 +88,8 @@ export function useHeadToHead(params?: UseHeadToHeadParams) {
         searchParams.append("minLevel", params.minLevel.toString());
       if (params?.maxLevel)
         searchParams.append("maxLevel", params.maxLevel.toString());
+      if (params?.ph) searchParams.append("ph", "true");
+      if (params?.matchmaking) searchParams.append("matchmaking", "true");
 
       return client.get<GetHeadToHeadResponse>(
         `/battles/@me/statistics/head-to-head?${searchParams.toString()}`,

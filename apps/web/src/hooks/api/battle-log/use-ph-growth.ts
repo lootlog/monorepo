@@ -14,6 +14,8 @@ interface UsePhGrowthParams {
   period?: string;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
 }
 
 export function usePhGrowth(params: UsePhGrowthParams) {

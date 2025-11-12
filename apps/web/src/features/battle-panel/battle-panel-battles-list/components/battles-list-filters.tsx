@@ -11,6 +11,7 @@ export type BattleFilters = {
   search?: string;
   result?: Array<"won" | "lost" | "flee">;
   ph?: boolean;
+  matchmaking?: boolean;
   characterId?: Array<string>;
   minLevel?: number;
   maxLevel?: number;
@@ -135,6 +136,13 @@ export const BattlesListFilters = ({
     });
   };
 
+  const handleMatchmakingToggle = (checked: boolean) => {
+    onFiltersChange({
+      ...filters,
+      matchmaking: checked ? true : undefined,
+    });
+  };
+
   const handleWorldChange = (value: string) => {
     onFiltersChange({
       ...filters,
@@ -157,6 +165,7 @@ export const BattlesListFilters = ({
     (filters.result?.length || 0) +
     (filters.world ? 1 : 0) +
     (filters.ph ? 1 : 0) +
+    (filters.matchmaking ? 1 : 0) +
     selectedWarriors.length;
 
   const createDebouncedHandler = (
@@ -221,6 +230,7 @@ export const BattlesListFilters = ({
           onResultChange={handleResultChange}
           onWarriorToggle={handleWarriorToggle}
           onPhToggle={handlePhToggle}
+          onMatchmakingToggle={handleMatchmakingToggle}
           onWorldChange={handleWorldChange}
         />
       </div>
@@ -242,6 +252,7 @@ export const BattlesListFilters = ({
           onResultChange={handleResultChange}
           onWarriorToggle={handleWarriorToggle}
           onPhToggle={handlePhToggle}
+          onMatchmakingToggle={handleMatchmakingToggle}
           onWorldChange={handleWorldChange}
           onMinLevelChange={handleMinLevelChange}
           onMaxLevelChange={handleMaxLevelChange}

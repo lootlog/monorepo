@@ -24,9 +24,9 @@ export const UserMenu = () => {
   };
 
   return (
-    <div className="flex border-t w-full h-14 items-center p-3 justify-between bg-background">
+    <div className="flex border-t w-full h-14 items-center px-3 justify-between bg-background">
       {isPending && (
-        <Avatar className="cursor-pointer size-10 rounded-lg">
+        <Avatar className="cursor-pointer size-8 rounded-lg">
           <AvatarImage src={undefined} />
           <AvatarFallback>
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -38,7 +38,7 @@ export const UserMenu = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex flex-row gap-4 items-center">
-                <Avatar className="cursor-pointer size-10 rounded-lg">
+                <Avatar className="cursor-pointer size-8 rounded-lg">
                   <AvatarImage src={user?.image ?? undefined} />
                   <AvatarFallback>
                     <User2 className="h-4 w-4" />
@@ -58,7 +58,7 @@ export const UserMenu = () => {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div>
+          <div className="h-full flex items-center">
             <span className="text-sm font-semibold">{user.name}</span>
           </div>
         </div>
