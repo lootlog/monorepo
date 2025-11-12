@@ -1,5 +1,9 @@
 import { GatewayEvent } from "@/config/gateway";
-import { ChatMessage, fetchChatMessages } from "@/hooks/api/use-chat-messages";
+import {
+  ChatMessage,
+  fetchChatMessages,
+  QUERY_KEY,
+} from "@/hooks/api/use-chat-messages";
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosInstance, AxiosResponse } from "axios";
@@ -16,7 +20,7 @@ export const useChatMessagesListener = (client: AxiosInstance) => {
 
     socket?.on(GatewayEvent.CHAT_MESSAGE, (data: ChatMessage) => {
       queryClient.setQueryData(
-        ["channel-messages", data.guildId],
+        [QUERY_KEY, data.guildId],
         (old: AxiosResponse<ChatMessage[]>) => {
           return {
             data: [...old.data, data],
