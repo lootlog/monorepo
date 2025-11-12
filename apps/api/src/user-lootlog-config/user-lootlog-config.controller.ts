@@ -8,7 +8,6 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
-import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
@@ -41,13 +40,11 @@ export class UserLootlogConfigController {
   @ApiResponse({ status: 404, description: 'Configuration not found' })
   async getUserLootlogConfigByAccountId(
     @DiscordId() discordId: string,
-    @UserId() userId: string,
     @Param('accountId') accountId: string,
   ) {
     const configs = await this.userLootlogConfigService.getLootlogAccountConfig(
       discordId,
       accountId,
-      userId,
     );
 
     const serialized = Object.entries(configs).reduce(
@@ -80,7 +77,6 @@ export class UserLootlogConfigController {
   })
   async createOrUpdateLootlogCharacterConfig(
     @DiscordId() discordId: string,
-    @UserId() userId: string,
     @Param('accountId') accountId: string,
     @Body() data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
@@ -88,7 +84,6 @@ export class UserLootlogConfigController {
       await this.userLootlogConfigService.createOrUpdateLootlogCharacterConfig(
         discordId,
         accountId,
-        userId,
         data,
       );
 

@@ -75,9 +75,8 @@ export class GuildsController {
   })
   async getUserGuildsWithPermissions(
     @DiscordId() discordId: string,
-    @UserId() userId: string,
   ): Promise<UserGuildPermissionsDto[]> {
-    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
+    return this.guildsService.getUserGuildsWithPermissions(discordId);
   }
 
   @Get('/@me/manageable')

@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  type OnModuleInit,
 } from '@nestjs/common';
 import {
   NpcType,
@@ -32,9 +33,9 @@ import type { CreateTimerFromGameClientDto } from 'src/timers/dto/create-timer-f
 import { validateAndCalculateSpawnTimes } from 'src/timers/utils/validate-spawn-times';
 import { TIMER_LIMITS, TIMER_TYPES } from 'src/timers/constants/timer-limits';
 import { RedisService } from 'src/lib/redis/redis.service';
-import { randomUUID } from 'crypto';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
+import Redlock, { ExecutionError } from 'redlock';
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -44,7 +45,6 @@ function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   return npc as { lvl: number; type: NpcType };
 }
 
-const LOCK_TTL_SECONDS = 5;
 const DEDUP_TTL_SECONDS = 10;
 const CACHE_TTL_SECONDS = 2;
 
@@ -62,7 +62,10 @@ interface NpcData {
 }
 
 @Injectable()
-export class TimersService {
+export class TimersService implements OnModuleInit {
+  private redlock: Redlock;
+  private readonly lockTtl = 10000;
+
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
@@ -71,30 +74,15 @@ export class TimersService {
     private readonly redis: RedisService,
   ) {}
 
-  private async acquireLock(
-    lockKey: string,
-    lockValue: string,
-  ): Promise<boolean> {
-    const acquired = await this.redis.setNX(
-      lockKey,
-      lockValue,
-      LOCK_TTL_SECONDS,
-    );
-    this.logger.log({
-      level: acquired ? 'debug' : 'debug',
-      message: acquired
-        ? `Lock acquired: ${lockKey}`
-        : `Lock acquisition failed: ${lockKey}`,
+  async onModuleInit() {
+    const client = await this.redis.getClient();
+    this.redlock = new Redlock([client], {
+      driftFactor: 0.01,
+      retryCount: 3,
+      retryDelay: 100,
+      retryJitter: 50,
+      automaticExtensionThreshold: 5000,
     });
-    return acquired;
-  }
-
-  private async releaseLock(lockKey: string, lockValue: string): Promise<void> {
-    const currentValue = await this.redis.get(lockKey);
-    if (currentValue === lockValue) {
-      await this.redis.del(lockKey);
-      this.logger.log({ level: 'debug', message: `Lock released: ${lockKey}` });
-    }
   }
 
   private getLockKey(world: string, npcId: number, guildId: string): string {
@@ -174,42 +162,26 @@ export class TimersService {
     }
 
     const dedupLockKey = `${dedupKey}:lock`;
-    const dedupLockValue = randomUUID();
-    const dedupAcquired = await this.redis.setNX(
-      dedupLockKey,
-      dedupLockValue,
-      DEDUP_TTL_SECONDS,
-    );
-
-    if (!dedupAcquired) {
-      const maxRetries = 3;
-      const retryDelayMs = 100;
-
-      for (let i = 0; i < maxRetries; i++) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
-        const result = await this.redis.get(dedupKey);
-        if (result) {
-          this.logger.log({
-            level: 'debug',
-            message: `Deduplication hit after retry ${i + 1} for ${dedupKey}`,
-          });
-          return JSON.parse(result) as Timer;
-        }
-      }
-
-      throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
-    }
-
     const lockKey = this.getLockKey(data.world, data.npc.id, guildId);
-    const lockValue = randomUUID();
-    const acquired = await this.acquireLock(lockKey, lockValue);
-
-    if (!acquired) {
-      await this.redis.del(dedupLockKey);
-      throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
-    }
+    let dedupLock: Awaited<ReturnType<typeof this.redlock.acquire>> | null =
+      null;
+    let mainLock: Awaited<ReturnType<typeof this.redlock.acquire>> | null =
+      null;
 
     try {
+      dedupLock = await this.redlock.acquire([dedupLockKey], this.lockTtl);
+
+      const cachedAfterLock = await this.redis.get(dedupKey);
+      if (cachedAfterLock) {
+        this.logger.log({
+          level: 'debug',
+          message: `Deduplication hit after lock for ${dedupKey}`,
+        });
+        return JSON.parse(cachedAfterLock) as Timer;
+      }
+
+      mainLock = await this.redlock.acquire([lockKey], this.lockTtl);
+
       const { minSpawnTime, maxSpawnTime } = validateAndCalculateSpawnTimes(
         data,
         now,
@@ -225,7 +197,6 @@ export class TimersService {
         npcId: data.npc.id,
         latestRespBaseSeconds: data.respBaseSeconds,
         latestRespawnRandomness: respawnRandomness,
-        tempId: data.tempId,
         wasReset: false,
         npc: npcData,
         member: { connect: { memberId: { userId: discordId, guildId } } },
@@ -245,11 +216,21 @@ export class TimersService {
 
       this.emitUpdateTimer(newTimer);
       return newTimer;
+    } catch (error) {
+      if (error instanceof ExecutionError) {
+        this.logger.log({
+          level: 'error',
+          message: `Lock acquisition failed for createTimerForGuild`,
+          guildId,
+          npcId: data.npc.id,
+          world: data.world,
+        });
+        throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
+      }
+      throw error;
     } finally {
-      await Promise.all([
-        this.releaseLock(lockKey, lockValue),
-        this.releaseLock(dedupLockKey, dedupLockValue),
-      ]);
+      await mainLock?.release();
+      await dedupLock?.release();
     }
   }
 
@@ -369,15 +350,10 @@ export class TimersService {
     });
   }
 
-  async getAllTimers(
-    discordId: string,
-    userId: string,
-    { world }: GetTimersDto,
-  ) {
+  async getAllTimers(discordId: string, { world }: GetTimersDto) {
     const now = new Date();
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
-      userId,
       [Permission.LOOTLOG_READ],
     );
 
@@ -432,14 +408,11 @@ export class TimersService {
     const now = new Date();
     const npcIdNum = Number.parseInt(npcId, 10);
     const lockKey = this.getLockKey(data.world, npcIdNum, guildId);
-    const lockValue = randomUUID();
-    const acquired = await this.acquireLock(lockKey, lockValue);
-
-    if (!acquired) {
-      throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
-    }
+    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
 
     try {
+      lock = await this.redlock.acquire([lockKey], this.lockTtl);
+
       const timer = await this.prisma.timer.findUnique({
         where: { timerId: { guildId, world: data.world, npcId: npcIdNum } },
       });
@@ -468,8 +441,20 @@ export class TimersService {
       await this.invalidateTimersCache(guildId);
       this.emitUpdateTimer(updatedTimer);
       return updatedTimer;
+    } catch (error) {
+      if (error instanceof ExecutionError) {
+        this.logger.log({
+          level: 'error',
+          message: `Lock acquisition failed for resetTimer`,
+          guildId,
+          npcId: npcIdNum,
+          world: data.world,
+        });
+        throw new ConflictException({ message: ErrorKey.TIMER_RACE_CONDITION });
+      }
+      throw error;
     } finally {
-      await this.releaseLock(lockKey, lockValue);
+      await lock?.release();
     }
   }
 

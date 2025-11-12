@@ -30,6 +30,16 @@ model Battle {
     matchmaking Boolean @default(false)
     statistics  Json
 
+    // Matchmaking data
+    difficultyRank  Int?
+    result          Int?
+    ratingDelta     Int?
+    opponentLvl     Int?
+    opponentOplvl   Int?
+    opponentRating  Int?
+    rating          Int?
+    status          Int?
+
     // Relations
     warriors BattleWarrior[]
 
