@@ -15,6 +15,8 @@ interface UseProfessionWinRateParams {
   period?: string;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
 }
 
 export function useProfessionWinRate(params: UseProfessionWinRateParams) {

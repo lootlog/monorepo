@@ -37,7 +37,7 @@ export const Timers = () => {
   const groups = groupBy(sorted, "npc.type");
 
   return (
-    <div className="h-full">
+    <div>
       {isPending &&
         Array.from({ length: 8 }).map((_, index) => {
           return (
@@ -48,7 +48,7 @@ export const Timers = () => {
           );
         })}
       {!isPending && timers && timers.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground">
+        <div className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground min-h-[200px]">
           <p>Brak timerów</p>
         </div>
       )}

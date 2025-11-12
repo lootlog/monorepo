@@ -104,6 +104,30 @@ export class BattlesController {
     return this.battleAnalyticsService.getPhGrowthTimeSeries(query, userId);
   }
 
+  @Get('/@me/statistics/rating-growth')
+  getRatingGrowth(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getRatingGrowthTimeSeries(query, userId);
+  }
+
+  @Get('/@me/statistics/rating-delta-by-opponent')
+  getRatingDeltaByOpponent(
+    @Query() query: QueryBattleStatisticsDto,
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getRatingDeltaByOpponent(query, userId);
+  }
+
+  @Get('/@me/statistics/player-vs-player')
+  getPlayerVsPlayerBattles(
+    @Query() query: QueryBattleStatisticsDto & { opponentId: string },
+    @UserId() userId: string,
+  ) {
+    return this.battleAnalyticsService.getPlayerVsPlayerBattles(query, userId);
+  }
+
   @Get('/@me/warriors/search')
   searchWarriors(@Query('q') query: string, @UserId() userId: string) {
     return this.battlesService.searchWarriors(query, userId);

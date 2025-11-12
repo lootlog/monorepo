@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -13,36 +13,45 @@ import {
   TableHeader,
   TableRow,
 } from "@lootlog/ui/components/table";
-import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
 import { PlayerTile } from "@/components/battle";
 import { StatCard } from "./stat-card";
 import { getProfessionName } from "@/lib/utils/professions";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowRight } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ROUTES } from "@/config/routes";
+import { useBattleFiltersStore } from "@/store/battle-filters.store";
+import type { RatingDeltaByOpponentRecord } from "@/hooks/api/battle-log/use-rating-delta-by-opponent";
 
-interface HeadToHeadRecord {
-  opponentId: string;
-  opponentName: string;
-  opponentIcon: string;
-  opponentProf: string;
-  opponentLvl: number;
-  wins: number;
-  losses: number;
-  totalBattles: number;
-  winRate: number;
-  lastBattleDate: string;
-}
-
-interface HeadToHeadTableProps {
-  data: HeadToHeadRecord[];
+interface RatingDeltaByOpponentCardProps {
+  data: RatingDeltaByOpponentRecord[];
   isLoading?: boolean;
 }
 
-export function HeadToHeadTable({ data, isLoading }: HeadToHeadTableProps) {
-  const columns: ColumnDef<HeadToHeadRecord>[] = useMemo(
+export function RatingDeltaByOpponentCard({
+  data,
+  isLoading,
+}: RatingDeltaByOpponentCardProps) {
+  const navigate = useNavigate();
+  const topData = useMemo(() => data.slice(0, 5), [data]);
+  const currentCharacterId = useBattleFiltersStore(
+    (state) => state.currentCharacterId,
+  );
+
+  const handleRowClick = useCallback(
+    (opponentId: string) => {
+      if (!currentCharacterId) return;
+      navigate({
+        to: ROUTES.user.battlePanel.playerVsPlayer(
+          currentCharacterId,
+          opponentId,
+        ),
+      });
+    },
+    [currentCharacterId, navigate],
+  );
+
+  const columns: ColumnDef<RatingDeltaByOpponentRecord>[] = useMemo(
     () => [
       {
         id: "avatar",
@@ -98,51 +107,66 @@ export function HeadToHeadTable({ data, isLoading }: HeadToHeadTableProps) {
         ),
       },
       {
-        accessorKey: "winRate",
-        header: () => <div className="text-center">Win %</div>,
-        cell: ({ row }) => (
-          <div className="text-center">
-            <span
-              className={
-                row.original.winRate >= 50
-                  ? "text-green-600 font-medium"
-                  : "text-red-600 font-medium"
-              }
-            >
-              {row.original.winRate.toFixed(1)}%
-            </span>
-          </div>
-        ),
+        accessorKey: "totalRatingDelta",
+        header: () => <div className="text-center">Σ Rating</div>,
+        cell: ({ row }) => {
+          const delta = row.original.totalRatingDelta;
+          const sign = delta >= 0 ? "+" : "";
+          return (
+            <div className="text-center">
+              <span
+                className={
+                  delta >= 0
+                    ? "text-green-600 font-medium"
+                    : "text-red-600 font-medium"
+                }
+              >
+                {sign}
+                {delta}
+              </span>
+            </div>
+          );
+        },
       },
       {
-        accessorKey: "lastBattleDate",
-        header: () => <div className="text-right">Ostatnia walka</div>,
-        cell: ({ row }) => (
-          <div className="text-right text-sm text-muted-foreground">
-            {formatDistanceToNow(new Date(row.original.lastBattleDate), {
-              addSuffix: true,
-              locale: pl,
-            })}
-          </div>
-        ),
+        accessorKey: "avgRatingDelta",
+        header: () => <div className="text-center">Śr. Rating</div>,
+        cell: ({ row }) => {
+          const delta = row.original.avgRatingDelta;
+          const sign = delta >= 0 ? "+" : "";
+          return (
+            <div className="text-center">
+              <span
+                className={
+                  delta >= 0
+                    ? "text-green-600 font-medium"
+                    : "text-red-600 font-medium"
+                }
+              >
+                {sign}
+                {delta.toFixed(2)}
+              </span>
+            </div>
+          );
+        },
       },
     ],
     [],
   );
 
   const table = useReactTable({
-    data,
+    data: topData,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
   return (
     <StatCard
-      title="Bilans bezpośrednich starć"
-      description="Historia walk z konkretnymi przeciwnikami (top 5)"
+      title="Bilans walk w Otchłani"
+      description="Największe zmiany ratingu według przeciwników (top 5)"
       isLoading={isLoading}
       isEmpty={data.length === 0}
-      emptyMessage="Brak danych o walkach"
+      emptyMessage="Brak danych o walkach w Otchłani"
       className="flex flex-col"
     >
       <div className="min-h-72 flex flex-col flex-1">
@@ -166,7 +190,11 @@ export function HeadToHeadTable({ data, isLoading }: HeadToHeadTableProps) {
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  onClick={() => handleRowClick(row.original.opponentId)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -182,8 +210,8 @@ export function HeadToHeadTable({ data, isLoading }: HeadToHeadTableProps) {
         </div>
         <div className="flex justify-end pt-4 mt-auto">
           <Button asChild variant="outline" size="sm">
-            <Link to={ROUTES.user.battlePanel.h2h}>
-              Zobacz cały bilans
+            <Link to={ROUTES.user.battlePanel.matchmakingH2h}>
+              Zobacz pełny bilans Otchłani
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

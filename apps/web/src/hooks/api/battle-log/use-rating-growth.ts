@@ -1,34 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
 import { battlelogApiClient } from "@/lib/api-client/api-client";
 
-interface PhGrowthDataPoint {
+interface RatingGrowthDataPoint {
   date: string;
-  ph: number;
-  cumulativePh: number;
+  ratingDelta: number;
+  rating: number;
   battleId: string;
 }
 
-interface UsePhGrowthParams {
+interface UseRatingGrowthParams {
   characterId?: string;
   world?: string;
   period?: string;
   minLevel?: number;
   maxLevel?: number;
-  ph?: boolean;
-  matchmaking?: boolean;
 }
 
-export function usePhGrowth(params: UsePhGrowthParams) {
+export function useRatingGrowth(params: UseRatingGrowthParams) {
   return useQuery({
-    queryKey: ["ph-growth", params],
+    queryKey: ["rating-growth", params],
     queryFn: async () => {
       const response = await battlelogApiClient.get(
-        "/battles/@me/statistics/ph-growth",
+        "/battles/@me/statistics/rating-growth",
         {
           params,
         },
       );
-      return response.data as PhGrowthDataPoint[];
+      return response.data as RatingGrowthDataPoint[];
     },
     staleTime: 0,
   });
