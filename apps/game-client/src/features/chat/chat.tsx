@@ -44,12 +44,12 @@ export const Chat = () => {
   const { data: guildMembers } = useGuildMembers(selectedGuildId);
 
   useEffect(() => {
-    setTimeout(() => {
+    queueMicrotask(() => {
       scrollAreaRef.current?.scrollTo({
         top: scrollAreaRef.current.scrollHeight + 2000,
         behavior: "instant",
       });
-    }, 50);
+    });
   }, [selectedGuildId]);
 
   useEffect(() => {
@@ -62,17 +62,22 @@ export const Chat = () => {
           const oldLen = prevCache[channel]?.length ?? 0;
           if (newLen > oldLen) {
             if (selected === channel || selected === "all") {
-              const viewport = scrollAreaRef.current;
-              if (!viewport) return;
+              queueMicrotask(() => {
+                const viewport = scrollAreaRef.current;
+                if (!viewport) return;
 
-              const scrollPosition = viewport.scrollTop + viewport.clientHeight;
-              const scrollHeight = viewport.scrollHeight;
-              if (Math.abs(scrollHeight - scrollPosition) <= 21.25) {
-                viewport.scrollTo({
-                  top: scrollHeight,
-                  behavior: "smooth",
-                });
-              }
+                const scrollPosition =
+                  viewport.scrollTop + viewport.clientHeight;
+                const scrollHeight = viewport.scrollHeight;
+                if (Math.abs(scrollHeight - scrollPosition) <= 21.25) {
+                  requestAnimationFrame(() => {
+                    viewport.scrollTo({
+                      top: scrollHeight + 2000,
+                      behavior: "smooth",
+                    });
+                  });
+                }
+              });
             }
             break;
           }
