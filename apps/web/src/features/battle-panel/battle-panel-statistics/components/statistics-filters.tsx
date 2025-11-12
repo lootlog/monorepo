@@ -7,10 +7,14 @@ interface StatisticsFiltersProps {
   period: Period;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
+  onPhChange: (ph: boolean) => void;
+  onMatchmakingChange: (matchmaking: boolean) => void;
 }
 
 export function StatisticsFilters({
@@ -18,10 +22,14 @@ export function StatisticsFilters({
   period,
   minLevel,
   maxLevel,
+  ph,
+  matchmaking,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
   onMaxLevelChange,
+  onPhChange,
+  onMatchmakingChange,
 }: StatisticsFiltersProps) {
   return (
     <div className="sticky top-0 z-10 bg-background border-b p-4">
@@ -31,10 +39,14 @@ export function StatisticsFilters({
           period={period}
           minLevel={minLevel}
           maxLevel={maxLevel}
+          ph={ph}
+          matchmaking={matchmaking}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}
           onMaxLevelChange={onMaxLevelChange}
+          onPhChange={onPhChange}
+          onMatchmakingChange={onMatchmakingChange}
         />
       </div>
 
@@ -44,10 +56,14 @@ export function StatisticsFilters({
           period={period}
           minLevel={minLevel}
           maxLevel={maxLevel}
+          ph={ph}
+          matchmaking={matchmaking}
           onCharacterChange={onCharacterChange}
           onPeriodChange={onPeriodChange}
           onMinLevelChange={onMinLevelChange}
           onMaxLevelChange={onMaxLevelChange}
+          onPhChange={onPhChange}
+          onMatchmakingChange={onMatchmakingChange}
         />
       </div>
     </div>

@@ -391,6 +391,10 @@ export class BattlesService implements IBattlesService {
       andConditions.push({ warriors: { some: phFilter } });
     }
 
+    if (query.matchmaking === true) {
+      where.matchmaking = true;
+    }
+
     if (query.search) {
       andConditions.push({
         warriors: {

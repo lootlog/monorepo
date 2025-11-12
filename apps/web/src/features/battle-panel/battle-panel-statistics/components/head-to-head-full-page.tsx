@@ -25,11 +25,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
+import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import { HeadToHeadFilters } from "./head-to-head-filters";
 import { headToHeadColumns } from "./head-to-head-columns";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
 
@@ -50,6 +52,12 @@ export function HeadToHeadFullPage() {
   const maxLevel = useBattleFiltersStore(
     (state) => state.getFilters(state.currentCharacterId).maxLevel,
   );
+  const ph = useBattleFiltersStore(
+    (state) => state.getFilters(state.currentCharacterId).ph,
+  );
+  const matchmaking = useBattleFiltersStore(
+    (state) => state.getFilters(state.currentCharacterId).matchmaking,
+  );
 
   const [period, setPeriod] = useState<Period>(filterPeriod || "30d");
   const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
@@ -67,7 +75,7 @@ export function HeadToHeadFullPage() {
 
   useEffect(() => {
     setCursor(undefined);
-  }, [minLevel, maxLevel]);
+  }, [minLevel, maxLevel, ph, matchmaking]);
 
   const { data, isLoading } = useHeadToHead({
     cursor,
@@ -79,6 +87,8 @@ export function HeadToHeadFullPage() {
     search: selectedWarriors[0]?.name,
     minLevel,
     maxLevel,
+    ph,
+    matchmaking,
     includeTotal: true,
   });
 
@@ -138,6 +148,20 @@ export function HeadToHeadFullPage() {
     setCursor(undefined);
   }, []);
 
+  const handlePhChange = useCallback((value: boolean) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore.getState().updateFilters(currentId, { ph: value });
+    setCursor(undefined);
+  }, []);
+
+  const handleMatchmakingChange = useCallback((value: boolean) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { matchmaking: value });
+    setCursor(undefined);
+  }, []);
+
   const table = useReactTable({
     data: data?.records || [],
     columns: headToHeadColumns,
@@ -167,15 +191,19 @@ export function HeadToHeadFullPage() {
         period={period}
         minLevel={minLevel}
         maxLevel={maxLevel}
+        ph={ph}
+        matchmaking={matchmaking}
         selectedWarriors={selectedWarriors}
         onCharacterChange={handleCharacterChange}
         onPeriodChange={handlePeriodChange}
         onMinLevelChange={handleMinLevelChange}
         onMaxLevelChange={handleMaxLevelChange}
+        onPhChange={handlePhChange}
+        onMatchmakingChange={handleMatchmakingChange}
         onWarriorToggle={handleWarriorToggle}
       />
 
-      <div className="flex-1 overflow-auto min-h-0">
+      <ScrollArea className={cn("max-w-full flex-1 w-full")}>
         {isLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 p-16 h-full">
             <Spinner className="size-8" />
@@ -219,13 +247,13 @@ export function HeadToHeadFullPage() {
             </TableBody>
           </Table>
         )}
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground">
-          {data?.pagination?.total && (
-            <span>Łącznie rekordów: {data.pagination.total}</span>
-          )}
+        <div className="text-sm text-muted-foreground whitespace-nowrap">
+          Łącznie:&nbsp;
+          {data?.pagination?.total && <span>{data.pagination.total}</span>}
         </div>
         <Pagination>
           <PaginationContent>

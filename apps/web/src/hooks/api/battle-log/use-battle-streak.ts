@@ -18,6 +18,8 @@ interface UseBattleStreakParams {
   period?: string;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
 }
 
 export function useBattleStreak(params: UseBattleStreakParams) {

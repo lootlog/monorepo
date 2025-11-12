@@ -91,6 +91,11 @@ export class QueryBattlesDto {
   ph?: boolean; // Filter battles with honor points
 
   @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  matchmaking?: boolean; // Filter matchmaking battles (Otchłań)
+
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)

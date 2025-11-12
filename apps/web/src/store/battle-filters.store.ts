@@ -20,6 +20,7 @@ export interface BattleFilters {
   search?: string;
   result?: Array<"won" | "lost" | "flee">;
   ph?: boolean;
+  matchmaking?: boolean;
 }
 
 interface BattleFiltersState {

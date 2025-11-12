@@ -20,6 +20,8 @@ interface UseBattleDurationParams {
   period?: string;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
 }
 
 export function useBattleDuration(params: UseBattleDurationParams) {
