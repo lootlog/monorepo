@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -41,90 +42,93 @@ interface HeadToHeadTableProps {
 }
 
 export function HeadToHeadTable({ data, isLoading }: HeadToHeadTableProps) {
-  const columns: ColumnDef<HeadToHeadRecord>[] = [
-    {
-      id: "avatar",
-      header: "",
-      cell: ({ row }) => (
-        <PlayerTile
-          player={{
-            name: row.original.opponentName,
-            lvl: row.original.opponentLvl,
-            prof: row.original.opponentProf,
-            icon: row.original.opponentIcon,
-          }}
-          className="scale-75"
-        />
-      ),
-    },
-    {
-      accessorKey: "opponentName",
-      header: "Nazwa",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.opponentName}</span>
-      ),
-    },
-    {
-      accessorKey: "opponentLvl",
-      header: () => <div className="text-center">Poziom</div>,
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.opponentLvl}</div>
-      ),
-    },
-    {
-      accessorKey: "opponentProf",
-      header: () => <div className="text-center">Profesja</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          {getProfessionName(row.original.opponentProf)}
-        </div>
-      ),
-    },
-    {
-      id: "record",
-      header: () => <div className="text-center">W - L</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span className="text-green-600 font-medium">
-            {row.original.wins}
-          </span>
-          &nbsp;-&nbsp;
-          <span className="text-red-600 font-medium">
-            {row.original.losses}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "winRate",
-      header: () => <div className="text-center">Win %</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          <span
-            className={
-              row.original.winRate >= 50
-                ? "text-green-600 font-medium"
-                : "text-red-600 font-medium"
-            }
-          >
-            {row.original.winRate.toFixed(1)}%
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "lastBattleDate",
-      header: () => <div className="text-right">Ostatnia walka</div>,
-      cell: ({ row }) => (
-        <div className="text-right text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(row.original.lastBattleDate), {
-            addSuffix: true,
-            locale: pl,
-          })}
-        </div>
-      ),
-    },
-  ];
+  const columns: ColumnDef<HeadToHeadRecord>[] = useMemo(
+    () => [
+      {
+        id: "avatar",
+        header: "",
+        cell: ({ row }) => (
+          <PlayerTile
+            player={{
+              name: row.original.opponentName,
+              lvl: row.original.opponentLvl,
+              prof: row.original.opponentProf,
+              icon: row.original.opponentIcon,
+            }}
+            className="scale-75"
+          />
+        ),
+      },
+      {
+        accessorKey: "opponentName",
+        header: "Nazwa",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.opponentName}</span>
+        ),
+      },
+      {
+        accessorKey: "opponentLvl",
+        header: () => <div className="text-center">Poziom</div>,
+        cell: ({ row }) => (
+          <div className="text-center">{row.original.opponentLvl}</div>
+        ),
+      },
+      {
+        accessorKey: "opponentProf",
+        header: () => <div className="text-center">Profesja</div>,
+        cell: ({ row }) => (
+          <div className="text-center">
+            {getProfessionName(row.original.opponentProf)}
+          </div>
+        ),
+      },
+      {
+        id: "record",
+        header: () => <div className="text-center">W - L</div>,
+        cell: ({ row }) => (
+          <div className="text-center">
+            <span className="text-green-600 font-medium">
+              {row.original.wins}
+            </span>
+            &nbsp;-&nbsp;
+            <span className="text-red-600 font-medium">
+              {row.original.losses}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "winRate",
+        header: () => <div className="text-center">Win %</div>,
+        cell: ({ row }) => (
+          <div className="text-center">
+            <span
+              className={
+                row.original.winRate >= 50
+                  ? "text-green-600 font-medium"
+                  : "text-red-600 font-medium"
+              }
+            >
+              {row.original.winRate.toFixed(1)}%
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "lastBattleDate",
+        header: () => <div className="text-right">Ostatnia walka</div>,
+        cell: ({ row }) => (
+          <div className="text-right text-sm text-muted-foreground">
+            {formatDistanceToNow(new Date(row.original.lastBattleDate), {
+              addSuffix: true,
+              locale: pl,
+            })}
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   const table = useReactTable({
     data,
