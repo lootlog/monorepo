@@ -47,6 +47,8 @@ export interface UseHeadToHeadParams {
   minBattles?: number;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
 }
 
 export function useHeadToHead(params?: UseHeadToHeadParams) {
@@ -77,6 +79,8 @@ export function useHeadToHead(params?: UseHeadToHeadParams) {
         searchParams.append("minLevel", params.minLevel.toString());
       if (params?.maxLevel)
         searchParams.append("maxLevel", params.maxLevel.toString());
+      if (params?.ph) searchParams.append("ph", "true");
+      if (params?.matchmaking) searchParams.append("matchmaking", "true");
 
       return client.get<GetHeadToHeadResponse>(
         `/battles/@me/statistics/head-to-head?${searchParams.toString()}`,

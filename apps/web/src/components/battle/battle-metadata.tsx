@@ -11,6 +11,7 @@ import {
   Clock,
   Earth,
   Lock,
+  Swords,
   Unlock,
   Users,
 } from "lucide-react";
@@ -140,6 +141,19 @@ export const BattleMetadata: FC<BattleMetadataProps> = ({
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8}>
               <p>Walka przerwana przez ucieczkę</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {battle.matchmaking && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 cursor-help whitespace-nowrap text-purple-500">
+                <Swords size={14} /> Otchłań
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={8}>
+              <p>Walka z systemu matchmakingu (Otchłań)</p>
             </TooltipContent>
           </Tooltip>
         )}

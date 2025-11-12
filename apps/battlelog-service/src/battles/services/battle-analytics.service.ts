@@ -34,7 +34,9 @@ export class BattleAnalyticsService {
     totalPH: number;
   }> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -88,9 +90,13 @@ export class BattleAnalyticsService {
       type: '1v1',
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -161,7 +167,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<ProfessionWinRateDto[]> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -182,9 +190,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -292,9 +304,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -485,7 +501,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<StreakDto> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -509,9 +527,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -606,7 +628,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<BattleDurationStatsDto> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -632,9 +656,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -731,7 +759,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<PhGrowthDataPointDto[]> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -751,6 +781,9 @@ export class BattleAnalyticsService {
       type: '1v1',
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },

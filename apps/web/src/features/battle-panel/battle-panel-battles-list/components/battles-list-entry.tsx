@@ -15,6 +15,7 @@ export type BattlesListEntryProps = {
   onResultClick?: (result: "won" | "lost" | "flee") => void;
   onWorldClick?: (world: string) => void;
   onPhClick?: () => void;
+  onMatchmakingClick?: () => void;
 };
 
 export const BattlesListEntry: FC<BattlesListEntryProps> = ({
@@ -22,6 +23,7 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
   onResultClick,
   onWorldClick,
   onPhClick,
+  onMatchmakingClick,
 }) => {
   const attackingTeam = battle.warriors.filter((w) => w.team === 1);
   const defendingTeam = battle.warriors.filter((w) => w.team === 2);
@@ -67,6 +69,14 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
     }
   };
 
+  const handleMatchmakingClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onMatchmakingClick) {
+      onMatchmakingClick();
+    }
+  };
+
   const isWon = !battle.hasFlee && battle.winningTeam === userTeam?.team;
   const isLost = !battle.hasFlee && battle.winningTeam !== userTeam?.team;
 
@@ -78,10 +88,10 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
     >
       <div
         className={cn(
-          "bg-gradient-to-r from-green-400/10 via-transparent to-red-400/10 text-white relative border-b transition-all duration-300",
+          "text-white relative border-b transition-all duration-300",
           {
-            "hover:via-green-400/10": isWon || battle.hasFlee,
-            "hover:via-red-400/10": isLost,
+            "bg-green-400/10 hover:bg-green-400/15": isWon || battle.hasFlee,
+            "bg-red-400/10 hover:bg-red-400/15": isLost,
           },
         )}
       >
@@ -119,6 +129,15 @@ export const BattlesListEntry: FC<BattlesListEntryProps> = ({
                   className="text-xs cursor-pointer border-foreground/50 whitespace-nowrap"
                 >
                   Punkty Honoru
+                </Badge>
+              )}
+              {battle.matchmaking && (
+                <Badge
+                  onClick={handleMatchmakingClick}
+                  variant="outline"
+                  className="text-xs cursor-pointer border-purple-500/50 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 whitespace-nowrap"
+                >
+                  Otchłań
                 </Badge>
               )}
             </div>

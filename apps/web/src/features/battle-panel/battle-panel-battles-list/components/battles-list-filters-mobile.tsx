@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   Globe,
   Filter,
+  Swords,
 } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -71,6 +72,7 @@ type BattlesListFiltersMobileProps = {
   onResultChange: (value: "won" | "lost" | "flee") => void;
   onWarriorToggle: (warrior: Warrior) => void;
   onPhToggle: (checked: boolean) => void;
+  onMatchmakingToggle: (checked: boolean) => void;
   onWorldChange: (value: string) => void;
 };
 
@@ -93,6 +95,7 @@ export const BattlesListFiltersMobile = ({
   onResultChange,
   onWarriorToggle,
   onPhToggle,
+  onMatchmakingToggle,
   onWorldChange,
 }: BattlesListFiltersMobileProps) => {
   return (
@@ -364,6 +367,23 @@ export const BattlesListFiltersMobile = ({
               id="ph-checkbox-mobile"
               checked={filters.ph === true}
               onCheckedChange={onPhToggle}
+            />
+          </div>
+
+          <div className="flex items-center justify-between border rounded-md p-3">
+            <div className="flex items-center gap-2">
+              <Swords className="h-4 w-4" />
+              <Label
+                htmlFor="matchmaking-checkbox-mobile"
+                className="cursor-pointer"
+              >
+                Otchłań
+              </Label>
+            </div>
+            <Checkbox
+              id="matchmaking-checkbox-mobile"
+              checked={filters.matchmaking === true}
+              onCheckedChange={onMatchmakingToggle}
             />
           </div>
         </div>

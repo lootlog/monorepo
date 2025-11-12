@@ -50,6 +50,12 @@ export function BattlePanelStatistics() {
   const maxLevel = useBattleFiltersStore(
     (state) => state.getFilters(currentCharacterId).maxLevel ?? 500,
   );
+  const ph = useBattleFiltersStore(
+    (state) => state.getFilters(currentCharacterId).ph,
+  );
+  const matchmaking = useBattleFiltersStore(
+    (state) => state.getFilters(currentCharacterId).matchmaking,
+  );
 
   const { data: professionData, isLoading: isProfessionLoading } =
     useProfessionWinRate({
@@ -57,6 +63,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      ph,
+      matchmaking,
     });
 
   const { data: headToHeadData, isLoading: isHeadToHeadLoading } =
@@ -65,6 +73,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      ph,
+      matchmaking,
       size: 5,
     });
 
@@ -73,6 +83,8 @@ export function BattlePanelStatistics() {
     period,
     minLevel,
     maxLevel,
+    ph,
+    matchmaking,
   });
 
   const { data: durationData, isLoading: isDurationLoading } =
@@ -81,6 +93,8 @@ export function BattlePanelStatistics() {
       period,
       minLevel,
       maxLevel,
+      ph,
+      matchmaking,
     });
 
   const { data: phGrowthData, isLoading: isPhGrowthLoading } = usePhGrowth({
@@ -88,6 +102,8 @@ export function BattlePanelStatistics() {
     period,
     minLevel,
     maxLevel,
+    ph,
+    matchmaking,
   });
 
   const handleCharacterChange = (newCharacterId: string | undefined) => {
@@ -115,6 +131,18 @@ export function BattlePanelStatistics() {
       .updateFilters(currentId, { maxLevel: newMaxLevel ?? 500 });
   };
 
+  const handlePhChange = (newPh: boolean) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore.getState().updateFilters(currentId, { ph: newPh });
+  };
+
+  const handleMatchmakingChange = (newMatchmaking: boolean) => {
+    const currentId = useBattleFiltersStore.getState().currentCharacterId;
+    useBattleFiltersStore
+      .getState()
+      .updateFilters(currentId, { matchmaking: newMatchmaking });
+  };
+
   if (isLoadingCharacters) {
     return null;
   }
@@ -133,10 +161,14 @@ export function BattlePanelStatistics() {
         period={period}
         minLevel={minLevel}
         maxLevel={maxLevel}
+        ph={ph}
+        matchmaking={matchmaking}
         onCharacterChange={handleCharacterChange}
         onPeriodChange={handlePeriodChange}
         onMinLevelChange={handleMinLevelChange}
         onMaxLevelChange={handleMaxLevelChange}
+        onPhChange={handlePhChange}
+        onMatchmakingChange={handleMatchmakingChange}
       />
 
       <div className="p-4 space-y-6">

@@ -6,6 +6,7 @@ import {
   Check,
   ChevronsUpDown,
   Globe,
+  Swords,
 } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
@@ -55,6 +56,7 @@ type BattlesListFiltersDesktopProps = {
   onResultChange: (value: "won" | "lost" | "flee") => void;
   onWarriorToggle: (warrior: Warrior) => void;
   onPhToggle: (checked: boolean) => void;
+  onMatchmakingToggle: (checked: boolean) => void;
   onWorldChange: (value: string) => void;
   onMinLevelChange: (value: number | undefined) => void;
   onMaxLevelChange: (value: number | undefined) => void;
@@ -72,6 +74,7 @@ export const BattlesListFiltersDesktop = ({
   onResultChange,
   onWarriorToggle,
   onPhToggle,
+  onMatchmakingToggle,
   onWorldChange,
   onMinLevelChange,
   onMaxLevelChange,
@@ -191,13 +194,26 @@ export const BattlesListFiltersDesktop = ({
         />
       </div>
 
+      <div className="flex items-center gap-2 border rounded-md px-3 h-10">
+        <Swords className="h-4 w-4" />
+        <Label
+          htmlFor="matchmaking-checkbox"
+          className="cursor-pointer text-sm"
+        >
+          Otchłań
+        </Label>
+        <Checkbox
+          id="matchmaking-checkbox"
+          checked={filters.matchmaking === true}
+          onCheckedChange={onMatchmakingToggle}
+        />
+      </div>
+
       <LevelRangeFilter
         minLevel={filters.minLevel}
         maxLevel={filters.maxLevel}
         onMinLevelChange={onMinLevelChange}
         onMaxLevelChange={onMaxLevelChange}
-        minLevelId="min-level-battles"
-        maxLevelId="max-level-battles"
       />
     </div>
   );
