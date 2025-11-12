@@ -79,6 +79,32 @@ export class CreateBattleFightEventDto {
   w?: Record<string, CreateBattleFightEventWarriorDto>;
 }
 
+export class CreateBattleMatchSummaryDto {
+  @IsNumber()
+  difficulty_rank: number;
+
+  @IsNumber()
+  result: number;
+
+  @IsNumber()
+  rating_delta: number;
+
+  @IsNumber()
+  opponent_lvl: number;
+
+  @IsNumber()
+  opponent_oplvl: number;
+
+  @IsNumber()
+  opponent_rating: number;
+
+  @IsNumber()
+  rating: number;
+
+  @IsNumber()
+  status: number;
+}
+
 export class CreateBattleEventsDto {
   @IsOptional()
   @IsObject()
@@ -93,6 +119,12 @@ export class CreateBattleEventsDto {
 
   @IsNumber()
   ev: number;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => CreateBattleMatchSummaryDto)
+  match_summary?: CreateBattleMatchSummaryDto;
 }
 
 export class CreateBattleDto {

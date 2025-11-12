@@ -991,7 +991,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         .expect(403);
     });
 
-    it('should return empty result when missing query parameters', async () => {
+    it('should return 400 when missing required query parameters', async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -1017,23 +1017,19 @@ describe('Timers E2E Tests (Whitelist)', () => {
         },
       });
 
-      const response1 = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'Boss' })
         .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
         .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .expect(200);
+        .expect(400);
 
-      expect(response1.body).toHaveLength(0);
-
-      const response2 = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ world: 'test-world' })
         .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
         .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .expect(200);
-
-      expect(response2.body).toHaveLength(0);
+        .expect(400);
     });
 
     it('should perform case-insensitive search', async () => {

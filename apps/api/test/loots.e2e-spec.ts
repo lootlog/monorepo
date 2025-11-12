@@ -337,5 +337,86 @@ describe('Loots E2E Tests (Whitelist)', () => {
         .send(lootPayload)
         .expect(403);
     });
+
+    it('should handle 10 concurrent requests with distributed locking', async () => {
+      const guild1 = await prisma.guild.create({
+        data: TEST_GUILDS.GUILD_1,
+      });
+
+      const role = await prisma.role.create({
+        data: {
+          id: 'role-1',
+          guildId: guild1.id,
+          name: 'Member',
+          permissions: [Permission.LOOTLOG_WRITE],
+        },
+      });
+
+      await prisma.member.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          guildId: guild1.id,
+          name: 'Test Member',
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          roles: {
+            connect: { id: role.id },
+          },
+        },
+      });
+
+      await prisma.userCharactersLootlogSettings.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: '12345',
+          characterId: '1',
+          collectLootWhitelistGuildIds: [guild1.id],
+          addTimersWhitelistGuildIds: [],
+        },
+      });
+
+      await prisma.lootlogConfig.create({
+        data: {
+          id: guild1.id,
+          npcs: {
+            create: [
+              {
+                npcType: NpcType.ELITE2,
+                allowedRarities: [ItemRarity.UNIQUE],
+              },
+            ],
+          },
+        },
+      });
+
+      const lootPayload = createTestLootPayload();
+
+      const requests = Array(10)
+        .fill(null)
+        .map(() =>
+          request(app.getHttpServer())
+            .post('/loots')
+            .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+            .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+            .send(lootPayload),
+        );
+
+      const responses = await Promise.all(requests);
+
+      responses.forEach((response) => {
+        expect(response.status).toBe(201);
+        expect(response.body).toHaveProperty('id');
+      });
+
+      const allSameId = responses.every(
+        (r) => r.body.id === responses[0].body.id,
+      );
+      expect(allSameId).toBe(true);
+
+      const lootCount = await prisma.loot.count();
+      expect(lootCount).toBe(1);
+
+      const submissionsCount = await prisma.lootSubmission.count();
+      expect(submissionsCount).toBe(1);
+    });
   });
 });

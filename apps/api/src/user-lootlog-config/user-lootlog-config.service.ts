@@ -24,13 +24,21 @@ export class UserLootlogConfigService {
     return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:${accountId}`;
   }
 
+  private getLootlogCharacterConfigCacheKey(
+    discordId: string,
+    accountId: string,
+    characterId: string,
+  ): string {
+    return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:${accountId}:${characterId}`;
+  }
+
   async invalidateUserLootlogConfigCache(
     discordId: string,
     accountId?: string,
   ): Promise<void> {
     if (accountId) {
-      const cacheKey = this.getUserLootlogConfigCacheKey(discordId, accountId);
-      await this.redisService.del(cacheKey);
+      const pattern = `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:${accountId}:*`;
+      await this.redisService.deleteByPattern(pattern);
     } else {
       const pattern = `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:*`;
       await this.redisService.deleteByPattern(pattern);
@@ -39,12 +47,9 @@ export class UserLootlogConfigService {
 
   private async getUserGuildsWithWriteAccess(
     discordId: string,
-    userId: string,
   ): Promise<Set<string>> {
-    const guilds = await this.guildsService.getUserGuildsWithPermissions(
-      discordId,
-      userId,
-    );
+    const guilds =
+      await this.guildsService.getUserGuildsWithPermissions(discordId);
 
     const guildIdsWithWriteAccess = guilds
       .filter((guildData) => {
@@ -59,17 +64,13 @@ export class UserLootlogConfigService {
     return new Set(guildIdsWithWriteAccess);
   }
 
-  async getLootlogAccountConfig(
-    discordId: string,
-    accountId: string,
-    userId: string,
-  ) {
+  async getLootlogAccountConfig(discordId: string, accountId: string) {
     const cacheKey = this.getUserLootlogConfigCacheKey(discordId, accountId);
-    const cached = await this.redisService.get(cacheKey);
+    // const cached = await this.redisService.get(cacheKey);
 
-    if (cached) {
-      return JSON.parse(cached);
-    }
+    // if (cached) {
+    //   return JSON.parse(cached);
+    // }
 
     const accountConfig =
       await this.prisma.userCharactersLootlogSettings.findMany({
@@ -82,10 +83,8 @@ export class UserLootlogConfigService {
         },
       });
 
-    const userGuildsWithWriteAccess = await this.getUserGuildsWithWriteAccess(
-      discordId,
-      userId,
-    );
+    const userGuildsWithWriteAccess =
+      await this.getUserGuildsWithWriteAccess(discordId);
 
     const configsToUpdate: Array<{
       characterId: string;
@@ -162,6 +161,17 @@ export class UserLootlogConfigService {
     accountId: string,
     characterId: string,
   ) {
+    const cacheKey = this.getLootlogCharacterConfigCacheKey(
+      discordId,
+      accountId,
+      characterId,
+    );
+    // const cached = await this.redisService.get(cacheKey);
+
+    // if (cached) {
+    //   return JSON.parse(cached);
+    // }
+
     const characterConfig =
       await this.prisma.userCharactersLootlogSettings.findFirst({
         where: {
@@ -174,19 +184,24 @@ export class UserLootlogConfigService {
         },
       });
 
+    if (characterConfig) {
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(characterConfig),
+        USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS,
+      );
+    }
+
     return characterConfig;
   }
 
   async createOrUpdateLootlogCharacterConfig(
     discordId: string,
     accountId: string,
-    userId: string,
     data: CreateOrUpdateLootlogCharacterConfigDto,
   ) {
-    const userGuildsWithWriteAccess = await this.getUserGuildsWithWriteAccess(
-      discordId,
-      userId,
-    );
+    const userGuildsWithWriteAccess =
+      await this.getUserGuildsWithWriteAccess(discordId);
 
     const validLootGuildIds = data.lootGuildIds.filter((guildId) =>
       userGuildsWithWriteAccess.has(guildId),
