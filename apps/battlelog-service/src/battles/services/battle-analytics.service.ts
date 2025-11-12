@@ -351,6 +351,7 @@ export class BattleAnalyticsService {
         losses: number;
         lastBattleDate: Date;
         totalRatingDelta: number;
+        battlesWithRating: number;
       }
     >();
 
@@ -373,6 +374,7 @@ export class BattleAnalyticsService {
           losses: 0,
           lastBattleDate: battle.createdAt,
           totalRatingDelta: 0,
+          battlesWithRating: 0,
         };
 
         if (userWarrior.team === battle.winningTeam) {
@@ -383,6 +385,9 @@ export class BattleAnalyticsService {
 
         if (query.matchmaking && battle.ratingDelta !== null) {
           stats.totalRatingDelta += battle.ratingDelta;
+          if (battle.ratingDelta !== 0) {
+            stats.battlesWithRating++;
+          }
         }
 
         if (battle.createdAt > stats.lastBattleDate) {
@@ -411,8 +416,10 @@ export class BattleAnalyticsService {
             ? stats.totalRatingDelta
             : undefined,
           avgRatingDelta: query.matchmaking
-            ? totalBattles > 0
-              ? Math.round((stats.totalRatingDelta / totalBattles) * 100) / 100
+            ? stats.battlesWithRating > 0
+              ? Math.round(
+                  (stats.totalRatingDelta / stats.battlesWithRating) * 100,
+                ) / 100
               : 0
             : undefined,
         };
@@ -532,10 +539,10 @@ export class BattleAnalyticsService {
     const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
     const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
-    // const cachedResult = await this.redisService.get(cacheKey);
-    // if (cachedResult) {
-    //   return JSON.parse(cachedResult);
-    // }
+    const cachedResult = await this.redisService.get(cacheKey);
+    if (cachedResult) {
+      return JSON.parse(cachedResult);
+    }
 
     const characterIds = await this.getCharacterIds(userId, query);
 
@@ -1086,6 +1093,7 @@ export class BattleAnalyticsService {
         wins: number;
         losses: number;
         lastBattleDate: Date;
+        battlesWithRating: number;
       }
     >();
 
@@ -1108,9 +1116,13 @@ export class BattleAnalyticsService {
           wins: 0,
           losses: 0,
           lastBattleDate: battle.createdAt,
+          battlesWithRating: 0,
         };
 
         stats.totalRatingDelta += battle.ratingDelta;
+        if (battle.ratingDelta !== 0) {
+          stats.battlesWithRating++;
+        }
 
         if (userWarrior.team === battle.winningTeam) {
           stats.wins++;
@@ -1140,8 +1152,10 @@ export class BattleAnalyticsService {
           losses: stats.losses,
           totalBattles,
           avgRatingDelta:
-            totalBattles > 0
-              ? Math.round((stats.totalRatingDelta / totalBattles) * 100) / 100
+            stats.battlesWithRating > 0
+              ? Math.round(
+                  (stats.totalRatingDelta / stats.battlesWithRating) * 100,
+                ) / 100
               : 0,
           lastBattleDate: stats.lastBattleDate.toISOString(),
         };

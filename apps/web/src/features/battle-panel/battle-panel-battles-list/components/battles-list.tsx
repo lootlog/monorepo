@@ -175,7 +175,7 @@ export const BattlesList = ({
         battlesResponse?.pagination &&
         (battlesResponse.pagination.hasNext ||
           battlesResponse.pagination.hasPrev) && (
-          <div className="sticky h-14 bottom-0 bg-background border-t flex items-center justify-center px-4 relative">
+          <div className="sticky h-14 bottom-0 bg-background border-t flex items-center justify-center px-4 relative py-4">
             <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
               {battlesResponse.pagination.total && (
                 <span>Łącznie walk: {battlesResponse.pagination.total}</span>
