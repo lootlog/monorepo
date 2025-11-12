@@ -21,7 +21,7 @@ import { ROUTES } from "@/config/routes";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 
 export const GuildLayout: FC = () => {
-  const [timersOpen, setTimersOpen] = useState(true);
+  const [timersOpen, setTimersOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
