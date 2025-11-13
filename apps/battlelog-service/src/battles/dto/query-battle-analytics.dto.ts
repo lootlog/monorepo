@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsIn, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsIn,
+  IsInt,
+  Min,
+  IsBoolean,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class QueryBattleAnalyticsDto {
@@ -26,4 +33,14 @@ export class QueryBattleAnalyticsDto {
   @IsInt()
   @Min(1)
   maxLevel?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  ph?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  matchmaking?: boolean;
 }

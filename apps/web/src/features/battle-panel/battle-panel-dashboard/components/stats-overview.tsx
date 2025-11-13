@@ -166,7 +166,54 @@ export function StatsOverview() {
         </div>
       </div>
       <Separator />
-      <div className="p-4 space-y-4">
+      <div className="px-4 pb-4 space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex flex-col md:flex-row md:items-end gap-3 w-full md:w-auto flex-wrap">
+            <div className="space-y-1 w-full md:w-auto">
+              <Label className="text-xs invisible">Postać</Label>
+              <CharacterSelector
+                characterId={currentCharacterId}
+                onCharacterChange={setCurrentCharacterId}
+                allowAllCharacters
+                className="w-full md:w-[250px] h-10"
+              />
+            </div>
+
+            <div className="space-y-1 w-full md:w-auto">
+              <Label className="text-xs invisible">Okres</Label>
+              <PeriodSelector
+                value={selectedPeriod}
+                onValueChange={handlePeriodChange}
+                excludePeriods={["all"]}
+                width="w-full md:w-[220px]"
+              />
+            </div>
+
+            <div className="flex items-end gap-3">
+              <LevelRangeFilter
+                minLevel={minLevel}
+                maxLevel={maxLevel}
+                onMinLevelChange={(value) => {
+                  const currentId =
+                    useBattleFiltersStore.getState().currentCharacterId;
+                  useBattleFiltersStore
+                    .getState()
+                    .updateFilters(currentId, { minLevel: value ?? 1 });
+                }}
+                onMaxLevelChange={(value) => {
+                  const currentId =
+                    useBattleFiltersStore.getState().currentCharacterId;
+                  useBattleFiltersStore
+                    .getState()
+                    .updateFilters(currentId, { maxLevel: value ?? 500 });
+                }}
+                inputClassName="w-full md:w-[80px]"
+                containerClassName="flex-1 md:flex-none"
+              />
+            </div>
+          </div>
+        </div>
+        <Separator />
         {isLoadingAnalytics ? (
           <div className="flex items-center justify-center p-8">
             <Spinner />
@@ -214,55 +261,6 @@ export function StatsOverview() {
             })}
           </div>
         )}
-        <Separator />
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex flex-col md:flex-row md:items-end gap-3 w-full md:w-auto">
-            <div className="space-y-1 w-full md:w-auto">
-              <Label className="text-xs invisible">Postać</Label>
-              <CharacterSelector
-                characterId={currentCharacterId}
-                onCharacterChange={setCurrentCharacterId}
-                allowAllCharacters
-                className="w-full md:w-[250px] h-10"
-              />
-            </div>
-
-            <div className="space-y-1 w-full md:w-auto">
-              <Label className="text-xs invisible">Okres</Label>
-              <PeriodSelector
-                value={selectedPeriod}
-                onValueChange={handlePeriodChange}
-                excludePeriods={["all"]}
-                width="w-full md:w-[220px]"
-              />
-            </div>
-
-            <div className="flex items-end gap-3">
-              <LevelRangeFilter
-                minLevel={minLevel}
-                maxLevel={maxLevel}
-                onMinLevelChange={(value) => {
-                  const currentId =
-                    useBattleFiltersStore.getState().currentCharacterId;
-                  useBattleFiltersStore
-                    .getState()
-                    .updateFilters(currentId, { minLevel: value ?? 1 });
-                }}
-                onMaxLevelChange={(value) => {
-                  const currentId =
-                    useBattleFiltersStore.getState().currentCharacterId;
-                  useBattleFiltersStore
-                    .getState()
-                    .updateFilters(currentId, { maxLevel: value ?? 500 });
-                }}
-                minLevelId="min-level-overview"
-                maxLevelId="max-level-overview"
-                inputClassName="w-full md:w-[140px]"
-                containerClassName="flex-1 md:flex-none"
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,14 @@
-import { Filter, Calendar, TrendingUp, User } from "lucide-react";
+import {
+  Filter,
+  Calendar,
+  TrendingUp,
+  User,
+  Swords,
+  Award,
+} from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
+import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
   Drawer,
   DrawerClose,
@@ -27,11 +35,17 @@ type HeadToHeadFiltersMobileProps = {
   period: Period;
   minLevel?: number;
   maxLevel?: number;
+  ph?: boolean;
+  matchmaking?: boolean;
   selectedWarriors: Warrior[];
+  showPhFilter?: boolean;
+  showMatchmakingFilter?: boolean;
   onCharacterChange: (characterId: string | undefined) => void;
   onPeriodChange: (period: Period) => void;
   onMinLevelChange: (minLevel: number | undefined) => void;
   onMaxLevelChange: (maxLevel: number | undefined) => void;
+  onPhChange: (ph: boolean) => void;
+  onMatchmakingChange: (matchmaking: boolean) => void;
   onWarriorToggle: (warrior: Warrior) => void;
 };
 
@@ -47,11 +61,17 @@ export const HeadToHeadFiltersMobile = ({
   period,
   minLevel,
   maxLevel,
+  ph,
+  matchmaking,
   selectedWarriors,
+  showPhFilter = true,
+  showMatchmakingFilter = true,
   onCharacterChange,
   onPeriodChange,
   onMinLevelChange,
   onMaxLevelChange,
+  onPhChange,
+  onMatchmakingChange,
   onWarriorToggle,
 }: HeadToHeadFiltersMobileProps) => {
   const { data: characters = [] } = useBattleCharacters();
@@ -159,6 +179,46 @@ export const HeadToHeadFiltersMobile = ({
               </div>
             </div>
           </div>
+
+          {showPhFilter && (
+            <div className="flex items-center justify-between border rounded-md p-3">
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                <Label
+                  htmlFor="ph-filter-h2h-mobile"
+                  className="cursor-pointer"
+                >
+                  Punkty Honoru
+                </Label>
+              </div>
+              <Checkbox
+                id="ph-filter-h2h-mobile"
+                checked={ph === true}
+                onCheckedChange={(checked) => onPhChange(checked === true)}
+              />
+            </div>
+          )}
+
+          {showMatchmakingFilter && (
+            <div className="flex items-center justify-between border rounded-md p-3">
+              <div className="flex items-center gap-2">
+                <Swords className="h-4 w-4" />
+                <Label
+                  htmlFor="matchmaking-filter-h2h-mobile"
+                  className="cursor-pointer"
+                >
+                  Otchłań
+                </Label>
+              </div>
+              <Checkbox
+                id="matchmaking-filter-h2h-mobile"
+                checked={matchmaking === true}
+                onCheckedChange={(checked) =>
+                  onMatchmakingChange(checked === true)
+                }
+              />
+            </div>
+          )}
         </div>
         <div className="mt-6">
           <DrawerClose asChild>

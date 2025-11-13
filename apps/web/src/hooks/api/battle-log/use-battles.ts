@@ -101,6 +101,7 @@ export type Battle = {
   hasFlee: boolean;
   warriors: Warrior[];
   world: string;
+  matchmaking: boolean;
 };
 
 export type GetBattlesResponse = {
@@ -132,6 +133,7 @@ export type UseBattlesParams = {
   search?: string;
   result?: Array<"won" | "lost" | "flee">;
   ph?: boolean;
+  matchmaking?: boolean;
   characterId?: Array<string>;
   minLevel?: number;
   maxLevel?: number;
@@ -161,6 +163,7 @@ export const useBattles = (params?: UseBattlesParams) => {
         params.result.forEach((r) => searchParams.append("result", r));
       }
       if (params?.ph) searchParams.append("ph", "true");
+      if (params?.matchmaking) searchParams.append("matchmaking", "true");
       if (params?.characterId && params.characterId.length > 0) {
         params.characterId.forEach((id) =>
           searchParams.append("characterId", id),

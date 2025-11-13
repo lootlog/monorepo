@@ -74,7 +74,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
         )}
         <div className="flex flex-col">
           <span className="text-sm">{timer.npc.name}</span>
-          <span className="text-muted-foreground text-xs max-w-48 truncate">
+          <span className="text-muted-foreground text-xs max-w-42 truncate">
             Dodane przez: {timer.member.name}
           </span>
         </div>
