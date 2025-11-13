@@ -8,6 +8,9 @@ import type {
   StreakDto,
   BattleDurationStatsDto,
   PhGrowthDataPointDto,
+  RatingGrowthDataPointDto,
+  RatingDeltaByOpponentDto,
+  PlayerVsPlayerPaginatedResponseDto,
 } from 'src/battles/dto/battle-statistics-response.dto';
 import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
 import { RedisService } from 'src/shared/modules/redis/redis.service';
@@ -34,7 +37,9 @@ export class BattleAnalyticsService {
     totalPH: number;
   }> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -88,9 +93,13 @@ export class BattleAnalyticsService {
       type: '1v1',
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -161,7 +170,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<ProfessionWinRateDto[]> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -182,9 +193,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -292,9 +307,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -331,6 +350,8 @@ export class BattleAnalyticsService {
         wins: number;
         losses: number;
         lastBattleDate: Date;
+        totalRatingDelta: number;
+        battlesWithRating: number;
       }
     >();
 
@@ -352,12 +373,21 @@ export class BattleAnalyticsService {
           wins: 0,
           losses: 0,
           lastBattleDate: battle.createdAt,
+          totalRatingDelta: 0,
+          battlesWithRating: 0,
         };
 
         if (userWarrior.team === battle.winningTeam) {
           stats.wins++;
         } else if (userWarrior.team === battle.losingTeam) {
           stats.losses++;
+        }
+
+        if (query.matchmaking && battle.ratingDelta !== null) {
+          stats.totalRatingDelta += battle.ratingDelta;
+          if (battle.ratingDelta !== 0) {
+            stats.battlesWithRating++;
+          }
         }
 
         if (battle.createdAt > stats.lastBattleDate) {
@@ -368,10 +398,10 @@ export class BattleAnalyticsService {
       }
     }
 
-    let allRecords = Array.from(opponentStats.entries()).map(
+    const allRecords = Array.from(opponentStats.entries()).map(
       ([opponentId, stats]) => {
         const totalBattles = stats.wins + stats.losses;
-        return {
+        const baseRecord = {
           opponentId,
           opponentName: stats.name,
           opponentIcon: stats.icon,
@@ -382,26 +412,40 @@ export class BattleAnalyticsService {
           totalBattles,
           winRate: totalBattles > 0 ? (stats.wins / totalBattles) * 100 : 0,
           lastBattleDate: stats.lastBattleDate.toISOString(),
+          totalRatingDelta: query.matchmaking
+            ? stats.totalRatingDelta
+            : undefined,
+          avgRatingDelta: query.matchmaking
+            ? stats.battlesWithRating > 0
+              ? Math.round(
+                  (stats.totalRatingDelta / stats.battlesWithRating) * 100,
+                ) / 100
+              : 0
+            : undefined,
         };
+
+        return baseRecord;
       },
     );
 
+    let filteredRecords = allRecords;
+
     if (query.search) {
       const searchLower = query.search.toLowerCase();
-      allRecords = allRecords.filter((record) =>
+      filteredRecords = filteredRecords.filter((record) =>
         record.opponentName.toLowerCase().includes(searchLower),
       );
     }
 
     if (query.minBattles) {
-      allRecords = allRecords.filter(
+      filteredRecords = filteredRecords.filter(
         (record) => record.totalBattles >= query.minBattles!,
       );
     }
 
     const sortBy = query.sortBy || 'totalBattles';
     const sortOrder = query.sortOrder || 'desc';
-    allRecords.sort((a, b) => {
+    filteredRecords.sort((a, b) => {
       let compareResult = 0;
 
       switch (sortBy) {
@@ -422,12 +466,18 @@ export class BattleAnalyticsService {
             new Date(a.lastBattleDate).getTime() -
             new Date(b.lastBattleDate).getTime();
           break;
+        case 'totalRatingDelta':
+          compareResult = (a.totalRatingDelta ?? 0) - (b.totalRatingDelta ?? 0);
+          break;
+        case 'avgRatingDelta':
+          compareResult = (a.avgRatingDelta ?? 0) - (b.avgRatingDelta ?? 0);
+          break;
       }
 
       return sortOrder === 'desc' ? -compareResult : compareResult;
     });
 
-    const totalRecords = allRecords.length;
+    const totalRecords = filteredRecords.length;
 
     let startIndex = 0;
     if (query.cursor) {
@@ -446,7 +496,7 @@ export class BattleAnalyticsService {
 
     const size = query.size || 20;
     const endIndex = startIndex + size;
-    const paginatedRecords = allRecords.slice(startIndex, endIndex);
+    const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
 
     const hasNext = endIndex < totalRecords;
     const hasPrev = startIndex > 0;
@@ -485,7 +535,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<StreakDto> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -509,9 +561,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -551,6 +607,7 @@ export class BattleAnalyticsService {
     let longestLossStreak = 0;
     let tempWinStreak = 0;
     let tempLossStreak = 0;
+    let isCurrentStreakActive = true;
 
     for (const battle of filteredBattles) {
       const userWarrior = battle.warriors.find((w) =>
@@ -560,16 +617,18 @@ export class BattleAnalyticsService {
 
       const isWin = userWarrior.team === battle.winningTeam;
 
-      if (currentType === 'none') {
-        currentType = isWin ? 'wins' : 'losses';
-        currentStreak = 1;
-      } else if (
-        (currentType === 'wins' && isWin) ||
-        (currentType === 'losses' && !isWin)
-      ) {
-        currentStreak++;
-      } else {
-        break;
+      if (isCurrentStreakActive) {
+        if (currentType === 'none') {
+          currentType = isWin ? 'wins' : 'losses';
+          currentStreak = 1;
+        } else if (
+          (currentType === 'wins' && isWin) ||
+          (currentType === 'losses' && !isWin)
+        ) {
+          currentStreak++;
+        } else {
+          isCurrentStreakActive = false;
+        }
       }
 
       if (isWin) {
@@ -606,7 +665,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<BattleDurationStatsDto> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -632,9 +693,13 @@ export class BattleAnalyticsService {
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
+          ...(query.ph && { ph: { gt: 0 } }),
         },
       },
     };
@@ -731,7 +796,9 @@ export class BattleAnalyticsService {
     userId: string,
   ): Promise<PhGrowthDataPointDto[]> {
     const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const phFilter = query.ph ? 'ph' : 'all';
+    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
+    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -751,6 +818,9 @@ export class BattleAnalyticsService {
       type: '1v1',
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
+      ...(query.matchmaking !== undefined && {
+        matchmaking: query.matchmaking,
+      }),
       warriors: {
         some: {
           originalId: { in: characterIds },
@@ -878,6 +948,383 @@ export class BattleAnalyticsService {
 
     const days = periodMap[period];
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  }
+
+  async getRatingGrowthTimeSeries(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<RatingGrowthDataPointDto[]> {
+    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
+    const cacheKey = `statistics:rating-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+
+    const cachedResult = await this.redisService.get(cacheKey);
+    if (cachedResult) {
+      return JSON.parse(cachedResult);
+    }
+
+    const characterIds = await this.getCharacterIds(userId, query);
+
+    if (characterIds.length === 0) {
+      return [];
+    }
+
+    const startDate = this.getDateFilter(query.period);
+
+    const where: Prisma.BattleWhereInput = {
+      userId,
+      type: '1v1',
+      matchmaking: true,
+      rating: { not: null },
+      ratingDelta: { not: null },
+      ...(query.world && { world: query.world }),
+      ...(startDate && { createdAt: { gte: startDate } }),
+      warriors: {
+        some: {
+          originalId: { in: characterIds },
+        },
+      },
+    };
+
+    const battles = await this.prisma.battle.findMany({
+      where,
+      include: {
+        warriors: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    let filteredBattles = battles;
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
+      filteredBattles = battles.filter((battle) =>
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
+      );
+    }
+
+    const result: RatingGrowthDataPointDto[] = filteredBattles.map((battle) => {
+      return {
+        date: battle.createdAt.toISOString(),
+        ratingDelta: battle.ratingDelta ?? 0,
+        rating: battle.rating ?? 0,
+        battleId: battle.id,
+      };
+    });
+
+    await this.redisService.set(
+      cacheKey,
+      JSON.stringify(result),
+      this.ANALYTICS_CACHE_TTL,
+    );
+
+    return result;
+  }
+
+  async getRatingDeltaByOpponent(
+    query: QueryBattleStatisticsDto,
+    userId: string,
+  ): Promise<RatingDeltaByOpponentDto[]> {
+    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
+    const cacheKey = `statistics:rating-delta-by-opponent:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+
+    const cachedResult = await this.redisService.get(cacheKey);
+    if (cachedResult) {
+      return JSON.parse(cachedResult);
+    }
+
+    const characterIds = await this.getCharacterIds(userId, query);
+
+    if (characterIds.length === 0) {
+      return [];
+    }
+
+    const startDate = this.getDateFilter(query.period);
+
+    const where: Prisma.BattleWhereInput = {
+      userId,
+      type: '1v1',
+      matchmaking: true,
+      ratingDelta: { not: null },
+      hasFlee: false,
+      ...(query.world && { world: query.world }),
+      ...(startDate && { createdAt: { gte: startDate } }),
+      warriors: {
+        some: {
+          originalId: { in: characterIds },
+        },
+      },
+    };
+
+    const battles = await this.prisma.battle.findMany({
+      where,
+      include: {
+        warriors: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    let filteredBattles = battles;
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
+      filteredBattles = battles.filter((battle) =>
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
+      );
+    }
+
+    const opponentStats = new Map<
+      string,
+      {
+        name: string;
+        icon: string;
+        prof: string;
+        lvl: number;
+        totalRatingDelta: number;
+        wins: number;
+        losses: number;
+        lastBattleDate: Date;
+        battlesWithRating: number;
+      }
+    >();
+
+    for (const battle of filteredBattles) {
+      const userWarrior = battle.warriors.find((w) =>
+        characterIds.includes(w.originalId),
+      );
+      const opponentWarrior = battle.warriors.find(
+        (w) => !characterIds.includes(w.originalId),
+      );
+
+      if (userWarrior && opponentWarrior && battle.ratingDelta !== null) {
+        const opponentId = opponentWarrior.originalId;
+        const stats = opponentStats.get(opponentId) || {
+          name: opponentWarrior.name,
+          icon: opponentWarrior.icon,
+          prof: opponentWarrior.prof,
+          lvl: opponentWarrior.lvl,
+          totalRatingDelta: 0,
+          wins: 0,
+          losses: 0,
+          lastBattleDate: battle.createdAt,
+          battlesWithRating: 0,
+        };
+
+        stats.totalRatingDelta += battle.ratingDelta;
+        if (battle.ratingDelta !== 0) {
+          stats.battlesWithRating++;
+        }
+
+        if (userWarrior.team === battle.winningTeam) {
+          stats.wins++;
+        } else if (userWarrior.team === battle.losingTeam) {
+          stats.losses++;
+        }
+
+        if (battle.createdAt > stats.lastBattleDate) {
+          stats.lastBattleDate = battle.createdAt;
+        }
+
+        opponentStats.set(opponentId, stats);
+      }
+    }
+
+    const result = Array.from(opponentStats.entries())
+      .map(([opponentId, stats]) => {
+        const totalBattles = stats.wins + stats.losses;
+        return {
+          opponentId,
+          opponentName: stats.name,
+          opponentIcon: stats.icon,
+          opponentProf: stats.prof,
+          opponentLvl: stats.lvl,
+          totalRatingDelta: stats.totalRatingDelta,
+          wins: stats.wins,
+          losses: stats.losses,
+          totalBattles,
+          avgRatingDelta:
+            stats.battlesWithRating > 0
+              ? Math.round(
+                  (stats.totalRatingDelta / stats.battlesWithRating) * 100,
+                ) / 100
+              : 0,
+          lastBattleDate: stats.lastBattleDate.toISOString(),
+        };
+      })
+      .sort((a, b) => b.totalRatingDelta - a.totalRatingDelta);
+
+    await this.redisService.set(
+      cacheKey,
+      JSON.stringify(result),
+      this.ANALYTICS_CACHE_TTL,
+    );
+
+    return result;
+  }
+
+  async getPlayerVsPlayerBattles(
+    query: QueryBattleStatisticsDto & { opponentId: string },
+    userId: string,
+  ): Promise<PlayerVsPlayerPaginatedResponseDto> {
+    const startTime = Date.now();
+
+    const characterIds = await this.getCharacterIds(userId, {
+      characterId: query.characterId,
+      world: query.world,
+    });
+
+    if (characterIds.length === 0) {
+      return {
+        battles: [],
+        pagination: {
+          size: query.size || 20,
+          hasNext: false,
+          hasPrev: false,
+        },
+        meta: {
+          performance: {
+            queryTime: Date.now() - startTime,
+          },
+        },
+      };
+    }
+
+    const startDate = this.getDateFilter(query.period);
+
+    const where: Prisma.BattleWhereInput = {
+      userId,
+      type: '1v1',
+      matchmaking: true,
+      ...(query.world && { world: query.world }),
+      ...(startDate && { createdAt: { gte: startDate } }),
+      warriors: {
+        some: {
+          originalId: { in: characterIds },
+        },
+      },
+    };
+
+    const battles = await this.prisma.battle.findMany({
+      where,
+      include: {
+        warriors: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const filteredBattles = battles.filter((battle) => {
+      const hasOpponent = battle.warriors.some(
+        (w) => w.originalId === query.opponentId,
+      );
+      return hasOpponent;
+    });
+
+    let levelFilteredBattles = filteredBattles;
+    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
+      levelFilteredBattles = filteredBattles.filter((battle) =>
+        this.isOpponentLevelInRange(
+          battle,
+          characterIds,
+          query.minLevel,
+          query.maxLevel,
+        ),
+      );
+    }
+
+    const totalRecords = levelFilteredBattles.length;
+
+    let startIndex = 0;
+    if (query.cursor) {
+      try {
+        const decodedCursor = Buffer.from(query.cursor, 'base64').toString(
+          'utf-8',
+        );
+        const cursorIndex = Number.parseInt(decodedCursor, 10);
+        if (!Number.isNaN(cursorIndex) && cursorIndex >= 0) {
+          startIndex = cursorIndex;
+        }
+      } catch {
+        startIndex = 0;
+      }
+    }
+
+    const size = query.size || 20;
+    const endIndex = startIndex + size;
+    const paginatedBattles = levelFilteredBattles.slice(startIndex, endIndex);
+
+    const result = paginatedBattles.map((battle) => {
+      const userWarrior = battle.warriors.find((w) =>
+        characterIds.includes(w.originalId),
+      );
+      const opponentWarrior = battle.warriors.find(
+        (w) => w.originalId === query.opponentId,
+      );
+
+      return {
+        battleId: battle.id,
+        createdAt: battle.createdAt.toISOString(),
+        duration: battle.duration,
+        winner: battle.winner,
+        loser: battle.loser,
+        ratingDelta: battle.ratingDelta ?? 0,
+        userRating: battle.rating ?? 0,
+        opponentRating: battle.opponentRating ?? 0,
+        userWarrior: {
+          name: userWarrior?.name ?? '',
+          lvl: userWarrior?.lvl ?? 0,
+          prof: userWarrior?.prof ?? '',
+          icon: userWarrior?.icon ?? '',
+        },
+        opponentWarrior: {
+          name: opponentWarrior?.name ?? '',
+          lvl: opponentWarrior?.lvl ?? 0,
+          prof: opponentWarrior?.prof ?? '',
+          icon: opponentWarrior?.icon ?? '',
+        },
+      };
+    });
+
+    const hasNext = endIndex < totalRecords;
+    const hasPrev = startIndex > 0;
+    const nextCursor = hasNext
+      ? Buffer.from(endIndex.toString()).toString('base64')
+      : undefined;
+    const previousCursor = hasPrev
+      ? Buffer.from(Math.max(0, startIndex - size).toString()).toString(
+          'base64',
+        )
+      : undefined;
+
+    const queryTime = Date.now() - startTime;
+
+    return {
+      battles: result,
+      pagination: {
+        size,
+        hasNext,
+        hasPrev,
+        nextCursor,
+        previousCursor,
+        ...(query.includeTotal && { total: totalRecords }),
+      },
+      meta: {
+        performance: {
+          queryTime,
+          ...(query.includeTotal && { totalItems: totalRecords }),
+        },
+      },
+    };
   }
 
   private isOpponentLevelInRange(

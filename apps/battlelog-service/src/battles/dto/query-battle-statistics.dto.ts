@@ -46,9 +46,23 @@ export class QueryBattleStatisticsDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['wins', 'losses', 'totalBattles', 'winRate', 'lastBattleDate'])
-  sortBy?: 'wins' | 'losses' | 'totalBattles' | 'winRate' | 'lastBattleDate' =
-    'totalBattles';
+  @IsIn([
+    'wins',
+    'losses',
+    'totalBattles',
+    'winRate',
+    'lastBattleDate',
+    'totalRatingDelta',
+    'avgRatingDelta',
+  ])
+  sortBy?:
+    | 'wins'
+    | 'losses'
+    | 'totalBattles'
+    | 'winRate'
+    | 'lastBattleDate'
+    | 'totalRatingDelta'
+    | 'avgRatingDelta' = 'totalBattles';
 
   @IsOptional()
   @IsString()
@@ -69,4 +83,14 @@ export class QueryBattleStatisticsDto {
   @IsInt()
   @Min(1)
   minBattles?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  ph?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  matchmaking?: boolean;
 }

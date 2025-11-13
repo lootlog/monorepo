@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Input } from "@lootlog/ui/components/input";
-import { Label } from "@lootlog/ui/components/label";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -10,10 +9,8 @@ interface LevelRangeFilterProps {
   onMinLevelChange: (value: number | undefined) => void;
   onMaxLevelChange: (value: number | undefined) => void;
   debounceMs?: number;
-  minLevelLabel?: string;
-  maxLevelLabel?: string;
-  minLevelId?: string;
-  maxLevelId?: string;
+  minLevelPlaceholder?: string;
+  maxLevelPlaceholder?: string;
   inputClassName?: string;
   containerClassName?: string;
 }
@@ -24,10 +21,8 @@ export function LevelRangeFilter({
   onMinLevelChange,
   onMaxLevelChange,
   debounceMs = 500,
-  minLevelLabel = "Min. poziom przeciwnika",
-  maxLevelLabel = "Max. poziom przeciwnika",
-  minLevelId = "min-level",
-  maxLevelId = "max-level",
+  minLevelPlaceholder = "Min. poziom",
+  maxLevelPlaceholder = "Max. poziom",
   inputClassName,
   containerClassName,
 }: LevelRangeFilterProps) {
@@ -81,33 +76,27 @@ export function LevelRangeFilter({
 
   return (
     <>
-      <div className={cn("space-y-1", containerClassName)}>
-        <Label htmlFor={minLevelId} className="text-xs">
-          {minLevelLabel}
-        </Label>
+      <div className={containerClassName}>
         <Input
-          id={minLevelId}
           type="number"
           min="1"
           max="500"
+          placeholder={minLevelPlaceholder}
           value={localMinLevel ?? ""}
           onChange={(e) => handleMinLevelChange(e.target.value)}
-          className={cn("w-[140px] h-10", inputClassName)}
+          className={cn("w-[80px] h-10", inputClassName)}
         />
       </div>
 
-      <div className={cn("space-y-1", containerClassName)}>
-        <Label htmlFor={maxLevelId} className="text-xs">
-          {maxLevelLabel}
-        </Label>
+      <div className={containerClassName}>
         <Input
-          id={maxLevelId}
           type="number"
           min="1"
           max="500"
+          placeholder={maxLevelPlaceholder}
           value={localMaxLevel ?? ""}
           onChange={(e) => handleMaxLevelChange(e.target.value)}
-          className={cn("w-[140px] h-10", inputClassName)}
+          className={cn("w-[80px] h-10", inputClassName)}
         />
       </div>
     </>

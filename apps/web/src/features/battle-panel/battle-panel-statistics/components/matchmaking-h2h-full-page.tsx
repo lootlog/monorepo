@@ -30,12 +30,22 @@ import { useHeadToHead } from "@/hooks/api/battle-log/use-head-to-head";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import type { Warrior } from "@/hooks/api/battle-log/use-search-warriors";
 import { HeadToHeadFilters } from "./head-to-head-filters";
-import { headToHeadColumns } from "./head-to-head-columns";
+import { matchmakingH2HColumns } from "./matchmaking-h2h-columns";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useNavigate } from "@tanstack/react-router";
+import { ROUTES } from "@/config/routes";
 
-type SortBy = "wins" | "losses" | "totalBattles" | "winRate" | "lastBattleDate";
+type SortBy =
+  | "wins"
+  | "losses"
+  | "totalBattles"
+  | "winRate"
+  | "lastBattleDate"
+  | "totalRatingDelta"
+  | "avgRatingDelta";
 
-export function HeadToHeadFullPage() {
+export function MatchmakingH2HFullPage() {
+  const navigate = useNavigate();
   const currentCharacterId = useBattleFiltersStore(
     (state) => state.currentCharacterId,
   );
@@ -52,12 +62,6 @@ export function HeadToHeadFullPage() {
   const maxLevel = useBattleFiltersStore(
     (state) => state.getFilters(state.currentCharacterId).maxLevel,
   );
-  const ph = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).ph,
-  );
-  const matchmaking = useBattleFiltersStore(
-    (state) => state.getFilters(state.currentCharacterId).matchmaking,
-  );
 
   const [period, setPeriod] = useState<Period>(filterPeriod || "30d");
   const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
@@ -65,6 +69,16 @@ export function HeadToHeadFullPage() {
     { id: "totalBattles", desc: true },
   ]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
+
+  const handleRowClick = (opponentId: string) => {
+    if (!currentCharacterId) return;
+    navigate({
+      to: ROUTES.user.battlePanel.playerVsPlayer(
+        currentCharacterId,
+        opponentId,
+      ),
+    });
+  };
 
   const sortBy = (sorting[0]?.id || "totalBattles") as SortBy;
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
@@ -75,7 +89,7 @@ export function HeadToHeadFullPage() {
 
   useEffect(() => {
     setCursor(undefined);
-  }, [minLevel, maxLevel, ph, matchmaking]);
+  }, [minLevel, maxLevel]);
 
   const { data, isLoading } = useHeadToHead({
     cursor,
@@ -87,8 +101,7 @@ export function HeadToHeadFullPage() {
     search: selectedWarriors[0]?.name,
     minLevel,
     maxLevel,
-    ph,
-    matchmaking,
+    matchmaking: true,
     includeTotal: true,
   });
 
@@ -148,23 +161,9 @@ export function HeadToHeadFullPage() {
     setCursor(undefined);
   }, []);
 
-  const handlePhChange = useCallback((value: boolean) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore.getState().updateFilters(currentId, { ph: value });
-    setCursor(undefined);
-  }, []);
-
-  const handleMatchmakingChange = useCallback((value: boolean) => {
-    const currentId = useBattleFiltersStore.getState().currentCharacterId;
-    useBattleFiltersStore
-      .getState()
-      .updateFilters(currentId, { matchmaking: value });
-    setCursor(undefined);
-  }, []);
-
   const table = useReactTable({
     data: data?.records || [],
-    columns: headToHeadColumns,
+    columns: matchmakingH2HColumns,
     state: {
       sorting,
     },
@@ -180,9 +179,9 @@ export function HeadToHeadFullPage() {
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 pb-0 bg-background">
-        <h1 className="text-xl font-bold">Pełny bilans bezpośrednich starć</h1>
+        <h1 className="text-xl font-bold">Pełny bilans starć w Otchłani</h1>
         <p className="text-muted-foreground">
-          Kompletna historia walk z konkretnymi przeciwnikami
+          Kompletna historia walk rankingowych z konkretnymi przeciwnikami
         </p>
       </div>
 
@@ -191,15 +190,17 @@ export function HeadToHeadFullPage() {
         period={period}
         minLevel={minLevel}
         maxLevel={maxLevel}
-        ph={ph}
-        matchmaking={matchmaking}
+        ph={false}
+        matchmaking
         selectedWarriors={selectedWarriors}
+        showPhFilter={false}
+        showMatchmakingFilter={false}
         onCharacterChange={handleCharacterChange}
         onPeriodChange={handlePeriodChange}
         onMinLevelChange={handleMinLevelChange}
         onMaxLevelChange={handleMaxLevelChange}
-        onPhChange={handlePhChange}
-        onMatchmakingChange={handleMatchmakingChange}
+        onPhChange={() => {}}
+        onMatchmakingChange={() => {}}
         onWarriorToggle={handleWarriorToggle}
       />
 
@@ -238,7 +239,8 @@ export function HeadToHeadFullPage() {
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="bg-background/30 border-b border-border"
+                  className="bg-background/30 cursor-pointer hover:bg-muted/50 border-b border-border"
+                  onClick={() => handleRowClick(row.original.opponentId)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="whitespace-nowrap">

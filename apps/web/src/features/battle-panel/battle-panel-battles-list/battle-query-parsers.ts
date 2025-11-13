@@ -15,6 +15,7 @@ export const battleQueryParsers = {
     parseAsStringLiteral(["won", "lost", "flee"] as const),
   ),
   ph: parseAsBoolean,
+  matchmaking: parseAsBoolean,
   characterId: parseAsArrayOf(parseAsString),
   minLevel: parseAsInteger.withDefault(1),
   maxLevel: parseAsInteger.withDefault(500),
