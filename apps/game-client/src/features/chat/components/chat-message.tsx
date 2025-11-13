@@ -9,6 +9,7 @@ import type { FC } from "react";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
 
 export type ChatMessageProps = {
   message: ChatMessageType;
@@ -32,12 +33,19 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       const shortname = NPC_NAMES[npcType]?.shortname;
       const color = getTextColor(npcType, true);
 
+      let location = npc.location;
+
+      if (NPCS_WITH_LOCATION.includes(npcType)) {
+        location = `${location} (${npc.x}, ${npc.y})`;
+      }
+
       return (
         <span
           style={{ color }}
           className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
         >
-          [{shortname}] {npc.name} {npc.location ? `- ${npc.location}` : ""}
+          [{shortname}] {npc.name} ({npc.lvl}
+          {npc.prof ?? ""}) {location ? `- ${location}` : ""}
         </span>
       );
     }
