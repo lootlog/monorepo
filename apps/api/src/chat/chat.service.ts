@@ -1,5 +1,5 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
@@ -7,14 +7,27 @@ import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { v6 } from 'uuid';
+import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
+import { GuildsService } from 'src/guilds/guilds.service';
+import { Permission, Role } from 'generated/client';
+import { canViewChatMessage } from 'src/shared/utils/can-view-chat-message';
 
 const MAX_MESSAGES = 100;
+
+function parseMessage(message: unknown): SendMessageDto | null {
+  if (!message) return null;
+  if (typeof message === 'string') {
+    return JSON.parse(message);
+  }
+  return null;
+}
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly amqpConnection: AmqpConnection,
     private readonly redisService: RedisService,
+    private readonly guildsService: GuildsService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
@@ -28,8 +41,9 @@ export class ChatService {
       guildId,
       type: data.type,
       npc: data.npc,
+      characterData: data.characterData,
     };
-    const messages = await this.getMessages(guildId);
+    const messages = await this.getMessages(discordId, guildId);
     if (Array.isArray(messages) && messages.length >= MAX_MESSAGES) {
       messages.shift();
     }
@@ -41,16 +55,51 @@ export class ChatService {
     return msg;
   }
 
-  async getMessages(guildId: string) {
+  async getMessages(discordId: string, guildId: string) {
     const key = `guild:${guildId}:messages`;
     const messages = await this.redisService.get(key);
 
+    if (!messages) {
+      return [];
+    }
+
+    const guilds = await this.guildsService.getGuildsForRequiredPermissions(
+      discordId,
+      [Permission.LOOTLOG_CHAT_READ],
+    );
+
+    if (guilds.length === 0) return [];
+
+    const guildIds = guilds.map((guild) => guild.id);
+    const guildsWithPermissions =
+      await this.guildsService.getMultipleGuildsPermissions(
+        discordId,
+        guildIds,
+      );
+
+    const guild = guildsWithPermissions.find((g) => g.guild.id === guildId);
+
+    if (!guild) {
+      return [];
+    }
+
+    const permissions = guild?.permissions ?? [];
+    const roles = guild?.roles ?? [];
+
+    const isAdministrative = isAdministrativeUser(permissions);
+
     try {
-      if (!messages) {
-        return [];
+      const parsedMessages = JSON.parse(messages);
+
+      if (isAdministrative) {
+        return parsedMessages;
       }
 
-      return JSON.parse(messages);
+      return this.filterMessagesByPermissions(
+        parsedMessages,
+        isAdministrative,
+        roles,
+      );
     } catch (error) {
       this.logger.log({
         level: 'error',
@@ -60,6 +109,18 @@ export class ChatService {
       });
       return [];
     }
+  }
+
+  private filterMessagesByPermissions(
+    messages: any[],
+    administrativeUser: boolean,
+    roles: Role[],
+  ): any[] {
+    if (administrativeUser) return messages;
+    return messages.filter((xmessage) => {
+      const canView = canViewChatMessage(xmessage, roles);
+      return canView;
+    });
   }
 
   async clearMessages(guildId: string) {

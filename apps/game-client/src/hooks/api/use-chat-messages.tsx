@@ -2,7 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { API_URL } from "@/config/api";
 import { AxiosInstance } from "axios";
-import { ChatNpc, MessageType } from "./use-send-chat-message";
+import {
+  ChatCharacterData,
+  ChatNpc,
+  MessageType,
+} from "./use-send-chat-message";
 
 export type ChatMessage = {
   id: string;
@@ -11,6 +15,7 @@ export type ChatMessage = {
   senderId: string;
   timestamp: string;
   type: MessageType;
+  characterData: ChatCharacterData;
   npc?: ChatNpc;
 };
 

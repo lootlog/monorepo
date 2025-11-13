@@ -70,11 +70,16 @@ export class GatewayService {
           }
 
           if (data instanceof SendMessageDto) {
+            if (!data.characterData) {
+              this.logger.log(
+                `Missing character data for chat message in guild ${guildId} from user ${socket.data.discordId}`,
+              );
+              return;
+            }
             const canViewChat = canViewChatMessage(data, roles);
-
             if (!canViewChat) {
-              this.logger.debug(
-                `User ${socket.data.discordId} cannot view chat message ${data.message} in guild ${guildId}`,
+              this.logger.log(
+                `User ${socket.data.discordId} cannot view chat message ${JSON.stringify(data)} in guild ${guildId}`,
               );
               return;
             }
@@ -114,7 +119,7 @@ export class GatewayService {
     this.emitToEligibleSockets({
       guildId: data.guildId,
       event: GatewayEvent.TIMERS_CREATE,
-      data,
+      data: Object.assign(new CreateTimerDto(), data),
     });
   }
 
@@ -126,7 +131,7 @@ export class GatewayService {
     this.emitToEligibleSockets({
       guildId: data.guildId,
       event: GatewayEvent.CHAT_MESSAGE,
-      data,
+      data: Object.assign(new SendMessageDto(), data),
     });
   }
 
@@ -134,7 +139,7 @@ export class GatewayService {
     this.emitToEligibleSockets({
       guildId: data.guildId,
       event: GatewayEvent.NOTIFICATIONS_SEND,
-      data,
+      data: Object.assign(new SendNotificationDto(), data),
     });
   }
 

@@ -59,12 +59,28 @@ export const ChatInput = () => {
         guildIds: selectedInputGuildIds,
         message: data.message,
         type: MessageType.NOTIFICATION,
+        characterData: {
+          nick: Game.hero.nick,
+          id: Game.hero.id,
+          acc: Game.hero.account,
+          lvl: Game.hero.lvl,
+          prof: Game.hero.prof,
+          icon: Game.hero.icon,
+        },
       });
     } else {
       sendChatMessage({
         guildIds: selectedInputGuildIds,
         message: data.message,
         type: MessageType.NORMAL,
+        characterData: {
+          nick: Game.hero.nick,
+          id: Game.hero.id,
+          acc: Game.hero.account,
+          lvl: Game.hero.lvl,
+          prof: Game.hero.prof,
+          icon: Game.hero.icon,
+        },
       });
     }
 

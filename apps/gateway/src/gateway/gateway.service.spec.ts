@@ -308,6 +308,14 @@ describe('GatewayService', () => {
         x: 15,
         y: 15,
       };
+      messageDto.characterData = {
+        nick: 'SenderNick',
+        id: 123,
+        acc: 456,
+        lvl: 50,
+        prof: 'warrior',
+        icon: 'icon.png',
+      };
 
       const mockSocketWithPermissions = {
         ...mockSocket,

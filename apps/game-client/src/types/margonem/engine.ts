@@ -10,6 +10,9 @@ import { ChangePlayer } from "@/types/margonem/change-player";
 import { Others } from "@/types/margonem/others";
 import { WidgetManager } from "./widget-manager";
 import { ServerStorage } from "./server-storage";
+import { ShowEqManager } from "./showEq-manager";
+import { iframeWindowManager } from "./iframe-window-manager";
+import { ChatController } from "./chat-controller";
 
 export type Engine = {
   npcs: Npcs;
@@ -24,4 +27,7 @@ export type Engine = {
   others: Others;
   widgetManager: WidgetManager;
   serverStorage: ServerStorage;
+  showEqManager: ShowEqManager;
+  iframeWindowManager: iframeWindowManager;
+  chatController: ChatController;
 };

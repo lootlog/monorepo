@@ -92,6 +92,14 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         message: "",
         guildIds: settingsByNpcType.guildIds,
         type: MessageType.NPC,
+        characterData: {
+          nick: Game.hero.nick,
+          id: Game.hero.id,
+          acc: Game.hero.account,
+          lvl: Game.hero.lvl,
+          prof: Game.hero.prof,
+          icon: Game.hero.icon,
+        },
         npc: {
           x: npc.x,
           y: npc.y,

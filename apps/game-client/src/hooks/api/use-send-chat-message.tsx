@@ -8,6 +8,15 @@ export enum MessageType {
   NPC = "NPC",
 }
 
+export type ChatCharacterData = {
+  nick: string;
+  id: number;
+  acc: number;
+  lvl: number;
+  prof: string;
+  icon: string;
+};
+
 export type ChatNpc = {
   icon: string;
   id: number;
@@ -26,6 +35,7 @@ export type UseSendChatMessageOptions = {
   message: string;
   guildIds: string[];
   type: MessageType;
+  characterData: ChatCharacterData;
   npc?: ChatNpc;
 };
 
@@ -38,6 +48,7 @@ export const useSendChatMessage = () => {
       message,
       guildIds,
       type,
+      characterData,
       npc,
     }: UseSendChatMessageOptions) => {
       return Promise.all(
@@ -45,6 +56,7 @@ export const useSendChatMessage = () => {
           client.post(`/guilds/${guildId}/chat-messages`, {
             message,
             type,
+            characterData,
             npc,
           }),
         ),
