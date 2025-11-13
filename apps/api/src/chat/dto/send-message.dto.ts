@@ -1,11 +1,15 @@
 import {
   IsBoolean,
+  IsEnum,
   IsNotEmpty,
+  IsNumber,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { NpcDto } from 'src/loots/dto/create-loot.dto';
 
 export class SendMessageDto {
   @ApiProperty({
@@ -14,11 +18,17 @@ export class SendMessageDto {
     minLength: 1,
     maxLength: 128,
   })
-  @IsNotEmpty()
   @IsString()
-  @MinLength(1)
   @MaxLength(128)
   message: string;
-  @IsBoolean()
-  notification: boolean;
+  @IsNotEmpty()
+  type: MessageType;
+  @IsOptional()
+  npc?: NpcDto;
+}
+
+export enum MessageType {
+  NORMAL = 'NORMAL',
+  NOTIFICATION = 'NOTIFICATION',
+  NPC = 'NPC',
 }

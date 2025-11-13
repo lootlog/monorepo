@@ -9,9 +9,11 @@ import {
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { Separator } from "@radix-ui/react-select";
 import { XIcon } from "lucide-react";
-import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
+import {
+  MessageType,
+  useSendChatMessage,
+} from "@/hooks/api/use-send-chat-message";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
-import { composeNpcChatMessage } from "@/utils/chat/compose-npc-chat-message";
 import {
   getBackgroundColor,
   getGradient,
@@ -85,22 +87,24 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
       return;
     }
 
-    let location = "";
-
-    if (NPCS_WITH_LOCATION.includes(npcType)) {
-      location = `${npc.location} (${npc.x}, ${npc.y})`;
-    }
-
-    const chatMessage = composeNpcChatMessage(
-      npcType,
-      `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
-      location,
-    );
-
     sendChatMessage(
       {
-        message: chatMessage,
+        message: "",
         guildIds: settingsByNpcType.guildIds,
+        type: MessageType.NPC,
+        npc: {
+          x: npc.x,
+          y: npc.y,
+          icon: npc.icon,
+          id: npc.id,
+          name: npc.nick,
+          hpp: 0,
+          location: npc.location,
+          lvl: npc.lvl,
+          prof: npc.prof,
+          type: npc.type,
+          wt: npc.wt,
+        },
       },
       {
         onSuccess: () => {

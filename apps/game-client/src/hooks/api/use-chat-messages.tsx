@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { API_URL } from "@/config/api";
 import { AxiosInstance } from "axios";
+import { ChatNpc, MessageType } from "./use-send-chat-message";
 
 export type ChatMessage = {
   id: string;
@@ -9,7 +10,8 @@ export type ChatMessage = {
   message: string;
   senderId: string;
   timestamp: string;
-  notification: boolean;
+  type: MessageType;
+  npc?: ChatNpc;
 };
 
 export const QUERY_KEY = "guild-messages";

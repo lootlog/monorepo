@@ -18,6 +18,8 @@ describe('canViewNpcTimer', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     lootId: null,
+    x: 15,
+    y: 15,
   });
 
   const createRole = (
