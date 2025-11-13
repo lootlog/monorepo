@@ -26,7 +26,8 @@ export class ChatService {
       senderId: discordId,
       timestamp: new Date().toISOString(),
       guildId,
-      notification: data.notification,
+      type: data.type,
+      npc: data.npc,
     };
     const messages = await this.getMessages(guildId);
     if (Array.isArray(messages) && messages.length >= MAX_MESSAGES) {

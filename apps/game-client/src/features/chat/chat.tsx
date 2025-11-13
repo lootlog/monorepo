@@ -1,7 +1,10 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
-import { useChatMessages } from "@/hooks/api/use-chat-messages";
-import { useRef, useMemo, useEffect } from "react";
+import {
+  ChatMessage as ChatMessageType,
+  useChatMessages,
+} from "@/hooks/api/use-chat-messages";
+import { useRef, useMemo, useEffect, useState } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
@@ -10,9 +13,9 @@ import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { Game } from "@/lib/game";
 import { useChatCache } from "./hooks/use-chat-cache";
-import { ChatMessage } from "./components/chat-message";
 import { useChatStore } from "@/store/chat.store";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { ChatMessage } from "./components/chat-message";
 
 export const Chat = () => {
   const { isIntegratedMode } = useChatStore();
@@ -43,11 +46,31 @@ export const Chat = () => {
   const { data: messages } = useChatMessages(selectedGuildId);
   const { data: guildMembers } = useGuildMembers(selectedGuildId);
 
+  const isUserNearBottomRef = useRef(true);
+  const handleScroll = () => {
+    const viewport = scrollAreaRef.current;
+    if (!viewport) return;
+
+    const scrollPos = viewport.scrollTop + viewport.clientHeight;
+    const scrollHeight = viewport.scrollHeight;
+
+    isUserNearBottomRef.current = scrollHeight - scrollPos < 100;
+  };
+
   useEffect(() => {
-    queueMicrotask(() => {
-      scrollAreaRef.current?.scrollTo({
-        top: scrollAreaRef.current.scrollHeight + 2000,
-        behavior: "instant",
+    const viewport = scrollAreaRef.current;
+    if (!viewport) return;
+    viewport.addEventListener("scroll", handleScroll);
+    return () => viewport.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollAreaRef.current?.scrollTo({
+          top: scrollAreaRef.current.scrollHeight + 2000,
+          behavior: "instant",
+        });
       });
     });
   }, [selectedGuildId]);
@@ -62,22 +85,19 @@ export const Chat = () => {
           const oldLen = prevCache[channel]?.length ?? 0;
           if (newLen > oldLen) {
             if (selected === channel || selected === "all") {
-              queueMicrotask(() => {
+              if (isUserNearBottomRef.current) {
                 const viewport = scrollAreaRef.current;
                 if (!viewport) return;
 
-                const scrollPosition =
-                  viewport.scrollTop + viewport.clientHeight;
-                const scrollHeight = viewport.scrollHeight;
-                if (Math.abs(scrollHeight - scrollPosition) <= 21.25) {
+                requestAnimationFrame(() => {
                   requestAnimationFrame(() => {
                     viewport.scrollTo({
-                      top: scrollHeight + 2000,
+                      top: viewport.scrollHeight,
                       behavior: "smooth",
                     });
                   });
-                }
-              });
+                });
+              }
             }
             break;
           }
@@ -89,26 +109,34 @@ export const Chat = () => {
   }, []);
 
   const currentMessages = useMemo(() => {
+    let allMessages;
+
     if (selectedGuildId === "all") {
-      const allMessages = Object.values(messageCache)
+      allMessages = Object.values(messageCache)
         .flat()
         .filter((m) => !!m.timestamp);
-      const uniqueMessagesMap = new Map<string, (typeof allMessages)[0]>();
-      for (const msg of allMessages) {
-        const date = new Date(msg.timestamp);
-        const roundedTs = Math.floor(date.getTime() / 1000);
-        const key = `${msg.message}_${msg.senderId}_${roundedTs}`;
-        if (!uniqueMessagesMap.has(key)) {
-          uniqueMessagesMap.set(key, msg);
-        }
-      }
-      return Array.from(uniqueMessagesMap.values()).sort((a, b) => {
-        const timeA = new Date(a.timestamp).getTime();
-        const timeB = new Date(b.timestamp).getTime();
-        return timeA - timeB;
-      });
+    } else {
+      allMessages = (messageCache[selectedGuildId ?? ""] ?? [])
+        .flat()
+        .filter((m) => !!m.timestamp);
     }
-    return messageCache[selectedGuildId ?? ""] ?? [];
+
+    const unique: ChatMessageType[] = [];
+    for (const msg of allMessages) {
+      const ts = new Date(msg.timestamp).getTime();
+      const key = `${msg.message?.trim() ?? ""}_${msg.senderId}_${msg.npc?.id ?? ""}`;
+
+      const duplicate = unique.find(
+        (u) =>
+          `${u.message?.trim() ?? ""}_${u.senderId}_${u.npc?.id ?? ""}` ===
+            key && Math.abs(new Date(u.timestamp).getTime() - ts) <= 200,
+      );
+      if (!duplicate) unique.push(msg);
+    }
+    return unique.sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
   }, [selectedGuildId, messageCache]);
 
   const currentMembers = useMemo(() => {
@@ -148,6 +176,8 @@ export const Chat = () => {
         id="chat"
         title="Chat"
         onClose={() => setOpen("chat", false)}
+        minHeight={116}
+        minWidth={242}
       >
         <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
           <div className="ll:shrink-0 ll:pt-1 ll:pb-2">

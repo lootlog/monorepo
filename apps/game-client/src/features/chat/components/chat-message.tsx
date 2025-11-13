@@ -7,6 +7,8 @@ import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { format, isYesterday } from "date-fns";
 import type { FC } from "react";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
+import { MessageType } from "@/hooks/api/use-send-chat-message";
+import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 
 export type ChatMessageProps = {
   message: ChatMessageType;
@@ -22,33 +24,32 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
   const isMsgYesterday = isYesterday(msgDate) || isMsgYesterdayOrOlder;
 
   const renderChatMessage = (message: ChatMessageType) => {
-    const messageData = decomposeChatMessage(message.message);
+    if (message.type === MessageType.NPC) {
+      const npc = message.npc;
+      if (!npc) return null;
+      const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
 
-    if (messageData.npc) {
-      const shortname = NPC_NAMES[messageData.npc.npcType]?.shortname;
-      const color = getTextColor(messageData.npc.npcType, true);
+      const shortname = NPC_NAMES[npcType]?.shortname;
+      const color = getTextColor(npcType, true);
 
       return (
         <span
           style={{ color }}
           className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
         >
-          [{shortname}] {messageData.npc.npcName}{" "}
-          {messageData.npc.npcLocation
-            ? `- ${messageData.npc.npcLocation}`
-            : ""}
+          [{shortname}] {npc.name} {npc.location ? `- ${npc.location}` : ""}
         </span>
       );
     }
 
-    if (message.notification) {
+    if (message.type === MessageType.NOTIFICATION) {
       const color = getTextColor("message", true);
       return (
         <span
           className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
           style={{ color }}
         >
-          [P] {messageData.baseMessage}
+          [P] {message.message}
         </span>
       );
     }
@@ -57,7 +58,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       <span
         className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
       >
-        {messageData.baseMessage}
+        {message.message}
       </span>
     );
   };
@@ -66,10 +67,10 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
 
   return (
     <div
-      key={message.id}
-      className="ll:text-white ll:text-xs ll:whitespace-pre-wrap ll:wrap-break-word ll:w-[calc(100%-1rem)] ll:select-text ll:cursor-text"
+      key={`${message.id}-${message.guildId}`}
+      className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text"
     >
-      <span className="ll:inline-block ll:whitespace-nowrap ll:select-text">
+      <span className="ll:inline-block ll:select-text">
         <span
           className={cn("ll:text-[11px] ll:select-text", {
             "ll:opacity-50": isMsgYesterday,
@@ -86,7 +87,13 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
           {member?.name || "Nieznany"}:
         </span>
       </span>{" "}
-      <span className="ll:wrap-break-word ll:select-text">
+      <span
+        className="ll:whitespace-pre-wrap ll:select-text"
+        style={{
+          overflowWrap: "anywhere",
+          wordBreak: "normal",
+        }}
+      >
         {renderChatMessage(message)}
       </span>
     </div>

@@ -1,10 +1,9 @@
-import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
-import { composeNpcChatMessage } from "@/utils/chat/compose-npc-chat-message";
-import type { NpcLocation } from "./types";
-import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
+import {
+  MessageType,
+  useSendChatMessage,
+} from "@/hooks/api/use-send-chat-message";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { useWindowsStore } from "@/store/windows.store";
-import type { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 import type { GameNpcWithLocation } from "@/store/npc-detector.store";
 
@@ -14,24 +13,25 @@ export const useMessagingHandlers = () => {
 
   const { setOpen } = useWindowsStore();
 
-  const handleSendMessage = (
-    npcType: NpcType,
-    baseMessage: string,
-    npcLocation: NpcLocation,
-    guildIds: string[],
-  ) => {
-    let location = "";
-
-    if (NPCS_WITH_LOCATION.includes(npcType)) {
-      location = `${npcLocation.name} (${npcLocation.x}, ${npcLocation.y})`;
-    }
-
-    const chatMessage = composeNpcChatMessage(npcType, baseMessage, location);
-
+  const handleSendMessage = (guildIds: string[], npc: GameNpcWithLocation) => {
     sendChatMessage(
       {
-        message: chatMessage,
+        message: "",
         guildIds,
+        type: MessageType.NPC,
+        npc: {
+          x: npc.x,
+          y: npc.y,
+          icon: npc.icon,
+          id: npc.id,
+          name: npc.nick,
+          lvl: npc.lvl,
+          prof: npc.prof,
+          type: npc.type,
+          hpp: 0,
+          location: npc.location,
+          wt: npc.wt,
+        },
       },
       {
         onSuccess: () => {

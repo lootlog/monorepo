@@ -2,7 +2,10 @@ import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { useWindowsStore } from "@/store/windows.store";
 import { Game } from "@/lib/game";
-import { useSendChatMessage } from "@/hooks/api/use-send-chat-message";
+import {
+  MessageType,
+  useSendChatMessage,
+} from "@/hooks/api/use-send-chat-message";
 import { useCreateNotification } from "@/hooks/api/use-create-notification";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -55,13 +58,13 @@ export const ChatInput = () => {
       sendChatMessage({
         guildIds: selectedInputGuildIds,
         message: data.message,
-        notification: true,
+        type: MessageType.NOTIFICATION,
       });
     } else {
       sendChatMessage({
         guildIds: selectedInputGuildIds,
         message: data.message,
-        notification: false,
+        type: MessageType.NORMAL,
       });
     }
 

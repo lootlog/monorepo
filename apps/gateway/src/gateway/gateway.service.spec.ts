@@ -3,10 +3,10 @@ import { GatewayService } from './gateway.service';
 import { Gateway } from './gateway';
 import { RedisService } from '../lib/redis/redis.service';
 import { GuildsService } from '../guilds/guilds.service';
-import type { CreateTimerDto } from './dto/create-timer.dto';
+import { CreateTimerDto } from './dto/create-timer.dto';
 import type { DeleteTimerDto } from './dto/delete-timer.dto';
-import type { SendMessageDto } from './dto/send-message.dto';
-import type { SendNotificationDto } from './dto/send-notification.dto';
+import { MessageType, SendMessageDto } from './dto/send-message.dto';
+import { SendNotificationDto } from './dto/send-notification.dto';
 import type { RefreshJobUpdateDto } from './dto/refresh-job-update.dto';
 import { NpcType } from './enums/npc-type.enum';
 import { GatewayEvent } from './enums/gateway-event.enum';
@@ -50,6 +50,11 @@ describe('GatewayService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    // Re-initialize mock return values after clearAllMocks
+    mockServer.to.mockReturnThis();
+    mockServer.in.mockReturnThis();
+    mockServer.emit.mockReturnThis();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GatewayService,
@@ -71,6 +76,11 @@ describe('GatewayService', () => {
     service = module.get<GatewayService>(GatewayService);
   });
 
+  // Helper function to wait for all promises
+  async function flushPromises() {
+    return new Promise((resolve) => setImmediate(resolve));
+  }
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -89,16 +99,17 @@ describe('GatewayService', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       lootId: null,
+      x: 15,
+      y: 15,
     };
 
-    const timerDto: CreateTimerDto = {
-      guildId: 'guild-123',
-      world: 'test-world',
-      minSpawnTime: 1000,
-      maxSpawnTime: 2000,
-      npc: npcData,
-      location: 'test-location',
-    };
+    const timerDto = new CreateTimerDto();
+    timerDto.guildId = 'guild-123';
+    timerDto.world = 'test-world';
+    timerDto.minSpawnTime = 1000;
+    timerDto.maxSpawnTime = 2000;
+    timerDto.npc = npcData;
+    timerDto.location = 'test-location';
 
     it('should emit timer update to eligible sockets with TITAN permissions', async () => {
       const mockSocketWithPermissions = {
@@ -107,7 +118,7 @@ describe('GatewayService', () => {
           discordId: 'discord-123',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_READ_TIMERS_TITANS],
@@ -125,6 +136,7 @@ describe('GatewayService', () => {
 
       await service.handleGuildsTimerUpdate(timerDto);
 
+      // Wait for async promise chain to complete
       expect(mockServer.in).toHaveBeenCalledWith('guild-123');
       expect(mockServer.fetchSockets).toHaveBeenCalled();
       expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
@@ -140,7 +152,7 @@ describe('GatewayService', () => {
           discordId: 'discord-123',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_READ],
@@ -158,6 +170,7 @@ describe('GatewayService', () => {
 
       await service.handleGuildsTimerUpdate(timerDto);
 
+      // Wait for async promise chain to complete
       expect(mockSocketWithoutPermissions.emit).not.toHaveBeenCalled();
     });
 
@@ -168,7 +181,7 @@ describe('GatewayService', () => {
           discordId: 'discord-admin',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
                   permissions: [Permission.ADMIN],
@@ -186,6 +199,7 @@ describe('GatewayService', () => {
 
       await service.handleGuildsTimerUpdate(timerDto);
 
+      // Wait for async promise chain to complete
       expect(mockAdminSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.TIMERS_CREATE,
         timerDto,
@@ -199,7 +213,7 @@ describe('GatewayService', () => {
           discordId: 'discord-123',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_READ_TIMERS_TITANS],
@@ -217,6 +231,7 @@ describe('GatewayService', () => {
 
       await service.handleGuildsTimerUpdate(timerDto);
 
+      // Wait for async promise chain to complete
       expect(mockSocketWrongLevel.emit).not.toHaveBeenCalled();
     });
 
@@ -227,7 +242,7 @@ describe('GatewayService', () => {
           discordId: 'discord-123',
           guilds: [
             {
-              guild: { id: 'guild-456' },
+              guild: { id: 'guild-456', ownerId: 'different-user' },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_READ_TIMERS_TITANS],
@@ -245,6 +260,7 @@ describe('GatewayService', () => {
 
       await service.handleGuildsTimerUpdate(timerDto);
 
+      // Wait for async promise chain to complete
       expect(mockSocketWrongGuild.emit).not.toHaveBeenCalled();
     });
   });
@@ -268,19 +284,60 @@ describe('GatewayService', () => {
   });
 
   describe('handleGuildMessageSend', () => {
-    it('should emit chat message to guild room', async () => {
-      const messageDto: SendMessageDto = {
-        id: 'message-123',
-        guildId: 'guild-123',
-        message: 'Test message',
-        senderId: 'sender-123',
-        timestamp: new Date().toISOString(),
+    it('should emit chat message to eligible sockets', async () => {
+      const messageDto = new SendMessageDto();
+      messageDto.id = 'message-123';
+      messageDto.guildId = 'guild-123';
+      messageDto.message = 'Test message';
+      messageDto.senderId = 'sender-123';
+      messageDto.timestamp = new Date().toISOString();
+      messageDto.type = MessageType.NORMAL;
+      messageDto.npc = {
+        id: 1,
+        name: 'Hero NPC',
+        lvl: 200,
+        prof: 'mage',
+        type: NpcType.HERO,
+        margonemType: '2',
+        location: 'hero-location',
+        wt: '2000',
+        icon: 'hero.png',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lootId: null,
+        x: 15,
+        y: 15,
       };
+
+      const mockSocketWithPermissions = {
+        ...mockSocket,
+        data: {
+          discordId: 'discord-123',
+          guilds: [
+            {
+              guild: { id: 'guild-123', ownerId: 'different-user' },
+              roles: [
+                {
+                  permissions: [Permission.LOOTLOG_READ],
+                  lvlRangeFrom: 1,
+                  lvlRangeTo: 999,
+                },
+              ],
+            },
+          ],
+        },
+        emit: jest.fn(),
+      };
+
+      mockServer.in.mockReturnValue(mockServer);
+      mockServer.fetchSockets.mockResolvedValue([mockSocketWithPermissions]);
 
       await service.handleGuildMessageSend(messageDto);
 
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123');
-      expect(mockServer.emit).toHaveBeenCalledWith(
+      await flushPromises();
+
+      expect(mockServer.in).toHaveBeenCalledWith('guild-123');
+      expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
         messageDto,
       );
@@ -302,12 +359,13 @@ describe('GatewayService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         lootId: null,
+        x: 15,
+        y: 15,
       };
 
-      const notificationDto: SendNotificationDto = {
-        guildId: 'guild-123',
-        npc: npcData,
-      };
+      const notificationDto = new SendNotificationDto();
+      notificationDto.guildId = 'guild-123';
+      notificationDto.npc = npcData;
 
       const mockSocketWithHeroPerms = {
         ...mockSocket,
@@ -315,7 +373,7 @@ describe('GatewayService', () => {
           discordId: 'discord-123',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_READ_TIMERS_HEROES],
@@ -332,6 +390,8 @@ describe('GatewayService', () => {
       mockServer.fetchSockets.mockResolvedValue([mockSocketWithHeroPerms]);
 
       await service.handleGuildNotificationSend(notificationDto);
+
+      await flushPromises();
 
       expect(mockSocketWithHeroPerms.emit).toHaveBeenCalledWith(
         GatewayEvent.NOTIFICATIONS_SEND,
@@ -367,7 +427,7 @@ describe('GatewayService', () => {
           discordId: 'discord-owner',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'discord-owner' },
               roles: [
                 {
                   permissions: [Permission.OWNER],
@@ -387,7 +447,7 @@ describe('GatewayService', () => {
           discordId: 'discord-regular',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'discord-owner' },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_READ],
@@ -408,6 +468,7 @@ describe('GatewayService', () => {
 
       await service.handleMembersRefreshJobUpdate(refreshDto);
 
+      expect(mockServer.in).toHaveBeenCalledWith('guild-123');
       expect(mockOwnerSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
         refreshDto,
@@ -431,7 +492,7 @@ describe('GatewayService', () => {
           discordId: 'discord-admin',
           guilds: [
             {
-              guild: { id: 'guild-123' },
+              guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
                   permissions: [Permission.ADMIN],
@@ -449,6 +510,7 @@ describe('GatewayService', () => {
 
       await service.handleMembersRefreshJobUpdate(refreshDto);
 
+      expect(mockServer.in).toHaveBeenCalledWith('guild-123');
       expect(mockAdminSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
         refreshDto,
