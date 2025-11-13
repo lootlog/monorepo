@@ -23,6 +23,8 @@ export class SendMessageDto {
   message: string;
   @IsNotEmpty()
   type: MessageType;
+  @IsNotEmpty()
+  characterData: ChatCharacterData;
   @IsOptional()
   npc?: NpcDto;
 }
@@ -32,3 +34,12 @@ export enum MessageType {
   NOTIFICATION = 'NOTIFICATION',
   NPC = 'NPC',
 }
+
+export type ChatCharacterData = {
+  nick: string;
+  id: number;
+  acc: number;
+  lvl: number;
+  prof: string;
+  icon: string;
+};
