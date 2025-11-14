@@ -199,11 +199,7 @@ describe("Timers Component", () => {
 
       render(<Timers />);
 
-      expect(useTimersSocket).toHaveBeenCalledWith(
-        expect.objectContaining({ id: "socket-1" }),
-        true,
-        "world1",
-      );
+      expect(useTimersSocket).toHaveBeenCalledWith("world1");
     });
 
     it("2.2 should handle socket disconnection (HIGH PRIORITY)", async () => {

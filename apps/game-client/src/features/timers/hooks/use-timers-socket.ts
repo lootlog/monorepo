@@ -1,50 +1,43 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
-import type { Socket } from "socket.io-client";
 import type { Timer } from "@/hooks/api/use-timers";
 import { GatewayEvent } from "@/config/gateway";
+import { useGateway } from "@/hooks/gateway/use-gateway";
 
-export const useTimersSocket = (
-  socket: Socket | null,
-  connected: boolean | undefined,
-  desiredWorld: string | undefined,
-) => {
+export const useTimersSocket = (world: string | undefined) => {
+  const { socket, connected, joinedGuilds, joined } = useGateway();
   const queryClient = useQueryClient();
-  const desiredWorldRef = useRef<string | undefined>(desiredWorld);
-
-  useEffect(() => {
-    desiredWorldRef.current = desiredWorld;
-  }, [desiredWorld]);
+  const [isListenersActive, setIsListenersActive] = useState(false);
 
   const handleTimerMessage = useCallback(
     (data: Timer) => {
+      if (!data.world) return;
+
       queryClient.setQueryData(
-        ["guild-timers", desiredWorldRef.current],
-        (old: AxiosResponse<Timer[]>) => {
-          if (data.world !== desiredWorldRef.current) {
-            return old;
-          }
+        ["guild-timers", data.world],
+        (old?: AxiosResponse<Timer[]>) => {
+          const previous = old?.data ?? [];
+          const updated = [...previous];
 
-          const updated = [...(old?.data || [])];
+          const index = updated.findIndex(
+            (t) =>
+              t.npcId === data.npcId &&
+              t.guildId === data.guildId &&
+              t.world === data.world,
+          );
 
-          let timerIndex = -1;
-
-          if (timerIndex === -1) {
-            timerIndex = updated.findIndex(
-              (t) =>
-                t.npcId === data.npcId &&
-                t.guildId === data.guildId &&
-                t.world === data.world,
-            );
-          }
-
-          if (timerIndex !== -1) {
-            updated[timerIndex] = { ...data, isPending: false };
+          if (index !== -1) {
+            updated[index] = { ...data, isPending: false };
           } else {
             updated.push({ ...data, isPending: false });
           }
-          return { data: updated };
+
+          if (old) {
+            return { ...old, data: updated };
+          }
+
+          return { data: updated } as AxiosResponse<Timer[]>;
         },
       );
     },
@@ -53,24 +46,23 @@ export const useTimersSocket = (
 
   const handleTimerRemove = useCallback(
     (data: Timer) => {
+      if (!data.world) return;
+
       queryClient.setQueryData(
-        ["guild-timers", desiredWorldRef.current],
-        (old: AxiosResponse<Timer[]>) => {
-          if (data.world !== desiredWorldRef.current) {
-            return old;
-          }
+        ["guild-timers", data.world],
+        (old?: AxiosResponse<Timer[]>) => {
+          if (!old) return old;
 
-          const filtered =
-            old?.data.filter(
-              (t) =>
-                !(
-                  t.npcId === data.npcId &&
-                  t.world === data.world &&
-                  t.guildId === data.guildId
-                ),
-            ) || [];
+          const filtered = old.data.filter(
+            (t) =>
+              !(
+                t.npcId === data.npcId &&
+                t.world === data.world &&
+                t.guildId === data.guildId
+              ),
+          );
 
-          return { data: filtered };
+          return { ...old, data: filtered };
         },
       );
     },
@@ -78,16 +70,25 @@ export const useTimersSocket = (
   );
 
   useEffect(() => {
-    if (!connected) {
+    if (!connected || !joined || !socket || !world) {
+      setIsListenersActive(false);
       return;
     }
 
-    socket?.on(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
-    socket?.on(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+    socket.on(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
+    socket.on(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+    setIsListenersActive(true);
 
     return () => {
-      socket?.off(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
-      socket?.off(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+      socket.off(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
+      socket.off(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+      setIsListenersActive(false);
     };
-  }, [connected, socket, handleTimerMessage, handleTimerRemove]);
+  }, [connected, joined, socket, world, handleTimerMessage, handleTimerRemove]);
+
+  return {
+    isListenersActive:
+      connected && isListenersActive && joinedGuilds && joinedGuilds.length > 0,
+    joinedGuilds,
+  };
 };

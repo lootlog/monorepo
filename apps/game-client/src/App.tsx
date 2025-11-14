@@ -28,6 +28,7 @@ const queryClient = new QueryClient({
       gcTime: QUERY_CLIENT_CACHE_TIME_MS,
       staleTime: 0,
       refetchOnMount: "always",
+      refetchOnWindowFocus: false,
     },
   },
 });

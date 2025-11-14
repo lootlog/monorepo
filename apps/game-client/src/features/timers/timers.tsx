@@ -2,7 +2,6 @@ import { useState } from "react";
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { useTimers } from "@/hooks/api/use-timers";
-import { useGateway } from "@/hooks/gateway/use-gateway";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
@@ -56,9 +55,9 @@ export const Timers = () => {
 
   const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
   const guildId = guildIdByCharId[characterId];
-  const desiredWorld = generalConfig.timersGrouping
-    ? defaultWorld
-    : world || defaultWorld;
+  const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
+
+  useTimersSocket(desiredWorld);
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
@@ -66,7 +65,6 @@ export const Timers = () => {
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
   const { data: timers } = useTimers({ world: desiredWorld });
-  const { socket, connected } = useGateway();
 
   const rawTimers = timers ?? [];
 
@@ -101,8 +99,6 @@ export const Timers = () => {
     activeTimers,
     generalConfig.removeTimerAfterMs,
   );
-
-  useTimersSocket(socket ?? null, connected ?? false, desiredWorld ?? "");
 
   const areFiltersActive = checkFiltersActive(
     timerFiltersSearchText ?? "",
