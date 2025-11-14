@@ -17,7 +17,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         {
           "ll:!cursor-not-allowed": props.disabled,
         },
-        className
+        className,
       )}
       {...props}
     />

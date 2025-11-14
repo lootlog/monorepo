@@ -38,8 +38,11 @@ export class ChatController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async getChatMessages(@GuildData() guild: Guild) {
-    return this.chatService.getMessages(guild.id);
+  async getChatMessages(
+    @DiscordId() discordId: string,
+    @GuildData() guild: Guild,
+  ) {
+    return this.chatService.getMessages(discordId, guild.id);
   }
 
   @Permissions(Permission.LOOTLOG_CHAT_WRITE)

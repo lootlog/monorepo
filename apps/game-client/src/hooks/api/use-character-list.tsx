@@ -20,7 +20,7 @@ export type MargonemCharacter = {
   lvl: number;
   nick: string;
   prof: string;
-  world: string;
+  world?: string;
 };
 
 export const useCharacterList = () => {

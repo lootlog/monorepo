@@ -14,6 +14,7 @@ export type WindowId =
   | "settings"
   | "timers"
   | "chat"
+  | "chat-input"
   | "online-players"
   | "add-timer"
   | "npc-detector"
@@ -48,6 +49,7 @@ interface WindowsState {
   settings: WindowData;
   timers: WindowData;
   chat: WindowData;
+  "chat-input": WindowData;
   "online-players": WindowData;
   "add-timer": WindowData;
   "npc-detector": WindowData & { state: NpcDetectorWindowState };
@@ -93,6 +95,14 @@ export const useWindowsStore = create<WindowsState>()(
         open: true,
         position: DEFAULT_POSITION,
         size: DEFAULT_SIZE,
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+        autofocus: false,
+      },
+      "chat-input": {
+        open: true,
+        position: DEFAULT_POSITION,
+        size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
         autofocus: false,
@@ -214,6 +224,7 @@ export const useWindowsStore = create<WindowsState>()(
         settings: state.settings,
         timers: state.timers,
         chat: state.chat,
+        "chat-input": state["chat-input"],
         "online-players": state["online-players"],
         "add-timer": state["add-timer"],
         "npc-detector": state["npc-detector"],

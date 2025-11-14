@@ -2,18 +2,36 @@ import { NPC_NAMES } from "@/constants/margonem";
 import type { ChatMessage as ChatMessageType } from "@/hooks/api/use-chat-messages";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { cn } from "@/lib/utils";
-import { decomposeChatMessage } from "@/utils/chat/decompose-chat-message";
 import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { format, isYesterday } from "date-fns";
 import type { FC } from "react";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
+import { MessageType } from "@/hooks/api/use-send-chat-message";
+import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Game } from "@/lib/game";
+import { useGuilds } from "@/hooks/api/use-guilds";
+import { CharacterTile } from "@/components/character-tile";
 
 export type ChatMessageProps = {
+  all: boolean;
   message: ChatMessageType;
   member?: GuildMember;
 };
 
-export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
+export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
+  const { data: guilds } = useGuilds();
   const memberColor = useMemberColor(member);
   const msgDate = new Date(message.timestamp);
   const now = new Date();
@@ -22,33 +40,39 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
   const isMsgYesterday = isYesterday(msgDate) || isMsgYesterdayOrOlder;
 
   const renderChatMessage = (message: ChatMessageType) => {
-    const messageData = decomposeChatMessage(message.message);
+    if (message.type === MessageType.NPC) {
+      const npc = message.npc;
+      if (!npc) return null;
+      const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
 
-    if (messageData.npc) {
-      const shortname = NPC_NAMES[messageData.npc.npcType]?.shortname;
-      const color = getTextColor(messageData.npc.npcType, true);
+      const shortname = NPC_NAMES[npcType]?.shortname;
+      const color = getTextColor(npcType, true);
+
+      let location = npc.location;
+
+      if (NPCS_WITH_LOCATION.includes(npcType)) {
+        location = `${location} (${npc.x}, ${npc.y})`;
+      }
 
       return (
         <span
           style={{ color }}
           className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
         >
-          [{shortname}] {messageData.npc.npcName}{" "}
-          {messageData.npc.npcLocation
-            ? `- ${messageData.npc.npcLocation}`
-            : ""}
+          [{shortname}] {npc.name} ({npc.lvl}
+          {npc.prof ?? ""}) {location ? `- ${location}` : ""}
         </span>
       );
     }
 
-    if (messageData.baseMessage.startsWith("!")) {
+    if (message.type === MessageType.NOTIFICATION) {
       const color = getTextColor("message", true);
       return (
         <span
           className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
           style={{ color }}
         >
-          [P] {messageData.baseMessage.slice(1)}
+          [P] {message.message}
         </span>
       );
     }
@@ -57,38 +81,139 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
       <span
         className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
       >
-        {messageData.baseMessage}
+        {message.message}
       </span>
     );
   };
 
+  if (!message.characterData) return null;
+
   if (!member?.name) return null;
+
+  const guild = guilds?.find((g) => g.id === message.guildId);
+  if (!guild) return null;
 
   return (
     <div
-      key={message.id}
-      className="ll:text-white ll:text-xs ll:whitespace-pre-wrap ll:wrap-break-word ll:w-[calc(100%-1rem)] ll:select-text ll:cursor-text"
+      key={`${message.id}-${message.guildId}`}
+      className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text"
     >
-      <span className="ll:inline-block ll:whitespace-nowrap ll:select-text">
-        <span
-          className={cn("ll:text-[11px] ll:select-text", {
-            "ll:opacity-50": isMsgYesterday,
-          })}
-        >
-          [{format(new Date(message.timestamp), "HH:mm")}]
-        </span>{" "}
-        <span
-          className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-            "ll:opacity-50": isMsgYesterday,
-          })}
-          style={{ color: `#${memberColor}` }}
-        >
-          {member?.name || "Nieznany"}:
-        </span>
-      </span>{" "}
-      <span className="ll:wrap-break-word ll:select-text">
-        {renderChatMessage(message)}
-      </span>
+      <ContextMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ContextMenuTrigger>
+              <span className="ll:inline-block ll:select-text">
+                <span
+                  className={cn("ll:text-[11px] ll:select-text", {
+                    "ll:opacity-50": isMsgYesterday,
+                  })}
+                >
+                  [{format(new Date(message.timestamp), "HH:mm")}]
+                </span>{" "}
+                {all && (
+                  <span
+                    className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
+                      "ll:opacity-50": isMsgYesterday,
+                    })}
+                  >
+                    [{guild.name}]{" "}
+                  </span>
+                )}
+                <span
+                  className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
+                    "ll:opacity-50": isMsgYesterday,
+                  })}
+                  style={{ color: `#${memberColor}` }}
+                >
+                  {member?.name || "Nieznany"}:
+                </span>
+              </span>{" "}
+              <span
+                className="ll:whitespace-pre-wrap ll:select-text"
+                style={{
+                  overflowWrap: "anywhere",
+                  wordBreak: "normal",
+                }}
+              >
+                {renderChatMessage(message)}
+              </span>
+            </ContextMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent className="ll:bg-black ll:p-0 ll:px-2 ll:flex ll:items-center ll:gap-2">
+            <CharacterTile
+              character={message.characterData}
+              className="ll:scale-75 ll:p-0"
+            />
+            <div className="ll:font-semibold">
+              {message.characterData.nick} ({message.characterData.lvl}
+              {message.characterData.prof})
+            </div>
+          </TooltipContent>
+        </Tooltip>
+
+        <ContextMenuContent className="ll-w-48 ll-flex ll-flex-col">
+          {message.characterData.nick !== Game.hero.nick && (
+            <ContextMenuItem
+              onClick={() => {
+                window.Engine.chatController
+                  .getChatInputWrapper()
+                  .setPrivateMessageProcedure(message.characterData.nick);
+              }}
+            >
+              Wyślij wiadomość
+            </ContextMenuItem>
+          )}
+          {Game.interface === "ni" && (
+            <ContextMenuItem
+              onClick={() => {
+                window.Engine.showEqManager.update({
+                  id: message.characterData.id,
+                  nick: message.characterData.nick,
+                  prof: message.characterData.prof,
+                  icon: message.characterData.icon,
+                  lvl: message.characterData.lvl,
+                  account: message.characterData.acc,
+                });
+              }}
+            >
+              Pokaż ekwipunek
+            </ContextMenuItem>
+          )}
+          {message.characterData.nick !== Game.hero.nick && (
+            <ContextMenuItem
+              onClick={() => {
+                window._g(
+                  "friends&a=finvite&nick=" +
+                    message.characterData.nick.trim().split(" ").join("_"),
+                );
+              }}
+            >
+              Zaproś do przyjaciół
+            </ContextMenuItem>
+          )}
+          {message.characterData.nick !== Game.hero.nick && (
+            <ContextMenuItem
+              onClick={() => {
+                window._g("party&a=inv&id=" + message.characterData.id);
+              }}
+            >
+              Zaproś do drużyny
+            </ContextMenuItem>
+          )}
+          {Game.interface === "ni" && (
+            <ContextMenuItem
+              onClick={() => {
+                window.Engine.iframeWindowManager.newPlayerProfile({
+                  accountId: message.characterData.acc,
+                  characterId: message.characterData.id,
+                });
+              }}
+            >
+              Pokaż profil
+            </ContextMenuItem>
+          )}
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   );
 };

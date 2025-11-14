@@ -46,7 +46,6 @@ export const useNpcsHandlers = () => {
 
         sendNotification({
           composedNpc,
-          npcType,
           guildIds: processedSettings.guildIds,
           autoSendMessage: processedSettings.autoSendMessage,
           autoSendNotification: processedSettings.autoSendNotification,
@@ -82,7 +81,6 @@ export const useNpcsHandlers = () => {
 
         sendNotification({
           composedNpc,
-          npcType,
           guildIds: processedSettings.guildIds,
           autoSendMessage: processedSettings.autoSendMessage,
           autoSendNotification: processedSettings.autoSendNotification,
@@ -156,28 +154,17 @@ export const useNpcsHandlers = () => {
 
   const sendNotification = ({
     composedNpc,
-    npcType,
     guildIds,
     autoSendMessage,
     autoSendNotification,
   }: {
     composedNpc: GameNpcWithLocation;
-    npcType: NpcType;
     guildIds: string[];
     autoSendMessage: boolean;
     autoSendNotification: boolean;
   }) => {
     if (autoSendMessage) {
-      handleSendMessage(
-        npcType,
-        `${composedNpc.nick} (${composedNpc.lvl}${composedNpc.prof})`,
-        {
-          name: composedNpc.location,
-          x: composedNpc.x,
-          y: composedNpc.y,
-        },
-        guildIds,
-      );
+      handleSendMessage(guildIds, composedNpc);
     }
 
     if (autoSendNotification) {
