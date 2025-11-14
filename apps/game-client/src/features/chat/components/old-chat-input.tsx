@@ -42,16 +42,18 @@ export const OldChatInput: FC<OldChatInputProps> = ({
   const onSubmit = (data: FormData) => {
     if (!selectedGuildId || !world) return;
     const isNotificationEnabled = data.message.charAt(0) === "!";
+    const msg =
+      data.message.indexOf("!") === 0 ? data.message.slice(1) : data.message;
 
     if (isNotificationEnabled) {
       createNotification({
         guildIds: [selectedGuildId],
-        message: data.message,
+        message: msg,
         world,
       });
       sendChatMessage({
         guildIds: [selectedGuildId],
-        message: data.message,
+        message: msg,
         type: MessageType.NOTIFICATION,
         characterData: {
           nick: Game.hero.nick,
