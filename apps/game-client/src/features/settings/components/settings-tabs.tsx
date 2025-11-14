@@ -9,7 +9,6 @@ import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hi
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
 import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
 import { FC } from "react";
-import { ChatSettingsTab } from "./chat/chat-settings-tab";
 
 export type SettingsTabsProps = {};
 
