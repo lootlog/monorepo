@@ -7,7 +7,7 @@ import {
 import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosInstance, AxiosResponse } from "axios";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useChatCache } from "./use-chat-cache";
 import { fetchGuildMembers } from "@/hooks/api/use-guild-members";
 
@@ -15,10 +15,8 @@ export const useChatMessagesListener = (client: AxiosInstance) => {
   const queryClient = useQueryClient();
   const { socket, connected } = useGateway();
 
-  useEffect(() => {
-    if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
-
-    socket?.on(GatewayEvent.CHAT_MESSAGE, (data: ChatMessage) => {
+  const handleChatMessage = useCallback(
+    (data: ChatMessage) => {
       queryClient.setQueryData(
         [QUERY_KEY, data.guildId],
         (old: AxiosResponse<ChatMessage[]>) => {
@@ -42,6 +40,22 @@ export const useChatMessagesListener = (client: AxiosInstance) => {
         });
       }
       useChatCache.getState().appendMessage(data.guildId, data);
-    });
-  }, [connected, socket, queryClient]);
+    },
+    [queryClient, client],
+  );
+
+  const handlerRef = useRef(handleChatMessage);
+  handlerRef.current = handleChatMessage;
+
+  useEffect(() => {
+    if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
+
+    const onChatMessage = (data: ChatMessage) => handlerRef.current(data);
+
+    socket?.on(GatewayEvent.CHAT_MESSAGE, onChatMessage);
+
+    return () => {
+      socket?.off(GatewayEvent.CHAT_MESSAGE, onChatMessage);
+    };
+  }, [connected, socket]);
 };
