@@ -9,6 +9,7 @@ export enum GatewayEvent {
   DISCONNECTING = "disconnecting",
   DISCONNECT = "disconnect",
   CONNECT = "connect",
+  PERMISSIONS_UPDATED = "permissions-updated",
 
   //rooms
   JOIN = "join",
