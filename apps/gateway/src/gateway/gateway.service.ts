@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
+import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
 import type { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
 import type { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
-import type { SendMessageDto } from 'src/gateway/dto/send-message.dto';
-import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
+import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
+import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
 import type { Npc } from 'src/gateway/types/npc.type';
@@ -16,6 +16,8 @@ import { RedisService } from 'src/lib/redis/redis.service';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
 import type { UserGuildData } from 'src/guilds/types/guild.types';
+import { canViewChatMessage } from './utils/can-view-chat-message';
+import { canViewNpcNotification } from './utils/can-view-npc-notifications';
 
 @Injectable()
 export class GatewayService {
@@ -29,12 +31,10 @@ export class GatewayService {
 
   private emitToEligibleSockets({
     guildId,
-    npc,
     event,
     data,
   }: {
     guildId: string;
-    npc: Npc;
     event: GatewayEvent;
     data: unknown;
   }) {
@@ -42,16 +42,12 @@ export class GatewayService {
       .in(guildId)
       .fetchSockets()
       .then((sockets) => {
-        const npcLevel = npc?.lvl ?? 0;
         sockets.forEach((socket) => {
           const desiredGuild = socket.data.guilds?.find(
             (g: UserGuildData) => g.guild.id === guildId,
           );
           if (!desiredGuild) return;
-          if (!npc) {
-            socket.emit(event, data);
-            return;
-          }
+
           const isOwner = desiredGuild.guild.ownerId === socket.data.discordId;
 
           if (isOwner) {
@@ -73,16 +69,48 @@ export class GatewayService {
             return;
           }
 
-          const canViewNpc = canViewNpcTimer(npc, roles);
+          if (data instanceof SendMessageDto) {
+            if (!data.characterData) {
+              this.logger.log(
+                `Missing character data for chat message in guild ${guildId} from user ${socket.data.discordId}`,
+              );
+              return;
+            }
+            const canViewChat = canViewChatMessage(data, roles);
+            if (!canViewChat) {
+              this.logger.log(
+                `User ${socket.data.discordId} cannot view chat message ${JSON.stringify(data)} in guild ${guildId}`,
+              );
+              return;
+            }
 
-          if (!canViewNpc) {
-            this.logger.debug(
-              `User ${socket.data.discordId} cannot view NPC ${npc.type} lvl ${npcLevel} in guild ${guildId}`,
+            socket.emit(event, data);
+          } else if (data instanceof CreateTimerDto) {
+            const canViewNpc = canViewNpcTimer(
+              { lvl: data.npc?.lvl ?? 0, type: data.npc.type },
+              roles,
             );
-            return;
-          }
 
-          socket.emit(event, data);
+            if (!canViewNpc) {
+              this.logger.debug(
+                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
+              );
+              return;
+            }
+
+            socket.emit(event, data);
+          } else if (data instanceof SendNotificationDto) {
+            const canViewNpc = canViewNpcNotification(data.npc, roles);
+
+            if (!canViewNpc) {
+              this.logger.debug(
+                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
+              );
+              return;
+            }
+
+            socket.emit(event, data);
+          }
         });
       });
   }
@@ -90,9 +118,8 @@ export class GatewayService {
   handleGuildsTimerUpdate(data: CreateTimerDto) {
     this.emitToEligibleSockets({
       guildId: data.guildId,
-      npc: data.npc,
       event: GatewayEvent.TIMERS_CREATE,
-      data,
+      data: Object.assign(new CreateTimerDto(), data),
     });
   }
 
@@ -101,15 +128,18 @@ export class GatewayService {
   }
 
   handleGuildMessageSend(data: SendMessageDto) {
-    this.gateway.server.to(data.guildId).emit(GatewayEvent.CHAT_MESSAGE, data);
+    this.emitToEligibleSockets({
+      guildId: data.guildId,
+      event: GatewayEvent.CHAT_MESSAGE,
+      data: Object.assign(new SendMessageDto(), data),
+    });
   }
 
   handleGuildNotificationSend(data: SendNotificationDto) {
     this.emitToEligibleSockets({
       guildId: data.guildId,
-      npc: data.npc,
       event: GatewayEvent.NOTIFICATIONS_SEND,
-      data,
+      data: Object.assign(new SendNotificationDto(), data),
     });
   }
 
