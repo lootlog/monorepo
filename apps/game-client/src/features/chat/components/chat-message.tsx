@@ -67,17 +67,13 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
 
     if (message.type === MessageType.NOTIFICATION) {
       const color = getTextColor("message", true);
-      const msg =
-        message.message.indexOf("!") === 0
-          ? message.message.slice(1)
-          : message.message;
 
       return (
         <span
           className={cn("ll:select-text", { "ll:opacity-50": isMsgYesterday })}
           style={{ color }}
         >
-          [P] {msg}
+          [P] {message.message}
         </span>
       );
     }
