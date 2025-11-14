@@ -104,7 +104,7 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
         ref={scrollContainerRef}
         type="hover"
       >
-        <div className="ll:flex ll:gap-1 ll:mt-1">
+        <div className="ll:flex ll:gap-1 ll:mt-1 ll:overflow-hidden">
           {allowAll && (
             <Tooltip key="all">
               <TooltipTrigger asChild>
@@ -126,14 +126,14 @@ export const GuildSwitcher: FC<GuildSwitcherProps> = ({
                   )}
                 >
                   <Avatar className="ll:size-full ll:flex ll:items-center ll:justify-center">
-                    <AvatarFallback className="ll:text-xs ll:font-semibold">
-                      P
+                    <AvatarFallback className="ll:font-semibold ll:text-xl ll:mt-1.5">
+                      *
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="ll:z-500">
-                <p className="ll:text-xs ll:font-semibold">Połączone</p>
+                <p className="ll:text-xs ll:font-semibold">Wszystkie serwery</p>
               </TooltipContent>
             </Tooltip>
           )}
