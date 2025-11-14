@@ -46,7 +46,7 @@ export const QuickAccess = () => {
       id="quick-access"
       title="Lootlog"
       minHeight={56}
-      minWidth={184}
+      minWidth={218}
       closable={false}
     >
       <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
