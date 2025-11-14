@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { API_URL } from "@/config/api";
+import type { AxiosInstance } from "axios";
+import type {
+  ChatCharacterData,
+  ChatNpc,
+  MessageType,
+} from "./use-send-chat-message";
 
 export type ChatMessage = {
   id: string;
@@ -8,24 +14,34 @@ export type ChatMessage = {
   message: string;
   senderId: string;
   timestamp: string;
-};
-
-export type GetChatMessagesOptions = {
-  guildId: string;
+  type: MessageType;
+  characterData: ChatCharacterData;
+  npc?: ChatNpc;
 };
 
 export const QUERY_KEY = "guild-messages";
 
-export const useChatMessages = ({ guildId }: GetChatMessagesOptions) => {
+export const useChatMessages = (guildId?: string) => {
   const { client } = useAuthenticatedApiClient();
 
   const query = useQuery({
     queryKey: [QUERY_KEY, guildId],
     queryFn: () =>
       client.get<ChatMessage[]>(`${API_URL}/guilds/${guildId}/chat-messages`),
-    enabled: !!guildId,
+    enabled: !!guildId && guildId !== "all",
+    gcTime: Infinity,
+    staleTime: 5 * 60 * 1000,
     select: (response) => response.data,
   });
 
   return query;
+};
+export const fetchChatMessages = async (
+  client: AxiosInstance,
+  guildId: string,
+): Promise<ChatMessage[]> => {
+  const response = await client.get<ChatMessage[]>(
+    `${API_URL}/guilds/${guildId}/chat-messages`,
+  );
+  return response.data;
 };
