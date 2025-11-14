@@ -4,7 +4,7 @@ import { Permission } from 'src/guilds/enum/permission.type';
 import type { Role } from 'src/guilds/types/role.type';
 
 export const canViewNpcNotification = (npc: Npc, roles: Role[]) => {
-  if (!npc) return false;
+  if (!npc) return true;
 
   if (npc.type === NpcType.TITAN) {
     return roles.some(

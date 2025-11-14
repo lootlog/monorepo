@@ -93,7 +93,7 @@ export class GatewayService {
 
             if (!canViewNpc) {
               this.logger.debug(
-                `User ${socket.data.discordId} cannot view NPC ${data.npc.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
+                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
               );
               return;
             }
@@ -104,7 +104,7 @@ export class GatewayService {
 
             if (!canViewNpc) {
               this.logger.debug(
-                `User ${socket.data.discordId} cannot view NPC ${data.npc.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
+                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
               );
               return;
             }
