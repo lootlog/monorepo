@@ -49,14 +49,17 @@ export class Gateway {
     this.logger.log('client connected');
     this.logger.debug(`discord id: ${discordId}`);
     this.logger.debug(`platform: ${platform}`);
+
     if (!discordId) {
       this.logger.warn('No discordId found in headers, disconnecting client');
       return client.disconnect();
     }
+
     if (platform === Platform.UNKNOWN) {
       this.logger.warn('Unrecognized platform, disconnecting...');
       return client.disconnect();
     }
+
     client.data = {
       discordId,
       userId,
