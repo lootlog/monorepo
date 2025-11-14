@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
 import type { Timer } from "@/hooks/api/use-timers";
@@ -69,22 +69,30 @@ export const useTimersSocket = (world: string | undefined) => {
     [queryClient],
   );
 
+  const handlersRef = useRef({ handleTimerMessage, handleTimerRemove });
+  handlersRef.current = { handleTimerMessage, handleTimerRemove };
+
   useEffect(() => {
     if (!connected || !joined || !socket || !world) {
       setIsListenersActive(false);
       return;
     }
 
-    socket.on(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
-    socket.on(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+    const onTimerCreate = (data: Timer) =>
+      handlersRef.current.handleTimerMessage(data);
+    const onTimerDelete = (data: Timer) =>
+      handlersRef.current.handleTimerRemove(data);
+
+    socket.on(GatewayEvent.TIMERS_CREATE, onTimerCreate);
+    socket.on(GatewayEvent.TIMERS_DELETE, onTimerDelete);
     setIsListenersActive(true);
 
     return () => {
-      socket.off(GatewayEvent.TIMERS_CREATE, handleTimerMessage);
-      socket.off(GatewayEvent.TIMERS_DELETE, handleTimerRemove);
+      socket.off(GatewayEvent.TIMERS_CREATE, onTimerCreate);
+      socket.off(GatewayEvent.TIMERS_DELETE, onTimerDelete);
       setIsListenersActive(false);
     };
-  }, [connected, joined, socket, world, handleTimerMessage, handleTimerRemove]);
+  }, [connected, joined, socket, world]);
 
   return {
     isListenersActive:
