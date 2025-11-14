@@ -16,13 +16,16 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Game } from "@/lib/game";
+import { useGuilds } from "@/hooks/api/use-guilds";
 
 export type ChatMessageProps = {
+  all: boolean;
   message: ChatMessageType;
   member?: GuildMember;
 };
 
-export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
+export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
+  const { data: guilds, isFetched } = useGuilds();
   const memberColor = useMemberColor(member);
   const msgDate = new Date(message.timestamp);
   const now = new Date();
@@ -81,6 +84,9 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
 
   if (!member?.name) return null;
 
+  const guild = guilds?.find((g) => g.id === message.guildId);
+  if (!guild) return null;
+
   return (
     <div
       key={`${message.id}-${message.guildId}`}
@@ -96,6 +102,15 @@ export const ChatMessage: FC<ChatMessageProps> = ({ message, member }) => {
             >
               [{format(new Date(message.timestamp), "HH:mm")}]
             </span>{" "}
+            {all && (
+              <span
+                className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
+                  "ll:opacity-50": isMsgYesterday,
+                })}
+              >
+                [{guild.name}]{" "}
+              </span>
+            )}
             <span
               className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
                 "ll:opacity-50": isMsgYesterday,
