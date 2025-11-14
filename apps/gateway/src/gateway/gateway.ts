@@ -126,6 +126,7 @@ export class Gateway {
       client.emit(GatewayEvent.JOIN, {
         status: 'success',
         guildsCount: guilds.length,
+        guildIds,
       });
     } catch (error) {
       const duration = Date.now() - startTime;

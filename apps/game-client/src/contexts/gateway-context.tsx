@@ -4,11 +4,13 @@ import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
 import { useGlobalStore } from "@/store/global.store";
 import { Game } from "@/lib/game";
+import { useDeepCompareEffect } from "react-use";
 
 export type GatewayProviderValue = {
   connected: boolean;
   joined: boolean;
   socket: Socket;
+  joinedGuilds: string[];
 };
 
 type Props = {
@@ -25,30 +27,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
-
-  const setupBaseListeners = useCallback(() => {
-    socket.on(GatewayEvent.CONNECT, () => {
-      setConnected(true);
-    });
-
-    socket.on(GatewayEvent.DISCONNECT, () => {
-      setConnected(false);
-    });
-
-    socket.on(GatewayEvent.JOIN, (data) => {
-      if (data.status === "error") {
-        console.error("Join error:", data.message);
-        return;
-      }
-
-      setJoined(true);
-    });
-
-    return () => {
-      socket.off(GatewayEvent.CONNECT);
-      socket.off(GatewayEvent.DISCONNECT);
-    };
-  }, []);
+  const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
 
   const emitJoin = useCallback(() => {
     if (connected && gameInitialized) {
@@ -75,6 +54,51 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
   }, [connected, gameInitialized]);
 
+  const setupBaseListeners = useCallback(() => {
+    socket.on(GatewayEvent.CONNECT, () => {
+      setConnected(true);
+    });
+
+    socket.on(GatewayEvent.DISCONNECT, () => {
+      console.log("[Gateway] Disconnected from gateway");
+      setConnected(false);
+      setJoined(false);
+      setJoinedGuilds([]);
+    });
+
+    socket.on(GatewayEvent.PERMISSIONS_UPDATED, (data) => {
+      console.log("[Gateway] Rooms rebalanced:", data);
+
+      if (!data.guilds) {
+        console.error("[Gateway] No guilds data in permissions update");
+        setJoinedGuilds([]);
+        setJoined(false);
+        return;
+      }
+
+      setJoinedGuilds(
+        data.guilds.map((g: { guild: { id: string } }) => g.guild.id) || [],
+      );
+    });
+
+    socket.on(GatewayEvent.JOIN, (data) => {
+      if (data.status === "error") {
+        console.error("[Gateway] Join error:", data.message);
+        return;
+      }
+
+      console.log("[Gateway] Joined successfully:", data.guildIds);
+
+      setJoined(true);
+      setJoinedGuilds(data.guildIds || []);
+    });
+
+    return () => {
+      socket.off(GatewayEvent.CONNECT);
+      socket.off(GatewayEvent.DISCONNECT);
+    };
+  }, []);
+
   useEffect(() => {
     const cleanup = setupBaseListeners();
     if (!socket.connected) {
@@ -82,19 +106,26 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
 
     return cleanup;
-  }, []);
+  }, [setupBaseListeners]);
 
   useEffect(() => {
-    if (connected) {
+    if (connected && !joined) {
       emitJoin();
-      console.log("Connected to gateway:", connected);
+      console.log("[Gateway] Connected to gateway:", connected);
     }
-  }, [connected, emitJoin]);
+  }, [connected, emitJoin, joined]);
+
+  useDeepCompareEffect(() => {
+    if (joined) {
+      console.log("[Gateway] Joined gateway with guilds:", joinedGuilds);
+    }
+  }, [joined, joinedGuilds]);
 
   const value: GatewayProviderValue = {
     connected,
     socket,
     joined,
+    joinedGuilds,
   };
 
   return (
