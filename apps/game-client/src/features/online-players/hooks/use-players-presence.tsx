@@ -43,7 +43,7 @@ export const usePlayersPresence = (
     {},
   );
   const [loading, setLoading] = useState(false);
-  const { socket, joined } = useGateway();
+  const { socket, joined, connected } = useGateway();
 
   const selectedGuildIdRef = useRef(selectedGuildId);
   const requestIdRef = useRef(0);
@@ -53,7 +53,14 @@ export const usePlayersPresence = (
   }, [selectedGuildId]);
 
   useEffect(() => {
-    if (!joined || !socket || !selectedGuildIdRef.current || !world) return;
+    if (
+      !joined ||
+      !connected ||
+      !socket ||
+      !selectedGuildIdRef.current ||
+      !world
+    )
+      return;
 
     const currentRequestId = ++requestIdRef.current;
     setLoading(true);
@@ -76,15 +83,16 @@ export const usePlayersPresence = (
           setLoading(false);
         }
       });
-  }, [joined, socket, world, selectedGuildId]);
+  }, [joined, connected, socket, world, selectedGuildId]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !connected || !joined) return;
 
     const handlePresenceUpdate = (data: PlayerPresence) => {
       if (
         data.guildId !== selectedGuildIdRef.current ||
-        data.player?.world !== world
+        data.player?.world !== world ||
+        data.platform !== "game"
       )
         return;
 
@@ -116,7 +124,7 @@ export const usePlayersPresence = (
     return () => {
       socket.off(GatewayEvent.UPDATE_SERVER_PRESENCE, handlePresenceUpdate);
     };
-  }, [socket, world]);
+  }, [socket, world, joined, connected]);
 
   return [onlinePlayers, loading, setOnlinePlayers];
 };
