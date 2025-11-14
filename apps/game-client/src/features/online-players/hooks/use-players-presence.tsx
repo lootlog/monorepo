@@ -91,8 +91,7 @@ export const usePlayersPresence = (
     const handlePresenceUpdate = (data: PlayerPresence) => {
       if (
         data.guildId !== selectedGuildIdRef.current ||
-        data.player?.world !== world ||
-        data.platform !== "game"
+        data.player?.world !== world
       )
         return;
 
