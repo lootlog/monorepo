@@ -49,11 +49,11 @@ const TABS_LIST = [
     label: "Panel walk (beta)",
     content: <BattlePanelSettingsTab />,
   },
-  {
-    value: "chat",
-    label: "Chat",
-    content: <ChatSettingsTab />,
-  },
+  // {
+  //   value: "chat",
+  //   label: "Chat",
+  //   content: <ChatSettingsTab />,
+  // },
   {
     value: "debug",
     label: "Debug",
