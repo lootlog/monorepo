@@ -54,19 +54,21 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
     }
   }, [connected, gameInitialized]);
 
-  const setupBaseListeners = useCallback(() => {
-    socket.on(GatewayEvent.CONNECT, () => {
+  useEffect(() => {
+    const onConnect = () => {
       setConnected(true);
-    });
+    };
 
-    socket.on(GatewayEvent.DISCONNECT, () => {
+    const onDisconnect = () => {
       console.log("[Gateway] Disconnected from gateway");
       setConnected(false);
       setJoined(false);
       setJoinedGuilds([]);
-    });
+    };
 
-    socket.on(GatewayEvent.PERMISSIONS_UPDATED, (data) => {
+    const onPermissionsUpdated = (data: {
+      guilds?: Array<{ guild: { id: string } }>;
+    }) => {
       console.log("[Gateway] Rooms rebalanced:", data);
 
       if (!data.guilds) {
@@ -76,12 +78,14 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
         return;
       }
 
-      setJoinedGuilds(
-        data.guilds.map((g: { guild: { id: string } }) => g.guild.id) || [],
-      );
-    });
+      setJoinedGuilds(data.guilds.map((g) => g.guild.id) || []);
+    };
 
-    socket.on(GatewayEvent.JOIN, (data) => {
+    const onJoin = (data: {
+      status?: string;
+      message?: string;
+      guildIds?: string[];
+    }) => {
       if (data.status === "error") {
         console.error("[Gateway] Join error:", data.message);
         return;
@@ -91,22 +95,24 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
       setJoined(true);
       setJoinedGuilds(data.guildIds || []);
-    });
-
-    return () => {
-      socket.off(GatewayEvent.CONNECT);
-      socket.off(GatewayEvent.DISCONNECT);
     };
-  }, []);
 
-  useEffect(() => {
-    const cleanup = setupBaseListeners();
+    socket.on(GatewayEvent.CONNECT, onConnect);
+    socket.on(GatewayEvent.DISCONNECT, onDisconnect);
+    socket.on(GatewayEvent.PERMISSIONS_UPDATED, onPermissionsUpdated);
+    socket.on(GatewayEvent.JOIN, onJoin);
+
     if (!socket.connected) {
       socket.connect();
     }
 
-    return cleanup;
-  }, [setupBaseListeners]);
+    return () => {
+      socket.off(GatewayEvent.CONNECT, onConnect);
+      socket.off(GatewayEvent.DISCONNECT, onDisconnect);
+      socket.off(GatewayEvent.PERMISSIONS_UPDATED, onPermissionsUpdated);
+      socket.off(GatewayEvent.JOIN, onJoin);
+    };
+  }, []);
 
   useEffect(() => {
     if (connected && !joined) {
