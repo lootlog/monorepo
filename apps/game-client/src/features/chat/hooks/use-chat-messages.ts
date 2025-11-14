@@ -1,6 +1,6 @@
 import { GatewayEvent } from "@/config/gateway";
 import {
-  ChatMessage,
+  type ChatMessage,
   fetchChatMessages,
   QUERY_KEY,
 } from "@/hooks/api/use-chat-messages";
