@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { API_URL } from "@/config/api";
-import { AxiosInstance } from "axios";
-import {
+import type { AxiosInstance } from "axios";
+import type {
   ChatCharacterData,
   ChatNpc,
   MessageType,

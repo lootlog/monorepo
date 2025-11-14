@@ -4,6 +4,10 @@ import { getNpcTypeByWt } from './get-npc-type-by-wt';
 
 export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
   if (!data) return false;
+  const canReadChatMessages = roles.some((role) =>
+    role.permissions.includes(Permission.LOOTLOG_CHAT_READ),
+  );
+  if (!canReadChatMessages) return false;
 
   if (data.type === MessageType.NPC) {
     const npc = data.npc;
@@ -31,13 +35,11 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
 
     return roles.some(
       (role) =>
-        role.permissions.includes(Permission.LOOTLOG_READ) &&
+        role.permissions.includes(Permission.LOOTLOG_CHAT_READ) &&
         role.lvlRangeFrom <= npc.lvl &&
         role.lvlRangeTo >= npc.lvl,
     );
   }
 
-  return roles.some((role) =>
-    role.permissions.includes(Permission.LOOTLOG_READ),
-  );
+  return true;
 };

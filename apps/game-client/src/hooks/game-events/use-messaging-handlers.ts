@@ -25,7 +25,7 @@ export const useMessagingHandlers = () => {
           acc: Game.hero.account,
           lvl: Game.hero.lvl,
           prof: Game.hero.prof,
-          icon: Game.hero.icon,
+          icon: Game.hero.img,
         },
         npc: {
           x: npc.x,

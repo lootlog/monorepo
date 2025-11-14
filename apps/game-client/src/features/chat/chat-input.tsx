@@ -47,7 +47,7 @@ export const ChatInput = () => {
   const messageValue = watch("message");
 
   const onSubmit = (data: FormData) => {
-    if (!characterId || !world || selectedInputGuildIds.length <= 0) return; //TODO send character data
+    if (!characterId || !world || selectedInputGuildIds.length <= 0) return;
 
     if (isNotificationEnabled) {
       createNotification({
@@ -65,7 +65,7 @@ export const ChatInput = () => {
           acc: Game.hero.account,
           lvl: Game.hero.lvl,
           prof: Game.hero.prof,
-          icon: Game.hero.icon,
+          icon: Game.hero.img,
         },
       });
     } else {
@@ -79,7 +79,7 @@ export const ChatInput = () => {
           acc: Game.hero.account,
           lvl: Game.hero.lvl,
           prof: Game.hero.prof,
-          icon: Game.hero.icon,
+          icon: Game.hero.img,
         },
       });
     }

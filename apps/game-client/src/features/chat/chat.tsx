@@ -1,10 +1,10 @@
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import {
-  ChatMessage as ChatMessageType,
+  type ChatMessage as ChatMessageType,
   useChatMessages,
 } from "@/hooks/api/use-chat-messages";
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
@@ -182,7 +182,7 @@ export const Chat = () => {
         <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
           <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
             <GuildSwitcher
-              allowAll={true}
+              allowAll
               value={selectedGuildId}
               onChange={setSelectedGuildId}
             />
