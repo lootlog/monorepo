@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@/hooks/api/use-user";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { AxiosInstance } from "axios";
 
 export type GuildMember = {
   id: number;
@@ -22,7 +23,7 @@ export const useGuildMembers = (guildId?: string) => {
   const query = useQuery({
     queryKey: ["guild-members", guildId],
     queryFn: () => client.get<GuildMember[]>(`/guilds/${guildId}/members`),
-    enabled: !!guildId,
+    enabled: !!guildId && guildId !== "all",
     gcTime: Infinity,
     staleTime: 5 * 60 * 1000,
     select: (response) => {
@@ -36,4 +37,20 @@ export const useGuildMembers = (guildId?: string) => {
   });
 
   return query;
+};
+
+export const fetchGuildMembers = async (
+  client: AxiosInstance,
+  guildId: string,
+): Promise<Record<string, GuildMember>> => {
+  const response = await client.get<GuildMember[]>(
+    `/guilds/${guildId}/members`,
+  );
+
+  const keyValue: Record<string, GuildMember> = {};
+  response.data.forEach((member) => {
+    keyValue[member.userId] = member;
+  });
+
+  return keyValue;
 };
