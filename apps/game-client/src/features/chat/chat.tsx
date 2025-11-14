@@ -208,6 +208,7 @@ export const Chat = () => {
                         <ChatMessage
                           key={message.id}
                           message={message}
+                          all={selectedGuildId === "all"}
                           member={members[message.senderId]}
                         />
                       );
