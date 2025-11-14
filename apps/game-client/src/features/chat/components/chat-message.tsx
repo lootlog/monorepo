@@ -15,8 +15,14 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Game } from "@/lib/game";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { CharacterTile } from "@/components/character-tile";
 
 export type ChatMessageProps = {
   all: boolean;
@@ -25,7 +31,7 @@ export type ChatMessageProps = {
 };
 
 export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
-  const { data: guilds, isFetched } = useGuilds();
+  const { data: guilds } = useGuilds();
   const memberColor = useMemberColor(member);
   const msgDate = new Date(message.timestamp);
   const now = new Date();
@@ -93,43 +99,57 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
       className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text"
     >
       <ContextMenu>
-        <ContextMenuTrigger>
-          <span className="ll:inline-block ll:select-text">
-            <span
-              className={cn("ll:text-[11px] ll:select-text", {
-                "ll:opacity-50": isMsgYesterday,
-              })}
-            >
-              [{format(new Date(message.timestamp), "HH:mm")}]
-            </span>{" "}
-            {all && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ContextMenuTrigger>
+              <span className="ll:inline-block ll:select-text">
+                <span
+                  className={cn("ll:text-[11px] ll:select-text", {
+                    "ll:opacity-50": isMsgYesterday,
+                  })}
+                >
+                  [{format(new Date(message.timestamp), "HH:mm")}]
+                </span>{" "}
+                {all && (
+                  <span
+                    className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
+                      "ll:opacity-50": isMsgYesterday,
+                    })}
+                  >
+                    [{guild.name}]{" "}
+                  </span>
+                )}
+                <span
+                  className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
+                    "ll:opacity-50": isMsgYesterday,
+                  })}
+                  style={{ color: `#${memberColor}` }}
+                >
+                  {member?.name || "Nieznany"}:
+                </span>
+              </span>{" "}
               <span
-                className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-                  "ll:opacity-50": isMsgYesterday,
-                })}
+                className="ll:whitespace-pre-wrap ll:select-text"
+                style={{
+                  overflowWrap: "anywhere",
+                  wordBreak: "normal",
+                }}
               >
-                [{guild.name}]{" "}
+                {renderChatMessage(message)}
               </span>
-            )}
-            <span
-              className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-                "ll:opacity-50": isMsgYesterday,
-              })}
-              style={{ color: `#${memberColor}` }}
-            >
-              {member?.name || "Nieznany"}:
-            </span>
-          </span>{" "}
-          <span
-            className="ll:whitespace-pre-wrap ll:select-text"
-            style={{
-              overflowWrap: "anywhere",
-              wordBreak: "normal",
-            }}
-          >
-            {renderChatMessage(message)}
-          </span>
-        </ContextMenuTrigger>
+            </ContextMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent className="ll:bg-black ll:p-0 ll:px-2 ll:flex ll:items-center ll:gap-2">
+            <CharacterTile
+              character={message.characterData}
+              className="ll:scale-75 ll:p-0"
+            />
+            <div className="ll:font-semibold">
+              {message.characterData.nick} ({message.characterData.lvl}
+              {message.characterData.prof})
+            </div>
+          </TooltipContent>
+        </Tooltip>
 
         <ContextMenuContent className="ll-w-48 ll-flex ll-flex-col">
           {message.characterData.nick !== Game.hero.nick && (

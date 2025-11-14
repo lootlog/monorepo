@@ -326,7 +326,7 @@ describe('GatewayService', () => {
               guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_READ],
+                  permissions: [Permission.LOOTLOG_CHAT_READ],
                   lvlRangeFrom: 1,
                   lvlRangeTo: 999,
                 },

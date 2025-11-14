@@ -1,3 +1,3 @@
 export type iframeWindowManager = {
-  newPlayerProfile: (data: any) => void;
+  newPlayerProfile: (data: unknown) => void;
 };

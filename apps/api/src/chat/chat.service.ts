@@ -1,5 +1,5 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
@@ -13,14 +13,6 @@ import { Permission, Role } from 'generated/client';
 import { canViewChatMessage } from 'src/shared/utils/can-view-chat-message';
 
 const MAX_MESSAGES = 100;
-
-function parseMessage(message: unknown): SendMessageDto | null {
-  if (!message) return null;
-  if (typeof message === 'string') {
-    return JSON.parse(message);
-  }
-  return null;
-}
 
 @Injectable()
 export class ChatService {
@@ -43,7 +35,7 @@ export class ChatService {
       npc: data.npc,
       characterData: data.characterData,
     };
-    const messages = await this.getMessages(discordId, guildId);
+    const messages = await this.getRawMessages(guildId);
     if (Array.isArray(messages) && messages.length >= MAX_MESSAGES) {
       messages.shift();
     }
@@ -53,6 +45,27 @@ export class ChatService {
     await this.emitMessage(msg);
 
     return msg;
+  }
+
+  private async getRawMessages(guildId: string): Promise<any[]> {
+    const key = `guild:${guildId}:messages`;
+    const messages = await this.redisService.get(key);
+
+    if (!messages) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(messages);
+    } catch (error) {
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to parse chat messages from Redis',
+        guildId,
+        error: error instanceof Error ? error.stack : error,
+      });
+      return [];
+    }
   }
 
   async getMessages(discordId: string, guildId: string) {
@@ -130,7 +143,7 @@ export class ChatService {
     return;
   }
 
-  async emitMessage(msg) {
+  async emitMessage(msg: any) {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_SEND_MESSAGE,
