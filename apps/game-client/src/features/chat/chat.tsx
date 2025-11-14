@@ -16,9 +16,13 @@ import { useChatCache } from "./hooks/use-chat-cache";
 import { useChatStore } from "@/store/chat.store";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { ChatMessage } from "./components/chat-message";
+import { OldChatInput } from "@/features/chat/components/old-chat-input";
+import { useGuilds } from "@/hooks/api/use-guilds";
+import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
 
 export const Chat = () => {
-  const { isIntegratedMode } = useChatStore();
+  const { isIntegratedMode, isChatInputEnabled, toggleChatInputEnabled } =
+    useChatStore();
 
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);
@@ -30,6 +34,7 @@ export const Chat = () => {
     `ll:chat:selected-guild:${accountId}:${characterId}`,
     "",
   );
+  const { data: guilds } = useGuilds();
 
   const scrollAreaRef =
     useRef<React.ElementRef<typeof ScrollArea.Viewport>>(null);
@@ -74,6 +79,12 @@ export const Chat = () => {
       });
     });
   }, [selectedGuildId]);
+
+  useEffect(() => {
+    if (!selectedGuildId && guilds && guilds.length > 0) {
+      setSelectedGuildId(guilds[0].id);
+    }
+  }, [selectedGuildId, setSelectedGuildId, guilds]);
 
   useEffect(() => {
     const unsubscribe = useChatCache.subscribe(
@@ -178,6 +189,10 @@ export const Chat = () => {
         onClose={() => setOpen("chat", false)}
         minHeight={116}
         minWidth={242}
+        actions=<ChatWindowActions
+          chatInputEnabled={isChatInputEnabled}
+          toggleChatInputEnabled={toggleChatInputEnabled}
+        />
       >
         <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
           <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
@@ -226,6 +241,9 @@ export const Chat = () => {
               <ScrollArea.Corner className="ll:bg-gray-200" />
             </ScrollArea.Root>
           </div>
+          {selectedGuildId !== "all" && isChatInputEnabled && (
+            <OldChatInput selectedGuildId={selectedGuildId} />
+          )}
         </div>
       </DraggableWindow>
     </AnimatedWindow>

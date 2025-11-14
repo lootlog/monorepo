@@ -8,6 +8,8 @@ interface ChatState {
   toggleNotificationEnabled: () => void;
   selectedInputGuildIds: string[];
   setSelectedInputGuildIds: (guildIds: string[]) => void;
+  isChatInputEnabled: boolean;
+  toggleChatInputEnabled: () => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -27,8 +29,14 @@ export const useChatStore = create<ChatState>()(
       },
       selectedInputGuildIds: [],
       setSelectedInputGuildIds: (guildIds) => {
-        set((state) => ({
+        set(() => ({
           selectedInputGuildIds: guildIds,
+        }));
+      },
+      isChatInputEnabled: true,
+      toggleChatInputEnabled: () => {
+        set((state) => ({
+          isChatInputEnabled: !state.isChatInputEnabled,
         }));
       },
     }),
@@ -38,6 +46,7 @@ export const useChatStore = create<ChatState>()(
         isIntegratedMode: state.isIntegratedMode,
         isNotificationEnabled: state.isNotificationEnabled,
         selectedInputGuildIds: state.selectedInputGuildIds,
+        isChatInputEnabled: state.isChatInputEnabled,
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
