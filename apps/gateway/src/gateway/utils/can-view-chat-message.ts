@@ -6,9 +6,11 @@ import { getNpcTypeByWt } from './get-npc-type-by-wt';
 
 export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
   if (!data) return false;
+
   const canReadChatMessages = roles.some((role) =>
     role.permissions.includes(Permission.LOOTLOG_CHAT_READ),
   );
+
   if (!canReadChatMessages) return false;
 
   if (data.type === MessageType.NPC) {
