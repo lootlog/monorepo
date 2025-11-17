@@ -28,8 +28,8 @@
     "build": "pkgroll"
   },
   "dependencies": {
-    "hono": "^4.10.3",
-    "jose": "^6.1.0"
+    "hono": "^4.10.6",
+    "jose": "^6.1.2"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
