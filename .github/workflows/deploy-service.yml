@@ -144,7 +144,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update kustomization.yaml image tag
-        uses: mikefarah/yq@v4.48.1
+        uses: mikefarah/yq@v4.48.2
         with:
           cmd: yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i ${{ env.KUSTOMIZE_PATH }}
 
