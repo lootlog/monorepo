@@ -1,7 +1,4 @@
-import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
-import { Game } from "@/lib/game";
 import { cn } from "@/lib/utils";
-import { useSettingsStore } from "@/store/settings.store";
 import type { FC } from "react";
 import {
   Tooltip,
@@ -9,13 +6,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { useSocket } from "@/contexts/socket-context";
 
 export const TimersConnectionStatus: FC = () => {
-  const defaultWorld = Game.getWorldName();
-  const { world, allowWorldSelection } = useSettingsStore();
-  const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
-  const { isListenersActive, joinedGuilds } = useTimersSocket(desiredWorld);
+  const { connected, joined, joinedGuilds } = useSocket();
   const { data: guilds } = useGuilds();
+
+  const connectedToServers =
+    connected && joined && joinedGuilds && joinedGuilds.length > 0;
 
   return (
     <Tooltip>
@@ -24,14 +22,14 @@ export const TimersConnectionStatus: FC = () => {
           className={cn(
             "ll:size-3 ll:rounded-full ll:absolute ll:left-6 ll:cursor-pointer",
             {
-              "ll:bg-red-400": !isListenersActive,
-              "ll:bg-green-400": isListenersActive,
+              "ll:bg-red-400": !connectedToServers,
+              "ll:bg-green-400": connectedToServers,
             },
           )}
         />
       </TooltipTrigger>
       <TooltipContent>
-        {joinedGuilds && joinedGuilds.length > 0 ? (
+        {connectedToServers ? (
           <div className="ll:flex ll:flex-col ll:gap-2">
             <div>Połączono z serwerami:</div>
             <div>

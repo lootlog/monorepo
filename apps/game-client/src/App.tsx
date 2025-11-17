@@ -17,11 +17,12 @@ import { useInit } from "@/hooks/use-init";
 import { useInitialConfiguration } from "@/hooks/use-initial-configuration";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
-import { GatewayProvider } from "@/contexts/gateway-context";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QUERY_CLIENT_CACHE_TIME_MS } from "@/constants/query-client";
 import { ChatInput } from "./features/chat/chat-input";
+import { SocketProvider } from "@/contexts/socket-context";
+import { ErrorBoundary } from "react-error-boundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,7 +35,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const localStoragePersister = createSyncStoragePersister({
+const localStoragePersister = createAsyncStoragePersister({
   storage: window.localStorage,
 });
 
@@ -78,9 +79,11 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark-theme" storageKey="lootlog-theme">
       <QueryClientProvider client={queryClient}>
-        <GatewayProvider>
-          <AppContent />
-        </GatewayProvider>
+        <SocketProvider>
+          <ErrorBoundary fallback={<div>Error loading app</div>}>
+            <AppContent />
+          </ErrorBoundary>
+        </SocketProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

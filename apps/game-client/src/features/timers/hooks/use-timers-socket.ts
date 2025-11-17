@@ -1,102 +1,40 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import type { AxiosResponse } from "axios";
+import { useEffect, useEffectEvent } from "react";
 import type { Timer } from "@/hooks/api/use-timers";
 import { GatewayEvent } from "@/config/gateway";
-import { useGateway } from "@/hooks/gateway/use-gateway";
+import { useSocket } from "@/contexts/socket-context";
+import { useTimersCache } from "@/hooks/api/use-timers-cache";
 
-export const useTimersSocket = (world: string | undefined) => {
-  const { socket, connected, joinedGuilds, joined } = useGateway();
-  const queryClient = useQueryClient();
-  const [isListenersActive, setIsListenersActive] = useState(false);
+export const useTimersSocket = () => {
+  const { socket, connected, joined } = useSocket();
+  const { upsertTimer, removeTimer } = useTimersCache();
 
-  const handleTimerMessage = useCallback(
-    (data: Timer) => {
-      if (!data.world) return;
+  const handleTimerCreate = useEffectEvent((data: Timer) => {
+    upsertTimer(data);
+  });
 
-      queryClient.setQueryData(
-        ["guild-timers", data.world],
-        (old?: AxiosResponse<Timer[]>) => {
-          const previous = old?.data ?? [];
-          const updated = [...previous];
-
-          const index = updated.findIndex(
-            (t) =>
-              t.npcId === data.npcId &&
-              t.guildId === data.guildId &&
-              t.world === data.world,
-          );
-
-          if (index !== -1) {
-            updated[index] = { ...data, isPending: false };
-          } else {
-            updated.push({ ...data, isPending: false });
-          }
-
-          if (old) {
-            return { ...old, data: updated };
-          }
-
-          return { data: updated } as AxiosResponse<Timer[]>;
-        },
-      );
-    },
-    [queryClient],
-  );
-
-  const handleTimerRemove = useCallback(
-    (data: Timer) => {
-      if (!data.world) return;
-
-      queryClient.setQueryData(
-        ["guild-timers", data.world],
-        (old?: AxiosResponse<Timer[]>) => {
-          if (!old) return old;
-
-          const filtered = old.data.filter(
-            (t) =>
-              !(
-                t.npcId === data.npcId &&
-                t.world === data.world &&
-                t.guildId === data.guildId
-              ),
-          );
-
-          return { ...old, data: filtered };
-        },
-      );
-    },
-    [queryClient],
-  );
-
-  const handlersRef = useRef({ handleTimerMessage, handleTimerRemove });
-  handlersRef.current = { handleTimerMessage, handleTimerRemove };
+  const handleTimerDelete = useEffectEvent((data: Timer) => {
+    removeTimer(data);
+  });
 
   useEffect(() => {
-    if (!connected || !joined || !socket || !world) {
-      setIsListenersActive(false);
+    if (!connected || !joined || !socket) {
       return;
     }
 
-    const onTimerCreate = (data: Timer) =>
-      handlersRef.current.handleTimerMessage(data);
-    const onTimerDelete = (data: Timer) =>
-      handlersRef.current.handleTimerRemove(data);
+    const onTimerCreate = (data: Timer) => {
+      handleTimerCreate(data);
+    };
+
+    const onTimerDelete = (data: Timer) => {
+      handleTimerDelete(data);
+    };
 
     socket.on(GatewayEvent.TIMERS_CREATE, onTimerCreate);
     socket.on(GatewayEvent.TIMERS_DELETE, onTimerDelete);
-    setIsListenersActive(true);
 
     return () => {
       socket.off(GatewayEvent.TIMERS_CREATE, onTimerCreate);
       socket.off(GatewayEvent.TIMERS_DELETE, onTimerDelete);
-      setIsListenersActive(false);
     };
-  }, [connected, joined, socket, world]);
-
-  return {
-    isListenersActive:
-      connected && isListenersActive && joinedGuilds && joinedGuilds.length > 0,
-    joinedGuilds,
-  };
+  }, [connected, joined, socket]);
 };

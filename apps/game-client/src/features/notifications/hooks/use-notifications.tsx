@@ -1,6 +1,6 @@
 import { GatewayEvent } from "@/config/gateway";
+import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
-import { useGateway } from "@/hooks/gateway/use-gateway";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
 import type { GameNpc } from "@/types/margonem/npcs";
@@ -17,8 +17,10 @@ export type Notification = {
 };
 
 export const useNotifications = () => {
-  const { socket, connected } = useGateway();
-  const { pushNotification } = useNotificationsStore();
+  const { connected, socket } = useSocket();
+  const pushNotification = useNotificationsStore(
+    (state) => state.pushNotification,
+  );
   const { data: sessionData } = useSession();
   const characterId = String(Game.hero.id);
   const { settings: notificationsSettings } = useNotificationsStore();
@@ -39,5 +41,5 @@ export const useNotifications = () => {
 
       pushNotification({ ...data, servers: [data.guildId] });
     });
-  }, [connected]);
+  }, [connected, socket, pushNotification]);
 };

@@ -4,16 +4,16 @@ import {
   fetchChatMessages,
   QUERY_KEY,
 } from "@/hooks/api/use-chat-messages";
-import { useGateway } from "@/hooks/gateway/use-gateway";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AxiosInstance, AxiosResponse } from "axios";
 import { useCallback, useEffect, useRef } from "react";
 import { useChatCache } from "./use-chat-cache";
 import { fetchGuildMembers } from "@/hooks/api/use-guild-members";
+import { useSocket } from "@/contexts/socket-context";
 
 export const useChatMessagesListener = (client: AxiosInstance) => {
   const queryClient = useQueryClient();
-  const { socket, connected } = useGateway();
+  const { connected, socket } = useSocket();
 
   const handleChatMessage = useCallback(
     (data: ChatMessage) => {
