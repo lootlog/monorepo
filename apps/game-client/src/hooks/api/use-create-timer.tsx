@@ -1,9 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AxiosResponse } from "axios";
+import { useMutation } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import type { Timer } from "@/hooks/api/use-timers";
 import type { NpcType } from "@/hooks/api/use-npcs";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "@/features/timers/constants/default-respawn-randomness";
 
 export type UseCreateTimerOptions = {
   respawnRandomness?: number;
@@ -40,33 +38,8 @@ type CreateTimerResult = {
   failureCount: number;
 };
 
-const calculateSpawnTimes = (
-  timer: UseCreateTimerOptions,
-): { minSpawnTime: Date; maxSpawnTime: Date } => {
-  if (timer.customMinSpawnTime && timer.customMaxSpawnTime) {
-    return {
-      minSpawnTime: timer.customMinSpawnTime,
-      maxSpawnTime: timer.customMaxSpawnTime,
-    };
-  }
-
-  const now = new Date();
-  const respawnRandomness =
-    timer.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
-  const baseRespawnMs = timer.respBaseSeconds * 1000;
-  const multiplier = respawnRandomness / 100;
-  const variance = Math.round(baseRespawnMs * multiplier);
-  const baseSpawnTimeMs = now.getTime() + baseRespawnMs;
-
-  const minSpawnTime = new Date(baseSpawnTimeMs - variance);
-  const maxSpawnTime = new Date(baseSpawnTimeMs + variance);
-
-  return { minSpawnTime, maxSpawnTime };
-};
-
 export const useCreateTimer = () => {
   const { client } = useAuthenticatedApiClient();
-  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationKey: ["create-timer"],
@@ -132,65 +105,6 @@ export const useCreateTimer = () => {
         successCount: successful.length,
         failureCount: failed.length,
       };
-    },
-    onMutate: async ({ timer, guildIds, npcType }) => {
-      await queryClient.cancelQueries({ queryKey: ["guild-timers"] });
-
-      const previousTimers = queryClient.getQueryData<AxiosResponse<Timer[]>>([
-        "guild-timers",
-        timer.world,
-      ]);
-
-      const { minSpawnTime, maxSpawnTime } = calculateSpawnTimes(timer);
-
-      const optimisticTimers = guildIds.map((guildId) => ({
-        isPending: true,
-        minSpawnTime,
-        maxSpawnTime,
-        npc: {
-          id: timer.npc.id,
-          name: timer.npc.name,
-          icon: timer.npc.icon,
-          prof: timer.npc.prof,
-          type: npcType ?? ("COMMON" as NpcType),
-          lvl: timer.npc.lvl,
-          location: timer.npc.location,
-          hpp: timer.npc.hpp,
-          wt: timer.npc.wt,
-          margonemType: timer.npc.type,
-        },
-        npcId: timer.npc.id,
-        member: {
-          id: 0,
-          userId: String(timer.characterId),
-          name: "",
-          type: "",
-          guildId,
-        },
-        world: timer.world,
-        guildId,
-        isCustomTime: !!(timer.customMinSpawnTime && timer.customMaxSpawnTime),
-      })) satisfies Timer[];
-
-      queryClient.setQueryData<AxiosResponse<Timer[]>>(
-        ["guild-timers", timer.world],
-        (old) => {
-          const existingTimers = old?.data || [];
-          return {
-            data: [...existingTimers, ...optimisticTimers],
-          } as AxiosResponse<Timer[]>;
-        },
-      );
-
-      return { previousTimers, optimisticTimers };
-    },
-    onError: (_error, variables, context) => {
-      if (context?.previousTimers) {
-        queryClient.setQueryData(
-          ["guild-timers", variables.timer.world],
-          context.previousTimers,
-        );
-      }
     },
   });
 

@@ -3,12 +3,12 @@ export const GATEWAY_SOCKET_PATH = import.meta.env
   .VITE_GATEWAY_SOCKET_PATH as string;
 
 export enum GatewayEvent {
-  //main
-  INIT = "init",
-  HELLO = "hello",
+  // connection
   DISCONNECTING = "disconnecting",
   DISCONNECT = "disconnect",
   CONNECT = "connect",
+
+  // permissions
   PERMISSIONS_UPDATED = "permissions-updated",
 
   //rooms
@@ -20,6 +20,8 @@ export enum GatewayEvent {
   // presence
   REQUEST_SERVER_PRESENCE = "request-server-presence",
   UPDATE_SERVER_PRESENCE = "update-server-presence",
+
+  // timers
   TIMERS_CREATE = "timers-create",
   TIMERS_DELETE = "timers-delete",
 
