@@ -20,6 +20,8 @@ export const useChatMessagesListener = (client: AxiosInstance) => {
       queryClient.setQueryData(
         [QUERY_KEY, data.guildId],
         (old: AxiosResponse<ChatMessage[]>) => {
+          if (!old) return { data: [data] };
+
           return {
             data: [...old.data, data],
           };

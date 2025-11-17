@@ -37,6 +37,7 @@ const queryClient = new QueryClient({
 
 const localStoragePersister = createAsyncStoragePersister({
   storage: window.localStorage,
+  key: "ll:query-cache",
 });
 
 persistQueryClient({
