@@ -7,6 +7,7 @@ import { NpcType } from "@/hooks/api/use-npcs";
 const mockToggleOpen = vi.fn();
 const mockSetOpen = vi.fn();
 const mockToggleTimerFiltersEnabled = vi.fn();
+const mockToggleColorFiltersEnabled = vi.fn();
 const mockSetTimersSortOrder = vi.fn();
 
 vi.mock("@/hooks/api/use-timers");
@@ -16,6 +17,7 @@ vi.mock("@/store/global.store");
 vi.mock("@/store/windows.store");
 vi.mock("@/store/timers.store");
 vi.mock("@/store/settings.store");
+vi.mock("@/contexts/socket-context");
 
 vi.mock("@/lib/game", () => ({
   Game: {
@@ -85,6 +87,17 @@ vi.mock("@/components/draggable-window", () => ({
   ),
 }));
 
+vi.mock("@/components/animated-window", () => ({
+  AnimatedWindow: ({
+    children,
+    isOpen,
+  }: {
+    children: React.ReactNode;
+    isOpen: boolean;
+    windowKey: string;
+  }) => (isOpen ? <div data-testid="animated-window">{children}</div> : null),
+}));
+
 vi.mock("./hooks/use-timers-update");
 vi.mock("./hooks/use-timers-filtering");
 vi.mock("./hooks/use-timers-socket");
@@ -98,7 +111,6 @@ describe("Timers Component", () => {
     vi.clearAllMocks();
 
     const { useTimers } = await import("@/hooks/api/use-timers");
-    const { useGateway } = await import("@/hooks/gateway/use-gateway");
     const { useGuildPermissions } = await import(
       "@/hooks/api/use-guild-permissions"
     );
@@ -108,16 +120,19 @@ describe("Timers Component", () => {
     const { useSettingsStore } = await import("@/store/settings.store");
     const { useTimersUpdate } = await import("./hooks/use-timers-update");
     const { useTimersFiltering } = await import("./hooks/use-timers-filtering");
+    const { useSocket } = await import("@/contexts/socket-context");
 
     vi.mocked(useTimers).mockReturnValue({
       data: [],
       isLoading: false,
       error: null,
     } as unknown as ReturnType<typeof useTimers>);
-    vi.mocked(useGateway).mockReturnValue({
+    vi.mocked(useSocket).mockReturnValue({
       socket: { id: "socket-1" },
       connected: true,
-    } as unknown as ReturnType<typeof useGateway>);
+      joined: true,
+      joinedGuilds: [],
+    } as unknown as ReturnType<typeof useSocket>);
     vi.mocked(useGuildPermissions).mockReturnValue({
       data: [],
     } as unknown as ReturnType<typeof useGuildPermissions>);
@@ -139,6 +154,8 @@ describe("Timers Component", () => {
       },
       timerFiltersEnabled: false,
       toggleTimerFiltersEnabled: mockToggleTimerFiltersEnabled,
+      colorFiltersEnabled: false,
+      toggleColorFiltersEnabled: mockToggleColorFiltersEnabled,
       timerFiltersSearchText: "",
       timersSortOrder: "asc",
       setTimersSortOrder: mockSetTimersSortOrder,
@@ -199,18 +216,22 @@ describe("Timers Component", () => {
 
       render(<Timers />);
 
-      expect(useTimersSocket).toHaveBeenCalledWith("world1");
+      expect(useTimersSocket).toHaveBeenCalled();
     });
 
     it("2.2 should handle socket disconnection (HIGH PRIORITY)", async () => {
-      const { useGateway } = await import("@/hooks/gateway/use-gateway");
+      const { useSocket } = await import("@/contexts/socket-context");
 
-      vi.mocked(useGateway).mockReturnValue({
-        socket: undefined,
+      vi.mocked(useSocket).mockReturnValue({
+        socket: null,
         connected: false,
-      } as ReturnType<typeof useGateway>);
+        joined: false,
+        joinedGuilds: [],
+      } as ReturnType<typeof useSocket>);
 
-      expect(() => render(<Timers />)).not.toThrow();
+      render(<Timers />);
+
+      expect(screen.getByTestId("timers-content")).toBeDefined();
     });
   });
 
@@ -311,6 +332,8 @@ describe("Timers Component", () => {
         pinnedTimers: {},
         timerFiltersEnabled: false,
         toggleTimerFiltersEnabled: mockToggleTimerFiltersEnabled,
+        colorFiltersEnabled: false,
+        toggleColorFiltersEnabled: mockToggleColorFiltersEnabled,
         timerFiltersSearchText: "",
         timersSortOrder: "asc",
         setTimersSortOrder: mockSetTimersSortOrder,

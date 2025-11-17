@@ -24,32 +24,26 @@ export type Timer = {
   updatedAt?: Date;
 };
 
+const timersKey = (world?: string) => ["guild-timers", world] as const;
+
 export const useTimers = ({ world }: UseTimersOptions) => {
   const { client } = useAuthenticatedApiClient();
 
-  const queryParams = {
-    world,
-  };
-
+  const queryParams = { world };
   const queryString = stringify(queryParams);
 
   const query = useQuery({
-    queryKey: ["guild-timers", world],
-    queryFn: async () => {
-      const response = await client.get<Timer[]>(
+    queryKey: timersKey(world),
+    enabled: !!world,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    queryFn: async (): Promise<Timer[]> => {
+      const { data } = await client.get<Timer[]>(
         `${API_URL}/timers?${queryString}`,
       );
-      return response;
+
+      return data;
     },
-    enabled: !!world,
-    select: (response) => {
-      const cleanedTimers = response.data.map((timer) => ({
-        ...timer,
-        isPending: false,
-      }));
-      return cleanedTimers;
-    },
-    staleTime: 0,
   });
 
   return query;
