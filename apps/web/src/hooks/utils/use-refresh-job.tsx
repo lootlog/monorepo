@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefreshJobUpdate } from "@/types/refresh-job";
 import { GatewayEvent } from "@/config/gateway";
-import { useGateway } from "@/hooks/utils/use-gateway";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
+import { useGateway } from "@/hooks/utils/use-gateway";
 
 export const useRefreshJob = (
   guildId: string | undefined,
