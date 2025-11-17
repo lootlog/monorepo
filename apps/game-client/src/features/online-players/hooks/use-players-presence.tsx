@@ -1,5 +1,5 @@
 import { GatewayEvent } from "@/config/gateway";
-import { useGateway } from "@/hooks/gateway/use-gateway";
+import { useSocket } from "@/contexts/socket-context";
 import { useEffect, useRef, useState } from "react";
 
 type PlayerPresenceResponse = Record<string, PlayerPresence[]>;
@@ -43,7 +43,7 @@ export const usePlayersPresence = (
     {},
   );
   const [loading, setLoading] = useState(false);
-  const { socket, joined, connected } = useGateway();
+  const { joined, connected, socket } = useSocket();
 
   const selectedGuildIdRef = useRef(selectedGuildId);
   const worldRef = useRef(world);

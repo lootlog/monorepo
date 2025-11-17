@@ -70,8 +70,8 @@ export const GuildsSidebarNav: FC = () => {
       path: ROUTE_SEGMENTS.guild.settings,
       available: true,
       enabled: Boolean(
-        permissions.includes(Permission.ADMIN) ||
-          permissions.includes(Permission.OWNER),
+        permissions?.includes(Permission.ADMIN) ||
+          permissions?.includes(Permission.OWNER),
       ),
     },
   ];

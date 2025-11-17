@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
-import { useTimers } from "@/hooks/api/use-timers";
+import { type Timer, useTimers } from "@/hooks/api/use-timers";
 import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
@@ -11,7 +11,6 @@ import { TimersContent } from "@/features/timers/components/timers-content";
 import { TimersUnderBagActions } from "@/features/timers/components/timers-under-bag-actions";
 import { useTimersUpdate } from "@/features/timers/hooks/use-timers-update";
 import { useTimersFiltering } from "@/features/timers/hooks/use-timers-filtering";
-import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 import {
   mergeTimers,
   calculateTimeLeft,
@@ -20,19 +19,29 @@ import {
 import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
 import { Game } from "@/lib/game";
+import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
 
 export type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
+
+const EMPTY_TIMERS: Timer[] = [];
 
 export const Timers = () => {
   const characterId = String(Game.hero.id);
   const gameInterface = Game.interface;
   const defaultWorld = Game.getWorldName();
+  const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
+
+  const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
+
+  const { data: timers } = useTimers({ world: desiredWorld });
 
   const {
     timers: { open },
     toggleOpen,
     setOpen,
   } = useWindowsStore();
+
+  useTimersSocket();
 
   const {
     hiddenTimers,
@@ -53,20 +62,16 @@ export const Timers = () => {
     overriddenDefaultColors,
   } = useTimersStore();
 
-  const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
   const guildId = guildIdByCharId[characterId];
-  const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
-
-  useTimersSocket(desiredWorld);
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
-  const { data: timers } = useTimers({ world: desiredWorld });
+  useTimers({ world: desiredWorld });
 
-  const rawTimers = timers ?? [];
+  const rawTimers = timers ? timers : EMPTY_TIMERS;
 
   const deduplicatedTimers = generalConfig.timersGrouping
     ? rawTimers
