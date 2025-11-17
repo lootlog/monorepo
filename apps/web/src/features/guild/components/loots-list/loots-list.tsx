@@ -33,7 +33,7 @@ export const LootsList: FC = () => {
   const scrollElementRef = useRef<HTMLDivElement>(null);
 
   const canManageLoots =
-    permissions.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
+    permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
 
   const allLoots = loots?.pages.flatMap((page) => page.data) ?? [];
   const totalCount = allLoots.length;
