@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: search
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: search
@@ -17,17 +18,19 @@ spec:
           image: kamilwronka7/lootlog-search:latest
           resources:
             requests:
-              memory: '256Mi'
-              cpu: '200m'
+              memory: "128Mi"
+              cpu: "50m"
             limits:
-              memory: '384Mi'
-              cpu: '300m'
+              memory: "1Gi"
+              cpu: "1000m"
           ports:
             - name: container-port
               containerPort: 4000
           env:
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=800"
             - name: PORT
-              value: '4000'
+              value: "4000"
             - name: ENV
               valueFrom:
                 secretKeyRef:
@@ -48,13 +51,14 @@ spec:
                 secretKeyRef:
                   name: lootlog-search-secrets
                   key: meilisearchApiKey
-
           livenessProbe:
             httpGet:
               path: /healthz
               port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
           readinessProbe:
             tcpSocket:
               port: 4000
-            initialDelaySeconds: 30
-            periodSeconds: 20
+            initialDelaySeconds: 5
+            periodSeconds: 5

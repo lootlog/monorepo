@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: api
 spec:
+  replicas: 2
   selector:
     matchLabels:
       app: api
@@ -17,15 +18,17 @@ spec:
           image: kamilwronka7/lootlog-api:latest
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "800m"
+              memory: "256Mi"
+              cpu: "100m"
             limits:
-              memory: "768Mi"
-              cpu: "1000m"
+              memory: "1.5Gi"
+              cpu: "2000m"
           ports:
             - name: container-port
               containerPort: 4000
           env:
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=1200"
             - name: PORT
               value: "4000"
             - name: ENV
@@ -72,13 +75,14 @@ spec:
                 secretKeyRef:
                   name: lootlog-api-secrets
                   key: authServiceUrl
-
           livenessProbe:
             httpGet:
               path: /healthz
               port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
           readinessProbe:
             tcpSocket:
               port: 4000
-            initialDelaySeconds: 30
-            periodSeconds: 20
+            initialDelaySeconds: 5
+            periodSeconds: 5
