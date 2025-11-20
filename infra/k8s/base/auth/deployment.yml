@@ -32,7 +32,6 @@ spec:
             - name: NODE_OPTIONS
               value: "--max-old-space-size=1200"
 
-            # --- TWOJE ZMIENNE ---
             - name: PORT
               value: "4000"
             - name: ENV
