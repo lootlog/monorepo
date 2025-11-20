@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: gateway
 spec:
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: gateway
@@ -17,15 +20,17 @@ spec:
           image: kamilwronka7/lootlog-gateway:latest
           resources:
             requests:
-              memory: "512Mi"
+              memory: "1Gi"
               cpu: "500m"
             limits:
-              memory: "768Mi"
-              cpu: "700m"
+              memory: "4Gi"
+              cpu: "4000m"
           ports:
             - name: container-port
               containerPort: 4000
           env:
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=3072"
             - name: PORT
               value: "4000"
             - name: ENV
@@ -59,20 +64,17 @@ spec:
                 secretKeyRef:
                   name: lootlog-gateway-secrets
                   key: apiUrl
-
-          # livenessProbe:
-          #   httpGet:
-          #     path: /healthz
-          #     port: 4000
-          #   timeoutSeconds: 30
           livenessProbe:
-            exec:
-              command: ["/bin/sh", "-c", "true"]
-            periodSeconds: 5
-            timeoutSeconds: 1
-            failureThreshold: 3
-          readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /healthz
               port: 4000
-            initialDelaySeconds: 30
-            periodSeconds: 20
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 5
