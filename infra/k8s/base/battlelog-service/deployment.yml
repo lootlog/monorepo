@@ -2,7 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: battlelog-service
+  namespace: lootlog-prod
 spec:
+  replicas: 2
   selector:
     matchLabels:
       app: battlelog-service
@@ -15,19 +17,25 @@ spec:
       containers:
         - name: battlelog-service
           image: kamilwronka7/lootlog-battlelog-service:latest
+
           resources:
             requests:
-              memory: '512Mi'
-              cpu: '500m'
+              memory: "256Mi"
+              cpu: "50m"
             limits:
-              memory: '768Mi'
-              cpu: '700m'
+              memory: "1Gi"
+              cpu: "1000m"
+
           ports:
             - name: container-port
               containerPort: 4000
+
           env:
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=800"
+
             - name: PORT
-              value: '4000'
+              value: "4000"
             - name: ENV
               valueFrom:
                 secretKeyRef:
@@ -86,14 +94,16 @@ spec:
             - name: REDIS_HOST
               value: dragonfly
             - name: REDIS_PORT
-              value: '6379'
+              value: "6379"
 
           livenessProbe:
             httpGet:
               path: /healthz
               port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
           readinessProbe:
             tcpSocket:
               port: 4000
-            initialDelaySeconds: 30
-            periodSeconds: 20
+            initialDelaySeconds: 5
+            periodSeconds: 5
