@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Reservations } from "@/features/reservations/reservations";
+import { ReservationsLayout } from "@/features/reservations/reservations-layout/reservations-layout";
 
 export const Route = createFileRoute("/_authenticated/$guildId/reservations")({
-  component: Reservations,
+  component: ReservationsLayout,
 });

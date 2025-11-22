@@ -31,6 +31,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     REDIS_PASSWORD: Joi.string().allow('').required(),
     REDIS_USERNAME: Joi.string().allow('').required(),
     AUTH_SERVICE_URL: Joi.string().required(),
+    RESERVATIONS_CARDS_URL: Joi.string().uri().required(),
   }),
   validationOptions: {
     allowUnknown: true,

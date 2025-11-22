@@ -51,6 +51,28 @@ export default registerAs(ConfigKey.RABBITMQ, (): RabbitMQConfig => {
           deadLetterRoutingKey: RoutingKey.GUILDS_TIMERS_DELETE,
         },
       },
+      {
+        name: Queue.GUILDS_RESERVATIONS_CREATE_RETRY,
+        exchange: RETRY_EXCHANGE_NAME,
+        routingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE_RETRY,
+        options: {
+          durable: true,
+          messageTtl: DEFAULT_TTL,
+          deadLetterExchange: DEFAULT_EXCHANGE_NAME,
+          deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE,
+        },
+      },
+      {
+        name: Queue.GUILDS_RESERVATIONS_DELETE_RETRY,
+        exchange: RETRY_EXCHANGE_NAME,
+        routingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE_RETRY,
+        options: {
+          durable: true,
+          messageTtl: DEFAULT_TTL,
+          deadLetterExchange: DEFAULT_EXCHANGE_NAME,
+          deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE,
+        },
+      },
       // Message retry queues
       {
         name: Queue.GUILDS_SEND_MESSAGE_RETRY,
