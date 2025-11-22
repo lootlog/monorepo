@@ -21,6 +21,7 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
 import { DiscordModule } from './discord/discord.module';
 import { AuthModule } from './auth/auth.module';
 import { LoggerMiddleware } from 'src/shared/middleware/logger.middleware';
+import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { LoggerMiddleware } from 'src/shared/middleware/logger.middleware';
     LootlogConfigModule,
     UserLootlogConfigModule,
     ChatModule,
+    ReservationsModule,
     RedisModule,
     NotificationsModule,
     DiscordModule,

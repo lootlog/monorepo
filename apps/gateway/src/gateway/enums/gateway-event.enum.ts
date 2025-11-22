@@ -7,6 +7,8 @@ export enum GatewayEvent {
   CHAT_MESSAGE = 'chat-message',
   TIMERS_CREATE = 'timers-create',
   TIMERS_DELETE = 'timers-delete',
+  RESERVATIONS_CREATE = 'reservations-create',
+  RESERVATIONS_DELETE = 'reservations-delete',
   NOTIFICATIONS_SEND = 'notifications-send',
   MEMBERS_REFRESH_JOB_UPDATE = 'members-refresh-job-update',
   PERMISSIONS_UPDATED = 'permissions-updated',
