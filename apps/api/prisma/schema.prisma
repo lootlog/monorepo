@@ -8,7 +8,6 @@ datasource db {
   url      = env("POSTGRESQL_CONNECTION_URI")
 }
 
-
 enum Permission {
   OWNER
   ADMIN
@@ -108,7 +107,6 @@ enum RefreshJobStatus {
   FAILED
 }
 
-
 model Guild {
   id              String           @id
   name            String
@@ -192,7 +190,6 @@ model Timer {
   @@index([createdById])
 }
 
-
 model Loot {
   id        Int        @id @default(autoincrement())
   uniqueId  String     @unique
@@ -201,11 +198,6 @@ model Loot {
   location  String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-
-  mainNpcName  String?
-  mainNpcType  NpcType?
-  itemRarities ItemRarity[]
-  playerNames  String[]     @default([])
 
   items   Json?
   players Json?
@@ -220,10 +212,7 @@ model Loot {
   lootShare       Json             @default("{}")
 
   @@index([createdAt])
-  @@index([uniqueId])
-  @@index([world, source, createdAt])
-  @@index([mainNpcName])
-  @@index([itemRarities], type: Gin)
+  @@index([world, createdAt])
 }
 
 model ItemSnapshot {
@@ -242,7 +231,6 @@ model ItemSnapshot {
   lootItems LootItem[]
 
   @@unique([itemId, statsHash])
-  @@index([statsSnapshot], type: Gin)
   @@index([rarity, lvl])
 }
 
@@ -250,6 +238,7 @@ model LootItem {
   id             Int @id @default(autoincrement())
   lootId         Int
   itemSnapshotId Int
+  hid            String
 
   loot         Loot         @relation(fields: [lootId], references: [id])
   itemSnapshot ItemSnapshot @relation(fields: [itemSnapshotId], references: [id])
@@ -261,11 +250,10 @@ model LootItem {
 model PlayerSnapshot {
   id           Int         @id @default(autoincrement())
   world        String
-  accountId    String
-  characterId  String
+  accountId    Int
+  characterId  Int
   snapshotHash String
   name         String
-  lvl          Int
   prof         Profession?
   icon         String?
   createdAt    DateTime    @default(now())
@@ -275,12 +263,14 @@ model PlayerSnapshot {
   @@unique([world, accountId, characterId, snapshotHash])
   @@index([world, name])
   @@index([accountId, characterId])
+  @@index([name])
 }
 
 model LootPlayer {
   id               Int  @id @default(autoincrement())
   lootId           Int
   playerSnapshotId Int
+  lvl              Int?
   hpp              Int?
 
   loot           Loot           @relation(fields: [lootId], references: [id])
@@ -291,17 +281,22 @@ model LootPlayer {
 }
 
 model NpcSnapshot {
-  id        Int      @id @default(autoincrement())
-  npcId     Int
-  name      String
-  type      NpcType?
-  lvl       Int?
-  icon      String?
-  createdAt DateTime @default(now())
+  id           Int         @id @default(autoincrement())
+  npcId        Int
+  name         String
+  type         NpcType?
+  lvl          Int?
+  icon         String?
+  wt           Int?
+  margonemType Int?
+  prof         Profession?
+  createdAt    DateTime    @default(now())
 
   lootNpcs LootNpc[]
 
   @@unique([npcId, name])
+  @@index([name])
+  @@index([type, lvl])
 }
 
 model LootNpc {
@@ -316,7 +311,6 @@ model LootNpc {
   @@index([npcSnapshotId])
 }
 
-
 model LootSubmission {
   id        Int      @id @default(autoincrement())
   lootId    Int
@@ -330,6 +324,7 @@ model LootSubmission {
   guild  Guild  @relation(fields: [guildId], references: [id])
 
   @@unique([lootId, guildId, memberId])
+  @@index([guildId, lootId])
 }
 
 model LootComment {
