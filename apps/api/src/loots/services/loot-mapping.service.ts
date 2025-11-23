@@ -10,6 +10,8 @@ import {
   LOOT_SHARE_MSG_REGEX,
 } from 'src/loots/constants/loot-share-msg-regex';
 
+const SNAPSHOT_HASH_IGNORED_KEYS = new Set(['created', 'gold', 'amount']);
+
 interface ParsedPlayer {
   id: string;
   name: string;
@@ -42,6 +44,28 @@ export class LootMappingService {
         .sort((a, b) => a.hid.localeCompare(b.hid))
         .map((loot) => loot.hid)
         .join('') + world;
+    return createHash('sha256').update(string).digest('hex');
+  }
+
+  generateStatsHash(stat: string): string {
+    const sortedStats = stat
+      .split(';')
+      .filter((statEntry) => {
+        const [key] = statEntry.split('=');
+        return Boolean(key) && !SNAPSHOT_HASH_IGNORED_KEYS.has(key);
+      })
+      .sort()
+      .join(';');
+    return createHash('sha256').update(sortedStats).digest('hex');
+  }
+
+  generatePlayerSnapshotHash(
+    name: string,
+    lvl: number,
+    prof: string,
+    icon: string,
+  ): string {
+    const string = `${name}${lvl}${prof}${icon}`;
     return createHash('sha256').update(string).digest('hex');
   }
 
@@ -212,5 +236,103 @@ export class LootMappingService {
       },
       {} as Record<string, string[]>,
     );
+  }
+
+  mapLootItemsToConnectOrCreate(items: CreateLootDto['loots']) {
+    return items.map((item) => {
+      const { lvl, rarity, type } = this.getItemStats(item);
+      const statsHash = this.generateStatsHash(item.stat);
+
+      return {
+        itemSnapshot: {
+          connectOrCreate: {
+            where: {
+              itemId_statsHash: {
+                itemId: item.id,
+                statsHash,
+              },
+            },
+            create: {
+              itemId: item.id,
+              statsHash,
+              name: item.name,
+              icon: item.icon,
+              lvl,
+              rarity,
+              itemType: type,
+              statRaw: item.stat,
+              statsSnapshot: this.parseItemStats(item.stat),
+            },
+          },
+        },
+      };
+    });
+  }
+
+  mapLootPlayersToConnectOrCreate(
+    players: CreateLootDto['players'],
+    world: string,
+  ) {
+    return players.map((player) => {
+      const prof = getProfByShortname(player.prof);
+      const snapshotHash = this.generatePlayerSnapshotHash(
+        player.name,
+        player.lvl,
+        player.prof,
+        player.icon,
+      );
+
+      return {
+        hpp: player.hpp,
+        playerSnapshot: {
+          connectOrCreate: {
+            where: {
+              world_accountId_characterId_snapshotHash: {
+                world,
+                accountId: String(player.accountId),
+                characterId: String(player.id),
+                snapshotHash,
+              },
+            },
+            create: {
+              world,
+              accountId: String(player.accountId),
+              characterId: String(player.id),
+              snapshotHash,
+              name: player.name,
+              lvl: player.lvl,
+              prof,
+              icon: player.icon,
+            },
+          },
+        },
+      };
+    });
+  }
+
+  mapLootNpcsToConnectOrCreate(npcs: CreateLootDto['npcs']) {
+    return npcs.map((npc) => {
+      const type = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+
+      return {
+        npcSnapshot: {
+          connectOrCreate: {
+            where: {
+              npcId_name: {
+                npcId: npc.id,
+                name: npc.name,
+              },
+            },
+            create: {
+              npcId: npc.id,
+              name: npc.name,
+              type,
+              lvl: npc.lvl,
+              icon: npc.icon,
+            },
+          },
+        },
+      };
+    });
   }
 }
