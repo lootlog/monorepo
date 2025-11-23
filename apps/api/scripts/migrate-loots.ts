@@ -12,7 +12,14 @@ const prisma = new PrismaClient();
 
 // --- UTILS ---
 
-const SNAPSHOT_HASH_IGNORED_KEYS = new Set(['created', 'gold', 'amount']);
+const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
+  'created',
+  'gold',
+  'amount',
+  'opis',
+]);
+
+const SHOULD_CLEAR_LEGACY_FIELDS = false;
 
 const PROFESSIONS_SHORTNAMES: Record<string, Profession> = {
   BLADE_DANCER: Profession.BLADE_DANCER,
@@ -101,11 +108,10 @@ const generateStatsHash = (stat: string): string => {
 
 const generatePlayerSnapshotHash = (
   name: string,
-  lvl: number,
   prof: string,
   icon: string,
 ): string => {
-  const string = `${name}${lvl}${prof}${icon}`;
+  const string = `${name}${prof}${icon}`;
   return createHash('sha256').update(string).digest('hex');
 };
 
@@ -146,6 +152,29 @@ const getItemStats = (item: any) => {
 
 const parseJsonField = (field: unknown): unknown => {
   return typeof field === 'string' ? JSON.parse(field) : field;
+};
+
+const toOptionalInt = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const splitCharacterAndAccount = (
+  id: string | number,
+  accountId: string | number,
+) => {
+  const accountStr = String(accountId ?? '');
+  const idStr = String(id ?? '');
+
+  if (accountStr && idStr.endsWith(accountStr)) {
+    const characterPart = idStr.slice(0, idStr.length - accountStr.length);
+    return {
+      characterId: Number(characterPart || idStr),
+      accountId: Number(accountStr),
+    };
+  }
+
+  return { characterId: Number(idStr), accountId: Number(accountStr) };
 };
 
 // --- MIGRATION LOGIC ---
@@ -239,30 +268,21 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
     lootId: number;
     itemId: number;
     statsHash: string;
+    hid: string;
   }[] = [];
   const lootPlayersToCreate: {
     lootId: number;
     world: string;
-    accountId: string;
-    characterId: string;
+    accountId: number;
+    characterId: number;
     snapshotHash: string;
+    lvl: number | null;
     hpp: number | null;
   }[] = [];
   const lootNpcsToCreate: { lootId: number; npcId: number; name: string }[] =
     [];
-  const lootUpdates: {
-    id: number;
-    playerNames: string[];
-    mainNpcName: string | null;
-    mainNpcType: NpcType | null;
-    itemRarities: ItemRarity[];
-  }[] = [];
 
   for (const loot of loots) {
-    let mainNpcName: string | null = null;
-    let mainNpcType: NpcType | null = null;
-    const playerNames: string[] = [];
-    const itemRarities: Set<ItemRarity> = new Set();
     // 1. Items
     if (loot.items && loot.items !== null) {
       const items = parseJsonField(loot.items) as any[];
@@ -294,14 +314,11 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
             });
           }
 
-          if (rarity) {
-            itemRarities.add(rarity);
-          }
-
           lootItemsToCreate.push({
             lootId: loot.id,
             itemId: item.id,
             statsHash,
+            hid: item.hid,
           });
         }
       }
@@ -313,7 +330,10 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
       if (Array.isArray(players)) {
         for (const player of players) {
           const prof = getProfByShortname(player.prof);
-          playerNames.push(player.name);
+          const { characterId, accountId } = splitCharacterAndAccount(
+            player.id,
+            player.accountId,
+          );
 
           if (!prof) {
             console.warn(
@@ -325,20 +345,18 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
 
           const snapshotHash = generatePlayerSnapshotHash(
             player.name,
-            player.lvl,
             player.prof,
             player.icon,
           );
-          const key = `${loot.world}_${player.accountId}_${player.id}_${snapshotHash}`;
+          const key = `${loot.world}_${accountId}_${characterId}_${snapshotHash}`;
 
           if (!playerSnapshotsToCreate.has(key)) {
             playerSnapshotsToCreate.set(key, {
               world: loot.world,
-              accountId: String(player.accountId),
-              characterId: String(player.id),
+              accountId,
+              characterId,
               snapshotHash,
               name: player.name,
-              lvl: player.lvl,
               prof,
               icon: player.icon,
             });
@@ -347,60 +365,56 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
           lootPlayersToCreate.push({
             lootId: loot.id,
             world: loot.world,
-            accountId: String(player.accountId),
-            characterId: String(player.id),
+            accountId,
+            characterId,
             snapshotHash,
+            lvl: toOptionalInt(player.lvl),
             hpp: player.hpp || null,
           });
         }
       }
-      // Moved lootUpdates push to end of loop to include mainNpcName
     }
 
     // 3. Npcs
     if (loot.npcs && loot.npcs !== null) {
       const npcs = parseJsonField(loot.npcs) as any[];
       if (Array.isArray(npcs)) {
-        // Sort npcs by wt descending to find main npc
-        const sortedNpcs = [...npcs].sort((a, b) => (b.wt || 0) - (a.wt || 0));
-        if (sortedNpcs.length > 0) {
-          const mainNpc = sortedNpcs[0];
-          mainNpcName = mainNpc.name;
-          mainNpcType = getNpcTypeByWt(mainNpc.wt, mainNpc.prof, mainNpc.type);
-        }
-
         for (const npc of npcs) {
-          const key = `${npc.id}_${npc.name}`;
+          const npcId = toOptionalInt(npc.id);
+          if (npcId === null) {
+            console.warn(`[WARN] Invalid npc id for loot ${loot.id}`, npc);
+            continue;
+          }
+          const key = `${npcId}_${npc.name}`;
+          const wt = toOptionalInt(npc.wt);
+          const margonemType = toOptionalInt(npc.margonemType);
+          const lvl = toOptionalInt(npc.lvl);
 
           if (!npcSnapshotsToCreate.has(key)) {
-            const type = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+            const type = getNpcTypeByWt(
+              wt ?? 0,
+              npc.prof,
+              margonemType ?? undefined,
+            );
             npcSnapshotsToCreate.set(key, {
-              npcId: npc.id,
+              npcId,
               name: npc.name,
               type,
-              lvl: npc.lvl,
+              lvl,
               icon: npc.icon ?? null,
+              wt,
+              margonemType,
+              prof: npc.prof ? getProfByShortname(npc.prof) : null,
             });
           }
 
           lootNpcsToCreate.push({
             lootId: loot.id,
-            npcId: npc.id,
+            npcId,
             name: npc.name,
           });
         }
       }
-    }
-
-    // Add update object if we have playerNames OR mainNpcName to update
-    if (playerNames.length > 0 || mainNpcName || itemRarities.size > 0) {
-      lootUpdates.push({
-        id: loot.id,
-        playerNames,
-        mainNpcName,
-        mainNpcType,
-        itemRarities: Array.from(itemRarities),
-      });
     }
   }
 
@@ -438,11 +452,13 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
         return {
           lootId: li.lootId,
           itemSnapshotId: sid,
+          hid: li.hid,
         };
       })
       .filter((x) => x !== null) as {
       lootId: number;
       itemSnapshotId: number;
+      hid: string;
     }[];
 
     if (finalLootItems.length > 0) {
@@ -493,13 +509,14 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
 
     const finalLootPlayers = lootPlayersToCreate
       .map((lp) => {
-        const sid = snapshotMap.get(
-          `${lp.world}_${lp.accountId}_${lp.characterId}_${lp.snapshotHash}`,
-        );
+          const sid = snapshotMap.get(
+            `${lp.world}_${lp.accountId}_${lp.characterId}_${lp.snapshotHash}`,
+          );
         if (!sid) return null;
         return {
           lootId: lp.lootId,
           playerSnapshotId: sid,
+          lvl: lp.lvl,
           hpp: lp.hpp,
         };
       })
@@ -557,36 +574,17 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
     }
   }
 
-  // Update playerNames and mainNpcName where needed
-  if (lootUpdates.length > 0) {
-    // Split updates into chunks to avoid connection pool exhaustion if there are many
-    // Although with BATCH_SIZE=5000, parallel promises might be okay.
-    // Let's just execute them.
-    const updatePromises = lootUpdates.map((update) =>
-      db.loot.update({
-        where: { id: update.id },
-        data: {
-          playerNames: update.playerNames,
-          mainNpcName: update.mainNpcName,
-          mainNpcType: update.mainNpcType,
-          itemRarities: update.itemRarities,
-          // mainNpcId: null, // Removed because column was renamed/replaced in schema
-        },
-      }),
-    );
-    await Promise.all(updatePromises);
+  if (SHOULD_CLEAR_LEGACY_FIELDS) {
+    const lootIds = loots.map((l) => l.id);
+    await db.loot.updateMany({
+      where: { id: { in: lootIds } },
+      data: {
+        items: null,
+        players: null,
+        npcs: null,
+      },
+    });
   }
-
-  // Update Loots to clear legacy fields
-  const lootIds = loots.map((l) => l.id);
-  await db.loot.updateMany({
-    where: { id: { in: lootIds } },
-    data: {
-      items: null,
-      players: null,
-      npcs: null,
-    },
-  });
 }
 
 if (require.main === module) {

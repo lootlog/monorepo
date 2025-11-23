@@ -181,11 +181,6 @@ export class LootsService implements OnModuleInit {
       const lootNpcs = this.lootMappingService.mapLootNpcsToConnectOrCreate(
         body.npcs,
       );
-      const itemRarities = [
-        ...new Set(items.map((i) => i.rarity).filter(Boolean)),
-      ];
-      const playerNames = players.map((p) => p.name);
-
       const share = {};
 
       const loot = await this.prisma.loot.create({
@@ -198,10 +193,6 @@ export class LootsService implements OnModuleInit {
           players,
           npcs,
           lootShare: share,
-          mainNpcName: npcData.highest.name,
-          mainNpcType: highestWtNpcType,
-          itemRarities,
-          playerNames,
           lootItems: {
             create: lootItems,
           },

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import type { CreateLootDto } from 'src/loots/dto/create-loot.dto';
-import { Profession, type ItemRarity } from 'generated/client';
+import { Prisma, Profession, type ItemRarity } from 'generated/client';
 import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
@@ -10,7 +10,12 @@ import {
   LOOT_SHARE_MSG_REGEX,
 } from 'src/loots/constants/loot-share-msg-regex';
 
-const SNAPSHOT_HASH_IGNORED_KEYS = new Set(['created', 'gold', 'amount']);
+const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
+  'created',
+  'gold',
+  'amount',
+  'opis',
+]);
 
 interface ParsedPlayer {
   id: string;
@@ -59,13 +64,8 @@ export class LootMappingService {
     return createHash('sha256').update(sortedStats).digest('hex');
   }
 
-  generatePlayerSnapshotHash(
-    name: string,
-    lvl: number,
-    prof: string,
-    icon: string,
-  ): string {
-    const string = `${name}${lvl}${prof}${icon}`;
+  generatePlayerSnapshotHash(name: string, prof: string, icon: string): string {
+    const string = `${name}${prof}${icon}`;
     return createHash('sha256').update(string).digest('hex');
   }
 
@@ -97,6 +97,24 @@ export class LootMappingService {
 
   parseJsonField(field: unknown): unknown {
     return typeof field === 'string' ? JSON.parse(field) : field;
+  }
+
+  private normalizeCharacterAndAccount(
+    id: string | number,
+    accountId: string | number,
+  ): { characterId: number; accountId: number } {
+    const accountStr = String(accountId ?? '');
+    const idStr = String(id ?? '');
+
+    if (accountStr && idStr.endsWith(accountStr)) {
+      const characterPart = idStr.slice(0, idStr.length - accountStr.length);
+      return {
+        characterId: Number(characterPart || idStr),
+        accountId: Number(accountStr),
+      };
+    }
+
+    return { characterId: Number(idStr), accountId: Number(accountStr) };
   }
 
   processNpcs(npcs: CreateLootDto['npcs']) {
@@ -176,16 +194,23 @@ export class LootMappingService {
   }
 
   mapPlayers(players: CreateLootDto['players']) {
-    return players.map((player) => ({
-      id: `${player.id}${player.accountId}`,
-      name: player.name,
-      lvl: player.lvl,
-      prof: getProfByShortname(player.prof),
-      icon: player.icon,
-      characterId: player.id,
-      accountId: player.accountId,
-      hpp: player.hpp,
-    }));
+    return players.map((player) => {
+      const { characterId, accountId } = this.normalizeCharacterAndAccount(
+        player.id,
+        player.accountId,
+      );
+
+      return {
+        id: `${characterId}${accountId}`,
+        name: player.name,
+        lvl: player.lvl,
+        prof: getProfByShortname(player.prof),
+        icon: player.icon,
+        characterId: Number(characterId),
+        accountId: Number(accountId),
+        hpp: player.hpp,
+      };
+    });
   }
 
   getLootShareFromMsg(msg: string) {
@@ -265,6 +290,7 @@ export class LootMappingService {
             },
           },
         },
+        hid: item.hid,
       };
     });
   }
@@ -272,35 +298,39 @@ export class LootMappingService {
   mapLootPlayersToConnectOrCreate(
     players: CreateLootDto['players'],
     world: string,
-  ) {
+  ): Prisma.LootPlayerCreateWithoutLootInput[] {
     return players.map((player) => {
       const prof = getProfByShortname(player.prof);
+      const { characterId, accountId } = this.normalizeCharacterAndAccount(
+        player.id,
+        player.accountId,
+      );
       const snapshotHash = this.generatePlayerSnapshotHash(
         player.name,
-        player.lvl,
         player.prof,
         player.icon,
       );
+      const where: Prisma.PlayerSnapshotWhereUniqueInput = {
+        world_accountId_characterId_snapshotHash: {
+          world,
+          accountId,
+          characterId,
+          snapshotHash,
+        },
+      };
 
       return {
         hpp: player.hpp,
+        lvl: player.lvl,
         playerSnapshot: {
           connectOrCreate: {
-            where: {
-              world_accountId_characterId_snapshotHash: {
-                world,
-                accountId: String(player.accountId),
-                characterId: String(player.id),
-                snapshotHash,
-              },
-            },
+            where,
             create: {
               world,
-              accountId: String(player.accountId),
-              characterId: String(player.id),
+              accountId,
+              characterId,
               snapshotHash,
               name: player.name,
-              lvl: player.lvl,
               prof,
               icon: player.icon,
             },
@@ -329,6 +359,9 @@ export class LootMappingService {
               type,
               lvl: npc.lvl,
               icon: npc.icon,
+              wt: npc.wt,
+              margonemType: npc.type,
+              prof: npc.prof ? getProfByShortname(npc.prof) : null,
             },
           },
         },
