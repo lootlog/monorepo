@@ -179,7 +179,7 @@ const splitCharacterAndAccount = (
 
 // --- MIGRATION LOGIC ---
 
-const BATCH_SIZE = 5000;
+const BATCH_SIZE = 1000;
 
 async function migrate(db = prisma) {
   console.log('Starting Loot Migration...');
@@ -191,6 +191,7 @@ async function migrate(db = prisma) {
         { players: { not: null } },
         { npcs: { not: null } },
       ],
+      lootNpcs: { none: {} },
     },
   });
 
@@ -212,6 +213,7 @@ async function migrate(db = prisma) {
             { players: { not: null } },
             { npcs: { not: null } },
           ],
+          lootNpcs: { none: {} },
         },
         take: BATCH_SIZE,
         orderBy: { id: 'asc' },
@@ -509,9 +511,9 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
 
     const finalLootPlayers = lootPlayersToCreate
       .map((lp) => {
-          const sid = snapshotMap.get(
-            `${lp.world}_${lp.accountId}_${lp.characterId}_${lp.snapshotHash}`,
-          );
+        const sid = snapshotMap.get(
+          `${lp.world}_${lp.accountId}_${lp.characterId}_${lp.snapshotHash}`,
+        );
         if (!sid) return null;
         return {
           lootId: lp.lootId,
