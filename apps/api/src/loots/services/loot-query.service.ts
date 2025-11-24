@@ -142,10 +142,10 @@ export class LootQueryService {
 
     const commentsCountByLootId = commentsCounts.reduce(
       (acc, group) => {
-        acc[group.lootId] = BigInt(group._count._all);
+        acc[group.lootId] = group._count._all;
         return acc;
       },
-      {} as Record<number, bigint>,
+      {} as Record<number, number>,
     );
 
     const results: LootQueryResult[] = lootsWithRelations.map((loot) => ({
@@ -163,7 +163,7 @@ export class LootQueryService {
       ),
       npcs: this.mapNpcs(loot.lootNpcs),
       submissions: loot.lootSubmissions,
-      commentsCount: commentsCountByLootId[loot.id] ?? BigInt(0),
+      commentsCount: commentsCountByLootId[loot.id] ?? 0,
     }));
 
     return results;

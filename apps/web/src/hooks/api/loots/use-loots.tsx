@@ -28,8 +28,6 @@ export type Item = {
   hid: string;
   name: string;
   icon: string;
-  pr: number;
-  prc: string;
   stat: string;
   type: string;
   rarity: ItemRarity;
