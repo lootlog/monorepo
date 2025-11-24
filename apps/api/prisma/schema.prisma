@@ -213,6 +213,7 @@ model Loot {
 
   @@index([createdAt])
   @@index([world, createdAt])
+  @@index([world, id])
 }
 
 model ItemSnapshot {
@@ -235,7 +236,7 @@ model ItemSnapshot {
 }
 
 model LootItem {
-  id             Int @id @default(autoincrement())
+  id             Int    @id @default(autoincrement())
   lootId         Int
   itemSnapshotId Int
   hid            String
