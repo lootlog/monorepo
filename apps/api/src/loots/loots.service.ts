@@ -170,6 +170,17 @@ export class LootsService implements OnModuleInit {
       const players = this.lootMappingService.mapPlayers(body.players);
       const items = this.lootMappingService.mapItems(body.loots);
 
+      const lootItems = this.lootMappingService.mapLootItemsToConnectOrCreate(
+        body.loots,
+      );
+      const lootPlayers =
+        this.lootMappingService.mapLootPlayersToConnectOrCreate(
+          body.players,
+          body.world,
+        );
+      const lootNpcs = this.lootMappingService.mapLootNpcsToConnectOrCreate(
+        body.npcs,
+      );
       const share = {};
 
       const loot = await this.prisma.loot.create({
@@ -182,6 +193,15 @@ export class LootsService implements OnModuleInit {
           players,
           npcs,
           lootShare: share,
+          lootItems: {
+            create: lootItems,
+          },
+          lootPlayers: {
+            create: lootPlayers,
+          },
+          lootNpcs: {
+            create: lootNpcs,
+          },
         },
       });
 

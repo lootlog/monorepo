@@ -97,10 +97,10 @@ export class LootEntity {
 
   @Expose()
   @ApiProperty({
-    example: '10',
+    example: 10,
     description: 'Number of comments on the loot',
   })
-  commentsCount: string;
+  commentsCount: number;
 
   @Exclude()
   uniqueId: string;
