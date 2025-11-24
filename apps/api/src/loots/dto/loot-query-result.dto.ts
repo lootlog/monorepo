@@ -33,5 +33,5 @@ export type LootQueryResult = LootSelection & {
   players: LootPlayerDto[];
   npcs: LootNpcDto[];
   submissions: SubmissionWithMember[];
-  commentsCount: bigint;
+  commentsCount: number;
 };
