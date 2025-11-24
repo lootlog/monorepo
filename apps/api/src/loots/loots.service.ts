@@ -186,12 +186,9 @@ export class LootsService implements OnModuleInit {
       const loot = await this.prisma.loot.create({
         data: {
           uniqueId,
-          items,
           world: body.world,
           source: body.source,
           location: body.location,
-          players,
-          npcs,
           lootShare: share,
           lootItems: {
             create: lootItems,
@@ -281,6 +278,18 @@ export class LootsService implements OnModuleInit {
           equals: {},
         },
       },
+      include: {
+        lootItems: {
+          include: {
+            itemSnapshot: true,
+          },
+        },
+        lootPlayers: {
+          include: {
+            playerSnapshot: true,
+          },
+        },
+      },
     });
 
     if (!loot) {
@@ -292,20 +301,40 @@ export class LootsService implements OnModuleInit {
       throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE);
     }
 
+    // Transform relational data to the expected format for parseLootShareForUpdate
+    const players = loot.lootPlayers.map((lp) => ({
+      id: `${lp.playerSnapshot.characterId}${lp.playerSnapshot.accountId}`,
+      name: lp.playerSnapshot.name,
+      lvl: lp.lvl ?? 0,
+      prof: lp.playerSnapshot.prof,
+      icon: lp.playerSnapshot.icon ?? '',
+      characterId: String(lp.playerSnapshot.characterId),
+      accountId: String(lp.playerSnapshot.accountId),
+    }));
+
+    const items = loot.lootItems.map((li) => ({
+      id: String(li.itemSnapshot.itemId),
+      hid: li.hid,
+      name: li.itemSnapshot.name,
+      icon: li.itemSnapshot.icon,
+      stat: li.itemSnapshot.statRaw,
+      lvl: li.itemSnapshot.lvl ?? 0,
+      rarity: li.itemSnapshot.rarity,
+      prof: [],
+      type: li.itemSnapshot.itemType ?? '',
+    }));
+
     const mappedLootShare = this.lootMappingService.parseLootShareForUpdate(
       data.msg,
-      loot.players,
-      loot.items,
+      players,
+      items,
     );
 
     if (Object.keys(mappedLootShare).length === 0) {
       throw new BadRequestException(ErrorKey.MISSING_LOOT_SHARE_ITEM_OR_PLAYER);
     }
 
-    const parsedLoot = this.lootMappingService.parseJsonField(loot.items);
-    const parsedLootArray = Array.isArray(parsedLoot) ? parsedLoot : [];
-
-    if (Object.keys(mappedLootShare).length < parsedLootArray.length) {
+    if (Object.keys(mappedLootShare).length < items.length) {
       this.logger.log({
         level: 'warn',
         message:
@@ -313,7 +342,7 @@ export class LootsService implements OnModuleInit {
         lootId,
         lootShareMsg: data.msg,
         mappedItemsCount: Object.keys(mappedLootShare).length,
-        totalItemsCount: parsedLootArray.length,
+        totalItemsCount: items.length,
       });
     }
 
