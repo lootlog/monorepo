@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
 import { Button } from "@lootlog/ui/components/button";
+import { Textarea } from "@lootlog/ui/components/textarea";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import {
@@ -40,10 +41,22 @@ import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
-import { Ban, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import {
+  Ban,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquareText,
+  Trash2,
+} from "lucide-react";
 import { DatePicker } from "./date-picker";
 import { toast } from "sonner";
 import { reservationSlug } from "./reservation-slug";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 
 const LABEL_COLUMN_WIDTH = 80;
 
@@ -164,6 +177,7 @@ export const ReservationsSchedule: React.FC = () => {
   const [toDate, setToDate] = useState<Date | undefined>();
   const [isFromPickerOpen, setIsFromPickerOpen] = useState(false);
   const [isToPickerOpen, setIsToPickerOpen] = useState(false);
+  const [comment, setComment] = useState("");
   const currentUserId = session?.user?.discordId;
 
   const normalizedReservationId = reservationId
@@ -220,6 +234,12 @@ export const ReservationsSchedule: React.FC = () => {
     };
   }, [connected, guildId, queryClient, socket]);
 
+  useEffect(() => {
+    if (!isCreateDialogOpen) {
+      setComment("");
+    }
+  }, [isCreateDialogOpen]);
+
   const handleCreateReservation = useCallback(async () => {
     if (!fromDate || !toDate) {
       toast.error("Wybierz zakres czasowy rezerwacji.", {
@@ -267,12 +287,14 @@ export const ReservationsSchedule: React.FC = () => {
     }
 
     try {
+      const normalizedComment = comment.trim();
       await createReservation({
         reservationId: createReservationKey,
         createdDate: new Date(),
         fromDate,
         toDate,
         createdBy: currentUserId,
+        comment: normalizedComment.length > 0 ? normalizedComment : undefined,
       });
       toast.success("Rezerwacja została utworzona.", {
         position: "bottom-right",
@@ -282,6 +304,7 @@ export const ReservationsSchedule: React.FC = () => {
       setToDate(undefined);
       setIsFromPickerOpen(false);
       setIsToPickerOpen(false);
+      setComment("");
     } catch (error) {
       const fallbackMessage = "Nie udało się utworzyć rezerwacji.";
       if (error && typeof error === "object" && "response" in error) {
@@ -317,6 +340,7 @@ export const ReservationsSchedule: React.FC = () => {
     createReservationKey,
     currentUserId,
     createReservation,
+    comment,
   ]);
 
   const handleDeleteReservation = useCallback(
@@ -504,272 +528,322 @@ export const ReservationsSchedule: React.FC = () => {
   }, [days.length, hours.length, reservationsInWeek, weekStartTimestamp]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden bg-background">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => setIsCreateDialogOpen(true)}
-          className="text-xs font-semibold"
-        >
-          Dodaj rezerwację
-        </Button>
-        <div className="flex items-center gap-2">
-          <button
-            className="p-1 hover:bg-muted rounded-lg transition-colors"
-            onClick={handlePrevWeek}
-            aria-label="Poprzedni tydzień"
+    <TooltipProvider>
+      <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden bg-background">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="text-xs font-semibold"
           >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-xs font-medium min-w-28 text-center">
-            Tydzień {currentWeek} ({currentYear}, {monthName})
-          </span>
-          <button
-            className="p-1 hover:bg-muted rounded-lg transition-colors"
-            onClick={handleNextWeek}
-            aria-label="Następny tydzień"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent
-          className="max-w-md translate-y-[-35%] sm:translate-y-[-120%]"
-          aria-describedby={undefined}
-        >
-          <DialogHeader>
-            <DialogTitle>Dodaj rezerwację</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-3 ml-3 mr-3 mb-4">
-            <DatePicker
-              label="Data rozpoczęcia"
-              placeholder="Wybierz początek rezerwacji"
-              date={fromDate}
-              setDate={(date) => setFromDate(date)}
-              open={isFromPickerOpen}
-              setOpen={setIsFromPickerOpen}
-              onClear={() => setFromDate(undefined)}
-            />
-            <DatePicker
-              label="Data zakończenia"
-              placeholder="Wybierz koniec rezerwacji"
-              date={toDate}
-              setDate={(date) => setToDate(date)}
-              open={isToPickerOpen}
-              setOpen={setIsToPickerOpen}
-              onClear={() => setToDate(undefined)}
-            />
+            Dodaj rezerwację
+          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              className="p-1 hover:bg-muted rounded-lg transition-colors"
+              onClick={handlePrevWeek}
+              aria-label="Poprzedni tydzień"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="text-xs font-medium min-w-28 text-center">
+              Tydzień {currentWeek} ({currentYear}, {monthName})
+            </span>
+            <button
+              className="p-1 hover:bg-muted rounded-lg transition-colors"
+              onClick={handleNextWeek}
+              aria-label="Następny tydzień"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
-          <DialogFooter className="mt-0 mb-2 mr-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsCreateDialogOpen(false)}
-            >
-              Anuluj
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={
-                !fromDate ||
-                !toDate ||
-                !createReservationKey ||
-                !currentUserId ||
-                isCreating
-              }
-              onClick={handleCreateReservation}
-            >
-              Zapisz
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden">
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px repeat(${days.length}, minmax(0, 1fr))`,
-          }}
-        >
-          <div className="bg-background" />
-          {days.map((day, idx) => {
-            const date = new Date(weekStart);
-            date.setDate(weekStart.getDate() + idx);
-            const dayNumber = date.getDate();
-            return (
-              <div
-                key={day}
-                className="border-l border-border flex flex-col items-center justify-center py-1"
-                style={{ minWidth: 0 }}
-              >
-                <span className="text-xs text-muted-foreground">{day}</span>
-                <span className="text-xs font-semibold text-primary mt-1">
-                  {dayNumber}
-                </span>
-              </div>
-            );
-          })}
         </div>
 
-        <div className="flex-1 min-h-0 max-h-full overflow-y-auto">
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent
+            className="max-w-md translate-y-[-35%] sm:translate-y-[-100%]"
+            aria-describedby={undefined}
+          >
+            <DialogHeader>
+              <DialogTitle>Dodaj rezerwację</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-3 ml-3 mr-3 mb-4">
+              <DatePicker
+                label="Data rozpoczęcia"
+                placeholder="Wybierz początek rezerwacji"
+                date={fromDate}
+                setDate={(date) => setFromDate(date)}
+                open={isFromPickerOpen}
+                setOpen={setIsFromPickerOpen}
+                onClear={() => setFromDate(undefined)}
+              />
+              <DatePicker
+                label="Data zakończenia"
+                placeholder="Wybierz koniec rezerwacji"
+                date={toDate}
+                setDate={(date) => setToDate(date)}
+                open={isToPickerOpen}
+                setOpen={setIsToPickerOpen}
+                onClear={() => setToDate(undefined)}
+              />
+              <div className="space-y-2">
+                <label
+                  className="text-xs font-semibold text-muted-foreground"
+                  htmlFor="reservation-comment"
+                >
+                  Komentarz (opcjonalnie)
+                </label>
+                <Textarea
+                  id="reservation-comment"
+                  maxLength={128}
+                  placeholder="Dodaj krótki komentarz do rezerwacji"
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  className="min-h-[58px] max-h-[58px] resize-none"
+                  rows={2}
+                />
+                <p className="text-[10px] text-muted-foreground text-right">
+                  {comment.trim().length}/{128}
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="mt-0 mb-2 mr-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCreateDialogOpen(false)}
+              >
+                Anuluj
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={
+                  !fromDate ||
+                  !toDate ||
+                  !createReservationKey ||
+                  !currentUserId ||
+                  isCreating
+                }
+                onClick={handleCreateReservation}
+              >
+                Zapisz
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden">
           <div
-            className="relative grid w-full h-full min-h-full max-h-full"
+            className="grid"
             style={{
-              gridTemplateRows: `repeat(${hours.length}, minmax(0, 1fr))`,
               gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px repeat(${days.length}, minmax(0, 1fr))`,
             }}
           >
-            {hours.map((hour, _) => [
-              <div
-                key={`label-${hour}`}
-                className="text-xs font-medium text-center px-2 text-muted-foreground border-b border-border flex items-center justify-center bg-muted min-h-0"
-                style={{ minWidth: 0 }}
-              >
-                {hour}
-              </div>,
-              ...days.map((day, dayIdx) => {
-                const backgroundClass =
-                  dayIdx % 2 === 0 ? "bg-background" : "bg-muted";
-
-                return (
-                  <div
-                    key={`${hour}-${day}`}
-                    className={`relative border-l border-b border-border min-h-0 h-full ${backgroundClass}`}
-                    style={{ minWidth: 0, overflow: "hidden" }}
-                  />
-                );
-              }),
-            ])}
-            {reservationSegments.map((segment) => {
-              const dayWidthExpr = `(100% - ${LABEL_COLUMN_WIDTH}px) / ${days.length}`;
-              const leftExpression = `calc(${LABEL_COLUMN_WIDTH}px + (${segment.dayIdx} * ${dayWidthExpr}) + 3px)`;
-              const widthExpression = `calc(${dayWidthExpr} - 6px)`;
-              const topPercent = Math.max(
-                0,
-                Math.min(100, (segment.startHour / hours.length) * 100),
-              );
-              const heightPercent = Math.max(
-                1,
-                Math.min(100, (segment.durationHours / hours.length) * 100),
-              );
-
-              const member = membersByUserId.get(segment.reservation.createdBy);
-              const memberName = member?.name ?? segment.reservation.createdBy;
-              const avatarUrl = getDiscordAvatarUrl(
-                member?.userId,
-                member?.avatar,
-                64,
-              );
-              const fallbackInitial = memberName?.[0]?.toUpperCase() ?? "?";
-              const segmentKey = `${segment.id}-${segment.dayIdx}-${segment.segmentStart.getTime()}`;
-              const canCancelReservation =
-                segment.reservation.createdBy === currentUserId;
-              const canRemoveReservation = canModerateReservations;
-              const showContextMenu =
-                canCancelReservation || canRemoveReservation;
-              const displayStartLabel = formatSegmentTime(
-                segment.reservation.fromDate,
-                segment.segmentStart,
-              );
-              const baseEndReference = shouldShowEndDateOnFirstSegment(segment)
-                ? segment.reservation.fromDate
-                : segment.segmentEnd;
-              const displayEndLabel = formatSegmentTime(
-                segment.reservation.toDate,
-                baseEndReference,
-              );
-              const createdLabel = formatDateWithTime(
-                segment.reservation.createdDate,
-              );
-
-              const segmentElement = (
+            <div className="bg-background" />
+            {days.map((day, idx) => {
+              const date = new Date(weekStart);
+              date.setDate(weekStart.getDate() + idx);
+              const dayNumber = date.getDate();
+              return (
                 <div
-                  className={`absolute z-10 overflow-hidden rounded-md border border-primary/40 bg-primary/95 text-[10px] font-medium text-primary-foreground shadow-sm ${showContextMenu ? "pointer-events-auto" : "pointer-events-none"}`}
-                  style={{
-                    left: leftExpression,
-                    width: widthExpression,
-                    top: `calc(${topPercent}% + 1px)`,
-                    height: `calc(${heightPercent}% - 2px)`,
-                  }}
+                  key={day}
+                  className="border-l border-border flex flex-col items-center justify-center py-1"
+                  style={{ minWidth: 0 }}
                 >
-                  <div className="relative flex h-full flex-col justify-center gap-1 p-2 pr-10">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="pointer-events-none size-6 border border-primary-foreground/30">
-                        <AvatarImage src={avatarUrl} alt={memberName} />
-                        <AvatarFallback>{fallbackInitial}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-[10px] font-semibold leading-tight">
-                        {memberName}
-                      </span>
-                    </div>
-                    <span className="absolute top-1 right-1 rounded bg-primary/70 px-1.5 py-0.5 text-[9px] font-semibold">
-                      {displayStartLabel}
-                    </span>
-                    <span className="absolute bottom-1 right-1 rounded bg-primary/70 px-1.5 py-0.5 text-[9px] font-semibold">
-                      {displayEndLabel}
-                    </span>
-                    <span className="absolute bottom-1 left-1 rounded bg-primary/70 px-1.5 py-0.5 text-[9px] font-semibold">
-                      Dodano {createdLabel}
-                    </span>
-                  </div>
+                  <span className="text-xs text-muted-foreground">{day}</span>
+                  <span className="text-xs font-semibold text-primary mt-1">
+                    {dayNumber}
+                  </span>
                 </div>
               );
-
-              if (showContextMenu) {
-                return (
-                  <ContextMenu key={segmentKey}>
-                    <ContextMenuTrigger asChild>
-                      {segmentElement}
-                    </ContextMenuTrigger>
-                    <ContextMenuContent className="min-w-[12rem]">
-                      {canCancelReservation && (
-                        <ContextMenuItem
-                          className="group gap-2 data-[highlighted]:bg-muted data-[highlighted]:text-foreground"
-                          disabled={isDeleting}
-                          onSelect={() => {
-                            void handleDeleteReservation(
-                              segment.reservation.id,
-                              "cancel",
-                            );
-                          }}
-                        >
-                          <Ban className="h-4 w-4 text-muted-foreground transition-colors group-data-[highlighted]:text-foreground" />
-                          Anuluj rezerwację
-                        </ContextMenuItem>
-                      )}
-                      {canCancelReservation && canRemoveReservation && (
-                        <ContextMenuSeparator />
-                      )}
-                      {canRemoveReservation && (
-                        <ContextMenuItem
-                          className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
-                          disabled={isDeleting}
-                          onSelect={() => {
-                            void handleDeleteReservation(
-                              segment.reservation.id,
-                              "remove",
-                            );
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                          Usuń rezerwację
-                        </ContextMenuItem>
-                      )}
-                    </ContextMenuContent>
-                  </ContextMenu>
-                );
-              }
-
-              return <Fragment key={segmentKey}>{segmentElement}</Fragment>;
             })}
+          </div>
+
+          <div className="flex-1 min-h-0 max-h-full overflow-y-auto">
+            <div
+              className="relative grid w-full h-full min-h-full max-h-full"
+              style={{
+                gridTemplateRows: `repeat(${hours.length}, minmax(0, 1fr))`,
+                gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px repeat(${days.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {hours.map((hour, _) => [
+                <div
+                  key={`label-${hour}`}
+                  className="text-xs font-medium text-center px-2 text-muted-foreground border-b border-border flex items-center justify-center bg-muted min-h-0"
+                  style={{ minWidth: 0 }}
+                >
+                  {hour}
+                </div>,
+                ...days.map((day, dayIdx) => {
+                  const backgroundClass =
+                    dayIdx % 2 === 0 ? "bg-background" : "bg-muted";
+
+                  return (
+                    <div
+                      key={`${hour}-${day}`}
+                      className={`relative border-l border-b border-border min-h-0 h-full ${backgroundClass}`}
+                      style={{ minWidth: 0, overflow: "hidden" }}
+                    />
+                  );
+                }),
+              ])}
+              {reservationSegments.map((segment) => {
+                const dayWidthExpr = `(100% - ${LABEL_COLUMN_WIDTH}px) / ${days.length}`;
+                const leftExpression = `calc(${LABEL_COLUMN_WIDTH}px + (${segment.dayIdx} * ${dayWidthExpr}) + 3px)`;
+                const widthExpression = `calc(${dayWidthExpr} - 6px)`;
+                const topPercent = Math.max(
+                  0,
+                  Math.min(100, (segment.startHour / hours.length) * 100),
+                );
+                const heightPercent = Math.max(
+                  1,
+                  Math.min(100, (segment.durationHours / hours.length) * 100),
+                );
+
+                const member = membersByUserId.get(
+                  segment.reservation.createdBy,
+                );
+                const memberName =
+                  member?.name ?? segment.reservation.createdBy;
+                const avatarUrl = getDiscordAvatarUrl(
+                  member?.userId,
+                  member?.avatar,
+                  64,
+                );
+                const fallbackInitial = memberName?.[0]?.toUpperCase() ?? "?";
+                const segmentKey = `${segment.id}-${segment.dayIdx}-${segment.segmentStart.getTime()}`;
+                const canCancelReservation =
+                  segment.reservation.createdBy === currentUserId;
+                const canRemoveReservation = canModerateReservations;
+                const showContextMenu =
+                  canCancelReservation || canRemoveReservation;
+                const displayStartLabel = formatSegmentTime(
+                  segment.reservation.fromDate,
+                  segment.segmentStart,
+                );
+                const baseEndReference = shouldShowEndDateOnFirstSegment(
+                  segment,
+                )
+                  ? segment.reservation.fromDate
+                  : segment.segmentEnd;
+                const displayEndLabel = formatSegmentTime(
+                  segment.reservation.toDate,
+                  baseEndReference,
+                );
+                const createdLabel = formatDateWithTime(
+                  segment.reservation.createdDate,
+                );
+                const trimmedComment = segment.reservation.comment?.trim();
+                const hasComment = Boolean(trimmedComment?.length);
+                const allowsInteraction = showContextMenu || hasComment;
+
+                const segmentElement = (
+                  <div
+                    className={`absolute z-10 overflow-hidden rounded-md border border-primary/40 bg-primary/95 text-[10px] font-medium text-primary-foreground shadow-sm ${allowsInteraction ? "pointer-events-auto" : "pointer-events-none"}`}
+                    style={{
+                      left: leftExpression,
+                      width: widthExpression,
+                      top: `calc(${topPercent}% + 1px)`,
+                      height: `calc(${heightPercent}% - 2px)`,
+                    }}
+                  >
+                    <div className="relative flex h-full flex-col justify-center gap-1 p-2 pr-10">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="pointer-events-none size-6 border border-primary-foreground/30">
+                          <AvatarImage src={avatarUrl} alt={memberName} />
+                          <AvatarFallback>{fallbackInitial}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-[10px] font-semibold leading-tight">
+                          {memberName}
+                        </span>
+                      </div>
+                      {hasComment && trimmedComment && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="absolute top-1 left-1 flex items-center gap-1 rounded bg-primary/70 px-1.5 py-0.5 text-[9px] font-semibold">
+                              <MessageSquareText
+                                className="h-3 w-3"
+                                aria-hidden="true"
+                              />
+                              Komentarz
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            align="start"
+                            className="max-w-xs break-words text-xs"
+                          >
+                            {trimmedComment}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      <span className="absolute top-1 right-1 rounded bg-primary/70 px-1.5 py-0.5 text-[9px] font-semibold">
+                        {displayStartLabel}
+                      </span>
+                      <span className="absolute bottom-1 right-1 rounded bg-primary/70 px-1.5 py-0.5 text-[9px] font-semibold">
+                        {displayEndLabel}
+                      </span>
+                      <span className="absolute bottom-1 left-1 rounded bg-primary/70 px-1.5 py-0.5 text-[9px] font-semibold">
+                        Dodano {createdLabel}
+                      </span>
+                    </div>
+                  </div>
+                );
+
+                if (showContextMenu) {
+                  return (
+                    <ContextMenu key={segmentKey}>
+                      <ContextMenuTrigger asChild>
+                        {segmentElement}
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="min-w-[12rem]">
+                        {canCancelReservation && (
+                          <ContextMenuItem
+                            className="group gap-2 data-[highlighted]:bg-muted data-[highlighted]:text-foreground"
+                            disabled={isDeleting}
+                            onSelect={() => {
+                              void handleDeleteReservation(
+                                segment.reservation.id,
+                                "cancel",
+                              );
+                            }}
+                          >
+                            <Ban className="h-4 w-4 text-muted-foreground transition-colors group-data-[highlighted]:text-foreground" />
+                            Anuluj rezerwację
+                          </ContextMenuItem>
+                        )}
+                        {canCancelReservation && canRemoveReservation && (
+                          <ContextMenuSeparator />
+                        )}
+                        {canRemoveReservation && (
+                          <ContextMenuItem
+                            className="gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                            disabled={isDeleting}
+                            onSelect={() => {
+                              void handleDeleteReservation(
+                                segment.reservation.id,
+                                "remove",
+                              );
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                            Usuń rezerwację
+                          </ContextMenuItem>
+                        )}
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  );
+                }
+
+                return <Fragment key={segmentKey}>{segmentElement}</Fragment>;
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };

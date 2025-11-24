@@ -22,6 +22,7 @@ type ReservationRecord = {
   fromDate: Date;
   toDate: Date;
   createdBy: string;
+  comment?: string | null;
 };
 
 type ReservationCard = {
@@ -88,6 +89,7 @@ export class ReservationsService {
       fromDate,
       toDate,
       createdBy,
+      comment: reservation.comment,
     } satisfies ReservationRecord;
   }
 
@@ -99,6 +101,7 @@ export class ReservationsService {
       fromDate: reservation.fromDate.toISOString(),
       toDate: reservation.toDate.toISOString(),
       createdBy: reservation.createdBy,
+      comment: reservation.comment ?? null,
     };
   }
 
@@ -190,15 +193,21 @@ export class ReservationsService {
       );
     }
 
+    const createPayload: Record<string, unknown> = {
+      guildId,
+      reservationId: data.reservationId,
+      createdDate: data.createdDate,
+      fromDate: data.fromDate,
+      toDate: data.toDate,
+      createdBy: data.createdBy,
+    };
+
+    if (data.comment !== undefined) {
+      createPayload.comment = data.comment;
+    }
+
     const created = await this.prisma.reservation.create({
-      data: {
-        guildId,
-        reservationId: data.reservationId,
-        createdDate: data.createdDate,
-        fromDate: data.fromDate,
-        toDate: data.toDate,
-        createdBy: data.createdBy,
-      },
+      data: createPayload as any,
     });
 
     const record = this.mapReservationRecord(created);
@@ -300,6 +309,7 @@ export class ReservationsService {
           fromDate: reservation.fromDate,
           toDate: reservation.toDate,
           createdBy: reservation.createdBy,
+          comment: (reservation as { comment?: string | null }).comment ?? null,
         });
 
         return accumulator;

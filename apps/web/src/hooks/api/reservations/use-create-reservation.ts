@@ -8,6 +8,7 @@ export type CreateReservationInput = {
   fromDate: Date;
   toDate: Date;
   createdBy: string;
+  comment?: string;
 };
 
 export const useCreateReservation = () => {

@@ -1,4 +1,10 @@
-import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsDate,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateReservationDto {
@@ -20,4 +26,8 @@ export class CreateReservationDto {
   @IsString()
   @IsNotEmpty()
   createdBy: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  comment?: string;
 }
