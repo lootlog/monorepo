@@ -10,13 +10,13 @@
     "build": "pkgroll"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.5",
+    "@hono/node-server": "^1.19.6",
     "@lootlog/api-helpers": "workspace:*",
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3",
-    "hono": "^4.10.3",
-    "meilisearch": "^0.53.0",
-    "zod": "^4.1.12"
+    "hono": "^4.10.6",
+    "meilisearch": "^0.54.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@lootlog/types": "workspace:*",
