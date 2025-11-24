@@ -34,6 +34,7 @@ describe('LootsService', () => {
       create: jest.Mock;
       update: jest.Mock;
       findFirst: jest.Mock;
+      findMany: jest.Mock;
     };
     lootSubmission: {
       createMany: jest.Mock;
@@ -44,6 +45,7 @@ describe('LootsService', () => {
     lootComment: {
       create: jest.Mock;
       findMany: jest.Mock;
+      groupBy: jest.Mock;
     };
     member: {
       findMany: jest.Mock;
@@ -137,6 +139,7 @@ describe('LootsService', () => {
         create: jest.fn(),
         update: jest.fn(),
         findFirst: jest.fn(),
+        findMany: jest.fn(),
       },
       lootSubmission: {
         createMany: jest.fn(),
@@ -147,6 +150,7 @@ describe('LootsService', () => {
       lootComment: {
         create: jest.fn(),
         findMany: jest.fn(),
+        groupBy: jest.fn(),
       },
       member: {
         findMany: jest.fn(),
@@ -769,7 +773,6 @@ describe('LootsService', () => {
     };
 
     it('should return loots with submissions', async () => {
-      const mockLoots = [{ id: 1, uniqueId: 'unique1' }];
       const mockSubmissions = [
         {
           lootId: 1,
@@ -781,8 +784,27 @@ describe('LootsService', () => {
         },
       ];
 
-      prismaService.$queryRaw.mockResolvedValue(mockLoots);
-      prismaService.lootSubmission.findMany.mockResolvedValue(mockSubmissions);
+      const mockLootsWithRelations = [
+        {
+          id: 1,
+          uniqueId: 'unique1',
+          world: 'testworld',
+          source: LootSource.FIGHT,
+          location: 'Test Location',
+          lootShare: {},
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          lootSubmissions: mockSubmissions,
+          lootItems: [],
+          lootPlayers: [],
+          lootNpcs: [],
+        },
+      ];
+
+      prismaService.loot.findMany.mockResolvedValue(mockLootsWithRelations);
+      prismaService.lootComment.groupBy.mockResolvedValue([
+        { lootId: 1, _count: { _all: 0 } },
+      ]);
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
@@ -791,17 +813,16 @@ describe('LootsService', () => {
         params,
       );
 
-      expect(result).toEqual([
-        {
-          id: 1,
-          uniqueId: 'unique1',
-          submissions: [mockSubmissions[0]],
-        },
-      ]);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: 1,
+        uniqueId: 'unique1',
+        submissions: mockSubmissions,
+      });
     });
 
     it('should return empty array when no loots found', async () => {
-      prismaService.$queryRaw.mockResolvedValue([]);
+      prismaService.loot.findMany.mockResolvedValue([]);
 
       const result = await service.fetchLootsByGuildId(
         mockGuild,
@@ -811,7 +832,7 @@ describe('LootsService', () => {
       );
 
       expect(result).toEqual([]);
-      expect(prismaService.lootSubmission.findMany).not.toHaveBeenCalled();
+      expect(prismaService.lootComment.groupBy).not.toHaveBeenCalled();
     });
   });
 });
