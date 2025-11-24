@@ -47,9 +47,9 @@ export class LootQueryService {
       world,
     }: FetchLootsParamsDto,
   ) {
-    const filteredRoles = roles.filter((role) => {
-      return role.permissions.includes(Permission.LOOTLOG_READ);
-    });
+    const filteredRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_READ),
+    );
     const administrativeUser = isAdministrativeUser(permissions);
 
     const levelRangesCondition = this.buildLevelRangesCondition(
@@ -177,11 +177,76 @@ export class LootQueryService {
       return null;
     }
 
-    const roleConditions = filteredRoles.map((role) =>
-      this.buildRoleVisibilityCondition(role),
+    const npcVisibilityPerRole: Prisma.NpcSnapshotWhereInput[] = [];
+
+    for (const role of filteredRoles) {
+      const roleCondition = this.buildRoleVisibilityCondition(role);
+      if (roleCondition) {
+        npcVisibilityPerRole.push(roleCondition);
+      }
+    }
+
+    if (npcVisibilityPerRole.length === 0) {
+      return null;
+    }
+
+    return {
+      lootNpcs: {
+        some: {
+          npcSnapshot: {
+            OR: npcVisibilityPerRole,
+          },
+        },
+      },
+    };
+  }
+
+  private buildRoleVisibilityCondition(
+    role: Role,
+  ): Prisma.NpcSnapshotWhereInput | null {
+    const hasReadTitans = role.permissions?.includes(
+      Permission.LOOTLOG_READ_LOOTS_TITANS,
+    );
+    const hasReadHeroes = role.permissions?.includes(
+      Permission.LOOTLOG_READ_LOOTS_HEROES,
     );
 
-    return roleConditions.length > 0 ? { OR: roleConditions } : null;
+    const lvlFrom = role.lvlRangeFrom ?? 0;
+    const lvlTo = role.lvlRangeTo ?? 500;
+
+    const npcConstraints: Prisma.NpcSnapshotWhereInput[] = [];
+
+    npcConstraints.push({
+      OR: [{ lvl: { gte: lvlFrom } }, ...(lvlFrom <= 0 ? [{ lvl: null }] : [])],
+    });
+
+    npcConstraints.push({
+      OR: [{ lvl: { lte: lvlTo } }, ...(lvlTo >= 0 ? [{ lvl: null }] : [])],
+    });
+
+    if (!hasReadTitans) {
+      npcConstraints.push({
+        type: {
+          not: NpcType.TITAN,
+        },
+      });
+    }
+
+    if (!hasReadHeroes) {
+      npcConstraints.push({
+        type: {
+          notIn: [NpcType.HERO, NpcType.EVENT_HERO],
+        },
+      });
+    }
+
+    if (npcConstraints.length === 0) {
+      return null;
+    }
+
+    return {
+      AND: npcConstraints,
+    };
   }
 
   private buildPlayersCondition(
@@ -274,53 +339,6 @@ export class LootQueryService {
     return {
       id: {
         lt: Number(cursor),
-      },
-    };
-  }
-
-  private buildRoleVisibilityCondition(role: Role): Prisma.LootWhereInput {
-    const hasReadTitans = role.permissions?.includes(
-      Permission.LOOTLOG_READ_LOOTS_TITANS,
-    );
-    const hasReadHeroes = role.permissions?.includes(
-      Permission.LOOTLOG_READ_LOOTS_HEROES,
-    );
-
-    const lvlFrom = role.lvlRangeFrom ?? 0;
-    const lvlTo = role.lvlRangeTo ?? 500;
-    const npcConstraints: Prisma.NpcSnapshotWhereInput[] = [];
-
-    npcConstraints.push({
-      OR: [{ lvl: { gte: lvlFrom } }, ...(lvlFrom <= 0 ? [{ lvl: null }] : [])],
-    });
-
-    npcConstraints.push({
-      OR: [{ lvl: { lte: lvlTo } }, ...(lvlTo >= 0 ? [{ lvl: null }] : [])],
-    });
-
-    if (!hasReadTitans) {
-      npcConstraints.push({
-        type: {
-          not: NpcType.TITAN,
-        },
-      });
-    }
-
-    if (!hasReadHeroes) {
-      npcConstraints.push({
-        type: {
-          notIn: [NpcType.HERO, NpcType.EVENT_HERO],
-        },
-      });
-    }
-
-    return {
-      lootNpcs: {
-        some: {
-          npcSnapshot: {
-            AND: npcConstraints,
-          },
-        },
       },
     };
   }
