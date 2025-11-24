@@ -10,6 +10,7 @@ export interface Reservation {
   fromDate: Date;
   toDate: Date;
   createdBy: string;
+  comment?: string | null;
 }
 
 export const reservationsQueryOptions = (guildId: string) =>
@@ -38,6 +39,7 @@ export const reservationsQueryOptions = (guildId: string) =>
           fromDate: new Date(reservation.fromDate),
           toDate: new Date(reservation.toDate),
           createdDate: new Date(reservation.createdDate),
+          comment: reservation.comment ?? null,
         }));
 
         const slugKey = reservationSlug(rawKey);

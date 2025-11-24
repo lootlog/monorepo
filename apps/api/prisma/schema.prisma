@@ -266,6 +266,7 @@ model Reservation {
   fromDate      DateTime
   toDate        DateTime
   createdBy     String
+  comment       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
