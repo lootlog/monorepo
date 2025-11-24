@@ -43,7 +43,7 @@
     "bullmq": "^5.61.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
-    "discord-api-types": "0.38.31",
+    "discord-api-types": "0.38.32",
     "fastify": "^5.6.1",
     "ioredis": "^5.8.2",
     "joi": "^18.0.1",
