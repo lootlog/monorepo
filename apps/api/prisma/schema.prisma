@@ -199,10 +199,6 @@ model Loot {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  items   Json?
-  players Json?
-  npcs    Json?
-
   lootItems   LootItem[]
   lootNpcs    LootNpc[]
   lootPlayers LootPlayer[]

@@ -719,8 +719,43 @@ describe('LootsService', () => {
       const mockLoot = {
         id: 1,
         lootShare: {},
-        players: JSON.stringify([{ id: '1123', name: 'Test Player' }]),
-        items: JSON.stringify([{ hid: 'abc123', name: 'Test Item' }]),
+        lootPlayers: [
+          {
+            id: 1,
+            lvl: 50,
+            hpp: 3000,
+            playerSnapshot: {
+              id: 1,
+              characterId: 1,
+              accountId: 123,
+              name: 'Test Player',
+              prof: Profession.WARRIOR,
+              icon: 'player.png',
+              world: 'testworld',
+              snapshotHash: 'hash123',
+              createdAt: new Date(),
+            },
+          },
+        ],
+        lootItems: [
+          {
+            id: 1,
+            hid: 'abc123',
+            itemSnapshot: {
+              id: 1,
+              itemId: 1,
+              statsHash: 'hash456',
+              name: 'Test Item',
+              icon: 'item.png',
+              lvl: 50,
+              rarity: ItemRarity.UNIQUE,
+              itemType: 'WEAPON',
+              statRaw: 'lvl=50;rarity=UNIQUE',
+              statsSnapshot: {},
+              createdAt: new Date(),
+            },
+          },
+        ],
       };
       const mockUpdatedLoot = { lootShare: { '1123': ['abc123'] } };
 
@@ -748,8 +783,8 @@ describe('LootsService', () => {
       const mockLoot = {
         id: 1,
         lootShare: {},
-        players: JSON.stringify([]),
-        items: JSON.stringify([]),
+        lootPlayers: [],
+        lootItems: [],
       };
       prismaService.loot.findFirst.mockResolvedValue(mockLoot);
 
