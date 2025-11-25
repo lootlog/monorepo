@@ -16,7 +16,6 @@ import {
   CommandInputRaw,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@lootlog/ui/components/command";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { cn } from "@/utils/cn";
@@ -43,7 +42,7 @@ const multiSelectVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 /**
@@ -75,6 +74,8 @@ interface MultiSelectProps
 
   /** The default selected values when the component mounts. */
   defaultValue?: string[];
+  /** Controlled selected values. If provided, component follows this value. */
+  value?: string[];
 
   /**
    * Placeholder text to be displayed when no values are selected.
@@ -132,6 +133,7 @@ export const MultiSelect = React.forwardRef<
       onClose,
       variant,
       defaultValue = [],
+      value,
       placeholder = "Select options",
       animation = 0,
       maxCount = 3,
@@ -145,15 +147,28 @@ export const MultiSelect = React.forwardRef<
       className,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const [selectedValues, setSelectedValues] =
-      React.useState<string[]>(defaultValue);
+    const [selectedValues, setSelectedValues] = React.useState<string[]>(
+      value ?? defaultValue,
+    );
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [isAnimating] = React.useState(false);
 
+    React.useEffect(() => {
+      if (value !== undefined) {
+        setSelectedValues(value);
+      }
+    }, [value]);
+
+    React.useEffect(() => {
+      if (value === undefined) {
+        setSelectedValues(defaultValue);
+      }
+    }, [defaultValue, value]);
+
     const handleInputKeyDown = (
-      event: React.KeyboardEvent<HTMLInputElement>
+      event: React.KeyboardEvent<HTMLInputElement>,
     ) => {
       if (event.key === "Enter") {
         setIsPopoverOpen(true);
@@ -220,8 +235,8 @@ export const MultiSelect = React.forwardRef<
             {...props}
             onClick={handleTogglePopover}
             className={cn(
-              "flex w-full p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit bg-secondary hover:bg-input/50",
-              className
+              "flex w-full p-0 rounded-md border min-h-8 h-auto items-center justify-between bg-inherit hover:bg-inherit bg-secondary hover:bg-input/50",
+              className,
             )}
           >
             {selectedValues.length > 0 ? (
@@ -234,9 +249,10 @@ export const MultiSelect = React.forwardRef<
                       <Badge
                         key={value}
                         className={cn(
-                          "px-2",
+                          "px-1",
+                          "max-w-20",
                           isAnimating ? "animate-bounce" : "",
-                          multiSelectVariants({ variant })
+                          multiSelectVariants({ variant }),
                         )}
                         style={{ animationDuration: `${animation}s` }}
                       >
@@ -257,13 +273,13 @@ export const MultiSelect = React.forwardRef<
                   {selectedValues.length > maxCount && (
                     <Badge
                       className={cn(
-                        "bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
+                        "bg-transparent max-w-14 px-2 text-foreground border-foreground/1 hover:bg-transparent border border-border",
                         isAnimating ? "animate-bounce" : "",
-                        multiSelectVariants({ variant })
+                        multiSelectVariants({ variant }),
                       )}
                       style={{ animationDuration: `${animation}s` }}
                     >
-                      {`+ ${selectedValues.length - maxCount} inne`}
+                      {`+ ${selectedValues.length - maxCount}`}
                       <div
                         onClick={(event) => {
                           event.stopPropagation();
@@ -287,7 +303,6 @@ export const MultiSelect = React.forwardRef<
                     orientation="vertical"
                     className="flex min-h-6 h-full"
                   />
-                  <ChevronDown className="h-4 mx-2 cursor-pointer text-muted-foreground" />
                 </div>
               </div>
             ) : (
@@ -321,9 +336,9 @@ export const MultiSelect = React.forwardRef<
                 defaultValue={searchValue}
               />
             )}
-            <CommandList className="flex-1">
-              <CommandEmpty>Brak wyników.</CommandEmpty>
-              <ScrollArea className="max-h-56">
+            <ScrollArea className="max-h-64 h-64">
+              <CommandList className="max-h-none overflow-visible">
+                <CommandEmpty>Brak wyników.</CommandEmpty>
                 <CommandGroup>
                   {loading && (
                     <div className="py-6 px-6 text-center text-sm flex items-center justify-center">
@@ -346,7 +361,7 @@ export const MultiSelect = React.forwardRef<
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border-2 border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible"
+                              : "opacity-50 [&_svg]:invisible",
                           )}
                         >
                           <CheckIcon className="h-4 w-4" />
@@ -359,42 +374,13 @@ export const MultiSelect = React.forwardRef<
                     );
                   })}
                 </CommandGroup>
-              </ScrollArea>
-            </CommandList>
-            <CommandSeparator />
-            <CommandGroup className="mt-auto">
-              <div className="flex items-center justify-between p-1 gap-2">
-                {selectedValues.length > 0 && (
-                  <>
-                    <CommandItem
-                      onSelect={handleClear}
-                      className="flex-1 justify-center cursor-pointer p-0"
-                    >
-                      <Button variant="ghost" className="w-full" size="sm">
-                        Wyczyść
-                      </Button>
-                    </CommandItem>
-                    <Separator
-                      orientation="vertical"
-                      className="flex min-h-6 h-full"
-                    />
-                  </>
-                )}
-                <CommandItem
-                  onSelect={handleClose}
-                  className="flex-1 justify-center cursor-pointer max-w-full p-0"
-                >
-                  <Button variant="default" className="w-full" size="sm">
-                    Zapisz
-                  </Button>
-                </CommandItem>
-              </div>
-            </CommandGroup>
+              </CommandList>
+            </ScrollArea>
           </Command>
         </PopoverContent>
       </Popover>
     );
-  }
+  },
 );
 
 MultiSelect.displayName = "MultiSelect";

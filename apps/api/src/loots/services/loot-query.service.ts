@@ -44,6 +44,13 @@ export class LootQueryService {
       npcs = [],
       players = [],
       rarities = [],
+      npcLevelMin,
+      npcLevelMax,
+      itemLevelMin,
+      itemLevelMax,
+      playerLevelMin,
+      playerLevelMax,
+      search,
       world,
     }: FetchLootsParamsDto,
   ) {
@@ -60,6 +67,19 @@ export class LootQueryService {
     const npcsCondition = this.buildNpcsCondition(npcs);
     const npcTypesCondition = this.buildNpcTypesCondition(npcTypes);
     const raritiesCondition = this.buildRaritiesCondition(rarities);
+    const npcLevelsCondition = this.buildNpcLevelsCondition(
+      npcLevelMin,
+      npcLevelMax,
+    );
+    const itemLevelsCondition = this.buildItemLevelsCondition(
+      itemLevelMin,
+      itemLevelMax,
+    );
+    const playerLevelsCondition = this.buildPlayerLevelsCondition(
+      playerLevelMin,
+      playerLevelMax,
+    );
+    const searchCondition = this.buildSearchCondition(search);
     const cursorCondition = this.buildCursorCondition(cursor);
 
     const baseWhere: Prisma.LootWhereInput = {
@@ -80,7 +100,11 @@ export class LootQueryService {
       npcsCondition,
       npcTypesCondition,
       raritiesCondition,
+      npcLevelsCondition,
+      itemLevelsCondition,
+      playerLevelsCondition,
       levelRangesCondition,
+      searchCondition,
     ].filter(Boolean) as Prisma.LootWhereInput[];
 
     if (andConditions.length > 0) {
@@ -329,6 +353,100 @@ export class LootQueryService {
     };
   }
 
+  private buildNpcLevelsCondition(
+    npcLevelMin?: number | null,
+    npcLevelMax?: number | null,
+  ): Prisma.LootWhereInput | null {
+    const hasMin = npcLevelMin !== undefined && npcLevelMin !== null;
+    const hasMax = npcLevelMax !== undefined && npcLevelMax !== null;
+
+    if (!hasMin && !hasMax) {
+      return null;
+    }
+
+    const lvlCondition: Prisma.IntNullableFilter = {};
+
+    if (hasMin) {
+      lvlCondition.gte = npcLevelMin ?? undefined;
+    }
+
+    if (hasMax) {
+      lvlCondition.lte = npcLevelMax ?? undefined;
+    }
+
+    return {
+      lootNpcs: {
+        some: {
+          npcSnapshot: {
+            lvl: lvlCondition,
+          },
+        },
+      },
+    };
+  }
+
+  private buildItemLevelsCondition(
+    itemLevelMin?: number | null,
+    itemLevelMax?: number | null,
+  ): Prisma.LootWhereInput | null {
+    const hasMin = itemLevelMin !== undefined && itemLevelMin !== null;
+    const hasMax = itemLevelMax !== undefined && itemLevelMax !== null;
+
+    if (!hasMin && !hasMax) {
+      return null;
+    }
+
+    const lvlCondition: Prisma.IntNullableFilter = {};
+
+    if (hasMin) {
+      lvlCondition.gte = itemLevelMin ?? undefined;
+    }
+
+    if (hasMax) {
+      lvlCondition.lte = itemLevelMax ?? undefined;
+    }
+
+    return {
+      lootItems: {
+        some: {
+          itemSnapshot: {
+            lvl: lvlCondition,
+          },
+        },
+      },
+    };
+  }
+
+  private buildPlayerLevelsCondition(
+    playerLevelMin?: number | null,
+    playerLevelMax?: number | null,
+  ): Prisma.LootWhereInput | null {
+    const hasMin = playerLevelMin !== undefined && playerLevelMin !== null;
+    const hasMax = playerLevelMax !== undefined && playerLevelMax !== null;
+
+    if (!hasMin && !hasMax) {
+      return null;
+    }
+
+    const lvlCondition: Prisma.IntNullableFilter = {};
+
+    if (hasMin) {
+      lvlCondition.gte = playerLevelMin ?? undefined;
+    }
+
+    if (hasMax) {
+      lvlCondition.lte = playerLevelMax ?? undefined;
+    }
+
+    return {
+      lootPlayers: {
+        some: {
+          lvl: lvlCondition,
+        },
+      },
+    };
+  }
+
   private buildCursorCondition(
     cursor: number | null,
   ): Prisma.LootWhereInput | null {
@@ -340,6 +458,67 @@ export class LootQueryService {
       id: {
         lt: Number(cursor),
       },
+    };
+  }
+
+  private buildSearchCondition(
+    search?: string | null,
+  ): Prisma.LootWhereInput | null {
+    if (!search) {
+      return null;
+    }
+
+    const trimmedSearch = search.trim();
+
+    if (!trimmedSearch) {
+      return null;
+    }
+
+    return {
+      OR: [
+        {
+          location: {
+            contains: trimmedSearch,
+            mode: 'insensitive',
+          },
+        },
+        {
+          lootItems: {
+            some: {
+              itemSnapshot: {
+                name: {
+                  contains: trimmedSearch,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+        },
+        {
+          lootNpcs: {
+            some: {
+              npcSnapshot: {
+                name: {
+                  contains: trimmedSearch,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+        },
+        {
+          lootPlayers: {
+            some: {
+              playerSnapshot: {
+                name: {
+                  contains: trimmedSearch,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+        },
+      ],
     };
   }
 

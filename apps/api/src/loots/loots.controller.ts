@@ -85,6 +85,41 @@ export class LootsController {
     description: 'NPC names filter (comma-separated)',
     required: false,
   })
+  @ApiQuery({
+    name: 'npcLevelMin',
+    description: 'Minimum NPC level filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'npcLevelMax',
+    description: 'Maximum NPC level filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'itemLevelMin',
+    description: 'Minimum item level filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'itemLevelMax',
+    description: 'Maximum item level filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'playerLevelMin',
+    description: 'Minimum player level filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'playerLevelMax',
+    description: 'Maximum player level filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: 'Search term for loots, items, NPCs or players',
+    required: false,
+  })
   @ApiResponse({
     status: 200,
     description: 'Paginated list of loots',
@@ -109,6 +144,19 @@ export class LootsController {
     players: string[],
     @Query('npcs', new ArrayValidationPipe())
     npcs: string[],
+    @Query('npcLevelMin', new ParseIntPipe({ optional: true }))
+    npcLevelMin?: number,
+    @Query('npcLevelMax', new ParseIntPipe({ optional: true }))
+    npcLevelMax?: number,
+    @Query('itemLevelMin', new ParseIntPipe({ optional: true }))
+    itemLevelMin?: number,
+    @Query('itemLevelMax', new ParseIntPipe({ optional: true }))
+    itemLevelMax?: number,
+    @Query('playerLevelMin', new ParseIntPipe({ optional: true }))
+    playerLevelMin?: number,
+    @Query('playerLevelMax', new ParseIntPipe({ optional: true }))
+    playerLevelMax?: number,
+    @Query('search') search?: string,
   ) {
     const loots = await this.lootsService.fetchLootsByGuildId(
       guild,
@@ -122,6 +170,13 @@ export class LootsController {
         players,
         npcs,
         world,
+        npcLevelMin,
+        npcLevelMax,
+        itemLevelMin,
+        itemLevelMax,
+        playerLevelMin,
+        playerLevelMax,
+        search,
       },
     );
     return plainToInstance(LootEntity, loots);

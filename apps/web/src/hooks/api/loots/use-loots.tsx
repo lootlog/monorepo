@@ -1,5 +1,4 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useSearch } from "@tanstack/react-router";
 import type { Npc } from "@/hooks/api/game-data/use-npcs";
 import { DEFAULT_PAGE_LIMIT } from "@/constants/pagination";
 import { stringify } from "qs";
@@ -8,6 +7,7 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import type { Player } from "@/hooks/api/game-data/use-guild-players";
+import { useLootsFilters } from "@/hooks/use-loots-filters";
 
 export enum ItemRarity {
   COMMON = "COMMON",
@@ -54,10 +54,6 @@ export type Loot = {
 
 export type UseLootsOptions = {
   limit?: number;
-  npcs?: string[];
-  npcTypes?: string[];
-  rarities?: string[];
-  players?: number[];
 };
 
 export type UseLootsResponse = Loot[];
@@ -69,17 +65,22 @@ export type UseLootsErrorResponse = {
 export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
   const guildId = useGuildId();
   const { client } = useApiClient();
-  const searchParams = useSearch({ strict: false }) as Record<string, unknown>;
   const { world } = useGuildContext();
-
-  const { npcs, npcTypes, rarities, players } = searchParams;
+  const { filters } = useLootsFilters();
 
   const queryParams = {
     limit,
-    npcs,
-    npcTypes,
-    rarities,
-    players,
+    npcs: filters.npcs.length > 0 ? filters.npcs : undefined,
+    npcTypes: filters.npcTypes.length > 0 ? filters.npcTypes : undefined,
+    rarities: filters.rarities.length > 0 ? filters.rarities : undefined,
+    players: filters.players.length > 0 ? filters.players : undefined,
+    npcLevelMin: filters.npcLevelMin || undefined,
+    npcLevelMax: filters.npcLevelMax || undefined,
+    itemLevelMin: filters.itemLevelMin || undefined,
+    itemLevelMax: filters.itemLevelMax || undefined,
+    playerLevelMin: filters.playerLevelMin || undefined,
+    playerLevelMax: filters.playerLevelMax || undefined,
+    search: filters.search || undefined,
     world,
   };
 
@@ -87,7 +88,7 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
     arrayFormat: "comma",
     allowEmptyArrays: false,
     filter: (_, value) => {
-      if (value === "") {
+      if (value === "" || value === undefined || value === null) {
         return;
       }
 
