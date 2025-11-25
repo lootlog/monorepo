@@ -1,7 +1,7 @@
 import { MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
 import { cn } from "@/lib/utils";
-import { GameNpc } from "@/types/margonem/npcs";
-import { FC } from "react";
+import type { GameNpc } from "@/types/margonem/npcs";
+import type { FC } from "react";
 
 export type NpcTileProps = {
   npc: GameNpc;
@@ -21,13 +21,13 @@ export const NpcTile: FC<NpcTileProps> = ({
     <span
       className={cn(
         "ll:w-12 ll:flex ll:items-center ll:justify-center",
-        containerClassName
+        containerClassName,
       )}
     >
       <img
         className={cn(
           "ll-custom-cursor-pointer ll:rounded-lg ll:max-w-12",
-          className
+          className,
         )}
         draggable={false}
         src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${npc.icon}`}

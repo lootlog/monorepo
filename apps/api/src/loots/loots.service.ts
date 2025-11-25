@@ -12,6 +12,7 @@ import type { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
 import { ErrorKey } from './enum/error-key.enum';
 import { PlayersService } from 'src/players/players.service';
 import { NpcsService } from 'src/npcs/npcs.service';
+import { ItemsService } from 'src/items/items.service';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 import { PrismaService } from 'src/db/prisma.service';
 import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
@@ -35,6 +36,7 @@ export class LootsService implements OnModuleInit {
   constructor(
     private readonly playersService: PlayersService,
     private readonly npcsService: NpcsService,
+    private readonly itemsService: ItemsService,
     private readonly guildsService: GuildsService,
     private readonly prisma: PrismaService,
     private readonly lootlogConfigService: LootlogConfigService,
@@ -212,6 +214,17 @@ export class LootsService implements OnModuleInit {
 
       this.playersService.bulkIndexPlayers(players);
       this.npcsService.bulkIndexNpcs(npcs);
+
+      const indexItems = items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        icon: item.icon,
+        lvl: item.lvl,
+        rarity: item.rarity,
+        type: item.type,
+        world: body.world,
+      }));
+      this.itemsService.bulkIndexItems(indexItems);
 
       return { id: loot.id };
     } catch (error: unknown) {

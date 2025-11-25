@@ -1,50 +1,205 @@
-import { LootsFilters } from "@/features/guild/components/loots-filters/loots-filters";
-import { Filter } from "lucide-react";
 import { LootsList } from "@/features/guild/components/loots-list/loots-list";
+import { LootsFiltersSidebar } from "@/features/guild/components/loots-filters/loots-filters-sidebar";
+import { useLootsFilters } from "@/hooks/use-loots-filters";
+import { AnimatePresence, motion } from "framer-motion";
+import { LootFiltersHeader } from "@/features/guild/components/loots-filters/loot-filters-header";
+import { useEffect, useRef, useState } from "react";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
-  DrawerFooter,
+  DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@lootlog/ui/components/drawer";
-import { Button } from "@lootlog/ui/components/button";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { useLocalStorage } from "usehooks-ts";
+
+const FILTERS_OPEN_KEY = "loots-filters-open";
 
 export const Guild: React.FC = () => {
+  const { filters, setFilters, hasActiveFilters, clearFilters } =
+    useLootsFilters();
+  const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
+    FILTERS_OPEN_KEY,
+    true,
+  );
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [tempFilters, setTempFilters] = useState<
+    ReturnType<typeof useLootsFilters>["filters"]
+  >(() => filters);
+  const skipFirstAnimationRef = useRef(isFiltersOpen);
   const isMobile = useIsMobile();
 
+  const handleOpenSidebar = () => {
+    setTempFilters(filters);
+    if (isMobile) {
+      setIsMobileFiltersOpen((prev) => !prev);
+      return;
+    }
+
+    setIsFiltersOpen((prev) => !prev);
+  };
+
+  const handleSaveFilters = (
+    override?: Partial<ReturnType<typeof useLootsFilters>["filters"]>,
+  ) => {
+    const filtersToSave = {
+      ...tempFilters,
+      ...override,
+    };
+
+    setTempFilters(filtersToSave);
+    setFilters({
+      search: filtersToSave.search || null,
+      npcTypes:
+        filtersToSave.npcTypes.length > 0 ? filtersToSave.npcTypes : null,
+      npcs: filtersToSave.npcs.length > 0 ? filtersToSave.npcs : null,
+      npcLevelMin: filtersToSave.npcLevelMin || null,
+      npcLevelMax: filtersToSave.npcLevelMax || null,
+      rarities:
+        filtersToSave.rarities.length > 0 ? filtersToSave.rarities : null,
+      itemLevelMin: filtersToSave.itemLevelMin || null,
+      itemLevelMax: filtersToSave.itemLevelMax || null,
+      players: filtersToSave.players.length > 0 ? filtersToSave.players : null,
+      playerLevelMin: filtersToSave.playerLevelMin || null,
+      playerLevelMax: filtersToSave.playerLevelMax || null,
+      location: null,
+    });
+  };
+
+  const handleClearFilters = () => {
+    clearFilters();
+    setTempFilters({
+      search: "",
+      npcTypes: [],
+      npcs: [],
+      npcLevelMin: "",
+      npcLevelMax: "",
+      rarities: [],
+      itemLevelMin: "",
+      itemLevelMax: "",
+      players: [],
+      playerLevelMin: "",
+      playerLevelMax: "",
+      location: "",
+    });
+  };
+
+  useEffect(() => {
+    if (skipFirstAnimationRef.current) {
+      skipFirstAnimationRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      setIsFiltersOpen(false);
+      return;
+    }
+
+    setIsMobileFiltersOpen(false);
+  }, [isMobile, setIsFiltersOpen]);
+
+  const sidebarFilters = {
+    players: tempFilters.players,
+    npcs: tempFilters.npcs,
+    rarities: tempFilters.rarities,
+    npcTypes: tempFilters.npcTypes,
+    npcLevelMin: tempFilters.npcLevelMin,
+    npcLevelMax: tempFilters.npcLevelMax,
+    itemLevelMin: tempFilters.itemLevelMin,
+    itemLevelMax: tempFilters.itemLevelMax,
+    playerLevelMin: tempFilters.playerLevelMin,
+    playerLevelMax: tempFilters.playerLevelMax,
+  };
+
+  const handleFilterChange = (
+    newFilters: Partial<typeof sidebarFilters>,
+  ) => {
+    setTempFilters((prev) => ({
+      ...prev,
+      ...newFilters,
+    }));
+  };
+
+  const handleMobileSaveFilters = (
+    override?: Partial<typeof sidebarFilters>,
+  ) => {
+    handleSaveFilters(override);
+    setIsMobileFiltersOpen(false);
+  };
+
+  const filtersOpenForHeader = isMobile
+    ? isMobileFiltersOpen
+    : isFiltersOpen;
+
   return (
-    <div className="w-full flex flex-col h-full overflow-hidden">
+    <>
       {isMobile && (
-        <Drawer>
-          <DrawerTrigger className="w-full" asChild>
-            <div className="p-2 w-full border-b">
-              <Button className="w-full">
-                <Filter /> Filtry
-              </Button>
+        <Drawer
+          open={isMobileFiltersOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              setTempFilters(filters);
+            }
+            setIsMobileFiltersOpen(open);
+          }}
+          shouldScaleBackground={false}
+        >
+          <DrawerContent className="p-0 h-[85vh] max-h-[85vh] flex flex-col overflow-hidden">
+            <DrawerHeader className="border-b px-4 py-3 shrink-0">
+              <DrawerTitle>Filtry łupów</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex-1 overflow-hidden">
+              <LootsFiltersSidebar
+                className="w-full border-l-0 h-full"
+                filters={sidebarFilters}
+                onFilterChange={handleFilterChange}
+                onSave={handleMobileSaveFilters}
+                onClear={handleClearFilters}
+              />
             </div>
-          </DrawerTrigger>
-          <DrawerContent className="">
-            <DrawerTitle className="px-4 pt-4 flex items-center justify-center">
-              Filtry
-            </DrawerTitle>
-            <div className="pb-4">
-              <LootsFilters />
-            </div>
-            <DrawerFooter>
-              <DrawerClose className="w-full" asChild>
-                <Button variant="default" className="w-full">
-                  Zapisz
-                </Button>
-              </DrawerClose>
-            </DrawerFooter>
           </DrawerContent>
         </Drawer>
       )}
-      {!isMobile && <LootsFilters />}
-      <LootsList />
-    </div>
+
+      <div className="w-full flex h-full overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <LootFiltersHeader
+            onToggleFilters={handleOpenSidebar}
+            isFiltersOpen={filtersOpenForHeader}
+            hasActiveFilters={hasActiveFilters}
+          />
+
+          <div className="flex-1 flex flex-col overflow-hidden bg-background/20">
+            <LootsList />
+          </div>
+        </div>
+
+        {!isMobile && (
+          <AnimatePresence>
+            {isFiltersOpen && (
+              <motion.div
+                initial={
+                  skipFirstAnimationRef.current
+                    ? { width: 320, opacity: 1 }
+                    : { width: 0, opacity: 0 }
+                }
+                animate={{ width: 320, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden h-full border-l border-border/40" // Opcjonalnie: dodałem border-l dla estetyki
+              >
+                <LootsFiltersSidebar
+                  filters={sidebarFilters}
+                  onFilterChange={handleFilterChange}
+                  onSave={handleSaveFilters}
+                  onClear={handleClearFilters}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
+    </>
   );
 };
