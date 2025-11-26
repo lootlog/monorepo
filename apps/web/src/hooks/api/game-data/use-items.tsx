@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SEARCH_API_URL } from "@/config/api";
 import { useApiClient } from "@/hooks/api/use-api-client";
 
-export type Item = {
+export type GameItem = {
   id: number;
   hid: string;
   name: string;
@@ -30,7 +30,9 @@ export const useItems = ({ search, world, limit = 3 }: UseItemsOptions) => {
   return useQuery({
     queryKey: ["items", search, world, limit],
     queryFn: () =>
-      client.get<Item[]>(`${SEARCH_API_URL}/items?${queryParams.toString()}`),
+      client.get<GameItem[]>(
+        `${SEARCH_API_URL}/items?${queryParams.toString()}`,
+      ),
     select: (response) => response.data,
     enabled: !!search && search.length >= 2,
   });

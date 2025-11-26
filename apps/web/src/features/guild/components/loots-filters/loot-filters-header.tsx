@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { LootSearchCommand } from "./loot-search-command";
+import { useLootsFilters } from "@/hooks/use-loots-filters";
 
 export type LootFiltersHeaderProps = {
   isFiltersOpen: boolean;
@@ -19,6 +20,13 @@ export const LootFiltersHeader = ({
 }: LootFiltersHeaderProps) => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { filters } = useLootsFilters();
+
+  const hasSearchFilters =
+    filters.npcs.length > 0 ||
+    filters.itemNames.length > 0 ||
+    filters.hid !== "" ||
+    filters.players.length > 0;
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -47,6 +55,16 @@ export const LootFiltersHeader = ({
             <kbd className="pointer-events-none absolute right-2 top-[50%] translate-y-[-50%] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
               <span className="text-xs">Ctrl + K</span>
             </kbd>
+            <AnimatePresence>
+              {hasSearchFilters && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="absolute -top-1 -left-1 w-3 h-3 bg-primary rounded-full border-2 border-background"
+                />
+              )}
+            </AnimatePresence>
           </Button>
         </div>
 

@@ -382,4 +382,18 @@ export class LootsService implements OnModuleInit {
       params,
     );
   }
+
+  async countLootsByGuildId(
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    params: FetchLootsParamsDto,
+  ) {
+    return this.lootQueryService.countLootsByGuildId(
+      guild,
+      permissions,
+      roles,
+      params,
+    );
+  }
 }

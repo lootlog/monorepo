@@ -56,66 +56,23 @@ export class LootQueryService {
       itemNames,
     }: FetchLootsParamsDto,
   ) {
-    const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_READ),
-    );
-    const administrativeUser = isAdministrativeUser(permissions);
-
-    const levelRangesCondition = this.buildLevelRangesCondition(
-      filteredRoles,
-      administrativeUser,
-    );
-    const playersCondition = this.buildPlayersCondition(players);
-    const npcsCondition = this.buildNpcsCondition(npcs);
-    const npcTypesCondition = this.buildNpcTypesCondition(npcTypes);
-    const raritiesCondition = this.buildRaritiesCondition(rarities);
-    const npcLevelsCondition = this.buildNpcLevelsCondition(
+    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
+      npcTypes,
+      npcs,
+      players,
+      rarities,
       npcLevelMin,
       npcLevelMax,
-    );
-    const itemLevelsCondition = this.buildItemLevelsCondition(
       itemLevelMin,
       itemLevelMax,
-    );
-    const playerLevelsCondition = this.buildPlayerLevelsCondition(
       playerLevelMin,
       playerLevelMax,
-    );
-    const searchCondition = this.buildSearchCondition(search);
-    const cursorCondition = this.buildCursorCondition(cursor);
-    const hidCondition = this.buildHidCondition(hid);
-    const itemNamesCondition = this.buildItemNamesCondition(itemNames);
-
-    const baseWhere: Prisma.LootWhereInput = {
-      lootSubmissions: {
-        some: {
-          guildId: guild.id,
-        },
-      },
-    };
-
-    if (world) {
-      baseWhere.world = world;
-    }
-
-    const andConditions = [
-      cursorCondition,
-      playersCondition,
-      npcsCondition,
-      npcTypesCondition,
-      raritiesCondition,
-      npcLevelsCondition,
-      itemLevelsCondition,
-      playerLevelsCondition,
-      levelRangesCondition,
-      searchCondition,
-      hidCondition,
-      itemNamesCondition,
-    ].filter(Boolean) as Prisma.LootWhereInput[];
-
-    if (andConditions.length > 0) {
-      baseWhere.AND = andConditions;
-    }
+      search,
+      world,
+      hid,
+      itemNames,
+      cursor,
+    });
 
     const lootsWithRelations = await this.prisma.loot.findMany({
       where: baseWhere,
@@ -197,6 +154,152 @@ export class LootQueryService {
     }));
 
     return results;
+  }
+
+  async countLootsByGuildId(
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    {
+      npcTypes = [],
+      npcs = [],
+      players = [],
+      rarities = [],
+      npcLevelMin,
+      npcLevelMax,
+      itemLevelMin,
+      itemLevelMax,
+      playerLevelMin,
+      playerLevelMax,
+      search,
+      world,
+      hid,
+      itemNames,
+    }: FetchLootsParamsDto,
+  ) {
+    const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
+      npcTypes,
+      npcs,
+      players,
+      rarities,
+      npcLevelMin,
+      npcLevelMax,
+      itemLevelMin,
+      itemLevelMax,
+      playerLevelMin,
+      playerLevelMax,
+      search,
+      world,
+      hid,
+      itemNames,
+      cursor: null,
+    });
+
+    return this.prisma.loot.count({
+      where: baseWhere,
+    });
+  }
+
+  private buildBaseWhereCondition(
+    guild: Guild,
+    permissions: Permission[],
+    roles: Role[],
+    {
+      npcTypes = [],
+      npcs = [],
+      players = [],
+      rarities = [],
+      npcLevelMin,
+      npcLevelMax,
+      itemLevelMin,
+      itemLevelMax,
+      playerLevelMin,
+      playerLevelMax,
+      search,
+      world,
+      hid,
+      itemNames,
+      cursor,
+    }: {
+      npcTypes?: string[];
+      npcs?: string[];
+      players?: string[];
+      rarities?: string[];
+      npcLevelMin?: number;
+      npcLevelMax?: number;
+      itemLevelMin?: number;
+      itemLevelMax?: number;
+      playerLevelMin?: number;
+      playerLevelMax?: number;
+      search?: string;
+      world?: string;
+      hid?: string;
+      itemNames?: string[];
+      cursor?: number | null;
+    },
+  ): Prisma.LootWhereInput {
+    const filteredRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_READ),
+    );
+    const administrativeUser = isAdministrativeUser(permissions);
+
+    const levelRangesCondition = this.buildLevelRangesCondition(
+      filteredRoles,
+      administrativeUser,
+    );
+    const playersCondition = this.buildPlayersCondition(players);
+    const npcsCondition = this.buildNpcsCondition(npcs);
+    const npcTypesCondition = this.buildNpcTypesCondition(npcTypes);
+    const raritiesCondition = this.buildRaritiesCondition(rarities);
+    const npcLevelsCondition = this.buildNpcLevelsCondition(
+      npcLevelMin,
+      npcLevelMax,
+    );
+    const itemLevelsCondition = this.buildItemLevelsCondition(
+      itemLevelMin,
+      itemLevelMax,
+    );
+    const playerLevelsCondition = this.buildPlayerLevelsCondition(
+      playerLevelMin,
+      playerLevelMax,
+    );
+    const searchCondition = this.buildSearchCondition(search);
+    const cursorCondition = this.buildCursorCondition(cursor ?? null);
+    const hidCondition = this.buildHidCondition(hid);
+    const itemNamesCondition = this.buildItemNamesCondition(itemNames);
+
+    const baseWhere: Prisma.LootWhereInput = {
+      lootSubmissions: {
+        some: {
+          guildId: guild.id,
+        },
+      },
+    };
+
+    if (world) {
+      baseWhere.world = world;
+    }
+
+    const andConditions = [
+      cursorCondition,
+      playersCondition,
+      npcsCondition,
+      npcTypesCondition,
+      raritiesCondition,
+      npcLevelsCondition,
+      itemLevelsCondition,
+      playerLevelsCondition,
+      levelRangesCondition,
+      searchCondition,
+      hidCondition,
+      itemNamesCondition,
+    ].filter(Boolean) as Prisma.LootWhereInput[];
+
+    if (andConditions.length > 0) {
+      baseWhere.AND = andConditions;
+    }
+
+    return baseWhere;
   }
 
   private buildLevelRangesCondition(
