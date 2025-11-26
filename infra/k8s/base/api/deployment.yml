@@ -74,6 +74,11 @@ spec:
                 secretKeyRef:
                   name: lootlog-api-secrets
                   key: authServiceUrl
+            - name: RESERVATIONS_CARDS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-api-secrets
+                  key: reservationsCardsUrl
           livenessProbe:
             httpGet:
               path: /healthz

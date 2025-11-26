@@ -15,16 +15,19 @@ export type Player = {
 export type UseGuildPlayersOptions = {
   search?: string;
   selectedPlayers?: string;
+  world?: string;
 };
 
 export const useGuildPlayers = ({
   search,
   selectedPlayers,
+  world,
 }: UseGuildPlayersOptions) => {
   const { client } = useApiClient();
 
   const queryParams = {
     search: search || selectedPlayers || "",
+    ...(world ? { world } : {}),
   };
 
   const query = useQuery({
@@ -32,8 +35,8 @@ export const useGuildPlayers = ({
     queryFn: () =>
       client.get<Player[]>(
         `${SEARCH_API_URL}/players?${new URLSearchParams(
-          queryParams
-        ).toString()}`
+          queryParams,
+        ).toString()}`,
       ),
     select: (response) => response.data,
   });

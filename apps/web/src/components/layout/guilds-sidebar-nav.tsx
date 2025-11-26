@@ -53,7 +53,7 @@ export const GuildsSidebarNav: FC = () => {
       label: "Rezerwacje",
       icon: <CalendarClock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.reservations,
-      available: false,
+      available: true,
       enabled: true,
     },
     {
