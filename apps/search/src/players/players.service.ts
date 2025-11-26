@@ -42,7 +42,7 @@ export class PlayersService {
 
     const playersWithUid = data.players.map((player) => ({
       ...player,
-      uid: `${player.id}_${player.name}_${player.world}`,
+      uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
 
     try {
