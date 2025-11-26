@@ -9,7 +9,7 @@ const itemsService = new ItemsService();
 
 const itemSchema = z.object({
   id: z.number(),
-  hid: z.string(),
+  hid: z.string().optional(),
   name: z.string(),
   icon: z.string(),
   lvl: z.number(),
@@ -18,9 +18,7 @@ const itemSchema = z.object({
   world: z.string(),
 });
 
-const indexItemsPayloadSchema = z.object({
-  items: z.array(itemSchema),
-});
+const indexItemsPayloadSchema = z.array(itemSchema);
 
 export const setupItemsHandlers = async () => {
   if (!channel) return;
@@ -39,9 +37,7 @@ export const setupItemsHandlers = async () => {
         if (msg) {
           try {
             const messageContent = msg.content.toString();
-            const parsed = messageContent
-              ? JSON.parse(messageContent)
-              : { items: [] };
+            const parsed = messageContent ? JSON.parse(messageContent) : [];
             const validationResult = indexItemsPayloadSchema.safeParse(parsed);
 
             if (!validationResult.success) {
@@ -53,7 +49,7 @@ export const setupItemsHandlers = async () => {
               return;
             }
 
-            await itemsService.indexItems(validationResult.data);
+            await itemsService.indexItems({ items: validationResult.data });
             channel?.ack(msg);
           } catch (error) {
             console.error("Error processing items index message:", {
