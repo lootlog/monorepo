@@ -89,31 +89,44 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
 
         <div className="flex flex-row justify-between gap-4 pt-3 pb-2 border-t border-border/30">
           <div className="flex flex-row items-start gap-2 flex-wrap">
-            {loot.players.map((player, idx) => {
-              const color = playerColorMap[player.id];
-              const playerItems = itemsByPlayer[player.id] || [];
-              return (
-                <div
-                  key={player.id}
-                  className="flex flex-col items-center gap-3"
-                >
-                  <PlayerTile player={player} idx={idx} color={color?.color} />
-                  {playerItems.length > 0 && (
-                    <div className="flex flex-col gap-1">
-                      {playerItems.map((item, itemIdx) => (
-                        <ItemTile
-                          key={`${item.hid}-${itemIdx}`}
-                          item={item}
-                          color={color?.color}
-                          shareIndex={color?.idx}
-                          shareNickname={loot.players[color?.idx ?? 0]?.name}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {[...loot.players]
+              .sort((a, b) => {
+                const aItems = itemsByPlayer[a.id]?.length || 0;
+                const bItems = itemsByPlayer[b.id]?.length || 0;
+                // Players with items first
+                if (aItems > 0 && bItems === 0) return -1;
+                if (aItems === 0 && bItems > 0) return 1;
+                return 0;
+              })
+              .map((player) => {
+                const color = playerColorMap[player.id];
+                const playerItems = itemsByPlayer[player.id] || [];
+                return (
+                  <div
+                    key={player.id}
+                    className="flex flex-col items-center gap-3"
+                  >
+                    <PlayerTile
+                      player={player}
+                      idx={color?.idx ?? 0}
+                      color={color?.color}
+                    />
+                    {playerItems.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        {playerItems.map((item, itemIdx) => (
+                          <ItemTile
+                            key={`${item.hid}-${itemIdx}`}
+                            item={item}
+                            color={color?.color}
+                            shareIndex={color?.idx}
+                            shareNickname={loot.players[color?.idx ?? 0]?.name}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
           {unassignedItems.length > 0 && (
             <div className="flex flex-col gap-1 border-l border-border/30 pl-4">
