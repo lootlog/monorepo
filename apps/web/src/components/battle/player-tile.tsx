@@ -33,7 +33,7 @@ export const PlayerTile: FC<PlayerTileProps> = ({
     <TooltipProvider key={id}>
       <Tooltip delayDuration={100}>
         <TooltipTrigger asChild>
-          <div className={cn("relative", className)}>
+          <div className={cn("relative ring-0 outline-none", className)}>
             <div
               className={cn(
                 "w-[32px] h-[48px] relative cursor-pointer rounded-lg",

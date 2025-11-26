@@ -27,11 +27,19 @@ export const ItemTile: FC<ItemTileProps> = ({
 }) => {
   const { t } = useTranslation();
   const rarityCn = cn("text-xs font-semibold", {
-    "text-gray-500": rarity === ItemRarity.COMMON,
-    "text-sm": rarity === ItemRarity.UPGRADED,
-    "text-amber-700": rarity === ItemRarity.LEGENDARY,
+    "text-muted-foreground": rarity === ItemRarity.COMMON,
+    "text-sm text-primary": rarity === ItemRarity.UPGRADED,
+    "text-orange-400": rarity === ItemRarity.LEGENDARY,
     "text-blue-500": rarity === ItemRarity.HEROIC,
     "text-amber-300": rarity === ItemRarity.UNIQUE,
+  });
+
+  const tooltipBorderCn = cn("w-80 p-3 pb-0 bg-popover/95 backdrop-blur-md", {
+    "border-2 border-orange-400/80": rarity === ItemRarity.LEGENDARY,
+    "border-2 border-blue-500/80": rarity === ItemRarity.HEROIC,
+    "border-2 border-amber-300/80": rarity === ItemRarity.UNIQUE,
+    "border-2 border-primary/40": rarity === ItemRarity.UPGRADED,
+    "border border-border/50": rarity === ItemRarity.COMMON,
   });
 
   const renderStats = () => {
@@ -47,7 +55,7 @@ export const ItemTile: FC<ItemTileProps> = ({
         <div
           key={key}
           className={cn("pb-2 gap-0.5 flex flex-col", {
-            "border-b": i < Object.entries(values).length - 1,
+            "border-b border-border/50": i < Object.entries(values).length - 1,
           })}
         >
           {value.map((v) => {
@@ -68,13 +76,18 @@ export const ItemTile: FC<ItemTileProps> = ({
                   };
 
             return (
-              <div key={v.key} className="text-xs whitespace-pre-line">
+              <div
+                key={v.key}
+                className="text-xs whitespace-pre-line text-foreground"
+              >
                 <Trans
                   i18nKey={`itemStats.${v.key}`}
                   values={values}
                   components={{
-                    value: <span className="font-bold text-orange-500" />,
-                    description: <div className="text-center text-gray-400" />,
+                    value: <span className="font-bold text-primary" />,
+                    description: (
+                      <div className="text-center text-muted-foreground" />
+                    ),
                     legbon: <span className="text-green-500" />,
                   }}
                 >
@@ -99,10 +112,10 @@ export const ItemTile: FC<ItemTileProps> = ({
             shareIndex={shareIndex}
           />
         </TooltipTrigger>
-        <TooltipContent className="w-80 p-3 pb-0">
-          <div className="flex flex-row border-b items-center justify-between pb-2">
+        <TooltipContent className={tooltipBorderCn}>
+          <div className="flex flex-row border-b border-border/50 items-center justify-between pb-2">
             <div className="flex flex-col justify-between">
-              <p className="font-heading mt-12 scroll:m-20 mr-8 text-md font-semibold tracking-tight first:mt-0">
+              <p className="font-heading mt-12 scroll:m-20 mr-8 text-md font-semibold tracking-tight first:mt-0 text-foreground">
                 {name}
               </p>
               <p className={rarityCn}>{t(`itemRarity.${rarity}`)}</p>
@@ -113,9 +126,11 @@ export const ItemTile: FC<ItemTileProps> = ({
             {renderStats()}
           </div>
           {shareNickname && (
-            <div className="text-xs py-2">
+            <div className="text-xs py-2 text-muted-foreground">
               Zdobyto przez:{" "}
-              <span className="font-semibold">{shareNickname}</span>
+              <span className="font-semibold text-foreground">
+                {shareNickname}
+              </span>
             </div>
           )}
         </TooltipContent>

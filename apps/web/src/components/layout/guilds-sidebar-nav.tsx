@@ -43,17 +43,17 @@ export const GuildsSidebarNav: FC = () => {
       enabled: true,
     },
     {
-      label: "Rezerwacje",
-      icon: <CalendarClock className="mr-1 h-4 w-4" />,
-      path: ROUTE_SEGMENTS.guild.reservations,
-      available: true,
-      enabled: true,
-    },
-    {
       label: "Timery",
       icon: <Clock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.timers,
       available: false,
+      enabled: true,
+    },
+    {
+      label: "Rezerwacje",
+      icon: <CalendarClock className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.reservations,
+      available: true,
       enabled: true,
     },
     {

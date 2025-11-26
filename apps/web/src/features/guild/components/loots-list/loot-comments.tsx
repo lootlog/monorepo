@@ -27,10 +27,10 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
 
   return (
     <div className="space-y-2 flex flex-col">
-      <div className="p-4 flex flex-col border-b gap-2">
+      <div className="p-4 flex flex-col border-b border-border/50 gap-2 bg-card/20">
         <form onSubmit={handleAddComment}>
           <Textarea
-            className="w-full h-24 p-2 border rounded"
+            className="w-full h-24 p-2 rounded-lg bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-primary/50"
             placeholder="Dodaj komentarz..."
             autoFocus={false}
             maxLength={MAX_LENGTH}
@@ -59,7 +59,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
         </form>
       </div>
 
-      <h3 className="text-sm font-semibold px-4 pb-2 border-b">
+      <h3 className="text-sm font-semibold px-4 pb-2 border-b border-border/50 text-foreground">
         Komentarze ({comments?.length || 0})
       </h3>
       <ul className="p-0 !m-0">
