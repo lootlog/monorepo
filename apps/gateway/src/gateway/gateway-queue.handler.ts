@@ -10,6 +10,10 @@ import type { DeleteMemberRoleDto } from 'src/gateway/dto/delete-member-role.dto
 import type { DeleteMemberDto } from 'src/gateway/dto/delete-member.dto';
 import type { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
 import type { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
+import type {
+  ReservationCreateEventDto,
+  ReservationDeleteEventDto,
+} from 'src/gateway/dto/reservation-event.dto';
 import type { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { Queue } from 'src/gateway/enums/queue.enum';
@@ -93,6 +97,74 @@ export class GatewayQueueHandler {
 
     await this.gatewayService.handleGuildsTimerDelete(data);
     this.logger.log(`Timer deleted successfully for guild: ${data.guildId}`);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE,
+    queue: Queue.GUILDS_RESERVATIONS_CREATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE_RETRY,
+    },
+  })
+  async handleGuildsReservationCreate(
+    data: ReservationCreateEventDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    const headers = amqpMsg.properties.headers || {};
+
+    const shouldContinue = await this.retryService.handleRetryLogic(
+      data,
+      headers,
+      RoutingKey.GUILDS_RESERVATIONS_CREATE_DLQ,
+      `reservation create: ${data.guildId}`,
+    );
+
+    if (!shouldContinue) {
+      return;
+    }
+
+    await this.gatewayService.handleGuildsReservationCreate(data);
+    this.logger.log(
+      `Reservation created successfully for guild: ${data.guildId}`,
+    );
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE,
+    queue: Queue.GUILDS_RESERVATIONS_DELETE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE_RETRY,
+    },
+  })
+  async handleGuildsReservationDelete(
+    data: ReservationDeleteEventDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    const headers = amqpMsg.properties.headers || {};
+
+    const shouldContinue = await this.retryService.handleRetryLogic(
+      data,
+      headers,
+      RoutingKey.GUILDS_RESERVATIONS_DELETE_DLQ,
+      `reservation delete: ${data.guildId}`,
+    );
+
+    if (!shouldContinue) {
+      return;
+    }
+
+    await this.gatewayService.handleGuildsReservationDelete(data);
+    this.logger.log(
+      `Reservation deleted successfully for guild: ${data.guildId}`,
+    );
   }
 
   @RabbitSubscribe({
@@ -345,6 +417,48 @@ export class GatewayQueueHandler {
   })
   handleTimerDeleteDLQ(data: DeleteTimerDto, amqpMsg: AmqpMessage) {
     this.logger.error('Message sent to DLQ - Timer Delete:', {
+      data,
+      retryCount: this.retryService.getRetryCount(
+        amqpMsg.properties.headers || {},
+      ),
+      headers: amqpMsg.properties.headers,
+    });
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_RESERVATIONS_CREATE_DLQ,
+    queue: Queue.GUILDS_RESERVATIONS_CREATE_DLQ,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  handleReservationCreateDLQ(
+    data: ReservationCreateEventDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    this.logger.error('Message sent to DLQ - Reservation Create:', {
+      data,
+      retryCount: this.retryService.getRetryCount(
+        amqpMsg.properties.headers || {},
+      ),
+      headers: amqpMsg.properties.headers,
+    });
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_RESERVATIONS_DELETE_DLQ,
+    queue: Queue.GUILDS_RESERVATIONS_DELETE_DLQ,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  handleReservationDeleteDLQ(
+    data: ReservationDeleteEventDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    this.logger.error('Message sent to DLQ - Reservation Delete:', {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},

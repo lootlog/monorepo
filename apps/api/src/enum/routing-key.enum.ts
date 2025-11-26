@@ -4,6 +4,9 @@ export enum RoutingKey {
   GUILDS_TIMERS_UPDATE = 'guilds.timers.update',
   GUILDS_TIMERS_DELETE = 'guilds.timers.delete',
 
+  GUILDS_RESERVATIONS_CREATE = 'guilds.reservations.create',
+  GUILDS_RESERVATIONS_DELETE = 'guilds.reservations.delete',
+
   GUILDS_NOTIFICATIONS_SEND = 'guilds.notifications.send',
 
   GUILDS_MEMBERS_ADD = 'guilds.members.add',

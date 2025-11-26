@@ -14,7 +14,7 @@ const itemsService = new ItemsService();
 items.get("/", async (c) => {
   const { limit, search, world } = parseSchema(
     c.req.query(),
-    getItemsQuerySchema
+    getItemsQuerySchema,
   );
   const res = await itemsService.getItems({ limit, search, world });
 

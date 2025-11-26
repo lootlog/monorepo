@@ -11,6 +11,10 @@ import type { RefreshJobUpdateDto } from './dto/refresh-job-update.dto';
 import { NpcType } from './enums/npc-type.enum';
 import { GatewayEvent } from './enums/gateway-event.enum';
 import { Permission } from '../guilds/enum/permission.type';
+import type {
+  ReservationCreateEventDto,
+  ReservationDeleteEventDto,
+} from './dto/reservation-event.dto';
 
 describe('GatewayService', () => {
   let service: GatewayService;
@@ -279,6 +283,54 @@ describe('GatewayService', () => {
       expect(mockServer.emit).toHaveBeenCalledWith(
         GatewayEvent.TIMERS_DELETE,
         deleteDto,
+      );
+    });
+  });
+
+  describe('handleGuildsReservationCreate', () => {
+    it('should emit reservation create event to guild room', () => {
+      const payload: ReservationCreateEventDto = {
+        guildId: 'guild-123',
+        reservation: {
+          id: 42,
+          reservationId: 'raid',
+          createdDate: new Date().toISOString(),
+          fromDate: new Date().toISOString(),
+          toDate: new Date(Date.now() + 3_600_000).toISOString(),
+          createdBy: 'discord-123',
+        },
+      };
+
+      service.handleGuildsReservationCreate(payload);
+
+      expect(mockServer.to).toHaveBeenCalledWith('guild-123');
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        GatewayEvent.RESERVATIONS_CREATE,
+        payload,
+      );
+    });
+  });
+
+  describe('handleGuildsReservationDelete', () => {
+    it('should emit reservation delete event to guild room', () => {
+      const payload: ReservationDeleteEventDto = {
+        guildId: 'guild-123',
+        reservation: {
+          id: 43,
+          reservationId: 'raid',
+          createdDate: new Date().toISOString(),
+          fromDate: new Date().toISOString(),
+          toDate: new Date(Date.now() + 3_600_000).toISOString(),
+          createdBy: 'discord-123',
+        },
+      };
+
+      service.handleGuildsReservationDelete(payload);
+
+      expect(mockServer.to).toHaveBeenCalledWith('guild-123');
+      expect(mockServer.emit).toHaveBeenCalledWith(
+        GatewayEvent.RESERVATIONS_DELETE,
+        payload,
       );
     });
   });
