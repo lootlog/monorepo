@@ -14,7 +14,7 @@ const allService = new AllService();
 all.get("/", async (c) => {
   const { limit, search, world } = parseSchema(
     c.req.query(),
-    searchAllQuerySchema
+    searchAllQuerySchema,
   );
   const res = await allService.searchAll({ limit, search, world });
 

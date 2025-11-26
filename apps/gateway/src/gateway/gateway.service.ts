@@ -2,11 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
 import type { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
 import type { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
+import type {
+  ReservationCreateEventDto,
+  ReservationDeleteEventDto,
+} from 'src/gateway/dto/reservation-event.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
-import type { Npc } from 'src/gateway/types/npc.type';
 import { canViewNpcTimer } from '@lootlog/api-helpers/permissions';
 import {
   isAdministrativeUserFromRoles,
@@ -125,6 +128,18 @@ export class GatewayService {
 
   handleGuildsTimerDelete(data: DeleteTimerDto) {
     this.gateway.server.to(data.guildId).emit(GatewayEvent.TIMERS_DELETE, data);
+  }
+
+  handleGuildsReservationCreate(data: ReservationCreateEventDto) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.RESERVATIONS_CREATE, data);
+  }
+
+  handleGuildsReservationDelete(data: ReservationDeleteEventDto) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.RESERVATIONS_DELETE, data);
   }
 
   handleGuildMessageSend(data: SendMessageDto) {

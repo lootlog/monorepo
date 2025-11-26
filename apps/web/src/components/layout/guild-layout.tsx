@@ -26,7 +26,7 @@ export const GuildLayout: FC = () => {
 
   const getNavigationInfo = () => {
     const path = location.pathname;
-    const { guildId } = params;
+    const { guildId, reservationId } = params;
 
     if (!guildId) {
       return {
@@ -37,7 +37,7 @@ export const GuildLayout: FC = () => {
 
     const guildBase = ROUTES.guild.base(guildId);
     const guildTimers = ROUTES.guild.timers(guildId);
-    const guildReservations = ROUTES.guild.reservations(guildId);
+    const guildReservations = ROUTES.guild.reservations.base(guildId);
     const guildStats = ROUTES.guild.stats(guildId);
     const guildSettings = ROUTES.guild.settings.base(guildId);
     const guildSettingsRoles = ROUTES.guild.settings.roles(guildId);
@@ -70,6 +70,17 @@ export const GuildLayout: FC = () => {
         ],
         showBack: true,
         backPath: guildBase,
+      };
+    }
+    if (path.startsWith(guildReservations)) {
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Rezerwacje", path: guildReservations },
+          { label: reservationId, path: null },
+        ],
+        showBack: true,
+        backPath: guildReservations,
       };
     }
 
