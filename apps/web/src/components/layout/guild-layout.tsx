@@ -1,12 +1,11 @@
 import { GuildSidebar } from "@/components/layout/guild-sidebar";
-import { TimersSidebar } from "@/components/layout/timers-sidebar";
 import {
   SidebarProvider,
   SidebarTrigger,
 } from "@lootlog/ui/components/sidebar";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { GuildContextProvider } from "@/contexts/guild.context";
-import { useState, type FC } from "react";
+import type { FC } from "react";
 import {
   Outlet,
   useLocation,
@@ -15,13 +14,11 @@ import {
 } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@lootlog/ui/components/button";
-import { ArrowLeft, ChevronRight, TimerIcon } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { ROUTES } from "@/config/routes";
-import { WorldSwitcher } from "@/components/common/world-switcher";
 
 export const GuildLayout: FC = () => {
-  const [timersOpen, setTimersOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
@@ -124,9 +121,6 @@ export const GuildLayout: FC = () => {
 
   const navInfo = getNavigationInfo();
 
-  const isGuildIndexPage =
-    location.pathname === ROUTES.guild.base(params.guildId || "");
-
   return (
     <GuildContextProvider>
       <div className="h-dvh max-h-dvh overflow-hidden flex flex-row">
@@ -180,30 +174,13 @@ export const GuildLayout: FC = () => {
                       </div>
                     ))}
                   </div>
-
-                  {isGuildIndexPage && (
-                    <div className="flex items-center gap-2">
-                      <WorldSwitcher />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setTimersOpen(!timersOpen)}
-                        className="size-7"
-                      >
-                        <TimerIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                  {!isGuildIndexPage && <div className="w-8" />}
+                  <div className="w-8" />
                 </div>
               </PageHeader>
               <div className="flex-1 min-h-0 flex flex-col gap-4 w-full max-w-full h-full overflow-hidden">
                 <Outlet />
               </div>
             </div>
-            {isGuildIndexPage && (
-              <TimersSidebar open={timersOpen} onOpenChange={setTimersOpen} />
-            )}
           </div>
         </SidebarProvider>
       </div>

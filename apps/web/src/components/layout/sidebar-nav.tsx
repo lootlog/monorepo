@@ -44,10 +44,13 @@ export const SidebarNav = ({
       {items.map(
         ({ divided, icon, path, label, available, enabled, badge }) => {
           const url = `${basePath}${path}`;
+          const normalizedPathname = pathname.replace(/\/$/, "");
+          const normalizedUrl = url.replace(/\/$/, "");
           const isActive =
             path === ""
-              ? pathname === basePath
-              : pathname === url || pathname.startsWith(`${url}/`);
+              ? normalizedPathname === normalizedUrl
+              : normalizedPathname === normalizedUrl ||
+                pathname.startsWith(`${normalizedUrl}/`);
 
           return (
             enabled && (
