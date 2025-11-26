@@ -91,4 +91,13 @@ export class FetchLootsParamsDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsString()
+  hid?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  itemNames?: string[];
 }

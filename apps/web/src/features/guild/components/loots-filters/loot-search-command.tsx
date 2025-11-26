@@ -14,7 +14,8 @@ import { useItemByHid } from "@/hooks/api/game-data/use-item-by-hid";
 import { isItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import type { Npc } from "@/hooks/api/game-data/use-npcs";
-import type { Item } from "@/hooks/api/game-data/use-items";
+import type { Item as SearchItem } from "@/hooks/api/game-data/use-items";
+import type { Item as LootItem } from "@/hooks/api/loots/use-loots";
 import {
   ItemSearchTile,
   NpcSearchTile,
@@ -50,8 +51,14 @@ export const LootSearchCommand = ({
     setSearchQuery("");
   };
 
-  const handleSelectItem = (item: Item) => {
-    setFilters({ search: item.name });
+  const handleSelectItem = (item: SearchItem) => {
+    setFilters({ itemNames: [item.name] });
+    onOpenChange(false);
+    setSearchQuery("");
+  };
+
+  const handleSelectItemByHid = (item: LootItem) => {
+    setFilters({ hid: item.hid });
     onOpenChange(false);
     setSearchQuery("");
   };
@@ -83,8 +90,8 @@ export const LootSearchCommand = ({
         {debouncedSearch && !isLoading && (
           <>
             {hidItem && (
-              <CommandGroup heading="Znaleziony przedmiot (HID)">
-                <CommandItem onSelect={() => handleSelectItem(hidItem)}>
+              <CommandGroup heading="Znaleziony przedmiot (ID)">
+                <CommandItem onSelect={() => handleSelectItemByHid(hidItem)}>
                   <ItemSearchTile icon={hidItem.icon} name={hidItem.name} />
                   <span>{hidItem.name}</span>
                   <span className="ml-auto text-xs text-muted-foreground">

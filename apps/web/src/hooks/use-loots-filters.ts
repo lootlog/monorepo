@@ -16,6 +16,8 @@ export const useLootsFilters = () => {
       rarities: parseAsArrayOf(parseAsString).withDefault([]),
       itemLevelMin: parseAsString.withDefault(""),
       itemLevelMax: parseAsString.withDefault(""),
+      hid: parseAsString.withDefault(""),
+      itemNames: parseAsArrayOf(parseAsString).withDefault([]),
 
       // Player filters
       players: parseAsArrayOf(parseAsString).withDefault([]),
@@ -41,6 +43,8 @@ export const useLootsFilters = () => {
       filters.rarities.length > 0 ||
       filters.itemLevelMin !== "" ||
       filters.itemLevelMax !== "" ||
+      filters.hid !== "" ||
+      filters.itemNames.length > 0 ||
       filters.players.length > 0 ||
       filters.playerLevelMin !== "" ||
       filters.playerLevelMax !== ""
@@ -57,6 +61,8 @@ export const useLootsFilters = () => {
       rarities: null,
       itemLevelMin: null,
       itemLevelMax: null,
+      hid: null,
+      itemNames: null,
       players: null,
       playerLevelMin: null,
       playerLevelMax: null,

@@ -81,6 +81,8 @@ export const useLoots = ({ limit = DEFAULT_PAGE_LIMIT }: UseLootsOptions) => {
     playerLevelMin: filters.playerLevelMin || undefined,
     playerLevelMax: filters.playerLevelMax || undefined,
     search: filters.search || undefined,
+    hid: filters.hid || undefined,
+    itemNames: filters.itemNames.length > 0 ? filters.itemNames : undefined,
     world,
   };
 
