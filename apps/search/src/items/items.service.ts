@@ -39,8 +39,13 @@ export class ItemsService {
   async indexItems(data: IndexItemsDto) {
     const index = this.meilisearch.index(ITEMS_INDEX);
 
+    const itemsWithUid = data.items.map((item) => ({
+      ...item,
+      uid: `${item.id}_${item.world}`,
+    }));
+
     try {
-      return index.addDocuments(data.items, { primaryKey: "id" });
+      return index.addDocuments(itemsWithUid, { primaryKey: "uid" });
     } catch (error) {
       console.error("Error indexing items:", error);
       return;

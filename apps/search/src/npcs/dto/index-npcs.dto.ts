@@ -8,5 +8,6 @@ export type IndexNpcsDto = {
     wt: number;
     type: string;
     margonemType: number;
+    world: string;
   }[];
 };
