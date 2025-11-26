@@ -525,3 +525,4 @@ git log infra/k8s/prod/api/kustomization.yml
 - `apps/battlelog-service/prisma/schema.prisma` - Battlelog database schema
 - Dont use memo or useMemo, because its already handled by react compiler.
 - Avoid extensive comments.
+- @lootlog/web is not SSR

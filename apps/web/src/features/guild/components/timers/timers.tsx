@@ -1,66 +1,66 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { NpcType } from "@/hooks/api/game-data/use-npcs";
 import { groupBy } from "lodash";
+import { useState } from "react";
 import { SingleTimer } from "@/features/guild/components/timers/single-timer";
 import { useTimers } from "@/hooks/api/game-data/use-timers";
-
-const SORT_ORDER = [
-  NpcType.TITAN,
-  NpcType.COLOSSUS,
-  NpcType.HERO,
-  NpcType.ELITE3,
-  NpcType.ELITE2,
-  NpcType.ELITE,
-];
-
-const NPC_NAMES: { [key: string]: string } = {
-  TITAN: "Tytan",
-  COLOSSUS: "Kolos",
-  HERO: "Heros",
-  ELITE3: "Elita III",
-  ELITE2: "Elita II",
-  ELITE: "Elita",
-};
+import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
+import { SearchInput } from "@/components/ui/search-input";
 
 export const Timers = () => {
   const { data: timers, isPending } = useTimers();
+  const [search, setSearch] = useState("");
 
-  const sortedByTime = timers?.sort((a, b) => {
+  const filtered = timers?.filter((timer) =>
+    timer.npc.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const sortedByTime = filtered?.sort((a, b) => {
     return (
       new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime()
     );
   });
   const sorted = sortedByTime?.sort((a, b) => {
-    return SORT_ORDER.indexOf(a.npc.type) - SORT_ORDER.indexOf(b.npc.type);
+    return (
+      NPC_TYPE_SORT_ORDER.indexOf(a.npc.type) -
+      NPC_TYPE_SORT_ORDER.indexOf(b.npc.type)
+    );
   });
 
   const groups = groupBy(sorted, "npc.type");
 
   return (
     <div>
-      {isPending &&
-        Array.from({ length: 8 }).map((_, index) => {
-          return (
-            <div className="flex flex-row justify-between border-b" key={index}>
-              <Skeleton className="w-24 h-5 m-2" />{" "}
-              <Skeleton className="w-12 h-5 m-2" />
-            </div>
-          );
-        })}
+      <div className="h-14 border-b bg-background flex items-center w-full px-3">
+        <SearchInput
+          placeholder="Szukaj timerów..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-input/30 h-9 flex-1"
+        />
+      </div>
+      {isPending && (
+        <div className="flex flex-col gap-3 p-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <Skeleton key={index} className="h-20 w-full rounded-xl" />
+          ))}
+        </div>
+      )}
       {!isPending && timers && timers.length === 0 && (
         <div className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground min-h-[200px]">
           <p>Brak timerów</p>
         </div>
       )}
       {!isPending && timers && timers.length > 0 && (
-        <div>
+        <div className="p-3">
           {Object.keys(groups).map((key) => {
             return (
-              <div key={key} className="border-b">
-                <p className="text-sm capitalize font-semibold px-4 py-2 border-b">
-                  {NPC_NAMES[key] ?? "Dodane ręcznie"} - {groups[key]?.length}
+              <div key={key} className="mb-6 last:mb-0">
+                <p className="text-sm capitalize font-semibold px-2 py-2 mb-3 text-muted-foreground">
+                  {NPC_TYPE_NAMES[key as keyof typeof NPC_TYPE_NAMES] ??
+                    "Dodane ręcznie"}{" "}
+                  ({groups[key]?.length})
                 </p>
-                <div>
+                <div className="flex flex-col gap-3">
                   {groups[key]?.map((timer) => {
                     return <SingleTimer key={timer.npc.id} timer={timer} />;
                   })}

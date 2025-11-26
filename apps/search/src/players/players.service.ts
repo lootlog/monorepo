@@ -10,10 +10,10 @@ export class PlayersService {
   constructor() {
     this.meilisearch = meilisearchClient;
     const index = this.meilisearch.index(PLAYERS_INDEX);
-    index.updateFilterableAttributes(["name"]);
+    index.updateFilterableAttributes(["name", "world"]);
   }
 
-  async getPlayers({ limit, search }: GetPlayersDto) {
+  async getPlayers({ limit, search, world }: GetPlayersDto) {
     const index = this.meilisearch.index(PLAYERS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : search;
@@ -21,10 +21,11 @@ export class PlayersService {
     const query: SearchParams = {
       limit,
       attributesToSearchOn: ["name"],
+      filter: `world = "${world}"`,
     };
 
     if (hasMultipleSearchTerms) {
-      query.filter = `name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
+      query.filter = `world = "${world}" AND name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
     }
 
     try {
@@ -40,8 +41,13 @@ export class PlayersService {
   async indexPlayers(data: IndexPlayersDto) {
     const index = this.meilisearch.index(PLAYERS_INDEX);
 
+    const playersWithUid = data.players.map((player) => ({
+      ...player,
+      uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
+    }));
+
     try {
-      return index.addDocuments(data.players, { primaryKey: "id" });
+      return index.addDocuments(playersWithUid, { primaryKey: "uid" });
     } catch (error) {
       console.error("Error indexing players:", error);
       return;

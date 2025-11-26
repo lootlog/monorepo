@@ -14,6 +14,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { LootDetailsActions } from "@/features/guild/components/loots-list/loot-details-actions";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import { Calendar, MapPin } from "lucide-react";
 
 export type LootDetailsSheetProps = {
   loot: Loot;
@@ -33,33 +34,40 @@ export const LootDetailsSheetContent: FC<LootDetailsSheetProps> = ({
 
   return (
     <SheetContent
-      className={cn("flex flex-col gap-0 lg:w-[25rem] lg:!max-w-[25rem]", {
-        "w-full": isMobile,
-      })}
+      className={cn(
+        "flex flex-col gap-0 lg:w-[25rem] lg:!max-w-[25rem] bg-background/95 backdrop-blur-xl border-border/50",
+        {
+          "w-full": isMobile,
+        },
+      )}
       onOpenAutoFocus={(e) => e.preventDefault()}
       aria-describedby={undefined}
     >
-      <SheetHeader className="border-b">
+      <SheetHeader className="border-b border-border/50">
         <SheetTitle className="pb-4 flex flex-col items-start">
           <LootNpcs
             npcs={loot.npcs}
             className="p-4 pb-0 mb-2 text-left pr-12"
           />
-          <span className="text-xs font-normal text-muted-foreground px-4">
-            {loot.location}
-          </span>
-          <span className="text-xs font-normal text-muted-foreground px-4">
-            Zdobyto {date}
-          </span>
+          <div className="flex flex-col gap-1 px-4">
+            <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {loot.location}
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              Zdobyto {date}
+            </span>
+          </div>
         </SheetTitle>
       </SheetHeader>
       {canManageLoots && (
-        <div className="border-b p-4">
+        <div className="border-b border-border/50 p-4 bg-secondary/20">
           <LootDetailsActions loot={loot} />
         </div>
       )}
       <ScrollArea className="flex-1 h-24">
-        <div className="flex flex-row gap-1 flex-wrap p-4 border-b">
+        <div className="flex flex-row gap-1 flex-wrap p-4 border-b border-border/50 bg-card/30">
           {loot.players.map((player, idx) => {
             const color = playerColorMap[player.id];
             return (

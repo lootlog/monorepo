@@ -1,5 +1,5 @@
 import { MultiSelect } from "@/components/ui/multi-select";
-import { useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 
 type FilterComboboxProps = {
   placeholder: string;
@@ -28,9 +28,16 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
   searchValue,
   onSearchChange,
 }) => {
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(
+    defaultValue ?? [],
+  );
 
-  const handleSelect = (name: string, options: string[]) => {
+  useEffect(() => {
+    setSelectedOptions(defaultValue ?? []);
+  }, [defaultValue]);
+
+  const handleSelect = (options: string[]) => {
+    setSelectedOptions(options);
     onSelect?.(name, options);
   };
 
@@ -39,14 +46,14 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
       {label && <span className="text-xs font-semibold px-3">{label}</span>}
       <MultiSelect
         options={options}
-        onValueChange={setSelectedOptions}
-        onClose={(options) => handleSelect(name, options)}
+        onValueChange={handleSelect}
+        onClose={() => {}}
         defaultValue={defaultValue}
         value={selectedOptions}
         placeholder={placeholder}
         variant="inverted"
         animation={2}
-        maxCount={1}
+        maxCount={2}
         controlledSearch={controlledSearch}
         commandSearch={commandSearch}
         onSearchChange={onSearchChange}

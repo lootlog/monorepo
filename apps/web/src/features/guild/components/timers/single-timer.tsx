@@ -52,72 +52,74 @@ export const SingleTimer: FC<SingleTimerProps> = ({ timer }) => {
   const imageHasDomain = timer.npc.icon?.startsWith("https://"); // @TODO: temporary fix for icons with full URL
 
   return (
-    <div className="flex flex-row justify-between px-2 py-2 gap-3 min-h-12 items-center hover:bg-secondary/50 cursor-pointer">
-      <span
-        className={cn(
-          "font-semibold text-xs transition-all flex flex-row gap-2 items-center",
-          {
-            "text-orange-400": isMinSpawnTime,
-            "text-red-500": hasPassedRedThreshold,
-          },
-        )}
-      >
-        {timer.npc.icon && (
-          <div className="w-8">
-            {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-            <img
-              className="relative cursor-pointer rounded-lg max-h-10 max-w-8"
-              src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${timer.npc.icon}`}
-              alt={timer.npc.name}
-            />
+    <div className="group relative rounded-xl border border-border/50 bg-card/40 backdrop-blur-md p-4 hover:bg-card/60 hover:border-primary/50 transition-all duration-300 cursor-pointer">
+      <div className="flex flex-row justify-between gap-3 items-center">
+        <div
+          className={cn(
+            "font-semibold text-xs transition-all flex flex-row gap-3 items-center",
+            {
+              "text-orange-400": isMinSpawnTime,
+              "text-red-500": hasPassedRedThreshold,
+            },
+          )}
+        >
+          {timer.npc.icon && (
+            <div className="w-10 h-10 flex items-center justify-center">
+              {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
+              <img
+                className="relative cursor-pointer rounded-lg max-h-10 max-w-10"
+                src={`${imageHasDomain ? "" : MARGONEM_CDN_NPCS_URL}${timer.npc.icon}`}
+                alt={timer.npc.name}
+              />
+            </div>
+          )}
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">{timer.npc.name}</span>
+            <span className="text-muted-foreground text-xs">
+              Dodane przez: {timer.member.name}
+            </span>
           </div>
-        )}
-        <div className="flex flex-col">
-          <span className="text-sm">{timer.npc.name}</span>
-          <span className="text-muted-foreground text-xs max-w-42 truncate">
-            Dodane przez: {timer.member.name}
-          </span>
         </div>
-      </span>
-      <div className="flex flex-col items-end">
-        {!isMinSpawnTime && (
+        <div className="flex flex-col items-end gap-1">
+          {!isMinSpawnTime && (
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="text-xs flex flex-row items-center gap-1">
+                  <ClockArrowDown size="14px" />
+                  {parseMsToTime(minTimeLeft)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="flex flex-col">
+                <span className="text-sm">Min. czas spawnu:</span>
+                <span className="text-sm font-semibold">
+                  {format(new Date(minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger>
-              <span className="text-xs flex flex-row items-center gap-1">
-                <ClockArrowDown size="14px" />
-                {parseMsToTime(minTimeLeft)}
+              <span
+                className={cn(
+                  "transition-all text-xs flex flex-row items-center gap-1",
+                  {
+                    "text-orange-400": isMinSpawnTime,
+                    "text-red-500": hasPassedRedThreshold,
+                  },
+                )}
+              >
+                <ClockArrowUp size="14px" />
+                {parseMsToTime(timeLeft)}
               </span>
             </TooltipTrigger>
             <TooltipContent className="flex flex-col">
-              <span className="text-sm">Min. czas spawnu:</span>
+              <span className="text-sm">Max. czas spawnu:</span>
               <span className="text-sm font-semibold">
-                {format(new Date(minSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
+                {format(new Date(maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
               </span>
             </TooltipContent>
           </Tooltip>
-        )}
-        <Tooltip>
-          <TooltipTrigger>
-            <span
-              className={cn(
-                "transition-all text-xs flex flex-row items-center gap-1",
-                {
-                  "text-orange-400": isMinSpawnTime,
-                  "text-red-500": hasPassedRedThreshold,
-                },
-              )}
-            >
-              <ClockArrowUp size="14px" />
-              {parseMsToTime(timeLeft)}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="flex flex-col">
-            <span className="text-sm">Max. czas spawnu:</span>
-            <span className="text-sm font-semibold">
-              {format(new Date(maxSpawnTime), "dd.MM.yyyy - HH:mm:ss")}
-            </span>
-          </TooltipContent>
-        </Tooltip>
+        </div>
       </div>
     </div>
   );

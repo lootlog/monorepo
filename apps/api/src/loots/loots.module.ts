@@ -4,6 +4,7 @@ import { LootsService } from './loots.service';
 import { MembersModule } from 'src/members/members.module';
 import { PlayersModule } from 'src/players/players.module';
 import { NpcsModule } from 'src/npcs/npcs.module';
+import { ItemsModule } from 'src/items/items.module';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { LootlogConfigModule } from 'src/lootlog-config/lootlog-config.module';
 import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-config.module';
@@ -19,6 +20,7 @@ import { LootCommentService } from './services/loot-comment.service';
     MembersModule,
     PlayersModule,
     NpcsModule,
+    ItemsModule,
     GuildsModule,
     LootlogConfigModule,
     UserLootlogConfigModule,
