@@ -3,5 +3,5 @@ resources:
   - ../../base/search
 images:
   - name: kamilwronka7/lootlog-search
-    newTag: prod-3c3f0e09490dabf34b06fce71b92774998da98f9
+    newTag: prod-996f58fb49ef827b1c78ffa8600c009f259f8c5b
 namePrefix: prod-
