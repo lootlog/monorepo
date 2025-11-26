@@ -112,9 +112,7 @@ export const Guild: React.FC = () => {
     playerLevelMax: tempFilters.playerLevelMax,
   };
 
-  const handleFilterChange = (
-    newFilters: Partial<typeof sidebarFilters>,
-  ) => {
+  const handleFilterChange = (newFilters: Partial<typeof sidebarFilters>) => {
     setTempFilters((prev) => ({
       ...prev,
       ...newFilters,
@@ -128,9 +126,7 @@ export const Guild: React.FC = () => {
     setIsMobileFiltersOpen(false);
   };
 
-  const filtersOpenForHeader = isMobile
-    ? isMobileFiltersOpen
-    : isFiltersOpen;
+  const filtersOpenForHeader = isMobile ? isMobileFiltersOpen : isFiltersOpen;
 
   return (
     <>
@@ -162,43 +158,43 @@ export const Guild: React.FC = () => {
         </Drawer>
       )}
 
-      <div className="w-full flex h-full overflow-hidden">
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <LootFiltersHeader
-            onToggleFilters={handleOpenSidebar}
-            isFiltersOpen={filtersOpenForHeader}
-            hasActiveFilters={hasActiveFilters}
-          />
+      <div className="w-full flex flex-col h-full overflow-hidden">
+        <LootFiltersHeader
+          onToggleFilters={handleOpenSidebar}
+          isFiltersOpen={filtersOpenForHeader}
+          hasActiveFilters={hasActiveFilters}
+        />
 
-          <div className="flex-1 flex flex-col overflow-hidden bg-background/20">
+        <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background/20">
             <LootsList />
           </div>
-        </div>
 
-        {!isMobile && (
-          <AnimatePresence>
-            {isFiltersOpen && (
-              <motion.div
-                initial={
-                  skipFirstAnimationRef.current
-                    ? { width: 320, opacity: 1 }
-                    : { width: 0, opacity: 0 }
-                }
-                animate={{ width: 320, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden h-full border-l border-border/40" // Opcjonalnie: dodałem border-l dla estetyki
-              >
-                <LootsFiltersSidebar
-                  filters={sidebarFilters}
-                  onFilterChange={handleFilterChange}
-                  onSave={handleSaveFilters}
-                  onClear={handleClearFilters}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
+          {!isMobile && (
+            <AnimatePresence>
+              {isFiltersOpen && (
+                <motion.div
+                  initial={
+                    skipFirstAnimationRef.current
+                      ? { width: 320, opacity: 1 }
+                      : { width: 0, opacity: 0 }
+                  }
+                  animate={{ width: 320, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden h-full border-l border-border"
+                >
+                  <LootsFiltersSidebar
+                    filters={sidebarFilters}
+                    onFilterChange={handleFilterChange}
+                    onSave={handleSaveFilters}
+                    onClear={handleClearFilters}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+        </div>
       </div>
     </>
   );

@@ -8,7 +8,7 @@ import {
 import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
 import type { FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { ItemImage } from "@/features/guild/components/loots-list/item-image";
+import { ItemImage } from "@/components/tiles/item-image";
 import { cn } from "@/utils/cn";
 import { mapStatsToDisplayValues } from "@/utils/item-tips/map-stats-to-display-values";
 

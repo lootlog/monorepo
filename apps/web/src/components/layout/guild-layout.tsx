@@ -5,7 +5,7 @@ import {
 } from "@lootlog/ui/components/sidebar";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { GuildContextProvider } from "@/contexts/guild.context";
-import { type FC } from "react";
+import type { FC } from "react";
 import {
   Outlet,
   useLocation,

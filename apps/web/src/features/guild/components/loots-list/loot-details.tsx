@@ -46,11 +46,13 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
         return (
           <div
             key={item.hid}
-            className="flex gap-4 items-start w-full border-b p-4"
+            className="flex gap-4 items-start w-full border-b border-border/50 p-4 bg-card/20 hover:bg-card/40 transition-colors"
           >
             <ItemTile item={item} />
             <div className="flex flex-col flex-1">
-              <span className="text-sm font-medium">{item.name}</span>
+              <span className="text-sm font-medium text-foreground">
+                {item.name}
+              </span>
               {owner && (
                 <span className="text-xs text-muted-foreground">
                   Zdobyto przez: {owner}
@@ -58,7 +60,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
               )}
               <div className="w-full flex mt-2 gap-1">
                 <Input
-                  className="h-6 px-2 !text-xs"
+                  className="h-6 px-2 !text-xs bg-secondary/50 border-border/50"
                   value={item.hid}
                   readOnly
                 />
@@ -88,11 +90,13 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
               return (
                 <div
                   key={item.hid}
-                  className="flex gap-4 items-start w-full border-b p-4"
+                  className="flex gap-4 items-start w-full border-b border-border/50 p-4 bg-card/20 hover:bg-card/40 transition-colors"
                 >
                   <ItemTile item={item} />
                   <div className="flex flex-col flex-1">
-                    <span className="text-sm font-medium">{item.name}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {item.name}
+                    </span>
                     {owner && (
                       <span className="text-xs text-muted-foreground">
                         Zdobyto przez: {owner}
@@ -100,7 +104,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
                     )}
                     <div className="w-full flex mt-2 gap-1">
                       <Input
-                        className="h-6 px-2 !text-xs"
+                        className="h-6 px-2 !text-xs bg-secondary/50 border-border/50"
                         value={item.hid}
                         readOnly
                       />
@@ -119,7 +123,10 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
             })}
           </CollapsibleContent>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full mt-2">
+            <Button
+              variant="ghost"
+              className="w-full mt-2 text-muted-foreground hover:text-foreground"
+            >
               {open ? "Pokaż mniej" : `Pokaż więcej (${hiddenItems.length})`}
             </Button>
           </CollapsibleTrigger>
