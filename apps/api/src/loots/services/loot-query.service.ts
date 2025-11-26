@@ -52,6 +52,8 @@ export class LootQueryService {
       playerLevelMax,
       search,
       world,
+      hid,
+      itemNames,
     }: FetchLootsParamsDto,
   ) {
     const filteredRoles = roles.filter((role) =>
@@ -81,6 +83,8 @@ export class LootQueryService {
     );
     const searchCondition = this.buildSearchCondition(search);
     const cursorCondition = this.buildCursorCondition(cursor);
+    const hidCondition = this.buildHidCondition(hid);
+    const itemNamesCondition = this.buildItemNamesCondition(itemNames);
 
     const baseWhere: Prisma.LootWhereInput = {
       lootSubmissions: {
@@ -105,6 +109,8 @@ export class LootQueryService {
       playerLevelsCondition,
       levelRangesCondition,
       searchCondition,
+      hidCondition,
+      itemNamesCondition,
     ].filter(Boolean) as Prisma.LootWhereInput[];
 
     if (andConditions.length > 0) {
@@ -304,6 +310,40 @@ export class LootQueryService {
           npcSnapshot: {
             name: {
               in: npcs,
+            },
+          },
+        },
+      },
+    };
+  }
+
+  private buildHidCondition(hid?: string): Prisma.LootWhereInput | null {
+    if (!hid) {
+      return null;
+    }
+
+    return {
+      lootItems: {
+        some: {
+          hid: hid,
+        },
+      },
+    };
+  }
+
+  private buildItemNamesCondition(
+    itemNames?: string[],
+  ): Prisma.LootWhereInput | null {
+    if (!itemNames || itemNames.length === 0) {
+      return null;
+    }
+
+    return {
+      lootItems: {
+        some: {
+          itemSnapshot: {
+            name: {
+              in: itemNames,
             },
           },
         },

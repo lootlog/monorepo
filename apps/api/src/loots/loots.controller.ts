@@ -157,6 +157,9 @@ export class LootsController {
     @Query('playerLevelMax', new ParseIntPipe({ optional: true }))
     playerLevelMax?: number,
     @Query('search') search?: string,
+    @Query('hid') hid?: string,
+    @Query('itemNames', new ArrayValidationPipe())
+    itemNames?: string[],
   ) {
     const loots = await this.lootsService.fetchLootsByGuildId(
       guild,
@@ -177,6 +180,8 @@ export class LootsController {
         playerLevelMin,
         playerLevelMax,
         search,
+        hid,
+        itemNames,
       },
     );
     return plainToInstance(LootEntity, loots);

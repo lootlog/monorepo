@@ -10,6 +10,7 @@ import {
   CollapsibleTrigger,
 } from "@lootlog/ui/components/collapsible";
 import { toast } from "sonner";
+import { formatItemHid } from "@/lib/utils/hid-detection";
 
 export type LootDetailsProps = {
   loot: Loot;
@@ -61,14 +62,16 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
               <div className="w-full flex mt-2 gap-1">
                 <Input
                   className="h-6 px-2 !text-xs bg-secondary/50 border-border/50"
-                  value={item.hid}
+                  value={formatItemHid(item.hid, loot.world)}
                   readOnly
                 />
                 <Button
                   size="icon"
                   className="h-6"
                   variant="ghost"
-                  onClick={() => handleCopyId(item.hid)}
+                  onClick={() =>
+                    handleCopyId(formatItemHid(item.hid, loot.world))
+                  }
                 >
                   <Copy />
                 </Button>
@@ -105,14 +108,16 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
                     <div className="w-full flex mt-2 gap-1">
                       <Input
                         className="h-6 px-2 !text-xs bg-secondary/50 border-border/50"
-                        value={item.hid}
+                        value={formatItemHid(item.hid, loot.world)}
                         readOnly
                       />
                       <Button
                         size="icon"
                         className="h-6"
                         variant="ghost"
-                        onClick={() => handleCopyId(item.hid)}
+                        onClick={() =>
+                          handleCopyId(formatItemHid(item.hid, loot.world))
+                        }
                       >
                         <Copy />
                       </Button>

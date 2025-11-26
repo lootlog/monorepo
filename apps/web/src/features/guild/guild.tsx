@@ -59,6 +59,9 @@ export const Guild: React.FC = () => {
         filtersToSave.rarities.length > 0 ? filtersToSave.rarities : null,
       itemLevelMin: filtersToSave.itemLevelMin || null,
       itemLevelMax: filtersToSave.itemLevelMax || null,
+      hid: filtersToSave.hid || null,
+      itemNames:
+        filtersToSave.itemNames.length > 0 ? filtersToSave.itemNames : null,
       players: filtersToSave.players.length > 0 ? filtersToSave.players : null,
       playerLevelMin: filtersToSave.playerLevelMin || null,
       playerLevelMax: filtersToSave.playerLevelMax || null,
@@ -77,6 +80,8 @@ export const Guild: React.FC = () => {
       rarities: [],
       itemLevelMin: "",
       itemLevelMax: "",
+      hid: "",
+      itemNames: [],
       players: [],
       playerLevelMin: "",
       playerLevelMax: "",
@@ -89,6 +94,10 @@ export const Guild: React.FC = () => {
       skipFirstAnimationRef.current = false;
     }
   }, []);
+
+  useEffect(() => {
+    setTempFilters(filters);
+  }, [filters]);
 
   useEffect(() => {
     if (isMobile) {
@@ -110,6 +119,8 @@ export const Guild: React.FC = () => {
     itemLevelMax: tempFilters.itemLevelMax,
     playerLevelMin: tempFilters.playerLevelMin,
     playerLevelMax: tempFilters.playerLevelMax,
+    hid: tempFilters.hid,
+    itemNames: tempFilters.itemNames,
   };
 
   const handleFilterChange = (newFilters: Partial<typeof sidebarFilters>) => {

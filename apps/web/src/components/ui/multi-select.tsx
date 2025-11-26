@@ -336,9 +336,21 @@ export const MultiSelect = React.forwardRef<
                 defaultValue={searchValue}
               />
             )}
-            <ScrollArea className="max-h-64 h-64">
+            <ScrollArea
+              className={cn("transition-[height] duration-200", {
+                "h-10": options.length === 0 && !loading,
+                "h-64": options.length > 6 || loading,
+              })}
+              style={
+                options.length > 0 && options.length <= 6 && !loading
+                  ? { height: `${options.length * 2.5}rem` }
+                  : undefined
+              }
+            >
               <CommandList className="max-h-none overflow-visible">
-                <CommandEmpty>Brak wyników.</CommandEmpty>
+                <CommandEmpty className="py-2 px-3 text-sm">
+                  Brak wyników.
+                </CommandEmpty>
                 <CommandGroup>
                   {loading && (
                     <div className="py-6 px-6 text-center text-sm flex items-center justify-center">

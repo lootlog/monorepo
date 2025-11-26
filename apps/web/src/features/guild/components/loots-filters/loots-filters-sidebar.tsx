@@ -17,9 +17,14 @@ import type { FC } from "react";
 import { FilterCombobox } from "./filter-combobox";
 import { NpcType, useNpcs } from "@/hooks/api/game-data/use-npcs";
 import { useGuildPlayers } from "@/hooks/api/game-data/use-guild-players";
+import { useItems } from "@/hooks/api/game-data/use-items";
+import { useItemByHid } from "@/hooks/api/game-data/use-item-by-hid";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { useDebounceValue } from "usehooks-ts";
 import { cn } from "@lootlog/ui/lib/utils";
+import { ItemSearchTile } from "@/components/tiles";
+import { useGuildContext } from "@/hooks/context/use-guild-context";
+import { formatItemHid } from "@/lib/utils/hid-detection";
 
 const DEFAULT_DEBOUNCE_MS = 500;
 
@@ -79,6 +84,8 @@ type LootsFiltersSidebarProps = {
     itemLevelMax?: string;
     playerLevelMin?: string;
     playerLevelMax?: string;
+    hid?: string;
+    itemNames?: string[];
   };
   onFilterChange: (filters: LootsFiltersSidebarProps["filters"]) => void;
   onSave: (filters?: LootsFiltersSidebarProps["filters"]) => void;
@@ -93,9 +100,12 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   onClear,
   className,
 }) => {
+  const { world } = useGuildContext();
   const [debouncedPlayersSearchValue, setDebouncedPlayersSearchValue] =
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
   const [debouncedNpcsSearchValue, setDebouncedNpcsSearchValue] =
+    useDebounceValue("", DEFAULT_DEBOUNCE_MS);
+  const [debouncedItemsSearchValue, setDebouncedItemsSearchValue] =
     useDebounceValue("", DEFAULT_DEBOUNCE_MS);
 
   const { data: playersData, isLoading: playersDataLoading } = useGuildPlayers({
@@ -108,6 +118,17 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     selectedNpcs: filters.npcs?.join(","),
   });
 
+  const { data: itemsData, isLoading: itemsDataLoading } = useItems({
+    search: debouncedItemsSearchValue,
+    world: world || "",
+    limit: 10,
+  });
+
+  const { data: hidItem } = useItemByHid(
+    filters.hid && world ? formatItemHid(filters.hid, world) : "",
+    !!filters.hid && !!world,
+  );
+
   const playersOptions =
     playersData?.map((player) => ({
       value: player.name,
@@ -118,6 +139,12 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
     npcsData?.map((npc) => ({
       value: npc.name,
       label: npc.name,
+    })) ?? [];
+
+  const itemsOptions =
+    itemsData?.map((item) => ({
+      value: item.name,
+      label: item.name,
     })) ?? [];
 
   const hasActiveFilters = Object.values(filters).some((value) => {
@@ -307,6 +334,57 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                       ))}
                     </div>
                   </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-2 block">
+                      Przedmioty
+                    </Label>
+                    <FilterCombobox
+                      name="itemNames"
+                      placeholder="Wybierz przedmioty"
+                      options={itemsOptions}
+                      defaultValue={filters.itemNames}
+                      onSelect={(_, values) =>
+                        onFilterChange({ ...filters, itemNames: values })
+                      }
+                      controlledSearch
+                      onSearchChange={setDebouncedItemsSearchValue}
+                      searchValue={debouncedItemsSearchValue}
+                      loading={itemsDataLoading}
+                    />
+                  </div>
+
+                  {hidItem && filters.hid && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">
+                        Filtrowany przedmiot (ID)
+                      </Label>
+                      <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                        <ItemSearchTile
+                          icon={hidItem.icon}
+                          name={hidItem.name}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {hidItem.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Lvl {hidItem.lvl}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() =>
+                            onFilterChange({ ...filters, hid: undefined })
+                          }
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
