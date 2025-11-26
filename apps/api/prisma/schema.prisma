@@ -8,6 +8,24 @@ datasource db {
   url      = env("POSTGRESQL_CONNECTION_URI")
 }
 
+model Guild {
+  id              String           @id
+  name            String
+  icon            String?
+  ownerId         String
+  vanityUrl       String?          @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  roles           Role[]
+  members         Member[]
+  timers          Timer[]
+  lootSubmissions LootSubmission[]
+  active          Boolean          @default(true)
+  reservations    Reservation[]
+
+  @@index([vanityUrl])
+}
+
 enum Permission {
   OWNER
   ADMIN
@@ -105,23 +123,6 @@ enum RefreshJobStatus {
   PROCESSING
   COMPLETED
   FAILED
-}
-
-model Guild {
-  id              String           @id
-  name            String
-  icon            String?
-  ownerId         String
-  vanityUrl       String?          @unique
-  active          Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  roles           Role[]
-  members         Member[]
-  timers          Timer[]
-  lootSubmissions LootSubmission[]
-
-  @@index([vanityUrl])
 }
 
 model Role {
@@ -355,6 +356,24 @@ model LootlogConfig {
   npcs      LootlogConfigNpc[]
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
+}
+
+model Reservation {
+  id            Int      @id @default(autoincrement())
+  guildId       String
+  reservationId String
+  createdDate   DateTime
+  fromDate      DateTime
+  toDate        DateTime
+  createdBy     String
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  guild Guild @relation(fields: [guildId], references: [id])
+
+  @@index([guildId, reservationId])
+  @@index([guildId, toDate])
 }
 
 model UserCharactersLootlogSettings {

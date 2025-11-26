@@ -29,20 +29,26 @@ export type Npc = {
 export type UseGuildNpcsOptions = {
   search?: string;
   selectedNpcs?: string;
+  world?: string;
 };
 
-export const useNpcs = ({ search, selectedNpcs }: UseGuildNpcsOptions) => {
+export const useNpcs = ({
+  search,
+  selectedNpcs,
+  world,
+}: UseGuildNpcsOptions) => {
   const { client } = useApiClient();
 
   const queryParams = {
     search: search || selectedNpcs || "",
+    ...(world ? { world } : {}),
   };
 
   const query = useQuery({
     queryKey: ["guild-npcs", search],
     queryFn: () =>
       client.get<Npc[]>(
-        `${SEARCH_API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`
+        `${SEARCH_API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`,
       ),
     select: (response) => response.data,
   });
