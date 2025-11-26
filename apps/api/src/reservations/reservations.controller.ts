@@ -24,7 +24,6 @@ import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
-import type { Request } from 'express';
 
 @ApiTags('reservations')
 @ApiBearerAuth()

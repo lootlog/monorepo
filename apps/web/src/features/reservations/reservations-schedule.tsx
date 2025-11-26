@@ -636,7 +636,7 @@ export const ReservationsSchedule: React.FC = () => {
 
         <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden">
           <div
-            className="grid"
+            className="grid border-b border-border"
             style={{
               gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px repeat(${days.length}, minmax(0, 1fr))`,
             }}
@@ -756,7 +756,7 @@ export const ReservationsSchedule: React.FC = () => {
                           <AvatarImage src={avatarUrl} alt={memberName} />
                           <AvatarFallback>{fallbackInitial}</AvatarFallback>
                         </Avatar>
-                        <span className="text-[10px] font-semibold leading-tight">
+                        <span className="text-[10px] font-semibold leading-tight text-nowrap">
                           {memberName}
                         </span>
                       </div>
