@@ -13,7 +13,7 @@ export class PlayersService {
     index.updateFilterableAttributes(["name", "world"]);
   }
 
-  async getPlayers({ limit, search, world }: GetPlayersDto) {
+  async getPlayers({ limit, search }: GetPlayersDto) {
     const index = this.meilisearch.index(PLAYERS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : search;
@@ -21,11 +21,10 @@ export class PlayersService {
     const query: SearchParams = {
       limit,
       attributesToSearchOn: ["name"],
-      filter: `world = "${world}"`,
     };
 
     if (hasMultipleSearchTerms) {
-      query.filter = `world = "${world}" AND name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
+      query.filter = `name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
     }
 
     try {
