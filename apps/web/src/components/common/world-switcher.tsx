@@ -4,8 +4,13 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useEffect, useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
+import { cn } from "@lootlog/ui/lib/utils";
 
-export const WorldSwitcher: React.FC = () => {
+type WorldSwitcherProps = {
+  className?: string;
+};
+
+export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({ className }) => {
   const { data: worlds } = useWorlds();
   const { setWorld, world } = useGuildContext();
   const guildId = useGuildId();
@@ -46,7 +51,7 @@ export const WorldSwitcher: React.FC = () => {
       placeholder="Wybierz świat"
       emptyMessage="Brak światów"
       searchPlaceholder="Szukaj świata..."
-      width="w-[140px] md:w-[180px]"
+      width={cn("w-[140px] md:w-[180px]", className)}
       triggerClassName="h-9 shrink-0"
       contentClassName="max-h-64"
       showSearch

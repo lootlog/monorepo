@@ -20,14 +20,16 @@ export const ItemImage: FC<ItemImageProps> = ({
     <div className="relative">
       <div
         className={cn(
-          "w-[32px] h-[32px] relative cursor-pointer border-2 box-content",
+          "w-[32px] h-[32px] relative cursor-pointer border-2 box-content rounded-md transition-all duration-200",
           {
-            "shadow-[inset_0_0_6px_0.5px_rgba(255,138,0,1)] border-amber-700 bg-amber-700/30":
+            "border-yellow-500/80 bg-card/80 shadow-[0_0_15px_rgba(234,179,8,0.3),inset_0_0_8px_rgba(234,179,8,0.4)]":
               rarity === ItemRarity.LEGENDARY,
-            "shadow-[inset_0_0_8px_0.5px_rgba(59,130,246,1)] border-blue-500 bg-blue-500/30":
+            "border-blue-500/80 bg-card/80 shadow-[0_0_10px_rgba(59,130,246,0.25),inset_0_0_6px_rgba(59,130,246,0.3)]":
               rarity === ItemRarity.HEROIC,
-            "shadow-[inset_0_0_6px_0.5px_rgb(252,211,77,1)] border-amber-300 bg-amber-300/30":
+            "border-amber-300/80 bg-card/80 shadow-[0_0_10px_rgba(252,211,77,0.25),inset_0_0_6px_rgba(252,211,77,0.3)]":
               rarity === ItemRarity.UNIQUE,
+            "border-primary/40 bg-muted/50": rarity === ItemRarity.UPGRADED,
+            "border-border/50 bg-muted/30": rarity === ItemRarity.COMMON,
           },
         )}
         style={{
@@ -37,10 +39,10 @@ export const ItemImage: FC<ItemImageProps> = ({
       {(shareIndex || shareIndex === 0) && (
         <div
           className={cn(
-            "top-7 -right-1 absolute size-4 rounded-sm box-content bg-background text-xs flex items-center justify-center",
+            "top-7 -right-1 absolute size-4 rounded-sm box-content text-xs flex items-center justify-center font-medium shadow-sm",
           )}
           style={{
-            backgroundColor: color ? `${color}` : "transparent",
+            backgroundColor: color ? `${color}` : "var(--background)",
           }}
         >
           {shareIndex + 1}

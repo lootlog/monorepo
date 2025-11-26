@@ -345,9 +345,6 @@ export const MultiSelect = React.forwardRef<
                       <Loader2 className="animate-spin" />
                     </div>
                   )}
-                  {options.length === 0 && (
-                    <div className="py-6 text-center text-sm">Brak wyników</div>
-                  )}
                   {options.map((option) => {
                     const isSelected = selectedValues.includes(option.value);
                     return (

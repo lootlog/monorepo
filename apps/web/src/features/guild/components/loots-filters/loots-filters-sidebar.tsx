@@ -4,6 +4,7 @@ import { Separator } from "@lootlog/ui/components/separator";
 import { Label } from "@lootlog/ui/components/label";
 import { Input } from "@lootlog/ui/components/input";
 import { Badge } from "@lootlog/ui/components/badge";
+import { Checkbox } from "@lootlog/ui/components/checkbox";
 import {
   Accordion,
   AccordionItem,
@@ -26,7 +27,6 @@ const raritiesData = [
   { value: ItemRarity.LEGENDARY, label: "Legendarny" },
   { value: ItemRarity.HEROIC, label: "Heroiczny" },
   { value: ItemRarity.UNIQUE, label: "Unikatowy" },
-  { value: ItemRarity.UPGRADED, label: "Ulepszony" },
 ];
 
 const npcTypesData = [
@@ -37,7 +37,6 @@ const npcTypesData = [
   { value: NpcType.ELITE3, label: "Elita III" },
   { value: NpcType.ELITE2, label: "Elita II" },
   { value: NpcType.ELITE, label: "Elita" },
-  { value: NpcType.COMMON, label: "Zwykły" },
   { value: NpcType.NPC, label: "NPC" },
 ];
 
@@ -129,7 +128,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   return (
     <div
       className={cn(
-        "w-[320px] border-l bg-background flex flex-col h-full shrink-0",
+        "w-[320px] bg-background flex flex-col h-full shrink-0",
         className,
       )}
     >
@@ -172,15 +171,37 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     <Label className="text-xs text-muted-foreground mb-2 block">
                       Typy potworów
                     </Label>
-                    <FilterCombobox
-                      name="npcTypes"
-                      placeholder="Wybierz typy"
-                      options={npcTypesData}
-                      defaultValue={filters.npcTypes}
-                      onSelect={(_, values) =>
-                        onFilterChange({ ...filters, npcTypes: values })
-                      }
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      {npcTypesData.map((npcType) => (
+                        <div
+                          key={npcType.value}
+                          className="flex items-center gap-2"
+                        >
+                          <Checkbox
+                            id={`npcType-${npcType.value}`}
+                            checked={filters.npcTypes?.includes(npcType.value)}
+                            onCheckedChange={(checked) => {
+                              const currentTypes = filters.npcTypes ?? [];
+                              const newTypes = checked
+                                ? [...currentTypes, npcType.value]
+                                : currentTypes.filter(
+                                    (t) => t !== npcType.value,
+                                  );
+                              onFilterChange({
+                                ...filters,
+                                npcTypes: newTypes,
+                              });
+                            }}
+                          />
+                          <Label
+                            htmlFor={`npcType-${npcType.value}`}
+                            className="text-sm cursor-pointer"
+                          >
+                            {npcType.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div>
@@ -254,15 +275,37 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     <Label className="text-xs text-muted-foreground mb-2 block">
                       Rzadkość
                     </Label>
-                    <FilterCombobox
-                      name="rarities"
-                      placeholder="Wybierz rzadkość"
-                      options={raritiesData}
-                      defaultValue={filters.rarities}
-                      onSelect={(_, values) =>
-                        onFilterChange({ ...filters, rarities: values })
-                      }
-                    />
+                    <div className="flex flex-col gap-2">
+                      {raritiesData.map((rarity) => (
+                        <div
+                          key={rarity.value}
+                          className="flex items-center gap-2"
+                        >
+                          <Checkbox
+                            id={`rarity-${rarity.value}`}
+                            checked={filters.rarities?.includes(rarity.value)}
+                            onCheckedChange={(checked) => {
+                              const currentRarities = filters.rarities ?? [];
+                              const newRarities = checked
+                                ? [...currentRarities, rarity.value]
+                                : currentRarities.filter(
+                                    (r) => r !== rarity.value,
+                                  );
+                              onFilterChange({
+                                ...filters,
+                                rarities: newRarities,
+                              });
+                            }}
+                          />
+                          <Label
+                            htmlFor={`rarity-${rarity.value}`}
+                            className="text-sm cursor-pointer"
+                          >
+                            {rarity.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
