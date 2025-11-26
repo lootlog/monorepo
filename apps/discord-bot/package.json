@@ -32,13 +32,13 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.10",
-    "@nestjs/testing": "^11.1.8",
+    "@nestjs/cli": "^11.0.12",
+    "@nestjs/testing": "^11.1.9",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.9.1",
+    "@types/node": "^24.10.1",
     "@types/supertest": "^6.0.3",
     "jest": "^30.2.0",
-    "lint-staged": "^16.2.6",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.6.2",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
