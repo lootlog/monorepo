@@ -8,6 +8,9 @@ import { setupAMQP } from "./lib/rabbitmq.js";
 import { setupPlayersHandlers } from "./players/players.handlers.js";
 import { npcs } from "./npcs/npcs.controller.js";
 import { setupNpcsHandlers } from "./npcs/npcs.handlers.js";
+import { items } from "./items/items.controller.js";
+import { setupItemsHandlers } from "./items/items.handlers.js";
+import { all } from "./all/all.controller.js";
 
 const app = new Hono<{
   Variables: {
@@ -30,6 +33,11 @@ await setupPlayersHandlers();
 
 app.route("/npcs", npcs);
 await setupNpcsHandlers();
+
+app.route("/items", items);
+await setupItemsHandlers();
+
+app.route("/all", all);
 
 const port = APP_CONFIG.port;
 

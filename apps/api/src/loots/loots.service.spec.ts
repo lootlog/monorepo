@@ -4,6 +4,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { LootsService } from './loots.service';
 import { PlayersService } from '../players/players.service';
 import { NpcsService } from '../npcs/npcs.service';
+import { ItemsService } from '../items/items.service';
 import { GuildsService } from '../guilds/guilds.service';
 import { PrismaService } from '../db/prisma.service';
 import { LootlogConfigService } from '../lootlog-config/lootlog-config.service';
@@ -57,6 +58,9 @@ describe('LootsService', () => {
   };
   let npcsService: {
     bulkIndexNpcs: jest.Mock;
+  };
+  let itemsService: {
+    bulkIndexItems: jest.Mock;
   };
   let guildsService: {
     getGuildsForRequiredPermissions: jest.Mock;
@@ -166,6 +170,10 @@ describe('LootsService', () => {
       bulkIndexNpcs: jest.fn(),
     };
 
+    const mockItemsService = {
+      bulkIndexItems: jest.fn(),
+    };
+
     const mockGuildsService = {
       getGuildsForRequiredPermissions: jest.fn(),
     };
@@ -203,6 +211,7 @@ describe('LootsService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: PlayersService, useValue: mockPlayersService },
         { provide: NpcsService, useValue: mockNpcsService },
+        { provide: ItemsService, useValue: mockItemsService },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: LootlogConfigService, useValue: mockLootlogConfigService },
         {
@@ -228,6 +237,7 @@ describe('LootsService', () => {
     prismaService = module.get(PrismaService);
     playersService = module.get(PlayersService);
     npcsService = module.get(NpcsService);
+    itemsService = module.get(ItemsService);
     guildsService = module.get(GuildsService);
     lootlogConfigService = module.get(LootlogConfigService);
     userLootlogConfigService = module.get(UserLootlogConfigService);

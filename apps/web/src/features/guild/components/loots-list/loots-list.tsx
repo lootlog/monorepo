@@ -1,5 +1,4 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Separator } from "@lootlog/ui/components/separator";
 import { useLoots } from "@/hooks/api/loots/use-loots";
 import { Frown, Loader2 } from "lucide-react";
 import { useEffect, useRef, type FC } from "react";
@@ -41,7 +40,7 @@ export const LootsList: FC = () => {
   const virtualizer = useVirtualizer({
     count: totalCount + 1,
     getScrollElement: () => scrollElementRef.current,
-    estimateSize: (index) => (index === totalCount ? 60 : 138),
+    estimateSize: () => 180,
     overscan: 5,
     useAnimationFrameWithResizeObserver: true,
   });
@@ -74,21 +73,23 @@ export const LootsList: FC = () => {
 
   const hasLoots = (loots?.pages?.[0]?.data?.length ?? 0) > 0;
 
-  if (!isLoading && !hasLoots) {
+  if (!world) {
     return (
-      <div className="flex flex-col justify-center gap-8 items-center flex-1">
-        <Frown size="72" />
-        <span className="font-semibold">Nie znaleziono żadnych lootów.</span>
+      <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
+        <Frown size="72" className="text-muted-foreground/50" />
+        <span className="font-semibold text-foreground">
+          Brak wybranego świata, wybierz go z listy na górze.
+        </span>
       </div>
     );
   }
 
-  if (!world) {
+  if (!isLoading && !hasLoots) {
     return (
-      <div className="flex flex-col justify-center gap-8 items-center flex-1">
-        <Frown size="72" />
-        <span className="font-semibold">
-          Brak wybranego świata, wybierz go z listy na górze.
+      <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
+        <Frown size="72" className="text-muted-foreground/50" />
+        <span className="font-semibold text-foreground">
+          Nie znaleziono żadnych lootów.
         </span>
       </div>
     );
@@ -100,14 +101,16 @@ export const LootsList: FC = () => {
       className="h-24 flex-1 relative"
       ref={scrollElementRef}
     >
+      <div className="h-3" />
       {isLoading ? (
-        <ul>
-          {Array.from({ length: 12 }).map((_, index) => (
+        <div className="flex flex-col gap-4 p-3 pt-0">
+          {Array.from({ length: 8 }).map((_, index) => (
             <LootsListItemSkeleton key={index} index={index} />
           ))}
-        </ul>
+        </div>
       ) : (
         <div
+          className="p-4 pt-6"
           style={{
             height: `${virtualizer.getTotalSize()}px`,
             width: "100%",
@@ -123,43 +126,32 @@ export const LootsList: FC = () => {
                 key={virtualItem.key}
                 data-index={virtualItem.index}
                 ref={virtualizer.measureElement}
+                className="pb-3"
                 style={{
                   position: "absolute",
                   top: 0,
-                  left: 0,
-                  width: "100%",
+                  left: 12,
+                  right: 12,
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
               >
                 {isLoaderRow ? (
                   hasNextPage ? (
-                    <div
-                      className="relative flex items-center justify-center gap-3 border-t border-border/50 bg-secondary/30"
-                      style={{ height: "60px" }}
-                    >
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       <span className="text-sm text-muted-foreground font-medium">
                         Ładowanie kolejnych lootów...
                       </span>
                     </div>
                   ) : (
-                    <div
-                      className="flex items-center justify-center border-t border-border/50"
-                      style={{ height: "60px" }}
-                    >
+                    <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                       <span className="text-xs text-muted-foreground">
                         To już wszystkie looty
                       </span>
                     </div>
                   )
                 ) : loot ? (
-                  <>
-                    <LootsListItem
-                      loot={loot}
-                      canManageLoots={canManageLoots}
-                    />
-                    <Separator />
-                  </>
+                  <LootsListItem loot={loot} canManageLoots={canManageLoots} />
                 ) : null}
               </div>
             );
