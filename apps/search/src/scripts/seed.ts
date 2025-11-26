@@ -216,7 +216,9 @@ async function seedPlayers() {
   const playersIndex = meilisearch.index(PLAYERS_INDEX);
 
   for (let i = 0; i < latestPlayerSnapshots.length; i += BATCH_SIZE) {
-    const batch = latestPlayerSnapshots.slice(i, i + BATCH_SIZE);
+    const batch = latestPlayerSnapshots
+      .slice(i, i + BATCH_SIZE)
+      .filter((player) => player.accountId !== null && player.accountId !== 0);
 
     // Map to the same format as IndexPlayersDto used in players.service.ts
     // In API mapPlayers: id = `${characterId}${accountId}` (no underscore)
@@ -230,7 +232,7 @@ async function seedPlayers() {
       characterId: player.characterId,
       accountId: player.accountId,
       world: player.world,
-      uid: `${player.characterId}${player.accountId}_${player.name}_${player.world}`,
+      uid: `${player.characterId}${player.accountId}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
 
     const task = await playersIndex.addDocuments(playersForIndex, {

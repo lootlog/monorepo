@@ -222,10 +222,6 @@ export const LootSearchCommand = ({
                       className="scale-75"
                     />
                     <span>{player.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Lvl {player.lvl}
-                      {player.prof?.charAt(0).toLowerCase()}
-                    </span>
                   </CommandItem>
                 ))}
               </CommandGroup>
