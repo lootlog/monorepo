@@ -29,13 +29,13 @@ export const ItemTile: FC<ItemTileProps> = ({
   const rarityCn = cn("text-xs font-semibold", {
     "text-muted-foreground": rarity === ItemRarity.COMMON,
     "text-sm text-primary": rarity === ItemRarity.UPGRADED,
-    "text-yellow-500": rarity === ItemRarity.LEGENDARY,
+    "text-orange-400": rarity === ItemRarity.LEGENDARY,
     "text-blue-500": rarity === ItemRarity.HEROIC,
     "text-amber-300": rarity === ItemRarity.UNIQUE,
   });
 
   const tooltipBorderCn = cn("w-80 p-3 pb-0 bg-popover/95 backdrop-blur-md", {
-    "border-2 border-yellow-500/80": rarity === ItemRarity.LEGENDARY,
+    "border-2 border-orange-400/80": rarity === ItemRarity.LEGENDARY,
     "border-2 border-blue-500/80": rarity === ItemRarity.HEROIC,
     "border-2 border-amber-300/80": rarity === ItemRarity.UNIQUE,
     "border-2 border-primary/40": rarity === ItemRarity.UPGRADED,

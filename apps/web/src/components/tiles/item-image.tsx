@@ -22,11 +22,11 @@ export const ItemImage: FC<ItemImageProps> = ({
         className={cn(
           "w-[32px] h-[32px] relative cursor-pointer border-2 box-content rounded-md transition-all duration-200",
           {
-            "border-yellow-500/80 bg-card/80 shadow-[0_0_15px_rgba(234,179,8,0.3),inset_0_0_8px_rgba(234,179,8,0.4)]":
+            "border-orange-400 bg-card/80 shadow-[0_0_20px_rgba(251,146,60,0.6),_inset_0_0_10px_rgba(251,146,60,0.5)]":
               rarity === ItemRarity.LEGENDARY,
-            "border-blue-500/80 bg-card/80 shadow-[0_0_10px_rgba(59,130,246,0.25),inset_0_0_6px_rgba(59,130,246,0.3)]":
+            "border-blue-500 bg-card/80 shadow-[0_0_16px_rgba(59,130,246,0.5),_inset_0_0_8px_rgba(59,130,246,0.4)]":
               rarity === ItemRarity.HEROIC,
-            "border-amber-300/80 bg-card/80 shadow-[0_0_10px_rgba(252,211,77,0.25),inset_0_0_6px_rgba(252,211,77,0.3)]":
+            "border-amber-300 bg-card/80 shadow-[0_0_16px_rgba(252,211,77,0.5),_inset_0_0_8px_rgba(252,211,77,0.4)]":
               rarity === ItemRarity.UNIQUE,
             "border-primary/40 bg-muted/50": rarity === ItemRarity.UPGRADED,
             "border-border/50 bg-muted/30": rarity === ItemRarity.COMMON,

@@ -35,7 +35,7 @@ export const LootsListItemSkeleton: React.FC<Props> = ({ index = 0 }) => {
           {[...Array(PLAYERS_COUNT)].map((_, i) => (
             <Skeleton
               key={i}
-              className="w-[32px] h-[48px] rounded-lg bg-muted/50 border border-border/30 ring-2 ring-background"
+              className="w-[32px] h-[48px] rounded-lg bg-muted/50 border border-border/30"
             />
           ))}
         </div>

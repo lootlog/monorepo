@@ -1,9 +1,11 @@
-import type { Loot, Item } from "@/hooks/api/loots/use-loots";
+import { useState } from "react";
+import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
 import { ItemTile } from "@/features/guild/components/loots-list/item-tile";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/constants/loot-share-color-palette";
-import { Sheet, SheetTrigger } from "@lootlog/ui/components/sheet";
+import { Sheet } from "@lootlog/ui/components/sheet";
+import { ElectricBorder } from "@lootlog/ui/components/electric-border";
 import { LootDetailsSheetContent } from "@/features/guild/components/loots-list/loot-details-sheet-content";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { Calendar, MapPin, MessageSquare } from "lucide-react";
@@ -14,6 +16,7 @@ type Props = {
 };
 
 export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const date = timestampToDate(loot.createdAt);
 
   const playerColorMap = loot.players.reduce<
@@ -45,19 +48,44 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
   // Items without owner (unassigned)
   const unassignedItems: Item[] = [];
 
+  // If there's only one player, assign all items to them
+  const singlePlayerId =
+    loot.players.length === 1 ? loot.players[0]?.id : undefined;
+
   loot.items.forEach((item) => {
     const ownerId = itemOwnerMap[item.hid];
     if (ownerId && itemsByPlayer[ownerId]) {
       itemsByPlayer[ownerId].push(item);
+    } else if (singlePlayerId && itemsByPlayer[singlePlayerId]) {
+      // Assign unassigned items to the single player
+      itemsByPlayer[singlePlayerId].push(item);
     } else {
       unassignedItems.push(item);
     }
   });
 
+  const hasLegendaryItem = loot.items.some(
+    (item) => item.rarity === ItemRarity.LEGENDARY,
+  );
+
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <article className="group relative rounded-xl border border-border/50 bg-card/40 backdrop-blur-md p-4 hover:bg-card/60 hover:border-primary/50 transition-all duration-300 cursor-pointer">
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <ElectricBorder
+        enabled={hasLegendaryItem}
+        color="#f97316"
+        speed={0.5}
+        chaos={0.3}
+        thickness={2}
+        radius="xl"
+      >
+        <article
+          onClick={() => setIsOpen(true)}
+          className={`group relative rounded-xl border bg-background/30 backdrop-blur-md p-4 transition-all duration-300 cursor-pointer ${
+            hasLegendaryItem
+              ? "border-transparent hover:bg-card/50"
+              : "border-border/50 hover:bg-card/50 hover:border-primary/50"
+          }`}
+        >
           <div className="flex flex-row justify-between items-start gap-2 mb-3">
             <div className="flex-1 min-w-0">
               <LootNpcs npcs={loot.npcs} />
@@ -68,7 +96,7 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
             </div>
           </div>
 
-          <div className="flex flex-row justify-between gap-4 pt-3 border-t border-border/30">
+          <div className="flex flex-row justify-between gap-4 pt-3 pb-2 border-t border-border/30">
             <div className="flex flex-row items-start gap-2 flex-wrap">
               {loot.players.map((player, idx) => {
                 const color = playerColorMap[player.id];
@@ -76,7 +104,7 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
                 return (
                   <div
                     key={player.id}
-                    className="flex flex-col items-center gap-2"
+                    className="flex flex-col items-center gap-3"
                   >
                     <PlayerTile
                       player={player}
@@ -128,7 +156,7 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
             </span>
           </div>
         </article>
-      </SheetTrigger>
+      </ElectricBorder>
       <LootDetailsSheetContent
         loot={loot}
         ownerMap={itemOwnerMap}

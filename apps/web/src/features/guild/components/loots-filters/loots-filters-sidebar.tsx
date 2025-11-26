@@ -22,7 +22,7 @@ import { useItemByHid } from "@/hooks/api/game-data/use-item-by-hid";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { useDebounceValue } from "usehooks-ts";
 import { cn } from "@lootlog/ui/lib/utils";
-import { ItemSearchTile } from "@/components/tiles";
+import { ItemImage } from "@/components/tiles";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 
@@ -360,9 +360,9 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                         Filtrowany przedmiot (ID)
                       </Label>
                       <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                        <ItemSearchTile
+                        <ItemImage
                           icon={hidItem.icon}
-                          name={hidItem.name}
+                          rarity={hidItem.rarity}
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">

@@ -103,7 +103,7 @@ export const LootsList: FC = () => {
     >
       <div className="h-3" />
       {isLoading ? (
-        <div className="flex flex-col gap-4 p-3 pt-6">
+        <div className="flex flex-col gap-4 p-3 pt-0">
           {Array.from({ length: 8 }).map((_, index) => (
             <LootsListItemSkeleton key={index} index={index} />
           ))}
