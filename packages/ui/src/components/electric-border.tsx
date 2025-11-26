@@ -3,6 +3,37 @@
 import * as React from "react";
 import { cn } from "@lootlog/ui/lib/utils";
 
+function checkCanRunHeavyEffects(): boolean {
+  if (typeof window === "undefined") return true; // SSR - assume supported
+
+  // Respect user's motion preference
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return false;
+  }
+
+  // Check for WebGL support (indicates hardware acceleration)
+  try {
+    const canvas = document.createElement("canvas");
+    const gl =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    if (!gl) return false;
+  } catch {
+    return false;
+  }
+
+  // Check device memory (if available) - low memory devices may struggle
+  if ("deviceMemory" in navigator && (navigator.deviceMemory as number) < 4) {
+    return false;
+  }
+
+  // Check hardware concurrency - single/dual core devices may struggle
+  if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
+    return false;
+  }
+
+  return true;
+}
+
 type ElectricBorderProps = {
   children: React.ReactNode;
   className?: string;
@@ -147,8 +178,31 @@ function ElectricBorder({
     return () => ro.disconnect();
   }, [updateAnim]);
 
+  const [canRunEffects, setCanRunEffects] = React.useState(true);
+
+  React.useEffect(() => {
+    setCanRunEffects(checkCanRunHeavyEffects());
+  }, []);
+
   if (!enabled) {
     return <>{children}</>;
+  }
+
+  // Fallback for browsers without WebGL/hardware acceleration or weak devices
+  if (!canRunEffects) {
+    return (
+      <div
+        className={cn("relative", className)}
+        style={{
+          borderRadius,
+          borderWidth: thickness,
+          borderStyle: "solid",
+          borderColor: color,
+        }}
+      >
+        {children}
+      </div>
+    );
   }
 
   const inheritRadius = {
