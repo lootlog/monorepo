@@ -10,7 +10,7 @@ export class NpcsService {
   constructor() {
     this.meilisearch = meilisearchClient;
     const index = this.meilisearch.index(NPCS_INDEX);
-    index.updateFilterableAttributes(["name"]);
+    index.updateFilterableAttributes(["name", "world"]);
   }
 
   async getNpcs({ limit, search }: GetNpcsDto) {
@@ -31,7 +31,7 @@ export class NpcsService {
       const data = await index.search(searchTerm as string, query);
 
       const uniqueHits = Array.from(
-        new Map(data.hits.map((npc: any) => [npc.name, npc])).values()
+        new Map(data.hits.map((npc: any) => [npc.name, npc])).values(),
       );
       return uniqueHits;
     } catch (error) {
@@ -43,8 +43,13 @@ export class NpcsService {
   async indexNpcs(data: IndexNpcsDto) {
     const index = this.meilisearch.index(NPCS_INDEX);
 
+    const npcsWithUid = data.npcs.map((npc) => ({
+      ...npc,
+      uid: `${npc.id}_${npc.world}`,
+    }));
+
     try {
-      return index.addDocuments(data.npcs, { primaryKey: "id" });
+      return index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
       console.error("Error indexing npcs:", error);
       return;

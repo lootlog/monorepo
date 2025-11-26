@@ -7,5 +7,6 @@ export type IndexPlayersDto = {
     icon: string;
     characterId: number;
     accountId: number;
+    world: string;
   }[];
 };

@@ -10,7 +10,7 @@ export class PlayersService {
   constructor() {
     this.meilisearch = meilisearchClient;
     const index = this.meilisearch.index(PLAYERS_INDEX);
-    index.updateFilterableAttributes(["name"]);
+    index.updateFilterableAttributes(["name", "world"]);
   }
 
   async getPlayers({ limit, search }: GetPlayersDto) {
@@ -40,8 +40,13 @@ export class PlayersService {
   async indexPlayers(data: IndexPlayersDto) {
     const index = this.meilisearch.index(PLAYERS_INDEX);
 
+    const playersWithUid = data.players.map((player) => ({
+      ...player,
+      uid: `${player.id}_${player.world}`,
+    }));
+
     try {
-      return index.addDocuments(data.players, { primaryKey: "id" });
+      return index.addDocuments(playersWithUid, { primaryKey: "uid" });
     } catch (error) {
       console.error("Error indexing players:", error);
       return;
