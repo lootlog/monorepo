@@ -1,11 +1,17 @@
 import { Button } from "@lootlog/ui/components/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { Filter, Search } from "lucide-react";
+import { Filter, Grid2X2, List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { LootSearchCommand } from "./loot-search-command";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
+import { useLootsViewMode } from "@/hooks/use-loots-view-mode";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 
 export type LootFiltersHeaderProps = {
   isFiltersOpen: boolean;
@@ -21,6 +27,7 @@ export const LootFiltersHeader = ({
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const isMobile = useIsMobile();
   const { filters } = useLootsFilters();
+  const { viewMode, setViewMode } = useLootsViewMode();
 
   const hasSearchFilters =
     filters.npcs.length > 0 ||
@@ -74,6 +81,38 @@ export const LootFiltersHeader = ({
             className="flex items-center gap-2 justify-end shrink-0 h-full border-l border-border px-3"
           >
             <WorldSwitcher className="flex-1" />
+            <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setViewMode("list")}
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Widok listy</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setViewMode("grid")}
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="icon"
+                    className="h-8 w-8"
+                  >
+                    <Grid2X2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Widok siatki</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <Button
               onClick={onToggleFilters}
               variant={isFiltersOpen ? "default" : "outline"}

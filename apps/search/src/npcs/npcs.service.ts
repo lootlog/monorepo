@@ -13,19 +13,26 @@ export class NpcsService {
     index.updateFilterableAttributes(["name", "world"]);
   }
 
-  async getNpcs({ limit, search }: GetNpcsDto) {
+  async getNpcs({ limit, search, world }: GetNpcsDto) {
     const index = this.meilisearch.index(NPCS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : search;
 
+    const filters: string[] = [];
+
+    if (hasMultipleSearchTerms) {
+      filters.push(`name IN [${search.map((n) => `"${n}"`).join(", ")}]`);
+    }
+
+    if (world) {
+      filters.push(`world = "${world}"`);
+    }
+
     const query: SearchParams = {
       limit,
       attributesToSearchOn: ["name"],
+      ...(filters.length > 0 && { filter: filters.join(" AND ") }),
     };
-
-    if (hasMultipleSearchTerms) {
-      query.filter = `name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
-    }
 
     try {
       const data = await index.search(searchTerm as string, query);
@@ -43,7 +50,22 @@ export class NpcsService {
   async indexNpcs(data: IndexNpcsDto) {
     const index = this.meilisearch.index(NPCS_INDEX);
 
-    const npcsWithUid = data.npcs.map((npc) => ({
+    const validNpcs = data.npcs.filter(
+      (npc) => npc.world && npc.id && npc.name,
+    );
+
+    if (validNpcs.length === 0) {
+      console.warn("No valid npcs to index (missing required fields)");
+      return;
+    }
+
+    if (validNpcs.length !== data.npcs.length) {
+      console.warn(
+        `Skipped ${data.npcs.length - validNpcs.length} npcs due to missing required fields`,
+      );
+    }
+
+    const npcsWithUid = validNpcs.map((npc) => ({
       ...npc,
       uid: `${npc.id}_${npc.world}`,
     }));

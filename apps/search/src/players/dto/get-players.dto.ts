@@ -3,6 +3,7 @@ import { z } from "zod";
 export type GetPlayersDto = {
   limit: number;
   search?: string | string[];
+  world?: string;
 };
 
 export const getPlayersQuerySchema = z.object({
@@ -17,4 +18,5 @@ export const getPlayersQuerySchema = z.object({
 
       return val;
     }),
+  world: z.string().optional(),
 });

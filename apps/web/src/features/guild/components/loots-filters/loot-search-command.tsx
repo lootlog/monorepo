@@ -13,39 +13,30 @@ import { useSearchAll } from "@/hooks/api/game-data/use-search-all";
 import { useItemByHid } from "@/hooks/api/game-data/use-item-by-hid";
 import { isItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
-import { NpcType, type Npc } from "@/hooks/api/game-data/use-npcs";
+import type { Npc } from "@/hooks/api/game-data/use-npcs";
 import type { GameItem } from "@/hooks/api/game-data/use-items";
 import { ItemRarity } from "@/hooks/api/loots/use-loots";
 import { ItemImage, NpcSearchTile, PlayerSearchTile } from "@/components/tiles";
 import { cn } from "@lootlog/ui/lib/utils";
-import {
-  NPC_TYPE_NAMES,
-  SPECIAL_NPC_TYPES,
-  ITEM_RARITY_NAMES,
-} from "@/constants/npc";
+import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
+import { motion, Reorder } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 export type LootSearchCommandProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-// Get badge styling based on NPC type
-const getNpcBadgeStyle = (type: NpcType) => {
-  switch (type) {
-    case NpcType.TITAN:
-      return "bg-primary/10 text-primary border-primary/20";
-    case NpcType.COLOSSUS:
-      return "bg-purple-500/10 text-purple-500 border-purple-500/20";
-    case NpcType.HERO:
-      return "bg-destructive/10 text-destructive border-destructive/20";
-    case NpcType.EVENT_HERO:
-      return "bg-orange-500/10 text-orange-500 border-orange-500/20";
-    default:
-      return "";
-  }
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.15,
+    },
+  },
 };
 
-// Get rarity text styling
 const getRarityStyle = (rarity: string | null) => {
   switch (rarity) {
     case "LEGENDARY":
@@ -67,7 +58,7 @@ export const LootSearchCommand = ({
 }: LootSearchCommandProps) => {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [debouncedSearch] = useDebounceValue(searchQuery, 100);
+  const [debouncedSearch] = useDebounceValue(searchQuery, 200);
   const { world } = useGuildContext();
   const { setFilters } = useLootsFilters();
 
@@ -92,7 +83,22 @@ export const LootSearchCommand = ({
   };
 
   const handleSelectItemByHid = (hid: string) => {
-    setFilters({ hid });
+    setFilters({
+      hid,
+      search: null,
+      npcTypes: null,
+      npcs: null,
+      npcLevelMin: null,
+      npcLevelMax: null,
+      rarities: null,
+      itemLevelMin: null,
+      itemLevelMax: null,
+      itemNames: null,
+      players: null,
+      playerLevelMin: null,
+      playerLevelMax: null,
+      location: null,
+    });
     onOpenChange(false);
     setSearchQuery("");
   };
@@ -103,6 +109,14 @@ export const LootSearchCommand = ({
     setSearchQuery("");
   };
 
+  const hasResults =
+    hidItem ||
+    (searchResults?.npcs && searchResults.npcs.length > 0) ||
+    (searchResults?.items && searchResults.items.length > 0) ||
+    (searchResults?.players && searchResults.players.length > 0);
+
+  const showLoading = isLoading && debouncedSearch && !hasResults;
+
   return (
     <CommandDialog shouldFilter={false} open={open} onOpenChange={onOpenChange}>
       <CommandInput
@@ -110,22 +124,45 @@ export const LootSearchCommand = ({
         value={searchQuery}
         onValueChange={setSearchQuery}
       />
-      <CommandList>
-        {isLoading && (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            Wyszukiwanie...
-          </div>
+      <CommandList className="h-[350px] min-h-[350px] custom-scrollbar">
+        {showLoading && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex flex-col items-center justify-center py-12 text-muted-foreground"
+          >
+            <Loader2 className="mb-2 h-6 w-6 animate-spin" />
+            <span className="text-sm">Wyszukiwanie...</span>
+          </motion.div>
         )}
 
         {!debouncedSearch && !isLoading && (
-          <CommandEmpty>Zacznij wpisywać aby wyszukać...</CommandEmpty>
+          <motion.div
+            key="empty-state"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <CommandEmpty>Zacznij wpisywać aby wyszukać...</CommandEmpty>
+          </motion.div>
         )}
 
-        {debouncedSearch && !isLoading && (
-          <>
+        {debouncedSearch && !showLoading && (
+          <motion.div
+            key="results"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+          >
             {hidItem && (
               <CommandGroup heading="Znaleziony przedmiot (ID)">
                 <CommandItem
+                  value={`hid-${hidItem.hid}`}
                   onSelect={() => handleSelectItemByHid(hidItem.hid)}
                   className="p-2! px-2!"
                 >
@@ -138,102 +175,148 @@ export const LootSearchCommand = ({
               </CommandGroup>
             )}
 
-            {searchResults?.npcs && searchResults.npcs.length > 0 && (
+            {!isHid && searchResults?.npcs && searchResults.npcs.length > 0 && (
               <CommandGroup heading="Potwory">
-                {searchResults.npcs.map((npc) => {
-                  const isSpecial = SPECIAL_NPC_TYPES.includes(
-                    npc.type as (typeof SPECIAL_NPC_TYPES)[number],
-                  );
-                  return (
-                    <CommandItem
-                      key={npc.id}
-                      onSelect={() => handleSelectNpc(npc)}
-                      className="p-2! px-2!"
-                    >
-                      <NpcSearchTile icon={npc.icon} name={npc.name} />
-                      <div className="flex flex-col">
-                        <span>{npc.name}</span>
-                        {isSpecial ? (
-                          <span
-                            className={cn(
-                              "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border w-fit",
-                              getNpcBadgeStyle(npc.type),
-                            )}
-                          >
-                            {NPC_TYPE_NAMES[npc.type]}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {NPC_TYPE_NAMES[npc.type]}
-                          </span>
-                        )}
-                      </div>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        Lvl {npc.lvl}
-                      </span>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            )}
-            {searchResults?.items && searchResults.items.length > 0 && (
-              <CommandGroup heading="Przedmioty">
-                {searchResults.items.map((item) => (
-                  <CommandItem
-                    key={item.hid}
-                    onSelect={() => handleSelectItem(item)}
-                    className="p-2! px-2!"
-                  >
-                    <ItemImage
-                      icon={item.icon}
-                      rarity={(item.rarity as ItemRarity) ?? ItemRarity.COMMON}
-                    />
-                    <div className="flex flex-col">
-                      <span>{item.name}</span>
-                      {item.rarity && (
-                        <span
-                          className={cn(
-                            "text-xs font-semibold",
-                            getRarityStyle(item.rarity),
-                          )}
+                <Reorder.Group
+                  axis="y"
+                  values={searchResults.npcs}
+                  onReorder={() => {}}
+                  as="div"
+                >
+                  {searchResults.npcs.map((npc) => {
+                    return (
+                      <Reorder.Item
+                        key={`npc-${npc.id}`}
+                        value={npc}
+                        as="div"
+                        drag={false}
+                        layout
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <CommandItem
+                          value={`npc-${npc.id}`}
+                          onSelect={() => handleSelectNpc(npc)}
+                          className="p-2! px-2!"
                         >
-                          {ITEM_RARITY_NAMES[item.rarity] ?? item.rarity}
-                        </span>
-                      )}
-                    </div>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Lvl {item.lvl}
-                    </span>
-                  </CommandItem>
-                ))}
+                          <NpcSearchTile icon={npc.icon} name={npc.name} />
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{npc.name}</span>
+
+                            <span className="text-xs text-muted-foreground">
+                              {NPC_TYPE_NAMES[npc.type]}
+                            </span>
+                          </div>
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            Lvl {npc.lvl}
+                          </span>
+                        </CommandItem>
+                      </Reorder.Item>
+                    );
+                  })}
+                </Reorder.Group>
               </CommandGroup>
             )}
-            {searchResults?.players && searchResults.players.length > 0 && (
-              <CommandGroup heading="Gracze">
-                {searchResults.players.map((player) => (
-                  <CommandItem
-                    key={player.id}
-                    onSelect={() => handleSelectPlayer(player)}
-                    className="p-0! px-2!"
+            {!isHid &&
+              searchResults?.items &&
+              searchResults.items.length > 0 && (
+                <CommandGroup heading="Przedmioty">
+                  <Reorder.Group
+                    axis="y"
+                    values={searchResults.items}
+                    onReorder={() => {}}
+                    as="div"
                   >
-                    <PlayerSearchTile
-                      icon={player.icon}
-                      name={player.name}
-                      className="scale-75"
-                    />
-                    <span>{player.name}</span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-            {!hidItem &&
-              (!searchResults?.npcs || searchResults.npcs.length === 0) &&
-              (!searchResults?.items || searchResults.items.length === 0) &&
-              (!searchResults?.players ||
-                searchResults.players.length === 0) && (
-                <CommandEmpty>Nie znaleziono wyników.</CommandEmpty>
+                    {searchResults.items.map((item) => (
+                      <Reorder.Item
+                        key={`item-${item.id}`}
+                        value={item}
+                        as="div"
+                        drag={false}
+                        layout
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <CommandItem
+                          value={`item-${item.id}`}
+                          onSelect={() => handleSelectItem(item)}
+                          className="p-2! px-2!"
+                        >
+                          <ItemImage
+                            icon={item.icon}
+                            rarity={
+                              (item.rarity as ItemRarity) ?? ItemRarity.COMMON
+                            }
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{item.name}</span>
+                            {item.rarity && (
+                              <span
+                                className={cn(
+                                  "text-xs font-semibold",
+                                  getRarityStyle(item.rarity),
+                                )}
+                              >
+                                {ITEM_RARITY_NAMES[item.rarity] ?? item.rarity}
+                              </span>
+                            )}
+                          </div>
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            Lvl {item.lvl}
+                          </span>
+                        </CommandItem>
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+                </CommandGroup>
               )}
-          </>
+            {!isHid &&
+              searchResults?.players &&
+              searchResults.players.length > 0 && (
+                <CommandGroup heading="Gracze">
+                  <Reorder.Group
+                    axis="y"
+                    values={searchResults.players}
+                    onReorder={() => {}}
+                    as="div"
+                  >
+                    {searchResults.players.map((player) => (
+                      <Reorder.Item
+                        key={`player-${player.id}`}
+                        value={player}
+                        as="div"
+                        drag={false}
+                        layout
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <CommandItem
+                          value={`player-${player.id}`}
+                          onSelect={() => handleSelectPlayer(player)}
+                          className="p-0! px-2!"
+                        >
+                          <PlayerSearchTile
+                            icon={player.icon}
+                            name={player.name}
+                            className="scale-75"
+                          />
+                          <span className="font-semibold">{player.name}</span>
+                        </CommandItem>
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+                </CommandGroup>
+              )}
+            {!hasResults && (
+              <CommandEmpty>Nie znaleziono wyników.</CommandEmpty>
+            )}
+          </motion.div>
         )}
       </CommandList>
     </CommandDialog>

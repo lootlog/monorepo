@@ -687,19 +687,19 @@
   --card-foreground: oklch(0.96 0.02 40);
   --popover: oklch(0.12 0.05 30);
   --popover-foreground: oklch(0.96 0.02 40);
-  --primary: oklch(0.2 0.08 30);
-  --primary-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.75 0.18 50);
+  --primary-foreground: oklch(0.1 0.04 30);
   --secondary: oklch(0.18 0.08 30);
   --secondary-foreground: oklch(0.96 0.02 40);
   --muted: oklch(0.22 0.05 30);
   --muted-foreground: oklch(0.72 0.07 40);
-  --accent: oklch(0.24 0.08 30);
-  --accent-foreground: oklch(0.96 0.02 40);
+  --accent: oklch(0.68 0.2 45);
+  --accent-foreground: oklch(0.1 0.04 30);
   --destructive: oklch(0.62 0.26 25);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.26 0.09 30);
   --input: oklch(0.3 0.08 30);
-  --ring: oklch(0.2 0.08 30);
+  --ring: oklch(0.75 0.18 50);
   --chart-1: oklch(0.68 0.25 35);
   --chart-2: oklch(0.55 0.22 295);
   --chart-3: oklch(0.68 0.24 130);
@@ -707,12 +707,12 @@
   --chart-5: oklch(0.75 0.2 50);
   --sidebar: oklch(0.08 0.04 30);
   --sidebar-foreground: oklch(0.96 0.02 40);
-  --sidebar-primary: oklch(0.2 0.08 30);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.75 0.18 50);
+  --sidebar-primary-foreground: oklch(0.1 0.04 30);
   --sidebar-accent: oklch(0.22 0.05 30);
   --sidebar-accent-foreground: oklch(0.96 0.02 40);
   --sidebar-border: oklch(0.26 0.06 30);
-  --sidebar-ring: oklch(0.2 0.08 30);
+  --sidebar-ring: oklch(0.75 0.18 50);
 }
 
 @theme inline {
@@ -1258,4 +1258,44 @@ body {
   --sidebar-accent-foreground: oklch(0.97 0.02 50);
   --sidebar-border: oklch(0.04 0.1 10);
   --sidebar-ring: oklch(0.45 0.16 10);
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-button:start:decrement,
+.custom-scrollbar::-webkit-scrollbar-button:end:increment {
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
 }
