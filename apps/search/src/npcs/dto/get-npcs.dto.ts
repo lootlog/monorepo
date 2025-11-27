@@ -3,6 +3,7 @@ import { z } from "zod";
 export type GetNpcsDto = {
   limit: number;
   search?: string | string[];
+  world?: string;
 };
 
 export const getNpcsQuerySchema = z.object({
@@ -17,4 +18,5 @@ export const getNpcsQuerySchema = z.object({
 
       return val;
     }),
+  world: z.string().optional(),
 });

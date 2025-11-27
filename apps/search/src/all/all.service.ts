@@ -17,8 +17,8 @@ export class AllService {
   async searchAll({ limit, search, world }: SearchAllDto) {
     const [items, players, npcs] = await Promise.all([
       this.itemsService.getItems({ limit, search, world }),
-      this.playersService.getPlayers({ limit, search }),
-      this.npcsService.getNpcs({ limit, search }),
+      this.playersService.getPlayers({ limit, search, world }),
+      this.npcsService.getNpcs({ limit, search, world }),
     ]);
 
     return {

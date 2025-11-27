@@ -28,9 +28,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 4096M
         reservations:
-          memory: 256M
+          memory: 2048M
 
   lootlog-db:
     image: postgres:17-alpine
