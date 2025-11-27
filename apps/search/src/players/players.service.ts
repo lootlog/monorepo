@@ -13,19 +13,26 @@ export class PlayersService {
     index.updateFilterableAttributes(["name", "world"]);
   }
 
-  async getPlayers({ limit, search }: GetPlayersDto) {
+  async getPlayers({ limit, search, world }: GetPlayersDto) {
     const index = this.meilisearch.index(PLAYERS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : search;
 
+    const filters: string[] = [];
+
+    if (hasMultipleSearchTerms) {
+      filters.push(`name IN [${search.map((n) => `"${n}"`).join(", ")}]`);
+    }
+
+    if (world) {
+      filters.push(`world = "${world}"`);
+    }
+
     const query: SearchParams = {
       limit,
       attributesToSearchOn: ["name"],
+      ...(filters.length > 0 && { filter: filters.join(" AND ") }),
     };
-
-    if (hasMultipleSearchTerms) {
-      query.filter = `name IN [${search.map((n) => `"${n}"`).join(", ")}]`;
-    }
 
     try {
       const data = await index.search(searchTerm as string, query);
@@ -40,7 +47,22 @@ export class PlayersService {
   async indexPlayers(data: IndexPlayersDto) {
     const index = this.meilisearch.index(PLAYERS_INDEX);
 
-    const playersWithUid = data.players.map((player) => ({
+    const validPlayers = data.players.filter(
+      (player) => player.world && player.id && player.name,
+    );
+
+    if (validPlayers.length === 0) {
+      console.warn("No valid players to index (missing required fields)");
+      return;
+    }
+
+    if (validPlayers.length !== data.players.length) {
+      console.warn(
+        `Skipped ${data.players.length - validPlayers.length} players due to missing required fields`,
+      );
+    }
+
+    const playersWithUid = validPlayers.map((player) => ({
       ...player,
       uid: `${player.id}_${player.name.replace(/[^a-zA-Z0-9_-]/g, "")}_${player.world}`,
     }));
