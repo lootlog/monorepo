@@ -7,7 +7,7 @@ import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/constants/loot-share-
 import { Sheet } from "@lootlog/ui/components/sheet";
 import { LootDetailsSheetContent } from "@/features/guild/components/loots-list/loot-details-sheet-content";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
-import { Calendar, MapPin, MessageSquare } from "lucide-react";
+import { Calendar, MapPin, MessageSquare, Users, Package } from "lucide-react";
 
 type Props = {
   loot: Loot;
@@ -35,7 +35,6 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
     });
   });
 
-  // Group items by player
   const itemsByPlayer = loot.players.reduce<Record<string, Item[]>>(
     (acc, player) => {
       acc[player.id] = [];
@@ -44,10 +43,8 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
     {},
   );
 
-  // Items without owner (unassigned)
   const unassignedItems: Item[] = [];
 
-  // If there's only one player, assign all items to them
   const singlePlayerId =
     loot.players.length === 1 ? loot.players[0]?.id : undefined;
 
@@ -56,7 +53,6 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
     if (ownerId && itemsByPlayer[ownerId]) {
       itemsByPlayer[ownerId].push(item);
     } else if (singlePlayerId && itemsByPlayer[singlePlayerId]) {
-      // Assign unassigned items to the single player
       itemsByPlayer[singlePlayerId].push(item);
     } else {
       unassignedItems.push(item);
@@ -71,11 +67,19 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <article
         onClick={() => setIsOpen(true)}
-        className={`group relative rounded-xl border bg-background/30 backdrop-blur-md p-4 transition-all duration-300 cursor-pointer ${
+        className={`group relative rounded-xl border bg-background/30 backdrop-blur-md p-4 transition-all duration-300 cursor-pointer h-full flex flex-col ${
           hasLegendaryItem
-            ? "border-orange-500 hover:bg-card/50"
-            : "border-border/50 hover:bg-card/50 hover:border-primary/50"
+            ? "border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.3),_0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_30px_rgba(239,68,68,0.4),_0_0_15px_rgba(239,68,68,0.3)] hover:bg-card/50"
+            : "border-border hover:bg-card/50 hover:border-primary/50"
         }`}
+        style={
+          hasLegendaryItem
+            ? {
+                background:
+                  "linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(0,0,0,0) 50%, rgba(239,68,68,0.05) 100%)",
+              }
+            : undefined
+        }
       >
         <div className="flex flex-row justify-between items-start gap-2 mb-3">
           <div className="flex-1 min-w-0">
@@ -87,7 +91,7 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
           </div>
         </div>
 
-        <div className="flex flex-row justify-between gap-4 pt-3 pb-2 border-t border-border/30">
+        <div className="flex flex-row justify-between gap-4 pt-3 pb-2 border-t border-border/30 flex-1">
           <div className="flex flex-row items-start gap-2 flex-wrap">
             {[...loot.players]
               .sort((a, b) => {
@@ -99,27 +103,19 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
                 return 0;
               })
               .map((player) => {
-                const color = playerColorMap[player.id];
                 const playerItems = itemsByPlayer[player.id] || [];
                 return (
                   <div
                     key={player.id}
                     className="flex flex-col items-center gap-3"
                   >
-                    <PlayerTile
-                      player={player}
-                      idx={color?.idx ?? 0}
-                      color={color?.color}
-                    />
+                    <PlayerTile player={player} />
                     {playerItems.length > 0 && (
                       <div className="flex flex-col gap-1">
                         {playerItems.map((item, itemIdx) => (
                           <ItemTile
                             key={`${item.hid}-${itemIdx}`}
                             item={item}
-                            color={color?.color}
-                            shareIndex={color?.idx}
-                            shareNickname={loot.players[color?.idx ?? 0]?.name}
                           />
                         ))}
                       </div>
@@ -145,15 +141,27 @@ export const LootsListItem: React.FC<Props> = ({ loot, canManageLoots }) => {
           )}
         </div>
 
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/30 flex-wrap">
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {loot.location}
-          </span>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
-            {date}
-          </span>
+        <div className="flex items-center justify-between gap-3 mt-auto pt-3 border-t border-border/30 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {loot.location}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              {date}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Users className="h-3 w-3" />
+              {loot.players.length}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Package className="h-3 w-3" />
+              {loot.items.length}
+            </span>
+          </div>
         </div>
       </article>
       <LootDetailsSheetContent

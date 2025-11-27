@@ -21,7 +21,7 @@ type SearchAllResponse = {
 export const useSearchAll = ({
   search,
   world,
-  limit = 3,
+  limit = 5,
   enabled = true,
 }: UseSearchAllOptions) => {
   const { client } = useApiClient();
