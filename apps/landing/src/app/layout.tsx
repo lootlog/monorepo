@@ -45,56 +45,13 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>): JSX.Element {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pl" className="dark" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-white`}
       >
         <RootProvider>
           {children}
           <CookieConsent />
-          <footer className="py-8 px-4 bg-background">
-            <div className="max-w-6xl mx-auto text-center text-gray-400">
-              <p>
-                Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.
-              </p>
-              <p>
-                &copy; {new Date().getFullYear()} Lootlog.pl - Dodatek do gry
-                Margonem
-              </p>
-              <div className="mt-4 flex justify-center gap-6">
-                <a
-                  href="https://discord.gg/mPcczaeYMu"
-                  className="hover:text-white transition-colors"
-                >
-                  Discord
-                </a>
-                <a
-                  href="https://github.com/lootlog/monorepo"
-                  className="hover:text-white transition-colors"
-                >
-                  GitHub
-                </a>
-                <a
-                  href="/privacy-policy"
-                  className="hover:text-white transition-colors"
-                >
-                  Polityka Prywatności
-                </a>
-                <a
-                  href="/terms-of-service"
-                  className="hover:text-white transition-colors"
-                >
-                  Regulamin
-                </a>
-                <a
-                  href="https://buycoffee.to/lootlog"
-                  className="hover:text-white transition-colors"
-                >
-                  Donate
-                </a>
-              </div>
-            </div>
-          </footer>
         </RootProvider>
       </body>
     </html>
