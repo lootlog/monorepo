@@ -32,7 +32,7 @@ import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_RESERVATIONS)
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
@@ -52,7 +52,7 @@ export class ReservationsController {
     return this.reservationsService.getReservations(guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_WRITE)
+  @Permissions(Permission.LOOTLOG_RESERVATIONS)
   @UseGuards(PermissionsGuard)
   @Post()
   @ApiOperation({
@@ -75,7 +75,7 @@ export class ReservationsController {
     return this.reservationsService.createReservation(guild.id, data);
   }
 
-  @Permissions(Permission.LOOTLOG_WRITE)
+  @Permissions(Permission.LOOTLOG_RESERVATIONS)
   @UseGuards(PermissionsGuard)
   @Delete(':reservationRecordId')
   @ApiOperation({
@@ -106,7 +106,7 @@ export class ReservationsController {
     });
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_RESERVATIONS)
   @UseGuards(PermissionsGuard)
   @Get('cards')
   @ApiOperation({
