@@ -1,0 +1,8 @@
+export { LandingHeader } from "./header";
+export { LandingFooter } from "./footer";
+export { HeroSection } from "./hero-section";
+export { ValueProposition } from "./value-proposition";
+export { QuickStartSection } from "./quick-start-section";
+export { FeaturesPanel } from "./features-panel";
+export { FaqPanel } from "./faq-panel";
+export { Testimonials } from "./testimonials";
