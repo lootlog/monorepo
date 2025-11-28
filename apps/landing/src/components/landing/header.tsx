@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, Heart, LogIn, Sword } from "lucide-react";
+import { Loader2, Heart, LogIn } from "lucide-react";
 import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { Button } from "@lootlog/ui/components/button";
@@ -49,7 +49,7 @@ export function LandingHeader() {
 
         <div className="flex items-center gap-3">
           {isLoading ? (
-            <Button disabled size="sm" className="gap-2">
+            <Button disabled size="sm" className="gap-2 rounded-full">
               <Loader2 className="h-4 w-4 animate-spin" />
             </Button>
           ) : isAuthenticated ? (
@@ -57,7 +57,7 @@ export function LandingHeader() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
+                className="h-9 rounded-full border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
                 asChild
               >
                 <a
@@ -70,7 +70,11 @@ export function LandingHeader() {
                   <span className="sr-only md:not-sr-only">Wesprzyj</span>
                 </a>
               </Button>
-              <Button size="sm" className="h-9" asChild>
+              <Button
+                size="sm"
+                className="h-9 rounded-full shadow-[0_0_15px_-5px_hsl(var(--primary))]"
+                asChild
+              >
                 <a href="/@me" className="flex items-center">
                   <span className="md:hidden">Lootlog</span>
                   <span className="sr-only md:not-sr-only">
@@ -80,7 +84,11 @@ export function LandingHeader() {
               </Button>
             </>
           ) : (
-            <Button size="sm" className="gap-2" onClick={handleLoginAction}>
+            <Button
+              size="sm"
+              className="gap-2 rounded-full shadow-[0_0_15px_-5px_hsl(var(--primary))]"
+              onClick={handleLoginAction}
+            >
               <LogIn className="w-4 h-4" />
               Zaloguj się
             </Button>
