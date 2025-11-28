@@ -42,23 +42,20 @@ const faqData = [
 
 export function FaqPanel() {
   return (
-    <div className="py-4">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="font-bold text-xl tracking-tight">FAQ</h3>
-      </div>
+    <div className="max-w-3xl mx-auto">
       <Accordion
         type="single"
         collapsible
         defaultValue="item-0"
-        className="w-full"
+        className="w-full space-y-4"
       >
         {faqData.map((item, index) => (
           <AccordionItem
             key={index}
             value={`item-${index}`}
-            className="border-b border-border last:border-0"
+            className="border border-white/10 bg-white/5 rounded-xl px-4 data-[state=open]:bg-white/10 transition-all duration-300"
           >
-            <AccordionTrigger className="py-4">
+            <AccordionTrigger className="py-4 text-left hover:no-underline hover:text-primary transition-colors">
               {item.question}
             </AccordionTrigger>
             <AccordionContent className="pb-4">
