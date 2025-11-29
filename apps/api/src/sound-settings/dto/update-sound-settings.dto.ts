@@ -5,7 +5,9 @@ import {
   IsUrl,
   Min,
   Max,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 class NpcTypeSoundConfigDto {
@@ -86,6 +88,8 @@ export class UpdateSoundSettingsDto {
   })
   @IsOptional()
   @IsObject()
+  @ValidateNested({ each: true })
+  @Type(() => NpcTypeSoundConfigDto)
   notificationsConfig?: Record<string, NpcTypeSoundConfigDto>;
 
   @ApiProperty({
@@ -99,6 +103,8 @@ export class UpdateSoundSettingsDto {
   })
   @IsOptional()
   @IsObject()
+  @ValidateNested({ each: true })
+  @Type(() => NpcTypeSoundConfigDto)
   detectorConfig?: Record<string, NpcTypeSoundConfigDto>;
 
   @ApiProperty({
@@ -112,5 +118,7 @@ export class UpdateSoundSettingsDto {
   })
   @IsOptional()
   @IsObject()
+  @ValidateNested({ each: true })
+  @Type(() => NpcTypeSoundConfigDto)
   timersConfig?: Record<string, NpcTypeSoundConfigDto>;
 }
