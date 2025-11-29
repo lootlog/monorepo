@@ -31,15 +31,11 @@ export class GuildTimerSettingsEntity {
 
   @Expose()
   @ApiProperty({
-    description: 'Timer filters configuration',
-    example: {
-      minLvl: 0,
-      maxLvl: 300,
-      selectedNpcTypes: ['ELITE3', 'ELITE2', 'HERO', 'TITAN'],
-      selectedColors: [],
-    },
+    description: 'Array of timer names with sound enabled',
+    example: ['Tanroth', 'Fanatyk'],
+    type: [String],
   })
-  filters: Record<string, unknown>;
+  soundEnabledTimers: string[];
 
   @Expose()
   @ApiProperty({ description: 'Creation timestamp' })

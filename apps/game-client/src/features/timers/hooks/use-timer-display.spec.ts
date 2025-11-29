@@ -4,8 +4,8 @@ import type { Timer } from "@/hooks/api/use-timers";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { useTimerDisplay } from "./use-timer-display";
 
-vi.mock("@/store/timers.store", () => ({
-  useTimersStore: () => ({
+vi.mock("@/hooks/api/use-timers-settings", () => ({
+  useUserSettings: () => ({
     timersColors: { "Dragon Boss": "red" },
     customColors: {},
     overriddenDefaultColors: {},

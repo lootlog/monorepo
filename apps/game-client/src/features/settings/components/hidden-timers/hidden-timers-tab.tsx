@@ -1,10 +1,10 @@
 import { HiddenTimers } from "@/features/settings/components/hidden-timers/hidden-timers";
 import { useState } from "react";
-import { useTimersStore } from "@/store/timers.store";
+import { useUserSettings } from "@/hooks/api/use-timers-settings";
 import { GuildSwitcher } from "@/components/guild-switcher";
 
 export const HiddenTimersTab = () => {
-  const { generalConfig } = useTimersStore();
+  const { generalConfig } = useUserSettings();
   const [selectedGuildId, setSelectedGuildId] = useState("");
 
   return (

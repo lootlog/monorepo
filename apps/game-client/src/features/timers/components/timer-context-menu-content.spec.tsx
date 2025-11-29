@@ -24,6 +24,7 @@ describe("TimerContextMenuContent", () => {
     isPending: false,
     isPinned: false,
     isHidden: false,
+    isSoundEnabled: false,
     canDelete: true,
     timersGrouping: false,
     selectedColor: "white",
@@ -39,6 +40,7 @@ describe("TimerContextMenuContent", () => {
     onHideAll: vi.fn(),
     onShow: vi.fn(),
     onShowAll: vi.fn(),
+    onToggleSound: vi.fn(),
     onReset: vi.fn(),
     onDelete: vi.fn(),
   };
@@ -82,14 +84,14 @@ describe("TimerContextMenuContent", () => {
     render(<TimerContextMenuContent {...defaultProps} isHidden={false} />);
 
     expect(screen.getByText("Ukryj")).toBeDefined();
-    expect(screen.getByText("Ukryj na wszystkich serwerach")).toBeDefined();
+    expect(screen.getByText("Ukryj wszędzie")).toBeDefined();
   });
 
   it("should show 'Pokaż' when timer is hidden", () => {
     render(<TimerContextMenuContent {...defaultProps} isHidden={true} />);
 
     expect(screen.getByText("Pokaż")).toBeDefined();
-    expect(screen.getByText("Pokaż na wszystkich serwerach")).toBeDefined();
+    expect(screen.getByText("Pokaż wszędzie")).toBeDefined();
   });
 
   it("should call onHide when hide button is clicked", async () => {
@@ -134,7 +136,7 @@ describe("TimerContextMenuContent", () => {
       />,
     );
 
-    const hideAllButton = screen.getByText("Ukryj na wszystkich serwerach");
+    const hideAllButton = screen.getByText("Ukryj wszędzie");
     await userEvent.click(hideAllButton);
 
     expect(onHideAll).toHaveBeenCalledTimes(1);
@@ -150,7 +152,7 @@ describe("TimerContextMenuContent", () => {
       />,
     );
 
-    const showAllButton = screen.getByText("Pokaż na wszystkich serwerach");
+    const showAllButton = screen.getByText("Pokaż wszędzie");
     await userEvent.click(showAllButton);
 
     expect(onShowAll).toHaveBeenCalledTimes(1);
@@ -203,20 +205,20 @@ describe("TimerContextMenuContent", () => {
   it("should show pin for all servers option", () => {
     render(<TimerContextMenuContent {...defaultProps} />);
 
-    expect(screen.getByText("Przypnij na wszystkich serwerach")).toBeDefined();
+    expect(screen.getByText("Przypnij wszędzie")).toBeDefined();
   });
 
   it("should show unpin for all servers when timer is pinned", () => {
     render(<TimerContextMenuContent {...defaultProps} isPinned={true} />);
 
-    expect(screen.getByText("Odepnij na wszystkich serwerach")).toBeDefined();
+    expect(screen.getByText("Odepnij wszędzie")).toBeDefined();
   });
 
   it("should call onPinAll when pin all button is clicked", async () => {
     const onPinAll = vi.fn();
     render(<TimerContextMenuContent {...defaultProps} onPinAll={onPinAll} />);
 
-    const pinAllButton = screen.getByText("Przypnij na wszystkich serwerach");
+    const pinAllButton = screen.getByText("Przypnij wszędzie");
     await userEvent.click(pinAllButton);
 
     expect(onPinAll).toHaveBeenCalledTimes(1);
@@ -232,7 +234,7 @@ describe("TimerContextMenuContent", () => {
       />,
     );
 
-    const unpinAllButton = screen.getByText("Odepnij na wszystkich serwerach");
+    const unpinAllButton = screen.getByText("Odepnij wszędzie");
     await userEvent.click(unpinAllButton);
 
     expect(onUnpinAll).toHaveBeenCalledTimes(1);
@@ -241,13 +243,35 @@ describe("TimerContextMenuContent", () => {
   it("should show hide on all servers option", () => {
     render(<TimerContextMenuContent {...defaultProps} />);
 
-    expect(screen.getByText("Ukryj na wszystkich serwerach")).toBeDefined();
+    expect(screen.getByText("Ukryj wszędzie")).toBeDefined();
   });
 
-  it("should have disabled sound option", () => {
-    render(<TimerContextMenuContent {...defaultProps} />);
+  it("should show 'Włącz dźwięk' when sound is not enabled", () => {
+    render(
+      <TimerContextMenuContent {...defaultProps} isSoundEnabled={false} />,
+    );
+
+    expect(screen.getByText("Włącz dźwięk")).toBeDefined();
+  });
+
+  it("should show 'Wyłącz dźwięk' when sound is enabled", () => {
+    render(<TimerContextMenuContent {...defaultProps} isSoundEnabled={true} />);
+
+    expect(screen.getByText("Wyłącz dźwięk")).toBeDefined();
+  });
+
+  it("should call onToggleSound when sound button is clicked", async () => {
+    const onToggleSound = vi.fn();
+    render(
+      <TimerContextMenuContent
+        {...defaultProps}
+        onToggleSound={onToggleSound}
+      />,
+    );
 
     const soundButton = screen.getByText("Włącz dźwięk");
-    expect(soundButton.closest("[data-disabled]")).toBeDefined();
+    await userEvent.click(soundButton);
+
+    expect(onToggleSound).toHaveBeenCalledTimes(1);
   });
 });

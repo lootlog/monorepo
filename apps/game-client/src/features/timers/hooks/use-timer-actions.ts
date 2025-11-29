@@ -2,7 +2,7 @@ import { useDeleteTimer } from "@/hooks/api/use-delete-timer";
 import { useResetTimer } from "@/hooks/api/use-reset-timer";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import type { Guild } from "@/hooks/api/use-guild";
-import { useTimersStore } from "@/store/timers.store";
+import { useUserSettings } from "@/hooks/api/use-timers-settings";
 
 export const useTimerActions = (
   timer: TimerWithTimeLeft,
@@ -18,11 +18,19 @@ export const useTimerActions = (
     unpinTimer,
     pinnedTimers,
     setTimerColor,
-  } = useTimersStore();
+    enableTimerSound,
+    disableTimerSound,
+    soundEnabledTimers,
+  } = useUserSettings({
+    guildIds: [settingsKey, "global"].filter(Boolean) as string[],
+  });
   const { mutate: resetTimer } = useResetTimer();
   const { mutate: deleteTimer } = useDeleteTimer();
 
   const isPinned = pinnedTimers[settingsKey]?.includes(timer.npc.name);
+  const isSoundEnabled = soundEnabledTimers[settingsKey]?.includes(
+    timer.npc.name,
+  );
 
   const handleHideTimer = () => {
     if (!settingsKey) return;
@@ -86,6 +94,15 @@ export const useTimerActions = (
     setTimerColor(timer.npc.name, color);
   };
 
+  const handleToggleTimerSound = () => {
+    if (!settingsKey) return;
+    if (isSoundEnabled) {
+      disableTimerSound(settingsKey, timer.npc.name);
+    } else {
+      enableTimerSound(settingsKey, timer.npc.name);
+    }
+  };
+
   const handleRestartTimer = () => {
     if (!world) return;
 
@@ -119,6 +136,7 @@ export const useTimerActions = (
 
   return {
     isPinned,
+    isSoundEnabled,
     handleHideTimer,
     handleHideTimerForAll,
     handleShowTimer,
@@ -127,6 +145,7 @@ export const useTimerActions = (
     handlePinTimerForAll,
     handleUnpinTimerForAll,
     handleTimerColorChange,
+    handleToggleTimerSound,
     handleRestartTimer,
     handleDeleteTimer,
   };

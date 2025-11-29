@@ -1,6 +1,6 @@
 import { NPC_NAMES } from "@/constants/margonem";
 import type { Timer } from "@/hooks/api/use-timers";
-import { useTimersStore } from "@/store/timers.store";
+import { useUserSettings } from "@/hooks/api/use-timers-settings";
 import { calculateTimeLeft, getTimerColorConfig } from "../utils/timer-helpers";
 
 export const useTimerDisplay = (
@@ -14,7 +14,7 @@ export const useTimerDisplay = (
     overriddenDefaultColors,
     displayConfig,
     generalConfig,
-  } = useTimersStore();
+  } = useUserSettings();
 
   const isPending = timer.isPending === true;
   const isMinSpawnTime = minTimeLeft < 0;

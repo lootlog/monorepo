@@ -23,4 +23,15 @@ export class UpdateGuildTimerSettingsDto {
   @IsArray()
   @IsString({ each: true })
   pinnedTimers?: string[];
+
+  @ApiProperty({
+    description: 'Array of timer names with sound enabled',
+    example: ['Boss Timer', 'Elite Timer'],
+    required: false,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  soundEnabledTimers?: string[];
 }

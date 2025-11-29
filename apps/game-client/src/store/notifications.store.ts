@@ -16,6 +16,7 @@ export interface NotificationSettings {
   ignoreOtherWorlds: boolean;
   autoHideTimeout?: number;
   guildIds: string[];
+  sound: boolean;
 }
 
 export type NotificationsSettings = Record<
@@ -45,6 +46,7 @@ export const recommendedSettings: NotificationsSettings = {
     ignoreOtherWorlds: false,
     autoHideTimeout: 0,
     guildIds: [],
+    sound: false,
   },
   [NpcType.HERO]: {
     show: true,
@@ -52,6 +54,7 @@ export const recommendedSettings: NotificationsSettings = {
     ignoreOtherWorlds: false,
     autoHideTimeout: 0,
     guildIds: [],
+    sound: true,
   },
   [NpcType.COLOSSUS]: {
     show: true,
@@ -59,6 +62,7 @@ export const recommendedSettings: NotificationsSettings = {
     ignoreOtherWorlds: false,
     autoHideTimeout: 0,
     guildIds: [],
+    sound: true,
   },
   [NpcType.TITAN]: {
     show: true,
@@ -66,6 +70,7 @@ export const recommendedSettings: NotificationsSettings = {
     ignoreOtherWorlds: false,
     autoHideTimeout: 0,
     guildIds: [],
+    sound: true,
   },
   message: {
     show: true,
@@ -73,6 +78,7 @@ export const recommendedSettings: NotificationsSettings = {
     ignoreOtherWorlds: false,
     autoHideTimeout: 0,
     guildIds: [],
+    sound: true,
   },
 };
 
@@ -94,7 +100,7 @@ export const useNotificationsStore = create<NotificationsState>()(
         set((state) => {
           // If notification already exists, push members to it
           const existingNotification = state.notifications.find(
-            (n) => n.notificationId === notification.notificationId
+            (n) => n.notificationId === notification.notificationId,
           );
 
           if (existingNotification) {
@@ -119,7 +125,7 @@ export const useNotificationsStore = create<NotificationsState>()(
           const existingNotificationIndex = state.notifications.findIndex(
             (n) =>
               n.npc?.id === notification.npc?.id &&
-              n.world === notification.world
+              n.world === notification.world,
           );
           if (existingNotificationIndex !== -1) {
             state.notifications[existingNotificationIndex] = notification;
@@ -140,7 +146,7 @@ export const useNotificationsStore = create<NotificationsState>()(
       removeNotification: (id: string) =>
         set((state) => ({
           notifications: state.notifications.filter(
-            (notification) => notification.notificationId !== id
+            (notification) => notification.notificationId !== id,
           ),
         })),
       removeNotificationByNpcId: (npcId: number, world?: string) =>
@@ -150,7 +156,7 @@ export const useNotificationsStore = create<NotificationsState>()(
               !(
                 notification.npc?.id === npcId &&
                 (world ? notification.world === world : true)
-              )
+              ),
           ),
         })),
     }),
@@ -162,6 +168,6 @@ export const useNotificationsStore = create<NotificationsState>()(
         notifications: state.notifications,
       }),
       version: 2,
-    }
-  )
+    },
+  ),
 );

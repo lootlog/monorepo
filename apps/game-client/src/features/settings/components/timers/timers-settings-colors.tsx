@@ -1,6 +1,7 @@
-import { useTimersStore, type CustomTimerColor } from "@/store/timers.store";
+import { useUserSettings } from "@/hooks/api/use-timers-settings";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import { FC, useState } from "react";
+import type { CustomTimerColor } from "@lootlog/types";
 import { DefaultColorItem } from "./components/default-color-item";
 import { CustomColorItem } from "./components/custom-color-item";
 import { AddColorForm } from "./components/add-color-form";
@@ -27,7 +28,7 @@ export const TimersSettingsColors: FC = () => {
     deleteDefaultColor,
     hiddenDefaultColors,
     restoreDefaultColor,
-  } = useTimersStore();
+  } = useUserSettings();
 
   const [editingDefaultColor, setEditingDefaultColor] = useState<string | null>(
     null,

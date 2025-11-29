@@ -2,7 +2,10 @@ import { Input } from "@/components/ui/input";
 import { NPC_NAMES } from "@/constants/margonem";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { cn } from "@/lib/utils";
-import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
+import {
+  DEFAULT_TIMERS_FILTERS,
+  useUserSettings,
+} from "@/hooks/api/use-timers-settings";
 import type { FC } from "react";
 import { TIMERS_COLORS } from "@/features/timers/constants/timer-colors";
 import {
@@ -54,7 +57,7 @@ export const TimersFilters: FC<TimersFiltersProps> = ({ filtersKey }) => {
     overriddenDefaultColors,
     hiddenDefaultColors,
     colorFiltersEnabled,
-  } = useTimersStore();
+  } = useUserSettings({ guildIds: [filtersKey].filter(Boolean) as string[] });
 
   const filters = timersFilters[filtersKey] || DEFAULT_TIMERS_FILTERS;
 

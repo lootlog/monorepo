@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkFiltersActive } from "./filters-utils";
-import { DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
+import { DEFAULT_TIMERS_FILTERS } from "@/hooks/api/use-timers-settings";
 import { NpcType } from "@/hooks/api/use-npcs";
 
 describe("filters-utils", () => {

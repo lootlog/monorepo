@@ -12,9 +12,9 @@ import {
 import { useGuilds } from "@/hooks/api/use-guilds";
 import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { cn } from "@/lib/utils";
-import { useTimersStore } from "@/store/timers.store";
+import { useUserSettings } from "@/hooks/api/use-timers-settings";
 import { parseMsToTime } from "@/utils/parse-ms-to-time";
-import { Loader2 } from "lucide-react";
+import { Loader2, Volume2 } from "lucide-react";
 import type { FC } from "react";
 import { useTimerActions } from "../hooks/use-timer-actions";
 import { useTimerDisplay } from "../hooks/use-timer-display";
@@ -47,7 +47,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     overriddenDefaultColors,
     hiddenDefaultColors,
     generalConfig,
-  } = useTimersStore();
+  } = useUserSettings({
+    guildIds: [settingsKey, "global"].filter(Boolean) as string[],
+  });
 
   const { data: guildPermissions } = useGuildPermissions({
     guildId: timer.guildId,
@@ -59,6 +61,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
 
   const {
     isPinned,
+    isSoundEnabled,
     handleHideTimer,
     handleHideTimerForAll,
     handleShowTimer,
@@ -67,6 +70,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
     handlePinTimerForAll,
     handleUnpinTimerForAll,
     handleTimerColorChange,
+    handleToggleTimerSound,
     handleRestartTimer,
     handleDeleteTimer,
   } = useTimerActions(
@@ -136,9 +140,9 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                 >
                   <span
                     className={cn(
-                      "ll:whitespace-nowrap ll:truncate ll:min-w-0 ll:max-w-full",
+                      "ll:whitespace-nowrap ll:truncate ll:min-w-0 ll:max-w-full ll:flex ll:items-center ll:gap-0.5",
                       {
-                        "ll:w-full ll:text-center":
+                        "ll:w-full ll:text-center ll:justify-center":
                           displayConfig.singleTimerDisplayMode === "column",
                       },
                     )}
@@ -146,6 +150,11 @@ export const SingleTimer: FC<SingleTimerProps> = ({
                       fontSize: `${displayConfig.fontSize}px`,
                     }}
                   >
+                    {isSoundEnabled && (
+                      <span className="ll:inline-flex ll:items-center">
+                        [<Volume2 className="ll:shrink-0 ll:size-3" />]
+                      </span>
+                    )}
                     {resetIndicator}
                     {shortname} {timer.npc.name} {npcDetails}
                   </span>
@@ -162,12 +171,13 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           </ContextMenuTrigger>
         </TooltipTrigger>
 
-        <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
+        <ContextMenuContent className="ll:w-40 ll:flex ll:flex-col">
           <TimerContextMenuContent
             timer={timer}
             isPending={isPending}
             isPinned={isPinned}
             isHidden={isHidden}
+            isSoundEnabled={isSoundEnabled}
             canDelete={canDelete}
             timersGrouping={generalConfig.timersGrouping}
             selectedColor={selectedColor}
@@ -183,6 +193,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             onHideAll={handleHideTimerForAll}
             onShow={handleShowTimer}
             onShowAll={handleShowTimerForAll}
+            onToggleSound={handleToggleTimerSound}
             onReset={handleRestartTimer}
             onDelete={handleDeleteTimer}
           />

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TimerColorPicker } from "./timer-color-picker";
+import { TIMERS_COLORS } from "../constants/timer-colors";
 
 describe("TimerColorPicker", () => {
   const mockCustomColors = {
@@ -42,8 +43,9 @@ describe("TimerColorPicker", () => {
   it("should render all visible default colors", () => {
     const { container } = render(<TimerColorPicker {...defaultProps} />);
 
-    const colorDivs = container.querySelectorAll(".ll\\:size-4");
-    expect(colorDivs.length).toBeGreaterThan(0);
+    const defaultColorDivs = container.querySelectorAll(".ll\\:size-3\\.5");
+    const expectedCount = Object.keys(TIMERS_COLORS).length;
+    expect(defaultColorDivs.length).toBe(expectedCount);
   });
 
   it("should not render hidden default colors", () => {
@@ -54,8 +56,8 @@ describe("TimerColorPicker", () => {
       />,
     );
 
-    const colorDivs = container.querySelectorAll(".ll\\:size-4");
-    expect(colorDivs.length).toBeLessThan(12);
+    const defaultColorDivs = container.querySelectorAll(".ll\\:size-3\\.5");
+    expect(defaultColorDivs.length).toBe(Object.keys(TIMERS_COLORS).length - 2);
   });
 
   it("should render custom colors", () => {
@@ -63,8 +65,8 @@ describe("TimerColorPicker", () => {
       <TimerColorPicker {...defaultProps} customColors={mockCustomColors} />,
     );
 
-    const colorDivs = container.querySelectorAll(".ll\\:size-4");
-    expect(colorDivs.length).toBeGreaterThan(10);
+    const customColorDivs = container.querySelectorAll(".ll\\:size-4");
+    expect(customColorDivs.length).toBe(Object.keys(mockCustomColors).length);
   });
 
   it("should call onColorChange when clicking a color", async () => {
@@ -122,7 +124,7 @@ describe("TimerColorPicker", () => {
       />,
     );
 
-    const colorDivs = container.querySelectorAll(".ll\\:size-4");
+    const colorDivs = container.querySelectorAll(".ll\\:size-3\\.5");
     const overriddenDiv = Array.from(colorDivs).find((div) => {
       const style = (div as HTMLElement).getAttribute("style");
       return style?.includes("#123456");

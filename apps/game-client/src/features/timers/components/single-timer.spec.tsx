@@ -38,8 +38,8 @@ vi.mock("@/store/global.store", () => ({
   useGlobalStore: () => ({ gameState: { world: "world1" } }),
 }));
 
-vi.mock("@/store/timers.store", () => ({
-  useTimersStore: () => ({
+vi.mock("@/hooks/api/use-timers-settings", () => ({
+  useUserSettings: () => ({
     customColors: {},
     defaultColorNames: {},
     overriddenDefaultColors: {},

@@ -63,6 +63,7 @@ export interface UserGuildTimerSettings {
   guildId: string;
   hiddenTimers: string[];
   pinnedTimers: string[];
+  soundEnabledTimers: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -92,4 +93,5 @@ export interface UpdateTimerSettingsPayload {
 export interface UpdateGuildTimerSettingsPayload {
   hiddenTimers?: string[];
   pinnedTimers?: string[];
+  soundEnabledTimers?: string[];
 }

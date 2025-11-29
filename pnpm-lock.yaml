@@ -412,9 +412,15 @@ importers:
       "@lootlog/types":
         specifier: workspace:*
         version: link:../../packages/types
+      "@radix-ui/react-accordion":
+        specifier: ^1.2.12
+        version: 1.2.12(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-avatar":
         specifier: ^1.1.10
         version: 1.1.10(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      "@radix-ui/react-collapsible":
+        specifier: ^1.1.12
+        version: 1.1.12(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       "@radix-ui/react-context-menu":
         specifier: ^2.2.16
         version: 2.2.16(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -18662,7 +18668,7 @@ snapshots:
 
   "@radix-ui/rect@1.1.1": {}
 
-  "@reduxjs/toolkit@2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0)(redux@5.0.1))(react@19.2.0)":
+  "@reduxjs/toolkit@2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)":
     dependencies:
       "@standard-schema/spec": 1.0.0
       "@standard-schema/utils": 0.3.0
@@ -24151,7 +24157,7 @@ snapshots:
 
   recharts@3.3.0(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react-is@18.3.1)(react@19.2.0)(redux@5.0.1):
     dependencies:
-      "@reduxjs/toolkit": 2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
+      "@reduxjs/toolkit": 2.9.2(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0))(react@19.2.0)
       clsx: 2.1.1
       decimal.js-light: 2.5.1
       es-toolkit: 1.41.0

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import type { UpdateTimerSettingsDto } from './dto/update-timer-settings.dto';
 import type { UpdateGuildTimerSettingsDto } from './dto/update-guild-timer-settings.dto';
@@ -194,6 +194,7 @@ export class TimerSettingsService {
     return {
       hiddenTimers: [],
       pinnedTimers: [],
+      soundEnabledTimers: [],
     };
   }
 
@@ -220,10 +221,13 @@ export class TimerSettingsService {
       (localData.hiddenTimers as Record<string, string[]>) ?? {};
     const pinnedTimers =
       (localData.pinnedTimers as Record<string, string[]>) ?? {};
+    const soundEnabledTimers =
+      (localData.soundEnabledTimers as Record<string, string[]>) ?? {};
 
     const guildIds = new Set([
       ...Object.keys(hiddenTimers),
       ...Object.keys(pinnedTimers),
+      ...Object.keys(soundEnabledTimers),
     ]);
 
     const guildSettings: Record<
@@ -231,6 +235,7 @@ export class TimerSettingsService {
       {
         hiddenTimers: string[];
         pinnedTimers: string[];
+        soundEnabledTimers: string[];
       }
     > = {};
 
@@ -238,6 +243,7 @@ export class TimerSettingsService {
       guildSettings[guildId] = {
         hiddenTimers: hiddenTimers[guildId] ?? [],
         pinnedTimers: pinnedTimers[guildId] ?? [],
+        soundEnabledTimers: soundEnabledTimers[guildId] ?? [],
       };
     }
 

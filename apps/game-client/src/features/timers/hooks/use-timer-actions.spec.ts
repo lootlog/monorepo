@@ -11,12 +11,16 @@ vi.mock("@/hooks/api/use-reset-timer", () => ({
   useResetTimer: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock("@/store/timers.store", () => ({
-  useTimersStore: () => ({
+vi.mock("@/hooks/api/use-timers-settings", () => ({
+  useUserSettings: () => ({
     hideTimer: vi.fn(),
+    revealTimer: vi.fn(),
     pinTimer: vi.fn(),
     unpinTimer: vi.fn(),
+    enableTimerSound: vi.fn(),
+    disableTimerSound: vi.fn(),
     pinnedTimers: { guild1: [] },
+    soundEnabledTimers: {},
     setTimerColor: vi.fn(),
   }),
 }));

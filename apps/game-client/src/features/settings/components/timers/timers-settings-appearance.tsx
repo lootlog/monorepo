@@ -2,11 +2,11 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useTimersStore } from "@/store/timers.store";
-import { FC } from "react";
+import { useUserSettings } from "@/hooks/api/use-timers-settings";
+import type { FC } from "react";
 
 export const TimersSettingsAppearance: FC = () => {
-  const { displayConfig, setDisplayConfig } = useTimersStore();
+  const { displayConfig, setDisplayConfig } = useUserSettings();
 
   return (
     <span className="ll:flex ll:flex-col ll:gap-3">

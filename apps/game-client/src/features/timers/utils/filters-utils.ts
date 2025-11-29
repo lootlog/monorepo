@@ -1,4 +1,4 @@
-import { DEFAULT_TIMERS_FILTERS } from "@/store/timers.store";
+import { DEFAULT_TIMERS_FILTERS } from "@/hooks/api/use-timers-settings";
 import type { NpcType } from "@/hooks/api/use-npcs";
 
 type FiltersConfig = {

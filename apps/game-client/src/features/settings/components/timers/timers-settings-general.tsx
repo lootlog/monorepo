@@ -2,18 +2,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useTimersStore } from "@/store/timers.store";
-import { FC, useState } from "react";
+import {
+  useUserSettings,
+  enableCloudSync,
+  disableCloudSync,
+} from "@/hooks/api/use-timers-settings";
+import { useQueryClient } from "@tanstack/react-query";
+import { type FC, useState } from "react";
 
 const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 
 export const TimersSettingsGeneral: FC = () => {
-  const { generalConfig, setGeneralConfig, syncEnabled, setSyncEnabled } =
-    useTimersStore();
+  const queryClient = useQueryClient();
+  const { generalConfig, setGeneralConfig, mode, updateSettings, setMode } =
+    useUserSettings();
 
   const [inputValue, setInputValue] = useState<string>(
     (generalConfig.removeTimerAfterMs / 1000).toString(),
   );
+
+  const handleSyncChange = async (checked: boolean) => {
+    if (checked) {
+      await enableCloudSync(queryClient);
+      setMode("cloud");
+      updateSettings({ syncEnabled: true });
+    } else {
+      disableCloudSync(queryClient);
+      setMode("local");
+      updateSettings({ syncEnabled: false });
+    }
+  };
 
   const handleRemoveTimerAfterMsChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -26,8 +44,8 @@ export const TimersSettingsGeneral: FC = () => {
       return;
     }
 
-    const num = parseInt(value, 10);
-    if (isNaN(num)) {
+    const num = Number.parseInt(value, 10);
+    if (Number.isNaN(num)) {
       setGeneralConfig({ ...generalConfig, removeTimerAfterMs: 0 });
       return;
     }
@@ -54,8 +72,8 @@ export const TimersSettingsGeneral: FC = () => {
           </p>
         </div>
         <Switch
-          checked={syncEnabled ?? true}
-          onCheckedChange={setSyncEnabled}
+          checked={mode === "cloud"}
+          onCheckedChange={handleSyncChange}
           id="sync-enabled"
         />
       </div>

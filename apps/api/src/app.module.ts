@@ -5,6 +5,7 @@ import { APP_CONFIG } from 'src/config/app.config';
 import { UsersModule } from './users/users.module';
 import { TimersModule } from './timers/timers.module';
 import { TimerSettingsModule } from './timer-settings/timer-settings.module';
+import { SoundSettingsModule } from './sound-settings/sound-settings.module';
 import { LootsModule } from './loots/loots.module';
 import { HealthzModule } from 'src/healthz/healthz.module';
 import { GuildsModule } from './guilds/guilds.module';
@@ -35,6 +36,7 @@ import { ReservationsModule } from './reservations/reservations.module';
     UsersModule,
     TimersModule,
     TimerSettingsModule,
+    SoundSettingsModule,
     LootsModule,
     HealthzModule,
     GuildsModule,

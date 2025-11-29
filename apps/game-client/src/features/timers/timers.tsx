@@ -2,7 +2,10 @@ import { useState } from "react";
 import { DraggableWindow } from "@/components/draggable-window";
 import { AnimatedWindow } from "@/components/animated-window";
 import { type Timer, useTimers } from "@/hooks/api/use-timers";
-import { DEFAULT_TIMERS_FILTERS, useTimersStore } from "@/store/timers.store";
+import {
+  DEFAULT_TIMERS_FILTERS,
+  useUserSettings,
+} from "@/hooks/api/use-timers-settings";
 import { useWindowsStore } from "@/store/windows.store";
 import { UnderBagTimers } from "@/features/timers/under-bag-timers";
 import { useSettingsStore } from "@/store/settings.store";
@@ -20,6 +23,7 @@ import { checkFiltersActive } from "@/features/timers/utils/filters-utils";
 import { calculateColorStatistics } from "@/features/timers/utils/color-statistics";
 import { Game } from "@/lib/game";
 import { useTimersSocket } from "@/features/timers/hooks/use-timers-socket";
+import { useTimersSound } from "@/features/timers/hooks/use-timers-sound";
 
 export type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
 
@@ -32,6 +36,7 @@ export const Timers = () => {
   const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
 
   const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
+  const guildId = guildIdByCharId[characterId];
 
   const { data: timers } = useTimers({ world: desiredWorld });
 
@@ -46,6 +51,7 @@ export const Timers = () => {
   const {
     hiddenTimers,
     pinnedTimers,
+    soundEnabledTimers,
     generalConfig,
     timerFiltersEnabled,
     toggleTimerFiltersEnabled,
@@ -60,13 +66,14 @@ export const Timers = () => {
     customColors,
     defaultColorNames,
     overriddenDefaultColors,
-  } = useTimersStore();
-
-  const guildId = guildIdByCharId[characterId];
+  } = useUserSettings({
+    guildIds: [guildId, "global"].filter(Boolean) as string[],
+  });
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
   const settingsKey = generalConfig.timersGrouping ? "global" : guildId;
+
   const filters = timersFilters[settingsKey] || DEFAULT_TIMERS_FILTERS;
 
   useTimers({ world: desiredWorld });
@@ -135,6 +142,8 @@ export const Timers = () => {
     defaultColorNames as Record<string, string>,
     overriddenDefaultColors,
   );
+
+  useTimersSound(calculatedTimers, soundEnabledTimers[settingsKey] || []);
 
   if (generalConfig.timersUnderBag && gameInterface === "ni") {
     return (

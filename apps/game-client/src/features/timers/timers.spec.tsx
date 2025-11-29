@@ -15,7 +15,13 @@ vi.mock("@/hooks/gateway/use-gateway");
 vi.mock("@/hooks/api/use-guild-permissions");
 vi.mock("@/store/global.store");
 vi.mock("@/store/windows.store");
-vi.mock("@/store/timers.store");
+vi.mock("@/hooks/api/use-timers-settings");
+vi.mock("@/hooks/use-sound-playback", () => ({
+  useSoundPlayback: () => ({
+    playSound: vi.fn(),
+    playSoundTest: vi.fn(),
+  }),
+}));
 vi.mock("@/store/settings.store");
 vi.mock("@/contexts/socket-context");
 
@@ -116,7 +122,7 @@ describe("Timers Component", () => {
     );
     const { useGlobalStore } = await import("@/store/global.store");
     const { useWindowsStore } = await import("@/store/windows.store");
-    const { useTimersStore } = await import("@/store/timers.store");
+    const { useUserSettings } = await import("@/hooks/api/use-timers-settings");
     const { useSettingsStore } = await import("@/store/settings.store");
     const { useTimersUpdate } = await import("./hooks/use-timers-update");
     const { useTimersFiltering } = await import("./hooks/use-timers-filtering");
@@ -144,13 +150,15 @@ describe("Timers Component", () => {
       toggleOpen: mockToggleOpen,
       setOpen: mockSetOpen,
     });
-    vi.mocked(useTimersStore).mockReturnValue({
+    vi.mocked(useUserSettings).mockReturnValue({
       hiddenTimers: {},
       pinnedTimers: {},
+      soundEnabledTimers: {},
       generalConfig: {
         timersGrouping: false,
         timersUnderBag: false,
         removeTimerAfterMs: 600000,
+        countdownMode: "max",
       },
       timerFiltersEnabled: false,
       toggleTimerFiltersEnabled: mockToggleTimerFiltersEnabled,
@@ -171,7 +179,7 @@ describe("Timers Component", () => {
       customColors: {},
       defaultColorNames: {},
       overriddenDefaultColors: {},
-    });
+    } as unknown as ReturnType<typeof useUserSettings>);
     vi.mocked(useSettingsStore).mockReturnValue({
       world: "world1",
       allowWorldSelection: false,
@@ -299,7 +307,9 @@ describe("Timers Component", () => {
 
     it("7.2 should merge timers from different guilds when grouping is ON (HIGH PRIORITY)", async () => {
       const { useTimers } = await import("@/hooks/api/use-timers");
-      const { useTimersStore } = await import("@/store/timers.store");
+      const { useUserSettings } = await import(
+        "@/hooks/api/use-timers-settings"
+      );
 
       const timersFromDifferentGuilds = [
         createMockTimer({
@@ -322,14 +332,16 @@ describe("Timers Component", () => {
         error: null,
       } as ReturnType<typeof useTimers>);
 
-      vi.mocked(useTimersStore).mockReturnValue({
+      vi.mocked(useUserSettings).mockReturnValue({
         generalConfig: {
           timersGrouping: true,
           timersUnderBag: false,
           removeTimerAfterMs: 600000,
+          countdownMode: "max",
         },
         hiddenTimers: {},
         pinnedTimers: {},
+        soundEnabledTimers: {},
         timerFiltersEnabled: false,
         toggleTimerFiltersEnabled: mockToggleTimerFiltersEnabled,
         colorFiltersEnabled: false,
@@ -349,7 +361,7 @@ describe("Timers Component", () => {
         customColors: {},
         defaultColorNames: {},
         overriddenDefaultColors: {},
-      });
+      } as unknown as ReturnType<typeof useUserSettings>);
 
       render(<Timers />);
 

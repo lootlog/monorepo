@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FC } from "react";
+import type { FC } from "react";
 import { TimersSettingsAppearance } from "@/features/settings/components/timers/timers-settings-appearance";
 import { TimersSettingsGeneral } from "@/features/settings/components/timers/timers-settings-general";
 import { TimersSettingsColors } from "@/features/settings/components/timers/timers-settings-colors";

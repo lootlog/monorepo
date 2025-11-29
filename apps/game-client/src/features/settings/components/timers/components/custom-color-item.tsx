@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Tile } from "@/components/ui/tile";
-import type { CustomTimerColor } from "@/store/timers.store";
+import type { CustomTimerColor } from "@lootlog/types";
 import { Edit2, Trash2 } from "lucide-react";
 import type { FC } from "react";
 import { ColorEditForm } from "./color-edit-form";
