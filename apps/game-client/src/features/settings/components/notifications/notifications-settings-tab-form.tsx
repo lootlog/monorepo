@@ -44,6 +44,7 @@ const FormSchema = z.object({
       ignoreOtherWorlds: z.boolean(),
       autoHideTimeout: z.number().min(0).optional(),
       guildIds: z.array(z.string()),
+      sound: z.boolean(),
     }),
   ),
 });
@@ -151,6 +152,13 @@ export const NotificationsSettingsTabForm: FC<
           {...register(`settingsByNpcType.${field.key}.highlight`)}
         >
           Podświetlenie
+        </Checkbox>
+        <Checkbox
+          id={`${field.key}-sound`}
+          disabled={!watchShow}
+          {...register(`settingsByNpcType.${field.key}.sound`)}
+        >
+          Powiadom dźwiękiem
         </Checkbox>
         <div className="ll:mt-2">
           <Label>Auto ukrywanie: (sekundy)</Label>

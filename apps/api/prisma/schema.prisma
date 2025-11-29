@@ -450,3 +450,19 @@ model UserGuildTimerSettings {
   @@index([userId])
   @@index([guildId])
 }
+
+model UserSoundSettings {
+  id                  Int      @id @default(autoincrement())
+  userId              String   @unique
+  masterVolume        Float    @default(0.5)
+  notificationsVolume Float    @default(0.5)
+  detectorVolume      Float    @default(0.5)
+  timersVolume        Float    @default(0.5)
+  notificationsConfig Json     @default("{}")
+  detectorConfig      Json     @default("{}")
+  timersConfig        Json     @default("{}")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+}
