@@ -18,7 +18,7 @@
     "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@types/node": "^24.9.1",
+    "@types/node": "^24.10.1",
     "dotenv": "^17.2.3",
     "tsx": "^4.20.6"
   }
