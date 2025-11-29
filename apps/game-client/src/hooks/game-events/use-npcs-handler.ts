@@ -1,14 +1,15 @@
-import type { NpcType } from "@/hooks/api/use-npcs";
 import {
   composeNpcFromEvent,
   composeNpcFromGame,
 } from "@/hooks/game-events/helpers/npc.helpers";
 import type { EventNpc, ProcessedNpcSettings } from "@/hooks/game-events/types";
 import { useMessagingHandlers } from "@/hooks/game-events/use-messaging-handlers";
+import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { Game } from "@/lib/game";
 import {
   type DetectorNpcType,
   type GameNpcWithLocation,
+  type NpcDetectorSettingByNpc,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
@@ -22,6 +23,7 @@ export const useNpcsHandlers = () => {
   const { addNpc } = useNpcDetectorStore();
   const { setOpen } = useWindowsStore();
   const { handleSendMessage, handleSendNotification } = useMessagingHandlers();
+  const { playSound } = useSoundPlayback();
 
   const handleNpcDetection = (event: GameEvent) => {
     if (!event.npcs?.length) return;
@@ -49,6 +51,8 @@ export const useNpcsHandlers = () => {
           guildIds: processedSettings.guildIds,
           autoSendMessage: processedSettings.autoSendMessage,
           autoSendNotification: processedSettings.autoSendNotification,
+          npcType,
+          detectorSettings: processedSettings.settings,
         });
 
         acc.push(composedNpc);
@@ -84,6 +88,8 @@ export const useNpcsHandlers = () => {
           guildIds: processedSettings.guildIds,
           autoSendMessage: processedSettings.autoSendMessage,
           autoSendNotification: processedSettings.autoSendNotification,
+          npcType,
+          detectorSettings: processedSettings.settings,
         });
 
         acc.push(composedNpc);
@@ -157,11 +163,15 @@ export const useNpcsHandlers = () => {
     guildIds,
     autoSendMessage,
     autoSendNotification,
+    npcType,
+    detectorSettings,
   }: {
     composedNpc: GameNpcWithLocation;
     guildIds: string[];
     autoSendMessage: boolean;
     autoSendNotification: boolean;
+    npcType: DetectorNpcType;
+    detectorSettings: NpcDetectorSettingByNpc;
   }) => {
     if (autoSendMessage) {
       handleSendMessage(guildIds, composedNpc);
@@ -169,6 +179,10 @@ export const useNpcsHandlers = () => {
 
     if (autoSendNotification) {
       handleSendNotification(composedNpc, guildIds);
+    }
+
+    if (detectorSettings.notifySound) {
+      playSound("detector", npcType);
     }
   };
 

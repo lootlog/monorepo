@@ -162,7 +162,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
           </ContextMenuTrigger>
         </TooltipTrigger>
 
-        <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
+        <ContextMenuContent className="ll:w-40 ll:flex ll:flex-col">
           <TimerContextMenuContent
             timer={timer}
             isPending={isPending}
