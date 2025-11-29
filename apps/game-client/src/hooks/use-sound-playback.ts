@@ -43,7 +43,10 @@ export const useSoundPlayback = () => {
       }
 
       const soundConfig = settings[`${category}Config`]?.[key];
-      const soundUrl = soundConfig?.soundUrl || DEFAULT_SOUND_URLS[key];
+      const soundUrl =
+        soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
+          ? DEFAULT_SOUND_URLS[key]
+          : soundConfig.soundUrl;
 
       if (!soundUrl) {
         return;
@@ -81,7 +84,10 @@ export const useSoundPlayback = () => {
 
       const soundConfig = settings[`${category}Config`]?.[key];
       const soundUrl =
-        customSoundUrl || soundConfig?.soundUrl || DEFAULT_SOUND_URLS[key];
+        customSoundUrl ||
+        (soundConfig?.soundUrl === "" || !soundConfig?.soundUrl
+          ? DEFAULT_SOUND_URLS[key]
+          : soundConfig.soundUrl);
 
       if (!soundUrl) {
         return;
