@@ -1,7 +1,16 @@
 import { ContextMenuItem } from "@/components/ui/context-menu";
 import { DeleteTimerPopover } from "@/components/delete-timer-popover";
 import type { TimerWithTimeLeft } from "@/features/timers/utils/timers-utils";
-import { Loader2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Globe,
+  Loader2,
+  Pin,
+  PinOff,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import type { FC } from "react";
 import { TimerColorPicker } from "./timer-color-picker";
 
@@ -83,33 +92,52 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         hiddenDefaultColors={hiddenDefaultColors}
         onColorChange={onColorChange}
       />
-      <ContextMenuItem onClick={onPin}>
+      <ContextMenuItem onClick={onPin} className="ll:mt-1">
+        {isPinned ? (
+          <PinOff className="ll:h-4 ll:w-4 ll:mr-2" />
+        ) : (
+          <Pin className="ll:h-4 ll:w-4 ll:mr-2" />
+        )}
         {isPinned ? "Odepnij" : "Przypnij"}
       </ContextMenuItem>
       <ContextMenuItem onClick={isPinned ? onUnpinAll : onPinAll}>
-        {isPinned
-          ? "Odepnij na wszystkich serwerach"
-          : "Przypnij na wszystkich serwerach"}
+        <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
+        {isPinned ? "Odepnij wszędzie" : "Przypnij wszędzie"}
       </ContextMenuItem>
       <ContextMenuItem onClick={isHidden ? onShow : onHide}>
+        {isHidden ? (
+          <Eye className="ll:h-4 ll:w-4 ll:mr-2" />
+        ) : (
+          <EyeOff className="ll:h-4 ll:w-4 ll:mr-2" />
+        )}
         {isHidden ? "Pokaż" : "Ukryj"}
       </ContextMenuItem>
       <ContextMenuItem onClick={isHidden ? onShowAll : onHideAll}>
-        {isHidden
-          ? "Pokaż na wszystkich serwerach"
-          : "Ukryj na wszystkich serwerach"}
+        <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
+        {isHidden ? "Pokaż wszędzie" : "Ukryj wszędzie"}
       </ContextMenuItem>
-      <ContextMenuItem onClick={onReset}>Odliczaj od początku</ContextMenuItem>
+      <ContextMenuItem onClick={onReset}>
+        <RotateCcw className="ll:h-4 ll:w-4 ll:mr-2" />
+        Odliczaj od początku
+      </ContextMenuItem>
+      {/* <ContextMenuItem onClick={onToggleSound}>
+        {isSoundEnabled ? (
+          <VolumeOff className="ll:h-4 ll:w-4 ll:mr-2" />
+        ) : (
+          <Volume2 className="ll:h-4 ll:w-4 ll:mr-2" />
+        )}
+        {isSoundEnabled ? "Wyłącz dźwięk" : "Włącz dźwięk"}
+      </ContextMenuItem> */}
       {timersGrouping ? (
         <DeleteTimerPopover timer={timer} onDeleteTimer={onDelete} />
       ) : (
         canDelete && (
           <ContextMenuItem onClick={() => onDelete(timer.guildId, timer.npcId)}>
+            <Trash2 className="ll:h-4 ll:w-4 ll:mr-2" />
             Usuń timer
           </ContextMenuItem>
         )
       )}
-      <ContextMenuItem disabled>Włącz dźwięk</ContextMenuItem>
     </>
   );
 };
