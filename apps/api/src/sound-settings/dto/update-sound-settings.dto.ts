@@ -2,19 +2,18 @@ import {
   IsOptional,
   IsNumber,
   IsObject,
-  IsUrl,
   Min,
   Max,
   ValidateNested,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 class NpcTypeSoundConfigDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Volume for this NPC type (0.0 to 1.0)',
     example: 0.5,
-    required: false,
   })
   @IsOptional()
   @IsNumber()
@@ -22,21 +21,51 @@ class NpcTypeSoundConfigDto {
   @Max(1)
   volume?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Custom sound URL for this NPC type',
     example: 'https://example.com/sound.mp3',
-    required: false,
   })
   @IsOptional()
   @IsUrl({}, { message: 'soundUrl must be a valid URL' })
   soundUrl?: string;
 }
 
+class SoundConfigMapDto {
+  @ApiPropertyOptional({ type: () => NpcTypeSoundConfigDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NpcTypeSoundConfigDto)
+  ELITE2?: NpcTypeSoundConfigDto;
+
+  @ApiPropertyOptional({ type: () => NpcTypeSoundConfigDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NpcTypeSoundConfigDto)
+  HERO?: NpcTypeSoundConfigDto;
+
+  @ApiPropertyOptional({ type: () => NpcTypeSoundConfigDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NpcTypeSoundConfigDto)
+  TITAN?: NpcTypeSoundConfigDto;
+
+  @ApiPropertyOptional({ type: () => NpcTypeSoundConfigDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NpcTypeSoundConfigDto)
+  COLOSSUS?: NpcTypeSoundConfigDto;
+
+  @ApiPropertyOptional({ type: () => NpcTypeSoundConfigDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NpcTypeSoundConfigDto)
+  message?: NpcTypeSoundConfigDto;
+}
+
 export class UpdateSoundSettingsDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Master volume (0.0 to 1.0)',
     example: 0.5,
-    required: false,
   })
   @IsOptional()
   @IsNumber()
@@ -44,10 +73,9 @@ export class UpdateSoundSettingsDto {
   @Max(1)
   masterVolume?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Notifications volume (0.0 to 1.0)',
     example: 0.5,
-    required: false,
   })
   @IsOptional()
   @IsNumber()
@@ -55,10 +83,9 @@ export class UpdateSoundSettingsDto {
   @Max(1)
   notificationsVolume?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Detector volume (0.0 to 1.0)',
     example: 0.5,
-    required: false,
   })
   @IsOptional()
   @IsNumber()
@@ -66,10 +93,9 @@ export class UpdateSoundSettingsDto {
   @Max(1)
   detectorVolume?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Timers volume (0.0 to 1.0)',
     example: 0.5,
-    required: false,
   })
   @IsOptional()
   @IsNumber()
@@ -77,48 +103,48 @@ export class UpdateSoundSettingsDto {
   @Max(1)
   timersVolume?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Sound configuration for notifications',
+    type: () => SoundConfigMapDto,
     example: {
       ELITE2: { volume: 0.3, soundUrl: '' },
       HERO: { volume: 0.5, soundUrl: '' },
       message: { volume: 0.5, soundUrl: '' },
     },
-    required: false,
   })
   @IsOptional()
   @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => NpcTypeSoundConfigDto)
-  notificationsConfig?: Record<string, NpcTypeSoundConfigDto>;
+  @ValidateNested()
+  @Type(() => SoundConfigMapDto)
+  notificationsConfig?: SoundConfigMapDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Sound configuration for detector',
+    type: () => SoundConfigMapDto,
     example: {
-      ELITE2: { volume: 0.3, soundUrl: '' },
+      ELITE2: { volume: 0.5, soundUrl: '' },
       HERO: { volume: 0.5, soundUrl: '' },
       TITAN: { volume: 1.0, soundUrl: '' },
     },
-    required: false,
   })
   @IsOptional()
   @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => NpcTypeSoundConfigDto)
-  detectorConfig?: Record<string, NpcTypeSoundConfigDto>;
+  @ValidateNested()
+  @Type(() => SoundConfigMapDto)
+  detectorConfig?: SoundConfigMapDto;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Sound configuration for timers',
+    type: () => SoundConfigMapDto,
     example: {
       ELITE2: { volume: 0.3, soundUrl: '' },
       HERO: { volume: 0.5, soundUrl: '' },
       TITAN: { volume: 1.0, soundUrl: '' },
     },
-    required: false,
   })
   @IsOptional()
   @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => NpcTypeSoundConfigDto)
-  timersConfig?: Record<string, NpcTypeSoundConfigDto>;
+  @ValidateNested()
+  @Type(() => SoundConfigMapDto)
+  timersConfig?: SoundConfigMapDto;
 }
