@@ -11,7 +11,6 @@ export const useTimersCache = () => {
 
   const upsertTimer = useCallback(
     (timer: Timer) => {
-      console.log("[CACHE] timer:upsert", timer);
       if (!timer.world) return;
 
       queryClient.setQueryData<Timer[]>(timersKey(timer.world), (old = []) => {
@@ -40,7 +39,6 @@ export const useTimersCache = () => {
 
   const removeTimer = useCallback(
     (timer: TimerIdentity) => {
-      console.log("[CACHE] timer:delete", timer);
       if (!timer.world) return;
 
       queryClient.setQueryData<Timer[]>(timersKey(timer.world), (old = []) =>

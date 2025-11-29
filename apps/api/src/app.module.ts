@@ -22,6 +22,7 @@ import { DiscordModule } from './discord/discord.module';
 import { AuthModule } from './auth/auth.module';
 import { LoggerMiddleware } from 'src/shared/middleware/logger.middleware';
 import { ReservationsModule } from './reservations/reservations.module';
+import { SoundSettingsModule } from 'src/sound-settings/sound-settings.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { ReservationsModule } from './reservations/reservations.module';
     NotificationsModule,
     DiscordModule,
     AuthModule,
+    SoundSettingsModule,
   ],
   controllers: [],
   providers: [],

@@ -49,7 +49,7 @@ export const TimerColorPicker: FC<TimerColorPickerProps> = ({
               <TooltipTrigger asChild>
                 <div
                   className={cn(
-                    "ll:size-4 ll:rounded-md ll:box-border ll:border ll-custom-cursor-pointer",
+                    "ll:size-3.5 ll:rounded-full ll:box-border ll:border ll-custom-cursor-pointer",
                     !overridden && color?.bgNoOpacity,
                     !overridden && color?.border,
                     {
