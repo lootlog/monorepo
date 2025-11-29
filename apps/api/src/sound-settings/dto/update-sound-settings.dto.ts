@@ -6,6 +6,7 @@ import {
   Max,
   ValidateNested,
   IsUrl,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -22,10 +23,12 @@ class NpcTypeSoundConfigDto {
   volume?: number;
 
   @ApiPropertyOptional({
-    description: 'Custom sound URL for this NPC type',
+    description:
+      'Custom sound URL for this NPC type (empty string to use default)',
     example: 'https://example.com/sound.mp3',
   })
   @IsOptional()
+  @ValidateIf((o) => o.soundUrl !== '')
   @IsUrl({}, { message: 'soundUrl must be a valid URL' })
   soundUrl?: string;
 }
