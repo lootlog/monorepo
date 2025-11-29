@@ -27,10 +27,10 @@ const Slider = React.forwardRef<
       formatEndpoint,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [internalValue, setInternalValue] = React.useState<number[]>(
-      (value as number[]) || (defaultValue as number[]) || [0]
+      (value as number[]) || (defaultValue as number[]) || [0],
     );
 
     React.useEffect(() => {
@@ -73,33 +73,33 @@ const Slider = React.forwardRef<
           onValueChange={handleValueChange}
           className={cn(
             "ll:relative ll:flex ll:w-full ll:touch-none ll:select-none ll:items-center",
-            className
+            className,
           )}
           {...props}
         >
-          <SliderPrimitive.Track className="ll:relative ll:h-1.5 ll:w-full ll:grow ll:overflow-hidden ll:rounded-full ll:bg-primary/40">
-            <SliderPrimitive.Range className="ll:absolute ll:h-full ll:bg-primary" />
+          <SliderPrimitive.Track className="ll:relative ll:h-1.5 ll:w-full ll:grow ll:overflow-hidden ll:rounded-full ll:bg-purple-950/40 ll:border ll:border-purple-900/50">
+            <SliderPrimitive.Range className="ll:absolute ll:h-full ll:bg-purple-500" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb
             onPointerDown={thumbPointerDown}
-            className="ll:relative ll:flex ll:items-center ll:justify-center ll:h-4 ll:w-4 ll:rounded-full ll:border ll:border-primary/50 ll:bg-ring ll:shadow ll:transition-colors ll:focus-visible:outline-none ll:focus-visible:ring-1 ll:ring-ring ll:disabled:pointer-events-none ll:disabled:opacity-50"
+            className="ll:relative ll:flex ll:items-center ll:justify-center ll:h-3.5 ll:w-2.5 ll:rounded-full ll:border ll:border-purple-300 ll:bg-purple-100 ll:shadow-[0_0_8px_rgba(168,85,247,0.4)] ll:transition-transform ll:hover:scale-110 ll:focus-visible:outline-none ll:focus-visible:ring-1 ll:focus-visible:ring-purple-400 ll:focus-visible:ring-offset-1 ll:focus-visible:ring-offset-purple-950 ll:disabled:pointer-events-none ll:disabled:opacity-50 ll-custom-cursor-pointer"
           >
             {showValue && dragging && (
-              <span className="ll:absolute ll:-top-5 ll:left-1/2 ll:-translate-x-1/2 ll:select-none ll:text-[10px] ll:leading-none ll:rounded ll:bg-black/70 ll:px-1 ll:py-[1px] ll:text-white ll:pointer-events-none">
+              <span className="ll:absolute ll:-top-5 ll:left-1/2 ll:-translate-x-1/2 ll:select-none ll:text-[9px] ll:font-medium ll:leading-none ll:rounded ll:bg-purple-600 ll:px-1 ll:py-0.5 ll:text-white ll:shadow-sm ll:pointer-events-none">
                 {display}
               </span>
             )}
           </SliderPrimitive.Thumb>
         </SliderPrimitive.Root>
         {showEndpoints && (
-          <span className="ll:mb-1 ll:flex ll:justify-between ll:text-[10px] ll:text-muted-foreground">
+          <span className="ll:mt-1 ll:flex ll:justify-between ll:text-[9px] ll:font-medium ll:text-purple-300/70">
             <span>{renderEndpoint(min, "min")}</span>
             <span>{renderEndpoint(max, "max")}</span>
           </span>
         )}
       </div>
     );
-  }
+  },
 );
 Slider.displayName = SliderPrimitive.Root.displayName;
 
