@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@lootlog/ui/components/button";
+import { Cookie } from "lucide-react";
 
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
@@ -21,24 +22,37 @@ export function CookieConsent() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-background/95 backdrop-blur-lg border border-white/10 rounded-lg p-4 shadow-2xl">
-        <p className="text-sm text-gray-300 mb-3">
-          Używamy plików cookie do zapamiętywania preferencji i poprawy
-          działania strony.
-        </p>
-        <div className="flex gap-2">
-          <Button onClick={acceptCookies} size="sm" className="flex-1">
-            Akceptuję
-          </Button>
-          <Button
-            onClick={() => setIsVisible(false)}
-            variant="ghost"
-            size="sm"
-            className="flex-1"
-          >
-            Odrzuć
-          </Button>
+    <div className="fixed bottom-6 left-6 z-50 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="w-full max-w-md p-6 rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl shadow-black/50">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">
+            <Cookie className="w-6 h-6" />
+          </div>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-bold text-foreground mb-1">Ciasteczka? 🍪</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Używamy plików cookie, aby zapewnić Ci najlepsze doświadczenia.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={acceptCookies}
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+              >
+                Akceptuję
+              </Button>
+              <Button
+                onClick={() => setIsVisible(false)}
+                variant="outline"
+                size="sm"
+                className="border-white/10 hover:bg-white/5 hover:text-foreground"
+              >
+                Odrzuć
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
