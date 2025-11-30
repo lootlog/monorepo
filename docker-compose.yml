@@ -16,7 +16,7 @@ services:
     image: postgres:17-alpine
     container_name: "lootlog-users-db"
     restart: always
-    shm_size: 128mb
+    shm_size: 256mb
     volumes:
       - lootlog-users-db:/var/lib/postgresql/data
     environment:
@@ -36,7 +36,7 @@ services:
     image: postgres:17-alpine
     container_name: "lootlog-db"
     restart: always
-    shm_size: 128mb
+    shm_size: 256mb
     volumes:
       - lootlog-db:/var/lib/postgresql/data
     environment:
@@ -56,7 +56,7 @@ services:
     image: postgres:17-alpine
     container_name: "battle-log-db"
     restart: always
-    shm_size: 128mb
+    shm_size: 256mb
     volumes:
       - battle-log-db:/var/lib/postgresql/data
     environment:
@@ -76,7 +76,7 @@ services:
     image: timescale/timescaledb:latest-pg17
     container_name: "activity-log-db"
     restart: always
-    shm_size: 128mb
+    shm_size: 512mb
     volumes:
       - activity-log-db:/var/lib/postgresql/data
     environment:

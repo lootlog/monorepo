@@ -3,7 +3,7 @@ import { RuntimeEnvironment } from '@lootlog/types';
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      PORT: number;
+      PORT: string;
       ENV: RuntimeEnvironment;
       SERVICE_NAME: string;
       APP_VERSION: string;
