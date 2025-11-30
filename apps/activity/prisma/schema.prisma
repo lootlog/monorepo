@@ -1,0 +1,29 @@
+generator client {
+  provider   = "prisma-client"
+  output     = "./generated"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  MESSAGE_SENT
+  MESSAGE_DELETED
+  REACTION_ADDED
+  REACTION_REMOVED
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  userId    String
+  discordId String
+  type      ActivityType
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

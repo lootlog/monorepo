@@ -1,5 +1,6 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { PrismaClient, Prisma } from 'generated/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Prisma, PrismaClient } from 'prisma/generated/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -7,14 +8,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly SLOW_QUERY_THRESHOLD_MS = 100;
 
   constructor() {
+    const pool = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+
     super({
-      log: [
-        { emit: 'event', level: 'query' },
-        { emit: 'stdout', level: 'info' },
-        { emit: 'stdout', level: 'warn' },
-        { emit: 'stdout', level: 'error' },
-      ],
-      errorFormat: 'colorless',
+      adapter: pool,
     });
 
     this.$on('query', (event: Prisma.QueryEvent) => {
