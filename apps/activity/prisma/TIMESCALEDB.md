@@ -137,7 +137,7 @@ SELECT add_continuous_aggregate_policy('activity_hourly',
 To use TimescaleDB in development, update `docker-compose.yml`:
 
 ```yaml
-activity-db:
+activity-log-db:
   image: timescale/timescaledb:latest-pg17
   environment:
     POSTGRES_USER: activity_user
@@ -146,7 +146,7 @@ activity-db:
   ports:
     - "5435:5432"
   volumes:
-    - activity-db-data:/var/lib/postgresql/data
+    - activity-log-db:/var/lib/postgresql/data
 ```
 
 ## Performance Benefits
