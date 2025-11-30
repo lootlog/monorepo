@@ -4,4 +4,5 @@ export enum ConfigKey {
   WINSTON = 'winston',
   REDIS = 'redis',
   SWAGGER = 'swagger',
+  API_SERVICE = 'apiService',
 }

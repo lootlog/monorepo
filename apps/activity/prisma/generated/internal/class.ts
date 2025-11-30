@@ -19,7 +19,7 @@ const config: runtime.GetPrismaClientConfig = {
   engineVersion: 'f09f2815f091dbba658cdcd2264306d88bb5bda6',
   activeProvider: 'postgresql',
   inlineSchema:
-    'generator client {\n  provider     = "prisma-client"\n  output       = "./generated"\n  moduleFormat = "cjs"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nenum ActivityType {\n  LOGIN\n  LOGOUT\n  MESSAGE_SENT\n  MESSAGE_DELETED\n  REACTION_ADDED\n  REACTION_REMOVED\n}\n\nmodel Activity {\n  id        String       @id @default(cuid())\n  userId    String\n  discordId String\n  type      ActivityType\n  details   String?\n  createdAt DateTime     @default(now())\n\n  @@index([userId])\n}\n',
+    'generator client {\n  provider = "prisma-client"\n  output   = "./generated"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nenum ActivityType {\n  LOGIN\n  LOGOUT\n  MESSAGE_SENT\n  MESSAGE_DELETED\n  REACTION_ADDED\n  REACTION_REMOVED\n}\n\nmodel Activity {\n  id        String       @id @default(cuid())\n  userId    String\n  discordId String\n  type      ActivityType\n  details   String?\n  createdAt DateTime     @default(now())\n\n  @@index([userId])\n}\n',
   runtimeDataModel: {
     models: {},
     enums: {},

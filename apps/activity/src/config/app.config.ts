@@ -1,6 +1,7 @@
 import { RuntimeEnvironment } from '@lootlog/types';
 import type { ConfigModuleOptions } from '@nestjs/config';
 import * as Joi from 'joi';
+import apiServiceConfig from 'src/config/api-service.config';
 import rabbitmqConfig from 'src/config/rabbitmq.config';
 import redisConfig from 'src/config/redis.config';
 import serviceConfig from 'src/config/service.config';
@@ -16,6 +17,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     winstonConfig,
     redisConfig,
     swaggerConfig,
+    apiServiceConfig,
   ],
   cache: true,
   validationSchema: Joi.object({
