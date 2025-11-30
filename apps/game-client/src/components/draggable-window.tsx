@@ -171,14 +171,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   return (
     <div
-      className="ll:pointer-events-auto ll:absolute ll:will-change-transform"
+      className="ll:pointer-events-auto ll:absolute"
       ref={draggableRef}
       style={{
         ...style,
         maxHeight,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+        top: position.y,
+        left: position.x,
         zIndex,
         cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
       }}
