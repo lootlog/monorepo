@@ -19,15 +19,15 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@golevelup/nestjs-rabbitmq": "^6.0.2",
-    "@nestjs/common": "^11.1.8",
+    "@golevelup/nestjs-rabbitmq": "^6.1.0",
+    "@nestjs/common": "^11.1.9",
     "@nestjs/config": "^4.0.2",
-    "@nestjs/core": "^11.1.8",
-    "@nestjs/microservices": "^11.1.8",
-    "@nestjs/platform-express": "^11.1.8",
-    "discord.js": "^14.24.0",
-    "joi": "^18.0.1",
-    "necord": "^6.11.1",
+    "@nestjs/core": "^11.1.9",
+    "@nestjs/microservices": "^11.1.9",
+    "@nestjs/platform-express": "^11.1.9",
+    "discord.js": "^14.25.1",
+    "joi": "^18.0.2",
+    "necord": "^6.11.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
