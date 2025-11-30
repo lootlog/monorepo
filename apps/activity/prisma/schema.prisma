@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "./generated"
+  provider        = "prisma-client"
+  output          = "./generated"
+  previewFeatures = ["views"]
 }
 
 datasource db {
@@ -8,21 +9,106 @@ datasource db {
 }
 
 enum ActivityType {
-  LOGIN
-  LOGOUT
-  MESSAGE_SENT
-  MESSAGE_DELETED
-  REACTION_ADDED
-  REACTION_REMOVED
+  LOOT_EVENT
+  TIMER_EVENT
+  CONNECT_EVENT
+  DISCONNECT_EVENT
 }
 
+enum ActivitySource {
+  GAME
+  WEB_APP
+}
+
+// TimescaleDB-ready: after migration, convert to hypertable with e.g.:
+// SELECT create_hypertable('"Activity"', 'createdAt', chunk_time_interval => INTERVAL '7 days');
 model Activity {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   userId    String
+  guildId   String
   discordId String
   type      ActivityType
-  details   String?
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now()) @db.Timestamptz
 
-  @@index([userId])
+  // Where the event originated from (game client or web app)
+  source    ActivitySource
+
+  // Optional generic payload for future extensions
+  details   Json?
+
+  // Snapshot of the actor at the moment of the event
+  actorSnapshotId String?
+  actorSnapshot   ActivityActorSnapshot? @relation("ActivityActorSnapshot_Activity", fields: [actorSnapshotId], references: [id])
+
+  // Context for loot events (itemNames, npcNames + actor snapshot)
+  lootContextId String?
+  lootContext   ActivityLootContext? @relation("Activity_LootContext")
+
+  // Context for timer events (npcName + actor snapshot)
+  timerContextId String?
+  timerContext   ActivityTimerContext? @relation("Activity_TimerContext")
+
+  @@index([createdAt(sort: Desc), guildId])
+  @@index([createdAt(sort: Desc), userId])
+  @@index([createdAt(sort: Desc), type])
+  @@index([guildId, createdAt(sort: Desc)])
+}
+
+// Snapshot of a character/account state at the time of the event.
+// This is deduplicated by `fingerprint`, so multiple events can reuse the same snapshot.
+model ActivityActorSnapshot {
+  id          String   @id @default(cuid())
+
+  accountId   String?
+  characterId String?
+  clanName    String?
+  icon        String?
+  lvl         Int?
+  // You can change this to your own enum (e.g. Profession) if you want
+  prof        String?
+
+  source      ActivitySource
+
+  // Hash built from (accountId, characterId, clanName, icon, lvl, prof, source)
+  // used to deduplicate identical snapshots
+  fingerprint String   @unique
+
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  // Many activities may reference the same snapshot
+  activities    Activity[]              @relation("ActivityActorSnapshot_Activity")
+  lootContexts  ActivityLootContext[]
+  timerContexts ActivityTimerContext[]
+}
+
+// Context for LOOT_EVENT:
+// - itemNames[]
+// - npcNames[]
+// - actor snapshot at the time of the loot
+model ActivityLootContext {
+  id String @id @default(cuid())
+
+  actorSnapshotId String
+  actorSnapshot   ActivityActorSnapshot @relation(fields: [actorSnapshotId], references: [id])
+
+  itemNames String[] @db.Text
+  npcNames  String[] @db.Text
+
+  activity   Activity? @relation("Activity_LootContext", fields: [activityId], references: [id])
+  activityId String?   @unique
+}
+
+// Context for TIMER_EVENT:
+// - npcName
+// - actor snapshot at the time of the timer event
+model ActivityTimerContext {
+  id String @id @default(cuid())
+
+  actorSnapshotId String
+  actorSnapshot   ActivityActorSnapshot @relation(fields: [actorSnapshotId], references: [id])
+
+  npcName String @db.Text
+
+  activity   Activity? @relation("Activity_TimerContext", fields: [activityId], references: [id])
+  activityId String?   @unique
 }
