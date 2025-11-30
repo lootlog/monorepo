@@ -36,7 +36,8 @@ npm-debug.log*
 .DS_Store
 *.pem
 
-generated
+**/api/generated
+**/battlelog-service/generated
 
 .claude/settings.local.json
 analysis
