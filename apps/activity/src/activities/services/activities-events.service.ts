@@ -2,7 +2,7 @@ import {
   MessageHandlerErrorBehavior,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import { Queue } from 'src/enum/queue.enum';
@@ -14,6 +14,7 @@ import {
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { RetryService } from 'src/shared/rabbitmq/retry.service';
 import { CreateActivityDto } from 'src/activities/dto/create-activity.dto';
+import { ActivitiesService } from 'src/activities/activities.service';
 
 interface AmqpMessage {
   properties: {
@@ -24,6 +25,7 @@ interface AmqpMessage {
 @Injectable()
 export class ActivitiesEventsService {
   constructor(
+    private readonly activitiesService: ActivitiesService,
     private readonly retryService: RetryService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
@@ -40,7 +42,7 @@ export class ActivitiesEventsService {
     },
   })
   async handleActivityCreate(data: CreateActivityDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers || {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -53,12 +55,39 @@ export class ActivitiesEventsService {
       return;
     }
 
-    console.log('Creating activity log for:', data);
+    try {
+      const activity = await this.activitiesService.create(data);
 
-    this.logger.log({
-      level: 'info',
-      message: 'Activity created successfully',
-    });
+      this.logger.log({
+        level: 'info',
+        message: 'Activity created successfully',
+        activityId: activity.id,
+        userId: data.userId,
+        guildId: data.guildId,
+        type: data.type,
+      });
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        this.logger.warn({
+          level: 'warn',
+          message: 'Duplicate activity event ignored (idempotency)',
+          userId: data.userId,
+          guildId: data.guildId,
+          type: data.type,
+        });
+        return;
+      }
+
+      this.logger.error({
+        level: 'error',
+        message: 'Failed to create activity',
+        error: error instanceof Error ? error.message : String(error),
+        userId: data.userId,
+        guildId: data.guildId,
+      });
+
+      throw error;
+    }
   }
 
   @RabbitSubscribe({
