@@ -35,7 +35,7 @@ import { ActivityType } from '../../prisma/generated/client';
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
-  @Get('guilds/:guildId')
+  @Get(':guildId')
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: PaginatedActivitiesEntity })
   @ApiOperation({ summary: 'Get activities for a specific guild' })
@@ -47,7 +47,7 @@ export class ActivitiesController {
     return this.activitiesService.findByGuild(guildId, query);
   }
 
-  @Get('guilds/:guildId/users/:userId')
+  @Get(':guildId/users/:userId')
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: PaginatedActivitiesEntity })
   @ApiOperation({ summary: 'Get activities for a specific user in a guild' })
@@ -60,23 +60,7 @@ export class ActivitiesController {
     return this.activitiesService.findByUser(userId, guildId, query);
   }
 
-  @Get('guilds/:guildId/stats')
-  @RequiredPermissions(Permission.ADMIN)
-  @ApiOperation({ summary: 'Get activity statistics for a guild' })
-  @ApiResponse({
-    status: 200,
-    schema: {
-      type: 'object',
-      additionalProperties: { type: 'number' },
-    },
-  })
-  async getStatsByGuild(
-    @Param('guildId') guildId: string,
-  ): Promise<Record<ActivityType, number>> {
-    return this.activitiesService.getStatsByGuild(guildId);
-  }
-
-  @Get('guilds/:guildId/activities/:id')
+  @Get(':guildId/activities/:id')
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: ActivityEntity })
   @ApiOperation({ summary: 'Get a single activity by ID' })
@@ -89,7 +73,7 @@ export class ActivitiesController {
     return this.activitiesService.findOne(id, guildId);
   }
 
-  @Delete('guilds/:guildId')
+  @Delete(':guildId/activities/:id')
   @RequiredPermissions(Permission.OWNER)
   @ApiOperation({ summary: 'Delete all activities for a guild' })
   @ApiQuery({ name: 'type', enum: ActivityType, required: false })
@@ -97,11 +81,11 @@ export class ActivitiesController {
     status: 200,
     schema: { type: 'object', properties: { count: { type: 'number' } } },
   })
-  async deleteByGuild(
+  async deleteGuildActivityById(
     @Param('guildId') guildId: string,
-    @Query('type') type?: ActivityType,
+    @Param('id') id: string,
   ): Promise<{ count: number }> {
-    const count = await this.activitiesService.deleteMany(guildId, type);
+    const count = await this.activitiesService.deleteOne(id, guildId);
     return { count };
   }
 }

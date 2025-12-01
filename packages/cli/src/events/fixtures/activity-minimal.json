@@ -1,0 +1,11 @@
+{
+  "exchange": "default",
+  "routingKey": "activity.log.create",
+  "payload": {
+    "userId": "user_minimal_001",
+    "guildId": "guild_minimal_001",
+    "discordId": "123456789012345678",
+    "type": "CONNECT_EVENT",
+    "source": "WEB_APP"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "exchange": "default",
+  "routingKey": "activity.log.create",
+  "payload": {
+    "userId": "user_987654",
+    "guildId": "guild_789012",
+    "discordId": "456789012345678901",
+    "type": "TIMER_EVENT",
+    "source": "WEB_APP",
+    "details": {
+      "action": "timer_started",
+      "respawnTime": 7200
+    },
+    "actorSnapshot": {
+      "accountId": 54321,
+      "characterId": 98765,
+      "clanName": "Dragon Slayers",
+      "icon": "paladin_icon",
+      "lvl": 85,
+      "prof": "paladin"
+    },
+    "timerContext": {
+      "npcName": "Ancient Dragon"
+    },
+    "idempotencyKey": "timer_event_987654321_1733068800000"
+  }
+}

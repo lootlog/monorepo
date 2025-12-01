@@ -1,0 +1,27 @@
+{
+  "exchange": "default",
+  "routingKey": "activity.log.create",
+  "payload": {
+    "userId": "gy99u1OMHmQ8Sa1FVTLKjexTccPQ0yPS",
+    "guildId": "1399076174654603284",
+    "discordId": "362907135824101376",
+    "type": "DISCONNECT_EVENT",
+    "source": "GAME",
+    "world": "gordion",
+    "details": {
+      "sessionDuration": 3600,
+      "sessionId": "_lsiCdXCban74biwLxBW",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+    },
+    "actorSnapshot": {
+      "accountId": 9822301,
+      "characterId": 617,
+      "clanName": "Gorillas in Pyjamas",
+      "clanId": 692,
+      "icon": "/paid/bf25-uniwersalne-k.gif",
+      "lvl": 305,
+      "prof": "HUNTER"
+    },
+    "idempotencyKey": "disconnect_event_333444555_1733068800000"
+  }
+}
