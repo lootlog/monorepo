@@ -44,6 +44,7 @@ export type ActivityActorSnapshotMinAggregateOutputType = {
   id: string | null
   accountId: number | null
   characterId: number | null
+  name: string | null
   clanName: string | null
   clanId: number | null
   icon: string | null
@@ -58,6 +59,7 @@ export type ActivityActorSnapshotMaxAggregateOutputType = {
   id: string | null
   accountId: number | null
   characterId: number | null
+  name: string | null
   clanName: string | null
   clanId: number | null
   icon: string | null
@@ -72,6 +74,7 @@ export type ActivityActorSnapshotCountAggregateOutputType = {
   id: number
   accountId: number
   characterId: number
+  name: number
   clanName: number
   clanId: number
   icon: number
@@ -102,6 +105,7 @@ export type ActivityActorSnapshotMinAggregateInputType = {
   id?: true
   accountId?: true
   characterId?: true
+  name?: true
   clanName?: true
   clanId?: true
   icon?: true
@@ -116,6 +120,7 @@ export type ActivityActorSnapshotMaxAggregateInputType = {
   id?: true
   accountId?: true
   characterId?: true
+  name?: true
   clanName?: true
   clanId?: true
   icon?: true
@@ -130,6 +135,7 @@ export type ActivityActorSnapshotCountAggregateInputType = {
   id?: true
   accountId?: true
   characterId?: true
+  name?: true
   clanName?: true
   clanId?: true
   icon?: true
@@ -231,11 +237,12 @@ export type ActivityActorSnapshotGroupByOutputType = {
   id: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName: string | null
   clanId: number | null
   icon: string
   lvl: number
-  prof: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt: Date
@@ -268,11 +275,12 @@ export type ActivityActorSnapshotWhereInput = {
   id?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
   accountId?: Prisma.IntFilter<"ActivityActorSnapshot"> | number
   characterId?: Prisma.IntFilter<"ActivityActorSnapshot"> | number
-  clanName?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
+  name?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
+  clanName?: Prisma.StringNullableFilter<"ActivityActorSnapshot"> | string | null
   clanId?: Prisma.IntNullableFilter<"ActivityActorSnapshot"> | number | null
   icon?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
   lvl?: Prisma.IntFilter<"ActivityActorSnapshot"> | number
-  prof?: Prisma.EnumProfessionNullableFilter<"ActivityActorSnapshot"> | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFilter<"ActivityActorSnapshot"> | $Enums.Profession
   source?: Prisma.EnumActivitySourceFilter<"ActivityActorSnapshot"> | $Enums.ActivitySource
   fingerprint?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
   createdAt?: Prisma.DateTimeFilter<"ActivityActorSnapshot"> | Date | string
@@ -285,11 +293,12 @@ export type ActivityActorSnapshotOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
-  clanName?: Prisma.SortOrder
+  name?: Prisma.SortOrder
+  clanName?: Prisma.SortOrderInput | Prisma.SortOrder
   clanId?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrder
   lvl?: Prisma.SortOrder
-  prof?: Prisma.SortOrderInput | Prisma.SortOrder
+  prof?: Prisma.SortOrder
   source?: Prisma.SortOrder
   fingerprint?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -306,11 +315,12 @@ export type ActivityActorSnapshotWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ActivityActorSnapshotWhereInput | Prisma.ActivityActorSnapshotWhereInput[]
   accountId?: Prisma.IntFilter<"ActivityActorSnapshot"> | number
   characterId?: Prisma.IntFilter<"ActivityActorSnapshot"> | number
-  clanName?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
+  name?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
+  clanName?: Prisma.StringNullableFilter<"ActivityActorSnapshot"> | string | null
   clanId?: Prisma.IntNullableFilter<"ActivityActorSnapshot"> | number | null
   icon?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
   lvl?: Prisma.IntFilter<"ActivityActorSnapshot"> | number
-  prof?: Prisma.EnumProfessionNullableFilter<"ActivityActorSnapshot"> | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFilter<"ActivityActorSnapshot"> | $Enums.Profession
   source?: Prisma.EnumActivitySourceFilter<"ActivityActorSnapshot"> | $Enums.ActivitySource
   createdAt?: Prisma.DateTimeFilter<"ActivityActorSnapshot"> | Date | string
   activities?: Prisma.ActivityListRelationFilter
@@ -322,11 +332,12 @@ export type ActivityActorSnapshotOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
-  clanName?: Prisma.SortOrder
+  name?: Prisma.SortOrder
+  clanName?: Prisma.SortOrderInput | Prisma.SortOrder
   clanId?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrder
   lvl?: Prisma.SortOrder
-  prof?: Prisma.SortOrderInput | Prisma.SortOrder
+  prof?: Prisma.SortOrder
   source?: Prisma.SortOrder
   fingerprint?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -344,11 +355,12 @@ export type ActivityActorSnapshotScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"ActivityActorSnapshot"> | string
   accountId?: Prisma.IntWithAggregatesFilter<"ActivityActorSnapshot"> | number
   characterId?: Prisma.IntWithAggregatesFilter<"ActivityActorSnapshot"> | number
-  clanName?: Prisma.StringWithAggregatesFilter<"ActivityActorSnapshot"> | string
+  name?: Prisma.StringWithAggregatesFilter<"ActivityActorSnapshot"> | string
+  clanName?: Prisma.StringNullableWithAggregatesFilter<"ActivityActorSnapshot"> | string | null
   clanId?: Prisma.IntNullableWithAggregatesFilter<"ActivityActorSnapshot"> | number | null
   icon?: Prisma.StringWithAggregatesFilter<"ActivityActorSnapshot"> | string
   lvl?: Prisma.IntWithAggregatesFilter<"ActivityActorSnapshot"> | number
-  prof?: Prisma.EnumProfessionNullableWithAggregatesFilter<"ActivityActorSnapshot"> | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionWithAggregatesFilter<"ActivityActorSnapshot"> | $Enums.Profession
   source?: Prisma.EnumActivitySourceWithAggregatesFilter<"ActivityActorSnapshot"> | $Enums.ActivitySource
   fingerprint?: Prisma.StringWithAggregatesFilter<"ActivityActorSnapshot"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ActivityActorSnapshot"> | Date | string
@@ -358,11 +370,12 @@ export type ActivityActorSnapshotCreateInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -375,11 +388,12 @@ export type ActivityActorSnapshotUncheckedCreateInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -392,11 +406,12 @@ export type ActivityActorSnapshotUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -409,11 +424,12 @@ export type ActivityActorSnapshotUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -426,11 +442,12 @@ export type ActivityActorSnapshotCreateManyInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -440,11 +457,12 @@ export type ActivityActorSnapshotUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -454,11 +472,12 @@ export type ActivityActorSnapshotUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -473,6 +492,7 @@ export type ActivityActorSnapshotCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
+  name?: Prisma.SortOrder
   clanName?: Prisma.SortOrder
   clanId?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -494,6 +514,7 @@ export type ActivityActorSnapshotMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
+  name?: Prisma.SortOrder
   clanName?: Prisma.SortOrder
   clanId?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -508,6 +529,7 @@ export type ActivityActorSnapshotMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accountId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
+  name?: Prisma.SortOrder
   clanName?: Prisma.SortOrder
   clanId?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -562,8 +584,8 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type NullableEnumProfessionFieldUpdateOperationsInput = {
-  set?: $Enums.Profession | null
+export type EnumProfessionFieldUpdateOperationsInput = {
+  set?: $Enums.Profession
 }
 
 export type ActivityActorSnapshotCreateNestedOneWithoutLootContextsInput = {
@@ -598,11 +620,12 @@ export type ActivityActorSnapshotCreateWithoutActivitiesInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -614,11 +637,12 @@ export type ActivityActorSnapshotUncheckedCreateWithoutActivitiesInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -646,11 +670,12 @@ export type ActivityActorSnapshotUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -662,11 +687,12 @@ export type ActivityActorSnapshotUncheckedUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -678,11 +704,12 @@ export type ActivityActorSnapshotCreateWithoutLootContextsInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -694,11 +721,12 @@ export type ActivityActorSnapshotUncheckedCreateWithoutLootContextsInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -726,11 +754,12 @@ export type ActivityActorSnapshotUpdateWithoutLootContextsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -742,11 +771,12 @@ export type ActivityActorSnapshotUncheckedUpdateWithoutLootContextsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -758,11 +788,12 @@ export type ActivityActorSnapshotCreateWithoutTimerContextsInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -774,11 +805,12 @@ export type ActivityActorSnapshotUncheckedCreateWithoutTimerContextsInput = {
   id?: string
   accountId: number
   characterId: number
-  clanName: string
+  name: string
+  clanName?: string | null
   clanId?: number | null
   icon: string
   lvl: number
-  prof?: $Enums.Profession | null
+  prof: $Enums.Profession
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
@@ -806,11 +838,12 @@ export type ActivityActorSnapshotUpdateWithoutTimerContextsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -822,11 +855,12 @@ export type ActivityActorSnapshotUncheckedUpdateWithoutTimerContextsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   accountId?: Prisma.IntFieldUpdateOperationsInput | number
   characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  clanName?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   icon?: Prisma.StringFieldUpdateOperationsInput | string
   lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.NullableEnumProfessionFieldUpdateOperationsInput | $Enums.Profession | null
+  prof?: Prisma.EnumProfessionFieldUpdateOperationsInput | $Enums.Profession
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -887,6 +921,7 @@ export type ActivityActorSnapshotSelect<ExtArgs extends runtime.Types.Extensions
   id?: boolean
   accountId?: boolean
   characterId?: boolean
+  name?: boolean
   clanName?: boolean
   clanId?: boolean
   icon?: boolean
@@ -905,6 +940,7 @@ export type ActivityActorSnapshotSelectCreateManyAndReturn<ExtArgs extends runti
   id?: boolean
   accountId?: boolean
   characterId?: boolean
+  name?: boolean
   clanName?: boolean
   clanId?: boolean
   icon?: boolean
@@ -919,6 +955,7 @@ export type ActivityActorSnapshotSelectUpdateManyAndReturn<ExtArgs extends runti
   id?: boolean
   accountId?: boolean
   characterId?: boolean
+  name?: boolean
   clanName?: boolean
   clanId?: boolean
   icon?: boolean
@@ -933,6 +970,7 @@ export type ActivityActorSnapshotSelectScalar = {
   id?: boolean
   accountId?: boolean
   characterId?: boolean
+  name?: boolean
   clanName?: boolean
   clanId?: boolean
   icon?: boolean
@@ -943,7 +981,7 @@ export type ActivityActorSnapshotSelectScalar = {
   createdAt?: boolean
 }
 
-export type ActivityActorSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "accountId" | "characterId" | "clanName" | "clanId" | "icon" | "lvl" | "prof" | "source" | "fingerprint" | "createdAt", ExtArgs["result"]["activityActorSnapshot"]>
+export type ActivityActorSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "accountId" | "characterId" | "name" | "clanName" | "clanId" | "icon" | "lvl" | "prof" | "source" | "fingerprint" | "createdAt", ExtArgs["result"]["activityActorSnapshot"]>
 export type ActivityActorSnapshotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   activities?: boolean | Prisma.ActivityActorSnapshot$activitiesArgs<ExtArgs>
   lootContexts?: boolean | Prisma.ActivityActorSnapshot$lootContextsArgs<ExtArgs>
@@ -964,11 +1002,12 @@ export type $ActivityActorSnapshotPayload<ExtArgs extends runtime.Types.Extensio
     id: string
     accountId: number
     characterId: number
-    clanName: string
+    name: string
+    clanName: string | null
     clanId: number | null
     icon: string
     lvl: number
-    prof: $Enums.Profession | null
+    prof: $Enums.Profession
     source: $Enums.ActivitySource
     fingerprint: string
     createdAt: Date
@@ -1401,6 +1440,7 @@ export interface ActivityActorSnapshotFieldRefs {
   readonly id: Prisma.FieldRef<"ActivityActorSnapshot", 'String'>
   readonly accountId: Prisma.FieldRef<"ActivityActorSnapshot", 'Int'>
   readonly characterId: Prisma.FieldRef<"ActivityActorSnapshot", 'Int'>
+  readonly name: Prisma.FieldRef<"ActivityActorSnapshot", 'String'>
   readonly clanName: Prisma.FieldRef<"ActivityActorSnapshot", 'String'>
   readonly clanId: Prisma.FieldRef<"ActivityActorSnapshot", 'Int'>
   readonly icon: Prisma.FieldRef<"ActivityActorSnapshot", 'String'>
