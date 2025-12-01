@@ -32,12 +32,13 @@ enum Profession {
 // TimescaleDB-ready: after migration, convert to hypertable with e.g.:
 // SELECT create_hypertable('"Activity"', 'createdAt', chunk_time_interval => INTERVAL '7 days');
 model Activity {
-  id        String       @id @default(cuid())
-  userId    String
-  guildId   String
-  discordId String
-  type      ActivityType
-  createdAt DateTime     @default(now()) @db.Timestamptz
+  id              String       @id @default(cuid())
+  userId          String
+  guildId         String
+  discordId       String
+  type            ActivityType
+  createdAt       DateTime     @default(now()) @db.Timestamptz
+  idempotencyKey  String       @unique
 
   source ActivitySource
 
@@ -66,10 +67,10 @@ model ActivityActorSnapshot {
   accountId   Int
   characterId Int
   clanName    String
-  clanId      Int
+  clanId      Int?
   icon        String
   lvl         Int
-  prof        Profession
+  prof        Profession?
 
   source      ActivitySource
   fingerprint String         @unique

@@ -420,14 +420,6 @@ export type ActivityLootContextUncheckedUpdateManyWithoutActorSnapshotNestedInpu
   deleteMany?: Prisma.ActivityLootContextScalarWhereInput | Prisma.ActivityLootContextScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type ActivityLootContextCreateWithoutActivityInput = {
   id?: string
   lootId: number

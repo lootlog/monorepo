@@ -165,6 +165,6 @@ export class CreateActivityDto {
   timerContext?: TimerContextDto;
 
   @IsString()
-  @IsOptional()
-  idempotencyKey?: string;
+  @IsNotEmpty()
+  idempotencyKey: string;
 }

@@ -72,6 +72,7 @@ const ROUTE_SEGMENTS = {
     members: "/members",
     appearance: "/appearance",
     servers: "/servers",
+    activityLogs: "/activity-logs",
   },
 } as const;
 
