@@ -49,11 +49,16 @@ export class RabbitMQClient {
         chalk.gray("Payload:\n"),
         chalk.dim(JSON.stringify(payload, null, 2)),
       );
+      console.log();
     } catch (error) {
       throw new Error(
         `Failed to publish event: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+  }
+
+  isConnected(): boolean {
+    return this.connection !== null && this.channel !== null;
   }
 
   async close(): Promise<void> {
