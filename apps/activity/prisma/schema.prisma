@@ -59,8 +59,8 @@ model Activity {
 model ActivityActorSnapshot {
   id          String   @id @default(cuid())
 
-  accountId   String?
-  characterId String?
+  accountId   Int?
+  characterId Int?
   clanName    String?
   icon        String?
   lvl         Int?
@@ -82,8 +82,7 @@ model ActivityActorSnapshot {
 }
 
 // Context for LOOT_EVENT:
-// - itemNames[]
-// - npcNames[]
+// - lootId (reference to loot from main API)
 // - actor snapshot at the time of the loot
 model ActivityLootContext {
   id String @id @default(cuid())
@@ -91,8 +90,7 @@ model ActivityLootContext {
   actorSnapshotId String
   actorSnapshot   ActivityActorSnapshot @relation(fields: [actorSnapshotId], references: [id])
 
-  itemNames String[] @db.Text
-  npcNames  String[] @db.Text
+  lootId Int
 
   activity   Activity? @relation("Activity_LootContext", fields: [activityId], references: [id])
   activityId String?   @unique
