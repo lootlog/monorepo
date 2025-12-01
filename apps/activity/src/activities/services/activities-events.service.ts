@@ -1,8 +1,15 @@
 import {
   MessageHandlerErrorBehavior,
+  RabbitPayload,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import { Queue } from 'src/enum/queue.enum';
@@ -41,8 +48,12 @@ export class ActivitiesEventsService {
       deadLetterRoutingKey: RoutingKey.ACTIVITY_LOG_CREATE_RETRY,
     },
   })
-  async handleActivityCreate(data: CreateActivityDto, amqpMsg: AmqpMessage) {
-    const headers = amqpMsg.properties.headers ?? {};
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: false }))
+  async handleActivityCreate(
+    @RabbitPayload() data: CreateActivityDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    const headers = amqpMsg?.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
@@ -98,7 +109,8 @@ export class ActivitiesEventsService {
       durable: true,
     },
   })
-  handleActivityCreateDlq(message: CreateActivityDto) {
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: false }))
+  handleActivityCreateDlq(@RabbitPayload() message: CreateActivityDto) {
     this.logger.log({
       level: 'warn',
       message: 'Activity CREATE DLQ message - manual intervention needed',

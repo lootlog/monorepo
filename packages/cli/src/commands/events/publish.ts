@@ -96,7 +96,9 @@ ${chalk.bold("Continuous Mode:")}
   pnpm events publish --continuous
 
   Keeps the connection open and allows publishing multiple events sequentially
-  without restarting the script. Perfect for testing event flows.
+  without restarting the script. Fixtures are automatically reloaded before each
+  event selection, allowing you to modify JSON files on-the-fly. Perfect for
+  testing event flows.
 
 ${chalk.bold("Non-Interactive Mode:")}
   pnpm events publish --event <name>
@@ -141,9 +143,11 @@ const publishInteractive = async (
 ): Promise<void> => {
   p.intro(chalk.bold.cyan("🐰 Publish RabbitMQ Event"));
 
-  const fixtureNames = Array.from(fixtures.keys());
+  let currentFixtures = fixtures;
 
-  if (fixtureNames.length === 0) {
+  const getFixtureNames = () => Array.from(currentFixtures.keys());
+
+  if (getFixtureNames().length === 0) {
     p.outro(chalk.red("No event fixtures found"));
     process.exit(1);
   }
@@ -155,14 +159,34 @@ const publishInteractive = async (
   spinner.stop("Connected to RabbitMQ");
 
   let continuePublishing = true;
+  let iterationCount = 0;
 
   try {
     while (continuePublishing) {
+      // Reload fixtures in continuous mode after first iteration
+      if (continuous && iterationCount > 0) {
+        spinner.start("Reloading fixtures...");
+        currentFixtures = await loadFixtures();
+        spinner.stop("Fixtures reloaded");
+      }
+
+      const fixtureNames = getFixtureNames();
+
+      if (fixtureNames.length === 0) {
+        p.outro(chalk.red("No event fixtures found"));
+        break;
+      }
+
       const selectedEvent = await p.select({
-        message: "Select an event to publish:",
+        message:
+          continuous && iterationCount > 0
+            ? "Select an event to publish (fixtures reloaded):"
+            : "Select an event to publish:",
         options: fixtureNames.map((name) => ({
           value: name,
-          label: name.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+          label: name
+            .replace(/-/g, " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase()),
         })),
       });
 
@@ -171,7 +195,7 @@ const publishInteractive = async (
         break;
       }
 
-      const fixture = fixtures.get(selectedEvent as string);
+      const fixture = currentFixtures.get(selectedEvent as string);
 
       if (!fixture) {
         p.outro(chalk.red("Event not found"));
@@ -187,6 +211,8 @@ const publishInteractive = async (
       });
 
       spinner.stop("Event published");
+
+      iterationCount++;
 
       if (!continuous) {
         continuePublishing = false;

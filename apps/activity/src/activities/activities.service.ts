@@ -224,6 +224,29 @@ export class ActivitiesService {
     return this.findMany({ ...query, userId, guildId });
   }
 
+  async deleteOne(id: string, guildId: string): Promise<number> {
+    const activity = await this.prisma.activity.findFirst({
+      where: {
+        id,
+        guildId,
+      },
+    });
+
+    if (!activity) {
+      throw new NotFoundException(`Activity with ID ${id} not found`);
+    }
+
+    await this.prisma.activity.delete({
+      where: { id },
+    });
+
+    this.logger.log(
+      `Deleted activity ${id} (type: ${activity.type}) for guild ${guildId}`,
+    );
+
+    return 1;
+  }
+
   async deleteMany(guildId: string, type?: ActivityType): Promise<number> {
     const result = await this.prisma.activity.deleteMany({
       where: {
@@ -300,12 +323,12 @@ export class ActivitiesService {
     source: CreateActivityDto['source'],
   ): string {
     const data = JSON.stringify({
-      accountId: snapshot?.accountId ?? null,
-      characterId: snapshot?.characterId ?? null,
-      clanName: snapshot?.clanName ?? null,
-      icon: snapshot?.icon ?? null,
-      lvl: snapshot?.lvl ?? null,
-      prof: snapshot?.prof ?? null,
+      accountId: snapshot.accountId,
+      characterId: snapshot.characterId,
+      clanName: snapshot.clanName,
+      icon: snapshot.icon,
+      lvl: snapshot.lvl,
+      prof: snapshot.prof,
       source,
     });
 
