@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -21,33 +20,6 @@ export class ActivitiesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateActivityDto): Promise<ActivityEntity> {
-    const idempotencyKey =
-      dto.idempotencyKey ?? this.generateIdempotencyKey(dto);
-
-    const existing = await this.prisma.activity.findFirst({
-      where: {
-        userId: dto.userId,
-        guildId: dto.guildId,
-        type: dto.type,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 1,
-    });
-
-    if (existing) {
-      const existingKey = this.generateIdempotencyKey({
-        ...dto,
-        details: existing.details as Record<string, unknown> | undefined,
-      });
-
-      if (existingKey === idempotencyKey) {
-        this.logger.log(
-          `Duplicate activity detected via idempotency key: ${idempotencyKey}`,
-        );
-        throw new ConflictException('Activity already exists');
-      }
-    }
-
     let actorSnapshotId: string | undefined;
     if (dto.actorSnapshot) {
       actorSnapshotId = await this.findOrCreateActorSnapshot(
@@ -56,57 +28,97 @@ export class ActivitiesService {
       );
     }
 
-    const activity = await this.prisma.activity.create({
-      data: {
-        userId: dto.userId,
-        guildId: dto.guildId,
-        discordId: dto.discordId,
-        type: dto.type,
-        source: dto.source,
-        details: dto.details
-          ? (dto.details as Prisma.InputJsonValue)
-          : undefined,
-        actorSnapshotId,
-        lootContext: dto.lootContext
-          ? {
-              create: {
-                lootId: dto.lootContext.lootId,
-                actorSnapshotId: actorSnapshotId!,
-              },
-            }
-          : undefined,
-        timerContext: dto.timerContext
-          ? {
-              create: {
-                npcName: dto.timerContext.npcName,
-                actorSnapshotId: actorSnapshotId!,
-              },
-            }
-          : undefined,
-      },
-      include: {
-        actorSnapshot: true,
-        lootContext: {
-          include: {
-            actorSnapshot: true,
+    try {
+      const activity = await this.prisma.activity.create({
+        data: {
+          userId: dto.userId,
+          guildId: dto.guildId,
+          discordId: dto.discordId,
+          type: dto.type,
+          source: dto.source,
+          idempotencyKey: dto.idempotencyKey,
+          details: dto.details
+            ? (dto.details as Prisma.InputJsonValue)
+            : undefined,
+          actorSnapshotId,
+          lootContext: dto.lootContext
+            ? {
+                create: {
+                  lootId: dto.lootContext.lootId,
+                  actorSnapshotId: actorSnapshotId!,
+                },
+              }
+            : undefined,
+          timerContext: dto.timerContext
+            ? {
+                create: {
+                  npcName: dto.timerContext.npcName,
+                  actorSnapshotId: actorSnapshotId!,
+                },
+              }
+            : undefined,
+        },
+        include: {
+          actorSnapshot: true,
+          lootContext: {
+            include: {
+              actorSnapshot: true,
+            },
+          },
+          timerContext: {
+            include: {
+              actorSnapshot: true,
+            },
           },
         },
-        timerContext: {
+      });
+
+      this.logger.log(
+        `Activity created: ${activity.id} (type: ${activity.type}, userId: ${activity.userId})`,
+      );
+
+      return new ActivityEntity({
+        ...activity,
+        details: activity.details as Record<string, unknown> | undefined,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        this.logger.log(
+          `Duplicate activity detected via idempotency key: ${dto.idempotencyKey}`,
+        );
+
+        const existing = await this.prisma.activity.findUnique({
+          where: { idempotencyKey: dto.idempotencyKey },
           include: {
             actorSnapshot: true,
+            lootContext: {
+              include: {
+                actorSnapshot: true,
+              },
+            },
+            timerContext: {
+              include: {
+                actorSnapshot: true,
+              },
+            },
           },
-        },
-      },
-    });
+        });
 
-    this.logger.log(
-      `Activity created: ${activity.id} (type: ${activity.type}, userId: ${activity.userId})`,
-    );
+        if (!existing) {
+          throw error;
+        }
 
-    return new ActivityEntity({
-      ...activity,
-      details: activity.details as Record<string, unknown> | undefined,
-    });
+        return new ActivityEntity({
+          ...existing,
+          details: existing.details as Record<string, unknown> | undefined,
+        });
+      }
+
+      throw error;
+    }
   }
 
   async findMany(
@@ -304,6 +316,7 @@ export class ActivitiesService {
         accountId: snapshot.accountId,
         characterId: snapshot.characterId,
         clanName: snapshot.clanName,
+        clanId: snapshot.clanId,
         icon: snapshot.icon,
         lvl: snapshot.lvl,
         prof: snapshot.prof,
@@ -326,6 +339,7 @@ export class ActivitiesService {
       accountId: snapshot.accountId,
       characterId: snapshot.characterId,
       clanName: snapshot.clanName,
+      clanId: snapshot.clanId,
       icon: snapshot.icon,
       lvl: snapshot.lvl,
       prof: snapshot.prof,
@@ -335,17 +349,4 @@ export class ActivitiesService {
     return createHash('sha256').update(data).digest('hex');
   }
 
-  private generateIdempotencyKey(dto: CreateActivityDto): string {
-    const data = JSON.stringify({
-      userId: dto.userId,
-      guildId: dto.guildId,
-      type: dto.type,
-      source: dto.source,
-      details: dto.details,
-      lootContext: dto.lootContext,
-      timerContext: dto.timerContext,
-    });
-
-    return createHash('sha256').update(data).digest('hex');
-  }
 }

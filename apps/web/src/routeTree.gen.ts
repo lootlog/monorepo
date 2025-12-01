@@ -23,6 +23,7 @@ import { Route as AuthenticatedGuildIdTimersRouteImport } from './routes/_authen
 import { Route as AuthenticatedGuildIdStatsRouteImport } from './routes/_authenticated/$guildId/stats'
 import { Route as AuthenticatedGuildIdSettingsRouteImport } from './routes/_authenticated/$guildId/settings'
 import { Route as AuthenticatedGuildIdReservationsRouteImport } from './routes/_authenticated/$guildId/reservations'
+import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from './routes/_authenticated/$guildId/activity-logs'
 import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
 import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/_authenticated/@me/battle-panel/index'
 import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from './routes/_authenticated/$guildId/settings/index'
@@ -115,6 +116,12 @@ const AuthenticatedGuildIdReservationsRoute =
   AuthenticatedGuildIdReservationsRouteImport.update({
     id: '/reservations',
     path: '/reservations',
+    getParentRoute: () => AuthenticatedGuildIdRoute,
+  } as any)
+const AuthenticatedGuildIdActivityLogsRoute =
+  AuthenticatedGuildIdActivityLogsRouteImport.update({
+    id: '/activity-logs',
+    path: '/activity-logs',
     getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
 const AuthenticatedAtmeSettingsIndexRoute =
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
   '/@me': typeof AuthenticatedAtmeRouteWithChildren
   '/battles/$id': typeof BattlesIdRoute
+  '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
   '/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
   '/$guildId/stats': typeof AuthenticatedGuildIdStatsRoute
@@ -258,6 +266,7 @@ export interface FileRoutesByTo {
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/battles/$id': typeof BattlesIdRoute
+  '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/$guildId/stats': typeof AuthenticatedGuildIdStatsRoute
   '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
   '/$guildId': typeof AuthenticatedGuildIdIndexRoute
@@ -288,6 +297,7 @@ export interface FileRoutesById {
   '/_authenticated/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
   '/_authenticated/@me': typeof AuthenticatedAtmeRouteWithChildren
   '/battles/$id': typeof BattlesIdRoute
+  '/_authenticated/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/_authenticated/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
   '/_authenticated/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
   '/_authenticated/$guildId/stats': typeof AuthenticatedGuildIdStatsRoute
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/$guildId'
     | '/@me'
     | '/battles/$id'
+    | '/$guildId/activity-logs'
     | '/$guildId/reservations'
     | '/$guildId/settings'
     | '/$guildId/stats'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/init'
     | '/signin'
     | '/battles/$id'
+    | '/$guildId/activity-logs'
     | '/$guildId/stats'
     | '/$guildId/timers'
     | '/$guildId'
@@ -381,6 +393,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId'
     | '/_authenticated/@me'
     | '/battles/$id'
+    | '/_authenticated/$guildId/activity-logs'
     | '/_authenticated/$guildId/reservations'
     | '/_authenticated/$guildId/settings'
     | '/_authenticated/$guildId/stats'
@@ -513,6 +526,13 @@ declare module '@tanstack/react-router' {
       path: '/reservations'
       fullPath: '/$guildId/reservations'
       preLoaderRoute: typeof AuthenticatedGuildIdReservationsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/activity-logs': {
+      id: '/_authenticated/$guildId/activity-logs'
+      path: '/activity-logs'
+      fullPath: '/$guildId/activity-logs'
+      preLoaderRoute: typeof AuthenticatedGuildIdActivityLogsRouteImport
       parentRoute: typeof AuthenticatedGuildIdRoute
     }
     '/_authenticated/@me/settings/': {
@@ -695,6 +715,7 @@ const AuthenticatedGuildIdSettingsRouteWithChildren =
   )
 
 interface AuthenticatedGuildIdRouteChildren {
+  AuthenticatedGuildIdActivityLogsRoute: typeof AuthenticatedGuildIdActivityLogsRoute
   AuthenticatedGuildIdReservationsRoute: typeof AuthenticatedGuildIdReservationsRouteWithChildren
   AuthenticatedGuildIdSettingsRoute: typeof AuthenticatedGuildIdSettingsRouteWithChildren
   AuthenticatedGuildIdStatsRoute: typeof AuthenticatedGuildIdStatsRoute
@@ -703,6 +724,7 @@ interface AuthenticatedGuildIdRouteChildren {
 }
 
 const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
+  AuthenticatedGuildIdActivityLogsRoute: AuthenticatedGuildIdActivityLogsRoute,
   AuthenticatedGuildIdReservationsRoute:
     AuthenticatedGuildIdReservationsRouteWithChildren,
   AuthenticatedGuildIdSettingsRoute:

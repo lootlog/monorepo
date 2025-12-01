@@ -3,13 +3,7 @@ import {
   RabbitPayload,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import { Queue } from 'src/enum/queue.enum';
@@ -22,6 +16,8 @@ import { RoutingKey } from 'src/enum/routing-key.enum';
 import { RetryService } from 'src/shared/rabbitmq/retry.service';
 import { CreateActivityDto } from 'src/activities/dto/create-activity.dto';
 import { ActivitiesService } from 'src/activities/activities.service';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 
 interface AmqpMessage {
   properties: {
@@ -48,18 +44,48 @@ export class ActivitiesEventsService {
       deadLetterRoutingKey: RoutingKey.ACTIVITY_LOG_CREATE_RETRY,
     },
   })
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: false }))
   async handleActivityCreate(
-    @RabbitPayload() data: CreateActivityDto,
+    @RabbitPayload() data: unknown,
     amqpMsg: AmqpMessage,
   ) {
+    const dto = plainToInstance(CreateActivityDto, data);
+    const validationErrors = await validate(dto);
+
+    if (validationErrors.length > 0) {
+      this.logger.error({
+        level: 'error',
+        message:
+          'Invalid activity payload - validation failed (permanent error, sending to DLQ)',
+        rawPayload: data,
+        validationErrors: validationErrors.map((err) => ({
+          property: err.property,
+          constraints: err.constraints,
+          value: err.value,
+        })),
+      });
+
+      // Don't throw - validation errors are permanent and should not be retried
+      // Message will be ACKed and removed from queue
+      // For manual intervention, send to DLQ directly
+      await this.retryService.sendToDlq(
+        data,
+        RoutingKey.ACTIVITY_LOG_CREATE_DLQ,
+        {
+          'x-validation-error': 'Validation failed',
+          'x-error-type': 'permanent',
+        },
+      );
+
+      return;
+    }
+
     const headers = amqpMsg?.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
-      data,
+      dto,
       headers,
       RoutingKey.ACTIVITY_LOG_CREATE_DLQ,
-      `activity create. discordId: ${data.discordId}, userId: ${data.userId}`,
+      `activity create. discordId: ${dto.discordId}, userId: ${dto.userId}`,
     );
 
     if (!shouldContinue) {
@@ -67,34 +93,25 @@ export class ActivitiesEventsService {
     }
 
     try {
-      const activity = await this.activitiesService.create(data);
+      const activity = await this.activitiesService.create(dto);
 
       this.logger.log({
         level: 'info',
         message: 'Activity created successfully',
         activityId: activity.id,
-        userId: data.userId,
-        guildId: data.guildId,
-        type: data.type,
+        userId: dto.userId,
+        guildId: dto.guildId,
+        type: dto.type,
       });
     } catch (error) {
-      if (error instanceof ConflictException) {
-        this.logger.warn({
-          level: 'warn',
-          message: 'Duplicate activity event ignored (idempotency)',
-          userId: data.userId,
-          guildId: data.guildId,
-          type: data.type,
-        });
-        return;
-      }
-
       this.logger.error({
         level: 'error',
         message: 'Failed to create activity',
         error: error instanceof Error ? error.message : String(error),
-        userId: data.userId,
-        guildId: data.guildId,
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: dto?.userId,
+        guildId: dto?.guildId,
+        payload: data,
       });
 
       throw error;
@@ -109,14 +126,11 @@ export class ActivitiesEventsService {
       durable: true,
     },
   })
-  @UsePipes(new ValidationPipe({ transform: true, whitelist: false }))
-  handleActivityCreateDlq(@RabbitPayload() message: CreateActivityDto) {
+  handleActivityCreateDlq(@RabbitPayload() message: unknown) {
     this.logger.log({
       level: 'warn',
       message: 'Activity CREATE DLQ message - manual intervention needed',
-      discordId: message.discordId,
-      userId: message.userId,
-      data: message,
+      rawPayload: message,
     });
   }
 }
