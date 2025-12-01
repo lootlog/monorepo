@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ActivitiesController } from './activities.controller';
 import { ActivitiesService } from './activities.service';
+import { ActivitiesQueryService } from './services/activities-query.service';
 import { QueryActivitiesDto } from './dto/query-activities.dto';
 import {
   PaginatedActivitiesEntity,
@@ -12,6 +13,7 @@ import { PermissionsGuard } from 'src/shared/guards/permissions.guard';
 
 describe('ActivitiesController', () => {
   let controller: ActivitiesController;
+  let queryService: ActivitiesQueryService;
   let service: ActivitiesService;
 
   const mockActivity: ActivityEntity = {
@@ -31,12 +33,14 @@ describe('ActivitiesController', () => {
     hasMore: false,
   } as PaginatedActivitiesEntity;
 
-  const mockService = {
+  const mockQueryService = {
     findByGuild: jest.fn(),
     findByUser: jest.fn(),
     findOne: jest.fn(),
-    deleteMany: jest.fn(),
-    getStatsByGuild: jest.fn(),
+  };
+
+  const mockService = {
+    deleteOne: jest.fn(),
   };
 
   const mockAuthGuard = {
@@ -55,6 +59,10 @@ describe('ActivitiesController', () => {
           provide: ActivitiesService,
           useValue: mockService,
         },
+        {
+          provide: ActivitiesQueryService,
+          useValue: mockQueryService,
+        },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -64,6 +72,7 @@ describe('ActivitiesController', () => {
       .compile();
 
     controller = module.get<ActivitiesController>(ActivitiesController);
+    queryService = module.get<ActivitiesQueryService>(ActivitiesQueryService);
     service = module.get<ActivitiesService>(ActivitiesService);
 
     jest.clearAllMocks();
@@ -78,13 +87,13 @@ describe('ActivitiesController', () => {
       const guildId = 'guild-1';
       const query: QueryActivitiesDto = { limit: 50 };
 
-      mockService.findByGuild.mockResolvedValue(mockPaginatedResponse);
+      mockQueryService.findByGuild.mockResolvedValue(mockPaginatedResponse);
 
       const result = await controller.findByGuild(guildId, query);
 
       expect(result).toEqual(mockPaginatedResponse);
-      expect(service.findByGuild).toHaveBeenCalledWith(guildId, query);
-      expect(service.findByGuild).toHaveBeenCalledTimes(1);
+      expect(queryService.findByGuild).toHaveBeenCalledWith(guildId, query);
+      expect(queryService.findByGuild).toHaveBeenCalledTimes(1);
     });
 
     it('should pass query parameters to service', async () => {
@@ -97,11 +106,11 @@ describe('ActivitiesController', () => {
         limit: 25,
       };
 
-      mockService.findByGuild.mockResolvedValue(mockPaginatedResponse);
+      mockQueryService.findByGuild.mockResolvedValue(mockPaginatedResponse);
 
       await controller.findByGuild(guildId, query);
 
-      expect(service.findByGuild).toHaveBeenCalledWith(guildId, query);
+      expect(queryService.findByGuild).toHaveBeenCalledWith(guildId, query);
     });
   });
 
@@ -111,13 +120,13 @@ describe('ActivitiesController', () => {
       const userId = 'user-1';
       const query: QueryActivitiesDto = { limit: 50 };
 
-      mockService.findByUser.mockResolvedValue(mockPaginatedResponse);
+      mockQueryService.findByUser.mockResolvedValue(mockPaginatedResponse);
 
       const result = await controller.findByUser(guildId, userId, query);
 
       expect(result).toEqual(mockPaginatedResponse);
-      expect(service.findByUser).toHaveBeenCalledWith(userId, guildId, query);
-      expect(service.findByUser).toHaveBeenCalledTimes(1);
+      expect(queryService.findByUser).toHaveBeenCalledWith(userId, guildId, query);
+      expect(queryService.findByUser).toHaveBeenCalledTimes(1);
     });
 
     it('should pass query parameters to service', async () => {
@@ -128,31 +137,11 @@ describe('ActivitiesController', () => {
         limit: 100,
       };
 
-      mockService.findByUser.mockResolvedValue(mockPaginatedResponse);
+      mockQueryService.findByUser.mockResolvedValue(mockPaginatedResponse);
 
       await controller.findByUser(guildId, userId, query);
 
-      expect(service.findByUser).toHaveBeenCalledWith(userId, guildId, query);
-    });
-  });
-
-  describe('getStatsByGuild', () => {
-    it('should return activity statistics for a guild', async () => {
-      const guildId = 'guild-1';
-      const mockStats: Record<ActivityType, number> = {
-        [ActivityType.LOOT_EVENT]: 10,
-        [ActivityType.TIMER_EVENT]: 8,
-        [ActivityType.CONNECT_EVENT]: 15,
-        [ActivityType.DISCONNECT_EVENT]: 4,
-      };
-
-      mockService.getStatsByGuild.mockResolvedValue(mockStats);
-
-      const result = await controller.getStatsByGuild(guildId);
-
-      expect(result).toEqual(mockStats);
-      expect(service.getStatsByGuild).toHaveBeenCalledWith(guildId);
-      expect(service.getStatsByGuild).toHaveBeenCalledTimes(1);
+      expect(queryService.findByUser).toHaveBeenCalledWith(userId, guildId, query);
     });
   });
 
@@ -161,42 +150,29 @@ describe('ActivitiesController', () => {
       const guildId = 'guild-1';
       const activityId = 'activity-1';
 
-      mockService.findOne.mockResolvedValue(mockActivity);
+      mockQueryService.findOne.mockResolvedValue(mockActivity);
 
       const result = await controller.findOne(guildId, activityId);
 
       expect(result).toEqual(mockActivity);
-      expect(service.findOne).toHaveBeenCalledWith(activityId, guildId);
-      expect(service.findOne).toHaveBeenCalledTimes(1);
+      expect(queryService.findOne).toHaveBeenCalledWith(activityId, guildId);
+      expect(queryService.findOne).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('deleteByGuild', () => {
-    it('should delete all activities for a guild', async () => {
+  describe('deleteGuildActivityById', () => {
+    it('should delete a specific activity by ID', async () => {
       const guildId = 'guild-1';
-      const expectedCount = 25;
+      const activityId = 'activity-1';
+      const expectedCount = 1;
 
-      mockService.deleteMany.mockResolvedValue(expectedCount);
+      mockService.deleteOne.mockResolvedValue(expectedCount);
 
-      const result = await controller.deleteByGuild(guildId);
+      const result = await controller.deleteGuildActivityById(guildId, activityId);
 
       expect(result).toEqual({ count: expectedCount });
-      expect(service.deleteMany).toHaveBeenCalledWith(guildId, undefined);
-      expect(service.deleteMany).toHaveBeenCalledTimes(1);
-    });
-
-    it('should delete activities of specific type for a guild', async () => {
-      const guildId = 'guild-1';
-      const type = ActivityType.LOOT_EVENT;
-      const expectedCount = 10;
-
-      mockService.deleteMany.mockResolvedValue(expectedCount);
-
-      const result = await controller.deleteByGuild(guildId, type);
-
-      expect(result).toEqual({ count: expectedCount });
-      expect(service.deleteMany).toHaveBeenCalledWith(guildId, type);
-      expect(service.deleteMany).toHaveBeenCalledTimes(1);
+      expect(service.deleteOne).toHaveBeenCalledWith(activityId, guildId);
+      expect(service.deleteOne).toHaveBeenCalledTimes(1);
     });
   });
 

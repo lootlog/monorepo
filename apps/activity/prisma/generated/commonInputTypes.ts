@@ -217,11 +217,11 @@ export type IntNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedIntNullableFilter<$PrismaModel> | number | null
 }
 
-export type EnumProfessionNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel> | null
-  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel> | $Enums.Profession | null
+export type EnumProfessionFilter<$PrismaModel = never> = {
+  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel>
+  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProfessionFilter<$PrismaModel> | $Enums.Profession
 }
 
 export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -256,14 +256,14 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
-export type EnumProfessionNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel> | null
-  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumProfessionNullableWithAggregatesFilter<$PrismaModel> | $Enums.Profession | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel>
+export type EnumProfessionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel>
+  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProfessionWithAggregatesFilter<$PrismaModel> | $Enums.Profession
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProfessionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProfessionFilter<$PrismaModel>
 }
 
 export type NestedStringFilter<$PrismaModel = never> = {
@@ -433,11 +433,11 @@ export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
   not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
 }
 
-export type NestedEnumProfessionNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel> | null
-  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel> | $Enums.Profession | null
+export type NestedEnumProfessionFilter<$PrismaModel = never> = {
+  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel>
+  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProfessionFilter<$PrismaModel> | $Enums.Profession
 }
 
 export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -494,14 +494,14 @@ export type NestedFloatNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedFloatNullableFilter<$PrismaModel> | number | null
 }
 
-export type NestedEnumProfessionNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel> | null
-  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumProfessionNullableWithAggregatesFilter<$PrismaModel> | $Enums.Profession | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumProfessionNullableFilter<$PrismaModel>
+export type NestedEnumProfessionWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Profession | Prisma.EnumProfessionFieldRefInput<$PrismaModel>
+  in?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  notIn?: $Enums.Profession[] | Prisma.ListEnumProfessionFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProfessionWithAggregatesFilter<$PrismaModel> | $Enums.Profession
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProfessionFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProfessionFilter<$PrismaModel>
 }
 
 

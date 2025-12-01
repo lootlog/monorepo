@@ -1,6 +1,9 @@
 import { IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ActivityType } from '../../../prisma/generated/client';
+import {
+  ActivityType,
+  ActivitySource,
+} from '../../../prisma/generated/client';
 
 export class QueryActivitiesDto {
   @IsString()
@@ -14,6 +17,14 @@ export class QueryActivitiesDto {
   @IsEnum(ActivityType)
   @IsOptional()
   type?: ActivityType;
+
+  @IsEnum(ActivitySource)
+  @IsOptional()
+  source?: ActivitySource;
+
+  @IsString()
+  @IsOptional()
+  playerName?: string;
 
   @IsDateString()
   @IsOptional()

@@ -20,6 +20,7 @@ import { AuthGuard, RequiredPermissions } from '@lootlog/nest-shared';
 import { PermissionsGuard } from 'src/shared/guards/permissions.guard';
 import { Permission } from '@lootlog/types';
 import { ActivitiesService } from './activities.service';
+import { ActivitiesQueryService } from './services/activities-query.service';
 import { QueryActivitiesDto } from './dto/query-activities.dto';
 import {
   ActivityEntity,
@@ -27,15 +28,18 @@ import {
 } from './entities/activity.entity';
 import { ActivityType } from '../../prisma/generated/client';
 
-@ApiTags('activities')
+@ApiTags('guilds')
 @ApiBearerAuth()
 @UseGuards(AuthGuard, PermissionsGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('activities')
+@Controller('guilds')
 export class ActivitiesController {
-  constructor(private readonly activitiesService: ActivitiesService) {}
+  constructor(
+    private readonly activitiesService: ActivitiesService,
+    private readonly activitiesQueryService: ActivitiesQueryService,
+  ) {}
 
-  @Get(':guildId')
+  @Get(':guildId/activity-logs')
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: PaginatedActivitiesEntity })
   @ApiOperation({ summary: 'Get activities for a specific guild' })
@@ -44,10 +48,10 @@ export class ActivitiesController {
     @Param('guildId') guildId: string,
     @Query() query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
-    return this.activitiesService.findByGuild(guildId, query);
+    return this.activitiesQueryService.findByGuild(guildId, query);
   }
 
-  @Get(':guildId/users/:userId')
+  @Get(':guildId/users/:userId/activity-logs')
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: PaginatedActivitiesEntity })
   @ApiOperation({ summary: 'Get activities for a specific user in a guild' })
@@ -57,10 +61,10 @@ export class ActivitiesController {
     @Param('userId') userId: string,
     @Query() query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
-    return this.activitiesService.findByUser(userId, guildId, query);
+    return this.activitiesQueryService.findByUser(userId, guildId, query);
   }
 
-  @Get(':guildId/activities/:id')
+  @Get(':guildId/activity-logs/:id')
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: ActivityEntity })
   @ApiOperation({ summary: 'Get a single activity by ID' })
@@ -70,18 +74,18 @@ export class ActivitiesController {
     @Param('guildId') guildId: string,
     @Param('id') id: string,
   ): Promise<ActivityEntity> {
-    return this.activitiesService.findOne(id, guildId);
+    return this.activitiesQueryService.findOne(id, guildId);
   }
 
-  @Delete(':guildId/activities/:id')
+  @Delete(':guildId/activity-logs/:id')
   @RequiredPermissions(Permission.OWNER)
-  @ApiOperation({ summary: 'Delete all activities for a guild' })
-  @ApiQuery({ name: 'type', enum: ActivityType, required: false })
+  @ApiOperation({ summary: 'Delete a specific activity by ID' })
   @ApiResponse({
     status: 200,
     schema: { type: 'object', properties: { count: { type: 'number' } } },
   })
-  async deleteGuildActivityById(
+  @ApiResponse({ status: 404, description: 'Activity not found' })
+  async deleteActivity(
     @Param('guildId') guildId: string,
     @Param('id') id: string,
   ): Promise<{ count: number }> {

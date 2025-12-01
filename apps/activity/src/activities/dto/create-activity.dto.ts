@@ -18,6 +18,16 @@ import {
   Profession,
 } from '../../../prisma/generated/client';
 
+const GAME_SOURCE_REQUIRED_FIELDS: Array<keyof ActorSnapshotDto> = [
+  'accountId',
+  'characterId',
+  'clanName',
+  'clanId',
+  'icon',
+  'lvl',
+  'prof',
+];
+
 @ValidatorConstraint({ name: 'actorSnapshotForGameSource', async: false })
 class ActorSnapshotForGameSourceConstraint
   implements ValidatorConstraintInterface
@@ -36,24 +46,10 @@ class ActorSnapshotForGameSourceConstraint
       return false;
     }
 
-    const requiredFields = [
-      'accountId',
-      'characterId',
-      'clanName',
-      'clanId',
-      'icon',
-      'lvl',
-      'prof',
-    ];
-
-    for (const field of requiredFields) {
-      const value = actorSnapshot[field as keyof ActorSnapshotDto];
-      if (value === null || value === undefined) {
-        return false;
-      }
-    }
-
-    return true;
+    return GAME_SOURCE_REQUIRED_FIELDS.every((field) => {
+      const value = actorSnapshot[field];
+      return value !== null && value !== undefined;
+    });
   }
 
   defaultMessage(args: ValidationArguments) {
@@ -64,16 +60,8 @@ class ActorSnapshotForGameSourceConstraint
       return 'actorSnapshot is required when source is GAME';
     }
 
-    const missingFields = [
-      'accountId',
-      'characterId',
-      'clanName',
-      'clanId',
-      'icon',
-      'lvl',
-      'prof',
-    ].filter((field) => {
-      const value = actorSnapshot[field as keyof ActorSnapshotDto];
+    const missingFields = GAME_SOURCE_REQUIRED_FIELDS.filter((field) => {
+      const value = actorSnapshot[field];
       return value === null || value === undefined;
     });
 
@@ -82,11 +70,17 @@ class ActorSnapshotForGameSourceConstraint
 }
 
 export class ActorSnapshotDto {
+  @IsNumber()
   @IsOptional()
   accountId?: number;
 
+  @IsNumber()
   @IsOptional()
   characterId?: number;
+
+  @IsString()
+  @IsOptional()
+  name?: string;
 
   @IsString()
   @IsOptional()
@@ -100,6 +94,7 @@ export class ActorSnapshotDto {
   @IsOptional()
   icon?: string;
 
+  @IsNumber()
   @IsOptional()
   lvl?: number;
 

@@ -1,15 +1,7 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/shared/db/prisma.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
-import { QueryActivitiesDto } from './dto/query-activities.dto';
-import {
-  ActivityEntity,
-  PaginatedActivitiesEntity,
-} from './entities/activity.entity';
+import { ActivityEntity } from './entities/activity.entity';
 import { createHash } from 'node:crypto';
 import { ActivityType, Prisma } from '../../prisma/generated/client';
 
@@ -25,6 +17,13 @@ export class ActivitiesService {
       actorSnapshotId = await this.findOrCreateActorSnapshot(
         dto.actorSnapshot,
         dto.source,
+      );
+    }
+
+    const requiresActorSnapshot = dto.lootContext || dto.timerContext;
+    if (requiresActorSnapshot && !actorSnapshotId) {
+      throw new Error(
+        'Actor snapshot is required for loot or timer context but was not created',
       );
     }
 
@@ -45,7 +44,7 @@ export class ActivitiesService {
             ? {
                 create: {
                   lootId: dto.lootContext.lootId,
-                  actorSnapshotId: actorSnapshotId!,
+                  actorSnapshotId: actorSnapshotId,
                 },
               }
             : undefined,
@@ -53,7 +52,7 @@ export class ActivitiesService {
             ? {
                 create: {
                   npcName: dto.timerContext.npcName,
-                  actorSnapshotId: actorSnapshotId!,
+                  actorSnapshotId: actorSnapshotId,
                 },
               }
             : undefined,
@@ -119,121 +118,6 @@ export class ActivitiesService {
 
       throw error;
     }
-  }
-
-  async findMany(
-    query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
-    const limit = Math.min(query.limit ?? 50, 100);
-    const where: Parameters<typeof this.prisma.activity.findMany>[0]['where'] =
-      {};
-
-    if (query.userId) {
-      where.userId = query.userId;
-    }
-
-    if (query.guildId) {
-      where.guildId = query.guildId;
-    }
-
-    if (query.type) {
-      where.type = query.type;
-    }
-
-    if (query.startDate ?? query.endDate) {
-      where.createdAt = {};
-      if (query.startDate) {
-        where.createdAt.gte = new Date(query.startDate);
-      }
-      if (query.endDate) {
-        where.createdAt.lte = new Date(query.endDate);
-      }
-    }
-
-    if (query.cursor) {
-      where.id = { lt: query.cursor };
-    }
-
-    const activities = await this.prisma.activity.findMany({
-      where,
-      take: limit + 1,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        actorSnapshot: true,
-        lootContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
-        timerContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
-      },
-    });
-
-    const hasMore = activities.length > limit;
-    const data = hasMore ? activities.slice(0, limit) : activities;
-    const nextCursor = hasMore ? data[data.length - 1].id : undefined;
-
-    return new PaginatedActivitiesEntity({
-      data: data.map(
-        (activity) =>
-          new ActivityEntity({
-            ...activity,
-            details: activity.details as Record<string, unknown> | undefined,
-          }),
-      ),
-      nextCursor,
-      hasMore,
-    });
-  }
-
-  async findOne(id: string, guildId: string): Promise<ActivityEntity> {
-    const activity = await this.prisma.activity.findFirst({
-      where: {
-        id,
-        guildId,
-      },
-      include: {
-        actorSnapshot: true,
-        lootContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
-        timerContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
-      },
-    });
-
-    if (!activity) {
-      throw new NotFoundException(`Activity with ID ${id} not found`);
-    }
-
-    return new ActivityEntity({
-      ...activity,
-      details: activity.details as Record<string, unknown> | undefined,
-    });
-  }
-
-  async findByGuild(
-    guildId: string,
-    query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
-    return this.findMany({ ...query, guildId });
-  }
-
-  async findByUser(
-    userId: string,
-    guildId: string,
-    query: QueryActivitiesDto,
-  ): Promise<PaginatedActivitiesEntity> {
-    return this.findMany({ ...query, userId, guildId });
   }
 
   async deleteOne(id: string, guildId: string): Promise<number> {
@@ -302,33 +186,40 @@ export class ActivitiesService {
 
     const fingerprint = this.generateFingerprint(snapshot, source);
 
-    const existing = await this.prisma.activityActorSnapshot.findUnique({
-      where: { fingerprint },
-      select: { id: true },
-    });
+    try {
+      const actorSnapshot = await this.prisma.activityActorSnapshot.upsert({
+        where: { fingerprint },
+        update: {},
+        create: {
+          accountId: snapshot.accountId,
+          characterId: snapshot.characterId,
+          clanName: snapshot.clanName,
+          clanId: snapshot.clanId,
+          name: snapshot.name,
+          icon: snapshot.icon,
+          lvl: snapshot.lvl,
+          prof: snapshot.prof,
+          source,
+          fingerprint,
+        },
+        select: { id: true },
+      });
 
-    if (existing) {
-      return existing.id;
+      if (!actorSnapshot.id) {
+        this.logger.debug(`Reused existing actor snapshot for fingerprint`);
+      } else {
+        this.logger.debug(`Created new actor snapshot: ${actorSnapshot.id}`);
+      }
+
+      return actorSnapshot.id;
+    } catch (error) {
+      this.logger.log({
+        level: 'error',
+        message: 'Failed to create or find actor snapshot',
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
     }
-
-    const created = await this.prisma.activityActorSnapshot.create({
-      data: {
-        accountId: snapshot.accountId,
-        characterId: snapshot.characterId,
-        clanName: snapshot.clanName,
-        clanId: snapshot.clanId,
-        icon: snapshot.icon,
-        lvl: snapshot.lvl,
-        prof: snapshot.prof,
-        source,
-        fingerprint,
-      },
-      select: { id: true },
-    });
-
-    this.logger.debug(`Created new actor snapshot: ${created.id}`);
-
-    return created.id;
   }
 
   private generateFingerprint(
@@ -340,6 +231,7 @@ export class ActivitiesService {
       characterId: snapshot.characterId,
       clanName: snapshot.clanName,
       clanId: snapshot.clanId,
+      name: snapshot.name,
       icon: snapshot.icon,
       lvl: snapshot.lvl,
       prof: snapshot.prof,
@@ -348,5 +240,4 @@ export class ActivitiesService {
 
     return createHash('sha256').update(data).digest('hex');
   }
-
 }

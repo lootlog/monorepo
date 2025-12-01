@@ -16,11 +16,12 @@
       "accountId": 9822301,
       "characterId": 617,
       "clanName": "Gorillas in Pyjamas",
+      "name": "yoruichi",
       "clanId": 692,
       "icon": "/paid/bf25-uniwersalne-k.gif",
       "lvl": 305,
       "prof": "HUNTER"
     },
-    "idempotencyKey": "disconnect_event_333444555_1733068800000"
+    "idempotencyKey": "disconnect_event_333444555_1733068800002"
   }
 }

@@ -765,6 +765,7 @@ export const ActivityActorSnapshotScalarFieldEnum = {
   id: 'id',
   accountId: 'accountId',
   characterId: 'characterId',
+  name: 'name',
   clanName: 'clanName',
   clanId: 'clanId',
   icon: 'icon',

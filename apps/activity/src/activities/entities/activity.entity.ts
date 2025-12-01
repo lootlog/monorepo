@@ -12,6 +12,9 @@ export class ActivityActorSnapshotEntity {
   characterId?: number;
 
   @Expose()
+  name?: string;
+
+  @Expose()
   clanName?: string;
 
   @Expose()

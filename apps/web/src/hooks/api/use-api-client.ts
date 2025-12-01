@@ -1,10 +1,5 @@
-import { apiClient, setupApiInterceptors } from "@/lib/api-client/api-client";
-import { useEffect } from "react";
+import { apiClient } from "@/lib/api-client/api-client";
 
 export const useApiClient = () => {
-  useEffect(() => {
-    setupApiInterceptors();
-  }, []);
-
   return { client: apiClient };
 };
