@@ -48,12 +48,14 @@ const parseCliArgs = (
   exchange?: string;
   routingKey?: string;
   payload?: string;
+  continuous?: boolean;
 } => {
   const parsed: {
     event?: string;
     exchange?: string;
     routingKey?: string;
     payload?: string;
+    continuous?: boolean;
   } = {};
 
   for (let i = 0; i < args.length; i++) {
@@ -70,6 +72,8 @@ const parseCliArgs = (
       parsed.routingKey = args[++i];
     } else if ((arg === "--payload" || arg === "-p") && i + 1 < args.length) {
       parsed.payload = args[++i];
+    } else if (arg === "--continuous" || arg === "-c") {
+      parsed.continuous = true;
     }
   }
 
@@ -88,11 +92,18 @@ ${chalk.bold("Interactive Mode (recommended):")}
 
   Launches an interactive menu to select and publish predefined events.
 
+${chalk.bold("Continuous Mode:")}
+  pnpm events publish --continuous
+
+  Keeps the connection open and allows publishing multiple events sequentially
+  without restarting the script. Perfect for testing event flows.
+
 ${chalk.bold("Non-Interactive Mode:")}
   pnpm events publish --event <name>
   pnpm events publish --exchange <name> --routing-key <key> --payload <json>
 
 ${chalk.bold("Options:")}
+  -c, --continuous             Enable continuous mode (publish multiple events)
   -e, --event <name>           Publish a predefined event by name
   -x, --exchange <name>        Custom exchange name
   -r, --routing-key <key>      Custom routing key
@@ -100,8 +111,11 @@ ${chalk.bold("Options:")}
   -h, --help                   Show this help message
 
 ${chalk.bold("Examples:")}
-  ${chalk.gray("# Interactive mode")}
+  ${chalk.gray("# Interactive mode (single event)")}
   pnpm events publish
+
+  ${chalk.gray("# Continuous mode (multiple events)")}
+  pnpm events publish --continuous
 
   ${chalk.gray("# Publish predefined event")}
   pnpm events publish --event loot-created
@@ -123,6 +137,7 @@ ${chalk.bold("Requirements:")}
 
 const publishInteractive = async (
   fixtures: Map<string, EventFixture>,
+  continuous = false,
 ): Promise<void> => {
   p.intro(chalk.bold.cyan("🐰 Publish RabbitMQ Event"));
 
@@ -133,45 +148,63 @@ const publishInteractive = async (
     process.exit(1);
   }
 
-  const selectedEvent = await p.select({
-    message: "Select an event to publish:",
-    options: fixtureNames.map((name) => ({
-      value: name,
-      label: name.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-    })),
-  });
-
-  if (p.isCancel(selectedEvent)) {
-    p.cancel("Operation cancelled");
-    process.exit(0);
-  }
-
-  const fixture = fixtures.get(selectedEvent as string);
-
-  if (!fixture) {
-    p.outro(chalk.red("Event not found"));
-    process.exit(1);
-  }
-
   const spinner = p.spinner();
   spinner.start("Connecting to RabbitMQ...");
 
   const client = await createRabbitMQClient();
   spinner.stop("Connected to RabbitMQ");
 
-  spinner.start("Publishing event...");
+  let continuePublishing = true;
 
   try {
-    await client.publish({
-      exchange: fixture.exchange,
-      routingKey: fixture.routingKey,
-      payload: fixture.payload,
-    });
+    while (continuePublishing) {
+      const selectedEvent = await p.select({
+        message: "Select an event to publish:",
+        options: fixtureNames.map((name) => ({
+          value: name,
+          label: name.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+        })),
+      });
+
+      if (p.isCancel(selectedEvent)) {
+        p.cancel("Operation cancelled");
+        break;
+      }
+
+      const fixture = fixtures.get(selectedEvent as string);
+
+      if (!fixture) {
+        p.outro(chalk.red("Event not found"));
+        break;
+      }
+
+      spinner.start("Publishing event...");
+
+      await client.publish({
+        exchange: fixture.exchange,
+        routingKey: fixture.routingKey,
+        payload: fixture.payload,
+      });
+
+      spinner.stop("Event published");
+
+      if (!continuous) {
+        continuePublishing = false;
+      } else {
+        const shouldContinue = await p.confirm({
+          message: "Publish another event?",
+          initialValue: true,
+        });
+
+        if (p.isCancel(shouldContinue) || !shouldContinue) {
+          continuePublishing = false;
+        }
+      }
+    }
   } finally {
     await client.close();
   }
 
-  spinner.stop("Event published");
   p.outro(chalk.green("✓ Done!"));
 };
 
@@ -255,7 +288,7 @@ export const publish = async (args: string[]): Promise<void> => {
     !parsedArgs.payload;
 
   if (isInteractive) {
-    await publishInteractive(fixtures);
+    await publishInteractive(fixtures, parsedArgs.continuous);
   } else {
     await publishNonInteractive(fixtures, parsedArgs);
   }

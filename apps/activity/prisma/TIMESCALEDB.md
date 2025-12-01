@@ -67,7 +67,7 @@ These indexes optimize queries like:
 prisma.activity.findMany({
   where: { guildId: 'xxx' },
   orderBy: { createdAt: 'desc' },
-  take: 100
+  take: 100,
 });
 
 // Activities in time range
@@ -76,9 +76,9 @@ prisma.activity.findMany({
     guildId: 'xxx',
     createdAt: {
       gte: new Date('2025-01-01'),
-      lte: new Date('2025-01-31')
-    }
-  }
+      lte: new Date('2025-01-31'),
+    },
+  },
 });
 ```
 
@@ -144,7 +144,7 @@ activity-log-db:
     POSTGRES_PASSWORD: activity_password
     POSTGRES_DB: activity_db
   ports:
-    - "5435:5432"
+    - '5435:5432'
   volumes:
     - activity-log-db:/var/lib/postgresql/data
 ```
