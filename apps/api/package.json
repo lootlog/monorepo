@@ -38,7 +38,7 @@
     "@nestjs/schedule": "^6.0.1",
     "@nestjs/swagger": "^11.2.1",
     "@nestjs/websockets": "^11.1.8",
-    "@prisma/client": "6.18.0",
+    "@prisma/client": "6.19.0",
     "axios": "^1.12.2",
     "bullmq": "^5.61.2",
     "class-transformer": "^0.5.1",
