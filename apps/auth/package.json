@@ -24,8 +24,8 @@
   "devDependencies": {
     "@lootlog/types": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
-    "@types/pg": "^8.15.5",
-    "pkgroll": "^2.20.1",
-    "tsx": "^4.20.6"
+    "@types/pg": "^8.15.6",
+    "pkgroll": "^2.21.4",
+    "tsx": "^4.21.0"
   }
 }
