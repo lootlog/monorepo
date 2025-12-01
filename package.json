@@ -53,6 +53,8 @@
     "seed:scrape:items": "tsx packages/cli/src/index.ts seed scrape:items",
     "seed:scrape:npcs": "tsx packages/cli/src/index.ts seed scrape:npcs",
     "seed:generate:players": "tsx packages/cli/src/index.ts seed generate:players",
+    "events": "tsx packages/cli/src/index.ts events",
+    "events:publish": "tsx packages/cli/src/index.ts events publish",
     "build:game-client": "turbo run build:game-client",
     "copy-entrypoint": "turbo run copy-entrypoint",
     "changeset": "changeset",

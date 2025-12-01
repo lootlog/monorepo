@@ -2,10 +2,12 @@
 
 import { chalk } from "zx";
 import { env } from "./commands/env/index.js";
+import { events } from "./commands/events/index.js";
 import { seedCommand } from "./commands/seed/index.js";
 
 const COMMANDS = {
   env,
+  events,
   seed: seedCommand,
 } as const;
 
@@ -20,11 +22,14 @@ ${chalk.bold("Usage:")}
 
 ${chalk.bold("Commands:")}
   env         Environment management (generate .env files)
+  events      RabbitMQ event management (publish test events)
   seed        Database seeding (scrape data, generate mocks, populate DB)
 
 ${chalk.bold("Examples:")}
   pnpm env generate              # Generate all .env files
   pnpm env generate --help       # Show help for specific command
+  pnpm events publish            # Publish test event to RabbitMQ
+  pnpm events --help             # Show events command help
   pnpm seed setup                # Complete database setup
   pnpm seed --help               # Show seed command help
 

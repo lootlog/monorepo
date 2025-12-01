@@ -62,6 +62,77 @@ pnpm seed:generate:players
 
 For detailed documentation, see [src/commands/seed/README.md](./src/commands/seed/README.md).
 
+### RabbitMQ Event Publishing
+
+Publish test events to RabbitMQ for debugging and manual triggering of event subscribers.
+
+```bash
+pnpm events publish [options]
+```
+
+**Options:**
+
+- `-e, --event <name>` - Publish a predefined event by name
+- `-x, --exchange <name>` - Custom exchange name
+- `-r, --routing-key <key>` - Custom routing key
+- `-p, --payload <json>` - Custom payload as JSON string
+- `-h, --help` - Show help
+
+**Examples:**
+
+```bash
+# Interactive mode (recommended)
+pnpm events:publish
+
+# Publish predefined event
+pnpm events:publish --event loot-created
+pnpm events:publish --event timer-expired
+pnpm events:publish --event member-joined
+pnpm events:publish --event battle-completed
+
+# Custom event
+pnpm events:publish \
+  --exchange lootlog.events \
+  --routing-key custom.test \
+  --payload '{"test": "data"}'
+```
+
+**Available Predefined Events:**
+
+- `loot-created` - New loot drop event
+- `timer-expired` - Boss respawn timer expiration
+- `member-joined` - Guild member joined event
+- `battle-completed` - Battle statistics event
+
+**Requirements:**
+
+- `RABBITMQ_URI` environment variable must be set
+- RabbitMQ server must be running and accessible
+
+**Event Fixtures:**
+
+Fixtures are located in `src/events/fixtures/` and include:
+
+- Exchange name
+- Routing key
+- Sample payload with realistic data
+
+To add new fixtures, create a JSON file in `src/events/fixtures/` with this structure:
+
+```json
+{
+  "exchange": "lootlog.events",
+  "routingKey": "your.routing.key",
+  "payload": {
+    "eventType": "your.event.type",
+    "timestamp": "2025-12-01T12:00:00.000Z",
+    "data": {
+      // Your event data
+    }
+  }
+}
+```
+
 ### Environment Generation
 
 Generate `.env` files from `.env.sample` templates with smart defaults.
@@ -211,12 +282,19 @@ packages/cli/
 │   │   ├── env/
 │   │   │   ├── index.ts             # Env command aggregator
 │   │   │   └── generate.ts          # Generate .env files
+│   │   ├── events/
+│   │   │   ├── index.ts             # Events command aggregator
+│   │   │   └── publish.ts           # Publish RabbitMQ events
 │   │   └── seed/
 │   │       ├── index.ts             # Seed command handler
 │   │       ├── config.ts            # Seed configuration
 │   │       ├── seed.ts              # Main seeding logic
 │   │       ├── scrapers/            # Data scrapers
 │   │       └── generators/          # Data generators
+│   ├── events/
+│   │   └── fixtures/                # Event JSON fixtures
+│   ├── rabbitmq/
+│   │   └── client.ts                # RabbitMQ connection helper
 │   └── utils/
 │       ├── file-utils.ts            # File operations
 │       └── env-generator.ts         # Value generation logic
@@ -319,6 +397,7 @@ if (variable.key === "YOUR_DERIVED_KEY") {
 
 ✅ **Environment Management** - Generate `.env` files with smart defaults
 ✅ **Database Seeding** - Scrape data, generate mocks, populate database
+✅ **RabbitMQ Events** - Publish test events to RabbitMQ for debugging
 
 ## Future Commands
 

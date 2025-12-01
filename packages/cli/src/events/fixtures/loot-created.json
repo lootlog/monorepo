@@ -1,0 +1,35 @@
+{
+  "exchange": "lootlog.events",
+  "routingKey": "loot.created",
+  "payload": {
+    "eventType": "loot.created",
+    "timestamp": "2025-12-01T12:00:00.000Z",
+    "data": {
+      "lootId": "550e8400-e29b-41d4-a716-446655440000",
+      "guildId": "123e4567-e89b-12d3-a456-426614174000",
+      "item": {
+        "id": "item_789",
+        "name": "Legendary Sword of Destiny",
+        "rarity": "legendary",
+        "level": 85,
+        "stats": {
+          "attack": 250,
+          "strength": 45,
+          "agility": 20
+        }
+      },
+      "droppedBy": {
+        "npcId": "npc_456",
+        "npcName": "Ancient Dragon",
+        "location": "Dragon's Lair"
+      },
+      "collectedBy": {
+        "characterId": "char_123",
+        "characterName": "Aragorn",
+        "level": 90,
+        "profession": "warrior"
+      },
+      "value": 50000
+    }
+  }
+}

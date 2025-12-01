@@ -1,0 +1,22 @@
+{
+  "exchange": "lootlog.events",
+  "routingKey": "timer.expired",
+  "payload": {
+    "eventType": "timer.expired",
+    "timestamp": "2025-12-01T12:00:00.000Z",
+    "data": {
+      "timerId": "timer_001",
+      "guildId": "123e4567-e89b-12d3-a456-426614174000",
+      "timerName": "Boss Respawn Timer",
+      "description": "Ancient Dragon respawn in Dragon's Lair",
+      "scheduledAt": "2025-12-01T11:00:00.000Z",
+      "expiredAt": "2025-12-01T12:00:00.000Z",
+      "metadata": {
+        "bossName": "Ancient Dragon",
+        "location": "Dragon's Lair",
+        "respawnInterval": 3600,
+        "difficulty": "hard"
+      }
+    }
+  }
+}
