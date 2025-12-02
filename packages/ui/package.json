@@ -50,8 +50,8 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "@types/three": "^0.180.0"
   },
   "exports": {
