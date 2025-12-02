@@ -2,13 +2,41 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
-import { Resource } from "@opentelemetry/resources";
-import { SEMRESATTRS_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import {
+  Resource,
+  envDetector,
+  hostDetector,
+  osDetector,
+  processDetector,
+} from "@opentelemetry/resources";
+import {
+  SEMRESATTRS_SERVICE_NAME,
+  SEMRESATTRS_SERVICE_NAMESPACE,
+  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
+} from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 
-export function initObservability(serviceName: string) {
-  const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
-  const otlpHeaders = process.env.OTEL_EXPORTER_OTLP_HEADERS;
+export interface ObservabilityConfig {
+  serviceName: string;
+  otlpEndpoint?: string;
+  otlpHeaders?: string;
+  serviceEnvironment?: string;
+  serviceNamespace?: string;
+}
+
+let sdkInstance: NodeSDK | null = null;
+let currentServiceName = "";
+
+export function initObservability(config: ObservabilityConfig) {
+  const {
+    serviceName,
+    otlpEndpoint,
+    otlpHeaders,
+    serviceEnvironment,
+    serviceNamespace,
+  } = config;
+
+  currentServiceName = serviceName;
 
   if (!otlpEndpoint || !otlpHeaders) {
     // eslint-disable-next-line no-console
@@ -18,10 +46,23 @@ export function initObservability(serviceName: string) {
     return;
   }
 
-  const sdk = new NodeSDK({
-    resource: new Resource({
-      [SEMRESATTRS_SERVICE_NAME]: serviceName,
-    }),
+  const resourceAttributes: Record<string, string> = {
+    [SEMRESATTRS_SERVICE_NAME]: serviceName,
+  };
+
+  if (serviceEnvironment) {
+    resourceAttributes[SEMRESATTRS_DEPLOYMENT_ENVIRONMENT] = serviceEnvironment;
+  }
+
+  if (serviceNamespace) {
+    resourceAttributes[SEMRESATTRS_SERVICE_NAMESPACE] = serviceNamespace;
+  }
+
+  const detectors = getResourceDetectors();
+
+  sdkInstance = new NodeSDK({
+    resource: new Resource(resourceAttributes),
+    resourceDetectors: detectors,
     traceExporter: new OTLPTraceExporter({
       url: `${otlpEndpoint}/v1/traces`,
       headers: parseHeaders(otlpHeaders),
@@ -35,29 +76,71 @@ export function initObservability(serviceName: string) {
     instrumentations: [getNodeAutoInstrumentations()],
   });
 
-  sdk.start();
+  try {
+    sdkInstance.start();
+    // eslint-disable-next-line no-console
+    console.log(`[${serviceName}] Observability initialized.`);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(
+      `[${serviceName}] Observability initialization failed:`,
+      error,
+    );
+    process.exit(1);
+  }
+}
 
+export async function shutdownObservability(): Promise<void> {
+  if (!sdkInstance) {
+    return;
+  }
+
+  await sdkInstance.shutdown();
   // eslint-disable-next-line no-console
-  console.log(`[${serviceName}] Observability initialized.`);
+  console.log(`[${currentServiceName}] Observability terminated`);
+  sdkInstance = null;
+}
 
-  process.on("SIGTERM", () => {
-    sdk
-      .shutdown()
-      .then(() => console.log(`[${serviceName}] Observability terminated`)) // eslint-disable-line no-console
-      .catch((error: unknown) =>
-        console.log(`[${serviceName}] Error terminating observability`, error),
-      ) // eslint-disable-line no-console
-      .finally(() => process.exit(0));
-  });
+function getResourceDetectors() {
+  const detectors: Array<typeof envDetector> = [];
+  const detectorsEnv = process.env.OTEL_NODE_RESOURCE_DETECTORS;
+
+  if (!detectorsEnv) {
+    return [envDetector, hostDetector, osDetector, processDetector];
+  }
+
+  const detectorNames = detectorsEnv.split(",").map((d) => d.trim());
+
+  const detectorMap = {
+    env: envDetector,
+    host: hostDetector,
+    os: osDetector,
+    process: processDetector,
+  };
+
+  for (const name of detectorNames) {
+    const detector = detectorMap[name as keyof typeof detectorMap];
+    if (detector) {
+      detectors.push(detector);
+    }
+  }
+
+  return detectors.length > 0
+    ? detectors
+    : [envDetector, hostDetector, osDetector, processDetector];
 }
 
 function parseHeaders(headersString: string): Record<string, string> {
   const headers: Record<string, string> = {};
-  headersString.split(",").forEach((header) => {
-    const [key, value] = header.split("=");
-    if (key && value) {
-      headers[key.trim()] = value.trim();
-    }
+
+  // Convert comma separators to ampersands for URLSearchParams compatibility
+  // This allows values to contain commas and equals signs (e.g., base64, URLs, JSON)
+  const paramsString = headersString.replace(/,/g, "&");
+  const params = new URLSearchParams(paramsString);
+
+  params.forEach((value, key) => {
+    headers[key] = value;
   });
+
   return headers;
 }
