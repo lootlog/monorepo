@@ -15,6 +15,7 @@ import {
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { inspect } from "node:util";
 
 export interface ObservabilityConfig {
   serviceName: string;
@@ -80,13 +81,13 @@ export function initObservability(config: ObservabilityConfig) {
     sdkInstance.start();
     // eslint-disable-next-line no-console
     console.log(`[${serviceName}] Observability initialized.`);
-  } catch (error) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error(
       `[${serviceName}] Observability initialization failed:`,
-      error,
+      inspect(error, { depth: 2, colors: false }),
     );
-    process.exit(1);
+    sdkInstance = null;
   }
 }
 
