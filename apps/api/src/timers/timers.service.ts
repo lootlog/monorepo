@@ -216,14 +216,6 @@ export class TimersService implements OnModuleInit {
       ]);
 
       this.emitUpdateTimer(newTimer);
-      this.trackTimerActivity({
-        discordId,
-        userId,
-        guildId,
-        world: data.world,
-        npcName: npcData.name,
-        data,
-      });
 
       return newTimer;
     } catch (error) {
@@ -563,68 +555,5 @@ export class TimersService implements OnModuleInit {
       minSpawnTime: new Date(dateMs + respMs - variance),
       maxSpawnTime: new Date(dateMs + respMs + variance),
     };
-  }
-
-  private trackTimerActivity(options: {
-    discordId: string;
-    userId: string;
-    guildId: string;
-    world: string;
-    npcName: string;
-    data: CreateTimerFromGameClientDto;
-  }) {
-    const { discordId, userId, guildId, world, npcName, data } = options;
-
-    const prof = getProfByShortname(data.npc.prof);
-    if (!prof) {
-      this.logger.log({
-        level: 'warn',
-        message: 'Skipping activity tracking - invalid profession',
-        npcId: data.npc.id,
-        prof: data.npc.prof,
-      });
-      return;
-    }
-
-    const timestamp = Date.now();
-    const idempotencyKey = `timer:${guildId}:${data.npc.id}:${world}:${timestamp}:${discordId}`;
-
-    try {
-      this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.ACTIVITY_LOG_CREATE,
-        {
-          userId,
-          guildId,
-          discordId,
-          type: 'TIMER_EVENT',
-          source: 'GAME',
-          world,
-          idempotencyKey,
-          actorSnapshot: {
-            accountId: Number(data.accountId),
-            characterId: Number(data.characterId),
-            name: data.npc.name ?? '',
-            clanName: '',
-            clanId: null,
-            icon: data.npc.icon,
-            lvl: data.npc.lvl,
-            prof,
-          },
-          timerContext: {
-            npcName,
-          },
-        },
-      );
-    } catch (error) {
-      this.logger.error({
-        level: 'error',
-        message: 'Failed to publish timer activity event',
-        error: error instanceof Error ? error.message : String(error),
-        guildId,
-        npcId: data.npc.id,
-        userId,
-      });
-    }
   }
 }

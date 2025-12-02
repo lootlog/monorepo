@@ -63,7 +63,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.29.8",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
     "knip": "^5.67.1",
@@ -81,7 +81,16 @@
       "multer": "^2.0.1",
       "cross-spawn": "^7.0.5",
       "body-parser": "^1.20.3",
-      "undici": "^6.21.2"
+      "undici": "^6.21.2",
+      "hono@<4.9.7": ">=4.9.7",
+      "hono@>=1.1.0 <4.10.2": ">=4.10.2",
+      "js-yaml@<3.14.2": ">=3.14.2",
+      "js-yaml@>=4.0.0 <4.1.1": ">=4.1.1",
+      "glob": "^13.0.0",
+      "valibot@>=0.31.0 <1.2.0": ">=1.2.0",
+      "hono@<4.10.3": ">=4.10.3",
+      "express@>=5.0.0 <5.2.0": ">=5.2.0",
+      "better-auth@<1.4.2": ">=1.4.2"
     },
     "onlyBuiltDependencies": [
       "@nestjs/core",
