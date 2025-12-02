@@ -39,6 +39,8 @@ spec:
                 secretKeyRef:
                   key: env
                   name: lootlog-battlelog-service-secrets
+            - name: SERVICE_NAME
+              value: battlelog-service
             - name: POSTGRESQL_CONNECTION_URI
               valueFrom:
                 secretKeyRef:
@@ -93,6 +95,25 @@ spec:
               value: dragonfly
             - name: REDIS_PORT
               value: "6379"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-battlelog-service-secrets
+                  key: otelExporterOtlpEndpoint
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-battlelog-service-secrets
+                  key: otelExporterOtlpHeaders
+            - name: OTEL_NODE_RESOURCE_DETECTORS
+              value: "env,host,os,process"
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: SERVICE_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-battlelog-service-secrets
+                  key: serviceNamespace
 
           livenessProbe:
             httpGet:

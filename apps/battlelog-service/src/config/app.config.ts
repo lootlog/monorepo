@@ -21,6 +21,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
       )
       .default(RuntimeEnvironment.LOCAL),
     PORT: Joi.number().required(),
+    SERVICE_NAME: Joi.string().default('battlelog-service'),
     POSTGRESQL_CONNECTION_URI: Joi.string(),
     AXIOM_DATASET: Joi.string(),
     AXIOM_TOKEN: Joi.string(),

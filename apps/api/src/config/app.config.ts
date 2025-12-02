@@ -22,6 +22,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
       )
       .default(RuntimeEnvironment.LOCAL),
     PORT: Joi.number().required(),
+    SERVICE_NAME: Joi.string().default('api'),
     POSTGRESQL_CONNECTION_URI: Joi.string(),
     RABBITMQ_URI: Joi.string(),
     AXIOM_DATASET: Joi.string(),
