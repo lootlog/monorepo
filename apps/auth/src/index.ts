@@ -1,6 +1,13 @@
+import "dotenv/config";
 import { initObservability } from "@lootlog/instrumentation";
 
-initObservability("lootlog-auth");
+initObservability({
+  serviceName: process.env.SERVICE_NAME || "auth",
+  otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+  otlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
+  serviceEnvironment: process.env.ENV,
+  serviceNamespace: process.env.SERVICE_NAMESPACE,
+});
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";

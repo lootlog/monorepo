@@ -14,4 +14,10 @@ export const configSchema = Joi.object({
   DISCORD_BOT_TOKEN: Joi.string().required(),
   DISCORD_DEVELOPMENT_GUILD_ID: Joi.string().optional(),
   RABBITMQ_URI: Joi.string().required(),
+  SERVICE_NAME: Joi.string().default('discord-bot'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri(),
+  OTEL_EXPORTER_OTLP_HEADERS: Joi.string(),
+  OTEL_NODE_RESOURCE_DETECTORS: Joi.string().default('env,host,os,process'),
+  OTEL_TRACES_EXPORTER: Joi.string().default('otlp'),
+  SERVICE_NAMESPACE: Joi.string().default('local'),
 });
