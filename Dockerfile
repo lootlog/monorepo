@@ -33,6 +33,10 @@ COPY . .
 
 RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client
 
+RUN find ./packages -name "src" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find ./packages -name "*.ts" -not -path "*/dist/*" -delete && \
+    find ./packages -name "*.tsx" -not -path "*/dist/*" -delete
+
 RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     pnpm deploy --filter=@lootlog/auth --prod /prod/auth && \
     pnpm deploy --filter=@lootlog/search --prod /prod/search && \
@@ -53,6 +57,8 @@ USER nodejs
 
 EXPOSE 4000
 
+ENV NODE_OPTIONS="--no-strip-types"
+
 ENTRYPOINT ["dumb-init", "--"]
 
 CMD ["pnpm", "start"]
@@ -69,6 +75,8 @@ WORKDIR /prod/search
 USER nodejs
 
 EXPOSE 4000
+
+ENV NODE_OPTIONS="--no-strip-types"
 
 ENTRYPOINT ["dumb-init", "--"]
 
