@@ -37,6 +37,15 @@ export function initObservability(config: ObservabilityConfig) {
     serviceNamespace,
   } = config;
 
+  if (serviceEnvironment !== "prod") {
+    // Disable observability for non-production environments
+    // eslint-disable-next-line no-console
+    console.log(
+      `[${serviceName}] Observability disabled for non-production environment: ${serviceEnvironment}`,
+    );
+    return;
+  }
+
   currentServiceName = serviceName;
 
   if (!otlpEndpoint || !otlpHeaders) {
