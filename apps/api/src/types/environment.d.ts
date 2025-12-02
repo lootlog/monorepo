@@ -6,6 +6,7 @@ declare global {
     interface ProcessEnv {
       PORT: number;
       ENV: RuntimeEnvironment;
+      SERVICE_NAME: string;
 
       DISCORD_API_VERSION: RESTOptions.version;
       DISCORD_API_AUTH_PREFIX: RESTOptions.authPrefix;
@@ -21,6 +22,12 @@ declare global {
       REDIS_HOST: string;
       REDIS_PORT: string;
       REDIS_USERNAME: string;
+
+      OTEL_EXPORTER_OTLP_ENDPOINT: string;
+      OTEL_EXPORTER_OTLP_HEADERS: string;
+      OTEL_NODE_RESOURCE_DETECTORS: string;
+      OTEL_TRACES_EXPORTER: string;
+      SERVICE_NAMESPACE: string;
     }
   }
 }

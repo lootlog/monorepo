@@ -45,6 +45,11 @@ const PERMISSIONS = [
     border: true,
   },
   {
+    key: Permission.LOOTLOG_RESERVATIONS,
+    description: "Pozwala na dostęp do rezerwacji",
+    border: true,
+  },
+  {
     key: Permission.LOOTLOG_READ_LOOTS_TITANS,
     description: "Dostęp do lootów tytanów",
     border: true,
