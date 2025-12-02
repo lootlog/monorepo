@@ -1,3 +1,7 @@
+import { initObservability } from "@lootlog/instrumentation";
+
+initObservability("lootlog-search");
+
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { APP_CONFIG } from "./config/app.config.js";
