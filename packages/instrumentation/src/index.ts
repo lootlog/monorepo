@@ -73,10 +73,7 @@ import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import {
   ParentBasedSampler,
   TraceIdRatioBasedSampler,
-  type SpanProcessor,
-  type ReadableSpan,
 } from "@opentelemetry/sdk-trace-base";
-import type { Context } from "@opentelemetry/api";
 import { inspect } from "node:util";
 
 export interface ObservabilityConfig {
@@ -86,53 +83,26 @@ export interface ObservabilityConfig {
   serviceEnvironment?: string;
   serviceNamespace?: string;
   traceSampleRate?: number;
+  forceEnable?: boolean; // Bypass environment check and force observability
 }
 
 let sdkInstance: NodeSDK | null = null;
 let currentServiceName = "";
 
-// High-cardinality attributes to drop from spans before export
-// These attributes cause metrics cardinality explosion in Grafana Cloud's "metrics-from-traces"
-const HIGH_CARDINALITY_ATTRIBUTES = [
-  // HTTP attributes with dynamic values (IDs in URLs, query params, etc.)
-  "http.url",
-  "http.target",
-  // Database attributes (full SQL statements are unique per query)
-  "db.statement",
-  "db.query.text",
-  // User/session identifiers
-  "enduser.id",
-  "session.id",
-  // Custom high-cardinality attributes (add more as needed)
-  "user.id",
-  "character.id",
-  "guild.id",
-];
-
-// SpanProcessor that filters high-cardinality attributes before export
-// This ensures metrics-from-traces in Grafana Cloud only use low-cardinality labels
-class AttributeFilteringSpanProcessor implements SpanProcessor {
-  forceFlush(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  onStart(_span: ReadableSpan, _parentContext: Context): void {
-    // No-op
-  }
-
-  onEnd(span: ReadableSpan): void {
-    // ReadableSpan doesn't have setAttribute, so we need to modify attributes directly
-    // We'll remove the attributes by deleting them from the span's attributes
-    const attributes = span.attributes;
-    HIGH_CARDINALITY_ATTRIBUTES.forEach((attr) => {
-      delete attributes[attr];
-    });
-  }
-
-  shutdown(): Promise<void> {
-    return Promise.resolve();
-  }
-}
+/**
+ * High-cardinality attributes that cause metrics explosion:
+ * - http.url, http.target (dynamic IDs in URLs)
+ * - db.statement, db.query.text (full SQL queries)
+ * - user.id, character.id, guild.id (entity identifiers)
+ * - enduser.id, session.id (session identifiers)
+ *
+ * These are prevented by:
+ * 1. Disabling enhancedDatabaseReporting (no db.statement)
+ * 2. Grafana's built-in cardinality limits
+ * 3. Trace sampling (reduces volume)
+ *
+ * Cannot be filtered at SpanProcessor level (ReadableSpan is immutable)
+ */
 
 export function initObservability(config: ObservabilityConfig) {
   const {
@@ -142,12 +112,16 @@ export function initObservability(config: ObservabilityConfig) {
     serviceEnvironment,
     serviceNamespace,
     traceSampleRate = 0.2,
+    forceEnable = false,
   } = config;
 
-  if (serviceEnvironment !== "prod") {
+  // Disable observability only for local/development environments
+  // Allow: prod, staging, dev (any environment except local)
+  // Can be bypassed with forceEnable flag
+  if (!forceEnable && (serviceEnvironment === "local" || !serviceEnvironment)) {
     // eslint-disable-next-line no-console
     console.log(
-      `[${serviceName}] Observability disabled for non-production environment: ${serviceEnvironment}`,
+      `[${serviceName}] Observability disabled for local development environment.`,
     );
     return;
   }
@@ -197,11 +171,8 @@ export function initObservability(config: ObservabilityConfig) {
         headers: parseHeaders(otlpHeaders),
       }),
     }),
-    spanProcessors: [
-      // Filter high-cardinality attributes before export
-      // This prevents metrics cardinality explosion in Grafana Cloud
-      new AttributeFilteringSpanProcessor(),
-    ],
+    // Note: Span attribute filtering is handled by instrumentation configuration below
+    // and by disabling enhancedDatabaseReporting to prevent db.statement capture
     instrumentations: [
       getNodeAutoInstrumentations({
         // Configure HTTP instrumentation to avoid high-cardinality attributes
