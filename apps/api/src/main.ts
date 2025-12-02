@@ -1,3 +1,7 @@
+import { initObservability } from '@lootlog/instrumentation';
+
+initObservability('lootlog-api');
+
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
