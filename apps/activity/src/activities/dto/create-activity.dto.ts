@@ -12,11 +12,7 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  ActivitySource,
-  ActivityType,
-  Profession,
-} from '../../../prisma/generated/client';
+import { ActivitySource, ActivityType } from '../../../prisma/generated/client';
 
 const GAME_SOURCE_REQUIRED_FIELDS: Array<keyof ActorSnapshotDto> = [
   'accountId',
@@ -100,7 +96,7 @@ export class ActorSnapshotDto {
 
   @IsString()
   @IsOptional()
-  prof?: Profession;
+  prof?: string;
 }
 
 export class LootContextDto {

@@ -12,7 +12,6 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -26,7 +25,6 @@ import {
   ActivityEntity,
   PaginatedActivitiesEntity,
 } from './entities/activity.entity';
-import { ActivityType } from '../../prisma/generated/client';
 
 @ApiTags('guilds')
 @ApiBearerAuth()

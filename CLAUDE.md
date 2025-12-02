@@ -11,9 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Monorepo**: Turborepo + pnpm workspaces
 - **Backend**: NestJS (Fastify), Hono
 - **Frontend**: React 19, Vite, Next.js 16
-- **Databases**: PostgreSQL 17 (3 separate databases), Redis, Meilisearch
+- **Databases**: PostgreSQL 17 (4 separate databases), Redis, Meilisearch
 - **Message Queue**: RabbitMQ 4
-- **ORMs**: Prisma (API, Battlelog), Kysely (Auth), Better-Auth
+- **ORMs**: Prisma (API, Battlelog, Activity), Kysely (Auth), Better-Auth
 - **Testing**: Jest (backend), Vitest (frontend)
 - **Node**: >= 20
 
@@ -36,6 +36,8 @@ docker compose up -d
 # 4. Run database migrations
 pnpm api:migrate:dev
 pnpm auth:migrate:dev
+pnpm battlelog:migrate:dev
+pnpm activity:migrate:dev
 
 # 5. Start all services in development mode
 pnpm dev
@@ -46,7 +48,7 @@ pnpm dev
 ### Development
 
 ```bash
-pnpm dev                    # Start all apps/services with hot reload (concurrency 11)
+pnpm dev                    # Start all apps/services with hot reload (concurrency 12)
 pnpm build                  # Build all apps/services
 pnpm lint                   # Lint all code
 pnpm format                 # Format code with Prettier
@@ -76,6 +78,40 @@ pnpm auth:migrate:prod      # Production migrations
 pnpm battlelog:migrate:dev  # Run Prisma migrations
 pnpm battlelog:generate     # Generate Prisma client
 pnpm battlelog:studio       # Open Prisma Studio
+```
+
+**Activity Service (Activity Log DB - port 5435)**
+
+```bash
+pnpm activity:migrate:dev   # Run Prisma migrations
+pnpm activity:generate      # Generate Prisma client
+pnpm activity:studio        # Open Prisma Studio
+```
+
+### Database Seeding
+
+```bash
+pnpm seed:setup              # Complete setup (scrape, generate, seed)
+pnpm seed:scrape             # Scrape items and NPCs from margoworld.pl
+pnpm seed:generate:players   # Generate mock player data
+pnpm seed                    # Seed the database with test data
+```
+
+### RabbitMQ Event Testing
+
+```bash
+pnpm events:publish          # Interactive event publishing
+pnpm events:publish --event loot-created      # Publish predefined event
+pnpm events:publish --event timer-expired     # Publish timer event
+pnpm events:publish --event member-joined     # Publish member event
+```
+
+### Version Management (Changesets)
+
+```bash
+pnpm changeset        # Create a changeset for your changes
+pnpm version          # Update package versions from changesets
+pnpm release          # Build and publish packages
 ```
 
 ### Testing
@@ -114,6 +150,7 @@ docker compose logs -f      # Follow logs
 - `api` - Main NestJS backend (guilds, loots, timers, NPCs)
 - `auth` - Hono auth service (Better-Auth, Discord OAuth, JWT)
 - `battlelog-service` - NestJS service for battle statistics
+- `activity` - NestJS service for activity/event logging (TimescaleDB)
 - `gateway` - Socket.IO gateway for real-time events
 - `discord-bot` - Discord bot (NestJS + necord)
 - `search` - Hono search service (Meilisearch indexing)
@@ -126,10 +163,11 @@ docker compose logs -f      # Follow logs
 - `ui` - Shared Radix UI + Tailwind components
 - `types` - Shared TypeScript types
 - `api-helpers` - JWT/JWKS auth utilities for services
+- `nest-shared` - Shared NestJS utilities and configurations
 - `cli` - Environment configuration CLI with smart defaults generation
 - `eslint-config`, `typescript-config` - Shared configs
 
-### Three-Database Architecture
+### Four-Database Architecture
 
 1. **lootlog-users-db** (port 5432)
    - Used by: Auth service
@@ -147,6 +185,13 @@ docker compose logs -f      # Follow logs
    - ORM: Prisma
    - Contains: Battles, warrior stats, character data
    - Schema location: `apps/battlelog-service/prisma/schema.prisma`
+
+4. **activity-log-db** (port 5435)
+   - Used by: Activity service
+   - ORM: Prisma
+   - Database: TimescaleDB (PostgreSQL 17 with time-series extension)
+   - Contains: Activity logs, event tracking, time-series data
+   - Schema location: `apps/activity/prisma/schema.prisma`
 
 ### Inter-Service Communication
 
@@ -231,7 +276,15 @@ When modifying database schemas:
    pnpm battlelog:generate
    ```
 
-3. **For Auth service**:
+3. **For Activity service**:
+
+   ```bash
+   # Edit apps/activity/prisma/schema.prisma
+   pnpm activity:migrate:dev
+   pnpm activity:generate
+   ```
+
+4. **For Auth service**:
    ```bash
    # Better-Auth manages migrations automatically
    pnpm auth:migrate:dev
@@ -285,7 +338,7 @@ pnpm dev                    # Runs Hono dev server
 ### Turbo Task Dependencies
 
 - Build tasks depend on upstream builds: `"dependsOn": ["^build"]`
-- Database generation runs before build: `api:generate`, `battlelog:generate`
+- Database generation runs before build: `api:generate`, `battlelog:generate`, `activity:generate`
 - Turbo caches outputs in `.next/`, `dist/`, `generated/`
 
 ### Module Organization (NestJS)
@@ -302,10 +355,16 @@ pnpm dev                    # Runs Hono dev server
 - React Hook Form for forms
 - Socket.IO client for real-time updates
 
+**React Development Notes:**
+
+- Don't use `memo` or `useMemo` - React Compiler handles memoization automatically
+- `@lootlog/web` is not server-side rendered (SSR)
+- Minimize comments - code should be self-documenting
+
 ### Environment Variables
 
 - Sample file: `.env.sample`
-- Configure via: `pnpm configure:env`
+- Configure via: `pnpm env:generate`
 - Global vars in `turbo.json`: `RABBITMQ_URI`, `REDIS_HOST`, `REDIS_PASSWORD`, etc.
 - Service-specific vars in each app's `.env` files
 
@@ -365,6 +424,7 @@ pnpm api:migrate:dev
 # Regenerate clients after schema changes
 pnpm api:generate
 pnpm battlelog:generate
+pnpm activity:generate
 ```
 
 ### RabbitMQ Connection Issues
@@ -378,6 +438,7 @@ pnpm battlelog:generate
 - PostgreSQL (Users): 5432
 - PostgreSQL (Lootlog): 5433
 - PostgreSQL (Battlelog): 5434
+- PostgreSQL (Activity): 5435
 - RabbitMQ: 5672 (AMQP), 15672 (Management)
 - Redis: 6379
 - Meilisearch: 7700
@@ -523,6 +584,4 @@ git log infra/k8s/prod/api/kustomization.yml
 - `apps/*/package.json` - Per-app scripts and dependencies
 - `apps/api/prisma/schema.prisma` - Main database schema
 - `apps/battlelog-service/prisma/schema.prisma` - Battlelog database schema
-- Dont use memo or useMemo, because its already handled by react compiler.
-- Avoid extensive comments.
-- @lootlog/web is not SSR
+- `apps/activity/prisma/schema.prisma` - Activity database schema
