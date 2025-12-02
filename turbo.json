@@ -62,12 +62,12 @@
       ]
     },
     "dev": {
-      "dependsOn": [],
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
     "start": {
-      "dependsOn": ["^start"]
+      "dependsOn": ["^build"]
     },
     "api:migrate:dev": {
       "cache": false,
