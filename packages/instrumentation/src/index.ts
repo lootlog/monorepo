@@ -21,12 +21,16 @@ import {
   PeriodicExportingMetricReader,
   View,
   Aggregation,
-  MeterProvider,
 } from "@opentelemetry/sdk-metrics";
 import {
   ParentBasedSampler,
   TraceIdRatioBasedSampler,
+  BatchSpanProcessor,
+  type SpanProcessor,
+  type ReadableSpan,
+  type Span,
 } from "@opentelemetry/sdk-trace-base";
+import type { Context } from "@opentelemetry/api";
 import { inspect } from "node:util";
 
 export interface ObservabilityConfig {
@@ -42,6 +46,74 @@ export interface ObservabilityConfig {
 let sdkInstance: NodeSDK | null = null;
 let hostMetrics: HostMetrics | null = null;
 let currentServiceName = "";
+
+/**
+ * Custom SpanProcessor that filters high-cardinality spans before export.
+ * Wraps the underlying processor and drops problematic spans.
+ */
+class FilteringSpanProcessor implements SpanProcessor {
+  constructor(private readonly wrappedProcessor: SpanProcessor) {}
+
+  onStart(span: Span, parentContext: Context): void {
+    this.wrappedProcessor.onStart(span, parentContext);
+  }
+
+  onEnd(span: ReadableSpan): void {
+    // Check if span should be filtered
+    if (this.shouldDropSpan(span)) {
+      return;
+    }
+
+    // Forward to wrapped processor (exporter)
+    this.wrappedProcessor.onEnd(span);
+  }
+
+  private shouldDropSpan(span: ReadableSpan): boolean {
+    const spanKind = span.kind;
+    const spanName = span.name;
+    const attributes = span.attributes;
+
+    // Drop all CLIENT spans (outbound calls - Socket.IO, HTTP, etc.)
+    // SpanKind.CLIENT = 3
+    if (spanKind === 3) {
+      return true;
+    }
+
+    // Drop Socket.IO room/namespace spans (high cardinality)
+    // Match patterns like "emit to guild:123" or "room:guild-456"
+    if (
+      spanName.includes("socket.io") ||
+      spanName.match(/room:[a-zA-Z]+-?\d+/) ||
+      spanName.match(/namespace:[a-zA-Z]+-?\d+/) ||
+      spanName.includes("emit to") ||
+      spanName.includes("send to")
+    ) {
+      return true;
+    }
+
+    // Drop spans with messaging destinations containing actual IDs (guild:123, battle:456)
+    const messagingDest = attributes["messaging.destination"]?.toString();
+    if (messagingDest && (messagingDest.match(/[a-zA-Z]+:\d+/) || messagingDest.includes("guild:") || messagingDest.includes("battle:"))) {
+      return true;
+    }
+
+    // Drop spans with actual room IDs like "guild:123" or "battle:456" (NOT route templates like "/guilds/:id")
+    // Only match if there's a word followed by colon and actual numbers (not just :id placeholder)
+    if (spanName.match(/[a-zA-Z]+:\d+/)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  shutdown(): Promise<void> {
+    return this.wrappedProcessor.shutdown();
+  }
+
+  forceFlush(): Promise<void> {
+    return this.wrappedProcessor.forceFlush();
+  }
+}
 
 /**
  * Normalize an HTTP path to low-cardinality template:
@@ -187,14 +259,19 @@ export function initObservability(config: ObservabilityConfig): void {
     }),
   ];
 
+  const traceExporter = new OTLPTraceExporter({
+    url: `${otlpEndpoint}/v1/traces`,
+    headers: parseHeaders(otlpHeaders),
+  });
+
+  const batchProcessor = new BatchSpanProcessor(traceExporter);
+  const filteringProcessor = new FilteringSpanProcessor(batchProcessor);
+
   sdkInstance = new NodeSDK({
     resource: new Resource(resourceAttributes),
     resourceDetectors: detectors,
     sampler,
-    traceExporter: new OTLPTraceExporter({
-      url: `${otlpEndpoint}/v1/traces`,
-      headers: parseHeaders(otlpHeaders),
-    }),
+    spanProcessor: filteringProcessor,
     metricReader: new PeriodicExportingMetricReader({
       exporter: new OTLPMetricExporter({
         url: `${otlpEndpoint}/v1/metrics`,
@@ -209,22 +286,7 @@ export function initObservability(config: ObservabilityConfig): void {
   try {
     sdkInstance.start();
 
-    const meterProvider = new MeterProvider({
-      resource: new Resource(resourceAttributes),
-      readers: [
-        new PeriodicExportingMetricReader({
-          exporter: new OTLPMetricExporter({
-            url: `${otlpEndpoint}/v1/metrics`,
-            headers: parseHeaders(otlpHeaders),
-          }),
-          exportIntervalMillis: 60000,
-        }),
-      ],
-      views: metricViews,
-    });
-
     hostMetrics = new HostMetrics({
-      meterProvider,
       name: `${serviceName}-runtime`,
     });
     hostMetrics.start();
@@ -233,7 +295,7 @@ export function initObservability(config: ObservabilityConfig): void {
     console.log(
       `[${serviceName}] Observability initialized (sampling: ${
         traceSampleRate * 100
-      }%, HTTP client disabled, low-cardinality metrics + runtime metrics enabled).`,
+      }%, HTTP client disabled, Socket.IO/room spans filtered, low-cardinality metrics + runtime metrics enabled).`,
     );
   } catch (error: unknown) {
     // eslint-disable-next-line no-console
