@@ -10,6 +10,7 @@ initHonoObservability({
   traceSampleRate: 0.1,
   forceEnable: false,
   enableDebugLogging: false,
+  enableHostMetrics: true,
 });
 
 import { serve } from "@hono/node-server";
@@ -43,7 +44,7 @@ app.route("/healthz", healthzController);
 
 app.route("/auth", authController);
 
-app.on(["POST", "GET"], "/idp/**", async (c) => {
+app.on(["POST", "GET"], "/idp/**", (c) => {
   return auth.handler(c.req.raw);
 });
 
