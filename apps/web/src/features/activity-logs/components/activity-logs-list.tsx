@@ -6,7 +6,7 @@ import {
   useActivityLogs,
 } from "@/hooks/api/activity-logs/use-activity-logs";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
-import { ActivityLogItem } from "./activity-log-item";
+import { ActivityLogsListItem } from "./activity-logs-list-item";
 import { Frown, Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -42,7 +42,7 @@ export const ActivityLogsList = () => {
   const virtualizer = useVirtualizer({
     count: totalCount + 1,
     getScrollElement: () => scrollElementRef.current,
-    estimateSize: () => 120,
+    estimateSize: () => 140,
     overscan: 5,
     useAnimationFrameWithResizeObserver: true,
   });
@@ -154,7 +154,7 @@ export const ActivityLogsList = () => {
                   </div>
                 )
               ) : activity ? (
-                <ActivityLogItem activity={activity} />
+                <ActivityLogsListItem activity={activity} />
               ) : null}
             </div>
           );

@@ -13,12 +13,14 @@ export type ActivityActorSnapshot = {
   accountId: number;
   characterId: number;
   clanName: string;
+  clanId?: number;
   icon: string;
   lvl: number;
   name: string;
   prof: string;
   source: ActivitySource;
   createdAt: string;
+  world?: string;
 };
 
 export type ActivityLootContext = {
@@ -40,6 +42,7 @@ export type ActivityLog = {
   discordId: string;
   type: ActivityType;
   source: ActivitySource;
+  world?: string;
   details?: Record<string, unknown>;
   createdAt: string;
   actorSnapshot?: ActivityActorSnapshot;
@@ -65,7 +68,15 @@ export type UseActivityLogsOptions = {
 
 export const useActivityLogs = (options: UseActivityLogsOptions) => {
   const { client } = useActivityApiClient();
-  const { guildId, type, source, startDate, endDate, name, limit = 20 } = options;
+  const {
+    guildId,
+    type,
+    source,
+    startDate,
+    endDate,
+    name,
+    limit = 20,
+  } = options;
 
   const queryParams = new URLSearchParams();
   if (type) queryParams.append("type", type);

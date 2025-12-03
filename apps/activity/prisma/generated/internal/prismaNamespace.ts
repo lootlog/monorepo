@@ -931,20 +931,6 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'Profession'
- */
-export type EnumProfessionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Profession'>
-    
-
-
-/**
- * Reference to a field of type 'Profession[]'
- */
-export type ListEnumProfessionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Profession[]'>
-    
-
-
-/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>

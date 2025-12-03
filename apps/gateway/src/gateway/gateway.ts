@@ -136,7 +136,11 @@ export class Gateway {
         GatewayEvent.UPDATE_SERVER_PRESENCE,
       );
 
-      await this.publishActivityEvent(ActivityType.CONNECT_EVENT, client, guilds);
+      await this.publishActivityEvent(
+        ActivityType.CONNECT_EVENT,
+        client,
+        guilds,
+      );
 
       const duration = Date.now() - startTime;
       this.logger.log(
