@@ -52,7 +52,7 @@
     "@lootlog/typescript-config": "workspace:*",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@types/three": "^0.180.0"
+    "@types/three": "^0.181.0"
   },
   "exports": {
     "./globals.css": "./src/styles/globals.css",
