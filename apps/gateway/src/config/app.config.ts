@@ -28,6 +28,11 @@ export const APP_CONFIG: ConfigModuleOptions = {
     REDIS_PORT: Joi.number().required(),
     REDIS_PASSWORD: Joi.string().required(),
     REDIS_USERNAME: Joi.string().required(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().allow(''),
+    OTEL_EXPORTER_OTLP_HEADERS: Joi.string().allow(''),
+    OTEL_NODE_RESOURCE_DETECTORS: Joi.string().default('env,host,os,process'),
+    OTEL_TRACES_EXPORTER: Joi.string().default('otlp'),
+    SERVICE_NAMESPACE: Joi.string().default('local'),
   }),
   validationOptions: {
     allowUnknown: true,
