@@ -117,9 +117,60 @@ class FilteringSpanProcessor implements SpanProcessor {
 }
 
 function normalizePath(path: string | undefined | null): string {
-  const raw = (path ?? "/").split("?")[0] || "/";
-  return raw
-    .replace(/\/[0-9a-fA-F-]{6,}/g, "/:id")
+  let normalized = (path ?? "/").split("?")[0] || "/";
+
+  // Preserve special routes
+  if (normalized === "/guilds/@me") return normalized;
+  if (normalized === "/healthz") return normalized;
+
+  // Parameterize path segments after known prefixes
+  const prefixes = [
+    "/guilds/",
+    "/loots/",
+    "/users/",
+    "/timers/",
+    "/internal/guilds/",
+    "/battles/",
+    "/battles/public/",
+  ];
+
+  for (const prefix of prefixes) {
+    if (normalized.startsWith(prefix)) {
+      const rest = normalized.slice(prefix.length);
+      const segments = rest.split("/");
+
+      const knownSubResources = [
+        "timers",
+        "members",
+        "chat-messages",
+        "permissions",
+        "worlds",
+        "lootlog-config",
+        "accounts",
+        "user-permissions",
+        "raw",
+      ];
+
+      for (let i = 0; i < segments.length; i++) {
+        if (
+          segments[i] &&
+          !knownSubResources.includes(segments[i] as string) &&
+          segments[i] !== "@me"
+        ) {
+          segments[i] = ":id";
+        }
+      }
+
+      return prefix + segments.join("/");
+    }
+  }
+
+  // Fallback for unknown routes
+  return normalized
+    .replace(
+      /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+      "/:id",
+    )
     .replace(/\/[0-9]+/g, "/:id");
 }
 
