@@ -27,13 +27,3 @@ export type Activity = Prisma.ActivityModel
  * 
  */
 export type ActivityActorSnapshot = Prisma.ActivityActorSnapshotModel
-/**
- * Model ActivityLootContext
- * 
- */
-export type ActivityLootContext = Prisma.ActivityLootContextModel
-/**
- * Model ActivityTimerContext
- * 
- */
-export type ActivityTimerContext = Prisma.ActivityTimerContextModel

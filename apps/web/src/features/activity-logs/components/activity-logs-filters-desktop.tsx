@@ -1,4 +1,4 @@
-import { Activity, Monitor, Calendar, Search } from "lucide-react";
+import { Activity, Monitor, Calendar, Search, Globe } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Input } from "@lootlog/ui/components/input";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
@@ -8,8 +8,6 @@ import type {
 } from "@/hooks/api/activity-logs/use-activity-logs";
 
 const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
-  { value: "LOOT_EVENT", label: "Loot" },
-  { value: "TIMER_EVENT", label: "Timer" },
   { value: "CONNECT_EVENT", label: "Połączenie" },
   { value: "DISCONNECT_EVENT", label: "Rozłączenie" },
 ];
@@ -25,11 +23,13 @@ type ActivityLogsFiltersDesktopProps = {
   startDate: string;
   endDate: string;
   name: string;
+  world: string;
   onTypeChange: (value: ActivityType) => void;
   onSourceChange: (value: ActivitySource) => void;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
   onNameChange: (value: string) => void;
+  onWorldChange: (value: string) => void;
 };
 
 export const ActivityLogsFiltersDesktop = ({
@@ -38,11 +38,13 @@ export const ActivityLogsFiltersDesktop = ({
   startDate,
   endDate,
   name,
+  world,
   onTypeChange,
   onSourceChange,
   onStartDateChange,
   onEndDateChange,
   onNameChange,
+  onWorldChange,
 }: ActivityLogsFiltersDesktopProps) => {
   return (
     <div className="flex items-end gap-3 flex-wrap">
@@ -88,26 +90,40 @@ export const ActivityLogsFiltersDesktop = ({
         }
       />
 
-      <div className="flex flex-col gap-1.5 min-w-[180px]">
-        <Label className="text-xs text-muted-foreground">Data początkowa</Label>
+      <div className="flex flex-col gap-1.5 min-w-[200px]">
+        <Label className="text-xs text-muted-foreground">Świat</Label>
+        <div className="relative">
+          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Nazwa świata..."
+            value={world}
+            onChange={(e) => onWorldChange(e.target.value)}
+            className="w-full pl-9 h-10"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5 min-w-[220px]">
+        <Label className="text-xs text-muted-foreground">Data i godzina początkowa</Label>
         <div className="relative">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            type="date"
-            value={startDate ? startDate.split("T")[0] : ""}
+            type="datetime-local"
+            value={startDate ? startDate.slice(0, 16) : ""}
             onChange={(e) => onStartDateChange(e.target.value)}
             className="w-full pl-9 h-10"
           />
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5 min-w-[180px]">
-        <Label className="text-xs text-muted-foreground">Data końcowa</Label>
+      <div className="flex flex-col gap-1.5 min-w-[220px]">
+        <Label className="text-xs text-muted-foreground">Data i godzina końcowa</Label>
         <div className="relative">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            type="date"
-            value={endDate ? endDate.split("T")[0] : ""}
+            type="datetime-local"
+            value={endDate ? endDate.slice(0, 16) : ""}
             onChange={(e) => onEndDateChange(e.target.value)}
             className="w-full pl-9 h-10"
           />

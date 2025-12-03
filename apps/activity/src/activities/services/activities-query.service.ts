@@ -27,12 +27,19 @@ export class ActivitiesQueryService {
       where.guildId = query.guildId;
     }
 
-    if (query.type) {
-      where.type = query.type;
+    if (query.type && query.type.length > 0) {
+      where.type = { in: query.type };
     }
 
-    if (query.source) {
-      where.source = query.source;
+    if (query.source && query.source.length > 0) {
+      where.source = { in: query.source };
+    }
+
+    if (query.world) {
+      where.world = {
+        contains: query.world,
+        mode: 'insensitive',
+      };
     }
 
     if (query.playerName) {
@@ -64,16 +71,6 @@ export class ActivitiesQueryService {
       orderBy: { createdAt: 'desc' },
       include: {
         actorSnapshot: true,
-        lootContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
-        timerContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
       },
     });
 
@@ -117,16 +114,6 @@ export class ActivitiesQueryService {
       },
       include: {
         actorSnapshot: true,
-        lootContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
-        timerContext: {
-          include: {
-            actorSnapshot: true,
-          },
-        },
       },
     });
 

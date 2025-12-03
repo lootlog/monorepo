@@ -10,6 +10,4 @@
  */
 export type * from './models/Activity'
 export type * from './models/ActivityActorSnapshot'
-export type * from './models/ActivityLootContext'
-export type * from './models/ActivityTimerContext'
 export type * from './commonInputTypes'

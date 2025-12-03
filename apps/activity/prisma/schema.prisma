@@ -9,8 +9,6 @@ datasource db {
 }
 
 enum ActivityType {
-  LOOT_EVENT
-  TIMER_EVENT
   CONNECT_EVENT
   DISCONNECT_EVENT
 }
@@ -40,12 +38,6 @@ model Activity {
   actorSnapshotId String?
   actorSnapshot   ActivityActorSnapshot? @relation("ActivityActorSnapshot_Activity", fields: [actorSnapshotId], references: [id])
 
-  lootContextId String?
-  lootContext   ActivityLootContext? @relation("Activity_LootContext")
-
-  timerContextId String?
-  timerContext   ActivityTimerContext? @relation("Activity_TimerContext")
-
   @@index([createdAt(sort: Desc), guildId])
   @@index([createdAt(sort: Desc), userId])
   @@index([createdAt(sort: Desc), type])
@@ -69,31 +61,5 @@ model ActivityActorSnapshot {
 
   createdAt DateTime @default(now()) @db.Timestamptz
 
-  activities    Activity[]             @relation("ActivityActorSnapshot_Activity")
-  lootContexts  ActivityLootContext[]
-  timerContexts ActivityTimerContext[]
-}
-
-model ActivityLootContext {
-  id String @id @default(cuid())
-
-  actorSnapshotId String
-  actorSnapshot   ActivityActorSnapshot @relation(fields: [actorSnapshotId], references: [id])
-
-  lootId Int
-
-  activity   Activity? @relation("Activity_LootContext", fields: [activityId], references: [id])
-  activityId String?   @unique
-}
-
-model ActivityTimerContext {
-  id String @id @default(cuid())
-
-  actorSnapshotId String
-  actorSnapshot   ActivityActorSnapshot @relation(fields: [actorSnapshotId], references: [id])
-
-  npcName String @db.Text
-
-  activity   Activity? @relation("Activity_TimerContext", fields: [activityId], references: [id])
-  activityId String?   @unique
+  activities Activity[] @relation("ActivityActorSnapshot_Activity")
 }

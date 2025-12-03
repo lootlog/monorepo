@@ -43,12 +43,17 @@ export const ActivityLogsFilters = () => {
     setFilters({ name: value || null });
   };
 
+  const handleWorldChange = (value: string) => {
+    setFilters({ world: value || null });
+  };
+
   const activeFiltersCount =
     filters.types.length +
     filters.sources.length +
     (filters.startDate ? 1 : 0) +
     (filters.endDate ? 1 : 0) +
-    (filters.name ? 1 : 0);
+    (filters.name ? 1 : 0) +
+    (filters.world ? 1 : 0);
 
   const createDebouncedHandler = (
     key: string,
@@ -86,6 +91,7 @@ export const ActivityLogsFilters = () => {
           startDate={filters.startDate}
           endDate={filters.endDate}
           name={filters.name}
+          world={filters.world}
           activeFiltersCount={activeFiltersCount}
           typeOpen={typeOpenMobile}
           sourceOpen={sourceOpenMobile}
@@ -96,6 +102,7 @@ export const ActivityLogsFilters = () => {
           onStartDateChange={handleStartDateChange}
           onEndDateChange={handleEndDateChange}
           onNameChange={handleNameChange}
+          onWorldChange={handleWorldChange}
         />
       </div>
 
@@ -106,11 +113,13 @@ export const ActivityLogsFilters = () => {
           startDate={filters.startDate}
           endDate={filters.endDate}
           name={filters.name}
+          world={filters.world}
           onTypeChange={handleTypeChange}
           onSourceChange={handleSourceChange}
           onStartDateChange={handleStartDateChange}
           onEndDateChange={handleEndDateChange}
           onNameChange={handleNameChange}
+          onWorldChange={handleWorldChange}
         />
       </div>
     </div>

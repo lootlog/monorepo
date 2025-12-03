@@ -285,8 +285,6 @@ export type ActivityActorSnapshotWhereInput = {
   fingerprint?: Prisma.StringFilter<"ActivityActorSnapshot"> | string
   createdAt?: Prisma.DateTimeFilter<"ActivityActorSnapshot"> | Date | string
   activities?: Prisma.ActivityListRelationFilter
-  lootContexts?: Prisma.ActivityLootContextListRelationFilter
-  timerContexts?: Prisma.ActivityTimerContextListRelationFilter
 }
 
 export type ActivityActorSnapshotOrderByWithRelationInput = {
@@ -303,8 +301,6 @@ export type ActivityActorSnapshotOrderByWithRelationInput = {
   fingerprint?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   activities?: Prisma.ActivityOrderByRelationAggregateInput
-  lootContexts?: Prisma.ActivityLootContextOrderByRelationAggregateInput
-  timerContexts?: Prisma.ActivityTimerContextOrderByRelationAggregateInput
 }
 
 export type ActivityActorSnapshotWhereUniqueInput = Prisma.AtLeast<{
@@ -324,8 +320,6 @@ export type ActivityActorSnapshotWhereUniqueInput = Prisma.AtLeast<{
   source?: Prisma.EnumActivitySourceFilter<"ActivityActorSnapshot"> | $Enums.ActivitySource
   createdAt?: Prisma.DateTimeFilter<"ActivityActorSnapshot"> | Date | string
   activities?: Prisma.ActivityListRelationFilter
-  lootContexts?: Prisma.ActivityLootContextListRelationFilter
-  timerContexts?: Prisma.ActivityTimerContextListRelationFilter
 }, "id" | "fingerprint">
 
 export type ActivityActorSnapshotOrderByWithAggregationInput = {
@@ -380,8 +374,6 @@ export type ActivityActorSnapshotCreateInput = {
   fingerprint: string
   createdAt?: Date | string
   activities?: Prisma.ActivityCreateNestedManyWithoutActorSnapshotInput
-  lootContexts?: Prisma.ActivityLootContextCreateNestedManyWithoutActorSnapshotInput
-  timerContexts?: Prisma.ActivityTimerContextCreateNestedManyWithoutActorSnapshotInput
 }
 
 export type ActivityActorSnapshotUncheckedCreateInput = {
@@ -398,8 +390,6 @@ export type ActivityActorSnapshotUncheckedCreateInput = {
   fingerprint: string
   createdAt?: Date | string
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutActorSnapshotInput
-  lootContexts?: Prisma.ActivityLootContextUncheckedCreateNestedManyWithoutActorSnapshotInput
-  timerContexts?: Prisma.ActivityTimerContextUncheckedCreateNestedManyWithoutActorSnapshotInput
 }
 
 export type ActivityActorSnapshotUpdateInput = {
@@ -416,8 +406,6 @@ export type ActivityActorSnapshotUpdateInput = {
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   activities?: Prisma.ActivityUpdateManyWithoutActorSnapshotNestedInput
-  lootContexts?: Prisma.ActivityLootContextUpdateManyWithoutActorSnapshotNestedInput
-  timerContexts?: Prisma.ActivityTimerContextUpdateManyWithoutActorSnapshotNestedInput
 }
 
 export type ActivityActorSnapshotUncheckedUpdateInput = {
@@ -434,8 +422,6 @@ export type ActivityActorSnapshotUncheckedUpdateInput = {
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutActorSnapshotNestedInput
-  lootContexts?: Prisma.ActivityLootContextUncheckedUpdateManyWithoutActorSnapshotNestedInput
-  timerContexts?: Prisma.ActivityTimerContextUncheckedUpdateManyWithoutActorSnapshotNestedInput
 }
 
 export type ActivityActorSnapshotCreateManyInput = {
@@ -547,11 +533,6 @@ export type ActivityActorSnapshotSumOrderByAggregateInput = {
   lvl?: Prisma.SortOrder
 }
 
-export type ActivityActorSnapshotScalarRelationFilter = {
-  is?: Prisma.ActivityActorSnapshotWhereInput
-  isNot?: Prisma.ActivityActorSnapshotWhereInput
-}
-
 export type ActivityActorSnapshotCreateNestedOneWithoutActivitiesInput = {
   create?: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutActivitiesInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutActivitiesInput>
   connectOrCreate?: Prisma.ActivityActorSnapshotCreateOrConnectWithoutActivitiesInput
@@ -584,34 +565,6 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type ActivityActorSnapshotCreateNestedOneWithoutLootContextsInput = {
-  create?: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutLootContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutLootContextsInput>
-  connectOrCreate?: Prisma.ActivityActorSnapshotCreateOrConnectWithoutLootContextsInput
-  connect?: Prisma.ActivityActorSnapshotWhereUniqueInput
-}
-
-export type ActivityActorSnapshotUpdateOneRequiredWithoutLootContextsNestedInput = {
-  create?: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutLootContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutLootContextsInput>
-  connectOrCreate?: Prisma.ActivityActorSnapshotCreateOrConnectWithoutLootContextsInput
-  upsert?: Prisma.ActivityActorSnapshotUpsertWithoutLootContextsInput
-  connect?: Prisma.ActivityActorSnapshotWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ActivityActorSnapshotUpdateToOneWithWhereWithoutLootContextsInput, Prisma.ActivityActorSnapshotUpdateWithoutLootContextsInput>, Prisma.ActivityActorSnapshotUncheckedUpdateWithoutLootContextsInput>
-}
-
-export type ActivityActorSnapshotCreateNestedOneWithoutTimerContextsInput = {
-  create?: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutTimerContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutTimerContextsInput>
-  connectOrCreate?: Prisma.ActivityActorSnapshotCreateOrConnectWithoutTimerContextsInput
-  connect?: Prisma.ActivityActorSnapshotWhereUniqueInput
-}
-
-export type ActivityActorSnapshotUpdateOneRequiredWithoutTimerContextsNestedInput = {
-  create?: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutTimerContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutTimerContextsInput>
-  connectOrCreate?: Prisma.ActivityActorSnapshotCreateOrConnectWithoutTimerContextsInput
-  upsert?: Prisma.ActivityActorSnapshotUpsertWithoutTimerContextsInput
-  connect?: Prisma.ActivityActorSnapshotWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ActivityActorSnapshotUpdateToOneWithWhereWithoutTimerContextsInput, Prisma.ActivityActorSnapshotUpdateWithoutTimerContextsInput>, Prisma.ActivityActorSnapshotUncheckedUpdateWithoutTimerContextsInput>
-}
-
 export type ActivityActorSnapshotCreateWithoutActivitiesInput = {
   id?: string
   accountId: number
@@ -625,8 +578,6 @@ export type ActivityActorSnapshotCreateWithoutActivitiesInput = {
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
-  lootContexts?: Prisma.ActivityLootContextCreateNestedManyWithoutActorSnapshotInput
-  timerContexts?: Prisma.ActivityTimerContextCreateNestedManyWithoutActorSnapshotInput
 }
 
 export type ActivityActorSnapshotUncheckedCreateWithoutActivitiesInput = {
@@ -642,8 +593,6 @@ export type ActivityActorSnapshotUncheckedCreateWithoutActivitiesInput = {
   source: $Enums.ActivitySource
   fingerprint: string
   createdAt?: Date | string
-  lootContexts?: Prisma.ActivityLootContextUncheckedCreateNestedManyWithoutActorSnapshotInput
-  timerContexts?: Prisma.ActivityTimerContextUncheckedCreateNestedManyWithoutActorSnapshotInput
 }
 
 export type ActivityActorSnapshotCreateOrConnectWithoutActivitiesInput = {
@@ -675,8 +624,6 @@ export type ActivityActorSnapshotUpdateWithoutActivitiesInput = {
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lootContexts?: Prisma.ActivityLootContextUpdateManyWithoutActorSnapshotNestedInput
-  timerContexts?: Prisma.ActivityTimerContextUpdateManyWithoutActorSnapshotNestedInput
 }
 
 export type ActivityActorSnapshotUncheckedUpdateWithoutActivitiesInput = {
@@ -692,176 +639,6 @@ export type ActivityActorSnapshotUncheckedUpdateWithoutActivitiesInput = {
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  lootContexts?: Prisma.ActivityLootContextUncheckedUpdateManyWithoutActorSnapshotNestedInput
-  timerContexts?: Prisma.ActivityTimerContextUncheckedUpdateManyWithoutActorSnapshotNestedInput
-}
-
-export type ActivityActorSnapshotCreateWithoutLootContextsInput = {
-  id?: string
-  accountId: number
-  characterId: number
-  name: string
-  clanName?: string | null
-  clanId?: number | null
-  icon: string
-  lvl: number
-  prof: string
-  source: $Enums.ActivitySource
-  fingerprint: string
-  createdAt?: Date | string
-  activities?: Prisma.ActivityCreateNestedManyWithoutActorSnapshotInput
-  timerContexts?: Prisma.ActivityTimerContextCreateNestedManyWithoutActorSnapshotInput
-}
-
-export type ActivityActorSnapshotUncheckedCreateWithoutLootContextsInput = {
-  id?: string
-  accountId: number
-  characterId: number
-  name: string
-  clanName?: string | null
-  clanId?: number | null
-  icon: string
-  lvl: number
-  prof: string
-  source: $Enums.ActivitySource
-  fingerprint: string
-  createdAt?: Date | string
-  activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutActorSnapshotInput
-  timerContexts?: Prisma.ActivityTimerContextUncheckedCreateNestedManyWithoutActorSnapshotInput
-}
-
-export type ActivityActorSnapshotCreateOrConnectWithoutLootContextsInput = {
-  where: Prisma.ActivityActorSnapshotWhereUniqueInput
-  create: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutLootContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutLootContextsInput>
-}
-
-export type ActivityActorSnapshotUpsertWithoutLootContextsInput = {
-  update: Prisma.XOR<Prisma.ActivityActorSnapshotUpdateWithoutLootContextsInput, Prisma.ActivityActorSnapshotUncheckedUpdateWithoutLootContextsInput>
-  create: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutLootContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutLootContextsInput>
-  where?: Prisma.ActivityActorSnapshotWhereInput
-}
-
-export type ActivityActorSnapshotUpdateToOneWithWhereWithoutLootContextsInput = {
-  where?: Prisma.ActivityActorSnapshotWhereInput
-  data: Prisma.XOR<Prisma.ActivityActorSnapshotUpdateWithoutLootContextsInput, Prisma.ActivityActorSnapshotUncheckedUpdateWithoutLootContextsInput>
-}
-
-export type ActivityActorSnapshotUpdateWithoutLootContextsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  icon?: Prisma.StringFieldUpdateOperationsInput | string
-  lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  activities?: Prisma.ActivityUpdateManyWithoutActorSnapshotNestedInput
-  timerContexts?: Prisma.ActivityTimerContextUpdateManyWithoutActorSnapshotNestedInput
-}
-
-export type ActivityActorSnapshotUncheckedUpdateWithoutLootContextsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  icon?: Prisma.StringFieldUpdateOperationsInput | string
-  lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  activities?: Prisma.ActivityUncheckedUpdateManyWithoutActorSnapshotNestedInput
-  timerContexts?: Prisma.ActivityTimerContextUncheckedUpdateManyWithoutActorSnapshotNestedInput
-}
-
-export type ActivityActorSnapshotCreateWithoutTimerContextsInput = {
-  id?: string
-  accountId: number
-  characterId: number
-  name: string
-  clanName?: string | null
-  clanId?: number | null
-  icon: string
-  lvl: number
-  prof: string
-  source: $Enums.ActivitySource
-  fingerprint: string
-  createdAt?: Date | string
-  activities?: Prisma.ActivityCreateNestedManyWithoutActorSnapshotInput
-  lootContexts?: Prisma.ActivityLootContextCreateNestedManyWithoutActorSnapshotInput
-}
-
-export type ActivityActorSnapshotUncheckedCreateWithoutTimerContextsInput = {
-  id?: string
-  accountId: number
-  characterId: number
-  name: string
-  clanName?: string | null
-  clanId?: number | null
-  icon: string
-  lvl: number
-  prof: string
-  source: $Enums.ActivitySource
-  fingerprint: string
-  createdAt?: Date | string
-  activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutActorSnapshotInput
-  lootContexts?: Prisma.ActivityLootContextUncheckedCreateNestedManyWithoutActorSnapshotInput
-}
-
-export type ActivityActorSnapshotCreateOrConnectWithoutTimerContextsInput = {
-  where: Prisma.ActivityActorSnapshotWhereUniqueInput
-  create: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutTimerContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutTimerContextsInput>
-}
-
-export type ActivityActorSnapshotUpsertWithoutTimerContextsInput = {
-  update: Prisma.XOR<Prisma.ActivityActorSnapshotUpdateWithoutTimerContextsInput, Prisma.ActivityActorSnapshotUncheckedUpdateWithoutTimerContextsInput>
-  create: Prisma.XOR<Prisma.ActivityActorSnapshotCreateWithoutTimerContextsInput, Prisma.ActivityActorSnapshotUncheckedCreateWithoutTimerContextsInput>
-  where?: Prisma.ActivityActorSnapshotWhereInput
-}
-
-export type ActivityActorSnapshotUpdateToOneWithWhereWithoutTimerContextsInput = {
-  where?: Prisma.ActivityActorSnapshotWhereInput
-  data: Prisma.XOR<Prisma.ActivityActorSnapshotUpdateWithoutTimerContextsInput, Prisma.ActivityActorSnapshotUncheckedUpdateWithoutTimerContextsInput>
-}
-
-export type ActivityActorSnapshotUpdateWithoutTimerContextsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  icon?: Prisma.StringFieldUpdateOperationsInput | string
-  lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  activities?: Prisma.ActivityUpdateManyWithoutActorSnapshotNestedInput
-  lootContexts?: Prisma.ActivityLootContextUpdateManyWithoutActorSnapshotNestedInput
-}
-
-export type ActivityActorSnapshotUncheckedUpdateWithoutTimerContextsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  accountId?: Prisma.IntFieldUpdateOperationsInput | number
-  characterId?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  clanName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  clanId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  icon?: Prisma.StringFieldUpdateOperationsInput | string
-  lvl?: Prisma.IntFieldUpdateOperationsInput | number
-  prof?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  activities?: Prisma.ActivityUncheckedUpdateManyWithoutActorSnapshotNestedInput
-  lootContexts?: Prisma.ActivityLootContextUncheckedUpdateManyWithoutActorSnapshotNestedInput
 }
 
 
@@ -871,14 +648,10 @@ export type ActivityActorSnapshotUncheckedUpdateWithoutTimerContextsInput = {
 
 export type ActivityActorSnapshotCountOutputType = {
   activities: number
-  lootContexts: number
-  timerContexts: number
 }
 
 export type ActivityActorSnapshotCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   activities?: boolean | ActivityActorSnapshotCountOutputTypeCountActivitiesArgs
-  lootContexts?: boolean | ActivityActorSnapshotCountOutputTypeCountLootContextsArgs
-  timerContexts?: boolean | ActivityActorSnapshotCountOutputTypeCountTimerContextsArgs
 }
 
 /**
@@ -898,20 +671,6 @@ export type ActivityActorSnapshotCountOutputTypeCountActivitiesArgs<ExtArgs exte
   where?: Prisma.ActivityWhereInput
 }
 
-/**
- * ActivityActorSnapshotCountOutputType without action
- */
-export type ActivityActorSnapshotCountOutputTypeCountLootContextsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ActivityLootContextWhereInput
-}
-
-/**
- * ActivityActorSnapshotCountOutputType without action
- */
-export type ActivityActorSnapshotCountOutputTypeCountTimerContextsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ActivityTimerContextWhereInput
-}
-
 
 export type ActivityActorSnapshotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -927,8 +686,6 @@ export type ActivityActorSnapshotSelect<ExtArgs extends runtime.Types.Extensions
   fingerprint?: boolean
   createdAt?: boolean
   activities?: boolean | Prisma.ActivityActorSnapshot$activitiesArgs<ExtArgs>
-  lootContexts?: boolean | Prisma.ActivityActorSnapshot$lootContextsArgs<ExtArgs>
-  timerContexts?: boolean | Prisma.ActivityActorSnapshot$timerContextsArgs<ExtArgs>
   _count?: boolean | Prisma.ActivityActorSnapshotCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["activityActorSnapshot"]>
 
@@ -980,8 +737,6 @@ export type ActivityActorSnapshotSelectScalar = {
 export type ActivityActorSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "accountId" | "characterId" | "name" | "clanName" | "clanId" | "icon" | "lvl" | "prof" | "source" | "fingerprint" | "createdAt", ExtArgs["result"]["activityActorSnapshot"]>
 export type ActivityActorSnapshotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   activities?: boolean | Prisma.ActivityActorSnapshot$activitiesArgs<ExtArgs>
-  lootContexts?: boolean | Prisma.ActivityActorSnapshot$lootContextsArgs<ExtArgs>
-  timerContexts?: boolean | Prisma.ActivityActorSnapshot$timerContextsArgs<ExtArgs>
   _count?: boolean | Prisma.ActivityActorSnapshotCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ActivityActorSnapshotIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -991,8 +746,6 @@ export type $ActivityActorSnapshotPayload<ExtArgs extends runtime.Types.Extensio
   name: "ActivityActorSnapshot"
   objects: {
     activities: Prisma.$ActivityPayload<ExtArgs>[]
-    lootContexts: Prisma.$ActivityLootContextPayload<ExtArgs>[]
-    timerContexts: Prisma.$ActivityTimerContextPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1402,8 +1155,6 @@ readonly fields: ActivityActorSnapshotFieldRefs;
 export interface Prisma__ActivityActorSnapshotClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   activities<T extends Prisma.ActivityActorSnapshot$activitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ActivityActorSnapshot$activitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  lootContexts<T extends Prisma.ActivityActorSnapshot$lootContextsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ActivityActorSnapshot$lootContextsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityLootContextPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  timerContexts<T extends Prisma.ActivityActorSnapshot$timerContextsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ActivityActorSnapshot$timerContextsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityTimerContextPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1854,54 +1605,6 @@ export type ActivityActorSnapshot$activitiesArgs<ExtArgs extends runtime.Types.E
   take?: number
   skip?: number
   distinct?: Prisma.ActivityScalarFieldEnum | Prisma.ActivityScalarFieldEnum[]
-}
-
-/**
- * ActivityActorSnapshot.lootContexts
- */
-export type ActivityActorSnapshot$lootContextsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ActivityLootContext
-   */
-  select?: Prisma.ActivityLootContextSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ActivityLootContext
-   */
-  omit?: Prisma.ActivityLootContextOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ActivityLootContextInclude<ExtArgs> | null
-  where?: Prisma.ActivityLootContextWhereInput
-  orderBy?: Prisma.ActivityLootContextOrderByWithRelationInput | Prisma.ActivityLootContextOrderByWithRelationInput[]
-  cursor?: Prisma.ActivityLootContextWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ActivityLootContextScalarFieldEnum | Prisma.ActivityLootContextScalarFieldEnum[]
-}
-
-/**
- * ActivityActorSnapshot.timerContexts
- */
-export type ActivityActorSnapshot$timerContextsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ActivityTimerContext
-   */
-  select?: Prisma.ActivityTimerContextSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ActivityTimerContext
-   */
-  omit?: Prisma.ActivityTimerContextOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ActivityTimerContextInclude<ExtArgs> | null
-  where?: Prisma.ActivityTimerContextWhereInput
-  orderBy?: Prisma.ActivityTimerContextOrderByWithRelationInput | Prisma.ActivityTimerContextOrderByWithRelationInput[]
-  cursor?: Prisma.ActivityTimerContextWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ActivityTimerContextScalarFieldEnum | Prisma.ActivityTimerContextScalarFieldEnum[]
 }
 
 /**

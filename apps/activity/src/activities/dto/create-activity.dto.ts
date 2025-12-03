@@ -25,9 +25,7 @@ const GAME_SOURCE_REQUIRED_FIELDS: Array<keyof ActorSnapshotDto> = [
 ];
 
 @ValidatorConstraint({ name: 'actorSnapshotForGameSource', async: false })
-class ActorSnapshotForGameSourceConstraint
-  implements ValidatorConstraintInterface
-{
+class ActorSnapshotForGameSourceConstraint implements ValidatorConstraintInterface {
   validate(
     actorSnapshot: ActorSnapshotDto | undefined,
     args: ValidationArguments,
@@ -99,17 +97,6 @@ export class ActorSnapshotDto {
   prof?: string;
 }
 
-export class LootContextDto {
-  @IsNotEmpty()
-  lootId: number;
-}
-
-export class TimerContextDto {
-  @IsString()
-  @IsNotEmpty()
-  npcName: string;
-}
-
 export class CreateActivityDto {
   @IsString()
   @IsNotEmpty()
@@ -144,16 +131,6 @@ export class CreateActivityDto {
   @Validate(ActorSnapshotForGameSourceConstraint)
   @IsOptional()
   actorSnapshot?: ActorSnapshotDto;
-
-  @ValidateNested()
-  @Type(() => LootContextDto)
-  @IsOptional()
-  lootContext?: LootContextDto;
-
-  @ValidateNested()
-  @Type(() => TimerContextDto)
-  @IsOptional()
-  timerContext?: TimerContextDto;
 
   @IsString()
   @IsNotEmpty()

@@ -10,8 +10,6 @@
 */
 
 export const ActivityType = {
-  LOOT_EVENT: 'LOOT_EVENT',
-  TIMER_EVENT: 'TIMER_EVENT',
   CONNECT_EVENT: 'CONNECT_EVENT',
   DISCONNECT_EVENT: 'DISCONNECT_EVENT'
 } as const

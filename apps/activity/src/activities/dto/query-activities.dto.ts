@@ -1,5 +1,11 @@
-import { IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsArray,
+} from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import {
   ActivityType,
   ActivitySource,
@@ -14,17 +20,25 @@ export class QueryActivitiesDto {
   @IsOptional()
   guildId?: string;
 
-  @IsEnum(ActivityType)
+  @IsArray()
+  @IsEnum(ActivityType, { each: true })
   @IsOptional()
-  type?: ActivityType;
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  type?: ActivityType[];
 
-  @IsEnum(ActivitySource)
+  @IsArray()
+  @IsEnum(ActivitySource, { each: true })
   @IsOptional()
-  source?: ActivitySource;
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  source?: ActivitySource[];
 
   @IsString()
   @IsOptional()
   playerName?: string;
+
+  @IsString()
+  @IsOptional()
+  world?: string;
 
   @IsDateString()
   @IsOptional()

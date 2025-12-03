@@ -35,8 +35,6 @@ export type ActivityMinAggregateOutputType = {
   source: $Enums.ActivitySource | null
   world: string | null
   actorSnapshotId: string | null
-  lootContextId: string | null
-  timerContextId: string | null
 }
 
 export type ActivityMaxAggregateOutputType = {
@@ -50,8 +48,6 @@ export type ActivityMaxAggregateOutputType = {
   source: $Enums.ActivitySource | null
   world: string | null
   actorSnapshotId: string | null
-  lootContextId: string | null
-  timerContextId: string | null
 }
 
 export type ActivityCountAggregateOutputType = {
@@ -66,8 +62,6 @@ export type ActivityCountAggregateOutputType = {
   world: number
   details: number
   actorSnapshotId: number
-  lootContextId: number
-  timerContextId: number
   _all: number
 }
 
@@ -83,8 +77,6 @@ export type ActivityMinAggregateInputType = {
   source?: true
   world?: true
   actorSnapshotId?: true
-  lootContextId?: true
-  timerContextId?: true
 }
 
 export type ActivityMaxAggregateInputType = {
@@ -98,8 +90,6 @@ export type ActivityMaxAggregateInputType = {
   source?: true
   world?: true
   actorSnapshotId?: true
-  lootContextId?: true
-  timerContextId?: true
 }
 
 export type ActivityCountAggregateInputType = {
@@ -114,8 +104,6 @@ export type ActivityCountAggregateInputType = {
   world?: true
   details?: true
   actorSnapshotId?: true
-  lootContextId?: true
-  timerContextId?: true
   _all?: true
 }
 
@@ -203,8 +191,6 @@ export type ActivityGroupByOutputType = {
   world: string | null
   details: runtime.JsonValue | null
   actorSnapshotId: string | null
-  lootContextId: string | null
-  timerContextId: string | null
   _count: ActivityCountAggregateOutputType | null
   _min: ActivityMinAggregateOutputType | null
   _max: ActivityMaxAggregateOutputType | null
@@ -240,11 +226,7 @@ export type ActivityWhereInput = {
   world?: Prisma.StringNullableFilter<"Activity"> | string | null
   details?: Prisma.JsonNullableFilter<"Activity">
   actorSnapshotId?: Prisma.StringNullableFilter<"Activity"> | string | null
-  lootContextId?: Prisma.StringNullableFilter<"Activity"> | string | null
-  timerContextId?: Prisma.StringNullableFilter<"Activity"> | string | null
   actorSnapshot?: Prisma.XOR<Prisma.ActivityActorSnapshotNullableScalarRelationFilter, Prisma.ActivityActorSnapshotWhereInput> | null
-  lootContext?: Prisma.XOR<Prisma.ActivityLootContextNullableScalarRelationFilter, Prisma.ActivityLootContextWhereInput> | null
-  timerContext?: Prisma.XOR<Prisma.ActivityTimerContextNullableScalarRelationFilter, Prisma.ActivityTimerContextWhereInput> | null
 }
 
 export type ActivityOrderByWithRelationInput = {
@@ -259,11 +241,7 @@ export type ActivityOrderByWithRelationInput = {
   world?: Prisma.SortOrderInput | Prisma.SortOrder
   details?: Prisma.SortOrderInput | Prisma.SortOrder
   actorSnapshotId?: Prisma.SortOrderInput | Prisma.SortOrder
-  lootContextId?: Prisma.SortOrderInput | Prisma.SortOrder
-  timerContextId?: Prisma.SortOrderInput | Prisma.SortOrder
   actorSnapshot?: Prisma.ActivityActorSnapshotOrderByWithRelationInput
-  lootContext?: Prisma.ActivityLootContextOrderByWithRelationInput
-  timerContext?: Prisma.ActivityTimerContextOrderByWithRelationInput
 }
 
 export type ActivityWhereUniqueInput = Prisma.AtLeast<{
@@ -281,11 +259,7 @@ export type ActivityWhereUniqueInput = Prisma.AtLeast<{
   world?: Prisma.StringNullableFilter<"Activity"> | string | null
   details?: Prisma.JsonNullableFilter<"Activity">
   actorSnapshotId?: Prisma.StringNullableFilter<"Activity"> | string | null
-  lootContextId?: Prisma.StringNullableFilter<"Activity"> | string | null
-  timerContextId?: Prisma.StringNullableFilter<"Activity"> | string | null
   actorSnapshot?: Prisma.XOR<Prisma.ActivityActorSnapshotNullableScalarRelationFilter, Prisma.ActivityActorSnapshotWhereInput> | null
-  lootContext?: Prisma.XOR<Prisma.ActivityLootContextNullableScalarRelationFilter, Prisma.ActivityLootContextWhereInput> | null
-  timerContext?: Prisma.XOR<Prisma.ActivityTimerContextNullableScalarRelationFilter, Prisma.ActivityTimerContextWhereInput> | null
 }, "id" | "idempotencyKey">
 
 export type ActivityOrderByWithAggregationInput = {
@@ -300,8 +274,6 @@ export type ActivityOrderByWithAggregationInput = {
   world?: Prisma.SortOrderInput | Prisma.SortOrder
   details?: Prisma.SortOrderInput | Prisma.SortOrder
   actorSnapshotId?: Prisma.SortOrderInput | Prisma.SortOrder
-  lootContextId?: Prisma.SortOrderInput | Prisma.SortOrder
-  timerContextId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ActivityCountOrderByAggregateInput
   _max?: Prisma.ActivityMaxOrderByAggregateInput
   _min?: Prisma.ActivityMinOrderByAggregateInput
@@ -322,8 +294,6 @@ export type ActivityScalarWhereWithAggregatesInput = {
   world?: Prisma.StringNullableWithAggregatesFilter<"Activity"> | string | null
   details?: Prisma.JsonNullableWithAggregatesFilter<"Activity">
   actorSnapshotId?: Prisma.StringNullableWithAggregatesFilter<"Activity"> | string | null
-  lootContextId?: Prisma.StringNullableWithAggregatesFilter<"Activity"> | string | null
-  timerContextId?: Prisma.StringNullableWithAggregatesFilter<"Activity"> | string | null
 }
 
 export type ActivityCreateInput = {
@@ -337,11 +307,7 @@ export type ActivityCreateInput = {
   source: $Enums.ActivitySource
   world?: string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: string | null
-  timerContextId?: string | null
   actorSnapshot?: Prisma.ActivityActorSnapshotCreateNestedOneWithoutActivitiesInput
-  lootContext?: Prisma.ActivityLootContextCreateNestedOneWithoutActivityInput
-  timerContext?: Prisma.ActivityTimerContextCreateNestedOneWithoutActivityInput
 }
 
 export type ActivityUncheckedCreateInput = {
@@ -356,10 +322,6 @@ export type ActivityUncheckedCreateInput = {
   world?: string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   actorSnapshotId?: string | null
-  lootContextId?: string | null
-  timerContextId?: string | null
-  lootContext?: Prisma.ActivityLootContextUncheckedCreateNestedOneWithoutActivityInput
-  timerContext?: Prisma.ActivityTimerContextUncheckedCreateNestedOneWithoutActivityInput
 }
 
 export type ActivityUpdateInput = {
@@ -373,11 +335,7 @@ export type ActivityUpdateInput = {
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorSnapshot?: Prisma.ActivityActorSnapshotUpdateOneWithoutActivitiesNestedInput
-  lootContext?: Prisma.ActivityLootContextUpdateOneWithoutActivityNestedInput
-  timerContext?: Prisma.ActivityTimerContextUpdateOneWithoutActivityNestedInput
 }
 
 export type ActivityUncheckedUpdateInput = {
@@ -392,10 +350,6 @@ export type ActivityUncheckedUpdateInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   actorSnapshotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContext?: Prisma.ActivityLootContextUncheckedUpdateOneWithoutActivityNestedInput
-  timerContext?: Prisma.ActivityTimerContextUncheckedUpdateOneWithoutActivityNestedInput
 }
 
 export type ActivityCreateManyInput = {
@@ -410,8 +364,6 @@ export type ActivityCreateManyInput = {
   world?: string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   actorSnapshotId?: string | null
-  lootContextId?: string | null
-  timerContextId?: string | null
 }
 
 export type ActivityUpdateManyMutationInput = {
@@ -425,8 +377,6 @@ export type ActivityUpdateManyMutationInput = {
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ActivityUncheckedUpdateManyInput = {
@@ -441,8 +391,6 @@ export type ActivityUncheckedUpdateManyInput = {
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   actorSnapshotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ActivityCountOrderByAggregateInput = {
@@ -457,8 +405,6 @@ export type ActivityCountOrderByAggregateInput = {
   world?: Prisma.SortOrder
   details?: Prisma.SortOrder
   actorSnapshotId?: Prisma.SortOrder
-  lootContextId?: Prisma.SortOrder
-  timerContextId?: Prisma.SortOrder
 }
 
 export type ActivityMaxOrderByAggregateInput = {
@@ -472,8 +418,6 @@ export type ActivityMaxOrderByAggregateInput = {
   source?: Prisma.SortOrder
   world?: Prisma.SortOrder
   actorSnapshotId?: Prisma.SortOrder
-  lootContextId?: Prisma.SortOrder
-  timerContextId?: Prisma.SortOrder
 }
 
 export type ActivityMinOrderByAggregateInput = {
@@ -487,8 +431,6 @@ export type ActivityMinOrderByAggregateInput = {
   source?: Prisma.SortOrder
   world?: Prisma.SortOrder
   actorSnapshotId?: Prisma.SortOrder
-  lootContextId?: Prisma.SortOrder
-  timerContextId?: Prisma.SortOrder
 }
 
 export type ActivityListRelationFilter = {
@@ -499,11 +441,6 @@ export type ActivityListRelationFilter = {
 
 export type ActivityOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type ActivityNullableScalarRelationFilter = {
-  is?: Prisma.ActivityWhereInput | null
-  isNot?: Prisma.ActivityWhereInput | null
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -568,38 +505,6 @@ export type ActivityUncheckedUpdateManyWithoutActorSnapshotNestedInput = {
   deleteMany?: Prisma.ActivityScalarWhereInput | Prisma.ActivityScalarWhereInput[]
 }
 
-export type ActivityCreateNestedOneWithoutLootContextInput = {
-  create?: Prisma.XOR<Prisma.ActivityCreateWithoutLootContextInput, Prisma.ActivityUncheckedCreateWithoutLootContextInput>
-  connectOrCreate?: Prisma.ActivityCreateOrConnectWithoutLootContextInput
-  connect?: Prisma.ActivityWhereUniqueInput
-}
-
-export type ActivityUpdateOneWithoutLootContextNestedInput = {
-  create?: Prisma.XOR<Prisma.ActivityCreateWithoutLootContextInput, Prisma.ActivityUncheckedCreateWithoutLootContextInput>
-  connectOrCreate?: Prisma.ActivityCreateOrConnectWithoutLootContextInput
-  upsert?: Prisma.ActivityUpsertWithoutLootContextInput
-  disconnect?: Prisma.ActivityWhereInput | boolean
-  delete?: Prisma.ActivityWhereInput | boolean
-  connect?: Prisma.ActivityWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ActivityUpdateToOneWithWhereWithoutLootContextInput, Prisma.ActivityUpdateWithoutLootContextInput>, Prisma.ActivityUncheckedUpdateWithoutLootContextInput>
-}
-
-export type ActivityCreateNestedOneWithoutTimerContextInput = {
-  create?: Prisma.XOR<Prisma.ActivityCreateWithoutTimerContextInput, Prisma.ActivityUncheckedCreateWithoutTimerContextInput>
-  connectOrCreate?: Prisma.ActivityCreateOrConnectWithoutTimerContextInput
-  connect?: Prisma.ActivityWhereUniqueInput
-}
-
-export type ActivityUpdateOneWithoutTimerContextNestedInput = {
-  create?: Prisma.XOR<Prisma.ActivityCreateWithoutTimerContextInput, Prisma.ActivityUncheckedCreateWithoutTimerContextInput>
-  connectOrCreate?: Prisma.ActivityCreateOrConnectWithoutTimerContextInput
-  upsert?: Prisma.ActivityUpsertWithoutTimerContextInput
-  disconnect?: Prisma.ActivityWhereInput | boolean
-  delete?: Prisma.ActivityWhereInput | boolean
-  connect?: Prisma.ActivityWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ActivityUpdateToOneWithWhereWithoutTimerContextInput, Prisma.ActivityUpdateWithoutTimerContextInput>, Prisma.ActivityUncheckedUpdateWithoutTimerContextInput>
-}
-
 export type ActivityCreateWithoutActorSnapshotInput = {
   id?: string
   userId: string
@@ -611,10 +516,6 @@ export type ActivityCreateWithoutActorSnapshotInput = {
   source: $Enums.ActivitySource
   world?: string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: string | null
-  timerContextId?: string | null
-  lootContext?: Prisma.ActivityLootContextCreateNestedOneWithoutActivityInput
-  timerContext?: Prisma.ActivityTimerContextCreateNestedOneWithoutActivityInput
 }
 
 export type ActivityUncheckedCreateWithoutActorSnapshotInput = {
@@ -628,10 +529,6 @@ export type ActivityUncheckedCreateWithoutActorSnapshotInput = {
   source: $Enums.ActivitySource
   world?: string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: string | null
-  timerContextId?: string | null
-  lootContext?: Prisma.ActivityLootContextUncheckedCreateNestedOneWithoutActivityInput
-  timerContext?: Prisma.ActivityTimerContextUncheckedCreateNestedOneWithoutActivityInput
 }
 
 export type ActivityCreateOrConnectWithoutActorSnapshotInput = {
@@ -675,176 +572,6 @@ export type ActivityScalarWhereInput = {
   world?: Prisma.StringNullableFilter<"Activity"> | string | null
   details?: Prisma.JsonNullableFilter<"Activity">
   actorSnapshotId?: Prisma.StringNullableFilter<"Activity"> | string | null
-  lootContextId?: Prisma.StringNullableFilter<"Activity"> | string | null
-  timerContextId?: Prisma.StringNullableFilter<"Activity"> | string | null
-}
-
-export type ActivityCreateWithoutLootContextInput = {
-  id?: string
-  userId: string
-  guildId: string
-  discordId: string
-  type: $Enums.ActivityType
-  createdAt?: Date | string
-  idempotencyKey: string
-  source: $Enums.ActivitySource
-  world?: string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: string | null
-  timerContextId?: string | null
-  actorSnapshot?: Prisma.ActivityActorSnapshotCreateNestedOneWithoutActivitiesInput
-  timerContext?: Prisma.ActivityTimerContextCreateNestedOneWithoutActivityInput
-}
-
-export type ActivityUncheckedCreateWithoutLootContextInput = {
-  id?: string
-  userId: string
-  guildId: string
-  discordId: string
-  type: $Enums.ActivityType
-  createdAt?: Date | string
-  idempotencyKey: string
-  source: $Enums.ActivitySource
-  world?: string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actorSnapshotId?: string | null
-  lootContextId?: string | null
-  timerContextId?: string | null
-  timerContext?: Prisma.ActivityTimerContextUncheckedCreateNestedOneWithoutActivityInput
-}
-
-export type ActivityCreateOrConnectWithoutLootContextInput = {
-  where: Prisma.ActivityWhereUniqueInput
-  create: Prisma.XOR<Prisma.ActivityCreateWithoutLootContextInput, Prisma.ActivityUncheckedCreateWithoutLootContextInput>
-}
-
-export type ActivityUpsertWithoutLootContextInput = {
-  update: Prisma.XOR<Prisma.ActivityUpdateWithoutLootContextInput, Prisma.ActivityUncheckedUpdateWithoutLootContextInput>
-  create: Prisma.XOR<Prisma.ActivityCreateWithoutLootContextInput, Prisma.ActivityUncheckedCreateWithoutLootContextInput>
-  where?: Prisma.ActivityWhereInput
-}
-
-export type ActivityUpdateToOneWithWhereWithoutLootContextInput = {
-  where?: Prisma.ActivityWhereInput
-  data: Prisma.XOR<Prisma.ActivityUpdateWithoutLootContextInput, Prisma.ActivityUncheckedUpdateWithoutLootContextInput>
-}
-
-export type ActivityUpdateWithoutLootContextInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  discordId?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.EnumActivityTypeFieldUpdateOperationsInput | $Enums.ActivityType
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  actorSnapshot?: Prisma.ActivityActorSnapshotUpdateOneWithoutActivitiesNestedInput
-  timerContext?: Prisma.ActivityTimerContextUpdateOneWithoutActivityNestedInput
-}
-
-export type ActivityUncheckedUpdateWithoutLootContextInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  discordId?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.EnumActivityTypeFieldUpdateOperationsInput | $Enums.ActivityType
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actorSnapshotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContext?: Prisma.ActivityTimerContextUncheckedUpdateOneWithoutActivityNestedInput
-}
-
-export type ActivityCreateWithoutTimerContextInput = {
-  id?: string
-  userId: string
-  guildId: string
-  discordId: string
-  type: $Enums.ActivityType
-  createdAt?: Date | string
-  idempotencyKey: string
-  source: $Enums.ActivitySource
-  world?: string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: string | null
-  timerContextId?: string | null
-  actorSnapshot?: Prisma.ActivityActorSnapshotCreateNestedOneWithoutActivitiesInput
-  lootContext?: Prisma.ActivityLootContextCreateNestedOneWithoutActivityInput
-}
-
-export type ActivityUncheckedCreateWithoutTimerContextInput = {
-  id?: string
-  userId: string
-  guildId: string
-  discordId: string
-  type: $Enums.ActivityType
-  createdAt?: Date | string
-  idempotencyKey: string
-  source: $Enums.ActivitySource
-  world?: string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actorSnapshotId?: string | null
-  lootContextId?: string | null
-  timerContextId?: string | null
-  lootContext?: Prisma.ActivityLootContextUncheckedCreateNestedOneWithoutActivityInput
-}
-
-export type ActivityCreateOrConnectWithoutTimerContextInput = {
-  where: Prisma.ActivityWhereUniqueInput
-  create: Prisma.XOR<Prisma.ActivityCreateWithoutTimerContextInput, Prisma.ActivityUncheckedCreateWithoutTimerContextInput>
-}
-
-export type ActivityUpsertWithoutTimerContextInput = {
-  update: Prisma.XOR<Prisma.ActivityUpdateWithoutTimerContextInput, Prisma.ActivityUncheckedUpdateWithoutTimerContextInput>
-  create: Prisma.XOR<Prisma.ActivityCreateWithoutTimerContextInput, Prisma.ActivityUncheckedCreateWithoutTimerContextInput>
-  where?: Prisma.ActivityWhereInput
-}
-
-export type ActivityUpdateToOneWithWhereWithoutTimerContextInput = {
-  where?: Prisma.ActivityWhereInput
-  data: Prisma.XOR<Prisma.ActivityUpdateWithoutTimerContextInput, Prisma.ActivityUncheckedUpdateWithoutTimerContextInput>
-}
-
-export type ActivityUpdateWithoutTimerContextInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  discordId?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.EnumActivityTypeFieldUpdateOperationsInput | $Enums.ActivityType
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  actorSnapshot?: Prisma.ActivityActorSnapshotUpdateOneWithoutActivitiesNestedInput
-  lootContext?: Prisma.ActivityLootContextUpdateOneWithoutActivityNestedInput
-}
-
-export type ActivityUncheckedUpdateWithoutTimerContextInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.StringFieldUpdateOperationsInput | string
-  guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  discordId?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.EnumActivityTypeFieldUpdateOperationsInput | $Enums.ActivityType
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
-  source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
-  world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actorSnapshotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContext?: Prisma.ActivityLootContextUncheckedUpdateOneWithoutActivityNestedInput
 }
 
 export type ActivityCreateManyActorSnapshotInput = {
@@ -858,8 +585,6 @@ export type ActivityCreateManyActorSnapshotInput = {
   source: $Enums.ActivitySource
   world?: string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: string | null
-  timerContextId?: string | null
 }
 
 export type ActivityUpdateWithoutActorSnapshotInput = {
@@ -873,10 +598,6 @@ export type ActivityUpdateWithoutActorSnapshotInput = {
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContext?: Prisma.ActivityLootContextUpdateOneWithoutActivityNestedInput
-  timerContext?: Prisma.ActivityTimerContextUpdateOneWithoutActivityNestedInput
 }
 
 export type ActivityUncheckedUpdateWithoutActorSnapshotInput = {
@@ -890,10 +611,6 @@ export type ActivityUncheckedUpdateWithoutActorSnapshotInput = {
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lootContext?: Prisma.ActivityLootContextUncheckedUpdateOneWithoutActivityNestedInput
-  timerContext?: Prisma.ActivityTimerContextUncheckedUpdateOneWithoutActivityNestedInput
 }
 
 export type ActivityUncheckedUpdateManyWithoutActorSnapshotInput = {
@@ -907,8 +624,6 @@ export type ActivityUncheckedUpdateManyWithoutActorSnapshotInput = {
   source?: Prisma.EnumActivitySourceFieldUpdateOperationsInput | $Enums.ActivitySource
   world?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   details?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  lootContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  timerContextId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -925,11 +640,7 @@ export type ActivitySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   world?: boolean
   details?: boolean
   actorSnapshotId?: boolean
-  lootContextId?: boolean
-  timerContextId?: boolean
   actorSnapshot?: boolean | Prisma.Activity$actorSnapshotArgs<ExtArgs>
-  lootContext?: boolean | Prisma.Activity$lootContextArgs<ExtArgs>
-  timerContext?: boolean | Prisma.Activity$timerContextArgs<ExtArgs>
 }, ExtArgs["result"]["activity"]>
 
 export type ActivitySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -944,8 +655,6 @@ export type ActivitySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   world?: boolean
   details?: boolean
   actorSnapshotId?: boolean
-  lootContextId?: boolean
-  timerContextId?: boolean
   actorSnapshot?: boolean | Prisma.Activity$actorSnapshotArgs<ExtArgs>
 }, ExtArgs["result"]["activity"]>
 
@@ -961,8 +670,6 @@ export type ActivitySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   world?: boolean
   details?: boolean
   actorSnapshotId?: boolean
-  lootContextId?: boolean
-  timerContextId?: boolean
   actorSnapshot?: boolean | Prisma.Activity$actorSnapshotArgs<ExtArgs>
 }, ExtArgs["result"]["activity"]>
 
@@ -978,15 +685,11 @@ export type ActivitySelectScalar = {
   world?: boolean
   details?: boolean
   actorSnapshotId?: boolean
-  lootContextId?: boolean
-  timerContextId?: boolean
 }
 
-export type ActivityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "guildId" | "discordId" | "type" | "createdAt" | "idempotencyKey" | "source" | "world" | "details" | "actorSnapshotId" | "lootContextId" | "timerContextId", ExtArgs["result"]["activity"]>
+export type ActivityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "guildId" | "discordId" | "type" | "createdAt" | "idempotencyKey" | "source" | "world" | "details" | "actorSnapshotId", ExtArgs["result"]["activity"]>
 export type ActivityInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   actorSnapshot?: boolean | Prisma.Activity$actorSnapshotArgs<ExtArgs>
-  lootContext?: boolean | Prisma.Activity$lootContextArgs<ExtArgs>
-  timerContext?: boolean | Prisma.Activity$timerContextArgs<ExtArgs>
 }
 export type ActivityIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   actorSnapshot?: boolean | Prisma.Activity$actorSnapshotArgs<ExtArgs>
@@ -999,8 +702,6 @@ export type $ActivityPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Activity"
   objects: {
     actorSnapshot: Prisma.$ActivityActorSnapshotPayload<ExtArgs> | null
-    lootContext: Prisma.$ActivityLootContextPayload<ExtArgs> | null
-    timerContext: Prisma.$ActivityTimerContextPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1014,8 +715,6 @@ export type $ActivityPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     world: string | null
     details: runtime.JsonValue | null
     actorSnapshotId: string | null
-    lootContextId: string | null
-    timerContextId: string | null
   }, ExtArgs["result"]["activity"]>
   composites: {}
 }
@@ -1411,8 +1110,6 @@ readonly fields: ActivityFieldRefs;
 export interface Prisma__ActivityClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   actorSnapshot<T extends Prisma.Activity$actorSnapshotArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Activity$actorSnapshotArgs<ExtArgs>>): Prisma.Prisma__ActivityActorSnapshotClient<runtime.Types.Result.GetResult<Prisma.$ActivityActorSnapshotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  lootContext<T extends Prisma.Activity$lootContextArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Activity$lootContextArgs<ExtArgs>>): Prisma.Prisma__ActivityLootContextClient<runtime.Types.Result.GetResult<Prisma.$ActivityLootContextPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  timerContext<T extends Prisma.Activity$timerContextArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Activity$timerContextArgs<ExtArgs>>): Prisma.Prisma__ActivityTimerContextClient<runtime.Types.Result.GetResult<Prisma.$ActivityTimerContextPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1453,8 +1150,6 @@ export interface ActivityFieldRefs {
   readonly world: Prisma.FieldRef<"Activity", 'String'>
   readonly details: Prisma.FieldRef<"Activity", 'Json'>
   readonly actorSnapshotId: Prisma.FieldRef<"Activity", 'String'>
-  readonly lootContextId: Prisma.FieldRef<"Activity", 'String'>
-  readonly timerContextId: Prisma.FieldRef<"Activity", 'String'>
 }
     
 
@@ -1867,44 +1562,6 @@ export type Activity$actorSnapshotArgs<ExtArgs extends runtime.Types.Extensions.
    */
   include?: Prisma.ActivityActorSnapshotInclude<ExtArgs> | null
   where?: Prisma.ActivityActorSnapshotWhereInput
-}
-
-/**
- * Activity.lootContext
- */
-export type Activity$lootContextArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ActivityLootContext
-   */
-  select?: Prisma.ActivityLootContextSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ActivityLootContext
-   */
-  omit?: Prisma.ActivityLootContextOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ActivityLootContextInclude<ExtArgs> | null
-  where?: Prisma.ActivityLootContextWhereInput
-}
-
-/**
- * Activity.timerContext
- */
-export type Activity$timerContextArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ActivityTimerContext
-   */
-  select?: Prisma.ActivityTimerContextSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ActivityTimerContext
-   */
-  omit?: Prisma.ActivityTimerContextOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ActivityTimerContextInclude<ExtArgs> | null
-  where?: Prisma.ActivityTimerContextWhereInput
 }
 
 /**
