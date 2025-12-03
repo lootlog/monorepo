@@ -6,7 +6,7 @@
   "exports": "./dist/index.mjs",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "node --import ./dist/instrumentation.mjs dist/index.mjs",
+    "start": "node dist/index.mjs",
     "build": "pkgroll",
     "auth:migrate:dev": "pnpm dlx @better-auth/cli migrate",
     "auth:migrate:prod": "pnpm dlx @better-auth/cli migrate --y"
