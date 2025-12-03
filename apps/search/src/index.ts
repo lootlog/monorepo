@@ -1,16 +1,20 @@
+import { initHonoObservability } from "@lootlog/instrumentation";
 import "dotenv/config";
-import { initObservability } from "@lootlog/instrumentation";
 
-initObservability({
+initHonoObservability({
   serviceName: process.env.SERVICE_NAME || "search",
   otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
   otlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
   serviceEnvironment: process.env.ENV,
   serviceNamespace: process.env.SERVICE_NAMESPACE,
+  traceSampleRate: 0.1,
+  forceEnable: false,
+  enableDebugLogging: false,
 });
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
 import { logger } from "hono/logger";
@@ -32,6 +36,13 @@ const app = new Hono<{
 
 await setupAMQP();
 
+app.use(
+  "*",
+  httpInstrumentationMiddleware({
+    serviceName: process.env.SERVICE_NAME || "search",
+    serviceVersion: "1.0.0",
+  }),
+);
 app.use("*", logger());
 app.use("*", userMetadataFromHeaders);
 

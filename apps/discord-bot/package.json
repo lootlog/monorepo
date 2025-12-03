@@ -10,7 +10,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start": "node dist/main",
+    "start": "node --import ./dist/instrumentation.js dist/main.js",
     "lint": "oxlint src",
     "test": "jest",
     "test:watch": "jest --watch",
