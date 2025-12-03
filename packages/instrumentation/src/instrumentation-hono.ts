@@ -36,22 +36,6 @@ export interface HonoObservabilityConfig {
 
 let sdkInstance: NodeSDK | null = null;
 
-/**
- * Initialize OpenTelemetry SDK for Hono.js services.
- *
- * IMPORTANT: For Hono, you ALSO need to add the @hono/otel middleware to your app:
- *
- * ```typescript
- * import { Hono } from 'hono';
- * import { httpInstrumentationMiddleware } from '@hono/otel';
- *
- * const app = new Hono();
- * app.use('*', httpInstrumentationMiddleware({
- *   serviceName: 'my-hono-service',
- *   serviceVersion: '1.0.0',
- * }));
- * ```
- */
 export function initHonoObservability(config: HonoObservabilityConfig): void {
   const {
     serviceName,
@@ -165,37 +149,3 @@ function parseHeaders(headersString: string): Record<string, string> {
   });
   return headers;
 }
-
-// =============================================================================
-// EXAMPLE HONO APP SETUP
-// =============================================================================
-/*
-// instrumentation.ts (load with --import or --require)
-import { initHonoObservability } from './observability-hono';
-
-initHonoObservability({
-  serviceName: process.env.SERVICE_NAME || 'hono-service',
-  otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-  otlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
-  serviceEnvironment: process.env.NODE_ENV,
-  traceSampleRate: 0.1,
-});
-
-// app.ts
-import { Hono } from 'hono';
-import { httpInstrumentationMiddleware } from '@hono/otel';
-
-const app = new Hono();
-
-// Add OpenTelemetry middleware FIRST
-app.use('*', httpInstrumentationMiddleware({
-  serviceName: 'hono-service',
-  serviceVersion: '1.0.0',
-  // Optional: customize span names
-  spanNameFactory: (c) => `${c.req.method} ${c.req.path}`,
-}));
-
-app.get('/health', (c) => c.json({ status: 'ok' }));
-
-export default app;
-*/

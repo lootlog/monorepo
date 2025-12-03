@@ -11,5 +11,4 @@ initObservability({
   forceEnable: false,
   enableDebugLogging: false,
   enableHostMetrics: false,
-  enableProcessMetrics: false,
 });
