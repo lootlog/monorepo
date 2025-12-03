@@ -21,6 +21,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
       )
       .default(RuntimeEnvironment.LOCAL),
     PORT: Joi.number().required(),
+    SERVICE_NAME: Joi.string().default('battlelog-service'),
     POSTGRESQL_CONNECTION_URI: Joi.string(),
     AXIOM_DATASET: Joi.string(),
     AXIOM_TOKEN: Joi.string(),
@@ -33,6 +34,11 @@ export const APP_CONFIG: ConfigModuleOptions = {
     R2_ENDPOINT: Joi.string().required(),
     R2_REGION: Joi.string().default('auto'),
     R2_BUCKET_NAME: Joi.string().required(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().allow(''),
+    OTEL_EXPORTER_OTLP_HEADERS: Joi.string().allow(''),
+    OTEL_NODE_RESOURCE_DETECTORS: Joi.string().default('env,host,os,process'),
+    OTEL_TRACES_EXPORTER: Joi.string().default('otlp'),
+    SERVICE_NAMESPACE: Joi.string().default('local'),
   }),
   validationOptions: {
     allowUnknown: true,
