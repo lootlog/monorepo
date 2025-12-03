@@ -24,7 +24,6 @@ import {
   PeriodicExportingMetricReader,
   View,
   Aggregation,
-  InstrumentType,
 } from "@opentelemetry/sdk-metrics";
 import {
   ParentBasedSampler,
@@ -44,7 +43,6 @@ export interface ObservabilityConfig {
   traceSampleRate?: number;
   forceEnable?: boolean;
   enableDebugLogging?: boolean;
-  // New: control what metrics to include
   enableHostMetrics?: boolean;
   enableProcessMetrics?: boolean;
 }
@@ -54,7 +52,6 @@ let currentServiceName = "";
 
 /**
  * Custom SpanProcessor that filters high-cardinality spans before export.
- * NOTE: Now only filters Socket.IO related spans, NOT all client spans.
  */
 class FilteringSpanProcessor implements SpanProcessor {
   constructor(private readonly wrappedProcessor: SpanProcessor) {}
@@ -73,9 +70,6 @@ class FilteringSpanProcessor implements SpanProcessor {
   private shouldDropSpan(span: ReadableSpan): boolean {
     const spanName = span.name;
     const attributes = span.attributes;
-
-    // REMOVED: Don't drop ALL CLIENT spans - this breaks distributed tracing!
-    // Only filter specific high-cardinality patterns
 
     // Drop Socket.IO room/namespace spans (high cardinality)
     if (
@@ -100,7 +94,8 @@ class FilteringSpanProcessor implements SpanProcessor {
     }
 
     // Drop spans with actual room IDs like "guild:123" or "battle:456"
-    if (spanName.match(/[a-zA-Z]+:\d+/)) {
+    // But NOT route templates like "/guilds/:id"
+    if (spanName.match(/[a-zA-Z]+:\d+/) && !spanName.includes("/:")) {
       return true;
     }
 
@@ -116,67 +111,8 @@ class FilteringSpanProcessor implements SpanProcessor {
   }
 }
 
-function normalizePath(path: string | undefined | null): string {
-  let normalized = (path ?? "/").split("?")[0] || "/";
-
-  // Preserve special routes
-  if (normalized === "/guilds/@me") return normalized;
-  if (normalized === "/healthz") return normalized;
-
-  // Parameterize path segments after known prefixes
-  const prefixes = [
-    "/guilds/",
-    "/loots/",
-    "/users/",
-    "/timers/",
-    "/internal/guilds/",
-    "/battles/",
-    "/battles/public/",
-  ];
-
-  for (const prefix of prefixes) {
-    if (normalized.startsWith(prefix)) {
-      const rest = normalized.slice(prefix.length);
-      const segments = rest.split("/");
-
-      const knownSubResources = [
-        "timers",
-        "members",
-        "chat-messages",
-        "permissions",
-        "worlds",
-        "lootlog-config",
-        "accounts",
-        "user-permissions",
-        "raw",
-      ];
-
-      for (let i = 0; i < segments.length; i++) {
-        if (
-          segments[i] &&
-          !knownSubResources.includes(segments[i] as string) &&
-          segments[i] !== "@me"
-        ) {
-          segments[i] = ":id";
-        }
-      }
-
-      return prefix + segments.join("/");
-    }
-  }
-
-  // Fallback for unknown routes
-  return normalized
-    .replace(
-      /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
-      "/:id",
-    )
-    .replace(/\/[0-9]+/g, "/:id");
-}
-
 /**
  * Create metric views to control cardinality.
- * This is CRITICAL for preventing Grafana Cloud cardinality breaches.
  */
 function createMetricViews(): View[] {
   return [
@@ -205,50 +141,6 @@ function createMetricViews(): View[] {
       ],
       aggregation: Aggregation.Histogram(),
     }),
-
-    // Process metrics - drop high-cardinality attributes
-    // Only keep service-level attributes, drop per-process details
-    new View({
-      instrumentName: "process.*",
-      attributeKeys: [], // Drop all extra attributes
-    }),
-
-    // System metrics - aggregate across all CPUs/disks/network interfaces
-    new View({
-      instrumentName: "system.cpu.*",
-      attributeKeys: ["state"], // Only keep state (user, system, idle), drop cpu number
-    }),
-    new View({
-      instrumentName: "system.memory.*",
-      attributeKeys: ["state"],
-    }),
-    new View({
-      instrumentName: "system.network.*",
-      attributeKeys: ["direction"], // Only keep direction, drop interface name
-    }),
-    new View({
-      instrumentName: "system.disk.*",
-      attributeKeys: ["direction"], // Only keep direction, drop device name
-    }),
-    new View({
-      instrumentName: "system.filesystem.*",
-      attributeKeys: ["state"], // Drop mountpoint, device, type, mode
-    }),
-
-    // Catch-all for any remaining high-cardinality metrics - DROP them
-    // This is aggressive but prevents cardinality explosion
-    new View({
-      instrumentType: InstrumentType.HISTOGRAM,
-      instrumentName: "*",
-      // Keep only service-level attributes for unmatched histograms
-      attributeKeys: [
-        "http.method",
-        "http.route",
-        "http.status_code",
-        "rpc.method",
-        "rpc.service",
-      ],
-    }),
   ];
 }
 
@@ -262,16 +154,13 @@ export function initObservability(config: ObservabilityConfig): void {
     traceSampleRate = 0.1,
     forceEnable = false,
     enableDebugLogging = false,
-    enableHostMetrics = false, // DISABLED BY DEFAULT due to cardinality
-    enableProcessMetrics = false, // DISABLED BY DEFAULT due to cardinality
+    enableHostMetrics = false,
   } = config;
 
-  // Enable debug logging if requested - helps diagnose issues
   if (enableDebugLogging) {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
   }
 
-  // Disable for local/dev unless explicitly forced
   if (!forceEnable && (serviceEnvironment === "local" || !serviceEnvironment)) {
     console.log(
       `[${serviceName}] Observability disabled for local environment.`,
@@ -300,47 +189,22 @@ export function initObservability(config: ObservabilityConfig): void {
     resourceAttributes[SEMRESATTRS_SERVICE_NAMESPACE] = serviceNamespace;
   }
 
-  // Use sync detectors to avoid issues - and limit which ones to use
-  // IMPORTANT: These can add high-cardinality labels!
-  const detectors = [
-    envDetector,
-    // Only include these if you really need them
-    // hostDetectorSync,  // Adds host.name, host.id, etc.
-    // osDetectorSync,    // Adds os.type, os.description, etc.
-    // processDetectorSync, // Adds process.pid - HIGH CARDINALITY!
-  ];
-
   const sampler = new ParentBasedSampler({
     root: new TraceIdRatioBasedSampler(traceSampleRate),
   });
 
+  // Auto-instrumentations - NO requestHook, let Express/NestJS set http.route
   const instrumentations = getNodeAutoInstrumentations({
-    // HTTP instrumentation - server side only
     "@opentelemetry/instrumentation-http": {
       enabled: true,
-      // IMPORTANT: Ignore outgoing requests to prevent cardinality explosion
-      // from external services (Discord, Redis, Cloudflare, etc.)
       ignoreOutgoingRequestHook: () => true,
-      requestHook: (span: any, req: any) => {
-        try {
-          const url: string =
-            req?.url ?? req?.path ?? req?.raw?.url ?? req?.originalUrl ?? "/";
-          const path = normalizePath(url);
-          const method: string = req?.method ?? req?.raw?.method ?? "HTTP";
-
-          // Always set normalized route to prevent cardinality from raw URLs
-          span.updateName(`${method} ${path}`);
-          span.setAttribute("http.route", path);
-        } catch {
-          // ignore hook errors
-        }
-      },
+      // NO requestHook - let Express instrumentation handle http.route from your decorators
     },
 
     "@opentelemetry/instrumentation-express": { enabled: true },
     "@opentelemetry/instrumentation-fastify": { enabled: true },
 
-    // DISABLE high-cardinality instrumentations
+    // Disable high-cardinality instrumentations
     "@opentelemetry/instrumentation-dns": { enabled: false },
     "@opentelemetry/instrumentation-net": { enabled: false },
     "@opentelemetry/instrumentation-fs": { enabled: false },
@@ -380,12 +244,12 @@ export function initObservability(config: ObservabilityConfig): void {
 
   sdkInstance = new NodeSDK({
     resource: new Resource(resourceAttributes),
-    resourceDetectors: detectors,
+    resourceDetectors: [envDetector],
     sampler,
     spanProcessor: filteringProcessor,
     metricReader: new PeriodicExportingMetricReader({
       exporter: metricExporter,
-      exportIntervalMillis: 60000, // 1 minute - don't export too frequently
+      exportIntervalMillis: 60000,
     }),
     views: createMetricViews(),
     instrumentations: [instrumentations, nestInstrumentation],
@@ -394,14 +258,10 @@ export function initObservability(config: ObservabilityConfig): void {
   try {
     sdkInstance.start();
 
-    // DON'T start HostMetrics by default - it causes cardinality explosion!
-    // If you need runtime metrics, use a separate, controlled metrics collection
-    // Or use Views to aggressively limit cardinality (already done above)
     if (enableHostMetrics) {
       console.warn(
         `[${serviceName}] HostMetrics enabled - watch for cardinality issues!`,
       );
-      // Import dynamically to avoid loading if not needed
       import("@opentelemetry/host-metrics").then(({ HostMetrics }) => {
         const hostMetrics = new HostMetrics({
           name: `${serviceName}-runtime`,
@@ -411,9 +271,7 @@ export function initObservability(config: ObservabilityConfig): void {
     }
 
     console.log(
-      `[${serviceName}] Observability initialized (sampling: ${
-        traceSampleRate * 100
-      }%, HTTP client disabled, cardinality-controlled metrics).`,
+      `[${serviceName}] Observability initialized (sampling: ${traceSampleRate * 100}%).`,
     );
   } catch (error: unknown) {
     console.error(

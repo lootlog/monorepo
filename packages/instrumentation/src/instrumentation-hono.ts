@@ -32,26 +32,12 @@ export interface HonoObservabilityConfig {
   traceSampleRate?: number;
   forceEnable?: boolean;
   enableDebugLogging?: boolean;
+  enableHostMetrics?: boolean;
 }
 
 let sdkInstance: NodeSDK | null = null;
+let currentServiceName = "";
 
-/**
- * Initialize OpenTelemetry SDK for Hono.js services.
- *
- * IMPORTANT: For Hono, you ALSO need to add the @hono/otel middleware to your app:
- *
- * ```typescript
- * import { Hono } from 'hono';
- * import { httpInstrumentationMiddleware } from '@hono/otel';
- *
- * const app = new Hono();
- * app.use('*', httpInstrumentationMiddleware({
- *   serviceName: 'my-hono-service',
- *   serviceVersion: '1.0.0',
- * }));
- * ```
- */
 export function initHonoObservability(config: HonoObservabilityConfig): void {
   const {
     serviceName,
@@ -62,6 +48,7 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
     traceSampleRate = 0.1,
     forceEnable = false,
     enableDebugLogging = false,
+    enableHostMetrics = false,
   } = config;
 
   if (enableDebugLogging) {
@@ -81,6 +68,8 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
     );
     return;
   }
+
+  currentServiceName = serviceName;
 
   const resourceAttributes: Record<string, string> = {
     [SEMRESATTRS_SERVICE_NAME]: serviceName,
@@ -135,6 +124,19 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
 
   try {
     sdkInstance.start();
+
+    if (enableHostMetrics) {
+      console.warn(
+        `[${serviceName}] HostMetrics enabled - watch for cardinality issues!`,
+      );
+      import("@opentelemetry/host-metrics").then(({ HostMetrics }) => {
+        const hostMetrics = new HostMetrics({
+          name: `${serviceName}-runtime`,
+        });
+        hostMetrics.start();
+      });
+    }
+
     console.log(
       `[${serviceName}] Hono observability initialized (sampling: ${traceSampleRate * 100}%).`,
     );
@@ -152,8 +154,18 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
 
 export async function shutdownHonoObservability(): Promise<void> {
   if (!sdkInstance) return;
-  await sdkInstance.shutdown();
-  sdkInstance = null;
+
+  try {
+    await sdkInstance.shutdown();
+  } catch (error) {
+    console.error(
+      `[${currentServiceName}] Error shutting down observability:`,
+      error,
+    );
+  } finally {
+    sdkInstance = null;
+    console.log(`[${currentServiceName}] Observability terminated`);
+  }
 }
 
 function parseHeaders(headersString: string): Record<string, string> {
@@ -165,37 +177,3 @@ function parseHeaders(headersString: string): Record<string, string> {
   });
   return headers;
 }
-
-// =============================================================================
-// EXAMPLE HONO APP SETUP
-// =============================================================================
-/*
-// instrumentation.ts (load with --import or --require)
-import { initHonoObservability } from './observability-hono';
-
-initHonoObservability({
-  serviceName: process.env.SERVICE_NAME || 'hono-service',
-  otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
-  otlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
-  serviceEnvironment: process.env.NODE_ENV,
-  traceSampleRate: 0.1,
-});
-
-// app.ts
-import { Hono } from 'hono';
-import { httpInstrumentationMiddleware } from '@hono/otel';
-
-const app = new Hono();
-
-// Add OpenTelemetry middleware FIRST
-app.use('*', httpInstrumentationMiddleware({
-  serviceName: 'hono-service',
-  serviceVersion: '1.0.0',
-  // Optional: customize span names
-  spanNameFactory: (c) => `${c.req.method} ${c.req.path}`,
-}));
-
-app.get('/health', (c) => c.json({ status: 'ok' }));
-
-export default app;
-*/
