@@ -14,6 +14,7 @@ initHonoObservability({
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { auth } from "./lib/auth.js";
 import { logger } from "hono/logger";
@@ -28,6 +29,13 @@ const app = new Hono<{
   };
 }>();
 
+app.use(
+  "*",
+  httpInstrumentationMiddleware({
+    serviceName: process.env.SERVICE_NAME || "auth",
+    serviceVersion: "1.0.0",
+  }),
+);
 app.use("*", logger());
 app.use("*", sessionMiddleware);
 

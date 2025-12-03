@@ -206,6 +206,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.5
         version: 1.19.5(hono@4.10.3)
+      '@hono/otel':
+        specifier: ^1.0.1
+        version: 1.0.1(hono@4.10.3)
       '@lootlog/api-helpers':
         specifier: workspace:*
         version: file:packages/api-helpers
@@ -785,6 +788,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.5
         version: 1.19.5(hono@4.10.3)
+      '@hono/otel':
+        specifier: ^1.0.1
+        version: 1.0.1(hono@4.10.3)
       '@lootlog/api-helpers':
         specifier: workspace:*
         version: file:packages/api-helpers
@@ -2136,6 +2142,11 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@hono/otel@1.0.1':
+    resolution: {integrity: sha512-WEV2M2gvGfLgafznoD5uz/wY9TbOvzt0asaoqplb0rSiMYTZxqVhxKa1teOF+PasnrXNFUhgYt04zvdUuF16Cw==}
+    peerDependencies:
+      hono: '>=4.0.0'
 
   '@hookform/resolvers@5.2.2':
     resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
@@ -12168,6 +12179,12 @@ snapshots:
 
   '@hono/node-server@1.19.5(hono@4.10.3)':
     dependencies:
+      hono: 4.10.3
+
+  '@hono/otel@1.0.1(hono@4.10.3)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/semantic-conventions': 1.38.0
       hono: 4.10.3
 
   '@hookform/resolvers@5.2.2(react-hook-form@7.65.0(react@19.2.0))':
