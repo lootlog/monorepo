@@ -1,57 +1,4 @@
-/**
- * OpenTelemetry Observability Configuration
- *
- * This module configures OpenTelemetry instrumentation for Node.js services with:
- * - Low-cardinality span attributes to prevent metrics explosion
- * - Probabilistic trace sampling (20% default) to reduce costs
- * - Automatic filtering of high-cardinality attributes before export
- *
- * Metrics Strategy (via Grafana Cloud "metrics-from-traces"):
- * ============================================================
- * After attribute filtering and sampling, you can still build dashboards/alerts for:
- *
- * 1. REQUEST LATENCY (p50/p90/p95/p99, max):
- *    - Available by: service.name, deployment.environment, http.method, http.route,
- *                    span.kind, status.code
- *    - Metric: `duration` (histogram)
- *    - Example query: histogram_quantile(0.95, sum(rate(duration_bucket[5m])) by (le, service_name, http_route))
- *
- * 2. REQUESTS PER SECOND (RPS):
- *    - Available by: service.name, deployment.environment, http.method, http.route,
- *                    span.kind, status.code
- *    - Metric: `calls` (counter)
- *    - Example query: sum(rate(calls[5m])) by (service_name, http_route)
- *
- * 3. ERROR RATE:
- *    - Available by: service.name, deployment.environment, http.method, http.route,
- *                    span.kind, status.code
- *    - Metric: `calls` filtered by status.code="ERROR"
- *    - Example query: sum(rate(calls{status_code="ERROR"}[5m])) by (service_name, http_route)
- *
- * Low-Cardinality Labels (kept):
- * - service.name
- * - deployment.environment
- * - span.kind (SERVER, CLIENT, INTERNAL, etc.)
- * - http.method (GET, POST, etc.)
- * - http.route (normalized paths like /guilds/:id/members/:id)
- * - status.code (OK, ERROR)
- * - http.status_code (200, 404, 500, etc.)
- *
- * High-Cardinality Attributes (dropped):
- * - http.url, http.target (dynamic IDs, query params)
- * - db.statement, db.query.text (full SQL queries)
- * - user.id, character.id, guild.id (user/entity identifiers)
- * - enduser.id, session.id (session identifiers)
- *
- * Adjusting Sampling Rate:
- * ========================
- * Default: 20% (traceSampleRate: 0.2)
- * To increase/decrease:
- *   initObservability({
- *     serviceName: 'my-service',
- *     traceSampleRate: 0.5,  // 50% sampling
- *   });
- */
+// src/observability.ts (np. entry dla @lootlog/instrumentation)
 
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
@@ -65,11 +12,15 @@ import {
   processDetector,
 } from "@opentelemetry/resources";
 import {
+  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
   SEMRESATTRS_SERVICE_NAME,
   SEMRESATTRS_SERVICE_NAMESPACE,
-  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from "@opentelemetry/semantic-conventions";
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import {
+  PeriodicExportingMetricReader,
+  View,
+  Aggregation,
+} from "@opentelemetry/sdk-metrics";
 import {
   ParentBasedSampler,
   TraceIdRatioBasedSampler,
@@ -82,42 +33,54 @@ export interface ObservabilityConfig {
   otlpHeaders?: string;
   serviceEnvironment?: string;
   serviceNamespace?: string;
-  traceSampleRate?: number;
-  forceEnable?: boolean; // Bypass environment check and force observability
+  traceSampleRate?: number; // 0.0–1.0, default 0.1 (10%)
+  forceEnable?: boolean; // bypass ENV guard
 }
 
 let sdkInstance: NodeSDK | null = null;
 let currentServiceName = "";
 
 /**
- * High-cardinality attributes that cause metrics explosion:
- * - http.url, http.target (dynamic IDs in URLs)
- * - db.statement, db.query.text (full SQL queries)
- * - user.id, character.id, guild.id (entity identifiers)
- * - enduser.id, session.id (session identifiers)
- *
- * These are prevented by:
- * 1. Disabling enhancedDatabaseReporting (no db.statement)
- * 2. Grafana's built-in cardinality limits
- * 3. Trace sampling (reduces volume)
- *
- * Cannot be filtered at SpanProcessor level (ReadableSpan is immutable)
+ * Normalize an HTTP path to low-cardinality template:
+ * - strips query string
+ * - replaces numeric/uuid-like segments with ":id"
  */
+function normalizePath(path: string | undefined | null): string {
+  const raw = (path ?? "/").split("?")[0] || "/";
+  return (
+    raw
+      // uuid / cuid / hashes etc. (6+ hex/word chars)
+      .replace(/\/[0-9a-fA-F-]{6,}/g, "/:id")
+      // purely numeric ids
+      .replace(/\/[0-9]+/g, "/:id")
+  );
+}
 
-export function initObservability(config: ObservabilityConfig) {
+/**
+ * Initialize OpenTelemetry SDK with:
+ * - low-cardinality HTTP span names (works for Hono, Nest/Express, Nest/Fastify)
+ * - probabilistic sampling (default 10%)
+ * - OTLP exporters for traces + metrics
+ * - HTTP client instrumentation disabled (prevents cardinality explosion)
+ * - Most database/network instrumentations disabled (metrics cardinality control)
+ * - Metric views to limit attribute cardinality
+ *
+ * Note: Node.js runtime metrics (CPU, memory, event loop) require additional
+ * packages like @opentelemetry/host-metrics or @opentelemetry/instrumentation-runtime-node.
+ * These are not included by default to keep dependencies minimal.
+ */
+export function initObservability(config: ObservabilityConfig): void {
   const {
     serviceName,
     otlpEndpoint,
     otlpHeaders,
     serviceEnvironment,
     serviceNamespace,
-    traceSampleRate = 0.2,
+    traceSampleRate = 0.1,
     forceEnable = false,
   } = config;
 
-  // Disable observability only for local/development environments
-  // Allow: prod, staging, dev (any environment except local)
-  // Can be bypassed with forceEnable flag
+  // Disable for local/dev unless explicitly forced
   if (!forceEnable && (serviceEnvironment === "local" || !serviceEnvironment)) {
     // eslint-disable-next-line no-console
     console.log(
@@ -126,8 +89,6 @@ export function initObservability(config: ObservabilityConfig) {
     return;
   }
 
-  currentServiceName = serviceName;
-
   if (!otlpEndpoint || !otlpHeaders) {
     // eslint-disable-next-line no-console
     console.warn(
@@ -135,6 +96,8 @@ export function initObservability(config: ObservabilityConfig) {
     );
     return;
   }
+
+  currentServiceName = serviceName;
 
   const resourceAttributes: Record<string, string> = {
     [SEMRESATTRS_SERVICE_NAME]: serviceName,
@@ -150,12 +113,79 @@ export function initObservability(config: ObservabilityConfig) {
 
   const detectors = getResourceDetectors();
 
-  // Probabilistic trace sampling to reduce trace volume and costs
-  // Default: 20% sampling rate (adjustable via traceSampleRate config)
-  // Note: Grafana's metrics-from-traces still work with sampled traces
   const sampler = new ParentBasedSampler({
     root: new TraceIdRatioBasedSampler(traceSampleRate),
   });
+
+  const instrumentations = getNodeAutoInstrumentations({
+    /**
+     * CRITICAL: Disable HTTP CLIENT instrumentation to prevent cardinality explosion.
+     * External services (Discord, Redis, RabbitMQ, Cloudflare, etc.) were creating
+     * thousands of unique metrics. We only track incoming HTTP (server-side).
+     */
+    "@opentelemetry/instrumentation-http": {
+      enabled: true,
+      ignoreOutgoingRequestHook: () => true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      requestHook: (span: any, req: any) => {
+        try {
+          const url: string =
+            req?.url ?? req?.path ?? req?.raw?.url ?? req?.originalUrl ?? "/";
+          const path = normalizePath(url);
+          const method: string = req?.method ?? req?.raw?.method ?? "HTTP";
+
+          const hasHttpRoute =
+            span.attributes?.["http.route"] ||
+            span.attributes?.["http.target"] ||
+            span.attributes?.["http.url"];
+
+          if (!hasHttpRoute) {
+            span.updateName(`${method} ${path}`);
+            span.setAttribute("http.route", path);
+          }
+        } catch {
+          // ignore hook errors
+        }
+      },
+    },
+
+    "@opentelemetry/instrumentation-express": { enabled: true },
+    "@opentelemetry/instrumentation-fastify": { enabled: true },
+
+    "@opentelemetry/instrumentation-dns": { enabled: false },
+    "@opentelemetry/instrumentation-net": { enabled: false },
+    "@opentelemetry/instrumentation-fs": { enabled: false },
+    "@opentelemetry/instrumentation-pg": { enabled: false },
+    "@opentelemetry/instrumentation-mysql": { enabled: false },
+    "@opentelemetry/instrumentation-mysql2": { enabled: false },
+    "@opentelemetry/instrumentation-redis": { enabled: false },
+    "@opentelemetry/instrumentation-redis-4": { enabled: false },
+    "@opentelemetry/instrumentation-mongodb": { enabled: false },
+    "@opentelemetry/instrumentation-grpc": { enabled: false },
+    "@opentelemetry/instrumentation-graphql": { enabled: false },
+    "@opentelemetry/instrumentation-aws-sdk": { enabled: false },
+    "@opentelemetry/instrumentation-socket.io": { enabled: false },
+    "@opentelemetry/instrumentation-amqplib": { enabled: false },
+    "@opentelemetry/instrumentation-ioredis": { enabled: false },
+  });
+
+  const metricViews = [
+    new View({
+      instrumentName: "http.server.duration",
+      attributeKeys: ["http.method", "http.route", "http.status_code"],
+      aggregation: Aggregation.Histogram(),
+    }),
+    new View({
+      instrumentName: "http.server.request.size",
+      attributeKeys: ["http.method", "http.route"],
+      aggregation: Aggregation.Histogram(),
+    }),
+    new View({
+      instrumentName: "http.server.response.size",
+      attributeKeys: ["http.method", "http.route"],
+      aggregation: Aggregation.Histogram(),
+    }),
+  ];
 
   sdkInstance = new NodeSDK({
     resource: new Resource(resourceAttributes),
@@ -170,39 +200,19 @@ export function initObservability(config: ObservabilityConfig) {
         url: `${otlpEndpoint}/v1/metrics`,
         headers: parseHeaders(otlpHeaders),
       }),
+      exportIntervalMillis: 60000,
     }),
-    // Note: Span attribute filtering is handled by instrumentation configuration below
-    // and by disabling enhancedDatabaseReporting to prevent db.statement capture
-    instrumentations: [
-      getNodeAutoInstrumentations({
-        // Configure HTTP instrumentation to avoid high-cardinality attributes
-        "@opentelemetry/instrumentation-http": {
-          // Disable capturing full URL/target (contains dynamic IDs, query params)
-          ignoreIncomingRequestHook: (_req) => {
-            // Keep the instrumentation active but attributes will be filtered
-            return false;
-          },
-          ignoreOutgoingRequestHook: (_req) => {
-            return false;
-          },
-        },
-        // Configure database instrumentation to avoid capturing statements
-        "@opentelemetry/instrumentation-pg": {
-          // Do not capture full SQL statements
-          enhancedDatabaseReporting: false,
-        },
-        "@opentelemetry/instrumentation-mysql": {
-          enhancedDatabaseReporting: false,
-        },
-      }),
-    ],
+    views: metricViews,
+    instrumentations: [instrumentations],
   });
 
   try {
     sdkInstance.start();
     // eslint-disable-next-line no-console
     console.log(
-      `[${serviceName}] Observability initialized (sampling: ${traceSampleRate * 100}%, low-cardinality mode).`,
+      `[${serviceName}] Observability initialized (sampling: ${
+        traceSampleRate * 100
+      }%, HTTP client disabled, low-cardinality metrics enabled).`,
     );
   } catch (error: unknown) {
     // eslint-disable-next-line no-console
@@ -215,9 +225,7 @@ export function initObservability(config: ObservabilityConfig) {
 }
 
 export async function shutdownObservability(): Promise<void> {
-  if (!sdkInstance) {
-    return;
-  }
+  if (!sdkInstance) return;
 
   await sdkInstance.shutdown();
   // eslint-disable-next-line no-console
@@ -244,9 +252,7 @@ function getResourceDetectors() {
 
   for (const name of detectorNames) {
     const detector = detectorMap[name as keyof typeof detectorMap];
-    if (detector) {
-      detectors.push(detector);
-    }
+    if (detector) detectors.push(detector);
   }
 
   return detectors.length > 0
@@ -258,7 +264,6 @@ function parseHeaders(headersString: string): Record<string, string> {
   const headers: Record<string, string> = {};
 
   // Convert comma separators to ampersands for URLSearchParams compatibility
-  // This allows values to contain commas and equals signs (e.g., base64, URLs, JSON)
   const paramsString = headersString.replace(/,/g, "&");
   const params = new URLSearchParams(paramsString);
 
