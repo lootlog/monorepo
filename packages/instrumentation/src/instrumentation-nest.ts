@@ -11,7 +11,6 @@ import {
 } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
-import { NestInstrumentation } from "@opentelemetry/instrumentation-nestjs-core";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
 import { Resource, envDetector } from "@opentelemetry/resources";
@@ -44,7 +43,6 @@ export interface ObservabilityConfig {
   forceEnable?: boolean;
   enableDebugLogging?: boolean;
   enableHostMetrics?: boolean;
-  enableProcessMetrics?: boolean;
 }
 
 let sdkInstance: NodeSDK | null = null;
@@ -71,31 +69,21 @@ class FilteringSpanProcessor implements SpanProcessor {
     const spanName = span.name;
     const attributes = span.attributes;
 
-    // Drop Socket.IO room/namespace spans (high cardinality)
+    // Drop Socket.IO related spans (high cardinality)
     if (
       spanName.includes("socket.io") ||
-      spanName.match(/room:[a-zA-Z]+-?\d+/) ||
-      spanName.match(/namespace:[a-zA-Z]+-?\d+/) ||
       spanName.includes("emit to") ||
       spanName.includes("send to")
     ) {
       return true;
     }
 
-    // Drop spans with messaging destinations containing actual IDs
+    // Drop spans with messaging destinations containing guild/battle IDs
     const messagingDest = attributes["messaging.destination"]?.toString();
     if (
       messagingDest &&
-      (messagingDest.match(/[a-zA-Z]+:\d+/) ||
-        messagingDest.includes("guild:") ||
-        messagingDest.includes("battle:"))
+      (messagingDest.includes("guild:") || messagingDest.includes("battle:"))
     ) {
-      return true;
-    }
-
-    // Drop spans with actual room IDs like "guild:123" or "battle:456"
-    // But NOT route templates like "/guilds/:id"
-    if (spanName.match(/[a-zA-Z]+:\d+/) && !spanName.includes("/:")) {
       return true;
     }
 
@@ -157,10 +145,12 @@ export function initObservability(config: ObservabilityConfig): void {
     enableHostMetrics = false,
   } = config;
 
+  // Enable debug logging if requested
   if (enableDebugLogging) {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
   }
 
+  // Disable for local/dev unless explicitly forced
   if (!forceEnable && (serviceEnvironment === "local" || !serviceEnvironment)) {
     console.log(
       `[${serviceName}] Observability disabled for local environment.`,
@@ -193,16 +183,19 @@ export function initObservability(config: ObservabilityConfig): void {
     root: new TraceIdRatioBasedSampler(traceSampleRate),
   });
 
-  // Auto-instrumentations - NO requestHook, let Express/NestJS set http.route
+  // Auto-instrumentations - includes NestJS, Express, HTTP
+  // NestJS instrumentation is ALREADY in auto-instrumentations-node
   const instrumentations = getNodeAutoInstrumentations({
     "@opentelemetry/instrumentation-http": {
       enabled: true,
       ignoreOutgoingRequestHook: () => true,
-      // NO requestHook - let Express instrumentation handle http.route from your decorators
     },
 
     "@opentelemetry/instrumentation-express": { enabled: true },
     "@opentelemetry/instrumentation-fastify": { enabled: true },
+
+    // NestJS - already included in auto-instrumentations, just enable it
+    "@opentelemetry/instrumentation-nestjs-core": { enabled: true },
 
     // Disable high-cardinality instrumentations
     "@opentelemetry/instrumentation-dns": { enabled: false },
@@ -235,8 +228,6 @@ export function initObservability(config: ObservabilityConfig): void {
 
   const filteringProcessor = new FilteringSpanProcessor(batchProcessor);
 
-  const nestInstrumentation = new NestInstrumentation();
-
   const metricExporter = new OTLPMetricExporter({
     url: `${otlpEndpoint}/v1/metrics`,
     headers: parseHeaders(otlpHeaders),
@@ -252,11 +243,12 @@ export function initObservability(config: ObservabilityConfig): void {
       exportIntervalMillis: 60000,
     }),
     views: createMetricViews(),
-    instrumentations: [instrumentations, nestInstrumentation],
+    instrumentations: [instrumentations],
   });
 
   try {
     sdkInstance.start();
+    console.log(`[${serviceName}] OpenTelemetry SDK started successfully`);
 
     if (enableHostMetrics) {
       console.warn(
@@ -267,11 +259,12 @@ export function initObservability(config: ObservabilityConfig): void {
           name: `${serviceName}-runtime`,
         });
         hostMetrics.start();
+        console.log(`[${serviceName}] HostMetrics started`);
       });
     }
 
     console.log(
-      `[${serviceName}] Observability initialized (sampling: ${traceSampleRate * 100}%).`,
+      `[${serviceName}] Observability initialized (sampling: ${traceSampleRate * 100}%, endpoint: ${otlpEndpoint}).`,
     );
   } catch (error: unknown) {
     console.error(
