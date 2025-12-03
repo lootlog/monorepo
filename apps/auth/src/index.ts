@@ -43,7 +43,7 @@ app.route("/healthz", healthzController);
 
 app.route("/auth", authController);
 
-app.on(["POST", "GET"], "/idp/**", async (c) => {
+app.on(["POST", "GET"], "/idp/**", (c) => {
   return auth.handler(c.req.raw);
 });
 
