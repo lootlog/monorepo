@@ -10,7 +10,7 @@ initHonoObservability({
   traceSampleRate: 0.1,
   forceEnable: false,
   enableDebugLogging: false,
-  enableHostMetrics: true,
+  enableHostMetrics: false,
 });
 
 import { serve } from "@hono/node-server";
