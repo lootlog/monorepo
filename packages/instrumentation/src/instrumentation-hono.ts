@@ -32,11 +32,9 @@ export interface HonoObservabilityConfig {
   traceSampleRate?: number;
   forceEnable?: boolean;
   enableDebugLogging?: boolean;
-  enableHostMetrics?: boolean;
 }
 
 let sdkInstance: NodeSDK | null = null;
-let currentServiceName = "";
 
 export function initHonoObservability(config: HonoObservabilityConfig): void {
   const {
@@ -48,7 +46,6 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
     traceSampleRate = 0.1,
     forceEnable = false,
     enableDebugLogging = false,
-    enableHostMetrics = false,
   } = config;
 
   if (enableDebugLogging) {
@@ -68,8 +65,6 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
     );
     return;
   }
-
-  currentServiceName = serviceName;
 
   const resourceAttributes: Record<string, string> = {
     [SEMRESATTRS_SERVICE_NAME]: serviceName,
@@ -124,19 +119,6 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
 
   try {
     sdkInstance.start();
-
-    if (enableHostMetrics) {
-      console.warn(
-        `[${serviceName}] HostMetrics enabled - watch for cardinality issues!`,
-      );
-      import("@opentelemetry/host-metrics").then(({ HostMetrics }) => {
-        const hostMetrics = new HostMetrics({
-          name: `${serviceName}-runtime`,
-        });
-        hostMetrics.start();
-      });
-    }
-
     console.log(
       `[${serviceName}] Hono observability initialized (sampling: ${traceSampleRate * 100}%).`,
     );
@@ -154,18 +136,8 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
 
 export async function shutdownHonoObservability(): Promise<void> {
   if (!sdkInstance) return;
-
-  try {
-    await sdkInstance.shutdown();
-  } catch (error) {
-    console.error(
-      `[${currentServiceName}] Error shutting down observability:`,
-      error,
-    );
-  } finally {
-    sdkInstance = null;
-    console.log(`[${currentServiceName}] Observability terminated`);
-  }
+  await sdkInstance.shutdown();
+  sdkInstance = null;
 }
 
 function parseHeaders(headersString: string): Record<string, string> {

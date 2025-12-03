@@ -10,5 +10,5 @@ initObservability({
   traceSampleRate: 0.1,
   forceEnable: false,
   enableDebugLogging: false,
-  enableHostMetrics: true,
+  enableHostMetrics: false,
 });
