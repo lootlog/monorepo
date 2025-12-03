@@ -36,6 +36,7 @@ export class ActivitiesService {
           type: dto.type,
           source: dto.source,
           idempotencyKey: dto.idempotencyKey,
+          world: dto.world,
           details: dto.details
             ? (dto.details as Prisma.InputJsonValue)
             : undefined,

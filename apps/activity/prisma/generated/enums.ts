@@ -25,15 +25,3 @@ export const ActivitySource = {
 } as const
 
 export type ActivitySource = (typeof ActivitySource)[keyof typeof ActivitySource]
-
-
-export const Profession = {
-  WARRIOR: 'WARRIOR',
-  PALADIN: 'PALADIN',
-  HUNTER: 'HUNTER',
-  MAGE: 'MAGE',
-  BLADE_DANCER: 'BLADE_DANCER',
-  TRACKER: 'TRACKER'
-} as const
-
-export type Profession = (typeof Profession)[keyof typeof Profession]

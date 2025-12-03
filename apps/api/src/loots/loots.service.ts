@@ -27,10 +27,6 @@ import { LootQueryService } from './services/loot-query.service';
 import { LootCommentService } from './services/loot-comment.service';
 import { RedisService } from 'src/lib/redis/redis.service';
 import Redlock, { ExecutionError } from 'redlock';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 
 @Injectable()
 export class LootsService implements OnModuleInit {
@@ -50,7 +46,6 @@ export class LootsService implements OnModuleInit {
     private readonly lootQueryService: LootQueryService,
     private readonly lootCommentService: LootCommentService,
     private readonly redisService: RedisService,
-    private readonly amqpConnection: AmqpConnection,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
@@ -231,14 +226,6 @@ export class LootsService implements OnModuleInit {
       }));
       this.itemsService.bulkIndexItems(indexItems);
 
-      this.trackLootActivity({
-        discordId,
-        userId,
-        guildIds: filteredGuildIds,
-        lootId: loot.id,
-        body,
-      });
-
       return { id: loot.id };
     } catch (error: unknown) {
       if (error instanceof ExecutionError) {
@@ -408,79 +395,5 @@ export class LootsService implements OnModuleInit {
       roles,
       params,
     );
-  }
-
-  private async trackLootActivity(options: {
-    discordId: string;
-    userId: string;
-    guildIds: string[];
-    lootId: number;
-    body: CreateLootDto;
-  }) {
-    const { discordId, userId, guildIds, lootId, body } = options;
-
-    const player = body.players?.[0];
-    if (!player) {
-      this.logger.log({
-        level: 'debug',
-        message: 'Skipping activity tracking - no player data available',
-        lootId,
-      });
-      return;
-    }
-
-    const prof = getProfByShortname(player.prof);
-    if (!prof) {
-      this.logger.log({
-        level: 'warn',
-        message: 'Skipping activity tracking - invalid profession',
-        lootId,
-        prof: player.prof,
-      });
-      return;
-    }
-
-    for (const guildId of guildIds) {
-      const timestamp = Date.now();
-      const idempotencyKey = `loot:${lootId}:${guildId}:${timestamp}:${discordId}`;
-
-      try {
-        this.amqpConnection.publish(
-          DEFAULT_EXCHANGE_NAME,
-          RoutingKey.ACTIVITY_LOG_CREATE,
-          {
-            userId,
-            guildId,
-            discordId,
-            type: 'LOOT_EVENT',
-            source: 'GAME',
-            world: body.world,
-            idempotencyKey,
-            actorSnapshot: {
-              accountId: Number(body.accountId),
-              characterId: Number(body.characterId),
-              name: player.name,
-              clanName: '',
-              clanId: null,
-              icon: player.icon,
-              lvl: player.lvl,
-              prof,
-            },
-            lootContext: {
-              lootId,
-            },
-          },
-        );
-      } catch (error) {
-        this.logger.error({
-          level: 'error',
-          message: 'Failed to publish loot activity event',
-          error: error instanceof Error ? error.message : String(error),
-          guildId,
-          lootId,
-          userId,
-        });
-      }
-    }
   }
 }

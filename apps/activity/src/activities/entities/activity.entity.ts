@@ -18,6 +18,9 @@ export class ActivityActorSnapshotEntity {
   clanName?: string;
 
   @Expose()
+  clanId?: number;
+
+  @Expose()
   icon?: string;
 
   @Expose()
@@ -90,6 +93,9 @@ export class ActivityEntity {
 
   @Expose()
   createdAt: Date;
+
+  @Expose()
+  world?: string;
 
   @Expose()
   details?: Record<string, unknown>;

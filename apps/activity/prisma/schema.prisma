@@ -20,15 +20,6 @@ enum ActivitySource {
   WEB_APP
 }
 
-enum Profession {
-  WARRIOR
-  PALADIN
-  HUNTER
-  MAGE
-  BLADE_DANCER
-  TRACKER
-}
-
 // TimescaleDB-ready: after migration, convert to hypertable with e.g.:
 // SELECT create_hypertable('"Activity"', 'createdAt', chunk_time_interval => INTERVAL '7 days');
 model Activity {
@@ -71,7 +62,7 @@ model ActivityActorSnapshot {
   clanId      Int?
   icon        String
   lvl         Int
-  prof        Profession
+  prof        String
 
   source      ActivitySource
   fingerprint String         @unique
