@@ -1,16 +1,20 @@
+import { initHonoObservability } from "@lootlog/instrumentation";
 import "dotenv/config";
-import { initObservability } from "@lootlog/instrumentation";
 
-initObservability({
+initHonoObservability({
   serviceName: process.env.SERVICE_NAME || "auth",
   otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
   otlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
   serviceEnvironment: process.env.ENV,
   serviceNamespace: process.env.SERVICE_NAMESPACE,
+  traceSampleRate: 0.1,
+  forceEnable: false,
+  enableDebugLogging: false,
 });
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { auth } from "./lib/auth.js";
 import { logger } from "hono/logger";
@@ -25,6 +29,13 @@ const app = new Hono<{
   };
 }>();
 
+app.use(
+  "*",
+  httpInstrumentationMiddleware({
+    serviceName: process.env.SERVICE_NAME || "auth",
+    serviceVersion: "1.0.0",
+  }),
+);
 app.use("*", logger());
 app.use("*", sessionMiddleware);
 
