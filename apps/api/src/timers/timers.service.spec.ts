@@ -105,6 +105,7 @@ describe('TimersService', () => {
   });
 
   describe('createTimerForGuild', () => {
+    const userId = 'user123';
     const mockDto: CreateTimerFromGameClientDto = {
       respBaseSeconds: 3600,
       respawnRandomness: 10,
@@ -148,6 +149,7 @@ describe('TimersService', () => {
 
       const result = await service.createTimerForGuild(
         'discord123',
+        userId,
         'guild1',
         mockDto,
       );
@@ -185,6 +187,7 @@ describe('TimersService', () => {
 
       await service.createTimerForGuild(
         'discord123',
+        userId,
         'guild1',
         dtoWithCustomTimes,
       );
@@ -210,7 +213,7 @@ describe('TimersService', () => {
       };
 
       await expect(
-        service.createTimerForGuild('discord123', 'guild1', lowWtDto),
+        service.createTimerForGuild('discord123', userId, 'guild1', lowWtDto),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -220,7 +223,12 @@ describe('TimersService', () => {
       mockRedisService.del.mockResolvedValue(1);
       mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
 
-      await service.createTimerForGuild('discord123', 'guild1', mockDto);
+      await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
 
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         expect.any(String),
@@ -235,7 +243,7 @@ describe('TimersService', () => {
       mockRedlock.acquire.mockRejectedValue(new ExecutionError('Lock failed'));
 
       await expect(
-        service.createTimerForGuild('discord123', 'guild1', mockDto),
+        service.createTimerForGuild('discord123', userId, 'guild1', mockDto),
       ).rejects.toThrow(ConflictException);
 
       expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
@@ -247,6 +255,7 @@ describe('TimersService', () => {
 
       const result = await service.createTimerForGuild(
         'discord123',
+        userId,
         'guild1',
         mockDto,
       );
@@ -266,7 +275,12 @@ describe('TimersService', () => {
       mockRedisService.del.mockResolvedValue(1);
       mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
 
-      await service.createTimerForGuild('discord123', 'guild1', mockDto);
+      await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
 
       expect(mockRedisService.set).toHaveBeenCalledWith(
         expect.stringContaining('timer:dedup:'),
@@ -282,7 +296,7 @@ describe('TimersService', () => {
       );
 
       await expect(
-        service.createTimerForGuild('discord123', 'guild1', mockDto),
+        service.createTimerForGuild('discord123', userId, 'guild1', mockDto),
       ).rejects.toThrow('Database error');
 
       expect(mockRedlockLock.release).toHaveBeenCalled();
@@ -405,6 +419,7 @@ describe('TimersService', () => {
   });
 
   describe('Cache invalidation', () => {
+    const userId = 'user123';
     const mockDto: CreateTimerFromGameClientDto = {
       respBaseSeconds: 3600,
       respawnRandomness: 10,
@@ -450,7 +465,12 @@ describe('TimersService', () => {
         guildId: 'guild1',
       });
 
-      await service.createTimerForGuild('discord123', 'guild1', mockDto);
+      await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
 
       expect(mockRedisService.deleteByPattern).toHaveBeenCalledWith(
         'timer:list:guild1:*',
