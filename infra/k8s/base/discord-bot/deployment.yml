@@ -17,22 +17,24 @@ spec:
           image: kamilwronka7/lootlog-discord-bot:latest
           resources:
             requests:
-              memory: '256Mi'
-              cpu: '200m'
+              memory: "256Mi"
+              cpu: "200m"
             limits:
-              memory: '384Mi'
-              cpu: '300m'
+              memory: "384Mi"
+              cpu: "300m"
           ports:
             - name: container-port
               containerPort: 4000
           env:
             - name: PORT
-              value: '4000'
+              value: "4000"
             - name: ENV
               valueFrom:
                 secretKeyRef:
                   key: env
                   name: lootlog-discord-bot-secrets
+            - name: SERVICE_NAME
+              value: discord-bot
             - name: DISCORD_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -43,6 +45,25 @@ spec:
                 secretKeyRef:
                   name: lootlog-discord-bot-secrets
                   key: rabbitmqUri
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-discord-bot-secrets
+                  key: otelExporterOtlpEndpoint
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-discord-bot-secrets
+                  key: otelExporterOtlpHeaders
+            - name: OTEL_NODE_RESOURCE_DETECTORS
+              value: "env,host,os,process"
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: SERVICE_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-discord-bot-secrets
+                  key: serviceNamespace
 
           livenessProbe:
             httpGet:
