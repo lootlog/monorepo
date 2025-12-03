@@ -4,6 +4,7 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
+import { HostMetrics } from "@opentelemetry/host-metrics";
 import {
   Resource,
   envDetector,
@@ -20,6 +21,7 @@ import {
   PeriodicExportingMetricReader,
   View,
   Aggregation,
+  MeterProvider,
 } from "@opentelemetry/sdk-metrics";
 import {
   ParentBasedSampler,
@@ -38,6 +40,7 @@ export interface ObservabilityConfig {
 }
 
 let sdkInstance: NodeSDK | null = null;
+let hostMetrics: HostMetrics | null = null;
 let currentServiceName = "";
 
 /**
@@ -64,10 +67,7 @@ function normalizePath(path: string | undefined | null): string {
  * - HTTP client instrumentation disabled (prevents cardinality explosion)
  * - Most database/network instrumentations disabled (metrics cardinality control)
  * - Metric views to limit attribute cardinality
- *
- * Note: Node.js runtime metrics (CPU, memory, event loop) require additional
- * packages like @opentelemetry/host-metrics or @opentelemetry/instrumentation-runtime-node.
- * These are not included by default to keep dependencies minimal.
+ * - Node.js runtime metrics (CPU, memory, event loop, GC)
  */
 export function initObservability(config: ObservabilityConfig): void {
   const {
@@ -208,11 +208,32 @@ export function initObservability(config: ObservabilityConfig): void {
 
   try {
     sdkInstance.start();
+
+    const meterProvider = new MeterProvider({
+      resource: new Resource(resourceAttributes),
+      readers: [
+        new PeriodicExportingMetricReader({
+          exporter: new OTLPMetricExporter({
+            url: `${otlpEndpoint}/v1/metrics`,
+            headers: parseHeaders(otlpHeaders),
+          }),
+          exportIntervalMillis: 60000,
+        }),
+      ],
+      views: metricViews,
+    });
+
+    hostMetrics = new HostMetrics({
+      meterProvider,
+      name: `${serviceName}-runtime`,
+    });
+    hostMetrics.start();
+
     // eslint-disable-next-line no-console
     console.log(
       `[${serviceName}] Observability initialized (sampling: ${
         traceSampleRate * 100
-      }%, HTTP client disabled, low-cardinality metrics enabled).`,
+      }%, HTTP client disabled, low-cardinality metrics + runtime metrics enabled).`,
     );
   } catch (error: unknown) {
     // eslint-disable-next-line no-console
@@ -221,6 +242,7 @@ export function initObservability(config: ObservabilityConfig): void {
       inspect(error, { depth: 2, colors: false }),
     );
     sdkInstance = null;
+    hostMetrics = null;
   }
 }
 
@@ -228,9 +250,11 @@ export async function shutdownObservability(): Promise<void> {
   if (!sdkInstance) return;
 
   await sdkInstance.shutdown();
+  hostMetrics = null;
+  sdkInstance = null;
+
   // eslint-disable-next-line no-console
   console.log(`[${currentServiceName}] Observability terminated`);
-  sdkInstance = null;
 }
 
 function getResourceDetectors() {
