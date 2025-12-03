@@ -52,9 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Activity: 'Activity',
-  ActivityActorSnapshot: 'ActivityActorSnapshot',
-  ActivityLootContext: 'ActivityLootContext',
-  ActivityTimerContext: 'ActivityTimerContext'
+  ActivityActorSnapshot: 'ActivityActorSnapshot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -84,9 +82,7 @@ export const ActivityScalarFieldEnum = {
   source: 'source',
   world: 'world',
   details: 'details',
-  actorSnapshotId: 'actorSnapshotId',
-  lootContextId: 'lootContextId',
-  timerContextId: 'timerContextId'
+  actorSnapshotId: 'actorSnapshotId'
 } as const
 
 export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typeof ActivityScalarFieldEnum]
@@ -108,26 +104,6 @@ export const ActivityActorSnapshotScalarFieldEnum = {
 } as const
 
 export type ActivityActorSnapshotScalarFieldEnum = (typeof ActivityActorSnapshotScalarFieldEnum)[keyof typeof ActivityActorSnapshotScalarFieldEnum]
-
-
-export const ActivityLootContextScalarFieldEnum = {
-  id: 'id',
-  actorSnapshotId: 'actorSnapshotId',
-  lootId: 'lootId',
-  activityId: 'activityId'
-} as const
-
-export type ActivityLootContextScalarFieldEnum = (typeof ActivityLootContextScalarFieldEnum)[keyof typeof ActivityLootContextScalarFieldEnum]
-
-
-export const ActivityTimerContextScalarFieldEnum = {
-  id: 'id',
-  actorSnapshotId: 'actorSnapshotId',
-  npcName: 'npcName',
-  activityId: 'activityId'
-} as const
-
-export type ActivityTimerContextScalarFieldEnum = (typeof ActivityTimerContextScalarFieldEnum)[keyof typeof ActivityTimerContextScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -19,10 +19,10 @@ const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [
     "views"
   ],
-  "clientVersion": "7.0.1",
-  "engineVersion": "f09f2815f091dbba658cdcd2264306d88bb5bda6",
+  "clientVersion": "7.1.0",
+  "engineVersion": "ab635e6b9d606fa5c8fb8b1a7f909c3c3c1c98ba",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider        = \"prisma-client\"\n  output          = \"./generated\"\n  previewFeatures = [\"views\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nenum ActivityType {\n  LOOT_EVENT\n  TIMER_EVENT\n  CONNECT_EVENT\n  DISCONNECT_EVENT\n}\n\nenum ActivitySource {\n  GAME\n  WEB_APP\n}\n\n// TimescaleDB-ready: after migration, convert to hypertable with e.g.:\n// SELECT create_hypertable('\"Activity\"', 'createdAt', chunk_time_interval => INTERVAL '7 days');\nmodel Activity {\n  id             String       @id @default(cuid())\n  userId         String\n  guildId        String\n  discordId      String\n  type           ActivityType\n  createdAt      DateTime     @default(now()) @db.Timestamptz\n  idempotencyKey String       @unique\n\n  source ActivitySource\n\n  world String? @db.Text\n\n  details Json?\n\n  actorSnapshotId String?\n  actorSnapshot   ActivityActorSnapshot? @relation(\"ActivityActorSnapshot_Activity\", fields: [actorSnapshotId], references: [id])\n\n  lootContextId String?\n  lootContext   ActivityLootContext? @relation(\"Activity_LootContext\")\n\n  timerContextId String?\n  timerContext   ActivityTimerContext? @relation(\"Activity_TimerContext\")\n\n  @@index([createdAt(sort: Desc), guildId])\n  @@index([createdAt(sort: Desc), userId])\n  @@index([createdAt(sort: Desc), type])\n  @@index([guildId, createdAt(sort: Desc)])\n}\n\nmodel ActivityActorSnapshot {\n  id String @id @default(cuid())\n\n  accountId   Int\n  characterId Int\n  name        String  @db.Text\n  clanName    String? @db.Text\n  clanId      Int?\n  icon        String\n  lvl         Int\n  prof        String\n\n  source      ActivitySource\n  fingerprint String         @unique\n\n  createdAt DateTime @default(now()) @db.Timestamptz\n\n  activities    Activity[]             @relation(\"ActivityActorSnapshot_Activity\")\n  lootContexts  ActivityLootContext[]\n  timerContexts ActivityTimerContext[]\n}\n\nmodel ActivityLootContext {\n  id String @id @default(cuid())\n\n  actorSnapshotId String\n  actorSnapshot   ActivityActorSnapshot @relation(fields: [actorSnapshotId], references: [id])\n\n  lootId Int\n\n  activity   Activity? @relation(\"Activity_LootContext\", fields: [activityId], references: [id])\n  activityId String?   @unique\n}\n\nmodel ActivityTimerContext {\n  id String @id @default(cuid())\n\n  actorSnapshotId String\n  actorSnapshot   ActivityActorSnapshot @relation(fields: [actorSnapshotId], references: [id])\n\n  npcName String @db.Text\n\n  activity   Activity? @relation(\"Activity_TimerContext\", fields: [activityId], references: [id])\n  activityId String?   @unique\n}\n",
+  "inlineSchema": "generator client {\n  provider        = \"prisma-client\"\n  output          = \"./generated\"\n  previewFeatures = [\"views\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nenum ActivityType {\n  CONNECT_EVENT\n  DISCONNECT_EVENT\n}\n\nenum ActivitySource {\n  GAME\n  WEB_APP\n}\n\n// TimescaleDB-ready: after migration, convert to hypertable with e.g.:\n// SELECT create_hypertable('\"Activity\"', 'createdAt', chunk_time_interval => INTERVAL '7 days');\nmodel Activity {\n  id             String       @id @default(cuid())\n  userId         String\n  guildId        String\n  discordId      String\n  type           ActivityType\n  createdAt      DateTime     @default(now()) @db.Timestamptz\n  idempotencyKey String       @unique\n\n  source ActivitySource\n\n  world String? @db.Text\n\n  details Json?\n\n  actorSnapshotId String?\n  actorSnapshot   ActivityActorSnapshot? @relation(\"ActivityActorSnapshot_Activity\", fields: [actorSnapshotId], references: [id])\n\n  @@index([createdAt(sort: Desc), guildId])\n  @@index([createdAt(sort: Desc), userId])\n  @@index([createdAt(sort: Desc), type])\n  @@index([guildId, createdAt(sort: Desc)])\n}\n\nmodel ActivityActorSnapshot {\n  id String @id @default(cuid())\n\n  accountId   Int\n  characterId Int\n  name        String  @db.Text\n  clanName    String? @db.Text\n  clanId      Int?\n  icon        String\n  lvl         Int\n  prof        String\n\n  source      ActivitySource\n  fingerprint String         @unique\n\n  createdAt DateTime @default(now()) @db.Timestamptz\n\n  activities Activity[] @relation(\"ActivityActorSnapshot_Activity\")\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -30,7 +30,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Activity\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"guildId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"discordId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"ActivityType\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"idempotencyKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"source\",\"kind\":\"enum\",\"type\":\"ActivitySource\"},{\"name\":\"world\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"details\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"actorSnapshotId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorSnapshot\",\"kind\":\"object\",\"type\":\"ActivityActorSnapshot\",\"relationName\":\"ActivityActorSnapshot_Activity\"},{\"name\":\"lootContextId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lootContext\",\"kind\":\"object\",\"type\":\"ActivityLootContext\",\"relationName\":\"Activity_LootContext\"},{\"name\":\"timerContextId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"timerContext\",\"kind\":\"object\",\"type\":\"ActivityTimerContext\",\"relationName\":\"Activity_TimerContext\"}],\"dbName\":null},\"ActivityActorSnapshot\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"accountId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"characterId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clanName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clanId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"icon\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lvl\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"prof\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"source\",\"kind\":\"enum\",\"type\":\"ActivitySource\"},{\"name\":\"fingerprint\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"activities\",\"kind\":\"object\",\"type\":\"Activity\",\"relationName\":\"ActivityActorSnapshot_Activity\"},{\"name\":\"lootContexts\",\"kind\":\"object\",\"type\":\"ActivityLootContext\",\"relationName\":\"ActivityActorSnapshotToActivityLootContext\"},{\"name\":\"timerContexts\",\"kind\":\"object\",\"type\":\"ActivityTimerContext\",\"relationName\":\"ActivityActorSnapshotToActivityTimerContext\"}],\"dbName\":null},\"ActivityLootContext\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorSnapshotId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorSnapshot\",\"kind\":\"object\",\"type\":\"ActivityActorSnapshot\",\"relationName\":\"ActivityActorSnapshotToActivityLootContext\"},{\"name\":\"lootId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"activity\",\"kind\":\"object\",\"type\":\"Activity\",\"relationName\":\"Activity_LootContext\"},{\"name\":\"activityId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"ActivityTimerContext\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorSnapshotId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorSnapshot\",\"kind\":\"object\",\"type\":\"ActivityActorSnapshot\",\"relationName\":\"ActivityActorSnapshotToActivityTimerContext\"},{\"name\":\"npcName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"activity\",\"kind\":\"object\",\"type\":\"Activity\",\"relationName\":\"Activity_TimerContext\"},{\"name\":\"activityId\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Activity\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"guildId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"discordId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"ActivityType\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"idempotencyKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"source\",\"kind\":\"enum\",\"type\":\"ActivitySource\"},{\"name\":\"world\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"details\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"actorSnapshotId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"actorSnapshot\",\"kind\":\"object\",\"type\":\"ActivityActorSnapshot\",\"relationName\":\"ActivityActorSnapshot_Activity\"}],\"dbName\":null},\"ActivityActorSnapshot\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"accountId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"characterId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clanName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clanId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"icon\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lvl\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"prof\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"source\",\"kind\":\"enum\",\"type\":\"ActivitySource\"},{\"name\":\"fingerprint\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"activities\",\"kind\":\"object\",\"type\":\"Activity\",\"relationName\":\"ActivityActorSnapshot_Activity\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -64,7 +64,7 @@ export interface PrismaClientConstructor {
    * const activities = await prisma.activity.findMany()
    * ```
    * 
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+   * Read more in our [docs](https://pris.ly/d/client).
    */
 
   new <
@@ -86,7 +86,7 @@ export interface PrismaClientConstructor {
  * const activities = await prisma.activity.findMany()
  * ```
  * 
- * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+ * Read more in our [docs](https://pris.ly/d/client).
  */
 
 export interface PrismaClient<
@@ -115,7 +115,7 @@ export interface PrismaClient<
    * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -127,7 +127,7 @@ export interface PrismaClient<
    * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -138,7 +138,7 @@ export interface PrismaClient<
    * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -150,7 +150,7 @@ export interface PrismaClient<
    * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -195,26 +195,6 @@ export interface PrismaClient<
     * ```
     */
   get activityActorSnapshot(): Prisma.ActivityActorSnapshotDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.activityLootContext`: Exposes CRUD operations for the **ActivityLootContext** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more ActivityLootContexts
-    * const activityLootContexts = await prisma.activityLootContext.findMany()
-    * ```
-    */
-  get activityLootContext(): Prisma.ActivityLootContextDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.activityTimerContext`: Exposes CRUD operations for the **ActivityTimerContext** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more ActivityTimerContexts
-    * const activityTimerContexts = await prisma.activityTimerContext.findMany()
-    * ```
-    */
-  get activityTimerContext(): Prisma.ActivityTimerContextDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {

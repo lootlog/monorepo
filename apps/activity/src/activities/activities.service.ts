@@ -20,13 +20,6 @@ export class ActivitiesService {
       );
     }
 
-    const requiresActorSnapshot = dto.lootContext || dto.timerContext;
-    if (requiresActorSnapshot && !actorSnapshotId) {
-      throw new Error(
-        'Actor snapshot is required for loot or timer context but was not created',
-      );
-    }
-
     try {
       const activity = await this.prisma.activity.create({
         data: {
@@ -41,35 +34,9 @@ export class ActivitiesService {
             ? (dto.details as Prisma.InputJsonValue)
             : undefined,
           actorSnapshotId,
-          lootContext: dto.lootContext
-            ? {
-                create: {
-                  lootId: dto.lootContext.lootId,
-                  actorSnapshotId: actorSnapshotId,
-                },
-              }
-            : undefined,
-          timerContext: dto.timerContext
-            ? {
-                create: {
-                  npcName: dto.timerContext.npcName,
-                  actorSnapshotId: actorSnapshotId,
-                },
-              }
-            : undefined,
         },
         include: {
           actorSnapshot: true,
-          lootContext: {
-            include: {
-              actorSnapshot: true,
-            },
-          },
-          timerContext: {
-            include: {
-              actorSnapshot: true,
-            },
-          },
         },
       });
 
@@ -94,16 +61,6 @@ export class ActivitiesService {
           where: { idempotencyKey: dto.idempotencyKey },
           include: {
             actorSnapshot: true,
-            lootContext: {
-              include: {
-                actorSnapshot: true,
-              },
-            },
-            timerContext: {
-              include: {
-                actorSnapshot: true,
-              },
-            },
           },
         });
 

@@ -8,6 +8,7 @@ export const useActivityLogsFilters = () => {
       startDate: parseAsString.withDefault(""),
       endDate: parseAsString.withDefault(""),
       name: parseAsString.withDefault(""),
+      world: parseAsString.withDefault(""),
     },
     {
       history: "push",
@@ -21,7 +22,8 @@ export const useActivityLogsFilters = () => {
       filters.sources.length > 0 ||
       filters.startDate !== "" ||
       filters.endDate !== "" ||
-      filters.name !== ""
+      filters.name !== "" ||
+      filters.world !== ""
     );
   };
 
@@ -32,6 +34,7 @@ export const useActivityLogsFilters = () => {
       startDate: null,
       endDate: null,
       name: null,
+      world: null,
     });
   };
 

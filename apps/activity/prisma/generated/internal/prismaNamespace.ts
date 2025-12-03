@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.0.1
- * Query Engine version: f09f2815f091dbba658cdcd2264306d88bb5bda6
+ * Prisma Client JS version: 7.1.0
+ * Query Engine version: ab635e6b9d606fa5c8fb8b1a7f909c3c3c1c98ba
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.0.1",
-  engine: "f09f2815f091dbba658cdcd2264306d88bb5bda6"
+  client: "7.1.0",
+  engine: "ab635e6b9d606fa5c8fb8b1a7f909c3c3c1c98ba"
 }
 
 /**
@@ -385,9 +385,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   Activity: 'Activity',
-  ActivityActorSnapshot: 'ActivityActorSnapshot',
-  ActivityLootContext: 'ActivityLootContext',
-  ActivityTimerContext: 'ActivityTimerContext'
+  ActivityActorSnapshot: 'ActivityActorSnapshot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -403,7 +401,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "activity" | "activityActorSnapshot" | "activityLootContext" | "activityTimerContext"
+    modelProps: "activity" | "activityActorSnapshot"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -555,154 +553,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    ActivityLootContext: {
-      payload: Prisma.$ActivityLootContextPayload<ExtArgs>
-      fields: Prisma.ActivityLootContextFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ActivityLootContextFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ActivityLootContextFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>
-        }
-        findFirst: {
-          args: Prisma.ActivityLootContextFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ActivityLootContextFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>
-        }
-        findMany: {
-          args: Prisma.ActivityLootContextFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>[]
-        }
-        create: {
-          args: Prisma.ActivityLootContextCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>
-        }
-        createMany: {
-          args: Prisma.ActivityLootContextCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ActivityLootContextCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>[]
-        }
-        delete: {
-          args: Prisma.ActivityLootContextDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>
-        }
-        update: {
-          args: Prisma.ActivityLootContextUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>
-        }
-        deleteMany: {
-          args: Prisma.ActivityLootContextDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ActivityLootContextUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ActivityLootContextUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>[]
-        }
-        upsert: {
-          args: Prisma.ActivityLootContextUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityLootContextPayload>
-        }
-        aggregate: {
-          args: Prisma.ActivityLootContextAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateActivityLootContext>
-        }
-        groupBy: {
-          args: Prisma.ActivityLootContextGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ActivityLootContextGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ActivityLootContextCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ActivityLootContextCountAggregateOutputType> | number
-        }
-      }
-    }
-    ActivityTimerContext: {
-      payload: Prisma.$ActivityTimerContextPayload<ExtArgs>
-      fields: Prisma.ActivityTimerContextFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ActivityTimerContextFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ActivityTimerContextFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>
-        }
-        findFirst: {
-          args: Prisma.ActivityTimerContextFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ActivityTimerContextFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>
-        }
-        findMany: {
-          args: Prisma.ActivityTimerContextFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>[]
-        }
-        create: {
-          args: Prisma.ActivityTimerContextCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>
-        }
-        createMany: {
-          args: Prisma.ActivityTimerContextCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ActivityTimerContextCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>[]
-        }
-        delete: {
-          args: Prisma.ActivityTimerContextDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>
-        }
-        update: {
-          args: Prisma.ActivityTimerContextUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>
-        }
-        deleteMany: {
-          args: Prisma.ActivityTimerContextDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ActivityTimerContextUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ActivityTimerContextUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>[]
-        }
-        upsert: {
-          args: Prisma.ActivityTimerContextUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ActivityTimerContextPayload>
-        }
-        aggregate: {
-          args: Prisma.ActivityTimerContextAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateActivityTimerContext>
-        }
-        groupBy: {
-          args: Prisma.ActivityTimerContextGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ActivityTimerContextGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ActivityTimerContextCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ActivityTimerContextCountAggregateOutputType> | number
-        }
-      }
-    }
   }
 } & {
   other: {
@@ -753,9 +603,7 @@ export const ActivityScalarFieldEnum = {
   source: 'source',
   world: 'world',
   details: 'details',
-  actorSnapshotId: 'actorSnapshotId',
-  lootContextId: 'lootContextId',
-  timerContextId: 'timerContextId'
+  actorSnapshotId: 'actorSnapshotId'
 } as const
 
 export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typeof ActivityScalarFieldEnum]
@@ -777,26 +625,6 @@ export const ActivityActorSnapshotScalarFieldEnum = {
 } as const
 
 export type ActivityActorSnapshotScalarFieldEnum = (typeof ActivityActorSnapshotScalarFieldEnum)[keyof typeof ActivityActorSnapshotScalarFieldEnum]
-
-
-export const ActivityLootContextScalarFieldEnum = {
-  id: 'id',
-  actorSnapshotId: 'actorSnapshotId',
-  lootId: 'lootId',
-  activityId: 'activityId'
-} as const
-
-export type ActivityLootContextScalarFieldEnum = (typeof ActivityLootContextScalarFieldEnum)[keyof typeof ActivityLootContextScalarFieldEnum]
-
-
-export const ActivityTimerContextScalarFieldEnum = {
-  id: 'id',
-  actorSnapshotId: 'actorSnapshotId',
-  npcName: 'npcName',
-  activityId: 'activityId'
-} as const
-
-export type ActivityTimerContextScalarFieldEnum = (typeof ActivityTimerContextScalarFieldEnum)[keyof typeof ActivityTimerContextScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -992,7 +820,7 @@ export type PrismaClientOptions = ({
    *  { emit: 'stdout', level: 'error' }
    * 
    * ```
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
+   * Read more in our [docs](https://pris.ly/d/logging).
    */
   log?: (LogLevel | LogDefinition)[]
   /**
@@ -1020,12 +848,26 @@ export type PrismaClientOptions = ({
    * ```
    */
   omit?: GlobalOmitConfig
+  /**
+   * SQL commenter plugins that add metadata to SQL queries as comments.
+   * Comments follow the sqlcommenter format: https://google.github.io/sqlcommenter/
+   * 
+   * @example
+   * ```
+   * const prisma = new PrismaClient({
+   *   adapter,
+   *   comments: [
+   *     traceContext(),
+   *     queryInsights(),
+   *   ],
+   * })
+   * ```
+   */
+  comments?: runtime.SqlCommenterPlugin[]
 }
 export type GlobalOmitConfig = {
   activity?: Prisma.ActivityOmit
   activityActorSnapshot?: Prisma.ActivityActorSnapshotOmit
-  activityLootContext?: Prisma.ActivityLootContextOmit
-  activityTimerContext?: Prisma.ActivityTimerContextOmit
 }
 
 /* Types for Logging */

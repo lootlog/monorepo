@@ -1,4 +1,4 @@
-import { Filter, Calendar, Check, ChevronsUpDown, Activity, Monitor, Search } from "lucide-react";
+import { Filter, Calendar, Check, ChevronsUpDown, Activity, Monitor, Search, Globe } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
@@ -30,8 +30,6 @@ import type {
 } from "@/hooks/api/activity-logs/use-activity-logs";
 
 const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
-  { value: "LOOT_EVENT", label: "Loot" },
-  { value: "TIMER_EVENT", label: "Timer" },
   { value: "CONNECT_EVENT", label: "Połączenie" },
   { value: "DISCONNECT_EVENT", label: "Rozłączenie" },
 ];
@@ -47,6 +45,7 @@ type ActivityLogsFiltersMobileProps = {
   startDate: string;
   endDate: string;
   name: string;
+  world: string;
   activeFiltersCount: number;
   typeOpen: boolean;
   sourceOpen: boolean;
@@ -57,6 +56,7 @@ type ActivityLogsFiltersMobileProps = {
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
   onNameChange: (value: string) => void;
+  onWorldChange: (value: string) => void;
 };
 
 export const ActivityLogsFiltersMobile = ({
@@ -65,6 +65,7 @@ export const ActivityLogsFiltersMobile = ({
   startDate,
   endDate,
   name,
+  world,
   activeFiltersCount,
   typeOpen,
   sourceOpen,
@@ -75,6 +76,7 @@ export const ActivityLogsFiltersMobile = ({
   onStartDateChange,
   onEndDateChange,
   onNameChange,
+  onWorldChange,
 }: ActivityLogsFiltersMobileProps) => {
   return (
     <Drawer shouldScaleBackground={false}>
@@ -219,12 +221,26 @@ export const ActivityLogsFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Data początkowa</Label>
+            <Label>Świat</Label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Nazwa świata..."
+                value={world}
+                onChange={(e) => onWorldChange(e.target.value)}
+                className="w-full pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Data i godzina początkowa</Label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                type="date"
-                value={startDate ? startDate.split("T")[0] : ""}
+                type="datetime-local"
+                value={startDate ? startDate.slice(0, 16) : ""}
                 onChange={(e) => onStartDateChange(e.target.value)}
                 className="w-full pl-9"
               />
@@ -232,12 +248,12 @@ export const ActivityLogsFiltersMobile = ({
           </div>
 
           <div className="space-y-2">
-            <Label>Data końcowa</Label>
+            <Label>Data i godzina końcowa</Label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                type="date"
-                value={endDate ? endDate.split("T")[0] : ""}
+                type="datetime-local"
+                value={endDate ? endDate.slice(0, 16) : ""}
                 onChange={(e) => onEndDateChange(e.target.value)}
                 className="w-full pl-9"
               />
