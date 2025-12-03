@@ -21,7 +21,7 @@ describe('ActivitiesController', () => {
     userId: 'user-1',
     guildId: 'guild-1',
     discordId: 'discord-1',
-    type: ActivityType.LOOT_EVENT,
+    type: ActivityType.CONNECT_EVENT,
     source: ActivitySource.WEB_APP,
     createdAt: new Date('2024-01-01'),
     details: { itemName: 'Sword' },
@@ -99,7 +99,7 @@ describe('ActivitiesController', () => {
     it('should pass query parameters to service', async () => {
       const guildId = 'guild-1';
       const query: QueryActivitiesDto = {
-        type: ActivityType.LOOT_EVENT,
+        type: [ActivityType.CONNECT_EVENT],
         startDate: '2024-01-01',
         endDate: '2024-12-31',
         cursor: 'cursor-1',
@@ -125,7 +125,11 @@ describe('ActivitiesController', () => {
       const result = await controller.findByUser(guildId, userId, query);
 
       expect(result).toEqual(mockPaginatedResponse);
-      expect(queryService.findByUser).toHaveBeenCalledWith(userId, guildId, query);
+      expect(queryService.findByUser).toHaveBeenCalledWith(
+        userId,
+        guildId,
+        query,
+      );
       expect(queryService.findByUser).toHaveBeenCalledTimes(1);
     });
 
@@ -133,7 +137,7 @@ describe('ActivitiesController', () => {
       const guildId = 'guild-1';
       const userId = 'user-1';
       const query: QueryActivitiesDto = {
-        type: ActivityType.TIMER_EVENT,
+        type: [ActivityType.DISCONNECT_EVENT],
         limit: 100,
       };
 
@@ -141,7 +145,11 @@ describe('ActivitiesController', () => {
 
       await controller.findByUser(guildId, userId, query);
 
-      expect(queryService.findByUser).toHaveBeenCalledWith(userId, guildId, query);
+      expect(queryService.findByUser).toHaveBeenCalledWith(
+        userId,
+        guildId,
+        query,
+      );
     });
   });
 
@@ -160,7 +168,7 @@ describe('ActivitiesController', () => {
     });
   });
 
-  describe('deleteGuildActivityById', () => {
+  describe('deleteActivity', () => {
     it('should delete a specific activity by ID', async () => {
       const guildId = 'guild-1';
       const activityId = 'activity-1';
@@ -168,7 +176,7 @@ describe('ActivitiesController', () => {
 
       mockService.deleteOne.mockResolvedValue(expectedCount);
 
-      const result = await controller.deleteGuildActivityById(guildId, activityId);
+      const result = await controller.deleteActivity(guildId, activityId);
 
       expect(result).toEqual({ count: expectedCount });
       expect(service.deleteOne).toHaveBeenCalledWith(activityId, guildId);
