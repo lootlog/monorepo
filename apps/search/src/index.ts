@@ -14,6 +14,7 @@ initHonoObservability({
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
 import { logger } from "hono/logger";
@@ -35,6 +36,13 @@ const app = new Hono<{
 
 await setupAMQP();
 
+app.use(
+  "*",
+  httpInstrumentationMiddleware({
+    serviceName: process.env.SERVICE_NAME || "search",
+    serviceVersion: "1.0.0",
+  }),
+);
 app.use("*", logger());
 app.use("*", userMetadataFromHeaders);
 
