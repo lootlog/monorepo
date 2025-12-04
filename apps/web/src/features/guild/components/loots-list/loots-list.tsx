@@ -1,7 +1,7 @@
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useLoots } from "@/hooks/api/loots/use-loots";
 import { Frown, Loader2 } from "lucide-react";
-import { useEffect, useRef, useMemo, type FC } from "react";
+import { useEffect, useRef, type FC } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -41,14 +41,10 @@ export const LootsList: FC = () => {
   const totalCount = allLoots.length;
 
   // Group loots into rows for grid view
-  const gridRows = useMemo(() => {
-    const rows: (typeof allLoots)[] = [];
-    for (let i = 0; i < allLoots.length; i += GRID_COLUMNS) {
-      rows.push(allLoots.slice(i, i + GRID_COLUMNS));
-    }
-    return rows;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalCount]);
+  const gridRows: (typeof allLoots)[] = [];
+  for (let i = 0; i < allLoots.length; i += GRID_COLUMNS) {
+    gridRows.push(allLoots.slice(i, i + GRID_COLUMNS));
+  }
 
   const listVirtualizer = useVirtualizer({
     count: totalCount + 1,
