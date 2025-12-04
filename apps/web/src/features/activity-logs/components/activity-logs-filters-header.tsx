@@ -45,12 +45,15 @@ export const ActivityLogsFiltersHeader = ({
           >
             <Select
               value={selectedWorld || undefined}
-              onValueChange={(value) => onWorldChange(value)}
+              onValueChange={(value) =>
+                onWorldChange(value !== "all" ? value : "")
+              }
             >
               <SelectTrigger className="h-9 flex-1">
                 <SelectValue placeholder="Wszystkie światy" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">Wszystkie światy</SelectItem>
                 {worldOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {capitalizeFirstLetter(option.label)}
