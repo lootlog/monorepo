@@ -18,8 +18,7 @@ enum ActivitySource {
   WEB_APP
 }
 
-// TimescaleDB-ready: after migration, convert to hypertable with e.g.:
-// SELECT create_hypertable('"Activity"', 'createdAt', chunk_time_interval => INTERVAL '7 days');
+// TimescaleDB hypertable with 1-day chunks and 7-day retention policy
 model Activity {
   id             String       @default(cuid())
   userId         String
