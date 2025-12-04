@@ -12,6 +12,7 @@ import type { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
 import type { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
+import { ActivityType } from 'src/gateway/enums/activity-type.enum';
 import { WsDiscordId, WsUserId } from 'src/shared/decorators/user-id.decorator';
 import { ConfigService } from '@nestjs/config';
 import { RuntimeEnvironment } from 'src/types/common.types';
@@ -23,6 +24,10 @@ import { groupBy, omit } from 'lodash';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { buildUser } from 'src/gateway/utils/build-user';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import type { UserGuildData } from 'src/guilds/types/guild.types';
 
 @WebSocketGateway({
   namespace:
@@ -37,6 +42,7 @@ export class Gateway {
     private configService: ConfigService,
     private guildsService: GuildsService,
     private redis: RedisService,
+    private amqpConnection: AmqpConnection,
   ) {}
 
   @WebSocketServer()
@@ -66,7 +72,7 @@ export class Gateway {
       sessionId: client.id,
       platform,
     };
-    client.on(GatewayEvent.DISCONNECTING, () => {
+    client.on(GatewayEvent.DISCONNECTING, async () => {
       if (client.data) {
         this.emitPresenceToRooms(
           client,
@@ -77,6 +83,15 @@ export class Gateway {
           },
           GatewayEvent.UPDATE_SERVER_PRESENCE,
         );
+
+        if (client.data.guilds) {
+          await this.publishActivityEvent(
+            ActivityType.DISCONNECT_EVENT,
+            client,
+            client.data.guilds,
+          );
+        }
+
         this.logger.log(`client disconnected ${client.data.discordId}`);
       }
     });
@@ -119,6 +134,12 @@ export class Gateway {
         client,
         user,
         GatewayEvent.UPDATE_SERVER_PRESENCE,
+      );
+
+      await this.publishActivityEvent(
+        ActivityType.CONNECT_EVENT,
+        client,
+        guilds,
       );
 
       const duration = Date.now() - startTime;
@@ -188,6 +209,70 @@ export class Gateway {
         guildId: room,
       });
     });
+  }
+
+  async publishActivityEvent(
+    type: ActivityType.CONNECT_EVENT | ActivityType.DISCONNECT_EVENT,
+    client: Socket,
+    guilds: UserGuildData[],
+  ) {
+    const { discordId, userId, sessionId, platform, player } = client.data;
+
+    if (!player) {
+      this.logger.debug(
+        `Skipping activity event for ${discordId} - no player data`,
+      );
+      return;
+    }
+
+    const source = platform === Platform.GAME ? 'GAME' : 'WEB_APP';
+    const timestamp = Date.now();
+
+    for (const { guild } of guilds) {
+      const payload = {
+        userId,
+        guildId: guild.id,
+        discordId,
+        type,
+        source,
+        world: player.world,
+        details: {
+          sessionId,
+          userAgent: client.request.headers['user-agent'],
+        },
+        actorSnapshot:
+          source === 'GAME'
+            ? {
+                accountId: Number(player.accountId),
+                characterId: Number(player.characterId),
+                clanName: player.clanName ?? '',
+                name: player.name,
+                clanId: player.clanId ?? 0,
+                icon: player.icon,
+                lvl: Number(player.lvl),
+                prof: player.prof,
+              }
+            : undefined,
+        idempotencyKey: `${type.toLowerCase()}_${sessionId}_${guild.id}_${timestamp}`,
+      };
+
+      try {
+        await this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.ACTIVITY_LOG_CREATE,
+          payload,
+        );
+
+        this.logger.debug(
+          `Published ${type} for ${discordId} in guild ${guild.id}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to publish ${type} for ${discordId} in guild ${guild.id}: ${error.message}`,
+          error.stack,
+        );
+      }
+    }
   }
 
   getConnectionMetadata(request: Socket['request']) {

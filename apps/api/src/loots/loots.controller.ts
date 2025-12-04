@@ -25,6 +25,7 @@ import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
 import { LootsService } from 'src/loots/loots.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
@@ -356,9 +357,10 @@ export class LootsController {
   })
   async createLoot(
     @DiscordId() discordId: string,
+    @UserId() userId: string,
     @Body() body: CreateLootDto,
   ) {
-    return this.lootsService.createLoot(discordId, body);
+    return this.lootsService.createLoot(discordId, userId, body);
   }
 
   @Permissions(Permission.LOOTLOG_READ)
