@@ -68,7 +68,7 @@ export const ActivityLogsFiltersSidebar: FC<
     : undefined;
   const endDateValue = filters.endDate ? new Date(filters.endDate) : undefined;
   const today = startOfDay(new Date());
-  const minSelectableDate = startOfDay(subDays(today, 14));
+  const minSelectableDate = startOfDay(subDays(today, 7));
 
   const normalizedStartDate = startDateValue
     ? startOfDay(startDateValue)
