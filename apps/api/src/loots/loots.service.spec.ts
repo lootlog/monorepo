@@ -256,6 +256,7 @@ describe('LootsService', () => {
 
   describe('createLoot', () => {
     const discordId = 'discord123';
+    const userId = 'user123';
 
     beforeEach(() => {
       guildsService.getGuildsForRequiredPermissions.mockResolvedValue([
@@ -294,7 +295,7 @@ describe('LootsService', () => {
       guildsService.getGuildsForRequiredPermissions.mockResolvedValue([]);
 
       await expect(
-        service.createLoot(discordId, mockCreateLootDto),
+        service.createLoot(discordId, userId, mockCreateLootDto),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -303,7 +304,11 @@ describe('LootsService', () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(discordId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(prismaService.loot.create).toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalled();
@@ -316,7 +321,11 @@ describe('LootsService', () => {
       const mockLoot = { id: 1, uniqueId: 'unique123' };
       prismaService.loot.findUnique.mockResolvedValue(mockLoot);
 
-      const result = await service.createLoot(discordId, mockCreateLootDto);
+      const result = await service.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(prismaService.loot.findUnique).toHaveBeenCalled();
       expect(prismaService.loot.create).not.toHaveBeenCalled();
@@ -333,7 +342,7 @@ describe('LootsService', () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.createLoot(discordId, mockCreateLootDto),
+        service.createLoot(discordId, userId, mockCreateLootDto),
       ).rejects.toThrow(
         new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
       );
@@ -366,7 +375,7 @@ describe('LootsService', () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.createLoot(discordId, mockCreateLootDto),
+        service.createLoot(discordId, userId, mockCreateLootDto),
       ).rejects.toThrow(
         new BadRequestException(ErrorKey.NO_GUILD_CONFIG_ACCEPTS_THIS_LOOT),
       );
@@ -446,7 +455,7 @@ describe('LootsService', () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      await service.createLoot(discordId, mockCreateLootDto);
+      await service.createLoot(discordId, userId, mockCreateLootDto);
 
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({
         data: [
@@ -516,7 +525,7 @@ describe('LootsService', () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      await service.createLoot(discordId, mockCreateLootDto);
+      await service.createLoot(discordId, userId, mockCreateLootDto);
 
       expect(
         lootlogConfigService.getMultipleLootlogConfigs,
@@ -604,7 +613,7 @@ describe('LootsService', () => {
       prismaService.loot.findUnique.mockResolvedValue(null);
       prismaService.loot.create.mockResolvedValue(mockLoot);
 
-      await service.createLoot(discordId, mockCreateLootDto);
+      await service.createLoot(discordId, userId, mockCreateLootDto);
 
       expect(prismaService.loot.create).toHaveBeenCalled();
       expect(prismaService.lootSubmission.createMany).toHaveBeenCalledWith({

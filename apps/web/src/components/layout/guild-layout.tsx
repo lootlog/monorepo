@@ -43,6 +43,7 @@ export const GuildLayout: FC = () => {
     const guildSettingsRoles = ROUTES.guild.settings.roles(guildId);
     const guildSettingsMembers = ROUTES.guild.settings.members(guildId);
     const guildSettingsNpcs = ROUTES.guild.settings.npcs(guildId);
+    const guildActivityLogs = ROUTES.guild.activityLogs(guildId);
 
     if (path === guildBase) {
       return {
@@ -81,6 +82,17 @@ export const GuildLayout: FC = () => {
         ],
         showBack: true,
         backPath: guildReservations,
+      };
+    }
+
+    if (path === guildActivityLogs) {
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Logi aktywności", path: null },
+        ],
+        showBack: true,
+        backPath: guildBase,
       };
     }
 

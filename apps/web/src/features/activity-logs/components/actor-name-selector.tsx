@@ -1,0 +1,153 @@
+import { useState, useEffect } from "react";
+import { Search, X, ChevronsUpDown, Check } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@lootlog/ui/components/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInputRaw,
+  CommandItem,
+  CommandList,
+} from "@lootlog/ui/components/command";
+import { Button } from "@lootlog/ui/components/button";
+import { cn } from "@lootlog/ui/lib/utils";
+
+interface ActorNameSelectorProps {
+  value: string;
+  suggestions: string[];
+  onValueChange: (value: string) => void;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+export function ActorNameSelector({
+  value,
+  suggestions,
+  onValueChange,
+  searchValue,
+  onSearchChange,
+  placeholder = "Nazwa gracza...",
+  className,
+}: ActorNameSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(searchValue);
+
+  useEffect(() => {
+    setInputValue(searchValue);
+  }, [searchValue]);
+
+  const handleSelect = (selectedValue: string) => {
+    setInputValue(selectedValue);
+    onValueChange(selectedValue);
+    onSearchChange(selectedValue);
+    setOpen(false);
+  };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setInputValue("");
+    onSearchChange("");
+    onValueChange("");
+    setOpen(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onSearchChange(newValue);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+  };
+
+  const exactMatch = suggestions.some(
+    (s) => s.toLowerCase() === inputValue.trim().toLowerCase(),
+  );
+  const showCustomOption = inputValue.trim() && !exactMatch;
+
+  const displayValue = value || placeholder;
+  const isTruncated = value.length > 30;
+  const truncatedValue = isTruncated ? `${value.slice(0, 30)}...` : value;
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("justify-between gap-2", className)}
+        >
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className={cn("truncate", !value && "text-muted-foreground")}>
+              {value ? truncatedValue : displayValue}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {value && (
+              <div
+                onMouseDown={handleClear}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-center"
+              >
+                <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+              </div>
+            )}
+            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+          </div>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[250px] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInputRaw
+            placeholder="Wpisz nazwę..."
+            value={inputValue}
+            onChange={handleInputChange}
+            className="h-9"
+          />
+          <CommandList>
+            <CommandEmpty>
+              {inputValue.trim() ? "Brak sugestii" : "Wpisz aby wyszukać..."}
+            </CommandEmpty>
+            <CommandGroup>
+              {suggestions.map((suggestion) => (
+                <CommandItem
+                  key={suggestion}
+                  value={suggestion}
+                  onSelect={() => handleSelect(suggestion)}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === suggestion ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  {suggestion}
+                </CommandItem>
+              ))}
+              {showCustomOption && (
+                <CommandItem
+                  value={`use-custom-${inputValue}`}
+                  onSelect={() => handleSelect(inputValue.trim())}
+                  className="text-primary"
+                >
+                  <Check className="mr-2 h-4 w-4 opacity-0" />
+                  Użyj: {inputValue.trim()}
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}

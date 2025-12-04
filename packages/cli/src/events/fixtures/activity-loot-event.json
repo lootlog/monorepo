@@ -1,0 +1,29 @@
+{
+  "exchange": "default",
+  "routingKey": "activity.log.create",
+  "payload": {
+    "userId": "user_123456",
+    "guildId": "guild_789012",
+    "discordId": "345678901234567890",
+    "type": "LOOT_EVENT",
+    "source": "GAME",
+    "details": {
+      "itemName": "Legendary Sword of Destiny",
+      "itemRarity": "legendary",
+      "itemLevel": 85
+    },
+    "actorSnapshot": {
+      "accountId": 12345,
+      "characterId": 67890,
+      "clanName": "Dragon Slayers",
+      "clanId": 999,
+      "icon": "warrior_legendary_icon",
+      "lvl": 90,
+      "prof": "warrior"
+    },
+    "lootContext": {
+      "lootId": 42
+    },
+    "idempotencyKey": "loot_event_123456789_1733068800000"
+  }
+}

@@ -20,6 +20,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { type Guild, Permission, type Role } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
@@ -256,10 +257,12 @@ export class TimersController {
   async createTimerFromGameClient(
     @Body() data: CreateTimerFromGameClientDto,
     @DiscordId() discordId: string,
+    @UserId() userId: string,
     @Param('guildId') guildId: string,
   ) {
     const timer = await this.timersService.createTimerForGuild(
       discordId,
+      userId,
       guildId,
       data,
     );

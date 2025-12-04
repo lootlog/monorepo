@@ -51,6 +51,11 @@ export interface GameHero {
   passive_stats: any;
   matchmaking_champion: number;
   hpp: number;
+  clan?: {
+    id: number;
+    name: string;
+    rank: number;
+  };
 }
 
 export interface WarriorStats {

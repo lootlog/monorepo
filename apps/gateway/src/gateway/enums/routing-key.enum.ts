@@ -44,4 +44,6 @@ export enum RoutingKey {
   GUILDS_NOTIFICATIONS_SEND_RETRY = 'guilds.notifications.send.retry',
 
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'guilds.members.refresh.job.update',
+
+  ACTIVITY_LOG_CREATE = 'activity.log.create',
 }

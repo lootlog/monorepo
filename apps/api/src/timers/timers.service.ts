@@ -137,6 +137,7 @@ export class TimersService implements OnModuleInit {
 
   async createTimerForGuild(
     discordId: string,
+    userId: string,
     guildId: string,
     data: CreateTimerFromGameClientDto,
   ) {
@@ -215,6 +216,7 @@ export class TimersService implements OnModuleInit {
       ]);
 
       this.emitUpdateTimer(newTimer);
+
       return newTimer;
     } catch (error) {
       if (error instanceof ExecutionError) {

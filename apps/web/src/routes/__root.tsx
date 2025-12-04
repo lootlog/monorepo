@@ -4,7 +4,6 @@ import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
-import { setupApiInterceptors } from "@/lib/api-client/api-client";
 import { persister } from "@/lib/query-client";
 import type { RouterContext } from "@/App";
 
@@ -32,8 +31,5 @@ function RootComponent() {
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  beforeLoad: () => {
-    setupApiInterceptors();
-  },
   component: RootComponent,
 });
