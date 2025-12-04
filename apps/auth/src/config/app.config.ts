@@ -18,6 +18,7 @@ const configSchema = z.object({
   COOKIE_DOMAIN: z.string(),
   COOKIE_PREFIX: z.string(),
   ADMIN_ACCOUNT_IDS: z.string().transform((val) => val.split(",")),
+  AUTH_SECRET: z.string(),
 });
 
 const {
@@ -36,6 +37,7 @@ const {
   COOKIE_DOMAIN,
   COOKIE_PREFIX,
   ADMIN_ACCOUNT_IDS,
+  AUTH_SECRET,
 } = configSchema.parse(process.env);
 
 export const APP_CONFIG = {
@@ -47,6 +49,7 @@ export const APP_CONFIG = {
   cookieDomain: COOKIE_DOMAIN,
   cookiePrefix: COOKIE_PREFIX,
   adminAccountIds: ADMIN_ACCOUNT_IDS,
+  authSecret: AUTH_SECRET,
   postgres: {
     host: POSTGRESQL_HOST,
     port: POSTGRESQL_PORT,
