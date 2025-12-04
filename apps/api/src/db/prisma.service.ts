@@ -4,7 +4,7 @@ import { PrismaClient, Prisma } from 'generated/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger(PrismaService.name);
-  private readonly SLOW_QUERY_THRESHOLD_MS = 100; // możesz zmienić
+  private readonly SLOW_QUERY_THRESHOLD_MS = 100;
 
   constructor() {
     super({
@@ -23,8 +23,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       if (duration >= this.SLOW_QUERY_THRESHOLD_MS) {
         this.logger.warn(
           `Slow query (${duration} ms) [${target}]:
-${query}
-params: ${params}`,
+          ${query}
+          params: ${params}`,
         );
       } else {
         this.logger.debug(`Query (${duration} ms) [${target}]`);

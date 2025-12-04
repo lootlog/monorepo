@@ -1,0 +1,98 @@
+{
+  "name": "@lootlog/activity",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "prebuild": "pnpm activity:generate",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "dev": "APP_VERSION=$(node -p \"require('./package.json').version\") nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start": "APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/main",
+    "lint": "oxlint src",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "test:cov": "jest --coverage --runInBand",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "activity:migrate:dev": "prisma migrate dev",
+    "activity:generate": "prisma generate",
+    "activity:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@axiomhq/winston": "^1.3.1",
+    "@golevelup/nestjs-rabbitmq": "^6.0.2",
+    "@keyv/redis": "^5.1.4",
+    "@lootlog/nest-shared": "workspace:*",
+    "@lootlog/types": "workspace:*",
+    "@nestjs/axios": "^4.0.1",
+    "@nestjs/cache-manager": "^3.0.1",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-fastify": "^11.1.8",
+    "@nestjs/swagger": "^11.2.1",
+    "@nestjs/terminus": "^11.0.0",
+    "@prisma/adapter-pg": "^7.0.1",
+    "@prisma/client": "7.0.1",
+    "@prisma/client-runtime-utils": "7.0.1",
+    "axios": "^1.12.2",
+    "cache-manager": "^7.2.5",
+    "cacheable": "^2.3.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "fastify": "^5.6.1",
+    "joi": "^18.0.1",
+    "keyv": "^5.5.4",
+    "nest-winston": "^1.10.2",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.10.7",
+    "@types/supertest": "^6.0.2",
+    "globals": "^16.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "prisma": "^7.0.1",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1",
+      "^prisma/generated/client$": "<rootDir>/../prisma/generated/client"
+    }
+  }
+}

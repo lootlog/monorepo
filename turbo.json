@@ -93,7 +93,12 @@
       "interactive": true
     },
     "test": {
-      "dependsOn": ["^build", "api:generate", "battlelog:generate"],
+      "dependsOn": [
+        "^build",
+        "api:generate",
+        "battlelog:generate",
+        "activity:generate"
+      ],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -106,7 +111,12 @@
       ]
     },
     "test:e2e": {
-      "dependsOn": ["^build", "api:generate", "battlelog:generate"],
+      "dependsOn": [
+        "^build",
+        "api:generate",
+        "battlelog:generate",
+        "activity:generate"
+      ],
       "cache": false,
       "outputs": [],
       "inputs": [
@@ -126,6 +136,17 @@
       "cache": false
     },
     "battlelog:studio": {
+      "cache": false,
+      "interactive": false
+    },
+    "activity:migrate:dev": {
+      "cache": false,
+      "interactive": true
+    },
+    "activity:generate": {
+      "cache": false
+    },
+    "activity:studio": {
       "cache": false,
       "interactive": false
     }

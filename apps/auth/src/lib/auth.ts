@@ -42,6 +42,7 @@ export const auth: any = betterAuth({
       },
     },
   },
+  secret: APP_CONFIG.authSecret,
   session: {
     cookieCache: {
       enabled: true,

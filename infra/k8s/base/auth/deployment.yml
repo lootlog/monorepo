@@ -40,6 +40,11 @@ spec:
                   name: lootlog-auth-secrets
             - name: SERVICE_NAME
               value: auth
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-auth-secrets
+                  key: authSecret
             - name: POSTGRESQL_PORT
               valueFrom:
                 secretKeyRef:
