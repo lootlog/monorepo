@@ -93,16 +93,7 @@ export class ActivitiesEventsService {
     }
 
     try {
-      const activity = await this.activitiesService.create(dto);
-
-      this.logger.log({
-        level: 'info',
-        message: 'Activity created successfully',
-        activityId: activity.id,
-        userId: dto.userId,
-        guildId: dto.guildId,
-        type: dto.type,
-      });
+      await this.activitiesService.create(dto);
     } catch (error) {
       this.logger.error({
         level: 'error',

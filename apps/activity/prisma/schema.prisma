@@ -21,13 +21,13 @@ enum ActivitySource {
 // TimescaleDB-ready: after migration, convert to hypertable with e.g.:
 // SELECT create_hypertable('"Activity"', 'createdAt', chunk_time_interval => INTERVAL '7 days');
 model Activity {
-  id             String       @id @default(cuid())
+  id             String       @default(cuid())
   userId         String
   guildId        String
   discordId      String
   type           ActivityType
   createdAt      DateTime     @default(now()) @db.Timestamptz
-  idempotencyKey String       @unique
+  idempotencyKey String
 
   source ActivitySource
 
@@ -38,6 +38,8 @@ model Activity {
   actorSnapshotId String?
   actorSnapshot   ActivityActorSnapshot? @relation("ActivityActorSnapshot_Activity", fields: [actorSnapshotId], references: [id])
 
+  @@id([id, createdAt])
+  @@unique([idempotencyKey, createdAt])
   @@index([createdAt(sort: Desc), guildId])
   @@index([createdAt(sort: Desc), userId])
   @@index([createdAt(sort: Desc), type])
