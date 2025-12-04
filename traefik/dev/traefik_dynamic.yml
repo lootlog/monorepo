@@ -90,6 +90,18 @@ http:
       entryPoints:
         - "web"
 
+    activity:
+      rule: "PathPrefix(`/api/activity`)"
+      service: "activity"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
@@ -139,6 +151,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:4005"
+    activity:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:4027"
   middlewares:
     apiStripPrefix:
       stripPrefix:
@@ -147,6 +163,7 @@ http:
           - "/api/search"
           - "/api/lootlog"
           - "/api/battlelog"
+          - "/api/activity"
           - "/gateway"
     apiForwardAuth:
       forwardAuth:

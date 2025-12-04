@@ -60,7 +60,7 @@ export class LootsService implements OnModuleInit {
     });
   }
 
-  async createLoot(discordId: string, body: CreateLootDto) {
+  async createLoot(discordId: string, userId: string, body: CreateLootDto) {
     const uniqueId = this.lootMappingService.createUniqueLootId(
       body.loots,
       body.world,

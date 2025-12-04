@@ -1,0 +1,26 @@
+{
+  "exchange": "default",
+  "routingKey": "activity.log.create",
+  "payload": {
+    "userId": "user_duplicate_test",
+    "guildId": "guild_789012",
+    "discordId": "000000000000000000",
+    "type": "LOOT_EVENT",
+    "source": "GAME",
+    "details": {
+      "testNote": "This event uses a fixed idempotency key to test duplicate detection"
+    },
+    "actorSnapshot": {
+      "accountId": 99999,
+      "characterId": 88888,
+      "clanName": "Test Clan",
+      "icon": "test_icon",
+      "lvl": 1,
+      "prof": "test"
+    },
+    "lootContext": {
+      "lootId": 999
+    },
+    "idempotencyKey": "DUPLICATE_TEST_FIXED_KEY"
+  }
+}

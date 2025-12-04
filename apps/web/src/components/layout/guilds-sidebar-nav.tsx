@@ -10,6 +10,7 @@ import {
   CalendarClock,
   ClipboardList,
   Clock,
+  Logs,
   RefreshCcw,
   Settings,
 } from "lucide-react";
@@ -65,6 +66,16 @@ export const GuildsSidebarNav: FC = () => {
     },
     {
       divided: true,
+      label: "Logi aktywności",
+      icon: <Logs className="mr-1 h-4 w-4" />,
+      path: ROUTE_SEGMENTS.guild.activityLogs,
+      available: true,
+      enabled: Boolean(
+        permissions?.includes(Permission.ADMIN) ||
+          permissions?.includes(Permission.OWNER),
+      ),
+    },
+    {
       label: "Ustawienia",
       icon: <Settings className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.settings,

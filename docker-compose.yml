@@ -16,7 +16,7 @@ services:
     image: postgres:17-alpine
     container_name: "lootlog-users-db"
     restart: always
-    shm_size: 128mb
+    shm_size: 256mb
     volumes:
       - lootlog-users-db:/var/lib/postgresql/data
     environment:
@@ -36,7 +36,7 @@ services:
     image: postgres:17-alpine
     container_name: "lootlog-db"
     restart: always
-    shm_size: 128mb
+    shm_size: 256mb
     volumes:
       - lootlog-db:/var/lib/postgresql/data
     environment:
@@ -56,7 +56,7 @@ services:
     image: postgres:17-alpine
     container_name: "battle-log-db"
     restart: always
-    shm_size: 128mb
+    shm_size: 256mb
     volumes:
       - battle-log-db:/var/lib/postgresql/data
     environment:
@@ -65,6 +65,26 @@ services:
       POSTGRES_PASSWORD: ${BATTLE_LOG_DB_PASSWORD}
     ports:
       - "5434:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  activity-log-db:
+    image: timescale/timescaledb:latest-pg17
+    container_name: "activity-log-db"
+    restart: always
+    shm_size: 512mb
+    volumes:
+      - activity-log-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${ACTIVITY_LOG_DB_NAME}
+      POSTGRES_USER: ${ACTIVITY_LOG_DB_USER}
+      POSTGRES_PASSWORD: ${ACTIVITY_LOG_DB_PASSWORD}
+    ports:
+      - "5435:5432"
     deploy:
       resources:
         limits:
@@ -123,3 +143,4 @@ volumes:
   meilisearch:
   redis:
   battle-log-db:
+  activity-log-db:

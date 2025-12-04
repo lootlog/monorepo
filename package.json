@@ -27,7 +27,7 @@
   ],
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev --concurrency 11",
+    "dev": "turbo dev --concurrency 12",
     "start": "turbo start",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
@@ -41,6 +41,9 @@
     "battlelog:migrate:dev": "turbo run battlelog:migrate:dev",
     "battlelog:generate": "turbo run battlelog:generate",
     "battlelog:studio": "turbo run battlelog:studio",
+    "activity:migrate:dev": "turbo run activity:migrate:dev",
+    "activity:generate": "turbo run activity:generate",
+    "activity:studio": "turbo run activity:studio",
     "auth:migrate:dev": "turbo run auth:migrate:dev -- --config ./src/lib/auth.ts",
     "auth:migrate:prod": "turbo run auth:migrate:prod -- --config ./src/lib/auth.ts",
     "env:generate": "turbo run env:generate",
@@ -50,6 +53,8 @@
     "seed:scrape:items": "tsx packages/cli/src/index.ts seed scrape:items",
     "seed:scrape:npcs": "tsx packages/cli/src/index.ts seed scrape:npcs",
     "seed:generate:players": "tsx packages/cli/src/index.ts seed generate:players",
+    "events": "tsx packages/cli/src/index.ts events",
+    "events:publish": "tsx packages/cli/src/index.ts events publish",
     "build:game-client": "turbo run build:game-client",
     "copy-entrypoint": "turbo run copy-entrypoint",
     "changeset": "changeset",
@@ -58,7 +63,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.29.8",
     "@lootlog/typescript-config": "workspace:*",
     "husky": "^9.1.7",
     "knip": "^5.67.1",
@@ -76,7 +81,16 @@
       "multer": "^2.0.1",
       "cross-spawn": "^7.0.5",
       "body-parser": "^1.20.3",
-      "undici": "^6.21.2"
+      "undici": "^6.21.2",
+      "hono@<4.9.7": ">=4.9.7",
+      "hono@>=1.1.0 <4.10.2": ">=4.10.2",
+      "js-yaml@<3.14.2": ">=3.14.2",
+      "js-yaml@>=4.0.0 <4.1.1": ">=4.1.1",
+      "glob": "^13.0.0",
+      "valibot@>=0.31.0 <1.2.0": ">=1.2.0",
+      "hono@<4.10.3": ">=4.10.3",
+      "express@>=5.0.0 <5.2.0": ">=5.2.0",
+      "better-auth@<1.4.2": ">=1.4.2"
     },
     "onlyBuiltDependencies": [
       "@nestjs/core",

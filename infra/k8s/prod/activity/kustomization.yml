@@ -1,0 +1,9 @@
+namespace: lootlog-prod
+resources:
+  - ../../base/activity
+patchesStrategicMerge:
+  - hpa.yml
+images:
+  - name: kamilwronka7/lootlog-activity
+    newTag: prod-latest
+namePrefix: prod-

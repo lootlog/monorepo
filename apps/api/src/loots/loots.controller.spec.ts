@@ -136,15 +136,21 @@ describe('LootsController', () => {
 
   describe('createLoot', () => {
     const discordId = 'discord123';
+    const userId = 'user123';
 
     it('should create a new loot', async () => {
       const mockResult = { id: 1 };
       service.createLoot.mockResolvedValue(mockResult);
 
-      const result = await controller.createLoot(discordId, mockCreateLootDto);
+      const result = await controller.createLoot(
+        discordId,
+        userId,
+        mockCreateLootDto,
+      );
 
       expect(service.createLoot).toHaveBeenCalledWith(
         discordId,
+        userId,
         mockCreateLootDto,
       );
       expect(result).toEqual(mockResult);
@@ -156,7 +162,7 @@ describe('LootsController', () => {
       );
 
       await expect(
-        controller.createLoot(discordId, mockCreateLootDto),
+        controller.createLoot(discordId, userId, mockCreateLootDto),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -166,7 +172,7 @@ describe('LootsController', () => {
 
       const requests = Array(5)
         .fill(null)
-        .map(() => controller.createLoot(discordId, mockCreateLootDto));
+        .map(() => controller.createLoot(discordId, userId, mockCreateLootDto));
 
       const results = await Promise.all(requests);
 
