@@ -1,4 +1,4 @@
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
 import 'dotenv/config';
 
 export default defineConfig({
@@ -8,6 +8,8 @@ export default defineConfig({
     seed: 'tsx prisma/seed.ts',
   },
   datasource: {
-    url: env('POSTGRESQL_CONNECTION_URI'),
+    url:
+      process.env.POSTGRESQL_CONNECTION_URI ??
+      'postgresql://placeholder:placeholder@localhost:5435/placeholder',
   },
 });

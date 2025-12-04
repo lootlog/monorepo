@@ -4,6 +4,9 @@ import {
   IsString,
   IsDateString,
   IsArray,
+  IsNumber,
+  Min,
+  Max,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ActivityType, ActivitySource } from '../../../prisma/generated/client';
@@ -54,6 +57,9 @@ export class QueryActivitiesDto {
   cursor?: string;
 
   @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(100)
   @IsOptional()
   limit?: number = 50;
 }
