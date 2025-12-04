@@ -27,13 +27,18 @@ export const ActivityLogsList = () => {
     isLoading,
   } = useActivityLogs({
     guildId: guild?.id,
-    types: filters.types.length > 0 ? (filters.types as ActivityType[]) : undefined,
-    sources: filters.sources.length > 0 ? (filters.sources as ActivitySource[]) : undefined,
+    types:
+      filters.types.length > 0 ? (filters.types as ActivityType[]) : undefined,
+    sources:
+      filters.sources.length > 0
+        ? (filters.sources as ActivitySource[])
+        : undefined,
     startDate: filters.startDate || undefined,
     endDate: filters.endDate || undefined,
     name: filters.name || undefined,
     world: filters.world || undefined,
     limit: ACTIVITY_LOGS_PAGE_LIMIT,
+    clanName: filters.clanName || undefined,
   });
 
   const allActivities =

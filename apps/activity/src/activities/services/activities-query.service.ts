@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/shared/db/prisma.service';
-import { QueryActivitiesDto } from '../dto/query-activities.dto';
+import type { QueryActivitiesDto } from '../dto/query-activities.dto';
 import {
   ActivityEntity,
   PaginatedActivitiesEntity,
@@ -42,13 +42,22 @@ export class ActivitiesQueryService {
       };
     }
 
-    if (query.playerName) {
-      where.actorSnapshot = {
-        name: {
+    if (query.playerName ?? query.clanName) {
+      where.actorSnapshot = {};
+
+      if (query.playerName) {
+        where.actorSnapshot.name = {
           contains: query.playerName,
           mode: 'insensitive',
-        },
-      };
+        };
+      }
+
+      if (query.clanName) {
+        where.actorSnapshot.clanName = {
+          contains: query.clanName,
+          mode: 'insensitive',
+        };
+      }
     }
 
     if (query.startDate ?? query.endDate) {
@@ -91,14 +100,158 @@ export class ActivitiesQueryService {
     });
   }
 
-  async findByGuild(
+  async suggestActorNames(
+    guildId: string,
+    search?: string,
+    limit = 10,
+  ): Promise<string[]> {
+    const limitValue = Math.min(Math.max(limit ?? 10, 1), 50);
+    const trimmedSearch = search?.trim();
+
+    const where: Prisma.ActivityActorSnapshotWhereInput = {
+      activities: {
+        some: { guildId },
+      },
+    };
+
+    if (trimmedSearch) {
+      where.name = {
+        contains: trimmedSearch,
+        mode: 'insensitive',
+      };
+    }
+
+    const snapshots = await this.prisma.activityActorSnapshot.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limitValue * 2,
+      select: { name: true },
+    });
+
+    const seen = new Set<string>();
+    const suggestions: string[] = [];
+
+    for (const snapshot of snapshots) {
+      const name = snapshot.name?.trim();
+      if (!name) continue;
+
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      suggestions.push(name);
+
+      if (suggestions.length >= limitValue) {
+        break;
+      }
+    }
+
+    return suggestions;
+  }
+
+  async suggestWorlds(
+    guildId: string,
+    search?: string,
+    limit = 20,
+  ): Promise<string[]> {
+    const limitValue = Math.min(Math.max(limit ?? 20, 1), 50);
+    const trimmedSearch = search?.trim();
+
+    const where: Prisma.ActivityWhereInput = {
+      guildId,
+      world: {
+        not: null,
+        notIn: [''],
+      },
+    };
+
+    if (trimmedSearch) {
+      where.world = {
+        ...(typeof where.world === 'object' && where.world !== null
+          ? where.world
+          : {}),
+        contains: trimmedSearch,
+        mode: 'insensitive',
+      };
+    }
+
+    const worlds = await this.prisma.activity.findMany({
+      where,
+      distinct: ['world'],
+      select: { world: true },
+      orderBy: { world: 'asc' },
+      take: limitValue,
+    });
+
+    return worlds
+      .map((item) => item.world?.trim())
+      .filter((world): world is string => !!world);
+  }
+
+  async suggestClanNames(
+    guildId: string,
+    search?: string,
+    limit = 10,
+  ): Promise<string[]> {
+    const limitValue = Math.min(Math.max(limit ?? 10, 1), 50);
+    const trimmedSearch = search?.trim();
+
+    const where: Prisma.ActivityActorSnapshotWhereInput = {
+      activities: {
+        some: { guildId },
+      },
+      clanName: {
+        not: null,
+        notIn: [''],
+      },
+    };
+
+    if (trimmedSearch) {
+      where.clanName = {
+        ...(typeof where.clanName === 'object' && where.clanName !== null
+          ? where.clanName
+          : {}),
+        contains: trimmedSearch,
+        mode: 'insensitive',
+      };
+    }
+
+    const snapshots = await this.prisma.activityActorSnapshot.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limitValue * 2,
+      select: { clanName: true },
+    });
+
+    const seen = new Set<string>();
+    const suggestions: string[] = [];
+
+    for (const snapshot of snapshots) {
+      const clanName = snapshot.clanName?.trim();
+      if (!clanName) continue;
+
+      const key = clanName.toLowerCase();
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      suggestions.push(clanName);
+
+      if (suggestions.length >= limitValue) {
+        break;
+      }
+    }
+
+    return suggestions;
+  }
+
+  findByGuild(
     guildId: string,
     query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
     return this.findMany({ ...query, guildId });
   }
 
-  async findByUser(
+  findByUser(
     userId: string,
     guildId: string,
     query: QueryActivitiesDto,

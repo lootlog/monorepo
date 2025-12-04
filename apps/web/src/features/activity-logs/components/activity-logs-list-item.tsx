@@ -158,7 +158,7 @@ export const ActivityLogsListItem: React.FC<Props> = ({ activity }) => {
                   prof: activity.actorSnapshot?.prof,
                   icon: activity.actorSnapshot?.icon,
                 }}
-                className="scale-100"
+                className="scale-80 top-1"
                 accountId={activity.actorSnapshot?.accountId}
                 characterId={activity.actorSnapshot?.characterId}
                 world={activity.world}
