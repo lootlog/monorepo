@@ -12,14 +12,14 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
-import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useActivityWorldSuggestions } from "@/hooks/api/activity-logs/use-activity-world-suggestions";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 const FILTERS_OPEN_KEY = "activity-logs-filters-open";
 
 export const ActivityLogs: FC = () => {
   const { filters, setFilters, hasActiveFilters } = useActivityLogsFilters();
-  const guildId = useGuildId();
+  const { data: guild } = useGuild();
   const [isFiltersOpen, setIsFiltersOpen] = useLocalStorage(
     FILTERS_OPEN_KEY,
     true,
@@ -29,7 +29,7 @@ export const ActivityLogs: FC = () => {
   const isMobile = useIsMobile();
 
   const { data: worldSuggestions = [] } = useActivityWorldSuggestions({
-    guildId,
+    guildId: guild?.id,
   });
 
   const handleOpenSidebar = () => {

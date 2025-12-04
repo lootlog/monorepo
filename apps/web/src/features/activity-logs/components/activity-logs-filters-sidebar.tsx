@@ -23,7 +23,7 @@ import { isAfter, isBefore, startOfDay, subDays } from "date-fns";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { useActivityActorNameSuggestions } from "@/hooks/api/activity-logs/use-activity-actor-name-suggestions";
 import { useActivityClanNameSuggestions } from "@/hooks/api/activity-logs/use-activity-clan-name-suggestions";
-import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: "CONNECT_EVENT", label: "Połączenie" },
@@ -44,16 +44,16 @@ export const ActivityLogsFiltersSidebar: FC<
 > = ({ className }) => {
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
-  const guildId = useGuildId();
+  const { data: guild } = useGuild();
   const [nameSearch, setNameSearch] = useState(filters.name ?? "");
   const [clanNameSearch, setClanNameSearch] = useState(filters.clanName ?? "");
   const { data: nameSuggestions = [] } = useActivityActorNameSuggestions({
-    guildId,
+    guildId: guild?.id,
     search: nameSearch,
     debounceMs: 300,
   });
   const { data: clanNameSuggestions = [] } = useActivityClanNameSuggestions({
-    guildId,
+    guildId: guild?.id,
     search: clanNameSearch,
     debounceMs: 300,
   });
