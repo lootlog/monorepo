@@ -40,10 +40,6 @@ export class ActivitiesService {
         },
       });
 
-      this.logger.log(
-        `Activity created: ${activity.id} (type: ${activity.type}, userId: ${activity.userId})`,
-      );
-
       return new ActivityEntity({
         ...activity,
         details: activity.details as Record<string, unknown> | undefined,
@@ -57,7 +53,7 @@ export class ActivitiesService {
           `Duplicate activity detected via idempotency key: ${dto.idempotencyKey}`,
         );
 
-        const existing = await this.prisma.activity.findUnique({
+        const existing = await this.prisma.activity.findFirst({
           where: { idempotencyKey: dto.idempotencyKey },
           include: {
             actorSnapshot: true,
@@ -91,12 +87,13 @@ export class ActivitiesService {
     }
 
     await this.prisma.activity.delete({
-      where: { id },
+      where: {
+        id_createdAt: {
+          id: activity.id,
+          createdAt: activity.createdAt,
+        },
+      },
     });
-
-    this.logger.log(
-      `Deleted activity ${id} (type: ${activity.type}) for guild ${guildId}`,
-    );
 
     return 1;
   }
@@ -108,10 +105,6 @@ export class ActivitiesService {
         type,
       },
     });
-
-    this.logger.log(
-      `Deleted ${result.count} activities for guild ${guildId}${type ? ` with type ${type}` : ''}`,
-    );
 
     return result.count;
   }
@@ -162,12 +155,6 @@ export class ActivitiesService {
         },
         select: { id: true },
       });
-
-      if (!actorSnapshot.id) {
-        this.logger.debug(`Reused existing actor snapshot for fingerprint`);
-      } else {
-        this.logger.debug(`Created new actor snapshot: ${actorSnapshot.id}`);
-      }
 
       return actorSnapshot.id;
     } catch (error) {

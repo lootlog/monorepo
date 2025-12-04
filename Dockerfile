@@ -42,7 +42,8 @@ RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     pnpm deploy --filter=@lootlog/search --prod /prod/search && \
     pnpm deploy --filter=@lootlog/discord-bot --prod /prod/discord-bot && \
     pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway && \
-    pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service
+    pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service && \
+    pnpm deploy --filter=@lootlog/activity --prod /prod/activity
 
 FROM base AS auth
 
@@ -141,6 +142,23 @@ LABEL org.opencontainers.image.vendor="Lootlog"
 
 COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/battlelog-service /prod/battlelog-service
 WORKDIR /prod/battlelog-service
+
+USER nodejs
+
+EXPOSE 4000
+
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["pnpm", "start"]
+
+FROM base AS activity
+
+LABEL org.opencontainers.image.title="Lootlog Activity Service"
+LABEL org.opencontainers.image.description="Activity and event logging service with TimescaleDB"
+LABEL org.opencontainers.image.vendor="Lootlog"
+
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/activity /prod/activity
+WORKDIR /prod/activity
 
 USER nodejs
 
