@@ -36,6 +36,7 @@ const ROUTES = {
       reservationId: (guildId: string, reservationId: string) =>
         `/${guildId}/reservations/${reservationId}`,
     },
+    activityLogs: (guildId: string) => `/${guildId}/activity-logs`,
     settings: {
       base: (guildId: string) => `/${guildId}/settings`,
       roles: (guildId: string) => `/${guildId}/settings/roles`,

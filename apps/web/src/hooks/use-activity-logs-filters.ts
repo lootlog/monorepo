@@ -8,6 +8,7 @@ export const useActivityLogsFilters = () => {
       startDate: parseAsString.withDefault(""),
       endDate: parseAsString.withDefault(""),
       name: parseAsString.withDefault(""),
+      clanName: parseAsString.withDefault(""),
       world: parseAsString.withDefault(""),
     },
     {
@@ -23,6 +24,7 @@ export const useActivityLogsFilters = () => {
       filters.startDate !== "" ||
       filters.endDate !== "" ||
       filters.name !== "" ||
+      filters.clanName !== "" ||
       filters.world !== ""
     );
   };
@@ -34,6 +36,7 @@ export const useActivityLogsFilters = () => {
       startDate: null,
       endDate: null,
       name: null,
+      clanName: null,
       world: null,
     });
   };
