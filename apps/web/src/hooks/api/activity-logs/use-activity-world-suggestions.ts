@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useDebounceValue } from "usehooks-ts";
 import { useActivityApiClient } from "./use-activity-log-api-client";
-import { capitalizeFirstLetter } from "@/utils/capitalize-first-letter";
 
 export type ActivityWorldSuggestionsResponse = {
   worlds: string[];

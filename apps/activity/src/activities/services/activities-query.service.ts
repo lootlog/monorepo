@@ -60,7 +60,7 @@ export class ActivitiesQueryService {
       }
     }
 
-    if (query.startDate ?? query.endDate) {
+    if (query.startDate || query.endDate) {
       where.createdAt = {};
       if (query.startDate) {
         where.createdAt.gte = new Date(query.startDate);

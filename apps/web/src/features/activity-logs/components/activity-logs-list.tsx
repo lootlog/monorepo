@@ -7,7 +7,7 @@ import {
 } from "@/hooks/api/activity-logs/use-activity-logs";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { ActivityLogsListItem } from "./activity-logs-list-item";
-import { Frown, Loader2 } from "lucide-react";
+import { AlertCircle, Frown, Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
@@ -25,6 +25,7 @@ export const ActivityLogsList = () => {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    error,
   } = useActivityLogs({
     guildId: guild?.id,
     types:
@@ -80,6 +81,17 @@ export const ActivityLogsList = () => {
   }, [guild?.id, filters]);
 
   const hasActivities = allActivities.length > 0;
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center gap-4 items-center flex-1 text-muted-foreground">
+        <AlertCircle size="48" className="text-destructive/70" />
+        <span className="font-semibold text-foreground">
+          Nie udało się załadować aktywności.
+        </span>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
