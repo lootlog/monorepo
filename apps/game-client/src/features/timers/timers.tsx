@@ -166,6 +166,7 @@ export const Timers = () => {
           isUnderBag={generalConfig.timersUnderBag}
           minColumnWidth={displayConfig.minColumnWidth}
           onAddTimer={() => toggleOpen("add-timer")}
+          compactView={generalConfig.compactView}
         />
       </UnderBagTimers>
     );
@@ -178,16 +179,22 @@ export const Timers = () => {
         title="Timery"
         onClose={() => setOpen("timers", false)}
         minHeight={108}
-        actions=<TimersActions
-          timerFiltersEnabled={timerFiltersEnabled}
-          toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-          colorFiltersEnabled={colorFiltersEnabled}
-          toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-          timersSortOrder={timersSortOrder ?? "asc"}
-          setTimersSortOrder={setTimersSortOrder}
-          showHiddenTimers={showHiddenTimers}
-          setShowHiddenTimers={setShowHiddenTimers}
-        />
+        disableTitle={generalConfig.compactView}
+        draggableContent={generalConfig.compactView}
+        actions={
+          !generalConfig.compactView ? (
+            <TimersActions
+              timerFiltersEnabled={timerFiltersEnabled}
+              toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+              colorFiltersEnabled={colorFiltersEnabled}
+              toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+              timersSortOrder={timersSortOrder ?? "asc"}
+              setTimersSortOrder={setTimersSortOrder}
+              showHiddenTimers={showHiddenTimers}
+              setShowHiddenTimers={setShowHiddenTimers}
+            />
+          ) : undefined
+        }
       >
         <div className="ll:flex ll:flex-col ll:h-full">
           <TimersContent
@@ -202,6 +209,7 @@ export const Timers = () => {
             isUnderBag={generalConfig.timersUnderBag}
             minColumnWidth={displayConfig.minColumnWidth}
             onAddTimer={() => toggleOpen("add-timer")}
+            compactView={generalConfig.compactView}
           />
         </div>
       </DraggableWindow>

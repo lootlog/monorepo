@@ -30,6 +30,7 @@ type TimersContentProps = {
   isUnderBag: boolean;
   minColumnWidth: number;
   onAddTimer: () => void;
+  compactView?: boolean;
 };
 
 export const TimersContent: FC<TimersContentProps> = ({
@@ -44,6 +45,7 @@ export const TimersContent: FC<TimersContentProps> = ({
   isUnderBag,
   minColumnWidth,
   onAddTimer,
+  compactView = false,
 }) => {
   return (
     <span
@@ -54,9 +56,11 @@ export const TimersContent: FC<TimersContentProps> = ({
         },
       )}
     >
-      {!isGrouping && <GuildSwitcher className="ll:mb-1!" />}
-      {allowWorldSelection && !isGrouping && <WorldSelector />}
-      {timerFiltersEnabled && <TimersFilters filtersKey={settingsKey} />}
+      {!compactView && !isGrouping && <GuildSwitcher className="ll:mb-1!" />}
+      {!compactView && allowWorldSelection && !isGrouping && <WorldSelector />}
+      {!compactView && timerFiltersEnabled && (
+        <TimersFilters filtersKey={settingsKey} />
+      )}
 
       <ScrollArea className="ll:py-1 ll:w-full! ll:flex-1" type="hover">
         {sortedTimers.length === 0 ? (
@@ -71,7 +75,12 @@ export const TimersContent: FC<TimersContentProps> = ({
         )}
       </ScrollArea>
 
-      <TimersFooter colorStatistics={colorStatistics} onAddTimer={onAddTimer} />
+      {!compactView && (
+        <TimersFooter
+          colorStatistics={colorStatistics}
+          onAddTimer={onAddTimer}
+        />
+      )}
     </span>
   );
 };
