@@ -1,9 +1,6 @@
 import { Permission } from 'generated/client';
+import { PermissionResolver } from './permission-resolver';
 
 export const isAdministrativeUser = (permissions: Permission[]) => {
-  return (
-    permissions.includes(Permission.ADMIN) ||
-    permissions.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions.includes(Permission.OWNER)
-  );
+  return PermissionResolver.isAdministrative(permissions);
 };

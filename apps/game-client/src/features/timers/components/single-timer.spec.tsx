@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import type { TimerWithTimeLeft } from "../utils/timers-utils";
 import { SingleTimer } from "./single-timer";
 import { createMockTimerWithTimeLeft } from "../__tests__/test-helpers";
 
@@ -27,11 +26,6 @@ vi.mock("@/hooks/api/use-guild-permissions", () => ({
   useGuildPermissions: () => ({
     data: ["LOOTLOG_MANAGE"],
   }),
-  Permission: {
-    OWNER: "OWNER",
-    ADMIN: "ADMIN",
-    LOOTLOG_MANAGE: "LOOTLOG_MANAGE",
-  },
 }));
 
 vi.mock("@/store/global.store", () => ({

@@ -10,7 +10,7 @@ import { SendNotificationDto } from './dto/send-notification.dto';
 import type { RefreshJobUpdateDto } from './dto/refresh-job-update.dto';
 import { NpcType } from './enums/npc-type.enum';
 import { GatewayEvent } from './enums/gateway-event.enum';
-import { Permission } from '../guilds/enum/permission.type';
+import { Permission } from '@lootlog/types';
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
@@ -125,7 +125,7 @@ describe('GatewayService', () => {
               guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_READ_TIMERS_TITANS],
+                  permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
                   lvlRangeFrom: 50,
                   lvlRangeTo: 150,
                 },
@@ -159,7 +159,7 @@ describe('GatewayService', () => {
               guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_READ],
+                  permissions: [Permission.LOOTLOG_LOOTS_READ],
                   lvlRangeFrom: 50,
                   lvlRangeTo: 150,
                 },
@@ -220,7 +220,7 @@ describe('GatewayService', () => {
               guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_READ_TIMERS_TITANS],
+                  permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
                   lvlRangeFrom: 1,
                   lvlRangeTo: 50,
                 },
@@ -249,7 +249,7 @@ describe('GatewayService', () => {
               guild: { id: 'guild-456', ownerId: 'different-user' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_READ_TIMERS_TITANS],
+                  permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
                   lvlRangeFrom: 50,
                   lvlRangeTo: 150,
                 },
@@ -436,7 +436,7 @@ describe('GatewayService', () => {
               guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_READ_TIMERS_HEROES],
+                  permissions: [Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ],
                   lvlRangeFrom: 150,
                   lvlRangeTo: 250,
                 },
@@ -510,7 +510,7 @@ describe('GatewayService', () => {
               guild: { id: 'guild-123', ownerId: 'discord-owner' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_READ],
+                  permissions: [Permission.LOOTLOG_LOOTS_READ],
                   lvlRangeFrom: 1,
                   lvlRangeTo: 999,
                 },

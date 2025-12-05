@@ -1,20 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-
-export enum Permission {
-  OWNER = "OWNER",
-  ADMIN = "ADMIN",
-  LOOTLOG_MANAGE = "LOOTLOG_MANAGE",
-  LOOTLOG_READ = "LOOTLOG_READ",
-  LOOTLOG_WRITE = "LOOTLOG_WRITE",
-  LOOTLOG_RESERVATIONS = "LOOTLOG_RESERVATIONS",
-  LOOTLOG_READ_TIMERS_TITANS = "LOOTLOG_READ_TIMERS_TITANS",
-  LOOTLOG_READ_LOOTS_TITANS = "LOOTLOG_READ_LOOTS_TITANS",
-  LOOTLOG_READ_TIMERS_HEROES = "LOOTLOG_READ_TIMERS_HEROES",
-  LOOTLOG_READ_LOOTS_HEROES = "LOOTLOG_READ_LOOTS_HEROES",
-  LOOTLOG_CHAT_READ = "LOOTLOG_CHAT_READ",
-  LOOTLOG_CHAT_WRITE = "LOOTLOG_CHAT_WRITE",
-}
+import type { Permission } from "@lootlog/types";
 
 export type UseGuildPermissionsOptions = {
   guildId?: string;
