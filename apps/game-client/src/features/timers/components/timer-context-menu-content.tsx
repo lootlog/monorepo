@@ -32,6 +32,7 @@ type TimerContextMenuContentProps = {
   isPinned: boolean;
   isHidden: boolean;
   canDelete: boolean;
+  canReset: boolean;
   timersGrouping: boolean;
   selectedColor: string;
   customColors: Record<string, CustomColor>;
@@ -56,6 +57,7 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
   isPinned,
   isHidden,
   canDelete,
+  canReset,
   timersGrouping,
   selectedColor,
   customColors,
@@ -116,10 +118,12 @@ export const TimerContextMenuContent: FC<TimerContextMenuContentProps> = ({
         <Globe className="ll:h-4 ll:w-4 ll:mr-2" />
         {isHidden ? "Pokaż wszędzie" : "Ukryj wszędzie"}
       </ContextMenuItem>
-      <ContextMenuItem onClick={onReset}>
-        <RotateCcw className="ll:h-4 ll:w-4 ll:mr-2" />
-        Odliczaj od początku
-      </ContextMenuItem>
+      {canReset && (
+        <ContextMenuItem onClick={onReset}>
+          <RotateCcw className="ll:h-4 ll:w-4 ll:mr-2" />
+          Odliczaj od początku
+        </ContextMenuItem>
+      )}
       {/* <ContextMenuItem onClick={onToggleSound}>
         {isSoundEnabled ? (
           <VolumeOff className="ll:h-4 ll:w-4 ll:mr-2" />
