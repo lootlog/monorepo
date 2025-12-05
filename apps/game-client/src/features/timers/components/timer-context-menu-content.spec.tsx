@@ -26,6 +26,7 @@ describe.skip("TimerContextMenuContent", () => {
     isPinned: false,
     isHidden: false,
     canDelete: true,
+    canReset: true,
     timersGrouping: false,
     selectedColor: "white",
     customColors: {},
