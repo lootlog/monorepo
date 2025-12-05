@@ -157,7 +157,7 @@ export class MembersController {
     return plainToInstance(MemberEntity, member);
   }
 
-  @Permissions(Permission.LOOTLOG_MEMBERS_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({

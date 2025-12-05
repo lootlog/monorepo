@@ -54,7 +54,7 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   }, []);
 
   return (
-    <div className={`border-b box-border ${className}`}>
+    <div className={`border-b box-border bg-background ${className}`}>
       <div
         ref={scrollRef}
         className="p-2 flex gap-2 overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth"
