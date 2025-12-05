@@ -28,7 +28,7 @@
   "descriptions": {
     "ADMIN": "Pozwala zarządzać całym lootlogiem np. nadawanie uprawnień",
     "LOOTLOG_MANAGE": "Pozwala zarządzać lootlogiem np. usuwanie lub edycja lootów",
-    "LOOTLOG_ACCESS": "Dostęp do aplikacji - żadna rola nie zadziała bez tego uprawnienia",
+    "LOOTLOG_ACCESS": "Dostęp do aplikacji - podstawowa permisja, która pozwala na dostęp do danego lootloga",
     "LOOTLOG_LOOTS_READ": "Pozwala na przeglądanie lootów i komentarzy",
     "LOOTLOG_LOOTS_WRITE": "Pozwala na zapisywanie lootów w lootlogu",
     "LOOTLOG_LOOTS_TITANS_READ": "Dostęp do lootów tytanów",
