@@ -1,4 +1,4 @@
-import { Permission } from 'src/guilds/enum/permission.type';
+import { Permission } from '@lootlog/types';
 import type { GuildRole } from 'src/guilds/types/guild.types';
 
 export const isAdministrativeUser = (permissions: Permission[]) => {

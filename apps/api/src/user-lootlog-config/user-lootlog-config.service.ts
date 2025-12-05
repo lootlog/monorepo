@@ -54,8 +54,10 @@ export class UserLootlogConfigService {
     const guildIdsWithWriteAccess = guilds
       .filter((guildData) => {
         const isOwner = guildData.guild.ownerId === discordId;
-        const hasLootlogWrite = guildData.roles.some((role) =>
-          role.permissions.includes(Permission.LOOTLOG_WRITE),
+        const hasLootlogWrite = guildData.roles.some(
+          (role) =>
+            role.permissions.includes(Permission.LOOTLOG_LOOTS_WRITE) ||
+            role.permissions.includes(Permission.LOOTLOG_TIMERS_WRITE),
         );
         return isOwner || hasLootlogWrite;
       })

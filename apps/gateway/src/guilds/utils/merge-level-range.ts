@@ -1,4 +1,4 @@
-import type { Permission } from 'src/guilds/enum/permission.type';
+import { Permission } from '@lootlog/types';
 import type { Role } from 'src/guilds/types/role.type';
 
 export function mergeLevelRanges(

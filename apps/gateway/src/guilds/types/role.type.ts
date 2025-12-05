@@ -1,4 +1,4 @@
-import type { Permission } from 'src/guilds/enum/permission.type';
+import { Permission } from '@lootlog/types';
 
 export type Role = {
   id: string;

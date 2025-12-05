@@ -79,7 +79,7 @@ export class LootsService implements OnModuleInit {
 
       const [guilds, characterConfig] = await Promise.all([
         this.guildsService.getGuildsForRequiredPermissions(discordId, [
-          Permission.LOOTLOG_WRITE,
+          Permission.LOOTLOG_LOOTS_WRITE,
         ]),
         this.userLootlogConfigService.getLootlogCharacterConfig(
           discordId,

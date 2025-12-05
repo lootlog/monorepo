@@ -3,139 +3,173 @@ import {
   useGuildRoles,
   type GuildRole,
 } from "@/hooks/api/guilds/use-guild-roles";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/utils/cn";
-import { Button } from "@lootlog/ui/components/button";
-import { EllipsisVertical } from "lucide-react";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { AnimatePresence, motion } from "framer-motion";
 import { RolePanelContent } from "@/features/roles-settings/components/roles-panel";
+import { RoleListItem } from "@/features/roles-settings/components/role-list-item";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@lootlog/ui/components/drawer";
+import { Shield } from "lucide-react";
+import { Permission } from "@lootlog/types";
 
 export const RolesSettings = () => {
   const { data: roles } = useGuildRoles();
   const [searchValue, setSearchValue] = useState("");
   const [selectedRole, setSelectedRole] = useState<GuildRole | null>(null);
-  const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleSelectRole = (role: GuildRole) => {
-    if (selectedRole === null) {
-      setShouldAnimate(true);
-    }
     setSelectedRole(role);
+    if (isMobile) {
+      setIsMobileDrawerOpen(true);
+    }
   };
 
-  const filteredRoles = roles?.filter((role) => {
-    return role.name.toLowerCase().includes(searchValue.toLowerCase());
-  });
+  useEffect(() => {
+    if (!isMobile) {
+      setIsMobileDrawerOpen(false);
+    }
+  }, [isMobile]);
+
+  const filteredRoles = roles
+    ?.filter((role) => {
+      return role.name.toLowerCase().includes(searchValue.toLowerCase());
+    })
+    .sort((a, b) => {
+      const aIsAdmin = a.permissions.includes(Permission.ADMIN);
+      const bIsAdmin = b.permissions.includes(Permission.ADMIN);
+
+      if (aIsAdmin && !bIsAdmin) return -1;
+      if (!aIsAdmin && bIsAdmin) return 1;
+
+      const permDiff = b.permissions.length - a.permissions.length;
+      if (permDiff !== 0) return permDiff;
+
+      return a.name.localeCompare(b.name);
+    });
 
   const selectedRoleColor =
-    selectedRole?.color === 0 ? "FFF" : selectedRole?.color.toString(16);
+    selectedRole?.color === 0
+      ? "FFF"
+      : selectedRole?.color.toString(16).padStart(6, "0");
 
   return (
-    <div className="h-full flex flex-col min-h-0 overflow-hidden">
-      <div className="p-4 pb-4 flex-shrink-0">
-        <div className="text-lg font-semibold">Ustawienia ról</div>
-        <div className="text-sm text-gray-500">
-          Ustawienia ról, które mogą być przypisane do graczy na serwerze
-          Discord. Tutaj możesz przypisać uprawnienia do ról.
-        </div>
-      </div>
-      <div className="px-4 py-3 border-t flex-shrink-0">
-        <SearchInput
-          onChange={(e) => setSearchValue(e.target.value)}
-          placeholder="Szukaj roli..."
-        />
-      </div>
-      <div
-        className={cn(
-          "border-t grid flex-1 min-h-0 transition-[grid-template-columns] overflow-hidden",
-          selectedRole
-            ? "grid-cols-1 md:grid-cols-[theme(width.64)_1fr]"
-            : "grid-cols-1 md:grid-cols-[1fr]",
-        )}
-      >
-        <ScrollArea
-          className={cn("h-full min-h-0", selectedRole && "hidden md:block")}
+    <>
+      {isMobile && (
+        <Drawer
+          open={isMobileDrawerOpen}
+          onOpenChange={(open) => {
+            setIsMobileDrawerOpen(open);
+            if (!open) setSelectedRole(null);
+          }}
+          shouldScaleBackground={false}
         >
-          <div className="flex flex-col">
-            {filteredRoles?.map((role) => {
-              const color = role.color === 0 ? "FFF" : role.color.toString(16);
-              const active = selectedRole?.id === role.id;
-
-              return (
-                <div
-                  key={role.id}
-                  className={cn(
-                    "border-b flex flex-row justify-between py-3 px-5 items-center hover:bg-secondary cursor-pointer text-sm",
-                    {
-                      "bg-secondary": active,
-                    },
-                  )}
-                  onClick={() => handleSelectRole(role)}
-                >
-                  <div className="flex gap-4 items-center">
+          <DrawerContent className="p-0 h-[90vh] max-h-[90vh] flex flex-col overflow-hidden">
+            <DrawerHeader className="border-b px-4 py-3 shrink-0">
+              <DrawerTitle className="flex items-center gap-3">
+                {selectedRole && (
+                  <>
                     <div
-                      className={cn("size-4 rounded-full")}
-                      style={{ backgroundColor: `#${color}` }}
+                      className="size-4 rounded-full"
+                      style={{ backgroundColor: `#${selectedRoleColor}` }}
                     />
-                    <div>
-                      <div className="font-semibold">{role.name}</div>
-                      <div className="text-xs text-gray-500">
-                        ({role.lvlRangeFrom} - {role.lvlRangeTo})
-                      </div>
-                    </div>
-                  </div>
-                  {!selectedRole && (
-                    <Button
-                      className="size-8 rounded-full"
-                      size="sm"
-                      variant="secondary"
-                    >
-                      <EllipsisVertical />
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
-        <AnimatePresence mode="popLayout">
-          {selectedRole &&
-            (shouldAnimate ? (
-              <motion.div
-                className={cn(
-                  "border-l min-h-0 h-full overflow-hidden",
-                  "md:border-l border-l-0",
+                    <span>{selectedRole.name}</span>
+                  </>
                 )}
-                initial={{ opacity: 0, x: 32 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 16 }}
-                transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                key={selectedRole.id}
-              >
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="flex-1 overflow-hidden">
+              {selectedRole && (
                 <RolePanelContent
                   selectedRole={selectedRole}
                   setSelectedRole={setSelectedRole}
                   selectedRoleColor={selectedRoleColor}
                 />
-              </motion.div>
-            ) : (
-              <div
-                className={cn(
-                  "border-l min-h-0 h-full overflow-hidden",
-                  "md:border-l border-l-0",
+              )}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
+
+      <div className="h-full flex flex-col min-h-0 overflow-hidden">
+        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Shield className="size-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold leading-tight">
+                Ustawienia ról
+              </h2>
+              <p className="text-xs text-muted-foreground leading-tight">
+                Zarządzaj uprawnieniami dla ról Discord
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="px-3 py-2 border-b shrink-0 bg-background">
+          <SearchInput
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder="Szukaj roli..."
+            className="bg-input/30 h-9"
+          />
+        </div>
+
+        <div className="flex-1 flex min-h-0 overflow-hidden bg-background/50">
+          <div
+            className={cn(
+              "flex flex-col h-full min-w-0 overflow-hidden",
+              !isMobile && selectedRole
+                ? "w-1/3 min-w-[220px] max-w-[350px] border-r"
+                : "flex-1",
+            )}
+          >
+            <ScrollArea className="flex-1 h-full">
+              <div className="p-3 space-y-1.5">
+                {filteredRoles?.map((role, index) => (
+                  <RoleListItem
+                    key={role.id}
+                    role={role}
+                    isSelected={selectedRole?.id === role.id}
+                    onClick={() => handleSelectRole(role)}
+                    index={index}
+                    isPanelOpen={selectedRole !== null}
+                  />
+                ))}
+
+                {filteredRoles?.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Shield className="size-12 mb-4 opacity-30" />
+                    <p className="text-sm font-medium">Nie znaleziono ról</p>
+                    <p className="text-xs mt-1">
+                      Spróbuj zmienić kryteria wyszukiwania
+                    </p>
+                  </div>
                 )}
-                key={selectedRole.id}
-              >
+              </div>
+            </ScrollArea>
+          </div>
+
+          {!isMobile && selectedRole && (
+            <div className="h-full flex-1 min-w-0">
+              <div className="h-full min-w-[400px]">
                 <RolePanelContent
                   selectedRole={selectedRole}
                   setSelectedRole={setSelectedRole}
                   selectedRoleColor={selectedRoleColor}
                 />
               </div>
-            ))}
-        </AnimatePresence>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };

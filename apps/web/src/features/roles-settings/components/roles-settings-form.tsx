@@ -16,85 +16,121 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
-import { Permission } from "@/hooks/api/guilds/use-guild-permissions";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUpdateGuildRole } from "@/hooks/api/guilds/use-update-guild-role";
+import { Permission } from "@lootlog/types";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@lootlog/ui/components/accordion";
+import {
+  KeyRound,
+  Shield,
+  Package,
+  Clock,
+  CalendarCheck,
+  // Users,
+  MessageCircle,
+  Bell,
+  Settings,
+} from "lucide-react";
+import { cn } from "@lootlog/ui/lib/utils";
+import { Card } from "@lootlog/ui/components/card";
 
-const PERMISSIONS = [
+const PERMISSION_GROUPS = [
   {
-    key: Permission.ADMIN,
-    description: "Pozwala zarządzać całym lootlogiem np. nadawanie uprawnień",
-    border: true,
+    groupKey: "access",
+    icon: KeyRound,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-500/10",
+    permissions: [Permission.LOOTLOG_ACCESS],
   },
   {
-    key: Permission.LOOTLOG_MANAGE,
-    description: "Pozwala zarządzać lootlogiem np. usuwanie lub edycja lootów",
-    border: true,
+    groupKey: "admin",
+    icon: Shield,
+    color: "text-red-500",
+    bgColor: "bg-red-500/10",
+    permissions: [Permission.ADMIN, Permission.LOOTLOG_MANAGE],
   },
   {
-    key: Permission.LOOTLOG_READ,
-    description: "Pozwala na dostęp do lootloga i przeglądanie go",
-    border: true,
+    groupKey: "loots",
+    icon: Package,
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
+    permissions: [
+      Permission.LOOTLOG_LOOTS_READ,
+      Permission.LOOTLOG_LOOTS_WRITE,
+      Permission.LOOTLOG_LOOTS_TITANS_READ,
+      Permission.LOOTLOG_LOOTS_HEROES_READ,
+    ],
   },
   {
-    key: Permission.LOOTLOG_WRITE,
-    description: "Pozwala na zapisywanie lootów i timerów w lootlogu",
-    border: true,
+    groupKey: "timers",
+    icon: Clock,
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+    permissions: [
+      Permission.LOOTLOG_TIMERS_READ,
+      Permission.LOOTLOG_TIMERS_WRITE,
+      Permission.LOOTLOG_TIMERS_RESET,
+      Permission.LOOTLOG_TIMERS_DELETE,
+      Permission.LOOTLOG_TIMERS_TITANS_READ,
+      Permission.LOOTLOG_TIMERS_HEROES_READ,
+    ],
   },
   {
-    key: Permission.LOOTLOG_RESERVATIONS,
-    description: "Pozwala na dostęp do rezerwacji",
-    border: true,
+    groupKey: "reservations",
+    icon: CalendarCheck,
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10",
+    permissions: [
+      Permission.LOOTLOG_RESERVATIONS_READ,
+      Permission.LOOTLOG_RESERVATIONS_WRITE,
+    ],
+  },
+  // {
+  //   groupKey: "members",
+  //   icon: Users,
+  //   color: "text-cyan-500",
+  //   bgColor: "bg-cyan-500/10",
+  //   permissions: [Permission.LOOTLOG_MEMBERS_READ],
+  // },
+  {
+    groupKey: "chat",
+    icon: MessageCircle,
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
+    permissions: [
+      Permission.LOOTLOG_CHAT_READ,
+      Permission.LOOTLOG_CHAT_WRITE,
+      Permission.LOOTLOG_CHAT_TITANS_READ,
+      Permission.LOOTLOG_CHAT_HEROES_READ,
+    ],
   },
   {
-    key: Permission.LOOTLOG_READ_LOOTS_TITANS,
-    description: "Dostęp do lootów tytanów",
-    border: true,
+    groupKey: "notifications",
+    icon: Bell,
+    color: "text-orange-500",
+    bgColor: "bg-orange-500/10",
+    permissions: [
+      Permission.LOOTLOG_NOTIFICATIONS_READ,
+      Permission.LOOTLOG_NOTIFICATIONS_SEND,
+      Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+      Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    ],
   },
-  {
-    key: Permission.LOOTLOG_READ_TIMERS_TITANS,
-    description: "Dostęp do timerów tytanów",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_READ_LOOTS_HEROES,
-    description: "Dostęp do lootów herosów",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_READ_TIMERS_HEROES,
-    description: "Dostęp do timerów herosów",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_CHAT_READ,
-    description: "Pozwala na czytanie wiadomości z lootloga",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_CHAT_WRITE,
-    description: "Pozwala na pisanie wiadomości do lootloga",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_NOTIFICATIONS_SEND,
-    description: "Pozwala na wysyłanie powiadomień z lootloga",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_NOTIFICATIONS_READ,
-    description: "Pozwala na czytanie powiadomień z lootloga",
-    border: true,
-  },
-] as const;
+];
+
+// Flatten for form schema and submission
+const PERMISSIONS = PERMISSION_GROUPS.flatMap((group) => group.permissions);
 
 const DEFAULT_LVL_RANGE_FROM = "0";
 const DEFAULT_LVL_RANGE_TO = "500";
-
-type PermissionKey = (typeof PERMISSIONS)[number]["key"];
 
 const formSchema = z.object({
   lvlRangeFrom: z
@@ -121,7 +157,7 @@ const formSchema = z.object({
     }),
   ...PERMISSIONS.reduce(
     (acc, p) => {
-      acc[p.key] = z.boolean();
+      acc[p] = z.boolean();
       return acc;
     },
     {} as Record<string, z.ZodTypeAny>,
@@ -146,9 +182,9 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
       ...PERMISSIONS.reduce(
         (acc, p) => ({
           ...acc,
-          [p.key]: !!role.permissions.includes(p.key),
+          [p]: !!role.permissions.includes(p),
         }),
-        {} as Record<PermissionKey, boolean>,
+        {} as Record<Permission, boolean>,
       ),
     },
   });
@@ -160,9 +196,9 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
       ...PERMISSIONS.reduce(
         (acc, p) => ({
           ...acc,
-          [p.key]: !!role.permissions.includes(p.key),
+          [p]: !!role.permissions.includes(p),
         }),
-        {} as Record<PermissionKey, boolean>,
+        {} as Record<Permission, boolean>,
       ),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,10 +209,8 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
       {
         permissions: PERMISSIONS.filter(
           (p) =>
-            values[
-              p.key as unknown as keyof FormSchemaType
-            ] as unknown as boolean,
-        ).map((p) => p.key),
+            values[p as unknown as keyof FormSchemaType] as unknown as boolean,
+        ),
         roleId: role.id,
         lvlRangeFrom: Number(values.lvlRangeFrom),
         lvlRangeTo: Number(values.lvlRangeTo),
@@ -192,9 +226,9 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
             ...PERMISSIONS.reduce(
               (acc, p) => ({
                 ...acc,
-                [p.key]: response.data.permissions.includes(p.key),
+                [p]: response.data.permissions.includes(p),
               }),
-              {} as Record<PermissionKey, boolean>,
+              {} as Record<Permission, boolean>,
             ),
           });
         },
@@ -209,103 +243,171 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full md:py-2 mx-auto"
+        className="w-full mx-auto pb-24"
       >
-        <div className="px-6 p-2 border-b">
-          <Label>Ustawienia roli</Label>
-        </div>
-        <div className="px-6 pt-2">
-          <Label>Przedział levelowy</Label>
-          <FormDescription>
-            Określa przedział levelowy danej roli - przydatne w momencie, gdy na
-            jednym serwerze Discord jest kilka klanów. Ustawienie tej opcji
-            wyłączy możliwość wyświetlania łupów i timerów spoza przedziału.
-          </FormDescription>
-        </div>
-        <div className="flex px-6 p-4 gap-4 border-b items-center">
-          <FormField
-            control={form.control}
-            name="lvlRangeFrom"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder={DEFAULT_LVL_RANGE_FROM}
-                    type="number"
-                    max={500}
-                    min={0}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          -
-          <FormField
-            control={form.control}
-            name="lvlRangeTo"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder={DEFAULT_LVL_RANGE_TO}
-                    type="number"
-                    max={500}
-                    min={0}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="px-6 p-2 border-b">
-          <Label>Ustawienia dostępów</Label>
-        </div>
-        {PERMISSIONS.map((perm) => (
-          <FormField
-            key={perm.key}
-            control={form.control}
-            name={perm.key as unknown as keyof FormSchemaType}
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 px-6 border-b hover:bg-secondary">
-                <FormControl>
-                  <Checkbox
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="cursor-pointer">
-                    {t(`permissions.${perm.key}`)}
-                  </FormLabel>
-                  <FormDescription>{perm.description}</FormDescription>
-                  <FormMessage />
+        {/* Level Range Section */}
+        <div className="p-3">
+          <Card className="bg-card/50 backdrop-blur-sm border-border p-0">
+            <div className="p-3">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Settings className="size-4 text-primary" />
                 </div>
-              </FormItem>
-            )}
-          />
-        ))}
+                <div>
+                  <Label className="text-sm font-semibold">
+                    Przedział levelowy
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Ogranicza widoczność danych do określonego zakresu poziomów
+                  </p>
+                </div>
+              </div>
 
-        <div className="h-20 md:h-24" />
+              <div className="flex gap-3 items-center ml-11">
+                <FormField
+                  control={form.control}
+                  name="lvlRangeFrom"
+                  render={({ field }) => (
+                    <FormItem className="flex-1 max-w-[100px]">
+                      <FormControl>
+                        <Input
+                          placeholder={DEFAULT_LVL_RANGE_FROM}
+                          type="number"
+                          max={500}
+                          min={0}
+                          className="h-9"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <span className="text-muted-foreground">—</span>
+                <FormField
+                  control={form.control}
+                  name="lvlRangeTo"
+                  render={({ field }) => (
+                    <FormItem className="flex-1 max-w-[100px]">
+                      <FormControl>
+                        <Input
+                          placeholder={DEFAULT_LVL_RANGE_TO}
+                          type="number"
+                          max={500}
+                          min={0}
+                          className="h-9"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Permission Groups */}
+        <div className="px-3 space-y-3">
+          <Accordion
+            type="multiple"
+            defaultValue={PERMISSION_GROUPS.map((g) => g.groupKey)}
+            className="space-y-3"
+          >
+            {PERMISSION_GROUPS.map((group) => {
+              const IconComponent = group.icon;
+              const enabledCount = group.permissions.filter((p) =>
+                form.watch(p as unknown as keyof FormSchemaType),
+              ).length;
+
+              return (
+                <Card
+                  key={group.groupKey}
+                  className="bg-card/50 backdrop-blur-sm border-border overflow-hidden p-0"
+                >
+                  <AccordionItem value={group.groupKey} className="border-0">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className={cn("p-2 rounded-lg", group.bgColor)}>
+                          <IconComponent
+                            className={cn("size-4", group.color)}
+                          />
+                        </div>
+                        <div className="text-left flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">
+                              {t(`permissions.groups.${group.groupKey}.name`)}
+                            </span>
+                            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              {enabledCount}/{group.permissions.length}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-normal">
+                            {t(
+                              `permissions.groups.${group.groupKey}.description`,
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0 pt-0">
+                      <div className="divide-y divide-border/50 border-t border-border/50">
+                        {group.permissions.map((perm) => (
+                          <FormField
+                            key={perm}
+                            control={form.control}
+                            name={perm as unknown as keyof FormSchemaType}
+                            render={({ field }) => (
+                              <FormItem
+                                className={cn(
+                                  "relative flex flex-row items-start space-x-3 space-y-0 py-3 px-4 pl-6 items-center",
+                                  "transition-colors hover:bg-muted/20",
+                                  field.value && "bg-primary/5",
+                                )}
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={!!field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-0.5 leading-none flex-1">
+                                  <FormLabel className="text-sm font-medium cursor-pointer after:absolute after:inset-0">
+                                    {t(`permissions.${perm}`)}
+                                  </FormLabel>
+                                  <FormDescription className="text-xs">
+                                    {t(`permissions.descriptions.${perm}`)}
+                                  </FormDescription>
+                                  <FormMessage />
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Card>
+              );
+            })}
+          </Accordion>
+        </div>
 
         <AnimatePresence>
           {form.formState.isDirty && (
             <motion.div
               key="unsaved-bar-roles-form"
               aria-live="polite"
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
               transition={{
                 type: "spring",
-                stiffness: 520,
+                stiffness: 400,
                 damping: 28,
-                mass: 0.7,
               }}
-              className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[theme(width.64)] z-50 flex justify-center px-4 pb-3"
+              className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[theme(width.64)] z-50 flex justify-center px-4 pb-4"
             >
               <motion.div
                 layout
@@ -314,11 +416,13 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
                   type: "spring",
                   stiffness: 380,
                   damping: 30,
-                  mass: 0.6,
                 }}
-                className="pointer-events-auto w-full max-w-3xl rounded-md border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-3 shadow-md flex items-center justify-between gap-4"
+                className="pointer-events-auto w-full max-w-2xl rounded-xl border bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 p-3 shadow-lg flex items-center justify-between gap-4"
               >
-                <p className="text-sm font-medium">Masz niezapisane zmiany</p>
+                <div className="flex items-center gap-3">
+                  <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
+                  <p className="text-sm font-medium">Masz niezapisane zmiany</p>
+                </div>
                 <div className="flex gap-2">
                   <Button
                     type="button"

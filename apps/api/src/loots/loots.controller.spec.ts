@@ -45,7 +45,7 @@ describe('LootsController', () => {
     name: 'Test Role',
     color: 16711680,
     position: 1,
-    permissions: [Permission.LOOTLOG_READ],
+    permissions: [Permission.LOOTLOG_LOOTS_READ],
     lvlRangeFrom: 1,
     lvlRangeTo: 100,
     guildId: 'guild1',
@@ -212,7 +212,7 @@ describe('LootsController', () => {
       service.fetchLootsByGuildId.mockResolvedValue(mockLoots);
 
       const result = await controller.fetchLootsByGuildId(
-        [Permission.LOOTLOG_READ],
+        [Permission.LOOTLOG_LOOTS_READ],
         [mockRole],
         mockGuild,
         params.cursor,
@@ -226,7 +226,7 @@ describe('LootsController', () => {
 
       expect(service.fetchLootsByGuildId).toHaveBeenCalledWith(
         mockGuild,
-        [Permission.LOOTLOG_READ],
+        [Permission.LOOTLOG_LOOTS_READ],
         [mockRole],
         params,
       );
@@ -238,7 +238,7 @@ describe('LootsController', () => {
       service.fetchLootsByGuildId.mockResolvedValue([]);
 
       const result = await controller.fetchLootsByGuildId(
-        [Permission.LOOTLOG_READ],
+        [Permission.LOOTLOG_LOOTS_READ],
         [mockRole],
         mockGuild,
         params.cursor,

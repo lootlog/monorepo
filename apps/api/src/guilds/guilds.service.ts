@@ -4,10 +4,10 @@ import {
   Injectable,
   NotFoundException,
   forwardRef,
-  ForbiddenException,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import { type Guild, Permission } from 'generated/client';
@@ -27,8 +27,10 @@ import { DiscordService } from 'src/discord/discord.service';
 import { RedisService } from 'src/lib/redis/redis.service';
 import {
   getPermissionsCachePattern,
+  getPermissionsCacheKey,
   getGuildCacheKey,
   GUILD_CACHE_TTL_SECONDS,
+  PERMISSIONS_CACHE_TTL_SECONDS,
 } from 'src/shared/constants/cache.constant';
 
 @Injectable()
@@ -53,7 +55,7 @@ export class GuildsService {
     let guilds: Guild[] = [];
     if (source === 'game') {
       guilds = await this.getGuildsForRequiredPermissions(discordId, [
-        Permission.LOOTLOG_READ,
+        Permission.LOOTLOG_ACCESS,
       ]);
     } else {
       try {
@@ -243,12 +245,32 @@ export class GuildsService {
     return guilds;
   }
 
-  async getGuildPermissions(options: {
+  async getMemberContext(options: {
     discordId: string;
     userId: string;
     guildId: string;
-  }) {
+  }): Promise<{
+    guild: Guild;
+    member: unknown;
+    roles: unknown[];
+    permissions: Permission[];
+  } | null> {
     const { discordId, userId, guildId } = options;
+
+    const cacheKey = getPermissionsCacheKey(userId, guildId);
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (error) {
+        this.logger.warn({
+          message: `Failed to parse cached permissions data for key ${cacheKey}`,
+          error: error,
+        });
+        await this.redisService.del(cacheKey);
+      }
+    }
 
     const guild = await this.getGuildByIdInternal(guildId);
 
@@ -259,7 +281,7 @@ export class GuildsService {
     });
 
     if (!member || !member.active) {
-      throw new ForbiddenException();
+      return null;
     }
 
     const isOwner = guild.ownerId === discordId;
@@ -272,12 +294,20 @@ export class GuildsService {
 
     const uniquePermissions = Array.from(new Set(permissions));
 
-    return {
+    const context = {
       permissions: uniquePermissions,
       guild,
-      roles: member?.roles || [],
       member,
+      roles: member?.roles || [],
     };
+
+    await this.redisService.set(
+      cacheKey,
+      JSON.stringify(context),
+      PERMISSIONS_CACHE_TTL_SECONDS,
+    );
+
+    return context;
   }
 
   async getMultipleGuildsPermissions(discordId: string, guildIds: string[]) {
@@ -319,7 +349,7 @@ export class GuildsService {
 
   async getUserGuildsWithPermissions(discordId: string) {
     const guilds = await this.getGuildsForRequiredPermissions(discordId, [
-      Permission.LOOTLOG_READ,
+      Permission.LOOTLOG_ACCESS,
     ]);
 
     const guildIds = guilds.map((guild) => guild.id);

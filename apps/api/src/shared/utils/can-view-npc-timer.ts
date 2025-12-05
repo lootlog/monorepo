@@ -9,7 +9,7 @@ export const canViewNpcTimer = (
   if (npc.type === NpcType.TITAN) {
     return roles.some(
       (role) =>
-        role.permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS) &&
+        role.permissions.includes(Permission.LOOTLOG_TIMERS_TITANS_READ) &&
         role.lvlRangeFrom <= npc.lvl &&
         role.lvlRangeTo >= npc.lvl,
     );
@@ -18,7 +18,7 @@ export const canViewNpcTimer = (
   if (npc.type === NpcType.HERO || npc.type === NpcType.EVENT_HERO) {
     return roles.some(
       (role) =>
-        role.permissions.includes(Permission.LOOTLOG_READ_TIMERS_HEROES) &&
+        role.permissions.includes(Permission.LOOTLOG_TIMERS_HEROES_READ) &&
         role.lvlRangeFrom <= npc.lvl &&
         role.lvlRangeTo >= npc.lvl,
     );
@@ -28,6 +28,6 @@ export const canViewNpcTimer = (
     (role) =>
       role.lvlRangeFrom <= npc.lvl &&
       role.lvlRangeTo >= npc.lvl &&
-      role.permissions.includes(Permission.LOOTLOG_READ),
+      role.permissions.includes(Permission.LOOTLOG_TIMERS_READ),
   );
 };
