@@ -23,6 +23,7 @@ import { TimerTooltip } from "./timer-tooltip";
 import { useGuildPermissions } from "@/hooks/api/use-guild-permissions";
 import { REQUIRED_DELETE_PERMISSIONS } from "../constants/required-delete-permissions";
 import { Game } from "@/lib/game";
+import { REQUIRED_RESET_PERMISSIONS } from "@/features/timers/constants/required-reset-permissions";
 
 type SingleTimerProps = {
   timer: TimerWithTimeLeft;
@@ -54,6 +55,10 @@ export const SingleTimer: FC<SingleTimerProps> = ({
   });
 
   const canDelete = REQUIRED_DELETE_PERMISSIONS.some((perm) =>
+    guildPermissions?.includes(perm),
+  );
+
+  const canReset = REQUIRED_RESET_PERMISSIONS.some((perm) =>
     guildPermissions?.includes(perm),
   );
 
@@ -169,6 +174,7 @@ export const SingleTimer: FC<SingleTimerProps> = ({
             isPinned={isPinned}
             isHidden={isHidden}
             canDelete={canDelete}
+            canReset={canReset}
             timersGrouping={generalConfig.timersGrouping}
             selectedColor={selectedColor}
             customColors={customColors}

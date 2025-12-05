@@ -1,8 +1,7 @@
 import { Permission } from 'generated/client';
 
 export const ELIGIBLE_HERO_READ_ACL = [
-  Permission.LOOTLOG_READ_TIMERS_HEROES,
+  Permission.LOOTLOG_TIMERS_HEROES_READ,
   Permission.OWNER,
   Permission.ADMIN,
-  Permission.LOOTLOG_MANAGE,
 ];

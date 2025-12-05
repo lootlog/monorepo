@@ -43,7 +43,7 @@ import { LootCommentEntity } from 'src/shared/entities/loot-comment.entity';
 export class LootsController {
   constructor(private readonly lootsService: LootsService) {}
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/loots')
   @ApiOperation({
@@ -200,7 +200,7 @@ export class LootsController {
     return plainToInstance(LootEntity, loots);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/loots/count')
   @ApiOperation({
@@ -363,7 +363,7 @@ export class LootsController {
     return this.lootsService.createLoot(discordId, userId, body);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/loots/:lootId/comments')
   @ApiOperation({
@@ -395,7 +395,7 @@ export class LootsController {
     return plainToInstance(LootCommentEntity, comments);
   }
 
-  @Permissions(Permission.LOOTLOG_WRITE)
+  @Permissions(Permission.LOOTLOG_LOOTS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/loots/:lootId/comments')
   @ApiOperation({

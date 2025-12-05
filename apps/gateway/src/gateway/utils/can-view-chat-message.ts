@@ -1,4 +1,4 @@
-import { Permission } from 'src/guilds/enum/permission.type';
+import { Permission } from '@lootlog/types';
 import type { Role } from 'src/guilds/types/role.type';
 import { MessageType, SendMessageDto } from '../dto/send-message.dto';
 import { NpcType } from '../enums/npc-type.enum';
@@ -22,7 +22,7 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
     if (npcType === NpcType.TITAN) {
       return roles.some(
         (role) =>
-          role.permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS) &&
+          role.permissions.includes(Permission.LOOTLOG_CHAT_TITANS_READ) &&
           role.lvlRangeFrom <= npc.lvl &&
           role.lvlRangeTo >= npc.lvl,
       );
@@ -31,7 +31,7 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
     if (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO) {
       return roles.some(
         (role) =>
-          role.permissions.includes(Permission.LOOTLOG_READ_TIMERS_HEROES) &&
+          role.permissions.includes(Permission.LOOTLOG_CHAT_HEROES_READ) &&
           role.lvlRangeFrom <= npc.lvl &&
           role.lvlRangeTo >= npc.lvl,
       );

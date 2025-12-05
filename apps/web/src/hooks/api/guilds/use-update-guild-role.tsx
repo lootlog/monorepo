@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import type { Permission } from "@/hooks/api/guilds/use-guild-permissions";
+import type { Permission } from "@lootlog/types";
 
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { AxiosResponse } from "axios";

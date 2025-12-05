@@ -27,7 +27,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           params: ${params}`,
         );
       } else {
-        this.logger.debug(`Query (${duration} ms) [${target}]`);
+        // this.logger.debug(`Query (${duration} ms) [${target}]`);
       }
     });
   }

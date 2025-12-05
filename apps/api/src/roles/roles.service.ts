@@ -14,6 +14,7 @@ import type { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
 import type { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { getPermissionsCachePattern } from 'src/shared/constants/cache.constant';
+import { PermissionResolver } from 'src/shared/permissions/permission-resolver';
 
 @Injectable()
 export class RolesService {
@@ -125,11 +126,16 @@ export class RolesService {
 
     const isOwner = guild.ownerId === discordId;
 
-    if (
-      (role.permissions.includes(Permission.ADMIN) ||
-        data.permissions.includes(Permission.ADMIN)) &&
-      !isOwner
-    ) {
+    const roleIsAdministrative = PermissionResolver.isAdministrative(
+      role.permissions,
+    );
+    const newPermissionsAreAdministrative = PermissionResolver.isAdministrative(
+      data.permissions,
+    );
+    const isAdministrativePermissionChanging =
+      roleIsAdministrative !== newPermissionsAreAdministrative;
+
+    if (isAdministrativePermissionChanging && !isOwner) {
       throw new ForbiddenException();
     }
 

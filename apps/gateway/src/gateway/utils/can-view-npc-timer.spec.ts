@@ -1,6 +1,6 @@
 import { canViewNpcTimer } from './can-view-npc-timer';
 import { NpcType } from '../enums/npc-type.enum';
-import { Permission } from '../../guilds/enum/permission.type';
+import { Permission } from '@lootlog/types';
 import type { Npc } from '../types/npc.type';
 import type { Role } from '../../guilds/types/role.type';
 
@@ -43,7 +43,7 @@ describe('canViewNpcTimer', () => {
     it('should return true when user has TITAN permission and correct level range', () => {
       const npc = createNpc(NpcType.TITAN, 100);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_TITANS], 50, 150),
+        createRole([Permission.LOOTLOG_TIMERS_TITANS_READ], 50, 150),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
@@ -52,7 +52,7 @@ describe('canViewNpcTimer', () => {
     it('should return false when user has TITAN permission but wrong level range', () => {
       const npc = createNpc(NpcType.TITAN, 200);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_TITANS], 50, 150),
+        createRole([Permission.LOOTLOG_TIMERS_TITANS_READ], 50, 150),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(false);
@@ -60,7 +60,7 @@ describe('canViewNpcTimer', () => {
 
     it('should return false when user lacks TITAN permission', () => {
       const npc = createNpc(NpcType.TITAN, 100);
-      const roles = [createRole([Permission.LOOTLOG_READ], 50, 150)];
+      const roles = [createRole([Permission.LOOTLOG_TIMERS_READ], 50, 150)];
 
       expect(canViewNpcTimer(npc, roles)).toBe(false);
     });
@@ -68,7 +68,7 @@ describe('canViewNpcTimer', () => {
     it('should return true when level exactly matches range boundary', () => {
       const npc = createNpc(NpcType.TITAN, 100);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_TITANS], 100, 200),
+        createRole([Permission.LOOTLOG_TIMERS_TITANS_READ], 100, 200),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
@@ -77,8 +77,8 @@ describe('canViewNpcTimer', () => {
     it('should return true when user has multiple roles with one matching', () => {
       const npc = createNpc(NpcType.TITAN, 100);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_TITANS], 1, 50),
-        createRole([Permission.LOOTLOG_READ_TIMERS_TITANS], 50, 150),
+        createRole([Permission.LOOTLOG_TIMERS_TITANS_READ], 1, 50),
+        createRole([Permission.LOOTLOG_TIMERS_TITANS_READ], 50, 150),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
@@ -89,7 +89,7 @@ describe('canViewNpcTimer', () => {
     it('should return true for HERO with correct permissions and level', () => {
       const npc = createNpc(NpcType.HERO, 200);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_HEROES], 150, 250),
+        createRole([Permission.LOOTLOG_TIMERS_HEROES_READ], 150, 250),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
@@ -98,7 +98,7 @@ describe('canViewNpcTimer', () => {
     it('should return true for EVENT_HERO with correct permissions and level', () => {
       const npc = createNpc(NpcType.EVENT_HERO, 200);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_HEROES], 150, 250),
+        createRole([Permission.LOOTLOG_TIMERS_HEROES_READ], 150, 250),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
@@ -107,7 +107,7 @@ describe('canViewNpcTimer', () => {
     it('should return false when user has HERO permission but wrong level', () => {
       const npc = createNpc(NpcType.HERO, 300);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_HEROES], 150, 250),
+        createRole([Permission.LOOTLOG_TIMERS_HEROES_READ], 150, 250),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(false);
@@ -115,7 +115,7 @@ describe('canViewNpcTimer', () => {
 
     it('should return false when user lacks HERO permission', () => {
       const npc = createNpc(NpcType.HERO, 200);
-      const roles = [createRole([Permission.LOOTLOG_READ], 150, 250)];
+      const roles = [createRole([Permission.LOOTLOG_TIMERS_READ], 150, 250)];
 
       expect(canViewNpcTimer(npc, roles)).toBe(false);
     });
@@ -124,21 +124,21 @@ describe('canViewNpcTimer', () => {
   describe('Other NPC types (COMMON, ELITE, etc)', () => {
     it('should return true for COMMON NPC with LOOTLOG_READ permission', () => {
       const npc = createNpc(NpcType.COMMON, 50);
-      const roles = [createRole([Permission.LOOTLOG_READ], 1, 100)];
+      const roles = [createRole([Permission.LOOTLOG_TIMERS_READ], 1, 100)];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
     });
 
     it('should return true for ELITE NPC with correct level range', () => {
       const npc = createNpc(NpcType.ELITE, 75);
-      const roles = [createRole([Permission.LOOTLOG_READ], 50, 100)];
+      const roles = [createRole([Permission.LOOTLOG_TIMERS_READ], 50, 100)];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
     });
 
     it('should return false when level is outside range', () => {
       const npc = createNpc(NpcType.ELITE, 150);
-      const roles = [createRole([Permission.LOOTLOG_READ], 50, 100)];
+      const roles = [createRole([Permission.LOOTLOG_TIMERS_READ], 50, 100)];
 
       expect(canViewNpcTimer(npc, roles)).toBe(false);
     });
@@ -153,13 +153,13 @@ describe('canViewNpcTimer', () => {
 
   describe('Edge cases', () => {
     it('should return false when npc is null', () => {
-      const roles = [createRole([Permission.LOOTLOG_READ], 1, 999)];
+      const roles = [createRole([Permission.LOOTLOG_TIMERS_READ], 1, 999)];
 
       expect(canViewNpcTimer(null, roles)).toBe(false);
     });
 
     it('should return false when npc is undefined', () => {
-      const roles = [createRole([Permission.LOOTLOG_READ], 1, 999)];
+      const roles = [createRole([Permission.LOOTLOG_TIMERS_READ], 1, 999)];
 
       expect(canViewNpcTimer(undefined, roles)).toBe(false);
     });
@@ -185,8 +185,8 @@ describe('canViewNpcTimer', () => {
     it('should handle user with both general and specific permissions', () => {
       const npc = createNpc(NpcType.TITAN, 100);
       const roles = [
-        createRole([Permission.LOOTLOG_READ], 1, 50),
-        createRole([Permission.LOOTLOG_READ_TIMERS_TITANS], 80, 120),
+        createRole([Permission.LOOTLOG_TIMERS_READ], 1, 50),
+        createRole([Permission.LOOTLOG_TIMERS_TITANS_READ], 80, 120),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(true);
@@ -195,8 +195,8 @@ describe('canViewNpcTimer', () => {
     it('should prioritize specific TITAN permissions over general', () => {
       const npc = createNpc(NpcType.TITAN, 100);
       const roles = [
-        createRole([Permission.LOOTLOG_READ], 50, 150),
-        createRole([Permission.LOOTLOG_READ_TIMERS_TITANS], 1, 50),
+        createRole([Permission.LOOTLOG_TIMERS_READ], 50, 150),
+        createRole([Permission.LOOTLOG_TIMERS_TITANS_READ], 1, 50),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(false);
@@ -205,8 +205,8 @@ describe('canViewNpcTimer', () => {
     it('should handle multiple roles with non-overlapping ranges', () => {
       const npc = createNpc(NpcType.HERO, 85);
       const roles = [
-        createRole([Permission.LOOTLOG_READ_TIMERS_HEROES], 1, 80),
-        createRole([Permission.LOOTLOG_READ_TIMERS_HEROES], 90, 200),
+        createRole([Permission.LOOTLOG_TIMERS_HEROES_READ], 1, 80),
+        createRole([Permission.LOOTLOG_TIMERS_HEROES_READ], 90, 200),
       ];
 
       expect(canViewNpcTimer(npc, roles)).toBe(false);
@@ -217,9 +217,9 @@ describe('canViewNpcTimer', () => {
       const roles = [
         createRole(
           [
-            Permission.LOOTLOG_READ,
-            Permission.LOOTLOG_READ_TIMERS_TITANS,
-            Permission.LOOTLOG_WRITE,
+            Permission.LOOTLOG_TIMERS_READ,
+            Permission.LOOTLOG_TIMERS_TITANS_READ,
+            Permission.LOOTLOG_TIMERS_WRITE,
           ],
           50,
           150,
