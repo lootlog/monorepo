@@ -11,8 +11,8 @@ const mockToggleColorFiltersEnabled = vi.fn();
 const mockSetTimersSortOrder = vi.fn();
 
 vi.mock("@/hooks/api/use-timers");
-vi.mock("@/hooks/gateway/use-gateway");
 vi.mock("@/hooks/api/use-guild-permissions");
+vi.mock("@/hooks/gateway/use-gateway");
 vi.mock("@/store/global.store");
 vi.mock("@/store/windows.store");
 vi.mock("@/store/timers.store");
@@ -111,9 +111,8 @@ describe("Timers Component", () => {
     vi.clearAllMocks();
 
     const { useTimers } = await import("@/hooks/api/use-timers");
-    const { useGuildPermissions } = await import(
-      "@/hooks/api/use-guild-permissions"
-    );
+    const { useGuildPermissions } =
+      await import("@/hooks/api/use-guild-permissions");
     const { useGlobalStore } = await import("@/store/global.store");
     const { useWindowsStore } = await import("@/store/windows.store");
     const { useTimersStore } = await import("@/store/timers.store");
@@ -459,10 +458,9 @@ describe("Timers Component", () => {
 
   describe("8. Permissions & Authorization", () => {
     it("8.1 should enable delete when user has permissions (HIGH PRIORITY)", async () => {
-      const { useGuildPermissions } = await import(
-        "@/hooks/api/use-guild-permissions"
-      );
-      const { Permission } = await import("@/hooks/api/use-guild-permissions");
+      const { useGuildPermissions } =
+        await import("@/hooks/api/use-guild-permissions");
+      const { Permission } = await import("@lootlog/types");
 
       vi.mocked(useGuildPermissions).mockReturnValue({
         data: [Permission.LOOTLOG_MANAGE],

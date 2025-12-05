@@ -87,7 +87,7 @@ export class GuildsController {
     return this.guildsService.getManageableUserGuilds(discordId, userId);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(':guildId')
   @ApiOperation({
@@ -115,7 +115,7 @@ export class GuildsController {
     return plainToInstance(GuildEntity, updatedGuild);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(':guildId/config')
   async getGuildConfig(@GuildData() guild: Guild) {
@@ -123,14 +123,14 @@ export class GuildsController {
     return plainToInstance(GuildEntity, guildData);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(':guildId/worlds')
   async getWorldsByGuildId(@GuildData() guild: Guild) {
     return this.guildsService.getWorldsByGuildId(guild.id);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get(':guildId/permissions')
   async getGuildPermissions(@MemberPermissions() permissions: Permission[]) {

@@ -67,7 +67,7 @@ export class TimersController {
     return plainToInstance(TimerEntity, timers);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_TIMERS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/timers')
   @ApiOperation({
@@ -106,7 +106,7 @@ export class TimersController {
     return plainToInstance(TimerEntity, timers);
   }
 
-  @Permissions(Permission.LOOTLOG_READ)
+  @Permissions(Permission.LOOTLOG_TIMERS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/timers/npcs/search')
   @ApiOperation({
@@ -146,7 +146,7 @@ export class TimersController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_WRITE)
+  @Permissions(Permission.LOOTLOG_TIMERS_RESET)
   @UseGuards(PermissionsGuard)
   @Patch('/guilds/:guildId/timers/:npcId/reset')
   @ApiOperation({
@@ -207,7 +207,7 @@ export class TimersController {
     return this.timersService.deleteTimer(guildId, npcId, world);
   }
 
-  @Permissions(Permission.LOOTLOG_WRITE)
+  @Permissions(Permission.LOOTLOG_TIMERS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/timers/manual')
   @ApiOperation({
@@ -232,7 +232,7 @@ export class TimersController {
     return this.timersService.createManualTimer(discordId, guildId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_WRITE)
+  @Permissions(Permission.LOOTLOG_TIMERS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/timers')
   @ApiOperation({

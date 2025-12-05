@@ -5,14 +5,12 @@ import { useEffect, useRef, type FC } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-  Permission,
-  useGuildPermissions,
-} from "@/hooks/api/guilds/use-guild-permissions";
+import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootsViewMode } from "@/hooks/use-loots-view-mode";
+import { Permission } from "@lootlog/types";
 
 const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 const LOOTS_PAGE_LIMIT = 20;

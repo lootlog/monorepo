@@ -239,7 +239,7 @@ export class LootQueryService {
     },
   ): Prisma.LootWhereInput {
     const filteredRoles = roles.filter((role) =>
-      role.permissions.includes(Permission.LOOTLOG_READ),
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
     );
     const administrativeUser = isAdministrativeUser(permissions);
 
@@ -338,10 +338,10 @@ export class LootQueryService {
     role: Role,
   ): Prisma.NpcSnapshotWhereInput | null {
     const hasReadTitans = role.permissions?.includes(
-      Permission.LOOTLOG_READ_LOOTS_TITANS,
+      Permission.LOOTLOG_LOOTS_TITANS_READ,
     );
     const hasReadHeroes = role.permissions?.includes(
-      Permission.LOOTLOG_READ_LOOTS_HEROES,
+      Permission.LOOTLOG_LOOTS_HEROES_READ,
     );
 
     const lvlFrom = role.lvlRangeFrom ?? 0;

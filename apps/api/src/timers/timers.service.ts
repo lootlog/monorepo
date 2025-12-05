@@ -356,7 +356,7 @@ export class TimersService implements OnModuleInit {
     const now = new Date();
     const guilds = await this.guildsService.getGuildsForRequiredPermissions(
       discordId,
-      [Permission.LOOTLOG_READ],
+      [Permission.LOOTLOG_TIMERS_READ],
     );
 
     if (guilds.length === 0) throw new ForbiddenException();

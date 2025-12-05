@@ -1,9 +1,6 @@
 import { Button } from "@lootlog/ui/components/button";
 import { useSidebar } from "@lootlog/ui/components/sidebar";
-import {
-  Permission,
-  useGuildPermissions,
-} from "@/hooks/api/guilds/use-guild-permissions";
+import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import {
   BarChart4,
@@ -26,6 +23,7 @@ import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
 import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
+import { Permission } from "@lootlog/types";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -41,28 +39,40 @@ export const GuildsSidebarNav: FC = () => {
       icon: <ClipboardList className="mr-1 h-4 w-4" />,
       path: "",
       available: true,
-      enabled: true,
+      enabled: Boolean(
+        permissions?.includes(Permission.LOOTLOG_LOOTS_READ) ||
+        permissions?.includes(Permission.OWNER),
+      ),
     },
     {
       label: "Timery",
       icon: <Clock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.timers,
       available: true,
-      enabled: true,
+      enabled: Boolean(
+        permissions?.includes(Permission.LOOTLOG_TIMERS_READ) ||
+        permissions?.includes(Permission.OWNER),
+      ),
     },
     {
       label: "Rezerwacje",
       icon: <CalendarClock className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.reservations,
       available: true,
-      enabled: true,
+      enabled: Boolean(
+        permissions?.includes(Permission.LOOTLOG_RESERVATIONS_READ) ||
+        permissions?.includes(Permission.OWNER),
+      ),
     },
     {
       label: "Statystyki",
       icon: <BarChart4 className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.stats,
       available: false,
-      enabled: true,
+      enabled: Boolean(
+        permissions?.includes(Permission.LOOTLOG_LOOTS_READ) ||
+        permissions?.includes(Permission.OWNER),
+      ),
     },
     {
       divided: true,
@@ -72,7 +82,7 @@ export const GuildsSidebarNav: FC = () => {
       available: true,
       enabled: Boolean(
         permissions?.includes(Permission.ADMIN) ||
-          permissions?.includes(Permission.OWNER),
+        permissions?.includes(Permission.OWNER),
       ),
     },
     {
@@ -82,7 +92,7 @@ export const GuildsSidebarNav: FC = () => {
       available: true,
       enabled: Boolean(
         permissions?.includes(Permission.ADMIN) ||
-          permissions?.includes(Permission.OWNER),
+        permissions?.includes(Permission.OWNER),
       ),
     },
   ];

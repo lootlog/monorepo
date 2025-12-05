@@ -18,7 +18,7 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
     if (npcType === NpcType.TITAN) {
       return roles.some(
         (role) =>
-          role.permissions.includes(Permission.LOOTLOG_READ_TIMERS_TITANS) &&
+          role.permissions.includes(Permission.LOOTLOG_CHAT_TITANS_READ) &&
           role.lvlRangeFrom <= npc.lvl &&
           role.lvlRangeTo >= npc.lvl,
       );
@@ -27,7 +27,7 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
     if (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO) {
       return roles.some(
         (role) =>
-          role.permissions.includes(Permission.LOOTLOG_READ_TIMERS_HEROES) &&
+          role.permissions.includes(Permission.LOOTLOG_CHAT_HEROES_READ) &&
           role.lvlRangeFrom <= npc.lvl &&
           role.lvlRangeTo >= npc.lvl,
       );

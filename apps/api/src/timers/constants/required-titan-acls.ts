@@ -1,8 +1,7 @@
 import { Permission } from 'generated/client';
 
 export const ELIGIBLE_TITAN_READ_ACL = [
-  Permission.LOOTLOG_READ_TIMERS_TITANS,
+  Permission.LOOTLOG_TIMERS_TITANS_READ,
   Permission.OWNER,
   Permission.ADMIN,
-  Permission.LOOTLOG_MANAGE,
 ];

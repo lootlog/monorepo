@@ -16,80 +16,165 @@ import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { useEffect, type FC } from "react";
 import { useTranslation } from "react-i18next";
 import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
-import { Permission } from "@/hooks/api/guilds/use-guild-permissions";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUpdateGuildRole } from "@/hooks/api/guilds/use-update-guild-role";
+import { Permission } from "@lootlog/types";
 
-const PERMISSIONS = [
+const PERMISSION_GROUPS = [
   {
-    key: Permission.ADMIN,
-    description: "Pozwala zarządzać całym lootlogiem np. nadawanie uprawnień",
-    border: true,
+    name: "Dostęp",
+    description: "Podstawowe uprawnienie wymagane do korzystania z aplikacji",
+    permissions: [
+      {
+        key: Permission.LOOTLOG_ACCESS,
+        description:
+          "Dostęp do aplikacji - podstawowe uprawnienie wymagane do logowania",
+      },
+    ],
   },
   {
-    key: Permission.LOOTLOG_MANAGE,
-    description: "Pozwala zarządzać lootlogiem np. usuwanie lub edycja lootów",
-    border: true,
+    name: "Administracja",
+    description: "Uprawnienia administracyjne do zarządzania lootlogiem",
+    permissions: [
+      {
+        key: Permission.ADMIN,
+        description:
+          "Pozwala zarządzać całym lootlogiem np. nadawanie uprawnień",
+      },
+      {
+        key: Permission.LOOTLOG_MANAGE,
+        description:
+          "Pozwala zarządzać lootlogiem np. usuwanie lub edycja lootów",
+      },
+    ],
   },
   {
-    key: Permission.LOOTLOG_READ,
-    description: "Pozwala na dostęp do lootloga i przeglądanie go",
-    border: true,
+    name: "Łupy",
+    description: "Uprawnienia związane z przeglądaniem i zapisywaniem łupów",
+    permissions: [
+      {
+        key: Permission.LOOTLOG_LOOTS_READ,
+        description: "Pozwala na przeglądanie lootów i komentarzy",
+      },
+      {
+        key: Permission.LOOTLOG_LOOTS_WRITE,
+        description: "Pozwala na zapisywanie lootów w lootlogu",
+      },
+      {
+        key: Permission.LOOTLOG_LOOTS_TITANS_READ,
+        description: "Dostęp do lootów tytanów",
+      },
+      {
+        key: Permission.LOOTLOG_LOOTS_HEROES_READ,
+        description: "Dostęp do lootów herosów",
+      },
+    ],
   },
   {
-    key: Permission.LOOTLOG_WRITE,
-    description: "Pozwala na zapisywanie lootów i timerów w lootlogu",
-    border: true,
+    name: "Timery",
+    description: "Uprawnienia związane z timerami bossów",
+    permissions: [
+      {
+        key: Permission.LOOTLOG_TIMERS_READ,
+        description: "Pozwala na przeglądanie timerów bossów",
+      },
+      {
+        key: Permission.LOOTLOG_TIMERS_WRITE,
+        description: "Pozwala na zapisywanie timerów w lootlogu",
+      },
+      {
+        key: Permission.LOOTLOG_TIMERS_RESET,
+        description: "Pozwala na resetowanie timerów",
+      },
+      {
+        key: Permission.LOOTLOG_TIMERS_DELETE,
+        description: "Pozwala na usuwanie timerów",
+      },
+      {
+        key: Permission.LOOTLOG_TIMERS_TITANS_READ,
+        description: "Dostęp do timerów tytanów",
+      },
+      {
+        key: Permission.LOOTLOG_TIMERS_HEROES_READ,
+        description: "Dostęp do timerów herosów",
+      },
+    ],
   },
   {
-    key: Permission.LOOTLOG_RESERVATIONS,
-    description: "Pozwala na dostęp do rezerwacji",
-    border: true,
+    name: "Rezerwacje",
+    description: "Uprawnienia związane z rezerwacjami",
+    permissions: [
+      {
+        key: Permission.LOOTLOG_RESERVATIONS_READ,
+        description: "Pozwala na przeglądanie rezerwacji",
+      },
+      {
+        key: Permission.LOOTLOG_RESERVATIONS_WRITE,
+        description: "Pozwala na tworzenie i edycję rezerwacji",
+      },
+    ],
   },
   {
-    key: Permission.LOOTLOG_READ_LOOTS_TITANS,
-    description: "Dostęp do lootów tytanów",
-    border: true,
+    name: "Członkowie",
+    description: "Uprawnienia związane z listą członków gildii",
+    permissions: [
+      {
+        key: Permission.LOOTLOG_MEMBERS_READ,
+        description: "Pozwala na przeglądanie listy członków gildii",
+      },
+    ],
   },
   {
-    key: Permission.LOOTLOG_READ_TIMERS_TITANS,
-    description: "Dostęp do timerów tytanów",
-    border: true,
+    name: "Czat",
+    description: "Uprawnienia związane z czatem lootloga",
+    permissions: [
+      {
+        key: Permission.LOOTLOG_CHAT_READ,
+        description: "Pozwala na czytanie wiadomości z lootloga",
+      },
+      {
+        key: Permission.LOOTLOG_CHAT_WRITE,
+        description: "Pozwala na pisanie wiadomości do lootloga",
+      },
+      {
+        key: Permission.LOOTLOG_CHAT_TITANS_READ,
+        description: "Dostęp do czatu tytanów",
+      },
+      {
+        key: Permission.LOOTLOG_CHAT_HEROES_READ,
+        description: "Dostęp do czatu herosów",
+      },
+    ],
   },
   {
-    key: Permission.LOOTLOG_READ_LOOTS_HEROES,
-    description: "Dostęp do lootów herosów",
-    border: true,
+    name: "Powiadomienia",
+    description: "Uprawnienia związane z powiadomieniami",
+    permissions: [
+      {
+        key: Permission.LOOTLOG_NOTIFICATIONS_READ,
+        description: "Pozwala na czytanie powiadomień z lootloga",
+      },
+      {
+        key: Permission.LOOTLOG_NOTIFICATIONS_SEND,
+        description: "Pozwala na wysyłanie powiadomień z lootloga",
+      },
+      {
+        key: Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+        description: "Dostęp do powiadomień o tytanach",
+      },
+      {
+        key: Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+        description: "Dostęp do powiadomień o herosach",
+      },
+    ],
   },
-  {
-    key: Permission.LOOTLOG_READ_TIMERS_HEROES,
-    description: "Dostęp do timerów herosów",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_CHAT_READ,
-    description: "Pozwala na czytanie wiadomości z lootloga",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_CHAT_WRITE,
-    description: "Pozwala na pisanie wiadomości do lootloga",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_NOTIFICATIONS_SEND,
-    description: "Pozwala na wysyłanie powiadomień z lootloga",
-    border: true,
-  },
-  {
-    key: Permission.LOOTLOG_NOTIFICATIONS_READ,
-    description: "Pozwala na czytanie powiadomień z lootloga",
-    border: true,
-  },
-] as const;
+];
+
+// Flatten for form schema and submission
+const PERMISSIONS = PERMISSION_GROUPS.flatMap((group) => group.permissions);
 
 const DEFAULT_LVL_RANGE_FROM = "0";
 const DEFAULT_LVL_RANGE_TO = "500";
@@ -261,32 +346,39 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
             )}
           />
         </div>
-        <div className="px-6 p-2 border-b">
-          <Label>Ustawienia dostępów</Label>
-        </div>
-        {PERMISSIONS.map((perm) => (
-          <FormField
-            key={perm.key}
-            control={form.control}
-            name={perm.key as unknown as keyof FormSchemaType}
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 px-6 border-b hover:bg-secondary">
-                <FormControl>
-                  <Checkbox
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="cursor-pointer">
-                    {t(`permissions.${perm.key}`)}
-                  </FormLabel>
-                  <FormDescription>{perm.description}</FormDescription>
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
+        {PERMISSION_GROUPS.map((group) => (
+          <div key={group.name}>
+            <div className="px-6 py-3 bg-secondary/50 border-b">
+              <Label className="text-sm font-semibold">{group.name}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {group.description}
+              </p>
+            </div>
+            {group.permissions.map((perm) => (
+              <FormField
+                key={perm.key}
+                control={form.control}
+                name={perm.key as unknown as keyof FormSchemaType}
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 px-6 border-b hover:bg-secondary">
+                    <FormControl>
+                      <Checkbox
+                        checked={!!field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="cursor-pointer">
+                        {t(`permissions.${perm.key}`)}
+                      </FormLabel>
+                      <FormDescription>{perm.description}</FormDescription>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
         ))}
 
         <div className="h-20 md:h-24" />

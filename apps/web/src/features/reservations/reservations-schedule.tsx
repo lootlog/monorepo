@@ -3,10 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
-import {
-  Permission,
-  useGuildPermissions,
-} from "@/hooks/api/guilds/use-guild-permissions";
+import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import {
   Avatar,
   AvatarFallback,
@@ -57,6 +54,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
+import { Permission } from "@lootlog/types";
 
 const LABEL_COLUMN_WIDTH = 80;
 

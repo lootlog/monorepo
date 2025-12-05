@@ -6,12 +6,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from './permissions.decorator';
 import { GuildsService } from 'src/guilds/guilds.service';
-import type { Permission } from 'generated/client';
-import { RedisService } from 'src/lib/redis/redis.service';
-import {
-  getPermissionsCacheKey,
-  PERMISSIONS_CACHE_TTL_SECONDS,
-} from 'src/shared/constants/cache.constant';
+import { Permission } from 'generated/client';
 
 interface RequestWithPermissions {
   userId?: string;
@@ -19,7 +14,7 @@ interface RequestWithPermissions {
   params: { guildId?: string };
   permissions?: Permission[];
   guild?: unknown;
-  roles?: unknown;
+  roles?: unknown[];
   member?: unknown;
 }
 
@@ -28,7 +23,6 @@ export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private guildsService: GuildsService,
-    private redisService: RedisService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -68,41 +62,25 @@ export class PermissionsGuard implements CanActivate {
     userId: string;
     request: RequestWithPermissions;
   }) {
-    const { requiredPermissions, discordId, guildId, userId, request } =
-      options;
+    const {
+      requiredPermissions = [],
+      discordId,
+      guildId,
+      userId,
+      request,
+    } = options;
 
-    const cacheKey = getPermissionsCacheKey(userId, guildId);
-    const cached = await this.redisService.get(cacheKey);
+    const context = await this.guildsService.getMemberContext({
+      discordId,
+      userId,
+      guildId,
+    });
 
-    if (cached) {
-      const data = JSON.parse(cached);
-      const permissionsSet = new Set(data.permissions);
-      const hasPermission = requiredPermissions.some((permission) =>
-        permissionsSet.has(permission),
-      );
-
-      if (!hasPermission) {
-        return false;
-      }
-
-      request.permissions = data.permissions;
-      request.guild = data.guild;
-      request.roles = data.roles;
-      request.member = data.member;
-
-      return true;
-    }
-
-    const { permissions, guild, roles, member } =
-      await this.guildsService.getGuildPermissions({
-        discordId,
-        userId,
-        guildId,
-      });
-
-    if (!permissions) {
+    if (!context) {
       return false;
     }
+
+    const { guild, member, roles, permissions } = context;
 
     const permissionsSet = new Set(permissions);
     const hasPermission = requiredPermissions.some((permission) =>
@@ -112,12 +90,6 @@ export class PermissionsGuard implements CanActivate {
     if (!hasPermission) {
       return false;
     }
-
-    await this.redisService.set(
-      cacheKey,
-      JSON.stringify({ permissions, guild, roles, member }),
-      PERMISSIONS_CACHE_TTL_SECONDS,
-    );
 
     request.permissions = permissions;
     request.guild = guild;

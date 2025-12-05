@@ -1,5 +1,5 @@
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
-import { Permission } from "@/hooks/api/guilds/use-guild-permissions";
+import { Permission } from "@lootlog/types";
 
 import { useTranslation } from "react-i18next";
 

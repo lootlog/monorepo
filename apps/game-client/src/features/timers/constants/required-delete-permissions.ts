@@ -1,4 +1,4 @@
-import { Permission } from "@/hooks/api/use-guild-permissions";
+import { Permission } from "@lootlog/types";
 
 export const REQUIRED_DELETE_PERMISSIONS = [
   Permission.LOOTLOG_MANAGE,
