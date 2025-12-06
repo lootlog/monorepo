@@ -134,7 +134,11 @@ export const LootFiltersHeader = ({
           </div>
         )}
 
-        {isMobile && <WorldSwitcher className="pr-3" />}
+        {isMobile && (
+          <div className="pr-3">
+            <WorldSwitcher />
+          </div>
+        )}
       </div>
 
       {isMobile && (
