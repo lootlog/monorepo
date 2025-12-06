@@ -46,6 +46,8 @@ export const ItemTile: FC<ItemTileProps> = ({
     const stats = parseItemStats(stat);
     const values = mapStatsToDisplayValues(stats);
 
+    console.log(values);
+
     return Object.entries(values).map(([key, value], i) => {
       if (value.length === 0) {
         return null;
@@ -76,10 +78,7 @@ export const ItemTile: FC<ItemTileProps> = ({
                   };
 
             return (
-              <div
-                key={v.key}
-                className="text-xs whitespace-pre-line text-foreground"
-              >
+              <div key={v.key} className="text-xs text-foreground">
                 <Trans
                   i18nKey={`itemStats.${v.key}`}
                   values={values}
