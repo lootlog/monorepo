@@ -78,7 +78,12 @@ export const GuildLayout: FC = () => {
         breadcrumbs: [
           { label: guild?.name || "Gildia", path: guildBase },
           { label: "Rezerwacje", path: guildReservations },
-          { label: reservationId, path: null },
+          {
+            label: reservationId
+              ? reservationId.charAt(0).toUpperCase() + reservationId.slice(1)
+              : reservationId,
+            path: null,
+          },
         ],
         showBack: true,
         backPath: guildReservations,
