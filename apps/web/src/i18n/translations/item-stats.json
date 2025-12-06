@@ -24,7 +24,7 @@
   "hpbon": "<value>+{{value}}</value> życia za 1 pkt siły",
   "pierce": "Przebicie pancerza <value>+{{value}}%</value>",
   "teleport": "<description>Teleportuje gracza na mapę: \n {{value4}} ({{value2}}, {{value3}})</description>",
-  "gold": "Złoto <value>+{{value}}</value>",
+  "gold": "Złoto <value>+<gold>{{value}}</gold></value>",
   "acdmg": "Niszczy <value>{{value}}</value> punktów pancerza podczas ciosu",
   "manabon": "Mana <value>+{{value}}</value>",
   "evade": "Unik <value>+{{value}}</value>",
