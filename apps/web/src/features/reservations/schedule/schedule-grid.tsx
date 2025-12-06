@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { DAYS, HOURS, LABEL_COLUMN_WIDTH, MIN_ROW_HEIGHT } from "./constants";
+import {
+  DAYS,
+  HOURS,
+  LABEL_COLUMN_WIDTH,
+  MIN_ROW_HEIGHT,
+  HEADER_HEIGHT,
+} from "./constants";
 import type { ReservationSegment } from "./types";
 import { ReservationSegmentCard } from "./reservation-segment-card";
 import { NowIndicator } from "./now-indicator";
 import { ReservationQuickAddPopover } from "./reservation-quick-add-popover";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { cn } from "@lootlog/ui/lib/utils";
 
 type ScheduleGridProps = {
   weekStart: Date;
@@ -32,13 +39,18 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   onDeleteReservation,
   reservationKey,
 }) => {
-  const nowIndicatorRef = useRef<HTMLDivElement>(null);
+  const [nowIndicatorRef, setNowIndicatorRef] = useState<HTMLDivElement | null>(
+    null,
+  );
 
   useEffect(() => {
-    if (nowIndicatorRef.current) {
-      nowIndicatorRef.current.scrollIntoView({ block: "center" });
+    if (nowIndicatorRef) {
+      nowIndicatorRef.scrollIntoView({
+        block: "center",
+        inline: "center",
+      });
     }
-  }, [weekStart]);
+  }, [nowIndicatorRef]);
 
   const [selection, setSelection] = useState<{
     start: { dayIdx: number; minutes: number };
@@ -56,9 +68,10 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const y = e.clientY - rect.top - HEADER_HEIGHT; // Account for header
 
     if (x < LABEL_COLUMN_WIDTH) return; // Ignore label column
+    if (y < 0) return; // Ignore header click
 
     const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
     const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
@@ -106,8 +119,8 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     if (!isSelecting) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      if (x >= LABEL_COLUMN_WIDTH) {
+      const y = e.clientY - rect.top - HEADER_HEIGHT; // Account for header
+      if (x >= LABEL_COLUMN_WIDTH && y >= 0) {
         const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
         const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
         const totalMinutes = Math.floor((y / MIN_ROW_HEIGHT) * 60);
@@ -148,7 +161,10 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const y = e.clientY - rect.top - HEADER_HEIGHT; // Account for header
+
+    if (x < LABEL_COLUMN_WIDTH) return; // Ignore label column
+    if (y < 0) return; // Ignore header click
 
     const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
     const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
@@ -327,8 +343,8 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           const segEndMins =
             (segEnd.getTime() - current.getTime()) / (1000 * 60);
 
-          const top = (startMins / 60) * MIN_ROW_HEIGHT;
-          const height = ((segEndMins - startMins) / 60) * MIN_ROW_HEIGHT;
+          const top = HEADER_HEIGHT + (startMins / 60) * MIN_ROW_HEIGHT; // Offset by header
+          const height = ((segEndMins - startMins) / 60) * MIN_ROW_HEIGHT; // Offset by header? No, height is duration.
 
           const dayWidthExpr = `(100% - ${LABEL_COLUMN_WIDTH}px) / ${DAYS.length}`;
           const left = `calc(${LABEL_COLUMN_WIDTH}px + (${dayIdx} * ${dayWidthExpr}))`;
@@ -352,21 +368,58 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   return (
     <ScrollArea className="flex-1 min-h-0 max-h-full select-none">
       <div
-        className="relative grid w-full cursor-default"
+        className="relative grid w-full cursor-default min-w-[800px] md:min-w-0" // Min width to force horizontal scroll on mobile
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         style={{
-          gridTemplateRows: `repeat(${HOURS.length}, minmax(${MIN_ROW_HEIGHT}px, 1fr))`,
+          // Add extra row for header
+          gridTemplateRows: `${HEADER_HEIGHT}px repeat(${HOURS.length}, minmax(${MIN_ROW_HEIGHT}px, 1fr))`,
           gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px repeat(${DAYS.length}, minmax(0, 1fr))`,
         }}
       >
+        {/* Header Row */}
+        <div
+          className="sticky top-[-1px] left-0 z-50 bg-background border-b border-border border-r"
+          style={{ width: LABEL_COLUMN_WIDTH, height: HEADER_HEIGHT }}
+        />
+        {DAYS.map((day, idx) => {
+          const date = new Date(weekStart);
+          date.setDate(weekStart.getDate() + idx);
+          const dayNumber = date.getDate();
+          const isToday = new Date().toDateString() === date.toDateString();
+
+          return (
+            <div
+              key={`header-${day}`}
+              className={cn(
+                "sticky top-[-1px] z-40 flex flex-col items-center justify-center py-2 border-b border-r border-border bg-background",
+              )}
+            >
+              {isToday && (
+                <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+              )}
+              <span className="text-xs text-muted-foreground relative z-10">
+                {day}
+              </span>
+              <span
+                className={cn(
+                  "text-xs font-semibold mt-1 relative z-10",
+                  isToday ? "text-primary" : "text-foreground",
+                )}
+              >
+                {dayNumber}
+              </span>
+            </div>
+          );
+        })}
+
         {HOURS.map((hour) => [
           <div
             key={`label-${hour}`}
-            className="text-xs font-medium text-center px-2 text-muted-foreground border-b border-border flex items-center justify-center bg-muted"
-            style={{ minWidth: 0, minHeight: MIN_ROW_HEIGHT }}
+            className="sticky left-0 z-40 text-xs font-medium text-center px-2 text-muted-foreground border-b border-r border-border flex items-center justify-center bg-background"
+            style={{ width: LABEL_COLUMN_WIDTH, height: MIN_ROW_HEIGHT }}
           >
             {hour}
           </div>,
@@ -377,7 +430,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             return (
               <div
                 key={`${hour}-${day}`}
-                className={`relative border-l border-b border-border ${backgroundClass}`}
+                className={`relative border-b border-r border-border ${backgroundClass}`}
                 style={{
                   minWidth: 0,
                   minHeight: MIN_ROW_HEIGHT,
@@ -388,7 +441,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           }),
         ])}
 
-        <NowIndicator ref={nowIndicatorRef} weekStart={weekStart} />
+        <NowIndicator ref={setNowIndicatorRef} weekStart={weekStart} />
 
         {selection &&
           getSelectionSegments().map((style, i) => (

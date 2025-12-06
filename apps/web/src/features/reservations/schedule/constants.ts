@@ -1,7 +1,10 @@
-export const LABEL_COLUMN_WIDTH = 80;
+// Grid dimensions
+export const LABEL_COLUMN_WIDTH = 50;
 export const MIN_ROW_HEIGHT = 56;
+export const HEADER_HEIGHT = 56;
 
-export const DAYS = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"] as const;
+// Data
+export const DAYS = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"];
 
 export const HOURS = Array.from(
   { length: 24 },

@@ -6,11 +6,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@lootlog/ui/components/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@lootlog/ui/components/drawer";
 import { Button } from "@lootlog/ui/components/button";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { DatePicker } from "../date-picker";
 import { toast } from "sonner";
 import { useCreateReservation } from "@/hooks/api/reservations/use-create-reservation";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 
 type CreateReservationDialogProps = {
   open: boolean;
@@ -22,6 +30,7 @@ type CreateReservationDialogProps = {
 export const CreateReservationDialog: React.FC<
   CreateReservationDialogProps
 > = ({ open, onOpenChange, reservationKey, currentUserId }) => {
+  const isMobile = useIsMobile();
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
   const [isFromPickerOpen, setIsFromPickerOpen] = useState(false);
@@ -140,6 +149,85 @@ export const CreateReservationDialog: React.FC<
     onOpenChange,
   ]);
 
+  const renderFormContent = () => (
+    <div className="space-y-4 px-3 mb-4 mt-3">
+      <DatePicker
+        label="Data rozpoczęcia"
+        placeholder="Wybierz początek rezerwacji"
+        date={fromDate}
+        setDate={(date) => setFromDate(date)}
+        open={isFromPickerOpen}
+        setOpen={setIsFromPickerOpen}
+        onClear={() => setFromDate(undefined)}
+      />
+      <DatePicker
+        label="Data zakończenia"
+        placeholder="Wybierz koniec rezerwacji"
+        date={toDate}
+        setDate={(date) => setToDate(date)}
+        open={isToPickerOpen}
+        setOpen={setIsToPickerOpen}
+        onClear={() => setToDate(undefined)}
+      />
+      <div className="space-y-2">
+        <label
+          className="text-xs font-semibold text-muted-foreground"
+          htmlFor="reservation-comment"
+        >
+          Komentarz (opcjonalnie)
+        </label>
+        <Textarea
+          id="reservation-comment"
+          maxLength={128}
+          placeholder="Dodaj krótki komentarz do rezerwacji"
+          value={comment}
+          onChange={(event) => setComment(event.target.value)}
+          className="min-h-[58px] max-h-[58px] resize-none"
+          rows={2}
+        />
+        <p className="text-[10px] text-muted-foreground text-right">
+          {comment.trim().length}/{128}
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderFooter = () => (
+    <>
+      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+        Anuluj
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        disabled={
+          !fromDate ||
+          !toDate ||
+          !reservationKey ||
+          !currentUserId ||
+          isCreating
+        }
+        onClick={handleCreateReservation}
+      >
+        Zapisz
+      </Button>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Dodaj rezerwację</DrawerTitle>
+          </DrawerHeader>
+          {renderFormContent()}
+          <DrawerFooter>{renderFooter()}</DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -149,69 +237,8 @@ export const CreateReservationDialog: React.FC<
         <DialogHeader>
           <DialogTitle>Dodaj rezerwację</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 mt-3 ml-3 mr-3 mb-4">
-          <DatePicker
-            label="Data rozpoczęcia"
-            placeholder="Wybierz początek rezerwacji"
-            date={fromDate}
-            setDate={(date) => setFromDate(date)}
-            open={isFromPickerOpen}
-            setOpen={setIsFromPickerOpen}
-            onClear={() => setFromDate(undefined)}
-          />
-          <DatePicker
-            label="Data zakończenia"
-            placeholder="Wybierz koniec rezerwacji"
-            date={toDate}
-            setDate={(date) => setToDate(date)}
-            open={isToPickerOpen}
-            setOpen={setIsToPickerOpen}
-            onClear={() => setToDate(undefined)}
-          />
-          <div className="space-y-2">
-            <label
-              className="text-xs font-semibold text-muted-foreground"
-              htmlFor="reservation-comment"
-            >
-              Komentarz (opcjonalnie)
-            </label>
-            <Textarea
-              id="reservation-comment"
-              maxLength={128}
-              placeholder="Dodaj krótki komentarz do rezerwacji"
-              value={comment}
-              onChange={(event) => setComment(event.target.value)}
-              className="min-h-[58px] max-h-[58px] resize-none"
-              rows={2}
-            />
-            <p className="text-[10px] text-muted-foreground text-right">
-              {comment.trim().length}/{128}
-            </p>
-          </div>
-        </div>
-        <DialogFooter className="mt-0 mb-2 mr-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-          >
-            Anuluj
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={
-              !fromDate ||
-              !toDate ||
-              !reservationKey ||
-              !currentUserId ||
-              isCreating
-            }
-            onClick={handleCreateReservation}
-          >
-            Zapisz
-          </Button>
-        </DialogFooter>
+        {renderFormContent()}
+        <DialogFooter className="mr-3 mb-2">{renderFooter()}</DialogFooter>
       </DialogContent>
     </Dialog>
   );
