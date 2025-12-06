@@ -40,6 +40,11 @@ const getNextReservation = (
   return futureReservations[0] ?? null;
 };
 
+const getActiveReservationsCount = (reservations: Reservation[]): number => {
+  const now = new Date();
+  return reservations.filter((r) => new Date(r.toDate) >= now).length;
+};
+
 const formatReservationTime = (reservation: Reservation): string => {
   const from = new Date(reservation.fromDate);
   const to = new Date(reservation.toDate);
@@ -79,7 +84,9 @@ export const ReservationCard: FC<ReservationCardProps> = ({
       >
         <div className="flex flex-col text-left min-w-0 flex-1">
           <h3 className="font-semibold text-sm truncate">{title}</h3>
-          <p className="text-xs text-muted-foreground">Zapisów: {size}</p>
+          <p className="text-xs text-muted-foreground">
+            Zapisów: {getActiveReservationsCount(reservations)}
+          </p>
           {isOccupied && currentOccupant && (
             <p className="text-xs text-red-400 mt-1">
               Zajęte:{" "}
@@ -149,7 +156,7 @@ export const ReservationCard: FC<ReservationCardProps> = ({
         <div>
           <h3 className="font-semibold text-sm">{title}</h3>
           <p className="text-xs text-muted-foreground">
-            Aktualnie zapisów: {size}
+            Aktualnie zapisów: {getActiveReservationsCount(reservations)}
           </p>
         </div>
 
