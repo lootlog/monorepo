@@ -64,7 +64,7 @@ const RolesSettingsContent = () => {
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Szukaj roli..."
-            className="bg-input/30 h-9"
+            className="h-9"
           />
         </div>
       }
