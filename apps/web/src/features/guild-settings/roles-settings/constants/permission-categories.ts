@@ -7,6 +7,7 @@ import {
   CalendarCheck,
   MessageCircle,
   Bell,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -70,6 +71,13 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     ],
   },
   {
+    name: "Członkowie",
+    icon: Users,
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-500/20",
+    permissions: [Permission.LOOTLOG_MEMBERS_READ],
+  },
+  {
     name: "Czat",
     icon: MessageCircle,
     color: "text-green-500",
@@ -86,6 +94,11 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     icon: Bell,
     color: "text-orange-500",
     bgColor: "bg-orange-500/20",
-    permissions: [Permission.LOOTLOG_NOTIFICATIONS_READ],
+    permissions: [
+      Permission.LOOTLOG_NOTIFICATIONS_READ,
+      Permission.LOOTLOG_NOTIFICATIONS_SEND,
+      Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
+      Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    ],
   },
 ];
