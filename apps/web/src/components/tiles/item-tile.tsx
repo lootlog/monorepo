@@ -46,8 +46,6 @@ export const ItemTile: FC<ItemTileProps> = ({
     const stats = parseItemStats(stat);
     const values = mapStatsToDisplayValues(stats);
 
-    console.log(values);
-
     return Object.entries(values).map(([key, value], i) => {
       if (value.length === 0) {
         return null;
