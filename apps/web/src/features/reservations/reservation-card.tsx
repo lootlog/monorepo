@@ -53,7 +53,6 @@ const formatReservationTime = (reservation: Reservation): string => {
 
 export const ReservationCard: FC<ReservationCardProps> = ({
   title,
-  size,
   images,
   reservations,
   members = [],
