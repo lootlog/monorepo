@@ -1,5 +1,4 @@
 import type { Loot } from "@/hooks/api/loots/use-loots";
-import { ItemTile } from "@/features/guild/components/loots-list/item-tile";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Copy } from "lucide-react";
@@ -11,6 +10,7 @@ import {
 } from "@lootlog/ui/components/collapsible";
 import { toast } from "sonner";
 import { formatItemHid } from "@/lib/utils/hid-detection";
+import { ItemTile } from "@/components/tiles";
 
 export type LootDetailsProps = {
   loot: Loot;
