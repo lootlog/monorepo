@@ -1,10 +1,10 @@
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
-import { MemberSyncButton } from "@/features/members-settings/components/member-sync-button";
+import { MemberSyncButton } from "@/features/guild-settings/members-settings/components/member-sync-button";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { getColorFromRole } from "@/utils/get-color-from-role";
 import { getRelativeTime } from "@/utils/date/get-relative-time";
-import { useRefreshStatus } from "@/features/members-settings/contexts/refresh-status-context";
+import { useRefreshStatus } from "@/features/guild-settings/members-settings/contexts/refresh-status-context";
 import { Avatar, AvatarImage } from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import {

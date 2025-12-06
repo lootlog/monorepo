@@ -3,7 +3,7 @@ import { RefreshCw, Clock } from "lucide-react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useMemo, useCallback } from "react";
 import { cn } from "@/utils/cn";
-import { useRefreshStatus } from "@/features/members-settings/contexts/refresh-status-context";
+import { useRefreshStatus } from "@/features/guild-settings/members-settings/contexts/refresh-status-context";
 import { useCountdown } from "@/hooks/utils/use-countdown";
 import { useBulkMemberRefresh } from "@/hooks/api/members/use-bulk-member-refresh";
 import { useRefreshJob } from "@/hooks/utils/use-refresh-job";
@@ -42,21 +42,21 @@ export const RefreshMembersButton = () => {
     (ids: string[]) => {
       markAsRefreshed(ids);
     },
-    [markAsRefreshed]
+    [markAsRefreshed],
   );
 
   const handleFailedIds = useCallback(
     (ids: string[]) => {
       markAsFailed(ids);
     },
-    [markAsFailed]
+    [markAsFailed],
   );
 
   const { jobStatus } = useRefreshJob(
     guildId,
     currentJobId,
     handleRefreshedIds,
-    handleFailedIds
+    handleFailedIds,
   );
 
   const displayJob = jobStatus || currentJob;

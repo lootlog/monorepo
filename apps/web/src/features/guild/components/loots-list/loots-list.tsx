@@ -37,8 +37,6 @@ export const LootsList: FC = () => {
 
   const allLoots = loots?.pages.flatMap((page) => page.data) ?? [];
   const totalCount = allLoots.length;
-
-  // Group loots into rows for grid view
   const gridRows: (typeof allLoots)[] = [];
   for (let i = 0; i < allLoots.length; i += GRID_COLUMNS) {
     gridRows.push(allLoots.slice(i, i + GRID_COLUMNS));
@@ -64,8 +62,6 @@ export const LootsList: FC = () => {
 
   const virtualizer = viewMode === "grid" ? gridVirtualizer : listVirtualizer;
   const virtualItems = virtualizer.getVirtualItems();
-
-  // Infinite scroll for list view (virtualized)
   useEffect(() => {
     if (viewMode !== "list") return;
 
@@ -88,8 +84,6 @@ export const LootsList: FC = () => {
     virtualItems,
     viewMode,
   ]);
-
-  // Infinite scroll for grid view (virtualized)
   useEffect(() => {
     if (viewMode !== "grid") return;
 
@@ -152,7 +146,7 @@ export const LootsList: FC = () => {
         <div
           className={
             viewMode === "grid"
-              ? "grid grid-cols-1 lg:grid-cols-2 gap-4 p-3 pt-0"
+              ? "grid grid-cols-1 xl:grid-cols-2 gap-4 p-3 pt-0"
               : "flex flex-col gap-4 p-3 pt-0"
           }
         >
@@ -203,7 +197,7 @@ export const LootsList: FC = () => {
                     </div>
                   )
                 ) : rowLoots ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-stretch">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-stretch">
                     {rowLoots.map((loot) => (
                       <div key={loot.id} className="h-full">
                         <LootsListItem
