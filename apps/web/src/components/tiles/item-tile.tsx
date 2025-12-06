@@ -90,9 +90,7 @@ export const ItemTile: FC<ItemTileProps> = ({
                   i18nKey={`itemStats.${v.key}`}
                   values={values}
                   components={{
-                    value: (
-                      <span className="font-bold text-primary whitespace-nowrap" />
-                    ),
+                    value: <span className="font-bold text-primary" />,
                     description: (
                       <div className="text-center text-muted-foreground" />
                     ),
