@@ -80,7 +80,7 @@ export const ItemTile: FC<ItemTileProps> = ({
                       v.translateKey && Array.isArray(v.value)
                         ? v.value
                             .map((k) => t(`${v.translateKey}.${k}`))
-                            .join(", ")
+                            .join(",\u00A0")
                         : formatValue(v.value),
                   };
 
@@ -90,7 +90,9 @@ export const ItemTile: FC<ItemTileProps> = ({
                   i18nKey={`itemStats.${v.key}`}
                   values={values}
                   components={{
-                    value: <span className="font-bold text-primary" />,
+                    value: (
+                      <span className="font-bold text-primary whitespace-nowrap" />
+                    ),
                     description: (
                       <div className="text-center text-muted-foreground" />
                     ),
