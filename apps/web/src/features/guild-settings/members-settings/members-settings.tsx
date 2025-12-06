@@ -96,8 +96,9 @@ const MembersSettingsContent = () => {
   const virtualizer = useVirtualizer({
     count: filteredMembers.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 70,
+    estimateSize: () => 76,
     overscan: 5,
+    measureElement: (element) => element.getBoundingClientRect().height + 6,
   });
 
   return (
@@ -139,7 +140,8 @@ const MembersSettingsContent = () => {
           <SearchInput
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Szukaj członka..."
-            className="bg-input/30 h-9 flex-1"
+            className="h-9"
+            wrapperClassName="flex-1"
           />
           <label className="flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap">
             <Checkbox
@@ -175,6 +177,8 @@ const MembersSettingsContent = () => {
                     return (
                       <div
                         key={member.id}
+                        data-index={virtualItem.index}
+                        ref={virtualizer.measureElement}
                         style={{
                           position: "absolute",
                           top: 0,

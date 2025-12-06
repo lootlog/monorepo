@@ -38,7 +38,8 @@ export const Timers = () => {
           placeholder="Szukaj timerów..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-input/30 h-9 flex-1"
+          className="h-9"
+          wrapperClassName="flex-1"
         />
         {!isMobile && (
           <div className="flex items-center gap-2 shrink-0 h-full border-l border-border pl-3 ml-3">
