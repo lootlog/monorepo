@@ -18,7 +18,6 @@ import { reservationSlug } from "../reservation-slug";
 import { Permission } from "@lootlog/types";
 
 import { ScheduleHeader } from "./schedule-header";
-import { ScheduleDaysHeader } from "./schedule-days-header";
 import { ScheduleGrid } from "./schedule-grid";
 import { CreateReservationDialog } from "./create-reservation-dialog";
 import { useScheduleNavigation } from "./use-schedule-navigation";
@@ -203,8 +202,6 @@ export const ReservationsSchedule: React.FC = () => {
         />
 
         <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden">
-          <ScheduleDaysHeader weekStart={weekStart} />
-
           <ScheduleGrid
             weekStart={weekStart}
             segments={segments}
