@@ -1,29 +1,26 @@
 import { Search } from "lucide-react";
 import { forwardRef } from "react";
 import { cn } from "@/utils/cn";
+import { Input } from "@lootlog/ui/components/input";
 
 export type SearchProps = React.InputHTMLAttributes<HTMLInputElement>;
 
-const SearchInput = forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, ...props }, ref) => {
-    return (
-      <div
-        className={cn(
-          "flex h-10 items-center rounded-md border border-input pl-3 text-sm ring-offset-background focus-within:ring-1 bg-background focus-within:ring-ring focus-within:ring-offset-2",
-          className,
-        )}
-      >
-        <Search className="h-[16px] w-[16px]" />
-        <input
-          {...props}
-          type="search"
-          ref={ref}
-          className="w-full bg-transparent p-2 placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-        />
-      </div>
-    );
-  },
-);
+const SearchInput = forwardRef<
+  HTMLInputElement,
+  React.ComponentProps<"input"> & { wrapperClassName?: string }
+>(({ className, wrapperClassName, ...props }, ref) => {
+  return (
+    <div className={cn("relative", wrapperClassName)}>
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+      <Input
+        {...props}
+        type="search"
+        ref={ref}
+        className={cn("pl-9", className)}
+      />
+    </div>
+  );
+});
 
 SearchInput.displayName = "SearchInput";
 

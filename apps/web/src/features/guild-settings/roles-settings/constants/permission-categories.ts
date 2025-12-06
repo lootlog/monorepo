@@ -5,7 +5,6 @@ import {
   Package,
   Clock,
   CalendarCheck,
-  // Users,
   MessageCircle,
   Bell,
   type LucideIcon,
@@ -70,13 +69,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       Permission.LOOTLOG_RESERVATIONS_WRITE,
     ],
   },
-  // {
-  //   name: "Członkowie",
-  //   icon: Users,
-  //   color: "text-cyan-500",
-  //   bgColor: "bg-cyan-500/20",
-  //   permissions: [Permission.LOOTLOG_MEMBERS_READ],
-  // },
   {
     name: "Czat",
     icon: MessageCircle,
