@@ -20,7 +20,7 @@ type ItemTileProps = {
 };
 
 export const ItemTile: FC<ItemTileProps> = ({
-  item: { name, rarity, icon, stat },
+  item: { name, rarity, icon, stat, type },
   color = "",
   shareIndex,
   shareNickname,
@@ -61,10 +61,19 @@ export const ItemTile: FC<ItemTileProps> = ({
           })}
         >
           {value.map((v) => {
+            const formatValue = (
+              val: string | string[] | number | boolean | undefined,
+            ) => {
+              if (v.key === "gold" && typeof val === "string") {
+                return val.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+              }
+              return val;
+            };
+
             const values =
               Array.isArray(v.value) && !v.translateKey
                 ? v.value.reduce((acc: Record<string, string>, val, idx) => {
-                    acc[`value${idx + 1}`] = val;
+                    acc[`value${idx + 1}`] = formatValue(val) as string;
 
                     return acc;
                   }, {})
@@ -74,7 +83,7 @@ export const ItemTile: FC<ItemTileProps> = ({
                         ? v.value
                             .map((k) => t(`${v.translateKey}.${k}`))
                             .join(", ")
-                        : v.value,
+                        : formatValue(v.value),
                   };
 
             return (
@@ -88,6 +97,7 @@ export const ItemTile: FC<ItemTileProps> = ({
                       <div className="text-center text-muted-foreground" />
                     ),
                     legbon: <span className="text-green-500" />,
+                    gold: <span className="text-primary" />,
                   }}
                 >
                   {v.value}
@@ -118,6 +128,10 @@ export const ItemTile: FC<ItemTileProps> = ({
                 {name}
               </p>
               <p className={rarityCn}>{t(`itemRarity.${rarity}`)}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("itemType.prefix")}
+                {t(`itemType.${type}`)}
+              </p>
             </div>
             <ItemImage rarity={rarity} icon={icon} color={color} />
           </div>

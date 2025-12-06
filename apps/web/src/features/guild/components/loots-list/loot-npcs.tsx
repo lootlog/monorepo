@@ -62,7 +62,17 @@ export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
     );
 
   return (
-    <div className={cn("leading-none flex flex-col gap-1", className)}>
+    <div className={cn("leading-none flex flex-row gap-2", className)}>
+      {isFirstSpecial && (
+        <span
+          className={cn(
+            "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border w-fit",
+            getNpcBadgeStyle(firstNpc.type),
+          )}
+        >
+          {t(`npcType.${firstNpc.type}`)}
+        </span>
+      )}
       {firstNpc && (
         <div className="flex flex-wrap items-center gap-x-1">
           <span className="text-foreground font-bold text-sm">
@@ -85,16 +95,6 @@ export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
             );
           })}
         </div>
-      )}
-      {isFirstSpecial && (
-        <span
-          className={cn(
-            "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border w-fit",
-            getNpcBadgeStyle(firstNpc.type),
-          )}
-        >
-          {t(`npcType.${firstNpc.type}`)}
-        </span>
       )}
     </div>
   );
