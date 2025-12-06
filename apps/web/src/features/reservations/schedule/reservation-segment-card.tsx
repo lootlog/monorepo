@@ -24,7 +24,12 @@ import {
   formatDateWithTime,
   shouldShowEndDateOnFirstSegment,
 } from "./utils";
-import { DAYS, HOURS, LABEL_COLUMN_WIDTH } from "./constants";
+import {
+  HEADER_HEIGHT,
+  MIN_ROW_HEIGHT,
+  DAYS,
+  LABEL_COLUMN_WIDTH,
+} from "./constants";
 import { Fragment } from "react";
 
 type ReservationSegmentCardProps = {
@@ -72,21 +77,17 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
   const hasComment = Boolean(trimmedComment?.length);
   const allowsInteraction = showContextMenu || hasComment;
 
-  // Adaptive display - hide less important info for short reservations
   const isShortReservation = segment.durationHours < 1;
   const isVeryShortReservation = segment.durationHours < 0.75;
 
+  const { dayIdx, startHour, durationHours } = segment;
+
+  const topPx = HEADER_HEIGHT + startHour * MIN_ROW_HEIGHT;
+  const heightPx = durationHours * MIN_ROW_HEIGHT;
+
   const dayWidthExpr = `(100% - ${LABEL_COLUMN_WIDTH}px) / ${DAYS.length}`;
-  const leftExpression = `calc(${LABEL_COLUMN_WIDTH}px + (${segment.dayIdx} * ${dayWidthExpr}) + 3px)`;
-  const widthExpression = `calc(${dayWidthExpr} - 6px)`;
-  const topPercent = Math.max(
-    0,
-    Math.min(100, (segment.startHour / HOURS.length) * 100),
-  );
-  const heightPercent = Math.max(
-    1,
-    Math.min(100, (segment.durationHours / HOURS.length) * 100),
-  );
+  const leftExpression = `calc(${LABEL_COLUMN_WIDTH}px + (${dayIdx} * ${dayWidthExpr}))`;
+  const widthExpression = `calc(${dayWidthExpr})`;
 
   const segmentElement = (
     <div
@@ -94,105 +95,99 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
       style={{
         left: leftExpression,
         width: widthExpression,
-        top: `calc(${topPercent}% + 1px)`,
-        height: `calc(${heightPercent}% - 2px)`,
+        top: `calc(${topPx}px + 1px)`,
+        height: `calc(${heightPx}px - 2px)`,
       }}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div
-        className={`relative flex h-full flex-col justify-center gap-1 ${isShortReservation ? "" : isVeryShortReservation ? "p-1 pr-8" : "p-2 pr-10"}`}
-      >
-        {isShortReservation ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className={`flex h-full items-center gap-2 w-full ${isVeryShortReservation ? "p-1 pr-8" : "p-2 pr-10"}`}
-              >
-                <Avatar
-                  className={`pointer-events-none ${isVeryShortReservation ? "size-5" : "size-6"}`}
-                >
-                  <AvatarImage src={avatarUrl} alt={memberName} />
-                  <AvatarFallback>{fallbackInitial}</AvatarFallback>
-                </Avatar>
-                <span
-                  className={`font-semibold leading-tight text-nowrap truncate ${isVeryShortReservation ? "text-[9px]" : "text-[10px]"}`}
-                >
-                  {memberName}
-                </span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              sideOffset={12}
-              className="flex flex-col gap-1 text-xs"
-            >
-              <div className="font-semibold">{memberName}</div>
-              <div>
-                {displayStartLabel} - {displayEndLabel}
-              </div>
-              {hasComment && trimmedComment && (
-                <div className="italic text-muted-foreground">
-                  {trimmedComment}
-                </div>
-              )}
-              <div className="text-[10px] text-muted-foreground">
-                Dodano {createdLabel}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <>
-            <div className="flex items-center gap-2">
-              <Avatar
-                className={`pointer-events-none ${isVeryShortReservation ? "size-5" : "size-6"}`}
-              >
+      {isShortReservation ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`flex h-full items-center gap-2 w-full p-1`}>
+              <Avatar className={`pointer-events-none size-5 shrink-0`}>
                 <AvatarImage src={avatarUrl} alt={memberName} />
                 <AvatarFallback>{fallbackInitial}</AvatarFallback>
               </Avatar>
-              <span
-                className={`font-semibold leading-tight text-nowrap ${isVeryShortReservation ? "text-[9px]" : "text-[10px]"}`}
-              >
-                {memberName}
-              </span>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span
+                  className={`font-semibold leading-tight truncate text-[10px]`}
+                >
+                  {memberName}
+                </span>
+                {!isVeryShortReservation && (
+                  <span className="text-[9px] text-muted-foreground truncate opacity-80">
+                    {displayStartLabel} - {displayEndLabel}
+                  </span>
+                )}
+              </div>
             </div>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            sideOffset={12}
+            className="flex flex-col gap-1 text-xs"
+          >
+            <div className="font-semibold">{memberName}</div>
+            <div>
+              {displayStartLabel} - {displayEndLabel}
+            </div>
+            {hasComment && trimmedComment && (
+              <div className="italic text-muted-foreground">
+                {trimmedComment}
+              </div>
+            )}
+            <div className="text-[10px] text-muted-foreground">
+              Dodano {createdLabel}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <div className="flex flex-col h-full justify-between p-1.5 min-w-0">
+          <div className="flex items-start justify-between w-full">
+            <span className="text-[9px] font-semibold opacity-90 leading-none bg-background/40 px-1 rounded backdrop-blur-[1px]">
+              {displayStartLabel}
+            </span>
 
-            {hasComment && trimmedComment && !isVeryShortReservation && (
+            {hasComment && trimmedComment && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="absolute top-1 left-1 flex items-center gap-1 rounded bg-transparent px-1.5 py-0.5 text-[9px] font-semibold text-foreground">
-                    <MessageSquareText className="h-3 w-3" aria-hidden="true" />
-                    {!isShortReservation && "Komentarz"}
-                  </span>
+                  <MessageSquareText
+                    className="h-3 w-3 shrink-0 opacity-80"
+                    aria-hidden="true"
+                  />
                 </TooltipTrigger>
                 <TooltipContent
                   side="top"
-                  align="start"
+                  align="end"
                   className="max-w-xs break-words text-xs"
                 >
                   {trimmedComment}
                 </TooltipContent>
               </Tooltip>
             )}
+          </div>
 
-            <span
-              className={`absolute top-1 right-1 rounded px-1.5 py-0.5 font-semibold text-foreground ${isVeryShortReservation ? "text-[8px]" : "text-[9px]"}`}
+          <div className="flex flex-col items-center justify-center gap-1 text-center min-h-0 flex-1 my-0.5">
+            <Avatar
+              className={`pointer-events-none size-7 shrink-0 shadow-sm border border-border/20`}
             >
-              {displayStartLabel}
+              <AvatarImage src={avatarUrl} alt={memberName} />
+              <AvatarFallback>{fallbackInitial}</AvatarFallback>
+            </Avatar>
+            <span
+              className={`font-semibold leading-tight line-clamp-2 text-wrap break-words w-full text-[10px]`}
+            >
+              {memberName}
             </span>
-            <span
-              className={`absolute bottom-1 right-1 rounded px-1.5 py-0.5 font-semibold text-foreground ${isVeryShortReservation ? "text-[8px]" : "text-[9px]"}`}
-            >
+          </div>
+
+          <div className="flex flex-col items-end w-full gap-0.5">
+            <span className="text-[9px] font-semibold opacity-90 leading-none bg-background/40 px-1 rounded backdrop-blur-[1px]">
               {displayEndLabel}
             </span>
-
-            {!isShortReservation && (
-              <span className="absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[9px] font-semibold text-foreground">
-                Dodano {createdLabel}
-              </span>
-            )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

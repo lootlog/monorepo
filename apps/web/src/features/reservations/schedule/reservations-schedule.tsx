@@ -18,7 +18,6 @@ import { reservationSlug } from "../reservation-slug";
 import { Permission } from "@lootlog/types";
 
 import { ScheduleHeader } from "./schedule-header";
-import { ScheduleDaysHeader } from "./schedule-days-header";
 import { ScheduleGrid } from "./schedule-grid";
 import { CreateReservationDialog } from "./create-reservation-dialog";
 import { useScheduleNavigation } from "./use-schedule-navigation";
@@ -185,7 +184,7 @@ export const ReservationsSchedule: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden bg-background">
+      <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden">
         <ScheduleHeader
           currentWeek={currentWeek}
           currentYear={currentYear}
@@ -202,9 +201,7 @@ export const ReservationsSchedule: React.FC = () => {
           currentUserId={currentUserId}
         />
 
-        <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden">
-          <ScheduleDaysHeader weekStart={weekStart} />
-
+        <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden bg-transparent">
           <ScheduleGrid
             weekStart={weekStart}
             segments={segments}
