@@ -11,6 +11,7 @@ export type GuildRole = {
   permissions: Permission[];
   lvlRangeFrom: number;
   lvlRangeTo: number;
+  position?: number;
 };
 
 export const guildRolesQueryOptions = (guildId: string) =>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RolesSettings } from "@/features/roles-settings/roles-settings";
+import { RolesSettings } from "@/features/guild-settings/roles-settings/roles-settings";
 import { guildRolesQueryOptions } from "@/hooks/api/guilds/use-guild-roles";
 
 export const Route = createFileRoute("/_authenticated/$guildId/settings/roles")(

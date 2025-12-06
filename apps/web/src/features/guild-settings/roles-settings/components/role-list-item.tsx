@@ -12,24 +12,21 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useTranslation } from "react-i18next";
-import { PERMISSION_CATEGORIES } from "@/features/roles-settings/constants/permission-categories";
+import { PERMISSION_CATEGORIES } from "@/features/guild-settings/roles-settings/constants/permission-categories";
+import { useSelectorPanel } from "@/components/selector-panel";
 
 export type RoleListItemProps = {
   role: GuildRole;
-  isSelected: boolean;
-  onClick: () => void;
   index: number;
-  isPanelOpen?: boolean;
 };
 
-export const RoleListItem: FC<RoleListItemProps> = ({
-  role,
-  isSelected,
-  onClick,
-  index,
-  isPanelOpen = false,
-}) => {
+export const RoleListItem: FC<RoleListItemProps> = ({ role, index }) => {
   const { t } = useTranslation();
+  const { selectedItem, handleSelect } = useSelectorPanel<GuildRole>();
+
+  const isSelected = selectedItem?.id === role.id;
+  const isPanelOpen = selectedItem !== null;
+
   const color =
     role.color === 0 ? "FFF" : role.color.toString(16).padStart(6, "0");
 
@@ -61,7 +58,7 @@ export const RoleListItem: FC<RoleListItemProps> = ({
           isSelected &&
             "bg-primary/10 border-primary/50 shadow-lg scale-[1.01]",
         )}
-        onClick={onClick}
+        onClick={() => handleSelect(role)}
       >
         <div className="flex flex-wrap items-center gap-3 py-2 px-4 pl-5">
           <div

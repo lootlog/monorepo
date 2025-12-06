@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
-import { Button } from "@lootlog/ui/components/button";
 import {
   Form,
   FormControl,
@@ -19,7 +18,6 @@ import type { GuildRole } from "@/hooks/api/guilds/use-guild-roles";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { toast } from "sonner";
-import { AnimatePresence, motion } from "framer-motion";
 import { useUpdateGuildRole } from "@/hooks/api/guilds/use-update-guild-role";
 import { Permission } from "@lootlog/types";
 import {
@@ -34,13 +32,13 @@ import {
   Package,
   Clock,
   CalendarCheck,
-  // Users,
   MessageCircle,
   Bell,
   Settings,
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
+import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 
 const PERMISSION_GROUPS = [
   {
@@ -93,13 +91,7 @@ const PERMISSION_GROUPS = [
       Permission.LOOTLOG_RESERVATIONS_WRITE,
     ],
   },
-  // {
-  //   groupKey: "members",
-  //   icon: Users,
-  //   color: "text-cyan-500",
-  //   bgColor: "bg-cyan-500/10",
-  //   permissions: [Permission.LOOTLOG_MEMBERS_READ],
-  // },
+
   {
     groupKey: "chat",
     icon: MessageCircle,
@@ -245,7 +237,6 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full mx-auto pb-24"
       >
-        {/* Level Range Section */}
         <div className="p-3">
           <Card className="bg-card/50 backdrop-blur-sm border-border p-0">
             <div className="p-3">
@@ -308,7 +299,6 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
           </Card>
         </div>
 
-        {/* Permission Groups */}
         <div className="px-3 space-y-3">
           <Accordion
             type="multiple"
@@ -394,57 +384,11 @@ export const RolesSettingsForm: FC<RolesSettingsFormProps> = ({ role }) => {
           </Accordion>
         </div>
 
-        <AnimatePresence>
-          {form.formState.isDirty && (
-            <motion.div
-              key="unsaved-bar-roles-form"
-              aria-live="polite"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{
-                type: "spring",
-                stiffness: 400,
-                damping: 28,
-              }}
-              className="pointer-events-none fixed bottom-0 left-0 right-0 md:left-[theme(width.64)] z-50 flex justify-center px-4 pb-4"
-            >
-              <motion.div
-                layout
-                layoutId="unsaved-bar-inner-roles-form"
-                transition={{
-                  type: "spring",
-                  stiffness: 380,
-                  damping: 30,
-                }}
-                className="pointer-events-auto w-full max-w-2xl rounded-xl border bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 p-3 shadow-lg flex items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
-                  <p className="text-sm font-medium">Masz niezapisane zmiany</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => form.reset()}
-                  >
-                    Resetuj
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="default"
-                    size="sm"
-                    disabled={form.formState.isSubmitting}
-                  >
-                    {form.formState.isSubmitting ? "Zapisywanie..." : "Zapisz"}
-                  </Button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <UnsavedChangesBar
+          isDirty={form.formState.isDirty}
+          isSubmitting={form.formState.isSubmitting}
+          onReset={() => form.reset()}
+        />
       </form>
     </Form>
   );

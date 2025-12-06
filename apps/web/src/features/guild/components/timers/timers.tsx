@@ -5,10 +5,13 @@ import { SingleTimer } from "@/features/guild/components/timers/single-timer";
 import { useTimers } from "@/hooks/api/game-data/use-timers";
 import { NPC_TYPE_NAMES, NPC_TYPE_SORT_ORDER } from "@/constants/npc";
 import { SearchInput } from "@/components/ui/search-input";
+import { WorldSwitcher } from "@/components/common/world-switcher";
+import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 
 export const Timers = () => {
   const { data: timers, isPending } = useTimers();
   const [search, setSearch] = useState("");
+  const isMobile = useIsMobile();
 
   const filtered = timers?.filter((timer) =>
     timer.npc.name.toLowerCase().includes(search.toLowerCase()),
@@ -35,8 +38,19 @@ export const Timers = () => {
           placeholder="Szukaj timerów..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-input/30 h-9 flex-1"
+          className="h-9"
+          wrapperClassName="flex-1"
         />
+        {!isMobile && (
+          <div className="flex items-center gap-2 shrink-0 h-full border-l border-border pl-3 ml-3">
+            <WorldSwitcher />
+          </div>
+        )}
+        {isMobile && (
+          <div className="pl-3">
+            <WorldSwitcher />
+          </div>
+        )}
       </div>
       {isPending && (
         <div className="flex flex-col gap-3 p-4">

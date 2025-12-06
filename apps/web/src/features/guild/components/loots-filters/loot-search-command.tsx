@@ -118,7 +118,12 @@ export const LootSearchCommand = ({
   const showLoading = isLoading && debouncedSearch && !hasResults;
 
   return (
-    <CommandDialog shouldFilter={false} open={open} onOpenChange={onOpenChange}>
+    <CommandDialog
+      shouldFilter={false}
+      open={open}
+      onOpenChange={onOpenChange}
+      className="top-[25%] sm:top-[50%]"
+    >
       <CommandInput
         placeholder="Szukaj przedmiotów, potworów, graczy..."
         value={searchQuery}
