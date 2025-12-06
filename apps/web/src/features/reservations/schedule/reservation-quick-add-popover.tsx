@@ -42,7 +42,6 @@ export const ReservationQuickAddPopover: React.FC<
       toast.success("Rezerwacja została utworzona.");
       onSuccess();
     } catch (error) {
-      // Basic error handling similar to existing dialog, simplified for brevity
       const fallbackMessage = "Nie udało się utworzyć rezerwacji.";
       if (error && typeof error === "object" && "response" in error) {
         const maybeAxiosError = error as {

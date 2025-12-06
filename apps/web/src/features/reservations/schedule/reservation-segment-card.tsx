@@ -77,13 +77,11 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
   const hasComment = Boolean(trimmedComment?.length);
   const allowsInteraction = showContextMenu || hasComment;
 
-  // Adaptive display - hide less important info for short reservations
   const isShortReservation = segment.durationHours < 1;
   const isVeryShortReservation = segment.durationHours < 0.75;
 
   const { dayIdx, startHour, durationHours } = segment;
 
-  // Pixel-based positioning to account for fixed header
   const topPx = HEADER_HEIGHT + startHour * MIN_ROW_HEIGHT;
   const heightPx = durationHours * MIN_ROW_HEIGHT;
 
@@ -145,7 +143,6 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
         </Tooltip>
       ) : (
         <div className="flex flex-col h-full justify-between p-1.5 min-w-0">
-          {/* Header: Start Time + Comment Icon */}
           <div className="flex items-start justify-between w-full">
             <span className="text-[9px] font-semibold opacity-90 leading-none bg-background/40 px-1 rounded backdrop-blur-[1px]">
               {displayStartLabel}
@@ -170,7 +167,6 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
             )}
           </div>
 
-          {/* Center: Avatar + Name */}
           <div className="flex flex-col items-center justify-center gap-1 text-center min-h-0 flex-1 my-0.5">
             <Avatar
               className={`pointer-events-none size-7 shrink-0 shadow-sm border border-border/20`}
@@ -185,7 +181,6 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
             </span>
           </div>
 
-          {/* Footer: End Time + Added Date (Optional) */}
           <div className="flex flex-col items-end w-full gap-0.5">
             <span className="text-[9px] font-semibold opacity-90 leading-none bg-background/40 px-1 rounded backdrop-blur-[1px]">
               {displayEndLabel}

@@ -62,28 +62,25 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   );
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return; // Only left click
-    // Prevent selection if clicking on existing reservation or controls
+    if (e.button !== 0) return;
     if ((e.target as HTMLElement).closest(".reservation-card")) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top - HEADER_HEIGHT; // Account for header
+    const y = e.clientY - rect.top - HEADER_HEIGHT;
 
-    if (x < LABEL_COLUMN_WIDTH) return; // Ignore label column
-    if (y < 0) return; // Ignore header click
+    if (x < LABEL_COLUMN_WIDTH) return;
+    if (y < 0) return;
 
     const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
     const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
 
-    // Calculate minutes from Y
     const totalMinutes = Math.floor((y / MIN_ROW_HEIGHT) * 60);
     const snappedMinutes = Math.floor(totalMinutes / 15) * 15;
 
     if (dayIdx >= 0 && dayIdx < DAYS.length) {
       const startPoint = { dayIdx, minutes: snappedMinutes };
 
-      // Calculate start time to check if it's in the past
       const startDate = new Date(weekStart);
       startDate.setDate(startDate.getDate() + dayIdx);
       startDate.setHours(
@@ -97,7 +94,6 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         return;
       }
 
-      // Check collision with existing reservations
       const isOccupied = segments.some((segment) => {
         const resStart = new Date(segment.reservation.fromDate).getTime();
         const resEnd = new Date(segment.reservation.toDate).getTime();
@@ -115,11 +111,10 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Dynamic cursor logic
     if (!isSelecting) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top - HEADER_HEIGHT; // Account for header
+      const y = e.clientY - rect.top - HEADER_HEIGHT;
       if (x >= LABEL_COLUMN_WIDTH && y >= 0) {
         const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
         const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
@@ -138,7 +133,6 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           if (currentDate.getTime() < Date.now()) {
             e.currentTarget.style.cursor = "not-allowed";
           } else {
-            // Check overlap only for cursor
             const isOccupied = segments.some((segment) => {
               const resStart = new Date(segment.reservation.fromDate).getTime();
               const resEnd = new Date(segment.reservation.toDate).getTime();
@@ -161,20 +155,18 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top - HEADER_HEIGHT; // Account for header
+    const y = e.clientY - rect.top - HEADER_HEIGHT;
 
-    if (x < LABEL_COLUMN_WIDTH) return; // Ignore label column
-    if (y < 0) return; // Ignore header click
+    if (x < LABEL_COLUMN_WIDTH) return;
+    if (y < 0) return;
 
     const dayWidth = (rect.width - LABEL_COLUMN_WIDTH) / DAYS.length;
     const dayIdx = Math.floor((x - LABEL_COLUMN_WIDTH) / dayWidth);
 
-    // Allow dragging anywhere valid
     if (dayIdx >= 0 && dayIdx < DAYS.length) {
       const totalMinutes = Math.floor((y / MIN_ROW_HEIGHT) * 60);
       const snappedMinutes = Math.floor(totalMinutes / 15) * 15;
 
-      // Check if the dragged point is in the past
       const currentPointDate = new Date(weekStart);
       currentPointDate.setDate(currentPointDate.getDate() + dayIdx);
       currentPointDate.setHours(
@@ -203,7 +195,6 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       const targetTime = currentPointDate.getTime();
 
       if (targetTime > anchorTime) {
-        // Dragging Forward
         let limitTime = Number.MAX_SAFE_INTEGER;
         segments.forEach((seg) => {
           const resStart = new Date(seg.reservation.fromDate).getTime();
@@ -228,8 +219,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           return;
         }
       } else if (targetTime < anchorTime) {
-        // Dragging Backward
-        let limitTime = 0; // Epoch
+        let limitTime = 0;
         segments.forEach((seg) => {
           const resEnd = new Date(seg.reservation.toDate).getTime();
           if (resEnd <= anchorTime && resEnd > limitTime) {
@@ -270,7 +260,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.currentTarget.style.cursor = ""; // Reset cursor
+    e.currentTarget.style.cursor = "";
     if (isSelecting) {
       handleMouseUp();
     }
@@ -343,8 +333,8 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           const segEndMins =
             (segEnd.getTime() - current.getTime()) / (1000 * 60);
 
-          const top = HEADER_HEIGHT + (startMins / 60) * MIN_ROW_HEIGHT; // Offset by header
-          const height = ((segEndMins - startMins) / 60) * MIN_ROW_HEIGHT; // Offset by header? No, height is duration.
+          const top = HEADER_HEIGHT + (startMins / 60) * MIN_ROW_HEIGHT;
+          const height = ((segEndMins - startMins) / 60) * MIN_ROW_HEIGHT;
 
           const dayWidthExpr = `(100% - ${LABEL_COLUMN_WIDTH}px) / ${DAYS.length}`;
           const left = `calc(${LABEL_COLUMN_WIDTH}px + (${dayIdx} * ${dayWidthExpr}))`;
@@ -368,18 +358,16 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   return (
     <ScrollArea className="flex-1 min-h-0 max-h-full select-none">
       <div
-        className="relative grid w-full cursor-default min-w-[800px] md:min-w-0" // Min width to force horizontal scroll on mobile
+        className="relative grid w-full cursor-default min-w-[800px] md:min-w-0"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         style={{
-          // Add extra row for header
           gridTemplateRows: `${HEADER_HEIGHT}px repeat(${HOURS.length}, minmax(${MIN_ROW_HEIGHT}px, 1fr))`,
           gridTemplateColumns: `${LABEL_COLUMN_WIDTH}px repeat(${DAYS.length}, minmax(0, 1fr))`,
         }}
       >
-        {/* Header Row */}
         <div
           className="sticky top-[-1px] left-0 z-50 bg-background border-b border-border border-r"
           style={{ width: LABEL_COLUMN_WIDTH, height: HEADER_HEIGHT }}
@@ -415,31 +403,41 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
           );
         })}
 
-        {HOURS.map((hour) => [
-          <div
-            key={`label-${hour}`}
-            className="sticky left-0 z-40 text-xs font-medium text-center px-2 text-muted-foreground border-b border-r border-border flex items-center justify-center bg-background"
-            style={{ width: LABEL_COLUMN_WIDTH, height: MIN_ROW_HEIGHT }}
-          >
-            {hour}
-          </div>,
-          ...DAYS.map((day, dayIdx) => {
-            const backgroundClass =
-              dayIdx % 2 === 0 ? "bg-background" : "bg-muted";
+        {HOURS.map((hour, idx) => {
+          const isCurrentHour = new Date().getHours() === idx;
 
-            return (
-              <div
-                key={`${hour}-${day}`}
-                className={`relative border-b border-r border-border ${backgroundClass}`}
-                style={{
-                  minWidth: 0,
-                  minHeight: MIN_ROW_HEIGHT,
-                  overflow: "hidden",
-                }}
-              />
-            );
-          }),
-        ])}
+          return [
+            <div
+              key={`label-${hour}`}
+              className={cn(
+                "sticky left-0 z-40 text-xs font-medium text-center px-2 border-b border-r border-border flex items-center justify-center bg-background",
+                isCurrentHour ? "text-primary" : "text-muted-foreground",
+              )}
+              style={{ width: LABEL_COLUMN_WIDTH, height: MIN_ROW_HEIGHT }}
+            >
+              {isCurrentHour && (
+                <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+              )}
+              <span className="relative z-10">{hour}</span>
+            </div>,
+            ...DAYS.map((day, dayIdx) => {
+              const backgroundClass =
+                dayIdx % 2 === 0 ? "bg-background/50" : "bg-muted/50";
+
+              return (
+                <div
+                  key={`${hour}-${day}`}
+                  className={`relative border-b border-r border-border ${backgroundClass}`}
+                  style={{
+                    minWidth: 0,
+                    minHeight: MIN_ROW_HEIGHT,
+                    overflow: "hidden",
+                  }}
+                />
+              );
+            }),
+          ];
+        })}
 
         <NowIndicator ref={setNowIndicatorRef} weekStart={weekStart} />
 
@@ -460,8 +458,6 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               <div
                 className="absolute z-50 pointer-events-auto"
                 style={{
-                  // Anchor to the END of the selection visually?
-                  // For simplicity, let's anchor to the last segment (last day)
                   ...getSelectionSegments().slice(-1)[0],
                   overflow: "visible",
                 }}

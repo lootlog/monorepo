@@ -184,7 +184,7 @@ export const ReservationsSchedule: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden bg-background">
+      <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden">
         <ScheduleHeader
           currentWeek={currentWeek}
           currentYear={currentYear}
@@ -201,7 +201,7 @@ export const ReservationsSchedule: React.FC = () => {
           currentUserId={currentUserId}
         />
 
-        <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 max-h-full h-full overflow-hidden bg-transparent">
           <ScheduleGrid
             weekStart={weekStart}
             segments={segments}

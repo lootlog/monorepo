@@ -26,7 +26,7 @@ export const NowIndicator = forwardRef<HTMLDivElement, NowIndicatorProps>(
 
         if (diffDays >= 0 && diffDays < DAYS.length) {
           const hours = now.getHours() + now.getMinutes() / 60;
-          const top = HEADER_HEIGHT + hours * MIN_ROW_HEIGHT; // Pixel offset
+          const top = HEADER_HEIGHT + hours * MIN_ROW_HEIGHT;
 
           const dayWidthExpr = `(100% - ${LABEL_COLUMN_WIDTH}px) / ${DAYS.length}`;
           const leftExpression = `calc(${LABEL_COLUMN_WIDTH}px + (${diffDays} * ${dayWidthExpr}))`;
@@ -38,8 +38,8 @@ export const NowIndicator = forwardRef<HTMLDivElement, NowIndicatorProps>(
         }
       };
 
-      updatePosition(); // Initial call
-      const timer = setInterval(updatePosition, 60_000); // Update every minute
+      updatePosition();
+      const timer = setInterval(updatePosition, 60_000);
       return () => clearInterval(timer);
     }, [weekStart]);
 
