@@ -3,6 +3,7 @@ import { initReactI18next } from "react-i18next";
 
 import itemStats from "./translations/item-stats.json";
 import itemRarity from "./translations/item-rarity.json";
+import itemType from "./translations/item-type.json";
 import npcType from "./translations/npc-type.json";
 import permissions from "./translations/permissions.json";
 import professions from "./translations/professions.json";
@@ -14,6 +15,7 @@ i18n.use(initReactI18next).init({
       translation: {
         itemStats,
         itemRarity,
+        itemType,
         npcType,
         permissions,
         professions,

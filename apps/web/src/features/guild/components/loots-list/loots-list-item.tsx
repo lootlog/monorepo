@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
-import { ItemTile } from "@/features/guild/components/loots-list/item-tile";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/constants/loot-share-color-palette";
@@ -8,8 +7,16 @@ import { Sheet } from "@lootlog/ui/components/sheet";
 import { Card } from "@lootlog/ui/components/card";
 import { LootDetailsSheetContent } from "@/features/guild/components/loots-list/loot-details-sheet-content";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
-import { Calendar, MapPin, MessageSquare, Users, Package } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  MessageSquare,
+  Users,
+  Package,
+  Dot,
+} from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
+import { ItemTile } from "@/components/tiles";
 
 type Props = {
   loot: Loot;
@@ -183,9 +190,10 @@ const LootFooter = ({
   playersCount: number;
   itemsCount: number;
 }) => (
-  <div className="flex items-center justify-between gap-3 mt-auto py-1.5 border-t border-border/30 -mx-4 px-4">
-    <div className="flex items-center gap-3">
+  <div className="flex items-center justify-between gap-3 mt-auto border-t border-border/30 -mx-4 px-4 py-1">
+    <div className="flex items-center gap-0">
       <MetaItem icon={MapPin}>{location}</MetaItem>
+      <Dot className="text-muted-foreground" />
       <MetaItem icon={Calendar}>{date}</MetaItem>
     </div>
     <div className="flex items-center gap-3">
