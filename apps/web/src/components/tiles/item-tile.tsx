@@ -80,7 +80,7 @@ export const ItemTile: FC<ItemTileProps> = ({
                       v.translateKey && Array.isArray(v.value)
                         ? v.value
                             .map((k) => t(`${v.translateKey}.${k}`))
-                            .join(", ")
+                            .join(",\u00A0")
                         : formatValue(v.value),
                   };
 
