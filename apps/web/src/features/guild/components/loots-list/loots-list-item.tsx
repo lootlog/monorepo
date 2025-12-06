@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
-import { ItemTile } from "@/features/guild/components/loots-list/item-tile";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/constants/loot-share-color-palette";
@@ -10,6 +9,7 @@ import { LootDetailsSheetContent } from "@/features/guild/components/loots-list/
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { Calendar, MapPin, MessageSquare, Users, Package } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
+import { ItemTile } from "@/components/tiles";
 
 type Props = {
   loot: Loot;
