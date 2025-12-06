@@ -20,7 +20,7 @@ export const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
 }) => {
   return (
     <>
-      <div className="flex items-center justify-center md:justify-between px-4 py-3 border-b border-border flex-shrink-0 relative">
+      <div className="flex bg-background items-center justify-center md:justify-between px-4 py-3 border-b border-border flex-shrink-0 relative">
         <Button
           variant="default"
           size="sm"
@@ -50,7 +50,6 @@ export const ScheduleHeader: React.FC<ScheduleHeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Floating Action Button */}
       <Button
         className="md:hidden fixed bottom-6 right-6 z-50 rounded-full h-14 w-14 shadow-lg p-0"
         onClick={onAddReservation}
