@@ -1,0 +1,59 @@
+{
+  "title": "Eventy",
+  "description": "Lista eventów klanu",
+  "create": "Utwórz Event",
+  "edit": "Edytuj Event",
+  "delete": "Usuń Event",
+  "active": "Aktywny",
+  "inactive": "Nieaktywny",
+  "noEvents": "Brak eventów",
+  "ranking": {
+    "title": "Ranking Eventowy",
+    "points": "Punkty",
+    "kills": "Zabicia",
+    "time": "Czas",
+    "afk": "AFK %",
+    "noRanking": "Brak danych w rankingu"
+  },
+  "templates": {
+    "title": "Szablony Map",
+    "select": "Wybierz Szablon",
+    "noTemplates": "Brak szablonów"
+  },
+  "presence": {
+    "online": "Online",
+    "afk": "AFK",
+    "offline": "Offline"
+  },
+  "common": {
+    "backToEvent": "Powrót do eventu"
+  },
+  "maps": {
+    "title": "Mapy",
+    "manage": "Zarządzaj Mapami",
+    "assign": "Przypisz Członka",
+    "unassign": "Usuń Przypisanie",
+    "selfAssign": "Weź Tę Mapę",
+    "assignSuccess": "Przypisano do mapy",
+    "assignError": "Błąd podczas przypisywania",
+    "unassignSuccess": "Odpisano z mapy",
+    "unassignError": "Błąd podczas odpisywania",
+    "noMaps": "Brak map",
+    "status": {
+      "assignedPresent": "Monitoruje",
+      "assignedAbsent": "Nieobecny",
+      "unassigned": "Nieprzypisany",
+      "wrongPlayer": "Zły Gracz"
+    }
+  },
+  "heroes": {
+    "title": "Herosi Eventowi",
+    "notFound": "Nie znaleziono herosa",
+    "killed": "Heros Zabity!",
+    "pointsAwarded": "{{points}} punktów przyznano"
+  },
+  "participants": {
+    "title": "Uczestnicy",
+    "count": "Uczestników"
+  }
+}

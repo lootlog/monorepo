@@ -32,4 +32,7 @@ export type GameEvent = {
     avg_duration: number;
     avg_timeframe: number;
   };
+  h?: {
+    stasis?: number; // 1 = AFK, 0 = active
+  };
 };

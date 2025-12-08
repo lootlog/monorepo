@@ -1,0 +1,448 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { Permission } from 'generated/client';
+import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+import { AuthGuard } from 'src/shared/guards/auth.guard';
+import { Permissions } from 'src/shared/permissions/permissions.decorator';
+import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+import { EventsService } from './events.service';
+import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
+import { AssignMemberDto } from './dto/assign-member.dto';
+import { UpdatePresenceDto } from './dto/update-presence.dto';
+import { CreateHeroDto } from './dto/create-hero.dto';
+import { CreateMapDto } from './dto/create-map.dto';
+import { UpdateHeroDto } from './dto/update-hero.dto';
+import { CreateTemplateDto } from './dto/create-template.dto';
+
+@ApiTags('events')
+@ApiBearerAuth()
+@UseGuards(AuthGuard)
+@Controller()
+export class EventsController {
+  constructor(private readonly EventsService: EventsService) {}
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/templates')
+  @ApiOperation({
+    summary: 'Get event map templates',
+    description: 'Get map templates for this guild',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of templates',
+  })
+  async getTemplates(@Param('guildId') guildId: string) {
+    return this.EventsService.getTemplates(guildId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/templates')
+  @ApiOperation({
+    summary: 'Create event map template',
+    description: 'Create a new reusable map template',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Template created successfully',
+  })
+  async createTemplate(
+    @Param('guildId') guildId: string,
+    @Body() data: CreateTemplateDto,
+  ) {
+    return this.EventsService.createTemplate(guildId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/events/templates/:templateId')
+  @ApiOperation({
+    summary: 'Delete event map template',
+    description: 'Delete a map template',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'templateId', description: 'Template ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Template deleted successfully',
+  })
+  async deleteTemplate(
+    @Param('guildId') guildId: string,
+    @Param('templateId') templateId: string,
+  ) {
+    return this.EventsService.deleteTemplate(guildId, templateId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events')
+  @ApiOperation({
+    summary: 'Create event',
+    description: 'Create a new guild event with maps and hero NPCs',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Event created successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async createEvent(
+    @Param('guildId') guildId: string,
+    @Body() data: CreateEventDto,
+  ) {
+    return this.EventsService.createEvent(guildId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events')
+  @ApiOperation({
+    summary: 'List guild events',
+    description: 'Get all events for a guild',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiQuery({
+    name: 'world',
+    description: 'World name filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'activeOnly',
+    description: 'Only return active events',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of events',
+  })
+  async getEvents(
+    @Param('guildId') guildId: string,
+    @Query('world') world?: string,
+    @Query('activeOnly') activeOnly?: string,
+  ) {
+    return this.EventsService.getEvents(guildId, world, activeOnly !== 'false');
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId')
+  @ApiOperation({
+    summary: 'Get event details',
+    description: 'Get detailed information about a specific event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event details',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEvent(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.EventsService.getEvent(guildId, eventId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Patch('/guilds/:guildId/events/:eventId')
+  @ApiOperation({
+    summary: 'Update event',
+    description: 'Update an existing event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event updated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async updateEvent(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Body() data: UpdateEventDto,
+  ) {
+    return this.EventsService.updateEvent(guildId, eventId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/events/:eventId')
+  @ApiOperation({
+    summary: 'Delete event',
+    description: 'Delete an event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event deleted successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async deleteEvent(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.EventsService.deleteEvent(guildId, eventId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/maps/:mapId/assign')
+  @ApiOperation({
+    summary: 'Assign member to map',
+    description: 'Assign a guild member to monitor a specific map',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member assigned successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Map not found' })
+  async assignMember(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('mapId') mapId: string,
+    @Body() data: AssignMemberDto,
+  ) {
+    return this.EventsService.assignMemberToMap(
+      guildId,
+      eventId,
+      mapId,
+      data.memberId,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/heroes')
+  @ApiOperation({
+    summary: 'Add hero to event',
+    description: 'Add a new hero to an existing event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Hero added successfully',
+  })
+  async addHero(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Body() data: CreateHeroDto,
+  ) {
+    return this.EventsService.createHero(guildId, eventId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Patch('/guilds/:guildId/events/:eventId/heroes/:heroId')
+  @ApiOperation({
+    summary: 'Update hero',
+    description: 'Update an existing hero details',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Hero updated successfully',
+  })
+  async updateHero(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Body() data: UpdateHeroDto,
+  ) {
+    return this.EventsService.updateHero(guildId, eventId, heroId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/events/:eventId/heroes/:heroId')
+  @ApiOperation({
+    summary: 'Delete hero',
+    description: 'Remove a hero from the event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Hero deleted successfully',
+  })
+  async deleteHero(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+  ) {
+    return this.EventsService.deleteHero(guildId, eventId, heroId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/maps')
+  @ApiOperation({
+    summary: 'Add map to hero',
+    description: 'Add a new map to an existing hero',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Map added successfully',
+  })
+  async addMap(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Body() data: CreateMapDto,
+  ) {
+    return this.EventsService.addMap(guildId, eventId, heroId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId')
+  @ApiOperation({
+    summary: 'Delete map',
+    description: 'Remove a map from a hero',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Map deleted successfully',
+  })
+  async deleteMap(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Param('mapId') mapId: string,
+  ) {
+    return this.EventsService.deleteMap(guildId, eventId, heroId, mapId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/events/:eventId/maps/:mapId/assign')
+  @ApiOperation({
+    summary: 'Unassign member from map',
+    description:
+      'Remove an assigned member from a map. If memberId is provided, removes specific member; otherwise removes all.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiQuery({
+    name: 'memberId',
+    description: 'Optional member ID to unassign',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Member unassigned successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Map not found' })
+  async unassignMember(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('mapId') mapId: string,
+    @Query('memberId') memberId?: string,
+  ) {
+    return this.EventsService.unassignMemberFromMap(
+      guildId,
+      eventId,
+      mapId,
+      memberId ? parseInt(memberId, 10) : undefined,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/presence')
+  @ApiOperation({
+    summary: 'Update presence',
+    description: 'Update player presence and AFK status on event maps',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Presence updated',
+  })
+  async updatePresence(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @DiscordId() discordId: string,
+    @Body() data: UpdatePresenceDto,
+  ) {
+    // Get member for this user in this guild using Prisma directly
+    const member = await this.EventsService.getMemberByDiscordId(
+      discordId,
+      guildId,
+    );
+    if (!member) {
+      return { success: false, message: 'Member not found' };
+    }
+
+    return this.EventsService.updatePresence(
+      guildId,
+      eventId,
+      member.id,
+      data.mapName,
+      data.isAfk,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/ranking')
+  @ApiOperation({
+    summary: 'Get event ranking',
+    description: 'Get the ranking for an event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event ranking',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getRanking(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.EventsService.getRanking(guildId, eventId);
+  }
+}

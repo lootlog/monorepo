@@ -251,4 +251,46 @@ export class GatewayService {
       );
     }
   }
+
+  handleEventPresenceUpdate(data: {
+    guildId: string;
+    eventId: string;
+    mapId: string;
+    presenceLog: any;
+  }) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.EVENT_PRESENCE_UPDATE, data);
+  }
+
+  handleEventMapStatusUpdate(data: {
+    guildId: string;
+    eventId: string;
+    mapId: string;
+  }) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.EVENT_MAP_STATUS_UPDATE, data);
+  }
+
+  handleEventHeroKilled(data: {
+    guildId: string;
+    eventId: string;
+    heroNpcId: string;
+    kill: any;
+  }) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.EVENT_HERO_KILLED, data);
+  }
+
+  handleEventRankingUpdate(data: {
+    guildId: string;
+    eventId: string;
+    rankings: any;
+  }) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.EVENT_RANKING_UPDATE, data);
+  }
 }
