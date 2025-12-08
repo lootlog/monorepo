@@ -18,6 +18,7 @@ const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "item",
   "loot",
   "f",
+  "h",
 ];
 
 export const useGameEventHandlers = () => {

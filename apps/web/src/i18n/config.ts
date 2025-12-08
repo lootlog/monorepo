@@ -8,6 +8,7 @@ import npcType from "./translations/npc-type.json";
 import permissions from "./translations/permissions.json";
 import professions from "./translations/professions.json";
 import battle from "./translations/battle.json";
+import events from "./translations/events.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -20,6 +21,7 @@ i18n.use(initReactI18next).init({
         permissions,
         professions,
         battle,
+        events,
       },
     },
   },

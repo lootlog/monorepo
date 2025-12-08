@@ -12,4 +12,8 @@ export enum GatewayEvent {
   NOTIFICATIONS_SEND = 'notifications-send',
   MEMBERS_REFRESH_JOB_UPDATE = 'members-refresh-job-update',
   PERMISSIONS_UPDATED = 'permissions-updated',
+  EVENT_PRESENCE_UPDATE = 'event:presence:update',
+  EVENT_MAP_STATUS_UPDATE = 'event:map-status:update',
+  EVENT_HERO_KILLED = 'event:hero:killed',
+  EVENT_RANKING_UPDATE = 'event:ranking:update',
 }

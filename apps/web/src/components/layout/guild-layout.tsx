@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
+import { useEvent } from "@/features/events/hooks/use-event";
 import { ROUTES } from "@/config/routes";
 
 export const GuildLayout: FC = () => {
@@ -23,10 +24,15 @@ export const GuildLayout: FC = () => {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const { data: guild } = useGuild({ retry: false });
+  const { guildId, eventId } = params;
+  const { data: event } = useEvent({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
 
   const getNavigationInfo = () => {
     const path = location.pathname;
-    const { guildId, reservationId } = params;
+    const { guildId, reservationId, eventId, heroId } = params;
 
     if (!guildId) {
       return {
@@ -44,6 +50,7 @@ export const GuildLayout: FC = () => {
     const guildSettingsMembers = ROUTES.guild.settings.members(guildId);
     const guildSettingsNpcs = ROUTES.guild.settings.npcs(guildId);
     const guildActivityLogs = ROUTES.guild.activityLogs(guildId);
+    const guildEvents = ROUTES.guild.events(guildId);
 
     if (path === guildBase) {
       return {
@@ -109,6 +116,78 @@ export const GuildLayout: FC = () => {
         ],
         showBack: true,
         backPath: guildBase,
+      };
+    }
+
+    // Events handling
+    if (path === guildEvents) {
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Eventy", path: null },
+        ],
+        showBack: true,
+        backPath: guildBase,
+      };
+    }
+
+    if (path === `${guildEvents}/create`) {
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Eventy", path: guildEvents },
+          { label: "Nowy event", path: null },
+        ],
+        showBack: true,
+        backPath: guildEvents,
+      };
+    }
+
+    if (path.startsWith(guildEvents) && eventId) {
+      const guildEventDetail = `${guildEvents}/${eventId}`;
+
+      // Hero detail: /events/$eventId/heroes/$heroId
+      if (heroId && path.includes("/heroes/")) {
+        return {
+          breadcrumbs: [
+            { label: guild?.name || "Gildia", path: guildBase },
+            { label: "Eventy", path: guildEvents },
+            { label: event?.name || "Event", path: guildEventDetail },
+            {
+              label:
+                event?.heroNpcs?.find((h) => h.id === heroId)?.npcName ||
+                "Heros",
+              path: null,
+            },
+          ],
+          showBack: true,
+          backPath: guildEventDetail,
+        };
+      }
+
+      // Event ranking: /events/$eventId/ranking
+      if (path === `${guildEventDetail}/ranking`) {
+        return {
+          breadcrumbs: [
+            { label: guild?.name || "Gildia", path: guildBase },
+            { label: "Eventy", path: guildEvents },
+            { label: event?.name || "Event", path: guildEventDetail },
+            { label: "Ranking", path: null },
+          ],
+          showBack: true,
+          backPath: guildEventDetail,
+        };
+      }
+
+      // Event detail: /events/$eventId
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Eventy", path: guildEvents },
+          { label: event?.name || "Event", path: null },
+        ],
+        showBack: true,
+        backPath: guildEvents,
       };
     }
 

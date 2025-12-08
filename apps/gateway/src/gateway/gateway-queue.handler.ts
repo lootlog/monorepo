@@ -620,4 +620,78 @@ export class GatewayQueueHandler {
       `Member refresh job update sent for guild: ${data.guildId}, status: ${data.status}`,
     );
   }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_PRESENCE_UPDATE,
+    queue: Queue.EVENT_PRESENCE_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventPresenceUpdate(data: {
+    guildId: string;
+    eventId: string;
+    mapId: string;
+    presenceLog: any;
+  }) {
+    this.gatewayService.handleEventPresenceUpdate(data);
+    this.logger.log(`Margo event presence update for guild: ${data.guildId}`);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_MAP_STATUS_UPDATE,
+    queue: Queue.EVENT_MAP_STATUS_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventMapStatusUpdate(data: {
+    guildId: string;
+    eventId: string;
+    mapId: string;
+  }) {
+    this.gatewayService.handleEventMapStatusUpdate(data);
+    this.logger.log(`Margo event map status update for guild: ${data.guildId}`);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_HERO_KILLED,
+    queue: Queue.EVENT_HERO_KILLED,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventHeroKilled(data: {
+    guildId: string;
+    eventId: string;
+    heroNpcId: string;
+    kill: any;
+  }) {
+    this.gatewayService.handleEventHeroKilled(data);
+    this.logger.log(`Margo event hero killed for guild: ${data.guildId}`);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_RANKING_UPDATE,
+    queue: Queue.EVENT_RANKING_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventRankingUpdate(data: {
+    guildId: string;
+    eventId: string;
+    rankings: any;
+  }) {
+    this.gatewayService.handleEventRankingUpdate(data);
+    this.logger.log(`Margo event ranking update for guild: ${data.guildId}`);
+  }
 }
