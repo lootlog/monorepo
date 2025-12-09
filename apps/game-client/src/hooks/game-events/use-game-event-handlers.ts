@@ -9,6 +9,8 @@ import { useChatEventsHandlers } from "@/hooks/game-events/use-chat-events-handl
 import { useDialogHandlers } from "@/hooks/game-events/use-dialog-handlers";
 import { useNpcsHandlers } from "@/hooks/game-events/use-npcs-handler";
 import { useNpcsDeleteHandlers } from "@/hooks/game-events/use-npcs-delete-handlers";
+import { useMapChangeHandler } from "@/hooks/game-events/use-map-change-handler";
+import { useAfkHandler } from "@/hooks/game-events/use-afk-handler";
 
 const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "chat",
@@ -19,6 +21,7 @@ const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "loot",
   "f",
   "h",
+  "town",
 ];
 
 export const useGameEventHandlers = () => {
@@ -31,6 +34,8 @@ export const useGameEventHandlers = () => {
   const { handleLootFromBattle, handleDialogLoot } = useLootHandlers();
   const { handleBattleEvents } = useBattleEventHandler();
   const { handleNpcsDelete } = useNpcsDeleteHandlers();
+  const { handleMapChange } = useMapChangeHandler();
+  const { handleAfkEvent } = useAfkHandler();
 
   const handleEvent = (event: GameEvent) => {
     // Check for relevant event keys
@@ -47,6 +52,8 @@ export const useGameEventHandlers = () => {
     handleLootFromBattle(event);
     handleDialogLoot(event);
     handleNpcsDelete(event);
+    handleMapChange(event);
+    handleAfkEvent(event);
   };
 
   const setupGameEventHandler = useEffectEvent(() => {

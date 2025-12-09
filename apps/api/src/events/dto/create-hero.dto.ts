@@ -1,5 +1,7 @@
-import { IsInt, IsString, IsArray, IsOptional } from 'class-validator';
+import { IsInt, IsString, IsArray, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { HeroMapDto } from './create-event.dto';
 
 export class CreateHeroDto {
   @ApiProperty({ description: 'NPC ID' })
@@ -12,10 +14,11 @@ export class CreateHeroDto {
 
   @ApiPropertyOptional({
     description: 'Initial maps for this hero',
-    type: [String],
+    type: [HeroMapDto],
   })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  maps?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => HeroMapDto)
+  maps?: HeroMapDto[];
 }

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
-import { CreateEventDto, HeroNpcDto } from './dto/create-event.dto';
+import { CreateEventDto } from './dto/create-event.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { CreateMapDto } from './dto/create-map.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
@@ -26,7 +26,7 @@ export class EventsService {
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
-    const { heroNpcs, startsAt, endsAt, ...eventData } = data;
+    const { heroNpcs = [], startsAt, endsAt, ...eventData } = data;
 
     const event = await this.prisma.event.create({
       data: {
@@ -34,15 +34,20 @@ export class EventsService {
         guildId,
         startsAt: startsAt ? new Date(startsAt) : null,
         endsAt: endsAt ? new Date(endsAt) : null,
-        heroNpcs: {
-          create: heroNpcs.map((npc) => ({
-            npcId: npc.npcId,
-            npcName: npc.npcName,
-            maps: {
-              create: npc.maps.map((mapName) => ({ mapName })),
-            },
-          })),
-        },
+        ...(heroNpcs.length > 0 && {
+          heroNpcs: {
+            create: heroNpcs.map((npc) => ({
+              npcId: npc.npcId,
+              npcName: npc.npcName,
+              maps: {
+                create: npc.maps.map((map) => ({
+                  mapId: map.mapId,
+                  mapName: map.mapName,
+                })),
+              },
+            })),
+          },
+        }),
       },
       include: {
         heroNpcs: {
@@ -186,7 +191,10 @@ export class EventsService {
                 npcId: npc.npcId,
                 npcName: npc.npcName,
                 maps: {
-                  create: npc.maps.map((mapName) => ({ mapName })),
+                  create: npc.maps.map((map) => ({
+                    mapId: map.mapId,
+                    mapName: map.mapName,
+                  })),
                 },
               })),
             },
@@ -385,42 +393,6 @@ export class EventsService {
     });
   }
 
-  async getTemplates(guildId: string) {
-    return this.prisma.eventMapTemplate.findMany({
-      where: { guildId },
-      orderBy: { name: 'asc' },
-    });
-  }
-
-  async createTemplate(
-    guildId: string,
-    data: { name: string; heroNpcs: any[] },
-  ) {
-    return this.prisma.eventMapTemplate.create({
-      data: {
-        guildId,
-        name: data.name,
-        heroNpcs: data.heroNpcs as unknown as any,
-      },
-    });
-  }
-
-  async deleteTemplate(guildId: string, templateId: string) {
-    const template = await this.prisma.eventMapTemplate.findFirst({
-      where: { id: templateId, guildId },
-    });
-
-    if (!template) {
-      throw new NotFoundException('Template not found');
-    }
-
-    await this.prisma.eventMapTemplate.delete({
-      where: { id: templateId },
-    });
-
-    return { success: true };
-  }
-
   async getMemberByDiscordId(discordId: string, guildId: string) {
     return this.prisma.member.findFirst({
       where: {
@@ -446,7 +418,10 @@ export class EventsService {
         npcId: data.npcId,
         npcName: data.npcName,
         maps: {
-          create: (data.maps || []).map((mapName) => ({ mapName })),
+          create: (data.maps || []).map((map) => ({
+            mapId: map.mapId,
+            mapName: map.mapName,
+          })),
         },
       },
       include: {
@@ -531,7 +506,7 @@ export class EventsService {
     const existingMap = await this.prisma.eventMap.findFirst({
       where: {
         heroNpcId: heroId,
-        mapName: data.mapName,
+        mapId: data.mapId,
       },
     });
 
@@ -542,6 +517,7 @@ export class EventsService {
     return this.prisma.eventMap.create({
       data: {
         heroNpcId: heroId,
+        mapId: data.mapId,
         mapName: data.mapName,
       },
       include: {
@@ -626,5 +602,177 @@ export class EventsService {
     } catch (error) {
       console.error('Failed to emit presence update', error);
     }
+  }
+
+  async getEventHeroTimers(guildId: string, eventId: string, world: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      include: {
+        heroNpcs: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const npcIds = event.heroNpcs.map((hero) => hero.npcId);
+
+    if (npcIds.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const timers = await this.prisma.timer.findMany({
+      where: {
+        guildId,
+        world,
+        npcId: { in: npcIds },
+        maxSpawnTime: { gt: now.toISOString() },
+      },
+      include: {
+        member: true,
+      },
+    });
+
+    return timers;
+  }
+
+  async getEventHeroLoots(
+    guildId: string,
+    eventId: string,
+    world: string,
+    limit = 10,
+  ) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      include: {
+        heroNpcs: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const npcIds = event.heroNpcs.map((hero) => hero.npcId);
+
+    if (npcIds.length === 0) {
+      return [];
+    }
+
+    const loots = await this.prisma.loot.findMany({
+      where: {
+        world,
+        lootSubmissions: {
+          some: {
+            guildId,
+          },
+        },
+        lootNpcs: {
+          some: {
+            npcSnapshot: {
+              npcId: { in: npcIds },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        uniqueId: true,
+        world: true,
+        source: true,
+        location: true,
+        lootShare: true,
+        createdAt: true,
+        updatedAt: true,
+        lootSubmissions: {
+          where: { guildId },
+          include: {
+            member: {
+              select: {
+                name: true,
+                avatar: true,
+                userId: true,
+              },
+            },
+          },
+        },
+        lootItems: {
+          include: { itemSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootPlayers: {
+          include: { playerSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootNpcs: {
+          include: { npcSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    return loots.map((loot) => ({
+      id: loot.id,
+      uniqueId: loot.uniqueId,
+      world: loot.world,
+      source: loot.source,
+      location: loot.location,
+      lootShare: loot.lootShare,
+      createdAt: loot.createdAt,
+      updatedAt: loot.updatedAt,
+      member: loot.lootSubmissions[0]?.member || null,
+      items: loot.lootItems.map((item) => ({
+        id: item.itemSnapshot.itemId,
+        hid: item.hid,
+        name: item.itemSnapshot.name,
+        icon: item.itemSnapshot.icon,
+        stat: item.itemSnapshot.statRaw,
+        type: item.itemSnapshot.itemType,
+        rarity: item.itemSnapshot.rarity,
+        lvl: item.itemSnapshot.lvl,
+      })),
+      players: loot.lootPlayers.map((player) => ({
+        id: player.playerSnapshot.characterId,
+        name: player.playerSnapshot.name,
+        lvl: player.lvl,
+        prof: player.playerSnapshot.prof,
+        icon: player.playerSnapshot.icon,
+      })),
+      npcs: loot.lootNpcs.map((npc) => ({
+        id: npc.npcSnapshot.npcId,
+        name: npc.npcSnapshot.name,
+        lvl: npc.npcSnapshot.lvl,
+        type: npc.npcSnapshot.type,
+        icon: npc.npcSnapshot.icon,
+      })),
+    }));
+  }
+
+  async getEventHeroStats(guildId: string, eventId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      include: {
+        heroNpcs: {
+          include: {
+            kills: true,
+          },
+        },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return event.heroNpcs.map((hero) => ({
+      heroId: hero.id,
+      npcId: hero.npcId,
+      npcName: hero.npcName,
+      killCount: hero.kills.length,
+    }));
   }
 }

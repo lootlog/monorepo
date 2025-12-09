@@ -8,10 +8,15 @@ interface UpdateEventData {
   active?: boolean;
 }
 
+interface HeroMapData {
+  mapId: number;
+  mapName: string;
+}
+
 interface CreateHeroData {
   npcId: number;
   npcName: string;
-  maps?: string[];
+  maps?: HeroMapData[];
 }
 
 interface UpdateHeroData {
@@ -19,6 +24,7 @@ interface UpdateHeroData {
 }
 
 interface CreateMapData {
+  mapId: number;
   mapName: string;
 }
 

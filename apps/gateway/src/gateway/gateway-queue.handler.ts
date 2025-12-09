@@ -289,8 +289,18 @@ export class GatewayQueueHandler {
       return;
     }
 
-    await this.gatewayService.invalidatePlayerCache(data.id);
-    this.logger.log(`Member cache invalidated successfully: ${data.id}`);
+    await Promise.all([
+      this.gatewayService.invalidatePlayerCache(data.id),
+      this.gatewayService.invalidateUserGuildsCache(
+        data.discordId,
+        data.userId,
+      ),
+      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
+    ]);
+
+    this.logger.log(
+      `Member removed and rooms rebalanced for ${data.discordId} in guild ${data.guildId}`,
+    );
   }
 
   @RabbitSubscribe({
@@ -318,8 +328,18 @@ export class GatewayQueueHandler {
       return;
     }
 
-    await this.gatewayService.invalidatePlayerCache(data.id);
-    this.logger.log(`Member cache invalidated successfully: ${data.id}`);
+    await Promise.all([
+      this.gatewayService.invalidatePlayerCache(data.id),
+      this.gatewayService.invalidateUserGuildsCache(
+        data.discordId,
+        data.userId,
+      ),
+      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
+    ]);
+
+    this.logger.log(
+      `Member role added and rooms rebalanced for ${data.discordId} in guild ${data.guildId}`,
+    );
   }
 
   @RabbitSubscribe({
@@ -350,8 +370,18 @@ export class GatewayQueueHandler {
       return;
     }
 
-    await this.gatewayService.invalidatePlayerCache(data.id);
-    this.logger.log(`Member cache invalidated successfully: ${data.id}`);
+    await Promise.all([
+      this.gatewayService.invalidatePlayerCache(data.id),
+      this.gatewayService.invalidateUserGuildsCache(
+        data.discordId,
+        data.userId,
+      ),
+      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
+    ]);
+
+    this.logger.log(
+      `Member role removed and rooms rebalanced for ${data.discordId} in guild ${data.guildId}`,
+    );
   }
 
   @RabbitSubscribe({

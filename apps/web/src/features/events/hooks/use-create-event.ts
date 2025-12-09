@@ -3,13 +3,18 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { Event } from "./use-events";
 
+interface HeroMapData {
+  mapId: number;
+  mapName: string;
+}
+
 interface CreateEventData {
   name: string;
   world: string;
   active?: boolean;
   startsAt?: string;
   endsAt?: string;
-  heroNpcs: { npcId: number; npcName: string; maps: string[] }[];
+  heroNpcs: { npcId: number; npcName: string; maps: HeroMapData[] }[];
 }
 
 export const useCreateEvent = () => {

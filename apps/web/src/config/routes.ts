@@ -76,6 +76,7 @@ const ROUTE_SEGMENTS = {
     appearance: "/appearance",
     servers: "/servers",
     activityLogs: "/activity-logs",
+    mapTemplates: "/map-templates",
   },
 } as const;
 

@@ -1,0 +1,46 @@
+{
+  "cl": "jX/ !$0(\"(2 Z#0& $> !(@G! &d ",
+  "gw2": [297, 11, 7, 0, 0],
+  "townname": {
+    "297": "Dom Eldrika"
+  },
+  "barters": {
+    "premium": 0,
+    "dragon": 0,
+    "event": 256
+  },
+  "sraj_tpl": [
+    {
+      "appear": "{\"night\":{\"color\":{\"r\":0,\"g\":0,\"b\":0,\"a\":0.3},\"dayNightCycle\":{\"worldTime\":false,\"dayDuration\":24},\"list\":[]}}",
+      "cancel": "{}",
+      "id": 4
+    }
+  ],
+  "town": {
+    "bg": "dd3.jpg",
+    "file": "it-eldrik-2.png",
+    "id": 2659,
+    "is_drop_item_tax": true,
+    "mainid": 297,
+    "mode": 0,
+    "name": "Dom Eldrika p.1",
+    "params": {
+      "battlePoolTimeLimits": {
+        "minimum": 2,
+        "penalty": 5,
+        "total": 120
+      },
+      "isClearEnabled": true,
+      "lvlMax": 0,
+      "lvlMin": 0,
+      "respawn": "Ithan"
+    },
+    "pvp": 0,
+    "srajId": 4,
+    "visibility": 0,
+    "water": "",
+    "x": 16,
+    "y": 16
+  },
+  "e": "ok"
+}

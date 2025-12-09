@@ -10,6 +10,16 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class HeroMapDto {
+  @ApiProperty({ description: 'Margonem map ID' })
+  @IsInt()
+  mapId: number;
+
+  @ApiProperty({ description: 'Map name' })
+  @IsString()
+  mapName: string;
+}
+
 export class HeroNpcDto {
   @ApiProperty({ description: 'NPC ID' })
   @IsInt()
@@ -19,10 +29,11 @@ export class HeroNpcDto {
   @IsString()
   npcName: string;
 
-  @ApiProperty({ description: 'Maps where the NPC can spawn' })
+  @ApiProperty({ description: 'Maps where the NPC can spawn', type: [HeroMapDto] })
   @IsArray()
-  @IsString({ each: true })
-  maps: string[];
+  @ValidateNested({ each: true })
+  @Type(() => HeroMapDto)
+  maps: HeroMapDto[];
 }
 
 export class CreateEventDto {
@@ -52,12 +63,14 @@ export class CreateEventDto {
   @IsDateString()
   endsAt?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Hero NPCs to track with their spawn maps',
     type: [HeroNpcDto],
+    default: [],
   })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => HeroNpcDto)
-  heroNpcs: HeroNpcDto[];
+  heroNpcs?: HeroNpcDto[];
 }

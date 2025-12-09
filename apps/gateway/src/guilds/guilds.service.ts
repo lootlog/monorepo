@@ -162,7 +162,19 @@ export class GuildsService {
       const cached = await this.redis.get(cacheKey);
       if (!cached) return null;
 
-      return JSON.parse(cached);
+      const data: CachedGuildData = JSON.parse(cached);
+      const age = Date.now() - data.cachedAt;
+
+      // Reject stale cache older than MAX_STALE_CACHE_AGE (5 minutes)
+      // This prevents removed users from retaining access via ancient cache
+      if (age > CACHE_TTL.MAX_STALE_CACHE_AGE * 1000) {
+        this.logger.warn(
+          `Stale cache too old (${Math.floor(age / 1000)}s), rejecting`,
+        );
+        return null;
+      }
+
+      return data;
     } catch (error) {
       this.logger.error(`Stale cache read error: ${error.message}`);
       return null;
@@ -198,6 +210,58 @@ export class GuildsService {
       this.logger.debug(`Cache invalidated for ${discordId}`);
     } catch (error) {
       this.logger.error(`Cache invalidation error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Trigger Discord role refresh for game-client user.
+   * This is a fire-and-forget operation - we don't block on the result.
+   * The API handles rate limiting (15 min per user).
+   */
+  triggerGameClientDiscordRefresh(
+    discordId: string,
+    userId: string,
+  ): void {
+    // Fire and forget - don't await
+    this.doGameClientDiscordRefresh(discordId, userId).catch((error) => {
+      this.logger.warn(
+        `Failed to trigger game-client Discord refresh for ${discordId}: ${error.message}`,
+      );
+    });
+  }
+
+  private async doGameClientDiscordRefresh(
+    discordId: string,
+    userId: string,
+  ): Promise<void> {
+    try {
+      const url = `${this.apiUrl}/internal/members/refresh-discord-roles`;
+      const response = await firstValueFrom(
+        this.httpService.post(url, null, {
+          params: { discordId, userId },
+          timeout: 30000, // 30s timeout for refresh
+        }),
+      );
+
+      const data = response.data as {
+        refreshed: boolean;
+        rateLimited: boolean;
+        guildsRefreshed: number;
+      };
+
+      if (data.rateLimited) {
+        this.logger.debug(
+          `Game-client Discord refresh rate limited for ${discordId}`,
+        );
+      } else if (data.refreshed) {
+        this.logger.log(
+          `Game-client Discord refresh completed for ${discordId}, guilds: ${data.guildsRefreshed}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Game-client Discord refresh failed for ${discordId}: ${error.message}`,
+      );
     }
   }
 

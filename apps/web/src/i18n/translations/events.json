@@ -7,6 +7,30 @@
   "active": "Aktywny",
   "inactive": "Nieaktywny",
   "noEvents": "Brak eventów",
+  "createDialog": {
+    "title": "Nowy Event",
+    "description": "Utwórz nowy event dla gildii",
+    "nameLabel": "Nazwa eventu",
+    "namePlaceholder": "np. Wielkie Polowanie",
+    "worldLabel": "Świat",
+    "worldPlaceholder": "np. tempest",
+    "activeLabel": "Aktywny od razu",
+    "noHeroesHint": "Możesz utworzyć event bez herosów i dodać ich później w ustawieniach eventu.",
+    "heroIdLabel": "ID NPC",
+    "heroNameLabel": "Nazwa herosa",
+    "heroNamePlaceholder": "np. Król Goblinów",
+    "heroMapsLabel": "Mapy spawnu",
+    "mapPlaceholder": "Nazwa mapy",
+    "fromTemplate": "Z szablonu",
+    "addHero": "Dodaj herosa",
+    "heroValidation": "Wypełnij ID, nazwę i dodaj przynajmniej jedną mapę",
+    "nameRequired": "Nazwa eventu jest wymagana",
+    "worldRequired": "Świat jest wymagany",
+    "success": "Event utworzony pomyślnie",
+    "error": "Błąd podczas tworzenia eventu",
+    "cancel": "Anuluj",
+    "creating": "Tworzenie..."
+  },
   "ranking": {
     "title": "Ranking Eventowy",
     "points": "Punkty",
@@ -26,31 +50,58 @@
     "offline": "Offline"
   },
   "common": {
-    "backToEvent": "Powrót do eventu"
+    "backToEvent": "Powrót do eventu",
+    "close": "Zamknij"
   },
   "maps": {
     "title": "Mapy",
-    "manage": "Zarządzaj Mapami",
-    "assign": "Przypisz Członka",
-    "unassign": "Usuń Przypisanie",
-    "selfAssign": "Weź Tę Mapę",
+    "manage": "Zarządzaj mapami",
+    "assign": "Przypisz członka",
+    "unassign": "Usuń przypisanie",
+    "selfAssign": "Weź tę mapę",
     "assignSuccess": "Przypisano do mapy",
     "assignError": "Błąd podczas przypisywania",
     "unassignSuccess": "Odpisano z mapy",
     "unassignError": "Błąd podczas odpisywania",
     "noMaps": "Brak map",
+    "assigned": "Przypisane mapy",
+    "noMapsAssigned": "Brak przypisanych map",
+    "loadFromTemplate": "Załaduj z szablonu",
+    "searchMaps": "Wyszukaj mapy",
+    "searchPlaceholder": "Szukaj po nazwie lub ID...",
+    "searchHint": "Wpisz nazwę mapy, aby wyszukać",
+    "noResults": "Brak wyników dla \"{{query}}\"",
+    "allTemplatesAdded": "Wszystkie mapy z szablonu są już dodane",
+    "templateLoaded": "Dodano {{count}} map z szablonu \"{{name}}\"",
+    "errors": {
+      "duplicate": "Ta mapa już istnieje",
+      "addFailed": "Błąd podczas dodawania mapy",
+      "deleteFailed": "Błąd podczas usuwania mapy"
+    },
     "status": {
       "assignedPresent": "Monitoruje",
       "assignedAbsent": "Nieobecny",
+      "assignedAfk": "AFK",
       "unassigned": "Nieprzypisany",
       "wrongPlayer": "Zły Gracz"
-    }
+    },
+    "clearAll": "Wyczyść przypisania",
+    "clearAllSuccess": "Wyczyszczono wszystkie przypisania",
+    "clearAllError": "Błąd podczas czyszczenia przypisań"
   },
   "heroes": {
     "title": "Herosi Eventowi",
     "notFound": "Nie znaleziono herosa",
     "killed": "Heros Zabity!",
-    "pointsAwarded": "{{points}} punktów przyznano"
+    "pointsAwarded": "{{points}} punktów przyznano",
+    "kills": "bicia",
+    "kill": "bicie",
+    "noTimer": "Brak aktywnego timera",
+    "timerActive": "Timer aktywny"
+  },
+  "loots": {
+    "title": "Ostatnie łupy",
+    "noLoots": "Brak łupów z herosów eventowych"
   },
   "participants": {
     "title": "Uczestnicy",

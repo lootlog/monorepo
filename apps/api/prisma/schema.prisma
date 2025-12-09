@@ -23,7 +23,7 @@ model Guild {
   active            Boolean            @default(true)
   reservations      Reservation[]
   events            Event[]
-  eventMapTemplates EventMapTemplate[]
+  mapTemplates      MapTemplate[]
 
   @@index([vanityUrl])
 }
@@ -513,6 +513,7 @@ model Event {
 model EventMap {
   id        String   @id @default(cuid())
   heroNpcId String
+  mapId     Int
   mapName   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -521,7 +522,8 @@ model EventMap {
   assignedMembers Member[]
   presenceLogs    EventPresenceLog[]
 
-  @@unique([heroNpcId, mapName])
+  @@unique([heroNpcId, mapId])
+  @@index([mapId])
 }
 
 model EventHeroNpc {
@@ -601,11 +603,11 @@ model EventRanking {
   @@index([eventId, totalPoints(sort: Desc)])
 }
 
-model EventMapTemplate {
+model MapTemplate {
   id        String   @id @default(cuid())
   guildId   String
   name      String
-  heroNpcs  Json
+  maps      Json     // [{ id: number, name: string }]
   createdAt DateTime @default(now())
 
   guild Guild @relation(fields: [guildId], references: [id])

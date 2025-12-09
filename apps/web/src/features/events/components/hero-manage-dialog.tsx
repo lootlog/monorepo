@@ -13,7 +13,6 @@ import { Label } from "@lootlog/ui/components/label";
 import { useEventMutations } from "../hooks/use-event-mutations";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { Textarea } from "@lootlog/ui/components/textarea";
 
 interface HeroManageDialogProps {
   open: boolean;
@@ -30,7 +29,6 @@ interface HeroManageDialogProps {
 interface FormData {
   npcId: number;
   npcName: string;
-  maps: string; // Comma separated for new hero
 }
 
 export const HeroManageDialog = ({
@@ -47,7 +45,6 @@ export const HeroManageDialog = ({
     defaultValues: {
       npcId: 0,
       npcName: "",
-      maps: "",
     },
   });
 
@@ -57,13 +54,11 @@ export const HeroManageDialog = ({
         reset({
           npcId: hero.npcId,
           npcName: hero.npcName,
-          maps: "",
         });
       } else {
         reset({
           npcId: 0,
           npcName: "",
-          maps: "",
         });
       }
     }
@@ -80,15 +75,9 @@ export const HeroManageDialog = ({
         });
         toast.success("Zaktualizowano herosa");
       } else {
-        const maps = data.maps
-          .split(",")
-          .map((m) => m.trim())
-          .filter(Boolean);
-
         await addHero.mutateAsync({
           npcId: Number(data.npcId),
           npcName: data.npcName,
-          maps: maps,
         });
         toast.success("Dodano herosa");
       }
@@ -124,17 +113,9 @@ export const HeroManageDialog = ({
           </div>
 
           {!isEditing && (
-            <div className="space-y-2">
-              <Label htmlFor="maps">Mapy (oddziel przecinkiem)</Label>
-              <Textarea
-                id="maps"
-                placeholder="Nizina Wieśniaków, Stare Ruiny"
-                {...register("maps")}
-              />
-              <p className="text-xs text-muted-foreground">
-                Dodatkowe mapy można dodać później w edycji
-              </p>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Mapy dla herosa dodasz po jego utworzeniu.
+            </p>
           )}
 
           <div className="flex justify-end gap-2 pt-4">

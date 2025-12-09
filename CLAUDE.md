@@ -98,3 +98,6 @@ docker compose down && docker compose up -d  # Reset infrastructure
 - `turbo.json` - Task pipeline
 - `docker-compose.yml` - Infrastructure
 - `apps/*/prisma/schema.prisma` - Database schemas
+- Always use descriptive variable names.
+- Avoid excessive comments.
+- Please use i18n in /apps/web.

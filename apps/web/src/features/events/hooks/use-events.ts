@@ -14,6 +14,7 @@ interface Member {
 
 interface EventMap {
   id: string;
+  mapId: number;
   mapName: string;
   assignedMembers: Member[];
 }
