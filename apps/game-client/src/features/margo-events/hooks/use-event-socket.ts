@@ -1,6 +1,16 @@
 import { useEffect, useCallback } from "react";
 import { useSocket } from "@/contexts/socket-context";
-import type { EventRanking } from "./use-event";
+
+interface EventRanking {
+  id: string;
+  memberId: number;
+  totalPoints: number;
+  totalKills: number;
+  member: {
+    id: number;
+    name: string;
+  };
+}
 
 interface PresenceUpdatePayload {
   guildId: string;

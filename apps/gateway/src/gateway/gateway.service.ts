@@ -10,17 +10,20 @@ import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
-import { canViewNpcTimer } from '@lootlog/api-helpers/permissions';
-import {
-  isAdministrativeUserFromRoles,
-  isOwnerOrAdminFromRoles,
-} from 'src/guilds/utils/is-administrative-user';
+import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
 import type { UserGuildData } from 'src/guilds/types/guild.types';
-import { canViewChatMessage } from './utils/can-view-chat-message';
-import { canViewNpcNotification } from './utils/can-view-npc-notifications';
+import {
+  buildRoomName,
+  getNpcTier,
+  checkLevelRange,
+  isFeatureRoom,
+  calculateUserRooms,
+  type FeatureName,
+  type TierName,
+} from 'src/gateway/utils/room-utils';
 
 @Injectable()
 export class GatewayService {
@@ -32,97 +35,67 @@ export class GatewayService {
     private readonly guildsService: GuildsService,
   ) {}
 
-  private emitToEligibleSockets({
+  private emitToFeatureRoom({
     guildId,
+    feature,
+    tier,
     event,
     data,
+    npcLevel,
   }: {
     guildId: string;
+    feature: FeatureName;
+    tier: TierName;
     event: GatewayEvent;
     data: unknown;
+    npcLevel?: number;
   }) {
-    this.gateway.server
-      .in(guildId)
-      .fetchSockets()
-      .then((sockets) => {
-        sockets.forEach((socket) => {
-          const desiredGuild = socket.data.guilds?.find(
-            (g: UserGuildData) => g.guild.id === guildId,
-          );
-          if (!desiredGuild) return;
+    const room = buildRoomName(guildId, feature, tier);
 
-          const isOwner = desiredGuild.guild.ownerId === socket.data.discordId;
-
-          if (isOwner) {
-            this.logger.debug(
-              `Guild owner ${socket.data.discordId} sending event ${event} in guild ${guildId}`,
+    if (npcLevel !== undefined) {
+      // Level filtering required - fetch sockets and filter
+      this.gateway.server
+        .in(room)
+        .fetchSockets()
+        .then((sockets) => {
+          sockets.forEach((socket) => {
+            const guildData = socket.data.guilds?.find(
+              (g: UserGuildData) => g.guild.id === guildId,
             );
-            socket.emit(event, data);
-            return;
-          }
+            if (!guildData) return;
 
-          const roles = desiredGuild.roles || [];
-          const administrativeUser = isAdministrativeUserFromRoles(roles);
-
-          if (administrativeUser) {
-            this.logger.debug(
-              `Administrative user ${socket.data.discordId} sending event ${event} in guild ${guildId}`,
-            );
-            socket.emit(event, data);
-            return;
-          }
-
-          if (data instanceof SendMessageDto) {
-            if (!data.characterData) {
-              this.logger.log(
-                `Missing character data for chat message in guild ${guildId} from user ${socket.data.discordId}`,
-              );
-              return;
-            }
-            const canViewChat = canViewChatMessage(data, roles);
-            if (!canViewChat) {
-              this.logger.log(
-                `User ${socket.data.discordId} cannot view chat message ${JSON.stringify(data)} in guild ${guildId}`,
-              );
+            // Owner/Admin bypass level checks
+            const isOwner = guildData.guild.ownerId === socket.data.discordId;
+            if (isOwner || isAdministrativeUserFromRoles(guildData.roles)) {
+              socket.emit(event, data);
               return;
             }
 
-            socket.emit(event, data);
-          } else if (data instanceof CreateTimerDto) {
-            const canViewNpc = canViewNpcTimer(
-              { lvl: data.npc?.lvl ?? 0, type: data.npc.type },
-              roles,
-            );
-
-            if (!canViewNpc) {
+            // Check level range for regular members
+            if (checkLevelRange(guildData.roles, npcLevel)) {
+              socket.emit(event, data);
+            } else {
               this.logger.debug(
-                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
+                `User ${socket.data.discordId} filtered out by level range for NPC lvl ${npcLevel}`,
               );
-              return;
             }
-
-            socket.emit(event, data);
-          } else if (data instanceof SendNotificationDto) {
-            const canViewNpc = canViewNpcNotification(data.npc, roles);
-
-            if (!canViewNpc) {
-              this.logger.debug(
-                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
-              );
-              return;
-            }
-
-            socket.emit(event, data);
-          }
+          });
         });
-      });
+    } else {
+      // No level filtering - direct room broadcast
+      this.gateway.server.to(room).emit(event, data);
+    }
   }
 
   handleGuildsTimerUpdate(data: CreateTimerDto) {
-    this.emitToEligibleSockets({
+    const tier = getNpcTier(data.npc);
+    this.emitToFeatureRoom({
       guildId: data.guildId,
+      feature: 'timers',
+      tier,
       event: GatewayEvent.TIMERS_CREATE,
-      data: Object.assign(new CreateTimerDto(), data),
+      data,
+      npcLevel: data.npc?.lvl,
     });
   }
 
@@ -143,18 +116,27 @@ export class GatewayService {
   }
 
   handleGuildMessageSend(data: SendMessageDto) {
-    this.emitToEligibleSockets({
+    // For NPC messages, use npc data; for regular messages, use 'base' tier
+    const tier = getNpcTier(data.npc);
+    this.emitToFeatureRoom({
       guildId: data.guildId,
+      feature: 'chat',
+      tier,
       event: GatewayEvent.CHAT_MESSAGE,
-      data: Object.assign(new SendMessageDto(), data),
+      data,
+      npcLevel: data.npc?.lvl,
     });
   }
 
   handleGuildNotificationSend(data: SendNotificationDto) {
-    this.emitToEligibleSockets({
+    const tier = getNpcTier(data.npc);
+    this.emitToFeatureRoom({
       guildId: data.guildId,
+      feature: 'notifications',
+      tier,
       event: GatewayEvent.NOTIFICATIONS_SEND,
-      data: Object.assign(new SendNotificationDto(), data),
+      data,
+      npcLevel: data.npc?.lvl,
     });
   }
 
@@ -162,28 +144,10 @@ export class GatewayService {
     await this.redis.del(discordId);
   }
 
-  async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
-    const sockets = await this.gateway.server.in(data.guildId).fetchSockets();
-
-    sockets.forEach((socket) => {
-      const desiredGuild = socket.data.guilds?.find(
-        (g: any) => g.guild.id === data.guildId,
-      );
-
-      if (!desiredGuild) return;
-
-      const roles = desiredGuild.roles || [];
-      const hasPermission = isOwnerOrAdminFromRoles(roles);
-
-      if (!hasPermission) {
-        this.logger.debug(
-          `User ${socket.data.discordId} does not have OWNER/ADMIN permissions for refresh job in guild ${data.guildId}`,
-        );
-        return;
-      }
-
-      socket.emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
-    });
+  handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
+    // Emit directly to admin room - only owner/admin are in this room
+    const adminRoom = buildRoomName(data.guildId, 'admin');
+    this.gateway.server.to(adminRoom).emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
   }
 
   async invalidateUserGuildsCache(discordId: string, userId: string) {
@@ -214,32 +178,61 @@ export class GatewayService {
           (room) => room !== socket.id,
         );
 
-        const roomsToLeave = currentRooms.filter(
-          (room) => !updatedGuildIds.includes(room),
-        );
-        const roomsToJoin = updatedGuildIds.filter(
-          (guildId) => !currentRooms.includes(guildId),
+        // Separate legacy guild rooms from feature rooms
+        const currentGuildRooms = currentRooms.filter((r) => !isFeatureRoom(r));
+        const currentFeatureRooms = currentRooms.filter((r) => isFeatureRoom(r));
+
+        // Calculate new feature rooms based on subscription mode
+        const { rooms: newFeatureRooms } = calculateUserRooms(
+          updatedGuilds,
+          discordId,
+          socket.data.subscriptionMode ?? 'all',
+          socket.data.activeGuildId,
+          socket.data.platform,
         );
 
-        for (const room of roomsToLeave) {
-          await socket.leave(room);
+        // Handle legacy guild rooms
+        const guildRoomsToLeave = currentGuildRooms.filter(
+          (room) => !updatedGuildIds.includes(room),
+        );
+        const guildRoomsToJoin = updatedGuildIds.filter(
+          (guildId) => !currentGuildRooms.includes(guildId),
+        );
+
+        // Handle feature rooms
+        const featureRoomsToLeave = currentFeatureRooms.filter(
+          (room) => !newFeatureRooms.includes(room),
+        );
+        const featureRoomsToJoin = newFeatureRooms.filter(
+          (room) => !currentFeatureRooms.includes(room),
+        );
+
+        // Leave old rooms
+        for (const room of [...guildRoomsToLeave, ...featureRoomsToLeave]) {
+          socket.leave(room);
           this.logger.debug(
             `User ${discordId} left room ${room} (lost permissions)`,
           );
         }
 
-        for (const room of roomsToJoin) {
-          await socket.join(room);
+        // Join new rooms
+        for (const room of [...guildRoomsToJoin, ...featureRoomsToJoin]) {
+          socket.join(room);
         }
 
-        if (roomsToJoin.length > 0) {
+        const totalJoined = guildRoomsToJoin.length + featureRoomsToJoin.length;
+        if (totalJoined > 0) {
           this.logger.debug(
-            `User ${discordId} joined ${roomsToJoin.length} new rooms (gained permissions)`,
+            `User ${discordId} joined ${totalJoined} new rooms (gained permissions)`,
           );
         }
 
+        // Update socket data
+        socket.data.guilds = updatedGuilds;
+
         socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
           guilds: updatedGuilds,
+          featureRooms: newFeatureRooms,
         });
       }
 

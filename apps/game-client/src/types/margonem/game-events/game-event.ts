@@ -10,6 +10,7 @@ import type { Npcs } from "@/types/margonem/game-events/npcs";
 import type { NpcsDel } from "@/types/margonem/game-events/npcs_del";
 import type { Other } from "@/types/margonem/game-events/other";
 import type { PartyEvent } from "@/types/margonem/game-events/party";
+import type { TownEvent } from "@/types/margonem/game-events/town";
 
 export type GameEvent = {
   d: D;
@@ -35,4 +36,5 @@ export type GameEvent = {
   h?: {
     stasis?: number; // 1 = AFK, 0 = active
   };
+  town?: TownEvent;
 };

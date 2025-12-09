@@ -30,7 +30,6 @@ import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { CreateMapDto } from './dto/create-map.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
-import { CreateTemplateDto } from './dto/create-template.dto';
 
 @ApiTags('events')
 @ApiBearerAuth()
@@ -38,61 +37,6 @@ import { CreateTemplateDto } from './dto/create-template.dto';
 @Controller()
 export class EventsController {
   constructor(private readonly EventsService: EventsService) {}
-
-  @Permissions(Permission.LOOTLOG_ACCESS)
-  @UseGuards(PermissionsGuard)
-  @Get('/guilds/:guildId/events/templates')
-  @ApiOperation({
-    summary: 'Get event map templates',
-    description: 'Get map templates for this guild',
-  })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of templates',
-  })
-  async getTemplates(@Param('guildId') guildId: string) {
-    return this.EventsService.getTemplates(guildId);
-  }
-
-  @Permissions(Permission.LOOTLOG_MANAGE)
-  @UseGuards(PermissionsGuard)
-  @Post('/guilds/:guildId/events/templates')
-  @ApiOperation({
-    summary: 'Create event map template',
-    description: 'Create a new reusable map template',
-  })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiResponse({
-    status: 201,
-    description: 'Template created successfully',
-  })
-  async createTemplate(
-    @Param('guildId') guildId: string,
-    @Body() data: CreateTemplateDto,
-  ) {
-    return this.EventsService.createTemplate(guildId, data);
-  }
-
-  @Permissions(Permission.LOOTLOG_MANAGE)
-  @UseGuards(PermissionsGuard)
-  @Delete('/guilds/:guildId/events/templates/:templateId')
-  @ApiOperation({
-    summary: 'Delete event map template',
-    description: 'Delete a map template',
-  })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiParam({ name: 'templateId', description: 'Template ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Template deleted successfully',
-  })
-  async deleteTemplate(
-    @Param('guildId') guildId: string,
-    @Param('templateId') templateId: string,
-  ) {
-    return this.EventsService.deleteTemplate(guildId, templateId);
-  }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
@@ -444,5 +388,83 @@ export class EventsController {
     @Param('eventId') eventId: string,
   ) {
     return this.EventsService.getRanking(guildId, eventId);
+  }
+
+  @Permissions(Permission.LOOTLOG_TIMERS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/timers')
+  @ApiOperation({
+    summary: 'Get event hero timers',
+    description: 'Get timers for all hero NPCs in this event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiQuery({ name: 'world', description: 'World name', required: true })
+  @ApiResponse({
+    status: 200,
+    description: 'List of timers for event heroes',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEventHeroTimers(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Query('world') world: string,
+  ) {
+    return this.EventsService.getEventHeroTimers(guildId, eventId, world);
+  }
+
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/loots')
+  @ApiOperation({
+    summary: 'Get event hero loots',
+    description: 'Get recent loots from event hero NPCs',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiQuery({ name: 'world', description: 'World name', required: true })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of loots to return',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of loots from event heroes',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEventHeroLoots(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Query('world') world: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.EventsService.getEventHeroLoots(
+      guildId,
+      eventId,
+      world,
+      limit ? parseInt(limit, 10) : 10,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/hero-stats')
+  @ApiOperation({
+    summary: 'Get event hero stats',
+    description: 'Get kill counts and stats for all heroes in an event',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of hero stats with kill counts',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEventHeroStats(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.EventsService.getEventHeroStats(guildId, eventId);
   }
 }

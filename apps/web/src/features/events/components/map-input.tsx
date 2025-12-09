@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@lootlog/ui/components/input";
-import { useGameMaps } from "@/hooks/api/use-game-maps";
+import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
 import { cn } from "@lootlog/ui/lib/utils";
 import { MapPin, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface MapInputProps {
   value: string;
   onChange: (value: string) => void;
+  onMapSelect?: (map: GameMap) => void;
   placeholder?: string;
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -16,6 +17,7 @@ interface MapInputProps {
 export const MapInput = ({
   value,
   onChange,
+  onMapSelect,
   placeholder = "Nazwa mapy",
   className,
   onKeyDown,
@@ -65,7 +67,11 @@ export const MapInput = ({
         setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
       } else if (e.key === "Enter" && highlightedIndex >= 0) {
         e.preventDefault();
-        onChange(filteredMaps[highlightedIndex]?.name ?? "");
+        const selectedMap = filteredMaps[highlightedIndex];
+        if (selectedMap) {
+          onChange(selectedMap.name);
+          onMapSelect?.(selectedMap);
+        }
         setIsFocused(false);
         return;
       } else if (e.key === "Escape") {
@@ -75,8 +81,9 @@ export const MapInput = ({
     onKeyDown?.(e);
   };
 
-  const handleSelect = (mapName: string) => {
-    onChange(mapName);
+  const handleSelect = (map: GameMap) => {
+    onChange(map.name);
+    onMapSelect?.(map);
     setIsFocused(false);
     inputRef.current?.focus();
   };
@@ -115,7 +122,7 @@ export const MapInput = ({
               {filteredMaps.map((map, index) => (
                 <li
                   key={map.id}
-                  onClick={() => handleSelect(map.name)}
+                  onClick={() => handleSelect(map)}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 cursor-pointer text-sm",
                     "hover:bg-accent transition-colors",

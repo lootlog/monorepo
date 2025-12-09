@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { GatewayService } from './gateway.service';
 import { Gateway } from './gateway';
 import {
@@ -11,9 +12,11 @@ import { GatewayQueueHandler } from 'src/gateway/gateway-queue.handler';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import { RetryService } from 'src/gateway/retry.service';
+import { PermissionRevalidationService } from './permission-revalidation.service';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
@@ -22,6 +25,12 @@ import { RetryService } from 'src/gateway/retry.service';
     GuildsModule,
     RedisModule,
   ],
-  providers: [GatewayService, Gateway, GatewayQueueHandler, RetryService],
+  providers: [
+    GatewayService,
+    Gateway,
+    GatewayQueueHandler,
+    RetryService,
+    PermissionRevalidationService,
+  ],
 })
 export class GatewayModule {}

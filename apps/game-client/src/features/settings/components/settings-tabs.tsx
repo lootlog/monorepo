@@ -89,12 +89,16 @@ const TABS_LIST: {
   //   label: "Chat",
   //   content: <ChatSettingsTab />,
   // },
-  {
-    value: "debug",
-    label: "Debug",
-    icon: Bug,
-    content: <DebugTab />,
-  },
+  ...(import.meta.env.DEV
+    ? [
+        {
+          value: "debug",
+          label: "Debug",
+          icon: Bug,
+          content: <DebugTab />,
+        },
+      ]
+    : []),
 ];
 
 const ICON_CLASSES = "ll:size-4 ll:stroke-2";

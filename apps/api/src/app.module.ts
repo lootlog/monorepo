@@ -25,6 +25,7 @@ import { ReservationsModule } from './reservations/reservations.module';
 import { SoundSettingsModule } from 'src/sound-settings/sound-settings.module';
 import { EventsModule } from 'src/events/events.module';
 import { MapsModule } from 'src/maps/maps.module';
+import { MapTemplatesModule } from 'src/map-templates/map-templates.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { MapsModule } from 'src/maps/maps.module';
     SoundSettingsModule,
     EventsModule,
     MapsModule,
+    MapTemplatesModule,
   ],
   controllers: [],
   providers: [],

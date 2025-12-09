@@ -36,9 +36,8 @@ import { Route as AuthenticatedAtmeBattlePanelBattlesRouteImport } from './route
 import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from './routes/_authenticated/$guildId/settings/roles'
 import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from './routes/_authenticated/$guildId/settings/npcs'
 import { Route as AuthenticatedGuildIdSettingsMembersRouteImport } from './routes/_authenticated/$guildId/settings/members'
+import { Route as AuthenticatedGuildIdSettingsMapTemplatesRouteImport } from './routes/_authenticated/$guildId/settings/map-templates'
 import { Route as AuthenticatedGuildIdReservationsReservationIdRouteImport } from './routes/_authenticated/$guildId/reservations/$reservationId'
-import { Route as AuthenticatedGuildIdEventsTemplatesRouteImport } from './routes/_authenticated/$guildId/events_.templates'
-import { Route as AuthenticatedGuildIdEventsCreateRouteImport } from './routes/_authenticated/$guildId/events_.create'
 import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.h2h'
@@ -202,23 +201,17 @@ const AuthenticatedGuildIdSettingsMembersRoute =
     path: '/members',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
   } as any)
+const AuthenticatedGuildIdSettingsMapTemplatesRoute =
+  AuthenticatedGuildIdSettingsMapTemplatesRouteImport.update({
+    id: '/map-templates',
+    path: '/map-templates',
+    getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
+  } as any)
 const AuthenticatedGuildIdReservationsReservationIdRoute =
   AuthenticatedGuildIdReservationsReservationIdRouteImport.update({
     id: '/$reservationId',
     path: '/$reservationId',
     getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
-  } as any)
-const AuthenticatedGuildIdEventsTemplatesRoute =
-  AuthenticatedGuildIdEventsTemplatesRouteImport.update({
-    id: '/events_/templates',
-    path: '/events/templates',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any)
-const AuthenticatedGuildIdEventsCreateRoute =
-  AuthenticatedGuildIdEventsCreateRouteImport.update({
-    id: '/events_/create',
-    path: '/events/create',
-    getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
 const AuthenticatedGuildIdEventsEventIdRoute =
   AuthenticatedGuildIdEventsEventIdRouteImport.update({
@@ -288,9 +281,8 @@ export interface FileRoutesByFullPath {
   '/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/@me/': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRoute
-  '/$guildId/events/create': typeof AuthenticatedGuildIdEventsCreateRoute
-  '/$guildId/events/templates': typeof AuthenticatedGuildIdEventsTemplatesRoute
   '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
+  '/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
   '/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
   '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
@@ -321,9 +313,8 @@ export interface FileRoutesByTo {
   '/$guildId': typeof AuthenticatedGuildIdIndexRoute
   '/@me': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRoute
-  '/$guildId/events/create': typeof AuthenticatedGuildIdEventsCreateRoute
-  '/$guildId/events/templates': typeof AuthenticatedGuildIdEventsTemplatesRoute
   '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
+  '/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
   '/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
   '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
@@ -362,9 +353,8 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/_authenticated/@me/': typeof AuthenticatedAtmeIndexRoute
   '/_authenticated/$guildId/events_/$eventId': typeof AuthenticatedGuildIdEventsEventIdRoute
-  '/_authenticated/$guildId/events_/create': typeof AuthenticatedGuildIdEventsCreateRoute
-  '/_authenticated/$guildId/events_/templates': typeof AuthenticatedGuildIdEventsTemplatesRoute
   '/_authenticated/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
+  '/_authenticated/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
   '/_authenticated/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
   '/_authenticated/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/_authenticated/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
@@ -403,9 +393,8 @@ export interface FileRouteTypes {
     | '/$guildId/'
     | '/@me/'
     | '/$guildId/events/$eventId'
-    | '/$guildId/events/create'
-    | '/$guildId/events/templates'
     | '/$guildId/reservations/$reservationId'
+    | '/$guildId/settings/map-templates'
     | '/$guildId/settings/members'
     | '/$guildId/settings/npcs'
     | '/$guildId/settings/roles'
@@ -436,9 +425,8 @@ export interface FileRouteTypes {
     | '/$guildId'
     | '/@me'
     | '/$guildId/events/$eventId'
-    | '/$guildId/events/create'
-    | '/$guildId/events/templates'
     | '/$guildId/reservations/$reservationId'
+    | '/$guildId/settings/map-templates'
     | '/$guildId/settings/members'
     | '/$guildId/settings/npcs'
     | '/$guildId/settings/roles'
@@ -476,9 +464,8 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/'
     | '/_authenticated/@me/'
     | '/_authenticated/$guildId/events_/$eventId'
-    | '/_authenticated/$guildId/events_/create'
-    | '/_authenticated/$guildId/events_/templates'
     | '/_authenticated/$guildId/reservations/$reservationId'
+    | '/_authenticated/$guildId/settings/map-templates'
     | '/_authenticated/$guildId/settings/members'
     | '/_authenticated/$guildId/settings/npcs'
     | '/_authenticated/$guildId/settings/roles'
@@ -697,26 +684,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdSettingsMembersRouteImport
       parentRoute: typeof AuthenticatedGuildIdSettingsRoute
     }
+    '/_authenticated/$guildId/settings/map-templates': {
+      id: '/_authenticated/$guildId/settings/map-templates'
+      path: '/map-templates'
+      fullPath: '/$guildId/settings/map-templates'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
     '/_authenticated/$guildId/reservations/$reservationId': {
       id: '/_authenticated/$guildId/reservations/$reservationId'
       path: '/$reservationId'
       fullPath: '/$guildId/reservations/$reservationId'
       preLoaderRoute: typeof AuthenticatedGuildIdReservationsReservationIdRouteImport
       parentRoute: typeof AuthenticatedGuildIdReservationsRoute
-    }
-    '/_authenticated/$guildId/events_/templates': {
-      id: '/_authenticated/$guildId/events_/templates'
-      path: '/events/templates'
-      fullPath: '/$guildId/events/templates'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsTemplatesRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
-    }
-    '/_authenticated/$guildId/events_/create': {
-      id: '/_authenticated/$guildId/events_/create'
-      path: '/events/create'
-      fullPath: '/$guildId/events/create'
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsCreateRouteImport
-      parentRoute: typeof AuthenticatedGuildIdRoute
     }
     '/_authenticated/$guildId/events_/$eventId': {
       id: '/_authenticated/$guildId/events_/$eventId'
@@ -811,6 +791,7 @@ const AuthenticatedGuildIdSettingsRolesRouteWithChildren =
   )
 
 interface AuthenticatedGuildIdSettingsRouteChildren {
+  AuthenticatedGuildIdSettingsMapTemplatesRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
   AuthenticatedGuildIdSettingsMembersRoute: typeof AuthenticatedGuildIdSettingsMembersRoute
   AuthenticatedGuildIdSettingsNpcsRoute: typeof AuthenticatedGuildIdSettingsNpcsRoute
   AuthenticatedGuildIdSettingsRolesRoute: typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
@@ -819,6 +800,8 @@ interface AuthenticatedGuildIdSettingsRouteChildren {
 
 const AuthenticatedGuildIdSettingsRouteChildren: AuthenticatedGuildIdSettingsRouteChildren =
   {
+    AuthenticatedGuildIdSettingsMapTemplatesRoute:
+      AuthenticatedGuildIdSettingsMapTemplatesRoute,
     AuthenticatedGuildIdSettingsMembersRoute:
       AuthenticatedGuildIdSettingsMembersRoute,
     AuthenticatedGuildIdSettingsNpcsRoute:
@@ -843,8 +826,6 @@ interface AuthenticatedGuildIdRouteChildren {
   AuthenticatedGuildIdTimersRoute: typeof AuthenticatedGuildIdTimersRoute
   AuthenticatedGuildIdIndexRoute: typeof AuthenticatedGuildIdIndexRoute
   AuthenticatedGuildIdEventsEventIdRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
-  AuthenticatedGuildIdEventsCreateRoute: typeof AuthenticatedGuildIdEventsCreateRoute
-  AuthenticatedGuildIdEventsTemplatesRoute: typeof AuthenticatedGuildIdEventsTemplatesRoute
   AuthenticatedGuildIdEventsEventIdRankingRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRoute
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
 }
@@ -861,9 +842,6 @@ const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
   AuthenticatedGuildIdIndexRoute: AuthenticatedGuildIdIndexRoute,
   AuthenticatedGuildIdEventsEventIdRoute:
     AuthenticatedGuildIdEventsEventIdRoute,
-  AuthenticatedGuildIdEventsCreateRoute: AuthenticatedGuildIdEventsCreateRoute,
-  AuthenticatedGuildIdEventsTemplatesRoute:
-    AuthenticatedGuildIdEventsTemplatesRoute,
   AuthenticatedGuildIdEventsEventIdRankingRoute:
     AuthenticatedGuildIdEventsEventIdRankingRoute,
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute:

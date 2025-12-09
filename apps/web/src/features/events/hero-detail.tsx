@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEvent } from "./hooks/use-event";
 import { EventMapGrid } from "./components/event-map-grid";
 import { Swords, MapPin, Users, AlertCircle, Plus, Eraser } from "lucide-react";
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
+import { useEventPresence } from "./hooks/use-event-presence";
 
 const MemberBadge = ({ member }: { member: any }) => {
   const color = useMemberColor(member);
@@ -56,6 +58,14 @@ export const HeroDetail = () => {
     eventId: eventId ?? "",
   });
 
+  const { presenceData } = useEventPresence({ guildId });
+  console.log(
+    "[HeroDetail] presenceData size:",
+    presenceData.size,
+    "entries:",
+    [...presenceData.entries()],
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -89,6 +99,8 @@ export const HeroDetail = () => {
   const uniqueMembers = Array.from(
     new Map(allAssignedMembers.map((m) => [m.id, m])).values(),
   );
+
+  console.log(hero.maps);
 
   const handleAssignClick = async (mapId: string) => {
     if (canManage) {
@@ -182,131 +194,134 @@ export const HeroDetail = () => {
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Header */}
-      <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="p-2 rounded-lg bg-yellow-500/10">
-            <Swords className="size-4 text-yellow-500" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold leading-tight">
-              {hero.npcName}
-            </h2>
-            <p className="text-xs text-muted-foreground leading-tight">
-              ID: {hero.npcId} • {event.name}
-            </p>
+    <ScrollArea className="h-full bg-background/50">
+      <div className="flex flex-col gap-3">
+        {/* Header */}
+        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="p-2 rounded-lg bg-yellow-500/10">
+              <Swords className="size-4 text-yellow-500" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold leading-tight">
+                {hero.npcName}
+              </h2>
+              <p className="text-xs text-muted-foreground leading-tight">
+                ID: {hero.npcId} • {event.name}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="px-3 flex flex-col gap-6">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <MapPin className="w-5 h-5 text-primary" />
+        <div className="px-3 flex flex-col gap-6">
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <MapPin className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{hero.maps?.length || 0}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("events.maps.title")}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{hero.maps?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("events.maps.title")}
-                </p>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
+            <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Users className="w-5 h-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{uniqueMembers.length}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("events.participants.count", "Uczestników")}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Participants */}
+          {uniqueMembers.length > 0 && (
+            <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                {t("events.participants.title", "Uczestnicy")}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {uniqueMembers.map((member) => (
+                  <MemberBadge key={member.id} member={member} />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Maps */}
           <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Users className="w-5 h-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{uniqueMembers.length}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("events.participants.count", "Uczestników")}
-                </p>
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                {t("events.maps.title")}
+              </h2>
+              {canManage && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearAllAssignments}
+                    disabled={uniqueMembers.length === 0}
+                  >
+                    <Eraser className="w-4 h-4 mr-2" />
+                    {t("events.maps.clearAll", "Wyczyść przypisania")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMapManageOpen(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {t("events.maps.manage", "Zarządzaj mapami")}
+                  </Button>
+                </div>
+              )}
             </div>
+            <EventMapGrid
+              maps={hero.maps || []}
+              guildId={guildId ?? ""}
+              eventId={eventId ?? ""}
+              heroId={hero.id}
+              onAssignClick={handleAssignClick}
+              onUnassignClick={handleUnassignClick}
+              currentMemberId={currentMember?.id}
+              presenceData={presenceData}
+            />
           </Card>
         </div>
 
-        {/* Participants */}
-        {uniqueMembers.length > 0 && (
-          <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              {t("events.participants.title", "Uczestnicy")}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {uniqueMembers.map((member) => (
-                <MemberBadge key={member.id} member={member} />
-              ))}
-            </div>
-          </Card>
-        )}
-
-        {/* Maps */}
-        <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              {t("events.maps.title")}
-            </h2>
-            {canManage && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearAllAssignments}
-                  disabled={uniqueMembers.length === 0}
-                >
-                  <Eraser className="w-4 h-4 mr-2" />
-                  {t("events.maps.clearAll", "Wyczyść przypisania")}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMapManageOpen(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t("events.maps.manage", "Zarządzaj mapami")}
-                </Button>
-              </div>
-            )}
-          </div>
-          <EventMapGrid
-            maps={hero.maps || []}
-            guildId={guildId ?? ""}
-            eventId={eventId ?? ""}
-            heroId={hero.id}
-            onAssignClick={handleAssignClick}
-            onUnassignClick={handleUnassignClick}
-            currentMemberId={currentMember?.id}
-          />
-        </Card>
-      </div>
-
-      {/* Dialogs */}
-      <MapManageDialog
-        open={mapManageOpen}
-        onOpenChange={setMapManageOpen}
-        guildId={guildId ?? ""}
-        eventId={eventId ?? ""}
-        hero={hero}
-      />
-
-      {selectedMap && (
-        <MemberAssignmentModal
-          open={assignmentOpen}
-          onOpenChange={setAssignmentOpen}
-          mapName={selectedMap.mapName}
-          assignedMembers={selectedMap.assignedMembers || []}
-          onAssign={handleAssignFromModal}
-          onUnassign={handleUnassignFromModal}
+        {/* Dialogs */}
+        <MapManageDialog
+          open={mapManageOpen}
+          onOpenChange={setMapManageOpen}
+          guildId={guildId ?? ""}
+          eventId={eventId ?? ""}
+          hero={hero}
         />
-      )}
-    </div>
+
+        {selectedMap && (
+          <MemberAssignmentModal
+            open={assignmentOpen}
+            onOpenChange={setAssignmentOpen}
+            mapName={selectedMap.mapName}
+            assignedMembers={selectedMap.assignedMembers || []}
+            onAssign={handleAssignFromModal}
+            onUnassign={handleUnassignFromModal}
+          />
+        )}
+      </div>
+    </ScrollArea>
   );
 };

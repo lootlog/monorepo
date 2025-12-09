@@ -10,24 +10,30 @@ import {
 import type { Server } from 'socket.io';
 import type { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
 import type { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
+import type { EventPresenceUpdateDto } from 'src/gateway/dto/event-presence-update.dto';
+import type { GuildSubscribeDto } from 'src/gateway/dto/guild-subscribe.dto';
+import type { SubscriptionModeDto } from 'src/gateway/dto/subscription-mode.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
 import { ActivityType } from 'src/gateway/enums/activity-type.enum';
 import { WsDiscordId, WsUserId } from 'src/shared/decorators/user-id.decorator';
-import { ConfigService } from '@nestjs/config';
 import { RuntimeEnvironment } from 'src/types/common.types';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
 import { Platform } from 'src/gateway/enums/platform.enum';
-import type { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
+import type { Socket, SocketUser, SubscriptionMode } from 'src/gateway/types/socket-user.type';
 import { groupBy, omit } from 'lodash';
-import { RedisService } from 'src/lib/redis/redis.service';
 import { buildUser } from 'src/gateway/utils/build-user';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
+import {
+  calculateUserRooms,
+  isFeatureRoom,
+} from 'src/gateway/utils/room-utils';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import type { UserGuildData } from 'src/guilds/types/guild.types';
+import type { EventPresence } from 'src/gateway/types/socket-user.type';
 
 @WebSocketGateway({
   namespace:
@@ -39,9 +45,7 @@ export class Gateway {
   private readonly logger = new Logger(Gateway.name);
 
   constructor(
-    private configService: ConfigService,
     private guildsService: GuildsService,
-    private redis: RedisService,
     private amqpConnection: AmqpConnection,
   ) {}
 
@@ -71,6 +75,7 @@ export class Gateway {
       userId,
       sessionId: client.id,
       platform,
+      subscriptionMode: platform === Platform.GAME ? 'all' : 'single',
     };
     client.on(GatewayEvent.DISCONNECTING, async () => {
       if (client.data) {
@@ -90,6 +95,18 @@ export class Gateway {
             client,
             client.data.guilds,
           );
+
+          // Broadcast event presence disconnect to all guild rooms
+          if (client.data.eventPresence) {
+            const guildIds = getGuildIds(client.data.guilds);
+            for (const guildId of guildIds) {
+              this.server.to(guildId).emit(GatewayEvent.EVENT_PRESENCE_UPDATE, {
+                guildId,
+                discordId: client.data.discordId,
+                disconnected: true,
+              });
+            }
+          }
         }
 
         this.logger.log(`client disconnected ${client.data.discordId}`);
@@ -102,7 +119,8 @@ export class Gateway {
     @WsDiscordId() discordId: string,
     @WsUserId() userId: string,
     @ConnectedSocket() client: Socket,
-    @MessageBody() { data: player }: JoinGatewayDto,
+    @MessageBody()
+    { data: player, subscriptionMode, activeGuildId }: JoinGatewayDto,
   ): Promise<unknown> {
     const startTime = Date.now();
     this.logger.log(`User ${discordId} attempting to join gateway`);
@@ -125,11 +143,36 @@ export class Gateway {
         return;
       }
 
+      // Determine subscription mode
+      const mode: SubscriptionMode =
+        subscriptionMode ??
+        (client.data.platform === Platform.GAME ? 'all' : 'single');
+      const targetGuildId = activeGuildId ?? guilds[0]?.guild.id;
+
+      // Calculate permission-based rooms
+      const { rooms: featureRooms } = calculateUserRooms(
+        guilds,
+        discordId,
+        mode,
+        targetGuildId,
+        client.data.platform,
+      );
+
+      // Legacy guild rooms for broadcast events
       const guildIds = getGuildIds(guilds);
+
       const user = buildUser(client, player, guilds);
+      user.subscriptionMode = mode;
+      user.activeGuildId = targetGuildId;
 
       client.data = user;
+
+      // Join legacy guild rooms (for broadcast events like timer delete, reservations)
       client.join(guildIds);
+
+      // Join permission-based feature rooms
+      client.join(featureRooms);
+
       this.emitPresenceToRooms(
         client,
         user,
@@ -144,13 +187,21 @@ export class Gateway {
 
       const duration = Date.now() - startTime;
       this.logger.log(
-        `User ${discordId} successfully joined ${guilds.length} guilds in ${duration}ms`,
+        `User ${discordId} successfully joined ${guilds.length} guilds (${featureRooms.length} rooms) in ${duration}ms`,
       );
+
+      // Trigger Discord role refresh for game-client users (fire-and-forget, rate limited)
+      if (client.data.platform === Platform.GAME) {
+        this.guildsService.triggerGameClientDiscordRefresh(discordId, userId);
+      }
 
       client.emit(GatewayEvent.JOIN, {
         status: 'success',
         guildsCount: guilds.length,
         guildIds,
+        featureRooms,
+        subscriptionMode: mode,
+        activeGuildId: targetGuildId,
       });
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -289,5 +340,196 @@ export class Gateway {
     const result = GAME_URL_REGEX.test(requestOrigin);
 
     return result ? Platform.GAME : Platform.WEB_APP;
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @UsePipes(new ValidationPipe())
+  @SubscribeMessage(GatewayEvent.EVENT_PRESENCE_UPDATE)
+  handleEventPresenceUpdate(
+    @WsDiscordId() discordId: string,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: EventPresenceUpdateDto,
+  ): void {
+    if (!client.data?.guilds) {
+      this.logger.warn(
+        `User ${discordId} tried to update presence without joining first`,
+      );
+      return;
+    }
+
+    const guildIds = getGuildIds(client.data.guilds);
+
+    // Update presence in socket.data (merged with existing data)
+    const existingPresence = client.data.eventPresence;
+    const presenceData: EventPresence = {
+      mapId: data.mapId ?? existingPresence?.mapId,
+      mapName: data.mapName ?? existingPresence?.mapName,
+      isAfk: data.isAfk ?? existingPresence?.isAfk ?? false,
+      updatedAt: Date.now(),
+    };
+
+    client.data.eventPresence = presenceData;
+
+    // Broadcast to all guild rooms
+    for (const guildId of guildIds) {
+      this.server.to(guildId).emit(GatewayEvent.EVENT_PRESENCE_UPDATE, {
+        guildId,
+        discordId,
+        ...presenceData,
+      });
+    }
+
+    this.logger.debug(
+      `Updated event presence for ${discordId}: ${JSON.stringify(presenceData)}`,
+    );
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @UsePipes(new ValidationPipe())
+  @SubscribeMessage('event:presence:fetch')
+  async handleEventPresenceFetch(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() { guildId }: { guildId: string },
+  ): Promise<Record<string, EventPresence>> {
+    this.logger.debug(
+      `[EventPresenceFetch] User ${client.data?.discordId} fetching presence for guild ${guildId}, rooms: ${[...client.rooms].join(', ')}`,
+    );
+
+    if (!client.rooms.has(guildId)) {
+      this.logger.warn(
+        `User ${client.data?.discordId} tried to fetch presence for guild ${guildId} they're not in`,
+      );
+      return {};
+    }
+
+    const socketsInRoom = await this.server.in(guildId).fetchSockets();
+    const result: Record<string, EventPresence> = {};
+
+    for (const socket of socketsInRoom) {
+      if (socket.data.eventPresence) {
+        result[socket.data.discordId] = socket.data.eventPresence;
+      }
+    }
+
+    this.logger.debug(
+      `[EventPresenceFetch] Presence data for guild ${guildId}: ${JSON.stringify(result)}`,
+    );
+
+    return result;
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @UsePipes(new ValidationPipe())
+  @SubscribeMessage('guild:subscribe')
+  handleGuildSubscribe(
+    @WsDiscordId() discordId: string,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() { guildId }: GuildSubscribeDto,
+  ): void {
+    if (!client.data?.guilds) {
+      client.emit('guild:subscribe', {
+        status: 'error',
+        message: 'Not joined yet',
+      });
+      return;
+    }
+
+    const guild = client.data.guilds.find((g) => g.guild.id === guildId);
+    if (!guild) {
+      client.emit('guild:subscribe', {
+        status: 'error',
+        message: 'Not a member of this guild',
+      });
+      return;
+    }
+
+    // Leave old feature rooms if in single mode
+    if (
+      client.data.subscriptionMode === 'single' &&
+      client.data.activeGuildId
+    ) {
+      const oldGuild = client.data.guilds.find(
+        (g) => g.guild.id === client.data.activeGuildId,
+      );
+      if (oldGuild) {
+        const { rooms: oldRooms } = calculateUserRooms(
+          [oldGuild],
+          discordId,
+          'single',
+          client.data.activeGuildId,
+          client.data.platform,
+        );
+        for (const room of oldRooms) {
+          client.leave(room);
+        }
+      }
+    }
+
+    // Calculate and join new guild rooms
+    const { rooms: newRooms } = calculateUserRooms(
+      [guild],
+      discordId,
+      'single',
+      guildId,
+      client.data.platform,
+    );
+    client.join(newRooms);
+    client.data.activeGuildId = guildId;
+
+    this.logger.debug(
+      `User ${discordId} subscribed to guild ${guildId} (${newRooms.length} rooms)`,
+    );
+
+    client.emit('guild:subscribe', {
+      status: 'success',
+      guildId,
+      rooms: newRooms,
+    });
+  }
+
+  @UseFilters(new BaseWsExceptionFilter())
+  @UsePipes(new ValidationPipe())
+  @SubscribeMessage('subscription:mode')
+  handleSubscriptionModeChange(
+    @WsDiscordId() discordId: string,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() { mode }: SubscriptionModeDto,
+  ): void {
+    if (!client.data?.guilds) {
+      client.emit('subscription:mode', {
+        status: 'error',
+        message: 'Not joined yet',
+      });
+      return;
+    }
+
+    // Leave all current feature rooms
+    const currentRooms = Array.from(client.rooms).filter((r) =>
+      isFeatureRoom(r),
+    );
+    for (const room of currentRooms) {
+      client.leave(room);
+    }
+
+    // Recalculate rooms based on new mode
+    const { rooms: newRooms } = calculateUserRooms(
+      client.data.guilds,
+      discordId,
+      mode,
+      client.data.activeGuildId,
+      client.data.platform,
+    );
+    client.join(newRooms);
+    client.data.subscriptionMode = mode;
+
+    this.logger.debug(
+      `User ${discordId} changed subscription mode to ${mode} (${newRooms.length} rooms)`,
+    );
+
+    client.emit('subscription:mode', {
+      status: 'success',
+      mode,
+      roomCount: newRooms.length,
+    });
   }
 }
