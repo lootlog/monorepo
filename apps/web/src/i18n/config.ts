@@ -33,4 +33,6 @@ i18n.use(initReactI18next).init({
   react: {
     useSuspense: false,
   },
+  pluralSeparator: "_",
+  returnNull: false,
 });

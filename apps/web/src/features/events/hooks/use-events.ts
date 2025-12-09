@@ -21,8 +21,9 @@ interface EventMap {
 
 interface EventHeroNpc {
   id: string;
-  npcId: number;
+  npcId: number | null;
   npcName: string;
+  npcIcon: string | null;
   maps: EventMap[];
 }
 
@@ -37,6 +38,12 @@ interface EventRanking {
   };
 }
 
+interface TimeOfDayMultiplier {
+  from: string;
+  to: string;
+  multiplier: number;
+}
+
 interface Event {
   id: string;
   guildId: string;
@@ -48,6 +55,9 @@ interface Event {
   createdAt: string;
   heroNpcs: EventHeroNpc[];
   rankings: EventRanking[];
+  timeOfDayMultipliers?: TimeOfDayMultiplier[];
+  bettorsMultipliers?: Record<string, number>;
+  mapsCountMultipliers?: Record<string, number>;
 }
 
 interface UseEventsOptions {

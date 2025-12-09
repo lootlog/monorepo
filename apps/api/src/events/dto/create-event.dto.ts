@@ -6,6 +6,7 @@ import {
   ValidateNested,
   IsInt,
   IsDateString,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -21,9 +22,10 @@ export class HeroMapDto {
 }
 
 export class HeroNpcDto {
-  @ApiProperty({ description: 'NPC ID' })
+  @ApiPropertyOptional({ description: 'NPC ID' })
+  @IsOptional()
   @IsInt()
-  npcId: number;
+  npcId?: number;
 
   @ApiProperty({ description: 'NPC name' })
   @IsString()
@@ -62,6 +64,15 @@ export class CreateEventDto {
   @IsOptional()
   @IsDateString()
   endsAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'Base points awarded per hero kill before multipliers',
+    default: 100,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  basePointsPerKill?: number;
 
   @ApiPropertyOptional({
     description: 'Hero NPCs to track with their spawn maps',

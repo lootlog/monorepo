@@ -34,6 +34,7 @@ interface EventMapGridProps {
   onUnassignClick?: (mapId: string) => void;
   currentMemberId?: number;
   presenceData?: Map<string, PlayerPresenceData>;
+  assignmentDisabled?: boolean;
 }
 
 const getMapStatus = (
@@ -109,6 +110,7 @@ export const EventMapGrid = ({
   onUnassignClick,
   currentMemberId,
   presenceData,
+  assignmentDisabled = false,
 }: EventMapGridProps) => {
   const { t } = useTranslation();
   const { data: permissions } = useGuildPermissions();
@@ -223,7 +225,15 @@ export const EventMapGrid = ({
                     size="sm"
                     className="h-8 w-8 p-0 shrink-0"
                     onClick={() => onAssignClick?.(map.id)}
-                    title={t("events.maps.assign")}
+                    disabled={assignmentDisabled}
+                    title={
+                      assignmentDisabled
+                        ? t(
+                            "events.maps.assignmentDisabled",
+                            "Zapisywanie możliwe 5 min przed respawnem",
+                          )
+                        : t("events.maps.assign")
+                    }
                   >
                     <UserPlus className="w-4 h-4" />
                   </Button>

@@ -129,7 +129,7 @@ export const Events = () => {
                                 ? format(new Date(event.endsAt), "d MMM yyyy", {
                                     locale: pl,
                                   })
-                                : t("events.ongoing", "W trakcie")}
+                                : t("events.ongoing")}
                             </span>
                           </div>
                         </div>

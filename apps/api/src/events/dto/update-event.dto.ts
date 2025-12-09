@@ -5,10 +5,26 @@ import {
   IsArray,
   ValidateNested,
   IsDateString,
+  IsInt,
+  Min,
+  IsNumber,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { HeroNpcDto } from './create-event.dto';
+
+export class TimeOfDayMultiplierDto {
+  @IsString()
+  from: string; // HH:mm format
+
+  @IsString()
+  to: string; // HH:mm format
+
+  @IsNumber()
+  @Min(0)
+  multiplier: number;
+}
 
 export class UpdateEventDto {
   @ApiPropertyOptional({ description: 'Event name' })
@@ -40,4 +56,39 @@ export class UpdateEventDto {
   @ValidateNested({ each: true })
   @Type(() => HeroNpcDto)
   heroNpcs?: HeroNpcDto[];
+
+  @ApiPropertyOptional({
+    description: 'Base points awarded per hero kill before multipliers',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  basePointsPerKill?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Time of day multipliers array: [{from: "06:00", to: "12:00", multiplier: 1.5}, ...]',
+    type: [TimeOfDayMultiplierDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TimeOfDayMultiplierDto)
+  timeOfDayMultipliers?: TimeOfDayMultiplierDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Trackers count multipliers: {1: 3.0, 2: 2.5, ...} - fewer trackers = higher multiplier',
+  })
+  @IsOptional()
+  @IsObject()
+  trackersMultipliers?: Record<string, number>;
+
+  @ApiPropertyOptional({
+    description:
+      'Maps count multipliers: {1: 1.0, 2: 1.2, ...} - more maps = higher multiplier',
+  })
+  @IsOptional()
+  @IsObject()
+  mapsCountMultipliers?: Record<string, number>;
 }

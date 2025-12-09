@@ -1,18 +1,40 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Switch } from "@lootlog/ui/components/switch";
-import { useEventMutations } from "../hooks/use-event-mutations";
-import { useEffect } from "react";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@lootlog/ui/components/collapsible";
+import {
+  Clock,
+  Users,
+  Map as MapIcon,
+  Plus,
+  Trash2,
+  Pencil,
+  Loader2,
+  ChevronDown,
+  Settings,
+} from "lucide-react";
+import {
+  useEventMutations,
+  type TimeOfDayMultiplier,
+} from "../hooks/use-event-mutations";
 import { toast } from "sonner";
 
 interface EventEditDialogProps {
@@ -25,6 +47,9 @@ interface EventEditDialogProps {
     active: boolean;
     startsAt?: string;
     endsAt?: string;
+    timeOfDayMultipliers?: TimeOfDayMultiplier[];
+    trackersMultipliers?: Record<string, number>;
+    mapsCountMultipliers?: Record<string, number>;
   };
 }
 
@@ -40,6 +65,7 @@ export const EventEditDialog = ({
   onOpenChange,
   event,
 }: EventEditDialogProps) => {
+  const { t } = useTranslation();
   const { updateEvent } = useEventMutations(event.guildId, event.id);
 
   const { register, handleSubmit, reset, watch, setValue } = useForm<FormData>({
@@ -55,6 +81,32 @@ export const EventEditDialog = ({
     },
   });
 
+  const [timeMultipliers, setTimeMultipliers] = useState<TimeOfDayMultiplier[]>(
+    event.timeOfDayMultipliers ?? []
+  );
+  const [trackersMultipliers, setTrackersMultipliers] = useState<
+    { count: number; multiplier: number }[]
+  >(
+    event.trackersMultipliers
+      ? Object.entries(event.trackersMultipliers).map(([count, multiplier]) => ({
+          count: Number(count),
+          multiplier,
+        }))
+      : []
+  );
+  const [mapsMultipliers, setMapsMultipliers] = useState<
+    { count: number; multiplier: number }[]
+  >(
+    event.mapsCountMultipliers
+      ? Object.entries(event.mapsCountMultipliers).map(([count, multiplier]) => ({
+          count: Number(count),
+          multiplier,
+        }))
+      : []
+  );
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (open) {
       reset({
@@ -67,11 +119,109 @@ export const EventEditDialog = ({
           ? new Date(event.endsAt).toISOString().slice(0, 16)
           : "",
       });
+      setTimeMultipliers(event.timeOfDayMultipliers ?? []);
+      setTrackersMultipliers(
+        event.trackersMultipliers
+          ? Object.entries(event.trackersMultipliers).map(([count, multiplier]) => ({
+              count: Number(count),
+              multiplier,
+            }))
+          : []
+      );
+      setMapsMultipliers(
+        event.mapsCountMultipliers
+          ? Object.entries(event.mapsCountMultipliers).map(([count, multiplier]) => ({
+              count: Number(count),
+              multiplier,
+            }))
+          : []
+      );
     }
   }, [open, event, reset]);
 
+  const handleAddTimeMultiplier = () => {
+    setTimeMultipliers([
+      ...timeMultipliers,
+      { from: "00:00", to: "06:00", multiplier: 1.5 },
+    ]);
+  };
+
+  const handleRemoveTimeMultiplier = (index: number) => {
+    setTimeMultipliers(timeMultipliers.filter((_, i) => i !== index));
+  };
+
+  const handleTimeMultiplierChange = (
+    index: number,
+    field: keyof TimeOfDayMultiplier,
+    value: string | number
+  ) => {
+    setTimeMultipliers((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleAddTrackersMultiplier = () => {
+    const nextCount =
+      trackersMultipliers.length > 0
+        ? Math.max(...trackersMultipliers.map((b) => b.count)) + 1
+        : 1;
+    setTrackersMultipliers([
+      ...trackersMultipliers,
+      { count: nextCount, multiplier: 1.0 },
+    ]);
+  };
+
+  const handleRemoveTrackersMultiplier = (index: number) => {
+    setTrackersMultipliers(trackersMultipliers.filter((_, i) => i !== index));
+  };
+
+  const handleTrackersMultiplierChange = (
+    index: number,
+    field: "count" | "multiplier",
+    value: number
+  ) => {
+    setTrackersMultipliers((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleAddMapsMultiplier = () => {
+    const nextCount =
+      mapsMultipliers.length > 0
+        ? Math.max(...mapsMultipliers.map((m) => m.count)) + 1
+        : 1;
+    setMapsMultipliers([
+      ...mapsMultipliers,
+      { count: nextCount, multiplier: 1.0 },
+    ]);
+  };
+
+  const handleRemoveMapsMultiplier = (index: number) => {
+    setMapsMultipliers(mapsMultipliers.filter((_, i) => i !== index));
+  };
+
+  const handleMapsMultiplierChange = (
+    index: number,
+    field: "count" | "multiplier",
+    value: number
+  ) => {
+    setMapsMultipliers((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
+
   const onSubmit = async (data: FormData) => {
     try {
+      const trackersRecord: Record<number, number> = {};
+      trackersMultipliers.forEach(({ count, multiplier }) => {
+        trackersRecord[count] = multiplier;
+      });
+
+      const mapsRecord: Record<number, number> = {};
+      mapsMultipliers.forEach(({ count, multiplier }) => {
+        mapsRecord[count] = multiplier;
+      });
+
       await updateEvent.mutateAsync({
         name: data.name,
         active: data.active,
@@ -79,68 +229,458 @@ export const EventEditDialog = ({
           ? new Date(data.startsAt).toISOString()
           : undefined,
         endsAt: data.endsAt ? new Date(data.endsAt).toISOString() : undefined,
+        timeOfDayMultipliers:
+          timeMultipliers.length > 0 ? timeMultipliers : undefined,
+        trackersMultipliers:
+          Object.keys(trackersRecord).length > 0 ? trackersRecord : undefined,
+        mapsCountMultipliers:
+          Object.keys(mapsRecord).length > 0 ? mapsRecord : undefined,
       });
-      toast.success("Zapisano zmiany");
+      toast.success(t("events.scoring.saveSuccess"));
       onOpenChange(false);
-    } catch (error) {
-      toast.error("Wystąpił błąd podczas zapisywania zmian");
+    } catch {
+      toast.error(t("events.scoring.saveError"));
     }
+  };
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background border-border sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edytuj event</DialogTitle>
+      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Pencil className="size-4 text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="text-base">
+                {t("events.edit")}
+              </DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">
+                {event.name}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nazwa eventu</Label>
-            <Input id="name" {...register("name", { required: true })} />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={watch("active")}
-              onCheckedChange={(val) => setValue("active", val)}
-              id="active"
-            />
-            <Label htmlFor="active">Aktywny</Label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <ScrollArea className="flex-1">
+          <form
+            id="event-edit-form"
+            onSubmit={handleSubmit(onSubmit)}
+            className="p-5 space-y-5"
+          >
+            {/* Basic Info */}
             <div className="space-y-2">
-              <Label htmlFor="startsAt">Data rozpoczęcia</Label>
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("events.createDialog.nameLabel")}
+              </Label>
               <Input
-                id="startsAt"
-                type="datetime-local"
-                {...register("startsAt")}
+                {...register("name", { required: true })}
+                className="h-9 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endsAt">Data zakończenia</Label>
-              <Input
-                id="endsAt"
-                type="datetime-local"
-                {...register("endsAt")}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("events.createDialog.startsAt", "Data rozpoczęcia")}
+                </Label>
+                <Input
+                  type="datetime-local"
+                  {...register("startsAt")}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("events.createDialog.endsAt", "Data zakończenia")}
+                </Label>
+                <Input
+                  type="datetime-local"
+                  {...register("endsAt")}
+                  className="h-9 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between py-2 px-3 rounded-lg border">
+              <Label htmlFor="active" className="text-sm font-medium cursor-pointer">
+                {t("events.active")}
+              </Label>
+              <Switch
+                id="active"
+                checked={watch("active")}
+                onCheckedChange={(val) => setValue("active", val)}
               />
             </div>
-          </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Anuluj
-            </Button>
-            <Button type="submit" disabled={updateEvent.isPending}>
-              {updateEvent.isPending ? "Zapisywanie..." : "Zapisz"}
-            </Button>
-          </div>
-        </form>
+            {/* Scoring Multipliers */}
+            <div className="space-y-3">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <Settings className="size-3" />
+                {t("events.scoring.title")}
+              </Label>
+
+              {/* Time of Day */}
+              <Collapsible
+                open={openSections.timeOfDay}
+                onOpenChange={() => toggleSection("timeOfDay")}
+              >
+                <div className="rounded-lg border bg-muted/20 overflow-hidden">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <Clock className="size-4 text-blue-400" />
+                      <span className="text-sm font-medium">
+                        {t("events.scoring.timeOfDay.title")}
+                      </span>
+                      {timeMultipliers.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          ({timeMultipliers.length})
+                        </span>
+                      )}
+                    </div>
+                    <ChevronDown
+                      className={`size-4 text-muted-foreground transition-transform ${
+                        openSections.timeOfDay ? "rotate-180" : ""
+                      }`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {t("events.scoring.timeOfDay.description")}
+                      </p>
+                      {timeMultipliers.map((tm, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 bg-background/50 rounded-lg border"
+                        >
+                          <div className="flex-1 grid grid-cols-3 gap-2">
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {t("events.scoring.timeOfDay.from")}
+                              </Label>
+                              <Input
+                                type="time"
+                                value={tm.from}
+                                onChange={(e) =>
+                                  handleTimeMultiplierChange(index, "from", e.target.value)
+                                }
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {t("events.scoring.timeOfDay.to")}
+                              </Label>
+                              <Input
+                                type="time"
+                                value={tm.to}
+                                onChange={(e) =>
+                                  handleTimeMultiplierChange(index, "to", e.target.value)
+                                }
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {t("events.scoring.timeOfDay.multiplier")}
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0.1"
+                                value={tm.multiplier}
+                                onChange={(e) =>
+                                  handleTimeMultiplierChange(
+                                    index,
+                                    "multiplier",
+                                    parseFloat(e.target.value) || 1
+                                  )
+                                }
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTimeMultiplier(index)}
+                            className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      {timeMultipliers.length === 0 && (
+                        <div className="py-3 px-4 rounded-lg border border-dashed text-center">
+                          <p className="text-xs text-muted-foreground">
+                            {t("events.scoring.timeOfDay.empty")}
+                          </p>
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddTimeMultiplier}
+                        className="w-full h-8 text-xs"
+                      >
+                        <Plus className="size-3 mr-1" />
+                        {t("events.scoring.timeOfDay.add")}
+                      </Button>
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+
+              {/* Trackers */}
+              <Collapsible
+                open={openSections.trackers}
+                onOpenChange={() => toggleSection("trackers")}
+              >
+                <div className="rounded-lg border bg-muted/20 overflow-hidden">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <Users className="size-4 text-green-400" />
+                      <span className="text-sm font-medium">
+                        {t("events.scoring.trackers.title")}
+                      </span>
+                      {trackersMultipliers.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          ({trackersMultipliers.length})
+                        </span>
+                      )}
+                    </div>
+                    <ChevronDown
+                      className={`size-4 text-muted-foreground transition-transform ${
+                        openSections.trackers ? "rotate-180" : ""
+                      }`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {t("events.scoring.trackers.description")}
+                      </p>
+                      {trackersMultipliers
+                        .sort((a, b) => a.count - b.count)
+                        .map((bm, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 p-2 bg-background/50 rounded-lg border"
+                          >
+                            <div className="flex-1 grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  {t("events.scoring.trackers.count")}
+                                </Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={bm.count}
+                                  onChange={(e) =>
+                                    handleTrackersMultiplierChange(
+                                      index,
+                                      "count",
+                                      parseInt(e.target.value) || 1
+                                    )
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  {t("events.scoring.trackers.multiplier")}
+                                </Label>
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  min="0.1"
+                                  value={bm.multiplier}
+                                  onChange={(e) =>
+                                    handleTrackersMultiplierChange(
+                                      index,
+                                      "multiplier",
+                                      parseFloat(e.target.value) || 1
+                                    )
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTrackersMultiplier(index)}
+                              className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      {trackersMultipliers.length === 0 && (
+                        <div className="py-3 px-4 rounded-lg border border-dashed text-center">
+                          <p className="text-xs text-muted-foreground">
+                            {t("events.scoring.trackers.empty")}
+                          </p>
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddTrackersMultiplier}
+                        className="w-full h-8 text-xs"
+                      >
+                        <Plus className="size-3 mr-1" />
+                        {t("events.scoring.trackers.add")}
+                      </Button>
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+
+              {/* Maps Count */}
+              <Collapsible
+                open={openSections.mapsCount}
+                onOpenChange={() => toggleSection("mapsCount")}
+              >
+                <div className="rounded-lg border bg-muted/20 overflow-hidden">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <MapIcon className="size-4 text-yellow-400" />
+                      <span className="text-sm font-medium">
+                        {t("events.scoring.mapsCount.title")}
+                      </span>
+                      {mapsMultipliers.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          ({mapsMultipliers.length})
+                        </span>
+                      )}
+                    </div>
+                    <ChevronDown
+                      className={`size-4 text-muted-foreground transition-transform ${
+                        openSections.mapsCount ? "rotate-180" : ""
+                      }`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {t("events.scoring.mapsCount.description")}
+                      </p>
+                      {mapsMultipliers
+                        .sort((a, b) => a.count - b.count)
+                        .map((mm, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 p-2 bg-background/50 rounded-lg border"
+                          >
+                            <div className="flex-1 grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  {t("events.scoring.mapsCount.count")}
+                                </Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={mm.count}
+                                  onChange={(e) =>
+                                    handleMapsMultiplierChange(
+                                      index,
+                                      "count",
+                                      parseInt(e.target.value) || 1
+                                    )
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  {t("events.scoring.mapsCount.multiplier")}
+                                </Label>
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  min="0.1"
+                                  value={mm.multiplier}
+                                  onChange={(e) =>
+                                    handleMapsMultiplierChange(
+                                      index,
+                                      "multiplier",
+                                      parseFloat(e.target.value) || 1
+                                    )
+                                  }
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMapsMultiplier(index)}
+                              className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      {mapsMultipliers.length === 0 && (
+                        <div className="py-3 px-4 rounded-lg border border-dashed text-center">
+                          <p className="text-xs text-muted-foreground">
+                            {t("events.scoring.mapsCount.empty")}
+                          </p>
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddMapsMultiplier}
+                        className="w-full h-8 text-xs"
+                      >
+                        <Plus className="size-3 mr-1" />
+                        {t("events.scoring.mapsCount.add")}
+                      </Button>
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            </div>
+          </form>
+        </ScrollArea>
+
+        <div className="px-5 py-3 border-t bg-muted/30 shrink-0 flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="flex-1"
+          >
+            {t("events.createDialog.cancel")}
+          </Button>
+          <Button
+            type="submit"
+            form="event-edit-form"
+            size="sm"
+            disabled={updateEvent.isPending}
+            className="flex-1"
+          >
+            {updateEvent.isPending ? (
+              <>
+                <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                {t("events.scoring.saving")}
+              </>
+            ) : (
+              <>
+                <Pencil className="size-3.5 mr-1.5" />
+                {t("events.scoring.save")}
+              </>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -123,7 +123,7 @@ export const EventCreateDialog = ({
   };
 
   const handleAddHero = () => {
-    if (newHero.npcId && newHero.npcName && newHero.maps.length > 0) {
+    if (newHero.npcName && newHero.maps.length > 0) {
       setHeroNpcs([...heroNpcs, newHero]);
       setNewHero({ npcId: "", npcName: "", maps: [] });
       setShowHeroForm(false);
@@ -153,7 +153,7 @@ export const EventCreateDialog = ({
         world: data.world.trim(),
         active: data.active,
         heroNpcs: heroNpcs.map((h) => ({
-          npcId: Number.parseInt(h.npcId, 10),
+          ...(h.npcId && { npcId: Number.parseInt(h.npcId, 10) }),
           npcName: h.npcName,
           maps: h.maps.map((m) => ({ mapId: m.mapId, mapName: m.mapName })),
         })),
@@ -273,9 +273,11 @@ export const EventCreateDialog = ({
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="text-sm font-medium">{hero.npcName}</p>
-                            <p className="text-[10px] font-mono text-muted-foreground">
-                              ID: {hero.npcId}
-                            </p>
+                            {hero.npcId && (
+                              <p className="text-[10px] font-mono text-muted-foreground">
+                                ID: {hero.npcId}
+                              </p>
+                            )}
                           </div>
                           <button
                             type="button"
@@ -312,11 +314,12 @@ export const EventCreateDialog = ({
                         {t("events.createDialog.heroIdLabel")}
                       </Label>
                       <Input
+                        type="number"
                         value={newHero.npcId}
                         onChange={(e) =>
                           setNewHero({ ...newHero, npcId: e.target.value })
                         }
-                        placeholder="123456"
+                        placeholder={t("events.createDialog.heroIdPlaceholder")}
                         className="h-8 text-sm"
                       />
                     </div>
@@ -451,11 +454,7 @@ export const EventCreateDialog = ({
                     variant="secondary"
                     size="sm"
                     className="w-full h-8"
-                    disabled={
-                      !newHero.npcId ||
-                      !newHero.npcName ||
-                      newHero.maps.length === 0
-                    }
+                    disabled={!newHero.npcName || newHero.maps.length === 0}
                   >
                     <Plus className="size-3 mr-1" />
                     {t("events.createDialog.addHero")}
