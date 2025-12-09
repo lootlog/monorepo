@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Event } from "@/features/events/hooks/use-events";
+import { EventTimersList } from "./event-timers-list";
 
 interface ActiveEventsBannerProps {
   events: Event[];
@@ -86,6 +87,13 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
               <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
             </motion.div>
           </Link>
+
+          {/* Timers for featured event */}
+          <EventTimersList
+            event={featuredEvent}
+            guildId={guildId}
+            onNavigate={onNavigate}
+          />
         </div>
 
         {/* Expand button for more events */}
@@ -116,27 +124,33 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
                   className="border-t border-yellow-500/20 overflow-hidden"
                 >
                   {otherEvents.map((event, index) => (
-                    <Link
-                      key={event.id}
-                      to="/$guildId/events/$eventId"
-                      params={{ guildId, eventId: event.id }}
-                      onClick={onNavigate}
-                      className="block"
-                    >
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="px-3 py-2 flex items-center gap-2 hover:bg-yellow-500/10 transition-colors"
-                        whileHover={{ x: 2 }}
+                    <div key={event.id}>
+                      <Link
+                        to="/$guildId/events/$eventId"
+                        params={{ guildId, eventId: event.id }}
+                        onClick={onNavigate}
+                        className="block"
                       >
-                        <Trophy className="h-3.5 w-3.5 text-yellow-500/70" />
-                        <span className="text-sm truncate flex-1">
-                          {event.name}
-                        </span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      </motion.div>
-                    </Link>
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="px-3 py-2 flex items-center gap-2 hover:bg-yellow-500/10 transition-colors"
+                          whileHover={{ x: 2 }}
+                        >
+                          <Trophy className="h-3.5 w-3.5 text-yellow-500/70" />
+                          <span className="text-sm truncate flex-1">
+                            {event.name}
+                          </span>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        </motion.div>
+                      </Link>
+                      <EventTimersList
+                        event={event}
+                        guildId={guildId}
+                        onNavigate={onNavigate}
+                      />
+                    </div>
                   ))}
                 </motion.div>
               )}

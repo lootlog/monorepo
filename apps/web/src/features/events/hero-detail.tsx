@@ -4,6 +4,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEvent } from "./hooks/use-event";
+import { useEventHeroTimers } from "./hooks/use-event-hero-timers";
 import { EventMapGrid } from "./components/event-map-grid";
 import { Swords, MapPin, Users, AlertCircle, Plus, Eraser } from "lucide-react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
@@ -17,6 +18,9 @@ import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useEventPresence } from "./hooks/use-event-presence";
+import { RecentKillsPreview } from "./components/recent-kills-preview";
+import { EventHeroLoots } from "./components/event-hero-loots";
+import { NpcTile } from "@/components/tiles";
 
 const MemberBadge = ({ member }: { member: any }) => {
   const color = useMemberColor(member);
@@ -66,6 +70,12 @@ export const HeroDetail = () => {
     [...presenceData.entries()],
   );
 
+  const { data: timers } = useEventHeroTimers({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+    world: event?.world ?? "",
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -75,6 +85,27 @@ export const HeroDetail = () => {
   }
 
   const hero = event?.heroNpcs?.find((h) => h.id === heroId);
+
+  // Check if assignment is allowed (max 5 minutes before minSpawnTime)
+  const canAssignToMaps = () => {
+    if (!hero) return false;
+    if (!timers || timers.length === 0) return true; // No timer = allowed
+
+    // Find timer for this hero (by npcId or npcName)
+    const heroTimer = timers.find(
+      (t) => t.npcId === hero.npcId || t.npc?.name === hero.npcName,
+    );
+
+    if (!heroTimer) return true; // No timer for this hero
+
+    const minSpawn = new Date(heroTimer.minSpawnTime);
+    const now = new Date();
+    const fiveMinutes = 5 * 60 * 1000;
+
+    return minSpawn.getTime() - now.getTime() <= fiveMinutes;
+  };
+
+  const assignmentAllowed = canAssignToMaps();
 
   if (error || !event || !hero) {
     return (
@@ -199,9 +230,19 @@ export const HeroDetail = () => {
         {/* Header */}
         <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-lg bg-yellow-500/10">
-              <Swords className="size-4 text-yellow-500" />
-            </div>
+            {hero.npcIcon ? (
+              <NpcTile
+                npc={{
+                  id: hero.npcId ?? undefined,
+                  name: hero.npcName,
+                  icon: hero.npcIcon,
+                }}
+              />
+            ) : (
+              <div className="p-2 rounded-lg bg-yellow-500/10">
+                <Swords className="size-4 text-yellow-500" />
+              </div>
+            )}
             <div>
               <h2 className="text-sm font-semibold leading-tight">
                 {hero.npcName}
@@ -222,9 +263,8 @@ export const HeroDetail = () => {
                   <MapPin className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{hero.maps?.length || 0}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t("events.maps.title")}
+                  <p className="text-2xl font-bold">
+                    {t("events.maps.mapCount", { count: hero.maps?.length || 0 })}
                   </p>
                 </div>
               </div>
@@ -236,9 +276,8 @@ export const HeroDetail = () => {
                   <Users className="w-5 h-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{uniqueMembers.length}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t("events.participants.count", "Uczestników")}
+                  <p className="text-2xl font-bold">
+                    {t("events.participants.count", { count: uniqueMembers.length })}
                   </p>
                 </div>
               </div>
@@ -298,8 +337,25 @@ export const HeroDetail = () => {
               onUnassignClick={handleUnassignClick}
               currentMemberId={currentMember?.id}
               presenceData={presenceData}
+              assignmentDisabled={!assignmentAllowed}
             />
           </Card>
+
+          {/* Recent Kills */}
+          <RecentKillsPreview
+            guildId={guildId ?? ""}
+            eventId={eventId ?? ""}
+            heroId={heroId ?? ""}
+            limit={5}
+          />
+
+          {/* Recent Loots */}
+          <EventHeroLoots
+            guildId={guildId ?? ""}
+            heroNpcNames={[hero.npcName]}
+            world={event.world}
+            limit={10}
+          />
         </div>
 
         {/* Dialogs */}

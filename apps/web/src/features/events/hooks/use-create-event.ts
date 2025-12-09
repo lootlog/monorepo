@@ -14,7 +14,7 @@ interface CreateEventData {
   active?: boolean;
   startsAt?: string;
   endsAt?: string;
-  heroNpcs: { npcId: number; npcName: string; maps: HeroMapData[] }[];
+  heroNpcs: { npcId?: number; npcName: string; maps: HeroMapData[] }[];
 }
 
 export const useCreateEvent = () => {

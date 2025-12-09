@@ -1,128 +1,193 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
-import { Package, Frown } from "lucide-react";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
+import { Button } from "@lootlog/ui/components/button";
 import {
-  useEventHeroLoots,
-  type EventLoot,
-} from "../hooks/use-event-hero-loots";
-import { MARGONEM_CDN_ITEMS_URL, MARGONEM_CDN_NPCS_URL } from "@/constants/margonem";
+  Package,
+  Frown,
+  MapPin,
+  Calendar,
+  Users,
+  ChevronRight,
+} from "lucide-react";
 import { cn } from "@/utils/cn";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@lootlog/ui/components/tooltip";
+import { useEventLoots } from "../hooks/use-event-loots";
+import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
+import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
+import { ItemTile } from "@/components/tiles";
+import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
+import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
 
 interface EventHeroLootsProps {
   guildId: string;
-  eventId: string;
+  heroNpcNames: string[];
   world: string;
   limit?: number;
 }
 
-const RARITY_COLORS: Record<string, string> = {
-  LEGENDARY: "border-red-500/60 shadow-[0_0_10px_rgba(239,68,68,0.3)]",
-  HEROIC: "border-purple-500/60",
-  UNIQUE: "border-yellow-500/60",
-  UPGRADED: "border-green-500/60",
-};
+type ItemsByPlayer = Record<string, Item[]>;
 
-const LootItemTile = ({ item }: { item: EventLoot["items"][number] }) => {
-  const rarityClass = item.rarity ? RARITY_COLORS[item.rarity] : "";
+const useLootData = (loot: Loot) => {
+  const itemOwnerMap: Record<string, string | undefined> = {};
+  Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
+    itemIds.forEach((itemId) => {
+      itemOwnerMap[itemId] = playerId;
+    });
+  });
 
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={cn(
-            "w-8 h-8 rounded border border-border/50 overflow-hidden cursor-pointer hover:scale-110 transition-transform",
-            rarityClass,
-          )}
-        >
-          {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-          <img
-            src={`${MARGONEM_CDN_ITEMS_URL}${item.icon}`}
-            alt={item.name}
-            className="w-full h-full object-contain"
-          />
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="font-medium">{item.name}</p>
-        {item.lvl && <p className="text-xs text-muted-foreground">Lvl: {item.lvl}</p>}
-      </TooltipContent>
-    </Tooltip>
+  const itemsByPlayer = loot.players.reduce<ItemsByPlayer>((acc, player) => {
+    acc[player.id] = [];
+    return acc;
+  }, {});
+
+  const unassignedItems: Item[] = [];
+  const singlePlayerId =
+    loot.players.length === 1 ? loot.players[0]?.id : undefined;
+
+  loot.items.forEach((item) => {
+    const ownerId = itemOwnerMap[item.hid];
+    if (ownerId && itemsByPlayer[ownerId]) {
+      itemsByPlayer[ownerId].push(item);
+    } else if (singlePlayerId && itemsByPlayer[singlePlayerId]) {
+      itemsByPlayer[singlePlayerId].push(item);
+    } else {
+      unassignedItems.push(item);
+    }
+  });
+
+  const hasLegendaryItem = loot.items.some(
+    (item) => item.rarity === ItemRarity.LEGENDARY,
   );
+
+  const sortedPlayers = [...loot.players].sort((a, b) => {
+    const aItems = itemsByPlayer[a.id]?.length || 0;
+    const bItems = itemsByPlayer[b.id]?.length || 0;
+    if (aItems > 0 && bItems === 0) return -1;
+    if (aItems === 0 && bItems > 0) return 1;
+    return 0;
+  });
+
+  return {
+    itemsByPlayer,
+    unassignedItems,
+    hasLegendaryItem,
+    sortedPlayers,
+  };
 };
 
-const LootNpcTile = ({ npc }: { npc: EventLoot["npcs"][number] }) => (
-  <div className="flex items-center gap-2">
-    {npc.icon && (
-      <div className="w-6 h-6 rounded overflow-hidden">
-        {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
-        <img
-          src={`${MARGONEM_CDN_NPCS_URL}${npc.icon}`}
-          alt={npc.name}
-          className="w-full h-full object-contain"
-        />
+const PlayerWithItems = ({
+  player,
+  items,
+}: {
+  player: Loot["players"][number];
+  items: Item[];
+}) => (
+  <div className="flex flex-col items-center gap-0.5">
+    <PlayerTile player={player} />
+    {items.length > 0 && (
+      <div className="flex flex-col gap-1">
+        {items.slice(0, 3).map((item, itemIdx) => (
+          <ItemTile key={`${item.hid}-${itemIdx}`} item={item} />
+        ))}
+        {items.length > 3 && (
+          <span className="text-xs text-muted-foreground text-center">
+            +{items.length - 3}
+          </span>
+        )}
       </div>
     )}
-    <span className="text-sm font-medium truncate">{npc.name}</span>
   </div>
 );
 
-const LootCard = ({ loot }: { loot: EventLoot }) => {
-  const hasLegendary = loot.items.some((item) => item.rarity === "LEGENDARY");
+const LEGENDARY_GRADIENT =
+  "linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(0,0,0,0) 50%, rgba(239,68,68,0.05) 100%)";
+
+const LootCard = ({ loot }: { loot: Loot }) => {
+  const date = timestampToDate(loot.createdAt);
+  const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
+    useLootData(loot);
 
   return (
     <div
       className={cn(
-        "p-3 rounded-lg border border-border/50 bg-card/30 hover:bg-card/50 transition-colors",
-        hasLegendary &&
+        "p-3 rounded-lg border border-border/50 bg-card/30",
+        hasLegendaryItem &&
           "border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.2)]",
       )}
+      style={hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex-1 min-w-0">
-          {loot.npcs[0] && <LootNpcTile npc={loot.npcs[0]} />}
-        </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {format(new Date(loot.createdAt), "d MMM HH:mm", { locale: pl })}
-        </span>
+      {/* Header - NPCs */}
+      <div className="mb-2">
+        <LootNpcs npcs={loot.npcs} />
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {loot.items.slice(0, 6).map((item, idx) => (
-          <LootItemTile key={`${item.hid}-${idx}`} item={item} />
+
+      {/* Players with items */}
+      <div className="flex flex-row items-start gap-2 flex-wrap py-2 border-t border-border/30">
+        {sortedPlayers.slice(0, 4).map((player) => (
+          <PlayerWithItems
+            key={player.id}
+            player={player}
+            items={itemsByPlayer[player.id] || []}
+          />
         ))}
-        {loot.items.length > 6 && (
-          <div className="w-8 h-8 rounded border border-border/50 flex items-center justify-center text-xs text-muted-foreground">
-            +{loot.items.length - 6}
+        {sortedPlayers.length > 4 && (
+          <span className="text-xs text-muted-foreground self-center">
+            +{sortedPlayers.length - 4}
+          </span>
+        )}
+        {unassignedItems.length > 0 && (
+          <div className="flex flex-col gap-1 border-l border-border/30 pl-2">
+            <div className="flex flex-row flex-wrap gap-1">
+              {unassignedItems.slice(0, 4).map((item, itemIdx) => (
+                <ItemTile key={`unassigned-${item.hid}-${itemIdx}`} item={item} />
+              ))}
+              {unassignedItems.length > 4 && (
+                <span className="text-xs text-muted-foreground self-center">
+                  +{unassignedItems.length - 4}
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
-      {loot.member && (
-        <div className="mt-2 pt-2 border-t border-border/30">
-          <span className="text-xs text-muted-foreground">
-            {loot.member.name}
+
+      {/* Footer */}
+      <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            {loot.location}
+          </span>
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            {date}
           </span>
         </div>
-      )}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            {loot.players.length}
+          </span>
+          <span className="flex items-center gap-1">
+            <Package className="h-3 w-3" />
+            {loot.items.length}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
 
 export const EventHeroLoots = ({
   guildId,
-  eventId,
+  heroNpcNames,
   world,
   limit = 10,
 }: EventHeroLootsProps) => {
   const { t } = useTranslation();
-  const { data: loots, isLoading } = useEventHeroLoots({
+  const { data: loots, isLoading } = useEventLoots({
     guildId,
-    eventId,
+    npcNames: heroNpcNames,
     world,
     limit,
   });
@@ -153,11 +218,24 @@ export const EventHeroLoots = ({
           <p className="text-sm">{t("events.loots.noLoots")}</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {loots.map((loot) => (
-            <LootCard key={loot.id} loot={loot} />
-          ))}
-        </div>
+        <>
+          <div className="space-y-2">
+            {loots.map((loot) => (
+              <LootCard key={loot.id} loot={loot} />
+            ))}
+          </div>
+          <Link
+            to="/$guildId"
+            params={{ guildId }}
+            search={{ npcs: heroNpcNames.join(",") }}
+            className="block mt-4"
+          >
+            <Button variant="outline" className="w-full" size="sm">
+              {t("events.loots.showAll")}
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </>
       )}
     </Card>
   );

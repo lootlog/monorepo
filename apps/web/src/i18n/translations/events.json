@@ -6,6 +6,8 @@
   "delete": "Usuń Event",
   "active": "Aktywny",
   "inactive": "Nieaktywny",
+  "ongoing": "W trakcie",
+  "ended": "Zakończony",
   "noEvents": "Brak eventów",
   "createDialog": {
     "title": "Nowy Event",
@@ -16,14 +18,15 @@
     "worldPlaceholder": "np. tempest",
     "activeLabel": "Aktywny od razu",
     "noHeroesHint": "Możesz utworzyć event bez herosów i dodać ich później w ustawieniach eventu.",
-    "heroIdLabel": "ID NPC",
+    "heroIdLabel": "ID NPC (opcjonalne)",
+    "heroIdPlaceholder": "opcjonalne",
     "heroNameLabel": "Nazwa herosa",
     "heroNamePlaceholder": "np. Król Goblinów",
     "heroMapsLabel": "Mapy spawnu",
     "mapPlaceholder": "Nazwa mapy",
     "fromTemplate": "Z szablonu",
     "addHero": "Dodaj herosa",
-    "heroValidation": "Wypełnij ID, nazwę i dodaj przynajmniej jedną mapę",
+    "heroValidation": "Wypełnij nazwę i dodaj przynajmniej jedną mapę",
     "nameRequired": "Nazwa eventu jest wymagana",
     "worldRequired": "Świat jest wymagany",
     "success": "Event utworzony pomyślnie",
@@ -35,6 +38,12 @@
     "title": "Ranking Eventowy",
     "points": "Punkty",
     "kills": "Zabicia",
+    "killCount_one": "{{count}} zabicie",
+    "killCount_few": "{{count}} zabicia",
+    "killCount_many": "{{count}} zabić",
+    "pointCount_one": "{{count}} punkt",
+    "pointCount_few": "{{count}} punkty",
+    "pointCount_many": "{{count}} punktów",
     "time": "Czas",
     "afk": "AFK %",
     "noRanking": "Brak danych w rankingu"
@@ -51,10 +60,14 @@
   },
   "common": {
     "backToEvent": "Powrót do eventu",
+    "backToHero": "Powrót do herosa",
     "close": "Zamknij"
   },
   "maps": {
     "title": "Mapy",
+    "mapCount_one": "{{count}} mapa",
+    "mapCount_few": "{{count}} mapy",
+    "mapCount_many": "{{count}} map",
     "manage": "Zarządzaj mapami",
     "assign": "Przypisz członka",
     "unassign": "Usuń przypisanie",
@@ -72,7 +85,9 @@
     "searchHint": "Wpisz nazwę mapy, aby wyszukać",
     "noResults": "Brak wyników dla \"{{query}}\"",
     "allTemplatesAdded": "Wszystkie mapy z szablonu są już dodane",
-    "templateLoaded": "Dodano {{count}} map z szablonu \"{{name}}\"",
+    "templateLoaded_one": "Dodano {{count}} mapę z szablonu \"{{name}}\"",
+    "templateLoaded_few": "Dodano {{count}} mapy z szablonu \"{{name}}\"",
+    "templateLoaded_many": "Dodano {{count}} map z szablonu \"{{name}}\"",
     "errors": {
       "duplicate": "Ta mapa już istnieje",
       "addFailed": "Błąd podczas dodawania mapy",
@@ -96,15 +111,110 @@
     "pointsAwarded": "{{points}} punktów przyznano",
     "kills": "bicia",
     "kill": "bicie",
+    "killCount_one": "{{count}} zabicie",
+    "killCount_few": "{{count}} zabicia",
+    "killCount_many": "{{count}} zabić",
     "noTimer": "Brak aktywnego timera",
-    "timerActive": "Timer aktywny"
+    "timerActive": "Timer aktywny",
+    "add": "Dodaj herosa",
+    "edit": "Edytuj herosa",
+    "addDescription": "Dodaj nowego herosa do eventu",
+    "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
+    "added": "Dodano herosa",
+    "updated": "Zaktualizowano herosa"
   },
   "loots": {
     "title": "Ostatnie łupy",
-    "noLoots": "Brak łupów z herosów eventowych"
+    "noLoots": "Brak łupów z herosów eventowych",
+    "showAll": "Pokaż wszystkie łupy"
   },
   "participants": {
     "title": "Uczestnicy",
-    "count": "Uczestników"
+    "count": "Uczestników",
+    "count_one": "{{count}} uczestnik",
+    "count_few": "{{count}} uczestników",
+    "count_many": "{{count}} uczestników"
+  },
+  "kills": {
+    "title": "Historia zabić",
+    "recentTitle": "Ostatnie zabicia",
+    "allKillsTitle": "Historia zabić eventu",
+    "allHeroes": "Wszyscy herosi",
+    "viewAll": "Zobacz wszystkie",
+    "noKills": "Brak historii zabić",
+    "noParticipants": "Brak uczestników",
+    "killTime": "Czas zabicia",
+    "respawnTime": "Czas respawnu",
+    "respawnTimeDescription": "Okno czasowe respawnu",
+    "participants": "Uczestnicy",
+    "participantCount_one": "{{count}} uczestnik",
+    "participantCount_few": "{{count}} uczestników",
+    "participantCount_many": "{{count}} uczestników",
+    "points": "Punkty",
+    "pointCount_one": "{{count}} punkt",
+    "pointCount_few": "{{count}} punkty",
+    "pointCount_many": "{{count}} punktów",
+    "pointsBreakdown": "{{base}} × {{multiplier}}",
+    "timeOnMap": "Czas na mapie",
+    "afkPercentage": "Procent AFK",
+    "multipliers": {
+      "title": "Mnożniki",
+      "timeOfDay": "Pora dnia",
+      "trackers": "Tropiciele",
+      "mapsCount": "Liczba map"
+    },
+    "loadMore": "Załaduj więcej",
+    "loading": "Ładowanie...",
+    "endOfList": "To wszystkie zabicia"
+  },
+  "killDetail": {
+    "notFound": "Nie znaleziono zabicia",
+    "totalPoints": "Suma punktów",
+    "participantCount": "Uczestników",
+    "lootCount": "Dopasowanych łupów",
+    "detectedBy": "Wykryto przez",
+    "participants": "Uczestnicy",
+    "matchingLoots": "Dopasowane łupy",
+    "noLoots": "Brak łupów pasujących do tego zabicia",
+    "multipliers": {
+      "title": "Konfiguracja mnożników",
+      "basePoints": "Punkty bazowe",
+      "timeOfDay": "Pora dnia",
+      "trackers": "Liczba tropicieli",
+      "maps": "Liczba map"
+    }
+  },
+  "scoring": {
+    "title": "Ustawienia punktów",
+    "description": "Konfiguracja mnożników punktów za udział w evencie",
+    "timeOfDay": {
+      "title": "Mnożnik pory dnia",
+      "description": "Dodatkowe punkty za obecność o określonych porach",
+      "from": "Od",
+      "to": "Do",
+      "multiplier": "Mnożnik",
+      "add": "Dodaj przedział",
+      "empty": "Brak zdefiniowanych przedziałów czasowych"
+    },
+    "trackers": {
+      "title": "Mnożnik tropicieli",
+      "description": "Im mniej osób pilnuje tego samego herosa, tym większy mnożnik",
+      "count": "Liczba osób",
+      "multiplier": "Mnożnik",
+      "add": "Dodaj próg",
+      "empty": "Brak zdefiniowanych progów"
+    },
+    "mapsCount": {
+      "title": "Mnożnik ilości map",
+      "description": "Bonus za obstawianie wielu map jednocześnie",
+      "count": "Liczba map",
+      "multiplier": "Mnożnik",
+      "add": "Dodaj próg",
+      "empty": "Brak zdefiniowanych progów"
+    },
+    "save": "Zapisz ustawienia",
+    "saving": "Zapisywanie...",
+    "saveSuccess": "Zapisano ustawienia punktów",
+    "saveError": "Błąd podczas zapisywania ustawień"
   }
 }

@@ -4,9 +4,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { HeroMapDto } from './create-event.dto';
 
 export class CreateHeroDto {
-  @ApiProperty({ description: 'NPC ID' })
+  @ApiPropertyOptional({ description: 'NPC ID' })
+  @IsOptional()
   @IsInt()
-  npcId: number;
+  npcId?: number;
 
   @ApiProperty({ description: 'NPC name' })
   @IsString()

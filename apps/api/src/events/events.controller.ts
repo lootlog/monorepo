@@ -467,4 +467,118 @@ export class EventsController {
   ) {
     return this.EventsService.getEventHeroStats(guildId, eventId);
   }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/kills')
+  @ApiOperation({
+    summary: 'Get event kill history',
+    description:
+      'Get paginated kill history for all heroes in an event, with participant point details',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of kills to return (default 20)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'cursor',
+    description: 'Cursor for pagination',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'heroId',
+    description: 'Filter by hero ID (optional)',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of kills with participant details',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEventKillHistory(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+    @Query('heroId') heroId?: string,
+  ) {
+    return this.EventsService.getEventKillHistory(
+      guildId,
+      eventId,
+      limit ? parseInt(limit, 10) : 20,
+      cursor,
+      heroId,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/kills')
+  @ApiOperation({
+    summary: 'Get hero kill history',
+    description:
+      'Get paginated kill history for a specific hero, with participant point details',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of kills to return (default 20)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'cursor',
+    description: 'Cursor for pagination',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of kills with participant details',
+  })
+  @ApiResponse({ status: 404, description: 'Hero not found' })
+  async getHeroKillHistory(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.EventsService.getHeroKillHistory(
+      guildId,
+      eventId,
+      heroId,
+      limit ? parseInt(limit, 10) : 20,
+      cursor,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId')
+  @ApiOperation({
+    summary: 'Get kill details',
+    description:
+      'Get detailed information about a specific kill including participants, multipliers, and matching loots',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiParam({ name: 'killId', description: 'Kill ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Kill details with participants, event config, and matching loots',
+  })
+  @ApiResponse({ status: 404, description: 'Kill not found' })
+  async getKillDetail(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Param('killId') killId: string,
+  ) {
+    return this.EventsService.getKillDetail(guildId, eventId, heroId, killId);
+  }
 }

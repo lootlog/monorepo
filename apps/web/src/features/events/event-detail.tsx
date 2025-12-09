@@ -49,8 +49,10 @@ import {
 } from "./hooks/use-event-hero-timers";
 import { useEventHeroStats } from "./hooks/use-event-hero-stats";
 import { EventHeroLoots } from "./components/event-hero-loots";
+import { RecentKillsPreview } from "./components/recent-kills-preview";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { cn } from "@/utils/cn";
+import { NpcTile } from "@/components/tiles";
 
 interface HeroTimerDisplayProps {
   timer: EventTimer | undefined;
@@ -338,9 +340,8 @@ export const EventDetail = () => {
                   <MapPin className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{totalMaps}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t("events.maps.title")}
+                  <p className="text-2xl font-bold">
+                    {t("events.maps.mapCount", { count: totalMaps })}
                   </p>
                 </div>
               </div>
@@ -353,9 +354,8 @@ export const EventDetail = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">
-                    {event.rankings?.length || 0}
+                    {t("events.participants.count", { count: event.rankings?.length || 0 })}
                   </p>
-                  <p className="text-sm text-muted-foreground">Uczestników</p>
                 </div>
               </div>
             </Card>
@@ -419,12 +419,21 @@ export const EventDetail = () => {
                       <Card className="bg-card/40 backdrop-blur-sm border-border hover:bg-card/60 hover:border-primary/30 transition-colors cursor-pointer group-hover:border-primary/30">
                         <div className="p-4 flex items-center justify-between pr-14">
                           <div className="flex items-center gap-3">
-                            <Swords className="w-5 h-5 text-yellow-500" />
+                            {hero.npcIcon ? (
+                              <NpcTile
+                                npc={{
+                                  id: hero.npcId ?? undefined,
+                                  name: hero.npcName,
+                                  icon: hero.npcIcon,
+                                }}
+                              />
+                            ) : (
+                              <Swords className="w-5 h-5 text-yellow-500" />
+                            )}
                             <div>
                               <p className="font-semibold">{hero.npcName}</p>
                               <p className="text-sm text-muted-foreground">
-                                ID: {hero.npcId} • {hero.maps?.length || 0}{" "}
-                                {t("events.maps.title").toLowerCase()}
+                                ID: {hero.npcId} • {t("events.maps.mapCount", { count: hero.maps?.length || 0 })}
                               </p>
                             </div>
                           </div>
@@ -433,10 +442,7 @@ export const EventDetail = () => {
                               <HeroTimerDisplay timer={timer} t={t} />
                               <span className="text-xs text-muted-foreground flex items-center gap-1">
                                 <Target className="w-3 h-3" />
-                                {killCount}{" "}
-                                {killCount === 1
-                                  ? t("events.heroes.kill")
-                                  : t("events.heroes.kills")}
+                                {t("events.heroes.killCount", { count: killCount })}
                               </span>
                             </div>
                             <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -513,9 +519,17 @@ export const EventDetail = () => {
               {/* Recent Loots */}
               <EventHeroLoots
                 guildId={guildId ?? ""}
-                eventId={eventId ?? ""}
+                heroNpcNames={event.heroNpcs?.map((h) => h.npcName) ?? []}
                 world={event.world}
                 limit={10}
+              />
+
+              {/* Recent Kills */}
+              <RecentKillsPreview
+                guildId={guildId ?? ""}
+                eventId={eventId ?? ""}
+                limit={5}
+                showHeroName
               />
             </div>
           </div>

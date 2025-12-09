@@ -1,11 +1,20 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface UpdateEventData {
+export interface TimeOfDayMultiplier {
+  from: string; // HH:mm format
+  to: string; // HH:mm format
+  multiplier: number;
+}
+
+export interface UpdateEventData {
   name?: string;
   startsAt?: string;
   endsAt?: string;
   active?: boolean;
+  timeOfDayMultipliers?: TimeOfDayMultiplier[];
+  trackersMultipliers?: Record<number, number>; // {count: multiplier}
+  mapsCountMultipliers?: Record<number, number>; // {count: multiplier}
 }
 
 interface HeroMapData {
@@ -14,7 +23,7 @@ interface HeroMapData {
 }
 
 interface CreateHeroData {
-  npcId: number;
+  npcId?: number;
   npcName: string;
   maps?: HeroMapData[];
 }

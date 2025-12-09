@@ -63,21 +63,20 @@ export const EventRankingPreview = ({
                 {ranking.member?.name || `Gracz #${ranking.memberId}`}
               </p>
               <p className="text-xs text-muted-foreground">
-                {ranking.totalKills} {t("events.ranking.kills").toLowerCase()}
+                {t("events.ranking.killCount", { count: ranking.totalKills })}
               </p>
             </div>
 
             <div className="text-right shrink-0">
-              <p className="font-bold text-primary">{ranking.totalPoints}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("events.ranking.points").toLowerCase()}
+              <p className="font-bold text-primary">
+                {t("events.ranking.pointCount", { count: ranking.totalPoints })}
               </p>
             </div>
           </div>
         );
       })}
 
-      {rankings.length > limit && (
+      {rankings.length > 0 && (
         <Link
           to="/$guildId/events/$eventId/ranking"
           params={{ guildId, eventId }}

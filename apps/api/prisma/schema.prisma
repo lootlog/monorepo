@@ -176,15 +176,16 @@ model Member {
   globalUserId      String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
-  guild             Guild              @relation(fields: [guildId], references: [id])
-  roles             Role[]
-  timers            Timer[]
-  lootSubmissions   LootSubmission[]
-  comments          LootComment[]
-  assignedEventMaps EventMap[]
-  eventPresenceLogs EventPresenceLog[]
-  eventKillPoints   EventKillPoint[]
-  eventRankings     EventRanking[]
+  guild              Guild              @relation(fields: [guildId], references: [id])
+  roles              Role[]
+  timers             Timer[]
+  lootSubmissions    LootSubmission[]
+  comments           LootComment[]
+  assignedEventMaps  EventMap[]
+  eventPresenceLogs  EventPresenceLog[]
+  eventKillPoints    EventKillPoint[]
+  eventRankings      EventRanking[]
+  detectedKills      EventHeroKill[]    @relation("KillDetectedBy")
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
@@ -502,6 +503,12 @@ model Event {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  // Scoring multipliers configuration
+  basePointsPerKill    Int   @default(100) // Base points per kill before multipliers
+  timeOfDayMultipliers Json? // [{from: "06:00", to: "12:00", multiplier: 1.5}, ...]
+  trackersMultipliers  Json? // {1: 3.0, 2: 2.5, 3: 2.0, 4: 1.5, 5: 1.0} - fewer trackers = higher multiplier
+  mapsCountMultipliers Json? // {1: 1.0, 2: 1.2, 3: 1.5, ...} - more maps = higher multiplier
+
   guild    Guild          @relation(fields: [guildId], references: [id])
   heroNpcs EventHeroNpc[]
   rankings EventRanking[]
@@ -529,15 +536,16 @@ model EventMap {
 model EventHeroNpc {
   id        String   @id @default(cuid())
   eventId   String
-  npcId     Int
+  npcId     Int?
   npcName   String
+  npcIcon   String?
   createdAt DateTime @default(now())
 
   event Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
   kills EventHeroKill[]
   maps  EventMap[]
 
-  @@unique([eventId, npcId])
+  @@unique([eventId, npcName])
   @@index([npcId])
 }
 
@@ -557,27 +565,33 @@ model EventPresenceLog {
 }
 
 model EventHeroKill {
-  id        String   @id @default(cuid())
-  heroNpcId String
-  killedAt  DateTime @default(now())
+  id                 String   @id @default(cuid())
+  heroNpcId          String
+  killedAt           DateTime @default(now())
+  minSpawnTimeAtKill DateTime // Respawn window min at time of kill
+  maxSpawnTimeAtKill DateTime // Respawn window max at time of kill
+  timerCreatedById   Int? // Member who submitted the timer (detected the kill)
 
-  heroNpc EventHeroNpc     @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
-  points  EventKillPoint[]
+  heroNpc        EventHeroNpc     @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  timerCreatedBy Member?          @relation("KillDetectedBy", fields: [timerCreatedById], references: [id])
+  points         EventKillPoint[]
 
   @@index([heroNpcId])
   @@index([killedAt])
 }
 
 model EventKillPoint {
-  id               String   @id @default(cuid())
-  killId           String
-  memberId         Int
-  mapName          String
-  points           Int
-  timeOnMapSeconds Int
-  afkPercentage    Float
-  wasPresent       Boolean
-  createdAt        DateTime @default(now())
+  id                String   @id @default(cuid())
+  killId            String
+  memberId          Int
+  mapName           String
+  basePoints        Int // Points before multipliers
+  points            Int // Final points after multipliers
+  appliedMultiplier Float // Combined multiplier applied
+  timeOnMapSeconds  Int
+  afkPercentage     Float
+  wasPresent        Boolean
+  createdAt         DateTime @default(now())
 
   kill   EventHeroKill @relation(fields: [killId], references: [id], onDelete: Cascade)
   member Member        @relation(fields: [memberId], references: [id])
