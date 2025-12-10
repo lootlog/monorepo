@@ -55,23 +55,25 @@ export const EventRankingPreview = ({
         {t("events.ranking.title")}
       </h2>
 
-      <Tabs
-        value={selectedHeroName ?? heroNpcs[0]?.npcName}
-        onValueChange={setSelectedHeroName}
-        className="mb-3"
-      >
-        <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
-          {heroNpcs.map((hero) => (
-            <TabsTrigger
-              key={hero.id}
-              value={hero.npcName}
-              className="flex-shrink-0 text-xs"
-            >
-              {hero.npcName}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      {heroNpcs.length > 1 && (
+        <Tabs
+          value={selectedHeroName ?? heroNpcs[0]?.npcName}
+          onValueChange={setSelectedHeroName}
+          className="mb-3"
+        >
+          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+            {heroNpcs.map((hero) => (
+              <TabsTrigger
+                key={hero.id}
+                value={hero.npcName}
+                className="flex-shrink-0 text-xs"
+              >
+                {hero.npcName}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
 
       <div
         key={selectedHeroName}

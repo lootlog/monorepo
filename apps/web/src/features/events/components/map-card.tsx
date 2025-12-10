@@ -11,10 +11,10 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { PlayerTile } from "@/components/tiles";
 import { useLocalCoverageTimer } from "../hooks/utils/use-local-coverage-timer";
-import { useMapActiveGap } from "../hooks/queries/use-map-active-gap";
 import type { EventMap } from "../hooks/queries/use-events";
 import type { PlayerPresence } from "../hooks/socket/use-event-presence";
 import type { WindowStatus } from "../hooks/queries/use-hero-respawn-config";
+import type { CoverageGap } from "../hooks/queries/use-map-coverage-timer";
 import { MemberName } from "./member-name";
 
 export type MapStatus =
@@ -114,8 +114,6 @@ export const getMapStatus = (
 
 interface MapCardProps {
   map: EventMap;
-  guildId: string;
-  eventId: string;
   status: MapStatus;
   style: (typeof STATUS_STYLES)[MapStatus];
   canManage: boolean;
@@ -127,6 +125,7 @@ interface MapCardProps {
   onSelfUnassignClick?: (mapId: string) => void;
   onManageClick?: (mapId: string) => void;
   windowStatus?: WindowStatus;
+  activeGap?: CoverageGap | null;
 }
 
 const formatTimeRemaining = (targetDate: Date): string => {
@@ -148,7 +147,6 @@ const formatTimeRemaining = (targetDate: Date): string => {
 
 export const MapCard = ({
   map,
-  eventId,
   status,
   style,
   canManage,
@@ -160,6 +158,7 @@ export const MapCard = ({
   onSelfUnassignClick,
   onManageClick,
   windowStatus = "OPEN",
+  activeGap,
 }: MapCardProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -170,9 +169,7 @@ export const MapCard = ({
   );
   const playersOnMap = getPlayersOnMap(map.mapName, presenceData);
 
-  // Fetch initial gap from backend (only on mount, for persistence after refresh)
-  const { data: activeGap } = useMapActiveGap(eventId, map.id);
-
+  // Use activeGap from props (batch fetched by parent)
   const initialStartedAt = activeGap?.startedAt
     ? new Date(activeGap.startedAt)
     : null;
@@ -206,6 +203,9 @@ export const MapCard = ({
           onClick={hasPlayersToShow ? () => setIsExpanded(!isExpanded) : undefined}
         >
           <div className="flex items-center gap-1.5 min-w-0">
+            {hasPlayersToShow && (
+              <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            )}
             <span className="text-sm truncate">{map.mapName}</span>
             <span className="text-xs text-muted-foreground/60 font-mono shrink-0">
               #{map.mapId}

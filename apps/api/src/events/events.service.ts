@@ -11,6 +11,9 @@ import { PrismaService } from 'src/db/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { CreateMapDto } from './dto/create-map.dto';
+import { CreateLocationDto } from './dto/create-location.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
+import { ReorderLocationsDto } from './dto/reorder-locations.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { RoutingKey } from 'src/enum/routing-key.enum';
@@ -155,7 +158,30 @@ export class EventsService {
       include: {
         heroNpcs: {
           include: {
+            locations: {
+              orderBy: { order: 'asc' },
+              include: {
+                maps: {
+                  include: {
+                    assignedMembers: {
+                      include: {
+                        roles: true,
+                      },
+                    },
+                    presenceLogs: {
+                      where: {
+                        endedAt: null,
+                      },
+                      include: {
+                        member: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
             maps: {
+              where: { locationId: null },
               include: {
                 assignedMembers: {
                   include: {
@@ -655,6 +681,265 @@ export class EventsService {
     return { success: true };
   }
 
+  // ========== LOCATION MANAGEMENT ==========
+
+  async createLocation(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    data: CreateLocationDto,
+  ) {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    // Check if location with this name already exists
+    const existingLocation = await this.prisma.eventMapLocation.findFirst({
+      where: {
+        heroNpcId: heroId,
+        name: data.name,
+      },
+    });
+
+    if (existingLocation) {
+      throw new BadRequestException('Location with this name already exists');
+    }
+
+    // Get max order for this hero
+    const maxOrderResult = await this.prisma.eventMapLocation.aggregate({
+      where: { heroNpcId: heroId },
+      _max: { order: true },
+    });
+    const newOrder = (maxOrderResult._max.order ?? -1) + 1;
+
+    return this.prisma.eventMapLocation.create({
+      data: {
+        heroNpcId: heroId,
+        name: data.name,
+        order: newOrder,
+      },
+      include: {
+        maps: {
+          include: {
+            assignedMembers: {
+              include: { roles: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async updateLocation(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    locationId: string,
+    data: UpdateLocationDto,
+  ) {
+    const location = await this.prisma.eventMapLocation.findFirst({
+      where: {
+        id: locationId,
+        heroNpcId: heroId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+    });
+
+    if (!location) {
+      throw new NotFoundException('Location not found');
+    }
+
+    // Check for duplicate name if name is being changed
+    if (data.name && data.name !== location.name) {
+      const existingLocation = await this.prisma.eventMapLocation.findFirst({
+        where: {
+          heroNpcId: heroId,
+          name: data.name,
+          id: { not: locationId },
+        },
+      });
+
+      if (existingLocation) {
+        throw new BadRequestException('Location with this name already exists');
+      }
+    }
+
+    return this.prisma.eventMapLocation.update({
+      where: { id: locationId },
+      data: {
+        ...(data.name && { name: data.name }),
+      },
+      include: {
+        maps: {
+          include: {
+            assignedMembers: {
+              include: { roles: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async deleteLocation(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    locationId: string,
+  ) {
+    const location = await this.prisma.eventMapLocation.findFirst({
+      where: {
+        id: locationId,
+        heroNpcId: heroId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+    });
+
+    if (!location) {
+      throw new NotFoundException('Location not found');
+    }
+
+    // Maps will have locationId set to null automatically (onDelete: SetNull)
+    await this.prisma.eventMapLocation.delete({
+      where: { id: locationId },
+    });
+
+    return { success: true };
+  }
+
+  async reorderLocations(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    data: ReorderLocationsDto,
+  ) {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    // Verify all locations belong to this hero
+    const locations = await this.prisma.eventMapLocation.findMany({
+      where: {
+        heroNpcId: heroId,
+        id: { in: data.locationIds },
+      },
+    });
+
+    if (locations.length !== data.locationIds.length) {
+      throw new BadRequestException('Some locations not found or do not belong to this hero');
+    }
+
+    // Update order in a transaction
+    await this.prisma.$transaction(
+      data.locationIds.map((locationId, index) =>
+        this.prisma.eventMapLocation.update({
+          where: { id: locationId },
+          data: { order: index },
+        }),
+      ),
+    );
+
+    return { success: true };
+  }
+
+  async assignMapToLocation(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    mapId: string,
+    locationId: string | null,
+  ) {
+    const map = await this.prisma.eventMap.findFirst({
+      where: {
+        id: mapId,
+        heroNpcId: heroId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+    });
+
+    if (!map) {
+      throw new NotFoundException('Map not found');
+    }
+
+    // If locationId is provided, verify it belongs to this hero
+    if (locationId) {
+      const location = await this.prisma.eventMapLocation.findFirst({
+        where: {
+          id: locationId,
+          heroNpcId: heroId,
+        },
+      });
+
+      if (!location) {
+        throw new NotFoundException('Location not found');
+      }
+    }
+
+    return this.prisma.eventMap.update({
+      where: { id: mapId },
+      data: { locationId },
+      include: {
+        assignedMembers: {
+          include: { roles: true },
+        },
+        location: true,
+      },
+    });
+  }
+
+  async getLocations(guildId: string, eventId: string, heroId: string) {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    return this.prisma.eventMapLocation.findMany({
+      where: { heroNpcId: heroId },
+      orderBy: { order: 'asc' },
+      include: {
+        maps: {
+          include: {
+            assignedMembers: {
+              include: { roles: true },
+            },
+          },
+        },
+      },
+    });
+  }
+
   private async emitMapStatusUpdate(
     guildId: string,
     eventId: string,
@@ -909,6 +1194,19 @@ export class EventsService {
     return this.prisma.eventMapCoverageGap.findFirst({
       where: {
         mapId,
+        endedAt: null,
+      },
+    });
+  }
+
+  /**
+   * Get all active (ongoing) gaps for a hero.
+   * Returns all gaps where endedAt is null for all maps of this hero.
+   */
+  async getActiveGapsForHero(heroNpcId: string) {
+    return this.prisma.eventMapCoverageGap.findMany({
+      where: {
+        heroNpcId,
         endedAt: null,
       },
     });

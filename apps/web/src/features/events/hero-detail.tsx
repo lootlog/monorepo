@@ -23,7 +23,10 @@ import { MapManageDialog } from "./components/map-manage-dialog";
 import { MemberAssignmentModal } from "./components/member-assignment-modal";
 import { CloseRespawnWindowDialog } from "./components/close-respawn-window-dialog";
 import { OpenRespawnWindowDialog } from "./components/open-respawn-window-dialog";
-import { useAssignMember, useUnassignMember } from "./hooks/mutations/use-assign-member";
+import {
+  useAssignMember,
+  useUnassignMember,
+} from "./hooks/mutations/use-assign-member";
 import {
   useHeroRespawnConfig,
   type WindowStatus,
@@ -36,11 +39,14 @@ import { toast } from "sonner";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { useHeroActiveGaps } from "./hooks/queries/use-hero-active-gaps";
 import { RecentKillsPreview } from "./components/recent-kills-preview";
 import { EventHeroLoots } from "./components/event-hero-loots";
+import { EventRankingPreview } from "./components/event-ranking-preview";
 import { NpcTile } from "@/components/tiles";
 import { HeroTimerCountdown } from "./components/hero-timer-countdown";
 import { MemberBadge } from "./components/member-badge";
+import { getMapStatus } from "./components/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -109,6 +115,9 @@ export const HeroDetail = () => {
   // Socket subscription for real-time updates
   useEventSocket({ eventId, guildId, heroId });
 
+  // Batch fetch all active gaps for this hero
+  const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
+
   const { data: timers } = useEventHeroTimers({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
@@ -147,7 +156,8 @@ export const HeroDetail = () => {
     return { allowed, enabledAt };
   };
 
-  const { allowed: assignmentAllowed, enabledAt: assignmentEnabledAt } = getAssignmentStatus();
+  const { allowed: assignmentAllowed, enabledAt: assignmentEnabledAt } =
+    getAssignmentStatus();
 
   if (error || !event || !hero) {
     return (
@@ -168,7 +178,20 @@ export const HeroDetail = () => {
     );
   }
 
-  const allAssignedMembers = hero.maps?.flatMap((m) => m.assignedMembers) || [];
+  // Get all assigned members from all maps (including those in locations)
+  const allMapsFromLocations = hero.locations?.flatMap((loc) => loc.maps) ?? [];
+  const allMaps = [...allMapsFromLocations, ...(hero.maps ?? [])];
+
+  // Calculate total and covered maps count
+  const totalMapsCount = allMaps.length;
+  const windowStatus = respawnConfig?.windowStatus ?? "OPEN";
+  const coveredMapsCount =
+    windowStatus === "OPEN"
+      ? allMaps.filter(
+          (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
+        ).length
+      : 0;
+  const allAssignedMembers = allMaps.flatMap((m) => m.assignedMembers);
   const uniqueMembers = Array.from(
     new Map(allAssignedMembers.map((m) => [m.id, m])).values(),
   );
@@ -195,7 +218,7 @@ export const HeroDetail = () => {
         mapId,
         memberId: currentMember.id,
       });
-      toast.success(t("events.maps.unassignSuccess", "Odpisano z mapy"));
+      toast.success(t("events.maps.unassignSuccess", "Wypisano z mapy"));
     } catch {
       toast.error(t("events.maps.unassignError", "Błąd podczas odpisywania"));
     }
@@ -236,15 +259,16 @@ export const HeroDetail = () => {
     }
   };
 
-  const selectedMap = hero.maps?.find((m) => m.id === selectedMapId);
+  // Find selected map across all locations and ungrouped maps
+  const selectedMap = allMaps.find((m) => m.id === selectedMapId);
 
   const handleClearAllAssignments = async () => {
-    if (!hero.maps || hero.maps.length === 0) return;
+    if (allMaps.length === 0) return;
 
     try {
-      // Clear assignments from all maps
+      // Clear assignments from all maps (including those in locations)
       await Promise.all(
-        hero.maps.map((map) =>
+        allMaps.map((map) =>
           unassignMember.mutateAsync({
             eventId: eventId!,
             mapId: map.id,
@@ -310,104 +334,76 @@ export const HeroDetail = () => {
   };
 
   return (
-    <ScrollArea className="h-full bg-background/50">
-      <div className="flex flex-col gap-3">
-        {/* Header */}
-        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            {hero.npcIcon ? (
-              <NpcTile
-                npc={{
-                  id: hero.npcId ?? undefined,
-                  name: hero.npcName,
-                  icon: hero.npcIcon,
-                }}
-              />
-            ) : (
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <Swords className="size-4 text-yellow-500" />
-              </div>
-            )}
-            <div>
-              <h2 className="text-sm font-semibold leading-tight">
-                {hero.npcName}
-              </h2>
-              <p className="text-xs text-muted-foreground leading-tight">
-                ID: {hero.npcId} • {event.name}
-              </p>
-            </div>
-          </div>
-
-          {/* Timer Countdown & Window Status */}
-          <div className="mr-3 flex items-center gap-2">
-            <HeroTimerCountdown timer={heroTimer} />
-            {respawnConfig && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs",
-                  getWindowStatusConfig(respawnConfig.windowStatus, t).className,
-                )}
-              >
-                {getWindowStatusConfig(respawnConfig.windowStatus, t).label}
-              </Badge>
-            )}
-          </div>
-
-          {/* Respawn Window Actions */}
-          {canManage && (
-            <div className="flex items-center gap-2">
-              {respawnConfig?.hasTimer ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCloseWindowOpen(true)}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  {t("events.respawn.closeWindow", "Zamknij okno")}
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setOpenWindowOpen(true)}
-                >
-                  <Timer className="w-4 h-4 mr-2" />
-                  {t("events.respawn.openWindow", "Otwórz okno")}
-                </Button>
-              )}
+    <div className="flex flex-col h-full min-h-0 bg-background/50">
+      {/* Header */}
+      <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {hero.npcIcon ? (
+            <NpcTile
+              npc={{
+                id: hero.npcId ?? undefined,
+                name: hero.npcName,
+                icon: hero.npcIcon,
+              }}
+            />
+          ) : (
+            <div className="p-2 rounded-lg bg-yellow-500/10">
+              <Swords className="size-4 text-yellow-500" />
             </div>
           )}
+          <div>
+            <h2 className="text-sm font-semibold leading-tight">
+              {hero.npcName}
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <HeroTimerCountdown timer={heroTimer} />
+              {respawnConfig && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-xs",
+                    getWindowStatusConfig(respawnConfig.windowStatus, t)
+                      .className,
+                  )}
+                >
+                  {getWindowStatusConfig(respawnConfig.windowStatus, t).label}
+                </Badge>
+              )}
+            </div>
+          </div>
         </div>
 
+        {/* Respawn Window Actions */}
+        {canManage && (
+          <div className="flex items-center gap-2">
+            {respawnConfig?.hasTimer ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCloseWindowOpen(true)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                {t("events.respawn.closeWindow", "Zamknij okno")}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpenWindowOpen(true)}
+              >
+                <Timer className="w-4 h-4 mr-2" />
+                {t("events.respawn.openWindow", "Otwórz okno")}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left column - Maps */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Stats */}
-              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-primary/10">
-                      <MapPin className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold">{hero.maps?.length || 0}</p>
-                      <p className="text-xs text-muted-foreground">{t("events.maps.title")}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-green-500/10">
-                      <Users className="w-4 h-4 text-green-500" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold">{uniqueMembers.length}</p>
-                      <p className="text-xs text-muted-foreground">{t("events.participants.title", "Uczestnicy")}</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
               {/* Participants */}
               {uniqueMembers.length > 0 && (
                 <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
@@ -424,11 +420,30 @@ export const HeroDetail = () => {
               )}
 
               {/* Maps */}
-              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
                     {t("events.maps.title")}
+                    <span className="font-normal">
+                      {windowStatus === "OPEN" ? (
+                        <span
+                          className={cn(
+                            coveredMapsCount === totalMapsCount
+                              ? "text-green-500"
+                              : coveredMapsCount > 0
+                                ? "text-yellow-500"
+                                : "text-destructive",
+                          )}
+                        >
+                          ({coveredMapsCount}/{totalMapsCount})
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          ({totalMapsCount})
+                        </span>
+                      )}
+                    </span>
                   </h2>
                   {canManage && (
                     <div className="flex items-center gap-2">
@@ -453,10 +468,8 @@ export const HeroDetail = () => {
                   )}
                 </div>
                 <EventMapGrid
-                  maps={hero.maps || []}
-                  guildId={guildId ?? ""}
-                  eventId={eventId ?? ""}
-                  heroId={hero.id}
+                  locations={hero.locations ?? []}
+                  maps={hero.maps ?? []}
                   onSelfAssignClick={handleSelfAssignClick}
                   onSelfUnassignClick={handleSelfUnassignClick}
                   onManageClick={handleManageClick}
@@ -464,14 +477,26 @@ export const HeroDetail = () => {
                   presenceData={presenceData}
                   assignmentDisabled={!assignmentAllowed}
                   assignmentEnabledAt={assignmentEnabledAt}
-                  windowStatus={respawnConfig?.windowStatus ?? 'OPEN'}
+                  windowStatus={windowStatus}
+                  activeGapsMap={activeGapsMap}
                   vertical
                 />
               </Card>
             </div>
 
-            {/* Right column - Recent kills & loots */}
+            {/* Right column - Ranking, Recent kills & loots */}
             <div className="space-y-4">
+              {/* Ranking */}
+              <EventRankingPreview
+                rankings={
+                  event.rankings?.filter((r) => r.heroNpcName === hero.npcName) ?? []
+                }
+                heroNpcs={[hero]}
+                guildId={guildId ?? ""}
+                eventId={eventId ?? ""}
+                limit={5}
+              />
+
               {/* Recent Kills */}
               <RecentKillsPreview
                 guildId={guildId ?? ""}
@@ -486,53 +511,53 @@ export const HeroDetail = () => {
                 guildId={guildId ?? ""}
                 heroNpcNames={[hero.npcName]}
                 world={event.world}
-                limit={10}
+                limit={3}
               />
             </div>
           </div>
         </div>
+      </ScrollArea>
 
-        {/* Dialogs */}
-        <MapManageDialog
-          open={mapManageOpen}
-          onOpenChange={setMapManageOpen}
-          guildId={guildId ?? ""}
-          eventId={eventId ?? ""}
-          hero={hero}
+      {/* Dialogs */}
+      <MapManageDialog
+        open={mapManageOpen}
+        onOpenChange={setMapManageOpen}
+        guildId={guildId ?? ""}
+        eventId={eventId ?? ""}
+        hero={hero}
+      />
+
+      {selectedMap && (
+        <MemberAssignmentModal
+          open={assignmentOpen}
+          onOpenChange={setAssignmentOpen}
+          mapName={selectedMap.mapName}
+          assignedMembers={selectedMap.assignedMembers || []}
+          onAssign={handleAssignFromModal}
+          onUnassign={handleUnassignFromModal}
         />
+      )}
 
-        {selectedMap && (
-          <MemberAssignmentModal
-            open={assignmentOpen}
-            onOpenChange={setAssignmentOpen}
-            mapName={selectedMap.mapName}
-            assignedMembers={selectedMap.assignedMembers || []}
-            onAssign={handleAssignFromModal}
-            onUnassign={handleUnassignFromModal}
-          />
-        )}
+      {/* Respawn Window Dialogs */}
+      <CloseRespawnWindowDialog
+        open={closeWindowOpen}
+        onOpenChange={setCloseWindowOpen}
+        heroName={hero.npcName}
+        defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
+        defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
+        onConfirm={handleCloseRespawnWindow}
+        isLoading={closeRespawnWindow.isPending}
+      />
 
-        {/* Respawn Window Dialogs */}
-        <CloseRespawnWindowDialog
-          open={closeWindowOpen}
-          onOpenChange={setCloseWindowOpen}
-          heroName={hero.npcName}
-          defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
-          defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
-          onConfirm={handleCloseRespawnWindow}
-          isLoading={closeRespawnWindow.isPending}
-        />
-
-        <OpenRespawnWindowDialog
-          open={openWindowOpen}
-          onOpenChange={setOpenWindowOpen}
-          heroName={hero.npcName}
-          defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
-          defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
-          onConfirm={handleOpenRespawnWindow}
-          isLoading={openRespawnWindow.isPending}
-        />
-      </div>
-    </ScrollArea>
+      <OpenRespawnWindowDialog
+        open={openWindowOpen}
+        onOpenChange={setOpenWindowOpen}
+        heroName={hero.npcName}
+        defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
+        defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
+        onConfirm={handleOpenRespawnWindow}
+        isLoading={openRespawnWindow.isPending}
+      />
+    </div>
   );
 };

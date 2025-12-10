@@ -1,17 +1,18 @@
 import { useTranslation } from "react-i18next";
-import { MapPin } from "lucide-react";
+import { MapPin, ChevronDown, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Permission } from "@lootlog/types";
-import type { EventMap } from "../hooks/queries/use-events";
+import { cn } from "@lootlog/ui/lib/utils";
+import type { EventMap, EventMapLocation } from "../hooks/queries/use-events";
 import type { PlayerPresence } from "../hooks/socket/use-event-presence";
 import type { WindowStatus } from "../hooks/queries/use-hero-respawn-config";
+import type { CoverageGap } from "../hooks/queries/use-map-coverage-timer";
 import { MapCard, getMapStatus, STATUS_STYLES } from "./map-card";
 
 interface EventMapGridProps {
-  maps: EventMap[];
-  guildId: string;
-  eventId: string;
-  heroId: string;
+  locations?: EventMapLocation[];
+  maps: EventMap[]; // Ungrouped maps (locationId = null)
   onSelfAssignClick?: (mapId: string) => void;
   onSelfUnassignClick?: (mapId: string) => void;
   onManageClick?: (mapId: string) => void;
@@ -20,14 +21,116 @@ interface EventMapGridProps {
   assignmentDisabled?: boolean;
   assignmentEnabledAt?: Date | null;
   windowStatus?: WindowStatus;
+  activeGapsMap?: Map<string, CoverageGap>;
   vertical?: boolean;
 }
 
-export const EventMapGrid = ({
+interface LocationSectionProps {
+  title: string;
+  maps: EventMap[];
+  canManage: boolean;
+  currentMemberId?: number;
+  presenceData?: Map<string, PlayerPresence[]>;
+  assignmentDisabled: boolean;
+  assignmentEnabledAt?: Date | null;
+  windowStatus: WindowStatus;
+  activeGapsMap?: Map<string, CoverageGap>;
+  vertical: boolean;
+  onSelfAssignClick?: (mapId: string) => void;
+  onSelfUnassignClick?: (mapId: string) => void;
+  onManageClick?: (mapId: string) => void;
+  defaultExpanded?: boolean;
+  isUngrouped?: boolean;
+}
+
+const LocationSection = ({
+  title,
   maps,
-  guildId,
-  eventId,
-  heroId: _heroId,
+  canManage,
+  currentMemberId,
+  presenceData,
+  assignmentDisabled,
+  assignmentEnabledAt,
+  windowStatus,
+  activeGapsMap,
+  vertical,
+  onSelfAssignClick,
+  onSelfUnassignClick,
+  onManageClick,
+  defaultExpanded = true,
+  isUngrouped = false,
+}: LocationSectionProps) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  if (maps.length === 0) return null;
+
+  // Calculate covered maps count (only when window is OPEN)
+  const coveredCount =
+    windowStatus === "OPEN"
+      ? maps.filter((map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT").length
+      : 0;
+
+  return (
+    <div className={cn("rounded-lg border", isUngrouped ? "border-dashed border-muted-foreground/30" : "border-border")}>
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className={cn(
+          "w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-left transition-colors",
+          "hover:bg-muted/50",
+          isUngrouped && "text-muted-foreground"
+        )}
+      >
+        {isExpanded ? (
+          <ChevronDown className="w-4 h-4 shrink-0" />
+        ) : (
+          <ChevronRight className="w-4 h-4 shrink-0" />
+        )}
+        <span className="truncate">{title}</span>
+        <span className="ml-auto text-xs text-muted-foreground shrink-0">
+          {windowStatus === "OPEN" ? (
+            <span className={cn(coveredCount === maps.length ? "text-green-500" : coveredCount > 0 ? "text-yellow-500" : "text-destructive")}>
+              {coveredCount}/{maps.length}
+            </span>
+          ) : (
+            `(${maps.length})`
+          )}
+        </span>
+      </button>
+      {isExpanded && (
+        <div className={cn("p-2 pt-0", vertical ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2")}>
+          {maps.map((map) => {
+            const status = getMapStatus(map, presenceData);
+            const style = STATUS_STYLES[status];
+
+            return (
+              <MapCard
+                key={map.id}
+                map={map}
+                status={status}
+                style={style}
+                canManage={canManage}
+                currentMemberId={currentMemberId}
+                presenceData={presenceData}
+                assignmentDisabled={assignmentDisabled}
+                assignmentEnabledAt={assignmentEnabledAt}
+                onSelfAssignClick={onSelfAssignClick}
+                onSelfUnassignClick={onSelfUnassignClick}
+                onManageClick={onManageClick}
+                windowStatus={windowStatus}
+                activeGap={activeGapsMap?.get(map.id)}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const EventMapGrid = ({
+  locations = [],
+  maps,
   onSelfAssignClick,
   onSelfUnassignClick,
   onManageClick,
@@ -36,6 +139,7 @@ export const EventMapGrid = ({
   assignmentDisabled = false,
   assignmentEnabledAt,
   windowStatus = "OPEN",
+  activeGapsMap,
   vertical = false,
 }: EventMapGridProps) => {
   const { t } = useTranslation();
@@ -46,7 +150,9 @@ export const EventMapGrid = ({
     permissions?.includes(Permission.ADMIN) ||
     permissions?.includes(Permission.OWNER);
 
-  if (maps.length === 0) {
+  const totalMaps = locations.reduce((sum, loc) => sum + loc.maps.length, 0) + maps.length;
+
+  if (totalMaps === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <MapPin className="w-10 h-10 mb-2 opacity-50" />
@@ -55,32 +161,76 @@ export const EventMapGrid = ({
     );
   }
 
-  return (
-    <div className={vertical ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2"}>
-      {maps.map((map) => {
-        const status = getMapStatus(map, presenceData);
-        const style = STATUS_STYLES[status];
+  // If no locations exist, render maps directly (legacy behavior)
+  if (locations.length === 0 && maps.length > 0) {
+    return (
+      <div className={vertical ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2"}>
+        {maps.map((map) => {
+          const status = getMapStatus(map, presenceData);
+          const style = STATUS_STYLES[status];
 
-        return (
-          <MapCard
-            key={map.id}
-            map={map}
-            guildId={guildId}
-            eventId={eventId}
-            status={status}
-            style={style}
-            canManage={canManage ?? false}
-            currentMemberId={currentMemberId}
-            presenceData={presenceData}
-            assignmentDisabled={assignmentDisabled}
-            assignmentEnabledAt={assignmentEnabledAt}
-            onSelfAssignClick={onSelfAssignClick}
-            onSelfUnassignClick={onSelfUnassignClick}
-            onManageClick={onManageClick}
-            windowStatus={windowStatus}
-          />
-        );
-      })}
+          return (
+            <MapCard
+              key={map.id}
+              map={map}
+              status={status}
+              style={style}
+              canManage={canManage ?? false}
+              currentMemberId={currentMemberId}
+              presenceData={presenceData}
+              assignmentDisabled={assignmentDisabled}
+              assignmentEnabledAt={assignmentEnabledAt}
+              onSelfAssignClick={onSelfAssignClick}
+              onSelfUnassignClick={onSelfUnassignClick}
+              onManageClick={onManageClick}
+              windowStatus={windowStatus}
+              activeGap={activeGapsMap?.get(map.id)}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Render locations with their maps
+  return (
+    <div className="flex flex-col gap-3">
+      {locations.map((location) => (
+        <LocationSection
+          key={location.id}
+          title={location.name}
+          maps={location.maps}
+          canManage={canManage ?? false}
+          currentMemberId={currentMemberId}
+          presenceData={presenceData}
+          assignmentDisabled={assignmentDisabled}
+          assignmentEnabledAt={assignmentEnabledAt}
+          windowStatus={windowStatus}
+          activeGapsMap={activeGapsMap}
+          vertical={vertical}
+          onSelfAssignClick={onSelfAssignClick}
+          onSelfUnassignClick={onSelfUnassignClick}
+          onManageClick={onManageClick}
+        />
+      ))}
+      {maps.length > 0 && (
+        <LocationSection
+          title={t("events.locations.noLocation")}
+          maps={maps}
+          canManage={canManage ?? false}
+          currentMemberId={currentMemberId}
+          presenceData={presenceData}
+          assignmentDisabled={assignmentDisabled}
+          assignmentEnabledAt={assignmentEnabledAt}
+          windowStatus={windowStatus}
+          activeGapsMap={activeGapsMap}
+          vertical={vertical}
+          onSelfAssignClick={onSelfAssignClick}
+          onSelfUnassignClick={onSelfUnassignClick}
+          onManageClick={onManageClick}
+          isUngrouped
+        />
+      )}
     </div>
   );
 };

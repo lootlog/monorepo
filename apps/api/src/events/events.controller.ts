@@ -29,6 +29,10 @@ import { AssignMemberDto } from './dto/assign-member.dto';
 import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { CreateMapDto } from './dto/create-map.dto';
+import { CreateLocationDto } from './dto/create-location.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
+import { ReorderLocationsDto } from './dto/reorder-locations.dto';
+import { AssignMapLocationDto } from './dto/assign-map-location.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
 import { CloseRespawnWindowDto } from './dto/close-respawn-window.dto';
 import { OpenRespawnWindowDto } from './dto/open-respawn-window.dto';
@@ -297,6 +301,163 @@ export class EventsController {
     @Param('mapId') mapId: string,
   ) {
     return this.EventsService.deleteMap(guildId, eventId, heroId, mapId);
+  }
+
+  // ========== LOCATION MANAGEMENT ==========
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/locations')
+  @ApiOperation({
+    summary: 'Get hero locations',
+    description: 'Get all locations for a hero with their maps',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of locations with maps',
+  })
+  async getLocations(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+  ) {
+    return this.EventsService.getLocations(guildId, eventId, heroId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/locations')
+  @ApiOperation({
+    summary: 'Create location',
+    description: 'Create a new location for grouping maps',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 201,
+    description: 'Location created successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Location with this name already exists',
+  })
+  async createLocation(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Body() data: CreateLocationDto,
+  ) {
+    return this.EventsService.createLocation(guildId, eventId, heroId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Patch('/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId')
+  @ApiOperation({
+    summary: 'Update location',
+    description: 'Update a location name',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiParam({ name: 'locationId', description: 'Location ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Location updated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Location not found' })
+  async updateLocation(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Param('locationId') locationId: string,
+    @Body() data: UpdateLocationDto,
+  ) {
+    return this.EventsService.updateLocation(guildId, eventId, heroId, locationId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId')
+  @ApiOperation({
+    summary: 'Delete location',
+    description: 'Delete a location. Maps in this location will become ungrouped.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiParam({ name: 'locationId', description: 'Location ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Location deleted successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Location not found' })
+  async deleteLocation(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Param('locationId') locationId: string,
+  ) {
+    return this.EventsService.deleteLocation(guildId, eventId, heroId, locationId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/locations/reorder')
+  @ApiOperation({
+    summary: 'Reorder locations',
+    description: 'Change the order of locations',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Locations reordered successfully',
+  })
+  async reorderLocations(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Body() data: ReorderLocationsDto,
+  ) {
+    return this.EventsService.reorderLocations(guildId, eventId, heroId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Patch('/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId/location')
+  @ApiOperation({
+    summary: 'Assign map to location',
+    description: 'Assign a map to a location or remove it from a location (set to null)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Map location updated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Map or location not found' })
+  async assignMapToLocation(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Param('mapId') mapId: string,
+    @Body() data: AssignMapLocationDto,
+  ) {
+    return this.EventsService.assignMapToLocation(
+      guildId,
+      eventId,
+      heroId,
+      mapId,
+      data.locationId ?? null,
+    );
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -651,6 +812,29 @@ export class EventsController {
     @Param('mapId') mapId: string,
   ) {
     return this.EventsService.getActiveGapForMap(mapId);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/active-gaps')
+  @ApiOperation({
+    summary: 'Get all active coverage gaps for hero',
+    description:
+      'Get all currently active (ongoing) coverage gaps for all maps of a hero',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Array of active gaps for all maps of the hero',
+  })
+  async getActiveGapsForHero(
+    @Param('guildId') _guildId: string,
+    @Param('eventId') _eventId: string,
+    @Param('heroId') heroId: string,
+  ) {
+    return this.EventsService.getActiveGapsForHero(heroId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)

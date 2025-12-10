@@ -16,7 +16,15 @@ interface EventMap {
   id: string;
   mapId: number;
   mapName: string;
+  locationId: string | null;
   assignedMembers: Member[];
+}
+
+interface EventMapLocation {
+  id: string;
+  name: string;
+  order: number;
+  maps: EventMap[];
 }
 
 interface EventHeroNpc {
@@ -24,7 +32,8 @@ interface EventHeroNpc {
   npcId: number | null;
   npcName: string;
   npcIcon: string | null;
-  maps: EventMap[];
+  locations: EventMapLocation[];
+  maps: EventMap[]; // Ungrouped maps (locationId = null)
 }
 
 interface EventRanking {
@@ -91,4 +100,4 @@ export const useEvents = ({
   });
 };
 
-export type { Event, EventMap, EventHeroNpc, EventRanking, Member };
+export type { Event, EventMap, EventMapLocation, EventHeroNpc, EventRanking, Member };
