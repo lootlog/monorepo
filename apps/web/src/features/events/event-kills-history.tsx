@@ -4,8 +4,8 @@ import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, ChevronLeft, Skull, Loader2, Swords } from "lucide-react";
-import { useEvent } from "./hooks/use-event";
-import { useEventKillHistory } from "./hooks/use-event-kill-history";
+import { useEvent } from "./hooks/queries/use-event";
+import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kill-history-card";
 import { useState } from "react";
 
@@ -64,7 +64,7 @@ export const EventKillsHistory = () => {
     <ScrollArea className="h-full bg-background/50">
       <div className="flex flex-col gap-3">
         {/* Header */}
-        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
           <Link
             to="/$guildId/events/$eventId"
             params={{
@@ -84,7 +84,7 @@ export const EventKillsHistory = () => {
             </div>
             <div>
               <h2 className="text-sm font-semibold leading-tight">
-                {t("events.kills.allKillsTitle", "Historia zabić eventu")}
+                {t("events.kills.allKillsTitle", "Historia bić eventu")}
               </h2>
               <p className="text-xs text-muted-foreground leading-tight">
                 {event.name}
@@ -93,7 +93,7 @@ export const EventKillsHistory = () => {
           </div>
         </div>
 
-        <div className="px-3 pb-6">
+        <div className="px-3 pb-4">
           {/* Hero Filter Tabs */}
           {heroes.length > 0 && (
             <Tabs
@@ -101,7 +101,7 @@ export const EventKillsHistory = () => {
               onValueChange={(value) =>
                 setSelectedHeroId(value === "all" ? undefined : value)
               }
-              className="mb-4"
+              className="mb-3"
             >
               <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
                 <TabsTrigger value="all" className="flex-shrink-0">
@@ -122,18 +122,18 @@ export const EventKillsHistory = () => {
           )}
 
           {allKills.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Skull className="w-12 h-12 mb-4 opacity-50" />
-              <p>{t("events.kills.noKills")}</p>
+            <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+              <Skull className="w-8 h-8 mb-2 opacity-50" />
+              <p className="text-sm">{t("events.kills.noKills")}</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {allKills.map((kill) => (
                 <KillHistoryCard key={kill.id} kill={kill} showHeroName expanded />
               ))}
 
               {/* Load more */}
-              <div className="py-4 flex items-center justify-center">
+              <div className="py-3 flex items-center justify-center">
                 {isFetchingNextPage ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />

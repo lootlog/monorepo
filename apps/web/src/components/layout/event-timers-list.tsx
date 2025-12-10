@@ -9,10 +9,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { useEventHeroTimers } from "@/features/events/hooks/use-event-hero-timers";
+import { useEventHeroTimers, type Event } from "@/features/events/hooks";
 import { parseMsToTime } from "@/utils/date/parse-ms-to-time";
 import { cn } from "@/utils/cn";
-import type { Event } from "@/features/events/hooks/use-events";
 
 interface EventTimersListProps {
   event: Event;

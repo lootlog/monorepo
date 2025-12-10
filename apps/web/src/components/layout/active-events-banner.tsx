@@ -2,7 +2,7 @@ import { useState, type FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Event } from "@/features/events/hooks/use-events";
+import type { Event } from "@/features/events/hooks";
 import { EventTimersList } from "./event-timers-list";
 
 interface ActiveEventsBannerProps {

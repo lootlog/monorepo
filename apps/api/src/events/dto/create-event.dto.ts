@@ -84,4 +84,21 @@ export class CreateEventDto {
   @ValidateNested({ each: true })
   @Type(() => HeroNpcDto)
   heroNpcs?: HeroNpcDto[];
+
+  @ApiPropertyOptional({
+    description: 'Minutes before minSpawnTime when assignments are allowed',
+    default: 5,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  assignmentTimeoutMinutes?: number;
+
+  @ApiPropertyOptional({
+    description: 'Whether to automatically calculate points on kill',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  autoCalculatePoints?: boolean;
 }

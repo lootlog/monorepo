@@ -34,7 +34,7 @@ import {
 import {
   useEventMutations,
   type TimeOfDayMultiplier,
-} from "../hooks/use-event-mutations";
+} from "../hooks/mutations/use-event-mutations";
 import { toast } from "sonner";
 
 interface EventEditDialogProps {
@@ -45,11 +45,14 @@ interface EventEditDialogProps {
     guildId: string;
     name: string;
     active: boolean;
+    createdAt: string;
     startsAt?: string;
     endsAt?: string;
     timeOfDayMultipliers?: TimeOfDayMultiplier[];
     trackersMultipliers?: Record<string, number>;
     mapsCountMultipliers?: Record<string, number>;
+    assignmentTimeoutMinutes?: number;
+    autoCalculatePoints?: boolean;
   };
 }
 
@@ -58,6 +61,8 @@ interface FormData {
   active: boolean;
   startsAt: string;
   endsAt: string;
+  assignmentTimeoutMinutes: number;
+  autoCalculatePoints: boolean;
 }
 
 export const EventEditDialog = ({
@@ -74,10 +79,12 @@ export const EventEditDialog = ({
       active: event.active,
       startsAt: event.startsAt
         ? new Date(event.startsAt).toISOString().slice(0, 16)
-        : "",
+        : new Date(event.createdAt).toISOString().slice(0, 16),
       endsAt: event.endsAt
         ? new Date(event.endsAt).toISOString().slice(0, 16)
         : "",
+      assignmentTimeoutMinutes: event.assignmentTimeoutMinutes ?? 5,
+      autoCalculatePoints: event.autoCalculatePoints ?? true,
     },
   });
 
@@ -114,10 +121,12 @@ export const EventEditDialog = ({
         active: event.active,
         startsAt: event.startsAt
           ? new Date(event.startsAt).toISOString().slice(0, 16)
-          : "",
+          : new Date(event.createdAt).toISOString().slice(0, 16),
         endsAt: event.endsAt
           ? new Date(event.endsAt).toISOString().slice(0, 16)
           : "",
+        assignmentTimeoutMinutes: event.assignmentTimeoutMinutes ?? 5,
+        autoCalculatePoints: event.autoCalculatePoints ?? true,
       });
       setTimeMultipliers(event.timeOfDayMultipliers ?? []);
       setTrackersMultipliers(
@@ -235,6 +244,8 @@ export const EventEditDialog = ({
           Object.keys(trackersRecord).length > 0 ? trackersRecord : undefined,
         mapsCountMultipliers:
           Object.keys(mapsRecord).length > 0 ? mapsRecord : undefined,
+        assignmentTimeoutMinutes: data.assignmentTimeoutMinutes,
+        autoCalculatePoints: data.autoCalculatePoints,
       });
       toast.success(t("events.scoring.saveSuccess"));
       onOpenChange(false);
@@ -317,11 +328,47 @@ export const EventEditDialog = ({
               />
             </div>
 
+            {/* Assignment Timeout */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("events.settings.assignmentTimeout", "Czas na przypisanie (minuty)")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                {...register("assignmentTimeoutMinutes", { valueAsNumber: true })}
+                className="h-9 text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("events.settings.assignmentTimeoutDescription", "Ile minut przed minimalnym czasem respawnu można się przypisać do mapy")}
+              </p>
+            </div>
+
+            {/* Auto Calculate Points */}
+            <div className="flex items-center justify-between py-2 px-3 rounded-lg border">
+              <div className="flex flex-col">
+                <Label htmlFor="autoCalculatePoints" className="text-sm font-medium cursor-pointer">
+                  {t("events.settings.autoCalculatePoints", "Automatyczne punkty")}
+                </Label>
+                <span className="text-xs text-muted-foreground">
+                  {t("events.settings.autoCalculatePointsDescription", "Automatycznie naliczaj punkty po zabiciu herosa")}
+                </span>
+              </div>
+              <Switch
+                id="autoCalculatePoints"
+                checked={watch("autoCalculatePoints")}
+                onCheckedChange={(val) => setValue("autoCalculatePoints", val)}
+              />
+            </div>
+
             {/* Scoring Multipliers */}
-            <div className="space-y-3">
+            <div className={`space-y-3 ${!watch("autoCalculatePoints") ? "opacity-50 pointer-events-none" : ""}`}>
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                 <Settings className="size-3" />
                 {t("events.scoring.title")}
+                {!watch("autoCalculatePoints") && (
+                  <span className="text-[10px] ml-1">({t("events.settings.disabled", "wyłączone")})</span>
+                )}
               </Label>
 
               {/* Time of Day */}

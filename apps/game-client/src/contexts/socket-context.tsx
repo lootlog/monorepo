@@ -85,6 +85,15 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
       setJoined(true);
       setJoinedGuilds(data.guildIds);
+
+      // Emit initial presence after successful join
+      // This ensures presence is sent even after browser refresh
+      // (when town change event is not fired)
+      socket.emit(GatewayEvent.PRESENCE_UPDATE as any, {
+        mapId: Game.map.id,
+        mapName: Game.map.name,
+        isAfk: false,
+      });
     };
     const handlePermissionsUpdated = (data: {
       guilds: { guild: { id: string } }[];

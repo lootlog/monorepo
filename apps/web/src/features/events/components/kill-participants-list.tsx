@@ -7,7 +7,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@lootlog/ui/components/avatar";
 import { Clock, AlertCircle } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { KillParticipant } from "../hooks/use-hero-kill-history";
+import type { KillParticipant } from "../hooks/queries/use-hero-kill-history";
 
 interface KillParticipantsListProps {
   participants: KillParticipant[];

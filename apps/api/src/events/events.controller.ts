@@ -30,6 +30,8 @@ import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { CreateMapDto } from './dto/create-map.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
+import { CloseRespawnWindowDto } from './dto/close-respawn-window.dto';
+import { OpenRespawnWindowDto } from './dto/open-respawn-window.dto';
 
 @ApiTags('events')
 @ApiBearerAuth()
@@ -580,5 +582,182 @@ export class EventsController {
     @Param('killId') killId: string,
   ) {
     return this.EventsService.getKillDetail(guildId, eventId, heroId, killId);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/coverage-gaps')
+  @ApiOperation({
+    summary: 'Get hero coverage gaps',
+    description:
+      'Get coverage gap history for a specific hero (periods when maps were unassigned or uncovered)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of coverage gaps with type, duration, and timestamps',
+  })
+  async getHeroCoverageGaps(
+    @Param('guildId') _guildId: string,
+    @Param('eventId') _eventId: string,
+    @Param('heroId') heroId: string,
+  ) {
+    return this.EventsService.getHeroCoverageGaps(heroId);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/maps/:mapId/coverage-gaps')
+  @ApiOperation({
+    summary: 'Get map coverage gaps',
+    description:
+      'Get coverage gap history for a specific map (periods when the map was unassigned or uncovered)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of coverage gaps with type, duration, and timestamps',
+  })
+  async getMapCoverageGaps(
+    @Param('guildId') _guildId: string,
+    @Param('eventId') _eventId: string,
+    @Param('mapId') mapId: string,
+  ) {
+    return this.EventsService.getMapCoverageGaps(mapId);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/maps/:mapId/active-gap')
+  @ApiOperation({
+    summary: 'Get active coverage gap for map',
+    description:
+      'Get the currently active (ongoing) coverage gap for a map if any exists',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Active gap or null if no gap is currently active',
+  })
+  async getActiveGapForMap(
+    @Param('guildId') _guildId: string,
+    @Param('eventId') _eventId: string,
+    @Param('mapId') mapId: string,
+  ) {
+    return this.EventsService.getActiveGapForMap(mapId);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/respawn-config')
+  @ApiOperation({
+    summary: 'Get hero respawn configuration',
+    description:
+      'Get current respawn window status and default respawn times for a hero',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Respawn configuration including active timer status and default times',
+  })
+  async getHeroRespawnConfig(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+  ) {
+    return this.EventsService.getHeroRespawnConfig(guildId, eventId, heroId);
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/close-respawn-window')
+  @ApiOperation({
+    summary: 'Close hero respawn window',
+    description:
+      'Manually close a respawn window for a hero. Optionally creates a new window with specified or default times.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Respawn window closed successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - hero has no NPC ID',
+  })
+  @ApiResponse({ status: 404, description: 'Hero not found' })
+  async closeRespawnWindow(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Body() data: CloseRespawnWindowDto,
+  ) {
+    await this.EventsService.closeRespawnWindow(guildId, eventId, heroId, {
+      createNewWindow: data.createNewWindow,
+      newMinSpawnTime: data.newMinSpawnTime
+        ? new Date(data.newMinSpawnTime)
+        : undefined,
+      newMaxSpawnTime: data.newMaxSpawnTime
+        ? new Date(data.newMaxSpawnTime)
+        : undefined,
+    });
+    return { success: true };
+  }
+
+  @Permissions(Permission.LOOTLOG_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/open-respawn-window')
+  @ApiOperation({
+    summary: 'Open hero respawn window',
+    description:
+      'Manually open a new respawn window for a hero with specified or default times.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Respawn window opened successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - hero has no NPC ID',
+  })
+  @ApiResponse({ status: 404, description: 'Hero not found' })
+  async openRespawnWindow(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Body() data: OpenRespawnWindowDto,
+  ) {
+    const result = await this.EventsService.openRespawnWindow(
+      guildId,
+      eventId,
+      heroId,
+      {
+        minSpawnTime: data.minSpawnTime
+          ? new Date(data.minSpawnTime)
+          : undefined,
+        maxSpawnTime: data.maxSpawnTime
+          ? new Date(data.maxSpawnTime)
+          : undefined,
+      },
+    );
+    return {
+      success: true,
+      minSpawnTime: result.minSpawnTime,
+      maxSpawnTime: result.maxSpawnTime,
+    };
   }
 }

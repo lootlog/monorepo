@@ -3,37 +3,69 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEvent } from "./hooks/use-event";
-import { useEventHeroTimers } from "./hooks/use-event-hero-timers";
+import { useEvent } from "./hooks/queries/use-event";
+import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
 import { EventMapGrid } from "./components/event-map-grid";
-import { Swords, MapPin, Users, AlertCircle, Plus, Eraser } from "lucide-react";
+import {
+  Swords,
+  MapPin,
+  Users,
+  AlertCircle,
+  Plus,
+  Eraser,
+  X,
+  Timer,
+} from "lucide-react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Permission } from "@lootlog/types";
 import { useState } from "react";
 import { MapManageDialog } from "./components/map-manage-dialog";
 import { MemberAssignmentModal } from "./components/member-assignment-modal";
-import { useAssignMember, useUnassignMember } from "./hooks/use-assign-member";
+import { CloseRespawnWindowDialog } from "./components/close-respawn-window-dialog";
+import { OpenRespawnWindowDialog } from "./components/open-respawn-window-dialog";
+import { useAssignMember, useUnassignMember } from "./hooks/mutations/use-assign-member";
+import {
+  useHeroRespawnConfig,
+  type WindowStatus,
+} from "./hooks/queries/use-hero-respawn-config";
+import {
+  useCloseRespawnWindow,
+  useOpenRespawnWindow,
+} from "./hooks/mutations/use-respawn-window";
 import { toast } from "sonner";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
-import { useMemberColor } from "@/hooks/discord/use-member-color";
-import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import { useEventPresence } from "./hooks/use-event-presence";
+import { useEventPresence } from "./hooks/socket/use-event-presence";
+import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { RecentKillsPreview } from "./components/recent-kills-preview";
 import { EventHeroLoots } from "./components/event-hero-loots";
 import { NpcTile } from "@/components/tiles";
+import { HeroTimerCountdown } from "./components/hero-timer-countdown";
+import { MemberBadge } from "./components/member-badge";
+import { Badge } from "@lootlog/ui/components/badge";
+import { cn } from "@lootlog/ui/lib/utils";
 
-const MemberBadge = ({ member }: { member: any }) => {
-  const color = useMemberColor(member);
-  const avatarUrl = getDiscordAvatarUrl(member.userId, member.avatar, 32);
-
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-transparent hover:border-border transition-colors">
-      <img src={avatarUrl} alt={member.name} className="w-5 h-5 rounded-full" />
-      <span className="text-sm font-medium" style={{ color }}>
-        {member.name}
-      </span>
-    </div>
-  );
+const getWindowStatusConfig = (
+  status: WindowStatus,
+  t: (key: string, fallback: string) => string,
+) => {
+  switch (status) {
+    case "OPEN":
+      return {
+        label: t("events.respawn.status.open", "Okno otwarte"),
+        className: "bg-green-500/10 text-green-500 border-green-500/20",
+      };
+    case "WAITING":
+      return {
+        label: t("events.respawn.status.waiting", "Oczekiwanie"),
+        className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+      };
+    case "NONE":
+    default:
+      return {
+        label: t("events.respawn.status.none", "Brak okna"),
+        className: "bg-muted text-muted-foreground border-border",
+      };
+  }
 };
 
 export const HeroDetail = () => {
@@ -42,11 +74,21 @@ export const HeroDetail = () => {
   const [mapManageOpen, setMapManageOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
+  const [closeWindowOpen, setCloseWindowOpen] = useState(false);
+  const [openWindowOpen, setOpenWindowOpen] = useState(false);
 
   const { data: permissions } = useGuildPermissions();
   const { data: currentMember } = useGuildMember();
   const assignMember = useAssignMember();
   const unassignMember = useUnassignMember();
+
+  // Respawn window management
+  const { data: respawnConfig } = useHeroRespawnConfig(
+    eventId ?? "",
+    heroId ?? "",
+  );
+  const closeRespawnWindow = useCloseRespawnWindow();
+  const openRespawnWindow = useOpenRespawnWindow();
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -63,12 +105,9 @@ export const HeroDetail = () => {
   });
 
   const { presenceData } = useEventPresence({ guildId });
-  console.log(
-    "[HeroDetail] presenceData size:",
-    presenceData.size,
-    "entries:",
-    [...presenceData.entries()],
-  );
+
+  // Socket subscription for real-time updates
+  useEventSocket({ eventId, guildId, heroId });
 
   const { data: timers } = useEventHeroTimers({
     guildId: guildId ?? "",
@@ -86,26 +125,29 @@ export const HeroDetail = () => {
 
   const hero = event?.heroNpcs?.find((h) => h.id === heroId);
 
-  // Check if assignment is allowed (max 5 minutes before minSpawnTime)
-  const canAssignToMaps = () => {
-    if (!hero) return false;
-    if (!timers || timers.length === 0) return true; // No timer = allowed
+  // Find timer for this hero (by npcId or npcName)
+  const heroTimer = timers?.find(
+    (t) => t.npcId === hero?.npcId || t.npc?.name === hero?.npcName,
+  );
 
-    // Find timer for this hero (by npcId or npcName)
-    const heroTimer = timers.find(
-      (t) => t.npcId === hero.npcId || t.npc?.name === hero.npcName,
-    );
-
-    if (!heroTimer) return true; // No timer for this hero
+  // Check if assignment is allowed (configurable minutes before minSpawnTime)
+  const getAssignmentStatus = () => {
+    if (!hero) return { allowed: false, enabledAt: null };
+    if (!heroTimer) return { allowed: true, enabledAt: null }; // No timer = allowed
 
     const minSpawn = new Date(heroTimer.minSpawnTime);
     const now = new Date();
-    const fiveMinutes = 5 * 60 * 1000;
+    const timeoutMinutes = event?.assignmentTimeoutMinutes ?? 5;
+    const timeoutMs = timeoutMinutes * 60 * 1000;
 
-    return minSpawn.getTime() - now.getTime() <= fiveMinutes;
+    const allowed = minSpawn.getTime() - now.getTime() <= timeoutMs;
+    // When assignment will be enabled (minSpawn - timeout)
+    const enabledAt = allowed ? null : new Date(minSpawn.getTime() - timeoutMs);
+
+    return { allowed, enabledAt };
   };
 
-  const assignmentAllowed = canAssignToMaps();
+  const { allowed: assignmentAllowed, enabledAt: assignmentEnabledAt } = getAssignmentStatus();
 
   if (error || !event || !hero) {
     return (
@@ -131,41 +173,37 @@ export const HeroDetail = () => {
     new Map(allAssignedMembers.map((m) => [m.id, m])).values(),
   );
 
-  console.log(hero.maps);
-
-  const handleAssignClick = async (mapId: string) => {
-    if (canManage) {
-      setSelectedMapId(mapId);
-      setAssignmentOpen(true);
-    } else if (currentMember) {
-      // Self assign for regular members
-      try {
-        await assignMember.mutateAsync({
-          eventId: eventId!,
-          mapId,
-          memberId: currentMember.id,
-        });
-        toast.success(t("events.maps.assignSuccess", "Przypisano do mapy"));
-      } catch (error) {
-        toast.error(t("events.maps.assignError", "Błąd podczas przypisywania"));
-      }
+  const handleSelfAssignClick = async (mapId: string) => {
+    if (!currentMember) return;
+    try {
+      await assignMember.mutateAsync({
+        eventId: eventId!,
+        mapId,
+        memberId: currentMember.id,
+      });
+      toast.success(t("events.maps.assignSuccess", "Przypisano do mapy"));
+    } catch {
+      toast.error(t("events.maps.assignError", "Błąd podczas przypisywania"));
     }
   };
 
-  const handleUnassignClick = async (mapId: string) => {
+  const handleSelfUnassignClick = async (mapId: string) => {
+    if (!currentMember) return;
     try {
-      // If user is not admin, they can only unassign themselves
-      const memberIdToUnassign = !canManage ? currentMember?.id : undefined;
-
       await unassignMember.mutateAsync({
         eventId: eventId!,
         mapId,
-        memberId: memberIdToUnassign,
+        memberId: currentMember.id,
       });
       toast.success(t("events.maps.unassignSuccess", "Odpisano z mapy"));
-    } catch (error) {
+    } catch {
       toast.error(t("events.maps.unassignError", "Błąd podczas odpisywania"));
     }
+  };
+
+  const handleManageClick = (mapId: string) => {
+    setSelectedMapId(mapId);
+    setAssignmentOpen(true);
   };
 
   const handleAssignFromModal = async (memberId: number) => {
@@ -224,11 +262,58 @@ export const HeroDetail = () => {
     }
   };
 
+  const handleCloseRespawnWindow = async (options: {
+    createNewWindow: boolean;
+    newMinSpawnTime?: string;
+    newMaxSpawnTime?: string;
+  }) => {
+    if (!eventId || !heroId) return;
+
+    try {
+      await closeRespawnWindow.mutateAsync({
+        eventId,
+        heroId,
+        ...options,
+      });
+      toast.success(
+        t("events.respawn.closeSuccess", "Okno respawnu zostało zamknięte"),
+      );
+      setCloseWindowOpen(false);
+    } catch (_error) {
+      toast.error(
+        t("events.respawn.closeError", "Błąd podczas zamykania okna respawnu"),
+      );
+    }
+  };
+
+  const handleOpenRespawnWindow = async (options: {
+    minSpawnTime?: string;
+    maxSpawnTime?: string;
+  }) => {
+    if (!eventId || !heroId) return;
+
+    try {
+      await openRespawnWindow.mutateAsync({
+        eventId,
+        heroId,
+        ...options,
+      });
+      toast.success(
+        t("events.respawn.openSuccess", "Okno respawnu zostało otwarte"),
+      );
+      setOpenWindowOpen(false);
+    } catch (_error) {
+      toast.error(
+        t("events.respawn.openError", "Błąd podczas otwierania okna respawnu"),
+      );
+    }
+  };
+
   return (
     <ScrollArea className="h-full bg-background/50">
       <div className="flex flex-col gap-3">
         {/* Header */}
-        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {hero.npcIcon ? (
               <NpcTile
@@ -252,110 +337,159 @@ export const HeroDetail = () => {
               </p>
             </div>
           </div>
-        </div>
 
-        <div className="px-3 flex flex-col gap-6">
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <MapPin className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {t("events.maps.mapCount", { count: hero.maps?.length || 0 })}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500/10">
-                  <Users className="w-5 h-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {t("events.participants.count", { count: uniqueMembers.length })}
-                  </p>
-                </div>
-              </div>
-            </Card>
+          {/* Timer Countdown & Window Status */}
+          <div className="mr-3 flex items-center gap-2">
+            <HeroTimerCountdown timer={heroTimer} />
+            {respawnConfig && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs",
+                  getWindowStatusConfig(respawnConfig.windowStatus, t).className,
+                )}
+              >
+                {getWindowStatusConfig(respawnConfig.windowStatus, t).label}
+              </Badge>
+            )}
           </div>
 
-          {/* Participants */}
-          {uniqueMembers.length > 0 && (
-            <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                {t("events.participants.title", "Uczestnicy")}
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {uniqueMembers.map((member) => (
-                  <MemberBadge key={member.id} member={member} />
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* Maps */}
-          <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                {t("events.maps.title")}
-              </h2>
-              {canManage && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearAllAssignments}
-                    disabled={uniqueMembers.length === 0}
-                  >
-                    <Eraser className="w-4 h-4 mr-2" />
-                    {t("events.maps.clearAll", "Wyczyść przypisania")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setMapManageOpen(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {t("events.maps.manage", "Zarządzaj mapami")}
-                  </Button>
-                </div>
+          {/* Respawn Window Actions */}
+          {canManage && (
+            <div className="flex items-center gap-2">
+              {respawnConfig?.hasTimer ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCloseWindowOpen(true)}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  {t("events.respawn.closeWindow", "Zamknij okno")}
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setOpenWindowOpen(true)}
+                >
+                  <Timer className="w-4 h-4 mr-2" />
+                  {t("events.respawn.openWindow", "Otwórz okno")}
+                </Button>
               )}
             </div>
-            <EventMapGrid
-              maps={hero.maps || []}
-              guildId={guildId ?? ""}
-              eventId={eventId ?? ""}
-              heroId={hero.id}
-              onAssignClick={handleAssignClick}
-              onUnassignClick={handleUnassignClick}
-              currentMemberId={currentMember?.id}
-              presenceData={presenceData}
-              assignmentDisabled={!assignmentAllowed}
-            />
-          </Card>
+          )}
+        </div>
 
-          {/* Recent Kills */}
-          <RecentKillsPreview
-            guildId={guildId ?? ""}
-            eventId={eventId ?? ""}
-            heroId={heroId ?? ""}
-            limit={5}
-          />
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Left column - Maps */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Stats */}
+              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <MapPin className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold">{hero.maps?.length || 0}</p>
+                      <p className="text-xs text-muted-foreground">{t("events.maps.title")}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-md bg-green-500/10">
+                      <Users className="w-4 h-4 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold">{uniqueMembers.length}</p>
+                      <p className="text-xs text-muted-foreground">{t("events.participants.title", "Uczestnicy")}</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
 
-          {/* Recent Loots */}
-          <EventHeroLoots
-            guildId={guildId ?? ""}
-            heroNpcNames={[hero.npcName]}
-            world={event.world}
-            limit={10}
-          />
+              {/* Participants */}
+              {uniqueMembers.length > 0 && (
+                <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+                  <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    {t("events.participants.title", "Uczestnicy")}
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueMembers.map((member) => (
+                      <MemberBadge key={member.id} member={member} />
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Maps */}
+              <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-base font-semibold flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {t("events.maps.title")}
+                  </h2>
+                  {canManage && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearAllAssignments}
+                        disabled={uniqueMembers.length === 0}
+                      >
+                        <Eraser className="w-4 h-4 mr-2" />
+                        {t("events.maps.clearAll", "Wyczyść przypisania")}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMapManageOpen(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t("events.maps.manage", "Zarządzaj mapami")}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <EventMapGrid
+                  maps={hero.maps || []}
+                  guildId={guildId ?? ""}
+                  eventId={eventId ?? ""}
+                  heroId={hero.id}
+                  onSelfAssignClick={handleSelfAssignClick}
+                  onSelfUnassignClick={handleSelfUnassignClick}
+                  onManageClick={handleManageClick}
+                  currentMemberId={currentMember?.id}
+                  presenceData={presenceData}
+                  assignmentDisabled={!assignmentAllowed}
+                  assignmentEnabledAt={assignmentEnabledAt}
+                  windowStatus={respawnConfig?.windowStatus ?? 'OPEN'}
+                  vertical
+                />
+              </Card>
+            </div>
+
+            {/* Right column - Recent kills & loots */}
+            <div className="space-y-4">
+              {/* Recent Kills */}
+              <RecentKillsPreview
+                guildId={guildId ?? ""}
+                eventId={eventId ?? ""}
+                heroId={heroId ?? ""}
+                limit={5}
+                showHeroName
+              />
+
+              {/* Recent Loots */}
+              <EventHeroLoots
+                guildId={guildId ?? ""}
+                heroNpcNames={[hero.npcName]}
+                world={event.world}
+                limit={10}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Dialogs */}
@@ -377,6 +511,27 @@ export const HeroDetail = () => {
             onUnassign={handleUnassignFromModal}
           />
         )}
+
+        {/* Respawn Window Dialogs */}
+        <CloseRespawnWindowDialog
+          open={closeWindowOpen}
+          onOpenChange={setCloseWindowOpen}
+          heroName={hero.npcName}
+          defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
+          defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
+          onConfirm={handleCloseRespawnWindow}
+          isLoading={closeRespawnWindow.isPending}
+        />
+
+        <OpenRespawnWindowDialog
+          open={openWindowOpen}
+          onOpenChange={setOpenWindowOpen}
+          heroName={hero.npcName}
+          defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
+          defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
+          onConfirm={handleOpenRespawnWindow}
+          isLoading={openRespawnWindow.isPending}
+        />
       </div>
     </ScrollArea>
   );

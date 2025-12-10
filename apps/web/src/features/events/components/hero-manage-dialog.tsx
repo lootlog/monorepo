@@ -14,7 +14,7 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Swords, Plus, Pencil, Loader2, Info } from "lucide-react";
-import { useEventMutations } from "../hooks/use-event-mutations";
+import { useEventMutations } from "../hooks/mutations/use-event-mutations";
 import { toast } from "sonner";
 
 interface HeroManageDialogProps {

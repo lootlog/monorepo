@@ -19,9 +19,17 @@ export enum GatewayEvent {
   NOTIFICATION = "notifications-send",
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
 
-  // Margo Events
-  EVENT_PRESENCE_UPDATE = "event:presence:update",
+  // Player presence events
+  PRESENCE_UPDATE = "presence:update",
+  PRESENCE_FETCH = "presence:fetch",
+
+  // Margo Events (game-specific)
   EVENT_MAP_STATUS_UPDATE = "event:map-status:update",
   EVENT_HERO_KILLED = "event:hero:killed",
   EVENT_RANKING_UPDATE = "event:ranking:update",
+  EVENT_RESPAWN_WINDOW_OPENED = "event:respawn-window:opened",
+  EVENT_RESPAWN_WINDOW_CLOSED = "event:respawn-window:closed",
+
+  /** @deprecated Use PRESENCE_UPDATE instead */
+  EVENT_PRESENCE_UPDATE = "event:presence:update",
 }

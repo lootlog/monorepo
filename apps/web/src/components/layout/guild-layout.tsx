@@ -16,7 +16,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
-import { useEvent } from "@/features/events/hooks/use-event";
+import { useEvent } from "@/features/events/hooks";
 import { ROUTES } from "@/config/routes";
 
 export const GuildLayout: FC = () => {

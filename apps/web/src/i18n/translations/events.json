@@ -37,16 +37,17 @@
   "ranking": {
     "title": "Ranking Eventowy",
     "points": "Punkty",
-    "kills": "Zabicia",
-    "killCount_one": "{{count}} zabicie",
-    "killCount_few": "{{count}} zabicia",
-    "killCount_many": "{{count}} zabić",
+    "kills": "Bicia",
+    "killCount_one": "{{count}} bicie",
+    "killCount_few": "{{count}} bicia",
+    "killCount_many": "{{count}} bić",
     "pointCount_one": "{{count}} punkt",
     "pointCount_few": "{{count}} punkty",
     "pointCount_many": "{{count}} punktów",
     "time": "Czas",
     "afk": "AFK %",
-    "noRanking": "Brak danych w rankingu"
+    "noRanking": "Brak danych w rankingu",
+    "viewAll": "Zobacz pełny ranking"
   },
   "templates": {
     "title": "Szablony Map",
@@ -111,9 +112,9 @@
     "pointsAwarded": "{{points}} punktów przyznano",
     "kills": "bicia",
     "kill": "bicie",
-    "killCount_one": "{{count}} zabicie",
-    "killCount_few": "{{count}} zabicia",
-    "killCount_many": "{{count}} zabić",
+    "killCount_one": "{{count}} bicie",
+    "killCount_few": "{{count}} bicia",
+    "killCount_many": "{{count}} bić",
     "noTimer": "Brak aktywnego timera",
     "timerActive": "Timer aktywny",
     "add": "Dodaj herosa",
@@ -136,14 +137,14 @@
     "count_many": "{{count}} uczestników"
   },
   "kills": {
-    "title": "Historia zabić",
-    "recentTitle": "Ostatnie zabicia",
-    "allKillsTitle": "Historia zabić eventu",
+    "title": "Historia bić",
+    "recentTitle": "Ostatnie bicia",
+    "allKillsTitle": "Historia bić eventu",
     "allHeroes": "Wszyscy herosi",
     "viewAll": "Zobacz wszystkie",
-    "noKills": "Brak historii zabić",
+    "noKills": "Brak historii bić",
     "noParticipants": "Brak uczestników",
-    "killTime": "Czas zabicia",
+    "killTime": "Czas bicia",
     "respawnTime": "Czas respawnu",
     "respawnTimeDescription": "Okno czasowe respawnu",
     "participants": "Uczestnicy",
@@ -165,17 +166,17 @@
     },
     "loadMore": "Załaduj więcej",
     "loading": "Ładowanie...",
-    "endOfList": "To wszystkie zabicia"
+    "endOfList": "To wszystkie bicia"
   },
   "killDetail": {
-    "notFound": "Nie znaleziono zabicia",
+    "notFound": "Nie znaleziono bicia",
     "totalPoints": "Suma punktów",
     "participantCount": "Uczestników",
     "lootCount": "Dopasowanych łupów",
     "detectedBy": "Wykryto przez",
     "participants": "Uczestnicy",
     "matchingLoots": "Dopasowane łupy",
-    "noLoots": "Brak łupów pasujących do tego zabicia",
+    "noLoots": "Brak łupów pasujących do tego bicia",
     "multipliers": {
       "title": "Konfiguracja mnożników",
       "basePoints": "Punkty bazowe",
@@ -183,6 +184,13 @@
       "trackers": "Liczba tropicieli",
       "maps": "Liczba map"
     }
+  },
+  "settings": {
+    "assignmentTimeout": "Czas na przypisanie (minuty)",
+    "assignmentTimeoutDescription": "Ile minut przed minimalnym czasem respawnu można się przypisać do mapy",
+    "autoCalculatePoints": "Automatyczne punkty",
+    "autoCalculatePointsDescription": "Automatycznie naliczaj punkty po zabiciu herosa",
+    "disabled": "wyłączone"
   },
   "scoring": {
     "title": "Ustawienia punktów",

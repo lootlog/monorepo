@@ -14,7 +14,7 @@ import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEventMutations } from "../hooks/use-event-mutations";
+import { useEventMutations } from "../hooks/mutations/use-event-mutations";
 import { toast } from "sonner";
 import { X, MapPin, Search, FileText, Loader2, Plus } from "lucide-react";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";

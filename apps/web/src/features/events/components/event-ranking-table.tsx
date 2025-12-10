@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Trophy } from "lucide-react";
-import type { EventRanking } from "../hooks/use-events";
+import type { EventRanking } from "../hooks/queries/use-events";
 import { cn } from "@lootlog/ui/lib/utils";
 
 interface EventRankingTableProps {
@@ -12,9 +12,9 @@ export const EventRankingTable = ({ rankings }: EventRankingTableProps) => {
 
   if (rankings.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-        <Trophy className="w-10 h-10 mb-2 opacity-50" />
-        <p>{t("events.ranking.noRanking")}</p>
+      <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+        <Trophy className="w-8 h-8 mb-2 opacity-50" />
+        <p className="text-sm">{t("events.ranking.noRanking")}</p>
       </div>
     );
   }

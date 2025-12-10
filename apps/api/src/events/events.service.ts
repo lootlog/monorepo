@@ -1,10 +1,12 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import type { Queue } from 'bullmq';
 import { PrismaService } from 'src/db/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
@@ -12,7 +14,10 @@ import { CreateMapDto } from './dto/create-map.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { RoutingKey } from 'src/enum/routing-key.enum';
-import { Event, EventHeroNpc, EventKillPoint, Prisma } from 'generated/client';
+import { RESPAWN_WINDOW_QUEUE } from './constants/respawn-queue.constant';
+import type { AutoCloseRespawnWindowJobData } from './respawn-window.processor';
+import { CoverageGapType, Event, EventHeroNpc, EventKillPoint, Prisma } from 'generated/client';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 
 interface TimeOfDayMultiplier {
   from: string; // "HH:mm"
@@ -33,6 +38,22 @@ export type MapStatus =
   | 'UNASSIGNED'
   | 'WRONG_PLAYER';
 
+export interface CloseRespawnWindowOptions {
+  createNewWindow?: boolean;
+  newMinSpawnTime?: Date;
+  newMaxSpawnTime?: Date;
+  isAutoClose?: boolean;
+}
+
+export interface OpenRespawnWindowOptions {
+  minSpawnTime?: Date;
+  maxSpawnTime?: Date;
+}
+
+// Default respawn values when no previous timer exists
+const DEFAULT_RESP_BASE_SECONDS = 3600; // 1 hour
+const DEFAULT_RESP_RANDOMNESS = 20; // 20%
+
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
@@ -40,6 +61,8 @@ export class EventsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
+    @InjectQueue(RESPAWN_WINDOW_QUEUE)
+    private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
@@ -191,6 +214,8 @@ export class EventsService {
       timeOfDayMultipliers,
       trackersMultipliers,
       mapsCountMultipliers,
+      assignmentTimeoutMinutes,
+      autoCalculatePoints,
       ...updateData
     } = data;
 
@@ -226,6 +251,12 @@ export class EventsService {
           }),
           ...(mapsCountMultipliers !== undefined && {
             mapsCountMultipliers: mapsCountMultipliers as unknown as Prisma.InputJsonValue,
+          }),
+          ...(assignmentTimeoutMinutes !== undefined && {
+            assignmentTimeoutMinutes,
+          }),
+          ...(autoCalculatePoints !== undefined && {
+            autoCalculatePoints,
           }),
           ...(heroNpcs && {
             heroNpcs: {
@@ -295,11 +326,16 @@ export class EventsService {
           },
         },
       },
+      include: {
+        assignedMembers: true,
+      },
     });
 
     if (!map) {
       throw new NotFoundException('Map not found');
     }
+
+    const wasUnassigned = map.assignedMembers.length === 0;
 
     const updated = await this.prisma.eventMap.update({
       where: { id: mapId },
@@ -312,6 +348,13 @@ export class EventsService {
         assignedMembers: true,
       },
     });
+
+    // Close UNASSIGNED gap if this is the first member being assigned
+    if (wasUnassigned) {
+      await this.closeUnassignedGap(mapId);
+      // Open UNCOVERED gap since member is assigned but not yet on the map
+      await this.openUncoveredGap(mapId, map.heroNpcId);
+    }
 
     await this.emitMapStatusUpdate(guildId, eventId, mapId);
 
@@ -336,6 +379,7 @@ export class EventsService {
       },
       include: {
         assignedMembers: true,
+        heroNpc: true,
       },
     });
 
@@ -355,6 +399,13 @@ export class EventsService {
         assignedMembers: true,
       },
     });
+
+    // Open UNASSIGNED gap if no members are left
+    if (updated.assignedMembers.length === 0) {
+      await this.openUnassignedGap(mapId, map.heroNpcId);
+      // Also close any UNCOVERED gap since there's no one to cover
+      await this.closeUncoveredGap(mapId);
+    }
 
     await this.emitMapStatusUpdate(guildId, eventId, mapId);
 
@@ -644,6 +695,332 @@ export class EventsService {
     } catch (error) {
       console.error('Failed to emit presence update', error);
     }
+  }
+
+  // ========== COVERAGE GAP MANAGEMENT ==========
+
+  /**
+   * Open an UNASSIGNED gap when a map has no assigned members.
+   * Called when the last member is unassigned from a map.
+   */
+  async openUnassignedGap(mapId: string, heroNpcId: string): Promise<void> {
+    // Check if there's already an open UNASSIGNED gap
+    const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
+      where: {
+        mapId,
+        gapType: CoverageGapType.UNASSIGNED,
+        endedAt: null,
+      },
+    });
+
+    if (existingGap) {
+      return; // Gap already open
+    }
+
+    await this.prisma.eventMapCoverageGap.create({
+      data: {
+        mapId,
+        heroNpcId,
+        gapType: CoverageGapType.UNASSIGNED,
+        startedAt: new Date(),
+      },
+    });
+
+    this.logger.debug({
+      message: 'Opened UNASSIGNED gap',
+      mapId,
+      heroNpcId,
+    });
+  }
+
+  /**
+   * Close an UNASSIGNED gap when a member is assigned to a map.
+   */
+  async closeUnassignedGap(mapId: string): Promise<void> {
+    const now = new Date();
+
+    const openGap = await this.prisma.eventMapCoverageGap.findFirst({
+      where: {
+        mapId,
+        gapType: CoverageGapType.UNASSIGNED,
+        endedAt: null,
+      },
+    });
+
+    if (!openGap) {
+      return;
+    }
+
+    const durationSeconds = Math.round(
+      (now.getTime() - openGap.startedAt.getTime()) / 1000,
+    );
+
+    await this.prisma.eventMapCoverageGap.update({
+      where: { id: openGap.id },
+      data: {
+        endedAt: now,
+        durationSeconds,
+      },
+    });
+
+    this.logger.debug({
+      message: 'Closed UNASSIGNED gap',
+      mapId,
+      durationSeconds,
+    });
+  }
+
+  /**
+   * Open an UNCOVERED gap when no players are present on a map with assigned members.
+   */
+  async openUncoveredGap(mapId: string, heroNpcId: string): Promise<void> {
+    // Check if there's already an open UNCOVERED gap
+    const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
+      where: {
+        mapId,
+        gapType: CoverageGapType.UNCOVERED,
+        endedAt: null,
+      },
+    });
+
+    if (existingGap) {
+      return; // Gap already open
+    }
+
+    await this.prisma.eventMapCoverageGap.create({
+      data: {
+        mapId,
+        heroNpcId,
+        gapType: CoverageGapType.UNCOVERED,
+        startedAt: new Date(),
+      },
+    });
+
+    this.logger.debug({
+      message: 'Opened UNCOVERED gap',
+      mapId,
+      heroNpcId,
+    });
+  }
+
+  /**
+   * Close an UNCOVERED gap when a player arrives on the map.
+   */
+  async closeUncoveredGap(mapId: string): Promise<void> {
+    const now = new Date();
+
+    const openGap = await this.prisma.eventMapCoverageGap.findFirst({
+      where: {
+        mapId,
+        gapType: CoverageGapType.UNCOVERED,
+        endedAt: null,
+      },
+    });
+
+    if (!openGap) {
+      return;
+    }
+
+    const durationSeconds = Math.round(
+      (now.getTime() - openGap.startedAt.getTime()) / 1000,
+    );
+
+    await this.prisma.eventMapCoverageGap.update({
+      where: { id: openGap.id },
+      data: {
+        endedAt: now,
+        durationSeconds,
+      },
+    });
+
+    this.logger.debug({
+      message: 'Closed UNCOVERED gap',
+      mapId,
+      durationSeconds,
+    });
+  }
+
+  /**
+   * Close all open gaps for a hero when killed.
+   */
+  async closeAllGapsForHero(heroNpcId: string): Promise<void> {
+    const now = new Date();
+
+    const openGaps = await this.prisma.eventMapCoverageGap.findMany({
+      where: {
+        heroNpcId,
+        endedAt: null,
+      },
+    });
+
+    for (const gap of openGaps) {
+      const durationSeconds = Math.round(
+        (now.getTime() - gap.startedAt.getTime()) / 1000,
+      );
+
+      await this.prisma.eventMapCoverageGap.update({
+        where: { id: gap.id },
+        data: {
+          endedAt: now,
+          durationSeconds,
+        },
+      });
+    }
+
+    this.logger.debug({
+      message: 'Closed all gaps for hero',
+      heroNpcId,
+      closedCount: openGaps.length,
+    });
+  }
+
+  /**
+   * Get coverage gaps for a specific map.
+   */
+  async getMapCoverageGaps(mapId: string) {
+    return this.prisma.eventMapCoverageGap.findMany({
+      where: { mapId },
+      orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  /**
+   * Get coverage gaps for a hero (all maps).
+   */
+  async getHeroCoverageGaps(heroNpcId: string) {
+    return this.prisma.eventMapCoverageGap.findMany({
+      where: { heroNpcId },
+      orderBy: { startedAt: 'desc' },
+      include: {
+        map: {
+          select: {
+            mapName: true,
+            mapId: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Get active (ongoing) gap for a map.
+   */
+  async getActiveGapForMap(mapId: string) {
+    return this.prisma.eventMapCoverageGap.findFirst({
+      where: {
+        mapId,
+        endedAt: null,
+      },
+    });
+  }
+
+  /**
+   * Handle coverage gap logic when presence changes.
+   * Called from the gateway handler when a player changes maps.
+   * AFK players don't count as coverage - only active players close the gap.
+   */
+  async handlePresenceCoverageCheck(
+    guildId: string,
+    mapName: string,
+    discordId: string,
+    hasPlayer: boolean,
+    isAfk = false,
+  ): Promise<void> {
+    // Find all event maps with this name in active events for this guild
+    const eventMaps = await this.prisma.eventMap.findMany({
+      where: {
+        mapName,
+        heroNpc: {
+          event: {
+            guildId,
+            active: true,
+          },
+        },
+      },
+      include: {
+        assignedMembers: true,
+        heroNpc: true,
+      },
+    });
+
+    for (const map of eventMaps) {
+      const hasAssignedMembers = map.assignedMembers.length > 0;
+
+      if (!hasAssignedMembers) {
+        // No assigned members - UNASSIGNED gap should be open
+        // (handled in assign/unassign methods)
+        continue;
+      }
+
+      // Map has assigned members - check UNCOVERED gap
+      if (hasPlayer) {
+        if (isAfk) {
+          // AFK player doesn't count as coverage
+          // Check if there are any other active (non-AFK) players
+          const activeNonAfkPlayers =
+            await this.getActiveNonAfkPlayersOnMap(map.id);
+          if (activeNonAfkPlayers.length === 0) {
+            // No active players - open UNCOVERED gap
+            await this.openUncoveredGap(map.id, map.heroNpcId);
+          }
+        } else {
+          // Active player arrived - close UNCOVERED gap if open
+          await this.closeUncoveredGap(map.id);
+        }
+        // Emit map status update to refresh frontend
+        await this.emitMapStatusUpdate(guildId, map.heroNpc.eventId, map.id);
+      } else {
+        // Player left - check if map is now uncovered
+        // We need to check if any other active (non-AFK) players are still on this map
+        const activeNonAfkPlayers =
+          await this.getActiveNonAfkPlayersOnMap(map.id);
+
+        if (activeNonAfkPlayers.length === 0) {
+          // No active players on the map - open UNCOVERED gap
+          await this.openUncoveredGap(map.id, map.heroNpcId);
+          // Emit map status update to refresh frontend
+          await this.emitMapStatusUpdate(guildId, map.heroNpc.eventId, map.id);
+        }
+      }
+    }
+  }
+
+  /**
+   * Get count of active players on a map (from presence logs).
+   */
+  private async getActivePlayersOnMap(mapId: string): Promise<number[]> {
+    const activeLogs = await this.prisma.eventPresenceLog.findMany({
+      where: {
+        mapId,
+        endedAt: null,
+      },
+      select: {
+        memberId: true,
+      },
+      distinct: ['memberId'],
+    });
+
+    return activeLogs.map((log) => log.memberId);
+  }
+
+  /**
+   * Get active non-AFK players on a map (from presence logs).
+   * Used for coverage gap logic - AFK players don't count as coverage.
+   */
+  private async getActiveNonAfkPlayersOnMap(mapId: string): Promise<number[]> {
+    const activeLogs = await this.prisma.eventPresenceLog.findMany({
+      where: {
+        mapId,
+        endedAt: null,
+        isAfk: false,
+      },
+      select: {
+        memberId: true,
+      },
+      distinct: ['memberId'],
+    });
+
+    return activeLogs.map((log) => log.memberId);
   }
 
   async getEventHeroTimers(guildId: string, eventId: string, world: string) {
@@ -1104,13 +1481,16 @@ export class EventsService {
       // Still record the kill but with no points
     }
 
-    // Calculate points
-    const { points, appliedMultiplier } = this.calculateMemberPoints(
-      event,
-      killedAt,
-      heroMaps.length,
-      assignedMemberIds.length,
-    );
+    // Calculate points (only if autoCalculatePoints is enabled)
+    const shouldCalculatePoints = event.autoCalculatePoints !== false;
+    const { points, appliedMultiplier } = shouldCalculatePoints
+      ? this.calculateMemberPoints(
+          event,
+          killedAt,
+          heroMaps.length,
+          assignedMemberIds.length,
+        )
+      : { points: 0, appliedMultiplier: 0 };
 
     // Create kill record with points in a transaction
     const kill = await this.prisma.$transaction(async (tx) => {
@@ -1136,33 +1516,35 @@ export class EventsService {
         wasPresent: boolean;
       }> = [];
 
-      // Create points for each assigned member
-      for (const memberId of assignedMemberIds) {
-        const mapNames = memberMapAssignments.get(memberId) || [];
-        const presenceStats = await this.getMemberPresenceStats(
-          eventHero.id,
-          memberId,
-          timerData.previousMinSpawnTime ?? undefined,
-        );
+      // Create points for each assigned member (only if autoCalculatePoints is enabled)
+      if (shouldCalculatePoints) {
+        for (const memberId of assignedMemberIds) {
+          const mapNames = memberMapAssignments.get(memberId) || [];
+          const presenceStats = await this.getMemberPresenceStats(
+            eventHero.id,
+            memberId,
+            timerData.previousMinSpawnTime ?? undefined,
+          );
 
-        killPointsData.push({
-          killId: heroKill.id,
-          memberId,
-          mapName: mapNames.join(', '),
-          basePoints: event.basePointsPerKill,
-          points,
-          appliedMultiplier,
-          timeOnMapSeconds: presenceStats.timeOnMapSeconds,
-          afkPercentage: presenceStats.afkPercentage,
-          wasPresent: presenceStats.wasPresent,
-        });
-      }
+          killPointsData.push({
+            killId: heroKill.id,
+            memberId,
+            mapName: mapNames.join(', '),
+            basePoints: event.basePointsPerKill,
+            points,
+            appliedMultiplier,
+            timeOnMapSeconds: presenceStats.timeOnMapSeconds,
+            afkPercentage: presenceStats.afkPercentage,
+            wasPresent: presenceStats.wasPresent,
+          });
+        }
 
-      // Batch create all kill points
-      if (killPointsData.length > 0) {
-        await tx.eventKillPoint.createMany({
-          data: killPointsData,
-        });
+        // Batch create all kill points
+        if (killPointsData.length > 0) {
+          await tx.eventKillPoint.createMany({
+            data: killPointsData,
+          });
+        }
       }
 
       // Clear map assignments for this hero after recording the kill
@@ -1183,8 +1565,13 @@ export class EventsService {
       return { kill: heroKill, points: createdPoints, clearedMapIds: heroMaps.map((m) => m.id) };
     });
 
-    // Update rankings
-    await this.updateRankingAfterKill(event.id, kill.points);
+    // Update rankings (only if autoCalculatePoints is enabled)
+    if (shouldCalculatePoints && kill.points.length > 0) {
+      await this.updateRankingAfterKill(event.id, eventHero.npcName, kill.points);
+    }
+
+    // Close all coverage gaps for this hero
+    await this.closeAllGapsForHero(eventHero.id);
 
     // Emit real-time event
     await this.emitHeroKilled(guildId, event.id, kill.kill.id);
@@ -1409,14 +1796,16 @@ export class EventsService {
    */
   async updateRankingAfterKill(
     eventId: string,
+    heroNpcName: string,
     killPoints: EventKillPoint[],
   ): Promise<void> {
     for (const killPoint of killPoints) {
       const existing = await this.prisma.eventRanking.findUnique({
         where: {
-          eventId_memberId: {
+          eventId_memberId_heroNpcName: {
             eventId,
             memberId: killPoint.memberId,
+            heroNpcName,
           },
         },
       });
@@ -1431,9 +1820,10 @@ export class EventsService {
 
         await this.prisma.eventRanking.update({
           where: {
-            eventId_memberId: {
+            eventId_memberId_heroNpcName: {
               eventId,
               memberId: killPoint.memberId,
+              heroNpcName,
             },
           },
           data: {
@@ -1448,6 +1838,7 @@ export class EventsService {
           data: {
             eventId,
             memberId: killPoint.memberId,
+            heroNpcName,
             totalPoints: killPoint.points,
             totalKills: 1,
             totalTimeSeconds: killPoint.timeOnMapSeconds,
@@ -1810,5 +2201,495 @@ export class EventsService {
         icon: npc.npcSnapshot.icon,
       })),
     }));
+  }
+
+  /**
+   * Close a respawn window for an event hero.
+   * Optionally creates a new respawn window.
+   */
+  async closeRespawnWindow(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    options: CloseRespawnWindowOptions = {},
+  ): Promise<void> {
+    const { createNewWindow = false, newMinSpawnTime, newMaxSpawnTime, isAutoClose = false } = options;
+
+    // Get hero with event info
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: { id: heroId, event: { id: eventId, guildId } },
+      include: {
+        event: true,
+        maps: {
+          include: { assignedMembers: true },
+        },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    if (!hero.npcId) {
+      throw new BadRequestException('Hero has no NPC ID - cannot manage respawn window');
+    }
+
+    this.logger.log({
+      message: isAutoClose ? 'Auto-closing respawn window' : 'Manually closing respawn window',
+      heroId,
+      eventId,
+      guildId,
+      createNewWindow,
+    });
+
+    // 1. Clear all map assignments for this hero
+    for (const map of hero.maps) {
+      if (map.assignedMembers.length > 0) {
+        await this.prisma.eventMap.update({
+          where: { id: map.id },
+          data: { assignedMembers: { set: [] } },
+        });
+        await this.emitMapStatusUpdate(guildId, eventId, map.id);
+      }
+    }
+
+    // 2. Close all coverage gaps for this hero
+    await this.closeAllGapsForHero(heroId);
+
+    // 3. Delete the timer
+    try {
+      await this.prisma.timer.delete({
+        where: {
+          timerId: {
+            guildId,
+            world: hero.event.world,
+            npcId: hero.npcId,
+          },
+        },
+      });
+    } catch (error) {
+      // Timer might not exist, that's okay
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025')) {
+        throw error;
+      }
+    }
+
+    // 4. Cancel any scheduled auto-close job
+    await this.cancelScheduledAutoClose(heroId);
+
+    // 5. Emit respawn window closed event
+    await this.emitRespawnWindowClosed(guildId, eventId, heroId);
+
+    // 6. Optionally create a new respawn window
+    if (createNewWindow) {
+      await this.openRespawnWindow(guildId, eventId, heroId, {
+        minSpawnTime: newMinSpawnTime,
+        maxSpawnTime: newMaxSpawnTime,
+      });
+    }
+  }
+
+  /**
+   * Open a new respawn window for an event hero.
+   */
+  async openRespawnWindow(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    options: OpenRespawnWindowOptions = {},
+  ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
+    // Get hero with event info
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: { id: heroId, event: { id: eventId, guildId } },
+      include: { event: true },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    if (!hero.npcId) {
+      throw new BadRequestException('Hero has no NPC ID - cannot manage respawn window');
+    }
+
+    let minSpawnTime: Date;
+    let maxSpawnTime: Date;
+
+    if (options.minSpawnTime && options.maxSpawnTime) {
+      // Use custom times
+      minSpawnTime = options.minSpawnTime;
+      maxSpawnTime = options.maxSpawnTime;
+    } else {
+      // Use default times from last timer or fallback defaults
+      const lastTimer = await this.getLastTimerForHero(guildId, hero.event.world, hero.npcId);
+      const now = new Date();
+      const { min, max } = this.calculateRespawnTime(
+        lastTimer?.latestRespBaseSeconds ?? DEFAULT_RESP_BASE_SECONDS,
+        lastTimer?.latestRespawnRandomness ?? DEFAULT_RESP_RANDOMNESS,
+        now,
+      );
+      minSpawnTime = min;
+      maxSpawnTime = max;
+    }
+
+    this.logger.log({
+      message: 'Opening respawn window',
+      heroId,
+      eventId,
+      guildId,
+      minSpawnTime,
+      maxSpawnTime,
+    });
+
+    // Get the first member from the guild to use as timer creator (system action)
+    const firstMember = await this.prisma.member.findFirst({
+      where: { guildId },
+      select: { id: true },
+    });
+
+    if (!firstMember) {
+      throw new BadRequestException('No members found in guild');
+    }
+
+    // Create or update the timer
+    const npcData = {
+      id: hero.npcId,
+      name: hero.npcName,
+      prof: '',
+      location: '',
+      wt: '',
+      lvl: 0,
+      type: 'hero',
+      icon: hero.npcIcon || '',
+      margonemType: '0',
+    };
+
+    const timer = await this.prisma.timer.upsert({
+      where: {
+        timerId: {
+          guildId,
+          world: hero.event.world,
+          npcId: hero.npcId,
+        },
+      },
+      create: {
+        guildId,
+        createdById: firstMember.id,
+        world: hero.event.world,
+        npcId: hero.npcId,
+        minSpawnTime,
+        maxSpawnTime,
+        latestRespBaseSeconds: Math.round((maxSpawnTime.getTime() - minSpawnTime.getTime()) / 2000),
+        latestRespawnRandomness: DEFAULT_RESP_RANDOMNESS,
+        wasReset: false,
+        npc: npcData,
+      },
+      update: {
+        minSpawnTime,
+        maxSpawnTime,
+        wasReset: false,
+        npc: npcData,
+      },
+      include: {
+        member: true,
+      },
+    });
+
+    // Schedule auto-close at maxSpawnTime
+    await this.scheduleAutoClose(guildId, eventId, heroId, hero.npcId, hero.event.world, maxSpawnTime);
+
+    // Open coverage gaps for all hero maps
+    // When manually opening a respawn window, we assume no one is on any map yet
+    const heroMaps = await this.prisma.eventMap.findMany({
+      where: { heroNpcId: heroId },
+      include: {
+        assignedMembers: true,
+      },
+    });
+
+    let unassignedCount = 0;
+    let uncoveredCount = 0;
+
+    for (const map of heroMaps) {
+      if (!map.assignedMembers || map.assignedMembers.length === 0) {
+        // No assigned members - open UNASSIGNED gap
+        await this.openUnassignedGap(map.id, heroId);
+        unassignedCount++;
+      } else {
+        // Has assigned members but no one on map yet - open UNCOVERED gap
+        await this.openUncoveredGap(map.id, heroId);
+        uncoveredCount++;
+      }
+    }
+
+    this.logger.log({
+      message: 'Opened coverage gaps for hero maps',
+      heroId,
+      mapsCount: heroMaps.length,
+      unassignedCount,
+      uncoveredCount,
+    });
+
+    // Emit respawn window opened event
+    await this.emitRespawnWindowOpened(guildId, eventId, heroId);
+
+    // Emit timer update with full timer data (including member and npc)
+    await this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_TIMERS_UPDATE,
+      timer,
+    );
+
+    return { minSpawnTime, maxSpawnTime };
+  }
+
+  /**
+   * Get the last timer data for a hero (for default respawn times).
+   */
+  private async getLastTimerForHero(
+    guildId: string,
+    world: string,
+    npcId: number,
+  ): Promise<{ latestRespBaseSeconds: number; latestRespawnRandomness: number } | null> {
+    // First try to find an existing timer
+    const existingTimer = await this.prisma.timer.findUnique({
+      where: {
+        timerId: { guildId, world, npcId },
+      },
+      select: {
+        latestRespBaseSeconds: true,
+        latestRespawnRandomness: true,
+      },
+    });
+
+    if (existingTimer) {
+      return existingTimer;
+    }
+
+    // Otherwise look at recent kills to get historical timer data
+    const recentKill = await this.prisma.eventHeroKill.findFirst({
+      where: {
+        heroNpc: {
+          npcId,
+          event: { guildId, world },
+        },
+      },
+      orderBy: { killedAt: 'desc' },
+      select: {
+        minSpawnTimeAtKill: true,
+        maxSpawnTimeAtKill: true,
+      },
+    });
+
+    if (recentKill && recentKill.minSpawnTimeAtKill && recentKill.maxSpawnTimeAtKill) {
+      const diffMs = recentKill.maxSpawnTimeAtKill.getTime() - recentKill.minSpawnTimeAtKill.getTime();
+      const baseSeconds = Math.round(diffMs / 2000);
+      return {
+        latestRespBaseSeconds: baseSeconds,
+        latestRespawnRandomness: baseSeconds > 0 ? Math.round((diffMs / 2 / (baseSeconds * 1000)) * 100) : DEFAULT_RESP_RANDOMNESS,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Calculate respawn time window from base seconds and randomness.
+   */
+  private calculateRespawnTime(
+    respBaseSeconds: number,
+    respawnRandomness: number,
+    now: Date,
+  ): { min: Date; max: Date } {
+    const dateMs = now.getTime();
+    const respMs = respBaseSeconds * 1000;
+    const multiplier = respawnRandomness / 100;
+    const variance = Math.round(respMs * multiplier);
+
+    return {
+      min: new Date(dateMs + respMs - variance),
+      max: new Date(dateMs + respMs + variance),
+    };
+  }
+
+  /**
+   * Schedule an auto-close job for a respawn window.
+   */
+  private async scheduleAutoClose(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    npcId: number,
+    world: string,
+    maxSpawnTime: Date,
+  ): Promise<void> {
+    const delay = maxSpawnTime.getTime() - Date.now();
+
+    if (delay <= 0) {
+      this.logger.warn({
+        message: 'maxSpawnTime is in the past, skipping auto-close scheduling',
+        heroId,
+        maxSpawnTime,
+      });
+      return;
+    }
+
+    const jobId = this.getAutoCloseJobId(heroId, maxSpawnTime);
+
+    await this.respawnWindowQueue.add(
+      'auto-close-respawn-window',
+      { guildId, eventId, heroId, npcId, world },
+      {
+        delay,
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+
+    this.logger.log({
+      message: 'Scheduled auto-close job',
+      heroId,
+      jobId,
+      delay,
+      maxSpawnTime,
+    });
+  }
+
+  /**
+   * Cancel a scheduled auto-close job.
+   */
+  private async cancelScheduledAutoClose(heroId: string): Promise<void> {
+    // Get all delayed jobs and find the one for this hero
+    const delayedJobs = await this.respawnWindowQueue.getJobs(['delayed']);
+
+    for (const job of delayedJobs) {
+      if (job.data.heroId === heroId) {
+        await job.remove();
+        this.logger.log({
+          message: 'Cancelled scheduled auto-close job',
+          heroId,
+          jobId: job.id,
+        });
+      }
+    }
+  }
+
+  /**
+   * Get job ID for auto-close job.
+   */
+  private getAutoCloseJobId(heroId: string, maxSpawnTime: Date): string {
+    return `respawn-close-${heroId}-${maxSpawnTime.getTime()}`;
+  }
+
+  /**
+   * Emit respawn window opened event.
+   */
+  private async emitRespawnWindowOpened(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+  ): Promise<void> {
+    await this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+      { guildId, eventId, heroId },
+    );
+  }
+
+  /**
+   * Emit respawn window closed event.
+   */
+  private async emitRespawnWindowClosed(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+  ): Promise<void> {
+    await this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED,
+      { guildId, eventId, heroId },
+    );
+  }
+
+  /**
+   * Get hero's default respawn configuration for frontend display.
+   */
+  async getHeroRespawnConfig(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+  ): Promise<{
+    hasTimer: boolean;
+    windowStatus: 'OPEN' | 'WAITING' | 'NONE';
+    minSpawnTime: Date | null;
+    maxSpawnTime: Date | null;
+    defaultRespBaseSeconds: number;
+    defaultRespRandomness: number;
+  }> {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: { id: heroId, event: { id: eventId, guildId } },
+      include: { event: true },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    if (!hero.npcId) {
+      return {
+        hasTimer: false,
+        windowStatus: 'NONE',
+        minSpawnTime: null,
+        maxSpawnTime: null,
+        defaultRespBaseSeconds: DEFAULT_RESP_BASE_SECONDS,
+        defaultRespRandomness: DEFAULT_RESP_RANDOMNESS,
+      };
+    }
+
+    const now = new Date();
+
+    // Check for active timer
+    const timer = await this.prisma.timer.findUnique({
+      where: {
+        timerId: {
+          guildId,
+          world: hero.event.world,
+          npcId: hero.npcId,
+        },
+      },
+    });
+
+    // Get default values
+    const lastTimerData = await this.getLastTimerForHero(guildId, hero.event.world, hero.npcId);
+
+    // Determine window status:
+    // OPEN - between min and max spawn time (mob can respawn any moment)
+    // WAITING - timer exists but before minSpawnTime (waiting for window to open)
+    // NONE - no timer or timer expired
+    let windowStatus: 'OPEN' | 'WAITING' | 'NONE' = 'NONE';
+    let hasActiveTimer = false;
+
+    if (timer) {
+      const minTime = new Date(timer.minSpawnTime);
+      const maxTime = new Date(timer.maxSpawnTime);
+
+      if (now >= minTime && now < maxTime) {
+        windowStatus = 'OPEN';
+        hasActiveTimer = true;
+      } else if (now < minTime) {
+        windowStatus = 'WAITING';
+      }
+      // else: timer expired, windowStatus stays 'NONE'
+    }
+
+    return {
+      hasTimer: hasActiveTimer,
+      windowStatus,
+      minSpawnTime: timer?.minSpawnTime ?? null,
+      maxSpawnTime: timer?.maxSpawnTime ?? null,
+      defaultRespBaseSeconds: lastTimerData?.latestRespBaseSeconds ?? DEFAULT_RESP_BASE_SECONDS,
+      defaultRespRandomness: lastTimerData?.latestRespawnRandomness ?? DEFAULT_RESP_RANDOMNESS,
+    };
   }
 }

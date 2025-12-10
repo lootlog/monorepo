@@ -25,6 +25,7 @@ export interface HeroKillHeroNpc {
   id: string;
   npcId: number | null;
   npcName: string;
+  npcIcon: string | null;
 }
 
 export interface HeroKill {

@@ -34,7 +34,10 @@ export const NpcTile: FC<NpcTileProps> = ({
         </TooltipTrigger>
         <TooltipContent className="bg-popover/95 backdrop-blur-md border-border/50">
           <p className="text-foreground">
-            {name} <span className="text-muted-foreground">(Lvl {lvl})</span>
+            {name}
+            {lvl !== undefined && (
+              <span className="text-muted-foreground"> (Lvl {lvl})</span>
+            )}
           </p>
         </TooltipContent>
       </Tooltip>
