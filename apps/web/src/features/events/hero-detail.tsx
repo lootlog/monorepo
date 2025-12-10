@@ -489,7 +489,9 @@ export const HeroDetail = () => {
               {/* Ranking */}
               <EventRankingPreview
                 rankings={
-                  event.rankings?.filter((r) => r.heroNpcName === hero.npcName) ?? []
+                  event.rankings?.filter(
+                    (r) => r.heroNpcName === hero.npcName,
+                  ) ?? []
                 }
                 heroNpcs={[hero]}
                 guildId={guildId ?? ""}

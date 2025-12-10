@@ -2,7 +2,14 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Package, Frown, ChevronRight, Calendar, MapPin, Users } from "lucide-react";
+import {
+  Package,
+  Frown,
+  ChevronRight,
+  Calendar,
+  MapPin,
+  Users,
+} from "lucide-react";
 import { useEventLoots } from "../hooks/queries/use-event-loots";
 import { ItemTile } from "@/components/tiles";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";

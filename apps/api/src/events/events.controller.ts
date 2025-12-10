@@ -356,7 +356,9 @@ export class EventsController {
 
   @Permissions(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
-  @Patch('/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId')
+  @Patch(
+    '/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId',
+  )
   @ApiOperation({
     summary: 'Update location',
     description: 'Update a location name',
@@ -377,15 +379,24 @@ export class EventsController {
     @Param('locationId') locationId: string,
     @Body() data: UpdateLocationDto,
   ) {
-    return this.EventsService.updateLocation(guildId, eventId, heroId, locationId, data);
+    return this.EventsService.updateLocation(
+      guildId,
+      eventId,
+      heroId,
+      locationId,
+      data,
+    );
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
-  @Delete('/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId')
+  @Delete(
+    '/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId',
+  )
   @ApiOperation({
     summary: 'Delete location',
-    description: 'Delete a location. Maps in this location will become ungrouped.',
+    description:
+      'Delete a location. Maps in this location will become ungrouped.',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID' })
   @ApiParam({ name: 'eventId', description: 'Event ID' })
@@ -402,7 +413,12 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Param('locationId') locationId: string,
   ) {
-    return this.EventsService.deleteLocation(guildId, eventId, heroId, locationId);
+    return this.EventsService.deleteLocation(
+      guildId,
+      eventId,
+      heroId,
+      locationId,
+    );
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -433,7 +449,8 @@ export class EventsController {
   @Patch('/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId/location')
   @ApiOperation({
     summary: 'Assign map to location',
-    description: 'Assign a map to a location or remove it from a location (set to null)',
+    description:
+      'Assign a map to a location or remove it from a location (set to null)',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID' })
   @ApiParam({ name: 'eventId', description: 'Event ID' })
@@ -733,7 +750,8 @@ export class EventsController {
   @ApiParam({ name: 'killId', description: 'Kill ID' })
   @ApiResponse({
     status: 200,
-    description: 'Kill details with participants, event config, and matching loots',
+    description:
+      'Kill details with participants, event config, and matching loots',
   })
   @ApiResponse({ status: 404, description: 'Kill not found' })
   async getKillDetail(
