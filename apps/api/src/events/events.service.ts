@@ -19,7 +19,13 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { RESPAWN_WINDOW_QUEUE } from './constants/respawn-queue.constant';
 import type { AutoCloseRespawnWindowJobData } from './respawn-window.processor';
-import { CoverageGapType, Event, EventHeroNpc, EventKillPoint, Prisma } from 'generated/client';
+import {
+  CoverageGapType,
+  Event,
+  EventHeroNpc,
+  EventKillPoint,
+  Prisma,
+} from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 
 interface TimeOfDayMultiplier {
@@ -142,10 +148,7 @@ export class EventsService {
           },
         },
       },
-      orderBy: [
-        { active: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ active: 'desc' }, { createdAt: 'desc' }],
     });
   }
 
@@ -247,7 +250,10 @@ export class EventsService {
 
     // Auto-set endsAt when deactivating event (if not already set)
     const shouldSetEndsAt =
-      updateData.active === false && event.active === true && !event.endsAt && endsAt === undefined;
+      updateData.active === false &&
+      event.active === true &&
+      !event.endsAt &&
+      endsAt === undefined;
 
     // Update event and optionally recreate heroes/maps
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -270,13 +276,16 @@ export class EventsService {
             endsAt: new Date(),
           }),
           ...(timeOfDayMultipliers !== undefined && {
-            timeOfDayMultipliers: timeOfDayMultipliers as unknown as Prisma.InputJsonValue,
+            timeOfDayMultipliers:
+              timeOfDayMultipliers as unknown as Prisma.InputJsonValue,
           }),
           ...(trackersMultipliers !== undefined && {
-            trackersMultipliers: trackersMultipliers as unknown as Prisma.InputJsonValue,
+            trackersMultipliers:
+              trackersMultipliers as unknown as Prisma.InputJsonValue,
           }),
           ...(mapsCountMultipliers !== undefined && {
-            mapsCountMultipliers: mapsCountMultipliers as unknown as Prisma.InputJsonValue,
+            mapsCountMultipliers:
+              mapsCountMultipliers as unknown as Prisma.InputJsonValue,
           }),
           ...(assignmentTimeoutMinutes !== undefined && {
             assignmentTimeoutMinutes,
@@ -848,7 +857,9 @@ export class EventsService {
     });
 
     if (locations.length !== data.locationIds.length) {
-      throw new BadRequestException('Some locations not found or do not belong to this hero');
+      throw new BadRequestException(
+        'Some locations not found or do not belong to this hero',
+      );
     }
 
     // Update order in a transaction
@@ -1255,8 +1266,9 @@ export class EventsService {
         if (isAfk) {
           // AFK player doesn't count as coverage
           // Check if there are any other active (non-AFK) players
-          const activeNonAfkPlayers =
-            await this.getActiveNonAfkPlayersOnMap(map.id);
+          const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
+            map.id,
+          );
           if (activeNonAfkPlayers.length === 0) {
             // No active players - open UNCOVERED gap
             await this.openUncoveredGap(map.id, map.heroNpcId);
@@ -1270,8 +1282,9 @@ export class EventsService {
       } else {
         // Player left - check if map is now uncovered
         // We need to check if any other active (non-AFK) players are still on this map
-        const activeNonAfkPlayers =
-          await this.getActiveNonAfkPlayersOnMap(map.id);
+        const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
+          map.id,
+        );
 
         if (activeNonAfkPlayers.length === 0) {
           // No active players on the map - open UNCOVERED gap
@@ -1338,7 +1351,9 @@ export class EventsService {
     }
 
     const heroesWithId = event.heroNpcs.filter((hero) => hero.npcId !== null);
-    const heroesWithoutId = event.heroNpcs.filter((hero) => hero.npcId === null);
+    const heroesWithoutId = event.heroNpcs.filter(
+      (hero) => hero.npcId === null,
+    );
 
     const npcIds = heroesWithId.map((hero) => hero.npcId as number);
     const npcNames = heroesWithoutId.map((hero) => hero.npcName);
@@ -1464,13 +1479,18 @@ export class EventsService {
     }
 
     const heroesWithId = event.heroNpcs.filter((hero) => hero.npcId !== null);
-    const heroesWithoutId = event.heroNpcs.filter((hero) => hero.npcId === null);
+    const heroesWithoutId = event.heroNpcs.filter(
+      (hero) => hero.npcId === null,
+    );
 
     const npcIds = heroesWithId.map((hero) => hero.npcId as number);
     const npcNames = heroesWithoutId.map((hero) => hero.npcName);
 
     // Build OR conditions for npcSnapshot matching
-    const npcSnapshotConditions: Array<{ npcId?: { in: number[] }; name?: { in: string[] } }> = [];
+    const npcSnapshotConditions: Array<{
+      npcId?: { in: number[] };
+      name?: { in: string[] };
+    }> = [];
 
     if (npcIds.length > 0) {
       npcSnapshotConditions.push({ npcId: { in: npcIds } });
@@ -1680,16 +1700,10 @@ export class EventsService {
           guildId,
           world,
           active: true,
-          OR: [
-            { startsAt: null },
-            { startsAt: { lte: now } },
-          ],
+          OR: [{ startsAt: null }, { startsAt: { lte: now } }],
           AND: [
             {
-              OR: [
-                { endsAt: null },
-                { endsAt: { gte: now } },
-              ],
+              OR: [{ endsAt: null }, { endsAt: { gte: now } }],
             },
           ],
         },
@@ -1709,16 +1723,10 @@ export class EventsService {
             guildId,
             world,
             active: true,
-            OR: [
-              { startsAt: null },
-              { startsAt: { lte: now } },
-            ],
+            OR: [{ startsAt: null }, { startsAt: { lte: now } }],
             AND: [
               {
-                OR: [
-                  { endsAt: null },
-                  { endsAt: { gte: now } },
-                ],
+                OR: [{ endsAt: null }, { endsAt: { gte: now } }],
               },
             ],
           },
@@ -1860,12 +1868,20 @@ export class EventsService {
         where: { killId: heroKill.id },
       });
 
-      return { kill: heroKill, points: createdPoints, clearedMapIds: heroMaps.map((m) => m.id) };
+      return {
+        kill: heroKill,
+        points: createdPoints,
+        clearedMapIds: heroMaps.map((m) => m.id),
+      };
     });
 
     // Update rankings (only if autoCalculatePoints is enabled)
     if (shouldCalculatePoints && kill.points.length > 0) {
-      await this.updateRankingAfterKill(event.id, eventHero.npcName, kill.points);
+      await this.updateRankingAfterKill(
+        event.id,
+        eventHero.npcName,
+        kill.points,
+      );
     }
 
     // Close all coverage gaps for this hero
@@ -1909,7 +1925,8 @@ export class EventsService {
       heroMapCount,
     );
 
-    const appliedMultiplier = timeMultiplier * trackersMultiplier * mapsMultiplier;
+    const appliedMultiplier =
+      timeMultiplier * trackersMultiplier * mapsMultiplier;
     const points = Math.round(basePoints * appliedMultiplier);
 
     return { points, appliedMultiplier };
@@ -2391,7 +2408,11 @@ export class EventsService {
   private async getMatchingLootsForKill(
     kill: {
       killedAt: Date;
-      heroNpc: { npcId: number | null; npcName: string; event: { world: string } };
+      heroNpc: {
+        npcId: number | null;
+        npcName: string;
+        event: { world: string };
+      };
     },
     guildId: string,
   ) {
@@ -2511,7 +2532,12 @@ export class EventsService {
     heroId: string,
     options: CloseRespawnWindowOptions = {},
   ): Promise<void> {
-    const { createNewWindow = false, newMinSpawnTime, newMaxSpawnTime, isAutoClose = false } = options;
+    const {
+      createNewWindow = false,
+      newMinSpawnTime,
+      newMaxSpawnTime,
+      isAutoClose = false,
+    } = options;
 
     // Get hero with event info
     const hero = await this.prisma.eventHeroNpc.findFirst({
@@ -2529,11 +2555,15 @@ export class EventsService {
     }
 
     if (!hero.npcId) {
-      throw new BadRequestException('Hero has no NPC ID - cannot manage respawn window');
+      throw new BadRequestException(
+        'Hero has no NPC ID - cannot manage respawn window',
+      );
     }
 
     this.logger.log({
-      message: isAutoClose ? 'Auto-closing respawn window' : 'Manually closing respawn window',
+      message: isAutoClose
+        ? 'Auto-closing respawn window'
+        : 'Manually closing respawn window',
       heroId,
       eventId,
       guildId,
@@ -2567,7 +2597,12 @@ export class EventsService {
       });
     } catch (error) {
       // Timer might not exist, that's okay
-      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025')) {
+      if (
+        !(
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2025'
+        )
+      ) {
         throw error;
       }
     }
@@ -2607,7 +2642,9 @@ export class EventsService {
     }
 
     if (!hero.npcId) {
-      throw new BadRequestException('Hero has no NPC ID - cannot manage respawn window');
+      throw new BadRequestException(
+        'Hero has no NPC ID - cannot manage respawn window',
+      );
     }
 
     let minSpawnTime: Date;
@@ -2619,7 +2656,11 @@ export class EventsService {
       maxSpawnTime = options.maxSpawnTime;
     } else {
       // Use default times from last timer or fallback defaults
-      const lastTimer = await this.getLastTimerForHero(guildId, hero.event.world, hero.npcId);
+      const lastTimer = await this.getLastTimerForHero(
+        guildId,
+        hero.event.world,
+        hero.npcId,
+      );
       const now = new Date();
       const { min, max } = this.calculateRespawnTime(
         lastTimer?.latestRespBaseSeconds ?? DEFAULT_RESP_BASE_SECONDS,
@@ -2677,7 +2718,9 @@ export class EventsService {
         npcId: hero.npcId,
         minSpawnTime,
         maxSpawnTime,
-        latestRespBaseSeconds: Math.round((maxSpawnTime.getTime() - minSpawnTime.getTime()) / 2000),
+        latestRespBaseSeconds: Math.round(
+          (maxSpawnTime.getTime() - minSpawnTime.getTime()) / 2000,
+        ),
         latestRespawnRandomness: DEFAULT_RESP_RANDOMNESS,
         wasReset: false,
         npc: npcData,
@@ -2694,7 +2737,14 @@ export class EventsService {
     });
 
     // Schedule auto-close at maxSpawnTime
-    await this.scheduleAutoClose(guildId, eventId, heroId, hero.npcId, hero.event.world, maxSpawnTime);
+    await this.scheduleAutoClose(
+      guildId,
+      eventId,
+      heroId,
+      hero.npcId,
+      hero.event.world,
+      maxSpawnTime,
+    );
 
     // Open coverage gaps for all hero maps
     // When manually opening a respawn window, we assume no one is on any map yet
@@ -2748,7 +2798,10 @@ export class EventsService {
     guildId: string,
     world: string,
     npcId: number,
-  ): Promise<{ latestRespBaseSeconds: number; latestRespawnRandomness: number } | null> {
+  ): Promise<{
+    latestRespBaseSeconds: number;
+    latestRespawnRandomness: number;
+  } | null> {
     // First try to find an existing timer
     const existingTimer = await this.prisma.timer.findUnique({
       where: {
@@ -2779,12 +2832,21 @@ export class EventsService {
       },
     });
 
-    if (recentKill && recentKill.minSpawnTimeAtKill && recentKill.maxSpawnTimeAtKill) {
-      const diffMs = recentKill.maxSpawnTimeAtKill.getTime() - recentKill.minSpawnTimeAtKill.getTime();
+    if (
+      recentKill &&
+      recentKill.minSpawnTimeAtKill &&
+      recentKill.maxSpawnTimeAtKill
+    ) {
+      const diffMs =
+        recentKill.maxSpawnTimeAtKill.getTime() -
+        recentKill.minSpawnTimeAtKill.getTime();
       const baseSeconds = Math.round(diffMs / 2000);
       return {
         latestRespBaseSeconds: baseSeconds,
-        latestRespawnRandomness: baseSeconds > 0 ? Math.round((diffMs / 2 / (baseSeconds * 1000)) * 100) : DEFAULT_RESP_RANDOMNESS,
+        latestRespawnRandomness:
+          baseSeconds > 0
+            ? Math.round((diffMs / 2 / (baseSeconds * 1000)) * 100)
+            : DEFAULT_RESP_RANDOMNESS,
       };
     }
 
@@ -2959,7 +3021,11 @@ export class EventsService {
     });
 
     // Get default values
-    const lastTimerData = await this.getLastTimerForHero(guildId, hero.event.world, hero.npcId);
+    const lastTimerData = await this.getLastTimerForHero(
+      guildId,
+      hero.event.world,
+      hero.npcId,
+    );
 
     // Determine window status:
     // OPEN - between min and max spawn time (mob can respawn any moment)
@@ -2986,8 +3052,10 @@ export class EventsService {
       windowStatus,
       minSpawnTime: timer?.minSpawnTime ?? null,
       maxSpawnTime: timer?.maxSpawnTime ?? null,
-      defaultRespBaseSeconds: lastTimerData?.latestRespBaseSeconds ?? DEFAULT_RESP_BASE_SECONDS,
-      defaultRespRandomness: lastTimerData?.latestRespawnRandomness ?? DEFAULT_RESP_RANDOMNESS,
+      defaultRespBaseSeconds:
+        lastTimerData?.latestRespBaseSeconds ?? DEFAULT_RESP_BASE_SECONDS,
+      defaultRespRandomness:
+        lastTimerData?.latestRespawnRandomness ?? DEFAULT_RESP_RANDOMNESS,
     };
   }
 }

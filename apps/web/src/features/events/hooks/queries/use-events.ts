@@ -100,4 +100,11 @@ export const useEvents = ({
   });
 };
 
-export type { Event, EventMap, EventMapLocation, EventHeroNpc, EventRanking, Member };
+export type {
+  Event,
+  EventMap,
+  EventMapLocation,
+  EventHeroNpc,
+  EventRanking,
+  Member,
+};

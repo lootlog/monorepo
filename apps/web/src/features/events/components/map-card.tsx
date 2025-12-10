@@ -6,7 +6,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { UserPlus, X, AlertTriangle, Clock, Users, ChevronDown } from "lucide-react";
+import {
+  UserPlus,
+  X,
+  AlertTriangle,
+  Clock,
+  Users,
+  ChevronDown,
+} from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { PlayerTile } from "@/components/tiles";
@@ -200,7 +207,9 @@ export const MapCard = ({
             "flex-1 min-w-0 flex items-center gap-2",
             hasPlayersToShow && "cursor-pointer",
           )}
-          onClick={hasPlayersToShow ? () => setIsExpanded(!isExpanded) : undefined}
+          onClick={
+            hasPlayersToShow ? () => setIsExpanded(!isExpanded) : undefined
+          }
         >
           <div className="flex items-center gap-1.5 min-w-0">
             {hasPlayersToShow && (
@@ -246,7 +255,11 @@ export const MapCard = ({
                       title={`${member.name}${isAfk ? " (AFK)" : isOnMap ? " (Online)" : ""}`}
                     >
                       <img
-                        src={getDiscordAvatarUrl(member.userId, member.avatar, 32)}
+                        src={getDiscordAvatarUrl(
+                          member.userId,
+                          member.avatar,
+                          32,
+                        )}
                         alt={member.name}
                         className="w-full h-full object-cover"
                       />
@@ -260,7 +273,10 @@ export const MapCard = ({
                 )}
               </div>
               {memberCount === 1 && map.assignedMembers[0] ? (
-                <MemberName member={map.assignedMembers[0]} className="text-xs" />
+                <MemberName
+                  member={map.assignedMembers[0]}
+                  className="text-xs"
+                />
               ) : memberCount > 1 ? (
                 <span className="text-xs text-muted-foreground">
                   {memberCount}
@@ -345,7 +361,9 @@ export const MapCard = ({
                     "h-7 p-0 gap-1",
                     assignmentDisabled ? "w-auto px-1.5" : "w-7",
                   )}
-                  onClick={() => !assignmentDisabled && onSelfAssignClick?.(map.id)}
+                  onClick={() =>
+                    !assignmentDisabled && onSelfAssignClick?.(map.id)
+                  }
                   disabled={assignmentDisabled}
                 >
                   <UserPlus className="w-3.5 h-3.5" />

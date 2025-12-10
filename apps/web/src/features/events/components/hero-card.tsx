@@ -108,8 +108,15 @@ export const HeroCard = ({
             </div>
             {canManage && (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                <DropdownMenuTrigger
+                  asChild
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                  >
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>

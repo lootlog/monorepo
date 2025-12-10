@@ -67,18 +67,27 @@ const LocationSection = ({
   // Calculate covered maps count (only when window is OPEN)
   const coveredCount =
     windowStatus === "OPEN"
-      ? maps.filter((map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT").length
+      ? maps.filter(
+          (map) => getMapStatus(map, presenceData) === "ASSIGNED_PRESENT",
+        ).length
       : 0;
 
   return (
-    <div className={cn("rounded-lg border", isUngrouped ? "border-dashed border-muted-foreground/30" : "border-border")}>
+    <div
+      className={cn(
+        "rounded-lg border",
+        isUngrouped
+          ? "border-dashed border-muted-foreground/30"
+          : "border-border",
+      )}
+    >
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
           "w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-left transition-colors",
           "hover:bg-muted/50",
-          isUngrouped && "text-muted-foreground"
+          isUngrouped && "text-muted-foreground",
         )}
       >
         {isExpanded ? (
@@ -89,7 +98,15 @@ const LocationSection = ({
         <span className="truncate">{title}</span>
         <span className="ml-auto text-xs text-muted-foreground shrink-0">
           {windowStatus === "OPEN" ? (
-            <span className={cn(coveredCount === maps.length ? "text-green-500" : coveredCount > 0 ? "text-yellow-500" : "text-destructive")}>
+            <span
+              className={cn(
+                coveredCount === maps.length
+                  ? "text-green-500"
+                  : coveredCount > 0
+                    ? "text-yellow-500"
+                    : "text-destructive",
+              )}
+            >
               {coveredCount}/{maps.length}
             </span>
           ) : (
@@ -98,7 +115,14 @@ const LocationSection = ({
         </span>
       </button>
       {isExpanded && (
-        <div className={cn("p-2 pt-0", vertical ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2")}>
+        <div
+          className={cn(
+            "p-2 pt-0",
+            vertical
+              ? "flex flex-col gap-2"
+              : "grid grid-cols-1 sm:grid-cols-2 gap-2",
+          )}
+        >
           {maps.map((map) => {
             const status = getMapStatus(map, presenceData);
             const style = STATUS_STYLES[status];
@@ -150,7 +174,8 @@ export const EventMapGrid = ({
     permissions?.includes(Permission.ADMIN) ||
     permissions?.includes(Permission.OWNER);
 
-  const totalMaps = locations.reduce((sum, loc) => sum + loc.maps.length, 0) + maps.length;
+  const totalMaps =
+    locations.reduce((sum, loc) => sum + loc.maps.length, 0) + maps.length;
 
   if (totalMaps === 0) {
     return (
@@ -164,7 +189,13 @@ export const EventMapGrid = ({
   // If no locations exist, render maps directly (legacy behavior)
   if (locations.length === 0 && maps.length > 0) {
     return (
-      <div className={vertical ? "flex flex-col gap-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2"}>
+      <div
+        className={
+          vertical
+            ? "flex flex-col gap-2"
+            : "grid grid-cols-1 sm:grid-cols-2 gap-2"
+        }
+      >
         {maps.map((map) => {
           const status = getMapStatus(map, presenceData);
           const style = STATUS_STYLES[status];

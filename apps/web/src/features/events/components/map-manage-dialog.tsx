@@ -366,9 +366,7 @@ export const MapManageDialog = ({
                   size="sm"
                   className="h-8 gap-1.5"
                   onClick={handleCreateLocation}
-                  disabled={
-                    createLocation.isPending || !newLocationName.trim()
-                  }
+                  disabled={createLocation.isPending || !newLocationName.trim()}
                 >
                   {createLocation.isPending ? (
                     <Loader2 className="size-3 animate-spin" />
@@ -525,7 +523,9 @@ export const MapManageDialog = ({
                               variant="ghost"
                               size="sm"
                               className="w-full justify-start h-7 text-xs"
-                              onClick={() => handleLoadTemplate(template, loc.id)}
+                              onClick={() =>
+                                handleLoadTemplate(template, loc.id)
+                              }
                               disabled={addMap.isPending}
                             >
                               {loc.name}
