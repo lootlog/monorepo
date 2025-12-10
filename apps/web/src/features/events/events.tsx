@@ -8,7 +8,7 @@ import { Trophy, Plus, Swords, Calendar, AlertCircle } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Event, useEvents } from "@/features/events/hooks/use-events";
+import { type Event, useEvents } from "@/features/events/hooks/queries/use-events";
 import { EventCreateDialog } from "./components/event-create-dialog";
 
 export const Events = () => {
@@ -39,7 +39,7 @@ export const Events = () => {
   return (
     <ScrollArea className="h-full bg-background/50">
       <div className="flex flex-col gap-4">
-        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="p-2 rounded-lg bg-primary/10">
               <Trophy className="size-4 text-primary" />
@@ -67,8 +67,8 @@ export const Events = () => {
           </div>
         ) : events?.length === 0 ? (
           <div className="px-3">
-            <Card className="flex flex-col items-center justify-center h-64 gap-4 bg-card/40 backdrop-blur-sm">
-              <Trophy className="w-16 h-16 text-muted-foreground" />
+            <Card className="flex flex-col items-center justify-center py-12 gap-3 bg-card/40 backdrop-blur-sm">
+              <Trophy className="w-12 h-12 text-muted-foreground opacity-50" />
               <p className="text-muted-foreground">{t("events.noEvents")}</p>
               <Button onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
@@ -85,17 +85,17 @@ export const Events = () => {
                 params={{ guildId: guildId ?? "", eventId: event.id }}
               >
                 <Card
-                  className={`p-4 bg-card/40 backdrop-blur-sm hover:bg-card/60 transition-all cursor-pointer ${
+                  className={`p-3 bg-card/40 backdrop-blur-sm hover:bg-card/60 transition-all cursor-pointer ${
                     event.active
                       ? "border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:border-yellow-500/70"
                       : "border-border hover:border-primary/30"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="relative">
                         <Trophy
-                          className={`w-5 h-5 ${event.active ? "text-yellow-500" : "text-muted-foreground"}`}
+                          className={`w-4 h-4 ${event.active ? "text-yellow-500" : "text-muted-foreground"}`}
                         />
                         {event.active && (
                           <span className="absolute -top-1 -right-1 flex h-2 w-2">
@@ -105,17 +105,17 @@ export const Events = () => {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">{event.name}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                          <div className="flex items-center gap-1.5">
-                            <Swords className="w-4 h-4" />
+                        <h3 className="font-semibold text-base">{event.name}</h3>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+                          <div className="flex items-center gap-1">
+                            <Swords className="w-3.5 h-3.5" />
                             <span>
                               {event.heroNpcs?.length || 0}{" "}
                               {t("events.heroes.title").toLowerCase()}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4" />
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
                             <span>
                               {format(
                                 new Date(event.startsAt || event.createdAt),

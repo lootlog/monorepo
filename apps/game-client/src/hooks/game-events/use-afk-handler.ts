@@ -21,7 +21,7 @@ export const useAfkHandler = () => {
 
       if (connected && joinedGuilds.length > 0) {
         const socket = getSocket();
-        socket.emit(GatewayEvent.EVENT_PRESENCE_UPDATE as any, {
+        socket.emit(GatewayEvent.PRESENCE_UPDATE as any, {
           isAfk,
           mapId: Game.map.id,
           mapName: Game.map.name,

@@ -33,7 +33,10 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import type { UserGuildData } from 'src/guilds/types/guild.types';
-import type { EventPresence } from 'src/gateway/types/socket-user.type';
+import type {
+  EventPresence,
+  PlayerPresence,
+} from 'src/gateway/types/socket-user.type';
 
 @WebSocketGateway({
   namespace:
@@ -96,15 +99,30 @@ export class Gateway {
             client.data.guilds,
           );
 
-          // Broadcast event presence disconnect to all guild rooms
-          if (client.data.eventPresence) {
+          // Broadcast player presence disconnect to all guild rooms
+          if (client.data.playerPresence) {
             const guildIds = getGuildIds(client.data.guilds);
             for (const guildId of guildIds) {
-              this.server.to(guildId).emit(GatewayEvent.EVENT_PRESENCE_UPDATE, {
+              this.server.to(guildId).emit(GatewayEvent.PRESENCE_UPDATE, {
                 guildId,
                 discordId: client.data.discordId,
+                sessionId: client.data.sessionId,
                 disconnected: true,
               });
+
+              // Publish coverage check for disconnect (player left map)
+              if (client.data.playerPresence.mapName) {
+                this.amqpConnection.publish(
+                  DEFAULT_EXCHANGE_NAME,
+                  RoutingKey.PRESENCE_COVERAGE_CHECK,
+                  {
+                    guildId,
+                    mapName: client.data.playerPresence.mapName,
+                    discordId: client.data.discordId,
+                    hasPlayer: false,
+                  },
+                );
+              }
             }
           }
         }
@@ -193,6 +211,39 @@ export class Gateway {
       // Trigger Discord role refresh for game-client users (fire-and-forget, rate limited)
       if (client.data.platform === Platform.GAME) {
         this.guildsService.triggerGameClientDiscordRefresh(discordId, userId);
+      }
+
+      // Emit initial player presence if game client with player data
+      if (player && client.data.platform === Platform.GAME) {
+        const playerPresence: PlayerPresence = {
+          world: player.world,
+          name: player.name,
+          characterId: player.characterId,
+          accountId: player.accountId,
+          icon: player.icon,
+          lvl: player.lvl,
+          prof: player.prof,
+          mapId: undefined,
+          mapName: player.location?.map,
+          isAfk: false,
+          updatedAt: Date.now(),
+          sessionId: client.id,
+        };
+
+        client.data.playerPresence = playerPresence;
+
+        // Broadcast to all guilds
+        for (const gId of guildIds) {
+          this.server.to(gId).emit(GatewayEvent.PRESENCE_UPDATE, {
+            guildId: gId,
+            discordId,
+            player: playerPresence,
+          });
+        }
+
+        this.logger.debug(
+          `Emitted initial presence for ${discordId}: ${JSON.stringify(playerPresence)}`,
+        );
       }
 
       client.emit(GatewayEvent.JOIN, {
@@ -344,55 +395,113 @@ export class Gateway {
 
   @UseFilters(new BaseWsExceptionFilter())
   @UsePipes(new ValidationPipe())
+  @SubscribeMessage(GatewayEvent.PRESENCE_UPDATE)
+  handlePresenceUpdate(
+    @WsDiscordId() discordId: string,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: EventPresenceUpdateDto,
+  ): void {
+    if (!client.data?.guilds || !client.data?.player) {
+      this.logger.warn(
+        `User ${discordId} tried to update presence without joining first or without player data`,
+      );
+      return;
+    }
+
+    const guildIds = getGuildIds(client.data.guilds);
+    const { player } = client.data;
+
+    // Update presence in socket.data (merged with existing data)
+    const existingPresence = client.data.playerPresence;
+    const playerPresence: PlayerPresence = {
+      world: player.world,
+      name: player.name,
+      characterId: player.characterId,
+      accountId: player.accountId,
+      icon: player.icon,
+      lvl: player.lvl,
+      prof: player.prof,
+      mapId: data.mapId ?? existingPresence?.mapId,
+      mapName: data.mapName ?? existingPresence?.mapName,
+      isAfk: data.isAfk ?? existingPresence?.isAfk ?? false,
+      updatedAt: Date.now(),
+      sessionId: client.id,
+    };
+
+    client.data.playerPresence = playerPresence;
+
+    // Broadcast to all guild rooms
+    for (const guildId of guildIds) {
+      this.server.to(guildId).emit(GatewayEvent.PRESENCE_UPDATE, {
+        guildId,
+        discordId,
+        player: playerPresence,
+      });
+
+      // Publish coverage check events to API for gap tracking
+      if (data.mapName !== undefined || data.isAfk !== undefined) {
+        const oldMapName = existingPresence?.mapName;
+        const newMapName = playerPresence.mapName;
+
+        // If player left a map (changed to different map or no map)
+        if (oldMapName && oldMapName !== newMapName) {
+          this.amqpConnection.publish(
+            DEFAULT_EXCHANGE_NAME,
+            RoutingKey.PRESENCE_COVERAGE_CHECK,
+            {
+              guildId,
+              mapName: oldMapName,
+              discordId,
+              hasPlayer: false,
+              isAfk: playerPresence.isAfk,
+            },
+          );
+        }
+
+        // If player entered a new map or changed AFK status
+        if (newMapName) {
+          this.amqpConnection.publish(
+            DEFAULT_EXCHANGE_NAME,
+            RoutingKey.PRESENCE_COVERAGE_CHECK,
+            {
+              guildId,
+              mapName: newMapName,
+              discordId,
+              hasPlayer: true,
+              isAfk: playerPresence.isAfk,
+            },
+          );
+        }
+      }
+    }
+
+    this.logger.debug(
+      `Updated player presence for ${discordId}: ${JSON.stringify(playerPresence)}`,
+    );
+  }
+
+  /** @deprecated Use handlePresenceUpdate with PRESENCE_UPDATE event instead */
+  @UseFilters(new BaseWsExceptionFilter())
+  @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.EVENT_PRESENCE_UPDATE)
   handleEventPresenceUpdate(
     @WsDiscordId() discordId: string,
     @ConnectedSocket() client: Socket,
     @MessageBody() data: EventPresenceUpdateDto,
   ): void {
-    if (!client.data?.guilds) {
-      this.logger.warn(
-        `User ${discordId} tried to update presence without joining first`,
-      );
-      return;
-    }
-
-    const guildIds = getGuildIds(client.data.guilds);
-
-    // Update presence in socket.data (merged with existing data)
-    const existingPresence = client.data.eventPresence;
-    const presenceData: EventPresence = {
-      mapId: data.mapId ?? existingPresence?.mapId,
-      mapName: data.mapName ?? existingPresence?.mapName,
-      isAfk: data.isAfk ?? existingPresence?.isAfk ?? false,
-      updatedAt: Date.now(),
-    };
-
-    client.data.eventPresence = presenceData;
-
-    // Broadcast to all guild rooms
-    for (const guildId of guildIds) {
-      this.server.to(guildId).emit(GatewayEvent.EVENT_PRESENCE_UPDATE, {
-        guildId,
-        discordId,
-        ...presenceData,
-      });
-    }
-
-    this.logger.debug(
-      `Updated event presence for ${discordId}: ${JSON.stringify(presenceData)}`,
-    );
+    // Delegate to new handler
+    this.handlePresenceUpdate(discordId, client, data);
   }
 
   @UseFilters(new BaseWsExceptionFilter())
   @UsePipes(new ValidationPipe())
-  @SubscribeMessage('event:presence:fetch')
-  async handleEventPresenceFetch(
+  @SubscribeMessage(GatewayEvent.PRESENCE_FETCH)
+  async handlePlayerPresenceFetch(
     @ConnectedSocket() client: Socket,
     @MessageBody() { guildId }: { guildId: string },
-  ): Promise<Record<string, EventPresence>> {
+  ): Promise<Record<string, PlayerPresence[]>> {
     this.logger.debug(
-      `[EventPresenceFetch] User ${client.data?.discordId} fetching presence for guild ${guildId}, rooms: ${[...client.rooms].join(', ')}`,
+      `[PresenceFetch] User ${client.data?.discordId} fetching presence for guild ${guildId}, rooms: ${[...client.rooms].join(', ')}`,
     );
 
     if (!client.rooms.has(guildId)) {
@@ -403,19 +512,35 @@ export class Gateway {
     }
 
     const socketsInRoom = await this.server.in(guildId).fetchSockets();
-    const result: Record<string, EventPresence> = {};
+    const result: Record<string, PlayerPresence[]> = {};
 
     for (const socket of socketsInRoom) {
-      if (socket.data.eventPresence) {
-        result[socket.data.discordId] = socket.data.eventPresence;
+      if (socket.data.playerPresence) {
+        const discordId = socket.data.discordId;
+        if (!result[discordId]) {
+          result[discordId] = [];
+        }
+        result[discordId].push(socket.data.playerPresence);
       }
     }
 
     this.logger.debug(
-      `[EventPresenceFetch] Presence data for guild ${guildId}: ${JSON.stringify(result)}`,
+      `[PresenceFetch] Presence data for guild ${guildId}: ${JSON.stringify(result)}`,
     );
 
     return result;
+  }
+
+  /** @deprecated Use handlePlayerPresenceFetch with PRESENCE_FETCH event instead */
+  @UseFilters(new BaseWsExceptionFilter())
+  @UsePipes(new ValidationPipe())
+  @SubscribeMessage('event:presence:fetch')
+  async handleEventPresenceFetch(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() { guildId }: { guildId: string },
+  ): Promise<Record<string, PlayerPresence[]>> {
+    // Delegate to new handler
+    return this.handlePlayerPresenceFetch(client, { guildId });
   }
 
   @UseFilters(new BaseWsExceptionFilter())

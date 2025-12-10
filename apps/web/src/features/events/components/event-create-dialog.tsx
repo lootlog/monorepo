@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { useCreateEvent } from "../hooks/use-create-event";
+import { useCreateEvent } from "../hooks/mutations/use-create-event";
 import {
   useMapTemplates,
   type MapTemplate,

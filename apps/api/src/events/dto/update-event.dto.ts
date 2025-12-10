@@ -91,4 +91,19 @@ export class UpdateEventDto {
   @IsOptional()
   @IsObject()
   mapsCountMultipliers?: Record<string, number>;
+
+  @ApiPropertyOptional({
+    description: 'Minutes before minSpawnTime when assignments are allowed',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  assignmentTimeoutMinutes?: number;
+
+  @ApiPropertyOptional({
+    description: 'Whether to automatically calculate points on kill',
+  })
+  @IsOptional()
+  @IsBoolean()
+  autoCalculatePoints?: boolean;
 }

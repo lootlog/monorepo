@@ -286,4 +286,24 @@ export class GatewayService {
       .to(data.guildId)
       .emit(GatewayEvent.EVENT_RANKING_UPDATE, data);
   }
+
+  handleEventRespawnWindowOpened(data: {
+    guildId: string;
+    eventId: string;
+    heroId: string;
+  }) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED, data);
+  }
+
+  handleEventRespawnWindowClosed(data: {
+    guildId: string;
+    eventId: string;
+    heroId: string;
+  }) {
+    this.gateway.server
+      .to(data.guildId)
+      .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED, data);
+  }
 }

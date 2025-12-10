@@ -2,7 +2,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Skull, ChevronRight, Frown } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
-import { useRecentHeroKills } from "../hooks/use-recent-hero-kills";
+import { Button } from "@lootlog/ui/components/button";
+import { useRecentHeroKills } from "../hooks/queries/use-recent-hero-kills";
 import { KillHistoryCard } from "./kill-history-card";
 
 interface RecentKillsPreviewProps {
@@ -30,9 +31,9 @@ export const RecentKillsPreview = ({
 
   if (isLoading) {
     return (
-      <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Skull className="w-5 h-5" />
+      <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+        <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+          <Skull className="w-4 h-4" />
           {t("events.kills.recentTitle")}
         </h2>
         <div className="flex items-center justify-center h-32">
@@ -43,20 +44,20 @@ export const RecentKillsPreview = ({
   }
 
   return (
-    <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Skull className="w-5 h-5" />
+    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
+      <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+        <Skull className="w-4 h-4" />
         {t("events.kills.recentTitle")}
       </h2>
 
       {!kills || kills.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-          <Frown className="w-8 h-8 mb-2" />
+        <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+          <Frown className="w-8 h-8 mb-2 opacity-50" />
           <p className="text-sm">{t("events.kills.noKills")}</p>
         </div>
       ) : (
         <>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {kills.map((kill) => (
               <KillHistoryCard
                 key={kill.id}
@@ -77,14 +78,14 @@ export const RecentKillsPreview = ({
                   : "/$guildId/events/$eventId/kills"
               }
               params={
-                heroId
-                  ? { guildId, eventId, heroId }
-                  : { guildId, eventId }
+                heroId ? { guildId, eventId, heroId } : { guildId, eventId }
               }
-              className="flex items-center justify-center gap-2 p-3 mt-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="block mt-3"
             >
-              {t("events.kills.viewAll")}
-              <ChevronRight className="w-4 h-4" />
+              <Button variant="outline" className="w-full" size="sm">
+                {t("events.kills.viewAll")}
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
             </Link>
           )}
         </>

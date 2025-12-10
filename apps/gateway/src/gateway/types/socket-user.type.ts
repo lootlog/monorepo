@@ -24,11 +24,38 @@ export type SocketUserPlayer = {
   clanId?: number;
 };
 
+/**
+ * @deprecated Use PlayerPresence instead. Kept for backward compatibility.
+ */
 export type EventPresence = {
   mapId?: number;
   mapName?: string;
   isAfk: boolean;
   updatedAt: number;
+};
+
+/**
+ * Full player presence data including character information.
+ * Supports multiple characters per user (one per socket session).
+ */
+export type PlayerPresence = {
+  // Player data (from SocketUserPlayer)
+  world: string;
+  name: string;
+  characterId: string;
+  accountId: string;
+  icon: string;
+  lvl: string;
+  prof: string;
+
+  // Location/presence data
+  mapId?: number;
+  mapName?: string;
+  isAfk: boolean;
+  updatedAt: number;
+
+  // Session identifier (for multi-character support)
+  sessionId: string;
 };
 
 export type SocketUser = {
@@ -39,7 +66,10 @@ export type SocketUser = {
   player?: SocketUserPlayer;
   status?: UserPresenceStatus;
   guilds?: UserGuildData[];
+  /** @deprecated Use playerPresence instead */
   eventPresence?: EventPresence;
+  /** Full player presence with character data */
+  playerPresence?: PlayerPresence;
   subscriptionMode: SubscriptionMode;
   activeGuildId?: string;
 };

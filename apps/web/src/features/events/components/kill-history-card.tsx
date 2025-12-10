@@ -10,7 +10,8 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { HeroKill } from "../hooks/use-hero-kill-history";
+import { NpcTile } from "@/components/tiles";
+import type { HeroKill } from "../hooks/queries/use-hero-kill-history";
 import { KillParticipantsList } from "./kill-participants-list";
 
 interface KillHistoryCardProps {
@@ -65,16 +66,30 @@ export const KillHistoryCard = ({
 
   if (minimal) {
     const content = (
-      <div className="p-3 rounded-lg border border-border/50 bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
+      <div className="p-3 rounded-lg border border-border bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <Skull className="w-4 h-4 text-red-500 shrink-0" />
+            {kill.heroNpc.npcIcon ? (
+              <NpcTile
+                npc={{
+                  id: kill.heroNpc.npcId ?? undefined,
+                  name: kill.heroNpc.npcName,
+                  icon: kill.heroNpc.npcIcon,
+                }}
+              />
+            ) : (
+              <Skull className="w-4 h-4 text-red-500 shrink-0" />
+            )}
             <div className="min-w-0">
               {showHeroName && (
-                <p className="font-medium text-sm truncate">{kill.heroNpc.npcName}</p>
+                <p className="font-medium text-sm truncate">
+                  {kill.heroNpc.npcName}
+                </p>
               )}
               <p className="text-xs text-muted-foreground">
-                {format(new Date(kill.killedAt), "d MMM, HH:mm", { locale: pl })}
+                {format(new Date(kill.killedAt), "d MMM, HH:mm", {
+                  locale: pl,
+                })}
               </p>
             </div>
           </div>
@@ -114,19 +129,31 @@ export const KillHistoryCard = ({
   return (
     <div
       className={cn(
-        "p-4 rounded-lg border border-border/50 bg-card/30 hover:bg-card/50 transition-colors",
+        "p-3 rounded-lg border border-border/50 bg-card/30 hover:bg-card/50 transition-colors",
         expanded && "bg-card/50",
       )}
     >
-      <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Skull className="w-5 h-5 text-red-500 shrink-0" />
+          {kill.heroNpc.npcIcon ? (
+            <NpcTile
+              npc={{
+                id: kill.heroNpc.npcId ?? undefined,
+                name: kill.heroNpc.npcName,
+                icon: kill.heroNpc.npcIcon,
+              }}
+            />
+          ) : (
+            <Skull className="w-5 h-5 text-red-500 shrink-0" />
+          )}
           <div className="min-w-0">
             {showHeroName && (
               <p className="font-semibold truncate">{kill.heroNpc.npcName}</p>
             )}
             <p className="text-sm text-muted-foreground">
-              {format(new Date(kill.killedAt), "d MMM yyyy, HH:mm", { locale: pl })}
+              {format(new Date(kill.killedAt), "d MMM yyyy, HH:mm", {
+                locale: pl,
+              })}
             </p>
           </div>
         </div>
@@ -159,7 +186,7 @@ export const KillHistoryCard = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-3 text-sm">
+      <div className="flex items-center justify-between mb-2 text-sm">
         <div className="flex items-center gap-1 text-muted-foreground">
           <Users className="w-4 h-4" />
           <span>

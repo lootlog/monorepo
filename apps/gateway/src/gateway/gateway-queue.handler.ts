@@ -724,4 +724,44 @@ export class GatewayQueueHandler {
     this.gatewayService.handleEventRankingUpdate(data);
     this.logger.log(`Margo event ranking update for guild: ${data.guildId}`);
   }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+    queue: Queue.EVENT_RESPAWN_WINDOW_OPENED,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventRespawnWindowOpened(data: {
+    guildId: string;
+    eventId: string;
+    heroId: string;
+  }) {
+    this.gatewayService.handleEventRespawnWindowOpened(data);
+    this.logger.log(
+      `Margo event respawn window opened for guild: ${data.guildId}`,
+    );
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED,
+    queue: Queue.EVENT_RESPAWN_WINDOW_CLOSED,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventRespawnWindowClosed(data: {
+    guildId: string;
+    eventId: string;
+    heroId: string;
+  }) {
+    this.gatewayService.handleEventRespawnWindowClosed(data);
+    this.logger.log(
+      `Margo event respawn window closed for guild: ${data.guildId}`,
+    );
+  }
 }

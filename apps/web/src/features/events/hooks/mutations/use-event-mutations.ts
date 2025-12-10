@@ -15,6 +15,8 @@ export interface UpdateEventData {
   timeOfDayMultipliers?: TimeOfDayMultiplier[];
   trackersMultipliers?: Record<number, number>; // {count: multiplier}
   mapsCountMultipliers?: Record<number, number>; // {count: multiplier}
+  assignmentTimeoutMinutes?: number; // Minutes before minSpawnTime when assignments are allowed
+  autoCalculatePoints?: boolean; // Whether to automatically calculate points on kill
 }
 
 interface HeroMapData {

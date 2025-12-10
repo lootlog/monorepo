@@ -3,8 +3,8 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, ChevronLeft, Skull, Loader2 } from "lucide-react";
-import { useEvent } from "./hooks/use-event";
-import { useHeroKillHistory } from "./hooks/use-hero-kill-history";
+import { useEvent } from "./hooks/queries/use-event";
+import { useHeroKillHistory } from "./hooks/queries/use-hero-kill-history";
 import { KillHistoryCard } from "./components/kill-history-card";
 
 export const HeroKillsHistory = () => {
@@ -60,7 +60,7 @@ export const HeroKillsHistory = () => {
     <ScrollArea className="h-full bg-background/50">
       <div className="flex flex-col gap-3">
         {/* Header */}
-        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-4">
+        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
           <Link
             to="/$guildId/events/$eventId/heroes/$heroId"
             params={{
@@ -90,20 +90,20 @@ export const HeroKillsHistory = () => {
           </div>
         </div>
 
-        <div className="px-3 pb-6">
+        <div className="px-3 pb-4">
           {allKills.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Skull className="w-12 h-12 mb-4 opacity-50" />
-              <p>{t("events.kills.noKills")}</p>
+            <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+              <Skull className="w-8 h-8 mb-2 opacity-50" />
+              <p className="text-sm">{t("events.kills.noKills")}</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {allKills.map((kill) => (
                 <KillHistoryCard key={kill.id} kill={kill} expanded />
               ))}
 
               {/* Load more */}
-              <div className="py-4 flex items-center justify-center">
+              <div className="py-3 flex items-center justify-center">
                 {isFetchingNextPage ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />

@@ -43,4 +43,6 @@ export enum Queue {
   EVENT_MAP_STATUS_UPDATE = 'gateway-event-map-status-update',
   EVENT_HERO_KILLED = 'gateway-event-hero-killed',
   EVENT_RANKING_UPDATE = 'gateway-event-ranking-update',
+  EVENT_RESPAWN_WINDOW_OPENED = 'gateway-event-respawn-window-opened',
+  EVENT_RESPAWN_WINDOW_CLOSED = 'gateway-event-respawn-window-closed',
 }

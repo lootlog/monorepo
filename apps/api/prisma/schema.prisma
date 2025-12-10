@@ -504,10 +504,12 @@ model Event {
   updatedAt DateTime  @updatedAt
 
   // Scoring multipliers configuration
-  basePointsPerKill    Int   @default(100) // Base points per kill before multipliers
-  timeOfDayMultipliers Json? // [{from: "06:00", to: "12:00", multiplier: 1.5}, ...]
-  trackersMultipliers  Json? // {1: 3.0, 2: 2.5, 3: 2.0, 4: 1.5, 5: 1.0} - fewer trackers = higher multiplier
-  mapsCountMultipliers Json? // {1: 1.0, 2: 1.2, 3: 1.5, ...} - more maps = higher multiplier
+  basePointsPerKill        Int     @default(100) // Base points per kill before multipliers
+  timeOfDayMultipliers     Json? // [{from: "06:00", to: "12:00", multiplier: 1.5}, ...]
+  trackersMultipliers      Json? // {1: 3.0, 2: 2.5, 3: 2.0, 4: 1.5, 5: 1.0} - fewer trackers = higher multiplier
+  mapsCountMultipliers     Json? // {1: 1.0, 2: 1.2, 3: 1.5, ...} - more maps = higher multiplier
+  assignmentTimeoutMinutes Int     @default(5) // Minutes before minSpawnTime when assignments are allowed
+  autoCalculatePoints      Boolean @default(true) // Whether to automatically calculate points on kill
 
   guild    Guild          @relation(fields: [guildId], references: [id])
   heroNpcs EventHeroNpc[]
@@ -525,12 +527,34 @@ model EventMap {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  heroNpc         EventHeroNpc       @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  heroNpc         EventHeroNpc           @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
   assignedMembers Member[]
   presenceLogs    EventPresenceLog[]
+  coverageGaps    EventMapCoverageGap[]
 
   @@unique([heroNpcId, mapId])
   @@index([mapId])
+}
+
+enum CoverageGapType {
+  UNASSIGNED // No member is assigned to the map
+  UNCOVERED  // Members assigned but no one is present on the map
+}
+
+model EventMapCoverageGap {
+  id              String          @id @default(cuid())
+  mapId           String
+  heroNpcId       String
+  gapType         CoverageGapType
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationSeconds Int?
+
+  map     EventMap     @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  heroNpc EventHeroNpc @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+
+  @@index([mapId, gapType, endedAt])
+  @@index([heroNpcId, endedAt])
 }
 
 model EventHeroNpc {
@@ -541,9 +565,10 @@ model EventHeroNpc {
   npcIcon   String?
   createdAt DateTime @default(now())
 
-  event Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  kills EventHeroKill[]
-  maps  EventMap[]
+  event        Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  kills        EventHeroKill[]
+  maps         EventMap[]
+  coverageGaps EventMapCoverageGap[]
 
   @@unique([eventId, npcName])
   @@index([npcId])
@@ -604,6 +629,7 @@ model EventRanking {
   id               String   @id @default(cuid())
   eventId          String
   memberId         Int
+  heroNpcName      String
   totalPoints      Int      @default(0)
   totalKills       Int      @default(0)
   totalTimeSeconds Int      @default(0)
@@ -613,7 +639,7 @@ model EventRanking {
   event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   member Member @relation(fields: [memberId], references: [id])
 
-  @@unique([eventId, memberId])
+  @@unique([eventId, memberId, heroNpcName])
   @@index([eventId, totalPoints(sort: Desc)])
 }
 

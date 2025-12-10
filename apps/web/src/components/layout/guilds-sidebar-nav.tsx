@@ -25,7 +25,7 @@ import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
-import { useEvents } from "@/features/events/hooks/use-events";
+import { useEvents } from "@/features/events/hooks";
 import { ActiveEventsBanner } from "./active-events-banner";
 
 export const GuildsSidebarNav: FC = () => {

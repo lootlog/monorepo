@@ -24,7 +24,7 @@ export const useMapChangeHandler = () => {
     previousMapId.current = mapId;
 
     const socket = getSocket();
-    socket.emit(GatewayEvent.EVENT_PRESENCE_UPDATE as any, {
+    socket.emit(GatewayEvent.PRESENCE_UPDATE as any, {
       mapId,
       mapName,
     });
