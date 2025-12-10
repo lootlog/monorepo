@@ -1,7 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +31,52 @@ import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@lootlog/ui/components/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@lootlog/ui/components/popover";
 import { useEventMutations } from "../hooks/mutations/use-event-mutations";
+import { useLocationMutations } from "../hooks/mutations/use-location-mutations";
 import { toast } from "sonner";
-import { X, MapPin, Search, FileText, Loader2, Plus } from "lucide-react";
+import {
+  X,
+  MapPin,
+  Search,
+  FileText,
+  Loader2,
+  Plus,
+  FolderPlus,
+  Pencil,
+  Trash2,
+  GripVertical,
+} from "lucide-react";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
 import {
   useMapTemplates,
   type MapTemplate,
 } from "@/features/guild-settings/map-templates-settings/hooks/use-map-templates";
+
+interface MapData {
+  id: string;
+  mapId: number;
+  mapName: string;
+  locationId?: string | null;
+}
+
+interface LocationData {
+  id: string;
+  name: string;
+  order: number;
+  maps: MapData[];
+}
 
 interface MapManageDialogProps {
   open: boolean;
@@ -31,11 +86,8 @@ interface MapManageDialogProps {
   hero: {
     id: string;
     npcName: string;
-    maps: {
-      id: string;
-      mapId: number;
-      mapName: string;
-    }[];
+    locations?: LocationData[];
+    maps: MapData[];
   };
 }
 
@@ -48,13 +100,84 @@ export const MapManageDialog = ({
 }: MapManageDialogProps) => {
   const { t } = useTranslation();
   const { addMap, deleteMap } = useEventMutations(guildId, eventId);
+  const {
+    createLocation,
+    updateLocation,
+    deleteLocation,
+    reorderLocations,
+    assignMapToLocation,
+  } = useLocationMutations(guildId, eventId, hero.id);
   const { data: gameMaps } = useGameMaps();
-  const { data: templates } = useMapTemplates();
+  const { data: templates } = useMapTemplates({ guildId });
   const [searchQuery, setSearchQuery] = useState("");
+  const [newLocationName, setNewLocationName] = useState("");
+  const [editingLocation, setEditingLocation] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
+    null,
+  );
+
+  // Local state for locations to handle drag & drop smoothly
+  const [localLocations, setLocalLocations] = useState<LocationData[]>(
+    hero.locations ?? [],
+  );
+
+  // Sync local state when hero.locations changes (but not during reorder)
+  useEffect(() => {
+    if (!reorderLocations.isPending) {
+      setLocalLocations(hero.locations ?? []);
+    }
+  }, [hero.locations, reorderLocations.isPending]);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || localLocations.length === 0) return;
+
+    const oldIndex = localLocations.findIndex((loc) => loc.id === active.id);
+    const newIndex = localLocations.findIndex((loc) => loc.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newOrder = arrayMove(localLocations, oldIndex, newIndex);
+      const locationIds = newOrder.map((loc) => loc.id);
+
+      // Update local state immediately for smooth UI
+      setLocalLocations(newOrder);
+
+      // Then send to server (don't await - fire and forget)
+      reorderLocations.mutate(
+        { locationIds },
+        {
+          onError: () => {
+            // Revert on error
+            setLocalLocations(hero.locations ?? []);
+            toast.error(t("events.locations.errors.updateFailed"));
+          },
+        },
+      );
+    }
+  };
+
+  // Get all maps (from locations + ungrouped)
+  const allMapsFromLocations = hero.locations?.flatMap((loc) => loc.maps) ?? [];
+  const allMaps = [...allMapsFromLocations, ...hero.maps];
+  const addedMapIds = new Set(allMaps.map((m) => m.mapId));
 
   const filteredGameMaps = useMemo(() => {
     if (!gameMaps) return [];
-    const addedMapIds = new Set(hero.maps.map((m) => m.mapId));
     return gameMaps
       .filter(
         (map) =>
@@ -63,14 +186,22 @@ export const MapManageDialog = ({
             map.id.toString().includes(searchQuery)),
       )
       .slice(0, 50);
-  }, [gameMaps, hero.maps, searchQuery]);
+  }, [gameMaps, addedMapIds, searchQuery]);
 
   const handleAddMapFromGame = async (gameMap: GameMap) => {
     try {
-      await addMap.mutateAsync({
+      const result = await addMap.mutateAsync({
         heroId: hero.id,
         data: { mapId: gameMap.id, mapName: gameMap.name },
       });
+
+      // If a location is selected, assign the map to it
+      if (selectedLocationId && result?.id) {
+        await assignMapToLocation.mutateAsync({
+          mapId: result.id,
+          data: { locationId: selectedLocationId },
+        });
+      }
     } catch (error) {
       const typedError = error as { response?: { status?: number } };
       if (typedError.response?.status === 400) {
@@ -92,9 +223,11 @@ export const MapManageDialog = ({
     }
   };
 
-  const handleLoadTemplate = async (template: MapTemplate) => {
-    const existingMapIds = new Set(hero.maps.map((m) => m.mapId));
-    const mapsToAdd = template.maps.filter((m) => !existingMapIds.has(m.id));
+  const handleLoadTemplate = async (
+    template: MapTemplate,
+    targetLocationId: string | null,
+  ) => {
+    const mapsToAdd = template.maps.filter((m) => !addedMapIds.has(m.id));
 
     if (mapsToAdd.length === 0) {
       toast.info(t("events.maps.allTemplatesAdded"));
@@ -102,12 +235,20 @@ export const MapManageDialog = ({
     }
 
     const results = await Promise.allSettled(
-      mapsToAdd.map((mapItem) =>
-        addMap.mutateAsync({
+      mapsToAdd.map(async (mapItem) => {
+        const result = await addMap.mutateAsync({
           heroId: hero.id,
           data: { mapId: mapItem.id, mapName: mapItem.name },
-        }),
-      ),
+        });
+        // Assign to selected location if one is selected
+        if (targetLocationId && result?.id) {
+          await assignMapToLocation.mutateAsync({
+            mapId: result.id,
+            data: { locationId: targetLocationId },
+          });
+        }
+        return result;
+      }),
     );
 
     const addedCount = results.filter((r) => r.status === "fulfilled").length;
@@ -121,11 +262,70 @@ export const MapManageDialog = ({
     }
   };
 
-  const hasLotsOfMaps = hero.maps.length > 10;
+  const handleCreateLocation = async () => {
+    if (!newLocationName.trim()) return;
+    try {
+      await createLocation.mutateAsync({ name: newLocationName.trim() });
+      setNewLocationName("");
+      toast.success(t("events.locations.createSuccess"));
+    } catch (error) {
+      const typedError = error as { response?: { status?: number } };
+      if (typedError.response?.status === 400) {
+        toast.error(t("events.locations.errors.duplicateName"));
+      } else {
+        toast.error(t("events.locations.errors.createFailed"));
+      }
+    }
+  };
+
+  const handleUpdateLocation = async () => {
+    if (!editingLocation || !editingLocation.name.trim()) return;
+    try {
+      await updateLocation.mutateAsync({
+        locationId: editingLocation.id,
+        data: { name: editingLocation.name.trim() },
+      });
+      setEditingLocation(null);
+      toast.success(t("events.locations.updateSuccess"));
+    } catch (error) {
+      const typedError = error as { response?: { status?: number } };
+      if (typedError.response?.status === 400) {
+        toast.error(t("events.locations.errors.duplicateName"));
+      } else {
+        toast.error(t("events.locations.errors.updateFailed"));
+      }
+    }
+  };
+
+  const handleDeleteLocation = async (locationId: string) => {
+    try {
+      await deleteLocation.mutateAsync(locationId);
+      toast.success(t("events.locations.deleteSuccess"));
+    } catch {
+      toast.error(t("events.locations.errors.deleteFailed"));
+    }
+  };
+
+  const handleMapLocationChange = async (
+    mapId: string,
+    newLocationId: string | null,
+  ) => {
+    try {
+      await assignMapToLocation.mutateAsync({
+        mapId,
+        data: { locationId: newLocationId },
+      });
+    } catch {
+      toast.error(t("events.locations.errors.assignFailed"));
+    }
+  };
+
+  const totalMapsCount = allMaps.length;
+  const hasLotsOfMaps = totalMapsCount > 10;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -144,39 +344,133 @@ export const MapManageDialog = ({
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-5 space-y-5">
+            {/* Locations Management */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("events.locations.title")}
+              </Label>
+
+              {/* Create new location */}
+              <div className="flex gap-2">
+                <Input
+                  value={newLocationName}
+                  onChange={(e) => setNewLocationName(e.target.value)}
+                  placeholder={t("events.locations.namePlaceholder")}
+                  className="h-8 text-sm flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCreateLocation();
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5"
+                  onClick={handleCreateLocation}
+                  disabled={
+                    createLocation.isPending || !newLocationName.trim()
+                  }
+                >
+                  {createLocation.isPending ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <FolderPlus className="size-3" />
+                  )}
+                  {t("events.locations.create")}
+                </Button>
+              </div>
+
+              {/* Existing locations */}
+              {localLocations.length > 0 && (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={localLocations.map((loc) => loc.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-1.5">
+                      {localLocations.map((location) => (
+                        <SortableLocationItem
+                          key={location.id}
+                          location={location}
+                          editingLocation={editingLocation}
+                          setEditingLocation={setEditingLocation}
+                          handleUpdateLocation={handleUpdateLocation}
+                          handleDeleteLocation={handleDeleteLocation}
+                          isDeleting={deleteLocation.isPending}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </div>
+
+            {/* Maps display grouped by location */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.assigned")}
-                {hero.maps.length > 0 && (
+                {totalMapsCount > 0 && (
                   <span className="ml-1.5 text-foreground">
-                    ({hero.maps.length})
+                    ({totalMapsCount})
                   </span>
                 )}
               </Label>
 
-              {hero.maps.length > 0 ? (
-                <ScrollArea
-                  className={hasLotsOfMaps ? "h-[120px]" : undefined}
-                >
-                  <div className="flex flex-wrap gap-1.5">
-                    {hero.maps.map((map) => (
-                      <div
-                        key={map.id}
-                        className="group inline-flex items-center gap-1 pl-2 pr-1 py-0.5 bg-primary/10 hover:bg-primary/15 rounded border border-primary/20 transition-colors"
-                      >
-                        <span className="text-[11px] font-medium text-primary">
-                          {map.mapName}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMap(map.id)}
-                          className="p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
-                          disabled={deleteMap.isPending}
-                        >
-                          <X className="size-2.5" />
-                        </button>
+              {totalMapsCount > 0 ? (
+                <ScrollArea className={hasLotsOfMaps ? "h-[140px]" : undefined}>
+                  <div className="space-y-3">
+                    {/* Maps in locations */}
+                    {hero.locations?.map((location) =>
+                      location.maps.length > 0 ? (
+                        <div key={location.id} className="space-y-1">
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase">
+                            {location.name}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {location.maps.map((map) => (
+                              <MapChip
+                                key={map.id}
+                                map={map}
+                                locations={hero.locations ?? []}
+                                onDelete={() => handleDeleteMap(map.id)}
+                                onLocationChange={(locId) =>
+                                  handleMapLocationChange(map.id, locId)
+                                }
+                                isDeleting={deleteMap.isPending}
+                                t={t}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null,
+                    )}
+
+                    {/* Ungrouped maps */}
+                    {hero.maps.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-medium text-muted-foreground/60 uppercase">
+                          {t("events.locations.noLocation")}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {hero.maps.map((map) => (
+                            <MapChip
+                              key={map.id}
+                              map={map}
+                              locations={hero.locations ?? []}
+                              onDelete={() => handleDeleteMap(map.id)}
+                              onLocationChange={(locId) =>
+                                handleMapLocationChange(map.id, locId)
+                              }
+                              isDeleting={deleteMap.isPending}
+                              t={t}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </ScrollArea>
               ) : (
@@ -195,21 +489,51 @@ export const MapManageDialog = ({
                 </Label>
                 <div className="flex flex-wrap gap-1.5">
                   {templates.map((template) => (
-                    <Button
-                      key={template.id}
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs gap-1.5"
-                      onClick={() => handleLoadTemplate(template)}
-                      disabled={addMap.isPending}
-                    >
-                      <FileText className="size-3" />
-                      {template.name}
-                      <span className="text-muted-foreground">
-                        ({template.maps.length})
-                      </span>
-                      <Plus className="size-3 ml-0.5" />
-                    </Button>
+                    <Popover key={template.id}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5"
+                          disabled={addMap.isPending}
+                        >
+                          <FileText className="size-3" />
+                          {template.name}
+                          <span className="text-muted-foreground">
+                            ({template.maps.length})
+                          </span>
+                          <Plus className="size-3 ml-0.5" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2" align="start">
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">
+                            {t("events.locations.addTo")}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start h-7 text-xs"
+                            onClick={() => handleLoadTemplate(template, null)}
+                            disabled={addMap.isPending}
+                          >
+                            {t("events.locations.noLocation")}
+                          </Button>
+                          {hero.locations?.map((loc) => (
+                            <Button
+                              key={loc.id}
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start h-7 text-xs"
+                              onClick={() => handleLoadTemplate(template, loc.id)}
+                              disabled={addMap.isPending}
+                            >
+                              {loc.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   ))}
                 </div>
               </div>
@@ -219,6 +543,36 @@ export const MapManageDialog = ({
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.searchMaps")}
               </Label>
+
+              {/* Target location selector */}
+              {hero.locations && hero.locations.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {t("events.locations.addTo")}:
+                  </span>
+                  <Select
+                    value={selectedLocationId ?? "none"}
+                    onValueChange={(v) =>
+                      setSelectedLocationId(v === "none" ? null : v)
+                    }
+                  >
+                    <SelectTrigger className="h-7 text-xs w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        {t("events.locations.noLocation")}
+                      </SelectItem>
+                      {hero.locations.map((loc) => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                 <Input
@@ -287,5 +641,159 @@ export const MapManageDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+  );
+};
+
+// SortableLocationItem component
+interface SortableLocationItemProps {
+  location: LocationData;
+  editingLocation: { id: string; name: string } | null;
+  setEditingLocation: (loc: { id: string; name: string } | null) => void;
+  handleUpdateLocation: () => void;
+  handleDeleteLocation: (id: string) => void;
+  isDeleting: boolean;
+}
+
+const SortableLocationItem = ({
+  location,
+  editingLocation,
+  setEditingLocation,
+  handleUpdateLocation,
+  handleDeleteLocation,
+  isDeleting,
+}: SortableLocationItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: location.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 px-2 py-1.5 rounded border bg-muted/30"
+    >
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing touch-none"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-3 text-muted-foreground/50" />
+      </button>
+      {editingLocation?.id === location.id ? (
+        <Input
+          value={editingLocation.name}
+          onChange={(e) =>
+            setEditingLocation({
+              ...editingLocation,
+              name: e.target.value,
+            })
+          }
+          className="h-6 text-xs flex-1"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleUpdateLocation();
+            if (e.key === "Escape") setEditingLocation(null);
+          }}
+          onBlur={handleUpdateLocation}
+        />
+      ) : (
+        <span className="text-xs flex-1">{location.name}</span>
+      )}
+      <span className="text-[10px] text-muted-foreground">
+        ({location.maps.length})
+      </span>
+      <button
+        type="button"
+        onClick={() =>
+          setEditingLocation({
+            id: location.id,
+            name: location.name,
+          })
+        }
+        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <Pencil className="size-3" />
+      </button>
+      <button
+        type="button"
+        onClick={() => handleDeleteLocation(location.id)}
+        className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+        disabled={isDeleting}
+      >
+        <Trash2 className="size-3" />
+      </button>
+    </div>
+  );
+};
+
+// MapChip component with location selector
+interface MapChipProps {
+  map: { id: string; mapId: number; mapName: string };
+  locations: LocationData[];
+  onDelete: () => void;
+  onLocationChange: (locationId: string | null) => void;
+  isDeleting: boolean;
+  t: (key: string) => string;
+}
+
+const MapChip = ({
+  map,
+  locations,
+  onDelete,
+  onLocationChange,
+  isDeleting,
+  t,
+}: MapChipProps) => {
+  const [showSelect, setShowSelect] = useState(false);
+
+  return (
+    <div className="group inline-flex items-center gap-1 pl-2 pr-1 py-0.5 bg-primary/10 hover:bg-primary/15 rounded border border-primary/20 transition-colors">
+      <span className="text-[11px] font-medium text-primary">
+        {map.mapName}
+      </span>
+
+      {locations.length > 0 && (
+        <Select
+          open={showSelect}
+          onOpenChange={setShowSelect}
+          onValueChange={(v) => onLocationChange(v === "none" ? null : v)}
+        >
+          <SelectTrigger className="h-4 w-4 p-0 border-0 bg-transparent hover:bg-primary/20 rounded">
+            <GripVertical className="size-2.5 text-primary/60" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">
+              {t("events.locations.noLocation")}
+            </SelectItem>
+            {locations.map((loc) => (
+              <SelectItem key={loc.id} value={loc.id}>
+                {loc.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className="p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
+        disabled={isDeleting}
+      >
+        <X className="size-2.5" />
+      </button>
+    </div>
   );
 };

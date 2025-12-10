@@ -519,21 +519,39 @@ model Event {
   @@index([world])
 }
 
-model EventMap {
+model EventMapLocation {
   id        String   @id @default(cuid())
   heroNpcId String
-  mapId     Int
-  mapName   String
+  name      String
+  order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  heroNpc EventHeroNpc @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  maps    EventMap[]
+
+  @@unique([heroNpcId, name])
+  @@index([heroNpcId, order])
+}
+
+model EventMap {
+  id         String   @id @default(cuid())
+  heroNpcId  String
+  locationId String?
+  mapId      Int
+  mapName    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   heroNpc         EventHeroNpc           @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  location        EventMapLocation?      @relation(fields: [locationId], references: [id], onDelete: SetNull)
   assignedMembers Member[]
   presenceLogs    EventPresenceLog[]
   coverageGaps    EventMapCoverageGap[]
 
   @@unique([heroNpcId, mapId])
   @@index([mapId])
+  @@index([locationId])
 }
 
 enum CoverageGapType {
@@ -568,6 +586,7 @@ model EventHeroNpc {
   event        Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
   kills        EventHeroKill[]
   maps         EventMap[]
+  locations    EventMapLocation[]
   coverageGaps EventMapCoverageGap[]
 
   @@unique([eventId, npcName])

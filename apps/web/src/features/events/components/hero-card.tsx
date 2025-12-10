@@ -15,7 +15,6 @@ import {
   MoreVertical,
   Trash2,
   Map as MapIcon,
-  Target,
 } from "lucide-react";
 import { NpcTile } from "@/components/tiles";
 import { HeroTimerDisplay } from "./hero-timer-display";
@@ -33,6 +32,7 @@ interface Hero {
   npcId: number | null;
   npcName: string;
   npcIcon?: string | null;
+  locations?: { maps: { id: string }[] }[];
   maps?: { id: string; mapId: number; mapName: string }[];
 }
 
@@ -62,6 +62,9 @@ export const HeroCard = ({
   t,
 }: HeroCardProps) => {
   const killCount = stats?.killCount ?? 0;
+  const totalMapsCount =
+    (hero.locations?.reduce((sum, loc) => sum + loc.maps.length, 0) ?? 0) +
+    (hero.maps?.length ?? 0);
 
   return (
     <div className="relative group">
@@ -93,7 +96,7 @@ export const HeroCard = ({
                 <p className="text-xs text-muted-foreground">
                   ID: {hero.npcId} •{" "}
                   {t("events.maps.mapCount", {
-                    count: hero.maps?.length || 0,
+                    count: totalMapsCount,
                   })}{" "}
                   • {t("events.heroes.killCount", { count: killCount })}
                 </p>

@@ -59,9 +59,25 @@ export const EventDetail = () => {
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
   const [selectedHero, setSelectedHero] = useState<{
     id: string;
-    npcId: number;
+    npcId: number | null;
     npcName: string;
-    maps: { id: string; mapId: number; mapName: string }[];
+    locations?: {
+      id: string;
+      name: string;
+      order: number;
+      maps: {
+        id: string;
+        mapId: number;
+        mapName: string;
+        locationId: string | null;
+      }[];
+    }[];
+    maps: {
+      id: string;
+      mapId: number;
+      mapName: string;
+      locationId: string | null;
+    }[];
   } | null>(null);
 
   const canManage =
@@ -148,87 +164,87 @@ export const EventDetail = () => {
               {event.name}
             </h2>
             <div className="flex items-center gap-2 mt-2">
-                <Badge
-                  variant={event.active ? "default" : "secondary"}
-                  className="text-xs"
-                >
-                  {event.active ? t("events.active") : t("events.inactive")}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
-                </Badge>
-                {event.startsAt && (
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(event.startsAt), "d MMM yyyy", {
-                      locale: pl,
-                    })}
-                    {event.endsAt && (
-                      <>
-                        {" - "}
-                        {format(new Date(event.endsAt), "d MMM yyyy", {
-                          locale: pl,
-                        })}
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
+              <Badge
+                variant={event.active ? "default" : "secondary"}
+                className="text-xs"
+              >
+                {event.active ? t("events.active") : t("events.inactive")}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
+              </Badge>
+              {event.startsAt && (
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(event.startsAt), "d MMM yyyy", {
+                    locale: pl,
+                  })}
+                  {event.endsAt && (
+                    <>
+                      {" - "}
+                      {format(new Date(event.endsAt), "d MMM yyyy", {
+                        locale: pl,
+                      })}
+                    </>
+                  )}
+                </span>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {canManage && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditDialogOpen(true)}
-              >
-                <Pencil className="w-4 h-4 mr-2" />
-                Edytuj
-              </Button>
-            )}
-            {canManage &&
-              (event.active ? (
-                <ConfirmDeleteDialog
-                  title="Zakończyć event?"
-                  description="Czy na pewno chcesz zakończyć ten event? Będzie on oznaczony jako nieaktywny."
-                  onConfirm={async () => {
-                    try {
-                      await updateEvent.mutateAsync({
-                        active: false,
-                      });
-                      toast.success("Zakończono event");
-                    } catch (e) {
-                      toast.error("Błąd podczas zmiany statusu");
-                    }
-                  }}
-                  trigger={
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={updateEvent.isPending}
-                    >
-                      Zakończ
-                    </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          {canManage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Edytuj
+            </Button>
+          )}
+          {canManage &&
+            (event.active ? (
+              <ConfirmDeleteDialog
+                title="Zakończyć event?"
+                description="Czy na pewno chcesz zakończyć ten event? Będzie on oznaczony jako nieaktywny."
+                onConfirm={async () => {
+                  try {
+                    await updateEvent.mutateAsync({
+                      active: false,
+                    });
+                    toast.success("Zakończono event");
+                  } catch (e) {
+                    toast.error("Błąd podczas zmiany statusu");
                   }
-                />
-              ) : (
-                <Button
-                  variant="default"
-                  size="sm"
-                  disabled={updateEvent.isPending}
-                  onClick={async () => {
-                    try {
-                      await updateEvent.mutateAsync({
-                        active: true,
-                      });
-                      toast.success("Wznowiono event");
-                    } catch (e) {
-                      toast.error("Błąd podczas zmiany statusu");
-                    }
-                  }}
-                >
-                  Wznów
-                </Button>
+                }}
+                trigger={
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={updateEvent.isPending}
+                  >
+                    Zakończ
+                  </Button>
+                }
+              />
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                disabled={updateEvent.isPending}
+                onClick={async () => {
+                  try {
+                    await updateEvent.mutateAsync({
+                      active: true,
+                    });
+                    toast.success("Wznowiono event");
+                  } catch (e) {
+                    toast.error("Błąd podczas zmiany statusu");
+                  }
+                }}
+              >
+                Wznów
+              </Button>
             ))}
         </div>
       </div>
@@ -290,7 +306,7 @@ export const EventDetail = () => {
                 guildId={guildId ?? ""}
                 heroNpcNames={event.heroNpcs?.map((h) => h.npcName) ?? []}
                 world={event.world}
-                limit={10}
+                limit={5}
               />
             </div>
 

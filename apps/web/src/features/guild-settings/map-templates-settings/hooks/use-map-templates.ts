@@ -15,8 +15,13 @@ export interface MapTemplate {
   createdAt: string;
 }
 
-export const useMapTemplates = () => {
-  const guildId = useGuildId();
+interface UseMapTemplatesOptions {
+  guildId?: string;
+}
+
+export const useMapTemplates = (options?: UseMapTemplatesOptions) => {
+  const contextGuildId = useGuildId();
+  const guildId = options?.guildId ?? contextGuildId;
   const { client } = useApiClient();
 
   return useQuery({

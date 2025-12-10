@@ -49,7 +49,7 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
 
       {/* Footer */}
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
             {loot.location}

@@ -9,5 +9,5 @@ export * from "./use-hero-kill-history";
 export * from "./use-recent-hero-kills";
 export * from "./use-kill-detail";
 export * from "./use-map-coverage-timer";
-export * from "./use-map-active-gap";
+export * from "./use-hero-active-gaps";
 export * from "./use-hero-respawn-config";

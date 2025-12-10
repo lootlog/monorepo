@@ -75,7 +75,7 @@
     "selfAssign": "Weź tę mapę",
     "assignSuccess": "Przypisano do mapy",
     "assignError": "Błąd podczas przypisywania",
-    "unassignSuccess": "Odpisano z mapy",
+    "unassignSuccess": "Wypisano z mapy",
     "unassignError": "Błąd podczas odpisywania",
     "noMaps": "Brak map",
     "assigned": "Przypisane mapy",
@@ -224,5 +224,25 @@
     "saving": "Zapisywanie...",
     "saveSuccess": "Zapisano ustawienia punktów",
     "saveError": "Błąd podczas zapisywania ustawień"
+  },
+  "locations": {
+    "title": "Lokacje",
+    "noLocation": "Bez lokacji",
+    "create": "Utwórz lokację",
+    "edit": "Edytuj lokację",
+    "delete": "Usuń lokację",
+    "nameLabel": "Nazwa lokacji",
+    "namePlaceholder": "np. Północne Lasy",
+    "addTo": "Dodaj do lokacji",
+    "createSuccess": "Lokacja utworzona",
+    "updateSuccess": "Lokacja zaktualizowana",
+    "deleteSuccess": "Lokacja usunięta",
+    "errors": {
+      "createFailed": "Błąd podczas tworzenia lokacji",
+      "updateFailed": "Błąd podczas aktualizacji lokacji",
+      "deleteFailed": "Błąd podczas usuwania lokacji",
+      "duplicateName": "Lokacja o tej nazwie już istnieje",
+      "assignFailed": "Błąd podczas przypisywania mapy do lokacji"
+    }
   }
 }
