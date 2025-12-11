@@ -14,8 +14,36 @@ import { MapCoverageTimeline } from "./map-coverage-timeline";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
 import { formatDuration } from "../hooks/utils/use-local-coverage-timer";
-import type { MapTimelineData } from "../hooks/queries/use-kill-timeline";
+import type { MapTimelineData, MapGap } from "../hooks/queries/use-kill-timeline";
 import type { TFunction } from "i18next";
+
+function clipGapToRange(
+  gap: MapGap,
+  startTime: Date,
+  endTime: Date,
+): MapGap | null {
+  const gapStart = new Date(gap.startedAt);
+  const gapEnd = gap.endedAt ? new Date(gap.endedAt) : endTime;
+
+  // Gap outside of range
+  if (gapEnd <= startTime || gapStart >= endTime) {
+    return null;
+  }
+
+  // Clip to range
+  const clippedStart = gapStart < startTime ? startTime : gapStart;
+  const clippedEnd = gapEnd > endTime ? endTime : gapEnd;
+  const clippedDuration = Math.round(
+    (clippedEnd.getTime() - clippedStart.getTime()) / 1000,
+  );
+
+  return {
+    ...gap,
+    startedAt: clippedStart.toISOString(),
+    endedAt: clippedEnd.toISOString(),
+    durationSeconds: clippedDuration,
+  };
+}
 
 interface KillMapTimelineCardProps {
   map: MapTimelineData;
@@ -30,8 +58,13 @@ export const KillMapTimelineCard = ({
   endTime,
   t,
 }: KillMapTimelineCardProps) => {
-  const hasGaps = map.gaps.length > 0;
-  const totalGapSeconds = map.gaps.reduce(
+  // Clip gaps to respawn window range
+  const clippedGaps = map.gaps
+    .map((gap) => clipGapToRange(gap, startTime, endTime))
+    .filter((gap): gap is MapGap => gap !== null);
+
+  const hasGaps = clippedGaps.length > 0;
+  const totalGapSeconds = clippedGaps.reduce(
     (sum, g) => sum + (g.durationSeconds ?? 0),
     0,
   );
@@ -103,7 +136,7 @@ export const KillMapTimelineCard = ({
           <MapCoverageTimeline
             startTime={startTime}
             endTime={endTime}
-            gaps={map.gaps}
+            gaps={clippedGaps}
           />
           <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
             <span>{format(startTime, "HH:mm:ss")}</span>
@@ -151,7 +184,7 @@ export const KillMapTimelineCard = ({
             <p className="text-xs font-medium text-muted-foreground">
               {t("events.killDetail.mapCoverage.gapDetails")}
             </p>
-            {map.gaps.map((gap) => (
+            {clippedGaps.map((gap) => (
               <div
                 key={gap.id}
                 className="flex items-center justify-between text-xs py-1 px-2 rounded bg-muted/30"

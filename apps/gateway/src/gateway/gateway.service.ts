@@ -260,10 +260,15 @@ export class GatewayService {
     guildId: string;
     eventId: string;
     mapId: string;
+    mapName: string;
   }) {
     this.gateway.server
       .to(data.guildId)
       .emit(GatewayEvent.EVENT_MAP_STATUS_UPDATE, data);
+  }
+
+  async checkPresenceForMap(guildId: string, mapName: string): Promise<void> {
+    await this.gateway.checkPresenceForMap(guildId, mapName);
   }
 
   handleEventHeroKilled(data: {

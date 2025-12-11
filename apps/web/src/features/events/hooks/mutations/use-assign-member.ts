@@ -57,3 +57,50 @@ export const useUnassignMember = () => {
     },
   });
 };
+
+interface SelfAssignOptions {
+  eventId: string;
+  mapId: string;
+}
+
+export const useSelfAssignMember = () => {
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { client } = useApiClient();
+
+  return useMutation({
+    mutationFn: async ({ eventId, mapId }: SelfAssignOptions) => {
+      const response = await client.post(
+        `/guilds/${guildId}/events/${eventId}/maps/${mapId}/self-assign`,
+      );
+      return response.data;
+    },
+    onSuccess: (_, { eventId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["event", guildId, eventId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+    },
+  });
+};
+
+export const useSelfUnassignMember = () => {
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { client } = useApiClient();
+
+  return useMutation({
+    mutationFn: async ({ eventId, mapId }: SelfAssignOptions) => {
+      const response = await client.delete(
+        `/guilds/${guildId}/events/${eventId}/maps/${mapId}/self-assign`,
+      );
+      return response.data;
+    },
+    onSuccess: (_, { eventId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["event", guildId, eventId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+    },
+  });
+};

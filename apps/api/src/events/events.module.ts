@@ -16,6 +16,13 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { PrismaModule } from 'src/db/prisma.module';
 import type { RedisConfig } from 'src/config/redis.config';
 
+// Sub-services
+import { EventEmitterService } from './services/event-emitter.service';
+import { EventPointsService } from './services/event-points.service';
+import { EventTrackingService } from './services/event-tracking.service';
+import { EventKillService } from './services/event-kill.service';
+import { EventRespawnService } from './services/event-respawn.service';
+
 @Module({
   imports: [
     MembersModule,
@@ -45,7 +52,21 @@ import type { RedisConfig } from 'src/config/redis.config';
     BullModule.registerQueue({ name: RESPAWN_WINDOW_QUEUE }),
     PrismaModule,
   ],
-  providers: [EventsService, EventsQueueHandler, RespawnWindowProcessor],
+  providers: [
+    // Facade
+    EventsService,
+
+    // Sub-services
+    EventEmitterService,
+    EventPointsService,
+    EventTrackingService,
+    EventKillService,
+    EventRespawnService,
+
+    // Queue handlers
+    EventsQueueHandler,
+    RespawnWindowProcessor,
+  ],
   controllers: [EventsController],
   exports: [EventsService],
 })

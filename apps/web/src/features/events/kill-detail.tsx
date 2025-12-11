@@ -158,7 +158,7 @@ export const KillDetail = () => {
 
   const { kill, loots, eventConfig } = data;
   const participants = kill.points ?? [];
-  const respawnWindow = formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
+  const respawnWindow = formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
