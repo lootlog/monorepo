@@ -275,7 +275,6 @@ export class PresenceService {
     hasPlayer: boolean,
     isAfk?: boolean,
   ): void {
-    console.log('publishing coverage check');
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.PRESENCE_COVERAGE_CHECK,
