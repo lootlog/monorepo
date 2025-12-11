@@ -146,6 +146,20 @@ export const GuildLayout: FC = () => {
     if (path.startsWith(guildEvents) && eventId) {
       const guildEventDetail = `${guildEvents}/${eventId}`;
 
+      // Kill history: /events/$eventId/kills
+      if (path === `${guildEventDetail}/kills`) {
+        return {
+          breadcrumbs: [
+            { label: guild?.name || "Gildia", path: guildBase },
+            { label: "Eventy", path: guildEvents },
+            { label: event?.name || "Event", path: guildEventDetail },
+            { label: "Historia bić", path: null },
+          ],
+          showBack: true,
+          backPath: guildEventDetail,
+        };
+      }
+
       // Kill detail: /events/$eventId/heroes/$heroId/kills/$killId
       if (killId && path.includes("/kills/")) {
         const heroPath = `${guildEventDetail}/heroes/${heroId}`;

@@ -19,14 +19,15 @@ interface KillHistoryCardProps {
   showHeroName?: boolean;
   expanded?: boolean;
   minimal?: boolean;
+  compact?: boolean;
   guildId?: string;
   eventId?: string;
 }
 
-const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
+const formatRespawnTime = (minSpawn: string, killedAt: string): string => {
   const minDate = new Date(minSpawn);
-  const maxDate = new Date(maxSpawn);
-  const diffSeconds = differenceInSeconds(maxDate, minDate);
+  const killedDate = new Date(killedAt);
+  const diffSeconds = differenceInSeconds(killedDate, minDate);
 
   if (diffSeconds < 60) {
     return `${diffSeconds}s`;
@@ -46,6 +47,7 @@ export const KillHistoryCard = ({
   showHeroName = false,
   expanded = false,
   minimal = false,
+  compact = false,
   guildId,
   eventId,
 }: KillHistoryCardProps) => {
@@ -59,10 +61,96 @@ export const KillHistoryCard = ({
         participants.length
       : 1;
 
-  const respawnWindow = formatRespawnWindow(
+  const respawnTime = formatRespawnTime(
     kill.minSpawnTimeAtKill,
-    kill.maxSpawnTimeAtKill,
+    kill.killedAt,
   );
+
+  if (compact) {
+    const content = (
+      <div className="p-3 rounded-lg border border-border/50 bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            {kill.heroNpc.npcIcon ? (
+              <NpcTile
+                npc={{
+                  id: kill.heroNpc.npcId ?? undefined,
+                  name: kill.heroNpc.npcName,
+                  icon: kill.heroNpc.npcIcon,
+                }}
+              />
+            ) : (
+              <Skull className="w-4 h-4 text-red-500 shrink-0" />
+            )}
+            <div className="min-w-0">
+              {showHeroName && (
+                <p className="font-medium text-sm truncate">
+                  {kill.heroNpc.npcName}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(kill.killedAt), "d MMM, HH:mm", {
+                  locale: pl,
+                })}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 text-sm shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="gap-1">
+                  <Clock className="w-3 h-3" />
+                  {respawnTime}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {t(
+                    "events.kills.respawnTime",
+                    "Czas od respawnu do zabicia",
+                  )}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+
+            {avgMultiplier > 1 && (
+              <Badge variant="secondary" className="font-bold">
+                x{avgMultiplier.toFixed(2)}
+              </Badge>
+            )}
+
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              {participants.length}
+            </span>
+
+            <span className="font-bold text-primary">
+              {t("events.kills.pointCount", { count: totalPoints })}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+
+    if (guildId && eventId) {
+      return (
+        <Link
+          to="/$guildId/events/$eventId/heroes/$heroId/kills/$killId"
+          params={{
+            guildId,
+            eventId,
+            heroId: kill.heroNpcId,
+            killId: kill.id,
+          }}
+        >
+          {content}
+        </Link>
+      );
+    }
+
+    return content;
+  }
 
   if (minimal) {
     const content = (
@@ -163,11 +251,13 @@ export const KillHistoryCard = ({
             <TooltipTrigger asChild>
               <Badge variant="outline" className="gap-1">
                 <Clock className="w-3 h-3" />
-                {respawnWindow}
+                {respawnTime}
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t("events.kills.respawnTimeDescription")}</p>
+              <p>
+                {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
+              </p>
             </TooltipContent>
           </Tooltip>
 
