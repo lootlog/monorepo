@@ -2,12 +2,9 @@ import { Permission } from '@lootlog/types';
 import type { UserGuildData, GuildRole } from 'src/guilds/types/guild.types';
 import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
 import { Platform } from 'src/gateway/enums/platform.enum';
-import { SubscriptionMode } from 'src/gateway/enums/subscription-mode.enum';
 
 export type FeatureName = 'chat' | 'timers' | 'notifications';
 export type TierName = 'base' | 'titans' | 'heroes';
-
-export { SubscriptionMode };
 
 // NPC type string values from database
 const NPC_TYPE_TITAN = 'TITAN';
@@ -75,19 +72,12 @@ export interface RoomCalculationResult {
 export function calculateUserRooms(
   guilds: UserGuildData[],
   discordId: string,
-  mode: SubscriptionMode,
-  activeGuildId?: string,
   platform: Platform = Platform.GAME,
 ): RoomCalculationResult {
   const result: RoomCalculationResult = {
     rooms: [],
     roomsByGuild: new Map(),
   };
-
-  const targetGuilds =
-    mode === SubscriptionMode.SINGLE && activeGuildId
-      ? guilds.filter((g) => g.guild.id === activeGuildId)
-      : guilds;
 
   // Filter features based on platform (web doesn't need chat/notifications)
   const applicableFeatures =
@@ -97,7 +87,7 @@ export function calculateUserRooms(
         )
       : ALL_FEATURE_ROOMS;
 
-  for (const { guild, roles } of targetGuilds) {
+  for (const { guild, roles } of guilds) {
     const guildRooms: string[] = [];
     const isOwner = guild.ownerId === discordId;
 

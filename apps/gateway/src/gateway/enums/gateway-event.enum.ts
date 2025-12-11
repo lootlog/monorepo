@@ -13,15 +13,11 @@ export enum GatewayEvent {
   MEMBERS_REFRESH_JOB_UPDATE = 'members-refresh-job-update',
   PERMISSIONS_UPDATED = 'permissions-updated',
 
-  // Subscription events
-  GUILD_SUBSCRIBE = 'guild:subscribe',
-  SUBSCRIPTION_MODE = 'subscription:mode',
-
-  // Player presence events (renamed from event:* to presence:*)
+  // Player presence events
   PRESENCE_UPDATE = 'presence:update',
   PRESENCE_FETCH = 'presence:fetch',
 
-  // Margo event-specific events (keeping event:* prefix)
+  // Margo event-specific events
   EVENT_MAP_STATUS_UPDATE = 'event:map-status:update',
   EVENT_HERO_KILLED = 'event:hero:killed',
   EVENT_RANKING_UPDATE = 'event:ranking:update',

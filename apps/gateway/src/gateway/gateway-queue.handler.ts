@@ -634,9 +634,8 @@ export class GatewayQueueHandler {
       durable: true,
     },
   })
-  async handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
+  handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
     this.gatewayService.handleEventMapStatusUpdate(data);
-    await this.gatewayService.checkPresenceForMap(data.guildId, data.mapName);
   }
 
   @RabbitSubscribe({

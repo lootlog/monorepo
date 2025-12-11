@@ -145,7 +145,6 @@ export class PresenceService {
         }
       }
     }
-
   }
 
   async fetchGuildPresence(
@@ -217,6 +216,8 @@ export class PresenceService {
     const presenceRoom = buildRoomName(guildId, 'presence');
     const socketsInRoom = await server.in(presenceRoom).fetchSockets();
 
+    console.log('checking presence for map', mapName);
+
     for (const socket of socketsInRoom) {
       const playerPresence = socket.data?.playerPresence;
       if (playerPresence?.mapName === mapName) {
@@ -265,7 +266,6 @@ export class PresenceService {
         player: playerPresence,
       });
     }
-
   }
 
   private publishCoverageCheck(
@@ -275,6 +275,7 @@ export class PresenceService {
     hasPlayer: boolean,
     isAfk?: boolean,
   ): void {
+    console.log('publishing coverage check');
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.PRESENCE_COVERAGE_CHECK,

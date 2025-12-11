@@ -9,7 +9,6 @@ import type {
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
-import { SubscriptionMode } from 'src/gateway/enums/subscription-mode.enum';
 import { Gateway } from 'src/gateway/gateway';
 import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
 import { RedisService } from 'src/lib/redis/redis.service';
@@ -182,8 +181,6 @@ export class GatewayService {
         const { rooms: newFeatureRooms } = calculateUserRooms(
           updatedGuilds,
           discordId,
-          socket.data.subscriptionMode ?? SubscriptionMode.ALL,
-          socket.data.activeGuildId,
           socket.data.platform,
         );
 
