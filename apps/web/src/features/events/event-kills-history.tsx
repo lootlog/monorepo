@@ -3,7 +3,7 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { AlertCircle, Skull, Loader2, Swords, ChevronLeft } from "lucide-react";
+import { AlertCircle, Skull, Loader2, Swords } from "lucide-react";
 import { useEvent } from "./hooks/queries/use-event";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kill-history-card";
@@ -70,21 +70,6 @@ export const EventKillsHistory = () => {
     <div className="flex flex-col h-full min-h-0 bg-background/50">
       {/* Header */}
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-2">
-        {urlHeroId && (
-          <Link
-            to="/$guildId/events/$eventId/heroes/$heroId"
-            params={{
-              guildId: guildId ?? "",
-              eventId: eventId ?? "",
-              heroId: urlHeroId,
-            }}
-            className="mr-2"
-          >
-            <Button variant="ghost" size="icon" className="size-7">
-              <ChevronLeft className="size-4" />
-            </Button>
-          </Link>
-        )}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="p-1.5 rounded-lg bg-red-500/10">
             <Skull className="size-3.5 text-red-500" />
