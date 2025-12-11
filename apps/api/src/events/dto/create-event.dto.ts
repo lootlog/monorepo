@@ -67,7 +67,7 @@ export class CreateEventDto {
 
   @ApiPropertyOptional({
     description: 'Base points awarded per hero kill before multipliers',
-    default: 100,
+    default: 1,
   })
   @IsOptional()
   @IsInt()
@@ -101,4 +101,12 @@ export class CreateEventDto {
   @IsOptional()
   @IsBoolean()
   autoCalculatePoints?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Maximum number of members that can assign to a single map (null or 0 = no limit)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  mapAssignmentCap?: number;
 }

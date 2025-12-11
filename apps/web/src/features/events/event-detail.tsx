@@ -4,12 +4,24 @@ import { useState } from "react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEvent } from "./hooks/queries/use-event";
 import { EventRankingPreview } from "./components/event-ranking-preview";
-import { Trophy, AlertCircle, Swords, Pencil, Plus } from "lucide-react";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
+import {
+  Trophy,
+  AlertCircle,
+  Swords,
+  Pencil,
+  Plus,
+  Clock,
+  Calculator,
+  TrendingUp,
+} from "lucide-react";
 import { EventEditDialog } from "./components/event-edit-dialog";
 import { HeroManageDialog } from "./components/hero-manage-dialog";
 import { MapManageDialog } from "./components/map-manage-dialog";
@@ -163,31 +175,166 @@ export const EventDetail = () => {
             <h2 className="text-sm font-semibold leading-tight">
               {event.name}
             </h2>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <Badge
                 variant={event.active ? "default" : "secondary"}
                 className="text-xs"
               >
                 {event.active ? t("events.active") : t("events.inactive")}
               </Badge>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant={
+                      event.autoCalculatePoints !== false
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="text-xs gap-1 cursor-help"
+                  >
+                    <Calculator className="w-3 h-3" />
+                    {event.autoCalculatePoints !== false
+                      ? t("events.header.autoPointsOn", "Auto")
+                      : t("events.header.autoPointsOff", "Ręczne")}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {event.autoCalculatePoints !== false
+                      ? t(
+                          "events.header.autoPointsEnabledTooltip",
+                          "Punkty są naliczane automatycznie po zabiciu herosa",
+                        )
+                      : t(
+                          "events.header.autoPointsDisabledTooltip",
+                          "Punkty są naliczane ręcznie",
+                        )}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+
               <Badge variant="outline" className="text-xs">
                 {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
               </Badge>
-              {event.startsAt && (
-                <span className="text-xs text-muted-foreground">
-                  {format(new Date(event.startsAt), "d MMM yyyy", {
-                    locale: pl,
-                  })}
-                  {event.endsAt && (
-                    <>
-                      {" - "}
-                      {format(new Date(event.endsAt), "d MMM yyyy", {
-                        locale: pl,
-                      })}
-                    </>
-                  )}
-                </span>
-              )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs gap-1 cursor-help">
+                    <Clock className="w-3 h-3" />
+                    {event.assignmentTimeoutMinutes ?? 5} min
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {t(
+                      "events.header.assignmentTimeoutTooltip",
+                      "Czas przed respawnem, kiedy można się przypisać do mapy",
+                    )}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+
+              {(() => {
+                const hasTimeMultipliers =
+                  event.timeOfDayMultipliers &&
+                  event.timeOfDayMultipliers.length > 0;
+                const hasTrackersMultipliers =
+                  event.trackersMultipliers &&
+                  Object.keys(event.trackersMultipliers).length > 0;
+                const hasMapsMultipliers =
+                  event.mapsCountMultipliers &&
+                  Object.keys(event.mapsCountMultipliers).length > 0;
+
+                const multiplierCount =
+                  (hasTimeMultipliers ? 1 : 0) +
+                  (hasTrackersMultipliers ? 1 : 0) +
+                  (hasMapsMultipliers ? 1 : 0);
+
+                if (multiplierCount === 0) return null;
+
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className="text-xs gap-1 cursor-help"
+                      >
+                        <TrendingUp className="w-3 h-3" />
+                        {t("events.header.multipliers", {
+                          count: multiplierCount,
+                          defaultValue:
+                            multiplierCount === 1
+                              ? "{{count}} mnożnik"
+                              : "{{count}} mnożniki",
+                        })}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <div className="space-y-1.5 text-xs">
+                        {hasTimeMultipliers && (
+                          <div>
+                            <p className="font-medium">
+                              {t(
+                                "events.header.timeMultipliers",
+                                "Mnożniki czasowe",
+                              )}
+                              :
+                            </p>
+                            {event.timeOfDayMultipliers?.map((m, idx) => (
+                              <p key={idx} className="text-muted-foreground">
+                                {m.from} - {m.to}: x{m.multiplier}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                        {hasTrackersMultipliers && (
+                          <div>
+                            <p className="font-medium">
+                              {t(
+                                "events.header.trackersMultipliers",
+                                "Mnożniki za obecność",
+                              )}
+                              :
+                            </p>
+                            {Object.entries(event.trackersMultipliers ?? {})
+                              .sort(([a], [b]) => Number(a) - Number(b))
+                              .map(([count, multiplier]) => (
+                                <p
+                                  key={count}
+                                  className="text-muted-foreground"
+                                >
+                                  {count}+ osób: x{multiplier}
+                                </p>
+                              ))}
+                          </div>
+                        )}
+                        {hasMapsMultipliers && (
+                          <div>
+                            <p className="font-medium">
+                              {t(
+                                "events.header.mapsMultipliers",
+                                "Mnożniki za mapy",
+                              )}
+                              :
+                            </p>
+                            {Object.entries(event.mapsCountMultipliers ?? {})
+                              .sort(([a], [b]) => Number(a) - Number(b))
+                              .map(([count, multiplier]) => (
+                                <p
+                                  key={count}
+                                  className="text-muted-foreground"
+                                >
+                                  {count} map: x{multiplier}
+                                </p>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })()}
             </div>
           </div>
         </div>

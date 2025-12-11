@@ -106,4 +106,12 @@ export class UpdateEventDto {
   @IsOptional()
   @IsBoolean()
   autoCalculatePoints?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Maximum number of members that can assign to a single map (null or 0 = no limit)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  mapAssignmentCap?: number;
 }

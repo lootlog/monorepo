@@ -4,15 +4,22 @@ import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { Permission } from "@lootlog/types";
 import { useEvent } from "./hooks/queries/use-event";
 import { EventRankingTable } from "./components/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
+
+  const { data: permissions } = useGuildPermissions();
+  const canEditPoints =
+    permissions?.includes(Permission.OWNER) ||
+    permissions?.includes(Permission.ADMIN);
 
   const {
     data: event,
@@ -104,7 +111,12 @@ export const EventRankingPage = () => {
           )}
 
           <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
-            <EventRankingTable rankings={filteredRankings} />
+            <EventRankingTable
+              rankings={filteredRankings}
+              guildId={guildId}
+              eventId={eventId}
+              canEdit={canEditPoints}
+            />
           </Card>
         </div>
       </div>

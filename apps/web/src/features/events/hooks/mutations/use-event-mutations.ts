@@ -17,6 +17,8 @@ export interface UpdateEventData {
   mapsCountMultipliers?: Record<number, number>; // {count: multiplier}
   assignmentTimeoutMinutes?: number; // Minutes before minSpawnTime when assignments are allowed
   autoCalculatePoints?: boolean; // Whether to automatically calculate points on kill
+  mapAssignmentCap?: number; // Maximum members per map (0 = no limit)
+  basePointsPerKill?: number; // Base points per kill before multipliers
 }
 
 interface HeroMapData {

@@ -32,7 +32,7 @@ export const GuildLayout: FC = () => {
 
   const getNavigationInfo = () => {
     const path = location.pathname;
-    const { guildId, reservationId, eventId, heroId } = params;
+    const { guildId, reservationId, eventId, heroId, killId } = params;
 
     if (!guildId) {
       return {
@@ -145,6 +145,27 @@ export const GuildLayout: FC = () => {
 
     if (path.startsWith(guildEvents) && eventId) {
       const guildEventDetail = `${guildEvents}/${eventId}`;
+
+      // Kill detail: /events/$eventId/heroes/$heroId/kills/$killId
+      if (killId && path.includes("/kills/")) {
+        const heroPath = `${guildEventDetail}/heroes/${heroId}`;
+        return {
+          breadcrumbs: [
+            { label: guild?.name || "Gildia", path: guildBase },
+            { label: "Eventy", path: guildEvents },
+            { label: event?.name || "Event", path: guildEventDetail },
+            {
+              label:
+                event?.heroNpcs?.find((h) => h.id === heroId)?.npcName ||
+                "Heros",
+              path: heroPath,
+            },
+            { label: killId ?? "Kill", path: null },
+          ],
+          showBack: true,
+          backPath: heroPath,
+        };
+      }
 
       // Hero detail: /events/$eventId/heroes/$heroId
       if (heroId && path.includes("/heroes/")) {

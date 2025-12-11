@@ -198,6 +198,7 @@ export const MapCard = ({
         "p-2 rounded-lg border transition-colors",
         effectiveStyle.bg,
         effectiveStyle.border,
+        windowStatus !== "OPEN" && "hover:border-primary",
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -267,7 +268,7 @@ export const MapCard = ({
                   );
                 })}
                 {memberCount > 3 && (
-                  <div className="w-5 h-5 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center text-[10px] font-medium text-primary">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 border border-background flex items-center justify-center text-[10px] font-medium text-primary">
                     +{memberCount - 3}
                   </div>
                 )}

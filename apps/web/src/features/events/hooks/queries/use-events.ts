@@ -42,6 +42,7 @@ interface EventRanking {
   heroNpcName: string;
   totalPoints: number;
   totalKills: number;
+  pointsModified: boolean;
   member: {
     id: number;
     name: string;
@@ -66,9 +67,11 @@ interface Event {
   heroNpcs: EventHeroNpc[];
   rankings: EventRanking[];
   timeOfDayMultipliers?: TimeOfDayMultiplier[];
-  bettorsMultipliers?: Record<string, number>;
+  trackersMultipliers?: Record<string, number>;
   mapsCountMultipliers?: Record<string, number>;
   assignmentTimeoutMinutes?: number;
+  autoCalculatePoints?: boolean;
+  basePointsPerKill?: number;
 }
 
 interface UseEventsOptions {
