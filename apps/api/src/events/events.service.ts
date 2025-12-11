@@ -875,15 +875,6 @@ export class EventsService {
     return this.killService.getEventHeroTimers(guildId, eventId, world);
   }
 
-  async getEventHeroLoots(
-    guildId: string,
-    eventId: string,
-    world: string,
-    limit = 10,
-  ) {
-    return this.killService.getEventHeroLoots(guildId, eventId, world, limit);
-  }
-
   async getEventHeroStats(guildId: string, eventId: string) {
     return this.killService.getEventHeroStats(guildId, eventId);
   }

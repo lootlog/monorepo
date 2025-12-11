@@ -711,40 +711,6 @@ export class EventsController {
     return this.EventsService.getEventHeroTimers(guildId, eventId, world);
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
-  @UseGuards(PermissionsGuard)
-  @Get('/guilds/:guildId/events/:eventId/loots')
-  @ApiOperation({
-    summary: 'Get event hero loots',
-    description: 'Get recent loots from event hero NPCs',
-  })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiParam({ name: 'eventId', description: 'Event ID' })
-  @ApiQuery({ name: 'world', description: 'World name', required: true })
-  @ApiQuery({
-    name: 'limit',
-    description: 'Number of loots to return',
-    required: false,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'List of loots from event heroes',
-  })
-  @ApiResponse({ status: 404, description: 'Event not found' })
-  async getEventHeroLoots(
-    @Param('guildId') guildId: string,
-    @Param('eventId') eventId: string,
-    @Query('world') world: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.EventsService.getEventHeroLoots(
-      guildId,
-      eventId,
-      world,
-      limit ? parseInt(limit, 10) : 10,
-    );
-  }
-
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/hero-stats')
