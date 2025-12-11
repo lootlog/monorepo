@@ -29,7 +29,4 @@ export enum GatewayEvent {
   EVENT_RANKING_UPDATE = "event:ranking:update",
   EVENT_RESPAWN_WINDOW_OPENED = "event:respawn-window:opened",
   EVENT_RESPAWN_WINDOW_CLOSED = "event:respawn-window:closed",
-
-  /** @deprecated Use PRESENCE_UPDATE instead */
-  EVENT_PRESENCE_UPDATE = "event:presence:update",
 }

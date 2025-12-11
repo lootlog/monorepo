@@ -2,7 +2,6 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
-import type { PresenceLogWithMember } from '../interfaces/presence-log.interface';
 
 /**
  * Service responsible for publishing event-related messages to RabbitMQ.
@@ -36,31 +35,6 @@ export class EventEmitterService {
       );
     } catch (error) {
       this.logger.error('Failed to emit map status update', error);
-    }
-  }
-
-  /**
-   * Emit presence update when a player's presence changes on a map.
-   */
-  async emitPresenceUpdate(
-    guildId: string,
-    eventId: string,
-    mapId: string,
-    presenceLog: PresenceLogWithMember,
-  ): Promise<void> {
-    try {
-      await this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.EVENT_PRESENCE_UPDATE,
-        {
-          guildId,
-          eventId,
-          mapId,
-          presenceLog,
-        },
-      );
-    } catch (error) {
-      this.logger.error('Failed to emit presence update', error);
     }
   }
 

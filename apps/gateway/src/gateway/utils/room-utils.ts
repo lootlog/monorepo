@@ -2,10 +2,12 @@ import { Permission } from '@lootlog/types';
 import type { UserGuildData, GuildRole } from 'src/guilds/types/guild.types';
 import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
 import { Platform } from 'src/gateway/enums/platform.enum';
+import { SubscriptionMode } from 'src/gateway/enums/subscription-mode.enum';
 
-export type SubscriptionMode = 'all' | 'single';
 export type FeatureName = 'chat' | 'timers' | 'notifications';
 export type TierName = 'base' | 'titans' | 'heroes';
+
+export { SubscriptionMode };
 
 // NPC type string values from database
 const NPC_TYPE_TITAN = 'TITAN';
@@ -65,10 +67,6 @@ export function parseRoomName(
   };
 }
 
-export function isFeatureRoom(room: string): boolean {
-  return room.includes(':');
-}
-
 export interface RoomCalculationResult {
   rooms: string[];
   roomsByGuild: Map<string, string[]>;
@@ -87,7 +85,7 @@ export function calculateUserRooms(
   };
 
   const targetGuilds =
-    mode === 'single' && activeGuildId
+    mode === SubscriptionMode.SINGLE && activeGuildId
       ? guilds.filter((g) => g.guild.id === activeGuildId)
       : guilds;
 

@@ -233,8 +233,6 @@ export class EventTrackingService {
       },
     });
 
-    await this.eventEmitter.emitPresenceUpdate(guildId, eventId, map.id, presenceLog);
-
     return presenceLog;
   }
 

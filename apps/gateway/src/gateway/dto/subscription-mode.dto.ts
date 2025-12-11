@@ -1,7 +1,7 @@
 import { IsIn } from 'class-validator';
-import type { SubscriptionMode } from 'src/gateway/types/socket-user.type';
+import { SubscriptionMode } from 'src/gateway/enums/subscription-mode.enum';
 
 export class SubscriptionModeDto {
-  @IsIn(['all', 'single'])
+  @IsIn([SubscriptionMode.ALL, SubscriptionMode.SINGLE])
   mode: SubscriptionMode;
 }

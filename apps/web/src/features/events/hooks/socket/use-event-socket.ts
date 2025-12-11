@@ -4,17 +4,6 @@ import { GatewayEvent } from "@/config/gateway";
 import { useQueryClient } from "@tanstack/react-query";
 import type { EventRanking } from "../queries/use-events";
 
-interface PresenceUpdatePayload {
-  guildId: string;
-  eventId: string;
-  mapId: string;
-  presenceLog: {
-    id: string;
-    memberId: number;
-    isAfk: boolean;
-  };
-}
-
 interface MapStatusUpdatePayload {
   guildId: string;
   eventId: string;
@@ -56,21 +45,6 @@ export const useEventSocket = ({
 }: UseEventSocketOptions) => {
   const { socket, connected } = useGateway();
   const queryClient = useQueryClient();
-
-  const handlePresenceUpdate = useCallback(
-    (payload: PresenceUpdatePayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        queryClient.invalidateQueries({
-          queryKey: ["event", guildId, eventId],
-        });
-        // Invalidate coverage gap timer for this specific map
-        queryClient.invalidateQueries({
-          queryKey: ["map-active-gap", guildId, eventId, payload.mapId],
-        });
-      }
-    },
-    [eventId, guildId, queryClient],
-  );
 
   const handleMapStatusUpdate = useCallback(
     (payload: MapStatusUpdatePayload) => {
@@ -132,7 +106,6 @@ export const useEventSocket = ({
   useEffect(() => {
     if (!socket || !connected || !eventId || !guildId) return;
 
-    socket.on(GatewayEvent.EVENT_PRESENCE_UPDATE, handlePresenceUpdate);
     socket.on(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
     socket.on(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
     socket.on(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
@@ -146,7 +119,6 @@ export const useEventSocket = ({
     );
 
     return () => {
-      socket.off(GatewayEvent.EVENT_PRESENCE_UPDATE, handlePresenceUpdate);
       socket.off(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
       socket.off(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
       socket.off(GatewayEvent.EVENT_RANKING_UPDATE, handleRankingUpdate);
@@ -164,7 +136,6 @@ export const useEventSocket = ({
     connected,
     eventId,
     guildId,
-    handlePresenceUpdate,
     handleMapStatusUpdate,
     handleHeroKilled,
     handleRankingUpdate,

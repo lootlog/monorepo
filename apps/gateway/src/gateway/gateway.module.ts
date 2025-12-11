@@ -13,6 +13,12 @@ import { GuildsModule } from 'src/guilds/guilds.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import { RetryService } from 'src/gateway/retry.service';
 import { PermissionRevalidationService } from './permission-revalidation.service';
+import {
+  ConnectionService,
+  PresenceService,
+  SubscriptionService,
+  ActivityService,
+} from './services';
 
 @Module({
   imports: [
@@ -31,6 +37,10 @@ import { PermissionRevalidationService } from './permission-revalidation.service
     GatewayQueueHandler,
     RetryService,
     PermissionRevalidationService,
+    ConnectionService,
+    PresenceService,
+    SubscriptionService,
+    ActivityService,
   ],
 })
 export class GatewayModule {}
