@@ -38,52 +38,6 @@ export interface KillDetail {
   points: KillDetailParticipant[];
 }
 
-export interface LootItem {
-  id: number;
-  hid: string;
-  name: string;
-  icon: string;
-  stat: string;
-  type: string | null;
-  rarity: string | null;
-  lvl: number | null;
-}
-
-export interface LootPlayer {
-  id: number;
-  name: string;
-  lvl: number | null;
-  prof: string | null;
-  icon: string | null;
-}
-
-export interface LootNpc {
-  id: number;
-  name: string;
-  lvl: number | null;
-  type: string | null;
-  icon: string | null;
-}
-
-export interface MatchingLoot {
-  id: number;
-  uniqueId: string;
-  world: string;
-  source: string;
-  location: string;
-  lootShare: unknown;
-  createdAt: string;
-  updatedAt: string;
-  member: {
-    name: string;
-    avatar: string | null;
-    userId: string;
-  } | null;
-  items: LootItem[];
-  players: LootPlayer[];
-  npcs: LootNpc[];
-}
-
 export interface EventConfig {
   autoCalculatePoints: boolean;
   basePointsPerKill: number;
@@ -98,7 +52,6 @@ export interface EventConfig {
 
 export interface KillDetailResponse {
   kill: KillDetail;
-  loots: MatchingLoot[];
   eventConfig: EventConfig;
 }
 

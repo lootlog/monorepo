@@ -406,7 +406,7 @@ export const HeroDetail = () => {
             <div className="lg:col-span-2 space-y-4">
               {/* Participants */}
               {uniqueMembers.length > 0 && (
-                <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+                <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                   <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     {t("events.participants.title", "Uczestnicy")}
