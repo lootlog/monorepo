@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Event, EventHeroNpc, Prisma } from 'generated/client';
+import { Event, EventHeroNpc } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { EventEmitterService } from './event-emitter.service';
 import { EventPointsService } from './event-points.service';
@@ -469,16 +469,8 @@ export class EventKillService {
       });
     }
 
-    // Calculate points (only if autoCalculatePoints is enabled)
+    // Check if autoCalculatePoints is enabled
     const shouldCalculatePoints = event.autoCalculatePoints !== false;
-    const { points, appliedMultiplier } = shouldCalculatePoints
-      ? this.pointsService.calculateMemberPoints(
-          event,
-          killedAt,
-          heroMaps.length,
-          assignedMemberIds.length,
-        )
-      : { points: 0, appliedMultiplier: 0 };
 
     // Create kill record with points in a transaction
     const kill = await this.prisma.$transaction(async (tx) => {
@@ -513,6 +505,15 @@ export class EventKillService {
             memberId,
             timerData.previousMinSpawnTime ?? undefined,
           );
+
+          // Calculate points per-member using their individual map count
+          const { points, appliedMultiplier } =
+            this.pointsService.calculateMemberPoints(
+              event,
+              killedAt,
+              mapNames.length, // Number of maps THIS member is assigned to
+              assignedMemberIds.length,
+            );
 
           killPointsData.push({
             killId: heroKill.id,
