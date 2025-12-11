@@ -1,24 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { Reorder } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -123,52 +107,31 @@ export const MapManageDialog = ({
   const [localLocations, setLocalLocations] = useState<LocationData[]>(
     hero.locations ?? [],
   );
+  const isDraggingRef = useRef(false);
 
-  // Sync local state when hero.locations changes (but not during reorder)
+  // Sync local state when hero.locations changes (but not during drag)
   useEffect(() => {
-    if (!reorderLocations.isPending) {
+    if (!isDraggingRef.current) {
       setLocalLocations(hero.locations ?? []);
     }
-  }, [hero.locations, reorderLocations.isPending]);
+  }, [hero.locations]);
 
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const handleReorder = (newOrder: LocationData[]) => {
+    setLocalLocations(newOrder);
+  };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id || localLocations.length === 0) return;
-
-    const oldIndex = localLocations.findIndex((loc) => loc.id === active.id);
-    const newIndex = localLocations.findIndex((loc) => loc.id === over.id);
-
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newOrder = arrayMove(localLocations, oldIndex, newIndex);
-      const locationIds = newOrder.map((loc) => loc.id);
-
-      // Update local state immediately for smooth UI
-      setLocalLocations(newOrder);
-
-      // Then send to server (don't await - fire and forget)
-      reorderLocations.mutate(
-        { locationIds },
-        {
-          onError: () => {
-            // Revert on error
-            setLocalLocations(hero.locations ?? []);
-            toast.error(t("events.locations.errors.updateFailed"));
-          },
+  const handleDragEnd = () => {
+    isDraggingRef.current = false;
+    const locationIds = localLocations.map((loc) => loc.id);
+    reorderLocations.mutate(
+      { locationIds },
+      {
+        onError: () => {
+          setLocalLocations(hero.locations ?? []);
+          toast.error(t("events.locations.errors.updateFailed"));
         },
-      );
-    }
+      },
+    );
   };
 
   // Get all maps (from locations + ungrouped)
@@ -379,30 +342,28 @@ export const MapManageDialog = ({
 
               {/* Existing locations */}
               {localLocations.length > 0 && (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
+                <Reorder.Group
+                  axis="y"
+                  values={localLocations}
+                  onReorder={handleReorder}
+                  className="space-y-1.5"
                 >
-                  <SortableContext
-                    items={localLocations.map((loc) => loc.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-1.5">
-                      {localLocations.map((location) => (
-                        <SortableLocationItem
-                          key={location.id}
-                          location={location}
-                          editingLocation={editingLocation}
-                          setEditingLocation={setEditingLocation}
-                          handleUpdateLocation={handleUpdateLocation}
-                          handleDeleteLocation={handleDeleteLocation}
-                          isDeleting={deleteLocation.isPending}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
+                  {localLocations.map((location) => (
+                    <LocationItem
+                      key={location.id}
+                      location={location}
+                      editingLocation={editingLocation}
+                      setEditingLocation={setEditingLocation}
+                      handleUpdateLocation={handleUpdateLocation}
+                      handleDeleteLocation={handleDeleteLocation}
+                      isDeleting={deleteLocation.isPending}
+                      onDragStart={() => {
+                        isDraggingRef.current = true;
+                      }}
+                      onDragEnd={handleDragEnd}
+                    />
+                  ))}
+                </Reorder.Group>
               )}
             </div>
 
@@ -644,53 +605,36 @@ export const MapManageDialog = ({
   );
 };
 
-// SortableLocationItem component
-interface SortableLocationItemProps {
+// LocationItem component
+interface LocationItemProps {
   location: LocationData;
   editingLocation: { id: string; name: string } | null;
   setEditingLocation: (loc: { id: string; name: string } | null) => void;
   handleUpdateLocation: () => void;
   handleDeleteLocation: (id: string) => void;
   isDeleting: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }
 
-const SortableLocationItem = ({
+const LocationItem = ({
   location,
   editingLocation,
   setEditingLocation,
   handleUpdateLocation,
   handleDeleteLocation,
   isDeleting,
-}: SortableLocationItemProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: location.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
+  onDragStart,
+  onDragEnd,
+}: LocationItemProps) => {
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
+    <Reorder.Item
+      value={location}
       className="flex items-center gap-2 px-2 py-1.5 rounded border bg-muted/30"
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
     >
-      <button
-        type="button"
-        className="cursor-grab active:cursor-grabbing touch-none"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="size-3 text-muted-foreground/50" />
-      </button>
+      <GripVertical className="size-3 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />
       {editingLocation?.id === location.id ? (
         <Input
           value={editingLocation.name}
@@ -734,7 +678,7 @@ const SortableLocationItem = ({
       >
         <Trash2 className="size-3" />
       </button>
-    </div>
+    </Reorder.Item>
   );
 };
 
