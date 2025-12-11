@@ -689,4 +689,17 @@ export class GatewayQueueHandler {
   async handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
     this.gatewayService.handleEventRespawnWindowClosed(data);
   }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.PRESENCE_CHECK_REQUEST,
+    queue: Queue.PRESENCE_CHECK_REQUEST,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handlePresenceCheckRequest(data: { guildId: string; mapName: string }) {
+    await this.gatewayService.checkPresenceForMap(data.guildId, data.mapName);
+  }
 }
