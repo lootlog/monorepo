@@ -2,7 +2,6 @@ export * from "./use-events";
 export * from "./use-event";
 export * from "./use-event-hero-timers";
 export * from "./use-event-hero-stats";
-export * from "./use-event-hero-loots";
 export * from "./use-event-loots";
 export * from "./use-event-kill-history";
 export * from "./use-hero-kill-history";
