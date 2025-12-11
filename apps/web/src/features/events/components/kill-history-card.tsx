@@ -61,14 +61,11 @@ export const KillHistoryCard = ({
         participants.length
       : 1;
 
-  const respawnTime = formatRespawnTime(
-    kill.minSpawnTimeAtKill,
-    kill.killedAt,
-  );
+  const respawnTime = formatRespawnTime(kill.minSpawnTimeAtKill, kill.killedAt);
 
   if (compact) {
     const content = (
-      <div className="p-3 rounded-lg border border-border/50 bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
+      <div className="p-3 rounded-lg border border-border hover:border-primary bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {kill.heroNpc.npcIcon ? (
@@ -106,10 +103,7 @@ export const KillHistoryCard = ({
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {t(
-                    "events.kills.respawnTime",
-                    "Czas od respawnu do zabicia",
-                  )}
+                  {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
                 </p>
               </TooltipContent>
             </Tooltip>

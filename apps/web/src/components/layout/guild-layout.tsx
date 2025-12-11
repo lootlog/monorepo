@@ -160,6 +160,27 @@ export const GuildLayout: FC = () => {
         };
       }
 
+      // Hero kills history: /events/$eventId/heroes/$heroId/kills
+      if (heroId && path === `${guildEventDetail}/heroes/${heroId}/kills`) {
+        const heroPath = `${guildEventDetail}/heroes/${heroId}`;
+        return {
+          breadcrumbs: [
+            { label: guild?.name || "Gildia", path: guildBase },
+            { label: "Eventy", path: guildEvents },
+            { label: event?.name || "Event", path: guildEventDetail },
+            {
+              label:
+                event?.heroNpcs?.find((h) => h.id === heroId)?.npcName ||
+                "Heros",
+              path: heroPath,
+            },
+            { label: "Historia bić", path: null },
+          ],
+          showBack: true,
+          backPath: heroPath,
+        };
+      }
+
       // Kill detail: /events/$eventId/heroes/$heroId/kills/$killId
       if (killId && path.includes("/kills/")) {
         const heroPath = `${guildEventDetail}/heroes/${heroId}`;
