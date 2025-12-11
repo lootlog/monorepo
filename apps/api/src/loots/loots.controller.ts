@@ -133,6 +133,16 @@ export class LootsController {
     type: [String],
     description: 'filter by item names',
   })
+  @ApiQuery({
+    name: 'createdAtMin',
+    description: 'Minimum creation date filter (ISO 8601)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'createdAtMax',
+    description: 'Maximum creation date filter (ISO 8601)',
+    required: false,
+  })
   @ApiResponse({
     status: 200,
     description: 'Paginated list of loots',
@@ -173,6 +183,8 @@ export class LootsController {
     @Query('hid') hid?: string,
     @Query('itemNames', new ArrayValidationPipe())
     itemNames?: string[],
+    @Query('createdAtMin') createdAtMin?: string,
+    @Query('createdAtMax') createdAtMax?: string,
   ) {
     const loots = await this.lootsService.fetchLootsByGuildId(
       guild,
@@ -195,6 +207,8 @@ export class LootsController {
         search,
         hid,
         itemNames,
+        createdAtMin,
+        createdAtMax,
       },
     );
     return plainToInstance(LootEntity, loots);
@@ -281,6 +295,16 @@ export class LootsController {
     type: [String],
     description: 'filter by item names',
   })
+  @ApiQuery({
+    name: 'createdAtMin',
+    description: 'Minimum creation date filter (ISO 8601)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'createdAtMax',
+    description: 'Maximum creation date filter (ISO 8601)',
+    required: false,
+  })
   @ApiResponse({
     status: 200,
     description: 'Count of loots matching the filters',
@@ -318,6 +342,8 @@ export class LootsController {
     @Query('hid') hid?: string,
     @Query('itemNames', new ArrayValidationPipe())
     itemNames?: string[],
+    @Query('createdAtMin') createdAtMin?: string,
+    @Query('createdAtMax') createdAtMax?: string,
   ) {
     const count = await this.lootsService.countLootsByGuildId(
       guild,
@@ -340,6 +366,8 @@ export class LootsController {
         search,
         hid,
         itemNames,
+        createdAtMin,
+        createdAtMax,
       },
     );
     return { count };

@@ -790,12 +790,8 @@ export class EventKillService {
       throw new NotFoundException('Kill not found');
     }
 
-    // Get matching loots
-    const loots = await this.getMatchingLootsForKill(kill, guildId);
-
     return {
       kill,
-      loots,
       eventConfig: {
         autoCalculatePoints: kill.heroNpc.event.autoCalculatePoints,
         basePointsPerKill: kill.heroNpc.event.basePointsPerKill,

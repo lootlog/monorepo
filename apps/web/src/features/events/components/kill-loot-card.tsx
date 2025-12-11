@@ -11,14 +11,13 @@ import {
   MARGONEM_CDN_NPCS_URL,
 } from "@/constants/margonem";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
-import type { MatchingLoot } from "../hooks/queries/use-kill-detail";
+import { ItemRarity, type Loot } from "@/hooks/api/loots/use-loots";
 
 const LEGENDARY_GRADIENT =
   "linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(0,0,0,0) 50%, rgba(239,68,68,0.05) 100%)";
 
 interface KillLootCardProps {
-  loot: MatchingLoot;
+  loot: Loot;
 }
 
 export const KillLootCard = ({ loot }: KillLootCardProps) => {

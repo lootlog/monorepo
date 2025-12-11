@@ -59,7 +59,7 @@ export const KillMapsTimelineSection = ({
     .map((m) => m.mapId);
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
       <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
         <Map className="w-4 h-4" />
         {t("events.killDetail.mapCoverage.title")}
@@ -81,7 +81,11 @@ export const KillMapsTimelineSection = ({
         </div>
       </div>
 
-      <Accordion type="multiple" defaultValue={defaultOpenMaps} className="w-full">
+      <Accordion
+        type="multiple"
+        defaultValue={defaultOpenMaps}
+        className="w-full"
+      >
         {sortedMaps.map((map) => (
           <KillMapTimelineCard
             key={map.mapId}

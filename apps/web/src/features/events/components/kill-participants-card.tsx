@@ -142,9 +142,16 @@ const ParticipantRow = ({
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <div className="rounded-lg transition-colors overflow-hidden bg-muted/30">
         <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="flex items-center gap-3 p-3 w-full text-left hover:bg-muted/40 transition-colors"
+          <div
+            role="button"
+            tabIndex={0}
+            className="flex items-center gap-3 p-3 w-full text-left hover:bg-muted/40 transition-colors cursor-pointer"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onToggle();
+              }
+            }}
           >
             <span className="text-xs text-muted-foreground w-5 shrink-0 text-center font-medium">
               #{rank}
@@ -225,7 +232,7 @@ const ParticipantRow = ({
                 isExpanded && "rotate-180",
               )}
             />
-          </button>
+          </div>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
