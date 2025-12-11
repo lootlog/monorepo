@@ -1,4 +1,4 @@
-import { Injectable, Logger, forwardRef, Inject } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import type { Server } from 'socket.io';
 import { omit, groupBy } from 'lodash';
