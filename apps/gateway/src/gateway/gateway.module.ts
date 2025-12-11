@@ -12,7 +12,6 @@ import { GatewayQueueHandler } from 'src/gateway/gateway-queue.handler';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import { RetryService } from 'src/gateway/retry.service';
-import { PermissionRevalidationService } from './permission-revalidation.service';
 import {
   ConnectionService,
   PresenceService,
@@ -36,7 +35,6 @@ import {
     Gateway,
     GatewayQueueHandler,
     RetryService,
-    PermissionRevalidationService,
     ConnectionService,
     PresenceService,
     SubscriptionService,

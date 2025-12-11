@@ -11,8 +11,6 @@ import type { Server } from 'socket.io';
 import type { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
 import type { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 import type { EventPresenceUpdateDto } from 'src/gateway/dto/event-presence-update.dto';
-import type { GuildSubscribeDto } from 'src/gateway/dto/guild-subscribe.dto';
-import type { SubscriptionModeDto } from 'src/gateway/dto/subscription-mode.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { GatewayConfig } from 'src/gateway/constants/gateway-config.constant';
 import { RuntimeEnvironment } from 'src/types/common.types';
@@ -85,7 +83,7 @@ export class Gateway {
     @WsUserId() userId: string,
     @ConnectedSocket() client: Socket,
     @MessageBody()
-    { data: player, subscriptionMode, activeGuildId }: JoinGatewayDto,
+    { data: player }: JoinGatewayDto,
   ): Promise<void> {
     const result = await this.subscriptionService.handleJoin(
       this.server,
@@ -93,8 +91,6 @@ export class Gateway {
       discordId,
       userId,
       player,
-      subscriptionMode,
-      activeGuildId,
     );
 
     client.emit(GatewayEvent.JOIN, result);
@@ -139,38 +135,6 @@ export class Gateway {
     @MessageBody() { guildId }: { guildId: string },
   ): Promise<Record<string, PlayerPresence[]>> {
     return this.presenceService.fetchGuildPresence(this.server, client, guildId);
-  }
-
-  @UseFilters(new BaseWsExceptionFilter())
-  @UsePipes(new ValidationPipe())
-  @SubscribeMessage(GatewayEvent.GUILD_SUBSCRIBE)
-  handleGuildSubscribe(
-    @WsDiscordId() discordId: string,
-    @ConnectedSocket() client: Socket,
-    @MessageBody() { guildId }: GuildSubscribeDto,
-  ): void {
-    const result = this.subscriptionService.subscribeToGuild(
-      client,
-      discordId,
-      guildId,
-    );
-    client.emit(GatewayEvent.GUILD_SUBSCRIBE, result);
-  }
-
-  @UseFilters(new BaseWsExceptionFilter())
-  @UsePipes(new ValidationPipe())
-  @SubscribeMessage(GatewayEvent.SUBSCRIPTION_MODE)
-  handleSubscriptionModeChange(
-    @WsDiscordId() discordId: string,
-    @ConnectedSocket() client: Socket,
-    @MessageBody() { mode }: SubscriptionModeDto,
-  ): void {
-    const result = this.subscriptionService.changeSubscriptionMode(
-      client,
-      discordId,
-      mode,
-    );
-    client.emit(GatewayEvent.SUBSCRIPTION_MODE, result);
   }
 
   async checkPresenceForMap(guildId: string, mapName: string): Promise<void> {

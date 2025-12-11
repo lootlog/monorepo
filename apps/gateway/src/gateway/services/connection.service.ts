@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Platform } from 'src/gateway/enums/platform.enum';
-import { SubscriptionMode } from 'src/gateway/enums/subscription-mode.enum';
 import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
 import type { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
 
@@ -40,8 +39,6 @@ export class ConnectionService {
       userId: userId ?? undefined,
       sessionId: socketId,
       platform,
-      subscriptionMode:
-        platform === Platform.GAME ? SubscriptionMode.ALL : SubscriptionMode.SINGLE,
     };
   }
 
