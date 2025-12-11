@@ -1,21 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type {
-  Event,
-  EventKillPoint,
-  Prisma,
-  PrismaClient,
-} from 'generated/client';
+import type { Event, EventKillPoint } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import type {
   TimeOfDayMultiplier,
   TrackersMultipliers,
   MapsCountMultipliers,
 } from '../interfaces/time-multiplier.interface';
-
-type TransactionClient = Omit<
-  PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
->;
 
 /**
  * Service responsible for points calculation, rankings, and presence statistics.
