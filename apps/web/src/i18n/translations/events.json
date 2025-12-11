@@ -103,7 +103,11 @@
     },
     "clearAll": "Wyczyść przypisania",
     "clearAllSuccess": "Wyczyszczono wszystkie przypisania",
-    "clearAllError": "Błąd podczas czyszczenia przypisań"
+    "clearAllError": "Błąd podczas czyszczenia przypisań",
+    "gap": {
+      "unassigned": "nieprzypisana",
+      "uncovered": "nieobstawiona"
+    }
   },
   "heroes": {
     "title": "Herosi Eventowi",
@@ -177,17 +181,32 @@
     "participants": "Uczestnicy",
     "matchingLoots": "Dopasowane łupy",
     "noLoots": "Brak łupów pasujących do tego bicia",
+    "respawnTime": "Czas respawnu",
+    "respawnTimeDescription": "Czas od minimalnego respawnu do momentu zabicia",
+    "respawnMinLabel": "Min. respawn",
+    "killTimeLabel": "Moment zabicia",
     "multipliers": {
       "title": "Konfiguracja mnożników",
       "basePoints": "Punkty bazowe",
       "timeOfDay": "Pora dnia",
       "trackers": "Liczba tropicieli",
       "maps": "Liczba map"
+    },
+    "mapCoverage": {
+      "title": "Pokrycie map",
+      "covered": "Pokryte",
+      "uncovered": "Nieobstawione",
+      "unassigned": "Nieprzypisane",
+      "assignedMembers": "Przypisani członkowie",
+      "gapDetails": "Szczegóły przerw",
+      "fullCoverage": "Pełne pokrycie - brak przerw"
     }
   },
   "settings": {
     "assignmentTimeout": "Czas na przypisanie (minuty)",
     "assignmentTimeoutDescription": "Ile minut przed minimalnym czasem respawnu można się przypisać do mapy",
+    "mapAssignmentCap": "Limit osób na mapie",
+    "mapAssignmentCapDescription": "Maksymalna liczba osób, które mogą się przypisać do jednej mapy (0 = brak limitu)",
     "autoCalculatePoints": "Automatyczne punkty",
     "autoCalculatePointsDescription": "Automatycznie naliczaj punkty po zabiciu herosa",
     "disabled": "wyłączone"
@@ -195,6 +214,8 @@
   "scoring": {
     "title": "Ustawienia punktów",
     "description": "Konfiguracja mnożników punktów za udział w evencie",
+    "basePoints": "Bazowe punkty za killa",
+    "basePointsDescription": "Punkty bazowe przed mnożnikami (zmiana przeliczy wszystkie historyczne kille)",
     "timeOfDay": {
       "title": "Mnożnik pory dnia",
       "description": "Dodatkowe punkty za obecność o określonych porach",
@@ -224,6 +245,29 @@
     "saving": "Zapisywanie...",
     "saveSuccess": "Zapisano ustawienia punktów",
     "saveError": "Błąd podczas zapisywania ustawień"
+  },
+  "header": {
+    "assignmentTimeoutTooltip": "Czas przed respawnem, kiedy można się przypisać do mapy",
+    "autoPointsOn": "Auto",
+    "autoPointsOff": "Ręczne",
+    "autoPointsEnabledTooltip": "Punkty są naliczane automatycznie po zabiciu herosa",
+    "autoPointsDisabledTooltip": "Punkty są naliczane ręcznie",
+    "multipliers_one": "{{count}} mnożnik",
+    "multipliers_few": "{{count}} mnożniki",
+    "multipliers_many": "{{count}} mnożników",
+    "timeMultipliers": "Mnożniki czasowe",
+    "trackersMultipliers": "Mnożniki za obecność",
+    "mapsMultipliers": "Mnożniki za mapy"
+  },
+  "points": {
+    "edit": "Edytuj punkty",
+    "editSuccess": "Punkty zostały zaktualizowane",
+    "editError": "Błąd podczas aktualizacji punktów",
+    "modified": "Punkty zostały ręcznie zmodyfikowane",
+    "history": "Historia edycji",
+    "historyTypeRanking": "Ranking",
+    "historyTypeKill": "Kill",
+    "noHistory": "Brak historii edycji"
   },
   "locations": {
     "title": "Lokacje",

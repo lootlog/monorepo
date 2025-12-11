@@ -1,0 +1,60 @@
+import { useApiClient } from "@/hooks/api/use-api-client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface UpdateKillPointParams {
+  killId: string;
+  killPointId: string;
+  points: number;
+}
+
+interface UpdateRankingPointsParams {
+  rankingId: string;
+  totalPoints: number;
+}
+
+export const useUpdatePoints = (guildId: string, eventId: string) => {
+  const { client } = useApiClient();
+  const queryClient = useQueryClient();
+
+  const updateKillPoint = useMutation({
+    mutationFn: async ({ killId, killPointId, points }: UpdateKillPointParams) => {
+      const response = await client.patch(
+        `/guilds/${guildId}/events/${eventId}/kills/${killId}/points/${killPointId}`,
+        { points },
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate kill detail query (covers all heroes since we don't know which)
+      queryClient.invalidateQueries({
+        queryKey: ["kill-detail", guildId, eventId],
+        exact: false,
+      });
+      // Invalidate event query to refresh rankings
+      queryClient.invalidateQueries({
+        queryKey: ["event", guildId, eventId],
+      });
+    },
+  });
+
+  const updateRankingPoints = useMutation({
+    mutationFn: async ({ rankingId, totalPoints }: UpdateRankingPointsParams) => {
+      const response = await client.patch(
+        `/guilds/${guildId}/events/${eventId}/ranking/${rankingId}`,
+        { totalPoints },
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate event query to refresh rankings
+      queryClient.invalidateQueries({
+        queryKey: ["event", guildId, eventId],
+      });
+    },
+  });
+
+  return {
+    updateKillPoint,
+    updateRankingPoints,
+  };
+};

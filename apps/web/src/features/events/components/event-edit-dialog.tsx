@@ -53,6 +53,8 @@ interface EventEditDialogProps {
     mapsCountMultipliers?: Record<string, number>;
     assignmentTimeoutMinutes?: number;
     autoCalculatePoints?: boolean;
+    mapAssignmentCap?: number;
+    basePointsPerKill?: number;
   };
 }
 
@@ -63,6 +65,8 @@ interface FormData {
   endsAt: string;
   assignmentTimeoutMinutes: number;
   autoCalculatePoints: boolean;
+  mapAssignmentCap: number;
+  basePointsPerKill: number;
 }
 
 export const EventEditDialog = ({
@@ -85,6 +89,8 @@ export const EventEditDialog = ({
         : "",
       assignmentTimeoutMinutes: event.assignmentTimeoutMinutes ?? 5,
       autoCalculatePoints: event.autoCalculatePoints ?? true,
+      mapAssignmentCap: event.mapAssignmentCap ?? 0,
+      basePointsPerKill: event.basePointsPerKill ?? 1,
     },
   });
 
@@ -127,6 +133,8 @@ export const EventEditDialog = ({
           : "",
         assignmentTimeoutMinutes: event.assignmentTimeoutMinutes ?? 5,
         autoCalculatePoints: event.autoCalculatePoints ?? true,
+        mapAssignmentCap: event.mapAssignmentCap ?? 0,
+        basePointsPerKill: event.basePointsPerKill ?? 1,
       });
       setTimeMultipliers(event.timeOfDayMultipliers ?? []);
       setTrackersMultipliers(
@@ -246,6 +254,8 @@ export const EventEditDialog = ({
           Object.keys(mapsRecord).length > 0 ? mapsRecord : undefined,
         assignmentTimeoutMinutes: data.assignmentTimeoutMinutes,
         autoCalculatePoints: data.autoCalculatePoints,
+        mapAssignmentCap: data.mapAssignmentCap,
+        basePointsPerKill: data.basePointsPerKill,
       });
       toast.success(t("events.scoring.saveSuccess"));
       onOpenChange(false);
@@ -344,6 +354,22 @@ export const EventEditDialog = ({
               </p>
             </div>
 
+            {/* Map Assignment Cap */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("events.settings.mapAssignmentCap", "Limit osób na mapie")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                {...register("mapAssignmentCap", { valueAsNumber: true })}
+                className="h-9 text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("events.settings.mapAssignmentCapDescription", "Maksymalna liczba osób, które mogą się przypisać do jednej mapy (0 = brak limitu)")}
+              </p>
+            </div>
+
             {/* Auto Calculate Points */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg border">
               <div className="flex flex-col">
@@ -370,6 +396,22 @@ export const EventEditDialog = ({
                   <span className="text-[10px] ml-1">({t("events.settings.disabled", "wyłączone")})</span>
                 )}
               </Label>
+
+              {/* Base Points */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">
+                  {t("events.scoring.basePoints", "Bazowe punkty za killa")}
+                </Label>
+                <Input
+                  type="number"
+                  min={1}
+                  {...register("basePointsPerKill", { valueAsNumber: true })}
+                  className="h-9 text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("events.scoring.basePointsDescription", "Punkty bazowe przed mnożnikami (zmiana przeliczy wszystkie historyczne kille)")}
+                </p>
+              </div>
 
               {/* Time of Day */}
               <Collapsible

@@ -85,6 +85,7 @@ export interface MatchingLoot {
 }
 
 export interface EventConfig {
+  autoCalculatePoints: boolean;
   basePointsPerKill: number;
   timeOfDayMultipliers: Array<{
     from: string;

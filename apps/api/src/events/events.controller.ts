@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { Permission } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -36,6 +37,10 @@ import { AssignMapLocationDto } from './dto/assign-map-location.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
 import { CloseRespawnWindowDto } from './dto/close-respawn-window.dto';
 import { OpenRespawnWindowDto } from './dto/open-respawn-window.dto';
+import {
+  UpdateKillPointDto,
+  UpdateRankingPointsDto,
+} from './dto/update-points.dto';
 
 @ApiTags('events')
 @ApiBearerAuth()
@@ -570,6 +575,60 @@ export class EventsController {
     return this.EventsService.getRanking(guildId, eventId);
   }
 
+  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Patch('/guilds/:guildId/events/:eventId/ranking/:rankingId')
+  @ApiOperation({
+    summary: 'Update ranking points',
+    description: 'Manually update total points for a ranking entry (OWNER/ADMIN only)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'rankingId', description: 'Ranking ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Ranking updated',
+  })
+  @ApiResponse({ status: 404, description: 'Ranking not found' })
+  async updateRankingPoints(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('rankingId') rankingId: string,
+    @Body() data: UpdateRankingPointsDto,
+    @UserId() userId: string,
+  ) {
+    return this.EventsService.updateRankingPoints(
+      guildId,
+      eventId,
+      rankingId,
+      data.totalPoints,
+      userId,
+    );
+  }
+
+  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/ranking/:rankingId/history')
+  @ApiOperation({
+    summary: 'Get ranking edit history',
+    description: 'Get the edit history for a ranking entry (OWNER/ADMIN only)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'rankingId', description: 'Ranking ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Edit history returned',
+  })
+  @ApiResponse({ status: 404, description: 'Ranking not found' })
+  async getRankingEditHistory(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('rankingId') rankingId: string,
+  ) {
+    return this.EventsService.getRankingEditHistory(guildId, eventId, rankingId);
+  }
+
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/timers')
@@ -761,6 +820,73 @@ export class EventsController {
     @Param('killId') killId: string,
   ) {
     return this.EventsService.getKillDetail(guildId, eventId, heroId, killId);
+  }
+
+  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Patch('/guilds/:guildId/events/:eventId/kills/:killId/points/:killPointId')
+  @ApiOperation({
+    summary: 'Update kill point',
+    description:
+      'Manually update points for a specific kill participant (OWNER/ADMIN only). Automatically recalculates ranking.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'killId', description: 'Kill ID' })
+  @ApiParam({ name: 'killPointId', description: 'Kill Point ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Kill point updated and ranking recalculated',
+  })
+  @ApiResponse({ status: 404, description: 'Kill point not found' })
+  async updateKillPoint(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('killId') killId: string,
+    @Param('killPointId') killPointId: string,
+    @Body() data: UpdateKillPointDto,
+    @UserId() userId: string,
+  ) {
+    return this.EventsService.updateKillPoint(
+      guildId,
+      eventId,
+      killId,
+      killPointId,
+      data.points,
+      userId,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId/timeline')
+  @ApiOperation({
+    summary: 'Get kill timeline data',
+    description:
+      'Get map timeline data with assignments and gaps for a specific kill',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiParam({ name: 'killId', description: 'Kill ID' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Timeline data with map assignments and coverage gaps during spawn window',
+  })
+  @ApiResponse({ status: 404, description: 'Kill not found' })
+  async getKillTimelineData(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('heroId') heroId: string,
+    @Param('killId') killId: string,
+  ) {
+    return this.EventsService.getKillTimelineData(
+      guildId,
+      eventId,
+      heroId,
+      killId,
+    );
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)

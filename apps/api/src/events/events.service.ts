@@ -245,6 +245,7 @@ export class EventsService {
       mapsCountMultipliers,
       assignmentTimeoutMinutes,
       autoCalculatePoints,
+      basePointsPerKill,
       ...updateData
     } = data;
 
@@ -293,6 +294,9 @@ export class EventsService {
           ...(autoCalculatePoints !== undefined && {
             autoCalculatePoints,
           }),
+          ...(basePointsPerKill !== undefined && {
+            basePointsPerKill,
+          }),
           ...(heroNpcs && {
             heroNpcs: {
               create: heroNpcs.map((npc) => ({
@@ -325,6 +329,14 @@ export class EventsService {
         },
       });
     });
+
+    // Recalculate points if basePointsPerKill changed
+    if (
+      basePointsPerKill !== undefined &&
+      basePointsPerKill !== event.basePointsPerKill
+    ) {
+      await this.recalculateEventPoints(eventId, basePointsPerKill);
+    }
 
     return updated;
   }
@@ -363,11 +375,28 @@ export class EventsService {
       },
       include: {
         assignedMembers: true,
+        heroNpc: {
+          include: {
+            event: {
+              select: {
+                mapAssignmentCap: true,
+              },
+            },
+          },
+        },
       },
     });
 
     if (!map) {
       throw new NotFoundException('Map not found');
+    }
+
+    // Check map assignment cap
+    const cap = map.heroNpc.event.mapAssignmentCap;
+    if (cap && cap > 0 && map.assignedMembers.length >= cap) {
+      throw new BadRequestException(
+        `Map assignment limit reached (${cap} members max)`,
+      );
     }
 
     const wasUnassigned = map.assignedMembers.length === 0;
@@ -381,6 +410,16 @@ export class EventsService {
       },
       include: {
         assignedMembers: true,
+      },
+    });
+
+    // Create assignment history record
+    await this.prisma.eventMapAssignmentHistory.create({
+      data: {
+        mapId,
+        heroNpcId: map.heroNpcId,
+        memberId,
+        assignedAt: new Date(),
       },
     });
 
@@ -434,6 +473,22 @@ export class EventsService {
         assignedMembers: true,
       },
     });
+
+    // Close assignment history records
+    const now = new Date();
+    if (memberId) {
+      // Close specific member's assignment history
+      await this.prisma.eventMapAssignmentHistory.updateMany({
+        where: { mapId, memberId, unassignedAt: null },
+        data: { unassignedAt: now },
+      });
+    } else {
+      // Close all assignment history for this map
+      await this.prisma.eventMapAssignmentHistory.updateMany({
+        where: { mapId, unassignedAt: null },
+        data: { unassignedAt: now },
+      });
+    }
 
     // Open UNASSIGNED gap if no members are left
     if (updated.assignedMembers.length === 0) {
@@ -642,7 +697,7 @@ export class EventsService {
       throw new BadRequestException('Map already exists for this hero');
     }
 
-    return this.prisma.eventMap.create({
+    const map = await this.prisma.eventMap.create({
       data: {
         heroNpcId: heroId,
         mapId: data.mapId,
@@ -652,6 +707,11 @@ export class EventsService {
         assignedMembers: true,
       },
     });
+
+    // Open UNASSIGNED gap for new map (no members assigned yet)
+    await this.openUnassignedGap(map.id, heroId);
+
+    return map;
   }
 
   async deleteMap(
@@ -1863,6 +1923,15 @@ export class EventsService {
         });
       }
 
+      // Close all assignment history records for this hero's maps
+      await tx.eventMapAssignmentHistory.updateMany({
+        where: {
+          mapId: { in: heroMaps.map((m) => m.id) },
+          unassignedAt: null,
+        },
+        data: { unassignedAt: killedAt },
+      });
+
       // Fetch the created points
       const createdPoints = await tx.eventKillPoint.findMany({
         where: { killId: heroKill.id },
@@ -2028,6 +2097,124 @@ export class EventsService {
   }
 
   /**
+   * Recalculate all points for an event when basePointsPerKill changes.
+   * Updates all EventKillPoint records and rebuilds EventRanking aggregations.
+   */
+  async recalculateEventPoints(
+    eventId: string,
+    newBasePoints: number,
+  ): Promise<void> {
+    // Get all EventKillPoint records for this event
+    const killPoints = await this.prisma.eventKillPoint.findMany({
+      where: {
+        kill: {
+          heroNpc: {
+            eventId,
+          },
+        },
+      },
+      include: {
+        kill: {
+          include: {
+            heroNpc: true,
+          },
+        },
+      },
+    });
+
+    if (killPoints.length === 0) {
+      return;
+    }
+
+    // Update all kill points with new base and recalculated final points
+    await this.prisma.$transaction(async (tx) => {
+      for (const killPoint of killPoints) {
+        const newPoints = Math.round(newBasePoints * killPoint.appliedMultiplier);
+        await tx.eventKillPoint.update({
+          where: { id: killPoint.id },
+          data: {
+            basePoints: newBasePoints,
+            points: newPoints,
+          },
+        });
+      }
+
+      // Delete all rankings for this event to rebuild
+      await tx.eventRanking.deleteMany({
+        where: { eventId },
+      });
+
+      // Re-aggregate rankings from updated kill points
+      const updatedKillPoints = await tx.eventKillPoint.findMany({
+        where: {
+          kill: {
+            heroNpc: {
+              eventId,
+            },
+          },
+        },
+        include: {
+          kill: {
+            include: {
+              heroNpc: true,
+            },
+          },
+        },
+      });
+
+      // Group by member and heroNpcName
+      const rankingMap = new Map<
+        string,
+        {
+          memberId: number;
+          heroNpcName: string;
+          totalPoints: number;
+          totalKills: number;
+          totalTimeSeconds: number;
+          afkSum: number;
+        }
+      >();
+
+      for (const kp of updatedKillPoints) {
+        const key = `${kp.memberId}-${kp.kill.heroNpc.npcName}`;
+        const existing = rankingMap.get(key);
+
+        if (existing) {
+          existing.totalPoints += kp.points;
+          existing.totalKills += 1;
+          existing.totalTimeSeconds += kp.timeOnMapSeconds;
+          existing.afkSum += kp.afkPercentage;
+        } else {
+          rankingMap.set(key, {
+            memberId: kp.memberId,
+            heroNpcName: kp.kill.heroNpc.npcName,
+            totalPoints: kp.points,
+            totalKills: 1,
+            totalTimeSeconds: kp.timeOnMapSeconds,
+            afkSum: kp.afkPercentage,
+          });
+        }
+      }
+
+      // Create new ranking records
+      for (const ranking of rankingMap.values()) {
+        await tx.eventRanking.create({
+          data: {
+            eventId,
+            memberId: ranking.memberId,
+            heroNpcName: ranking.heroNpcName,
+            totalPoints: ranking.totalPoints,
+            totalKills: ranking.totalKills,
+            totalTimeSeconds: ranking.totalTimeSeconds,
+            avgAfkPercentage:
+              Math.round((ranking.afkSum / ranking.totalKills) * 100) / 100,
+          },
+        });
+      }
+    });
+  }
+
+  /**
    * Get presence statistics for a member on hero maps.
    */
   async getMemberPresenceStats(
@@ -2185,6 +2372,166 @@ export class EventsService {
     } catch (error) {
       this.logger.error('Failed to emit hero killed event', error);
     }
+  }
+
+  // ========== MANUAL POINTS EDITING ==========
+
+  /**
+   * Update a kill point's points value and recalculate the ranking.
+   */
+  async updateKillPoint(
+    guildId: string,
+    eventId: string,
+    killId: string,
+    killPointId: string,
+    newPoints: number,
+    editedByUserId: string,
+  ) {
+    // Verify the kill point exists and belongs to the correct event/guild
+    const killPoint = await this.prisma.eventKillPoint.findFirst({
+      where: {
+        id: killPointId,
+        killId,
+        kill: {
+          heroNpc: {
+            eventId,
+            event: { guildId },
+          },
+        },
+      },
+      include: {
+        kill: {
+          include: {
+            heroNpc: true,
+          },
+        },
+      },
+    });
+
+    if (!killPoint) {
+      throw new NotFoundException('Kill point not found');
+    }
+
+    const oldPoints = killPoint.points;
+    const delta = newPoints - oldPoints;
+
+    // Update the kill point
+    const updated = await this.prisma.eventKillPoint.update({
+      where: { id: killPointId },
+      data: {
+        points: newPoints,
+        // Update basePoints proportionally if multiplier is non-zero
+        basePoints:
+          killPoint.appliedMultiplier > 0
+            ? Math.round(newPoints / killPoint.appliedMultiplier)
+            : newPoints,
+      },
+    });
+
+    // Update the ranking and create edit history if points changed
+    if (delta !== 0) {
+      // Find the ranking to get its ID and old total points
+      const ranking = await this.prisma.eventRanking.findFirst({
+        where: {
+          eventId,
+          memberId: killPoint.memberId,
+          heroNpcName: killPoint.kill.heroNpc.npcName,
+        },
+      });
+
+      if (ranking) {
+        // Update ranking
+        await this.prisma.eventRanking.update({
+          where: { id: ranking.id },
+          data: {
+            totalPoints: { increment: delta },
+            pointsModified: true,
+          },
+        });
+
+        // Create edit history
+        await this.prisma.eventPointsEditHistory.create({
+          data: {
+            rankingId: ranking.id,
+            previousPoints: ranking.totalPoints,
+            newPoints: ranking.totalPoints + delta,
+            editType: 'KILL_POINT',
+            editedByUserId,
+          },
+        });
+      }
+    }
+
+    return updated;
+  }
+
+  /**
+   * Update a ranking's total points directly.
+   */
+  async updateRankingPoints(
+    guildId: string,
+    eventId: string,
+    rankingId: string,
+    newTotalPoints: number,
+    editedByUserId: string,
+  ) {
+    // Verify the ranking exists and belongs to the correct event/guild
+    const ranking = await this.prisma.eventRanking.findFirst({
+      where: {
+        id: rankingId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!ranking) {
+      throw new NotFoundException('Ranking not found');
+    }
+
+    const previousPoints = ranking.totalPoints;
+
+    // Create edit history
+    await this.prisma.eventPointsEditHistory.create({
+      data: {
+        rankingId,
+        previousPoints,
+        newPoints: newTotalPoints,
+        editType: 'RANKING',
+        editedByUserId,
+      },
+    });
+
+    return this.prisma.eventRanking.update({
+      where: { id: rankingId },
+      data: { totalPoints: newTotalPoints, pointsModified: true },
+    });
+  }
+
+  /**
+   * Get edit history for a ranking.
+   */
+  async getRankingEditHistory(
+    guildId: string,
+    eventId: string,
+    rankingId: string,
+  ) {
+    // Verify the ranking exists and belongs to the correct event/guild
+    const ranking = await this.prisma.eventRanking.findFirst({
+      where: {
+        id: rankingId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!ranking) {
+      throw new NotFoundException('Ranking not found');
+    }
+
+    return this.prisma.eventPointsEditHistory.findMany({
+      where: { rankingId },
+      orderBy: { editedAt: 'desc' },
+    });
   }
 
   // ========== KILL HISTORY ==========
@@ -2394,12 +2741,110 @@ export class EventsService {
       kill,
       loots,
       eventConfig: {
+        autoCalculatePoints: kill.heroNpc.event.autoCalculatePoints,
         basePointsPerKill: kill.heroNpc.event.basePointsPerKill,
         timeOfDayMultipliers: kill.heroNpc.event.timeOfDayMultipliers,
         trackersMultipliers: kill.heroNpc.event.trackersMultipliers,
         mapsCountMultipliers: kill.heroNpc.event.mapsCountMultipliers,
       },
     };
+  }
+
+  /**
+   * Get timeline data for maps during a kill event (assignments and coverage gaps).
+   */
+  async getKillTimelineData(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    killId: string,
+  ) {
+    // Get the kill to find time range
+    const kill = await this.prisma.eventHeroKill.findFirst({
+      where: {
+        id: killId,
+        heroNpcId: heroId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+      select: {
+        minSpawnTimeAtKill: true,
+        killedAt: true,
+      },
+    });
+
+    if (!kill) {
+      throw new NotFoundException('Kill not found');
+    }
+
+    // Get all maps for this hero
+    const maps = await this.prisma.eventMap.findMany({
+      where: { heroNpcId: heroId },
+      select: { id: true, mapName: true, mapId: true },
+    });
+
+    // For each map, get assignments and gaps within time range
+    const results = await Promise.all(
+      maps.map(async (map) => {
+        // Get assignment history overlapping with kill time range
+        const assignments = await this.prisma.eventMapAssignmentHistory.findMany(
+          {
+            where: {
+              mapId: map.id,
+              assignedAt: { lte: kill.killedAt },
+              OR: [
+                { unassignedAt: null },
+                { unassignedAt: { gte: kill.minSpawnTimeAtKill } },
+              ],
+            },
+            include: {
+              member: {
+                select: { id: true, name: true, avatar: true, userId: true },
+              },
+            },
+            orderBy: { assignedAt: 'asc' },
+          },
+        );
+
+        // Get coverage gaps overlapping with kill time range
+        const gaps = await this.prisma.eventMapCoverageGap.findMany({
+          where: {
+            mapId: map.id,
+            startedAt: { lte: kill.killedAt },
+            OR: [
+              { endedAt: null },
+              { endedAt: { gte: kill.minSpawnTimeAtKill } },
+            ],
+          },
+          orderBy: { startedAt: 'asc' },
+        });
+
+        return {
+          mapId: map.id,
+          mapName: map.mapName,
+          numericMapId: map.mapId,
+          assignments: assignments.map((a) => ({
+            memberId: a.memberId,
+            memberName: a.member.name,
+            memberAvatar: a.member.avatar,
+            memberUserId: a.member.userId,
+            assignedAt: a.assignedAt,
+            unassignedAt: a.unassignedAt,
+          })),
+          gaps: gaps.map((g) => ({
+            id: g.id,
+            gapType: g.gapType,
+            startedAt: g.startedAt,
+            endedAt: g.endedAt,
+            durationSeconds: g.durationSeconds,
+          })),
+        };
+      }),
+    );
+
+    return results;
   }
 
   /**
