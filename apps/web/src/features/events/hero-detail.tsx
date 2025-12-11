@@ -26,6 +26,8 @@ import { OpenRespawnWindowDialog } from "./components/open-respawn-window-dialog
 import {
   useAssignMember,
   useUnassignMember,
+  useSelfAssignMember,
+  useSelfUnassignMember,
 } from "./hooks/mutations/use-assign-member";
 import {
   useHeroRespawnConfig,
@@ -87,6 +89,8 @@ export const HeroDetail = () => {
   const { data: currentMember } = useGuildMember();
   const assignMember = useAssignMember();
   const unassignMember = useUnassignMember();
+  const selfAssignMember = useSelfAssignMember();
+  const selfUnassignMember = useSelfUnassignMember();
 
   // Respawn window management
   const { data: respawnConfig } = useHeroRespawnConfig(
@@ -197,12 +201,10 @@ export const HeroDetail = () => {
   );
 
   const handleSelfAssignClick = async (mapId: string) => {
-    if (!currentMember) return;
     try {
-      await assignMember.mutateAsync({
+      await selfAssignMember.mutateAsync({
         eventId: eventId!,
         mapId,
-        memberId: currentMember.id,
       });
       toast.success(t("events.maps.assignSuccess", "Przypisano do mapy"));
     } catch {
@@ -211,12 +213,10 @@ export const HeroDetail = () => {
   };
 
   const handleSelfUnassignClick = async (mapId: string) => {
-    if (!currentMember) return;
     try {
-      await unassignMember.mutateAsync({
+      await selfUnassignMember.mutateAsync({
         eventId: eventId!,
         mapId,
-        memberId: currentMember.id,
       });
       toast.success(t("events.maps.unassignSuccess", "Wypisano z mapy"));
     } catch {

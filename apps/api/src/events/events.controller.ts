@@ -20,6 +20,7 @@ import {
 import { Permission } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
+import { GuildMember } from 'src/shared/decorators/member.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -192,6 +193,64 @@ export class EventsController {
       eventId,
       mapId,
       data.memberId,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/maps/:mapId/self-assign')
+  @ApiOperation({
+    summary: 'Self-assign to map',
+    description: 'Assign yourself to monitor a specific map',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Self-assigned successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Map not found' })
+  async selfAssignMember(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('mapId') mapId: string,
+    @GuildMember() member: { id: number },
+  ) {
+    return this.EventsService.assignMemberToMap(
+      guildId,
+      eventId,
+      mapId,
+      member.id,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Delete('/guilds/:guildId/events/:eventId/maps/:mapId/self-assign')
+  @ApiOperation({
+    summary: 'Self-unassign from map',
+    description: 'Remove yourself from a specific map',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'mapId', description: 'Map ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Self-unassigned successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Map not found' })
+  async selfUnassignMember(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+    @Param('mapId') mapId: string,
+    @GuildMember() member: { id: number },
+  ) {
+    return this.EventsService.unassignMemberFromMap(
+      guildId,
+      eventId,
+      mapId,
+      member.id,
     );
   }
 

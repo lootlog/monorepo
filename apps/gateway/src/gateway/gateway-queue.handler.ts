@@ -683,8 +683,13 @@ export class GatewayQueueHandler {
     guildId: string;
     eventId: string;
     mapId: string;
+    mapName: string;
   }) {
     this.gatewayService.handleEventMapStatusUpdate(data);
+
+    // Check if any players are already on this map and publish presence check
+    await this.gatewayService.checkPresenceForMap(data.guildId, data.mapName);
+
     this.logger.log(`Margo event map status update for guild: ${data.guildId}`);
   }
 

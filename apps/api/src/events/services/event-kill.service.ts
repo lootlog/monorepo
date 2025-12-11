@@ -1,0 +1,1018 @@
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Event, EventHeroNpc, Prisma } from 'generated/client';
+import { PrismaService } from 'src/db/prisma.service';
+import { EventEmitterService } from './event-emitter.service';
+import { EventPointsService } from './event-points.service';
+import { EventTrackingService } from './event-tracking.service';
+import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
+
+/**
+ * Service responsible for kill detection, recording, and kill-related queries.
+ */
+@Injectable()
+export class EventKillService {
+  private readonly logger = new Logger(EventKillService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitterService,
+    private readonly pointsService: EventPointsService,
+    private readonly trackingService: EventTrackingService,
+  ) {}
+
+  /**
+   * Get timers for event heroes.
+   */
+  async getEventHeroTimers(guildId: string, eventId: string, world: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      include: {
+        heroNpcs: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (event.heroNpcs.length === 0) {
+      return [];
+    }
+
+    const heroesWithId = event.heroNpcs.filter((hero) => hero.npcId !== null);
+    const heroesWithoutId = event.heroNpcs.filter(
+      (hero) => hero.npcId === null,
+    );
+
+    const npcIds = heroesWithId.map((hero) => hero.npcId as number);
+    const npcNames = heroesWithoutId.map((hero) => hero.npcName);
+
+    const now = new Date();
+
+    // For heroes without ID, we need to match by name in the npc JSON
+    if (npcNames.length > 0) {
+      const nameMatchTimers = await this.prisma.$queryRaw<
+        Array<{
+          createdById: number;
+          guildId: string;
+          npcId: number;
+          world: string;
+          minSpawnTime: Date;
+          maxSpawnTime: Date;
+          latestRespBaseSeconds: number;
+          latestRespawnRandomness: number;
+          tempId: string | null;
+          wasReset: boolean;
+          npc: unknown;
+          createdAt: Date;
+          updatedAt: Date;
+        }>
+      >`
+        SELECT t.*
+        FROM "Timer" t
+        WHERE t."guildId" = ${guildId}
+          AND t."world" = ${world}
+          AND t."maxSpawnTime" > ${now}
+          AND t."npc"->>'name' = ANY(${npcNames}::text[])
+      `;
+
+      if (npcIds.length > 0) {
+        const idMatchTimers = await this.prisma.timer.findMany({
+          where: {
+            guildId,
+            world,
+            npcId: { in: npcIds },
+            maxSpawnTime: { gt: now.toISOString() },
+          },
+          include: {
+            member: true,
+          },
+        });
+
+        const seen = new Set<number>();
+        const combined = [];
+
+        for (const timer of idMatchTimers) {
+          if (!seen.has(timer.npcId)) {
+            seen.add(timer.npcId);
+            combined.push(timer);
+          }
+        }
+
+        for (const timer of nameMatchTimers) {
+          if (!seen.has(timer.npcId)) {
+            seen.add(timer.npcId);
+            const member = await this.prisma.member.findUnique({
+              where: { id: timer.createdById },
+            });
+            combined.push({ ...timer, member });
+          }
+        }
+
+        return combined;
+      }
+
+      const timersWithMembers = await Promise.all(
+        nameMatchTimers.map(async (timer) => {
+          const member = await this.prisma.member.findUnique({
+            where: { id: timer.createdById },
+          });
+          return { ...timer, member };
+        }),
+      );
+
+      return timersWithMembers;
+    }
+
+    const timers = await this.prisma.timer.findMany({
+      where: {
+        guildId,
+        world,
+        npcId: { in: npcIds },
+        maxSpawnTime: { gt: now.toISOString() },
+      },
+      include: {
+        member: true,
+      },
+    });
+
+    return timers;
+  }
+
+  /**
+   * Get loots from event heroes.
+   */
+  async getEventHeroLoots(
+    guildId: string,
+    eventId: string,
+    world: string,
+    limit = 10,
+  ) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      include: {
+        heroNpcs: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (event.heroNpcs.length === 0) {
+      return [];
+    }
+
+    const heroesWithId = event.heroNpcs.filter((hero) => hero.npcId !== null);
+    const heroesWithoutId = event.heroNpcs.filter(
+      (hero) => hero.npcId === null,
+    );
+
+    const npcIds = heroesWithId.map((hero) => hero.npcId as number);
+    const npcNames = heroesWithoutId.map((hero) => hero.npcName);
+
+    const npcSnapshotConditions: Array<{
+      npcId?: { in: number[] };
+      name?: { in: string[] };
+    }> = [];
+
+    if (npcIds.length > 0) {
+      npcSnapshotConditions.push({ npcId: { in: npcIds } });
+    }
+
+    if (npcNames.length > 0) {
+      npcSnapshotConditions.push({ name: { in: npcNames } });
+    }
+
+    const loots = await this.prisma.loot.findMany({
+      where: {
+        world,
+        lootSubmissions: {
+          some: {
+            guildId,
+          },
+        },
+        lootNpcs: {
+          some: {
+            npcSnapshot: {
+              OR: npcSnapshotConditions,
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        uniqueId: true,
+        world: true,
+        source: true,
+        location: true,
+        lootShare: true,
+        createdAt: true,
+        updatedAt: true,
+        lootSubmissions: {
+          where: { guildId },
+          include: {
+            member: {
+              select: {
+                name: true,
+                avatar: true,
+                userId: true,
+              },
+            },
+          },
+        },
+        lootItems: {
+          include: { itemSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootPlayers: {
+          include: { playerSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootNpcs: {
+          include: { npcSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    return loots.map((loot) => ({
+      id: loot.id,
+      uniqueId: loot.uniqueId,
+      world: loot.world,
+      source: loot.source,
+      location: loot.location,
+      lootShare: loot.lootShare,
+      createdAt: loot.createdAt,
+      updatedAt: loot.updatedAt,
+      member: loot.lootSubmissions[0]?.member || null,
+      items: loot.lootItems.map((item) => ({
+        id: item.itemSnapshot.itemId,
+        hid: item.hid,
+        name: item.itemSnapshot.name,
+        icon: item.itemSnapshot.icon,
+        stat: item.itemSnapshot.statRaw,
+        type: item.itemSnapshot.itemType,
+        rarity: item.itemSnapshot.rarity,
+        lvl: item.itemSnapshot.lvl,
+      })),
+      players: loot.lootPlayers.map((player) => ({
+        id: player.playerSnapshot.characterId,
+        name: player.playerSnapshot.name,
+        lvl: player.lvl,
+        prof: player.playerSnapshot.prof,
+        icon: player.playerSnapshot.icon,
+      })),
+      npcs: loot.lootNpcs.map((npc) => ({
+        id: npc.npcSnapshot.npcId,
+        name: npc.npcSnapshot.name,
+        lvl: npc.npcSnapshot.lvl,
+        type: npc.npcSnapshot.type,
+        icon: npc.npcSnapshot.icon,
+      })),
+    }));
+  }
+
+  /**
+   * Get hero stats for an event.
+   */
+  async getEventHeroStats(guildId: string, eventId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      include: {
+        heroNpcs: {
+          include: {
+            kills: true,
+          },
+        },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return event.heroNpcs.map((hero) => ({
+      heroId: hero.id,
+      npcId: hero.npcId,
+      npcName: hero.npcName,
+      killCount: hero.kills.length,
+    }));
+  }
+
+  /**
+   * Check if NPC is an event hero and record a kill if so.
+   */
+  async checkAndRecordEventHeroKill(
+    guildId: string,
+    world: string,
+    npcId: number,
+    npcName: string,
+    npcIcon: string,
+    timerData: KillTimerData,
+  ): Promise<void> {
+    const result = await this.findActiveEventHeroByNpc(
+      guildId,
+      world,
+      npcId,
+      npcName,
+    );
+
+    if (!result) {
+      return; // Not an event hero
+    }
+
+    let { eventHero } = result;
+    const { event } = result;
+
+    // Update hero's npcId and npcIcon if missing
+    if (eventHero.npcId === null || eventHero.npcIcon === null) {
+      eventHero = await this.prisma.eventHeroNpc.update({
+        where: { id: eventHero.id },
+        data: {
+          ...(eventHero.npcId === null && { npcId }),
+          ...(eventHero.npcIcon === null && { npcIcon }),
+        },
+      });
+      this.logger.log({
+        message: 'Hero NPC data updated',
+        heroId: eventHero.id,
+        npcId: eventHero.npcId,
+        npcIcon: eventHero.npcIcon,
+      });
+    }
+
+    try {
+      await this.recordHeroKill(guildId, eventHero, event, timerData);
+      this.logger.log({
+        message: 'Hero kill recorded',
+        guildId,
+        eventId: event.id,
+        heroId: eventHero.id,
+        npcName: eventHero.npcName,
+      });
+    } catch (error) {
+      this.logger.error({
+        message: 'Failed to record hero kill',
+        guildId,
+        eventId: event.id,
+        heroId: eventHero.id,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+
+  /**
+   * Find an active event hero by NPC ID or name.
+   */
+  async findActiveEventHeroByNpc(
+    guildId: string,
+    world: string,
+    npcId: number,
+    npcName: string,
+  ): Promise<{ eventHero: EventHeroNpc; event: Event } | null> {
+    const now = new Date();
+
+    // First try to match by npcId
+    let heroNpc = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        npcId,
+        event: {
+          guildId,
+          world,
+          active: true,
+          OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+          AND: [
+            {
+              OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+            },
+          ],
+        },
+      },
+      include: {
+        event: true,
+      },
+    });
+
+    // If not found by ID, try by name
+    if (!heroNpc) {
+      heroNpc = await this.prisma.eventHeroNpc.findFirst({
+        where: {
+          npcName,
+          npcId: null, // Only match by name for heroes without explicit npcId
+          event: {
+            guildId,
+            world,
+            active: true,
+            OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+            AND: [
+              {
+                OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+              },
+            ],
+          },
+        },
+        include: {
+          event: true,
+        },
+      });
+    }
+
+    if (!heroNpc) {
+      return null;
+    }
+
+    return {
+      eventHero: heroNpc,
+      event: heroNpc.event,
+    };
+  }
+
+  /**
+   * Record a hero kill and calculate points for all assigned members.
+   */
+  async recordHeroKill(
+    guildId: string,
+    eventHero: EventHeroNpc,
+    event: Event,
+    timerData: KillTimerData,
+  ) {
+    const killedAt = new Date();
+
+    // Get all maps for this hero with assigned members
+    const heroMaps = await this.prisma.eventMap.findMany({
+      where: { heroNpcId: eventHero.id },
+      include: {
+        assignedMembers: true,
+      },
+    });
+
+    // Collect unique assigned members
+    const memberMapAssignments = new Map<number, string[]>();
+    for (const map of heroMaps) {
+      for (const member of map.assignedMembers) {
+        const maps = memberMapAssignments.get(member.id) || [];
+        maps.push(map.mapName);
+        memberMapAssignments.set(member.id, maps);
+      }
+    }
+
+    const assignedMemberIds = Array.from(memberMapAssignments.keys());
+
+    if (assignedMemberIds.length === 0) {
+      this.logger.log({
+        message: 'No assigned members for hero kill',
+        heroId: eventHero.id,
+        eventId: event.id,
+      });
+    }
+
+    // Calculate points (only if autoCalculatePoints is enabled)
+    const shouldCalculatePoints = event.autoCalculatePoints !== false;
+    const { points, appliedMultiplier } = shouldCalculatePoints
+      ? this.pointsService.calculateMemberPoints(
+          event,
+          killedAt,
+          heroMaps.length,
+          assignedMemberIds.length,
+        )
+      : { points: 0, appliedMultiplier: 0 };
+
+    // Create kill record with points in a transaction
+    const kill = await this.prisma.$transaction(async (tx) => {
+      const heroKill = await tx.eventHeroKill.create({
+        data: {
+          heroNpcId: eventHero.id,
+          killedAt,
+          minSpawnTimeAtKill: timerData.previousMinSpawnTime ?? killedAt,
+          maxSpawnTimeAtKill: timerData.previousMaxSpawnTime ?? killedAt,
+          timerCreatedById: timerData.memberId,
+        },
+      });
+
+      const killPointsData: Array<{
+        killId: string;
+        memberId: number;
+        mapName: string;
+        basePoints: number;
+        points: number;
+        appliedMultiplier: number;
+        timeOnMapSeconds: number;
+        afkPercentage: number;
+        wasPresent: boolean;
+      }> = [];
+
+      // Create points for each assigned member (only if autoCalculatePoints is enabled)
+      if (shouldCalculatePoints) {
+        for (const memberId of assignedMemberIds) {
+          const mapNames = memberMapAssignments.get(memberId) || [];
+          const presenceStats = await this.pointsService.getMemberPresenceStats(
+            eventHero.id,
+            memberId,
+            timerData.previousMinSpawnTime ?? undefined,
+          );
+
+          killPointsData.push({
+            killId: heroKill.id,
+            memberId,
+            mapName: mapNames.join(', '),
+            basePoints: event.basePointsPerKill,
+            points,
+            appliedMultiplier,
+            timeOnMapSeconds: presenceStats.timeOnMapSeconds,
+            afkPercentage: presenceStats.afkPercentage,
+            wasPresent: presenceStats.wasPresent,
+          });
+        }
+
+        // Batch create all kill points
+        if (killPointsData.length > 0) {
+          await tx.eventKillPoint.createMany({
+            data: killPointsData,
+          });
+        }
+      }
+
+      // Clear map assignments for this hero after recording the kill
+      for (const map of heroMaps) {
+        await tx.eventMap.update({
+          where: { id: map.id },
+          data: {
+            assignedMembers: { set: [] },
+          },
+        });
+      }
+
+      // Close all assignment history records for this hero's maps
+      await tx.eventMapAssignmentHistory.updateMany({
+        where: {
+          mapId: { in: heroMaps.map((m) => m.id) },
+          unassignedAt: null,
+        },
+        data: { unassignedAt: killedAt },
+      });
+
+      // Fetch the created points
+      const createdPoints = await tx.eventKillPoint.findMany({
+        where: { killId: heroKill.id },
+      });
+
+      return {
+        kill: heroKill,
+        points: createdPoints,
+        clearedMapIds: heroMaps.map((m) => m.id),
+      };
+    });
+
+    // Update rankings (only if autoCalculatePoints is enabled)
+    if (shouldCalculatePoints && kill.points.length > 0) {
+      await this.pointsService.updateRankingAfterKill(
+        event.id,
+        eventHero.npcName,
+        kill.points,
+      );
+    }
+
+    // Close all coverage gaps for this hero
+    await this.trackingService.closeAllGapsForHero(eventHero.id);
+
+    // Emit real-time event
+    await this.eventEmitter.emitHeroKilled(guildId, event.id, kill.kill.id);
+
+    // Emit map status updates for cleared assignments
+    for (const map of heroMaps) {
+      await this.eventEmitter.emitMapStatusUpdate(
+        guildId,
+        event.id,
+        map.id,
+        map.mapName,
+      );
+    }
+
+    return kill.kill;
+  }
+
+  /**
+   * Get kill history for a specific hero with pagination.
+   */
+  async getHeroKillHistory(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    limit = 20,
+    cursor?: string,
+  ) {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    const kills = await this.prisma.eventHeroKill.findMany({
+      where: {
+        heroNpcId: heroId,
+        ...(cursor && { id: { lt: cursor } }),
+      },
+      orderBy: { killedAt: 'desc' },
+      take: limit + 1,
+      include: {
+        heroNpc: true,
+        timerCreatedBy: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            userId: true,
+          },
+        },
+        points: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+                userId: true,
+                roles: {
+                  select: {
+                    position: true,
+                    color: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const hasMore = kills.length > limit;
+    const data = hasMore ? kills.slice(0, limit) : kills;
+    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+
+    return {
+      data,
+      nextCursor,
+    };
+  }
+
+  /**
+   * Get kill history for an entire event with pagination.
+   */
+  async getEventKillHistory(
+    guildId: string,
+    eventId: string,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const kills = await this.prisma.eventHeroKill.findMany({
+      where: {
+        heroNpc: {
+          eventId,
+          ...(heroId && { id: heroId }),
+        },
+        ...(cursor && { id: { lt: cursor } }),
+      },
+      orderBy: { killedAt: 'desc' },
+      take: limit + 1,
+      include: {
+        heroNpc: true,
+        timerCreatedBy: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            userId: true,
+          },
+        },
+        points: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+                userId: true,
+                roles: {
+                  select: {
+                    position: true,
+                    color: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const hasMore = kills.length > limit;
+    const data = hasMore ? kills.slice(0, limit) : kills;
+    const nextCursor = hasMore ? data[data.length - 1]?.id : null;
+
+    return {
+      data,
+      nextCursor,
+    };
+  }
+
+  /**
+   * Get detailed information about a specific kill.
+   */
+  async getKillDetail(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    killId: string,
+  ) {
+    const kill = await this.prisma.eventHeroKill.findFirst({
+      where: {
+        id: killId,
+        heroNpcId: heroId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+      include: {
+        heroNpc: {
+          include: {
+            event: true,
+          },
+        },
+        timerCreatedBy: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            userId: true,
+          },
+        },
+        points: {
+          include: {
+            member: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+                userId: true,
+                roles: {
+                  select: {
+                    position: true,
+                    color: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!kill) {
+      throw new NotFoundException('Kill not found');
+    }
+
+    // Get matching loots
+    const loots = await this.getMatchingLootsForKill(kill, guildId);
+
+    return {
+      kill,
+      loots,
+      eventConfig: {
+        autoCalculatePoints: kill.heroNpc.event.autoCalculatePoints,
+        basePointsPerKill: kill.heroNpc.event.basePointsPerKill,
+        timeOfDayMultipliers: kill.heroNpc.event.timeOfDayMultipliers,
+        trackersMultipliers: kill.heroNpc.event.trackersMultipliers,
+        mapsCountMultipliers: kill.heroNpc.event.mapsCountMultipliers,
+      },
+    };
+  }
+
+  /**
+   * Get timeline data for maps during a kill event.
+   */
+  async getKillTimelineData(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    killId: string,
+  ) {
+    const kill = await this.prisma.eventHeroKill.findFirst({
+      where: {
+        id: killId,
+        heroNpcId: heroId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+      select: {
+        minSpawnTimeAtKill: true,
+        killedAt: true,
+      },
+    });
+
+    if (!kill) {
+      throw new NotFoundException('Kill not found');
+    }
+
+    const maps = await this.prisma.eventMap.findMany({
+      where: { heroNpcId: heroId },
+      select: { id: true, mapName: true, mapId: true },
+    });
+
+    const results = await Promise.all(
+      maps.map(async (map) => {
+        const assignments =
+          await this.prisma.eventMapAssignmentHistory.findMany({
+            where: {
+              mapId: map.id,
+              assignedAt: { lte: kill.killedAt },
+              OR: [
+                { unassignedAt: null },
+                { unassignedAt: { gte: kill.minSpawnTimeAtKill } },
+              ],
+            },
+            include: {
+              member: {
+                select: { id: true, name: true, avatar: true, userId: true },
+              },
+            },
+            orderBy: { assignedAt: 'asc' },
+          });
+
+        const gaps = await this.prisma.eventMapCoverageGap.findMany({
+          where: {
+            mapId: map.id,
+            startedAt: { lte: kill.killedAt },
+            OR: [
+              { endedAt: null },
+              { endedAt: { gte: kill.minSpawnTimeAtKill } },
+            ],
+          },
+          orderBy: { startedAt: 'asc' },
+        });
+
+        return {
+          mapId: map.id,
+          mapName: map.mapName,
+          numericMapId: map.mapId,
+          assignments: assignments.map((a) => ({
+            memberId: a.memberId,
+            memberName: a.member.name,
+            memberAvatar: a.member.avatar,
+            memberUserId: a.member.userId,
+            assignedAt: a.assignedAt,
+            unassignedAt: a.unassignedAt,
+          })),
+          gaps: gaps.map((g) => ({
+            id: g.id,
+            gapType: g.gapType,
+            startedAt: g.startedAt,
+            endedAt: g.endedAt,
+            durationSeconds: g.durationSeconds,
+          })),
+        };
+      }),
+    );
+
+    return results;
+  }
+
+  /**
+   * Get loots matching a kill by time window and NPC.
+   */
+  async getMatchingLootsForKill(
+    kill: {
+      killedAt: Date;
+      heroNpc: {
+        npcId: number | null;
+        npcName: string;
+        event: { world: string };
+      };
+    },
+    guildId: string,
+  ) {
+    const timeWindowMs = 5 * 60 * 1000; // 5 minutes
+    const minTime = new Date(kill.killedAt.getTime() - timeWindowMs);
+    const maxTime = new Date(kill.killedAt.getTime() + timeWindowMs);
+
+    const npcSnapshotConditions: Array<{ npcId?: number; name?: string }> = [];
+
+    if (kill.heroNpc.npcId !== null) {
+      npcSnapshotConditions.push({ npcId: kill.heroNpc.npcId });
+    }
+    npcSnapshotConditions.push({ name: kill.heroNpc.npcName });
+
+    const loots = await this.prisma.loot.findMany({
+      where: {
+        world: kill.heroNpc.event.world,
+        createdAt: {
+          gte: minTime,
+          lte: maxTime,
+        },
+        lootSubmissions: {
+          some: {
+            guildId,
+          },
+        },
+        lootNpcs: {
+          some: {
+            npcSnapshot: {
+              OR: npcSnapshotConditions,
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        uniqueId: true,
+        world: true,
+        source: true,
+        location: true,
+        lootShare: true,
+        createdAt: true,
+        updatedAt: true,
+        lootSubmissions: {
+          where: { guildId },
+          include: {
+            member: {
+              select: {
+                name: true,
+                avatar: true,
+                userId: true,
+              },
+            },
+          },
+        },
+        lootItems: {
+          include: { itemSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootPlayers: {
+          include: { playerSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootNpcs: {
+          include: { npcSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    return loots.map((loot) => ({
+      id: loot.id,
+      uniqueId: loot.uniqueId,
+      world: loot.world,
+      source: loot.source,
+      location: loot.location,
+      lootShare: loot.lootShare,
+      createdAt: loot.createdAt,
+      updatedAt: loot.updatedAt,
+      member: loot.lootSubmissions[0]?.member || null,
+      items: loot.lootItems.map((item) => ({
+        id: item.itemSnapshot.itemId,
+        hid: item.hid,
+        name: item.itemSnapshot.name,
+        icon: item.itemSnapshot.icon,
+        stat: item.itemSnapshot.statRaw,
+        type: item.itemSnapshot.itemType,
+        rarity: item.itemSnapshot.rarity,
+        lvl: item.itemSnapshot.lvl,
+      })),
+      players: loot.lootPlayers.map((player) => ({
+        id: player.playerSnapshot.characterId,
+        name: player.playerSnapshot.name,
+        lvl: player.lvl,
+        prof: player.playerSnapshot.prof,
+        icon: player.playerSnapshot.icon,
+      })),
+      npcs: loot.lootNpcs.map((npc) => ({
+        id: npc.npcSnapshot.npcId,
+        name: npc.npcSnapshot.name,
+        lvl: npc.npcSnapshot.lvl,
+        type: npc.npcSnapshot.type,
+        icon: npc.npcSnapshot.icon,
+      })),
+    }));
+  }
+}

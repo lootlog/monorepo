@@ -21,7 +21,11 @@ import { RuntimeEnvironment } from 'src/types/common.types';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
 import { Platform } from 'src/gateway/enums/platform.enum';
-import type { Socket, SocketUser, SubscriptionMode } from 'src/gateway/types/socket-user.type';
+import type {
+  Socket,
+  SocketUser,
+  SubscriptionMode,
+} from 'src/gateway/types/socket-user.type';
 import { groupBy, omit } from 'lodash';
 import { buildUser } from 'src/gateway/utils/build-user';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
@@ -33,10 +37,7 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import type { UserGuildData } from 'src/guilds/types/guild.types';
-import type {
-  EventPresence,
-  PlayerPresence,
-} from 'src/gateway/types/socket-user.type';
+import type { PlayerPresence } from 'src/gateway/types/socket-user.type';
 
 @WebSocketGateway({
   namespace:
@@ -480,19 +481,6 @@ export class Gateway {
     );
   }
 
-  /** @deprecated Use handlePresenceUpdate with PRESENCE_UPDATE event instead */
-  @UseFilters(new BaseWsExceptionFilter())
-  @UsePipes(new ValidationPipe())
-  @SubscribeMessage(GatewayEvent.EVENT_PRESENCE_UPDATE)
-  handleEventPresenceUpdate(
-    @WsDiscordId() discordId: string,
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: EventPresenceUpdateDto,
-  ): void {
-    // Delegate to new handler
-    this.handlePresenceUpdate(discordId, client, data);
-  }
-
   @UseFilters(new BaseWsExceptionFilter())
   @UsePipes(new ValidationPipe())
   @SubscribeMessage(GatewayEvent.PRESENCE_FETCH)
@@ -529,18 +517,6 @@ export class Gateway {
     );
 
     return result;
-  }
-
-  /** @deprecated Use handlePlayerPresenceFetch with PRESENCE_FETCH event instead */
-  @UseFilters(new BaseWsExceptionFilter())
-  @UsePipes(new ValidationPipe())
-  @SubscribeMessage('event:presence:fetch')
-  async handleEventPresenceFetch(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() { guildId }: { guildId: string },
-  ): Promise<Record<string, PlayerPresence[]>> {
-    // Delegate to new handler
-    return this.handlePlayerPresenceFetch(client, { guildId });
   }
 
   @UseFilters(new BaseWsExceptionFilter())
@@ -656,5 +632,34 @@ export class Gateway {
       mode,
       roomCount: newRooms.length,
     });
+  }
+
+  /**
+   * Check all connected players in a guild and publish PRESENCE_COVERAGE_CHECK
+   * for those who are on the specified map. Called after map assignment changes.
+   */
+  async checkPresenceForMap(guildId: string, mapName: string): Promise<void> {
+    const socketsInRoom = await this.server.in(guildId).fetchSockets();
+
+    for (const socket of socketsInRoom) {
+      const playerPresence = socket.data?.playerPresence;
+      if (playerPresence?.mapName === mapName) {
+        this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.PRESENCE_COVERAGE_CHECK,
+          {
+            guildId,
+            mapName,
+            discordId: socket.data.discordId,
+            hasPlayer: true,
+            isAfk: playerPresence.isAfk ?? false,
+          },
+        );
+
+        this.logger.debug(
+          `Published PRESENCE_COVERAGE_CHECK for player ${socket.data.discordId} on map ${mapName}`,
+        );
+      }
+    }
   }
 }
