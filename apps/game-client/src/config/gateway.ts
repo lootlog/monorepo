@@ -39,7 +39,4 @@ export enum GatewayEvent {
   EVENT_MAP_STATUS_UPDATE = "event:map-status:update",
   EVENT_HERO_KILLED = "event:hero:killed",
   EVENT_RANKING_UPDATE = "event:ranking:update",
-
-  /** @deprecated Use PRESENCE_UPDATE instead */
-  EVENT_PRESENCE_UPDATE = "event:presence:update",
 }

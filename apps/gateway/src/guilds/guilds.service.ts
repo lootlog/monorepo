@@ -41,7 +41,6 @@ export class GuildsService {
     const dedupeKey = `${discordId}:${userId}`;
 
     if (this.pendingRequests.has(dedupeKey)) {
-      this.logger.debug(`Request deduplication for ${discordId}`);
       return this.pendingRequests.get(dedupeKey)!;
     }
 
@@ -73,8 +72,6 @@ export class GuildsService {
       }
 
       const guilds = await this.fetchFromHttpWithRetry(options);
-      const duration = Date.now() - startTime;
-      this.logger.debug(`Fetched guilds for ${discordId} in ${duration}ms`);
 
       await this.cacheGuilds(cacheKey, guilds);
       return guilds;
@@ -115,9 +112,6 @@ export class GuildsService {
     } catch (error) {
       if (retryCount < MAX_RETRIES) {
         const delay = RETRY_DELAYS[retryCount];
-        this.logger.debug(
-          `Retry ${retryCount + 1}/${MAX_RETRIES} for ${discordId} in ${delay}ms`,
-        );
         await this.sleep(delay);
         return this.fetchFromHttpWithRetry(options, retryCount + 1);
       }
@@ -207,7 +201,6 @@ export class GuildsService {
     const cacheKey = getUserGuildsCacheKey(discordId, userId);
     try {
       await this.redis.del(cacheKey);
-      this.logger.debug(`Cache invalidated for ${discordId}`);
     } catch (error) {
       this.logger.error(`Cache invalidation error: ${error.message}`);
     }
@@ -236,28 +229,12 @@ export class GuildsService {
   ): Promise<void> {
     try {
       const url = `${this.apiUrl}/internal/members/refresh-discord-roles`;
-      const response = await firstValueFrom(
+      await firstValueFrom(
         this.httpService.post(url, null, {
           params: { discordId, userId },
-          timeout: 30000, // 30s timeout for refresh
+          timeout: 30000,
         }),
       );
-
-      const data = response.data as {
-        refreshed: boolean;
-        rateLimited: boolean;
-        guildsRefreshed: number;
-      };
-
-      if (data.rateLimited) {
-        this.logger.debug(
-          `Game-client Discord refresh rate limited for ${discordId}`,
-        );
-      } else if (data.refreshed) {
-        this.logger.log(
-          `Game-client Discord refresh completed for ${discordId}, guilds: ${data.guildsRefreshed}`,
-        );
-      }
     } catch (error) {
       this.logger.warn(
         `Game-client Discord refresh failed for ${discordId}: ${error.message}`,

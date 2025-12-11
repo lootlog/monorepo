@@ -47,7 +47,6 @@ export enum RoutingKey {
 
   ACTIVITY_LOG_CREATE = 'activity.log.create',
 
-  EVENT_PRESENCE_UPDATE = 'event.presence.update',
   EVENT_MAP_STATUS_UPDATE = 'event.map-status.update',
   EVENT_HERO_KILLED = 'event.hero.killed',
   EVENT_RANKING_UPDATE = 'event.ranking.update',

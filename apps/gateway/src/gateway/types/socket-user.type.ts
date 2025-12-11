@@ -1,9 +1,10 @@
 import type { Platform } from 'src/gateway/enums/platform.enum';
 import type { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
+import type { SubscriptionMode } from 'src/gateway/enums/subscription-mode.enum';
 import type { Socket as SocketIOSocket } from 'socket.io';
 import type { UserGuildData } from 'src/guilds/types/guild.types';
 
-export type SubscriptionMode = 'all' | 'single';
+export type { SubscriptionMode };
 
 export type SocketUserPlayerLocation = {
   x: number;
@@ -24,20 +25,6 @@ export type SocketUserPlayer = {
   clanId?: number;
 };
 
-/**
- * @deprecated Use PlayerPresence instead. Kept for backward compatibility.
- */
-export type EventPresence = {
-  mapId?: number;
-  mapName?: string;
-  isAfk: boolean;
-  updatedAt: number;
-};
-
-/**
- * Full player presence data including character information.
- * Supports multiple characters per user (one per socket session).
- */
 export type PlayerPresence = {
   // Player data (from SocketUserPlayer)
   world: string;
@@ -66,9 +53,6 @@ export type SocketUser = {
   player?: SocketUserPlayer;
   status?: UserPresenceStatus;
   guilds?: UserGuildData[];
-  /** @deprecated Use playerPresence instead */
-  eventPresence?: EventPresence;
-  /** Full player presence with character data */
   playerPresence?: PlayerPresence;
   subscriptionMode: SubscriptionMode;
   activeGuildId?: string;
