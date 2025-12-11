@@ -4,7 +4,7 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Trophy, Plus, Swords, Calendar, AlertCircle } from "lucide-react";
+import { Trophy, Plus, Swords, CalendarDays, AlertCircle } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -106,16 +106,17 @@ export const Events = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-base">{event.name}</h3>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                           <div className="flex items-center gap-1">
-                            <Swords className="w-3.5 h-3.5" />
+                            <Swords className="w-3 h-3" />
                             <span>
-                              {event.heroNpcs?.length || 0}{" "}
-                              {t("events.heroes.title").toLowerCase()}
+                              {t("events.heroes.count", {
+                                count: event.heroNpcs?.length || 0,
+                              })}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
+                            <CalendarDays className="w-3 h-3" />
                             <span>
                               {format(
                                 new Date(event.startsAt || event.createdAt),

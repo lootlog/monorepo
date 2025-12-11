@@ -111,6 +111,9 @@
   },
   "heroes": {
     "title": "Herosi Eventowi",
+    "count_one": "{{count}} heros eventowy",
+    "count_few": "{{count}} herosi eventowi",
+    "count_many": "{{count}} herosów eventowych",
     "notFound": "Nie znaleziono herosa",
     "killed": "Heros Zabity!",
     "pointsAwarded": "{{points}} punktów przyznano",
