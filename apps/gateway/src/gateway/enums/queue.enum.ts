@@ -44,4 +44,5 @@ export enum Queue {
   EVENT_RANKING_UPDATE = 'gateway-event-ranking-update',
   EVENT_RESPAWN_WINDOW_OPENED = 'gateway-event-respawn-window-opened',
   EVENT_RESPAWN_WINDOW_CLOSED = 'gateway-event-respawn-window-closed',
+  PRESENCE_CHECK_REQUEST = 'gateway-presence-check-request',
 }

@@ -4,9 +4,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { CoverageGapType } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { EventEmitterService } from './event-emitter.service';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 import type { PresenceLogWithMember } from '../interfaces/presence-log.interface';
 
 /**
@@ -20,6 +23,7 @@ export class EventTrackingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitterService,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   /**
@@ -96,6 +100,12 @@ export class EventTrackingService {
       await this.closeUnassignedGap(mapId);
       // Open UNCOVERED gap since member is assigned but not yet on the map
       await this.openUncoveredGap(mapId, map.heroNpcId);
+      // Request gateway to check if anyone is already on this map
+      // If so, the gap will be closed by the PRESENCE_COVERAGE_CHECK response
+      this.amqpConnection.publish(DEFAULT_EXCHANGE_NAME, RoutingKey.PRESENCE_CHECK_REQUEST, {
+        guildId,
+        mapName: map.mapName,
+      });
     }
 
     await this.eventEmitter.emitMapStatusUpdate(

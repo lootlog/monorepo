@@ -67,4 +67,6 @@ export enum RoutingKey {
 
   EVENT_RESPAWN_WINDOW_OPENED = 'event.respawn-window.opened',
   EVENT_RESPAWN_WINDOW_CLOSED = 'event.respawn-window.closed',
+
+  PRESENCE_CHECK_REQUEST = 'presence.check.request',
 }
