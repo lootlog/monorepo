@@ -1,6 +1,7 @@
 import { Module, type MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WinstonModule, type WinstonModuleOptions } from 'nest-winston';
+import { BullModule } from '@nestjs/bullmq';
 import { APP_CONFIG } from 'src/config/app.config';
 import { UsersModule } from './users/users.module';
 import { TimersModule } from './timers/timers.module';
@@ -26,6 +27,7 @@ import { SoundSettingsModule } from 'src/sound-settings/sound-settings.module';
 import { EventsModule } from 'src/events/events.module';
 import { MapsModule } from 'src/maps/maps.module';
 import { MapTemplatesModule } from 'src/map-templates/map-templates.module';
+import type { RedisConfig } from 'src/config/redis.config';
 
 @Module({
   imports: [
@@ -36,6 +38,23 @@ import { MapTemplatesModule } from 'src/map-templates/map-templates.module';
       inject: [ConfigService],
     }),
     ConfigModule.forRoot(APP_CONFIG),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const redisConfig = configService.get<RedisConfig>(ConfigKey.REDIS);
+        return {
+          connection: {
+            host: redisConfig.host,
+            port: redisConfig.port,
+            password: redisConfig.password,
+            username: redisConfig.username,
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+          },
+          prefix: '{bull}',
+        };
+      },
+    }),
     UsersModule,
     TimersModule,
     TimerSettingsModule,
