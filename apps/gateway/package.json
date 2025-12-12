@@ -21,6 +21,8 @@
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^6.0.2",
     "@lootlog/api-helpers": "workspace:*",
+    "@lootlog/socket-parser": "workspace:*",
+    "@msgpack/msgpack": "^3.0.0",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/types": "workspace:*",
     "@nestjs/axios": "^4.0.1",
