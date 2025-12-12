@@ -55,22 +55,6 @@ export class AuthService {
         );
       }
 
-      if ('error' in response.data) {
-        if (
-          response.data.error !== 'TOKEN_NOT_FOUND' &&
-          response.data.error !== 'TOKEN_FETCH_FAILED' &&
-          response.data.error !== 'TOKEN_EXPIRED'
-        ) {
-          this.logger.log({
-            level: 'error',
-            message: `Auth service returned error for user ${userId}: ${response.data.error}`,
-          });
-          throw new AuthServiceUnavailableError(
-            `Auth service error: ${response.data.error}`,
-          );
-        }
-      }
-
       return response.data;
     } catch (error) {
       if (error instanceof AuthServiceUnavailableError) {
@@ -81,12 +65,24 @@ export class AuthService {
         throw error;
       }
 
+      if (error instanceof TokenExpiredError) {
+        throw error;
+      }
+
       if (this.isAccountNotFoundError(error)) {
         this.logger.log({
           level: 'warn',
           message: `Account not found for user ${userId}`,
         });
         throw new AccountNotFoundError();
+      }
+
+      if (this.isTokenError(error)) {
+        this.logger.log({
+          level: 'warn',
+          message: `Token error for user ${userId}`,
+        });
+        throw new TokenExpiredError();
       }
 
       const errorMessage =
@@ -115,17 +111,28 @@ export class AuthService {
       const response = await this.fetchIdpToken(userId);
 
       if ('error' in response) {
+        if (response.error === 'ACCOUNT_NOT_FOUND') {
+          throw new AccountNotFoundError();
+        }
+
         if (
           response.error === 'TOKEN_NOT_FOUND' ||
-          response.error === 'TOKEN_FETCH_FAILED' ||
           response.error === 'TOKEN_EXPIRED'
         ) {
           this.logger.log({
             level: 'warn',
-            message: `Token expired for user ${userId}`,
+            message: `Token error for user ${userId}: ${response.error}`,
           });
           throw new TokenExpiredError();
         }
+
+        this.logger.log({
+          level: 'error',
+          message: `Unknown error from auth service for user ${userId}: ${response.error}`,
+        });
+        throw new AuthServiceUnavailableError(
+          `Auth service error: ${response.error}`,
+        );
       }
 
       const tokenResponse = response as Extract<
@@ -183,8 +190,29 @@ export class AuthService {
       const response = error.response as { status?: number; data?: unknown };
 
       if (response.status === 400 && response.data) {
-        const data = response.data as { code?: string };
-        return data.code === 'ACCOUNT_NOT_FOUND';
+        const data = response.data as { error?: string };
+        return data.error === 'ACCOUNT_NOT_FOUND';
+      }
+    }
+
+    return false;
+  }
+
+  private isTokenError(error: unknown): boolean {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      typeof error.response === 'object' &&
+      error.response !== null
+    ) {
+      const response = error.response as { status?: number; data?: unknown };
+
+      if (response.data) {
+        const data = response.data as { error?: string };
+        return (
+          data.error === 'TOKEN_NOT_FOUND' || data.error === 'TOKEN_EXPIRED'
+        );
       }
     }
 
