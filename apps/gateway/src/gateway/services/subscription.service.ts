@@ -84,10 +84,6 @@ export class SubscriptionService {
         guilds,
       );
 
-      if (client.data.platform === Platform.GAME) {
-        this.guildsService.triggerGameClientDiscordRefresh(discordId, userId);
-      }
-
       if (player && client.data.platform === Platform.GAME) {
         this.presenceService.emitInitialPresence(
           server,

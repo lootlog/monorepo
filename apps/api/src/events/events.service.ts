@@ -126,6 +126,7 @@ export class EventsService {
       where: {
         id: eventId,
         guildId,
+        active: true,
       },
       include: {
         heroNpcs: {
@@ -198,7 +199,7 @@ export class EventsService {
 
   async updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {
     const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
+      where: { id: eventId, guildId, active: true },
     });
 
     if (!event) {
@@ -312,15 +313,19 @@ export class EventsService {
 
   async deleteEvent(guildId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
+      where: { id: eventId, guildId, active: true },
     });
 
     if (!event) {
       throw new NotFoundException('Event not found');
     }
 
-    await this.prisma.event.delete({
+    await this.prisma.event.update({
       where: { id: eventId },
+      data: {
+        active: false,
+        endsAt: new Date(),
+      },
     });
 
     return { success: true };
@@ -354,7 +359,7 @@ export class EventsService {
 
   async createHero(guildId: string, eventId: string, data: CreateHeroDto) {
     const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId },
+      where: { id: eventId, guildId, active: true },
     });
 
     if (!event) {
@@ -856,9 +861,14 @@ export class EventsService {
 
   /**
    * Get presence statistics for a hero.
+   * Validates that the hero belongs to the specified guild and event.
    */
-  async getHeroPresenceStats(heroNpcId: string) {
-    return this.trackingService.getHeroPresenceStats(heroNpcId);
+  async getHeroPresenceStats(
+    guildId: string,
+    eventId: string,
+    heroNpcId: string,
+  ) {
+    return this.trackingService.getHeroPresenceStats(guildId, eventId, heroNpcId);
   }
 
   async getEventHeroTimers(guildId: string, eventId: string, world: string) {

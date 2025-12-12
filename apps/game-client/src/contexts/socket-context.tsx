@@ -89,7 +89,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       // Emit initial presence after successful join
       // This ensures presence is sent even after browser refresh
       // (when town change event is not fired)
-      socket.emit(GatewayEvent.PRESENCE_UPDATE as any, {
+      socket.emit(GatewayEvent.PRESENCE_UPDATE, {
         mapId: Game.map.id,
         mapName: Game.map.name,
         isAfk: false,
