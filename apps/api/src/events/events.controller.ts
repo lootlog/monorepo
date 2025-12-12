@@ -18,7 +18,6 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { Permission } from 'generated/client';
-import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { GuildMember } from 'src/shared/decorators/member.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
@@ -28,7 +27,6 @@ import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { AssignMemberDto } from './dto/assign-member.dto';
-import { UpdatePresenceDto } from './dto/update-presence.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { CreateMapDto } from './dto/create-map.dto';
 import { CreateLocationDto } from './dto/create-location.dto';
@@ -578,43 +576,6 @@ export class EventsController {
 
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
-  @Post('/guilds/:guildId/events/:eventId/presence')
-  @ApiOperation({
-    summary: 'Update presence',
-    description: 'Update player presence and AFK status on event maps',
-  })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiParam({ name: 'eventId', description: 'Event ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Presence updated',
-  })
-  async updatePresence(
-    @Param('guildId') guildId: string,
-    @Param('eventId') eventId: string,
-    @DiscordId() discordId: string,
-    @Body() data: UpdatePresenceDto,
-  ) {
-    // Get member for this user in this guild using Prisma directly
-    const member = await this.EventsService.getMemberByDiscordId(
-      discordId,
-      guildId,
-    );
-    if (!member) {
-      return { success: false, message: 'Member not found' };
-    }
-
-    return this.EventsService.updatePresence(
-      guildId,
-      eventId,
-      member.id,
-      data.mapName,
-      data.isAfk,
-    );
-  }
-
-  @Permissions(Permission.LOOTLOG_ACCESS)
-  @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/ranking')
   @ApiOperation({
     summary: 'Get event ranking',
@@ -1004,6 +965,30 @@ export class EventsController {
     @Param('heroId') heroId: string,
   ) {
     return this.EventsService.getActiveGapsForHero(heroId);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/presence-stats')
+  @ApiOperation({
+    summary: 'Get presence statistics for hero',
+    description:
+      'Get aggregated presence statistics for all members assigned to hero maps',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'heroId', description: 'Hero ID' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Presence statistics including total coverage time and per-member breakdown',
+  })
+  async getHeroPresenceStats(
+    @Param('guildId') _guildId: string,
+    @Param('eventId') _eventId: string,
+    @Param('heroId') heroId: string,
+  ) {
+    return this.EventsService.getHeroPresenceStats(heroId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)

@@ -344,16 +344,6 @@ export class EventsService {
     return this.trackingService.unassignMemberFromMap(guildId, eventId, mapId, memberId);
   }
 
-  async updatePresence(
-    guildId: string,
-    eventId: string,
-    memberId: number,
-    mapName: string,
-    isAfk: boolean,
-  ) {
-    return this.trackingService.updatePresence(guildId, eventId, memberId, mapName, isAfk);
-  }
-
   async getRanking(guildId: string, eventId: string) {
     return this.pointsService.getRanking(guildId, eventId);
   }
@@ -853,22 +843,30 @@ export class EventsService {
   }
 
   /**
-   * Handle coverage gap logic when presence changes.
+   * Handle player presence change from gateway.
+   * Creates presence logs and manages coverage gaps.
    */
-  async handlePresenceCoverageCheck(
+  async handlePlayerPresenceChange(
     guildId: string,
     mapName: string,
     discordId: string,
     hasPlayer: boolean,
     isAfk = false,
   ): Promise<void> {
-    return this.trackingService.handlePresenceCoverageCheck(
+    return this.trackingService.handlePlayerPresenceChange(
       guildId,
       mapName,
       discordId,
       hasPlayer,
       isAfk,
     );
+  }
+
+  /**
+   * Get presence statistics for a hero.
+   */
+  async getHeroPresenceStats(heroNpcId: string) {
+    return this.trackingService.getHeroPresenceStats(heroNpcId);
   }
 
   async getEventHeroTimers(guildId: string, eventId: string, world: string) {

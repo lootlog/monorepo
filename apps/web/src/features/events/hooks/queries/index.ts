@@ -10,4 +10,5 @@ export * from "./use-kill-detail";
 export * from "./use-map-coverage-timer";
 export * from "./use-hero-active-gaps";
 export * from "./use-hero-respawn-config";
+export * from "./use-hero-presence-stats";
 export * from "./use-ranking-edit-history";

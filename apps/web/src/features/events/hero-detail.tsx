@@ -42,7 +42,9 @@ import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { useHeroActiveGaps } from "./hooks/queries/use-hero-active-gaps";
+import { useHeroPresenceStats } from "./hooks/queries/use-hero-presence-stats";
 import { RecentKillsPreview } from "./components/recent-kills-preview";
+import { PresenceStatsCard } from "./components/presence-stats-card";
 import { EventHeroLoots } from "./components/event-hero-loots";
 import { EventRankingPreview } from "./components/event-ranking-preview";
 import { NpcTile } from "@/components/tiles";
@@ -121,6 +123,12 @@ export const HeroDetail = () => {
 
   // Batch fetch all active gaps for this hero
   const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
+
+  // Fetch presence statistics for this hero
+  const { data: presenceStats } = useHeroPresenceStats(
+    eventId ?? "",
+    heroId ?? "",
+  );
 
   const { data: timers } = useEventHeroTimers({
     guildId: guildId ?? "",
@@ -507,6 +515,17 @@ export const HeroDetail = () => {
                 limit={5}
                 showHeroName
               />
+
+              {/* Presence Stats */}
+              {presenceStats && (
+                <PresenceStatsCard
+                  totalCoverageSeconds={presenceStats.totalCoverageSeconds}
+                  totalEventSeconds={presenceStats.totalEventSeconds}
+                  presencePercentage={presenceStats.presencePercentage}
+                  memberStats={presenceStats.memberStats}
+                  t={t}
+                />
+              )}
 
               {/* Recent Loots */}
               <EventHeroLoots

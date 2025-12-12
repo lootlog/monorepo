@@ -10,7 +10,6 @@ import { PrismaService } from 'src/db/prisma.service';
 import { EventEmitterService } from './event-emitter.service';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
-import type { PresenceLogWithMember } from '../interfaces/presence-log.interface';
 
 /**
  * Service responsible for member assignments, presence tracking, and coverage gap management.
@@ -189,61 +188,6 @@ export class EventTrackingService {
     );
 
     return updated;
-  }
-
-  /**
-   * Update presence for a member on a map.
-   */
-  async updatePresence(
-    guildId: string,
-    eventId: string,
-    memberId: number,
-    mapName: string,
-    isAfk: boolean,
-  ): Promise<PresenceLogWithMember | null> {
-    // Find the map for this event (now through heroNpc)
-    const map = await this.prisma.eventMap.findFirst({
-      where: {
-        mapName,
-        heroNpc: {
-          event: {
-            id: eventId,
-            guildId,
-          },
-        },
-      },
-    });
-
-    if (!map) {
-      // Member is not on a tracked map
-      return null;
-    }
-
-    // Close any existing open presence log for this member on this map
-    await this.prisma.eventPresenceLog.updateMany({
-      where: {
-        mapId: map.id,
-        memberId,
-        endedAt: null,
-      },
-      data: {
-        endedAt: new Date(),
-      },
-    });
-
-    // Create new presence log
-    const presenceLog = await this.prisma.eventPresenceLog.create({
-      data: {
-        mapId: map.id,
-        memberId,
-        isAfk,
-      },
-      include: {
-        member: true,
-      },
-    });
-
-    return presenceLog;
   }
 
   /**
@@ -490,17 +434,119 @@ export class EventTrackingService {
   }
 
   /**
-   * Handle coverage gap logic when presence changes.
-   * Called from the gateway handler when a player changes maps.
-   * AFK players don't count as coverage - only active players close the gap.
+   * Create or update presence log when a player enters/leaves a map or changes AFK status.
+   * This tracks individual member presence for points calculation and analytics.
    */
-  async handlePresenceCoverageCheck(
+  async createOrUpdatePresenceLog(
     guildId: string,
     mapName: string,
-    _discordId: string,
+    discordId: string,
+    hasPlayer: boolean,
+    isAfk: boolean,
+  ): Promise<void> {
+    // Get member for this discord user
+    const member = await this.getMemberByDiscordId(discordId, guildId);
+    if (!member) {
+      // Non-guild member on the map - skip logging
+      this.logger.debug({
+        message: 'Skipping presence log - member not found',
+        discordId,
+        guildId,
+        mapName,
+      });
+      return;
+    }
+
+    // Find all event maps with this name in active events for this guild
+    const eventMaps = await this.prisma.eventMap.findMany({
+      where: {
+        mapName,
+        heroNpc: {
+          event: {
+            guildId,
+            active: true,
+          },
+        },
+      },
+    });
+
+    const now = new Date();
+
+    for (const map of eventMaps) {
+      if (hasPlayer) {
+        // Player is on the map - close existing log if any and create new one
+        await this.prisma.eventPresenceLog.updateMany({
+          where: {
+            mapId: map.id,
+            memberId: member.id,
+            endedAt: null,
+          },
+          data: {
+            endedAt: now,
+          },
+        });
+
+        // Create new presence log
+        await this.prisma.eventPresenceLog.create({
+          data: {
+            mapId: map.id,
+            memberId: member.id,
+            isAfk,
+          },
+        });
+
+        this.logger.debug({
+          message: 'Created presence log',
+          mapId: map.id,
+          memberId: member.id,
+          isAfk,
+        });
+      } else {
+        // Player left the map - close existing log
+        const result = await this.prisma.eventPresenceLog.updateMany({
+          where: {
+            mapId: map.id,
+            memberId: member.id,
+            endedAt: null,
+          },
+          data: {
+            endedAt: now,
+          },
+        });
+
+        if (result.count > 0) {
+          this.logger.debug({
+            message: 'Closed presence log - player left map',
+            mapId: map.id,
+            memberId: member.id,
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Handle player presence change from gateway.
+   * Creates presence logs and manages coverage gaps.
+   * Called when a player enters/leaves a map or changes AFK status.
+   */
+  async handlePlayerPresenceChange(
+    guildId: string,
+    mapName: string,
+    discordId: string,
     hasPlayer: boolean,
     isAfk = false,
   ): Promise<void> {
+    // First, create/update presence log for this player
+    await this.createOrUpdatePresenceLog(
+      guildId,
+      mapName,
+      discordId,
+      hasPlayer,
+      isAfk,
+    );
+
+    // Then handle coverage gap logic
     // Find all event maps with this name in active events for this guild
     const eventMaps = await this.prisma.eventMap.findMany({
       where: {
@@ -608,5 +654,171 @@ export class EventTrackingService {
     });
 
     return activeLogs.map((log) => log.memberId);
+  }
+
+  /**
+   * Get presence statistics for a hero across all maps and members.
+   * Returns aggregated data for UI display.
+   */
+  async getHeroPresenceStats(heroNpcId: string): Promise<{
+    totalCoverageSeconds: number;
+    totalEventSeconds: number;
+    presencePercentage: number;
+    memberStats: Array<{
+      memberId: number;
+      memberName: string;
+      memberAvatar: string | null;
+      totalTimeSeconds: number;
+      afkTimeSeconds: number;
+      afkPercentage: number;
+    }>;
+  }> {
+    // Get hero with event and maps
+    const hero = await this.prisma.eventHeroNpc.findUnique({
+      where: { id: heroNpcId },
+      include: {
+        event: true,
+        maps: {
+          include: {
+            assignedMembers: true,
+          },
+        },
+      },
+    });
+
+    if (!hero) {
+      return {
+        totalCoverageSeconds: 0,
+        totalEventSeconds: 0,
+        presencePercentage: 0,
+        memberStats: [],
+      };
+    }
+
+    const mapIds = hero.maps.map((m) => m.id);
+
+    // Calculate total event duration
+    const eventStart = hero.event.startsAt || hero.event.createdAt;
+    const eventEnd = hero.event.endsAt || new Date();
+    const totalEventSeconds = Math.max(
+      0,
+      Math.round((eventEnd.getTime() - eventStart.getTime()) / 1000),
+    );
+
+    // Get all unique assigned members across all maps
+    const assignedMemberIds = new Set<number>();
+    for (const map of hero.maps) {
+      for (const member of map.assignedMembers) {
+        assignedMemberIds.add(member.id);
+      }
+    }
+
+    // Get all presence logs for this hero's maps
+    const presenceLogs = await this.prisma.eventPresenceLog.findMany({
+      where: {
+        mapId: { in: mapIds },
+      },
+      include: {
+        member: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    const now = new Date();
+
+    // Aggregate by member
+    const memberStatsMap = new Map<
+      number,
+      {
+        memberId: number;
+        memberName: string;
+        memberAvatar: string | null;
+        totalTimeMs: number;
+        afkTimeMs: number;
+      }
+    >();
+
+    // Initialize stats for assigned members
+    for (const memberId of assignedMemberIds) {
+      const member = hero.maps
+        .flatMap((m) => m.assignedMembers)
+        .find((m) => m.id === memberId);
+      if (member) {
+        memberStatsMap.set(memberId, {
+          memberId: member.id,
+          memberName: member.name,
+          memberAvatar: member.avatar,
+          totalTimeMs: 0,
+          afkTimeMs: 0,
+        });
+      }
+    }
+
+    // Calculate presence time per member from logs
+    let totalCoverageMs = 0;
+
+    for (const log of presenceLogs) {
+      const endTime = log.endedAt || now;
+      const duration = Math.max(0, endTime.getTime() - log.startedAt.getTime());
+
+      // Only count non-AFK time as coverage
+      if (!log.isAfk) {
+        totalCoverageMs += duration;
+      }
+
+      // Update member stats
+      let memberStats = memberStatsMap.get(log.memberId);
+      if (!memberStats) {
+        // Member who has logs but isn't currently assigned (was unassigned)
+        memberStats = {
+          memberId: log.member.id,
+          memberName: log.member.name,
+          memberAvatar: log.member.avatar,
+          totalTimeMs: 0,
+          afkTimeMs: 0,
+        };
+        memberStatsMap.set(log.memberId, memberStats);
+      }
+
+      memberStats.totalTimeMs += duration;
+      if (log.isAfk) {
+        memberStats.afkTimeMs += duration;
+      }
+    }
+
+    // Convert to response format
+    const memberStats = Array.from(memberStatsMap.values()).map((stats) => ({
+      memberId: stats.memberId,
+      memberName: stats.memberName,
+      memberAvatar: stats.memberAvatar,
+      totalTimeSeconds: Math.round(stats.totalTimeMs / 1000),
+      afkTimeSeconds: Math.round(stats.afkTimeMs / 1000),
+      afkPercentage:
+        stats.totalTimeMs > 0
+          ? Math.round((stats.afkTimeMs / stats.totalTimeMs) * 10000) / 100
+          : 0,
+    }));
+
+    // Sort by total time descending
+    memberStats.sort((a, b) => b.totalTimeSeconds - a.totalTimeSeconds);
+
+    const totalCoverageSeconds = Math.round(totalCoverageMs / 1000);
+    const presencePercentage =
+      totalEventSeconds > 0
+        ? Math.round((totalCoverageSeconds / totalEventSeconds) * 10000) / 100
+        : 0;
+
+    return {
+      totalCoverageSeconds,
+      totalEventSeconds,
+      presencePercentage,
+      memberStats,
+    };
   }
 }
