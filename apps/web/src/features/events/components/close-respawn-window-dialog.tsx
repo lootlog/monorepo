@@ -6,25 +6,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@lootlog/ui/components/dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Input } from "@lootlog/ui/components/input";
-import { RadioGroup, RadioGroupItem } from "@lootlog/ui/components/radio-group";
-import { Loader2 } from "lucide-react";
-import {
-  formatRespawnDuration,
-  calculateSpawnTimes,
-} from "../hooks/utils/respawn-utils";
+import { Loader2, XCircle } from "lucide-react";
 
 interface CloseRespawnWindowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   heroName: string;
-  defaultRespBaseSeconds: number;
-  defaultRespRandomness: number;
   onConfirm: (options: {
     createNewWindow: boolean;
     newMinSpawnTime?: string;
@@ -37,33 +29,21 @@ export const CloseRespawnWindowDialog = ({
   open,
   onOpenChange,
   heroName,
-  defaultRespBaseSeconds,
-  defaultRespRandomness,
   onConfirm,
   isLoading = false,
 }: CloseRespawnWindowDialogProps) => {
   const { t } = useTranslation();
   const [createNewWindow, setCreateNewWindow] = useState(true);
-  const [timeMode, setTimeMode] = useState<"default" | "custom">("default");
-  const [customMinTime, setCustomMinTime] = useState("");
-  const [customMaxTime, setCustomMaxTime] = useState("");
-
-  const defaultDuration = formatRespawnDuration(defaultRespBaseSeconds);
-  const { minSpawnTime, maxSpawnTime } = calculateSpawnTimes(
-    defaultRespBaseSeconds,
-    defaultRespRandomness,
-  );
+  const [minTime, setMinTime] = useState("");
+  const [maxTime, setMaxTime] = useState("");
 
   const handleConfirm = async () => {
     let newMinSpawnTime: string | undefined;
     let newMaxSpawnTime: string | undefined;
 
-    if (createNewWindow) {
-      if (timeMode === "custom" && customMinTime && customMaxTime) {
-        newMinSpawnTime = new Date(customMinTime).toISOString();
-        newMaxSpawnTime = new Date(customMaxTime).toISOString();
-      }
-      // If default mode, backend will calculate times
+    if (createNewWindow && minTime && maxTime) {
+      newMinSpawnTime = new Date(minTime).toISOString();
+      newMaxSpawnTime = new Date(maxTime).toISOString();
     }
 
     await onConfirm({
@@ -73,33 +53,48 @@ export const CloseRespawnWindowDialog = ({
     });
   };
 
-  const formatDateTime = (date: Date): string => {
-    return date.toLocaleString("pl-PL", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setMinTime("");
+      setMaxTime("");
+      setCreateNewWindow(true);
+    }
+    onOpenChange(isOpen);
   };
 
+  const isTimeRangeValid =
+    !minTime || !maxTime || new Date(minTime) < new Date(maxTime);
+  const isValid =
+    !createNewWindow || (minTime && maxTime && isTimeRangeValid);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {t("events.respawn.closeWindow", "Zamknij okno respawnu")}
-          </DialogTitle>
-          <DialogDescription>
-            {t(
-              "events.respawn.closeWindowDesc",
-              "Zamknij aktywne okno respawnu dla herosa {{heroName}}. Ta akcja wyczyści wszystkie przypisania do map.",
-              { heroName },
-            )}
-          </DialogDescription>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-destructive/10">
+              <XCircle className="size-4 text-destructive" />
+            </div>
+            <div>
+              <DialogTitle className="text-base">
+                {t("events.respawn.closeWindow", "Zamknij okno respawnu")}
+              </DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">
+                {heroName}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="flex items-center space-x-2">
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {t(
+              "events.respawn.closeWindowDesc",
+              "Zamknij aktywne okno respawnu. Ta akcja wyczyści wszystkie przypisania do map.",
+            )}
+          </p>
+
+          <div className="flex items-center gap-2">
             <Checkbox
               id="createNewWindow"
               checked={createNewWindow}
@@ -107,7 +102,7 @@ export const CloseRespawnWindowDialog = ({
                 setCreateNewWindow(checked === true)
               }
             />
-            <Label htmlFor="createNewWindow" className="cursor-pointer">
+            <Label htmlFor="createNewWindow" className="cursor-pointer text-sm">
               {t(
                 "events.respawn.createNewWindow",
                 "Utwórz nowe okno respawnu",
@@ -117,90 +112,70 @@ export const CloseRespawnWindowDialog = ({
 
           {createNewWindow && (
             <div className="space-y-4 pl-6 border-l-2 border-muted">
-              <RadioGroup
-                value={timeMode}
-                onValueChange={(value: string) =>
-                  setTimeMode(value as "default" | "custom")
-                }
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="default" id="default" />
-                  <Label htmlFor="default" className="cursor-pointer">
-                    {t("events.respawn.useDefaultTimes", "Użyj domyślnych czasów")}
-                    <span className="text-muted-foreground text-sm ml-2">
-                      (~{defaultDuration} ± {defaultRespRandomness}%)
-                    </span>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="custom" id="custom" />
-                  <Label htmlFor="custom" className="cursor-pointer">
-                    {t("events.respawn.useCustomTimes", "Podaj własne czasy")}
-                  </Label>
-                </div>
-              </RadioGroup>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="minTime"
+                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                >
+                  {t("events.respawn.minSpawnTime", "Minimalny czas spawnu")}
+                </Label>
+                <Input
+                  id="minTime"
+                  type="datetime-local"
+                  value={minTime}
+                  onChange={(e) => setMinTime(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="maxTime"
+                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                >
+                  {t("events.respawn.maxSpawnTime", "Maksymalny czas spawnu")}
+                </Label>
+                <Input
+                  id="maxTime"
+                  type="datetime-local"
+                  value={maxTime}
+                  onChange={(e) => setMaxTime(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
 
-              {timeMode === "default" && (
-                <p className="text-sm text-muted-foreground">
-                  {t("events.respawn.defaultTimesPreview", "Przewidywany czas: {{min}} - {{max}}", {
-                    min: formatDateTime(minSpawnTime),
-                    max: formatDateTime(maxSpawnTime),
-                  })}
+              {minTime && maxTime && !isTimeRangeValid && (
+                <p className="text-xs text-destructive">
+                  {t(
+                    "events.respawn.invalidTimeRange",
+                    "Minimalny czas musi być przed maksymalnym",
+                  )}
                 </p>
-              )}
-
-              {timeMode === "custom" && (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="minTime">
-                      {t("events.respawn.minSpawnTime", "Minimalny czas spawnu")}
-                    </Label>
-                    <Input
-                      id="minTime"
-                      type="datetime-local"
-                      value={customMinTime}
-                      onChange={(e) => setCustomMinTime(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="maxTime">
-                      {t("events.respawn.maxSpawnTime", "Maksymalny czas spawnu")}
-                    </Label>
-                    <Input
-                      id="maxTime"
-                      type="datetime-local"
-                      value={customMaxTime}
-                      onChange={(e) => setCustomMaxTime(e.target.value)}
-                    />
-                  </div>
-                </div>
               )}
             </div>
           )}
         </div>
 
-        <DialogFooter>
+        <div className="px-5 py-3 border-t bg-muted/30 flex gap-2">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            size="sm"
+            onClick={() => handleOpenChange(false)}
             disabled={isLoading}
+            className="flex-1"
           >
             {t("common.cancel", "Anuluj")}
           </Button>
           <Button
             variant="destructive"
+            size="sm"
             onClick={handleConfirm}
-            disabled={
-              isLoading ||
-              (createNewWindow &&
-                timeMode === "custom" &&
-                (!customMinTime || !customMaxTime))
-            }
+            disabled={isLoading || !isValid}
+            className="flex-1"
           >
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {t("events.respawn.closeWindowButton", "Zamknij okno")}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

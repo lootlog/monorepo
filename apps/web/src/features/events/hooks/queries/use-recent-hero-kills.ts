@@ -8,6 +8,7 @@ interface ApiHeroKill {
   killedAt: string;
   minSpawnTimeAtKill: string;
   maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
   heroNpc: HeroKillHeroNpc;
   points: KillParticipant[];
 }

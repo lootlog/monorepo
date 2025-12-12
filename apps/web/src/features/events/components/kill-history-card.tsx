@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { format, differenceInSeconds } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Clock, Users, Skull, ChevronRight } from "lucide-react";
+import { Clock, Users, Skull, ChevronRight, Hand } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -61,7 +61,9 @@ export const KillHistoryCard = ({
         participants.length
       : 1;
 
-  const respawnTime = formatRespawnTime(kill.minSpawnTimeAtKill, kill.killedAt);
+  const respawnTime = kill.isManualClose
+    ? null
+    : formatRespawnTime(kill.minSpawnTimeAtKill, kill.killedAt);
 
   if (compact) {
     const content = (
@@ -94,19 +96,34 @@ export const KillHistoryCard = ({
           </div>
 
           <div className="flex items-center gap-3 text-sm shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="outline" className="gap-1">
-                  <Clock className="w-3 h-3" />
-                  {respawnTime}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+            {kill.isManualClose && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-600/50">
+                    <Hand className="w-3 h-3" />
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("events.kills.manualClose", "Ręczne zamknięcie okna")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {respawnTime && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="gap-1">
+                    <Clock className="w-3 h-3" />
+                    {respawnTime}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
 
             {avgMultiplier > 1 && (
               <Badge variant="secondary" className="font-bold">
@@ -176,6 +193,18 @@ export const KillHistoryCard = ({
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm shrink-0">
+            {kill.isManualClose && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-600/50">
+                    <Hand className="w-3 h-3" />
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("events.kills.manualClose", "Ręczne zamknięcie okna")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <span className="text-muted-foreground flex items-center gap-1">
               <Users className="w-3 h-3" />
               {participants.length}
@@ -241,19 +270,35 @@ export const KillHistoryCard = ({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant="outline" className="gap-1">
-                <Clock className="w-3 h-3" />
-                {respawnTime}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+          {kill.isManualClose && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-600/50">
+                  <Hand className="w-3 h-3" />
+                  {t("events.kills.manualClose", "Ręczne zamknięcie")}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t("events.kills.manualCloseDescription", "Okno zostało ręcznie zamknięte - heros mógł nie zostać zabity")}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {respawnTime && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="gap-1">
+                  <Clock className="w-3 h-3" />
+                  {respawnTime}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {avgMultiplier > 1 && (
             <Tooltip>

@@ -184,6 +184,7 @@ export class EventKillService {
     npcName: string,
     npcIcon: string,
     timerData: KillTimerData,
+    isManualClose = false,
   ): Promise<void> {
     const result = await this.findActiveEventHeroByNpc(
       guildId,
@@ -217,13 +218,14 @@ export class EventKillService {
     }
 
     try {
-      await this.recordHeroKill(guildId, eventHero, event, timerData);
+      await this.recordHeroKill(guildId, eventHero, event, timerData, isManualClose);
       this.logger.log({
-        message: 'Hero kill recorded',
+        message: isManualClose ? 'Manual close recorded' : 'Hero kill recorded',
         guildId,
         eventId: event.id,
         heroId: eventHero.id,
         npcName: eventHero.npcName,
+        isManualClose,
       });
     } catch (error) {
       this.logger.error({
@@ -310,6 +312,7 @@ export class EventKillService {
     eventHero: EventHeroNpc,
     event: Event,
     timerData: KillTimerData,
+    isManualClose = false,
   ) {
     const killedAt = new Date();
 
@@ -353,6 +356,7 @@ export class EventKillService {
           minSpawnTimeAtKill: timerData.previousMinSpawnTime ?? killedAt,
           maxSpawnTimeAtKill: timerData.previousMaxSpawnTime ?? killedAt,
           timerCreatedById: timerData.memberId,
+          isManualClose,
         },
       });
 

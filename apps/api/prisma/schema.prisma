@@ -636,6 +636,7 @@ model EventHeroKill {
   minSpawnTimeAtKill DateTime // Respawn window min at time of kill
   maxSpawnTimeAtKill DateTime // Respawn window max at time of kill
   timerCreatedById   Int? // Member who submitted the timer (detected the kill)
+  isManualClose      Boolean  @default(false) // True if this was a manual window close, not an actual kill
 
   heroNpc        EventHeroNpc     @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
   timerCreatedBy Member?          @relation("KillDetectedBy", fields: [timerCreatedById], references: [id])

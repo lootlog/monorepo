@@ -1,5 +1,3 @@
-"use client";
-
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -95,27 +93,31 @@ export const EventEditDialog = ({
   });
 
   const [timeMultipliers, setTimeMultipliers] = useState<TimeOfDayMultiplier[]>(
-    event.timeOfDayMultipliers ?? []
+    event.timeOfDayMultipliers ?? [],
   );
   const [trackersMultipliers, setTrackersMultipliers] = useState<
     { count: number; multiplier: number }[]
   >(
     event.trackersMultipliers
-      ? Object.entries(event.trackersMultipliers).map(([count, multiplier]) => ({
-          count: Number(count),
-          multiplier,
-        }))
-      : []
+      ? Object.entries(event.trackersMultipliers).map(
+          ([count, multiplier]) => ({
+            count: Number(count),
+            multiplier,
+          }),
+        )
+      : [],
   );
   const [mapsMultipliers, setMapsMultipliers] = useState<
     { count: number; multiplier: number }[]
   >(
     event.mapsCountMultipliers
-      ? Object.entries(event.mapsCountMultipliers).map(([count, multiplier]) => ({
-          count: Number(count),
-          multiplier,
-        }))
-      : []
+      ? Object.entries(event.mapsCountMultipliers).map(
+          ([count, multiplier]) => ({
+            count: Number(count),
+            multiplier,
+          }),
+        )
+      : [],
   );
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
@@ -139,19 +141,23 @@ export const EventEditDialog = ({
       setTimeMultipliers(event.timeOfDayMultipliers ?? []);
       setTrackersMultipliers(
         event.trackersMultipliers
-          ? Object.entries(event.trackersMultipliers).map(([count, multiplier]) => ({
-              count: Number(count),
-              multiplier,
-            }))
-          : []
+          ? Object.entries(event.trackersMultipliers).map(
+              ([count, multiplier]) => ({
+                count: Number(count),
+                multiplier,
+              }),
+            )
+          : [],
       );
       setMapsMultipliers(
         event.mapsCountMultipliers
-          ? Object.entries(event.mapsCountMultipliers).map(([count, multiplier]) => ({
-              count: Number(count),
-              multiplier,
-            }))
-          : []
+          ? Object.entries(event.mapsCountMultipliers).map(
+              ([count, multiplier]) => ({
+                count: Number(count),
+                multiplier,
+              }),
+            )
+          : [],
       );
     }
   }, [open, event, reset]);
@@ -170,10 +176,10 @@ export const EventEditDialog = ({
   const handleTimeMultiplierChange = (
     index: number,
     field: keyof TimeOfDayMultiplier,
-    value: string | number
+    value: string | number,
   ) => {
     setTimeMultipliers((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
     );
   };
 
@@ -195,10 +201,10 @@ export const EventEditDialog = ({
   const handleTrackersMultiplierChange = (
     index: number,
     field: "count" | "multiplier",
-    value: number
+    value: number,
   ) => {
     setTrackersMultipliers((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
     );
   };
 
@@ -220,10 +226,10 @@ export const EventEditDialog = ({
   const handleMapsMultiplierChange = (
     index: number,
     field: "count" | "multiplier",
-    value: number
+    value: number,
   ) => {
     setMapsMultipliers((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
     );
   };
 
@@ -328,7 +334,10 @@ export const EventEditDialog = ({
             </div>
 
             <div className="flex items-center justify-between py-2 px-3 rounded-lg border">
-              <Label htmlFor="active" className="text-sm font-medium cursor-pointer">
+              <Label
+                htmlFor="active"
+                className="text-sm font-medium cursor-pointer"
+              >
                 {t("events.active")}
               </Label>
               <Switch
@@ -341,16 +350,24 @@ export const EventEditDialog = ({
             {/* Assignment Timeout */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.settings.assignmentTimeout", "Czas na przypisanie (minuty)")}
+                {t(
+                  "events.settings.assignmentTimeout",
+                  "Czas na przypisanie (minuty)",
+                )}
               </Label>
               <Input
                 type="number"
                 min={0}
-                {...register("assignmentTimeoutMinutes", { valueAsNumber: true })}
+                {...register("assignmentTimeoutMinutes", {
+                  valueAsNumber: true,
+                })}
                 className="h-9 text-sm"
               />
               <p className="text-xs text-muted-foreground">
-                {t("events.settings.assignmentTimeoutDescription", "Ile minut przed minimalnym czasem respawnu można się przypisać do mapy")}
+                {t(
+                  "events.settings.assignmentTimeoutDescription",
+                  "Ile minut przed minimalnym czasem respawnu można się przypisać do mapy",
+                )}
               </p>
             </div>
 
@@ -366,18 +383,30 @@ export const EventEditDialog = ({
                 className="h-9 text-sm"
               />
               <p className="text-xs text-muted-foreground">
-                {t("events.settings.mapAssignmentCapDescription", "Maksymalna liczba osób, które mogą się przypisać do jednej mapy (0 = brak limitu)")}
+                {t(
+                  "events.settings.mapAssignmentCapDescription",
+                  "Maksymalna liczba osób, które mogą się przypisać do jednej mapy (0 = brak limitu)",
+                )}
               </p>
             </div>
 
             {/* Auto Calculate Points */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg border">
               <div className="flex flex-col">
-                <Label htmlFor="autoCalculatePoints" className="text-sm font-medium cursor-pointer">
-                  {t("events.settings.autoCalculatePoints", "Automatyczne punkty")}
+                <Label
+                  htmlFor="autoCalculatePoints"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  {t(
+                    "events.settings.autoCalculatePoints",
+                    "Automatyczne punkty",
+                  )}
                 </Label>
                 <span className="text-xs text-muted-foreground">
-                  {t("events.settings.autoCalculatePointsDescription", "Automatycznie naliczaj punkty po zabiciu herosa")}
+                  {t(
+                    "events.settings.autoCalculatePointsDescription",
+                    "Automatycznie naliczaj punkty po zabiciu herosa",
+                  )}
                 </span>
               </div>
               <Switch
@@ -388,12 +417,16 @@ export const EventEditDialog = ({
             </div>
 
             {/* Scoring Multipliers */}
-            <div className={`space-y-3 ${!watch("autoCalculatePoints") ? "opacity-50 pointer-events-none" : ""}`}>
+            <div
+              className={`space-y-3 ${!watch("autoCalculatePoints") ? "opacity-50 pointer-events-none" : ""}`}
+            >
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                 <Settings className="size-3" />
                 {t("events.scoring.title")}
                 {!watch("autoCalculatePoints") && (
-                  <span className="text-[10px] ml-1">({t("events.settings.disabled", "wyłączone")})</span>
+                  <span className="text-[10px] ml-1">
+                    ({t("events.settings.disabled", "wyłączone")})
+                  </span>
                 )}
               </Label>
 
@@ -409,7 +442,10 @@ export const EventEditDialog = ({
                   className="h-9 text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  {t("events.scoring.basePointsDescription", "Punkty bazowe przed mnożnikami (zmiana przeliczy wszystkie historyczne kille)")}
+                  {t(
+                    "events.scoring.basePointsDescription",
+                    "Punkty bazowe przed mnożnikami (zmiana przeliczy wszystkie historyczne kille)",
+                  )}
                 </p>
               </div>
 
@@ -456,7 +492,11 @@ export const EventEditDialog = ({
                                 type="time"
                                 value={tm.from}
                                 onChange={(e) =>
-                                  handleTimeMultiplierChange(index, "from", e.target.value)
+                                  handleTimeMultiplierChange(
+                                    index,
+                                    "from",
+                                    e.target.value,
+                                  )
                                 }
                                 className="h-8 text-sm"
                               />
@@ -469,7 +509,11 @@ export const EventEditDialog = ({
                                 type="time"
                                 value={tm.to}
                                 onChange={(e) =>
-                                  handleTimeMultiplierChange(index, "to", e.target.value)
+                                  handleTimeMultiplierChange(
+                                    index,
+                                    "to",
+                                    e.target.value,
+                                  )
                                 }
                                 className="h-8 text-sm"
                               />
@@ -487,7 +531,7 @@ export const EventEditDialog = ({
                                   handleTimeMultiplierChange(
                                     index,
                                     "multiplier",
-                                    parseFloat(e.target.value) || 1
+                                    parseFloat(e.target.value) || 1,
                                   )
                                 }
                                 className="h-8 text-sm"
@@ -574,7 +618,7 @@ export const EventEditDialog = ({
                                     handleTrackersMultiplierChange(
                                       index,
                                       "count",
-                                      parseInt(e.target.value) || 1
+                                      parseInt(e.target.value) || 1,
                                     )
                                   }
                                   className="h-8 text-sm"
@@ -593,7 +637,7 @@ export const EventEditDialog = ({
                                     handleTrackersMultiplierChange(
                                       index,
                                       "multiplier",
-                                      parseFloat(e.target.value) || 1
+                                      parseFloat(e.target.value) || 1,
                                     )
                                   }
                                   className="h-8 text-sm"
@@ -602,7 +646,9 @@ export const EventEditDialog = ({
                             </div>
                             <button
                               type="button"
-                              onClick={() => handleRemoveTrackersMultiplier(index)}
+                              onClick={() =>
+                                handleRemoveTrackersMultiplier(index)
+                              }
                               className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
                             >
                               <Trash2 className="size-3.5" />
@@ -680,7 +726,7 @@ export const EventEditDialog = ({
                                     handleMapsMultiplierChange(
                                       index,
                                       "count",
-                                      parseInt(e.target.value) || 1
+                                      parseInt(e.target.value) || 1,
                                     )
                                   }
                                   className="h-8 text-sm"
@@ -699,7 +745,7 @@ export const EventEditDialog = ({
                                     handleMapsMultiplierChange(
                                       index,
                                       "multiplier",
-                                      parseFloat(e.target.value) || 1
+                                      parseFloat(e.target.value) || 1,
                                     )
                                   }
                                   className="h-8 text-sm"

@@ -320,8 +320,8 @@ export const HeroDetail = () => {
   };
 
   const handleOpenRespawnWindow = async (options: {
-    minSpawnTime?: string;
-    maxSpawnTime?: string;
+    minSpawnTime: string;
+    maxSpawnTime: string;
   }) => {
     if (!eventId || !heroId) return;
 
@@ -329,7 +329,8 @@ export const HeroDetail = () => {
       await openRespawnWindow.mutateAsync({
         eventId,
         heroId,
-        ...options,
+        minSpawnTime: options.minSpawnTime,
+        maxSpawnTime: options.maxSpawnTime,
       });
       toast.success(
         t("events.respawn.openSuccess", "Okno respawnu zostało otwarte"),
@@ -564,8 +565,6 @@ export const HeroDetail = () => {
         open={closeWindowOpen}
         onOpenChange={setCloseWindowOpen}
         heroName={hero.npcName}
-        defaultRespBaseSeconds={heroTimer?.latestRespBaseSeconds ?? 3600}
-        defaultRespRandomness={heroTimer?.latestRespawnRandomness ?? 20}
         onConfirm={handleCloseRespawnWindow}
         isLoading={closeRespawnWindow.isPending}
       />
@@ -574,8 +573,6 @@ export const HeroDetail = () => {
         open={openWindowOpen}
         onOpenChange={setOpenWindowOpen}
         heroName={hero.npcName}
-        defaultRespBaseSeconds={heroTimer?.latestRespBaseSeconds ?? 3600}
-        defaultRespRandomness={heroTimer?.latestRespawnRandomness ?? 20}
         onConfirm={handleOpenRespawnWindow}
         isLoading={openRespawnWindow.isPending}
       />

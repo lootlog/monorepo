@@ -229,12 +229,19 @@ export class TimersService implements OnModuleInit {
       // Check if this timer represents an event hero kill
       // Fire and forget - don't block timer creation
       this.eventsService
-        .checkAndRecordEventHeroKill(guildId, data.world, data.npc.id, data.npc.name, data.npc.icon, {
-          minSpawnTime,
-          maxSpawnTime,
-          memberId: newTimer.createdById,
-          previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
-          previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
+        .checkAndRecordEventHeroKill({
+          guildId,
+          world: data.world,
+          npcId: data.npc.id,
+          npcName: data.npc.name,
+          npcIcon: data.npc.icon,
+          timerData: {
+            minSpawnTime,
+            maxSpawnTime,
+            memberId: newTimer.createdById,
+            previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
+            previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
+          },
         })
         .catch((err) => {
           this.logger.error({

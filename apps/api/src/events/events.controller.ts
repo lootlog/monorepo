@@ -1084,12 +1084,8 @@ export class EventsController {
       eventId,
       heroId,
       {
-        minSpawnTime: data.minSpawnTime
-          ? new Date(data.minSpawnTime)
-          : undefined,
-        maxSpawnTime: data.maxSpawnTime
-          ? new Date(data.maxSpawnTime)
-          : undefined,
+        minSpawnTime: new Date(data.minSpawnTime),
+        maxSpawnTime: new Date(data.maxSpawnTime),
       },
     );
     return {

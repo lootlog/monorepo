@@ -16,6 +16,7 @@ import {
   Package,
   Frown,
   Calculator,
+  Hand,
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { format, differenceInSeconds } from "date-fns";
@@ -105,10 +106,9 @@ export const KillDetail = () => {
 
   const { kill, eventConfig } = data;
   const participants = kill.points ?? [];
-  const respawnWindow = formatRespawnWindow(
-    kill.minSpawnTimeAtKill,
-    kill.killedAt,
-  );
+  const respawnWindow = kill.isManualClose
+    ? null
+    : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
@@ -143,6 +143,19 @@ export const KillDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          {kill.isManualClose && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+              <Hand className="w-5 h-5 text-yellow-600 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-yellow-600">
+                  {t("events.killDetail.manualCloseTitle", "Ręczne zamknięcie okna")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("events.killDetail.manualCloseDescription", "Okno respawnu zostało ręcznie zamknięte - heros mógł nie zostać zabity")}
+                </p>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left column - Participants & Map Coverage */}
             <div className="lg:col-span-2 space-y-4">
@@ -193,44 +206,46 @@ export const KillDetail = () => {
                       </p>
                     </div>
                   </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-2 cursor-help">
-                        <div className="p-1.5 rounded-md bg-orange-500/10">
-                          <Clock className="w-4 h-4 text-orange-500" />
+                  {respawnWindow && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 cursor-help">
+                          <div className="p-1.5 rounded-md bg-orange-500/10">
+                            <Clock className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold">{respawnWindow}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {t("events.killDetail.respawnTime")}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-lg font-bold">{respawnWindow}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {t("events.killDetail.respawnTime")}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-1 text-sm">
+                          <p className="font-medium">
+                            {t("events.killDetail.respawnTimeDescription")}
+                          </p>
+                          <p>
+                            {t("events.killDetail.respawnMinLabel")}:{" "}
+                            {format(
+                              new Date(kill.minSpawnTimeAtKill),
+                              "d MMMM yyyy, HH:mm:ss",
+                              { locale: pl },
+                            )}
+                          </p>
+                          <p>
+                            {t("events.killDetail.killTimeLabel")}:{" "}
+                            {format(
+                              new Date(kill.killedAt),
+                              "d MMMM yyyy, HH:mm:ss",
+                              { locale: pl },
+                            )}
                           </p>
                         </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="space-y-1 text-sm">
-                        <p className="font-medium">
-                          {t("events.killDetail.respawnTimeDescription")}
-                        </p>
-                        <p>
-                          {t("events.killDetail.respawnMinLabel")}:{" "}
-                          {format(
-                            new Date(kill.minSpawnTimeAtKill),
-                            "d MMMM yyyy, HH:mm:ss",
-                            { locale: pl },
-                          )}
-                        </p>
-                        <p>
-                          {t("events.killDetail.killTimeLabel")}:{" "}
-                          {format(
-                            new Date(kill.killedAt),
-                            "d MMMM yyyy, HH:mm:ss",
-                            { locale: pl },
-                          )}
-                        </p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   <div className="flex items-center gap-2">
                     <div
                       className={cn(
