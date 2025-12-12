@@ -8,6 +8,7 @@ import type { GetIdpTokenResponse } from 'src/auth/types/get-idp-token-response.
 import {
   TokenExpiredError,
   AuthServiceUnavailableError,
+  AccountNotFoundError,
 } from 'src/auth/errors';
 import { ConfigKey } from 'src/config/config-key.enum';
 import type { AuthConfig } from 'src/config/auth.config';
@@ -76,6 +77,18 @@ export class AuthService {
         throw error;
       }
 
+      if (error instanceof AccountNotFoundError) {
+        throw error;
+      }
+
+      if (this.isAccountNotFoundError(error)) {
+        this.logger.log({
+          level: 'warn',
+          message: `Account not found for user ${userId}`,
+        });
+        throw new AccountNotFoundError();
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       this.logger.log({
@@ -132,6 +145,10 @@ export class AuthService {
         throw error;
       }
 
+      if (error instanceof AccountNotFoundError) {
+        throw error;
+      }
+
       if (error instanceof AuthServiceUnavailableError) {
         throw error;
       }
@@ -153,5 +170,24 @@ export class AuthService {
   async invalidateIdpTokenCache(userId: string): Promise<void> {
     const cacheKey = getAuthTokenCacheKey(userId);
     await this.redisService.del(cacheKey);
+  }
+
+  private isAccountNotFoundError(error: unknown): boolean {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      typeof error.response === 'object' &&
+      error.response !== null
+    ) {
+      const response = error.response as { status?: number; data?: unknown };
+
+      if (response.status === 400 && response.data) {
+        const data = response.data as { code?: string };
+        return data.code === 'ACCOUNT_NOT_FOUND';
+      }
+    }
+
+    return false;
   }
 }
