@@ -6,6 +6,7 @@ import type { ServerOptions } from 'socket.io';
 import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import type { RedisConfig } from 'src/config/redis.config';
+import { msgpackParser } from '@lootlog/socket-parser';
 
 export class RedisIoAdapter extends IoAdapter {
   private adapterConstructor: ReturnType<typeof createAdapter>;
@@ -33,7 +34,11 @@ export class RedisIoAdapter extends IoAdapter {
   }
 
   createIOServer(port: number, options?: ServerOptions) {
-    const server = super.createIOServer(port, options);
+    const serverOptions: ServerOptions = {
+      ...options,
+      parser: msgpackParser,
+    };
+    const server = super.createIOServer(port, serverOptions);
     server.adapter(this.adapterConstructor);
     return server;
   }
