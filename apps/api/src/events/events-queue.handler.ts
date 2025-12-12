@@ -5,7 +5,7 @@ import { RoutingKey } from 'src/enum/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { EventsService } from './events.service';
 
-interface PresenceCoverageCheckPayload {
+interface PlayerPresenceChangePayload {
   guildId: string;
   mapName: string;
   discordId: string;
@@ -19,6 +19,11 @@ export class EventsQueueHandler {
 
   constructor(private readonly eventsService: EventsService) {}
 
+  /**
+   * Handle player presence change from gateway.
+   * Creates presence logs and manages coverage gaps.
+   * Routing key kept as PRESENCE_COVERAGE_CHECK for backwards compatibility.
+   */
   @RabbitSubscribe({
     exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RoutingKey.PRESENCE_COVERAGE_CHECK,
@@ -27,11 +32,11 @@ export class EventsQueueHandler {
       durable: true,
     },
   })
-  async handlePresenceCoverageCheck(data: PresenceCoverageCheckPayload) {
+  async handlePlayerPresenceChange(data: PlayerPresenceChangePayload) {
     const { guildId, mapName, discordId, hasPlayer, isAfk } = data;
 
     this.logger.debug({
-      message: 'Handling presence coverage check',
+      message: 'Handling player presence change',
       guildId,
       mapName,
       discordId,
@@ -40,7 +45,7 @@ export class EventsQueueHandler {
     });
 
     try {
-      await this.eventsService.handlePresenceCoverageCheck(
+      await this.eventsService.handlePlayerPresenceChange(
         guildId,
         mapName,
         discordId,
@@ -49,7 +54,7 @@ export class EventsQueueHandler {
       );
     } catch (error) {
       this.logger.error({
-        message: 'Failed to handle presence coverage check',
+        message: 'Failed to handle player presence change',
         error: error instanceof Error ? error.message : error,
         guildId,
         mapName,
