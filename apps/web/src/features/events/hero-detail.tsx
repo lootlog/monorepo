@@ -30,9 +30,9 @@ import {
   useSelfUnassignMember,
 } from "./hooks/mutations/use-assign-member";
 import {
-  useHeroRespawnConfig,
+  useWindowStatus,
   type WindowStatus,
-} from "./hooks/queries/use-hero-respawn-config";
+} from "./hooks/use-window-status";
 import {
   useCloseRespawnWindow,
   useOpenRespawnWindow,
@@ -95,10 +95,6 @@ export const HeroDetail = () => {
   const selfUnassignMember = useSelfUnassignMember();
 
   // Respawn window management
-  const { data: respawnConfig } = useHeroRespawnConfig(
-    eventId ?? "",
-    heroId ?? "",
-  );
   const closeRespawnWindow = useCloseRespawnWindow();
   const openRespawnWindow = useOpenRespawnWindow();
 
@@ -136,6 +132,18 @@ export const HeroDetail = () => {
     world: event?.world ?? "",
   });
 
+  // Derive hero and heroTimer early (before any returns, as useWindowStatus is a hook)
+  const hero = event?.heroNpcs?.find((h) => h.id === heroId);
+  const heroTimer = timers?.find(
+    (t) => t.npcId === hero?.npcId || t.npc?.name === hero?.npcName,
+  );
+
+  // Calculate window status client-side (schedules timeouts at boundaries)
+  const windowStatus = useWindowStatus(
+    heroTimer?.minSpawnTime ?? null,
+    heroTimer?.maxSpawnTime ?? null,
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -144,17 +152,11 @@ export const HeroDetail = () => {
     );
   }
 
-  const hero = event?.heroNpcs?.find((h) => h.id === heroId);
-
-  // Find timer for this hero (by npcId or npcName)
-  const heroTimer = timers?.find(
-    (t) => t.npcId === hero?.npcId || t.npc?.name === hero?.npcName,
-  );
-
   // Check if assignment is allowed (configurable minutes before minSpawnTime)
   const getAssignmentStatus = () => {
     if (!hero) return { allowed: false, enabledAt: null };
-    if (!heroTimer) return { allowed: true, enabledAt: null }; // No timer = allowed
+    // Block when no timer exists (respawn window not open)
+    if (!heroTimer) return { allowed: false, enabledAt: null };
 
     const minSpawn = new Date(heroTimer.minSpawnTime);
     const now = new Date();
@@ -196,7 +198,6 @@ export const HeroDetail = () => {
 
   // Calculate total and covered maps count
   const totalMapsCount = allMaps.length;
-  const windowStatus = respawnConfig?.windowStatus ?? "OPEN";
   const coveredMapsCount =
     windowStatus === "OPEN"
       ? allMaps.filter(
@@ -365,16 +366,15 @@ export const HeroDetail = () => {
             </h2>
             <div className="flex items-center gap-2 mt-1">
               <HeroTimerCountdown timer={heroTimer} />
-              {respawnConfig && (
+              {windowStatus !== "NONE" && (
                 <Badge
                   variant="outline"
                   className={cn(
                     "text-xs",
-                    getWindowStatusConfig(respawnConfig.windowStatus, t)
-                      .className,
+                    getWindowStatusConfig(windowStatus, t).className,
                   )}
                 >
-                  {getWindowStatusConfig(respawnConfig.windowStatus, t).label}
+                  {getWindowStatusConfig(windowStatus, t).label}
                 </Badge>
               )}
             </div>
@@ -384,7 +384,7 @@ export const HeroDetail = () => {
         {/* Respawn Window Actions */}
         {canManage && (
           <div className="flex items-center gap-2">
-            {respawnConfig?.hasTimer ? (
+            {heroTimer ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -564,8 +564,8 @@ export const HeroDetail = () => {
         open={closeWindowOpen}
         onOpenChange={setCloseWindowOpen}
         heroName={hero.npcName}
-        defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
-        defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
+        defaultRespBaseSeconds={heroTimer?.latestRespBaseSeconds ?? 3600}
+        defaultRespRandomness={heroTimer?.latestRespawnRandomness ?? 20}
         onConfirm={handleCloseRespawnWindow}
         isLoading={closeRespawnWindow.isPending}
       />
@@ -574,8 +574,8 @@ export const HeroDetail = () => {
         open={openWindowOpen}
         onOpenChange={setOpenWindowOpen}
         heroName={hero.npcName}
-        defaultRespBaseSeconds={respawnConfig?.defaultRespBaseSeconds ?? 3600}
-        defaultRespRandomness={respawnConfig?.defaultRespRandomness ?? 10}
+        defaultRespBaseSeconds={heroTimer?.latestRespBaseSeconds ?? 3600}
+        defaultRespRandomness={heroTimer?.latestRespawnRandomness ?? 20}
         onConfirm={handleOpenRespawnWindow}
         isLoading={openRespawnWindow.isPending}
       />

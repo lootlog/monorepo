@@ -103,7 +103,11 @@ export const HeroCard = ({
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <HeroWindowStatusBadge eventId={eventId} heroId={hero.id} />
+              <HeroWindowStatusBadge
+                eventId={eventId}
+                heroNpcId={hero.npcId}
+                heroName={hero.npcName}
+              />
               <HeroTimerDisplay timer={timer} t={t} />
             </div>
             {canManage && (

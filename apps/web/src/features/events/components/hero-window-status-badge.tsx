@@ -32,19 +32,21 @@ const getWindowStatusConfig = (
 
 interface HeroWindowStatusBadgeProps {
   eventId: string;
-  heroId: string;
+  heroNpcId?: number | null;
+  heroName?: string;
 }
 
 export const HeroWindowStatusBadge = ({
   eventId,
-  heroId,
+  heroNpcId,
+  heroName,
 }: HeroWindowStatusBadgeProps) => {
   const { t } = useTranslation();
-  const { data: respawnConfig } = useHeroRespawnConfig(eventId, heroId);
-
-  if (!respawnConfig) {
-    return null;
-  }
+  const respawnConfig = useHeroRespawnConfig({
+    eventId,
+    heroNpcId,
+    heroName,
+  });
 
   if (respawnConfig.windowStatus === "NONE") {
     return null;
