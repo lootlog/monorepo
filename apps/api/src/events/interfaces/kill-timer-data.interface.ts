@@ -13,4 +13,6 @@ export interface KillTimerData {
   previousMinSpawnTime: Date | null;
   /** Previous maximum spawn time (from before kill) */
   previousMaxSpawnTime: Date | null;
+  /** When the respawn window was opened (for summary calculation) */
+  windowOpenedAt: Date | null;
 }

@@ -3,3 +3,4 @@ export * from './event-points.service';
 export * from './event-tracking.service';
 export * from './event-kill.service';
 export * from './event-respawn.service';
+export * from './event-summary.service';
