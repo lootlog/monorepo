@@ -206,42 +206,6 @@ export class GuildsService {
     }
   }
 
-  /**
-   * Trigger Discord role refresh for game-client user.
-   * This is a fire-and-forget operation - we don't block on the result.
-   * The API handles rate limiting (15 min per user).
-   */
-  triggerGameClientDiscordRefresh(
-    discordId: string,
-    userId: string,
-  ): void {
-    // Fire and forget - don't await
-    this.doGameClientDiscordRefresh(discordId, userId).catch((error) => {
-      this.logger.warn(
-        `Failed to trigger game-client Discord refresh for ${discordId}: ${error.message}`,
-      );
-    });
-  }
-
-  private async doGameClientDiscordRefresh(
-    discordId: string,
-    userId: string,
-  ): Promise<void> {
-    try {
-      const url = `${this.apiUrl}/internal/members/refresh-discord-roles`;
-      await firstValueFrom(
-        this.httpService.post(url, null, {
-          params: { discordId, userId },
-          timeout: 30000,
-        }),
-      );
-    } catch (error) {
-      this.logger.warn(
-        `Game-client Discord refresh failed for ${discordId}: ${error.message}`,
-      );
-    }
-  }
-
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }

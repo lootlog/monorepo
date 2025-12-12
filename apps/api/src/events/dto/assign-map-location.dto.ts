@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, ValidateIf } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AssignMapLocationDto {
@@ -7,6 +7,7 @@ export class AssignMapLocationDto {
     example: 'clxxx123',
   })
   @IsOptional()
+  @ValidateIf((o) => o.locationId !== null)
   @IsString()
   locationId?: string | null;
 }

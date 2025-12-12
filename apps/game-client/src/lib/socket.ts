@@ -56,6 +56,12 @@ type ClientToServerEvents = {
   }) => void;
 
   [GatewayEvent.REQUEST_SERVER_PRESENCE]: () => void;
+
+  [GatewayEvent.PRESENCE_UPDATE]: (data: {
+    isAfk?: boolean;
+    mapId?: number;
+    mapName?: string;
+  }) => void;
 };
 
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

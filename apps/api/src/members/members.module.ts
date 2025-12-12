@@ -5,7 +5,6 @@ import { MembersConsumer } from './members.consumer';
 import { MemberBulkRefreshProcessor } from './member-bulk-refresh.processor';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
-import { MembersInternalController } from './members-internal.controller';
 import { RolesModule } from 'src/roles/roles.module';
 import { RetryService } from 'src/rabbitmq/retry.service';
 import {
@@ -39,7 +38,7 @@ import {
     PrismaModule,
     RedisModule,
   ],
-  controllers: [MembersController, MembersInternalController],
+  controllers: [MembersController],
   providers: [
     MembersService,
     MembersConsumer,

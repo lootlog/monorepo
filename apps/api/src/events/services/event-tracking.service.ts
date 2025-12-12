@@ -715,8 +715,13 @@ export class EventTrackingService {
   /**
    * Get presence statistics for a hero across all maps and members.
    * Returns aggregated data for UI display.
+   * Validates that the hero belongs to the specified guild and event.
    */
-  async getHeroPresenceStats(heroNpcId: string): Promise<{
+  async getHeroPresenceStats(
+    guildId: string,
+    eventId: string,
+    heroNpcId: string,
+  ): Promise<{
     totalCoverageSeconds: number;
     totalEventSeconds: number;
     presencePercentage: number;
@@ -729,9 +734,13 @@ export class EventTrackingService {
       afkPercentage: number;
     }>;
   }> {
-    // Get hero with event and maps
-    const hero = await this.prisma.eventHeroNpc.findUnique({
-      where: { id: heroNpcId },
+    // Get hero with event and maps, validating ownership
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroNpcId,
+        eventId,
+        event: { guildId },
+      },
       include: {
         event: true,
         maps: {
@@ -743,12 +752,7 @@ export class EventTrackingService {
     });
 
     if (!hero) {
-      return {
-        totalCoverageSeconds: 0,
-        totalEventSeconds: 0,
-        presencePercentage: 0,
-        memberStats: [],
-      };
+      throw new NotFoundException('Hero not found');
     }
 
     const mapIds = hero.maps.map((m) => m.id);

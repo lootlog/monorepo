@@ -984,11 +984,11 @@ export class EventsController {
       'Presence statistics including total coverage time and per-member breakdown',
   })
   async getHeroPresenceStats(
-    @Param('guildId') _guildId: string,
-    @Param('eventId') _eventId: string,
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.eventsService.getHeroPresenceStats(heroId);
+    return this.eventsService.getHeroPresenceStats(guildId, eventId, heroId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
