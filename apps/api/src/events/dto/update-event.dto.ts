@@ -8,18 +8,58 @@ import {
   IsInt,
   Min,
   IsNumber,
-  IsObject,
+  Matches,
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { HeroNpcDto } from './create-event.dto';
 
+function IsMultiplierRecord(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isMultiplierRecord',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: unknown, _args: ValidationArguments) {
+          if (value === null || value === undefined) return true;
+          if (typeof value !== 'object' || Array.isArray(value)) return false;
+
+          const record = value as Record<string, unknown>;
+          return Object.entries(record).every(([key, val]) => {
+            const numKey = parseInt(key, 10);
+            return (
+              !isNaN(numKey) &&
+              numKey >= 0 &&
+              typeof val === 'number' &&
+              val >= 0
+            );
+          });
+        },
+        defaultMessage(_args: ValidationArguments) {
+          return 'Must be an object with numeric keys (>=0) and numeric values (>=0)';
+        },
+      },
+    });
+  };
+}
+
 export class TimeOfDayMultiplierDto {
   @IsString()
-  from: string; // HH:mm format
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+    message: 'from must be in HH:mm format (00:00-23:59)',
+  })
+  from: string;
 
   @IsString()
-  to: string; // HH:mm format
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+    message: 'to must be in HH:mm format (00:00-23:59)',
+  })
+  to: string;
 
   @IsNumber()
   @Min(0)
@@ -81,7 +121,10 @@ export class UpdateEventDto {
       'Trackers count multipliers: {1: 3.0, 2: 2.5, ...} - fewer trackers = higher multiplier',
   })
   @IsOptional()
-  @IsObject()
+  @IsMultiplierRecord({
+    message:
+      'trackersMultipliers must be an object with numeric keys (>=0) and numeric values (>=0)',
+  })
   trackersMultipliers?: Record<string, number>;
 
   @ApiPropertyOptional({
@@ -89,7 +132,10 @@ export class UpdateEventDto {
       'Maps count multipliers: {1: 1.0, 2: 1.2, ...} - more maps = higher multiplier',
   })
   @IsOptional()
-  @IsObject()
+  @IsMultiplierRecord({
+    message:
+      'mapsCountMultipliers must be an object with numeric keys (>=0) and numeric values (>=0)',
+  })
   mapsCountMultipliers?: Record<string, number>;
 
   @ApiPropertyOptional({

@@ -7,6 +7,9 @@ import type {
   MapsCountMultipliers,
 } from '../interfaces/time-multiplier.interface';
 
+/** Default multiplier value when no multiplier config is found or applicable */
+const DEFAULT_MULTIPLIER = 1.0;
+
 /**
  * Service responsible for points calculation, rankings, and presence statistics.
  * Handles all point-related business logic including multipliers and manual edits.
@@ -80,7 +83,7 @@ export class EventPointsService {
     killTime: Date,
   ): number {
     if (!multipliers || multipliers.length === 0) {
-      return 1.0;
+      return DEFAULT_MULTIPLIER;
     }
 
     const hours = killTime.getHours();
@@ -93,7 +96,7 @@ export class EventPointsService {
       }
     }
 
-    return 1.0;
+    return DEFAULT_MULTIPLIER;
   }
 
   /**
@@ -117,7 +120,7 @@ export class EventPointsService {
     assignedCount: number,
   ): number {
     if (!multipliers || assignedCount === 0) {
-      return 1.0;
+      return DEFAULT_MULTIPLIER;
     }
 
     // Find the highest key <= assignedCount
@@ -128,17 +131,17 @@ export class EventPointsService {
 
     for (const key of sortedKeys) {
       if (assignedCount >= key) {
-        return multipliers[key.toString()] ?? 1.0;
+        return multipliers[key.toString()] ?? DEFAULT_MULTIPLIER;
       }
     }
 
     // If assignedCount is less than all keys, return highest multiplier
     if (sortedKeys.length > 0) {
       const minKey = sortedKeys[sortedKeys.length - 1];
-      return multipliers[minKey.toString()] ?? 1.0;
+      return multipliers[minKey.toString()] ?? DEFAULT_MULTIPLIER;
     }
 
-    return 1.0;
+    return DEFAULT_MULTIPLIER;
   }
 
   /**
@@ -149,7 +152,7 @@ export class EventPointsService {
     mapCount: number,
   ): number {
     if (!multipliers || mapCount === 0) {
-      return 1.0;
+      return DEFAULT_MULTIPLIER;
     }
 
     // Find the highest key <= mapCount
@@ -160,11 +163,11 @@ export class EventPointsService {
 
     for (const key of sortedKeys) {
       if (mapCount >= key) {
-        return multipliers[key.toString()] ?? 1.0;
+        return multipliers[key.toString()] ?? DEFAULT_MULTIPLIER;
       }
     }
 
-    return 1.0;
+    return DEFAULT_MULTIPLIER;
   }
 
   /**
