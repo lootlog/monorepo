@@ -241,6 +241,7 @@ export class TimersService implements OnModuleInit {
             memberId: newTimer.createdById,
             previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
             previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
+            windowOpenedAt: previousTimer?.windowOpenedAt ?? null,
           },
         })
         .catch((err) => {

@@ -31,22 +31,25 @@ import { KillMapsTimelineSection } from "./components/kill-maps-timeline-section
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 
-const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
-  const minDate = new Date(minSpawn);
-  const maxDate = new Date(maxSpawn);
-  const diffSeconds = differenceInSeconds(maxDate, minDate);
-
-  if (diffSeconds < 60) {
-    return `${diffSeconds}s`;
+const formatDurationSeconds = (totalSeconds: number): string => {
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
   }
-  const minutes = Math.floor(diffSeconds / 60);
-  const seconds = diffSeconds % 60;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
   if (minutes < 60) {
     return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
   }
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+};
+
+const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
+  const minDate = new Date(minSpawn);
+  const maxDate = new Date(maxSpawn);
+  const diffSeconds = differenceInSeconds(maxDate, minDate);
+  return formatDurationSeconds(diffSeconds);
 };
 
 export const KillDetail = () => {
@@ -107,7 +110,9 @@ export const KillDetail = () => {
   const { kill, eventConfig } = data;
   const participants = kill.points ?? [];
   const respawnWindow = kill.isManualClose
-    ? null
+    ? kill.windowDurationSeconds
+      ? formatDurationSeconds(kill.windowDurationSeconds)
+      : null
     : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
 
   return (

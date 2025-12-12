@@ -348,6 +348,8 @@ export class EventTrackingService {
 
   /**
    * Close all open gaps for a hero when killed.
+   * Uses a transaction for atomicity - prevents race conditions where
+   * a presence event might open a new gap during sequential updates.
    */
   async closeAllGapsForHero(heroNpcId: string): Promise<void> {
     const now = new Date();
@@ -359,19 +361,25 @@ export class EventTrackingService {
       },
     });
 
-    for (const gap of openGaps) {
-      const durationSeconds = Math.round(
-        (now.getTime() - gap.startedAt.getTime()) / 1000,
-      );
-
-      await this.prisma.eventMapCoverageGap.update({
-        where: { id: gap.id },
-        data: {
-          endedAt: now,
-          durationSeconds,
-        },
-      });
+    if (openGaps.length === 0) {
+      return;
     }
+
+    // Atomic operation - all gaps closed in a single transaction
+    await this.prisma.$transaction(
+      openGaps.map((gap) => {
+        const durationSeconds = Math.round(
+          (now.getTime() - gap.startedAt.getTime()) / 1000,
+        );
+        return this.prisma.eventMapCoverageGap.update({
+          where: { id: gap.id },
+          data: {
+            endedAt: now,
+            durationSeconds,
+          },
+        });
+      }),
+    );
 
     this.logger.debug({
       message: 'Closed all gaps for hero',
@@ -492,6 +500,9 @@ export class EventTrackingService {
   /**
    * Create or update presence log when a player enters/leaves a map or changes AFK status.
    * This tracks individual member presence for points calculation and analytics.
+   *
+   * @deprecated This method's logic has been integrated into handlePlayerPresenceChange
+   * to eliminate duplicate database queries. Use handlePlayerPresenceChange instead.
    */
   async createOrUpdatePresenceLog(
     guildId: string,
@@ -585,6 +596,9 @@ export class EventTrackingService {
    * Handle player presence change from gateway.
    * Creates presence logs and manages coverage gaps.
    * Called when a player enters/leaves a map or changes AFK status.
+   *
+   * Optimized to use a single query for event maps (eliminates duplicate query
+   * that was previously in createOrUpdatePresenceLog).
    */
   async handlePlayerPresenceChange(
     guildId: string,
@@ -593,17 +607,10 @@ export class EventTrackingService {
     hasPlayer: boolean,
     isAfk = false,
   ): Promise<void> {
-    // First, create/update presence log for this player
-    await this.createOrUpdatePresenceLog(
-      guildId,
-      mapName,
-      discordId,
-      hasPlayer,
-      isAfk,
-    );
+    // Get member for this discord user (may be null for non-guild members)
+    const member = await this.getMemberByDiscordId(discordId, guildId);
 
-    // Then handle coverage gap logic
-    // Find all event maps with this name in active events for this guild
+    // Single query for event maps - used for both presence logging and gap management
     const eventMaps = await this.prisma.eventMap.findMany({
       where: {
         mapName,
@@ -616,61 +623,121 @@ export class EventTrackingService {
       },
       include: {
         assignedMembers: true,
-        heroNpc: true,
+        heroNpc: {
+          include: {
+            event: {
+              select: { world: true },
+            },
+          },
+        },
       },
     });
 
-    for (const map of eventMaps) {
-      const hasAssignedMembers = map.assignedMembers.length > 0;
+    const now = new Date();
 
-      if (!hasAssignedMembers) {
-        // No assigned members - UNASSIGNED gap should be open
-        // (handled in assign/unassign methods)
+    for (const map of eventMaps) {
+      // 0. Check if respawn window is active - only track during open windows
+      const hasActiveWindow = await this.hasActiveRespawnWindow(
+        guildId,
+        map.heroNpc.event.world,
+        map.heroNpc.npcId,
+        map.heroNpc.id,
+      );
+
+      if (!hasActiveWindow) {
+        // No active respawn window - skip tracking for this hero
         continue;
       }
 
-      // Map has assigned members - check UNCOVERED gap
+      // 1. Update presence logs (only if member exists in guild)
+      if (member) {
+        if (hasPlayer) {
+          // Player is on the map - close existing log and create new one
+          await this.prisma.eventPresenceLog.updateMany({
+            where: {
+              mapId: map.id,
+              memberId: member.id,
+              endedAt: null,
+            },
+            data: { endedAt: now },
+          });
+
+          await this.prisma.eventPresenceLog.create({
+            data: {
+              mapId: map.id,
+              memberId: member.id,
+              isAfk,
+            },
+          });
+
+          this.logger.debug({
+            message: 'Created presence log',
+            mapId: map.id,
+            memberId: member.id,
+            isAfk,
+          });
+        } else {
+          // Player left the map - close existing log
+          const result = await this.prisma.eventPresenceLog.updateMany({
+            where: {
+              mapId: map.id,
+              memberId: member.id,
+              endedAt: null,
+            },
+            data: { endedAt: now },
+          });
+
+          if (result.count > 0) {
+            this.logger.debug({
+              message: 'Closed presence log - player left map',
+              mapId: map.id,
+              memberId: member.id,
+            });
+          }
+        }
+      }
+
+      // 2. Handle coverage gaps (only for maps with assigned members)
+      const hasAssignedMembers = map.assignedMembers.length > 0;
+
+      if (!hasAssignedMembers) {
+        // No assigned members - UNASSIGNED gap is managed in assign/unassign methods
+        continue;
+      }
+
+      // Map has assigned members - manage UNCOVERED gap
       if (hasPlayer) {
         if (isAfk) {
           // AFK player doesn't count as coverage
-          // Check if there are any other active (non-AFK) players
           const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
             map.id,
           );
           if (activeNonAfkPlayers.length === 0) {
-            // No active players - open UNCOVERED gap
             await this.openUncoveredGap(map.id, map.heroNpcId);
           }
         } else {
           // Active player arrived - close UNCOVERED gap if open
           await this.closeUncoveredGap(map.id);
         }
-        // Emit map status update to refresh frontend
-        await this.eventEmitter.emitMapStatusUpdate(
-          guildId,
-          map.heroNpc.eventId,
-          map.id,
-          map.mapName,
-        );
       } else {
         // Player left - check if map is now uncovered
-        // We need to check if any other active (non-AFK) players are still on this map
         const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
           map.id,
         );
 
         if (activeNonAfkPlayers.length === 0) {
-          // No active players on the map - open UNCOVERED gap
           await this.openUncoveredGap(map.id, map.heroNpcId);
-          // Emit map status update to refresh frontend
-          await this.eventEmitter.emitMapStatusUpdate(
-            guildId,
-            map.heroNpc.eventId,
-            map.id,
-            map.mapName,
-          );
         }
       }
+
+      // 3. Always emit status update to refresh frontend
+      // (previously was only emitted in some branches, causing stale UI)
+      await this.eventEmitter.emitMapStatusUpdate(
+        guildId,
+        map.heroNpc.eventId,
+        map.id,
+        map.mapName,
+      );
     }
   }
 
@@ -880,5 +947,45 @@ export class EventTrackingService {
       presencePercentage,
       memberStats,
     };
+  }
+
+  // ========== RESPAWN WINDOW HELPERS ==========
+
+  /**
+   * Check if there's an active respawn window for a hero.
+   * Used to determine if presence tracking should be active.
+   */
+  private async hasActiveRespawnWindow(
+    guildId: string,
+    world: string,
+    npcId: number | null,
+    heroId: string,
+  ): Promise<boolean> {
+    const effectiveNpcId = npcId ?? this.getSyntheticNpcId(heroId);
+
+    const timer = await this.prisma.timer.findUnique({
+      where: {
+        timerId: { guildId, world, npcId: effectiveNpcId },
+      },
+      select: { maxSpawnTime: true },
+    });
+
+    if (!timer) return false;
+
+    // Active if maxSpawnTime hasn't passed yet
+    return new Date(timer.maxSpawnTime) > new Date();
+  }
+
+  /**
+   * Generate synthetic negative npcId from heroId for heroes without real npcId.
+   * Uses negative values to avoid collision with real Margonem NPC IDs.
+   */
+  private getSyntheticNpcId(heroId: string): number {
+    let hash = 0;
+    for (let i = 0; i < heroId.length; i++) {
+      hash = ((hash << 5) - hash) + heroId.charCodeAt(i);
+      hash |= 0;
+    }
+    return -Math.abs(hash || 1);
   }
 }

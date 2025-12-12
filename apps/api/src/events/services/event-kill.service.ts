@@ -1,10 +1,24 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Event, EventHeroNpc } from 'generated/client';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
+import { CoverageGapType, Event, EventHeroNpc } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { EventEmitterService } from './event-emitter.service';
 import { EventPointsService } from './event-points.service';
 import { EventTrackingService } from './event-tracking.service';
+import { EventSummaryService } from './event-summary.service';
+import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
+import type { AutoCloseRespawnWindowJobData } from '../respawn-window.processor';
 import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
+
+interface GapTimelineEntry {
+  mapId: string;
+  mapName: string;
+  gapType: CoverageGapType;
+  startedAt: Date;
+  endedAt: Date | null;
+  durationSeconds: number;
+}
 
 /**
  * Service responsible for kill detection, recording, and kill-related queries.
@@ -18,6 +32,9 @@ export class EventKillService {
     private readonly eventEmitter: EventEmitterService,
     private readonly pointsService: EventPointsService,
     private readonly trackingService: EventTrackingService,
+    private readonly summaryService: EventSummaryService,
+    @InjectQueue(RESPAWN_WINDOW_QUEUE)
+    private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 
   /**
@@ -455,8 +472,56 @@ export class EventKillService {
     // Close all coverage gaps for this hero
     await this.trackingService.closeAllGapsForHero(eventHero.id);
 
-    // Emit real-time event
+    // Create respawn window summary and clean up raw tracking data
+    const windowOpenedAt =
+      timerData.windowOpenedAt ??
+      timerData.previousMinSpawnTime ??
+      killedAt;
+    await this.summaryService.createWindowSummary(
+      eventHero.id,
+      kill.kill.id,
+      windowOpenedAt,
+      killedAt,
+      timerData.previousMinSpawnTime ?? killedAt,
+      timerData.previousMaxSpawnTime ?? killedAt,
+      isManualClose,
+    );
+
+    // Cancel any scheduled auto-close job for this hero
+    await this.cancelScheduledAutoClose(eventHero.id);
+
+    // Emit real-time events
     await this.eventEmitter.emitHeroKilled(guildId, event.id, kill.kill.id);
+
+    // For real kills (not manual close), emit window events and schedule auto-close
+    // Manual close already handles these events in closeRespawnWindow()
+    if (!isManualClose) {
+      // Emit window closed (old window)
+      await this.eventEmitter.emitRespawnWindowClosed(
+        guildId,
+        event.id,
+        eventHero.id,
+      );
+
+      // Emit window opened (new window) - only if we have valid spawn times
+      if (timerData.minSpawnTime && timerData.maxSpawnTime) {
+        await this.eventEmitter.emitRespawnWindowOpened(
+          guildId,
+          event.id,
+          eventHero.id,
+        );
+
+        // Schedule auto-close for the new window
+        await this.scheduleAutoCloseForNewWindow(
+          guildId,
+          event.id,
+          eventHero.id,
+          eventHero.npcId,
+          event.world,
+          timerData.maxSpawnTime,
+        );
+      }
+    }
 
     // Emit map status updates for cleared assignments
     for (const map of heroMaps) {
@@ -667,8 +732,17 @@ export class EventKillService {
       throw new NotFoundException('Kill not found');
     }
 
+    // Get window duration from summary (useful for manual closes)
+    const summary = await this.prisma.eventRespawnWindowSummary.findUnique({
+      where: { killId },
+      select: { totalWindowSeconds: true },
+    });
+
     return {
-      kill,
+      kill: {
+        ...kill,
+        windowDurationSeconds: summary?.totalWindowSeconds ?? null,
+      },
       eventConfig: {
         autoCalculatePoints: kill.heroNpc.event.autoCalculatePoints,
         basePointsPerKill: kill.heroNpc.event.basePointsPerKill,
@@ -707,6 +781,16 @@ export class EventKillService {
       throw new NotFoundException('Kill not found');
     }
 
+    // Query summary for this kill to get gaps timeline
+    // Raw gaps are deleted after summary creation, so we read from the summary
+    const summary = await this.prisma.eventRespawnWindowSummary.findUnique({
+      where: { killId },
+      select: { gapsTimeline: true },
+    });
+
+    const summaryGaps =
+      (summary?.gapsTimeline as unknown as GapTimelineEntry[] | null) ?? [];
+
     const maps = await this.prisma.eventMap.findMany({
       where: { heroNpcId: heroId },
       select: { id: true, mapName: true, mapId: true },
@@ -732,17 +816,8 @@ export class EventKillService {
             orderBy: { assignedAt: 'asc' },
           });
 
-        const gaps = await this.prisma.eventMapCoverageGap.findMany({
-          where: {
-            mapId: map.id,
-            startedAt: { lte: kill.killedAt },
-            OR: [
-              { endedAt: null },
-              { endedAt: { gte: kill.minSpawnTimeAtKill } },
-            ],
-          },
-          orderBy: { startedAt: 'asc' },
-        });
+        // Get gaps for this map from summary instead of raw records
+        const gapsForMap = summaryGaps.filter((g) => g.mapId === map.id);
 
         return {
           mapId: map.id,
@@ -756,8 +831,8 @@ export class EventKillService {
             assignedAt: a.assignedAt,
             unassignedAt: a.unassignedAt,
           })),
-          gaps: gaps.map((g) => ({
-            id: g.id,
+          gaps: gapsForMap.map((g) => ({
+            id: `${g.mapId}-${new Date(g.startedAt).getTime()}`,
             gapType: g.gapType,
             startedAt: g.startedAt,
             endedAt: g.endedAt,
@@ -768,5 +843,81 @@ export class EventKillService {
     );
 
     return results;
+  }
+
+  /**
+   * Cancel any scheduled auto-close job for a hero.
+   */
+  private async cancelScheduledAutoClose(heroId: string): Promise<void> {
+    const delayedJobs = await this.respawnWindowQueue.getJobs(['delayed']);
+
+    for (const job of delayedJobs) {
+      if (job.data.heroId === heroId) {
+        await job.remove();
+        this.logger.log({
+          message: 'Cancelled scheduled auto-close job (kill recorded)',
+          heroId,
+          jobId: job.id,
+        });
+      }
+    }
+  }
+
+  /**
+   * Schedule auto-close for a new respawn window after a kill.
+   */
+  private async scheduleAutoCloseForNewWindow(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    npcId: number | null,
+    world: string,
+    maxSpawnTime: Date,
+  ): Promise<void> {
+    const now = new Date();
+    const delay = maxSpawnTime.getTime() - now.getTime();
+
+    if (delay <= 0) {
+      this.logger.log({
+        message: 'Not scheduling auto-close - maxSpawnTime already passed',
+        heroId,
+        maxSpawnTime,
+      });
+      return;
+    }
+
+    const effectiveNpcId = npcId ?? this.getSyntheticNpcId(heroId);
+    const jobId = `auto-close-${heroId}-${maxSpawnTime.getTime()}`;
+
+    await this.respawnWindowQueue.add(
+      'auto-close-respawn-window',
+      { guildId, eventId, heroId, npcId: effectiveNpcId, world },
+      {
+        delay,
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+
+    this.logger.log({
+      message: 'Scheduled auto-close for new respawn window',
+      heroId,
+      maxSpawnTime,
+      delayMs: delay,
+      jobId,
+    });
+  }
+
+  /**
+   * Generate synthetic negative npcId from heroId for heroes without real npcId.
+   */
+  private getSyntheticNpcId(heroId: string): number {
+    let hash = 0;
+    for (let i = 0; i < heroId.length; i++) {
+      hash = ((hash << 5) - hash) + heroId.charCodeAt(i);
+      hash |= 0;
+    }
+    return -Math.abs(hash || 1);
   }
 }

@@ -8,6 +8,7 @@ import {
 import type { Queue } from 'bullmq';
 import { Prisma } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
+import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
 import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
 import type { AutoCloseRespawnWindowJobData } from '../respawn-window.processor';
 import type {
@@ -17,6 +18,7 @@ import type {
 import { EventEmitterService } from './event-emitter.service';
 import { EventKillService } from './event-kill.service';
 import { EventTrackingService } from './event-tracking.service';
+import { EventSummaryService } from './event-summary.service';
 
 // Default respawn randomness when creating new timers
 const DEFAULT_RESP_RANDOMNESS = 20; // 20%
@@ -49,6 +51,7 @@ export class EventRespawnService {
     private readonly eventEmitter: EventEmitterService,
     private readonly killService: EventKillService,
     private readonly trackingService: EventTrackingService,
+    private readonly summaryService: EventSummaryService,
   ) {}
 
   /**
@@ -173,6 +176,7 @@ export class EventRespawnService {
             memberId: timer.createdById,
             previousMinSpawnTime: timer.minSpawnTime,
             previousMaxSpawnTime: timer.maxSpawnTime,
+            windowOpenedAt: timer.windowOpenedAt,
           },
           true, // isManualClose
         )
@@ -185,6 +189,20 @@ export class EventRespawnService {
             error: err instanceof Error ? err.message : err,
           });
         });
+    }
+
+    // 7b. Create summary for auto-close (no kill recorded)
+    if (isAutoClose && timer) {
+      const now = new Date();
+      await this.summaryService.createWindowSummary(
+        heroId,
+        null, // No kill for auto-close
+        timer.windowOpenedAt ?? timer.minSpawnTime,
+        now,
+        timer.minSpawnTime,
+        timer.maxSpawnTime,
+        false, // Not manual close
+      );
     }
 
     // 8. Optionally create a new respawn window
@@ -240,6 +258,9 @@ export class EventRespawnService {
     }
 
     // Create or update the timer
+    // Mark as CUSTOM_MANUAL if using synthetic ID (no real npcId)
+    // This prevents findTimerNpcDataByName from using this timer's ID for new heroes
+    const isUsingSyntheticId = hero.npcId === null;
     const npcData = {
       id: effectiveNpcId,
       name: hero.npcName,
@@ -249,9 +270,12 @@ export class EventRespawnService {
       lvl: 0,
       type: 'hero',
       icon: hero.npcIcon || '',
-      margonemType: '0',
+      margonemType: isUsingSyntheticId
+        ? String(TIMER_TYPES.CUSTOM_MANUAL)
+        : '0',
     };
 
+    const windowOpenedAt = new Date();
     const timer = await this.prisma.timer.upsert({
       where: {
         timerId: {
@@ -273,12 +297,14 @@ export class EventRespawnService {
         latestRespawnRandomness: DEFAULT_RESP_RANDOMNESS,
         wasReset: false,
         npc: npcData,
+        windowOpenedAt,
       },
       update: {
         minSpawnTime,
         maxSpawnTime,
         wasReset: false,
         npc: npcData,
+        windowOpenedAt,
       },
       include: {
         member: true,

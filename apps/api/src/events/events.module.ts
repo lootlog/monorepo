@@ -21,6 +21,7 @@ import { EventPointsService } from './services/event-points.service';
 import { EventTrackingService } from './services/event-tracking.service';
 import { EventKillService } from './services/event-kill.service';
 import { EventRespawnService } from './services/event-respawn.service';
+import { EventSummaryService } from './services/event-summary.service';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { EventRespawnService } from './services/event-respawn.service';
     EventTrackingService,
     EventKillService,
     EventRespawnService,
+    EventSummaryService,
 
     // Queue handlers
     EventsQueueHandler,
