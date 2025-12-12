@@ -22,6 +22,19 @@ const DEFAULT_RESP_BASE_SECONDS = 3600; // 1 hour
 const DEFAULT_RESP_RANDOMNESS = 20; // 20%
 
 /**
+ * Generate synthetic negative npcId from heroId for heroes without real npcId.
+ * Uses negative values to avoid collision with real Margonem NPC IDs.
+ */
+function getSyntheticNpcId(heroId: string): number {
+  let hash = 0;
+  for (let i = 0; i < heroId.length; i++) {
+    hash = ((hash << 5) - hash) + heroId.charCodeAt(i);
+    hash |= 0;
+  }
+  return -Math.abs(hash || 1);
+}
+
+/**
  * Service responsible for respawn window lifecycle management.
  * Handles opening, closing, and scheduling respawn windows for event heroes.
  */
@@ -69,11 +82,8 @@ export class EventRespawnService {
       throw new NotFoundException('Hero not found');
     }
 
-    if (!hero.npcId) {
-      throw new BadRequestException(
-        'Hero has no NPC ID - cannot manage respawn window',
-      );
-    }
+    // Use real npcId if available, otherwise generate synthetic ID from heroId
+    const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     this.logger.log({
       message: isAutoClose
@@ -111,7 +121,7 @@ export class EventRespawnService {
           timerId: {
             guildId,
             world: hero.event.world,
-            npcId: hero.npcId,
+            npcId: effectiveNpcId,
           },
         },
       });
@@ -161,11 +171,8 @@ export class EventRespawnService {
       throw new NotFoundException('Hero not found');
     }
 
-    if (!hero.npcId) {
-      throw new BadRequestException(
-        'Hero has no NPC ID - cannot manage respawn window',
-      );
-    }
+    // Use real npcId if available, otherwise generate synthetic ID from heroId
+    const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     let minSpawnTime: Date;
     let maxSpawnTime: Date;
@@ -179,7 +186,7 @@ export class EventRespawnService {
       const lastTimer = await this.getLastTimerForHero(
         guildId,
         hero.event.world,
-        hero.npcId,
+        effectiveNpcId,
       );
       const now = new Date();
       const { min, max } = this.calculateRespawnTime(
@@ -212,7 +219,7 @@ export class EventRespawnService {
 
     // Create or update the timer
     const npcData = {
-      id: hero.npcId,
+      id: effectiveNpcId,
       name: hero.npcName,
       prof: '',
       location: '',
@@ -228,14 +235,14 @@ export class EventRespawnService {
         timerId: {
           guildId,
           world: hero.event.world,
-          npcId: hero.npcId,
+          npcId: effectiveNpcId,
         },
       },
       create: {
         guildId,
         createdById: firstMember.id,
         world: hero.event.world,
-        npcId: hero.npcId,
+        npcId: effectiveNpcId,
         minSpawnTime,
         maxSpawnTime,
         latestRespBaseSeconds: Math.round(
@@ -261,7 +268,7 @@ export class EventRespawnService {
       guildId,
       eventId,
       heroId,
-      hero.npcId,
+      effectiveNpcId,
       hero.event.world,
       maxSpawnTime,
     );
@@ -342,16 +349,8 @@ export class EventRespawnService {
       throw new NotFoundException('Hero not found');
     }
 
-    if (!hero.npcId) {
-      return {
-        hasTimer: false,
-        windowStatus: 'NONE',
-        minSpawnTime: null,
-        maxSpawnTime: null,
-        defaultRespBaseSeconds: DEFAULT_RESP_BASE_SECONDS,
-        defaultRespRandomness: DEFAULT_RESP_RANDOMNESS,
-      };
-    }
+    // Use real npcId if available, otherwise generate synthetic ID from heroId
+    const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     const now = new Date();
 
@@ -361,7 +360,7 @@ export class EventRespawnService {
         timerId: {
           guildId,
           world: hero.event.world,
-          npcId: hero.npcId,
+          npcId: effectiveNpcId,
         },
       },
     });
@@ -370,7 +369,7 @@ export class EventRespawnService {
     const lastTimerData = await this.getLastTimerForHero(
       guildId,
       hero.event.world,
-      hero.npcId,
+      effectiveNpcId,
     );
 
     // Determine window status:
