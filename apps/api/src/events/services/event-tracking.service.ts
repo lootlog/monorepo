@@ -382,8 +382,23 @@ export class EventTrackingService {
 
   /**
    * Get coverage gaps for a specific map.
+   * Validates that the map belongs to the specified guild and event.
    */
-  async getMapCoverageGaps(mapId: string) {
+  async getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
+    const map = await this.prisma.eventMap.findFirst({
+      where: {
+        id: mapId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+    });
+
+    if (!map) {
+      throw new NotFoundException('Map not found');
+    }
+
     return this.prisma.eventMapCoverageGap.findMany({
       where: { mapId },
       orderBy: { startedAt: 'desc' },
@@ -392,8 +407,21 @@ export class EventTrackingService {
 
   /**
    * Get coverage gaps for a hero (all maps).
+   * Validates that the hero belongs to the specified guild and event.
    */
-  async getHeroCoverageGaps(heroNpcId: string) {
+  async getHeroCoverageGaps(guildId: string, eventId: string, heroNpcId: string) {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroNpcId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
     return this.prisma.eventMapCoverageGap.findMany({
       where: { heroNpcId },
       orderBy: { startedAt: 'desc' },
@@ -410,8 +438,23 @@ export class EventTrackingService {
 
   /**
    * Get active (ongoing) gap for a map.
+   * Validates that the map belongs to the specified guild and event.
    */
-  async getActiveGapForMap(mapId: string) {
+  async getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
+    const map = await this.prisma.eventMap.findFirst({
+      where: {
+        id: mapId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+    });
+
+    if (!map) {
+      throw new NotFoundException('Map not found');
+    }
+
     return this.prisma.eventMapCoverageGap.findFirst({
       where: {
         mapId,
@@ -423,8 +466,21 @@ export class EventTrackingService {
   /**
    * Get all active (ongoing) gaps for a hero.
    * Returns all gaps where endedAt is null for all maps of this hero.
+   * Validates that the hero belongs to the specified guild and event.
    */
-  async getActiveGapsForHero(heroNpcId: string) {
+  async getActiveGapsForHero(guildId: string, eventId: string, heroNpcId: string) {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroNpcId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
     return this.prisma.eventMapCoverageGap.findMany({
       where: {
         heroNpcId,

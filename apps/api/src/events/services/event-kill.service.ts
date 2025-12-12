@@ -99,29 +99,37 @@ export class EventKillService {
           }
         }
 
-        for (const timer of nameMatchTimers) {
-          if (!seen.has(timer.npcId)) {
-            seen.add(timer.npcId);
-            const member = await this.prisma.member.findUnique({
-              where: { id: timer.createdById },
-            });
-            combined.push({ ...timer, member });
-          }
+        // Batch fetch members for name-matched timers to avoid N+1
+        const nameMatchedTimersToAdd = nameMatchTimers.filter(
+          (timer) => !seen.has(timer.npcId),
+        );
+        const memberIds = [
+          ...new Set(nameMatchedTimersToAdd.map((t) => t.createdById)),
+        ];
+        const members = await this.prisma.member.findMany({
+          where: { id: { in: memberIds } },
+        });
+        const memberMap = new Map(members.map((m) => [m.id, m]));
+
+        for (const timer of nameMatchedTimersToAdd) {
+          seen.add(timer.npcId);
+          combined.push({ ...timer, member: memberMap.get(timer.createdById) });
         }
 
         return combined;
       }
 
-      const timersWithMembers = await Promise.all(
-        nameMatchTimers.map(async (timer) => {
-          const member = await this.prisma.member.findUnique({
-            where: { id: timer.createdById },
-          });
-          return { ...timer, member };
-        }),
-      );
+      // Batch fetch members for all name-matched timers to avoid N+1
+      const memberIds = [...new Set(nameMatchTimers.map((t) => t.createdById))];
+      const members = await this.prisma.member.findMany({
+        where: { id: { in: memberIds } },
+      });
+      const memberMap = new Map(members.map((m) => [m.id, m]));
 
-      return timersWithMembers;
+      return nameMatchTimers.map((timer) => ({
+        ...timer,
+        member: memberMap.get(timer.createdById),
+      }));
     }
 
     const timers = await this.prisma.timer.findMany({

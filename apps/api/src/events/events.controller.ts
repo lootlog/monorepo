@@ -46,7 +46,7 @@ import {
 @UseGuards(AuthGuard)
 @Controller()
 export class EventsController {
-  constructor(private readonly EventsService: EventsService) {}
+  constructor(private readonly eventsService: EventsService) {}
 
   @Permissions(Permission.LOOTLOG_MANAGE)
   @UseGuards(PermissionsGuard)
@@ -68,7 +68,7 @@ export class EventsController {
     @Param('guildId') guildId: string,
     @Body() data: CreateEventDto,
   ) {
-    return this.EventsService.createEvent(guildId, data);
+    return this.eventsService.createEvent(guildId, data);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -98,7 +98,7 @@ export class EventsController {
     @Query('world') world?: string,
     @Query('activeOnly') activeOnly?: string,
   ) {
-    return this.EventsService.getEvents(guildId, world, activeOnly !== 'false');
+    return this.eventsService.getEvents(guildId, world, activeOnly !== 'false');
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -119,7 +119,7 @@ export class EventsController {
     @Param('guildId') guildId: string,
     @Param('eventId') eventId: string,
   ) {
-    return this.EventsService.getEvent(guildId, eventId);
+    return this.eventsService.getEvent(guildId, eventId);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -141,7 +141,7 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Body() data: UpdateEventDto,
   ) {
-    return this.EventsService.updateEvent(guildId, eventId, data);
+    return this.eventsService.updateEvent(guildId, eventId, data);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -162,7 +162,7 @@ export class EventsController {
     @Param('guildId') guildId: string,
     @Param('eventId') eventId: string,
   ) {
-    return this.EventsService.deleteEvent(guildId, eventId);
+    return this.eventsService.deleteEvent(guildId, eventId);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -186,7 +186,7 @@ export class EventsController {
     @Param('mapId') mapId: string,
     @Body() data: AssignMemberDto,
   ) {
-    return this.EventsService.assignMemberToMap(
+    return this.eventsService.assignMemberToMap(
       guildId,
       eventId,
       mapId,
@@ -215,7 +215,7 @@ export class EventsController {
     @Param('mapId') mapId: string,
     @GuildMember() member: { id: number },
   ) {
-    return this.EventsService.assignMemberToMap(
+    return this.eventsService.assignMemberToMap(
       guildId,
       eventId,
       mapId,
@@ -244,7 +244,7 @@ export class EventsController {
     @Param('mapId') mapId: string,
     @GuildMember() member: { id: number },
   ) {
-    return this.EventsService.unassignMemberFromMap(
+    return this.eventsService.unassignMemberFromMap(
       guildId,
       eventId,
       mapId,
@@ -270,7 +270,7 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Body() data: CreateHeroDto,
   ) {
-    return this.EventsService.createHero(guildId, eventId, data);
+    return this.eventsService.createHero(guildId, eventId, data);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -293,7 +293,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Body() data: UpdateHeroDto,
   ) {
-    return this.EventsService.updateHero(guildId, eventId, heroId, data);
+    return this.eventsService.updateHero(guildId, eventId, heroId, data);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -315,7 +315,7 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.EventsService.deleteHero(guildId, eventId, heroId);
+    return this.eventsService.deleteHero(guildId, eventId, heroId);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -338,7 +338,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Body() data: CreateMapDto,
   ) {
-    return this.EventsService.addMap(guildId, eventId, heroId, data);
+    return this.eventsService.addMap(guildId, eventId, heroId, data);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -362,7 +362,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Param('mapId') mapId: string,
   ) {
-    return this.EventsService.deleteMap(guildId, eventId, heroId, mapId);
+    return this.eventsService.deleteMap(guildId, eventId, heroId, mapId);
   }
 
   // ========== LOCATION MANAGEMENT ==========
@@ -386,7 +386,7 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.EventsService.getLocations(guildId, eventId, heroId);
+    return this.eventsService.getLocations(guildId, eventId, heroId);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -413,7 +413,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Body() data: CreateLocationDto,
   ) {
-    return this.EventsService.createLocation(guildId, eventId, heroId, data);
+    return this.eventsService.createLocation(guildId, eventId, heroId, data);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -441,7 +441,7 @@ export class EventsController {
     @Param('locationId') locationId: string,
     @Body() data: UpdateLocationDto,
   ) {
-    return this.EventsService.updateLocation(
+    return this.eventsService.updateLocation(
       guildId,
       eventId,
       heroId,
@@ -475,7 +475,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Param('locationId') locationId: string,
   ) {
-    return this.EventsService.deleteLocation(
+    return this.eventsService.deleteLocation(
       guildId,
       eventId,
       heroId,
@@ -503,7 +503,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Body() data: ReorderLocationsDto,
   ) {
-    return this.EventsService.reorderLocations(guildId, eventId, heroId, data);
+    return this.eventsService.reorderLocations(guildId, eventId, heroId, data);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -530,7 +530,7 @@ export class EventsController {
     @Param('mapId') mapId: string,
     @Body() data: AssignMapLocationDto,
   ) {
-    return this.EventsService.assignMapToLocation(
+    return this.eventsService.assignMapToLocation(
       guildId,
       eventId,
       heroId,
@@ -566,7 +566,7 @@ export class EventsController {
     @Param('mapId') mapId: string,
     @Query('memberId') memberId?: string,
   ) {
-    return this.EventsService.unassignMemberFromMap(
+    return this.eventsService.unassignMemberFromMap(
       guildId,
       eventId,
       mapId,
@@ -592,7 +592,7 @@ export class EventsController {
     @Param('guildId') guildId: string,
     @Param('eventId') eventId: string,
   ) {
-    return this.EventsService.getRanking(guildId, eventId);
+    return this.eventsService.getRanking(guildId, eventId);
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -617,7 +617,7 @@ export class EventsController {
     @Body() data: UpdateRankingPointsDto,
     @UserId() userId: string,
   ) {
-    return this.EventsService.updateRankingPoints(
+    return this.eventsService.updateRankingPoints(
       guildId,
       eventId,
       rankingId,
@@ -646,7 +646,7 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('rankingId') rankingId: string,
   ) {
-    return this.EventsService.getRankingEditHistory(guildId, eventId, rankingId);
+    return this.eventsService.getRankingEditHistory(guildId, eventId, rankingId);
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
@@ -669,7 +669,7 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Query('world') world: string,
   ) {
-    return this.EventsService.getEventHeroTimers(guildId, eventId, world);
+    return this.eventsService.getEventHeroTimers(guildId, eventId, world);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -690,7 +690,7 @@ export class EventsController {
     @Param('guildId') guildId: string,
     @Param('eventId') eventId: string,
   ) {
-    return this.EventsService.getEventHeroStats(guildId, eventId);
+    return this.eventsService.getEventHeroStats(guildId, eventId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -730,7 +730,7 @@ export class EventsController {
     @Query('cursor') cursor?: string,
     @Query('heroId') heroId?: string,
   ) {
-    return this.EventsService.getEventKillHistory(
+    return this.eventsService.getEventKillHistory(
       guildId,
       eventId,
       limit ? parseInt(limit, 10) : 20,
@@ -772,7 +772,7 @@ export class EventsController {
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
   ) {
-    return this.EventsService.getHeroKillHistory(
+    return this.eventsService.getHeroKillHistory(
       guildId,
       eventId,
       heroId,
@@ -805,7 +805,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Param('killId') killId: string,
   ) {
-    return this.EventsService.getKillDetail(guildId, eventId, heroId, killId);
+    return this.eventsService.getKillDetail(guildId, eventId, heroId, killId);
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -833,7 +833,7 @@ export class EventsController {
     @Body() data: UpdateKillPointDto,
     @UserId() userId: string,
   ) {
-    return this.EventsService.updateKillPoint(
+    return this.eventsService.updateKillPoint(
       guildId,
       eventId,
       killId,
@@ -867,7 +867,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Param('killId') killId: string,
   ) {
-    return this.EventsService.getKillTimelineData(
+    return this.eventsService.getKillTimelineData(
       guildId,
       eventId,
       heroId,
@@ -891,11 +891,11 @@ export class EventsController {
     description: 'List of coverage gaps with type, duration, and timestamps',
   })
   async getHeroCoverageGaps(
-    @Param('guildId') _guildId: string,
-    @Param('eventId') _eventId: string,
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.EventsService.getHeroCoverageGaps(heroId);
+    return this.eventsService.getHeroCoverageGaps(guildId, eventId, heroId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -914,11 +914,11 @@ export class EventsController {
     description: 'List of coverage gaps with type, duration, and timestamps',
   })
   async getMapCoverageGaps(
-    @Param('guildId') _guildId: string,
-    @Param('eventId') _eventId: string,
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
   ) {
-    return this.EventsService.getMapCoverageGaps(mapId);
+    return this.eventsService.getMapCoverageGaps(guildId, eventId, mapId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -937,11 +937,11 @@ export class EventsController {
     description: 'Active gap or null if no gap is currently active',
   })
   async getActiveGapForMap(
-    @Param('guildId') _guildId: string,
-    @Param('eventId') _eventId: string,
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
   ) {
-    return this.EventsService.getActiveGapForMap(mapId);
+    return this.eventsService.getActiveGapForMap(guildId, eventId, mapId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -960,11 +960,11 @@ export class EventsController {
     description: 'Array of active gaps for all maps of the hero',
   })
   async getActiveGapsForHero(
-    @Param('guildId') _guildId: string,
-    @Param('eventId') _eventId: string,
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.EventsService.getActiveGapsForHero(heroId);
+    return this.eventsService.getActiveGapsForHero(guildId, eventId, heroId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -988,7 +988,7 @@ export class EventsController {
     @Param('eventId') _eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.EventsService.getHeroPresenceStats(heroId);
+    return this.eventsService.getHeroPresenceStats(heroId);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
@@ -1012,7 +1012,7 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.EventsService.getHeroRespawnConfig(guildId, eventId, heroId);
+    return this.eventsService.getHeroRespawnConfig(guildId, eventId, heroId);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -1041,7 +1041,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Body() data: CloseRespawnWindowDto,
   ) {
-    await this.EventsService.closeRespawnWindow(guildId, eventId, heroId, {
+    await this.eventsService.closeRespawnWindow(guildId, eventId, heroId, {
       createNewWindow: data.createNewWindow,
       newMinSpawnTime: data.newMinSpawnTime
         ? new Date(data.newMinSpawnTime)
@@ -1079,7 +1079,7 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Body() data: OpenRespawnWindowDto,
   ) {
-    const result = await this.EventsService.openRespawnWindow(
+    const result = await this.eventsService.openRespawnWindow(
       guildId,
       eventId,
       heroId,

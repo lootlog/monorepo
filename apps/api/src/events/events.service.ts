@@ -505,14 +505,6 @@ export class EventsService {
       where: { id: mapId },
     });
 
-    // Notify about map deletion so clients can update state (e.g. remove from tracking)
-    // We reuse the status update mechanism but maybe we need a specific deletion event?
-    // For now, let's just accept it disappears from lists on refresh/polling or if we add real-time deletion.
-    // The current emitMapStatusUpdate is for assignments.
-    // Let's at least try to emit a status update with "deleted" logic if we had one, but we don't.
-    // Clients currently rely on polling or initial load for the structure, and socket for status.
-    // We might need to implement real-time structure updates later, but for now this is fine.
-
     return { success: true };
   }
 
@@ -817,29 +809,29 @@ export class EventsService {
   /**
    * Get coverage gaps for a specific map.
    */
-  async getMapCoverageGaps(mapId: string) {
-    return this.trackingService.getMapCoverageGaps(mapId);
+  async getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
+    return this.trackingService.getMapCoverageGaps(guildId, eventId, mapId);
   }
 
   /**
    * Get coverage gaps for a hero (all maps).
    */
-  async getHeroCoverageGaps(heroNpcId: string) {
-    return this.trackingService.getHeroCoverageGaps(heroNpcId);
+  async getHeroCoverageGaps(guildId: string, eventId: string, heroNpcId: string) {
+    return this.trackingService.getHeroCoverageGaps(guildId, eventId, heroNpcId);
   }
 
   /**
    * Get active (ongoing) gap for a map.
    */
-  async getActiveGapForMap(mapId: string) {
-    return this.trackingService.getActiveGapForMap(mapId);
+  async getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
+    return this.trackingService.getActiveGapForMap(guildId, eventId, mapId);
   }
 
   /**
    * Get all active (ongoing) gaps for a hero.
    */
-  async getActiveGapsForHero(heroNpcId: string) {
-    return this.trackingService.getActiveGapsForHero(heroNpcId);
+  async getActiveGapsForHero(guildId: string, eventId: string, heroNpcId: string) {
+    return this.trackingService.getActiveGapsForHero(guildId, eventId, heroNpcId);
   }
 
   /**
