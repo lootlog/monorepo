@@ -14,8 +14,6 @@ export interface RespawnConfig {
   windowStatus: WindowStatus;
   minSpawnTime: string | null;
   maxSpawnTime: string | null;
-  defaultRespBaseSeconds: number;
-  defaultRespRandomness: number;
 }
 
 interface UseHeroRespawnConfigOptions {
@@ -78,7 +76,5 @@ export const useHeroRespawnConfig = ({
     windowStatus,
     minSpawnTime: timer?.minSpawnTime ?? null,
     maxSpawnTime: timer?.maxSpawnTime ?? null,
-    defaultRespBaseSeconds: timer?.latestRespBaseSeconds ?? 3600,
-    defaultRespRandomness: timer?.latestRespawnRandomness ?? 20,
   };
 };

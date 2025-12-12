@@ -33,6 +33,7 @@ export interface KillDetail {
   minSpawnTimeAtKill: string;
   maxSpawnTimeAtKill: string;
   timerCreatedById: number | null;
+  isManualClose: boolean;
   heroNpc: KillDetailHeroNpc;
   timerCreatedBy: KillDetailMember | null;
   points: KillDetailParticipant[];

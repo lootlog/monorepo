@@ -15,10 +15,10 @@ import type {
   OpenRespawnWindowOptions,
 } from '../interfaces/respawn-window.interface';
 import { EventEmitterService } from './event-emitter.service';
+import { EventKillService } from './event-kill.service';
 import { EventTrackingService } from './event-tracking.service';
 
-// Default respawn values when no previous timer exists
-const DEFAULT_RESP_BASE_SECONDS = 3600; // 1 hour
+// Default respawn randomness when creating new timers
 const DEFAULT_RESP_RANDOMNESS = 20; // 20%
 
 /**
@@ -47,6 +47,7 @@ export class EventRespawnService {
     @InjectQueue(RESPAWN_WINDOW_QUEUE)
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
     private readonly eventEmitter: EventEmitterService,
+    private readonly killService: EventKillService,
     private readonly trackingService: EventTrackingService,
   ) {}
 
@@ -95,7 +96,18 @@ export class EventRespawnService {
       createNewWindow,
     });
 
-    // 1. Clear all map assignments for this hero
+    // 1. Fetch the timer before deleting (needed for recording kill)
+    const timer = await this.prisma.timer.findUnique({
+      where: {
+        timerId: {
+          guildId,
+          world: hero.event.world,
+          npcId: effectiveNpcId,
+        },
+      },
+    });
+
+    // 2. Clear all map assignments for this hero
     for (const map of hero.maps) {
       if (map.assignedMembers.length > 0) {
         await this.prisma.eventMap.update({
@@ -111,43 +123,75 @@ export class EventRespawnService {
       }
     }
 
-    // 2. Close all coverage gaps for this hero
+    // 3. Close all coverage gaps for this hero
     await this.trackingService.closeAllGapsForHero(heroId);
 
-    // 3. Delete the timer
-    try {
-      await this.prisma.timer.delete({
-        where: {
-          timerId: {
-            guildId,
-            world: hero.event.world,
-            npcId: effectiveNpcId,
+    // 4. Delete the timer
+    if (timer) {
+      try {
+        await this.prisma.timer.delete({
+          where: {
+            timerId: {
+              guildId,
+              world: hero.event.world,
+              npcId: effectiveNpcId,
+            },
           },
-        },
-      });
-    } catch (error) {
-      // Timer might not exist, that's okay
-      if (
-        !(
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2025'
-        )
-      ) {
-        throw error;
+        });
+      } catch (error) {
+        // Timer might have been deleted in the meantime, that's okay
+        if (
+          !(
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2025'
+          )
+        ) {
+          throw error;
+        }
       }
     }
 
-    // 4. Cancel any scheduled auto-close job
+    // 5. Cancel any scheduled auto-close job
     await this.cancelScheduledAutoClose(heroId);
 
-    // 5. Emit respawn window closed event
+    // 6. Emit respawn window closed event
     await this.eventEmitter.emitRespawnWindowClosed(guildId, eventId, heroId);
 
-    // 6. Optionally create a new respawn window
+    // 7. Record hero "kill" for points calculation (manual close only)
+    // Even if hero wasn't actually killed, players deserve points for their effort
+    if (!isAutoClose && timer) {
+      this.killService
+        .checkAndRecordEventHeroKill(
+          guildId,
+          hero.event.world,
+          effectiveNpcId,
+          hero.npcName,
+          hero.npcIcon ?? '',
+          {
+            minSpawnTime: timer.minSpawnTime,
+            maxSpawnTime: timer.maxSpawnTime,
+            memberId: timer.createdById,
+            previousMinSpawnTime: timer.minSpawnTime,
+            previousMaxSpawnTime: timer.maxSpawnTime,
+          },
+          true, // isManualClose
+        )
+        .catch((err) => {
+          this.logger.error({
+            message: 'Failed to record hero kill on manual window close',
+            heroId,
+            eventId,
+            guildId,
+            error: err instanceof Error ? err.message : err,
+          });
+        });
+    }
+
+    // 8. Optionally create a new respawn window
     if (createNewWindow) {
       await this.openRespawnWindow(guildId, eventId, heroId, {
-        minSpawnTime: newMinSpawnTime,
-        maxSpawnTime: newMaxSpawnTime,
+        minSpawnTime: newMinSpawnTime!,
+        maxSpawnTime: newMaxSpawnTime!,
       });
     }
   }
@@ -159,7 +203,7 @@ export class EventRespawnService {
     guildId: string,
     eventId: string,
     heroId: string,
-    options: OpenRespawnWindowOptions = {},
+    options: OpenRespawnWindowOptions,
   ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
     // Get hero with event info
     const hero = await this.prisma.eventHeroNpc.findFirst({
@@ -174,29 +218,7 @@ export class EventRespawnService {
     // Use real npcId if available, otherwise generate synthetic ID from heroId
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
-    let minSpawnTime: Date;
-    let maxSpawnTime: Date;
-
-    if (options.minSpawnTime && options.maxSpawnTime) {
-      // Use custom times
-      minSpawnTime = options.minSpawnTime;
-      maxSpawnTime = options.maxSpawnTime;
-    } else {
-      // Use default times from last timer or fallback defaults
-      const lastTimer = await this.getLastTimerForHero(
-        guildId,
-        hero.event.world,
-        effectiveNpcId,
-      );
-      const now = new Date();
-      const { min, max } = this.calculateRespawnTime(
-        lastTimer?.latestRespBaseSeconds ?? DEFAULT_RESP_BASE_SECONDS,
-        lastTimer?.latestRespawnRandomness ?? DEFAULT_RESP_RANDOMNESS,
-        now,
-      );
-      minSpawnTime = min;
-      maxSpawnTime = max;
-    }
+    const { minSpawnTime, maxSpawnTime } = options;
 
     this.logger.log({
       message: 'Opening respawn window',
@@ -326,7 +348,7 @@ export class EventRespawnService {
   }
 
   /**
-   * Get hero's default respawn configuration for frontend display.
+   * Get hero's respawn configuration for frontend display.
    */
   async getHeroRespawnConfig(
     guildId: string,
@@ -337,8 +359,6 @@ export class EventRespawnService {
     windowStatus: 'OPEN' | 'WAITING' | 'NONE';
     minSpawnTime: Date | null;
     maxSpawnTime: Date | null;
-    defaultRespBaseSeconds: number;
-    defaultRespRandomness: number;
   }> {
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: { id: heroId, event: { id: eventId, guildId } },
@@ -365,13 +385,6 @@ export class EventRespawnService {
       },
     });
 
-    // Get default values
-    const lastTimerData = await this.getLastTimerForHero(
-      guildId,
-      hero.event.world,
-      effectiveNpcId,
-    );
-
     // Determine window status:
     // OPEN - between min and max spawn time (mob can respawn any moment)
     // WAITING - timer exists but before minSpawnTime (waiting for window to open)
@@ -397,91 +410,6 @@ export class EventRespawnService {
       windowStatus,
       minSpawnTime: timer?.minSpawnTime ?? null,
       maxSpawnTime: timer?.maxSpawnTime ?? null,
-      defaultRespBaseSeconds:
-        lastTimerData?.latestRespBaseSeconds ?? DEFAULT_RESP_BASE_SECONDS,
-      defaultRespRandomness:
-        lastTimerData?.latestRespawnRandomness ?? DEFAULT_RESP_RANDOMNESS,
-    };
-  }
-
-  /**
-   * Get the last timer data for a hero (for default respawn times).
-   */
-  private async getLastTimerForHero(
-    guildId: string,
-    world: string,
-    npcId: number,
-  ): Promise<{
-    latestRespBaseSeconds: number;
-    latestRespawnRandomness: number;
-  } | null> {
-    // First try to find an existing timer
-    const existingTimer = await this.prisma.timer.findUnique({
-      where: {
-        timerId: { guildId, world, npcId },
-      },
-      select: {
-        latestRespBaseSeconds: true,
-        latestRespawnRandomness: true,
-      },
-    });
-
-    if (existingTimer) {
-      return existingTimer;
-    }
-
-    // Otherwise look at recent kills to get historical timer data
-    const recentKill = await this.prisma.eventHeroKill.findFirst({
-      where: {
-        heroNpc: {
-          npcId,
-          event: { guildId, world },
-        },
-      },
-      orderBy: { killedAt: 'desc' },
-      select: {
-        minSpawnTimeAtKill: true,
-        maxSpawnTimeAtKill: true,
-      },
-    });
-
-    if (
-      recentKill &&
-      recentKill.minSpawnTimeAtKill &&
-      recentKill.maxSpawnTimeAtKill
-    ) {
-      const diffMs =
-        recentKill.maxSpawnTimeAtKill.getTime() -
-        recentKill.minSpawnTimeAtKill.getTime();
-      const baseSeconds = Math.round(diffMs / 2000);
-      return {
-        latestRespBaseSeconds: baseSeconds,
-        latestRespawnRandomness:
-          baseSeconds > 0
-            ? Math.round((diffMs / 2 / (baseSeconds * 1000)) * 100)
-            : DEFAULT_RESP_RANDOMNESS,
-      };
-    }
-
-    return null;
-  }
-
-  /**
-   * Calculate respawn time window from base seconds and randomness.
-   */
-  private calculateRespawnTime(
-    respBaseSeconds: number,
-    respawnRandomness: number,
-    now: Date,
-  ): { min: Date; max: Date } {
-    const dateMs = now.getTime();
-    const respMs = respBaseSeconds * 1000;
-    const multiplier = respawnRandomness / 100;
-    const variance = Math.round(respMs * multiplier);
-
-    return {
-      min: new Date(dateMs + respMs - variance),
-      max: new Date(dateMs + respMs + variance),
     };
   }
 

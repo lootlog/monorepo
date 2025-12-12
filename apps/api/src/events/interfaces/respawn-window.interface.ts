@@ -25,10 +25,10 @@ export interface CloseRespawnWindowOptions {
  * Options for opening a respawn window.
  */
 export interface OpenRespawnWindowOptions {
-  /** Custom minimum spawn time (overrides default calculation) */
-  minSpawnTime?: Date;
-  /** Custom maximum spawn time (overrides default calculation) */
-  maxSpawnTime?: Date;
+  /** Minimum spawn time */
+  minSpawnTime: Date;
+  /** Maximum spawn time */
+  maxSpawnTime: Date;
 }
 
 /**
@@ -43,8 +43,4 @@ export interface HeroRespawnConfig {
   minSpawnTime: Date | null;
   /** Maximum spawn time (null if no timer) */
   maxSpawnTime: Date | null;
-  /** Default respawn base time in seconds */
-  defaultRespBaseSeconds: number;
-  /** Default respawn randomness percentage */
-  defaultRespRandomness: number;
 }

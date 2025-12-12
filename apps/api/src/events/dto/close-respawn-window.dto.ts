@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsOptional, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  ValidateIf,
+} from 'class-validator';
 
 export class CloseRespawnWindowDto {
   @ApiPropertyOptional({
@@ -12,19 +18,19 @@ export class CloseRespawnWindowDto {
 
   @ApiPropertyOptional({
     description:
-      'Custom minimum spawn time for the new window (ISO date string). If not provided, uses default calculated times.',
+      'Minimum spawn time for the new window (ISO date string). Required when createNewWindow is true.',
   })
-  @IsOptional()
   @ValidateIf((o) => o.createNewWindow)
+  @IsNotEmpty()
   @IsDateString()
   newMinSpawnTime?: string;
 
   @ApiPropertyOptional({
     description:
-      'Custom maximum spawn time for the new window (ISO date string). If not provided, uses default calculated times.',
+      'Maximum spawn time for the new window (ISO date string). Required when createNewWindow is true.',
   })
-  @IsOptional()
   @ValidateIf((o) => o.createNewWindow)
+  @IsNotEmpty()
   @IsDateString()
   newMaxSpawnTime?: string;
 }

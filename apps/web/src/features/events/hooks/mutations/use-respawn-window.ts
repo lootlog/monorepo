@@ -13,8 +13,8 @@ interface CloseRespawnWindowParams {
 interface OpenRespawnWindowParams {
   eventId: string;
   heroId: string;
-  minSpawnTime?: string;
-  maxSpawnTime?: string;
+  minSpawnTime: string;
+  maxSpawnTime: string;
 }
 
 interface OpenRespawnWindowResult {

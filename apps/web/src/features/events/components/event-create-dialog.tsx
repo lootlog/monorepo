@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
@@ -263,7 +261,9 @@ export const EventCreateDialog = ({
               )}
 
               {heroNpcs.length > 0 && (
-                <ScrollArea className={hasLotsOfHeroes ? "h-[140px]" : undefined}>
+                <ScrollArea
+                  className={hasLotsOfHeroes ? "h-[140px]" : undefined}
+                >
                   <div className="space-y-2">
                     {heroNpcs.map((hero, index) => (
                       <div
@@ -272,7 +272,9 @@ export const EventCreateDialog = ({
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="text-sm font-medium">{hero.npcName}</p>
+                            <p className="text-sm font-medium">
+                              {hero.npcName}
+                            </p>
                             {hero.npcId && (
                               <p className="text-[10px] font-mono text-muted-foreground">
                                 ID: {hero.npcId}
@@ -332,7 +334,9 @@ export const EventCreateDialog = ({
                         onChange={(e) =>
                           setNewHero({ ...newHero, npcName: e.target.value })
                         }
-                        placeholder={t("events.createDialog.heroNamePlaceholder")}
+                        placeholder={t(
+                          "events.createDialog.heroNamePlaceholder",
+                        )}
                         className="h-8 text-sm"
                       />
                     </div>
@@ -377,7 +381,9 @@ export const EventCreateDialog = ({
                           <SelectTrigger className="w-auto h-6 text-[10px] px-2 gap-1">
                             <FileText className="size-2.5" />
                             <SelectValue
-                              placeholder={t("events.createDialog.fromTemplate")}
+                              placeholder={t(
+                                "events.createDialog.fromTemplate",
+                              )}
                             />
                           </SelectTrigger>
                           <SelectContent>
@@ -396,7 +402,11 @@ export const EventCreateDialog = ({
                     </div>
 
                     {newHero.maps.length > 0 && (
-                      <ScrollArea className={newHero.maps.length > 8 ? "h-[60px]" : undefined}>
+                      <ScrollArea
+                        className={
+                          newHero.maps.length > 8 ? "h-[60px]" : undefined
+                        }
+                      >
                         <div className="flex flex-wrap gap-1 p-2 rounded border bg-background/50 min-h-[32px]">
                           {newHero.maps.map((map, idx) => (
                             <div

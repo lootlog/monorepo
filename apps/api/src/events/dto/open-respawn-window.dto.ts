@@ -1,20 +1,18 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsDateString, IsNotEmpty } from 'class-validator';
 
 export class OpenRespawnWindowDto {
-  @ApiPropertyOptional({
-    description:
-      'Custom minimum spawn time (ISO date string). If not provided, uses default calculated times based on previous timer data.',
+  @ApiProperty({
+    description: 'Minimum spawn time (ISO date string)',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  minSpawnTime?: string;
+  minSpawnTime: string;
 
-  @ApiPropertyOptional({
-    description:
-      'Custom maximum spawn time (ISO date string). If not provided, uses default calculated times based on previous timer data.',
+  @ApiProperty({
+    description: 'Maximum spawn time (ISO date string)',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  maxSpawnTime?: string;
+  maxSpawnTime: string;
 }

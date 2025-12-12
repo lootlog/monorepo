@@ -31,6 +31,7 @@ export interface HeroKill {
   killedAt: string;
   minSpawnTimeAtKill: string;
   maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
   heroNpc: HeroKillHeroNpc;
   participants: KillParticipant[];
 }

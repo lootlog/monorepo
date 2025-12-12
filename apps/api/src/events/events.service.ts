@@ -18,16 +18,33 @@ import {
   EventKillPoint,
   Prisma,
 } from 'generated/client';
+import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
 import type { KillTimerData } from './interfaces/kill-timer-data.interface';
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
   MapStatus,
 } from './interfaces/respawn-window.interface';
+
 import { EventPointsService } from './services/event-points.service';
 import { EventTrackingService } from './services/event-tracking.service';
 import { EventKillService } from './services/event-kill.service';
 import { EventRespawnService } from './services/event-respawn.service';
+
+interface TimerNpcData {
+  id: number;
+  name: string;
+  icon: string;
+}
+
+export interface CheckEventHeroKillParams {
+  guildId: string;
+  world: string;
+  npcId: number;
+  npcName: string;
+  npcIcon: string;
+  timerData: KillTimerData;
+}
 
 // Re-export types for external consumers
 export type { MapStatus, CloseRespawnWindowOptions, OpenRespawnWindowOptions };
@@ -366,11 +383,27 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
+    let npcId = data.npcId;
+    let npcIcon: string | undefined;
+
+    if (!npcId) {
+      const npcData = await this.findTimerNpcDataByName(
+        guildId,
+        event.world,
+        data.npcName,
+      );
+      if (npcData) {
+        npcId = npcData.id;
+        npcIcon = npcData.icon;
+      }
+    }
+
     return this.prisma.eventHeroNpc.create({
       data: {
         eventId,
-        npcId: data.npcId,
+        npcId,
         npcName: data.npcName,
+        npcIcon,
         maps: {
           create: (data.maps || []).map((map) => ({
             mapId: map.mapId,
@@ -390,6 +423,36 @@ export class EventsService {
         },
       },
     });
+  }
+
+  private async findTimerNpcDataByName(
+    guildId: string,
+    world: string,
+    npcName: string,
+  ): Promise<TimerNpcData | null> {
+    const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
+
+    const results = await this.prisma.$queryRaw<{ npc: TimerNpcData }[]>`
+      SELECT t."npc"
+      FROM "Timer" t
+      WHERE t."guildId" = ${guildId}
+        AND t."world" = ${world}
+        AND t."npc"->>'name' ILIKE ${npcName}
+        AND COALESCE(t."npc"->>'margonemType', '0') != ${manualTimerType}
+      ORDER BY t."updatedAt" DESC
+      LIMIT 1
+    `;
+
+    if (results.length === 0) {
+      return null;
+    }
+
+    const npc = results[0].npc;
+    return {
+      id: npc.id,
+      name: npc.name,
+      icon: npc.icon,
+    };
   }
 
   async updateHero(
@@ -885,20 +948,15 @@ export class EventsService {
    * Check if NPC is an event hero and record a kill if so.
    */
   async checkAndRecordEventHeroKill(
-    guildId: string,
-    world: string,
-    npcId: number,
-    npcName: string,
-    npcIcon: string,
-    timerData: KillTimerData,
+    params: CheckEventHeroKillParams,
   ): Promise<void> {
     return this.killService.checkAndRecordEventHeroKill(
-      guildId,
-      world,
-      npcId,
-      npcName,
-      npcIcon,
-      timerData,
+      params.guildId,
+      params.world,
+      params.npcId,
+      params.npcName,
+      params.npcIcon,
+      params.timerData,
     );
   }
 
@@ -1105,7 +1163,7 @@ export class EventsService {
     guildId: string,
     eventId: string,
     heroId: string,
-    options: OpenRespawnWindowOptions = {},
+    options: OpenRespawnWindowOptions,
   ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
     return this.respawnService.openRespawnWindow(guildId, eventId, heroId, options);
   }
@@ -1122,8 +1180,6 @@ export class EventsService {
     windowStatus: 'OPEN' | 'WAITING' | 'NONE';
     minSpawnTime: Date | null;
     maxSpawnTime: Date | null;
-    defaultRespBaseSeconds: number;
-    defaultRespRandomness: number;
   }> {
     return this.respawnService.getHeroRespawnConfig(guildId, eventId, heroId);
   }

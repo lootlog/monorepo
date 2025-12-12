@@ -1,5 +1,3 @@
-"use client";
-
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -112,7 +110,7 @@ export const HeroManageDialog = ({
                   ? hero?.npcName
                   : t(
                       "events.heroes.addDescription",
-                      "Dodaj nowego herosa do eventu"
+                      "Dodaj nowego herosa do eventu",
                     )}
               </DialogDescription>
             </div>
@@ -131,7 +129,10 @@ export const HeroManageDialog = ({
               </Label>
               <Input
                 type="number"
-                placeholder={t("events.createDialog.heroIdPlaceholder", "opcjonalne")}
+                placeholder={t(
+                  "events.createDialog.heroIdPlaceholder",
+                  "opcjonalne",
+                )}
                 {...register("npcId")}
                 disabled={isEditing}
                 className="h-9 text-sm font-mono"
@@ -144,7 +145,7 @@ export const HeroManageDialog = ({
               <Input
                 placeholder={t(
                   "events.createDialog.heroNamePlaceholder",
-                  "np. Król Goblinów"
+                  "np. Król Goblinów",
                 )}
                 {...register("npcName", { required: true })}
                 className="h-9 text-sm"
@@ -158,7 +159,7 @@ export const HeroManageDialog = ({
               <p className="text-xs text-muted-foreground">
                 {t(
                   "events.heroes.mapsHint",
-                  "Mapy dla herosa dodasz po jego utworzeniu."
+                  "Mapy dla herosa dodasz po jego utworzeniu.",
                 )}
               </p>
             </div>
