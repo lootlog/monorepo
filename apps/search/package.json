@@ -11,15 +11,15 @@
     "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.5",
+    "@hono/node-server": "^1.19.7",
     "@hono/otel": "^1.0.1",
     "@lootlog/api-helpers": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3",
-    "hono": "^4.10.3",
-    "meilisearch": "^0.53.0",
-    "zod": "^4.1.12"
+    "hono": "^4.11.1",
+    "meilisearch": "^0.54.0",
+    "zod": "^4.2.0"
   },
   "devDependencies": {
     "@lootlog/types": "workspace:*",
