@@ -564,13 +564,18 @@ enum CoverageGapType {
 }
 
 model EventMapCoverageGap {
-  id              String          @id @default(cuid())
-  mapId           String
-  heroNpcId       String
-  gapType         CoverageGapType
-  startedAt       DateTime
-  endedAt         DateTime?
-  durationSeconds Int?
+  id                 String          @id @default(cuid())
+  mapId              String
+  heroNpcId          String
+  gapType            CoverageGapType
+  startedAt          DateTime
+  endedAt            DateTime?
+  durationSeconds    Int?
+  // Indicates if there were assigned members when the gap started
+  // true = UNCOVERED (members assigned but not present)
+  // false = UNASSIGNED (no members assigned)
+  // This field simplifies gap type detection for existing records
+  hadAssignedMembers Boolean?
 
   map     EventMap     @relation(fields: [mapId], references: [id], onDelete: Cascade)
   heroNpc EventHeroNpc @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)

@@ -2,6 +2,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -110,13 +111,45 @@ export class EventRespawnService {
       },
     });
 
-    // 2. Clear all map assignments for this hero
+    // 2. Record hero "kill" for points calculation
+    // IMPORTANT: Must happen BEFORE clearing map assignments so we can calculate points
+    // for currently assigned members
+    // NOTE: We call recordHeroKill directly (not checkAndRecordEventHeroKill) because
+    // we already have the hero object and don't need to search for it by npcId
+    if (timer) {
+      try {
+        await this.killService.recordHeroKill(
+          guildId,
+          hero,
+          hero.event,
+          {
+            minSpawnTime: timer.minSpawnTime,
+            maxSpawnTime: timer.maxSpawnTime,
+            memberId: timer.createdById,
+            previousMinSpawnTime: timer.minSpawnTime,
+            previousMaxSpawnTime: timer.maxSpawnTime,
+            windowOpenedAt: timer.windowOpenedAt,
+          },
+          !isAutoClose, // isManualClose
+        );
+      } catch (err) {
+        this.logger.error({
+          message: `Failed to record hero kill on ${isAutoClose ? 'auto' : 'manual'} window close`,
+          heroId,
+          eventId,
+          guildId,
+          error: err instanceof Error ? err.message : err,
+        });
+        throw new InternalServerErrorException(
+          'Window closed but failed to record points. Please contact support.',
+        );
+      }
+    }
+
+    // 3. Emit map status updates for real-time UI
+    // NOTE: recordHeroKill already clears assignments as part of its transaction
     for (const map of hero.maps) {
       if (map.assignedMembers.length > 0) {
-        await this.prisma.eventMap.update({
-          where: { id: map.id },
-          data: { assignedMembers: { set: [] } },
-        });
         await this.eventEmitter.emitMapStatusUpdate(
           guildId,
           eventId,
@@ -126,10 +159,9 @@ export class EventRespawnService {
       }
     }
 
-    // 3. Close all coverage gaps for this hero
-    await this.trackingService.closeAllGapsForHero(heroId);
+    // 4. Coverage gaps are already closed by recordHeroKill
 
-    // 4. Delete the timer
+    // 5. Delete the timer
     if (timer) {
       try {
         await this.prisma.timer.delete({
@@ -154,56 +186,11 @@ export class EventRespawnService {
       }
     }
 
-    // 5. Cancel any scheduled auto-close job
+    // 6. Cancel any scheduled auto-close job
     await this.cancelScheduledAutoClose(heroId);
 
-    // 6. Emit respawn window closed event
+    // 7. Emit respawn window closed event
     await this.eventEmitter.emitRespawnWindowClosed(guildId, eventId, heroId);
-
-    // 7. Record hero "kill" for points calculation (manual close only)
-    // Even if hero wasn't actually killed, players deserve points for their effort
-    if (!isAutoClose && timer) {
-      this.killService
-        .checkAndRecordEventHeroKill(
-          guildId,
-          hero.event.world,
-          effectiveNpcId,
-          hero.npcName,
-          hero.npcIcon ?? '',
-          {
-            minSpawnTime: timer.minSpawnTime,
-            maxSpawnTime: timer.maxSpawnTime,
-            memberId: timer.createdById,
-            previousMinSpawnTime: timer.minSpawnTime,
-            previousMaxSpawnTime: timer.maxSpawnTime,
-            windowOpenedAt: timer.windowOpenedAt,
-          },
-          true, // isManualClose
-        )
-        .catch((err) => {
-          this.logger.error({
-            message: 'Failed to record hero kill on manual window close',
-            heroId,
-            eventId,
-            guildId,
-            error: err instanceof Error ? err.message : err,
-          });
-        });
-    }
-
-    // 7b. Create summary for auto-close (no kill recorded)
-    if (isAutoClose && timer) {
-      const now = new Date();
-      await this.summaryService.createWindowSummary(
-        heroId,
-        null, // No kill for auto-close
-        timer.windowOpenedAt ?? timer.minSpawnTime,
-        now,
-        timer.minSpawnTime,
-        timer.maxSpawnTime,
-        false, // Not manual close
-      );
-    }
 
     // 8. Optionally create a new respawn window
     if (createNewWindow) {

@@ -3,10 +3,13 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import Redlock, { ExecutionError } from 'redlock';
 import { CoverageGapType } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
+import { RedisService } from 'src/lib/redis/redis.service';
 import { EventEmitterService } from './event-emitter.service';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
@@ -16,14 +19,31 @@ import { RoutingKey } from 'src/enum/routing-key.enum';
  * Handles who is where and tracks coverage gaps.
  */
 @Injectable()
-export class EventTrackingService {
+export class EventTrackingService implements OnModuleInit {
   private readonly logger = new Logger(EventTrackingService.name);
+  private redlock: Redlock;
+  private readonly presenceLockTtl = 5000; // 5 seconds
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitterService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly redis: RedisService,
   ) {}
+
+  async onModuleInit() {
+    const client = await this.redis.getClient();
+    this.redlock = new Redlock([client], {
+      driftFactor: 0.01,
+      retryCount: 3,
+      retryDelay: 100,
+      retryJitter: 50,
+    });
+  }
+
+  private getPresenceLockKey(guildId: string, mapName: string, discordId: string): string {
+    return `presence:lock:${guildId}:${mapName}:${discordId}`;
+  }
 
   /**
    * Assign a member to track a specific map.
@@ -72,6 +92,20 @@ export class EventTrackingService {
 
     const wasUnassigned = map.assignedMembers.length === 0;
 
+    // Idempotency check - skip if member is already assigned
+    const isAlreadyAssigned = map.assignedMembers.some((m) => m.id === memberId);
+    if (isAlreadyAssigned) {
+      this.logger.debug({
+        message: 'Member already assigned to map, skipping',
+        mapId,
+        memberId,
+      });
+      return await this.prisma.eventMap.findUnique({
+        where: { id: mapId },
+        include: { assignedMembers: true },
+      });
+    }
+
     const updated = await this.prisma.eventMap.update({
       where: { id: mapId },
       data: {
@@ -84,15 +118,27 @@ export class EventTrackingService {
       },
     });
 
-    // Create assignment history record
-    await this.prisma.eventMapAssignmentHistory.create({
-      data: {
-        mapId,
-        heroNpcId: map.heroNpcId,
-        memberId,
-        assignedAt: new Date(),
-      },
-    });
+    // Idempotency check - don't create duplicate assignment history
+    const existingOpenAssignment =
+      await this.prisma.eventMapAssignmentHistory.findFirst({
+        where: {
+          mapId,
+          memberId,
+          unassignedAt: null,
+        },
+      });
+
+    if (!existingOpenAssignment) {
+      // Create assignment history record only if no open assignment exists
+      await this.prisma.eventMapAssignmentHistory.create({
+        data: {
+          mapId,
+          heroNpcId: map.heroNpcId,
+          memberId,
+          assignedAt: new Date(),
+        },
+      });
+    }
 
     // Close UNASSIGNED gap if this is the first member being assigned
     if (wasUnassigned) {
@@ -599,6 +645,9 @@ export class EventTrackingService {
    *
    * Optimized to use a single query for event maps (eliminates duplicate query
    * that was previously in createOrUpdatePresenceLog).
+   *
+   * Uses distributed lock to prevent race conditions when multiple presence
+   * updates arrive for the same player on the same map.
    */
   async handlePlayerPresenceChange(
     guildId: string,
@@ -606,6 +655,43 @@ export class EventTrackingService {
     discordId: string,
     hasPlayer: boolean,
     isAfk = false,
+  ): Promise<void> {
+    const lockKey = this.getPresenceLockKey(guildId, mapName, discordId);
+
+    try {
+      await this.redlock.using([lockKey], this.presenceLockTtl, async () => {
+        await this.handlePlayerPresenceChangeInternal(
+          guildId,
+          mapName,
+          discordId,
+          hasPlayer,
+          isAfk,
+        );
+      });
+    } catch (error) {
+      if (error instanceof ExecutionError) {
+        this.logger.warn({
+          message: 'Failed to acquire presence lock, skipping update',
+          guildId,
+          mapName,
+          discordId,
+        });
+        return;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Internal implementation of presence change handling.
+   * Called within a distributed lock to ensure atomicity.
+   */
+  private async handlePlayerPresenceChangeInternal(
+    guildId: string,
+    mapName: string,
+    discordId: string,
+    hasPlayer: boolean,
+    isAfk: boolean,
   ): Promise<void> {
     // Get member for this discord user (may be null for non-guild members)
     const member = await this.getMemberByDiscordId(discordId, guildId);
@@ -635,14 +721,37 @@ export class EventTrackingService {
 
     const now = new Date();
 
+    // Batch query: Get all active timers for the heroes in one query
+    // This eliminates N+1 problem from calling hasActiveRespawnWindow per map
+    const timerKeys = eventMaps.map((map) => ({
+      guildId,
+      world: map.heroNpc.event.world,
+      npcId: map.heroNpc.npcId ?? this.getSyntheticNpcId(map.heroNpc.id),
+    }));
+
+    const activeTimers = await this.prisma.timer.findMany({
+      where: {
+        OR: timerKeys,
+        maxSpawnTime: { gt: now },
+      },
+      select: {
+        guildId: true,
+        world: true,
+        npcId: true,
+      },
+    });
+
+    // Create a Set for O(1) lookup
+    const activeTimerSet = new Set(
+      activeTimers.map((t) => `${t.guildId}:${t.world}:${t.npcId}`),
+    );
+
     for (const map of eventMaps) {
-      // 0. Check if respawn window is active - only track during open windows
-      const hasActiveWindow = await this.hasActiveRespawnWindow(
-        guildId,
-        map.heroNpc.event.world,
-        map.heroNpc.npcId,
-        map.heroNpc.id,
-      );
+      // 0. Check if respawn window is active using batch-loaded data
+      const effectiveNpcId =
+        map.heroNpc.npcId ?? this.getSyntheticNpcId(map.heroNpc.id);
+      const timerKey = `${guildId}:${map.heroNpc.event.world}:${effectiveNpcId}`;
+      const hasActiveWindow = activeTimerSet.has(timerKey);
 
       if (!hasActiveWindow) {
         // No active respawn window - skip tracking for this hero

@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -52,5 +52,26 @@ export class RespawnWindowProcessor extends WorkerHost {
       });
       throw error;
     }
+  }
+
+  /**
+   * Handle failed jobs for monitoring and alerting.
+   * Failed jobs are logged with full context for debugging.
+   */
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<AutoCloseRespawnWindowJobData>, error: Error): void {
+    this.logger.log({
+      level: 'error',
+      message: 'Auto-close respawn window job failed',
+      jobId: job.id,
+      heroId: job.data.heroId,
+      eventId: job.data.eventId,
+      guildId: job.data.guildId,
+      npcId: job.data.npcId,
+      world: job.data.world,
+      attemptsMade: job.attemptsMade,
+      error: error.message,
+      stack: error.stack,
+    });
   }
 }
