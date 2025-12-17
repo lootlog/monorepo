@@ -1094,4 +1094,50 @@ export class EventsController {
       maxSpawnTime: result.maxSpawnTime,
     };
   }
+
+  // ========== MONITORING ENDPOINTS ==========
+
+  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/auto-close-jobs')
+  @ApiOperation({
+    summary: 'Get auto-close job status',
+    description:
+      'Get status of scheduled auto-close jobs for event heroes (admin only). Shows pending, delayed, and failed jobs.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Auto-close job status with pending, delayed, and failed counts',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getAutoCloseJobsStatus(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.eventsService.getAutoCloseJobsStatus(guildId, eventId);
+  }
+
+  @Permissions(Permission.OWNER, Permission.ADMIN)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/queue-health')
+  @ApiOperation({
+    summary: 'Get queue health status',
+    description:
+      'Get health status of Bull queues for event processing (admin only). Shows queue readiness and job counts.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Queue health status with counts for different job states',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getQueueHealth(
+    @Param('guildId') guildId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.eventsService.getQueueHealth(guildId, eventId);
+  }
 }

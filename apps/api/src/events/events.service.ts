@@ -1,9 +1,13 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import type { Queue } from 'bullmq';
 import { PrismaService } from 'src/db/prisma.service';
+import { RESPAWN_WINDOW_QUEUE } from './constants/respawn-queue.constant';
+import type { AutoCloseRespawnWindowJobData } from './respawn-window.processor';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { CreateMapDto } from './dto/create-map.dto';
@@ -58,6 +62,8 @@ export class EventsService {
     private readonly trackingService: EventTrackingService,
     private readonly killService: EventKillService,
     private readonly respawnService: EventRespawnService,
+    @InjectQueue(RESPAWN_WINDOW_QUEUE)
+    private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
@@ -1182,5 +1188,131 @@ export class EventsService {
     maxSpawnTime: Date | null;
   }> {
     return this.respawnService.getHeroRespawnConfig(guildId, eventId, heroId);
+  }
+
+  // ========== MONITORING ==========
+
+  /**
+   * Get status of auto-close jobs for a specific event.
+   * Returns pending, delayed, and failed job counts with details.
+   */
+  async getAutoCloseJobsStatus(
+    guildId: string,
+    eventId: string,
+  ): Promise<{
+    pending: { count: number; jobs: { jobId: string; heroId: string }[] };
+    delayed: { count: number; jobs: { jobId: string; heroId: string; scheduledFor: Date }[] };
+    failed: { count: number; jobs: { jobId: string; heroId: string; failedReason: string }[] };
+  }> {
+    // Verify event belongs to guild
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      select: { id: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    // Get hero IDs for this event
+    const heroes = await this.prisma.eventHeroNpc.findMany({
+      where: { eventId },
+      select: { id: true },
+    });
+
+    const heroIds = new Set(heroes.map((h) => h.id));
+
+    // Get jobs from queue
+    const [pendingJobs, delayedJobs, failedJobs] = await Promise.all([
+      this.respawnWindowQueue.getJobs(['waiting', 'active']),
+      this.respawnWindowQueue.getJobs(['delayed']),
+      this.respawnWindowQueue.getJobs(['failed']),
+    ]);
+
+    // Filter jobs for this event's heroes
+    const filterJobsForEvent = (jobs: typeof pendingJobs) =>
+      jobs.filter((job) => heroIds.has(job.data.heroId));
+
+    const eventPendingJobs = filterJobsForEvent(pendingJobs);
+    const eventDelayedJobs = filterJobsForEvent(delayedJobs);
+    const eventFailedJobs = filterJobsForEvent(failedJobs);
+
+    return {
+      pending: {
+        count: eventPendingJobs.length,
+        jobs: eventPendingJobs.map((job) => ({
+          jobId: job.id ?? 'unknown',
+          heroId: job.data.heroId,
+        })),
+      },
+      delayed: {
+        count: eventDelayedJobs.length,
+        jobs: eventDelayedJobs.map((job) => ({
+          jobId: job.id ?? 'unknown',
+          heroId: job.data.heroId,
+          scheduledFor: new Date(job.timestamp + (job.opts.delay ?? 0)),
+        })),
+      },
+      failed: {
+        count: eventFailedJobs.length,
+        jobs: eventFailedJobs.map((job) => ({
+          jobId: job.id ?? 'unknown',
+          heroId: job.data.heroId,
+          failedReason: job.failedReason ?? 'Unknown',
+        })),
+      },
+    };
+  }
+
+  /**
+   * Get overall queue health status.
+   * Returns queue readiness and job counts for monitoring.
+   */
+  async getQueueHealth(
+    guildId: string,
+    eventId: string,
+  ): Promise<{
+    queueName: string;
+    isReady: boolean;
+    isPaused: boolean;
+    jobCounts: {
+      waiting: number;
+      active: number;
+      completed: number;
+      failed: number;
+      delayed: number;
+    };
+    workers: number;
+  }> {
+    // Verify event belongs to guild
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      select: { id: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    // Get queue status
+    const [jobCounts, isPaused, workers] = await Promise.all([
+      this.respawnWindowQueue.getJobCounts(),
+      this.respawnWindowQueue.isPaused(),
+      this.respawnWindowQueue.getWorkers(),
+    ]);
+
+    return {
+      queueName: this.respawnWindowQueue.name,
+      isReady: workers.length > 0,
+      isPaused,
+      jobCounts: {
+        waiting: jobCounts.waiting ?? 0,
+        active: jobCounts.active ?? 0,
+        completed: jobCounts.completed ?? 0,
+        failed: jobCounts.failed ?? 0,
+        delayed: jobCounts.delayed ?? 0,
+      },
+      workers: workers.length,
+    };
   }
 }
