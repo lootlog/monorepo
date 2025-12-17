@@ -6,4 +6,5 @@ export class CreatePlayerDto {
   lvl: number;
   prof: string;
   icon: string;
+  world: string;
 }
