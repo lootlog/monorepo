@@ -52,13 +52,20 @@ export class PlayersService {
     );
 
     if (validPlayers.length === 0) {
-      console.warn("No valid players to index (missing required fields)");
+      console.warn(
+        "No valid players to index (missing required fields):",
+        JSON.stringify(data.players, null, 2),
+      );
       return;
     }
 
     if (validPlayers.length !== data.players.length) {
+      const invalidPlayers = data.players.filter(
+        (player) => !player.world || !player.id || !player.name,
+      );
       console.warn(
-        `Skipped ${data.players.length - validPlayers.length} players due to missing required fields`,
+        `Skipped ${invalidPlayers.length} players due to missing required fields:`,
+        JSON.stringify(invalidPlayers, null, 2),
       );
     }
 
