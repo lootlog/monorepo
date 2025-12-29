@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@lootlog/types": "workspace:*",
-    "hono": "^4.10.3",
+    "hono": "^4.11.3",
     "jose": "^6.1.0"
   },
   "devDependencies": {
