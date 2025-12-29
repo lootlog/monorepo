@@ -7,4 +7,5 @@ export class CreateNpcDto {
   wt: number;
   type: string;
   margonemType: number;
+  world: string;
 }

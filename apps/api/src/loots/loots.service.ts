@@ -212,8 +212,17 @@ export class LootsService implements OnModuleInit {
         skipDuplicates: true,
       });
 
-      this.playersService.bulkIndexPlayers(players);
-      this.npcsService.bulkIndexNpcs(npcs);
+      const playersWithWorld = players.map((player) => ({
+        ...player,
+        world: body.world,
+      }));
+      this.playersService.bulkIndexPlayers(playersWithWorld);
+
+      const npcsWithWorld = npcs.map((npc) => ({
+        ...npc,
+        world: body.world,
+      }));
+      this.npcsService.bulkIndexNpcs(npcsWithWorld);
 
       const indexItems = items.map((item) => ({
         id: item.id,

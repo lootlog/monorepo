@@ -1,10 +1,10 @@
 import { useState, useCallback, useMemo } from "react";
-import { getISOWeek, getLastISOWeek, getDateOfISOWeek } from "./utils";
+import { getISOWeek, getISOWeekYear, getLastISOWeek, getDateOfISOWeek } from "./utils";
 import { MONTH_NAMES } from "./constants";
 
 export function useScheduleNavigation() {
   const today = new Date();
-  const initialYear = today.getFullYear();
+  const initialYear = getISOWeekYear(today);
   const initialWeek = getISOWeek(today);
 
   const [currentYear, setCurrentYear] = useState(initialYear);
