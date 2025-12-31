@@ -28,7 +28,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.8",
     "@nestjs/microservices": "^11.1.8",
-    "@nestjs/platform-express": "^11.1.8",
+    "@nestjs/platform-express": "^11.1.10",
     "@nestjs/platform-socket.io": "^11.1.8",
     "@nestjs/websockets": "^11.1.8",
     "axios": "^1.12.2",
