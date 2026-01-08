@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
@@ -156,12 +156,29 @@ export const HeroManageDialog = ({
           {!isEditing && (
             <div className="flex items-start gap-2 py-2.5 px-3 rounded-lg border border-dashed bg-muted/20">
               <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  "events.heroes.mapsHint",
-                  "Mapy dla herosa dodasz po jego utworzeniu.",
-                )}
-              </p>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>
+                  <Trans
+                    i18nKey="events.heroes.nameHint"
+                    defaults="Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze."
+                    components={{
+                      strong: <strong className="font-semibold text-foreground" />,
+                    }}
+                  />
+                </p>
+                <p>
+                  {t(
+                    "events.heroes.idHint",
+                    "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
+                  )}
+                </p>
+                <p>
+                  {t(
+                    "events.heroes.mapsHint",
+                    "Mapy dla herosa dodasz po jego utworzeniu.",
+                  )}
+                </p>
+              </div>
             </div>
           )}
         </form>
