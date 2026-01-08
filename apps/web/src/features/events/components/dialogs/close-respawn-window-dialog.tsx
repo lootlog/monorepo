@@ -77,7 +77,7 @@ export const CloseRespawnWindowDialog = ({
             </div>
             <div>
               <DialogTitle className="text-base">
-                {t("events.respawn.closeWindow", "Zamknij okno respawnu")}
+                {t("events.respawn.closeWindow")}
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
                 {heroName}
@@ -88,10 +88,7 @@ export const CloseRespawnWindowDialog = ({
 
         <div className="p-5 space-y-4">
           <p className="text-sm text-muted-foreground">
-            {t(
-              "events.respawn.closeWindowDesc",
-              "Zamknij aktywne okno respawnu. Ta akcja wyczyści wszystkie przypisania do map.",
-            )}
+            {t("events.respawn.closeWindowDesc")}
           </p>
 
           <div className="flex items-center gap-2">
@@ -103,10 +100,7 @@ export const CloseRespawnWindowDialog = ({
               }
             />
             <Label htmlFor="createNewWindow" className="cursor-pointer text-sm">
-              {t(
-                "events.respawn.createNewWindow",
-                "Utwórz nowe okno respawnu",
-              )}
+              {t("events.respawn.createNewWindow")}
             </Label>
           </div>
 
@@ -117,7 +111,7 @@ export const CloseRespawnWindowDialog = ({
                   htmlFor="minTime"
                   className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
                 >
-                  {t("events.respawn.minSpawnTime", "Minimalny czas spawnu")}
+                  {t("events.respawn.minSpawnTime")}
                 </Label>
                 <Input
                   id="minTime"
@@ -132,7 +126,7 @@ export const CloseRespawnWindowDialog = ({
                   htmlFor="maxTime"
                   className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
                 >
-                  {t("events.respawn.maxSpawnTime", "Maksymalny czas spawnu")}
+                  {t("events.respawn.maxSpawnTime")}
                 </Label>
                 <Input
                   id="maxTime"
@@ -145,10 +139,7 @@ export const CloseRespawnWindowDialog = ({
 
               {minTime && maxTime && !isTimeRangeValid && (
                 <p className="text-xs text-destructive">
-                  {t(
-                    "events.respawn.invalidTimeRange",
-                    "Minimalny czas musi być przed maksymalnym",
-                  )}
+                  {t("events.respawn.invalidTimeRange")}
                 </p>
               )}
             </div>
@@ -163,7 +154,7 @@ export const CloseRespawnWindowDialog = ({
             disabled={isLoading}
             className="flex-1"
           >
-            {t("common.cancel", "Anuluj")}
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -173,7 +164,7 @@ export const CloseRespawnWindowDialog = ({
             className="flex-1"
           >
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {t("events.respawn.closeWindowButton", "Zamknij okno")}
+            {t("events.respawn.closeWindowButton")}
           </Button>
         </div>
       </DialogContent>

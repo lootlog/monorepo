@@ -29,6 +29,7 @@ interface MemberAssignmentModalProps {
   onAssign: (memberId: number) => void;
   onUnassign: (memberId: number) => void;
   isLoading?: boolean;
+  disabled?: boolean;
 }
 
 export const MemberAssignmentModal = ({
@@ -39,6 +40,7 @@ export const MemberAssignmentModal = ({
   onAssign,
   onUnassign,
   isLoading: isActionLoading,
+  disabled,
 }: MemberAssignmentModalProps) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
@@ -80,7 +82,7 @@ export const MemberAssignmentModal = ({
             {/* Current Assignments */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.maps.assignedMembers", "Przypisani członkowie")}
+                {t("events.maps.assignedMembers")}
                 {assignedMembers.length > 0 && (
                   <span className="ml-1.5 text-foreground">
                     ({assignedMembers.length})
@@ -121,7 +123,7 @@ export const MemberAssignmentModal = ({
                 <div className="py-4 px-4 rounded-lg border border-dashed text-center">
                   <Users className="size-6 mx-auto mb-2 text-muted-foreground/40" />
                   <p className="text-xs text-muted-foreground">
-                    {t("events.maps.noAssignedMembers", "Brak przypisanych członków")}
+                    {t("events.maps.noAssignedMembers")}
                   </p>
                 </div>
               )}
@@ -130,12 +132,12 @@ export const MemberAssignmentModal = ({
             {/* Search section */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.maps.addMember", "Dodaj członka")}
+                {t("events.maps.addMember")}
               </Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                 <Input
-                  placeholder={t("events.maps.searchMember", "Szukaj członka...")}
+                  placeholder={t("events.maps.searchMember")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 h-9 text-sm"
@@ -153,14 +155,14 @@ export const MemberAssignmentModal = ({
                   <div className="flex flex-col items-center justify-center h-full py-8">
                     <Loader2 className="size-6 animate-spin text-primary mb-2" />
                     <p className="text-xs text-muted-foreground">
-                      {t("common.loading", "Ładowanie...")}
+                      {t("common.loading")}
                     </p>
                   </div>
                 ) : filteredMembers?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
                     <Search className="size-8 mb-2 opacity-30" />
                     <p className="text-xs">
-                      {t("events.maps.noMembersFound", "Nie znaleziono członków")}
+                      {t("events.maps.noMembersFound")}
                     </p>
                   </div>
                 ) : (
@@ -173,11 +175,11 @@ export const MemberAssignmentModal = ({
                       return (
                         <button
                           key={member.id}
-                          onClick={() => !isAssigned && handleAssign(member.id)}
-                          disabled={isAssigned}
+                          onClick={() => !isAssigned && !disabled && handleAssign(member.id)}
+                          disabled={isAssigned || disabled}
                           className={cn(
                             "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
-                            isAssigned
+                            isAssigned || disabled
                               ? "opacity-50 cursor-default bg-muted/30"
                               : "hover:bg-muted/50 cursor-pointer",
                           )}
@@ -196,7 +198,7 @@ export const MemberAssignmentModal = ({
                           <span className="flex-1 text-sm font-medium">{member.name}</span>
                           {isAssigned ? (
                             <span className="text-[10px] font-medium text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
-                              {t("events.maps.alreadyAssigned", "Przypisany")}
+                              {t("events.maps.alreadyAssigned")}
                             </span>
                           ) : (
                             <UserPlus className="size-4 text-muted-foreground" />
@@ -218,7 +220,7 @@ export const MemberAssignmentModal = ({
             onClick={() => onOpenChange(false)}
             className="w-full"
           >
-            {t("events.common.close", "Zamknij")}
+            {t("events.common.close")}
           </Button>
         </div>
       </DialogContent>
