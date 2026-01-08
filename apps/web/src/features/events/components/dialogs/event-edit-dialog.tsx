@@ -32,7 +32,7 @@ import {
 import {
   useEventMutations,
   type TimeOfDayMultiplier,
-} from "../hooks/mutations/use-event-mutations";
+} from "../../hooks/mutations/use-event-mutations";
 import { toast } from "sonner";
 
 interface EventEditDialogProps {

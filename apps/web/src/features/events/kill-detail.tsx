@@ -24,10 +24,10 @@ import { pl } from "date-fns/locale";
 import { Permission } from "@lootlog/types";
 import { useKillDetail } from "./hooks/queries/use-kill-detail";
 import { useMatchingLoots } from "./hooks/queries/use-matching-loots";
-import { KillParticipantsCard } from "./components/kill-participants-card";
-import { MultipliersCard } from "./components/multipliers-card";
+import { KillParticipantsCard } from "./components/kills/kill-participants-card";
+import { MultipliersCard } from "./components/stats/multipliers-card";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
-import { KillMapsTimelineSection } from "./components/kill-maps-timeline-section";
+import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 

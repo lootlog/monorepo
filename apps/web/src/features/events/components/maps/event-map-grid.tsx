@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Permission } from "@lootlog/types";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { EventMap, EventMapLocation } from "../hooks/queries/use-events";
-import type { PlayerPresence } from "../hooks/socket/use-event-presence";
-import type { WindowStatus } from "../hooks/queries/use-hero-respawn-config";
-import type { CoverageGap } from "../hooks/queries/use-map-coverage-timer";
+import type { EventMap, EventMapLocation } from "../../hooks/queries/use-events";
+import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
+import type { WindowStatus } from "../../hooks/queries/use-hero-respawn-config";
+import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
 import { MapCard, getMapStatus, STATUS_STYLES } from "./map-card";
 
 interface EventMapGridProps {

@@ -20,7 +20,7 @@ import { NpcTile } from "@/components/tiles";
 import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";
 import type { TFunction } from "i18next";
-import type { EventTimer } from "../hooks/queries/use-event-hero-timers";
+import type { EventTimer } from "../../hooks/queries/use-event-hero-timers";
 
 interface HeroStats {
   npcId: number;

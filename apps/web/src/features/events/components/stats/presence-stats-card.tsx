@@ -2,7 +2,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { Users, Clock } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@lootlog/ui/components/avatar";
 import type { TFunction } from "i18next";
-import type { MemberPresenceStat } from "../hooks/queries/use-hero-presence-stats";
+import type { MemberPresenceStat } from "../../hooks/queries/use-hero-presence-stats";
 
 interface PresenceStatsCardProps {
   totalCoverageSeconds: number;

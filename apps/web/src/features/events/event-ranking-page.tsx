@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/types";
 import { useEvent } from "./hooks/queries/use-event";
-import { EventRankingTable } from "./components/event-ranking-table";
+import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";

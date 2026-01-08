@@ -4,7 +4,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import {
   useHeroRespawnConfig,
   type WindowStatus,
-} from "../hooks/queries/use-hero-respawn-config";
+} from "../../hooks/queries/use-hero-respawn-config";
 
 const getWindowStatusConfig = (
   status: WindowStatus,

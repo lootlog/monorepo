@@ -32,8 +32,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
-import type { KillDetailParticipant } from "../hooks/queries/use-kill-detail";
-import { useUpdatePoints } from "../hooks/mutations/use-update-points";
+import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
+import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
 
 interface KillParticipantsCardProps {
   participants: KillDetailParticipant[];

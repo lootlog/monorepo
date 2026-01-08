@@ -5,7 +5,7 @@ import { cn } from "@/utils/cn";
 import {
   formatDuration as formatGapDuration,
   type CoverageGap,
-} from "../hooks/queries/use-map-coverage-timer";
+} from "../../hooks/queries/use-map-coverage-timer";
 import type { TFunction } from "i18next";
 
 interface CoverageGapsCardProps {

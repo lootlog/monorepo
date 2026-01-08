@@ -1,6 +1,6 @@
 import { cn } from "@lootlog/ui/lib/utils";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { Member } from "../hooks/queries/use-events";
+import type { Member } from "../../hooks/queries/use-events";
 
 interface MemberNameProps {
   member: Member;

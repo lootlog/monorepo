@@ -10,7 +10,7 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
-import { useEventLoots } from "../hooks/queries/use-event-loots";
+import { useEventLoots } from "../../hooks/queries/use-event-loots";
 import { ItemTile } from "@/components/tiles";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";

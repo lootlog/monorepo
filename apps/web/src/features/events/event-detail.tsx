@@ -11,7 +11,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEvent } from "./hooks/queries/use-event";
-import { EventRankingPreview } from "./components/event-ranking-preview";
+import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
   AlertCircle,
@@ -22,9 +22,9 @@ import {
   Calculator,
   TrendingUp,
 } from "lucide-react";
-import { EventEditDialog } from "./components/event-edit-dialog";
-import { HeroManageDialog } from "./components/hero-manage-dialog";
-import { MapManageDialog } from "./components/map-manage-dialog";
+import { EventEditDialog } from "./components/dialogs/event-edit-dialog";
+import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
+import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
@@ -32,9 +32,9 @@ import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
 import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
 import { useEventHeroStats } from "./hooks/queries/use-event-hero-stats";
-import { EventHeroLoots } from "./components/event-hero-loots";
-import { RecentKillsPreview } from "./components/recent-kills-preview";
-import { HeroCard } from "./components/hero-card";
+import { EventHeroLoots } from "./components/stats/event-hero-loots";
+import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
+import { HeroCard } from "./components/heroes/hero-card";
 
 export const EventDetail = () => {
   const { t } = useTranslation();

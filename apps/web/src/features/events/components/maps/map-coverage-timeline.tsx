@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { format } from "date-fns";
-import type { MapGap } from "../hooks/queries/use-kill-timeline";
+import type { MapGap } from "../../hooks/queries/use-kill-timeline";
 
 interface MapCoverageTimelineProps {
   startTime: Date;

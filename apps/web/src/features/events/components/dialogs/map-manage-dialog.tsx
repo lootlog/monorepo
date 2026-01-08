@@ -25,8 +25,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
-import { useEventMutations } from "../hooks/mutations/use-event-mutations";
-import { useLocationMutations } from "../hooks/mutations/use-location-mutations";
+import { useEventMutations } from "../../hooks/mutations/use-event-mutations";
+import { useLocationMutations } from "../../hooks/mutations/use-location-mutations";
 import { toast } from "sonner";
 import {
   X,

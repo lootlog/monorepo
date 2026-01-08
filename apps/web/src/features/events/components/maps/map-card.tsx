@@ -17,12 +17,12 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { PlayerTile } from "@/components/tiles";
-import { useLocalCoverageTimer } from "../hooks/utils/use-local-coverage-timer";
-import type { EventMap } from "../hooks/queries/use-events";
-import type { PlayerPresence } from "../hooks/socket/use-event-presence";
-import type { WindowStatus } from "../hooks/queries/use-hero-respawn-config";
-import type { CoverageGap } from "../hooks/queries/use-map-coverage-timer";
-import { MemberName } from "./member-name";
+import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-timer";
+import type { EventMap } from "../../hooks/queries/use-events";
+import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
+import type { WindowStatus } from "../../hooks/queries/use-hero-respawn-config";
+import type { CoverageGap } from "../../hooks/queries/use-map-coverage-timer";
+import { MemberName } from "../shared/member-name";
 
 export type MapStatus =
   | "ASSIGNED_PRESENT"
