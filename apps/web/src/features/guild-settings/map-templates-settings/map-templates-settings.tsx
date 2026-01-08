@@ -80,7 +80,7 @@ export const MapTemplatesSettings = () => {
                 onOpenChange={() => toggleExpanded(template.id)}
               >
                 <div className="rounded-lg border bg-card/40 backdrop-blur-sm overflow-hidden">
-                  <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/30 transition-colors">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-primary/10">
                         <FileText className="size-4 text-primary" />

@@ -30,16 +30,12 @@ import { useEventMutations } from "../../hooks/mutations/use-event-mutations";
 import { useLocationMutations } from "../../hooks/mutations/use-location-mutations";
 import { toast } from "sonner";
 import {
-  X,
   MapPin,
   Search,
   FileText,
   Loader2,
   Plus,
   FolderPlus,
-  Pencil,
-  Trash2,
-  GripVertical,
   Settings,
 } from "lucide-react";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
@@ -47,19 +43,15 @@ import {
   useMapTemplates,
   type MapTemplate,
 } from "@/features/guild-settings/map-templates-settings/hooks/use-map-templates";
+import type { LocationData } from "./map-manage-dialog.types";
+import { LocationItem } from "./location-item";
+import { MapChip } from "./map-chip";
 
 interface MapData {
   id: string;
   mapId: number;
   mapName: string;
   locationId?: string | null;
-}
-
-interface LocationData {
-  id: string;
-  name: string;
-  order: number;
-  maps: MapData[];
 }
 
 interface MapManageDialogProps {
@@ -399,7 +391,6 @@ export const MapManageDialog = ({
                                   handleMapLocationChange(map.id, locId)
                                 }
                                 isDeleting={deleteMap.isPending}
-                                t={t}
                               />
                             ))}
                           </div>
@@ -424,7 +415,6 @@ export const MapManageDialog = ({
                                 handleMapLocationChange(map.id, locId)
                               }
                               isDeleting={deleteMap.isPending}
-                              t={t}
                             />
                           ))}
                         </div>
@@ -450,6 +440,7 @@ export const MapManageDialog = ({
                   <Link
                     to="/$guildId/settings/map-templates"
                     params={{ guildId }}
+                    target="_blank"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <Settings className="size-3" />
@@ -517,6 +508,7 @@ export const MapManageDialog = ({
                   <Link
                     to="/$guildId/settings/map-templates"
                     params={{ guildId }}
+                    target="_blank"
                     className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
                   >
                     <Plus className="size-3" />
@@ -628,142 +620,5 @@ export const MapManageDialog = ({
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
-
-// LocationItem component
-interface LocationItemProps {
-  location: LocationData;
-  editingLocation: { id: string; name: string } | null;
-  setEditingLocation: (loc: { id: string; name: string } | null) => void;
-  handleUpdateLocation: () => void;
-  handleDeleteLocation: (id: string) => void;
-  isDeleting: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-}
-
-const LocationItem = ({
-  location,
-  editingLocation,
-  setEditingLocation,
-  handleUpdateLocation,
-  handleDeleteLocation,
-  isDeleting,
-  onDragStart,
-  onDragEnd,
-}: LocationItemProps) => {
-  return (
-    <Reorder.Item
-      value={location}
-      className="flex items-center gap-2 px-2 py-1.5 rounded border bg-muted/30"
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-    >
-      <GripVertical className="size-3 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />
-      {editingLocation?.id === location.id ? (
-        <Input
-          value={editingLocation.name}
-          onChange={(e) =>
-            setEditingLocation({
-              ...editingLocation,
-              name: e.target.value,
-            })
-          }
-          className="h-6 text-xs flex-1"
-          autoFocus
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleUpdateLocation();
-            if (e.key === "Escape") setEditingLocation(null);
-          }}
-          onBlur={handleUpdateLocation}
-        />
-      ) : (
-        <span className="text-xs flex-1">{location.name}</span>
-      )}
-      <span className="text-[10px] text-muted-foreground">
-        ({location.maps.length})
-      </span>
-      <button
-        type="button"
-        onClick={() =>
-          setEditingLocation({
-            id: location.id,
-            name: location.name,
-          })
-        }
-        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <Pencil className="size-3" />
-      </button>
-      <button
-        type="button"
-        onClick={() => handleDeleteLocation(location.id)}
-        className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-        disabled={isDeleting}
-      >
-        <Trash2 className="size-3" />
-      </button>
-    </Reorder.Item>
-  );
-};
-
-// MapChip component with location selector
-interface MapChipProps {
-  map: { id: string; mapId: number; mapName: string };
-  locations: LocationData[];
-  onDelete: () => void;
-  onLocationChange: (locationId: string | null) => void;
-  isDeleting: boolean;
-  t: (key: string) => string;
-}
-
-const MapChip = ({
-  map,
-  locations,
-  onDelete,
-  onLocationChange,
-  isDeleting,
-  t,
-}: MapChipProps) => {
-  const [showSelect, setShowSelect] = useState(false);
-
-  return (
-    <div className="group inline-flex items-center gap-1 pl-2 pr-1 py-0.5 bg-primary/10 hover:bg-primary/15 rounded border border-primary/20 transition-colors">
-      <span className="text-[11px] font-medium text-primary">
-        {map.mapName}
-      </span>
-
-      {locations.length > 0 && (
-        <Select
-          open={showSelect}
-          onOpenChange={setShowSelect}
-          onValueChange={(v) => onLocationChange(v === "none" ? null : v)}
-        >
-          <SelectTrigger className="h-4 w-4 p-0 border-0 bg-transparent hover:bg-primary/20 rounded">
-            <GripVertical className="size-2.5 text-primary/60" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">
-              {t("events.locations.noLocation")}
-            </SelectItem>
-            {locations.map((loc) => (
-              <SelectItem key={loc.id} value={loc.id}>
-                {loc.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      <button
-        type="button"
-        onClick={onDelete}
-        className="p-0.5 rounded hover:bg-destructive/20 text-primary/60 hover:text-destructive transition-colors"
-        disabled={isDeleting}
-      >
-        <X className="size-2.5" />
-      </button>
-    </div>
   );
 };

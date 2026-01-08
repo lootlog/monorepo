@@ -14,7 +14,10 @@ import { MapCoverageTimeline } from "../maps/map-coverage-timeline";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
 import { formatDuration } from "../../hooks/utils/use-local-coverage-timer";
-import type { MapTimelineData, MapGap } from "../../hooks/queries/use-kill-timeline";
+import type {
+  MapTimelineData,
+  MapGap,
+} from "../../hooks/queries/use-kill-timeline";
 import type { TFunction } from "i18next";
 
 function clipGapToRange(
@@ -25,12 +28,10 @@ function clipGapToRange(
   const gapStart = new Date(gap.startedAt);
   const gapEnd = gap.endedAt ? new Date(gap.endedAt) : endTime;
 
-  // Gap outside of range
   if (gapEnd <= startTime || gapStart >= endTime) {
     return null;
   }
 
-  // Clip to range
   const clippedStart = gapStart < startTime ? startTime : gapStart;
   const clippedEnd = gapEnd > endTime ? endTime : gapEnd;
   const clippedDuration = Math.round(
@@ -58,7 +59,6 @@ export const KillMapTimelineCard = ({
   endTime,
   t,
 }: KillMapTimelineCardProps) => {
-  // Clip gaps to respawn window range
   const clippedGaps = map.gaps
     .map((gap) => clipGapToRange(gap, startTime, endTime))
     .filter((gap): gap is MapGap => gap !== null);
@@ -69,7 +69,6 @@ export const KillMapTimelineCard = ({
     0,
   );
 
-  // Calculate coverage percentage
   const totalSeconds = Math.round(
     (endTime.getTime() - startTime.getTime()) / 1000,
   );
@@ -100,7 +99,11 @@ export const KillMapTimelineCard = ({
                     className="w-5 h-5 border border-background"
                   >
                     <AvatarImage
-                      src={getDiscordAvatarUrl(a.memberUserId, a.memberAvatar, 32)}
+                      src={getDiscordAvatarUrl(
+                        a.memberUserId,
+                        a.memberAvatar,
+                        32,
+                      )}
                     />
                     <AvatarFallback className="text-[8px]">
                       {a.memberName.charAt(0).toUpperCase()}
@@ -117,7 +120,7 @@ export const KillMapTimelineCard = ({
             <Badge
               variant={coveragePercent === 100 ? "default" : "secondary"}
               className={cn(
-                "text-[10px] px-1.5 py-0",
+                "text-[10px] px-1.5 py-0 ml-2",
                 coveragePercent === 100 && "bg-green-500/20 text-green-500",
                 coveragePercent < 100 &&
                   coveragePercent >= 80 &&
@@ -131,7 +134,6 @@ export const KillMapTimelineCard = ({
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-3 pb-3">
-        {/* Timeline */}
         <div className="mb-3">
           <MapCoverageTimeline
             startTime={startTime}
@@ -144,7 +146,6 @@ export const KillMapTimelineCard = ({
           </div>
         </div>
 
-        {/* Assigned Members */}
         {map.assignments.length > 0 && (
           <div className="space-y-1.5 mb-3">
             <p className="text-xs font-medium text-muted-foreground">
@@ -178,7 +179,6 @@ export const KillMapTimelineCard = ({
           </div>
         )}
 
-        {/* Gap Details */}
         {hasGaps && (
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">
@@ -219,7 +219,6 @@ export const KillMapTimelineCard = ({
           </div>
         )}
 
-        {/* No gaps message */}
         {!hasGaps && map.assignments.length > 0 && (
           <div className="text-xs text-green-500 text-center py-2">
             {t("events.killDetail.mapCoverage.fullCoverage")}
