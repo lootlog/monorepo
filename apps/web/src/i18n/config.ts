@@ -9,6 +9,7 @@ import permissions from "./translations/permissions.json";
 import professions from "./translations/professions.json";
 import battle from "./translations/battle.json";
 import events from "./translations/events.json";
+import settings from "./translations/settings.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -22,6 +23,7 @@ i18n.use(initReactI18next).init({
         professions,
         battle,
         events,
+        settings,
       },
     },
   },
