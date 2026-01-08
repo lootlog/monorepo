@@ -4,7 +4,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { Avatar, AvatarFallback, AvatarImage } from "@lootlog/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import { Clock, AlertCircle } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { KillParticipant } from "../../hooks/queries/use-hero-kill-history";
@@ -21,7 +25,9 @@ const formatDuration = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   if (minutes < 60) {
-    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+    return remainingSeconds > 0
+      ? `${minutes}m ${remainingSeconds}s`
+      : `${minutes}m`;
   }
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
@@ -43,7 +49,9 @@ export const KillParticipantsList = ({
     );
   }
 
-  const sortedParticipants = [...participants].sort((a, b) => b.points - a.points);
+  const sortedParticipants = [...participants].sort(
+    (a, b) => b.points - a.points,
+  );
 
   if (compact) {
     return (
@@ -69,7 +77,9 @@ export const KillParticipantsList = ({
                   multiplier: participant.appliedMultiplier.toFixed(2),
                 })}
               </p>
-              <p className="text-xs text-muted-foreground">{participant.mapName}</p>
+              <p className="text-xs text-muted-foreground">
+                {participant.mapName}
+              </p>
             </TooltipContent>
           </Tooltip>
         ))}
@@ -100,7 +110,9 @@ export const KillParticipantsList = ({
           </Avatar>
 
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm truncate">{participant.member.name}</p>
+            <p className="font-medium text-sm truncate">
+              {participant.member.name}
+            </p>
             <p className="text-xs text-muted-foreground truncate">
               {participant.mapName}
             </p>
@@ -138,14 +150,17 @@ export const KillParticipantsList = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <p className="text-xs text-muted-foreground cursor-help">
-                  {participant.basePoints} x {participant.appliedMultiplier.toFixed(2)}
+                  {participant.basePoints} x{" "}
+                  {participant.appliedMultiplier.toFixed(2)}
                 </p>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t("events.kills.pointsBreakdown", {
-                  base: participant.basePoints,
-                  multiplier: participant.appliedMultiplier.toFixed(2),
-                })}</p>
+                <p>
+                  {t("events.kills.pointsBreakdown", {
+                    base: participant.basePoints,
+                    multiplier: participant.appliedMultiplier.toFixed(2),
+                  })}
+                </p>
               </TooltipContent>
             </Tooltip>
           </div>

@@ -5,6 +5,16 @@ export interface KillParticipantMember {
   userId: string;
 }
 
+export interface ParticipantMapData {
+  mapId: string;
+  mapName: string;
+  assignedAt: string;
+  unassignedAt: string | null;
+  assignmentDurationSeconds: number;
+  presenceTimeSeconds: number;
+  afkTimeSeconds: number;
+}
+
 export interface KillParticipant {
   id: string;
   memberId: number;
@@ -12,10 +22,15 @@ export interface KillParticipant {
   points: number;
   basePoints: number;
   appliedMultiplier: number;
+  timeMultiplier: number | null;
+  trackersMultiplier: number | null;
+  mapsMultiplier: number | null;
+  trackingDurationSeconds: number | null;
   timeOnMapSeconds: number;
   afkPercentage: number;
   wasPresent: boolean;
   member: KillParticipantMember;
+  mapData?: ParticipantMapData[];
 }
 
 export interface HeroKillHeroNpc {

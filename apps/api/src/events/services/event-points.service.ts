@@ -49,7 +49,13 @@ export class EventPointsService {
     killTime: Date,
     heroMapCount: number,
     assignedMembersCount: number,
-  ): { points: number; appliedMultiplier: number } {
+  ): {
+    points: number;
+    appliedMultiplier: number;
+    timeMultiplier: number;
+    trackersMultiplier: number;
+    mapsMultiplier: number;
+  } {
     const basePoints = event.basePointsPerKill;
 
     // Get multipliers
@@ -72,7 +78,13 @@ export class EventPointsService {
       timeMultiplier * trackersMultiplier * mapsMultiplier;
     const points = Math.round(basePoints * appliedMultiplier);
 
-    return { points, appliedMultiplier };
+    return {
+      points,
+      appliedMultiplier,
+      timeMultiplier,
+      trackersMultiplier,
+      mapsMultiplier,
+    };
   }
 
   /**
@@ -319,12 +331,18 @@ export class EventPointsService {
 
     const mapIds = maps.map((m) => m.id);
 
-    // Get presence logs
+    // Get presence logs that overlap with the time window
     const logs = await this.prisma.eventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
         memberId,
-        ...(since && { startedAt: { gte: since } }),
+        ...(since && {
+          OR: [
+            { startedAt: { gte: since } }, // Started after since
+            { endedAt: { gte: since } }, // Ended after since (overlap)
+            { endedAt: null, startedAt: { lte: since } }, // Still ongoing, started before
+          ],
+        }),
       },
       orderBy: { startedAt: 'asc' },
     });
@@ -344,17 +362,23 @@ export class EventPointsService {
     let lastMapName = '';
 
     for (const log of logs) {
+      // Only count time after 'since' if it's specified
+      const effectiveStart =
+        since && log.startedAt < since ? since : log.startedAt;
       const endTime = log.endedAt || now;
-      const duration = endTime.getTime() - log.startedAt.getTime();
-      totalTimeMs += duration;
+      const duration = endTime.getTime() - effectiveStart.getTime();
 
-      if (log.isAfk) {
-        afkTimeMs += duration;
-      }
+      if (duration > 0) {
+        totalTimeMs += duration;
 
-      const mapEntry = maps.find((m) => m.id === log.mapId);
-      if (mapEntry) {
-        lastMapName = mapEntry.mapName;
+        if (log.isAfk) {
+          afkTimeMs += duration;
+        }
+
+        const mapEntry = maps.find((m) => m.id === log.mapId);
+        if (mapEntry) {
+          lastMapName = mapEntry.mapName;
+        }
       }
     }
 
@@ -367,6 +391,80 @@ export class EventPointsService {
       wasPresent: totalTimeMs > 0,
       mapName: lastMapName,
     };
+  }
+
+  /**
+   * Get presence stats per individual map for a member.
+   * Returns an array with stats for each map the member was present on.
+   */
+  async getMemberPresenceStatsPerMap(
+    mapIds: string[],
+    memberId: number,
+    since?: Date,
+  ): Promise<
+    Array<{
+      mapId: string;
+      presenceTimeSeconds: number;
+      afkTimeSeconds: number;
+    }>
+  > {
+    if (mapIds.length === 0) {
+      return [];
+    }
+
+    // Get presence logs for this member on these maps
+    // Include logs that overlap with the time window (not just those that started after)
+    const logs = await this.prisma.eventPresenceLog.findMany({
+      where: {
+        mapId: { in: mapIds },
+        memberId,
+        ...(since && {
+          OR: [
+            { startedAt: { gte: since } }, // Started after since
+            { endedAt: { gte: since } }, // Ended after since (overlap)
+            { endedAt: null, startedAt: { lte: since } }, // Still ongoing, started before
+          ],
+        }),
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    const now = new Date();
+    const mapStats = new Map<
+      string,
+      { presenceTimeMs: number; afkTimeMs: number }
+    >();
+
+    // Initialize all maps with zero values
+    for (const mapId of mapIds) {
+      mapStats.set(mapId, { presenceTimeMs: 0, afkTimeMs: 0 });
+    }
+
+    // Aggregate stats per map
+    for (const log of logs) {
+      const stats = mapStats.get(log.mapId);
+      if (!stats) continue;
+
+      // Only count time after 'since' if it's specified
+      const effectiveStart =
+        since && log.startedAt < since ? since : log.startedAt;
+      const endTime = log.endedAt || now;
+      const duration = endTime.getTime() - effectiveStart.getTime();
+
+      if (duration > 0) {
+        stats.presenceTimeMs += duration;
+
+        if (log.isAfk) {
+          stats.afkTimeMs += duration;
+        }
+      }
+    }
+
+    return Array.from(mapStats.entries()).map(([mapId, stats]) => ({
+      mapId,
+      presenceTimeSeconds: Math.round(stats.presenceTimeMs / 1000),
+      afkTimeSeconds: Math.round(stats.afkTimeMs / 1000),
+    }));
   }
 
   /**
