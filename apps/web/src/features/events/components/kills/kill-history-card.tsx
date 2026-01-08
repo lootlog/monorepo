@@ -11,7 +11,7 @@ import {
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 import { NpcTile } from "@/components/tiles";
-import type { HeroKill } from "../hooks/queries/use-hero-kill-history";
+import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { KillParticipantsList } from "./kill-participants-list";
 
 interface KillHistoryCardProps {

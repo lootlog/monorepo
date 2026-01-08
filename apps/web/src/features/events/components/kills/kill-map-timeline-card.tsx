@@ -10,11 +10,11 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
-import { MapCoverageTimeline } from "./map-coverage-timeline";
+import { MapCoverageTimeline } from "../maps/map-coverage-timeline";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
-import { formatDuration } from "../hooks/utils/use-local-coverage-timer";
-import type { MapTimelineData, MapGap } from "../hooks/queries/use-kill-timeline";
+import { formatDuration } from "../../hooks/utils/use-local-coverage-timer";
+import type { MapTimelineData, MapGap } from "../../hooks/queries/use-kill-timeline";
 import type { TFunction } from "i18next";
 
 function clipGapToRange(

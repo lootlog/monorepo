@@ -1,6 +1,6 @@
 import { Card } from "@lootlog/ui/components/card";
 import { Calculator } from "lucide-react";
-import type { EventConfig } from "../hooks/queries/use-kill-detail";
+import type { EventConfig } from "../../hooks/queries/use-kill-detail";
 import type { TFunction } from "i18next";
 
 interface MultipliersCardProps {

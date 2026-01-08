@@ -9,7 +9,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { type Event, useEvents } from "@/features/events/hooks/queries/use-events";
-import { EventCreateDialog } from "./components/event-create-dialog";
+import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 
 export const Events = () => {
   const { t } = useTranslation();

@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Skull, ChevronRight, Frown } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { useRecentHeroKills } from "../hooks/queries/use-recent-hero-kills";
+import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import { KillHistoryCard } from "./kill-history-card";
 
 interface RecentKillsPreviewProps {

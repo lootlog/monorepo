@@ -11,7 +11,7 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
-import type { KillDetailParticipant } from "../hooks/queries/use-kill-detail";
+import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import type { TFunction } from "i18next";
 
 const formatDuration = (seconds: number): string => {
@@ -59,7 +59,6 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
           {participant.member.name.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate" style={nameStyle}>
           {participant.member.name}
@@ -68,7 +67,6 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
           {participant.mapName}
         </p>
       </div>
-
       <div className="flex items-center gap-4 text-sm text-muted-foreground shrink-0">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -95,13 +93,13 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
           </Tooltip>
         )}
       </div>
-
       <div className="text-right shrink-0">
         <p className="text-lg font-bold text-primary">{participant.points}</p>
         <Tooltip>
           <TooltipTrigger asChild>
             <p className="text-xs text-muted-foreground cursor-help">
-              {participant.basePoints} x {participant.appliedMultiplier.toFixed(2)}
+              {participant.basePoints} x{" "}
+              {participant.appliedMultiplier.toFixed(2)}
             </p>
           </TooltipTrigger>
           <TooltipContent>

@@ -6,7 +6,7 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, Skull, Loader2, Swords } from "lucide-react";
 import { useEvent } from "./hooks/queries/use-event";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
-import { KillHistoryCard } from "./components/kill-history-card";
+import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState, useEffect } from "react";
 
 export const EventKillsHistory = () => {

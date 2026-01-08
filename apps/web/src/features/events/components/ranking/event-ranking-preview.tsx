@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
-import type { EventRanking, EventHeroNpc } from "../hooks/queries/use-events";
+import type { EventRanking, EventHeroNpc } from "../../hooks/queries/use-events";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
 import { useState } from "react";

@@ -4,7 +4,7 @@ import { Trophy, Pencil, Check, X, PenLine, History, ArrowRight } from "lucide-r
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import type { EventRanking } from "../hooks/queries/use-events";
+import type { EventRanking } from "../../hooks/queries/use-events";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
@@ -19,8 +19,8 @@ import {
   PopoverTrigger,
 } from "@lootlog/ui/components/popover";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useUpdatePoints } from "../hooks/mutations/use-update-points";
-import { useRankingEditHistory } from "../hooks/queries/use-ranking-edit-history";
+import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
+import { useRankingEditHistory } from "../../hooks/queries/use-ranking-edit-history";
 
 interface EventRankingTableProps {
   rankings: EventRanking[];

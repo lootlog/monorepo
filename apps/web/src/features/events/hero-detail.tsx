@@ -5,7 +5,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEvent } from "./hooks/queries/use-event";
 import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
-import { EventMapGrid } from "./components/event-map-grid";
+import { EventMapGrid } from "./components/maps/event-map-grid";
 import {
   Swords,
   MapPin,
@@ -19,20 +19,17 @@ import {
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { Permission } from "@lootlog/types";
 import { useState } from "react";
-import { MapManageDialog } from "./components/map-manage-dialog";
-import { MemberAssignmentModal } from "./components/member-assignment-modal";
-import { CloseRespawnWindowDialog } from "./components/close-respawn-window-dialog";
-import { OpenRespawnWindowDialog } from "./components/open-respawn-window-dialog";
+import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
+import { MemberAssignmentModal } from "./components/dialogs/member-assignment-modal";
+import { CloseRespawnWindowDialog } from "./components/dialogs/close-respawn-window-dialog";
+import { OpenRespawnWindowDialog } from "./components/dialogs/open-respawn-window-dialog";
 import {
   useAssignMember,
   useUnassignMember,
   useSelfAssignMember,
   useSelfUnassignMember,
 } from "./hooks/mutations/use-assign-member";
-import {
-  useWindowStatus,
-  type WindowStatus,
-} from "./hooks/use-window-status";
+import { useWindowStatus, type WindowStatus } from "./hooks/use-window-status";
 import {
   useCloseRespawnWindow,
   useOpenRespawnWindow,
@@ -43,14 +40,14 @@ import { useEventPresence } from "./hooks/socket/use-event-presence";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { useHeroActiveGaps } from "./hooks/queries/use-hero-active-gaps";
 import { useHeroPresenceStats } from "./hooks/queries/use-hero-presence-stats";
-import { RecentKillsPreview } from "./components/recent-kills-preview";
-import { PresenceStatsCard } from "./components/presence-stats-card";
-import { EventHeroLoots } from "./components/event-hero-loots";
-import { EventRankingPreview } from "./components/event-ranking-preview";
+import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
+import { PresenceStatsCard } from "./components/stats/presence-stats-card";
+import { EventHeroLoots } from "./components/stats/event-hero-loots";
+import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import { NpcTile } from "@/components/tiles";
-import { HeroTimerCountdown } from "./components/hero-timer-countdown";
-import { MemberBadge } from "./components/member-badge";
-import { getMapStatus } from "./components/map-card";
+import { HeroTimerCountdown } from "./components/heroes/hero-timer-countdown";
+import { MemberBadge } from "./components/shared/member-badge";
+import { getMapStatus } from "./components/maps/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -381,7 +378,6 @@ export const HeroDetail = () => {
             </div>
           </div>
         </div>
-
         {/* Respawn Window Actions */}
         {canManage && (
           <div className="flex items-center gap-2">
@@ -539,7 +535,6 @@ export const HeroDetail = () => {
           </div>
         </div>
       </ScrollArea>
-
       {/* Dialogs */}
       <MapManageDialog
         open={mapManageOpen}
@@ -548,7 +543,6 @@ export const HeroDetail = () => {
         eventId={eventId ?? ""}
         hero={hero}
       />
-
       {selectedMap && (
         <MemberAssignmentModal
           open={assignmentOpen}
@@ -559,7 +553,6 @@ export const HeroDetail = () => {
           onUnassign={handleUnassignFromModal}
         />
       )}
-
       {/* Respawn Window Dialogs */}
       <CloseRespawnWindowDialog
         open={closeWindowOpen}
@@ -568,7 +561,6 @@ export const HeroDetail = () => {
         onConfirm={handleCloseRespawnWindow}
         isLoading={closeRespawnWindow.isPending}
       />
-
       <OpenRespawnWindowDialog
         open={openWindowOpen}
         onOpenChange={setOpenWindowOpen}

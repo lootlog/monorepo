@@ -21,12 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { useCreateEvent } from "../hooks/mutations/use-create-event";
+import { useCreateEvent } from "../../hooks/mutations/use-create-event";
 import {
   useMapTemplates,
   type MapTemplate,
 } from "@/features/guild-settings/map-templates-settings/hooks/use-map-templates";
-import { MapInput } from "./map-input";
+import { MapInput } from "../maps/map-input";
 import { toast } from "sonner";
 import {
   Plus,

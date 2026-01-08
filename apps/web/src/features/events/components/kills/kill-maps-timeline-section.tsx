@@ -2,7 +2,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { Accordion } from "@lootlog/ui/components/accordion";
 import { Map } from "lucide-react";
 import { KillMapTimelineCard } from "./kill-map-timeline-card";
-import { useKillTimeline } from "../hooks/queries/use-kill-timeline";
+import { useKillTimeline } from "../../hooks/queries/use-kill-timeline";
 import type { TFunction } from "i18next";
 
 interface KillMapsTimelineSectionProps {
