@@ -655,17 +655,21 @@ model EventHeroKill {
 }
 
 model EventKillPoint {
-  id                String   @id @default(cuid())
-  killId            String
-  memberId          Int
-  mapName           String
-  basePoints        Int // Points before multipliers
-  points            Int // Final points after multipliers
-  appliedMultiplier Float // Combined multiplier applied
-  timeOnMapSeconds  Int
-  afkPercentage     Float
-  wasPresent        Boolean
-  createdAt         DateTime @default(now())
+  id                      String   @id @default(cuid())
+  killId                  String
+  memberId                Int
+  mapName                 String
+  basePoints              Int // Points before multipliers
+  points                  Int // Final points after multipliers
+  appliedMultiplier       Float // Combined multiplier applied
+  timeMultiplier          Float? // Time-of-day multiplier
+  trackersMultiplier      Float? // Trackers count multiplier
+  mapsMultiplier          Float? // Maps count multiplier
+  trackingDurationSeconds Int? // Total tracking time from first assignment to kill
+  timeOnMapSeconds        Int
+  afkPercentage           Float
+  wasPresent              Boolean
+  createdAt               DateTime @default(now())
 
   kill   EventHeroKill @relation(fields: [killId], references: [id], onDelete: Cascade)
   member Member        @relation(fields: [memberId], references: [id])

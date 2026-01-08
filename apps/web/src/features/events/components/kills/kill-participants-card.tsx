@@ -24,10 +24,10 @@ import {
   ChevronDown,
   Frown,
   MapPin,
-  Moon,
   Pencil,
   Check,
   X,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/utils/cn";
@@ -62,7 +62,7 @@ const formatDuration = (seconds: number): string => {
 interface ParticipantRowProps {
   participant: KillDetailParticipant;
   rank: number;
-  maxPoints: number;
+  trackersCount: number;
   isExpanded: boolean;
   onToggle: () => void;
   canEdit?: boolean;
@@ -73,7 +73,7 @@ interface ParticipantRowProps {
 const ParticipantRow = ({
   participant,
   rank,
-  maxPoints,
+  trackersCount,
   isExpanded,
   onToggle,
   canEdit,
@@ -94,12 +94,25 @@ const ParticipantRow = ({
     ? { color: `#${roleColor.toString(16).padStart(6, "0")}` }
     : undefined;
 
-  const progressPercent =
-    maxPoints > 0 ? (participant.points / maxPoints) * 100 : 0;
-
-  const afkTimeSeconds = Math.round(
+  const legacyAfkTimeSeconds = Math.round(
     (participant.timeOnMapSeconds * participant.afkPercentage) / 100,
   );
+
+  // Calculate total AFK from mapData (sum from all maps) or fallback to legacy calculation
+  const totalAfkSeconds =
+    participant.mapData?.reduce((sum, map) => sum + map.afkTimeSeconds, 0) ??
+    legacyAfkTimeSeconds;
+
+  // Count maps from comma-separated mapName
+  const mapCount = participant.mapName
+    ? participant.mapName.split(",").length
+    : 0;
+
+  // Check if we have detailed multiplier data (new kills will have these)
+  const hasDetailedMultipliers =
+    participant.timeMultiplier !== null &&
+    participant.trackersMultiplier !== null &&
+    participant.mapsMultiplier !== null;
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -115,8 +128,8 @@ const ParticipantRow = ({
 
   const handleConfirmEdit = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newPoints = parseInt(editValue, 10);
-    if (isNaN(newPoints) || newPoints < 0) {
+    const newPoints = Number.parseInt(editValue, 10);
+    if (Number.isNaN(newPoints) || newPoints < 0) {
       return;
     }
     if (onEditPoints) {
@@ -164,15 +177,33 @@ const ParticipantRow = ({
               </AvatarFallback>
             </Avatar>
 
-            <span
-              className="font-medium truncate flex-1 min-w-0"
-              style={nameStyle}
-            >
-              {participant.member.name}
-            </span>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span
+                className="font-medium truncate"
+                style={nameStyle}
+              >
+                {participant.member.name}
+              </span>
+              {participant.trackingDurationSeconds !== null && (
+                <span className="text-xs text-muted-foreground">
+                  {formatDuration(participant.trackingDurationSeconds)}{" "}
+                  {t("events.kills.trackingDuration")}
+                </span>
+              )}
+            </div>
+
+            {/* Total AFK */}
+            {totalAfkSeconds > 0 && (
+              <span className="text-xs text-amber-500 shrink-0">
+                {t("events.kills.afkTime")}: {formatDuration(totalAfkSeconds)}
+              </span>
+            )}
 
             {isEditing ? (
-              <div className="flex items-center gap-1 shrink-0" onClick={handleInputClick}>
+              <div
+                className="flex items-center gap-1 shrink-0"
+                onClick={handleInputClick}
+              >
                 <Input
                   type="number"
                   min={0}
@@ -206,6 +237,79 @@ const ParticipantRow = ({
                 <span className="text-lg font-bold text-primary">
                   {participant.points}
                 </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.basePoints")}:
+                        </span>
+                        <span className="font-medium">
+                          {participant.basePoints}
+                        </span>
+                      </div>
+                      {hasDetailedMultipliers ? (
+                        <>
+                          <div className="flex justify-between gap-4">
+                            <span>
+                              {t("events.kills.pointsTooltip.timeMultiplier")}:
+                            </span>
+                            <span className="font-medium">
+                              &times;{participant.timeMultiplier?.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <span>
+                              {t(
+                                "events.kills.pointsTooltip.trackersMultiplier",
+                              )}{" "}
+                              {t("events.kills.pointsTooltip.trackersCount", {
+                                count: trackersCount,
+                              })}
+                              :
+                            </span>
+                            <span className="font-medium">
+                              &times;
+                              {participant.trackersMultiplier?.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <span>
+                              {t("events.kills.pointsTooltip.mapsMultiplier")}{" "}
+                              {t("events.kills.pointsTooltip.mapsCount", {
+                                count: mapCount,
+                              })}
+                              :
+                            </span>
+                            <span className="font-medium">
+                              &times;{participant.mapsMultiplier?.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="border-t border-border/50 pt-1 mt-1 flex justify-between gap-4">
+                            <span>
+                              {t("events.kills.pointsTooltip.total")}:
+                            </span>
+                            <span className="font-medium">
+                              {participant.basePoints} &times;{" "}
+                              {participant.appliedMultiplier.toFixed(2)} ={" "}
+                              {participant.points}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between gap-4">
+                          <span>{t("events.kills.multipliers.title")}:</span>
+                          <span className="font-medium">
+                            &times;{participant.appliedMultiplier.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
                 {canEdit && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -234,71 +338,57 @@ const ParticipantRow = ({
             />
           </div>
         </CollapsibleTrigger>
-
         <CollapsibleContent>
           <div className="px-3 pb-3 pt-0 space-y-3 border-t border-border/50">
-            <div className="pt-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="w-4 h-4 shrink-0" />
-                <span className="truncate">{participant.mapName}</span>
-              </div>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="w-4 h-4 shrink-0" />
-                    <span>{formatDuration(participant.timeOnMapSeconds)}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("events.kills.timeOnMap")}</p>
-                </TooltipContent>
-              </Tooltip>
-
-              {afkTimeSeconds > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2 text-amber-500">
-                      <Moon className="w-4 h-4 shrink-0" />
-                      <span>{formatDuration(afkTimeSeconds)} AFK</span>
+            {/* Per-map breakdown */}
+            {participant.mapData && participant.mapData.length > 0 ? (
+              <div className="pt-3 space-y-2">
+                {participant.mapData.map((mapInfo) => (
+                  <div key={mapInfo.mapId} className="text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="w-4 h-4 shrink-0" />
+                      <span className="font-medium">{mapInfo.mapName}</span>
                     </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("events.kills.afkPercentage")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-sm text-muted-foreground cursor-help">
-                  {participant.basePoints} &times;{" "}
-                  {participant.appliedMultiplier.toFixed(2)}
+                    <div className="ml-5 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                      <span>
+                        {t("events.kills.assignmentTime")}:{" "}
+                        {formatDuration(mapInfo.assignmentDurationSeconds)}
+                      </span>
+                      <span>
+                        {t("events.kills.presenceTime")}:{" "}
+                        {formatDuration(mapInfo.presenceTimeSeconds)}
+                      </span>
+                      {mapInfo.afkTimeSeconds > 0 && (
+                        <span className="text-amber-500">
+                          {t("events.kills.afkTime")}:{" "}
+                          {formatDuration(mapInfo.afkTimeSeconds)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Fallback for old kills without mapData */
+              <div className="pt-3 flex items-center gap-4 text-sm flex-wrap">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  <span className="truncate max-w-[200px]">
+                    {participant.mapName}
+                  </span>
                 </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {t("events.kills.pointsBreakdown", {
-                    base: participant.basePoints,
-                    multiplier: participant.appliedMultiplier.toFixed(2),
-                  })}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-
-            <div className="space-y-1">
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="w-4 h-4 shrink-0" />
+                  <span>{formatDuration(participant.timeOnMapSeconds)}</span>
+                </div>
+                {legacyAfkTimeSeconds > 0 && (
+                  <span className="text-amber-500 text-xs">
+                    {t("events.kills.afkTime")}:{" "}
+                    {formatDuration(legacyAfkTimeSeconds)}
+                  </span>
+                )}
               </div>
-              <div className="text-xs text-muted-foreground text-right">
-                {progressPercent.toFixed(0)}%{" "}
-                {t("events.ranking.points").toLowerCase()}
-              </div>
-            </div>
+            )}
           </div>
         </CollapsibleContent>
       </div>
@@ -319,7 +409,7 @@ export const KillParticipantsCard = ({
   const { updateKillPoint } = useUpdatePoints(guildId ?? "", eventId ?? "");
 
   const sorted = [...participants].sort((a, b) => b.points - a.points);
-  const maxPoints = sorted[0]?.points ?? 0;
+  const trackersCount = participants.length;
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -366,7 +456,7 @@ export const KillParticipantsCard = ({
               key={p.id}
               participant={p}
               rank={idx + 1}
-              maxPoints={maxPoints}
+              trackersCount={trackersCount}
               isExpanded={expandedIds.has(p.id)}
               onToggle={() => toggleExpand(p.id)}
               canEdit={canEdit}
