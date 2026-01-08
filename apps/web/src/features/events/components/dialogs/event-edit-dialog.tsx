@@ -295,7 +295,6 @@ export const EventEditDialog = ({
             onSubmit={handleSubmit(onSubmit)}
             className="p-5 space-y-5"
           >
-            {/* Basic Info */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.createDialog.nameLabel")}
@@ -329,7 +328,6 @@ export const EventEditDialog = ({
               </div>
             </div>
 
-            {/* Assignment Timeout */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t(
@@ -353,7 +351,6 @@ export const EventEditDialog = ({
               </p>
             </div>
 
-            {/* Map Assignment Cap */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.settings.mapAssignmentCap", "Limit osób na mapie")}
@@ -372,7 +369,6 @@ export const EventEditDialog = ({
               </p>
             </div>
 
-            {/* Auto Calculate Points */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg border">
               <div className="flex flex-col">
                 <Label
@@ -398,7 +394,6 @@ export const EventEditDialog = ({
               />
             </div>
 
-            {/* Scoring Multipliers */}
             <div
               className={`space-y-3 ${!watch("autoCalculatePoints") ? "opacity-50 pointer-events-none" : ""}`}
             >
@@ -412,7 +407,6 @@ export const EventEditDialog = ({
                 )}
               </Label>
 
-              {/* Base Points */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium text-muted-foreground">
                   {t("events.scoring.basePoints", "Bazowe punkty za killa")}
@@ -431,7 +425,6 @@ export const EventEditDialog = ({
                 </p>
               </div>
 
-              {/* Time of Day */}
               <Collapsible
                 open={openSections.timeOfDay}
                 onOpenChange={() => toggleSection("timeOfDay")}
@@ -551,7 +544,6 @@ export const EventEditDialog = ({
                 </div>
               </Collapsible>
 
-              {/* Trackers */}
               <Collapsible
                 open={openSections.trackers}
                 onOpenChange={() => toggleSection("trackers")}
@@ -659,7 +651,6 @@ export const EventEditDialog = ({
                 </div>
               </Collapsible>
 
-              {/* Maps Count */}
               <Collapsible
                 open={openSections.mapsCount}
                 onOpenChange={() => toggleSection("mapsCount")}

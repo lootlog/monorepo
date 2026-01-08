@@ -95,13 +95,11 @@ export const MapManageDialog = ({
     null,
   );
 
-  // Local state for locations to handle drag & drop smoothly
   const [localLocations, setLocalLocations] = useState<LocationData[]>(
     hero.locations ?? [],
   );
   const isDraggingRef = useRef(false);
 
-  // Sync local state when hero.locations changes (but not during drag)
   useEffect(() => {
     if (!isDraggingRef.current) {
       setLocalLocations(hero.locations ?? []);
@@ -126,7 +124,6 @@ export const MapManageDialog = ({
     );
   };
 
-  // Get all maps (from locations + ungrouped)
   const allMapsFromLocations = hero.locations?.flatMap((loc) => loc.maps) ?? [];
   const allMaps = [...allMapsFromLocations, ...hero.maps];
   const addedMapIds = new Set(allMaps.map((m) => m.mapId));
@@ -150,7 +147,6 @@ export const MapManageDialog = ({
         data: { mapId: gameMap.id, mapName: gameMap.name },
       });
 
-      // If a location is selected, assign the map to it
       if (selectedLocationId && result?.id) {
         await assignMapToLocation.mutateAsync({
           mapId: result.id,
@@ -195,7 +191,6 @@ export const MapManageDialog = ({
           heroId: hero.id,
           data: { mapId: mapItem.id, mapName: mapItem.name },
         });
-        // Assign to selected location if one is selected
         if (targetLocationId && result?.id) {
           await assignMapToLocation.mutateAsync({
             mapId: result.id,
@@ -299,13 +294,11 @@ export const MapManageDialog = ({
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-5 space-y-5">
-            {/* Locations Management */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.locations.title")}
               </Label>
 
-              {/* Create new location */}
               <div className="flex gap-2">
                 <Input
                   value={newLocationName}
@@ -332,7 +325,6 @@ export const MapManageDialog = ({
                 </Button>
               </div>
 
-              {/* Existing locations */}
               {localLocations.length > 0 && (
                 <Reorder.Group
                   axis="y"
@@ -359,7 +351,6 @@ export const MapManageDialog = ({
               )}
             </div>
 
-            {/* Maps display grouped by location */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.assigned")}
@@ -373,7 +364,6 @@ export const MapManageDialog = ({
               {totalMapsCount > 0 ? (
                 <ScrollArea className={hasLotsOfMaps ? "h-[140px]" : undefined}>
                   <div className="space-y-3">
-                    {/* Maps in locations */}
                     {hero.locations?.map((location) =>
                       location.maps.length > 0 ? (
                         <div key={location.id} className="space-y-1">
@@ -398,7 +388,6 @@ export const MapManageDialog = ({
                       ) : null,
                     )}
 
-                    {/* Ungrouped maps */}
                     {hero.maps.length > 0 && (
                       <div className="space-y-1">
                         <p className="text-[10px] font-medium text-muted-foreground/60 uppercase">
@@ -523,7 +512,6 @@ export const MapManageDialog = ({
                 {t("events.maps.searchMaps")}
               </Label>
 
-              {/* Target location selector */}
               {hero.locations && hero.locations.length > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">

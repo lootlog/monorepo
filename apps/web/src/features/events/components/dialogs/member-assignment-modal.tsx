@@ -79,7 +79,6 @@ export const MemberAssignmentModal = ({
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-5 space-y-5">
-            {/* Current Assignments */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.assignedMembers")}
@@ -129,7 +128,6 @@ export const MemberAssignmentModal = ({
               )}
             </div>
 
-            {/* Search section */}
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.maps.addMember")}
@@ -144,7 +142,6 @@ export const MemberAssignmentModal = ({
                 />
               </div>
 
-              {/* Members List */}
               <ScrollArea className="h-[220px] rounded-lg border relative">
                 {isActionLoading && (
                   <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 flex items-center justify-center">

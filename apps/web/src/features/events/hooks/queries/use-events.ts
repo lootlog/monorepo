@@ -33,7 +33,7 @@ interface EventHeroNpc {
   npcName: string;
   npcIcon: string | null;
   locations: EventMapLocation[];
-  maps: EventMap[]; // Ungrouped maps (locationId = null)
+  maps: EventMap[];
 }
 
 interface EventRanking {

@@ -4,7 +4,6 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { type CoverageGapType, formatDuration } from "../utils/use-local-coverage-timer";
 
-// Re-export for convenience
 export { type CoverageGapType, formatDuration };
 
 export interface CoverageGap {
@@ -23,9 +22,6 @@ interface MapCoverageState {
   elapsedSeconds: number;
 }
 
-/**
- * Hook to fetch active gap for a map and calculate elapsed time.
- */
 export const useMapCoverageTimer = (
   eventId: string,
   mapId: string,
@@ -44,7 +40,7 @@ export const useMapCoverageTimer = (
       return response.data;
     },
     enabled: enabled && !!guildId && !!eventId && !!mapId,
-    refetchInterval: 30000, // Refetch every 30 seconds to sync
+    refetchInterval: 30000,
     staleTime: 10000,
   });
 
@@ -60,7 +56,6 @@ export const useMapCoverageTimer = (
     };
   }, [activeGap, elapsedSeconds]);
 
-  // Timer update every second when there's an active gap
   useEffect(() => {
     if (!activeGap?.startedAt) {
       setElapsedSeconds(0);
@@ -75,10 +70,8 @@ export const useMapCoverageTimer = (
       setElapsedSeconds(Math.max(0, elapsed));
     };
 
-    // Initial calculation
     updateElapsed();
 
-    // Update every second
     const interval = setInterval(updateElapsed, 1000);
 
     return () => clearInterval(interval);
@@ -91,9 +84,6 @@ export const useMapCoverageTimer = (
   };
 };
 
-/**
- * Hook to fetch all coverage gaps for a hero (for historical display).
- */
 export const useHeroCoverageGaps = (eventId: string, heroId: string) => {
   const guildId = useGuildId();
   const { client } = useApiClient();
@@ -110,9 +100,6 @@ export const useHeroCoverageGaps = (eventId: string, heroId: string) => {
   });
 };
 
-/**
- * Hook to fetch coverage gaps for a map (for historical display).
- */
 export const useMapCoverageGaps = (eventId: string, mapId: string) => {
   const guildId = useGuildId();
   const { client } = useApiClient();

@@ -77,12 +77,10 @@ export const EventLootCard = ({ loot }: EventLootCardProps) => {
       )}
       style={hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined}
     >
-      {/* Header - NPCs */}
       <div className="mb-2">
         <LootNpcs npcs={loot.npcs} />
       </div>
 
-      {/* Players with items */}
       <div className="flex flex-row items-start gap-2 flex-wrap py-2 border-t border-border/30">
         {sortedPlayers.slice(0, 4).map((player) => (
           <PlayerWithItems
@@ -115,7 +113,6 @@ export const EventLootCard = ({ loot }: EventLootCardProps) => {
         )}
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">

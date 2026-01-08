@@ -18,9 +18,6 @@ export interface HeroPresenceStats {
   memberStats: MemberPresenceStat[];
 }
 
-/**
- * Hook to fetch presence statistics for a hero.
- */
 export const useHeroPresenceStats = (eventId: string, heroId: string) => {
   const guildId = useGuildId();
   const { client } = useApiClient();
@@ -34,7 +31,7 @@ export const useHeroPresenceStats = (eventId: string, heroId: string) => {
       return response.data;
     },
     enabled: !!guildId && !!eventId && !!heroId,
-    staleTime: 60 * 1000, // 1 minute
-    refetchInterval: 60 * 1000, // Refetch every minute
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
   });
 };

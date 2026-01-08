@@ -32,7 +32,6 @@ export const EventRankingPage = () => {
 
   useEffect(() => {
     if (event && !selectedHeroName) {
-      // Default to first hero that has rankings, or first hero if none have rankings
       const firstHeroWithRankings = event.heroNpcs?.find((hero) =>
         event.rankings?.some((r) => r.heroNpcName === hero.npcName),
       );

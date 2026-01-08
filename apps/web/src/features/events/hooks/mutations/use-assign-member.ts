@@ -11,7 +11,7 @@ interface AssignMemberOptions {
 interface UnassignMemberOptions {
   eventId: string;
   mapId: string;
-  memberId?: number; // Optional - if not provided, unassigns all members
+  memberId?: number;
 }
 
 export const useAssignMember = () => {

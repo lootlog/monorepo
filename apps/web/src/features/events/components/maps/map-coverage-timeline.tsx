@@ -29,7 +29,6 @@ function calculateTimelineSegments(
   const totalMs = endTime.getTime() - startTime.getTime();
   if (totalMs <= 0) return [];
 
-  // Sort gaps by start time and filter to only those overlapping with our range
   const sortedGaps = [...gaps]
     .filter((g) => {
       const gapStart = new Date(g.startedAt);
@@ -54,7 +53,6 @@ function calculateTimelineSegments(
       endTime.getTime(),
     );
 
-    // Add covered segment before gap if there's time
     if (gapStart > currentTime) {
       segments.push({
         type: "COVERED",
@@ -65,7 +63,6 @@ function calculateTimelineSegments(
       });
     }
 
-    // Add gap segment
     if (gapEnd > gapStart) {
       segments.push({
         type: gap.gapType as "UNCOVERED" | "UNASSIGNED",
@@ -79,7 +76,6 @@ function calculateTimelineSegments(
     currentTime = gapEnd;
   }
 
-  // Add final covered segment if needed
   if (currentTime < endTime.getTime()) {
     segments.push({
       type: "COVERED",
@@ -119,7 +115,6 @@ export const MapCoverageTimeline = ({
 }: MapCoverageTimelineProps) => {
   const segments = calculateTimelineSegments(startTime, endTime, gaps);
 
-  // If no gaps, show full green
   if (segments.length === 0) {
     return (
       <div className="relative h-3 w-full rounded-full bg-green-500 overflow-hidden" />

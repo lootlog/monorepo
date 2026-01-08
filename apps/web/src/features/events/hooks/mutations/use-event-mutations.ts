@@ -2,8 +2,8 @@ import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface TimeOfDayMultiplier {
-  from: string; // HH:mm format
-  to: string; // HH:mm format
+  from: string;
+  to: string;
   multiplier: number;
 }
 
@@ -13,12 +13,12 @@ export interface UpdateEventData {
   endsAt?: string;
   active?: boolean;
   timeOfDayMultipliers?: TimeOfDayMultiplier[];
-  trackersMultipliers?: Record<number, number>; // {count: multiplier}
-  mapsCountMultipliers?: Record<number, number>; // {count: multiplier}
-  assignmentTimeoutMinutes?: number; // Minutes before minSpawnTime when assignments are allowed
-  autoCalculatePoints?: boolean; // Whether to automatically calculate points on kill
-  mapAssignmentCap?: number; // Maximum members per map (0 = no limit)
-  basePointsPerKill?: number; // Base points per kill before multipliers
+  trackersMultipliers?: Record<number, number>;
+  mapsCountMultipliers?: Record<number, number>;
+  assignmentTimeoutMinutes?: number;
+  autoCalculatePoints?: boolean;
+  mapAssignmentCap?: number;
+  basePointsPerKill?: number;
 }
 
 interface HeroMapData {
