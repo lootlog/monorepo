@@ -76,7 +76,7 @@ export const OpenRespawnWindowDialog = ({
             </div>
             <div>
               <DialogTitle className="text-base">
-                {t("events.respawn.openWindow", "Otwórz okno respawnu")}
+                {t("events.respawn.openWindow")}
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
                 {heroName}
@@ -88,7 +88,7 @@ export const OpenRespawnWindowDialog = ({
         <div className="p-5 space-y-4">
           <div className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("events.respawn.minSpawnTime", "Minimalny czas spawnu")}
+              {t("events.respawn.minSpawnTime")}
             </Label>
             <DateTimePicker
               value={minTime}
@@ -98,7 +98,7 @@ export const OpenRespawnWindowDialog = ({
           </div>
           <div className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("events.respawn.maxSpawnTime", "Maksymalny czas spawnu")}
+              {t("events.respawn.maxSpawnTime")}
             </Label>
             <DateTimePicker
               value={maxTime}
@@ -109,10 +109,7 @@ export const OpenRespawnWindowDialog = ({
 
           {minTime && maxTime && minTime >= maxTime && (
             <p className="text-xs text-destructive">
-              {t(
-                "events.respawn.invalidTimeRange",
-                "Minimalny czas musi być przed maksymalnym",
-              )}
+              {t("events.respawn.invalidTimeRange")}
             </p>
           )}
         </div>
@@ -125,7 +122,7 @@ export const OpenRespawnWindowDialog = ({
             disabled={isLoading}
             className="flex-1"
           >
-            {t("common.cancel", "Anuluj")}
+            {t("common.cancel")}
           </Button>
           <Button
             size="sm"
@@ -134,7 +131,7 @@ export const OpenRespawnWindowDialog = ({
             className="flex-1"
           >
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {t("events.respawn.openWindowButton", "Otwórz okno")}
+            {t("events.respawn.openWindowButton")}
           </Button>
         </div>
       </DialogContent>

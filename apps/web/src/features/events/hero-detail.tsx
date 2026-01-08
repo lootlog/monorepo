@@ -51,23 +51,23 @@ import { cn } from "@lootlog/ui/lib/utils";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
-  t: (key: string, fallback: string) => string,
+  t: (key: string) => string,
 ) => {
   switch (status) {
     case "OPEN":
       return {
-        label: t("events.respawn.status.open", "Okno otwarte"),
+        label: t("events.respawn.status.open"),
         className: "bg-green-500/10 text-green-500 border-green-500/20",
       };
     case "WAITING":
       return {
-        label: t("events.respawn.status.waiting", "Oczekiwanie"),
+        label: t("events.respawn.status.waiting"),
         className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
       };
     case "NONE":
     default:
       return {
-        label: t("events.respawn.status.none", "Brak okna"),
+        label: t("events.respawn.status.none"),
         className: "bg-muted text-muted-foreground border-border",
       };
   }
@@ -167,14 +167,14 @@ export const HeroDetail = () => {
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">
-          {t("events.heroes.notFound", "Nie znaleziono herosa")}
+          {t("events.heroes.notFound")}
         </p>
         <Link
           to="/$guildId/events/$eventId"
           params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
         >
           <Button variant="outline">
-            {t("events.common.backToEvent", "Powrót do eventu")}
+            {t("events.common.backToEvent")}
           </Button>
         </Link>
       </div>
@@ -204,9 +204,9 @@ export const HeroDetail = () => {
         eventId: eventId!,
         mapId,
       });
-      toast.success(t("events.maps.assignSuccess", "Przypisano do mapy"));
+      toast.success(t("events.maps.assignSuccess"));
     } catch {
-      toast.error(t("events.maps.assignError", "Błąd podczas przypisywania"));
+      toast.error(t("events.maps.assignError"));
     }
   };
 
@@ -216,9 +216,9 @@ export const HeroDetail = () => {
         eventId: eventId!,
         mapId,
       });
-      toast.success(t("events.maps.unassignSuccess", "Wypisano z mapy"));
+      toast.success(t("events.maps.unassignSuccess"));
     } catch {
-      toast.error(t("events.maps.unassignError", "Błąd podczas odpisywania"));
+      toast.error(t("events.maps.unassignError"));
     }
   };
 
@@ -236,9 +236,9 @@ export const HeroDetail = () => {
         mapId: selectedMapId,
         memberId,
       });
-      toast.success(t("events.maps.assignSuccess", "Przypisano członka"));
+      toast.success(t("events.maps.assignSuccess"));
     } catch (error) {
-      toast.error(t("events.maps.assignError", "Błąd podczas przypisywania"));
+      toast.error(t("events.maps.assignError"));
     }
   };
 
@@ -251,9 +251,9 @@ export const HeroDetail = () => {
         mapId: selectedMapId,
         memberId,
       });
-      toast.success(t("events.maps.unassignSuccess", "Odpisano członka"));
+      toast.success(t("events.maps.unassignSuccess"));
     } catch (error) {
-      toast.error(t("events.maps.unassignError", "Błąd podczas odpisywania"));
+      toast.error(t("events.maps.unassignError"));
     }
   };
 
@@ -274,13 +274,9 @@ export const HeroDetail = () => {
           }),
         ),
       );
-      toast.success(
-        t("events.maps.clearAllSuccess", "Wyczyszczono wszystkie przypisania"),
-      );
+      toast.success(t("events.maps.clearAllSuccess"));
     } catch (error) {
-      toast.error(
-        t("events.maps.clearAllError", "Błąd podczas czyszczenia przypisań"),
-      );
+      toast.error(t("events.maps.clearAllError"));
     }
   };
 
@@ -297,14 +293,10 @@ export const HeroDetail = () => {
         heroId,
         ...options,
       });
-      toast.success(
-        t("events.respawn.closeSuccess", "Okno respawnu zostało zamknięte"),
-      );
+      toast.success(t("events.respawn.closeSuccess"));
       setCloseWindowOpen(false);
     } catch (_error) {
-      toast.error(
-        t("events.respawn.closeError", "Błąd podczas zamykania okna respawnu"),
-      );
+      toast.error(t("events.respawn.closeError"));
     }
   };
 
@@ -321,14 +313,10 @@ export const HeroDetail = () => {
         minSpawnTime: options.minSpawnTime,
         maxSpawnTime: options.maxSpawnTime,
       });
-      toast.success(
-        t("events.respawn.openSuccess", "Okno respawnu zostało otwarte"),
-      );
+      toast.success(t("events.respawn.openSuccess"));
       setOpenWindowOpen(false);
     } catch (_error) {
-      toast.error(
-        t("events.respawn.openError", "Błąd podczas otwierania okna respawnu"),
-      );
+      toast.error(t("events.respawn.openError"));
     }
   };
 
@@ -380,7 +368,7 @@ export const HeroDetail = () => {
                 onClick={() => setCloseWindowOpen(true)}
               >
                 <X className="w-4 h-4 mr-2" />
-                {t("events.respawn.closeWindow", "Zamknij okno")}
+                {t("events.respawn.closeWindow")}
               </Button>
             ) : (
               <Button
@@ -389,7 +377,7 @@ export const HeroDetail = () => {
                 onClick={() => setOpenWindowOpen(true)}
               >
                 <Timer className="w-4 h-4 mr-2" />
-                {t("events.respawn.openWindow", "Otwórz okno")}
+                {t("events.respawn.openWindow")}
               </Button>
             )}
           </div>
@@ -406,7 +394,7 @@ export const HeroDetail = () => {
                 <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                   <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4" />
-                    {t("events.participants.title", "Uczestnicy")}
+                    {t("events.participants.title")}
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     {uniqueMembers.map((member) => (
@@ -451,7 +439,7 @@ export const HeroDetail = () => {
                         disabled={uniqueMembers.length === 0}
                       >
                         <Eraser className="w-4 h-4 mr-2" />
-                        {t("events.maps.clearAll", "Wyczyść przypisania")}
+                        {t("events.maps.clearAll")}
                       </Button>
                       <Button
                         variant="outline"
@@ -459,7 +447,7 @@ export const HeroDetail = () => {
                         onClick={() => setMapManageOpen(true)}
                       >
                         <Plus className="w-4 h-4 mr-2" />
-                        {t("events.maps.manage", "Zarządzaj mapami")}
+                        {t("events.maps.manage")}
                       </Button>
                     </div>
                   )}
@@ -532,6 +520,7 @@ export const HeroDetail = () => {
           assignedMembers={selectedMap.assignedMembers || []}
           onAssign={handleAssignFromModal}
           onUnassign={handleUnassignFromModal}
+          disabled={!assignmentAllowed}
         />
       )}
       {/* Respawn Window Dialogs */}

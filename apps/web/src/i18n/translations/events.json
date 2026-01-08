@@ -124,9 +124,21 @@
     "clearAll": "Wyczyść przypisania",
     "clearAllSuccess": "Wyczyszczono wszystkie przypisania",
     "clearAllError": "Błąd podczas czyszczenia przypisań",
+    "assignedMembers": "Przypisani członkowie",
+    "noAssignedMembers": "Brak przypisanych członków",
+    "addMember": "Dodaj członka",
+    "searchMember": "Szukaj członka...",
+    "noMembersFound": "Nie znaleziono członków",
+    "alreadyAssigned": "Przypisany",
+    "assignmentDisabled": "Zapisywanie jeszcze niedostępne",
+    "assignmentDisabledWithTime": "Zapisywanie możliwe za {{time}}",
+    "unassignSelf": "Odpisz się",
+    "assignSelf": "Przypisz się",
     "gap": {
       "unassigned": "nieprzypisana",
-      "uncovered": "nieobstawiona"
+      "uncovered": "nieobstawiona",
+      "unassignedTooltip": "Czas od kiedy nikt nie jest przypisany do tej mapy",
+      "uncoveredTooltip": "Czas od kiedy mapa nie jest aktywnie obserwowana"
     }
   },
   "heroes": {
@@ -142,13 +154,16 @@
     "killCount_one": "{{count}} bicie",
     "killCount_few": "{{count}} bicia",
     "killCount_many": "{{count}} bić",
-    "noTimer": "Brak aktywnego timera",
+    "noTimer": "Brak timera",
+    "timerExpired": "Timer wygasł",
+    "inSpawnWindow": "W oknie respawnu!",
     "timerActive": "Timer aktywny",
     "add": "Dodaj herosa",
     "addButton": "Dodaj",
     "edit": "Edytuj herosa",
     "addDescription": "Dodaj nowego herosa do eventu",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
+    "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
     "added": "Dodano herosa",
     "updated": "Zaktualizowano herosa",
     "deleted": "Usunięto herosa",
@@ -215,7 +230,29 @@
     },
     "loadMore": "Załaduj więcej",
     "loading": "Ładowanie...",
-    "endOfList": "To wszystkie bicia"
+    "endOfList": "To wszystkie bicia",
+    "manualClose": "Ręczne zamknięcie okna",
+    "manualCloseDescription": "Okno zostało ręcznie zamknięte - heros mógł nie zostać zabity"
+  },
+  "respawn": {
+    "openWindow": "Otwórz okno respawnu",
+    "openWindowButton": "Otwórz okno",
+    "minSpawnTime": "Minimalny czas spawnu",
+    "maxSpawnTime": "Maksymalny czas spawnu",
+    "invalidTimeRange": "Minimalny czas musi być przed maksymalnym",
+    "closeWindow": "Zamknij okno respawnu",
+    "closeWindowDesc": "Zamknij aktywne okno respawnu. Ta akcja wyczyści wszystkie przypisania do map.",
+    "createNewWindow": "Utwórz nowe okno respawnu",
+    "closeWindowButton": "Zamknij okno",
+    "closeSuccess": "Okno respawnu zostało zamknięte",
+    "closeError": "Błąd podczas zamykania okna respawnu",
+    "openSuccess": "Okno respawnu zostało otwarte",
+    "openError": "Błąd podczas otwierania okna respawnu",
+    "status": {
+      "open": "Okno otwarte",
+      "waiting": "Oczekiwanie",
+      "none": "Brak okna"
+    }
   },
   "killDetail": {
     "notFound": "Nie znaleziono bicia",

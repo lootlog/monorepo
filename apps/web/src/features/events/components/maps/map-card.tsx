@@ -313,14 +313,8 @@ export const MapCard = ({
               </TooltipTrigger>
               <TooltipContent>
                 {gapType === "UNASSIGNED"
-                  ? t(
-                      "events.maps.gap.unassignedTooltip",
-                      "Czas od kiedy nikt nie jest przypisany do tej mapy",
-                    )
-                  : t(
-                      "events.maps.gap.uncoveredTooltip",
-                      "Czas od kiedy mapa nie jest aktywnie obserwowana",
-                    )}
+                  ? t("events.maps.gap.unassignedTooltip")
+                  : t("events.maps.gap.uncoveredTooltip")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -330,15 +324,30 @@ export const MapCard = ({
         <div className="flex items-center gap-1 shrink-0">
           {/* Admin: Manage button */}
           {canManage && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => onManageClick?.(map.id)}
-              title={t("events.maps.manage", "Zarządzaj")}
-            >
-              <Users className="w-3.5 h-3.5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => onManageClick?.(map.id)}
+                    disabled={assignmentDisabled}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {assignmentDisabled
+                  ? assignmentEnabledAt
+                    ? t("events.maps.assignmentDisabledWithTime", {
+                        time: formatTimeRemaining(assignmentEnabledAt),
+                      })
+                    : t("events.maps.assignmentDisabled")
+                  : t("events.maps.manage", "Zarządzaj")}
+              </TooltipContent>
+            </Tooltip>
           )}
 
           {/* Self-assign or Self-unassign */}
@@ -348,46 +357,41 @@ export const MapCard = ({
               size="sm"
               className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => onSelfUnassignClick?.(map.id)}
-              title={t("events.maps.unassignSelf", "Odpisz się")}
+              title={t("events.maps.unassignSelf")}
             >
               <X className="w-3.5 h-3.5" />
             </Button>
           ) : (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-7 p-0 gap-1",
-                    assignmentDisabled ? "w-auto px-1.5" : "w-7",
-                  )}
-                  onClick={() =>
-                    !assignmentDisabled && onSelfAssignClick?.(map.id)
-                  }
-                  disabled={assignmentDisabled}
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  {assignmentDisabled && assignmentEnabledAt && (
-                    <span className="text-xs font-mono">
-                      {formatTimeRemaining(assignmentEnabledAt)}
-                    </span>
-                  )}
-                </Button>
+                <span className="inline-flex">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-7 p-0 gap-1",
+                      assignmentDisabled ? "w-auto px-1.5" : "w-7",
+                    )}
+                    onClick={() => onSelfAssignClick?.(map.id)}
+                    disabled={assignmentDisabled}
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    {assignmentDisabled && assignmentEnabledAt && (
+                      <span className="text-xs font-mono">
+                        {formatTimeRemaining(assignmentEnabledAt)}
+                      </span>
+                    )}
+                  </Button>
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 {assignmentDisabled
                   ? assignmentEnabledAt
-                    ? t(
-                        "events.maps.assignmentDisabledWithTime",
-                        "Zapisywanie możliwe za {{time}}",
-                        { time: formatTimeRemaining(assignmentEnabledAt) },
-                      )
-                    : t(
-                        "events.maps.assignmentDisabled",
-                        "Zapisywanie jeszcze niedostępne",
-                      )
-                  : t("events.maps.assignSelf", "Przypisz się")}
+                    ? t("events.maps.assignmentDisabledWithTime", {
+                        time: formatTimeRemaining(assignmentEnabledAt),
+                      })
+                    : t("events.maps.assignmentDisabled")
+                  : t("events.maps.assignSelf")}
               </TooltipContent>
             </Tooltip>
           )}

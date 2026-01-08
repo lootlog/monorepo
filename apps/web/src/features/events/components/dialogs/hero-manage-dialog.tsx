@@ -76,18 +76,18 @@ export const HeroManageDialog = ({
             npcName: data.npcName,
           },
         });
-        toast.success(t("events.heroes.updated", "Zaktualizowano herosa"));
+        toast.success(t("events.heroes.updated"));
       } else {
         const npcIdNum = data.npcId ? Number(data.npcId) : undefined;
         await addHero.mutateAsync({
           ...(npcIdNum && { npcId: npcIdNum }),
           npcName: data.npcName,
         });
-        toast.success(t("events.heroes.added", "Dodano herosa"));
+        toast.success(t("events.heroes.added"));
       }
       onOpenChange(false);
     } catch {
-      toast.error(t("common.error", "Wystąpił błąd"));
+      toast.error(t("common.error"));
     }
   };
 
@@ -102,16 +102,13 @@ export const HeroManageDialog = ({
             <div>
               <DialogTitle className="text-base">
                 {isEditing
-                  ? t("events.heroes.edit", "Edytuj herosa")
-                  : t("events.heroes.add", "Dodaj herosa")}
+                  ? t("events.heroes.edit")
+                  : t("events.heroes.add")}
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
                 {isEditing
                   ? hero?.npcName
-                  : t(
-                      "events.heroes.addDescription",
-                      "Dodaj nowego herosa do eventu",
-                    )}
+                  : t("events.heroes.addDescription")}
               </DialogDescription>
             </div>
           </div>
@@ -125,14 +122,11 @@ export const HeroManageDialog = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.createDialog.heroIdLabel", "ID NPC")}
+                {t("events.createDialog.heroIdLabel")}
               </Label>
               <Input
                 type="number"
-                placeholder={t(
-                  "events.createDialog.heroIdPlaceholder",
-                  "opcjonalne",
-                )}
+                placeholder={t("events.createDialog.heroIdPlaceholder")}
                 {...register("npcId")}
                 disabled={isEditing}
                 className="h-9 text-sm font-mono"
@@ -140,13 +134,10 @@ export const HeroManageDialog = ({
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("events.createDialog.heroNameLabel", "Nazwa NPC")}
+                {t("events.createDialog.heroNameLabel")}
               </Label>
               <Input
-                placeholder={t(
-                  "events.createDialog.heroNamePlaceholder",
-                  "np. Król Goblinów",
-                )}
+                placeholder={t("events.createDialog.heroNamePlaceholder")}
                 {...register("npcName", { required: true })}
                 className="h-9 text-sm"
               />
@@ -167,16 +158,10 @@ export const HeroManageDialog = ({
                   />
                 </p>
                 <p>
-                  {t(
-                    "events.heroes.idHint",
-                    "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
-                  )}
+                  {t("events.heroes.idHint")}
                 </p>
                 <p>
-                  {t(
-                    "events.heroes.mapsHint",
-                    "Mapy dla herosa dodasz po jego utworzeniu.",
-                  )}
+                  {t("events.heroes.mapsHint")}
                 </p>
               </div>
             </div>
@@ -191,7 +176,7 @@ export const HeroManageDialog = ({
             onClick={() => onOpenChange(false)}
             className="flex-1"
           >
-            {t("events.createDialog.cancel", "Anuluj")}
+            {t("events.createDialog.cancel")}
           </Button>
           <Button
             type="submit"
@@ -203,17 +188,17 @@ export const HeroManageDialog = ({
             {isPending ? (
               <>
                 <Loader2 className="size-3.5 mr-1.5 animate-spin" />
-                {t("common.saving", "Zapisywanie...")}
+                {t("common.saving")}
               </>
             ) : isEditing ? (
               <>
                 <Pencil className="size-3.5 mr-1.5" />
-                {t("common.save", "Zapisz")}
+                {t("common.save")}
               </>
             ) : (
               <>
                 <Plus className="size-3.5 mr-1.5" />
-                {t("events.createDialog.addHero", "Dodaj herosa")}
+                {t("events.createDialog.addHero")}
               </>
             )}
           </Button>

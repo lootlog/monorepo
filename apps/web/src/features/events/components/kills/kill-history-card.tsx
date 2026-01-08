@@ -104,7 +104,7 @@ export const KillHistoryCard = ({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{t("events.kills.manualClose", "Ręczne zamknięcie okna")}</p>
+                  <p>{t("events.kills.manualClose")}</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -119,7 +119,7 @@ export const KillHistoryCard = ({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>
-                    {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
+                    {t("events.kills.respawnTime")}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -201,7 +201,7 @@ export const KillHistoryCard = ({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{t("events.kills.manualClose", "Ręczne zamknięcie okna")}</p>
+                  <p>{t("events.kills.manualClose")}</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -275,11 +275,11 @@ export const KillHistoryCard = ({
               <TooltipTrigger asChild>
                 <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-600/50">
                   <Hand className="w-3 h-3" />
-                  {t("events.kills.manualClose", "Ręczne zamknięcie")}
+                  {t("events.kills.manualClose")}
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t("events.kills.manualCloseDescription", "Okno zostało ręcznie zamknięte - heros mógł nie zostać zabity")}</p>
+                <p>{t("events.kills.manualCloseDescription")}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -294,7 +294,7 @@ export const KillHistoryCard = ({
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {t("events.kills.respawnTime", "Czas od respawnu do zabicia")}
+                  {t("events.kills.respawnTime")}
                 </p>
               </TooltipContent>
             </Tooltip>
