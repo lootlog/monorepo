@@ -75,17 +75,6 @@ export class CreateEventDto {
   basePointsPerKill?: number;
 
   @ApiPropertyOptional({
-    description: 'Hero NPCs to track with their spawn maps',
-    type: [HeroNpcDto],
-    default: [],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HeroNpcDto)
-  heroNpcs?: HeroNpcDto[];
-
-  @ApiPropertyOptional({
     description: 'Minutes before minSpawnTime when assignments are allowed',
     default: 5,
   })

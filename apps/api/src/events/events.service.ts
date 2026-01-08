@@ -16,12 +16,7 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 import { ReorderLocationsDto } from './dto/reorder-locations.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import {
-  Event,
-  EventHeroNpc,
-  EventKillPoint,
-  Prisma,
-} from 'generated/client';
+import { Event, EventHeroNpc, EventKillPoint, Prisma } from 'generated/client';
 import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
 import type { KillTimerData } from './interfaces/kill-timer-data.interface';
 import type {
@@ -67,28 +62,25 @@ export class EventsService {
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
-    const { heroNpcs = [], startsAt, endsAt, ...eventData } = data;
+    const { startsAt, endsAt, ...eventData } = data;
+
+    const startDate = startsAt ? new Date(startsAt) : new Date();
+    const endDate = endsAt ? new Date(endsAt) : null;
+
+    if (endDate && endDate <= startDate) {
+      throw new BadRequestException('End date must be after start date');
+    }
+
+    const now = new Date();
+    const active = startDate <= now && (!endDate || endDate > now);
 
     const event = await this.prisma.event.create({
       data: {
         ...eventData,
+        active,
         guildId,
-        startsAt: startsAt ? new Date(startsAt) : null,
-        endsAt: endsAt ? new Date(endsAt) : null,
-        ...(heroNpcs.length > 0 && {
-          heroNpcs: {
-            create: heroNpcs.map((npc) => ({
-              npcId: npc.npcId,
-              npcName: npc.npcName,
-              maps: {
-                create: npc.maps.map((map) => ({
-                  mapId: map.mapId,
-                  mapName: map.mapName,
-                })),
-              },
-            })),
-          },
-        }),
+        startsAt: startDate,
+        endsAt: endDate,
       },
       include: {
         heroNpcs: {
@@ -149,7 +141,6 @@ export class EventsService {
       where: {
         id: eventId,
         guildId,
-        active: true,
       },
       include: {
         heroNpcs: {
@@ -242,12 +233,25 @@ export class EventsService {
       ...updateData
     } = data;
 
-    // Auto-set endsAt when deactivating event (if not already set)
-    const shouldSetEndsAt =
-      updateData.active === false &&
-      event.active === true &&
-      !event.endsAt &&
-      endsAt === undefined;
+    // Calculate new dates (use existing if not provided)
+    const newStartDate =
+      startsAt !== undefined
+        ? startsAt
+          ? new Date(startsAt)
+          : event.startsAt
+        : event.startsAt;
+    const newEndDate =
+      endsAt !== undefined ? (endsAt ? new Date(endsAt) : null) : event.endsAt;
+
+    // Validate endsAt > startsAt
+    if (newEndDate && newStartDate && newEndDate <= newStartDate) {
+      throw new BadRequestException('End date must be after start date');
+    }
+
+    // Recalculate active based on date range
+    const now = new Date();
+    const newActive =
+      newStartDate && newStartDate <= now && (!newEndDate || newEndDate > now);
 
     // Update event and optionally recreate heroes/maps
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -260,14 +264,12 @@ export class EventsService {
         where: { id: eventId },
         data: {
           ...updateData,
+          active: newActive,
           ...(startsAt !== undefined && {
             startsAt: startsAt ? new Date(startsAt) : null,
           }),
           ...(endsAt !== undefined && {
             endsAt: endsAt ? new Date(endsAt) : null,
-          }),
-          ...(shouldSetEndsAt && {
-            endsAt: new Date(),
           }),
           ...(timeOfDayMultipliers !== undefined && {
             timeOfDayMultipliers:
@@ -360,7 +362,12 @@ export class EventsService {
     mapId: string,
     memberId: number,
   ) {
-    return this.trackingService.assignMemberToMap(guildId, eventId, mapId, memberId);
+    return this.trackingService.assignMemberToMap(
+      guildId,
+      eventId,
+      mapId,
+      memberId,
+    );
   }
 
   async unassignMemberFromMap(
@@ -369,7 +376,12 @@ export class EventsService {
     mapId: string,
     memberId?: number,
   ) {
-    return this.trackingService.unassignMemberFromMap(guildId, eventId, mapId, memberId);
+    return this.trackingService.unassignMemberFromMap(
+      guildId,
+      eventId,
+      mapId,
+      memberId,
+    );
   }
 
   async getRanking(guildId: string, eventId: string) {
@@ -890,8 +902,16 @@ export class EventsService {
   /**
    * Get coverage gaps for a hero (all maps).
    */
-  async getHeroCoverageGaps(guildId: string, eventId: string, heroNpcId: string) {
-    return this.trackingService.getHeroCoverageGaps(guildId, eventId, heroNpcId);
+  async getHeroCoverageGaps(
+    guildId: string,
+    eventId: string,
+    heroNpcId: string,
+  ) {
+    return this.trackingService.getHeroCoverageGaps(
+      guildId,
+      eventId,
+      heroNpcId,
+    );
   }
 
   /**
@@ -904,8 +924,16 @@ export class EventsService {
   /**
    * Get all active (ongoing) gaps for a hero.
    */
-  async getActiveGapsForHero(guildId: string, eventId: string, heroNpcId: string) {
-    return this.trackingService.getActiveGapsForHero(guildId, eventId, heroNpcId);
+  async getActiveGapsForHero(
+    guildId: string,
+    eventId: string,
+    heroNpcId: string,
+  ) {
+    return this.trackingService.getActiveGapsForHero(
+      guildId,
+      eventId,
+      heroNpcId,
+    );
   }
 
   /**
@@ -937,7 +965,11 @@ export class EventsService {
     eventId: string,
     heroNpcId: string,
   ) {
-    return this.trackingService.getHeroPresenceStats(guildId, eventId, heroNpcId);
+    return this.trackingService.getHeroPresenceStats(
+      guildId,
+      eventId,
+      heroNpcId,
+    );
   }
 
   async getEventHeroTimers(guildId: string, eventId: string, world: string) {
@@ -975,7 +1007,12 @@ export class EventsService {
     npcId: number,
     npcName: string,
   ): Promise<{ eventHero: EventHeroNpc; event: Event } | null> {
-    return this.killService.findActiveEventHeroByNpc(guildId, world, npcId, npcName);
+    return this.killService.findActiveEventHeroByNpc(
+      guildId,
+      world,
+      npcId,
+      npcName,
+    );
   }
 
   /**
@@ -987,7 +1024,12 @@ export class EventsService {
     event: Event,
     timerData: KillTimerData,
   ) {
-    return this.killService.recordHeroKill(guildId, eventHero, event, timerData);
+    return this.killService.recordHeroKill(
+      guildId,
+      eventHero,
+      event,
+      timerData,
+    );
   }
 
   /**
@@ -1025,7 +1067,11 @@ export class EventsService {
     memberId: number,
     since?: Date,
   ) {
-    return this.pointsService.getMemberPresenceStats(heroNpcId, memberId, since);
+    return this.pointsService.getMemberPresenceStats(
+      heroNpcId,
+      memberId,
+      since,
+    );
   }
 
   /**
@@ -1093,7 +1139,11 @@ export class EventsService {
     eventId: string,
     rankingId: string,
   ) {
-    return this.pointsService.getRankingEditHistory(guildId, eventId, rankingId);
+    return this.pointsService.getRankingEditHistory(
+      guildId,
+      eventId,
+      rankingId,
+    );
   }
 
   // ========== KILL HISTORY ==========
@@ -1108,7 +1158,13 @@ export class EventsService {
     limit = 20,
     cursor?: string,
   ) {
-    return this.killService.getHeroKillHistory(guildId, eventId, heroId, limit, cursor);
+    return this.killService.getHeroKillHistory(
+      guildId,
+      eventId,
+      heroId,
+      limit,
+      cursor,
+    );
   }
 
   /**
@@ -1121,7 +1177,13 @@ export class EventsService {
     cursor?: string,
     heroId?: string,
   ) {
-    return this.killService.getEventKillHistory(guildId, eventId, limit, cursor, heroId);
+    return this.killService.getEventKillHistory(
+      guildId,
+      eventId,
+      limit,
+      cursor,
+      heroId,
+    );
   }
 
   /**
@@ -1145,7 +1207,12 @@ export class EventsService {
     heroId: string,
     killId: string,
   ) {
-    return this.killService.getKillTimelineData(guildId, eventId, heroId, killId);
+    return this.killService.getKillTimelineData(
+      guildId,
+      eventId,
+      heroId,
+      killId,
+    );
   }
 
   // ========== RESPAWN WINDOW MANAGEMENT ==========
@@ -1159,7 +1226,12 @@ export class EventsService {
     heroId: string,
     options: CloseRespawnWindowOptions = {},
   ): Promise<void> {
-    return this.respawnService.closeRespawnWindow(guildId, eventId, heroId, options);
+    return this.respawnService.closeRespawnWindow(
+      guildId,
+      eventId,
+      heroId,
+      options,
+    );
   }
 
   /**
@@ -1171,7 +1243,12 @@ export class EventsService {
     heroId: string,
     options: OpenRespawnWindowOptions,
   ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
-    return this.respawnService.openRespawnWindow(guildId, eventId, heroId, options);
+    return this.respawnService.openRespawnWindow(
+      guildId,
+      eventId,
+      heroId,
+      options,
+    );
   }
 
   /**
@@ -1201,8 +1278,14 @@ export class EventsService {
     eventId: string,
   ): Promise<{
     pending: { count: number; jobs: { jobId: string; heroId: string }[] };
-    delayed: { count: number; jobs: { jobId: string; heroId: string; scheduledFor: Date }[] };
-    failed: { count: number; jobs: { jobId: string; heroId: string; failedReason: string }[] };
+    delayed: {
+      count: number;
+      jobs: { jobId: string; heroId: string; scheduledFor: Date }[];
+    };
+    failed: {
+      count: number;
+      jobs: { jobId: string; heroId: string; failedReason: string }[];
+    };
   }> {
     // Verify event belongs to guild
     const event = await this.prisma.event.findFirst({

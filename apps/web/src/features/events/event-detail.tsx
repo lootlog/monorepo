@@ -21,7 +21,10 @@ import {
   Clock,
   Calculator,
   TrendingUp,
+  CalendarDays,
 } from "lucide-react";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 import { EventEditDialog } from "./components/dialogs/event-edit-dialog";
 import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
@@ -216,6 +219,19 @@ export const EventDetail = () => {
 
               <Badge variant="outline" className="text-xs">
                 {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
+              </Badge>
+
+              <Badge variant="outline" className="text-xs gap-1">
+                <CalendarDays className="w-3 h-3" />
+                {format(
+                  new Date(event.startsAt || event.createdAt),
+                  "d MMM yyyy",
+                  { locale: pl },
+                )}
+                {" – "}
+                {event.endsAt
+                  ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
+                  : t("events.ongoing")}
               </Badge>
 
               <Tooltip>
