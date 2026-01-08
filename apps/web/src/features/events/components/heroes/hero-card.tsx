@@ -21,30 +21,22 @@ import { HeroTimerDisplay } from "./hero-timer-display";
 import { HeroWindowStatusBadge } from "./hero-window-status-badge";
 import type { TFunction } from "i18next";
 import type { EventTimer } from "../../hooks/queries/use-event-hero-timers";
+import type { EventHeroNpc } from "../../hooks/queries/use-events";
 
 interface HeroStats {
   npcId: number;
   killCount: number;
 }
 
-interface Hero {
-  id: string;
-  npcId: number | null;
-  npcName: string;
-  npcIcon?: string | null;
-  locations?: { maps: { id: string }[] }[];
-  maps?: { id: string; mapId: number; mapName: string }[];
-}
-
 interface HeroCardProps {
-  hero: Hero;
+  hero: EventHeroNpc;
   timer?: EventTimer;
   stats?: HeroStats;
   guildId: string;
   eventId: string;
   canManage: boolean;
-  onEditHero: (hero: Hero) => void;
-  onManageMaps: (hero: Hero) => void;
+  onEditHero: (hero: EventHeroNpc) => void;
+  onManageMaps: (hero: EventHeroNpc) => void;
   onDeleteHero: (heroId: string) => void;
   t: TFunction;
 }

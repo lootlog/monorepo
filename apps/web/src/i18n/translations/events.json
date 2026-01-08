@@ -3,12 +3,24 @@
   "description": "Lista eventów klanu",
   "create": "Utwórz Event",
   "edit": "Edytuj Event",
+  "editButton": "Edytuj",
   "delete": "Usuń Event",
   "active": "Aktywny",
   "inactive": "Nieaktywny",
   "ongoing": "W trakcie",
   "ended": "Zakończony",
   "noEvents": "Brak eventów",
+  "error": "Nie znaleziono eventu",
+  "backToList": "Powrót do listy",
+  "end": "Zakończ",
+  "resume": "Wznów",
+  "endSuccess": "Zakończono event",
+  "resumeSuccess": "Wznowiono event",
+  "statusError": "Błąd podczas zmiany statusu",
+  "endDialog": {
+    "title": "Zakończyć event?",
+    "description": "Czy na pewno chcesz zakończyć ten event? Będzie on oznaczony jako nieaktywny."
+  },
   "createDialog": {
     "title": "Nowy Event",
     "description": "Utwórz nowy event dla gildii",
@@ -133,11 +145,15 @@
     "noTimer": "Brak aktywnego timera",
     "timerActive": "Timer aktywny",
     "add": "Dodaj herosa",
+    "addButton": "Dodaj",
     "edit": "Edytuj herosa",
     "addDescription": "Dodaj nowego herosa do eventu",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "added": "Dodano herosa",
-    "updated": "Zaktualizowano herosa"
+    "updated": "Zaktualizowano herosa",
+    "deleted": "Usunięto herosa",
+    "deleteError": "Błąd podczas usuwania",
+    "empty": "Brak herosów"
   },
   "loots": {
     "title": "Ostatnie łupy",
@@ -286,7 +302,9 @@
     "multipliers_many": "{{count}} mnożników",
     "timeMultipliers": "Mnożniki czasowe",
     "trackersMultipliers": "Mnożniki za obecność",
-    "mapsMultipliers": "Mnożniki za mapy"
+    "mapsMultipliers": "Mnożniki za mapy",
+    "people": "osób",
+    "mapsLabel": "map"
   },
   "points": {
     "edit": "Edytuj punkty",
