@@ -239,6 +239,8 @@
     "openWindowButton": "Otwórz okno",
     "minSpawnTime": "Minimalny czas spawnu",
     "maxSpawnTime": "Maksymalny czas spawnu",
+    "minTimeRequired": "Minimalny czas spawnu jest wymagany",
+    "maxTimeRequired": "Maksymalny czas spawnu jest wymagany",
     "invalidTimeRange": "Minimalny czas musi być przed maksymalnym",
     "closeWindow": "Zamknij okno respawnu",
     "closeWindowDesc": "Zamknij aktywne okno respawnu. Ta akcja wyczyści wszystkie przypisania do map.",
