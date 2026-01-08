@@ -47,7 +47,6 @@ export const useRecentHeroKills = ({
         `${endpoint}?${params.toString()}`,
       );
 
-      // Map API response: rename 'points' to 'participants'
       return response.data.data.map((kill) => ({
         ...kill,
         participants: kill.points ?? [],

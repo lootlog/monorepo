@@ -117,7 +117,6 @@ export const KillDetail = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
-      {/* Header */}
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {kill.heroNpc.npcIcon ? (
@@ -162,9 +161,7 @@ export const KillDetail = () => {
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Left column - Participants & Map Coverage */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Participants */}
               <KillParticipantsCard
                 participants={participants}
                 guildId={guildId}
@@ -173,7 +170,6 @@ export const KillDetail = () => {
                 canEdit={canEditPoints}
               />
 
-              {/* Map Coverage Timeline */}
               <KillMapsTimelineSection
                 eventId={eventId ?? ""}
                 heroId={heroId ?? ""}
@@ -184,9 +180,7 @@ export const KillDetail = () => {
               />
             </div>
 
-            {/* Right column - Stats, Multipliers & Loots */}
             <div className="space-y-4">
-              {/* Stats Cards */}
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
@@ -283,10 +277,8 @@ export const KillDetail = () => {
                 </div>
               </Card>
 
-              {/* Multipliers */}
               <MultipliersCard eventConfig={eventConfig} t={t} />
 
-              {/* Matching Loots */}
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                 <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
                   <Package className="w-4 h-4" />

@@ -82,20 +82,16 @@ export const useLocationMutations = (
       return response.data;
     },
     onMutate: async (data: ReorderLocationsData) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey });
 
-      // Snapshot the previous value
       const previousEvent = queryClient.getQueryData(queryKey);
 
-      // Optimistically update the cache
       queryClient.setQueryData(queryKey, (old: any) => {
         if (!old) return old;
 
         const updatedHeroNpcs = old.heroNpcs?.map((hero: any) => {
           if (hero.id !== heroId) return hero;
 
-          // Reorder locations based on the new order
           const reorderedLocations = data.locationIds
             .map((id, index) => {
               const location = hero.locations?.find((l: any) => l.id === id);
@@ -112,7 +108,6 @@ export const useLocationMutations = (
       return { previousEvent };
     },
     onError: (_err, _data, context) => {
-      // Rollback on error
       if (context?.previousEvent) {
         queryClient.setQueryData(queryKey, context.previousEvent);
       }

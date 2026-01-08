@@ -35,7 +35,6 @@ export const KillLootCard = ({ loot }: KillLootCardProps) => {
       )}
       style={hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined}
     >
-      {/* Header - NPCs */}
       <div className="flex items-center gap-2 mb-2">
         {loot.npcs.slice(0, 3).map((npc) => (
           <div key={npc.id} className="flex items-center gap-1.5">
@@ -56,7 +55,6 @@ export const KillLootCard = ({ loot }: KillLootCardProps) => {
         )}
       </div>
 
-      {/* Players */}
       <div className="flex flex-row items-start gap-2 flex-wrap py-2 border-t border-border/30">
         {loot.players.slice(0, 6).map((player) => (
           <div key={player.id} className="flex items-center gap-1">
@@ -77,7 +75,6 @@ export const KillLootCard = ({ loot }: KillLootCardProps) => {
         )}
       </div>
 
-      {/* Items */}
       {loot.items.length > 0 && (
         <div className="flex flex-row flex-wrap gap-1 py-2 border-t border-border/30">
           {loot.items.slice(0, 8).map((item, idx) => (
@@ -106,7 +103,6 @@ export const KillLootCard = ({ loot }: KillLootCardProps) => {
         </div>
       )}
 
-      {/* Footer */}
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">

@@ -89,7 +89,6 @@ export const HeroDetail = () => {
   const selfAssignMember = useSelfAssignMember();
   const selfUnassignMember = useSelfUnassignMember();
 
-  // Respawn window management
   const closeRespawnWindow = useCloseRespawnWindow();
   const openRespawnWindow = useOpenRespawnWindow();
 
@@ -109,10 +108,8 @@ export const HeroDetail = () => {
 
   const { presenceData } = useEventPresence({ guildId });
 
-  // Socket subscription for real-time updates
   useEventSocket({ eventId, guildId, heroId });
 
-  // Batch fetch all active gaps for this hero
   const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
 
   const { data: timers } = useEventHeroTimers({
@@ -121,13 +118,11 @@ export const HeroDetail = () => {
     world: event?.world ?? "",
   });
 
-  // Derive hero and heroTimer early (before any returns, as useWindowStatus is a hook)
   const hero = event?.heroNpcs?.find((h) => h.id === heroId);
   const heroTimer = timers?.find(
     (t) => t.npcId === hero?.npcId || t.npc?.name === hero?.npcName,
   );
 
-  // Calculate window status client-side (schedules timeouts at boundaries)
   const windowStatus = useWindowStatus(
     heroTimer?.minSpawnTime ?? null,
     heroTimer?.maxSpawnTime ?? null,
@@ -141,10 +136,8 @@ export const HeroDetail = () => {
     );
   }
 
-  // Check if assignment is allowed (configurable minutes before minSpawnTime)
   const getAssignmentStatus = () => {
     if (!hero) return { allowed: false, enabledAt: null };
-    // Block when no timer exists (respawn window not open)
     if (!heroTimer) return { allowed: false, enabledAt: null };
 
     const minSpawn = new Date(heroTimer.minSpawnTime);
@@ -153,7 +146,6 @@ export const HeroDetail = () => {
     const timeoutMs = timeoutMinutes * 60 * 1000;
 
     const allowed = minSpawn.getTime() - now.getTime() <= timeoutMs;
-    // When assignment will be enabled (minSpawn - timeout)
     const enabledAt = allowed ? null : new Date(minSpawn.getTime() - timeoutMs);
 
     return { allowed, enabledAt };
@@ -181,11 +173,9 @@ export const HeroDetail = () => {
     );
   }
 
-  // Get all assigned members from all maps (including those in locations)
   const allMapsFromLocations = hero.locations?.flatMap((loc) => loc.maps) ?? [];
   const allMaps = [...allMapsFromLocations, ...(hero.maps ?? [])];
 
-  // Calculate total and covered maps count
   const totalMapsCount = allMaps.length;
   const coveredMapsCount =
     windowStatus === "OPEN"
@@ -257,20 +247,17 @@ export const HeroDetail = () => {
     }
   };
 
-  // Find selected map across all locations and ungrouped maps
   const selectedMap = allMaps.find((m) => m.id === selectedMapId);
 
   const handleClearAllAssignments = async () => {
     if (allMaps.length === 0) return;
 
     try {
-      // Clear assignments from all maps (including those in locations)
       await Promise.all(
         allMaps.map((map) =>
           unassignMember.mutateAsync({
             eventId: eventId!,
             mapId: map.id,
-            // Not passing memberId clears all assignments
           }),
         ),
       );
@@ -322,7 +309,6 @@ export const HeroDetail = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
-      {/* Header */}
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {hero.npcIcon ? (
@@ -358,7 +344,6 @@ export const HeroDetail = () => {
             </div>
           </div>
         </div>
-        {/* Respawn Window Actions */}
         {canManage && (
           <div className="flex items-center gap-2">
             {heroTimer ? (
@@ -387,9 +372,7 @@ export const HeroDetail = () => {
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Left column - Maps */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Participants */}
               {uniqueMembers.length > 0 && (
                 <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                   <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
@@ -404,7 +387,6 @@ export const HeroDetail = () => {
                 </Card>
               )}
 
-              {/* Maps */}
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-base font-semibold flex items-center gap-2">
@@ -469,9 +451,7 @@ export const HeroDetail = () => {
               </Card>
             </div>
 
-            {/* Right column - Ranking, Recent kills & loots */}
             <div className="space-y-4">
-              {/* Ranking */}
               <EventRankingPreview
                 rankings={
                   event.rankings?.filter(
@@ -484,7 +464,6 @@ export const HeroDetail = () => {
                 limit={5}
               />
 
-              {/* Recent Kills */}
               <RecentKillsPreview
                 guildId={guildId ?? ""}
                 eventId={eventId ?? ""}
@@ -493,7 +472,6 @@ export const HeroDetail = () => {
                 showHeroName
               />
 
-              {/* Recent Loots */}
               <EventHeroLoots
                 guildId={guildId ?? ""}
                 heroNpcNames={[hero.npcName]}
@@ -504,7 +482,6 @@ export const HeroDetail = () => {
           </div>
         </div>
       </ScrollArea>
-      {/* Dialogs */}
       <MapManageDialog
         open={mapManageOpen}
         onOpenChange={setMapManageOpen}
@@ -523,7 +500,6 @@ export const HeroDetail = () => {
           disabled={!assignmentAllowed}
         />
       )}
-      {/* Respawn Window Dialogs */}
       <CloseRespawnWindowDialog
         open={closeWindowOpen}
         onOpenChange={setCloseWindowOpen}

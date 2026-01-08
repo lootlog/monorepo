@@ -30,9 +30,6 @@ export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
     const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
     const now = Date.now();
 
-    // If before minSpawnTime, show countdown to min
-    // If between min and max, show countdown to max (in spawn window)
-    // If after max, timer expired
     if (now < minSpawnTime) {
       setTimeLeft(minSpawnTime - now);
     } else if (now < maxSpawnTime) {

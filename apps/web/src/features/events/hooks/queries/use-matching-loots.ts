@@ -3,7 +3,7 @@ import { stringify } from "qs";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { Loot } from "@/hooks/api/loots/use-loots";
 
-const MATCHING_LOOTS_TIME_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const MATCHING_LOOTS_TIME_WINDOW_MS = 5 * 60 * 1000;
 
 export interface UseMatchingLootsParams {
   guildId: string;

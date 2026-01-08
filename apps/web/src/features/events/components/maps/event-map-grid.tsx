@@ -12,7 +12,7 @@ import { MapCard, getMapStatus, STATUS_STYLES } from "./map-card";
 
 interface EventMapGridProps {
   locations?: EventMapLocation[];
-  maps: EventMap[]; // Ungrouped maps (locationId = null)
+  maps: EventMap[];
   onSelfAssignClick?: (mapId: string) => void;
   onSelfUnassignClick?: (mapId: string) => void;
   onManageClick?: (mapId: string) => void;
@@ -64,7 +64,6 @@ const LocationSection = ({
 
   if (maps.length === 0) return null;
 
-  // Calculate covered maps count (only when window is OPEN)
   const coveredCount =
     windowStatus === "OPEN"
       ? maps.filter(
@@ -186,7 +185,6 @@ export const EventMapGrid = ({
     );
   }
 
-  // If no locations exist, render maps directly (legacy behavior)
   if (locations.length === 0 && maps.length > 0) {
     return (
       <div
@@ -223,7 +221,6 @@ export const EventMapGrid = ({
     );
   }
 
-  // Render locations with their maps
   return (
     <div className="flex flex-col gap-3">
       {locations.map((location) => (

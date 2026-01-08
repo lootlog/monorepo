@@ -98,17 +98,14 @@ const ParticipantRow = ({
     (participant.timeOnMapSeconds * participant.afkPercentage) / 100,
   );
 
-  // Calculate total AFK from mapData (sum from all maps) or fallback to legacy calculation
   const totalAfkSeconds =
     participant.mapData?.reduce((sum, map) => sum + map.afkTimeSeconds, 0) ??
     legacyAfkTimeSeconds;
 
-  // Count maps from comma-separated mapName
   const mapCount = participant.mapName
     ? participant.mapName.split(",").length
     : 0;
 
-  // Check if we have detailed multiplier data (new kills will have these)
   const hasDetailedMultipliers =
     participant.timeMultiplier !== null &&
     participant.trackersMultiplier !== null &&
@@ -192,7 +189,6 @@ const ParticipantRow = ({
               )}
             </div>
 
-            {/* Total AFK */}
             {totalAfkSeconds > 0 && (
               <span className="text-xs text-amber-500 shrink-0">
                 {t("events.kills.afkTime")}: {formatDuration(totalAfkSeconds)}
@@ -340,7 +336,6 @@ const ParticipantRow = ({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="px-3 pb-3 pt-0 space-y-3 border-t border-border/50">
-            {/* Per-map breakdown */}
             {participant.mapData && participant.mapData.length > 0 ? (
               <div className="pt-3 space-y-2">
                 {participant.mapData.map((mapInfo) => (
@@ -369,7 +364,6 @@ const ParticipantRow = ({
                 ))}
               </div>
             ) : (
-              /* Fallback for old kills without mapData */
               <div className="pt-3 flex items-center gap-4 text-sm flex-wrap">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <MapPin className="w-4 h-4 shrink-0" />

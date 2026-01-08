@@ -52,7 +52,6 @@ export const useEventSocket = ({
         queryClient.invalidateQueries({
           queryKey: ["event", guildId, eventId],
         });
-        // Invalidate coverage gap timer for this specific map
         queryClient.invalidateQueries({
           queryKey: ["map-active-gap", guildId, eventId, payload.mapId],
         });
@@ -86,7 +85,6 @@ export const useEventSocket = ({
   const handleRespawnWindowChange = useCallback(
     (payload: RespawnWindowPayload) => {
       if (payload.guildId === guildId && payload.eventId === eventId) {
-        // Only invalidate if heroId matches or no heroId filter is set
         if (!heroId || payload.heroId === heroId) {
           queryClient.invalidateQueries({
             queryKey: ["hero-respawn-config", guildId, eventId, payload.heroId],

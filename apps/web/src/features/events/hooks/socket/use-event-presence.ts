@@ -2,12 +2,7 @@ import { useEffect, useCallback, useState } from "react";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
 
-/**
- * Full player presence data including character information.
- * Supports multiple characters per user (one per socket session).
- */
 export interface PlayerPresence {
-  // Player data
   world: string;
   name: string;
   characterId: string;
@@ -15,14 +10,10 @@ export interface PlayerPresence {
   icon: string;
   lvl: string;
   prof: string;
-
-  // Location/presence data
   mapId?: number;
   mapName?: string;
   isAfk: boolean;
   updatedAt: number;
-
-  // Session identifier (for multi-character support)
   sessionId: string;
 }
 
@@ -38,10 +29,6 @@ interface UseEventPresenceOptions {
   guildId?: string;
 }
 
-/**
- * Hook for tracking player presence on maps.
- * Returns Map<discordId, PlayerPresence[]> to support multiple characters per user.
- */
 export const useEventPresence = ({ guildId }: UseEventPresenceOptions) => {
   const { socket, connected, joined } = useGateway();
   const [presenceData, setPresenceData] = useState<
@@ -57,7 +44,6 @@ export const useEventPresence = ({ guildId }: UseEventPresenceOptions) => {
         const { discordId, sessionId, player, disconnected } = payload;
 
         if (disconnected && sessionId) {
-          // Remove specific session for this user
           const existing = newMap.get(discordId) || [];
           const filtered = existing.filter((p) => p.sessionId !== sessionId);
           if (filtered.length === 0) {
@@ -66,7 +52,6 @@ export const useEventPresence = ({ guildId }: UseEventPresenceOptions) => {
             newMap.set(discordId, filtered);
           }
         } else if (player) {
-          // Add or update player presence
           const existing = newMap.get(discordId) || [];
           const idx = existing.findIndex(
             (p) => p.sessionId === player.sessionId,

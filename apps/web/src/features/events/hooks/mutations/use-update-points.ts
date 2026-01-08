@@ -25,12 +25,10 @@ export const useUpdatePoints = (guildId: string, eventId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      // Invalidate kill detail query (covers all heroes since we don't know which)
       queryClient.invalidateQueries({
         queryKey: ["kill-detail", guildId, eventId],
         exact: false,
       });
-      // Invalidate event query to refresh rankings
       queryClient.invalidateQueries({
         queryKey: ["event", guildId, eventId],
       });
@@ -46,7 +44,6 @@ export const useUpdatePoints = (guildId: string, eventId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      // Invalidate event query to refresh rankings
       queryClient.invalidateQueries({
         queryKey: ["event", guildId, eventId],
       });

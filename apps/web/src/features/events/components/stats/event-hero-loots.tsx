@@ -42,19 +42,16 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
       )}
       style={hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined}
     >
-      {/* Header - NPCs */}
       <div className="mb-2">
         <LootNpcs npcs={loot.npcs} />
       </div>
 
-      {/* Items */}
       <div className="flex flex-row flex-wrap gap-1 py-2 border-t border-border/30">
         {loot.items.map((item, idx) => (
           <ItemTile key={`${item.hid}-${idx}`} item={item} />
         ))}
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">

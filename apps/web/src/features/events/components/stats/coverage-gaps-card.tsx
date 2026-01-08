@@ -14,10 +14,8 @@ interface CoverageGapsCardProps {
 }
 
 export const CoverageGapsCard = ({ gaps, t }: CoverageGapsCardProps) => {
-  // Filter to only show closed gaps (with durationSeconds)
   const closedGaps = gaps.filter((g) => g.durationSeconds !== null);
 
-  // Summarize by type
   const unassignedGaps = closedGaps.filter((g) => g.gapType === "UNASSIGNED");
   const uncoveredGaps = closedGaps.filter((g) => g.gapType === "UNCOVERED");
 
@@ -42,7 +40,6 @@ export const CoverageGapsCard = ({ gaps, t }: CoverageGapsCardProps) => {
       </h3>
 
       <div className="space-y-3">
-        {/* Summary */}
         <div className="grid grid-cols-2 gap-3">
           <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
             <div className="text-xs text-muted-foreground mb-0.5">
@@ -75,7 +72,6 @@ export const CoverageGapsCard = ({ gaps, t }: CoverageGapsCardProps) => {
           </div>
         </div>
 
-        {/* Details */}
         {closedGaps.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-muted-foreground">

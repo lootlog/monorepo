@@ -2,14 +2,6 @@ import { useState, useEffect } from "react";
 
 export type WindowStatus = "OPEN" | "WAITING" | "NONE";
 
-/**
- * Hook that calculates respawn window status client-side based on spawn times.
- * Schedules timeouts at exact boundary transitions instead of polling.
- *
- * @param minSpawnTime - Earliest expected spawn time (ISO string)
- * @param maxSpawnTime - Latest expected spawn time (ISO string)
- * @returns Current window status: OPEN, WAITING, or NONE
- */
 export function useWindowStatus(
   minSpawnTime: string | null,
   maxSpawnTime: string | null,
@@ -34,16 +26,13 @@ export function useWindowStatus(
 
     recalc();
 
-    // Schedule updates at boundaries
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     const now = Date.now();
 
     if (now < min) {
-      // Schedule transition from WAITING to OPEN
-      timeouts.push(setTimeout(recalc, min - now + 100)); // +100ms buffer for clock drift
+      timeouts.push(setTimeout(recalc, min - now + 100));
     }
     if (now < max) {
-      // Schedule transition from OPEN to NONE
       timeouts.push(setTimeout(recalc, max - now + 100));
     }
 

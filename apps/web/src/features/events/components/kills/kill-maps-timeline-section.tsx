@@ -59,7 +59,6 @@ export const KillMapsTimelineSection = ({
         {t("events.killDetail.mapCoverage.title")}
       </h3>
 
-      {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 mb-3 text-xs">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-green-500" />

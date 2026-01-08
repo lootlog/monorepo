@@ -67,9 +67,6 @@ const WINDOW_CLOSED_STYLE = {
   dot: "bg-muted-foreground/50",
 };
 
-/**
- * Get all players currently on a specific map
- */
 export const getPlayersOnMap = (
   mapName: string,
   presenceData?: Map<string, PlayerPresence[]>,
@@ -101,16 +98,13 @@ export const getMapStatus = (
     return "ASSIGNED_ABSENT";
   }
 
-  // Get all players currently on this map
   const playersOnMap = getPlayersOnMap(map.mapName, presenceData);
 
-  // Someone is on the map and not AFK
   const hasActivePlayer = playersOnMap.some((p) => !p.isAfk);
   if (hasActivePlayer) {
     return "ASSIGNED_PRESENT";
   }
 
-  // Someone is on the map but all are AFK
   const hasAfkPlayer = playersOnMap.some((p) => p.isAfk);
   if (hasAfkPlayer) {
     return "ASSIGNED_AFK";
@@ -176,18 +170,15 @@ export const MapCard = ({
   );
   const playersOnMap = getPlayersOnMap(map.mapName, presenceData);
 
-  // Use activeGap from props (batch fetched by parent)
   const initialStartedAt = activeGap?.startedAt
     ? new Date(activeGap.startedAt)
     : null;
 
-  // Local timer with backend initial value for persistence
   const { gapType, formattedDuration } = useLocalCoverageTimer(
     status,
     initialStartedAt,
   );
 
-  // Use neutral style when respawn window is not open
   const effectiveStyle = windowStatus === "OPEN" ? style : WINDOW_CLOSED_STYLE;
 
   const hasPlayersToShow = playersOnMap.length > 0;
@@ -202,7 +193,6 @@ export const MapCard = ({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        {/* Left side - Map info */}
         <div
           className={cn(
             "flex-1 min-w-0 flex items-center gap-2",
@@ -230,7 +220,6 @@ export const MapCard = ({
             )}
           </div>
 
-          {/* Assigned members avatar stack */}
           {memberCount > 0 && (
             <div className="flex items-center gap-1.5 shrink-0">
               <div className="flex -space-x-1.5">
@@ -286,7 +275,6 @@ export const MapCard = ({
             </div>
           )}
 
-          {/* Coverage gap timer - inline when collapsed */}
           {windowStatus === "OPEN" && gapType && formattedDuration && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -320,9 +308,7 @@ export const MapCard = ({
           )}
         </div>
 
-        {/* Right side - Action buttons */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Admin: Manage button */}
           {canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -350,7 +336,6 @@ export const MapCard = ({
             </Tooltip>
           )}
 
-          {/* Self-assign or Self-unassign */}
           {isAssignedToMe ? (
             <Button
               variant="ghost"
@@ -398,7 +383,6 @@ export const MapCard = ({
         </div>
       </div>
 
-      {/* Expandable: Players currently on this map */}
       {isExpanded && playersOnMap.length > 0 && (
         <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border/50">
           {playersOnMap.slice(0, 5).map((player) => (

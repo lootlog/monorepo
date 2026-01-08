@@ -68,7 +68,6 @@ export const EventKillsHistory = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
-      {/* Header */}
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="p-1.5 rounded-lg bg-red-500/10">
@@ -86,7 +85,6 @@ export const EventKillsHistory = () => {
         </div>
       </div>
 
-      {/* Hero Filter Tabs */}
       {heroes.length > 0 && (
         <div className="px-3 py-2 bg-background shrink-0 border-b">
           <Tabs
@@ -137,7 +135,6 @@ export const EventKillsHistory = () => {
               />
             ))}
 
-            {/* Load more */}
             <div className="py-2 flex items-center justify-center">
               {isFetchingNextPage ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
