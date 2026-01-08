@@ -45,18 +45,12 @@ export const KillMapsTimelineSection = ({
     return null;
   }
 
-  // Sort maps: those with gaps first, then by gap count, then by name
   const sortedMaps = [...mapsTimeline].sort((a, b) => {
     const aGaps = a.gaps.length;
     const bGaps = b.gaps.length;
     if (aGaps !== bGaps) return bGaps - aGaps;
     return a.mapName.localeCompare(b.mapName);
   });
-
-  // Default open maps with gaps
-  const defaultOpenMaps = sortedMaps
-    .filter((m) => m.gaps.length > 0)
-    .map((m) => m.mapId);
 
   return (
     <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
@@ -81,11 +75,7 @@ export const KillMapsTimelineSection = ({
         </div>
       </div>
 
-      <Accordion
-        type="multiple"
-        defaultValue={defaultOpenMaps}
-        className="w-full"
-      >
+      <Accordion type="multiple" defaultValue={[]} className="w-full">
         {sortedMaps.map((map) => (
           <KillMapTimelineCard
             key={map.mapId}
