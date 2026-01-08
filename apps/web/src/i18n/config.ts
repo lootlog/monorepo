@@ -10,6 +10,7 @@ import professions from "./translations/professions.json";
 import battle from "./translations/battle.json";
 import events from "./translations/events.json";
 import settings from "./translations/settings.json";
+import common from "./translations/common.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -24,6 +25,7 @@ i18n.use(initReactI18next).init({
         battle,
         events,
         settings,
+        common,
       },
     },
   },

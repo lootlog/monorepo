@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +10,15 @@ import {
   DialogDescription,
 } from "@lootlog/ui/components/dialog";
 import { Button } from "@lootlog/ui/components/button";
-import { Label } from "@lootlog/ui/components/label";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@lootlog/ui/components/form";
 import { Loader2, Timer } from "lucide-react";
 
 interface OpenRespawnWindowDialogProps {
@@ -23,6 +32,29 @@ interface OpenRespawnWindowDialogProps {
   isLoading?: boolean;
 }
 
+const createFormSchema = (t: (key: string) => string) =>
+  z
+    .object({
+      minTime: z.date({ message: t("events.respawn.minTimeRequired") }),
+      maxTime: z.date({ message: t("events.respawn.maxTimeRequired") }),
+    })
+    .refine((data) => data.minTime < data.maxTime, {
+      message: t("events.respawn.invalidTimeRange"),
+      path: ["maxTime"],
+    });
+
+type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
+
+const getDefaultValues = () => {
+  const now = new Date();
+  const later = new Date();
+  later.setHours(later.getHours() + 3);
+  return {
+    minTime: now,
+    maxTime: later,
+  };
+};
+
 export const OpenRespawnWindowDialog = ({
   open,
   onOpenChange,
@@ -31,40 +63,29 @@ export const OpenRespawnWindowDialog = ({
   isLoading = false,
 }: OpenRespawnWindowDialogProps) => {
   const { t } = useTranslation();
-  const [minTime, setMinTime] = useState<Date | undefined>(() => new Date());
-  const [maxTime, setMaxTime] = useState<Date | undefined>(() => {
-    const date = new Date();
-    date.setHours(date.getHours() + 3);
-    return date;
+
+  const formSchema = createFormSchema(t);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: getDefaultValues(),
   });
 
-  const handleConfirm = async () => {
-    if (!minTime || !maxTime) return;
-
+  const handleConfirm = async (values: FormValues) => {
     await onConfirm({
-      minSpawnTime: minTime.toISOString(),
-      maxSpawnTime: maxTime.toISOString(),
+      minSpawnTime: values.minTime.toISOString(),
+      maxSpawnTime: values.maxTime.toISOString(),
     });
 
-    const now = new Date();
-    const later = new Date();
-    later.setHours(later.getHours() + 3);
-    setMinTime(now);
-    setMaxTime(later);
+    form.reset(getDefaultValues());
   };
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      const now = new Date();
-      const later = new Date();
-      later.setHours(later.getHours() + 3);
-      setMinTime(now);
-      setMaxTime(later);
+      form.reset(getDefaultValues());
     }
     onOpenChange(isOpen);
   };
-
-  const isValid = minTime && maxTime && minTime < maxTime;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -85,55 +106,73 @@ export const OpenRespawnWindowDialog = ({
           </div>
         </DialogHeader>
 
-        <div className="p-5 space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("events.respawn.minSpawnTime")}
-            </Label>
-            <DateTimePicker
-              value={minTime}
-              onChange={setMinTime}
-              className="w-full"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("events.respawn.maxSpawnTime")}
-            </Label>
-            <DateTimePicker
-              value={maxTime}
-              onChange={setMaxTime}
-              className="w-full"
-            />
-          </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleConfirm)}>
+            <div className="p-5 space-y-4">
+              <FormField
+                control={form.control}
+                name="minTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("events.respawn.minSpawnTime")}
+                    </FormLabel>
+                    <FormControl>
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {minTime && maxTime && minTime >= maxTime && (
-            <p className="text-xs text-destructive">
-              {t("events.respawn.invalidTimeRange")}
-            </p>
-          )}
-        </div>
+              <FormField
+                control={form.control}
+                name="maxTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("events.respawn.maxSpawnTime")}
+                    </FormLabel>
+                    <FormControl>
+                      <DateTimePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        className="w-full"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <div className="px-5 py-3 border-t bg-muted/30 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleOpenChange(false)}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleConfirm}
-            disabled={isLoading || !isValid}
-            className="flex-1"
-          >
-            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {t("events.respawn.openWindowButton")}
-          </Button>
-        </div>
+            <div className="px-5 py-3 border-t bg-muted/30 flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleOpenChange(false)}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isLoading}
+                className="flex-1"
+              >
+                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {t("events.respawn.openWindowButton")}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

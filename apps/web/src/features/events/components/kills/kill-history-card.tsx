@@ -135,10 +135,6 @@ export const KillHistoryCard = ({
               <Users className="w-3 h-3" />
               {participants.length}
             </span>
-
-            <span className="font-bold text-primary">
-              {t("events.kills.pointCount", { count: totalPoints })}
-            </span>
           </div>
         </div>
       </div>
@@ -208,9 +204,6 @@ export const KillHistoryCard = ({
             <span className="text-muted-foreground flex items-center gap-1">
               <Users className="w-3 h-3" />
               {participants.length}
-            </span>
-            <span className="font-bold text-primary">
-              {t("events.kills.pointCount", { count: totalPoints })}
             </span>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </div>
