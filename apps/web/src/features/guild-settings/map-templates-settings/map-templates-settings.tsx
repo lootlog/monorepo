@@ -140,7 +140,7 @@ export const MapTemplatesSettings = () => {
                     id="templateName"
                     value={templateName}
                     onChange={(e) => setTemplateName(e.target.value)}
-                    placeholder="np. Mapy herosów Ithan"
+                    placeholder="np. Mrozy"
                   />
                 </div>
 
@@ -211,7 +211,9 @@ export const MapTemplatesSettings = () => {
                               }
                             />
                             <MapPin className="w-4 h-4 text-muted-foreground" />
-                            <span className="flex-1 text-sm">{gameMap.name}</span>
+                            <span className="flex-1 text-sm">
+                              {gameMap.name}
+                            </span>
                             <span className="text-xs text-muted-foreground">
                               ID: {gameMap.id}
                             </span>
@@ -293,7 +295,9 @@ export const MapTemplatesSettings = () => {
                       >
                         <MapPin className="w-3 h-3" />
                         {map.name}
-                        <span className="text-muted-foreground">({map.id})</span>
+                        <span className="text-muted-foreground">
+                          ({map.id})
+                        </span>
                       </span>
                     ))}
                   </div>

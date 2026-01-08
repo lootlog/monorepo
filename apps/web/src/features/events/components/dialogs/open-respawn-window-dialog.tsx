@@ -9,7 +9,7 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
-import { Input } from "@lootlog/ui/components/input";
+import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
 import { Loader2, Timer } from "lucide-react";
 
 interface OpenRespawnWindowDialogProps {
@@ -31,30 +31,40 @@ export const OpenRespawnWindowDialog = ({
   isLoading = false,
 }: OpenRespawnWindowDialogProps) => {
   const { t } = useTranslation();
-  const [minTime, setMinTime] = useState("");
-  const [maxTime, setMaxTime] = useState("");
+  const [minTime, setMinTime] = useState<Date | undefined>(() => new Date());
+  const [maxTime, setMaxTime] = useState<Date | undefined>(() => {
+    const date = new Date();
+    date.setHours(date.getHours() + 3);
+    return date;
+  });
 
   const handleConfirm = async () => {
     if (!minTime || !maxTime) return;
 
     await onConfirm({
-      minSpawnTime: new Date(minTime).toISOString(),
-      maxSpawnTime: new Date(maxTime).toISOString(),
+      minSpawnTime: minTime.toISOString(),
+      maxSpawnTime: maxTime.toISOString(),
     });
 
-    setMinTime("");
-    setMaxTime("");
+    const now = new Date();
+    const later = new Date();
+    later.setHours(later.getHours() + 3);
+    setMinTime(now);
+    setMaxTime(later);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      setMinTime("");
-      setMaxTime("");
+      const now = new Date();
+      const later = new Date();
+      later.setHours(later.getHours() + 3);
+      setMinTime(now);
+      setMaxTime(later);
     }
     onOpenChange(isOpen);
   };
 
-  const isValid = minTime && maxTime && new Date(minTime) < new Date(maxTime);
+  const isValid = minTime && maxTime && minTime < maxTime;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -77,37 +87,27 @@ export const OpenRespawnWindowDialog = ({
 
         <div className="p-5 space-y-4">
           <div className="space-y-2">
-            <Label
-              htmlFor="minTime"
-              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-            >
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("events.respawn.minSpawnTime", "Minimalny czas spawnu")}
             </Label>
-            <Input
-              id="minTime"
-              type="datetime-local"
+            <DateTimePicker
               value={minTime}
-              onChange={(e) => setMinTime(e.target.value)}
-              className="h-9 text-sm"
+              onChange={setMinTime}
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
-            <Label
-              htmlFor="maxTime"
-              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-            >
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("events.respawn.maxSpawnTime", "Maksymalny czas spawnu")}
             </Label>
-            <Input
-              id="maxTime"
-              type="datetime-local"
+            <DateTimePicker
               value={maxTime}
-              onChange={(e) => setMaxTime(e.target.value)}
-              className="h-9 text-sm"
+              onChange={setMaxTime}
+              className="w-full"
             />
           </div>
 
-          {minTime && maxTime && new Date(minTime) >= new Date(maxTime) && (
+          {minTime && maxTime && minTime >= maxTime && (
             <p className="text-xs text-destructive">
               {t(
                 "events.respawn.invalidTimeRange",
