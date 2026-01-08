@@ -48,3 +48,30 @@ export const useDeleteMapTemplate = () => {
     },
   });
 };
+
+interface UpdateMapTemplateData {
+  templateId: string;
+  name: string;
+  maps: MapItem[];
+}
+
+export const useUpdateMapTemplate = () => {
+  const guildId = useGuildId();
+  const queryClient = useQueryClient();
+  const { client } = useApiClient();
+
+  return useMutation({
+    mutationFn: async ({ templateId, name, maps }: UpdateMapTemplateData) => {
+      const response = await client.put(
+        `/guilds/${guildId}/map-templates/${templateId}`,
+        { name, maps },
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["map-templates", guildId],
+      });
+    },
+  });
+};
