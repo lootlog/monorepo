@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Reorder } from "framer-motion";
 import {
@@ -39,6 +40,7 @@ import {
   Pencil,
   Trash2,
   GripVertical,
+  Settings,
 } from "lucide-react";
 import { useGameMaps, type GameMap } from "@/hooks/api/use-game-maps";
 import {
@@ -439,11 +441,23 @@ export const MapManageDialog = ({
               )}
             </div>
 
-            {templates && templates.length > 0 && (
-              <div className="space-y-2">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
                 <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {t("events.maps.loadFromTemplate")}
                 </Label>
+                {templates && templates.length > 0 && (
+                  <Link
+                    to="/$guildId/settings/map-templates"
+                    params={{ guildId }}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Settings className="size-3" />
+                    {t("events.maps.manageTemplates")}
+                  </Link>
+                )}
+              </div>
+              {templates && templates.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {templates.map((template) => (
                     <Popover key={template.id}>
@@ -495,8 +509,22 @@ export const MapManageDialog = ({
                     </Popover>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="py-3 px-4 rounded-lg border border-dashed text-center">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {t("events.maps.noTemplatesHint")}
+                  </p>
+                  <Link
+                    to="/$guildId/settings/map-templates"
+                    params={{ guildId }}
+                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  >
+                    <Plus className="size-3" />
+                    {t("events.maps.createTemplates")}
+                  </Link>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

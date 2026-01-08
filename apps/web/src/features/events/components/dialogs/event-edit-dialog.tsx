@@ -58,7 +58,6 @@ interface EventEditDialogProps {
 
 interface FormData {
   name: string;
-  active: boolean;
   startsAt: string;
   endsAt: string;
   assignmentTimeoutMinutes: number;
@@ -78,7 +77,6 @@ export const EventEditDialog = ({
   const { register, handleSubmit, reset, watch, setValue } = useForm<FormData>({
     defaultValues: {
       name: event.name,
-      active: event.active,
       startsAt: event.startsAt
         ? new Date(event.startsAt).toISOString().slice(0, 16)
         : new Date(event.createdAt).toISOString().slice(0, 16),
@@ -126,7 +124,6 @@ export const EventEditDialog = ({
     if (open) {
       reset({
         name: event.name,
-        active: event.active,
         startsAt: event.startsAt
           ? new Date(event.startsAt).toISOString().slice(0, 16)
           : new Date(event.createdAt).toISOString().slice(0, 16),
@@ -247,7 +244,6 @@ export const EventEditDialog = ({
 
       await updateEvent.mutateAsync({
         name: data.name,
-        active: data.active,
         startsAt: data.startsAt
           ? new Date(data.startsAt).toISOString()
           : undefined,
@@ -331,20 +327,6 @@ export const EventEditDialog = ({
                   className="h-9 text-sm"
                 />
               </div>
-            </div>
-
-            <div className="flex items-center justify-between py-2 px-3 rounded-lg border">
-              <Label
-                htmlFor="active"
-                className="text-sm font-medium cursor-pointer"
-              >
-                {t("events.active")}
-              </Label>
-              <Switch
-                id="active"
-                checked={watch("active")}
-                onCheckedChange={(val) => setValue("active", val)}
-              />
             </div>
 
             {/* Assignment Timeout */}
