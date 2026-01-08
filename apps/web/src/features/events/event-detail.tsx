@@ -11,6 +11,7 @@ import {
 } from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useEvent } from "./hooks/queries/use-event";
+import type { EventHeroNpc } from "./hooks/queries/use-events";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
@@ -72,40 +73,19 @@ export const EventDetail = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [heroDialogOpen, setHeroDialogOpen] = useState(false);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
-  const [selectedHero, setSelectedHero] = useState<{
-    id: string;
-    npcId: number | null;
-    npcName: string;
-    locations?: {
-      id: string;
-      name: string;
-      order: number;
-      maps: {
-        id: string;
-        mapId: number;
-        mapName: string;
-        locationId: string | null;
-      }[];
-    }[];
-    maps: {
-      id: string;
-      mapId: number;
-      mapName: string;
-      locationId: string | null;
-    }[];
-  } | null>(null);
+  const [selectedHero, setSelectedHero] = useState<EventHeroNpc | null>(null);
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
     permissions?.includes(Permission.ADMIN) ||
     permissions?.includes(Permission.OWNER);
 
-  const handleEditHero = (hero: any) => {
+  const handleEditHero = (hero: EventHeroNpc) => {
     setSelectedHero(hero);
     setHeroDialogOpen(true);
   };
 
-  const handleManageMaps = (hero: any) => {
+  const handleManageMaps = (hero: EventHeroNpc) => {
     setSelectedHero(hero);
     setMapDialogOpen(true);
   };
@@ -113,9 +93,9 @@ export const EventDetail = () => {
   const handleDeleteHero = async (heroId: string) => {
     try {
       await deleteHero.mutateAsync(heroId);
-      toast.success("Usunięto herosa");
-    } catch (e) {
-      toast.error("Błąd podczas usuwania");
+      toast.success(t("events.heroes.deleted"));
+    } catch (_) {
+      toast.error(t("events.heroes.deleteError"));
     }
   };
 
@@ -131,11 +111,9 @@ export const EventDetail = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">
-          {t("events.error", "Nie znaleziono eventu")}
-        </p>
+        <p className="text-muted-foreground">{t("events.error")}</p>
         <Link to="/$guildId/events" params={{ guildId: guildId ?? "" }}>
-          <Button variant="outline">Powrót do listy</Button>
+          <Button variant="outline">{t("events.backToList")}</Button>
         </Link>
       </div>
     );
@@ -236,7 +214,10 @@ export const EventDetail = () => {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant="outline" className="text-xs gap-1 cursor-help">
+                  <Badge
+                    variant="outline"
+                    className="text-xs gap-1 cursor-help"
+                  >
                     <Clock className="w-3 h-3" />
                     {event.assignmentTimeoutMinutes ?? 5} min
                   </Badge>
@@ -320,7 +301,7 @@ export const EventDetail = () => {
                                   key={count}
                                   className="text-muted-foreground"
                                 >
-                                  {count}+ osób: x{multiplier}
+                                  {`${count}+ ${t("events.header.people")}: x${multiplier}`}
                                 </p>
                               ))}
                           </div>
@@ -341,7 +322,7 @@ export const EventDetail = () => {
                                   key={count}
                                   className="text-muted-foreground"
                                 >
-                                  {count} map: x{multiplier}
+                                  {`${count} ${t("events.header.mapsLabel")}: x${multiplier}`}
                                 </p>
                               ))}
                           </div>
@@ -362,22 +343,22 @@ export const EventDetail = () => {
               onClick={() => setEditDialogOpen(true)}
             >
               <Pencil className="w-4 h-4 mr-2" />
-              Edytuj
+              {t("events.editButton")}
             </Button>
           )}
           {canManage &&
             (event.active ? (
               <ConfirmDeleteDialog
-                title="Zakończyć event?"
-                description="Czy na pewno chcesz zakończyć ten event? Będzie on oznaczony jako nieaktywny."
+                title={t("events.endDialog.title")}
+                description={t("events.endDialog.description")}
                 onConfirm={async () => {
                   try {
                     await updateEvent.mutateAsync({
                       active: false,
                     });
-                    toast.success("Zakończono event");
-                  } catch (e) {
-                    toast.error("Błąd podczas zmiany statusu");
+                    toast.success(t("events.endSuccess"));
+                  } catch (_) {
+                    toast.error(t("events.statusError"));
                   }
                 }}
                 trigger={
@@ -386,7 +367,7 @@ export const EventDetail = () => {
                     size="sm"
                     disabled={updateEvent.isPending}
                   >
-                    Zakończ
+                    {t("events.end")}
                   </Button>
                 }
               />
@@ -400,13 +381,13 @@ export const EventDetail = () => {
                     await updateEvent.mutateAsync({
                       active: true,
                     });
-                    toast.success("Wznowiono event");
-                  } catch (e) {
-                    toast.error("Błąd podczas zmiany statusu");
+                    toast.success(t("events.resumeSuccess"));
+                  } catch (_) {
+                    toast.error(t("events.statusError"));
                   }
                 }}
               >
-                Wznów
+                {t("events.resume")}
               </Button>
             ))}
         </div>
@@ -432,7 +413,7 @@ export const EventDetail = () => {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Dodaj
+                      {t("events.heroes.addButton")}
                     </Button>
                   )}
                 </div>
@@ -459,7 +440,7 @@ export const EventDetail = () => {
                   {(!event.heroNpcs || event.heroNpcs.length === 0) && (
                     <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                       <Swords className="w-8 h-8 mb-2 opacity-50" />
-                      <p className="text-sm">Brak herosów</p>
+                      <p className="text-sm">{t("events.heroes.empty")}</p>
                     </div>
                   )}
                 </div>
