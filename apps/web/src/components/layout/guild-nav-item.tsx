@@ -1,5 +1,6 @@
 import type { Guild } from "@/hooks/api/guilds/use-guild";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@/utils/cn";
 import {
   Avatar,
@@ -11,8 +12,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { memo, type FC } from "react";
+import { memo, useState, type FC } from "react";
 import { Link } from "@tanstack/react-router";
+import { FrozenCircle } from "@/components/effects/rukia-frost";
 
 export type GuildNavItemProps = {
   guild: Guild;
@@ -24,7 +26,10 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   isDragging = false,
 }) => {
   const guildId = useGuildId();
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
   const isActive = guildId === guild.id || guildId === guild.vanityUrl;
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
     if (isDragging) {
@@ -33,10 +38,32 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
     }
   };
 
+  const avatarContent = (
+    <Avatar
+      className={cn(
+        "size-12 border-solid border-4 transition-all border-transparent box-border rounded-xl hover:rounded-lg",
+        { "border-primary rounded-lg": isActive },
+      )}
+    >
+      <AvatarImage
+        src={guild.icon as string}
+        alt={guild.name}
+        className="pointer-events-none select-none"
+      />
+      <AvatarFallback className="rounded-none text-white font-medium">
+        {guild.name.charAt(0).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
+  );
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="w-full flex items-center justify-center mb-1">
+        <div
+          className="w-full flex items-center justify-center mb-1"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <Link
             to={`/${guild.vanityUrl ?? guild.id}` as string}
             draggable={false}
@@ -44,21 +71,13 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
             onClick={handleClick}
             style={{ pointerEvents: isDragging ? "none" : "auto" }}
           >
-            <Avatar
-              className={cn(
-                "size-12 border-solid border-4 transition-all border-transparent box-border rounded-xl hover:rounded-lg",
-                { "border-primary rounded-lg": isActive },
-              )}
-            >
-              <AvatarImage
-                src={guild.icon as string}
-                alt={guild.name}
-                className="pointer-events-none select-none"
-              />
-              <AvatarFallback className="rounded-none text-white font-medium">
-                {guild.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            {isRukiaTheme ? (
+              <FrozenCircle isHovered={isHovered} isActive={isActive} size={48}>
+                {avatarContent}
+              </FrozenCircle>
+            ) : (
+              avatarContent
+            )}
           </Link>
         </div>
       </TooltipTrigger>

@@ -6,6 +6,7 @@ import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { persister } from "@/lib/query-client";
 import type { RouterContext } from "@/App";
+import { RukiaFrostOverlay } from "@/components/effects/rukia-frost-overlay";
 
 import "@lootlog/ui/globals.css";
 import "@/i18n/config";
@@ -22,6 +23,7 @@ function RootComponent() {
         <NuqsAdapter>
           <GlobalContextProvider>
             <Outlet />
+            <RukiaFrostOverlay />
             <ReactQueryDevtools initialIsOpen={false} />
           </GlobalContextProvider>
         </NuqsAdapter>

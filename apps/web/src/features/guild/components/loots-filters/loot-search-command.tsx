@@ -21,6 +21,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { NPC_TYPE_NAMES, ITEM_RARITY_NAMES } from "@/constants/npc";
 import { motion, Reorder } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { useTheme } from "@/hooks/context/use-theme";
+import { FrozenButton } from "@/components/effects/rukia-frost";
 
 export type LootSearchCommandProps = {
   open: boolean;
@@ -57,6 +59,8 @@ export const LootSearchCommand = ({
   onOpenChange,
 }: LootSearchCommandProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
 
   const [debouncedSearch] = useDebounceValue(searchQuery, 200);
   const { world } = useGuildContext();
@@ -117,13 +121,8 @@ export const LootSearchCommand = ({
 
   const showLoading = isLoading && debouncedSearch && !hasResults;
 
-  return (
-    <CommandDialog
-      shouldFilter={false}
-      open={open}
-      onOpenChange={onOpenChange}
-      className="top-[25%] sm:top-[50%]"
-    >
+  const dialogContent = (
+    <>
       <CommandInput
         placeholder="Szukaj przedmiotów, potworów, graczy..."
         value={searchQuery}
@@ -324,6 +323,23 @@ export const LootSearchCommand = ({
           </motion.div>
         )}
       </CommandList>
+    </>
+  );
+
+  return (
+    <CommandDialog
+      shouldFilter={false}
+      open={open}
+      onOpenChange={onOpenChange}
+      className="top-[25%] sm:top-[50%]"
+    >
+      {isRukiaTheme ? (
+        <FrozenButton isHovered={false} isActive={open} subtle>
+          {dialogContent}
+        </FrozenButton>
+      ) : (
+        dialogContent
+      )}
     </CommandDialog>
   );
 };
