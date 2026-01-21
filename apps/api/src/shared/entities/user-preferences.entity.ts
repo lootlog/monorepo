@@ -32,6 +32,7 @@ export class UserPreferencesEntity {
       'realmadrid-3rd',
       'barcelona',
       'waguri',
+      'rukia',
     ],
   })
   theme: string;

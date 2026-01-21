@@ -5,6 +5,8 @@ import { useEffect, useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useTheme } from "@/hooks/context/use-theme";
+import { FrostOverlay } from "@/components/effects/rukia-frost";
 
 type WorldSwitcherProps = {
   className?: string;
@@ -16,6 +18,8 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({ className }) => {
   const guildId = useGuildId();
   const storageKey = `lootlog:guild:${guildId ?? "global"}:world-order`;
   const [worldOrder, setWorldOrder] = useLocalStorage<string[]>(storageKey, []);
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
 
   const orderedWorlds = useMemo(() => {
     if (!worlds) return [];
@@ -39,22 +43,25 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({ className }) => {
   }, [world, worlds, setWorldOrder]);
 
   return (
-    <FilterPopover
-      options={
-        orderedWorlds?.map((w) => ({
-          value: w,
-          label: w.charAt(0).toUpperCase() + w.slice(1),
-        })) ?? []
-      }
-      value={world || undefined}
-      onValueChange={handleSelect}
-      placeholder="Wybierz świat"
-      emptyMessage="Brak światów"
-      searchPlaceholder="Szukaj świata..."
-      width={cn("w-[140px] md:w-[180px]", className)}
-      triggerClassName="h-9 shrink-0"
-      contentClassName="max-h-64"
-      showSearch
-    />
+    <div className="relative">
+      {isRukiaTheme && <FrostOverlay subtle rounded="rounded-md" />}
+      <FilterPopover
+        options={
+          orderedWorlds?.map((w) => ({
+            value: w,
+            label: w.charAt(0).toUpperCase() + w.slice(1),
+          })) ?? []
+        }
+        value={world || undefined}
+        onValueChange={handleSelect}
+        placeholder="Wybierz świat"
+        emptyMessage="Brak światów"
+        searchPlaceholder="Szukaj świata..."
+        width={cn("w-[140px] md:w-[180px]", className)}
+        triggerClassName="h-9 shrink-0"
+        contentClassName="max-h-64"
+        showSearch
+      />
+    </div>
   );
 };
