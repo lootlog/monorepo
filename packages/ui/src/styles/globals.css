@@ -1260,6 +1260,115 @@ body {
   --sidebar-ring: oklch(0.45 0.16 10);
 }
 
+/* Yamato Theme - Ice blue/silver with crimson red accents */
+/* Rukia Kuchiki - Hakka no Togame (白霞罸) - Absolute Zero Ice */
+.rukia {
+  --background: oklch(0.98 0.008 230);
+  --foreground: oklch(0.18 0.02 250);
+  --card: oklch(0.99 0.005 230);
+  --card-foreground: oklch(0.18 0.02 250);
+  --popover: oklch(0.99 0.005 230);
+  --popover-foreground: oklch(0.18 0.02 250);
+  --primary: oklch(0.55 0.12 230);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0.015 280);
+  --secondary-foreground: oklch(0.18 0.02 250);
+  --muted: oklch(0.95 0.01 230);
+  --muted-foreground: oklch(0.45 0.03 250);
+  --accent: oklch(0.6 0.14 280);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9 0.015 230);
+  --input: oklch(0.9 0.015 230);
+  --ring: oklch(0.55 0.12 230);
+  --chart-1: oklch(0.55 0.12 230);
+  --chart-2: oklch(0.6 0.14 280);
+  --chart-3: oklch(0.75 0.1 230);
+  --chart-4: oklch(0.65 0.12 260);
+  --chart-5: oklch(0.45 0.1 230);
+  --sidebar: oklch(0.99 0.006 230);
+  --sidebar-foreground: oklch(0.18 0.02 250);
+  --sidebar-primary: oklch(0.55 0.12 230);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0.01 230);
+  --sidebar-accent-foreground: oklch(0.18 0.02 250);
+  --sidebar-border: oklch(0.9 0.015 230);
+  --sidebar-ring: oklch(0.55 0.12 230);
+}
+
+.dark.rukia {
+  --background: oklch(0.1 0.025 230);
+  --foreground: oklch(0.96 0.015 230);
+  --card: oklch(0.14 0.03 230);
+  --card-foreground: oklch(0.96 0.015 230);
+  --popover: oklch(0.12 0.028 230);
+  --popover-foreground: oklch(0.96 0.015 230);
+  --primary: oklch(0.72 0.14 220);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.18 0.025 280);
+  --secondary-foreground: oklch(0.96 0.015 230);
+  --muted: oklch(0.2 0.03 230);
+  --muted-foreground: oklch(0.72 0.03 230);
+  --accent: oklch(0.65 0.16 280);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.26 0.035 230);
+  --input: oklch(0.28 0.04 230);
+  --ring: oklch(0.72 0.14 220);
+  --chart-1: oklch(0.72 0.14 220);
+  --chart-2: oklch(0.65 0.16 280);
+  --chart-3: oklch(0.82 0.12 220);
+  --chart-4: oklch(0.7 0.14 260);
+  --chart-5: oklch(0.55 0.12 230);
+  --sidebar: oklch(0.08 0.02 230);
+  --sidebar-foreground: oklch(0.96 0.015 230);
+  --sidebar-primary: oklch(0.72 0.14 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.2 0.03 230);
+  --sidebar-accent-foreground: oklch(0.96 0.015 230);
+  --sidebar-border: oklch(0.26 0.035 230);
+  --sidebar-ring: oklch(0.55 0.1 220);
+}
+
+.dark.rukia body {
+  background-image: none;
+}
+
+.dark.rukia body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("https://fictionhorizon.com/wp-content/uploads/2023/08/HakkanoTogane.jpg");
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: calc(50% + 200px) calc(50% + 200px);
+  background-repeat: no-repeat;
+  background-color: oklch(0.1 0.025 230);
+  filter: brightness(0.15);
+  z-index: -1;
+}
+
+.dark.rukia body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 30%,
+    oklch(0.1 0.025 230) 80%
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;

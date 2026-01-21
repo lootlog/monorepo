@@ -1,5 +1,7 @@
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useEffect, useState, type FC } from "react";
+import { useTheme } from "@/hooks/context/use-theme";
+import { FrozenButton } from "@/components/effects/rukia-frost";
 
 type FilterComboboxProps = {
   placeholder: string;
@@ -31,6 +33,9 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
   const [selectedOptions, setSelectedOptions] = useState<string[]>(
     defaultValue ?? [],
   );
+  const [isHovered, setIsHovered] = useState(false);
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
 
   useEffect(() => {
     setSelectedOptions(defaultValue ?? []);
@@ -41,25 +46,41 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
     onSelect?.(name, options);
   };
 
+  const hasSelection = selectedOptions.length > 0;
+
+  const multiSelectContent = (
+    <MultiSelect
+      options={options}
+      onValueChange={handleSelect}
+      onClose={() => {}}
+      defaultValue={defaultValue}
+      value={selectedOptions}
+      placeholder={placeholder}
+      variant="inverted"
+      animation={2}
+      maxCount={2}
+      controlledSearch={controlledSearch}
+      commandSearch={commandSearch}
+      onSearchChange={onSearchChange}
+      searchValue={searchValue}
+      loading={loading}
+    />
+  );
+
   return (
-    <div className="flex flex-col gap-1 w-full">
+    <div
+      className="flex flex-col gap-1 w-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {label && <span className="text-xs font-semibold px-3">{label}</span>}
-      <MultiSelect
-        options={options}
-        onValueChange={handleSelect}
-        onClose={() => {}}
-        defaultValue={defaultValue}
-        value={selectedOptions}
-        placeholder={placeholder}
-        variant="inverted"
-        animation={2}
-        maxCount={2}
-        controlledSearch={controlledSearch}
-        commandSearch={commandSearch}
-        onSearchChange={onSearchChange}
-        searchValue={searchValue}
-        loading={loading}
-      />
+      {isRukiaTheme ? (
+        <FrozenButton isHovered={isHovered} isActive={hasSelection}>
+          {multiSelectContent}
+        </FrozenButton>
+      ) : (
+        multiSelectContent
+      )}
     </div>
   );
 };

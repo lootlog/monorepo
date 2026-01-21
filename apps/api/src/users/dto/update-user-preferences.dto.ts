@@ -40,6 +40,7 @@ export class UpdateUserPreferencesDto {
       'realmadrid-3rd',
       'barcelona',
       'waguri',
+      'rukia',
     ],
   })
   @IsOptional()
@@ -58,6 +59,7 @@ export class UpdateUserPreferencesDto {
     'realmadrid-3rd',
     'barcelona',
     'waguri',
+    'rukia',
   ])
   theme?: string;
 
