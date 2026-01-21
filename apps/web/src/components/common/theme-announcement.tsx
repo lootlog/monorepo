@@ -29,7 +29,7 @@ export const ThemeAnnouncement = () => {
 
   return (
     <div className="w-full relative z-[100] bg-gradient-to-r from-cyan-500 via-blue-400 to-purple-400 border-b border-cyan-300/30 shadow-lg shrink-0">
-      <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
+      <div className="w-full px-4 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 shrink-0">
             <Snowflake className="w-4 h-4 text-white" />
