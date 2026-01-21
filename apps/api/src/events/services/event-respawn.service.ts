@@ -323,11 +323,19 @@ export class EventRespawnService {
     for (const map of heroMaps) {
       if (!map.assignedMembers || map.assignedMembers.length === 0) {
         // No assigned members - open UNASSIGNED gap
-        await this.trackingService.openUnassignedGap(map.id, heroId);
+        await this.trackingService.openUnassignedGap(
+          map.id,
+          heroId,
+          windowOpenedAt,
+        );
         unassignedCount++;
       } else {
         // Has assigned members but no one on map yet - open UNCOVERED gap
-        await this.trackingService.openUncoveredGap(map.id, heroId);
+        await this.trackingService.openUncoveredGap(
+          map.id,
+          heroId,
+          windowOpenedAt,
+        );
         uncoveredCount++;
       }
     }

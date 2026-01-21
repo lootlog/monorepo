@@ -515,6 +515,31 @@ export class EventKillService {
     // Close all coverage gaps for this hero
     await this.trackingService.closeAllGapsForHero(eventHero.id);
 
+    // Open UNASSIGNED gaps for new window (all assignments were cleared)
+    // Only when a new respawn window will be created:
+    // - not manual close
+    // - has spawn times
+    // - minSpawnTime is in the future (after kill), meaning it's a NEW window, not old data
+    if (
+      !isManualClose &&
+      timerData.minSpawnTime &&
+      timerData.maxSpawnTime &&
+      timerData.minSpawnTime > killedAt
+    ) {
+      for (const map of heroMaps) {
+        await this.trackingService.openUnassignedGap(
+          map.id,
+          eventHero.id,
+          killedAt,
+        );
+      }
+      this.logger.debug({
+        message: 'Opened UNASSIGNED gaps for new respawn window',
+        heroId: eventHero.id,
+        mapsCount: heroMaps.length,
+      });
+    }
+
     // Create respawn window summary and clean up raw tracking data
     const windowOpenedAt =
       timerData.windowOpenedAt ??
