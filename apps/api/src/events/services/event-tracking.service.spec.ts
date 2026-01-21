@@ -541,6 +541,98 @@ describe('EventTrackingService', () => {
 
       expect(mockPrismaService.eventMapCoverageGap.create).not.toHaveBeenCalled();
     });
+
+    it('should use provided startedAt timestamp when creating gap', async () => {
+      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      const customStartedAt = new Date('2026-01-08T12:00:00.000Z');
+
+      await service.openUnassignedGap(mapId, heroNpcId, customStartedAt);
+
+      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          mapId,
+          heroNpcId,
+          gapType: CoverageGapType.UNASSIGNED,
+          startedAt: customStartedAt,
+        }),
+      });
+    });
+
+    it('should use current time when startedAt is not provided', async () => {
+      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      const beforeCall = new Date();
+
+      await service.openUnassignedGap(mapId, heroNpcId);
+
+      const afterCall = new Date();
+      const callArgs =
+        mockPrismaService.eventMapCoverageGap.create.mock.calls[0][0];
+      const usedStartedAt = callArgs.data.startedAt;
+
+      expect(usedStartedAt.getTime()).toBeGreaterThanOrEqual(
+        beforeCall.getTime(),
+      );
+      expect(usedStartedAt.getTime()).toBeLessThanOrEqual(afterCall.getTime());
+    });
+  });
+
+  describe('openUncoveredGap', () => {
+    const mapId = 'map-1';
+    const heroNpcId = 'hero-1';
+
+    it('should create UNCOVERED gap', async () => {
+      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+
+      await service.openUncoveredGap(mapId, heroNpcId);
+
+      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          mapId,
+          heroNpcId,
+          gapType: CoverageGapType.UNCOVERED,
+        }),
+      });
+    });
+
+    it('should not create duplicate gap if one already exists', async () => {
+      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue({
+        id: 'existing-gap',
+        gapType: CoverageGapType.UNCOVERED,
+        endedAt: null,
+      });
+
+      await service.openUncoveredGap(mapId, heroNpcId);
+
+      expect(mockPrismaService.eventMapCoverageGap.create).not.toHaveBeenCalled();
+    });
+
+    it('should use provided startedAt timestamp when creating gap', async () => {
+      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      const customStartedAt = new Date('2026-01-08T12:00:00.000Z');
+
+      await service.openUncoveredGap(mapId, heroNpcId, customStartedAt);
+
+      expect(mockPrismaService.eventMapCoverageGap.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          startedAt: customStartedAt,
+        }),
+      });
+    });
+
+    it('should use current time when startedAt is not provided', async () => {
+      mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
+      const beforeCall = new Date();
+
+      await service.openUncoveredGap(mapId, heroNpcId);
+
+      const callArgs =
+        mockPrismaService.eventMapCoverageGap.create.mock.calls[0][0];
+      const usedStartedAt = callArgs.data.startedAt;
+
+      expect(usedStartedAt.getTime()).toBeGreaterThanOrEqual(
+        beforeCall.getTime(),
+      );
+    });
   });
 
   describe('closeUnassignedGap', () => {

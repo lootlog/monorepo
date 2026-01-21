@@ -48,6 +48,7 @@ describe('EventRespawnService', () => {
 
   const mockKillService = {
     checkAndRecordEventHeroKill: jest.fn(),
+    recordHeroKill: jest.fn(),
   };
 
   const mockTrackingService = {
@@ -124,21 +125,21 @@ describe('EventRespawnService', () => {
       mockPrismaService.eventMap.update.mockResolvedValue({});
       mockPrismaService.timer.delete.mockResolvedValue({});
       mockQueue.getJobs.mockResolvedValue([]);
-      mockKillService.checkAndRecordEventHeroKill.mockResolvedValue(undefined);
+      mockKillService.recordHeroKill.mockResolvedValue(undefined);
 
       await service.closeRespawnWindow(guildId, eventId, heroId, {
         isAutoClose: false,
       });
 
-      expect(mockKillService.checkAndRecordEventHeroKill).toHaveBeenCalledWith(
+      expect(mockKillService.recordHeroKill).toHaveBeenCalledWith(
         guildId,
-        mockHero.event.world,
-        mockHero.npcId,
-        mockHero.npcName,
-        mockHero.npcIcon,
+        mockHero,
+        mockHero.event,
         expect.objectContaining({
           minSpawnTime: mockTimer.minSpawnTime,
           maxSpawnTime: mockTimer.maxSpawnTime,
+          memberId: mockTimer.createdById,
+          windowOpenedAt: mockTimer.windowOpenedAt,
         }),
         true, // isManualClose
       );
@@ -152,7 +153,7 @@ describe('EventRespawnService', () => {
       mockQueue.getJobs.mockResolvedValue([]);
 
       // Simulate kill recording failure
-      mockKillService.checkAndRecordEventHeroKill.mockRejectedValue(
+      mockKillService.recordHeroKill.mockRejectedValue(
         new Error('Database error'),
       );
 
@@ -163,50 +164,61 @@ describe('EventRespawnService', () => {
       ).rejects.toThrow(InternalServerErrorException);
     });
 
-    it('should not record kill on auto-close', async () => {
+    it('should record kill with isManualClose=false on auto-close', async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
       mockPrismaService.eventMap.update.mockResolvedValue({});
       mockPrismaService.timer.delete.mockResolvedValue({});
       mockQueue.getJobs.mockResolvedValue([]);
+      mockKillService.recordHeroKill.mockResolvedValue(undefined);
 
       await service.closeRespawnWindow(guildId, eventId, heroId, {
         isAutoClose: true,
       });
 
-      expect(mockKillService.checkAndRecordEventHeroKill).not.toHaveBeenCalled();
-      expect(mockSummaryService.createWindowSummary).toHaveBeenCalled();
-    });
-
-    it('should clear all map assignments', async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
-      mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
-      mockPrismaService.eventMap.update.mockResolvedValue({});
-      mockPrismaService.timer.delete.mockResolvedValue({});
-      mockQueue.getJobs.mockResolvedValue([]);
-      mockKillService.checkAndRecordEventHeroKill.mockResolvedValue(undefined);
-
-      await service.closeRespawnWindow(guildId, eventId, heroId, {});
-
-      expect(mockPrismaService.eventMap.update).toHaveBeenCalledWith(
+      // recordHeroKill is still called on auto-close, but with isManualClose=false
+      expect(mockKillService.recordHeroKill).toHaveBeenCalledWith(
+        guildId,
+        mockHero,
+        mockHero.event,
         expect.objectContaining({
-          where: { id: 'map-1' },
-          data: { assignedMembers: { set: [] } },
+          minSpawnTime: mockTimer.minSpawnTime,
+          maxSpawnTime: mockTimer.maxSpawnTime,
         }),
+        false, // isManualClose = false for auto-close
       );
     });
 
-    it('should close all coverage gaps for hero', async () => {
+    it('should emit map status update for maps with assigned members', async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
       mockPrismaService.eventMap.update.mockResolvedValue({});
       mockPrismaService.timer.delete.mockResolvedValue({});
       mockQueue.getJobs.mockResolvedValue([]);
-      mockKillService.checkAndRecordEventHeroKill.mockResolvedValue(undefined);
+      mockKillService.recordHeroKill.mockResolvedValue(undefined);
 
       await service.closeRespawnWindow(guildId, eventId, heroId, {});
 
-      expect(mockTrackingService.closeAllGapsForHero).toHaveBeenCalledWith(heroId);
+      // recordHeroKill handles assignment clearing internally
+      // closeRespawnWindow emits map status updates for UI
+      expect(mockEventEmitter.emitMapStatusUpdate).toHaveBeenCalledWith(
+        guildId,
+        eventId,
+        'map-1',
+        'Map 1',
+      );
+    });
+
+    it('should skip kill recording if no timer exists', async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.timer.findUnique.mockResolvedValue(null); // No timer
+      mockPrismaService.timer.delete.mockResolvedValue({});
+      mockQueue.getJobs.mockResolvedValue([]);
+
+      await service.closeRespawnWindow(guildId, eventId, heroId, {});
+
+      // recordHeroKill should NOT be called when there's no timer
+      expect(mockKillService.recordHeroKill).not.toHaveBeenCalled();
     });
 
     it('should cancel scheduled auto-close job', async () => {
@@ -220,7 +232,7 @@ describe('EventRespawnService', () => {
       mockPrismaService.eventMap.update.mockResolvedValue({});
       mockPrismaService.timer.delete.mockResolvedValue({});
       mockQueue.getJobs.mockResolvedValue([mockJob]);
-      mockKillService.checkAndRecordEventHeroKill.mockResolvedValue(undefined);
+      mockKillService.recordHeroKill.mockResolvedValue(undefined);
 
       await service.closeRespawnWindow(guildId, eventId, heroId, {});
 
@@ -241,7 +253,7 @@ describe('EventRespawnService', () => {
       mockPrismaService.eventMap.update.mockResolvedValue({});
       mockPrismaService.timer.delete.mockResolvedValue({});
       mockQueue.getJobs.mockResolvedValue([]);
-      mockKillService.checkAndRecordEventHeroKill.mockResolvedValue(undefined);
+      mockKillService.recordHeroKill.mockResolvedValue(undefined);
 
       // Mock for openRespawnWindow
       mockPrismaService.member.findFirst.mockResolvedValue({ id: 1 });
@@ -377,11 +389,13 @@ describe('EventRespawnService', () => {
       expect(mockTrackingService.openUnassignedGap).toHaveBeenCalledWith(
         'map-1',
         heroId,
+        expect.any(Date),
       );
       // map-2 has assigned members -> UNCOVERED gap
       expect(mockTrackingService.openUncoveredGap).toHaveBeenCalledWith(
         'map-2',
         heroId,
+        expect.any(Date),
       );
     });
 
@@ -456,6 +470,84 @@ describe('EventRespawnService', () => {
       });
 
       expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('should pass exact windowOpenedAt to gap creation for all maps', async () => {
+      const heroMaps = [
+        { id: 'map-1', mapName: 'Unassigned Map', assignedMembers: [] },
+        { id: 'map-2', mapName: 'Assigned Map', assignedMembers: [{ id: 1 }] },
+      ];
+
+      let capturedWindowOpenedAt: Date | undefined;
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockPrismaService.timer.upsert.mockImplementation((args) => {
+        capturedWindowOpenedAt = args.create.windowOpenedAt;
+        return Promise.resolve({
+          guildId,
+          world: 'tempest',
+          npcId: 123,
+          minSpawnTime,
+          maxSpawnTime,
+          member: mockMember,
+          windowOpenedAt: capturedWindowOpenedAt,
+        });
+      });
+      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockQueue.add.mockResolvedValue({});
+
+      await service.openRespawnWindow(guildId, eventId, heroId, {
+        minSpawnTime,
+        maxSpawnTime,
+      });
+
+      // Both gaps should receive the exact same windowOpenedAt timestamp
+      expect(mockTrackingService.openUnassignedGap).toHaveBeenCalledWith(
+        'map-1',
+        heroId,
+        capturedWindowOpenedAt,
+      );
+      expect(mockTrackingService.openUncoveredGap).toHaveBeenCalledWith(
+        'map-2',
+        heroId,
+        capturedWindowOpenedAt,
+      );
+    });
+
+    it('should use same timestamp for all gap creations', async () => {
+      const heroMaps = [
+        { id: 'map-1', assignedMembers: [] },
+        { id: 'map-2', assignedMembers: [] },
+        { id: 'map-3', assignedMembers: [] },
+      ];
+
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
+      mockPrismaService.timer.upsert.mockResolvedValue({
+        guildId,
+        world: 'tempest',
+        npcId: 123,
+        minSpawnTime,
+        maxSpawnTime,
+        member: mockMember,
+      });
+      mockPrismaService.eventMap.findMany.mockResolvedValue(heroMaps);
+      mockQueue.add.mockResolvedValue({});
+
+      await service.openRespawnWindow(guildId, eventId, heroId, {
+        minSpawnTime,
+        maxSpawnTime,
+      });
+
+      // All 3 maps should have gaps with the same timestamp
+      expect(mockTrackingService.openUnassignedGap).toHaveBeenCalledTimes(3);
+
+      const calls = mockTrackingService.openUnassignedGap.mock.calls;
+      const firstTimestamp = calls[0][2];
+
+      // All timestamps should be identical
+      expect(calls[1][2]).toBe(firstTimestamp);
+      expect(calls[2][2]).toBe(firstTimestamp);
     });
   });
 

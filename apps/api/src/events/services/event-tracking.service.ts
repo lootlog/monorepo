@@ -254,8 +254,13 @@ export class EventTrackingService implements OnModuleInit {
   /**
    * Open an UNASSIGNED gap when a map has no assigned members.
    * Called when the last member is unassigned from a map.
+   * @param startedAt Optional start time for the gap. If not provided, uses current time.
    */
-  async openUnassignedGap(mapId: string, heroNpcId: string): Promise<void> {
+  async openUnassignedGap(
+    mapId: string,
+    heroNpcId: string,
+    startedAt?: Date,
+  ): Promise<void> {
     // Check if there's already an open UNASSIGNED gap
     const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
       where: {
@@ -274,7 +279,7 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
         heroNpcId,
         gapType: CoverageGapType.UNASSIGNED,
-        startedAt: new Date(),
+        startedAt: startedAt ?? new Date(),
       },
     });
 
@@ -324,8 +329,13 @@ export class EventTrackingService implements OnModuleInit {
 
   /**
    * Open an UNCOVERED gap when no players are present on a map with assigned members.
+   * @param startedAt Optional start time for the gap. If not provided, uses current time.
    */
-  async openUncoveredGap(mapId: string, heroNpcId: string): Promise<void> {
+  async openUncoveredGap(
+    mapId: string,
+    heroNpcId: string,
+    startedAt?: Date,
+  ): Promise<void> {
     // Check if there's already an open UNCOVERED gap
     const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
       where: {
@@ -344,7 +354,7 @@ export class EventTrackingService implements OnModuleInit {
         mapId,
         heroNpcId,
         gapType: CoverageGapType.UNCOVERED,
-        startedAt: new Date(),
+        startedAt: startedAt ?? new Date(),
       },
     });
 
