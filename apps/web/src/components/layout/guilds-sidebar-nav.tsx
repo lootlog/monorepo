@@ -24,6 +24,8 @@ import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
+import { useTheme } from "@/hooks/context/use-theme";
+import { cn } from "@lootlog/ui/lib/utils";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -32,6 +34,8 @@ export const GuildsSidebarNav: FC = () => {
   const { data: permissions } = useGuildPermissions();
   const { setOpenMobile } = useSidebar();
   const { mutate: refreshMember } = useMemberRefresh();
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
 
   const menuItems: MenuItem[] = [
     {
@@ -145,7 +149,25 @@ export const GuildsSidebarNav: FC = () => {
 
   const header = (
     <>
-      <span className="ml-3 max-w-44 text-nowrap text-ellipsis overflow-hidden">
+      <span
+        className={cn(
+          "ml-3 max-w-44 text-nowrap text-ellipsis overflow-hidden",
+          isRukiaTheme && "font-semibold",
+        )}
+        style={
+          isRukiaTheme
+            ? {
+                background:
+                  "linear-gradient(135deg, #e0f4ff 0%, #a8d8ff 30%, #7cc4ff 50%, #b8e0ff 70%, #ffffff 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                filter:
+                  "drop-shadow(0 0 4px rgba(180, 220, 255, 0.6)) drop-shadow(0 0 8px rgba(150, 200, 255, 0.3))",
+              }
+            : undefined
+        }
+      >
         {guild?.name}
       </span>
       <span>

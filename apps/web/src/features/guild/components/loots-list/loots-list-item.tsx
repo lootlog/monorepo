@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ItemTile } from "@/components/tiles";
+import { useTheme } from "@/hooks/context/use-theme";
+import { FrozenButton } from "@/components/effects/rukia-frost";
 
 type Props = {
   loot: Loot;
@@ -98,7 +100,7 @@ const LootHeader = ({
 }) => (
   <div className="flex flex-row justify-between items-center gap-2 mb-1">
     <div className="min-w-0">
-      <LootNpcs npcs={npcs} />
+      <LootNpcs npcs={npcs.slice(0, 1)} />
     </div>
     <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50">
       <MessageSquare className="h-3 w-3" />
@@ -208,7 +210,10 @@ const LEGENDARY_GRADIENT =
 
 export const LootsListItem = ({ loot, canManageLoots }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const date = timestampToDate(loot.createdAt);
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
 
   const {
     playerColorMap,
@@ -219,34 +224,52 @@ export const LootsListItem = ({ loot, canManageLoots }: Props) => {
     sortedPlayers,
   } = useLootData(loot);
 
+  const cardContent = (
+    <Card
+      onClick={() => setIsOpen(true)}
+      className={cn(
+        "group relative px-4 pt-2 pb-1 transition-all duration-300 cursor-pointer h-full flex flex-col gap-0",
+        "bg-card/40 backdrop-blur-sm border-border",
+        "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
+        hasLegendaryItem &&
+          "border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.3),_0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_30px_rgba(239,68,68,0.4),_0_0_15px_rgba(239,68,68,0.3)]",
+      )}
+      style={hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined}
+    >
+      <LootHeader npcs={loot.npcs} commentsCount={loot.commentsCount} />
+      <LootContent
+        sortedPlayers={sortedPlayers}
+        itemsByPlayer={itemsByPlayer}
+        unassignedItems={unassignedItems}
+      />
+      <LootFooter
+        location={loot.location}
+        date={date}
+        playersCount={loot.players.length}
+        itemsCount={loot.items.length}
+      />
+    </Card>
+  );
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <Card
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "group relative px-4 pt-2 pb-1 transition-all duration-300 cursor-pointer h-full flex flex-col gap-0",
-          "bg-card/40 backdrop-blur-sm border-border",
-          "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
-          hasLegendaryItem &&
-            "border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.3),_0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_30px_rgba(239,68,68,0.4),_0_0_15px_rgba(239,68,68,0.3)]",
-        )}
-        style={
-          hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined
-        }
+      <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="h-full"
       >
-        <LootHeader npcs={loot.npcs} commentsCount={loot.commentsCount} />
-        <LootContent
-          sortedPlayers={sortedPlayers}
-          itemsByPlayer={itemsByPlayer}
-          unassignedItems={unassignedItems}
-        />
-        <LootFooter
-          location={loot.location}
-          date={date}
-          playersCount={loot.players.length}
-          itemsCount={loot.items.length}
-        />
-      </Card>
+        {isRukiaTheme ? (
+          <FrozenButton
+            isHovered={isHovered}
+            isActive={false}
+            className="h-full"
+          >
+            {cardContent}
+          </FrozenButton>
+        ) : (
+          cardContent
+        )}
+      </div>
       <LootDetailsSheetContent
         loot={loot}
         ownerMap={itemOwnerMap}
