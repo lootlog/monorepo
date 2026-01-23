@@ -100,7 +100,7 @@ const LootHeader = ({
 }) => (
   <div className="flex flex-row justify-between items-center gap-2 mb-1">
     <div className="min-w-0">
-      <LootNpcs npcs={npcs.slice(0, 1)} />
+      <LootNpcs npcs={npcs} />
     </div>
     <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50">
       <MessageSquare className="h-3 w-3" />
