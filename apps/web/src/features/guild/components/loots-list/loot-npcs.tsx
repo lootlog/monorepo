@@ -54,7 +54,6 @@ export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
   );
 
   const firstNpc = sortedNpcs[0];
-  const restNpcs = sortedNpcs.slice(1);
   const isFirstSpecial =
     firstNpc &&
     SPECIAL_NPC_TYPES.includes(
@@ -74,27 +73,12 @@ export const LootNpcs: FC<LootNpcsProps> = ({ npcs, className }) => {
         </span>
       )}
       {firstNpc && (
-        <div className="flex flex-wrap items-center gap-x-1">
-          <span className="text-foreground font-bold text-sm">
-            {firstNpc.name}{" "}
-            {firstNpc.lvl !== 0
-              ? `(${firstNpc.lvl}${firstNpc.prof?.charAt(0).toLowerCase() ?? ""})`
-              : ""}
-            {restNpcs.length > 0 ? "," : ""}
-          </span>
-          {restNpcs.map((npc, index) => {
-            const isLastElement = index === restNpcs.length - 1;
-            return (
-              <span className="text-xs text-muted-foreground" key={index}>
-                {npc.name}{" "}
-                {npc.lvl !== 0
-                  ? `(${npc.lvl}${npc.prof?.charAt(0).toLowerCase() ?? ""})`
-                  : ""}
-                {isLastElement ? "" : ","}
-              </span>
-            );
-          })}
-        </div>
+        <span className="text-foreground font-bold text-sm">
+          {firstNpc.name}{" "}
+          {firstNpc.lvl !== 0
+            ? `(${firstNpc.lvl}${firstNpc.prof?.charAt(0).toLowerCase() ?? ""})`
+            : ""}
+        </span>
       )}
     </div>
   );
