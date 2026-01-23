@@ -11,12 +11,9 @@ export const ThemeAnnouncement = () => {
 
   const isAlreadyRukia = theme === "rukia";
 
-  // Hide only if user is already using Rukia theme
-  // TODO: Re-enable isDismissed check after testing: if (isDismissed || isAlreadyRukia)
-  if (isAlreadyRukia) {
+  if (isDismissed || isAlreadyRukia) {
     return null;
   }
-  void isDismissed; // Suppress unused variable warning
 
   const handleDismiss = () => {
     setIsDismissed(true);
