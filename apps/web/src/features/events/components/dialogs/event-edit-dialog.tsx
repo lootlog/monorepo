@@ -248,11 +248,11 @@ export const EventEditDialog = ({
           : undefined,
         endsAt: data.endsAt ? new Date(data.endsAt).toISOString() : undefined,
         timeOfDayMultipliers:
-          timeMultipliers.length > 0 ? timeMultipliers : undefined,
+          timeMultipliers.length > 0 ? timeMultipliers : null,
         trackersMultipliers:
-          Object.keys(trackersRecord).length > 0 ? trackersRecord : undefined,
+          Object.keys(trackersRecord).length > 0 ? trackersRecord : null,
         mapsCountMultipliers:
-          Object.keys(mapsRecord).length > 0 ? mapsRecord : undefined,
+          Object.keys(mapsRecord).length > 0 ? mapsRecord : null,
         assignmentTimeoutMinutes: data.assignmentTimeoutMinutes,
         autoCalculatePoints: data.autoCalculatePoints,
         mapAssignmentCap: data.mapAssignmentCap,

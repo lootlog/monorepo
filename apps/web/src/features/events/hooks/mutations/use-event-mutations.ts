@@ -12,9 +12,9 @@ export interface UpdateEventData {
   startsAt?: string;
   endsAt?: string;
   active?: boolean;
-  timeOfDayMultipliers?: TimeOfDayMultiplier[];
-  trackersMultipliers?: Record<number, number>;
-  mapsCountMultipliers?: Record<number, number>;
+  timeOfDayMultipliers?: TimeOfDayMultiplier[] | null;
+  trackersMultipliers?: Record<number, number> | null;
+  mapsCountMultipliers?: Record<number, number> | null;
   assignmentTimeoutMinutes?: number;
   autoCalculatePoints?: boolean;
   mapAssignmentCap?: number;
@@ -54,8 +54,11 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       );
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, (oldData: unknown) => ({
+        ...(oldData as object),
+        ...data,
+      }));
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });

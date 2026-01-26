@@ -303,6 +303,194 @@ export class EventPointsService {
   }
 
   /**
+   * Recalculate all points for an event when any multiplier configuration changes.
+   * Fetches kill context (killedAt, assignedMembersCount, heroMapCount) and recalculates
+   * each point using the provided event configuration.
+   */
+  async recalculateEventPointsWithMultipliers(
+    eventId: string,
+    eventConfig: Pick<
+      Event,
+      | 'basePointsPerKill'
+      | 'timeOfDayMultipliers'
+      | 'trackersMultipliers'
+      | 'mapsCountMultipliers'
+    >,
+  ): Promise<void> {
+    // Get all EventKillPoint records with kill context
+    const killPoints = await this.prisma.eventKillPoint.findMany({
+      where: {
+        kill: {
+          heroNpc: {
+            eventId,
+          },
+        },
+      },
+      include: {
+        kill: {
+          include: {
+            heroNpc: {
+              include: {
+                maps: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (killPoints.length === 0) {
+      return;
+    }
+
+    // Group kill points by killId to calculate assignedMembersCount
+    const killPointsByKillId = new Map<string, typeof killPoints>();
+    for (const kp of killPoints) {
+      const existing = killPointsByKillId.get(kp.killId);
+      if (existing) {
+        existing.push(kp);
+      } else {
+        killPointsByKillId.set(kp.killId, [kp]);
+      }
+    }
+
+    // Calculate assignedMembersCount per kill (unique memberIds)
+    const assignedMembersCountByKillId = new Map<string, number>();
+    for (const [killId, points] of killPointsByKillId) {
+      const uniqueMembers = new Set(points.map((p) => p.memberId));
+      assignedMembersCountByKillId.set(killId, uniqueMembers.size);
+    }
+
+    // Calculate heroMapCount per member per kill
+    const heroMapCountByKillAndMember = new Map<string, number>();
+    for (const [killId, points] of killPointsByKillId) {
+      for (const memberId of new Set(points.map((p) => p.memberId))) {
+        const memberPoints = points.filter((p) => p.memberId === memberId);
+        const key = `${killId}-${memberId}`;
+        heroMapCountByKillAndMember.set(key, memberPoints.length);
+      }
+    }
+
+    // Create a mock event object for point calculation
+    const mockEvent = {
+      basePointsPerKill: eventConfig.basePointsPerKill,
+      timeOfDayMultipliers: eventConfig.timeOfDayMultipliers,
+      trackersMultipliers: eventConfig.trackersMultipliers,
+      mapsCountMultipliers: eventConfig.mapsCountMultipliers,
+    } as Event;
+
+    await this.prisma.$transaction(async (tx) => {
+      // Update all kill points with recalculated multipliers
+      for (const killPoint of killPoints) {
+        const assignedMembersCount =
+          assignedMembersCountByKillId.get(killPoint.killId) ?? 1;
+        const heroMapCount =
+          heroMapCountByKillAndMember.get(
+            `${killPoint.killId}-${killPoint.memberId}`,
+          ) ?? 1;
+
+        const {
+          points,
+          appliedMultiplier,
+          timeMultiplier,
+          trackersMultiplier,
+          mapsMultiplier,
+        } = this.calculateMemberPoints(
+          mockEvent,
+          killPoint.kill.killedAt,
+          heroMapCount,
+          assignedMembersCount,
+        );
+
+        await tx.eventKillPoint.update({
+          where: { id: killPoint.id },
+          data: {
+            basePoints: eventConfig.basePointsPerKill,
+            points,
+            appliedMultiplier,
+            timeMultiplier,
+            trackersMultiplier,
+            mapsMultiplier,
+          },
+        });
+      }
+
+      // Delete all rankings for this event to rebuild
+      await tx.eventRanking.deleteMany({
+        where: { eventId },
+      });
+
+      // Re-aggregate rankings from updated kill points
+      const updatedKillPoints = await tx.eventKillPoint.findMany({
+        where: {
+          kill: {
+            heroNpc: {
+              eventId,
+            },
+          },
+        },
+        include: {
+          kill: {
+            include: {
+              heroNpc: true,
+            },
+          },
+        },
+      });
+
+      // Group by member and heroNpcName
+      const rankingMap = new Map<
+        string,
+        {
+          memberId: number;
+          heroNpcName: string;
+          totalPoints: number;
+          totalKills: number;
+          totalTimeSeconds: number;
+          afkSum: number;
+        }
+      >();
+
+      for (const kp of updatedKillPoints) {
+        const key = `${kp.memberId}-${kp.kill.heroNpc.npcName}`;
+        const existing = rankingMap.get(key);
+
+        if (existing) {
+          existing.totalPoints += kp.points;
+          existing.totalKills += 1;
+          existing.totalTimeSeconds += kp.timeOnMapSeconds;
+          existing.afkSum += kp.afkPercentage;
+        } else {
+          rankingMap.set(key, {
+            memberId: kp.memberId,
+            heroNpcName: kp.kill.heroNpc.npcName,
+            totalPoints: kp.points,
+            totalKills: 1,
+            totalTimeSeconds: kp.timeOnMapSeconds,
+            afkSum: kp.afkPercentage,
+          });
+        }
+      }
+
+      // Create new ranking records
+      for (const ranking of rankingMap.values()) {
+        await tx.eventRanking.create({
+          data: {
+            eventId,
+            memberId: ranking.memberId,
+            heroNpcName: ranking.heroNpcName,
+            totalPoints: ranking.totalPoints,
+            totalKills: ranking.totalKills,
+            totalTimeSeconds: ranking.totalTimeSeconds,
+            avgAfkPercentage:
+              Math.round((ranking.afkSum / ranking.totalKills) * 100) / 100,
+          },
+        });
+      }
+    });
+  }
+
+  /**
    * Get presence statistics for a member on hero maps.
    */
   async getMemberPresenceStats(
