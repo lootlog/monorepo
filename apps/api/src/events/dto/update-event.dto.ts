@@ -101,8 +101,8 @@ export class UpdateEventDto {
     description: 'Base points awarded per hero kill before multipliers',
   })
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsNumber()
+  @Min(0)
   basePointsPerKill?: number;
 
   @ApiPropertyOptional({
@@ -139,19 +139,23 @@ export class UpdateEventDto {
   mapsCountMultipliers?: Record<string, number>;
 
   @ApiPropertyOptional({
+    description:
+      'Tracking duration multipliers: {50: 0.5, 75: 0.75, 100: 1.0} - percentage thresholds',
+  })
+  @IsOptional()
+  @IsMultiplierRecord({
+    message:
+      'trackingDurationMultipliers must be an object with numeric keys (0-100) and numeric values (>=0)',
+  })
+  trackingDurationMultipliers?: Record<string, number>;
+
+  @ApiPropertyOptional({
     description: 'Minutes before minSpawnTime when assignments are allowed',
   })
   @IsOptional()
   @IsInt()
   @Min(0)
   assignmentTimeoutMinutes?: number;
-
-  @ApiPropertyOptional({
-    description: 'Whether to automatically calculate points on kill',
-  })
-  @IsOptional()
-  @IsBoolean()
-  autoCalculatePoints?: boolean;
 
   @ApiPropertyOptional({
     description: 'Maximum number of members that can assign to a single map (null or 0 = no limit)',

@@ -5,6 +5,7 @@ import {
   IsArray,
   ValidateNested,
   IsInt,
+  IsNumber,
   IsDateString,
   Min,
 } from 'class-validator';
@@ -70,8 +71,8 @@ export class CreateEventDto {
     default: 1,
   })
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsNumber()
+  @Min(0)
   basePointsPerKill?: number;
 
   @ApiPropertyOptional({
@@ -82,14 +83,6 @@ export class CreateEventDto {
   @IsInt()
   @Min(0)
   assignmentTimeoutMinutes?: number;
-
-  @ApiPropertyOptional({
-    description: 'Whether to automatically calculate points on kill',
-    default: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  autoCalculatePoints?: boolean;
 
   @ApiPropertyOptional({
     description: 'Maximum number of members that can assign to a single map (null or 0 = no limit)',

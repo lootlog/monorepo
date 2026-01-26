@@ -5,6 +5,7 @@ import type {
   TimeOfDayMultiplier,
   TrackersMultipliers,
   MapsCountMultipliers,
+  TrackingDurationMultipliers,
 } from '../interfaces/time-multiplier.interface';
 
 /** Default multiplier value when no multiplier config is found or applicable */
@@ -49,12 +50,14 @@ export class EventPointsService {
     killTime: Date,
     heroMapCount: number,
     assignedMembersCount: number,
+    trackingDurationPercentage?: number,
   ): {
     points: number;
     appliedMultiplier: number;
     timeMultiplier: number;
     trackersMultiplier: number;
     mapsMultiplier: number;
+    trackingDurationMultiplier: number;
   } {
     const basePoints = event.basePointsPerKill;
 
@@ -74,9 +77,18 @@ export class EventPointsService {
       heroMapCount,
     );
 
+    const trackingDurationMultiplier = this.getTrackingDurationMultiplier(
+      event.trackingDurationMultipliers as unknown as TrackingDurationMultipliers | null,
+      trackingDurationPercentage,
+    );
+
     const appliedMultiplier =
-      timeMultiplier * trackersMultiplier * mapsMultiplier;
-    const points = Math.round(basePoints * appliedMultiplier);
+      timeMultiplier *
+      trackersMultiplier *
+      mapsMultiplier *
+      trackingDurationMultiplier;
+    // Round to 2 decimal places to handle fractional points
+    const points = Math.round(basePoints * appliedMultiplier * 100) / 100;
 
     return {
       points,
@@ -84,6 +96,7 @@ export class EventPointsService {
       timeMultiplier,
       trackersMultiplier,
       mapsMultiplier,
+      trackingDurationMultiplier,
     };
   }
 
@@ -183,6 +196,42 @@ export class EventPointsService {
   }
 
   /**
+   * Get tracking duration multiplier based on percentage of window time spent tracking.
+   * Uses threshold-based matching: finds the highest configured threshold <= actual percentage.
+   */
+  private getTrackingDurationMultiplier(
+    multipliers: TrackingDurationMultipliers | null,
+    trackingPercentage?: number,
+  ): number {
+    // If no multipliers configured or percentage unknown, return default
+    if (!multipliers || trackingPercentage === undefined) {
+      return DEFAULT_MULTIPLIER;
+    }
+
+    // Find the highest threshold key <= trackingPercentage
+    const sortedKeys = Object.keys(multipliers)
+      .map(Number)
+      .filter((k) => !isNaN(k) && k >= 0 && k <= 100)
+      .sort((a, b) => b - a); // Descending
+
+    for (const key of sortedKeys) {
+      if (trackingPercentage >= key) {
+        return multipliers[key.toString()] ?? DEFAULT_MULTIPLIER;
+      }
+    }
+
+    // If percentage is less than all thresholds, use the lowest threshold's multiplier
+    // or return 0 if that's the intent (configurable by setting lowest threshold appropriately)
+    if (sortedKeys.length > 0) {
+      const lowestKey = sortedKeys[sortedKeys.length - 1];
+      // If tracking percentage is below all thresholds, give lowest multiplier
+      return multipliers[lowestKey.toString()] ?? DEFAULT_MULTIPLIER;
+    }
+
+    return DEFAULT_MULTIPLIER;
+  }
+
+  /**
    * Recalculate all points for an event when basePointsPerKill changes.
    * Updates all EventKillPoint records and rebuilds EventRanking aggregations.
    */
@@ -215,9 +264,9 @@ export class EventPointsService {
     // Update all kill points with new base and recalculated final points
     await this.prisma.$transaction(async (tx) => {
       for (const killPoint of killPoints) {
-        const newPoints = Math.round(
-          newBasePoints * killPoint.appliedMultiplier,
-        );
+        // Round to 2 decimal places to handle fractional points
+        const newPoints =
+          Math.round(newBasePoints * killPoint.appliedMultiplier * 100) / 100;
         await tx.eventKillPoint.update({
           where: { id: killPoint.id },
           data: {
@@ -315,6 +364,7 @@ export class EventPointsService {
       | 'timeOfDayMultipliers'
       | 'trackersMultipliers'
       | 'mapsCountMultipliers'
+      | 'trackingDurationMultipliers'
     >,
   ): Promise<void> {
     // Get all EventKillPoint records with kill context
@@ -377,6 +427,7 @@ export class EventPointsService {
       timeOfDayMultipliers: eventConfig.timeOfDayMultipliers,
       trackersMultipliers: eventConfig.trackersMultipliers,
       mapsCountMultipliers: eventConfig.mapsCountMultipliers,
+      trackingDurationMultipliers: eventConfig.trackingDurationMultipliers,
     } as Event;
 
     await this.prisma.$transaction(async (tx) => {
@@ -395,11 +446,13 @@ export class EventPointsService {
           timeMultiplier,
           trackersMultiplier,
           mapsMultiplier,
+          trackingDurationMultiplier,
         } = this.calculateMemberPoints(
           mockEvent,
           killPoint.kill.killedAt,
           heroMapCount,
           assignedMembersCount,
+          killPoint.trackingDurationPercentage ?? undefined,
         );
 
         await tx.eventKillPoint.update({
@@ -411,6 +464,7 @@ export class EventPointsService {
             timeMultiplier,
             trackersMultiplier,
             mapsMultiplier,
+            trackingDurationMultiplier,
           },
         });
       }
@@ -759,10 +813,10 @@ export class EventPointsService {
       where: { id: killPointId },
       data: {
         points: newPoints,
-        // Update basePoints proportionally if multiplier is non-zero
+        // Update basePoints proportionally if multiplier is non-zero (round to 2 decimal places)
         basePoints:
           killPoint.appliedMultiplier > 0
-            ? Math.round(newPoints / killPoint.appliedMultiplier)
+            ? Math.round((newPoints / killPoint.appliedMultiplier) * 100) / 100
             : newPoints,
       },
     });

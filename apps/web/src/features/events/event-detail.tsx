@@ -20,7 +20,6 @@ import {
   Pencil,
   Plus,
   Clock,
-  Calculator,
   TrendingUp,
   CalendarDays,
 } from "lucide-react";
@@ -163,37 +162,6 @@ export const EventDetail = () => {
               >
                 {event.active ? t("events.active") : t("events.inactive")}
               </Badge>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant={
-                      event.autoCalculatePoints !== false
-                        ? "default"
-                        : "secondary"
-                    }
-                    className="text-xs gap-1 cursor-help"
-                  >
-                    <Calculator className="w-3 h-3" />
-                    {event.autoCalculatePoints !== false
-                      ? t("events.header.autoPointsOn", "Auto")
-                      : t("events.header.autoPointsOff", "Ręczne")}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {event.autoCalculatePoints !== false
-                      ? t(
-                          "events.header.autoPointsEnabledTooltip",
-                          "Punkty są naliczane automatycznie po zabiciu herosa",
-                        )
-                      : t(
-                          "events.header.autoPointsDisabledTooltip",
-                          "Punkty są naliczane ręcznie",
-                        )}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
 
               <Badge variant="outline" className="text-xs">
                 {event.world.charAt(0).toUpperCase() + event.world.slice(1)}

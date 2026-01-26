@@ -83,8 +83,8 @@ describe('EventPointsService', () => {
         timeOfDayMultipliers: timeMultipliers as unknown as Event['timeOfDayMultipliers'],
         trackersMultipliers: trackersMultipliers as unknown as Event['trackersMultipliers'],
         mapsCountMultipliers: mapsCountMultipliers as unknown as Event['mapsCountMultipliers'],
+        trackingDurationMultipliers: null,
         assignmentTimeoutMinutes: 5,
-        autoCalculatePoints: true,
         mapAssignmentCap: null,
         startsAt: new Date(),
         endsAt: null,
@@ -393,7 +393,7 @@ describe('EventPointsService', () => {
         expect(result.points).toBe(Math.round(100 * 1.5 * 2.0 * 1.2));
       });
 
-      it('should handle fractional points with rounding', () => {
+      it('should handle fractional points with rounding to 2 decimal places', () => {
         const event = createMockEvent(
           100,
           [{ from: '00:00', to: '23:59', multiplier: 1.33 }],
@@ -406,7 +406,10 @@ describe('EventPointsService', () => {
 
         const expectedMultiplier = 1.33 * 1.27 * 1.11;
         expect(result.appliedMultiplier).toBeCloseTo(expectedMultiplier, 10);
-        expect(result.points).toBe(Math.round(100 * expectedMultiplier));
+        // Points should be rounded to 2 decimal places
+        expect(result.points).toBe(
+          Math.round(100 * expectedMultiplier * 100) / 100,
+        );
       });
 
       it('should handle mix of active and inactive multipliers', () => {
@@ -460,6 +463,48 @@ describe('EventPointsService', () => {
 
         expect(result.points).toBe(10);
         expect(result.appliedMultiplier).toBe(0.1);
+      });
+
+      it('should correctly handle 0.5 multiplier with base points of 1 (fractional result)', () => {
+        const event = createMockEvent(
+          1,
+          [{ from: '00:00', to: '23:59', multiplier: 0.5 }],
+        );
+        const killTime = new Date('2024-01-15T12:00:00');
+
+        const result = service.calculateMemberPoints(event, killTime, 1, 1);
+
+        // 1 * 0.5 = 0.5 (not rounded to 1 as before)
+        expect(result.points).toBe(0.5);
+        expect(result.appliedMultiplier).toBe(0.5);
+      });
+
+      it('should correctly handle 0.4 multiplier with base points of 1', () => {
+        const event = createMockEvent(
+          1,
+          [{ from: '00:00', to: '23:59', multiplier: 0.4 }],
+        );
+        const killTime = new Date('2024-01-15T12:00:00');
+
+        const result = service.calculateMemberPoints(event, killTime, 1, 1);
+
+        // 1 * 0.4 = 0.4
+        expect(result.points).toBe(0.4);
+        expect(result.appliedMultiplier).toBe(0.4);
+      });
+
+      it('should correctly handle multipliers resulting in many decimal places', () => {
+        const event = createMockEvent(
+          1,
+          [{ from: '00:00', to: '23:59', multiplier: 0.333 }],
+        );
+        const killTime = new Date('2024-01-15T12:00:00');
+
+        const result = service.calculateMemberPoints(event, killTime, 1, 1);
+
+        // 1 * 0.333 = 0.333, rounded to 2 decimal places = 0.33
+        expect(result.points).toBe(0.33);
+        expect(result.appliedMultiplier).toBe(0.333);
       });
 
       it('should handle time with single digit hour correctly', () => {
@@ -640,7 +685,11 @@ describe('EventPointsService', () => {
         where: {
           mapId: { in: ['map-1'] },
           memberId: 1,
-          startedAt: { gte: since },
+          OR: [
+            { startedAt: { gte: since } },
+            { endedAt: { gte: since } },
+            { startedAt: { lte: since }, endedAt: null },
+          ],
         },
         orderBy: { startedAt: 'asc' },
       });
@@ -826,7 +875,7 @@ describe('EventPointsService', () => {
         where: { id: 'kp-1' },
         data: {
           points: 200,
-          basePoints: Math.round(200 / 1.5),
+          basePoints: Math.round((200 / 1.5) * 100) / 100,
         },
       });
 
@@ -1047,7 +1096,7 @@ describe('EventPointsService', () => {
         where: { id: 'kp-1' },
         data: {
           basePoints: 200,
-          points: Math.round(200 * 1.5),
+          points: Math.round(200 * 1.5 * 100) / 100,
         },
       });
 
@@ -1071,6 +1120,7 @@ describe('EventPointsService', () => {
         timeOfDayMultipliers: null,
         trackersMultipliers: null,
         mapsCountMultipliers: null,
+        trackingDurationMultipliers: null,
       });
 
       expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
@@ -1133,6 +1183,7 @@ describe('EventPointsService', () => {
         ] as unknown as null,
         trackersMultipliers: null,
         mapsCountMultipliers: null,
+        trackingDurationMultipliers: null,
       });
 
       expect(mockTx.eventKillPoint.update).toHaveBeenCalledWith({
@@ -1144,6 +1195,7 @@ describe('EventPointsService', () => {
           timeMultiplier: 2.0,
           trackersMultiplier: 1.0,
           mapsMultiplier: 1.0,
+          trackingDurationMultiplier: 1.0,
         },
       });
 
@@ -1220,6 +1272,7 @@ describe('EventPointsService', () => {
         timeOfDayMultipliers: null,
         trackersMultipliers: { '2': 1.5 } as unknown as null,
         mapsCountMultipliers: null,
+        trackingDurationMultipliers: null,
       });
 
       // Both kill points should be updated with the trackers multiplier
@@ -1303,6 +1356,7 @@ describe('EventPointsService', () => {
         timeOfDayMultipliers: null,
         trackersMultipliers: null,
         mapsCountMultipliers: { '2': 1.2 } as unknown as null,
+        trackingDurationMultipliers: null,
       });
 
       // Both kill points should be updated with the maps multiplier
@@ -1368,6 +1422,7 @@ describe('EventPointsService', () => {
         ] as unknown as null,
         trackersMultipliers: { '1': 2.0 } as unknown as null,
         mapsCountMultipliers: { '1': 1.2 } as unknown as null,
+        trackingDurationMultipliers: null,
       });
 
       // Combined multiplier: 1.5 * 2.0 * 1.2 = 3.6
@@ -1444,6 +1499,7 @@ describe('EventPointsService', () => {
         ] as unknown as null,
         trackersMultipliers: null,
         mapsCountMultipliers: null,
+        trackingDurationMultipliers: null,
       });
 
       expect(mockTx.eventRanking.deleteMany).toHaveBeenCalledWith({

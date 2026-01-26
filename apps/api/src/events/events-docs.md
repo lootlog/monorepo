@@ -257,7 +257,7 @@ TRANSACTION START
 │
 ├─► 2. Pobranie map herosa z przypisanymi członkami
 │
-├─► 3. Dla każdego przypisanego członka (jeśli autoCalculatePoints):
+├─► 3. Dla każdego przypisanego członka:
 │      │
 │      ├─► Pobranie presence stats (czas na mapie, AFK %)
 │      │
@@ -279,7 +279,7 @@ TRANSACTION START
 │
 TRANSACTION END
 │
-├─► 7. Aktualizacja EventRanking (jeśli autoCalculatePoints)
+├─► 7. Aktualizacja EventRanking
 │      └─► pointsService.updateRankingAfterKill()
 │
 ├─► 8. Zamknięcie wszystkich coverage gaps
@@ -1315,7 +1315,6 @@ model Event {
   startsAt              DateTime?
   endsAt                DateTime?
   basePointsPerKill     Int             @default(100)
-  autoCalculatePoints   Boolean         @default(true)
   mapAssignmentCap      Int?
   timeOfDayMultipliers  Json?
   trackersMultipliers   Json?

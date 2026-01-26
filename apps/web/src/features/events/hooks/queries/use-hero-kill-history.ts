@@ -25,7 +25,9 @@ export interface KillParticipant {
   timeMultiplier: number | null;
   trackersMultiplier: number | null;
   mapsMultiplier: number | null;
+  trackingDurationMultiplier: number | null;
   trackingDurationSeconds: number | null;
+  trackingDurationPercentage: number | null;
   timeOnMapSeconds: number;
   afkPercentage: number;
   wasPresent: boolean;
