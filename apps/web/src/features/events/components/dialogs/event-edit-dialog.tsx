@@ -12,7 +12,6 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
 import { Switch } from "@lootlog/ui/components/switch";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import {
   Collapsible,
   CollapsibleContent,
@@ -289,7 +288,7 @@ export const EventEditDialog = ({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <form
             id="event-edit-form"
             onSubmit={handleSubmit(onSubmit)}
@@ -757,7 +756,7 @@ export const EventEditDialog = ({
               </Collapsible>
             </div>
           </form>
-        </ScrollArea>
+        </div>
 
         <div className="px-5 py-3 border-t bg-muted/30 shrink-0 flex gap-2">
           <Button
