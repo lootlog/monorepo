@@ -187,6 +187,7 @@ export class EventKillService {
       heroId: hero.id,
       npcId: hero.npcId,
       npcName: hero.npcName,
+      npcLvl: hero.npcLvl,
       killCount: hero.kills.length,
     }));
   }
@@ -202,6 +203,7 @@ export class EventKillService {
     npcIcon: string,
     timerData: KillTimerData,
     isManualClose = false,
+    npcLvl?: number,
   ): Promise<void> {
     const result = await this.findActiveEventHeroByNpc(
       guildId,
@@ -217,13 +219,18 @@ export class EventKillService {
     let { eventHero } = result;
     const { event } = result;
 
-    // Update hero's npcId and npcIcon if missing
-    if (eventHero.npcId === null || eventHero.npcIcon === null) {
+    // Update hero's npcId, npcIcon, and npcLvl if missing
+    if (
+      eventHero.npcId === null ||
+      eventHero.npcIcon === null ||
+      eventHero.npcLvl === null
+    ) {
       eventHero = await this.prisma.eventHeroNpc.update({
         where: { id: eventHero.id },
         data: {
           ...(eventHero.npcId === null && { npcId }),
           ...(eventHero.npcIcon === null && { npcIcon }),
+          ...(eventHero.npcLvl === null && npcLvl !== undefined && { npcLvl }),
         },
       });
       this.logger.log({
@@ -231,6 +238,7 @@ export class EventKillService {
         heroId: eventHero.id,
         npcId: eventHero.npcId,
         npcIcon: eventHero.npcIcon,
+        npcLvl: eventHero.npcLvl,
       });
     }
 

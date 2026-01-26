@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -17,9 +18,11 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { Permission } from 'generated/client';
+import { Permission, type Role } from 'generated/client';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { GuildMember } from 'src/shared/decorators/member.decorator';
+import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
+import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -98,11 +101,18 @@ export class EventsController {
     @GuildData() guildData: { id: string },
     @Query('world') world?: string,
     @Query('activeOnly') activeOnly?: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
-    return this.eventsService.getEvents(
+    const events = await this.eventsService.getEvents(
       guildData.id,
       world,
       activeOnly !== 'false',
+    );
+    return this.eventsService.filterEventsHeroesByLevel(
+      events,
+      roles,
+      permissions,
     );
   }
 
@@ -123,8 +133,15 @@ export class EventsController {
   async getEvent(
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
-    return this.eventsService.getEvent(guildData.id, eventId);
+    const event = await this.eventsService.getEvent(guildData.id, eventId);
+    return this.eventsService.filterEventHeroesByLevel(
+      event,
+      roles,
+      permissions,
+    );
   }
 
   @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
@@ -219,7 +236,22 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
     @GuildMember() member: { id: number },
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    // Validate that the map's hero is accessible to the user
+    const map = await this.eventsService.getMapWithHeroAccessCheck(
+      guildData.id,
+      eventId,
+      mapId,
+      roles,
+      permissions,
+    );
+    if (!map) {
+      throw new ForbiddenException(
+        'You cannot assign yourself to this hero due to level restrictions',
+      );
+    }
     return this.eventsService.assignMemberToMap(
       guildData.id,
       eventId,
@@ -248,7 +280,22 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
     @GuildMember() member: { id: number },
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    // Validate that the map's hero is accessible to the user
+    const map = await this.eventsService.getMapWithHeroAccessCheck(
+      guildData.id,
+      eventId,
+      mapId,
+      roles,
+      permissions,
+    );
+    if (!map) {
+      throw new ForbiddenException(
+        'You cannot unassign yourself from this hero due to level restrictions',
+      );
+    }
     return this.eventsService.unassignMemberFromMap(
       guildData.id,
       eventId,
@@ -390,7 +437,16 @@ export class EventsController {
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getLocations(guildData.id, eventId, heroId);
   }
 
@@ -688,8 +744,24 @@ export class EventsController {
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Query('world') world: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
-    return this.eventsService.getEventHeroTimers(guildData.id, eventId, world);
+    const timers = await this.eventsService.getEventHeroTimers(
+      guildData.id,
+      eventId,
+      world,
+    );
+    // Filter timers by hero visibility (using npc.lvl from timer data)
+    return timers.filter((timer) => {
+      const npc = timer.npc as { lvl?: number } | null;
+      const npcLvl = npc?.lvl ?? null;
+      return this.eventsService.isHeroVisibleToUser(
+        { npcLvl },
+        roles,
+        permissions,
+      );
+    });
   }
 
   @Permissions(Permission.LOOTLOG_EVENTS_READ)
@@ -709,8 +781,20 @@ export class EventsController {
   async getEventHeroStats(
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
-    return this.eventsService.getEventHeroStats(guildData.id, eventId);
+    const stats = await this.eventsService.getEventHeroStats(
+      guildData.id,
+      eventId,
+    );
+    return stats.filter((stat) =>
+      this.eventsService.isHeroVisibleToUser(
+        { npcLvl: stat.npcLvl },
+        roles,
+        permissions,
+      ),
+    );
   }
 
   @Permissions(Permission.LOOTLOG_EVENTS_READ)
@@ -749,14 +833,39 @@ export class EventsController {
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
     @Query('heroId') heroId?: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
-    return this.eventsService.getEventKillHistory(
+    // If heroId is provided, validate access first
+    if (heroId) {
+      await this.eventsService.getHeroWithAccessCheck(
+        guildData.id,
+        eventId,
+        heroId,
+        roles,
+        permissions,
+      );
+    }
+
+    const result = await this.eventsService.getEventKillHistory(
       guildData.id,
       eventId,
       limit ? parseInt(limit, 10) : 20,
       cursor,
       heroId,
     );
+
+    // Filter kills by visible heroes
+    return {
+      ...result,
+      data: result.data.filter((kill) =>
+        this.eventsService.isHeroVisibleToUser(
+          { npcLvl: kill.heroNpc.npcLvl },
+          roles,
+          permissions,
+        ),
+      ),
+    };
   }
 
   @Permissions(Permission.LOOTLOG_EVENTS_READ)
@@ -791,7 +900,16 @@ export class EventsController {
     @Param('heroId') heroId: string,
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getHeroKillHistory(
       guildData.id,
       eventId,
@@ -824,7 +942,16 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('killId') killId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getKillDetail(
       guildData.id,
       eventId,
@@ -891,7 +1018,16 @@ export class EventsController {
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('killId') killId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getKillTimelineData(
       guildData.id,
       eventId,
@@ -919,7 +1055,16 @@ export class EventsController {
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getHeroCoverageGaps(
       guildData.id,
       eventId,
@@ -992,7 +1137,16 @@ export class EventsController {
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getActiveGapsForHero(
       guildData.id,
       eventId,
@@ -1020,7 +1174,16 @@ export class EventsController {
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getHeroPresenceStats(
       guildData.id,
       eventId,
@@ -1048,7 +1211,16 @@ export class EventsController {
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
+    await this.eventsService.getHeroWithAccessCheck(
+      guildData.id,
+      eventId,
+      heroId,
+      roles,
+      permissions,
+    );
     return this.eventsService.getHeroRespawnConfig(
       guildData.id,
       eventId,
