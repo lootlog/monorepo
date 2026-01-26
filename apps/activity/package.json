@@ -34,7 +34,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/platform-fastify": "^11.1.8",
+    "@nestjs/platform-fastify": "^11.1.10",
     "@nestjs/swagger": "^11.2.1",
     "@nestjs/terminus": "^11.0.0",
     "@prisma/adapter-pg": "^7.0.1",
