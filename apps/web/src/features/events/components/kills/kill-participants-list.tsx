@@ -114,7 +114,7 @@ export const KillParticipantsList = ({
               {participant.member.name}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {participant.mapName}
+              s{participant.mapName}
             </p>
           </div>
 

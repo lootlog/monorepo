@@ -18,6 +18,7 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { PlayerTile } from "@/components/tiles";
 import { useLocalCoverageTimer } from "../../hooks/utils/use-local-coverage-timer";
+import { useAssignmentCountdown } from "../../hooks/utils/use-assignment-countdown";
 import type { EventMap } from "../../hooks/queries/use-events";
 import type { PlayerPresence } from "../../hooks/socket/use-event-presence";
 import type { WindowStatus } from "../../hooks/queries/use-hero-respawn-config";
@@ -129,23 +130,6 @@ interface MapCardProps {
   activeGap?: CoverageGap | null;
 }
 
-const formatTimeRemaining = (targetDate: Date): string => {
-  const now = new Date();
-  const diff = targetDate.getTime() - now.getTime();
-  if (diff <= 0) return "0:00";
-
-  const minutes = Math.floor(diff / 60000);
-  const seconds = Math.floor((diff % 60000) / 1000);
-
-  if (minutes >= 60) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  }
-
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-};
-
 export const MapCard = ({
   map,
   status,
@@ -178,6 +162,9 @@ export const MapCard = ({
     status,
     initialStartedAt,
   );
+
+  const { isEnabled: isAssignmentEnabled, formattedTime: countdownTime } =
+    useAssignmentCountdown(assignmentDisabled, assignmentEnabledAt);
 
   const effectiveStyle = windowStatus === "OPEN" ? style : WINDOW_CLOSED_STYLE;
 
@@ -318,17 +305,17 @@ export const MapCard = ({
                     size="sm"
                     className="h-7 w-7 p-0"
                     onClick={() => onManageClick?.(map.id)}
-                    disabled={assignmentDisabled}
+                    disabled={!isAssignmentEnabled}
                   >
                     <Users className="w-3.5 h-3.5" />
                   </Button>
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {assignmentDisabled
-                  ? assignmentEnabledAt
+                {!isAssignmentEnabled
+                  ? countdownTime
                     ? t("events.maps.assignmentDisabledWithTime", {
-                        time: formatTimeRemaining(assignmentEnabledAt),
+                        time: countdownTime,
                       })
                     : t("events.maps.assignmentDisabled")
                   : t("events.maps.manage", "Zarządzaj")}
@@ -355,25 +342,23 @@ export const MapCard = ({
                     size="sm"
                     className={cn(
                       "h-7 p-0 gap-1",
-                      assignmentDisabled ? "w-auto px-1.5" : "w-7",
+                      !isAssignmentEnabled ? "w-auto px-1.5" : "w-7",
                     )}
                     onClick={() => onSelfAssignClick?.(map.id)}
-                    disabled={assignmentDisabled}
+                    disabled={!isAssignmentEnabled}
                   >
                     <UserPlus className="w-3.5 h-3.5" />
-                    {assignmentDisabled && assignmentEnabledAt && (
-                      <span className="text-xs font-mono">
-                        {formatTimeRemaining(assignmentEnabledAt)}
-                      </span>
+                    {!isAssignmentEnabled && countdownTime && (
+                      <span className="text-xs font-mono">{countdownTime}</span>
                     )}
                   </Button>
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {assignmentDisabled
-                  ? assignmentEnabledAt
+                {!isAssignmentEnabled
+                  ? countdownTime
                     ? t("events.maps.assignmentDisabledWithTime", {
-                        time: formatTimeRemaining(assignmentEnabledAt),
+                        time: countdownTime,
                       })
                     : t("events.maps.assignmentDisabled")
                   : t("events.maps.assignSelf")}

@@ -20,6 +20,7 @@ import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { MapTemplatesService } from './map-templates.service';
 import { CreateMapTemplateDto } from './dto/create-map-template.dto';
+import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 
 @ApiTags('map-templates')
 @ApiBearerAuth()
@@ -40,8 +41,8 @@ export class MapTemplatesController {
     status: 200,
     description: 'List of map templates',
   })
-  async getTemplates(@Param('guildId') guildId: string) {
-    return this.mapTemplatesService.getTemplates(guildId);
+  async getTemplates(@GuildData() guildData: { id: string }) {
+    return this.mapTemplatesService.getTemplates(guildData.id);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -57,10 +58,10 @@ export class MapTemplatesController {
     description: 'Template created successfully',
   })
   async createTemplate(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Body() data: CreateMapTemplateDto,
   ) {
-    return this.mapTemplatesService.createTemplate(guildId, data);
+    return this.mapTemplatesService.createTemplate(guildData.id, data);
   }
 
   @Permissions(Permission.LOOTLOG_MANAGE)
@@ -77,9 +78,9 @@ export class MapTemplatesController {
     description: 'Template deleted successfully',
   })
   async deleteTemplate(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('templateId') templateId: string,
   ) {
-    return this.mapTemplatesService.deleteTemplate(guildId, templateId);
+    return this.mapTemplatesService.deleteTemplate(guildData.id, templateId);
   }
 }

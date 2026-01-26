@@ -209,6 +209,7 @@ export class TimersService implements OnModuleInit {
         latestRespawnRandomness: respawnRandomness,
         wasReset: false,
         npc: npcData,
+        windowOpenedAt: new Date(),
         member: { connect: { memberId: { userId: discordId, guildId } } },
       };
 

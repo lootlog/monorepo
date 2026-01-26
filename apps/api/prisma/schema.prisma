@@ -60,6 +60,10 @@ enum Permission {
   LOOTLOG_NOTIFICATIONS_SEND
   LOOTLOG_NOTIFICATIONS_TITANS_READ
   LOOTLOG_NOTIFICATIONS_HEROES_READ
+  // Events
+  LOOTLOG_EVENTS_MANAGE
+  LOOTLOG_EVENTS_READ
+  LOOTLOG_EVENTS_WRITE
 }
 
 enum MemberType {
@@ -669,6 +673,7 @@ model EventKillPoint {
   timeOnMapSeconds        Int
   afkPercentage           Float
   wasPresent              Boolean
+  mapPresenceData         Json? // Per-map presence data: [{mapId, mapName, presenceTimeSeconds, afkTimeSeconds}]
   createdAt               DateTime @default(now())
 
   kill   EventHeroKill @relation(fields: [killId], references: [id], onDelete: Cascade)

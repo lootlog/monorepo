@@ -48,6 +48,7 @@ import { MemberBadge } from "./components/shared/member-badge";
 import { getMapStatus } from "./components/maps/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -76,6 +77,7 @@ const getWindowStatusConfig = (
 export const HeroDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId } = useParams({ strict: false });
+  const { data: guild } = useGuild();
   const [mapManageOpen, setMapManageOpen] = useState(false);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
@@ -106,9 +108,9 @@ export const HeroDetail = () => {
     eventId: eventId ?? "",
   });
 
-  const { presenceData } = useEventPresence({ guildId });
+  const { presenceData } = useEventPresence({ guildId: guild?.id });
 
-  useEventSocket({ eventId, guildId, heroId });
+  useEventSocket({ eventId, guildId: guild?.id, heroId });
 
   const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
 
@@ -158,16 +160,12 @@ export const HeroDetail = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">
-          {t("events.heroes.notFound")}
-        </p>
+        <p className="text-muted-foreground">{t("events.heroes.notFound")}</p>
         <Link
           to="/$guildId/events/$eventId"
           params={{ guildId: guildId ?? "", eventId: eventId ?? "" }}
         >
-          <Button variant="outline">
-            {t("events.common.backToEvent")}
-          </Button>
+          <Button variant="outline">{t("events.common.backToEvent")}</Button>
         </Link>
       </div>
     );

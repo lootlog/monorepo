@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { formatDurationPadded } from "../../utils";
 
 export type CoverageGapType = "UNASSIGNED" | "UNCOVERED";
 
@@ -8,11 +9,15 @@ export type MapStatus =
   | "ASSIGNED_AFK"
   | "UNASSIGNED";
 
-export const formatDuration = (seconds: number): string => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+/**
+ * Determine gap type from map status
+ */
+export const getGapTypeFromStatus = (
+  status: MapStatus,
+): CoverageGapType | null => {
+  if (status === "ASSIGNED_PRESENT") return null;
+  if (status === "UNASSIGNED") return "UNASSIGNED";
+  return "UNCOVERED";
 };
 
 export const useLocalCoverageTimer = (
@@ -25,11 +30,10 @@ export const useLocalCoverageTimer = (
   const initializedRef = useRef(false);
   const usedBackendValueRef = useRef(false);
 
-  const gapType = useMemo((): CoverageGapType | null => {
-    if (status === "ASSIGNED_PRESENT") return null;
-    if (status === "UNASSIGNED") return "UNASSIGNED";
-    return "UNCOVERED";
-  }, [status]);
+  const gapType = useMemo(
+    () => getGapTypeFromStatus(status),
+    [status],
+  );
 
   useEffect(() => {
     const prevGapType = prevGapTypeRef.current;
@@ -75,6 +79,6 @@ export const useLocalCoverageTimer = (
   return {
     gapType,
     elapsedSeconds,
-    formattedDuration: gapType ? formatDuration(elapsedSeconds) : null,
+    formattedDuration: gapType ? formatDurationPadded(elapsedSeconds) : null,
   };
 };

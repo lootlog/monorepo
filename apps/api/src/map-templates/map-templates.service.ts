@@ -14,6 +14,7 @@ export class MapTemplatesService {
   }
 
   async createTemplate(guildId: string, data: CreateMapTemplateDto) {
+    console.log(data);
     return this.prisma.mapTemplate.create({
       data: {
         guildId,
