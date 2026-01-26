@@ -28,9 +28,9 @@ export class MapsService {
     }
 
     // Fetch from external API
-    const apiUrl = this.configService.get<string>('GIGABOT_MAPS_API_URL');
+    const apiUrl = this.configService.get<string>('MAPS_API_URL');
     if (!apiUrl) {
-      this.logger.error('GIGABOT_MAPS_API_URL is not configured');
+      this.logger.error('MAPS_API_URL is not configured');
       return [];
     }
 

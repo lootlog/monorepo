@@ -38,7 +38,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     OTEL_NODE_RESOURCE_DETECTORS: Joi.string().default('env,host,os,process'),
     OTEL_TRACES_EXPORTER: Joi.string().default('otlp'),
     SERVICE_NAMESPACE: Joi.string().default('local'),
-    GIGABOT_MAPS_API_URL: Joi.string().uri().required(),
+    MAPS_API_URL: Joi.string().uri().required(),
   }),
   validationOptions: {
     allowUnknown: true,
