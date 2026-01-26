@@ -54,7 +54,6 @@ export interface CheckEventHeroKillParams {
   timerData: KillTimerData;
 }
 
-// Re-export types for external consumers
 export type { MapStatus, CloseRespawnWindowOptions, OpenRespawnWindowOptions };
 export type { KillTimerData };
 
@@ -242,7 +241,6 @@ export class EventsService {
       ...updateData
     } = data;
 
-    // Calculate new dates (use existing if not provided)
     const newStartDate =
       startsAt !== undefined
         ? startsAt
@@ -252,19 +250,15 @@ export class EventsService {
     const newEndDate =
       endsAt !== undefined ? (endsAt ? new Date(endsAt) : null) : event.endsAt;
 
-    // Validate endsAt > startsAt
     if (newEndDate && newStartDate && newEndDate <= newStartDate) {
       throw new BadRequestException('End date must be after start date');
     }
 
-    // Recalculate active based on date range
     const now = new Date();
     const newActive =
       newStartDate && newStartDate <= now && (!newEndDate || newEndDate > now);
 
-    // Update event and optionally recreate heroes/maps
     const updated = await this.prisma.$transaction(async (tx) => {
-      // Delete existing heroNpcs (and their maps via cascade) if new ones are provided
       if (heroNpcs) {
         await tx.eventHeroNpc.deleteMany({ where: { eventId } });
       }
@@ -335,7 +329,6 @@ export class EventsService {
       });
     });
 
-    // Check if any multiplier configuration changed
     const multipliersChanged =
       this.hasJsonChanged(timeOfDayMultipliers, event.timeOfDayMultipliers) ||
       this.hasJsonChanged(trackersMultipliers, event.trackersMultipliers) ||
@@ -349,7 +342,6 @@ export class EventsService {
       basePointsPerKill !== undefined &&
       basePointsPerKill !== event.basePointsPerKill;
 
-    // Recalculate points if basePointsPerKill or any multiplier changed
     if (basePointsChanged || multipliersChanged) {
       await this.pointsService.recalculateEventPointsWithMultipliers(eventId, {
         basePointsPerKill: basePointsPerKill ?? event.basePointsPerKill,
@@ -395,10 +387,6 @@ export class EventsService {
     return { success: true };
   }
 
-  /**
-   * Compare two JSON values for deep equality.
-   * Returns true if the new value is defined and different from the old value.
-   */
   private hasJsonChanged(
     newValue: unknown,
     oldValue: unknown,
@@ -590,7 +578,6 @@ export class EventsService {
       throw new NotFoundException('Hero not found');
     }
 
-    // Check if map already exists for this hero
     const existingMap = await this.prisma.eventMap.findFirst({
       where: {
         heroNpcId: heroId,
@@ -613,7 +600,6 @@ export class EventsService {
       },
     });
 
-    // Open UNASSIGNED gap for new map (no members assigned yet)
     await this.openUnassignedGap(map.id, heroId);
 
     return map;
@@ -647,8 +633,6 @@ export class EventsService {
     return { success: true };
   }
 
-  // ========== LOCATION MANAGEMENT ==========
-
   async createLocation(
     guildId: string,
     eventId: string,
@@ -667,7 +651,6 @@ export class EventsService {
       throw new NotFoundException('Hero not found');
     }
 
-    // Check if location with this name already exists
     const existingLocation = await this.prisma.eventMapLocation.findFirst({
       where: {
         heroNpcId: heroId,
@@ -679,7 +662,6 @@ export class EventsService {
       throw new BadRequestException('Location with this name already exists');
     }
 
-    // Get max order for this hero
     const maxOrderResult = await this.prisma.eventMapLocation.aggregate({
       where: { heroNpcId: heroId },
       _max: { order: true },
@@ -726,7 +708,6 @@ export class EventsService {
       throw new NotFoundException('Location not found');
     }
 
-    // Check for duplicate name if name is being changed
     if (data.name && data.name !== location.name) {
       const existingLocation = await this.prisma.eventMapLocation.findFirst({
         where: {
@@ -779,7 +760,6 @@ export class EventsService {
       throw new NotFoundException('Location not found');
     }
 
-    // Maps will have locationId set to null automatically (onDelete: SetNull)
     await this.prisma.eventMapLocation.delete({
       where: { id: locationId },
     });
@@ -805,7 +785,6 @@ export class EventsService {
       throw new NotFoundException('Hero not found');
     }
 
-    // Verify all locations belong to this hero
     const locations = await this.prisma.eventMapLocation.findMany({
       where: {
         heroNpcId: heroId,
@@ -819,7 +798,6 @@ export class EventsService {
       );
     }
 
-    // Update order in a transaction
     await this.prisma.$transaction(
       data.locationIds.map((locationId, index) =>
         this.prisma.eventMapLocation.update({
@@ -854,7 +832,6 @@ export class EventsService {
       throw new NotFoundException('Map not found');
     }
 
-    // If locationId is provided, verify it belongs to this hero
     if (locationId) {
       const location = await this.prisma.eventMapLocation.findFirst({
         where: {
@@ -908,53 +885,30 @@ export class EventsService {
     });
   }
 
-  // ========== COVERAGE GAP MANAGEMENT ==========
-
-  /**
-   * Open an UNASSIGNED gap when a map has no assigned members.
-   */
   async openUnassignedGap(mapId: string, heroNpcId: string): Promise<void> {
     return this.trackingService.openUnassignedGap(mapId, heroNpcId);
   }
 
-  /**
-   * Close an UNASSIGNED gap when a member is assigned to a map.
-   */
   async closeUnassignedGap(mapId: string): Promise<void> {
     return this.trackingService.closeUnassignedGap(mapId);
   }
 
-  /**
-   * Open an UNCOVERED gap when no players are present on a map.
-   */
   async openUncoveredGap(mapId: string, heroNpcId: string): Promise<void> {
     return this.trackingService.openUncoveredGap(mapId, heroNpcId);
   }
 
-  /**
-   * Close an UNCOVERED gap when a player arrives on the map.
-   */
   async closeUncoveredGap(mapId: string): Promise<void> {
     return this.trackingService.closeUncoveredGap(mapId);
   }
 
-  /**
-   * Close all open gaps for a hero when killed.
-   */
   async closeAllGapsForHero(heroNpcId: string): Promise<void> {
     return this.trackingService.closeAllGapsForHero(heroNpcId);
   }
 
-  /**
-   * Get coverage gaps for a specific map.
-   */
   async getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
     return this.trackingService.getMapCoverageGaps(guildId, eventId, mapId);
   }
 
-  /**
-   * Get coverage gaps for a hero (all maps).
-   */
   async getHeroCoverageGaps(
     guildId: string,
     eventId: string,
@@ -967,16 +921,10 @@ export class EventsService {
     );
   }
 
-  /**
-   * Get active (ongoing) gap for a map.
-   */
   async getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
     return this.trackingService.getActiveGapForMap(guildId, eventId, mapId);
   }
 
-  /**
-   * Get all active (ongoing) gaps for a hero.
-   */
   async getActiveGapsForHero(
     guildId: string,
     eventId: string,
@@ -989,10 +937,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Handle player presence change from gateway.
-   * Creates presence logs and manages coverage gaps.
-   */
   async handlePlayerPresenceChange(
     guildId: string,
     mapName: string,
@@ -1009,10 +953,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Get presence statistics for a hero.
-   * Validates that the hero belongs to the specified guild and event.
-   */
   async getHeroPresenceStats(
     guildId: string,
     eventId: string,
@@ -1033,11 +973,6 @@ export class EventsService {
     return this.killService.getEventHeroStats(guildId, eventId);
   }
 
-  // ========== KILL DETECTION & POINT CALCULATION ==========
-
-  /**
-   * Check if NPC is an event hero and record a kill if so.
-   */
   async checkAndRecordEventHeroKill(
     params: CheckEventHeroKillParams,
   ): Promise<void> {
@@ -1053,9 +988,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Find an active event hero by NPC ID or name.
-   */
   async findActiveEventHeroByNpc(
     guildId: string,
     world: string,
@@ -1070,9 +1002,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Record a hero kill and calculate points for all assigned members.
-   */
   async recordHeroKill(
     guildId: string,
     eventHero: EventHeroNpc,
@@ -1087,9 +1016,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Calculate points with all multipliers applied.
-   */
   calculateMemberPoints(
     event: Event,
     killTime: Date,
@@ -1104,9 +1030,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Recalculate all points for an event when basePointsPerKill changes.
-   */
   async recalculateEventPoints(
     eventId: string,
     newBasePoints: number,
@@ -1114,9 +1037,6 @@ export class EventsService {
     return this.pointsService.recalculateEventPoints(eventId, newBasePoints);
   }
 
-  /**
-   * Get presence statistics for a member on hero maps.
-   */
   async getMemberPresenceStats(
     heroNpcId: string,
     memberId: number,
@@ -1129,9 +1049,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Update event rankings after a kill.
-   */
   async updateRankingAfterKill(
     eventId: string,
     heroNpcName: string,
@@ -1144,11 +1061,6 @@ export class EventsService {
     );
   }
 
-  // ========== MANUAL POINTS EDITING ==========
-
-  /**
-   * Update a kill point's points value and recalculate the ranking.
-   */
   async updateKillPoint(
     guildId: string,
     eventId: string,
@@ -1167,9 +1079,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Update a ranking's total points directly.
-   */
   async updateRankingPoints(
     guildId: string,
     eventId: string,
@@ -1186,9 +1095,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Get edit history for a ranking.
-   */
   async getRankingEditHistory(
     guildId: string,
     eventId: string,
@@ -1201,11 +1107,6 @@ export class EventsService {
     );
   }
 
-  // ========== KILL HISTORY ==========
-
-  /**
-   * Get kill history for a specific hero with pagination.
-   */
   async getHeroKillHistory(
     guildId: string,
     eventId: string,
@@ -1222,9 +1123,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Get kill history for an entire event with pagination.
-   */
   async getEventKillHistory(
     guildId: string,
     eventId: string,
@@ -1241,9 +1139,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Get detailed information about a specific kill.
-   */
   async getKillDetail(
     guildId: string,
     eventId: string,
@@ -1253,9 +1148,6 @@ export class EventsService {
     return this.killService.getKillDetail(guildId, eventId, heroId, killId);
   }
 
-  /**
-   * Get timeline data for maps during a kill event (assignments and coverage gaps).
-   */
   async getKillTimelineData(
     guildId: string,
     eventId: string,
@@ -1270,11 +1162,6 @@ export class EventsService {
     );
   }
 
-  // ========== RESPAWN WINDOW MANAGEMENT ==========
-
-  /**
-   * Close a respawn window for an event hero.
-   */
   async closeRespawnWindow(
     guildId: string,
     eventId: string,
@@ -1289,9 +1176,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Open a new respawn window for an event hero.
-   */
   async openRespawnWindow(
     guildId: string,
     eventId: string,
@@ -1306,9 +1190,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Get hero's default respawn configuration for frontend display.
-   */
   async getHeroRespawnConfig(
     guildId: string,
     eventId: string,
@@ -1322,12 +1203,6 @@ export class EventsService {
     return this.respawnService.getHeroRespawnConfig(guildId, eventId, heroId);
   }
 
-  // ========== MONITORING ==========
-
-  /**
-   * Get status of auto-close jobs for a specific event.
-   * Returns pending, delayed, and failed job counts with details.
-   */
   async getAutoCloseJobsStatus(
     guildId: string,
     eventId: string,
@@ -1342,7 +1217,6 @@ export class EventsService {
       jobs: { jobId: string; heroId: string; failedReason: string }[];
     };
   }> {
-    // Verify event belongs to guild
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
@@ -1352,7 +1226,6 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
-    // Get hero IDs for this event
     const heroes = await this.prisma.eventHeroNpc.findMany({
       where: { eventId },
       select: { id: true },
@@ -1360,14 +1233,12 @@ export class EventsService {
 
     const heroIds = new Set(heroes.map((h) => h.id));
 
-    // Get jobs from queue
     const [pendingJobs, delayedJobs, failedJobs] = await Promise.all([
       this.respawnWindowQueue.getJobs(['waiting', 'active']),
       this.respawnWindowQueue.getJobs(['delayed']),
       this.respawnWindowQueue.getJobs(['failed']),
     ]);
 
-    // Filter jobs for this event's heroes
     const filterJobsForEvent = (jobs: typeof pendingJobs) =>
       jobs.filter((job) => heroIds.has(job.data.heroId));
 
@@ -1402,10 +1273,6 @@ export class EventsService {
     };
   }
 
-  /**
-   * Get overall queue health status.
-   * Returns queue readiness and job counts for monitoring.
-   */
   async getQueueHealth(
     guildId: string,
     eventId: string,
@@ -1422,7 +1289,6 @@ export class EventsService {
     };
     workers: number;
   }> {
-    // Verify event belongs to guild
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId },
       select: { id: true },
@@ -1432,7 +1298,6 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
-    // Get queue status
     const [jobCounts, isPaused, workers] = await Promise.all([
       this.respawnWindowQueue.getJobCounts(),
       this.respawnWindowQueue.isPaused(),
@@ -1454,12 +1319,6 @@ export class EventsService {
     };
   }
 
-  // ========== HERO LEVEL FILTERING ==========
-
-  /**
-   * Filter heroes in an event by user's level range permissions.
-   * Returns filtered heroNpcs array.
-   */
   filterEventHeroesByLevel<
     T extends { heroNpcs: Array<{ npcLvl: number | null }> },
   >(event: T, roles: Role[], permissions: Permission[]): T {
@@ -1469,9 +1328,6 @@ export class EventsService {
     };
   }
 
-  /**
-   * Filter heroes in multiple events by user's level range permissions.
-   */
   filterEventsHeroesByLevel<
     T extends { heroNpcs: Array<{ npcLvl: number | null }> },
   >(events: T[], roles: Role[], permissions: Permission[]): T[] {
@@ -1480,9 +1336,6 @@ export class EventsService {
     );
   }
 
-  /**
-   * Check if a hero is visible to the user based on level restrictions.
-   */
   isHeroVisibleToUser(
     hero: { npcLvl: number | null },
     roles: Role[],
@@ -1491,10 +1344,6 @@ export class EventsService {
     return filterHeroesByLevel([hero], roles, permissions).length > 0;
   }
 
-  /**
-   * Get hero by ID and validate access.
-   * Throws NotFoundException if hero doesn't exist or user can't access it.
-   */
   async getHeroWithAccessCheck(
     guildId: string,
     eventId: string,
@@ -1521,10 +1370,6 @@ export class EventsService {
     return hero;
   }
 
-  /**
-   * Get map and validate that the associated hero is accessible to the user.
-   * Returns the map with hero data or throws.
-   */
   async getMapWithHeroAccessCheck(
     guildId: string,
     eventId: string,

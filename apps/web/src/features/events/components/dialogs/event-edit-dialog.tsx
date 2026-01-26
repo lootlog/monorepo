@@ -250,7 +250,6 @@ export const EventEditDialog = ({
   const handleAddTrackingDurationMultiplier = () => {
     const isFirst = trackingDurationMultipliers.length === 0;
     if (isFirst) {
-      // Add default config: <50% = 0.5x, >=50% = 1.0x
       setTrackingDurationMultipliers([
         { percentage: 0, multiplier: 0.5 },
         { percentage: 50, multiplier: 1.0 },
@@ -278,7 +277,6 @@ export const EventEditDialog = ({
     field: "percentage" | "multiplier",
     value: number,
   ) => {
-    // Clamp percentage to 0-100
     const clampedValue =
       field === "percentage" ? Math.min(100, Math.max(0, value)) : value;
     setTrackingDurationMultipliers((prev) =>

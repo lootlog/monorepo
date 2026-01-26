@@ -21,17 +21,10 @@ import { EventKillService } from './event-kill.service';
 import { EventTrackingService } from './event-tracking.service';
 import { EventSummaryService } from './event-summary.service';
 
-// Default respawn randomness when creating new timers
-const DEFAULT_RESP_RANDOMNESS = 20; // 20%
+const DEFAULT_RESP_RANDOMNESS = 20;
 
-// Buffer time before auto-closing respawn window after maxSpawnTime
-// This gives players time to defeat heroes that respawn exactly at max time
-const AUTO_CLOSE_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
+const AUTO_CLOSE_BUFFER_MS = 5 * 60 * 1000;
 
-/**
- * Generate synthetic negative npcId from heroId for heroes without real npcId.
- * Uses negative values to avoid collision with real Margonem NPC IDs.
- */
 function getSyntheticNpcId(heroId: string): number {
   let hash = 0;
   for (let i = 0; i < heroId.length; i++) {
@@ -41,10 +34,6 @@ function getSyntheticNpcId(heroId: string): number {
   return -Math.abs(hash || 1);
 }
 
-/**
- * Service responsible for respawn window lifecycle management.
- * Handles opening, closing, and scheduling respawn windows for event heroes.
- */
 @Injectable()
 export class EventRespawnService {
   private readonly logger = new Logger(EventRespawnService.name);
@@ -59,10 +48,6 @@ export class EventRespawnService {
     private readonly summaryService: EventSummaryService,
   ) {}
 
-  /**
-   * Close a respawn window for an event hero.
-   * Optionally creates a new respawn window.
-   */
   async closeRespawnWindow(
     guildId: string,
     eventId: string,
@@ -76,7 +61,6 @@ export class EventRespawnService {
       isAutoClose = false,
     } = options;
 
-    // Get hero with event info
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: { id: heroId, event: { id: eventId, guildId } },
       include: {
@@ -91,7 +75,6 @@ export class EventRespawnService {
       throw new NotFoundException('Hero not found');
     }
 
-    // Use real npcId if available, otherwise generate synthetic ID from heroId
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     this.logger.log({
@@ -104,7 +87,6 @@ export class EventRespawnService {
       createNewWindow,
     });
 
-    // 1. Fetch the timer before deleting (needed for recording kill)
     const timer = await this.prisma.timer.findUnique({
       where: {
         timerId: {
@@ -115,11 +97,6 @@ export class EventRespawnService {
       },
     });
 
-    // 2. Record hero "kill" for points calculation
-    // IMPORTANT: Must happen BEFORE clearing map assignments so we can calculate points
-    // for currently assigned members
-    // NOTE: We call recordHeroKill directly (not checkAndRecordEventHeroKill) because
-    // we already have the hero object and don't need to search for it by npcId
     if (timer) {
       try {
         await this.killService.recordHeroKill(
@@ -134,7 +111,7 @@ export class EventRespawnService {
             previousMaxSpawnTime: timer.maxSpawnTime,
             windowOpenedAt: timer.windowOpenedAt,
           },
-          !isAutoClose, // isManualClose
+          !isAutoClose,
         );
       } catch (err) {
         this.logger.error({
@@ -150,8 +127,6 @@ export class EventRespawnService {
       }
     }
 
-    // 3. Emit map status updates for real-time UI
-    // NOTE: recordHeroKill already clears assignments as part of its transaction
     for (const map of hero.maps) {
       if (map.assignedMembers.length > 0) {
         await this.eventEmitter.emitMapStatusUpdate(
@@ -163,9 +138,6 @@ export class EventRespawnService {
       }
     }
 
-    // 4. Coverage gaps are already closed by recordHeroKill
-
-    // 5. Delete the timer
     if (timer) {
       try {
         await this.prisma.timer.delete({
@@ -178,7 +150,6 @@ export class EventRespawnService {
           },
         });
       } catch (error) {
-        // Timer might have been deleted in the meantime, that's okay
         if (
           !(
             error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -190,13 +161,10 @@ export class EventRespawnService {
       }
     }
 
-    // 6. Cancel any scheduled auto-close job
     await this.cancelScheduledAutoClose(heroId);
 
-    // 7. Emit respawn window closed event
     await this.eventEmitter.emitRespawnWindowClosed(guildId, eventId, heroId);
 
-    // 8. Optionally create a new respawn window
     if (createNewWindow) {
       await this.openRespawnWindow(guildId, eventId, heroId, {
         minSpawnTime: newMinSpawnTime!,
@@ -205,16 +173,12 @@ export class EventRespawnService {
     }
   }
 
-  /**
-   * Open a new respawn window for an event hero.
-   */
   async openRespawnWindow(
     guildId: string,
     eventId: string,
     heroId: string,
     options: OpenRespawnWindowOptions,
   ): Promise<{ minSpawnTime: Date; maxSpawnTime: Date }> {
-    // Get hero with event info
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: { id: heroId, event: { id: eventId, guildId } },
       include: { event: true },
@@ -224,7 +188,6 @@ export class EventRespawnService {
       throw new NotFoundException('Hero not found');
     }
 
-    // Use real npcId if available, otherwise generate synthetic ID from heroId
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     const { minSpawnTime, maxSpawnTime } = options;
@@ -238,7 +201,6 @@ export class EventRespawnService {
       maxSpawnTime,
     });
 
-    // Get the first member from the guild to use as timer creator (system action)
     const firstMember = await this.prisma.member.findFirst({
       where: { guildId },
       select: { id: true },
@@ -248,9 +210,6 @@ export class EventRespawnService {
       throw new BadRequestException('No members found in guild');
     }
 
-    // Create or update the timer
-    // Mark as CUSTOM_MANUAL if using synthetic ID (no real npcId)
-    // This prevents findTimerNpcDataByName from using this timer's ID for new heroes
     const isUsingSyntheticId = hero.npcId === null;
     const npcData = {
       id: effectiveNpcId,
@@ -302,7 +261,6 @@ export class EventRespawnService {
       },
     });
 
-    // Schedule auto-close at maxSpawnTime
     await this.scheduleAutoClose(
       guildId,
       eventId,
@@ -312,8 +270,6 @@ export class EventRespawnService {
       maxSpawnTime,
     );
 
-    // Open coverage gaps for all hero maps
-    // When manually opening a respawn window, we assume no one is on any map yet
     const heroMaps = await this.prisma.eventMap.findMany({
       where: { heroNpcId: heroId },
       include: {
@@ -326,7 +282,6 @@ export class EventRespawnService {
 
     for (const map of heroMaps) {
       if (!map.assignedMembers || map.assignedMembers.length === 0) {
-        // No assigned members - open UNASSIGNED gap
         await this.trackingService.openUnassignedGap(
           map.id,
           heroId,
@@ -334,7 +289,6 @@ export class EventRespawnService {
         );
         unassignedCount++;
       } else {
-        // Has assigned members but no one on map yet - open UNCOVERED gap
         await this.trackingService.openUncoveredGap(
           map.id,
           heroId,
@@ -352,11 +306,8 @@ export class EventRespawnService {
       uncoveredCount,
     });
 
-    // Emit respawn window opened event
     await this.eventEmitter.emitRespawnWindowOpened(guildId, eventId, heroId);
 
-    // Trigger presence check for each map
-    // This will close UNCOVERED gaps if players are already on the maps
     for (const map of heroMaps) {
       await this.eventEmitter.emitMapStatusUpdate(
         guildId,
@@ -366,15 +317,11 @@ export class EventRespawnService {
       );
     }
 
-    // Emit timer update with full timer data (including member and npc)
     await this.eventEmitter.emitTimerUpdate(timer);
 
     return { minSpawnTime, maxSpawnTime };
   }
 
-  /**
-   * Get hero's respawn configuration for frontend display.
-   */
   async getHeroRespawnConfig(
     guildId: string,
     eventId: string,
@@ -394,12 +341,10 @@ export class EventRespawnService {
       throw new NotFoundException('Hero not found');
     }
 
-    // Use real npcId if available, otherwise generate synthetic ID from heroId
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     const now = new Date();
 
-    // Check for active timer
     const timer = await this.prisma.timer.findUnique({
       where: {
         timerId: {
@@ -410,10 +355,6 @@ export class EventRespawnService {
       },
     });
 
-    // Determine window status:
-    // OPEN - between min and max spawn time (mob can respawn any moment)
-    // WAITING - timer exists but before minSpawnTime (waiting for window to open)
-    // NONE - no timer or timer expired
     let windowStatus: 'OPEN' | 'WAITING' | 'NONE' = 'NONE';
     let hasActiveTimer = false;
 
@@ -427,7 +368,6 @@ export class EventRespawnService {
       } else if (now < minTime) {
         windowStatus = 'WAITING';
       }
-      // else: timer expired, windowStatus stays 'NONE'
     }
 
     return {
@@ -438,9 +378,6 @@ export class EventRespawnService {
     };
   }
 
-  /**
-   * Schedule an auto-close job for a respawn window.
-   */
   private async scheduleAutoClose(
     guildId: string,
     eventId: string,
@@ -483,11 +420,7 @@ export class EventRespawnService {
     });
   }
 
-  /**
-   * Cancel a scheduled auto-close job.
-   */
   private async cancelScheduledAutoClose(heroId: string): Promise<void> {
-    // Get all delayed jobs and find the one for this hero
     const delayedJobs = await this.respawnWindowQueue.getJobs(['delayed']);
 
     for (const job of delayedJobs) {
@@ -502,9 +435,6 @@ export class EventRespawnService {
     }
   }
 
-  /**
-   * Get job ID for auto-close job.
-   */
   private getAutoCloseJobId(heroId: string, maxSpawnTime: Date): string {
     return `respawn-close-${heroId}-${maxSpawnTime.getTime()}`;
   }

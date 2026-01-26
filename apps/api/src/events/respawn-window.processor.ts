@@ -54,10 +54,6 @@ export class RespawnWindowProcessor extends WorkerHost {
     }
   }
 
-  /**
-   * Handle failed jobs for monitoring and alerting.
-   * Failed jobs are logged with full context for debugging.
-   */
   @OnWorkerEvent('failed')
   onFailed(job: Job<AutoCloseRespawnWindowJobData>, error: Error): void {
     this.logger.log({

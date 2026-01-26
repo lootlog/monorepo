@@ -12,9 +12,6 @@ export interface TimelineSegment {
   endTime: Date;
 }
 
-/**
- * Calculate timeline segments for visualization from gaps data
- */
 export const calculateTimelineSegments = (
   startTime: Date,
   endTime: Date,

@@ -19,11 +19,6 @@ export class EventsQueueHandler {
 
   constructor(private readonly eventsService: EventsService) {}
 
-  /**
-   * Handle player presence change from gateway.
-   * Creates presence logs and manages coverage gaps.
-   * Routing key kept as PRESENCE_COVERAGE_CHECK for backwards compatibility.
-   */
   @RabbitSubscribe({
     exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RoutingKey.PRESENCE_COVERAGE_CHECK,

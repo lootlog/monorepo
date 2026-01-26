@@ -28,20 +28,12 @@ interface GapTimelineEntry {
   durationSeconds: number;
 }
 
-/**
- * Service responsible for creating respawn window summaries and cleaning up raw tracking data.
- * Called when a respawn window closes (either by kill or auto-close).
- */
 @Injectable()
 export class EventSummaryService {
   private readonly logger = new Logger(EventSummaryService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Create a summary of coverage tracking data for a respawn window.
-   * Aggregates all presence logs and coverage gaps, then deletes the raw data.
-   */
   async createWindowSummary(
     heroNpcId: string,
     killId: string | null,
@@ -51,7 +43,6 @@ export class EventSummaryService {
     maxSpawnTime: Date,
     wasManualClose: boolean,
   ): Promise<void> {
-    // 1. Get all maps for this hero
     const maps = await this.prisma.eventMap.findMany({
       where: { heroNpcId },
       select: { id: true, mapName: true, mapId: true },
@@ -68,16 +59,13 @@ export class EventSummaryService {
     const mapIds = maps.map((m) => m.id);
     const mapNameById = new Map(maps.map((m) => [m.id, m.mapName]));
 
-    // 2. Get presence logs from window period
     const presenceLogs = await this.prisma.eventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
         OR: [
-          // Logs that started during the window
           {
             startedAt: { gte: windowOpenedAt, lte: windowClosedAt },
           },
-          // Logs that were ongoing when window opened
           {
             startedAt: { lt: windowOpenedAt },
             OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
@@ -89,16 +77,13 @@ export class EventSummaryService {
       },
     });
 
-    // 3. Get coverage gaps from window period
     const gaps = await this.prisma.eventMapCoverageGap.findMany({
       where: {
         heroNpcId,
         OR: [
-          // Gaps that started during the window
           {
             startedAt: { gte: windowOpenedAt, lte: windowClosedAt },
           },
-          // Gaps that were ongoing when window opened
           {
             startedAt: { lt: windowOpenedAt },
             OR: [{ endedAt: null }, { endedAt: { gt: windowOpenedAt } }],
@@ -107,17 +92,14 @@ export class EventSummaryService {
       },
     });
 
-    // 4. Calculate statistics
     const totalWindowSeconds = Math.max(
       0,
       Math.round((windowClosedAt.getTime() - windowOpenedAt.getTime()) / 1000),
     );
 
-    // Calculate member stats
     const memberStatsMap = new Map<number, MemberStat>();
 
     for (const log of presenceLogs) {
-      // Clamp log times to window boundaries
       const logStart = new Date(
         Math.max(log.startedAt.getTime(), windowOpenedAt.getTime()),
       );
@@ -156,7 +138,6 @@ export class EventSummaryService {
       }
     }
 
-    // Calculate AFK percentages
     for (const stat of memberStatsMap.values()) {
       stat.afkPercentage =
         stat.timeSeconds > 0
@@ -168,7 +149,6 @@ export class EventSummaryService {
       (a, b) => b.timeSeconds - a.timeSeconds,
     );
 
-    // Calculate map stats and coverage
     const mapStatsMap = new Map<string, MapStat>();
     for (const map of maps) {
       mapStatsMap.set(map.id, {
@@ -179,7 +159,6 @@ export class EventSummaryService {
       });
     }
 
-    // Calculate coverage per map from non-AFK presence
     for (const log of presenceLogs) {
       if (log.isAfk) continue;
 
@@ -204,13 +183,11 @@ export class EventSummaryService {
       }
     }
 
-    // Calculate gaps
     let totalUncoveredSeconds = 0;
     let totalUnassignedSeconds = 0;
     const gapsTimeline: GapTimelineEntry[] = [];
 
     for (const gap of gaps) {
-      // Clamp gap times to window boundaries
       const gapStart = new Date(
         Math.max(gap.startedAt.getTime(), windowOpenedAt.getTime()),
       );
@@ -249,14 +226,12 @@ export class EventSummaryService {
 
     const mapStats: MapStat[] = Array.from(mapStatsMap.values());
 
-    // Calculate total coverage (sum of all non-AFK presence time, but capped at window duration per map)
-    // This is a simplified approach - for more accurate coverage, we'd need to merge overlapping presence logs
     const totalCoverageSeconds = Math.min(
       memberStats.reduce(
         (sum, m) => sum + (m.timeSeconds - m.afkSeconds),
         0,
       ),
-      totalWindowSeconds * maps.length, // Max possible coverage
+      totalWindowSeconds * maps.length,
     );
 
     const coveragePercentage =
@@ -264,7 +239,6 @@ export class EventSummaryService {
         ? Math.round((totalCoverageSeconds / totalWindowSeconds) * 10000) / 100
         : 0;
 
-    // 5. Create summary in a transaction
     await this.prisma.$transaction(async (tx) => {
       await tx.eventRespawnWindowSummary.create({
         data: {
@@ -286,7 +260,6 @@ export class EventSummaryService {
         },
       });
 
-      // 6. Delete raw data
       const deletedLogs = await tx.eventPresenceLog.deleteMany({
         where: {
           mapId: { in: mapIds },
@@ -322,9 +295,6 @@ export class EventSummaryService {
     });
   }
 
-  /**
-   * Get summaries for a hero.
-   */
   async getHeroWindowSummaries(
     guildId: string,
     eventId: string,

@@ -8,20 +8,12 @@ import type {
   TrackingDurationMultipliers,
 } from '../interfaces/time-multiplier.interface';
 
-/** Default multiplier value when no multiplier config is found or applicable */
 const DEFAULT_MULTIPLIER = 1.0;
 
-/**
- * Service responsible for points calculation, rankings, and presence statistics.
- * Handles all point-related business logic including multipliers and manual edits.
- */
 @Injectable()
 export class EventPointsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Get event rankings.
-   */
   async getRanking(guildId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId },
@@ -42,9 +34,6 @@ export class EventPointsService {
     });
   }
 
-  /**
-   * Calculate points with all multipliers applied.
-   */
   calculateMemberPoints(
     event: Event,
     killTime: Date,
@@ -61,7 +50,6 @@ export class EventPointsService {
   } {
     const basePoints = event.basePointsPerKill;
 
-    // Get multipliers
     const timeMultiplier = this.getTimeOfDayMultiplier(
       event.timeOfDayMultipliers as unknown as TimeOfDayMultiplier[] | null,
       killTime,
@@ -87,7 +75,6 @@ export class EventPointsService {
       trackersMultiplier *
       mapsMultiplier *
       trackingDurationMultiplier;
-    // Round to 2 decimal places to handle fractional points
     const points = Math.round(basePoints * appliedMultiplier * 100) / 100;
 
     return {
@@ -100,9 +87,6 @@ export class EventPointsService {
     };
   }
 
-  /**
-   * Get time-of-day multiplier based on kill time.
-   */
   private getTimeOfDayMultiplier(
     multipliers: TimeOfDayMultiplier[] | null,
     killTime: Date,
@@ -124,22 +108,14 @@ export class EventPointsService {
     return DEFAULT_MULTIPLIER;
   }
 
-  /**
-   * Check if time is within a range (handles overnight ranges).
-   */
   private isTimeInRange(time: string, from: string, to: string): boolean {
     if (from <= to) {
-      // Normal range (e.g., 06:00 to 18:00)
       return time >= from && time < to;
     } else {
-      // Overnight range (e.g., 22:00 to 06:00)
       return time >= from || time < to;
     }
   }
 
-  /**
-   * Get trackers multiplier based on number of assigned members.
-   */
   private getTrackersMultiplier(
     multipliers: TrackersMultipliers | null,
     assignedCount: number,
@@ -148,11 +124,10 @@ export class EventPointsService {
       return DEFAULT_MULTIPLIER;
     }
 
-    // Find the highest key <= assignedCount
     const sortedKeys = Object.keys(multipliers)
       .map(Number)
       .filter((k) => !isNaN(k))
-      .sort((a, b) => b - a); // Descending
+      .sort((a, b) => b - a);
 
     for (const key of sortedKeys) {
       if (assignedCount >= key) {
@@ -160,7 +135,6 @@ export class EventPointsService {
       }
     }
 
-    // If assignedCount is less than all keys, return highest multiplier
     if (sortedKeys.length > 0) {
       const minKey = sortedKeys[sortedKeys.length - 1];
       return multipliers[minKey.toString()] ?? DEFAULT_MULTIPLIER;
@@ -169,9 +143,6 @@ export class EventPointsService {
     return DEFAULT_MULTIPLIER;
   }
 
-  /**
-   * Get maps count multiplier.
-   */
   private getMapsCountMultiplier(
     multipliers: MapsCountMultipliers | null,
     mapCount: number,
@@ -180,11 +151,10 @@ export class EventPointsService {
       return DEFAULT_MULTIPLIER;
     }
 
-    // Find the highest key <= mapCount
     const sortedKeys = Object.keys(multipliers)
       .map(Number)
       .filter((k) => !isNaN(k))
-      .sort((a, b) => b - a); // Descending
+      .sort((a, b) => b - a);
 
     for (const key of sortedKeys) {
       if (mapCount >= key) {
@@ -195,24 +165,18 @@ export class EventPointsService {
     return DEFAULT_MULTIPLIER;
   }
 
-  /**
-   * Get tracking duration multiplier based on percentage of window time spent tracking.
-   * Uses threshold-based matching: finds the highest configured threshold <= actual percentage.
-   */
   private getTrackingDurationMultiplier(
     multipliers: TrackingDurationMultipliers | null,
     trackingPercentage?: number,
   ): number {
-    // If no multipliers configured or percentage unknown, return default
     if (!multipliers || trackingPercentage === undefined) {
       return DEFAULT_MULTIPLIER;
     }
 
-    // Find the highest threshold key <= trackingPercentage
     const sortedKeys = Object.keys(multipliers)
       .map(Number)
       .filter((k) => !isNaN(k) && k >= 0 && k <= 100)
-      .sort((a, b) => b - a); // Descending
+      .sort((a, b) => b - a);
 
     for (const key of sortedKeys) {
       if (trackingPercentage >= key) {
@@ -220,26 +184,18 @@ export class EventPointsService {
       }
     }
 
-    // If percentage is less than all thresholds, use the lowest threshold's multiplier
-    // or return 0 if that's the intent (configurable by setting lowest threshold appropriately)
     if (sortedKeys.length > 0) {
       const lowestKey = sortedKeys[sortedKeys.length - 1];
-      // If tracking percentage is below all thresholds, give lowest multiplier
       return multipliers[lowestKey.toString()] ?? DEFAULT_MULTIPLIER;
     }
 
     return DEFAULT_MULTIPLIER;
   }
 
-  /**
-   * Recalculate all points for an event when basePointsPerKill changes.
-   * Updates all EventKillPoint records and rebuilds EventRanking aggregations.
-   */
   async recalculateEventPoints(
     eventId: string,
     newBasePoints: number,
   ): Promise<void> {
-    // Get all EventKillPoint records for this event
     const killPoints = await this.prisma.eventKillPoint.findMany({
       where: {
         kill: {
@@ -261,10 +217,8 @@ export class EventPointsService {
       return;
     }
 
-    // Update all kill points with new base and recalculated final points
     await this.prisma.$transaction(async (tx) => {
       for (const killPoint of killPoints) {
-        // Round to 2 decimal places to handle fractional points
         const newPoints =
           Math.round(newBasePoints * killPoint.appliedMultiplier * 100) / 100;
         await tx.eventKillPoint.update({
@@ -276,12 +230,10 @@ export class EventPointsService {
         });
       }
 
-      // Delete all rankings for this event to rebuild
       await tx.eventRanking.deleteMany({
         where: { eventId },
       });
 
-      // Re-aggregate rankings from updated kill points
       const updatedKillPoints = await tx.eventKillPoint.findMany({
         where: {
           kill: {
@@ -299,7 +251,6 @@ export class EventPointsService {
         },
       });
 
-      // Group by member and heroNpcName
       const rankingMap = new Map<
         string,
         {
@@ -333,7 +284,6 @@ export class EventPointsService {
         }
       }
 
-      // Create new ranking records
       for (const ranking of rankingMap.values()) {
         await tx.eventRanking.create({
           data: {
@@ -351,11 +301,6 @@ export class EventPointsService {
     });
   }
 
-  /**
-   * Recalculate all points for an event when any multiplier configuration changes.
-   * Fetches kill context (killedAt, assignedMembersCount, heroMapCount) and recalculates
-   * each point using the provided event configuration.
-   */
   async recalculateEventPointsWithMultipliers(
     eventId: string,
     eventConfig: Pick<
@@ -367,7 +312,6 @@ export class EventPointsService {
       | 'trackingDurationMultipliers'
     >,
   ): Promise<void> {
-    // Get all EventKillPoint records with kill context
     const killPoints = await this.prisma.eventKillPoint.findMany({
       where: {
         kill: {
@@ -393,7 +337,6 @@ export class EventPointsService {
       return;
     }
 
-    // Group kill points by killId to calculate assignedMembersCount
     const killPointsByKillId = new Map<string, typeof killPoints>();
     for (const kp of killPoints) {
       const existing = killPointsByKillId.get(kp.killId);
@@ -404,14 +347,12 @@ export class EventPointsService {
       }
     }
 
-    // Calculate assignedMembersCount per kill (unique memberIds)
     const assignedMembersCountByKillId = new Map<string, number>();
     for (const [killId, points] of killPointsByKillId) {
       const uniqueMembers = new Set(points.map((p) => p.memberId));
       assignedMembersCountByKillId.set(killId, uniqueMembers.size);
     }
 
-    // Calculate heroMapCount per member per kill
     const heroMapCountByKillAndMember = new Map<string, number>();
     for (const [killId, points] of killPointsByKillId) {
       for (const memberId of new Set(points.map((p) => p.memberId))) {
@@ -421,7 +362,6 @@ export class EventPointsService {
       }
     }
 
-    // Create a mock event object for point calculation
     const mockEvent = {
       basePointsPerKill: eventConfig.basePointsPerKill,
       timeOfDayMultipliers: eventConfig.timeOfDayMultipliers,
@@ -431,7 +371,6 @@ export class EventPointsService {
     } as Event;
 
     await this.prisma.$transaction(async (tx) => {
-      // Update all kill points with recalculated multipliers
       for (const killPoint of killPoints) {
         const assignedMembersCount =
           assignedMembersCountByKillId.get(killPoint.killId) ?? 1;
@@ -469,12 +408,10 @@ export class EventPointsService {
         });
       }
 
-      // Delete all rankings for this event to rebuild
       await tx.eventRanking.deleteMany({
         where: { eventId },
       });
 
-      // Re-aggregate rankings from updated kill points
       const updatedKillPoints = await tx.eventKillPoint.findMany({
         where: {
           kill: {
@@ -492,7 +429,6 @@ export class EventPointsService {
         },
       });
 
-      // Group by member and heroNpcName
       const rankingMap = new Map<
         string,
         {
@@ -526,7 +462,6 @@ export class EventPointsService {
         }
       }
 
-      // Create new ranking records
       for (const ranking of rankingMap.values()) {
         await tx.eventRanking.create({
           data: {
@@ -544,9 +479,6 @@ export class EventPointsService {
     });
   }
 
-  /**
-   * Get presence statistics for a member on hero maps.
-   */
   async getMemberPresenceStats(
     heroNpcId: string,
     memberId: number,
@@ -573,16 +505,15 @@ export class EventPointsService {
 
     const mapIds = maps.map((m) => m.id);
 
-    // Get presence logs that overlap with the time window
     const logs = await this.prisma.eventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
         memberId,
         ...(since && {
           OR: [
-            { startedAt: { gte: since } }, // Started after since
-            { endedAt: { gte: since } }, // Ended after since (overlap)
-            { endedAt: null, startedAt: { lte: since } }, // Still ongoing, started before
+            { startedAt: { gte: since } },
+            { endedAt: { gte: since } },
+            { endedAt: null, startedAt: { lte: since } },
           ],
         }),
       },
@@ -604,7 +535,6 @@ export class EventPointsService {
     let lastMapName = '';
 
     for (const log of logs) {
-      // Only count time after 'since' if it's specified
       const effectiveStart =
         since && log.startedAt < since ? since : log.startedAt;
       const endTime = log.endedAt || now;
@@ -635,10 +565,6 @@ export class EventPointsService {
     };
   }
 
-  /**
-   * Get presence stats per individual map for a member.
-   * Returns an array with stats for each map the member was present on.
-   */
   async getMemberPresenceStatsPerMap(
     mapIds: string[],
     memberId: number,
@@ -654,17 +580,15 @@ export class EventPointsService {
       return [];
     }
 
-    // Get presence logs for this member on these maps
-    // Include logs that overlap with the time window (not just those that started after)
     const logs = await this.prisma.eventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
         memberId,
         ...(since && {
           OR: [
-            { startedAt: { gte: since } }, // Started after since
-            { endedAt: { gte: since } }, // Ended after since (overlap)
-            { endedAt: null, startedAt: { lte: since } }, // Still ongoing, started before
+            { startedAt: { gte: since } },
+            { endedAt: { gte: since } },
+            { endedAt: null, startedAt: { lte: since } },
           ],
         }),
       },
@@ -677,17 +601,14 @@ export class EventPointsService {
       { presenceTimeMs: number; afkTimeMs: number }
     >();
 
-    // Initialize all maps with zero values
     for (const mapId of mapIds) {
       mapStats.set(mapId, { presenceTimeMs: 0, afkTimeMs: 0 });
     }
 
-    // Aggregate stats per map
     for (const log of logs) {
       const stats = mapStats.get(log.mapId);
       if (!stats) continue;
 
-      // Only count time after 'since' if it's specified
       const effectiveStart =
         since && log.startedAt < since ? since : log.startedAt;
       const endTime = log.endedAt || now;
@@ -709,9 +630,6 @@ export class EventPointsService {
     }));
   }
 
-  /**
-   * Update event rankings after a kill.
-   */
   async updateRankingAfterKill(
     eventId: string,
     heroNpcName: string,
@@ -729,7 +647,6 @@ export class EventPointsService {
       });
 
       if (existing) {
-        // Calculate new average AFK
         const newTotalKills = existing.totalKills + 1;
         const newAvgAfk =
           (existing.avgAfkPercentage * existing.totalKills +
@@ -767,11 +684,6 @@ export class EventPointsService {
     }
   }
 
-  // ========== MANUAL POINTS EDITING ==========
-
-  /**
-   * Update a kill point's points value and recalculate the ranking.
-   */
   async updateKillPoint(
     guildId: string,
     eventId: string,
@@ -780,7 +692,6 @@ export class EventPointsService {
     newPoints: number,
     editedByUserId: string,
   ) {
-    // Verify the kill point exists and belongs to the correct event/guild
     const killPoint = await this.prisma.eventKillPoint.findFirst({
       where: {
         id: killPointId,
@@ -808,12 +719,10 @@ export class EventPointsService {
     const oldPoints = killPoint.points;
     const delta = newPoints - oldPoints;
 
-    // Update the kill point
     const updated = await this.prisma.eventKillPoint.update({
       where: { id: killPointId },
       data: {
         points: newPoints,
-        // Update basePoints proportionally if multiplier is non-zero (round to 2 decimal places)
         basePoints:
           killPoint.appliedMultiplier > 0
             ? Math.round((newPoints / killPoint.appliedMultiplier) * 100) / 100
@@ -821,9 +730,7 @@ export class EventPointsService {
       },
     });
 
-    // Update the ranking and create edit history if points changed
     if (delta !== 0) {
-      // Find the ranking to get its ID and old total points
       const ranking = await this.prisma.eventRanking.findFirst({
         where: {
           eventId,
@@ -833,7 +740,6 @@ export class EventPointsService {
       });
 
       if (ranking) {
-        // Update ranking
         await this.prisma.eventRanking.update({
           where: { id: ranking.id },
           data: {
@@ -842,7 +748,6 @@ export class EventPointsService {
           },
         });
 
-        // Create edit history
         await this.prisma.eventPointsEditHistory.create({
           data: {
             rankingId: ranking.id,
@@ -858,9 +763,6 @@ export class EventPointsService {
     return updated;
   }
 
-  /**
-   * Update a ranking's total points directly.
-   */
   async updateRankingPoints(
     guildId: string,
     eventId: string,
@@ -868,7 +770,6 @@ export class EventPointsService {
     newTotalPoints: number,
     editedByUserId: string,
   ) {
-    // Verify the ranking exists and belongs to the correct event/guild
     const ranking = await this.prisma.eventRanking.findFirst({
       where: {
         id: rankingId,
@@ -883,7 +784,6 @@ export class EventPointsService {
 
     const previousPoints = ranking.totalPoints;
 
-    // Create edit history
     await this.prisma.eventPointsEditHistory.create({
       data: {
         rankingId,
@@ -900,15 +800,11 @@ export class EventPointsService {
     });
   }
 
-  /**
-   * Get edit history for a ranking.
-   */
   async getRankingEditHistory(
     guildId: string,
     eventId: string,
     rankingId: string,
   ) {
-    // Verify the ranking exists and belongs to the correct event/guild
     const ranking = await this.prisma.eventRanking.findFirst({
       where: {
         id: rankingId,

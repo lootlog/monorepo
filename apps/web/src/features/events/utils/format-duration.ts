@@ -1,7 +1,3 @@
-/**
- * Format duration as padded HH:mm:ss (e.g., "00:05:30")
- * Used for timers and countdowns
- */
 export const formatDurationPadded = (seconds: number): string => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -9,10 +5,6 @@ export const formatDurationPadded = (seconds: number): string => {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 };
 
-/**
- * Format duration in human-readable format (e.g., "1h 30m 45s")
- * Used for displaying durations in UI
- */
 export const formatDurationHuman = (seconds: number): string => {
   if (seconds < 60) {
     return `${seconds}s`;
@@ -29,10 +21,6 @@ export const formatDurationHuman = (seconds: number): string => {
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 };
 
-/**
- * Format duration in compact format (e.g., "5:30" or "1h 30m")
- * Used for short countdowns, shows mm:ss for < 1h, otherwise "Xh Ym"
- */
 export const formatDurationCompact = (seconds: number): string => {
   if (seconds <= 0) return "0:00";
 
@@ -48,9 +36,6 @@ export const formatDurationCompact = (seconds: number): string => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 };
 
-/**
- * Format milliseconds to human-readable duration
- */
 export const formatDurationFromMs = (ms: number): string => {
   return formatDurationHuman(Math.floor(ms / 1000));
 };

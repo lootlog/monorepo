@@ -20,9 +20,6 @@ interface GapTimelineEntry {
   durationSeconds: number;
 }
 
-/**
- * Service responsible for kill detection, recording, and kill-related queries.
- */
 @Injectable()
 export class EventKillService {
   private readonly logger = new Logger(EventKillService.name);
@@ -37,9 +34,6 @@ export class EventKillService {
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
   ) {}
 
-  /**
-   * Get timers for event heroes.
-   */
   async getEventHeroTimers(guildId: string, eventId: string, world: string) {
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId },
@@ -66,7 +60,6 @@ export class EventKillService {
 
     const now = new Date();
 
-    // For heroes without ID, we need to match by name in the npc JSON
     if (npcNames.length > 0) {
       const nameMatchTimers = await this.prisma.$queryRaw<
         Array<{
@@ -116,7 +109,6 @@ export class EventKillService {
           }
         }
 
-        // Batch fetch members for name-matched timers to avoid N+1
         const nameMatchedTimersToAdd = nameMatchTimers.filter(
           (timer) => !seen.has(timer.npcId),
         );
@@ -136,7 +128,6 @@ export class EventKillService {
         return combined;
       }
 
-      // Batch fetch members for all name-matched timers to avoid N+1
       const memberIds = [...new Set(nameMatchTimers.map((t) => t.createdById))];
       const members = await this.prisma.member.findMany({
         where: { id: { in: memberIds } },
@@ -164,9 +155,6 @@ export class EventKillService {
     return timers;
   }
 
-  /**
-   * Get hero stats for an event.
-   */
   async getEventHeroStats(guildId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
       where: { id: eventId, guildId },
@@ -192,9 +180,6 @@ export class EventKillService {
     }));
   }
 
-  /**
-   * Check if NPC is an event hero and record a kill if so.
-   */
   async checkAndRecordEventHeroKill(
     guildId: string,
     world: string,
@@ -213,13 +198,12 @@ export class EventKillService {
     );
 
     if (!result) {
-      return; // Not an event hero
+      return;
     }
 
     let { eventHero } = result;
     const { event } = result;
 
-    // Update hero's npcId, npcIcon, and npcLvl if missing
     if (
       eventHero.npcId === null ||
       eventHero.npcIcon === null ||
@@ -263,9 +247,6 @@ export class EventKillService {
     }
   }
 
-  /**
-   * Find an active event hero by NPC ID or name.
-   */
   async findActiveEventHeroByNpc(
     guildId: string,
     world: string,
@@ -274,7 +255,6 @@ export class EventKillService {
   ): Promise<{ eventHero: EventHeroNpc; event: Event } | null> {
     const now = new Date();
 
-    // First try to match by npcId
     let heroNpc = await this.prisma.eventHeroNpc.findFirst({
       where: {
         npcId,
@@ -295,12 +275,11 @@ export class EventKillService {
       },
     });
 
-    // If not found by ID, try by name
     if (!heroNpc) {
       heroNpc = await this.prisma.eventHeroNpc.findFirst({
         where: {
           npcName,
-          npcId: null, // Only match by name for heroes without explicit npcId
+          npcId: null,
           event: {
             guildId,
             world,
@@ -329,9 +308,6 @@ export class EventKillService {
     };
   }
 
-  /**
-   * Record a hero kill and calculate points for all assigned members.
-   */
   async recordHeroKill(
     guildId: string,
     eventHero: EventHeroNpc,
@@ -341,7 +317,6 @@ export class EventKillService {
   ) {
     const killedAt = new Date();
 
-    // Get all maps for this hero with assigned members
     const heroMaps = await this.prisma.eventMap.findMany({
       where: { heroNpcId: eventHero.id },
       include: {
@@ -349,7 +324,6 @@ export class EventKillService {
       },
     });
 
-    // Collect unique assigned members and their map assignments
     const memberMapAssignments = new Map<number, string[]>();
     const memberMapIds = new Map<number, string[]>();
     const mapIdToName = new Map<string, string>();
@@ -377,7 +351,6 @@ export class EventKillService {
       });
     }
 
-    // Create kill record with points in a transaction
     const kill = await this.prisma.$transaction(async (tx) => {
       const heroKill = await tx.eventHeroKill.create({
         data: {
@@ -394,8 +367,8 @@ export class EventKillService {
         killId: string;
         memberId: number;
         mapName: string;
-        basePoints: number; // Float in DB
-        points: number; // Float in DB
+        basePoints: number;
+        points: number;
         appliedMultiplier: number;
         timeMultiplier: number;
         trackersMultiplier: number;
@@ -414,8 +387,6 @@ export class EventKillService {
         }>;
       }> = [];
 
-      // Get assignment history for tracking duration calculation
-      // Only get active (current window) assignments - filter by unassignedAt: null
       const mapIds = heroMaps.map((m) => m.id);
       const assignmentHistory = await tx.eventMapAssignmentHistory.findMany({
         where: {
@@ -429,7 +400,6 @@ export class EventKillService {
         },
       });
 
-      // Group by member to find earliest assignment
       const memberFirstAssignment = new Map<number, Date>();
       for (const history of assignmentHistory) {
         const current = memberFirstAssignment.get(history.memberId);
@@ -438,7 +408,6 @@ export class EventKillService {
         }
       }
 
-      // Create points for each assigned member
       for (const memberId of assignedMemberIds) {
         const mapNames = memberMapAssignments.get(memberId) || [];
         const memberAssignedMapIds = memberMapIds.get(memberId) || [];
@@ -449,7 +418,6 @@ export class EventKillService {
           timerData.previousMinSpawnTime ?? undefined,
         );
 
-        // Get per-map presence stats for this member
         const perMapPresenceStats =
           await this.pointsService.getMemberPresenceStatsPerMap(
             memberAssignedMapIds,
@@ -457,7 +425,6 @@ export class EventKillService {
             timerData.previousMinSpawnTime ?? undefined,
           );
 
-        // Build mapPresenceData with map names
         const mapPresenceData = perMapPresenceStats.map((stat) => ({
           mapId: stat.mapId,
           mapName: mapIdToName.get(stat.mapId) || '',
@@ -465,7 +432,6 @@ export class EventKillService {
           afkTimeSeconds: stat.afkTimeSeconds,
         }));
 
-        // Calculate tracking duration from first assignment to kill
         const firstAssignment = memberFirstAssignment.get(memberId);
         const trackingDurationSeconds = firstAssignment
           ? Math.floor(
@@ -473,8 +439,6 @@ export class EventKillService {
             )
           : null;
 
-        // Calculate tracking duration percentage relative to window duration
-        // Window duration: from previousMinSpawnTime to killedAt
         const windowStartTime = timerData.previousMinSpawnTime ?? killedAt;
         const windowDurationSeconds = Math.floor(
           (killedAt.getTime() - windowStartTime.getTime()) / 1000,
@@ -489,7 +453,6 @@ export class EventKillService {
               )
             : undefined;
 
-        // Calculate points per-member using their individual map count
         const {
           points,
           appliedMultiplier,
@@ -500,7 +463,7 @@ export class EventKillService {
         } = this.pointsService.calculateMemberPoints(
           event,
           killedAt,
-          mapNames.length, // Number of maps THIS member is assigned to
+          mapNames.length,
           assignedMemberIds.length,
           trackingDurationPercentage,
         );
@@ -525,14 +488,12 @@ export class EventKillService {
         });
       }
 
-      // Batch create all kill points
       if (killPointsData.length > 0) {
         await tx.eventKillPoint.createMany({
           data: killPointsData,
         });
       }
 
-      // Clear map assignments for this hero after recording the kill
       for (const map of heroMaps) {
         await tx.eventMap.update({
           where: { id: map.id },
@@ -542,7 +503,6 @@ export class EventKillService {
         });
       }
 
-      // Close all assignment history records for this hero's maps
       await tx.eventMapAssignmentHistory.updateMany({
         where: {
           mapId: { in: heroMaps.map((m) => m.id) },
@@ -551,7 +511,6 @@ export class EventKillService {
         data: { unassignedAt: killedAt },
       });
 
-      // Fetch the created points
       const createdPoints = await tx.eventKillPoint.findMany({
         where: { killId: heroKill.id },
       });
@@ -563,7 +522,6 @@ export class EventKillService {
       };
     });
 
-    // Update rankings
     if (kill.points.length > 0) {
       await this.pointsService.updateRankingAfterKill(
         event.id,
@@ -572,14 +530,8 @@ export class EventKillService {
       );
     }
 
-    // Close all coverage gaps for this hero
     await this.trackingService.closeAllGapsForHero(eventHero.id);
 
-    // Open UNASSIGNED gaps for new window (all assignments were cleared)
-    // Only when a new respawn window will be created:
-    // - not manual close
-    // - has spawn times
-    // - minSpawnTime is in the future (after kill), meaning it's a NEW window, not old data
     if (
       !isManualClose &&
       timerData.minSpawnTime &&
@@ -600,7 +552,6 @@ export class EventKillService {
       });
     }
 
-    // Create respawn window summary and clean up raw tracking data
     const windowOpenedAt =
       timerData.windowOpenedAt ??
       timerData.previousMinSpawnTime ??
@@ -615,23 +566,17 @@ export class EventKillService {
       isManualClose,
     );
 
-    // Cancel any scheduled auto-close job for this hero
     await this.cancelScheduledAutoClose(eventHero.id);
 
-    // Emit real-time events
     await this.eventEmitter.emitHeroKilled(guildId, event.id, kill.kill.id);
 
-    // For real kills (not manual close), emit window events and schedule auto-close
-    // Manual close already handles these events in closeRespawnWindow()
     if (!isManualClose) {
-      // Emit window closed (old window)
       await this.eventEmitter.emitRespawnWindowClosed(
         guildId,
         event.id,
         eventHero.id,
       );
 
-      // Emit window opened (new window) - only if we have valid spawn times
       if (timerData.minSpawnTime && timerData.maxSpawnTime) {
         await this.eventEmitter.emitRespawnWindowOpened(
           guildId,
@@ -639,7 +584,6 @@ export class EventKillService {
           eventHero.id,
         );
 
-        // Schedule auto-close for the new window
         await this.scheduleAutoCloseForNewWindow(
           guildId,
           event.id,
@@ -651,7 +595,6 @@ export class EventKillService {
       }
     }
 
-    // Emit map status updates for cleared assignments
     for (const map of heroMaps) {
       await this.eventEmitter.emitMapStatusUpdate(
         guildId,
@@ -664,9 +607,6 @@ export class EventKillService {
     return kill.kill;
   }
 
-  /**
-   * Get kill history for a specific hero with pagination.
-   */
   async getHeroKillHistory(
     guildId: string,
     eventId: string,
@@ -734,9 +674,6 @@ export class EventKillService {
     };
   }
 
-  /**
-   * Get kill history for an entire event with pagination.
-   */
   async getEventKillHistory(
     guildId: string,
     eventId: string,
@@ -803,9 +740,6 @@ export class EventKillService {
     };
   }
 
-  /**
-   * Get detailed information about a specific kill.
-   */
   async getKillDetail(
     guildId: string,
     eventId: string,
@@ -860,13 +794,11 @@ export class EventKillService {
       throw new NotFoundException('Kill not found');
     }
 
-    // Get window duration from summary (useful for manual closes)
     const summary = await this.prisma.eventRespawnWindowSummary.findUnique({
       where: { killId },
       select: { totalWindowSeconds: true },
     });
 
-    // Get all maps for this hero
     const heroMaps = await this.prisma.eventMap.findMany({
       where: { heroNpcId: heroId },
       select: { id: true, mapName: true },
@@ -875,10 +807,8 @@ export class EventKillService {
     const mapIdToName = new Map(heroMaps.map((m) => [m.id, m.mapName]));
     const mapIds = heroMaps.map((m) => m.id);
 
-    // Get per-map data for each participant
     const pointsWithMapData = await Promise.all(
       kill.points.map(async (point) => {
-        // Get assignment history for this member
         const assignments = await this.prisma.eventMapAssignmentHistory.findMany(
           {
             where: {
@@ -899,7 +829,6 @@ export class EventKillService {
           },
         );
 
-        // Use stored mapPresenceData if available, otherwise fall back to querying logs
         type MapPresenceEntry = {
           mapId: string;
           mapName: string;
@@ -916,7 +845,6 @@ export class EventKillService {
         >;
 
         if (storedMapPresence && storedMapPresence.length > 0) {
-          // Use stored presence data (presence logs may have been deleted)
           presenceByMapId = new Map(
             storedMapPresence.map((s) => [
               s.mapId,
@@ -927,7 +855,6 @@ export class EventKillService {
             ]),
           );
         } else {
-          // Fall back to querying presence logs (for older kills without stored data)
           const assignedMapIds = [...new Set(assignments.map((a) => a.mapId))];
           const presenceStats =
             await this.pointsService.getMemberPresenceStatsPerMap(
@@ -946,7 +873,6 @@ export class EventKillService {
           );
         }
 
-        // Build mapData array
         const mapData = assignments.map((assignment) => {
           const endTime = assignment.unassignedAt || kill.killedAt;
           const assignmentDurationSeconds = Math.round(
@@ -990,9 +916,6 @@ export class EventKillService {
     };
   }
 
-  /**
-   * Get timeline data for maps during a kill event.
-   */
   async getKillTimelineData(
     guildId: string,
     eventId: string,
@@ -1018,8 +941,6 @@ export class EventKillService {
       throw new NotFoundException('Kill not found');
     }
 
-    // Query summary for this kill to get gaps timeline
-    // Raw gaps are deleted after summary creation, so we read from the summary
     const summary = await this.prisma.eventRespawnWindowSummary.findUnique({
       where: { killId },
       select: { gapsTimeline: true },
@@ -1053,7 +974,6 @@ export class EventKillService {
             orderBy: { assignedAt: 'asc' },
           });
 
-        // Get gaps for this map from summary instead of raw records
         const gapsForMap = summaryGaps.filter((g) => g.mapId === map.id);
 
         return {
@@ -1082,9 +1002,6 @@ export class EventKillService {
     return results;
   }
 
-  /**
-   * Cancel any scheduled auto-close job for a hero.
-   */
   private async cancelScheduledAutoClose(heroId: string): Promise<void> {
     const delayedJobs = await this.respawnWindowQueue.getJobs(['delayed']);
 
@@ -1100,9 +1017,6 @@ export class EventKillService {
     }
   }
 
-  /**
-   * Schedule auto-close for a new respawn window after a kill.
-   */
   private async scheduleAutoCloseForNewWindow(
     guildId: string,
     eventId: string,
@@ -1146,9 +1060,6 @@ export class EventKillService {
     });
   }
 
-  /**
-   * Generate synthetic negative npcId from heroId for heroes without real npcId.
-   */
   private getSyntheticNpcId(heroId: string): number {
     let hash = 0;
     for (let i = 0; i < heroId.length; i++) {
