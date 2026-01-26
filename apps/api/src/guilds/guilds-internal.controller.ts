@@ -33,6 +33,6 @@ export class GuildsInternalController {
       return [];
     }
 
-    return this.guildsService.getUserGuildsWithPermissions(discordId);
+    return this.guildsService.getUserGuildsWithPermissions(discordId, userId);
   }
 }

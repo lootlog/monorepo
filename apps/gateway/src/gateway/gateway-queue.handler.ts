@@ -16,6 +16,12 @@ import type {
 } from 'src/gateway/dto/reservation-event.dto';
 import type { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
+import type {
+  EventMapStatusUpdatePayload,
+  EventHeroKilledPayload,
+  EventRankingUpdatePayload,
+  EventRespawnWindowPayload,
+} from 'src/gateway/types/margo-event.types';
 import { Queue } from 'src/gateway/enums/queue.enum';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
 import { GatewayService } from 'src/gateway/gateway.service';
@@ -67,7 +73,6 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.handleGuildsTimerUpdate(data);
-    this.logger.log(`Timer updated successfully for guild: ${data.guildId}`);
   }
 
   @RabbitSubscribe({
@@ -96,7 +101,6 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.handleGuildsTimerDelete(data);
-    this.logger.log(`Timer deleted successfully for guild: ${data.guildId}`);
   }
 
   @RabbitSubscribe({
@@ -128,9 +132,6 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.handleGuildsReservationCreate(data);
-    this.logger.log(
-      `Reservation created successfully for guild: ${data.guildId}`,
-    );
   }
 
   @RabbitSubscribe({
@@ -162,9 +163,6 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.handleGuildsReservationDelete(data);
-    this.logger.log(
-      `Reservation deleted successfully for guild: ${data.guildId}`,
-    );
   }
 
   @RabbitSubscribe({
@@ -193,7 +191,6 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.handleGuildMessageSend(data);
-    this.logger.log(`Message sent successfully for guild: ${data.guildId}`);
   }
 
   @RabbitSubscribe({
@@ -222,7 +219,6 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.invalidatePlayerCache(data.id);
-    this.logger.log(`Member cache invalidated successfully: ${data.id}`);
   }
 
   @RabbitSubscribe({
@@ -258,10 +254,6 @@ export class GatewayQueueHandler {
       ),
       this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
     ]);
-
-    this.logger.log(
-      `Member permissions updated for ${data.discordId} in guild ${data.guildId}`,
-    );
   }
 
   @RabbitSubscribe({
@@ -289,8 +281,14 @@ export class GatewayQueueHandler {
       return;
     }
 
-    await this.gatewayService.invalidatePlayerCache(data.id);
-    this.logger.log(`Member cache invalidated successfully: ${data.id}`);
+    await Promise.all([
+      this.gatewayService.invalidatePlayerCache(data.id),
+      this.gatewayService.invalidateUserGuildsCache(
+        data.discordId,
+        data.userId,
+      ),
+      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
+    ]);
   }
 
   @RabbitSubscribe({
@@ -318,8 +316,14 @@ export class GatewayQueueHandler {
       return;
     }
 
-    await this.gatewayService.invalidatePlayerCache(data.id);
-    this.logger.log(`Member cache invalidated successfully: ${data.id}`);
+    await Promise.all([
+      this.gatewayService.invalidatePlayerCache(data.id),
+      this.gatewayService.invalidateUserGuildsCache(
+        data.discordId,
+        data.userId,
+      ),
+      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
+    ]);
   }
 
   @RabbitSubscribe({
@@ -350,8 +354,14 @@ export class GatewayQueueHandler {
       return;
     }
 
-    await this.gatewayService.invalidatePlayerCache(data.id);
-    this.logger.log(`Member cache invalidated successfully: ${data.id}`);
+    await Promise.all([
+      this.gatewayService.invalidatePlayerCache(data.id),
+      this.gatewayService.invalidateUserGuildsCache(
+        data.discordId,
+        data.userId,
+      ),
+      this.gatewayService.rebalanceUserSocketRooms(data.discordId, data.userId),
+    ]);
   }
 
   @RabbitSubscribe({
@@ -383,9 +393,6 @@ export class GatewayQueueHandler {
     }
 
     await this.gatewayService.handleGuildNotificationSend(data);
-    this.logger.log(
-      `Notification sent successfully for guild: ${data.guildId}`,
-    );
   }
 
   // DLQ Handlers
@@ -616,8 +623,83 @@ export class GatewayQueueHandler {
   })
   async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
     await this.gatewayService.handleMembersRefreshJobUpdate(data);
-    this.logger.log(
-      `Member refresh job update sent for guild: ${data.guildId}, status: ${data.status}`,
-    );
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_MAP_STATUS_UPDATE,
+    queue: Queue.EVENT_MAP_STATUS_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
+    this.gatewayService.handleEventMapStatusUpdate(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_HERO_KILLED,
+    queue: Queue.EVENT_HERO_KILLED,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventHeroKilled(data: EventHeroKilledPayload) {
+    this.gatewayService.handleEventHeroKilled(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_RANKING_UPDATE,
+    queue: Queue.EVENT_RANKING_UPDATE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventRankingUpdate(data: EventRankingUpdatePayload) {
+    this.gatewayService.handleEventRankingUpdate(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_RESPAWN_WINDOW_OPENED,
+    queue: Queue.EVENT_RESPAWN_WINDOW_OPENED,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventRespawnWindowOpened(data: EventRespawnWindowPayload) {
+    this.gatewayService.handleEventRespawnWindowOpened(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.EVENT_RESPAWN_WINDOW_CLOSED,
+    queue: Queue.EVENT_RESPAWN_WINDOW_CLOSED,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
+    this.gatewayService.handleEventRespawnWindowClosed(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.PRESENCE_CHECK_REQUEST,
+    queue: Queue.PRESENCE_CHECK_REQUEST,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handlePresenceCheckRequest(data: { guildId: string; mapName: string }) {
+    await this.gatewayService.checkPresenceForMap(data.guildId, data.mapName);
   }
 }

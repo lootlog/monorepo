@@ -41,7 +41,6 @@ export class GuildsService {
     const dedupeKey = `${discordId}:${userId}`;
 
     if (this.pendingRequests.has(dedupeKey)) {
-      this.logger.debug(`Request deduplication for ${discordId}`);
       return this.pendingRequests.get(dedupeKey)!;
     }
 
@@ -73,8 +72,6 @@ export class GuildsService {
       }
 
       const guilds = await this.fetchFromHttpWithRetry(options);
-      const duration = Date.now() - startTime;
-      this.logger.debug(`Fetched guilds for ${discordId} in ${duration}ms`);
 
       await this.cacheGuilds(cacheKey, guilds);
       return guilds;
@@ -115,9 +112,6 @@ export class GuildsService {
     } catch (error) {
       if (retryCount < MAX_RETRIES) {
         const delay = RETRY_DELAYS[retryCount];
-        this.logger.debug(
-          `Retry ${retryCount + 1}/${MAX_RETRIES} for ${discordId} in ${delay}ms`,
-        );
         await this.sleep(delay);
         return this.fetchFromHttpWithRetry(options, retryCount + 1);
       }
@@ -162,7 +156,19 @@ export class GuildsService {
       const cached = await this.redis.get(cacheKey);
       if (!cached) return null;
 
-      return JSON.parse(cached);
+      const data: CachedGuildData = JSON.parse(cached);
+      const age = Date.now() - data.cachedAt;
+
+      // Reject stale cache older than MAX_STALE_CACHE_AGE (5 minutes)
+      // This prevents removed users from retaining access via ancient cache
+      if (age > CACHE_TTL.MAX_STALE_CACHE_AGE * 1000) {
+        this.logger.warn(
+          `Stale cache too old (${Math.floor(age / 1000)}s), rejecting`,
+        );
+        return null;
+      }
+
+      return data;
     } catch (error) {
       this.logger.error(`Stale cache read error: ${error.message}`);
       return null;
@@ -195,7 +201,6 @@ export class GuildsService {
     const cacheKey = getUserGuildsCacheKey(discordId, userId);
     try {
       await this.redis.del(cacheKey);
-      this.logger.debug(`Cache invalidated for ${discordId}`);
     } catch (error) {
       this.logger.error(`Cache invalidation error: ${error.message}`);
     }

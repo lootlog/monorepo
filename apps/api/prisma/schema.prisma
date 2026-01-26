@@ -9,19 +9,21 @@ datasource db {
 }
 
 model Guild {
-  id              String           @id
-  name            String
-  icon            String?
-  ownerId         String
-  vanityUrl       String?          @unique
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  roles           Role[]
-  members         Member[]
-  timers          Timer[]
-  lootSubmissions LootSubmission[]
-  active          Boolean          @default(true)
-  reservations    Reservation[]
+  id                String             @id
+  name              String
+  icon              String?
+  ownerId           String
+  vanityUrl         String?            @unique
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  roles             Role[]
+  members           Member[]
+  timers            Timer[]
+  lootSubmissions   LootSubmission[]
+  active            Boolean            @default(true)
+  reservations      Reservation[]
+  events            Event[]
+  mapTemplates      MapTemplate[]
 
   @@index([vanityUrl])
 }
@@ -31,33 +33,30 @@ enum Permission {
   ADMIN
   LOOTLOG_MANAGE
   LOOTLOG_ACCESS
-  // Loots
   LOOTLOG_LOOTS_READ
   LOOTLOG_LOOTS_WRITE
   LOOTLOG_LOOTS_TITANS_READ
   LOOTLOG_LOOTS_HEROES_READ
-  // Timers
   LOOTLOG_TIMERS_READ
   LOOTLOG_TIMERS_WRITE
   LOOTLOG_TIMERS_RESET
   LOOTLOG_TIMERS_DELETE
   LOOTLOG_TIMERS_TITANS_READ
   LOOTLOG_TIMERS_HEROES_READ
-  // Reservations
   LOOTLOG_RESERVATIONS_READ
   LOOTLOG_RESERVATIONS_WRITE
-  // Members
   LOOTLOG_MEMBERS_READ
-  // Chat
   LOOTLOG_CHAT_READ
   LOOTLOG_CHAT_WRITE
   LOOTLOG_CHAT_TITANS_READ
   LOOTLOG_CHAT_HEROES_READ
-  // Notifications
   LOOTLOG_NOTIFICATIONS_READ
   LOOTLOG_NOTIFICATIONS_SEND
   LOOTLOG_NOTIFICATIONS_TITANS_READ
   LOOTLOG_NOTIFICATIONS_HEROES_READ
+  LOOTLOG_EVENTS_MANAGE
+  LOOTLOG_EVENTS_READ
+  LOOTLOG_EVENTS_WRITE
 }
 
 enum MemberType {
@@ -163,22 +162,28 @@ model Role {
 }
 
 model Member {
-  id              Int              @id @default(autoincrement())
-  userId          String
-  guildId         String
-  type            MemberType       @default(USER)
-  name            String
-  avatar          String?
-  banner          String?
-  active          Boolean          @default(true)
-  globalUserId    String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  guild           Guild            @relation(fields: [guildId], references: [id])
-  roles           Role[]
-  timers          Timer[]
-  lootSubmissions LootSubmission[]
-  comments        LootComment[]
+  id                Int                @id @default(autoincrement())
+  userId            String
+  guildId           String
+  type              MemberType         @default(USER)
+  name              String
+  avatar            String?
+  banner            String?
+  active            Boolean            @default(true)
+  globalUserId      String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  guild                    Guild                      @relation(fields: [guildId], references: [id])
+  roles                    Role[]
+  timers                   Timer[]
+  lootSubmissions          LootSubmission[]
+  comments                 LootComment[]
+  assignedEventMaps        EventMap[]
+  eventPresenceLogs        EventPresenceLog[]
+  eventKillPoints          EventKillPoint[]
+  eventRankings            EventRanking[]
+  detectedKills            EventHeroKill[]            @relation("KillDetectedBy")
+  mapAssignmentHistory     EventMapAssignmentHistory[]
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
@@ -196,6 +201,7 @@ model Timer {
   tempId                  String?
   wasReset                Boolean  @default(false)
   npc                     Json
+  windowOpenedAt          DateTime?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -483,4 +489,269 @@ model UserSoundSettings {
   updatedAt           DateTime @updatedAt
 
   @@index([userId])
+}
+
+model Event {
+  id        String    @id @default(cuid())
+  guildId   String
+  name      String
+  world     String
+  active    Boolean   @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  basePointsPerKill             Int     @default(1)
+  timeOfDayMultipliers          Json? // [{from: "06:00", to: "12:00", multiplier: 1.5}, ...]
+  trackersMultipliers           Json? // {1: 3.0, 2: 2.5, 3: 2.0, 4: 1.5, 5: 1.0}
+  mapsCountMultipliers          Json? // {1: 1.0, 2: 1.2, 3: 1.5, ...}
+  trackingDurationMultipliers   Json? // {50: 0.5, 75: 0.75, 100: 1.0}
+  assignmentTimeoutMinutes      Int     @default(5)
+  mapAssignmentCap              Int?
+
+  guild    Guild          @relation(fields: [guildId], references: [id])
+  heroNpcs EventHeroNpc[]
+  rankings EventRanking[]
+
+  @@index([guildId, active])
+  @@index([world])
+}
+
+model EventMapLocation {
+  id        String   @id @default(cuid())
+  heroNpcId String
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  heroNpc EventHeroNpc @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  maps    EventMap[]
+
+  @@unique([heroNpcId, name])
+  @@index([heroNpcId, order])
+}
+
+model EventMap {
+  id         String   @id @default(cuid())
+  heroNpcId  String
+  locationId String?
+  mapId      Int
+  mapName    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  heroNpc           EventHeroNpc                @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  location          EventMapLocation?           @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  assignedMembers   Member[]
+  presenceLogs      EventPresenceLog[]
+  coverageGaps      EventMapCoverageGap[]
+  assignmentHistory EventMapAssignmentHistory[]
+
+  @@unique([heroNpcId, mapId])
+  @@index([mapId])
+  @@index([locationId])
+}
+
+enum CoverageGapType {
+  UNASSIGNED // No member is assigned to the map
+  UNCOVERED  // Members assigned but no one is present on the map
+}
+
+model EventMapCoverageGap {
+  id                 String          @id @default(cuid())
+  mapId              String
+  heroNpcId          String
+  gapType            CoverageGapType
+  startedAt          DateTime
+  endedAt            DateTime?
+  durationSeconds    Int?
+  hadAssignedMembers Boolean?
+
+  map     EventMap     @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  heroNpc EventHeroNpc @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+
+  @@index([mapId, gapType, endedAt])
+  @@index([heroNpcId, endedAt])
+}
+
+model EventMapAssignmentHistory {
+  id           String    @id @default(cuid())
+  mapId        String
+  heroNpcId    String
+  memberId     Int
+  assignedAt   DateTime  @default(now())
+  unassignedAt DateTime?
+
+  map     EventMap     @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  heroNpc EventHeroNpc @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  member  Member       @relation(fields: [memberId], references: [id])
+
+  @@index([mapId, assignedAt])
+  @@index([heroNpcId, assignedAt])
+  @@index([memberId])
+}
+
+model EventHeroNpc {
+  id        String   @id @default(cuid())
+  eventId   String
+  npcId     Int?
+  npcName   String
+  npcIcon   String?
+  npcLvl    Int?
+  createdAt DateTime @default(now())
+
+  event             Event                       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  kills             EventHeroKill[]
+  maps              EventMap[]
+  locations         EventMapLocation[]
+  coverageGaps      EventMapCoverageGap[]
+  assignmentHistory EventMapAssignmentHistory[]
+  windowSummaries   EventRespawnWindowSummary[]
+
+  @@unique([eventId, npcName])
+  @@index([npcId])
+}
+
+model EventPresenceLog {
+  id        String    @id @default(cuid())
+  mapId     String
+  memberId  Int
+  isAfk     Boolean
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  map    EventMap @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  member Member   @relation(fields: [memberId], references: [id])
+
+  @@index([mapId, memberId])
+  @@index([startedAt, endedAt])
+}
+
+model EventHeroKill {
+  id                 String   @id @default(cuid())
+  heroNpcId          String
+  killedAt           DateTime @default(now())
+  minSpawnTimeAtKill DateTime
+  maxSpawnTimeAtKill DateTime
+  timerCreatedById   Int?
+  isManualClose      Boolean  @default(false)
+
+  heroNpc        EventHeroNpc               @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  timerCreatedBy Member?                    @relation("KillDetectedBy", fields: [timerCreatedById], references: [id])
+  points         EventKillPoint[]
+  windowSummary  EventRespawnWindowSummary?
+
+  @@index([heroNpcId])
+  @@index([killedAt])
+}
+
+model EventKillPoint {
+  id                      String   @id @default(cuid())
+  killId                  String
+  memberId                Int
+  mapName                 String
+  basePoints              Float
+  points                  Float
+  appliedMultiplier       Float
+  timeMultiplier              Float?
+  trackersMultiplier          Float?
+  mapsMultiplier              Float?
+  trackingDurationMultiplier  Float?
+  trackingDurationSeconds     Int?
+  trackingDurationPercentage  Float?
+  timeOnMapSeconds        Int
+  afkPercentage           Float
+  wasPresent              Boolean
+  mapPresenceData         Json?
+  createdAt               DateTime @default(now())
+
+  kill   EventHeroKill @relation(fields: [killId], references: [id], onDelete: Cascade)
+  member Member        @relation(fields: [memberId], references: [id])
+
+  @@unique([killId, memberId, mapName])
+  @@index([memberId])
+}
+
+model EventRanking {
+  id               String   @id @default(cuid())
+  eventId          String
+  memberId         Int
+  heroNpcName      String
+  totalPoints      Float    @default(0)
+  totalKills       Int      @default(0)
+  totalTimeSeconds Int      @default(0)
+  avgAfkPercentage Float    @default(0)
+  pointsModified   Boolean  @default(false)
+  updatedAt        DateTime @updatedAt
+
+  event       Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member      Member                    @relation(fields: [memberId], references: [id])
+  editHistory EventPointsEditHistory[]
+
+  @@unique([eventId, memberId, heroNpcName])
+  @@index([eventId, totalPoints(sort: Desc)])
+}
+
+enum PointsEditType {
+  KILL_POINT
+  RANKING
+}
+
+model EventPointsEditHistory {
+  id             String         @id @default(cuid())
+  rankingId      String
+  previousPoints Float
+  newPoints      Float
+  editType       PointsEditType
+  editedByUserId String
+  editedAt       DateTime       @default(now())
+
+  ranking EventRanking @relation(fields: [rankingId], references: [id], onDelete: Cascade)
+
+  @@index([rankingId, editedAt(sort: Desc)])
+}
+
+model EventRespawnWindowSummary {
+  id        String  @id @default(cuid())
+  heroNpcId String
+  killId    String? @unique
+
+  windowOpenedAt DateTime
+  windowClosedAt DateTime
+  minSpawnTime   DateTime
+  maxSpawnTime   DateTime
+  wasManualClose Boolean @default(false)
+
+  totalWindowSeconds     Int
+  totalCoverageSeconds   Int
+  totalUncoveredSeconds  Int
+  totalUnassignedSeconds Int
+  coveragePercentage     Float
+
+  memberStats  Json
+  mapStats     Json
+  gapsTimeline Json
+
+  createdAt DateTime @default(now())
+
+  heroNpc EventHeroNpc   @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
+  kill    EventHeroKill? @relation(fields: [killId], references: [id], onDelete: SetNull)
+
+  @@index([heroNpcId])
+  @@index([windowClosedAt])
+}
+
+model MapTemplate {
+  id        String   @id @default(cuid())
+  guildId   String
+  name      String
+  maps      Json
+  createdAt DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id])
+
+  @@unique([guildId, name])
+  @@index([guildId])
 }

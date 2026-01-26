@@ -24,10 +24,12 @@ import { ChatInput } from "./features/chat/chat-input";
 import { SocketProvider } from "@/contexts/socket-context";
 import { ErrorBoundary } from "react-error-boundary";
 
+const isDev = import.meta.env.MODE === "development";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      gcTime: QUERY_CLIENT_CACHE_TIME_MS,
+      gcTime: isDev ? 0 : QUERY_CLIENT_CACHE_TIME_MS,
       staleTime: 0,
       refetchOnMount: "always",
       refetchOnWindowFocus: false,

@@ -8,6 +8,7 @@ import {
   useEffect,
   useState,
   type ReactNode,
+  useRef,
 } from "react";
 
 type SocketContextValue = {
@@ -30,6 +31,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [joined, setJoined] = useState(false);
   const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
+  const setSocketState = useGlobalStore((s) => s.setSocketState);
+  const setSocketStateRef = useRef(setSocketState);
+  setSocketStateRef.current = setSocketState;
+
+  // Sync socket state to global store for non-reactive access in callbacks
+  useEffect(() => {
+    setSocketStateRef.current({ connected, joined, joinedGuilds });
+  }, [connected, joined, joinedGuilds]);
 
   useEffect(() => {
     const emitJoin = () => {
@@ -76,6 +85,15 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
       setJoined(true);
       setJoinedGuilds(data.guildIds);
+
+      // Emit initial presence after successful join
+      // This ensures presence is sent even after browser refresh
+      // (when town change event is not fired)
+      socket.emit(GatewayEvent.PRESENCE_UPDATE, {
+        mapId: Game.map.id,
+        mapName: Game.map.name,
+        isAfk: false,
+      });
     };
     const handlePermissionsUpdated = (data: {
       guilds: { guild: { id: string } }[];

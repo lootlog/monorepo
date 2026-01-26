@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  forwardRef,
   Inject,
   Injectable,
   type OnModuleInit,
@@ -36,6 +37,7 @@ import { RedisService } from 'src/lib/redis/redis.service';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import Redlock, { ExecutionError } from 'redlock';
+import { EventsService } from 'src/events/events.service';
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -72,6 +74,8 @@ export class TimersService implements OnModuleInit {
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
     private readonly redis: RedisService,
+    @Inject(forwardRef(() => EventsService))
+    private readonly eventsService: EventsService,
   ) {}
 
   async onModuleInit() {
@@ -183,6 +187,11 @@ export class TimersService implements OnModuleInit {
 
       mainLock = await this.redlock.acquire([lockKey], this.lockTtl);
 
+      // Fetch previous timer before upsert to get previous spawn times
+      const previousTimer = await this.prisma.timer.findUnique({
+        where: { timerId: { guildId, world: data.world, npcId: data.npc.id } },
+      });
+
       const { minSpawnTime, maxSpawnTime } = validateAndCalculateSpawnTimes(
         data,
         now,
@@ -200,6 +209,7 @@ export class TimersService implements OnModuleInit {
         latestRespawnRandomness: respawnRandomness,
         wasReset: false,
         npc: npcData,
+        windowOpenedAt: new Date(),
         member: { connect: { memberId: { userId: discordId, guildId } } },
       };
 
@@ -216,6 +226,33 @@ export class TimersService implements OnModuleInit {
       ]);
 
       this.emitUpdateTimer(newTimer);
+
+      // Check if this timer represents an event hero kill
+      // Fire and forget - don't block timer creation
+      this.eventsService
+        .checkAndRecordEventHeroKill({
+          guildId,
+          world: data.world,
+          npcId: data.npc.id,
+          npcName: data.npc.name,
+          npcIcon: data.npc.icon,
+          npcLvl: data.npc.lvl,
+          timerData: {
+            minSpawnTime,
+            maxSpawnTime,
+            memberId: newTimer.createdById,
+            previousMinSpawnTime: previousTimer?.minSpawnTime ?? null,
+            previousMaxSpawnTime: previousTimer?.maxSpawnTime ?? null,
+            windowOpenedAt: previousTimer?.windowOpenedAt ?? null,
+          },
+        })
+        .catch((err) => {
+          this.logger.error({
+            level: 'error',
+            message: 'Failed to check/record event hero kill',
+            error: err instanceof Error ? err.message : err,
+          });
+        });
 
       return newTimer;
     } catch (error) {
