@@ -4,10 +4,11 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Trophy, Plus, Swords, CalendarDays, AlertCircle, Globe } from "lucide-react";
+import { Trophy, Plus, Swords, CalendarDays, AlertCircle, Globe, ShieldX } from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { isAxiosError } from "axios";
 import { type Event, useEvents } from "@/features/events/hooks/queries/use-events";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 
@@ -26,12 +27,21 @@ export const Events = () => {
   });
 
   if (error) {
+    const isForbidden = isAxiosError(error) && error.response?.status === 403;
+
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <AlertCircle className="w-12 h-12 text-destructive" />
-        <p className="text-muted-foreground">
-          {t("events.error", "Błąd ładowania eventów")}
-        </p>
+        {isForbidden ? (
+          <>
+            <ShieldX className="w-12 h-12 text-destructive" />
+            <p className="text-muted-foreground">{t("events.accessDenied")}</p>
+          </>
+        ) : (
+          <>
+            <AlertCircle className="w-12 h-12 text-destructive" />
+            <p className="text-muted-foreground">{t("events.error")}</p>
+          </>
+        )}
       </div>
     );
   }

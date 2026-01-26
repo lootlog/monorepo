@@ -36,10 +36,15 @@ export const GuildsSidebarNav: FC = () => {
   const { setOpenMobile } = useSidebar();
   const { mutate: refreshMember } = useMemberRefresh();
 
-  // Check for active events
+  const canViewEvents =
+    permissions?.includes(Permission.LOOTLOG_EVENTS_READ) ||
+    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
+    permissions?.includes(Permission.OWNER);
+
   const { data: activeEvents } = useEvents({
     guildId: guildId ?? "",
     activeOnly: true,
+    enabled: Boolean(canViewEvents),
   });
   const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
   const activeEventCount = activeEvents?.length ?? 0;
@@ -92,10 +97,7 @@ export const GuildsSidebarNav: FC = () => {
       ),
       path: ROUTE_SEGMENTS.guild.events,
       available: true,
-      enabled: Boolean(
-        permissions?.includes(Permission.LOOTLOG_ACCESS) ||
-        permissions?.includes(Permission.OWNER),
-      ),
+      enabled: Boolean(canViewEvents),
       badge: hasActiveEvents
         ? { content: activeEventCount, variant: "default" as const }
         : undefined,
@@ -213,11 +215,13 @@ export const GuildsSidebarNav: FC = () => {
       basePath={`/${guildId}`}
       header={header}
       beforeItems={
-        <ActiveEventsBanner
-          events={activeEvents ?? []}
-          guildId={guildId ?? ""}
-          onNavigate={handleItemClick}
-        />
+        canViewEvents ? (
+          <ActiveEventsBanner
+            events={activeEvents ?? []}
+            guildId={guildId ?? ""}
+            onNavigate={handleItemClick}
+          />
+        ) : undefined
       }
       onItemClick={handleItemClick}
     />

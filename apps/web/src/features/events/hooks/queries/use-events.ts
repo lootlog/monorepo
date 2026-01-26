@@ -78,12 +78,14 @@ interface UseEventsOptions {
   guildId: string;
   world?: string;
   activeOnly?: boolean;
+  enabled?: boolean;
 }
 
 export const useEvents = ({
   guildId,
   world,
   activeOnly = true,
+  enabled = true,
 }: UseEventsOptions) => {
   const { client } = useApiClient();
 
@@ -99,7 +101,7 @@ export const useEvents = ({
       );
       return response.data;
     },
-    enabled: !!guildId,
+    enabled: !!guildId && enabled,
   });
 };
 
