@@ -80,7 +80,7 @@ http:
         - "web"
 
     api-internal:
-      rule: "PathPrefix(`/api/lootlog/internal/guilds/user-permissions`)"
+      rule: "PathPrefix(`/api/lootlog/internal`)"
       service: "api"
       middlewares:
         - "cors"

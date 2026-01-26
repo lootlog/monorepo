@@ -8,6 +8,9 @@ import npcType from "./translations/npc-type.json";
 import permissions from "./translations/permissions.json";
 import professions from "./translations/professions.json";
 import battle from "./translations/battle.json";
+import events from "./translations/events.json";
+import settings from "./translations/settings.json";
+import common from "./translations/common.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -20,6 +23,9 @@ i18n.use(initReactI18next).init({
         permissions,
         professions,
         battle,
+        events,
+        settings,
+        common,
       },
     },
   },
@@ -31,4 +37,6 @@ i18n.use(initReactI18next).init({
   react: {
     useSuspense: false,
   },
+  pluralSeparator: "_",
+  returnNull: false,
 });

@@ -53,11 +53,7 @@ export const GatewayProvider: React.FC<Props> = ({ children }) => {
 
   const emitJoin = useCallback(() => {
     if (connected && user && guilds) {
-      socket.emit(GatewayEvent.JOIN, {
-        data: {
-          discordId: user.discordId,
-        },
-      });
+      socket.emit(GatewayEvent.JOIN, {});
     }
   }, [connected, user, guilds]);
 

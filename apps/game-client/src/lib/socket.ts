@@ -8,6 +8,7 @@ import type { Notification } from "@/features/notifications/hooks/use-notificati
 import { io, type Socket } from "socket.io-client";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { ChatMessage } from "@/hooks/api/use-chat-messages";
+import { msgpackParser } from "@lootlog/socket-parser";
 
 type ServerToClientEvents = {
   [GatewayEvent.DISCONNECT]: () => void;
@@ -55,6 +56,12 @@ type ClientToServerEvents = {
   }) => void;
 
   [GatewayEvent.REQUEST_SERVER_PRESENCE]: () => void;
+
+  [GatewayEvent.PRESENCE_UPDATE]: (data: {
+    isAfk?: boolean;
+    mapId?: number;
+    mapName?: string;
+  }) => void;
 };
 
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -72,6 +79,7 @@ export const getSocket = (): AppSocket => {
       timeout: 20000,
       withCredentials: true,
       autoConnect: false,
+      parser: msgpackParser,
     }) as AppSocket;
   }
 

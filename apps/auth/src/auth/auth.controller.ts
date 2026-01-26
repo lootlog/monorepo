@@ -1,7 +1,8 @@
 import { Hono } from "hono";
+import { APIError } from "better-auth/api";
 import { auth } from "../lib/auth.js";
 import { APP_CONFIG } from "../config/app.config.js";
-import { JwksKeys, validateToken } from "@lootlog/api-helpers";
+import { type JwksKeys, validateToken } from "@lootlog/api-helpers";
 
 const authController = new Hono<{
   Variables: {
@@ -36,8 +37,7 @@ authController.get("/verify", async (c) => {
       issuer: APP_CONFIG.appUrl,
       audience: APP_CONFIG.appUrl,
     }));
-  } catch (e) {
-    console.error("Error validating token", (e as Error)?.message || e);
+  } catch {
     return c.body(null, 401);
   }
 
@@ -54,15 +54,23 @@ authController.get("/@me/scopes", async (c) => {
 
   if (!user) return c.body(null, 401);
 
-  const token = await auth.api.getAccessToken({
-    body: {
-      providerId: "discord",
-      userId: user.id,
-    },
-  });
+  let token;
+  try {
+    token = await auth.api.getAccessToken({
+      body: {
+        providerId: "discord",
+        userId: user.id,
+      },
+    });
+  } catch (error) {
+    if (error instanceof APIError) {
+      return c.json({ error: error.message }, error.status as 400 | 500);
+    }
+    return c.json({ error: "Failed to retrieve IDP token" }, 500);
+  }
 
   if (!token || !token.accessToken) {
-    return c.json({ error: "Failed to retrieve IDP token" }, 503);
+    return c.json({ error: "Failed to retrieve IDP token" }, 400);
   }
 
   const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
@@ -81,25 +89,33 @@ authController.post("/idp-token", async (c) => {
     return c.json({ error: "INVALID_REQUEST" }, 400);
   }
 
-  const token = await auth.api.getAccessToken({
-    body: {
-      providerId: "discord",
-      userId: userId,
-    },
-  });
+  let token;
+  try {
+    token = await auth.api.getAccessToken({
+      body: {
+        providerId: "discord",
+        userId: userId,
+      },
+    });
+  } catch (error) {
+    if (error instanceof APIError) {
+      return c.json({ error: "ACCOUNT_NOT_FOUND" }, error.status as 400 | 500);
+    }
+    return c.json({ error: "INTERNAL_ERROR" }, 500);
+  }
 
   if (!token || !token.accessToken) {
-    return c.json({ error: "TOKEN_NOT_FOUND" });
+    return c.json({ error: "TOKEN_NOT_FOUND" }, 400);
   }
 
   const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
   if (expiresAt && expiresAt < new Date()) {
-    return c.json({ error: "TOKEN_EXPIRED" });
+    return c.json({ error: "TOKEN_EXPIRED" }, 401);
   }
 
   return c.json({
     accessToken: token.accessToken,
-    expiresIn: token.expiresAt ? Math.floor((expiresAt!.getTime() - Date.now()) / 1000) : 0,
+    expiresIn: expiresAt ? Math.floor((expiresAt.getTime() - Date.now()) / 1000) : 0,
     scopes: token.scopes || [],
   });
 });

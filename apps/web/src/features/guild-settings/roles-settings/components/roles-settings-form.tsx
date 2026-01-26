@@ -35,6 +35,7 @@ import {
   MessageCircle,
   Bell,
   Settings,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
@@ -114,6 +115,17 @@ const PERMISSION_GROUPS = [
       Permission.LOOTLOG_NOTIFICATIONS_SEND,
       Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
       Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    ],
+  },
+  {
+    groupKey: "events",
+    icon: Trophy,
+    color: "text-fuchsia-500",
+    bgColor: "bg-fuchsia-500/10",
+    permissions: [
+      Permission.LOOTLOG_EVENTS_READ,
+      Permission.LOOTLOG_EVENTS_WRITE,
+      Permission.LOOTLOG_EVENTS_MANAGE,
     ],
   },
 ];

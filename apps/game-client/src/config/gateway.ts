@@ -21,6 +21,10 @@ export enum GatewayEvent {
   REQUEST_SERVER_PRESENCE = "request-server-presence",
   UPDATE_SERVER_PRESENCE = "update-server-presence",
 
+  // player presence events
+  PRESENCE_UPDATE = "presence:update",
+  PRESENCE_FETCH = "presence:fetch",
+
   // timers
   TIMERS_CREATE = "timers-create",
   TIMERS_DELETE = "timers-delete",
@@ -30,4 +34,9 @@ export enum GatewayEvent {
 
   // members
   MEMBERS_REFRESH_JOB_UPDATE = "members-refresh-job-update",
+
+  // margo events (game-specific)
+  EVENT_MAP_STATUS_UPDATE = "event:map-status:update",
+  EVENT_HERO_KILLED = "event:hero:killed",
+  EVENT_RANKING_UPDATE = "event:ranking:update",
 }
