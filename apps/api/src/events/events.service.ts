@@ -70,7 +70,7 @@ export class EventsService {
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
-    const { startsAt, endsAt, ...eventData } = data;
+    const { startsAt, endsAt, heroNpcs, ...eventData } = data;
 
     const startDate = startsAt ? new Date(startsAt) : new Date();
     const endDate = endsAt ? new Date(endsAt) : null;
@@ -89,6 +89,22 @@ export class EventsService {
         guildId,
         startsAt: startDate,
         endsAt: endDate,
+        ...(heroNpcs && {
+          heroNpcs: {
+            create: heroNpcs.map((npc) => ({
+              npcId: npc.npcId,
+              npcName: npc.npcName,
+              maps: npc.maps
+                ? {
+                    create: npc.maps.map((map) => ({
+                      mapId: map.mapId,
+                      mapName: map.mapName,
+                    })),
+                  }
+                : undefined,
+            })),
+          },
+        }),
       },
       include: {
         heroNpcs: {
@@ -232,6 +248,7 @@ export class EventsService {
       heroNpcs,
       startsAt,
       endsAt,
+      active,
       timeOfDayMultipliers,
       trackersMultipliers,
       mapsCountMultipliers,
@@ -247,16 +264,26 @@ export class EventsService {
           ? new Date(startsAt)
           : event.startsAt
         : event.startsAt;
-    const newEndDate =
-      endsAt !== undefined ? (endsAt ? new Date(endsAt) : null) : event.endsAt;
+
+    const isExplicitDeactivation = active === false && event.active;
+    const newEndDate = isExplicitDeactivation
+      ? new Date()
+      : endsAt !== undefined
+        ? endsAt
+          ? new Date(endsAt)
+          : null
+        : event.endsAt;
 
     if (newEndDate && newStartDate && newEndDate <= newStartDate) {
       throw new BadRequestException('End date must be after start date');
     }
 
     const now = new Date();
-    const newActive =
-      newStartDate && newStartDate <= now && (!newEndDate || newEndDate > now);
+    const newActive = isExplicitDeactivation
+      ? false
+      : newStartDate &&
+        newStartDate <= now &&
+        (!newEndDate || newEndDate > now);
 
     const updated = await this.prisma.$transaction(async (tx) => {
       if (heroNpcs) {
@@ -271,8 +298,8 @@ export class EventsService {
           ...(startsAt !== undefined && {
             startsAt: startsAt ? new Date(startsAt) : null,
           }),
-          ...(endsAt !== undefined && {
-            endsAt: endsAt ? new Date(endsAt) : null,
+          ...((endsAt !== undefined || isExplicitDeactivation) && {
+            endsAt: newEndDate,
           }),
           ...(timeOfDayMultipliers !== undefined && {
             timeOfDayMultipliers:
@@ -387,10 +414,7 @@ export class EventsService {
     return { success: true };
   }
 
-  private hasJsonChanged(
-    newValue: unknown,
-    oldValue: unknown,
-  ): boolean {
+  private hasJsonChanged(newValue: unknown, oldValue: unknown): boolean {
     if (newValue === undefined) {
       return false;
     }

@@ -8,6 +8,7 @@ import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service'
 import { DiscordService } from 'src/discord/discord.service';
 import { UsersService } from 'src/users/users.service';
 import { RedisService } from 'src/lib/redis/redis.service';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 describe('GuildsService', () => {
   let service: GuildsService;
@@ -71,6 +72,10 @@ describe('GuildsService', () => {
     deleteByPattern: jest.fn(),
   };
 
+  const mockAmqpConnection = {
+    publish: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -106,6 +111,10 @@ describe('GuildsService', () => {
         {
           provide: RedisService,
           useValue: mockRedisService,
+        },
+        {
+          provide: AmqpConnection,
+          useValue: mockAmqpConnection,
         },
       ],
     }).compile();
