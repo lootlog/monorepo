@@ -30,15 +30,6 @@ export class EventsQueueHandler {
   async handlePlayerPresenceChange(data: PlayerPresenceChangePayload) {
     const { guildId, mapName, discordId, hasPlayer, isAfk } = data;
 
-    this.logger.debug({
-      message: 'Handling player presence change',
-      guildId,
-      mapName,
-      discordId,
-      hasPlayer,
-      isAfk,
-    });
-
     try {
       await this.eventsService.handlePlayerPresenceChange(
         guildId,
