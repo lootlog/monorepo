@@ -26,7 +26,7 @@ export class RespawnWindowProcessor extends WorkerHost {
   }
 
   async process(job: Job<AutoCloseRespawnWindowJobData>): Promise<void> {
-    const { guildId, eventId, heroId, npcId, world } = job.data;
+    const { guildId, eventId, heroId, npcId } = job.data;
 
     this.logger.log({
       level: 'info',
