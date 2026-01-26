@@ -9,6 +9,7 @@ import { validateAndCalculateSpawnTimes } from 'src/timers/utils/validate-spawn-
 import { TIMER_LIMITS } from 'src/timers/constants/timer-limits';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { EventsService } from 'src/events/events.service';
 
 describe('TimersService', () => {
   let service: TimersService;
@@ -41,6 +42,10 @@ describe('TimersService', () => {
     setNX: jest.fn(),
     del: jest.fn(),
     deleteByPattern: jest.fn(),
+  };
+
+  const mockEventsService = {
+    checkAndRecordEventHeroKill: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockLogger = {
@@ -87,6 +92,10 @@ describe('TimersService', () => {
         {
           provide: RedisService,
           useValue: mockRedisService,
+        },
+        {
+          provide: EventsService,
+          useValue: mockEventsService,
         },
       ],
     }).compile();

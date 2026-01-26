@@ -1,0 +1,47 @@
+{
+  "mapTemplates": {
+    "title": "Szablony map",
+    "description": "Zarządzaj szablonami list mapek",
+    "newTemplate": "Nowy szablon",
+    "cancel": "Anuluj",
+    "templateName": "Nazwa szablonu",
+    "templateNamePlaceholder": "np. Mrozy",
+    "selectedMaps": "Wybrane mapy",
+    "searchAndAddMaps": "Wyszukaj i dodaj mapy",
+    "searchPlaceholder": "Szukaj po nazwie lub ID mapy...",
+    "noMapsFound": "Nie znaleziono map pasujących do \"{{query}}\"",
+    "searchHint": "Wpisz nazwę lub ID mapy, aby wyszukać",
+    "saveTemplate": "Zapisz szablon",
+    "noTemplates": "Brak szablonów",
+    "mapCount_one": "{{count}} mapa",
+    "mapCount_few": "{{count}} mapy",
+    "mapCount_many": "{{count}} map",
+    "deleteConfirmTitle": "Usunąć szablon?",
+    "deleteConfirmDescription": "Czy na pewno chcesz usunąć szablon {{name}}?",
+    "createDialog": {
+      "title": "Nowy szablon map",
+      "description": "Utwórz nowy szablon z listą map",
+      "creating": "Tworzenie..."
+    },
+    "editDialog": {
+      "title": "Edytuj szablon",
+      "description": "Edytuj nazwę i mapy szablonu",
+      "saving": "Zapisywanie..."
+    },
+    "form": {
+      "nameRequired": "Nazwa szablonu jest wymagana",
+      "mapsRequired": "Dodaj przynajmniej jedną mapę"
+    },
+    "toasts": {
+      "nameRequired": "Nazwa szablonu jest wymagana",
+      "addAtLeastOneMap": "Dodaj przynajmniej jedną mapę",
+      "created": "Szablon utworzony pomyślnie",
+      "updated": "Szablon zaktualizowany",
+      "duplicateName": "Szablon o tej nazwie już istnieje",
+      "createError": "Błąd podczas tworzenia szablonu",
+      "updateError": "Błąd podczas aktualizacji szablonu",
+      "deleted": "Szablon usunięty",
+      "deleteError": "Błąd podczas usuwania szablonu"
+    }
+  }
+}

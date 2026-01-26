@@ -33,11 +33,13 @@ export function createIDBPersister(idbValidKey: IDBValidKey = "lootlog-cache") {
 
 export const persister = createIDBPersister();
 
+const isDev = import.meta.env.MODE === "development";
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
-      gcTime: 1000 * 60 * 60 * 24,
+      staleTime: isDev ? 0 : 30_000,
+      gcTime: isDev ? 0 : 1000 * 60 * 60 * 24,
       retry: 2,
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,

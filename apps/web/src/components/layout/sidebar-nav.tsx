@@ -19,12 +19,14 @@ export interface MenuItem {
     content: string | number;
     variant?: "default" | "secondary" | "destructive" | "outline" | "white";
   };
+  highlight?: boolean;
 }
 
 interface SidebarNavProps {
   items: MenuItem[];
   basePath?: string;
   header?: ReactNode;
+  beforeItems?: ReactNode;
   onItemClick?: (item: MenuItem, event: React.MouseEvent) => void;
 }
 
@@ -458,6 +460,7 @@ export const SidebarNav = ({
   items,
   basePath = "",
   header,
+  beforeItems,
   onItemClick,
 }: SidebarNavProps) => {
   const { pathname } = useLocation();
@@ -472,8 +475,18 @@ export const SidebarNav = ({
           {header}
         </div>
       )}
+      {beforeItems}
       {items.map(
-        ({ divided, icon, path, label, available, enabled, badge }) => {
+        ({
+          divided,
+          icon,
+          path,
+          label,
+          available,
+          enabled,
+          badge,
+          highlight,
+        }) => {
           const url = `${basePath}${path}`;
           const normalizedPathname = pathname.replace(/\/$/, "");
           const normalizedUrl = url.replace(/\/$/, "");
@@ -495,6 +508,7 @@ export const SidebarNav = ({
                   icon={icon}
                   label={label}
                   badge={badge}
+                  highlight={highlight}
                   isRukiaTheme={isRukiaTheme}
                   onItemClick={(e) => {
                     const item = items.find((item) => item.path === path);
@@ -520,6 +534,7 @@ const SidebarNavItem = ({
   icon,
   label,
   badge,
+  highlight,
   isRukiaTheme,
   onItemClick,
 }: {
@@ -530,6 +545,7 @@ const SidebarNavItem = ({
   icon: ReactNode;
   label: string;
   badge?: MenuItem["badge"];
+  highlight?: boolean;
   isRukiaTheme: boolean;
   onItemClick: (e: React.MouseEvent) => void;
 }) => {
@@ -539,7 +555,17 @@ const SidebarNavItem = ({
     <Button
       variant={isActive ? "default" : "ghost"}
       size="sm"
-      className={cn("justify-between w-full font-semibold transition")}
+      className={cn(
+        "justify-between w-full font-semibold transition",
+        highlight &&
+          !isActive && [
+            "relative overflow-hidden",
+            "bg-yellow-500/10 hover:bg-yellow-500/20",
+            "border border-yellow-500/30",
+            "shadow-[0_0_12px_rgba(234,179,8,0.3)]",
+            "animate-pulse",
+          ],
+      )}
       disabled={!available}
     >
       <div className="flex items-center">

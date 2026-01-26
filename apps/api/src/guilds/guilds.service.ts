@@ -10,6 +10,7 @@ import {
 
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { type Guild, Permission } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import type { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
@@ -32,9 +33,14 @@ import {
   GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from 'src/shared/constants/cache.constant';
+import { MEMBER_CACHE_SOFT_TTL } from 'src/members/constants/member-cache.constant';
+import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { RoutingKey } from 'src/enum/routing-key.enum';
 
 @Injectable()
 export class GuildsService {
+  private readonly SYNC_THROTTLE_TTL = 150;
+
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Inject(forwardRef(() => MembersService))
@@ -47,6 +53,7 @@ export class GuildsService {
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly redisService: RedisService,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   async getUserGuilds(discordId: string, userId: string, source?: string) {
@@ -347,7 +354,7 @@ export class GuildsService {
     return result;
   }
 
-  async getUserGuildsWithPermissions(discordId: string) {
+  async getUserGuildsWithPermissions(discordId: string, userId?: string) {
     const guilds = await this.getGuildsForRequiredPermissions(discordId, [
       Permission.LOOTLOG_ACCESS,
     ]);
@@ -373,7 +380,7 @@ export class GuildsService {
     const memberMap = new Map(members.map((m) => [m.guildId, m]));
     const allPermissions = Object.values(Permission);
 
-    return guilds.map((guild) => {
+    const result = guilds.map((guild) => {
       const member = memberMap.get(guild.id);
       const isOwner = guild.ownerId === discordId;
 
@@ -411,6 +418,85 @@ export class GuildsService {
         roles: rolesWithPermissions,
       };
     });
+
+    if (userId) {
+      this.queueStaleMemberRefreshes(discordId, userId, members).catch(
+        (error) => {
+          this.logger.log({
+            level: 'error',
+            message: 'Error queuing stale member refreshes',
+            stack: (error as Error).stack,
+          });
+        },
+      );
+    }
+
+    return result;
+  }
+
+  private async queueStaleMemberRefreshes(
+    discordId: string,
+    userId: string,
+    members: Array<{ guildId: string; globalUserId: string | null; updatedAt: Date }>,
+  ) {
+    const throttleKey = `member:sync:throttle:${discordId}`;
+    const isThrottled = await this.redisService.get(throttleKey);
+
+    if (isThrottled) {
+      this.logger.log({
+        level: 'debug',
+        message: `Sync throttled for user ${discordId}, skipping refresh`,
+      });
+      return;
+    }
+
+    const staleThreshold = new Date(Date.now() - MEMBER_CACHE_SOFT_TTL);
+
+    const staleMembers = members.filter(
+      (m) =>
+        m.globalUserId !== null &&
+        m.updatedAt < staleThreshold,
+    );
+
+    if (staleMembers.length === 0) {
+      this.logger.log({
+        level: 'debug',
+        message: `No stale members found for user ${userId} in ${members.length} guilds`,
+      });
+      return;
+    }
+
+    await this.redisService.set(throttleKey, '1', this.SYNC_THROTTLE_TTL);
+
+    this.logger.log({
+      level: 'info',
+      message: `Queueing refresh for ${staleMembers.length} stale members for user ${userId}`,
+    });
+
+    for (const member of staleMembers) {
+      try {
+        await this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.GUILDS_MEMBERS_REFRESH,
+          {
+            discordId,
+            guildId: member.guildId,
+            userId: member.globalUserId,
+          },
+        );
+
+        this.logger.log({
+          level: 'debug',
+          message: `Queued refresh for member ${discordId} in guild ${member.guildId}`,
+        });
+      } catch (error) {
+        this.logger.log({
+          level: 'error',
+          message: `Failed to queue refresh for member ${discordId}`,
+          stack: (error as Error).stack,
+        });
+      }
+    }
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
