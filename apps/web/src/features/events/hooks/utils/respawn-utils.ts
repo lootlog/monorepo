@@ -1,6 +1,3 @@
-/**
- * Format seconds to a human-readable duration string (e.g., "1h 30m")
- */
 export const formatRespawnDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -14,9 +11,6 @@ export const formatRespawnDuration = (seconds: number): string => {
   }
 };
 
-/**
- * Calculate min and max spawn times from base seconds and randomness
- */
 export const calculateSpawnTimes = (
   respBaseSeconds: number,
   respRandomness: number,

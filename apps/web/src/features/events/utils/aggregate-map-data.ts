@@ -14,9 +14,6 @@ export interface AggregatedMapData {
   afkTimeSeconds: number;
 }
 
-/**
- * Aggregates map data entries by mapId, summing up durations for same maps
- */
 export const aggregateMapData = (
   mapData: MapDataEntry[],
 ): AggregatedMapData[] => {

@@ -16,7 +16,6 @@ import { ConfigKey } from 'src/config/config-key.enum';
 import { PrismaModule } from 'src/db/prisma.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 
-// Sub-services
 import { EventEmitterService } from './services/event-emitter.service';
 import { EventPointsService } from './services/event-points.service';
 import { EventTrackingService } from './services/event-tracking.service';
@@ -38,10 +37,8 @@ import { EventSummaryService } from './services/event-summary.service';
     RedisModule,
   ],
   providers: [
-    // Facade
     EventsService,
 
-    // Sub-services
     EventEmitterService,
     EventPointsService,
     EventTrackingService,
@@ -49,7 +46,6 @@ import { EventSummaryService } from './services/event-summary.service';
     EventRespawnService,
     EventSummaryService,
 
-    // Queue handlers
     EventsQueueHandler,
     RespawnWindowProcessor,
   ],

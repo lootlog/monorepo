@@ -239,7 +239,6 @@ export class EventsController {
     @MemberRoles() roles: Role[] = [],
     @MemberPermissions() permissions: Permission[] = [],
   ) {
-    // Validate that the map's hero is accessible to the user
     const map = await this.eventsService.getMapWithHeroAccessCheck(
       guildData.id,
       eventId,
@@ -283,7 +282,6 @@ export class EventsController {
     @MemberRoles() roles: Role[] = [],
     @MemberPermissions() permissions: Permission[] = [],
   ) {
-    // Validate that the map's hero is accessible to the user
     const map = await this.eventsService.getMapWithHeroAccessCheck(
       guildData.id,
       eventId,
@@ -416,8 +414,6 @@ export class EventsController {
   ) {
     return this.eventsService.deleteMap(guildData.id, eventId, heroId, mapId);
   }
-
-  // ========== LOCATION MANAGEMENT ==========
 
   @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
@@ -752,7 +748,6 @@ export class EventsController {
       eventId,
       world,
     );
-    // Filter timers by hero visibility (using npc.lvl from timer data)
     return timers.filter((timer) => {
       const npc = timer.npc as { lvl?: number } | null;
       const npcLvl = npc?.lvl ?? null;
@@ -836,7 +831,6 @@ export class EventsController {
     @MemberRoles() roles: Role[] = [],
     @MemberPermissions() permissions: Permission[] = [],
   ) {
-    // If heroId is provided, validate access first
     if (heroId) {
       await this.eventsService.getHeroWithAccessCheck(
         guildData.id,
@@ -855,7 +849,6 @@ export class EventsController {
       heroId,
     );
 
-    // Filter kills by visible heroes
     return {
       ...result,
       data: result.data.filter((kill) =>

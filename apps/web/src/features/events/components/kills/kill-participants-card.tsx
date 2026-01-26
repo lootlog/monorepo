@@ -55,7 +55,6 @@ interface ParticipantRowProps {
 }
 
 const formatPoints = (points: number): string => {
-  // Show decimals only if they exist
   return Number.isInteger(points) ? String(points) : points.toFixed(2);
 };
 
@@ -112,7 +111,6 @@ const ParticipantRow = ({
     if (Number.isNaN(newPoints) || newPoints < 0) {
       return;
     }
-    // Round to 2 decimal places
     const roundedPoints = Math.round(newPoints * 100) / 100;
     if (onEditPoints) {
       await onEditPoints(participant.id, roundedPoints);

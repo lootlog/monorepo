@@ -9,9 +9,6 @@ export type MapStatus =
   | "ASSIGNED_AFK"
   | "UNASSIGNED";
 
-/**
- * Determine gap type from map status
- */
 export const getGapTypeFromStatus = (
   status: MapStatus,
 ): CoverageGapType | null => {

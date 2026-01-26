@@ -14,15 +14,11 @@ import { EventEmitterService } from './event-emitter.service';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 
-/**
- * Service responsible for member assignments, presence tracking, and coverage gap management.
- * Handles who is where and tracks coverage gaps.
- */
 @Injectable()
 export class EventTrackingService implements OnModuleInit {
   private readonly logger = new Logger(EventTrackingService.name);
   private redlock: Redlock;
-  private readonly presenceLockTtl = 5000; // 5 seconds
+  private readonly presenceLockTtl = 5000;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -45,9 +41,6 @@ export class EventTrackingService implements OnModuleInit {
     return `presence:lock:${guildId}:${mapName}:${discordId}`;
   }
 
-  /**
-   * Assign a member to track a specific map.
-   */
   async assignMemberToMap(
     guildId: string,
     eventId: string,
@@ -82,7 +75,6 @@ export class EventTrackingService implements OnModuleInit {
       throw new NotFoundException('Map not found');
     }
 
-    // Check map assignment cap
     const cap = map.heroNpc.event.mapAssignmentCap;
     if (cap && cap > 0 && map.assignedMembers.length >= cap) {
       throw new BadRequestException(
@@ -92,7 +84,6 @@ export class EventTrackingService implements OnModuleInit {
 
     const wasUnassigned = map.assignedMembers.length === 0;
 
-    // Idempotency check - skip if member is already assigned
     const isAlreadyAssigned = map.assignedMembers.some((m) => m.id === memberId);
     if (isAlreadyAssigned) {
       this.logger.debug({
@@ -118,7 +109,6 @@ export class EventTrackingService implements OnModuleInit {
       },
     });
 
-    // Idempotency check - don't create duplicate assignment history
     const existingOpenAssignment =
       await this.prisma.eventMapAssignmentHistory.findFirst({
         where: {
@@ -129,7 +119,6 @@ export class EventTrackingService implements OnModuleInit {
       });
 
     if (!existingOpenAssignment) {
-      // Create assignment history record only if no open assignment exists
       await this.prisma.eventMapAssignmentHistory.create({
         data: {
           mapId,
@@ -140,13 +129,9 @@ export class EventTrackingService implements OnModuleInit {
       });
     }
 
-    // Close UNASSIGNED gap if this is the first member being assigned
     if (wasUnassigned) {
       await this.closeUnassignedGap(mapId);
-      // Open UNCOVERED gap since member is assigned but not yet on the map
       await this.openUncoveredGap(mapId, map.heroNpcId);
-      // Request gateway to check if anyone is already on this map
-      // If so, the gap will be closed by the PRESENCE_COVERAGE_CHECK response
       this.amqpConnection.publish(DEFAULT_EXCHANGE_NAME, RoutingKey.PRESENCE_CHECK_REQUEST, {
         guildId,
         mapName: map.mapName,
@@ -163,9 +148,6 @@ export class EventTrackingService implements OnModuleInit {
     return updated;
   }
 
-  /**
-   * Unassign a member from a map.
-   */
   async unassignMemberFromMap(
     guildId: string,
     eventId: string,
@@ -192,7 +174,6 @@ export class EventTrackingService implements OnModuleInit {
       throw new NotFoundException('Map not found');
     }
 
-    // If memberId provided, disconnect specific member; otherwise disconnect all
     const updated = await this.prisma.eventMap.update({
       where: { id: mapId },
       data: {
@@ -203,26 +184,21 @@ export class EventTrackingService implements OnModuleInit {
       },
     });
 
-    // Close assignment history records
     const now = new Date();
     if (memberId) {
-      // Close specific member's assignment history
       await this.prisma.eventMapAssignmentHistory.updateMany({
         where: { mapId, memberId, unassignedAt: null },
         data: { unassignedAt: now },
       });
     } else {
-      // Close all assignment history for this map
       await this.prisma.eventMapAssignmentHistory.updateMany({
         where: { mapId, unassignedAt: null },
         data: { unassignedAt: now },
       });
     }
 
-    // Open UNASSIGNED gap if no members are left
     if (updated.assignedMembers.length === 0) {
       await this.openUnassignedGap(mapId, map.heroNpcId);
-      // Also close any UNCOVERED gap since there's no one to cover
       await this.closeUncoveredGap(mapId);
     }
 
@@ -236,9 +212,6 @@ export class EventTrackingService implements OnModuleInit {
     return updated;
   }
 
-  /**
-   * Get a member by their Discord ID.
-   */
   async getMemberByDiscordId(discordId: string, guildId: string) {
     return this.prisma.member.findFirst({
       where: {
@@ -249,19 +222,11 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  // ========== COVERAGE GAP MANAGEMENT ==========
-
-  /**
-   * Open an UNASSIGNED gap when a map has no assigned members.
-   * Called when the last member is unassigned from a map.
-   * @param startedAt Optional start time for the gap. If not provided, uses current time.
-   */
   async openUnassignedGap(
     mapId: string,
     heroNpcId: string,
     startedAt?: Date,
   ): Promise<void> {
-    // Check if there's already an open UNASSIGNED gap
     const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
       where: {
         mapId,
@@ -271,7 +236,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (existingGap) {
-      return; // Gap already open
+      return;
     }
 
     await this.prisma.eventMapCoverageGap.create({
@@ -290,9 +255,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Close an UNASSIGNED gap when a member is assigned to a map.
-   */
   async closeUnassignedGap(mapId: string): Promise<void> {
     const now = new Date();
 
@@ -327,16 +289,11 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Open an UNCOVERED gap when no players are present on a map with assigned members.
-   * @param startedAt Optional start time for the gap. If not provided, uses current time.
-   */
   async openUncoveredGap(
     mapId: string,
     heroNpcId: string,
     startedAt?: Date,
   ): Promise<void> {
-    // Check if there's already an open UNCOVERED gap
     const existingGap = await this.prisma.eventMapCoverageGap.findFirst({
       where: {
         mapId,
@@ -346,7 +303,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (existingGap) {
-      return; // Gap already open
+      return;
     }
 
     await this.prisma.eventMapCoverageGap.create({
@@ -365,9 +322,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Close an UNCOVERED gap when a player arrives on the map.
-   */
   async closeUncoveredGap(mapId: string): Promise<void> {
     const now = new Date();
 
@@ -402,11 +356,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Close all open gaps for a hero when killed.
-   * Uses a transaction for atomicity - prevents race conditions where
-   * a presence event might open a new gap during sequential updates.
-   */
   async closeAllGapsForHero(heroNpcId: string): Promise<void> {
     const now = new Date();
 
@@ -421,7 +370,6 @@ export class EventTrackingService implements OnModuleInit {
       return;
     }
 
-    // Atomic operation - all gaps closed in a single transaction
     await this.prisma.$transaction(
       openGaps.map((gap) => {
         const durationSeconds = Math.round(
@@ -444,10 +392,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Get coverage gaps for a specific map.
-   * Validates that the map belongs to the specified guild and event.
-   */
   async getMapCoverageGaps(guildId: string, eventId: string, mapId: string) {
     const map = await this.prisma.eventMap.findFirst({
       where: {
@@ -469,10 +413,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Get coverage gaps for a hero (all maps).
-   * Validates that the hero belongs to the specified guild and event.
-   */
   async getHeroCoverageGaps(guildId: string, eventId: string, heroNpcId: string) {
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: {
@@ -500,10 +440,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Get active (ongoing) gap for a map.
-   * Validates that the map belongs to the specified guild and event.
-   */
   async getActiveGapForMap(guildId: string, eventId: string, mapId: string) {
     const map = await this.prisma.eventMap.findFirst({
       where: {
@@ -527,11 +463,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Get all active (ongoing) gaps for a hero.
-   * Returns all gaps where endedAt is null for all maps of this hero.
-   * Validates that the hero belongs to the specified guild and event.
-   */
   async getActiveGapsForHero(guildId: string, eventId: string, heroNpcId: string) {
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: {
@@ -553,13 +484,6 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  /**
-   * Create or update presence log when a player enters/leaves a map or changes AFK status.
-   * This tracks individual member presence for points calculation and analytics.
-   *
-   * @deprecated This method's logic has been integrated into handlePlayerPresenceChange
-   * to eliminate duplicate database queries. Use handlePlayerPresenceChange instead.
-   */
   async createOrUpdatePresenceLog(
     guildId: string,
     mapName: string,
@@ -567,10 +491,8 @@ export class EventTrackingService implements OnModuleInit {
     hasPlayer: boolean,
     isAfk: boolean,
   ): Promise<void> {
-    // Get member for this discord user
     const member = await this.getMemberByDiscordId(discordId, guildId);
     if (!member) {
-      // Non-guild member on the map - skip logging
       this.logger.debug({
         message: 'Skipping presence log - member not found',
         discordId,
@@ -580,7 +502,6 @@ export class EventTrackingService implements OnModuleInit {
       return;
     }
 
-    // Find all event maps with this name in active events for this guild
     const eventMaps = await this.prisma.eventMap.findMany({
       where: {
         mapName,
@@ -597,7 +518,6 @@ export class EventTrackingService implements OnModuleInit {
 
     for (const map of eventMaps) {
       if (hasPlayer) {
-        // Player is on the map - close existing log if any and create new one
         await this.prisma.eventPresenceLog.updateMany({
           where: {
             mapId: map.id,
@@ -609,7 +529,6 @@ export class EventTrackingService implements OnModuleInit {
           },
         });
 
-        // Create new presence log
         await this.prisma.eventPresenceLog.create({
           data: {
             mapId: map.id,
@@ -625,7 +544,6 @@ export class EventTrackingService implements OnModuleInit {
           isAfk,
         });
       } else {
-        // Player left the map - close existing log
         const result = await this.prisma.eventPresenceLog.updateMany({
           where: {
             mapId: map.id,
@@ -648,17 +566,6 @@ export class EventTrackingService implements OnModuleInit {
     }
   }
 
-  /**
-   * Handle player presence change from gateway.
-   * Creates presence logs and manages coverage gaps.
-   * Called when a player enters/leaves a map or changes AFK status.
-   *
-   * Optimized to use a single query for event maps (eliminates duplicate query
-   * that was previously in createOrUpdatePresenceLog).
-   *
-   * Uses distributed lock to prevent race conditions when multiple presence
-   * updates arrive for the same player on the same map.
-   */
   async handlePlayerPresenceChange(
     guildId: string,
     mapName: string,
@@ -692,10 +599,6 @@ export class EventTrackingService implements OnModuleInit {
     }
   }
 
-  /**
-   * Internal implementation of presence change handling.
-   * Called within a distributed lock to ensure atomicity.
-   */
   private async handlePlayerPresenceChangeInternal(
     guildId: string,
     mapName: string,
@@ -703,10 +606,8 @@ export class EventTrackingService implements OnModuleInit {
     hasPlayer: boolean,
     isAfk: boolean,
   ): Promise<void> {
-    // Get member for this discord user (may be null for non-guild members)
     const member = await this.getMemberByDiscordId(discordId, guildId);
 
-    // Single query for event maps - used for both presence logging and gap management
     const eventMaps = await this.prisma.eventMap.findMany({
       where: {
         mapName,
@@ -731,8 +632,6 @@ export class EventTrackingService implements OnModuleInit {
 
     const now = new Date();
 
-    // Batch query: Get all active timers for the heroes in one query
-    // This eliminates N+1 problem from calling hasActiveRespawnWindow per map
     const timerKeys = eventMaps.map((map) => ({
       guildId,
       world: map.heroNpc.event.world,
@@ -751,27 +650,22 @@ export class EventTrackingService implements OnModuleInit {
       },
     });
 
-    // Create a Set for O(1) lookup
     const activeTimerSet = new Set(
       activeTimers.map((t) => `${t.guildId}:${t.world}:${t.npcId}`),
     );
 
     for (const map of eventMaps) {
-      // 0. Check if respawn window is active using batch-loaded data
       const effectiveNpcId =
         map.heroNpc.npcId ?? this.getSyntheticNpcId(map.heroNpc.id);
       const timerKey = `${guildId}:${map.heroNpc.event.world}:${effectiveNpcId}`;
       const hasActiveWindow = activeTimerSet.has(timerKey);
 
       if (!hasActiveWindow) {
-        // No active respawn window - skip tracking for this hero
         continue;
       }
 
-      // 1. Update presence logs (only if member exists in guild)
       if (member) {
         if (hasPlayer) {
-          // Player is on the map - close existing log and create new one
           await this.prisma.eventPresenceLog.updateMany({
             where: {
               mapId: map.id,
@@ -796,7 +690,6 @@ export class EventTrackingService implements OnModuleInit {
             isAfk,
           });
         } else {
-          // Player left the map - close existing log
           const result = await this.prisma.eventPresenceLog.updateMany({
             where: {
               mapId: map.id,
@@ -816,18 +709,14 @@ export class EventTrackingService implements OnModuleInit {
         }
       }
 
-      // 2. Handle coverage gaps (only for maps with assigned members)
       const hasAssignedMembers = map.assignedMembers.length > 0;
 
       if (!hasAssignedMembers) {
-        // No assigned members - UNASSIGNED gap is managed in assign/unassign methods
         continue;
       }
 
-      // Map has assigned members - manage UNCOVERED gap
       if (hasPlayer) {
         if (isAfk) {
-          // AFK player doesn't count as coverage
           const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
             map.id,
           );
@@ -835,11 +724,9 @@ export class EventTrackingService implements OnModuleInit {
             await this.openUncoveredGap(map.id, map.heroNpcId);
           }
         } else {
-          // Active player arrived - close UNCOVERED gap if open
           await this.closeUncoveredGap(map.id);
         }
       } else {
-        // Player left - check if map is now uncovered
         const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
           map.id,
         );
@@ -849,8 +736,6 @@ export class EventTrackingService implements OnModuleInit {
         }
       }
 
-      // 3. Always emit status update to refresh frontend
-      // (previously was only emitted in some branches, causing stale UI)
       await this.eventEmitter.emitMapStatusUpdate(
         guildId,
         map.heroNpc.eventId,
@@ -860,10 +745,6 @@ export class EventTrackingService implements OnModuleInit {
     }
   }
 
-  /**
-   * Get active non-AFK players on a map (from presence logs).
-   * Used for coverage gap logic - AFK players don't count as coverage.
-   */
   async getActiveNonAfkPlayersOnMap(mapId: string): Promise<number[]> {
     const activeLogs = await this.prisma.eventPresenceLog.findMany({
       where: {
@@ -880,9 +761,6 @@ export class EventTrackingService implements OnModuleInit {
     return activeLogs.map((log) => log.memberId);
   }
 
-  /**
-   * Get count of active players on a map (from presence logs).
-   */
   async getActivePlayersOnMap(mapId: string): Promise<number[]> {
     const activeLogs = await this.prisma.eventPresenceLog.findMany({
       where: {
@@ -898,11 +776,6 @@ export class EventTrackingService implements OnModuleInit {
     return activeLogs.map((log) => log.memberId);
   }
 
-  /**
-   * Get presence statistics for a hero across all maps and members.
-   * Returns aggregated data for UI display.
-   * Validates that the hero belongs to the specified guild and event.
-   */
   async getHeroPresenceStats(
     guildId: string,
     eventId: string,
@@ -920,7 +793,6 @@ export class EventTrackingService implements OnModuleInit {
       afkPercentage: number;
     }>;
   }> {
-    // Get hero with event and maps, validating ownership
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: {
         id: heroNpcId,
@@ -943,7 +815,6 @@ export class EventTrackingService implements OnModuleInit {
 
     const mapIds = hero.maps.map((m) => m.id);
 
-    // Calculate total event duration
     const eventStart = hero.event.startsAt || hero.event.createdAt;
     const eventEnd = hero.event.endsAt || new Date();
     const totalEventSeconds = Math.max(
@@ -951,7 +822,6 @@ export class EventTrackingService implements OnModuleInit {
       Math.round((eventEnd.getTime() - eventStart.getTime()) / 1000),
     );
 
-    // Get all unique assigned members across all maps
     const assignedMemberIds = new Set<number>();
     for (const map of hero.maps) {
       for (const member of map.assignedMembers) {
@@ -959,7 +829,6 @@ export class EventTrackingService implements OnModuleInit {
       }
     }
 
-    // Get all presence logs for this hero's maps
     const presenceLogs = await this.prisma.eventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
@@ -978,7 +847,6 @@ export class EventTrackingService implements OnModuleInit {
 
     const now = new Date();
 
-    // Aggregate by member
     const memberStatsMap = new Map<
       number,
       {
@@ -990,7 +858,6 @@ export class EventTrackingService implements OnModuleInit {
       }
     >();
 
-    // Initialize stats for assigned members
     for (const memberId of assignedMemberIds) {
       const member = hero.maps
         .flatMap((m) => m.assignedMembers)
@@ -1006,22 +873,18 @@ export class EventTrackingService implements OnModuleInit {
       }
     }
 
-    // Calculate presence time per member from logs
     let totalCoverageMs = 0;
 
     for (const log of presenceLogs) {
       const endTime = log.endedAt || now;
       const duration = Math.max(0, endTime.getTime() - log.startedAt.getTime());
 
-      // Only count non-AFK time as coverage
       if (!log.isAfk) {
         totalCoverageMs += duration;
       }
 
-      // Update member stats
       let memberStats = memberStatsMap.get(log.memberId);
       if (!memberStats) {
-        // Member who has logs but isn't currently assigned (was unassigned)
         memberStats = {
           memberId: log.member.id,
           memberName: log.member.name,
@@ -1038,7 +901,6 @@ export class EventTrackingService implements OnModuleInit {
       }
     }
 
-    // Convert to response format
     const memberStats = Array.from(memberStatsMap.values()).map((stats) => ({
       memberId: stats.memberId,
       memberName: stats.memberName,
@@ -1051,7 +913,6 @@ export class EventTrackingService implements OnModuleInit {
           : 0,
     }));
 
-    // Sort by total time descending
     memberStats.sort((a, b) => b.totalTimeSeconds - a.totalTimeSeconds);
 
     const totalCoverageSeconds = Math.round(totalCoverageMs / 1000);
@@ -1068,12 +929,6 @@ export class EventTrackingService implements OnModuleInit {
     };
   }
 
-  // ========== RESPAWN WINDOW HELPERS ==========
-
-  /**
-   * Check if there's an active respawn window for a hero.
-   * Used to determine if presence tracking should be active.
-   */
   private async hasActiveRespawnWindow(
     guildId: string,
     world: string,
@@ -1091,14 +946,9 @@ export class EventTrackingService implements OnModuleInit {
 
     if (!timer) return false;
 
-    // Active if maxSpawnTime hasn't passed yet
     return new Date(timer.maxSpawnTime) > new Date();
   }
 
-  /**
-   * Generate synthetic negative npcId from heroId for heroes without real npcId.
-   * Uses negative values to avoid collision with real Margonem NPC IDs.
-   */
   private getSyntheticNpcId(heroId: string): number {
     let hash = 0;
     for (let i = 0; i < heroId.length; i++) {
