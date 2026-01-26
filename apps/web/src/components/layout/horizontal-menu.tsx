@@ -1,6 +1,8 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Link, useLocation } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/hooks/context/use-theme";
+import { FrozenButton } from "@/components/effects/rukia-frost";
 
 interface NavElement {
   id: string;
@@ -22,6 +24,9 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
   className = "",
 }) => {
   const { pathname } = useLocation();
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const activeTabRef = useRef<HTMLAnchorElement | null>(null);
@@ -64,6 +69,18 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
         {items.map((item) => {
           const url = `${basePath}${item.href}`;
           const active = pathname === url;
+          const isHovered = hoveredId === item.id;
+
+          const buttonContent = (
+            <Button
+              className="flex-shrink-0 min-w-max"
+              size="sm"
+              variant={active ? "default" : "ghost"}
+            >
+              {item.label}
+            </Button>
+          );
+
           return (
             <Link
               key={item.id}
@@ -71,14 +88,16 @@ export const HorizontalMenu: React.FC<HorizontalMenuProps> = ({
               aria-current={active ? "page" : undefined}
               className="flex-shrink-0"
               ref={active ? activeTabRef : undefined}
+              onMouseEnter={() => setHoveredId(item.id)}
+              onMouseLeave={() => setHoveredId(null)}
             >
-              <Button
-                className="flex-shrink-0 min-w-max"
-                size="sm"
-                variant={active ? "default" : "ghost"}
-              >
-                {item.label}
-              </Button>
+              {isRukiaTheme ? (
+                <FrozenButton isHovered={isHovered} isActive={active}>
+                  {buttonContent}
+                </FrozenButton>
+              ) : (
+                buttonContent
+              )}
             </Link>
           );
         })}

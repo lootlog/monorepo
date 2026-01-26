@@ -23,7 +23,8 @@ type Theme =
   | "halloween"
   | "realmadrid"
   | "realmadrid-3rd"
-  | "barcelona";
+  | "barcelona"
+  | "rukia";
 type ColorMode = "light" | "dark";
 
 interface ThemeContextType {
@@ -103,6 +104,7 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
       "realmadrid",
       "realmadrid-3rd",
       "barcelona",
+      "rukia",
     );
 
     root.classList.add(colorMode);

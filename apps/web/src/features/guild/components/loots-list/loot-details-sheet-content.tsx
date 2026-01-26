@@ -15,6 +15,8 @@ import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { LootDetailsActions } from "@/features/guild/components/loots-list/loot-details-actions";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { Calendar, MapPin } from "lucide-react";
+import { useTheme } from "@/hooks/context/use-theme";
+import { FrostOverlay } from "@/components/effects/rukia-frost";
 
 export type LootDetailsSheetProps = {
   loot: Loot;
@@ -31,6 +33,8 @@ export const LootDetailsSheetContent: FC<LootDetailsSheetProps> = ({
 }) => {
   const date = timestampToDate(loot.createdAt);
   const isMobile = useIsMobile();
+  const { theme } = useTheme();
+  const isRukiaTheme = theme === "rukia";
 
   return (
     <SheetContent
@@ -43,6 +47,7 @@ export const LootDetailsSheetContent: FC<LootDetailsSheetProps> = ({
       onOpenAutoFocus={(e) => e.preventDefault()}
       aria-describedby={undefined}
     >
+      {isRukiaTheme && <FrostOverlay subtle rounded="rounded-l-xl" />}
       <SheetHeader className="border-b border-border/50">
         <SheetTitle className="pb-4 flex flex-col items-start">
           <LootNpcs
