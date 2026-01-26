@@ -22,6 +22,26 @@ export type SocketUserPlayer = {
   clanId?: number;
 };
 
+export type PlayerPresence = {
+  // Player data (from SocketUserPlayer)
+  world: string;
+  name: string;
+  characterId: string;
+  accountId: string;
+  icon: string;
+  lvl: string;
+  prof: string;
+
+  // Location/presence data
+  mapId?: number;
+  mapName?: string;
+  isAfk: boolean;
+  updatedAt: number;
+
+  // Session identifier (for multi-character support)
+  sessionId: string;
+};
+
 export type SocketUser = {
   discordId: string;
   sessionId: string;
@@ -30,6 +50,7 @@ export type SocketUser = {
   player?: SocketUserPlayer;
   status?: UserPresenceStatus;
   guilds?: UserGuildData[];
+  playerPresence?: PlayerPresence;
 };
 
 export type Socket = SocketIOSocket & { data: SocketUser };

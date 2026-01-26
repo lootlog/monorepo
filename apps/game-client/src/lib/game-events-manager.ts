@@ -17,6 +17,26 @@ class GameEventsManager {
     this.eventProcessor = null;
   }
 
+  triggerManualEvent(event: GameEvent): boolean {
+    if (!import.meta.env.DEV) {
+      console.warn("Manual event triggering is only available in development mode");
+      return false;
+    }
+
+    if (!this.eventProcessor) {
+      console.warn("Event processor not ready");
+      return false;
+    }
+
+    try {
+      this.eventProcessor(event);
+      return true;
+    } catch (error) {
+      console.error("Failed to trigger manual event:", error);
+      return false;
+    }
+  }
+
   setReady(ready: boolean) {
     this.isReady = ready;
     if (ready) {
