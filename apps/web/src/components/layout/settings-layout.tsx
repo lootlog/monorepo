@@ -20,6 +20,11 @@ const NAV_ELEMENTS = [
     href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.npcs}`,
   },
   {
+    id: "map-templates",
+    label: "Szablony map",
+    href: `${ROUTE_SEGMENTS.guild.settings}/map-templates`,
+  },
+  {
     id: "members",
     label: "Członkowie",
     href: `${ROUTE_SEGMENTS.guild.settings}${ROUTE_SEGMENTS.guild.members}`,

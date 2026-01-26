@@ -23,6 +23,7 @@ import {
   TokenExpiredError,
   AuthServiceUnavailableError,
   InvalidScopesError,
+  AccountNotFoundError,
 } from 'src/auth/errors';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { ServiceConfig } from 'src/config/service.config';
@@ -108,6 +109,13 @@ export class DiscordService implements OnModuleInit {
       if (error instanceof TokenExpiredError) {
         throw new UnauthorizedException({
           message: 'TOKEN_EXPIRED',
+          requiresReauth: true,
+        });
+      }
+
+      if (error instanceof AccountNotFoundError) {
+        throw new UnauthorizedException({
+          message: 'ACCOUNT_NOT_FOUND',
           requiresReauth: true,
         });
       }

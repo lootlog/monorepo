@@ -24,6 +24,9 @@
   "LOOTLOG_NOTIFICATIONS_SEND": "Wysyłanie powiadomień",
   "LOOTLOG_NOTIFICATIONS_TITANS_READ": "Powiadomienia o tytanach",
   "LOOTLOG_NOTIFICATIONS_HEROES_READ": "Powiadomienia o herosach",
+  "LOOTLOG_EVENTS_READ": "Przeglądanie eventów",
+  "LOOTLOG_EVENTS_WRITE": "Uczestnictwo w eventach",
+  "LOOTLOG_EVENTS_MANAGE": "Zarządzanie eventami",
 
   "descriptions": {
     "ADMIN": "Pozwala zarządzać całym lootlogiem np. nadawanie uprawnień",
@@ -49,7 +52,10 @@
     "LOOTLOG_NOTIFICATIONS_READ": "Pozwala na czytanie powiadomień z lootloga",
     "LOOTLOG_NOTIFICATIONS_SEND": "Pozwala na wysyłanie powiadomień z lootloga",
     "LOOTLOG_NOTIFICATIONS_TITANS_READ": "Dostęp do powiadomień o tytanach",
-    "LOOTLOG_NOTIFICATIONS_HEROES_READ": "Dostęp do powiadomień o herosach"
+    "LOOTLOG_NOTIFICATIONS_HEROES_READ": "Dostęp do powiadomień o herosach",
+    "LOOTLOG_EVENTS_READ": "Pozwala na przeglądanie eventów i ich statystyk",
+    "LOOTLOG_EVENTS_WRITE": "Pozwala na przypisywanie się do map i uczestnictwo w eventach",
+    "LOOTLOG_EVENTS_MANAGE": "Pozwala na tworzenie, edycję i zarządzanie eventami"
   },
 
   "groups": {
@@ -84,6 +90,10 @@
     "notifications": {
       "name": "Powiadomienia",
       "description": "Uprawnienia związane z powiadomieniami"
+    },
+    "events": {
+      "name": "Eventy",
+      "description": "Uprawnienia związane z eventami gildii"
     }
   }
 }

@@ -59,4 +59,14 @@ export enum RoutingKey {
   SEARCH_ITEMS_INDEX = 'search.items.index',
 
   ACTIVITY_LOG_CREATE = 'activity.log.create',
+
+  EVENT_MAP_STATUS_UPDATE = 'event.map-status.update',
+  EVENT_HERO_KILLED = 'event.hero.killed',
+  EVENT_RANKING_UPDATE = 'event.ranking.update',
+  PRESENCE_COVERAGE_CHECK = 'presence.coverage.check',
+
+  EVENT_RESPAWN_WINDOW_OPENED = 'event.respawn-window.opened',
+  EVENT_RESPAWN_WINDOW_CLOSED = 'event.respawn-window.closed',
+
+  PRESENCE_CHECK_REQUEST = 'presence.check.request',
 }
