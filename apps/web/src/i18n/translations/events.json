@@ -22,6 +22,10 @@
     "title": "Zakończyć event?",
     "description": "Czy na pewno chcesz zakończyć ten event? Będzie on oznaczony jako nieaktywny."
   },
+  "resumeDialog": {
+    "title": "Wznowić event?",
+    "description": "Czy na pewno chcesz wznowić ten event? Będzie on ponownie aktywny."
+  },
   "createDialog": {
     "title": "Nowy Event",
     "description": "Utwórz nowy event dla gildii",

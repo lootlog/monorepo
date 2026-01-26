@@ -10,7 +10,7 @@ export interface TimeOfDayMultiplier {
 export interface UpdateEventData {
   name?: string;
   startsAt?: string;
-  endsAt?: string;
+  endsAt?: string | null;
   active?: boolean;
   timeOfDayMultipliers?: TimeOfDayMultiplier[] | null;
   trackersMultipliers?: Record<number, number> | null;
