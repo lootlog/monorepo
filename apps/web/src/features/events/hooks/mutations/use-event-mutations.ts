@@ -15,8 +15,8 @@ export interface UpdateEventData {
   timeOfDayMultipliers?: TimeOfDayMultiplier[] | null;
   trackersMultipliers?: Record<number, number> | null;
   mapsCountMultipliers?: Record<number, number> | null;
+  trackingDurationMultipliers?: Record<number, number> | null;
   assignmentTimeoutMinutes?: number;
-  autoCalculatePoints?: boolean;
   mapAssignmentCap?: number;
   basePointsPerKill?: number;
 }

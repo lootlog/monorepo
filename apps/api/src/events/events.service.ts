@@ -227,8 +227,8 @@ export class EventsService {
       timeOfDayMultipliers,
       trackersMultipliers,
       mapsCountMultipliers,
+      trackingDurationMultipliers,
       assignmentTimeoutMinutes,
-      autoCalculatePoints,
       basePointsPerKill,
       ...updateData
     } = data;
@@ -283,11 +283,12 @@ export class EventsService {
             mapsCountMultipliers:
               mapsCountMultipliers as unknown as Prisma.InputJsonValue,
           }),
+          ...(trackingDurationMultipliers !== undefined && {
+            trackingDurationMultipliers:
+              trackingDurationMultipliers as unknown as Prisma.InputJsonValue,
+          }),
           ...(assignmentTimeoutMinutes !== undefined && {
             assignmentTimeoutMinutes,
-          }),
-          ...(autoCalculatePoints !== undefined && {
-            autoCalculatePoints,
           }),
           ...(basePointsPerKill !== undefined && {
             basePointsPerKill,
@@ -329,7 +330,11 @@ export class EventsService {
     const multipliersChanged =
       this.hasJsonChanged(timeOfDayMultipliers, event.timeOfDayMultipliers) ||
       this.hasJsonChanged(trackersMultipliers, event.trackersMultipliers) ||
-      this.hasJsonChanged(mapsCountMultipliers, event.mapsCountMultipliers);
+      this.hasJsonChanged(mapsCountMultipliers, event.mapsCountMultipliers) ||
+      this.hasJsonChanged(
+        trackingDurationMultipliers,
+        event.trackingDurationMultipliers,
+      );
 
     const basePointsChanged =
       basePointsPerKill !== undefined &&
@@ -351,6 +356,10 @@ export class EventsService {
           mapsCountMultipliers !== undefined
             ? (mapsCountMultipliers as unknown as Event['mapsCountMultipliers'])
             : event.mapsCountMultipliers,
+        trackingDurationMultipliers:
+          trackingDurationMultipliers !== undefined
+            ? (trackingDurationMultipliers as unknown as Event['trackingDurationMultipliers'])
+            : event.trackingDurationMultipliers,
       });
     }
 

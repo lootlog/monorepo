@@ -54,6 +54,11 @@ interface ParticipantRowProps {
   isEditPending?: boolean;
 }
 
+const formatPoints = (points: number): string => {
+  // Show decimals only if they exist
+  return Number.isInteger(points) ? String(points) : points.toFixed(2);
+};
+
 const ParticipantRow = ({
   participant,
   rank,
@@ -66,7 +71,7 @@ const ParticipantRow = ({
 }: ParticipantRowProps) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(String(participant.points));
+  const [editValue, setEditValue] = useState(formatPoints(participant.points));
 
   const avatarUrl = getDiscordAvatarUrl(
     participant.member.userId,
@@ -91,24 +96,26 @@ const ParticipantRow = ({
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditValue(String(participant.points));
+    setEditValue(formatPoints(participant.points));
     setIsEditing(true);
   };
 
   const handleCancelEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditing(false);
-    setEditValue(String(participant.points));
+    setEditValue(formatPoints(participant.points));
   };
 
   const handleConfirmEdit = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newPoints = Number.parseInt(editValue, 10);
+    const newPoints = Number.parseFloat(editValue);
     if (Number.isNaN(newPoints) || newPoints < 0) {
       return;
     }
+    // Round to 2 decimal places
+    const roundedPoints = Math.round(newPoints * 100) / 100;
     if (onEditPoints) {
-      await onEditPoints(participant.id, newPoints);
+      await onEditPoints(participant.id, roundedPoints);
     }
     setIsEditing(false);
   };
@@ -122,7 +129,7 @@ const ParticipantRow = ({
       handleConfirmEdit(e as unknown as React.MouseEvent);
     } else if (e.key === "Escape") {
       setIsEditing(false);
-      setEditValue(String(participant.points));
+      setEditValue(formatPoints(participant.points));
     }
   };
 
@@ -178,6 +185,7 @@ const ParticipantRow = ({
                 <Input
                   type="number"
                   min={0}
+                  step={0.01}
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -206,7 +214,7 @@ const ParticipantRow = ({
             ) : (
               <div className="flex items-center gap-1 shrink-0">
                 <span className="text-lg font-bold text-primary">
-                  {participant.points}
+                  {formatPoints(participant.points)}
                 </span>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -219,7 +227,7 @@ const ParticipantRow = ({
                           {t("events.kills.pointsTooltip.basePoints")}:
                         </span>
                         <span className="font-medium">
-                          {participant.basePoints}
+                          {formatPoints(participant.basePoints)}
                         </span>
                       </div>
                       <div className="flex justify-between gap-4">
@@ -254,12 +262,26 @@ const ParticipantRow = ({
                           &times;{participant.mapsMultiplier?.toFixed(2)}
                         </span>
                       </div>
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.trackingDurationMultiplier")}{" "}
+                          {participant.trackingDurationPercentage !== null && (
+                            <span className="text-muted-foreground">
+                              ({Math.round(participant.trackingDurationPercentage)}%)
+                            </span>
+                          )}
+                          :
+                        </span>
+                        <span className="font-medium">
+                          &times;{participant.trackingDurationMultiplier?.toFixed(2)}
+                        </span>
+                      </div>
                       <div className="border-t border-border/50 pt-1 mt-1 flex justify-between gap-4">
                         <span>{t("events.kills.pointsTooltip.total")}:</span>
                         <span className="font-medium">
-                          {participant.basePoints} &times;{" "}
+                          {formatPoints(participant.basePoints)} &times;{" "}
                           {participant.appliedMultiplier.toFixed(2)} ={" "}
-                          {participant.points}
+                          {formatPoints(participant.points)}
                         </span>
                       </div>
                     </div>

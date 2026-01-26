@@ -349,7 +349,7 @@ describe('EventKillService', () => {
         npcId,
         npcIcon,
         npcName,
-        event: { id: 'event-1', autoCalculatePoints: true },
+        event: { id: 'event-1' },
       };
 
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
@@ -388,7 +388,6 @@ describe('EventKillService', () => {
       id: 'event-1',
       guildId,
       basePointsPerKill: 100,
-      autoCalculatePoints: true,
     } as unknown as Event;
 
     const mockEventHero = {
@@ -446,9 +445,15 @@ describe('EventKillService', () => {
         afkPercentage: 0,
         wasPresent: true,
       });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+      ]);
       mockPointsService.calculateMemberPoints.mockReturnValue({
         points: 100,
         appliedMultiplier: 1.0,
+        timeMultiplier: 1.0,
+        trackersMultiplier: 1.0,
+        mapsMultiplier: 1.0,
       });
 
       await service.recordHeroKill(
@@ -599,51 +604,6 @@ describe('EventKillService', () => {
       );
 
       expect(mockSummaryService.createWindowSummary).toHaveBeenCalled();
-    });
-
-    it('should skip point calculation when autoCalculatePoints is false', async () => {
-      const eventNoAutoCalc = {
-        ...mockEvent,
-        autoCalculatePoints: false,
-      } as unknown as Event;
-      const mockMaps = [
-        {
-          id: 'map-1',
-          mapName: 'Map 1',
-          assignedMembers: [{ id: 1 }],
-        },
-      ];
-
-      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
-      const txMock = {
-        eventHeroKill: {
-          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
-        },
-        eventKillPoint: {
-          createMany: jest.fn().mockResolvedValue({ count: 0 }),
-          findMany: jest.fn().mockResolvedValue([]),
-        },
-        eventMap: {
-          update: jest.fn().mockResolvedValue({}),
-        },
-        eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-        },
-      };
-      mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(txMock),
-      );
-      mockQueue.getJobs.mockResolvedValue([]);
-
-      await service.recordHeroKill(
-        guildId,
-        mockEventHero,
-        eventNoAutoCalc,
-        timerData,
-      );
-
-      expect(mockPointsService.calculateMemberPoints).not.toHaveBeenCalled();
     });
 
     it('should open UNASSIGNED gaps for new window when kill creates new respawn', async () => {
@@ -966,7 +926,6 @@ describe('EventKillService', () => {
           id: heroId,
           npcName: 'Test Hero',
           event: {
-            autoCalculatePoints: true,
             basePointsPerKill: 100,
             timeOfDayMultipliers: null,
             trackersMultipliers: null,
@@ -995,7 +954,7 @@ describe('EventKillService', () => {
       expect(result.kill.id).toBe(killId);
       expect(result.kill.points).toHaveLength(1);
       expect(result.kill.windowDurationSeconds).toBe(3600);
-      expect(result.eventConfig.autoCalculatePoints).toBe(true);
+      expect(result.eventConfig.basePointsPerKill).toBe(100);
     });
 
     it('should throw NotFoundException when kill not found', async () => {

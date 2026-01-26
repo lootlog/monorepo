@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Trophy, Pencil, Check, X, PenLine, History, ArrowRight } from "lucide-react";
+import {
+  Trophy,
+  Pencil,
+  Check,
+  X,
+  PenLine,
+  History,
+  ArrowRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -53,12 +61,13 @@ const RankingRow = ({
   const [editValue, setEditValue] = useState(String(ranking.totalPoints));
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const { data: editHistory, isLoading: historyLoading } = useRankingEditHistory({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-    rankingId: ranking.id,
-    enabled: historyOpen && ranking.pointsModified,
-  });
+  const { data: editHistory, isLoading: historyLoading } =
+    useRankingEditHistory({
+      guildId: guildId ?? "",
+      eventId: eventId ?? "",
+      rankingId: ranking.id,
+      enabled: historyOpen && ranking.pointsModified,
+    });
 
   const isTop3 = position <= 3;
 
@@ -156,11 +165,7 @@ const RankingRow = ({
               {ranking.pointsModified && canEdit && (
                 <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
                   <PopoverTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6"
-                    >
+                    <Button size="icon" variant="ghost" className="h-6 w-6">
                       <PenLine className="h-3 w-3 text-amber-500" />
                     </Button>
                   </PopoverTrigger>
@@ -168,7 +173,9 @@ const RankingRow = ({
                     <div className="p-3 border-b">
                       <div className="flex items-center gap-2">
                         <History className="h-4 w-4 text-muted-foreground" />
-                        <h4 className="font-medium text-sm">{t("events.points.history")}</h4>
+                        <h4 className="font-medium text-sm">
+                          {t("events.points.history")}
+                        </h4>
                       </div>
                     </div>
                     <ScrollArea className="max-h-60">
@@ -185,7 +192,11 @@ const RankingRow = ({
                             >
                               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                                 <span className="text-xs">
-                                  {format(new Date(entry.editedAt), "d MMM yyyy, HH:mm", { locale: pl })}
+                                  {format(
+                                    new Date(entry.editedAt),
+                                    "d MMM yyyy, HH:mm",
+                                    { locale: pl },
+                                  )}
                                 </span>
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
                                   {entry.editType === "RANKING"
@@ -194,9 +205,13 @@ const RankingRow = ({
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 font-medium">
-                                <span className="text-red-500">{entry.previousPoints}</span>
+                                <span className="text-red-500">
+                                  {entry.previousPoints}
+                                </span>
                                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-green-500">{entry.newPoints}</span>
+                                <span className="text-green-500">
+                                  {entry.newPoints}
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -221,7 +236,9 @@ const RankingRow = ({
                 </Tooltip>
               )}
               <p className="font-bold text-primary">
-                {t("events.ranking.pointCount", { count: ranking.totalPoints })}
+                {t("events.ranking.pointCount", {
+                  count: ranking.totalPoints,
+                })}
               </p>
             </div>
             {canEdit && (

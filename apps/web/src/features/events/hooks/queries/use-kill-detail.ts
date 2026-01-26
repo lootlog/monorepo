@@ -41,7 +41,6 @@ export interface KillDetail {
 }
 
 export interface EventConfig {
-  autoCalculatePoints: boolean;
   basePointsPerKill: number;
   timeOfDayMultipliers: Array<{
     from: string;
@@ -50,6 +49,7 @@ export interface EventConfig {
   }> | null;
   trackersMultipliers: Record<string, number> | null;
   mapsCountMultipliers: Record<string, number> | null;
+  trackingDurationMultipliers: Record<string, number> | null;
 }
 
 export interface KillDetailResponse {

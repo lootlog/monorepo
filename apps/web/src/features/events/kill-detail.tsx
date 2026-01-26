@@ -18,7 +18,6 @@ import {
   Calculator,
   Hand,
 } from "lucide-react";
-import { cn } from "@lootlog/ui/lib/utils";
 import { format, differenceInSeconds } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Permission } from "@lootlog/types";
@@ -246,31 +245,15 @@ export const KillDetail = () => {
                     </Tooltip>
                   )}
                   <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "p-1.5 rounded-md",
-                        eventConfig.autoCalculatePoints
-                          ? "bg-primary/10"
-                          : "bg-muted",
-                      )}
-                    >
-                      <Calculator
-                        className={cn(
-                          "w-4 h-4",
-                          eventConfig.autoCalculatePoints
-                            ? "text-primary"
-                            : "text-muted-foreground",
-                        )}
-                      />
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Calculator className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <p className="text-lg font-bold">
-                        {eventConfig.autoCalculatePoints
-                          ? t("events.header.autoPointsOn")
-                          : t("events.header.autoPointsOff")}
+                        {t("events.header.autoPointsOn")}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {t("events.settings.autoCalculatePoints")}
+                        {t("events.scoring.title")}
                       </p>
                     </div>
                   </div>

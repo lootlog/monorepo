@@ -10,7 +10,7 @@
   "ongoing": "W trakcie",
   "ended": "Zakończony",
   "noEvents": "Brak eventów",
-  "error": "Błąd podczas pobierania eventów",
+  "error": "Błąd podczas pobierania",
   "accessDenied": "Brak dostępu do eventów",
   "backToList": "Powrót do listy",
   "end": "Zakończ",
@@ -62,6 +62,7 @@
     "pointCount_one": "{{count}} punkt",
     "pointCount_few": "{{count}} punkty",
     "pointCount_many": "{{count}} punktów",
+    "pointCount_other": "{{count}} pkt",
     "time": "Czas",
     "afk": "AFK %",
     "noRanking": "Brak danych w rankingu",
@@ -202,6 +203,7 @@
     "pointCount_one": "{{count}} punkt",
     "pointCount_few": "{{count}} punkty",
     "pointCount_many": "{{count}} punktów",
+    "pointCount_other": "{{count}} pkt",
     "pointsBreakdown": "{{base}} × {{multiplier}}",
     "timeOnMap": "Czas na mapie",
     "afkTime": "AFK",
@@ -227,6 +229,7 @@
       "mapsCount_one": "({{count}} mapa)",
       "mapsCount_few": "({{count}} mapy)",
       "mapsCount_many": "({{count}} map)",
+      "trackingDurationMultiplier": "Mnożnik czasu obstawiania",
       "total": "Łącznie"
     },
     "loadMore": "Załaduj więcej",
@@ -291,10 +294,7 @@
     "assignmentTimeout": "Czas na przypisanie (minuty)",
     "assignmentTimeoutDescription": "Ile minut przed minimalnym czasem respawnu można się przypisać do mapy",
     "mapAssignmentCap": "Limit osób na mapie",
-    "mapAssignmentCapDescription": "Maksymalna liczba osób, które mogą się przypisać do jednej mapy (0 = brak limitu)",
-    "autoCalculatePoints": "Automatyczne punkty",
-    "autoCalculatePointsDescription": "Automatycznie naliczaj punkty po zabiciu herosa",
-    "disabled": "wyłączone"
+    "mapAssignmentCapDescription": "Maksymalna liczba osób, które mogą się przypisać do jednej mapy (0 = brak limitu)"
   },
   "scoring": {
     "title": "Ustawienia punktów",
@@ -326,6 +326,14 @@
       "add": "Dodaj próg",
       "empty": "Brak zdefiniowanych progów"
     },
+    "trackingDuration": {
+      "title": "Mnożnik czasu obstawiania",
+      "description": "Kara za krótki czas obstawiania. Przykład: próg 0% z mnożnikiem 0.5 + próg 50% z mnożnikiem 1.0 = gracze z mniej niż 50% czasu dostaną połowę punktów.",
+      "percentage": "Min. % czasu",
+      "multiplier": "Mnożnik",
+      "add": "Dodaj próg",
+      "empty": "Brak zdefiniowanych progów (domyślnie 1.0x dla wszystkich)"
+    },
     "save": "Zapisz ustawienia",
     "saving": "Zapisywanie...",
     "saveSuccess": "Zapisano ustawienia punktów",
@@ -334,15 +342,13 @@
   "header": {
     "assignmentTimeoutTooltip": "Czas przed respawnem, kiedy można się przypisać do mapy",
     "autoPointsOn": "Auto",
-    "autoPointsOff": "Ręczne",
-    "autoPointsEnabledTooltip": "Punkty są naliczane automatycznie po zabiciu herosa",
-    "autoPointsDisabledTooltip": "Punkty są naliczane ręcznie",
     "multipliers_one": "{{count}} mnożnik",
     "multipliers_few": "{{count}} mnożniki",
     "multipliers_many": "{{count}} mnożników",
     "timeMultipliers": "Mnożniki czasowe",
     "trackersMultipliers": "Mnożniki za obecność",
     "mapsMultipliers": "Mnożniki za mapy",
+    "trackingDurationMultipliers": "Mnożniki czasu obstawiania",
     "people": "osób",
     "mapsLabel": "map"
   },

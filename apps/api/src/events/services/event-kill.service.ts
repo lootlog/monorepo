@@ -369,9 +369,6 @@ export class EventKillService {
       });
     }
 
-    // Check if autoCalculatePoints is enabled
-    const shouldCalculatePoints = event.autoCalculatePoints !== false;
-
     // Create kill record with points in a transaction
     const kill = await this.prisma.$transaction(async (tx) => {
       const heroKill = await tx.eventHeroKill.create({
@@ -389,13 +386,15 @@ export class EventKillService {
         killId: string;
         memberId: number;
         mapName: string;
-        basePoints: number;
-        points: number;
+        basePoints: number; // Float in DB
+        points: number; // Float in DB
         appliedMultiplier: number;
         timeMultiplier: number;
         trackersMultiplier: number;
         mapsMultiplier: number;
+        trackingDurationMultiplier: number;
         trackingDurationSeconds: number | null;
+        trackingDurationPercentage: number | null;
         timeOnMapSeconds: number;
         afkPercentage: number;
         wasPresent: boolean;
@@ -407,104 +406,122 @@ export class EventKillService {
         }>;
       }> = [];
 
-      // Create points for each assigned member (only if autoCalculatePoints is enabled)
-      if (shouldCalculatePoints) {
-        // Get assignment history for tracking duration calculation
-        // Only get active (current window) assignments - filter by unassignedAt: null
-        const mapIds = heroMaps.map((m) => m.id);
-        const assignmentHistory = await tx.eventMapAssignmentHistory.findMany({
-          where: {
-            mapId: { in: mapIds },
-            memberId: { in: assignedMemberIds },
-            unassignedAt: null,
-          },
-          select: {
-            memberId: true,
-            assignedAt: true,
-          },
-        });
+      // Get assignment history for tracking duration calculation
+      // Only get active (current window) assignments - filter by unassignedAt: null
+      const mapIds = heroMaps.map((m) => m.id);
+      const assignmentHistory = await tx.eventMapAssignmentHistory.findMany({
+        where: {
+          mapId: { in: mapIds },
+          memberId: { in: assignedMemberIds },
+          unassignedAt: null,
+        },
+        select: {
+          memberId: true,
+          assignedAt: true,
+        },
+      });
 
-        // Group by member to find earliest assignment
-        const memberFirstAssignment = new Map<number, Date>();
-        for (const history of assignmentHistory) {
-          const current = memberFirstAssignment.get(history.memberId);
-          if (!current || history.assignedAt < current) {
-            memberFirstAssignment.set(history.memberId, history.assignedAt);
-          }
+      // Group by member to find earliest assignment
+      const memberFirstAssignment = new Map<number, Date>();
+      for (const history of assignmentHistory) {
+        const current = memberFirstAssignment.get(history.memberId);
+        if (!current || history.assignedAt < current) {
+          memberFirstAssignment.set(history.memberId, history.assignedAt);
         }
+      }
 
-        for (const memberId of assignedMemberIds) {
-          const mapNames = memberMapAssignments.get(memberId) || [];
-          const memberAssignedMapIds = memberMapIds.get(memberId) || [];
+      // Create points for each assigned member
+      for (const memberId of assignedMemberIds) {
+        const mapNames = memberMapAssignments.get(memberId) || [];
+        const memberAssignedMapIds = memberMapIds.get(memberId) || [];
 
-          const presenceStats = await this.pointsService.getMemberPresenceStats(
-            eventHero.id,
+        const presenceStats = await this.pointsService.getMemberPresenceStats(
+          eventHero.id,
+          memberId,
+          timerData.previousMinSpawnTime ?? undefined,
+        );
+
+        // Get per-map presence stats for this member
+        const perMapPresenceStats =
+          await this.pointsService.getMemberPresenceStatsPerMap(
+            memberAssignedMapIds,
             memberId,
             timerData.previousMinSpawnTime ?? undefined,
           );
 
-          // Get per-map presence stats for this member
-          const perMapPresenceStats =
-            await this.pointsService.getMemberPresenceStatsPerMap(
-              memberAssignedMapIds,
-              memberId,
-              timerData.previousMinSpawnTime ?? undefined,
-            );
+        // Build mapPresenceData with map names
+        const mapPresenceData = perMapPresenceStats.map((stat) => ({
+          mapId: stat.mapId,
+          mapName: mapIdToName.get(stat.mapId) || '',
+          presenceTimeSeconds: stat.presenceTimeSeconds,
+          afkTimeSeconds: stat.afkTimeSeconds,
+        }));
 
-          // Build mapPresenceData with map names
-          const mapPresenceData = perMapPresenceStats.map((stat) => ({
-            mapId: stat.mapId,
-            mapName: mapIdToName.get(stat.mapId) || '',
-            presenceTimeSeconds: stat.presenceTimeSeconds,
-            afkTimeSeconds: stat.afkTimeSeconds,
-          }));
+        // Calculate tracking duration from first assignment to kill
+        const firstAssignment = memberFirstAssignment.get(memberId);
+        const trackingDurationSeconds = firstAssignment
+          ? Math.floor(
+              (killedAt.getTime() - firstAssignment.getTime()) / 1000,
+            )
+          : null;
 
-          // Calculate points per-member using their individual map count
-          const {
-            points,
-            appliedMultiplier,
-            timeMultiplier,
-            trackersMultiplier,
-            mapsMultiplier,
-          } = this.pointsService.calculateMemberPoints(
-            event,
-            killedAt,
-            mapNames.length, // Number of maps THIS member is assigned to
-            assignedMemberIds.length,
-          );
-
-          // Calculate tracking duration from first assignment to kill
-          const firstAssignment = memberFirstAssignment.get(memberId);
-          const trackingDurationSeconds = firstAssignment
-            ? Math.floor(
-                (killedAt.getTime() - firstAssignment.getTime()) / 1000,
+        // Calculate tracking duration percentage relative to window duration
+        // Window duration: from previousMinSpawnTime to killedAt
+        const windowStartTime = timerData.previousMinSpawnTime ?? killedAt;
+        const windowDurationSeconds = Math.floor(
+          (killedAt.getTime() - windowStartTime.getTime()) / 1000,
+        );
+        const trackingDurationPercentage =
+          trackingDurationSeconds !== null && windowDurationSeconds > 0
+            ? Math.min(
+                100,
+                Math.round(
+                  (trackingDurationSeconds / windowDurationSeconds) * 100,
+                ),
               )
-            : null;
+            : undefined;
 
-          killPointsData.push({
-            killId: heroKill.id,
-            memberId,
-            mapName: mapNames.join(', '),
-            basePoints: event.basePointsPerKill,
-            points,
-            appliedMultiplier,
-            timeMultiplier,
-            trackersMultiplier,
-            mapsMultiplier,
-            trackingDurationSeconds,
-            timeOnMapSeconds: presenceStats.timeOnMapSeconds,
-            afkPercentage: presenceStats.afkPercentage,
-            wasPresent: presenceStats.wasPresent,
-            mapPresenceData,
-          });
-        }
+        // Calculate points per-member using their individual map count
+        const {
+          points,
+          appliedMultiplier,
+          timeMultiplier,
+          trackersMultiplier,
+          mapsMultiplier,
+          trackingDurationMultiplier,
+        } = this.pointsService.calculateMemberPoints(
+          event,
+          killedAt,
+          mapNames.length, // Number of maps THIS member is assigned to
+          assignedMemberIds.length,
+          trackingDurationPercentage,
+        );
 
-        // Batch create all kill points
-        if (killPointsData.length > 0) {
-          await tx.eventKillPoint.createMany({
-            data: killPointsData,
-          });
-        }
+        killPointsData.push({
+          killId: heroKill.id,
+          memberId,
+          mapName: mapNames.join(', '),
+          basePoints: event.basePointsPerKill,
+          points,
+          appliedMultiplier,
+          timeMultiplier,
+          trackersMultiplier,
+          mapsMultiplier,
+          trackingDurationMultiplier,
+          trackingDurationSeconds,
+          trackingDurationPercentage: trackingDurationPercentage ?? null,
+          timeOnMapSeconds: presenceStats.timeOnMapSeconds,
+          afkPercentage: presenceStats.afkPercentage,
+          wasPresent: presenceStats.wasPresent,
+          mapPresenceData,
+        });
+      }
+
+      // Batch create all kill points
+      if (killPointsData.length > 0) {
+        await tx.eventKillPoint.createMany({
+          data: killPointsData,
+        });
       }
 
       // Clear map assignments for this hero after recording the kill
@@ -538,8 +555,8 @@ export class EventKillService {
       };
     });
 
-    // Update rankings (only if autoCalculatePoints is enabled)
-    if (shouldCalculatePoints && kill.points.length > 0) {
+    // Update rankings
+    if (kill.points.length > 0) {
       await this.pointsService.updateRankingAfterKill(
         event.id,
         eventHero.npcName,
@@ -955,11 +972,12 @@ export class EventKillService {
         windowDurationSeconds: summary?.totalWindowSeconds ?? null,
       },
       eventConfig: {
-        autoCalculatePoints: kill.heroNpc.event.autoCalculatePoints,
         basePointsPerKill: kill.heroNpc.event.basePointsPerKill,
         timeOfDayMultipliers: kill.heroNpc.event.timeOfDayMultipliers,
         trackersMultipliers: kill.heroNpc.event.trackersMultipliers,
         mapsCountMultipliers: kill.heroNpc.event.mapsCountMultipliers,
+        trackingDurationMultipliers:
+          kill.heroNpc.event.trackingDurationMultipliers,
       },
     };
   }

@@ -69,8 +69,8 @@ interface Event {
   timeOfDayMultipliers?: TimeOfDayMultiplier[];
   trackersMultipliers?: Record<string, number>;
   mapsCountMultipliers?: Record<string, number>;
+  trackingDurationMultipliers?: Record<string, number>;
   assignmentTimeoutMinutes?: number;
-  autoCalculatePoints?: boolean;
   basePointsPerKill?: number;
 }
 
