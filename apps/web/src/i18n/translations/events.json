@@ -274,7 +274,7 @@
       "title": "Konfiguracja mnożników",
       "basePoints": "Punkty bazowe",
       "timeOfDay": "Pora dnia",
-      "trackers": "Liczba tropicieli",
+      "trackers": "Liczba obstawiających",
       "maps": "Liczba map"
     },
     "mapCoverage": {
@@ -311,7 +311,7 @@
       "empty": "Brak zdefiniowanych przedziałów czasowych"
     },
     "trackers": {
-      "title": "Mnożnik tropicieli",
+      "title": "Mnożnik obstawiających",
       "description": "Im mniej osób pilnuje tego samego herosa, tym większy mnożnik",
       "count": "Liczba osób",
       "multiplier": "Mnożnik",

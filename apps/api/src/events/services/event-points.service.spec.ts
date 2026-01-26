@@ -1058,4 +1058,409 @@ describe('EventPointsService', () => {
       expect(mockTx.eventRanking.create).toHaveBeenCalled();
     });
   });
+
+  // ==========================================================================
+  // recalculateEventPointsWithMultipliers
+  // ==========================================================================
+  describe('recalculateEventPointsWithMultipliers', () => {
+    it('should do nothing when no kill points exist', async () => {
+      mockPrismaService.eventKillPoint.findMany.mockResolvedValue([]);
+
+      await service.recalculateEventPointsWithMultipliers('event-1', {
+        basePointsPerKill: 100,
+        timeOfDayMultipliers: null,
+        trackersMultipliers: null,
+        mapsCountMultipliers: null,
+      });
+
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should recalculate points with new multipliers', async () => {
+      const killTime = new Date('2024-01-15T14:00:00');
+      const killPoints = [
+        {
+          id: 'kp-1',
+          killId: 'kill-1',
+          memberId: 1,
+          points: 100,
+          appliedMultiplier: 1.0,
+          timeMultiplier: 1.0,
+          trackersMultiplier: 1.0,
+          mapsMultiplier: 1.0,
+          basePoints: 100,
+          timeOnMapSeconds: 3600,
+          afkPercentage: 10,
+          kill: {
+            id: 'kill-1',
+            killedAt: killTime,
+            heroNpc: {
+              npcName: 'Dragon',
+              eventId: 'event-1',
+              maps: [{ id: 'map-1' }],
+            },
+          },
+        },
+      ];
+
+      mockPrismaService.eventKillPoint.findMany.mockResolvedValue(killPoints);
+
+      const mockTx = {
+        eventKillPoint: {
+          update: jest.fn(),
+          findMany: jest.fn().mockResolvedValue([
+            {
+              ...killPoints[0],
+              points: 200,
+              appliedMultiplier: 2.0,
+            },
+          ]),
+        },
+        eventRanking: {
+          deleteMany: jest.fn(),
+          create: jest.fn(),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockTx),
+      );
+
+      await service.recalculateEventPointsWithMultipliers('event-1', {
+        basePointsPerKill: 100,
+        timeOfDayMultipliers: [
+          { from: '12:00', to: '18:00', multiplier: 2.0 },
+        ] as unknown as null,
+        trackersMultipliers: null,
+        mapsCountMultipliers: null,
+      });
+
+      expect(mockTx.eventKillPoint.update).toHaveBeenCalledWith({
+        where: { id: 'kp-1' },
+        data: {
+          basePoints: 100,
+          points: 200,
+          appliedMultiplier: 2.0,
+          timeMultiplier: 2.0,
+          trackersMultiplier: 1.0,
+          mapsMultiplier: 1.0,
+        },
+      });
+
+      expect(mockTx.eventRanking.deleteMany).toHaveBeenCalledWith({
+        where: { eventId: 'event-1' },
+      });
+
+      expect(mockTx.eventRanking.create).toHaveBeenCalled();
+    });
+
+    it('should correctly calculate assignedMembersCount from multiple kill points', async () => {
+      const killTime = new Date('2024-01-15T12:00:00');
+      const killPoints = [
+        {
+          id: 'kp-1',
+          killId: 'kill-1',
+          memberId: 1,
+          points: 100,
+          appliedMultiplier: 1.0,
+          timeOnMapSeconds: 3600,
+          afkPercentage: 10,
+          kill: {
+            id: 'kill-1',
+            killedAt: killTime,
+            heroNpc: {
+              npcName: 'Dragon',
+              eventId: 'event-1',
+              maps: [{ id: 'map-1' }],
+            },
+          },
+        },
+        {
+          id: 'kp-2',
+          killId: 'kill-1',
+          memberId: 2,
+          points: 100,
+          appliedMultiplier: 1.0,
+          timeOnMapSeconds: 1800,
+          afkPercentage: 5,
+          kill: {
+            id: 'kill-1',
+            killedAt: killTime,
+            heroNpc: {
+              npcName: 'Dragon',
+              eventId: 'event-1',
+              maps: [{ id: 'map-1' }],
+            },
+          },
+        },
+      ];
+
+      mockPrismaService.eventKillPoint.findMany.mockResolvedValue(killPoints);
+
+      const mockTx = {
+        eventKillPoint: {
+          update: jest.fn(),
+          findMany: jest.fn().mockResolvedValue(
+            killPoints.map((kp) => ({ ...kp, points: 150 })),
+          ),
+        },
+        eventRanking: {
+          deleteMany: jest.fn(),
+          create: jest.fn(),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockTx),
+      );
+
+      // Using trackersMultipliers that rewards having 2 trackers
+      await service.recalculateEventPointsWithMultipliers('event-1', {
+        basePointsPerKill: 100,
+        timeOfDayMultipliers: null,
+        trackersMultipliers: { '2': 1.5 } as unknown as null,
+        mapsCountMultipliers: null,
+      });
+
+      // Both kill points should be updated with the trackers multiplier
+      expect(mockTx.eventKillPoint.update).toHaveBeenCalledTimes(2);
+
+      // Verify the update was called with correct multiplier (1.5 for 2 trackers)
+      expect(mockTx.eventKillPoint.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'kp-1' },
+          data: expect.objectContaining({
+            trackersMultiplier: 1.5,
+          }),
+        }),
+      );
+    });
+
+    it('should correctly calculate heroMapCount per member', async () => {
+      const killTime = new Date('2024-01-15T12:00:00');
+      // Member 1 has 2 kill points for the same kill (was on 2 maps)
+      const killPoints = [
+        {
+          id: 'kp-1',
+          killId: 'kill-1',
+          memberId: 1,
+          points: 100,
+          appliedMultiplier: 1.0,
+          timeOnMapSeconds: 3600,
+          afkPercentage: 10,
+          kill: {
+            id: 'kill-1',
+            killedAt: killTime,
+            heroNpc: {
+              npcName: 'Dragon',
+              eventId: 'event-1',
+              maps: [{ id: 'map-1' }, { id: 'map-2' }],
+            },
+          },
+        },
+        {
+          id: 'kp-2',
+          killId: 'kill-1',
+          memberId: 1,
+          points: 100,
+          appliedMultiplier: 1.0,
+          timeOnMapSeconds: 1800,
+          afkPercentage: 5,
+          kill: {
+            id: 'kill-1',
+            killedAt: killTime,
+            heroNpc: {
+              npcName: 'Dragon',
+              eventId: 'event-1',
+              maps: [{ id: 'map-1' }, { id: 'map-2' }],
+            },
+          },
+        },
+      ];
+
+      mockPrismaService.eventKillPoint.findMany.mockResolvedValue(killPoints);
+
+      const mockTx = {
+        eventKillPoint: {
+          update: jest.fn(),
+          findMany: jest.fn().mockResolvedValue(
+            killPoints.map((kp) => ({ ...kp, points: 120 })),
+          ),
+        },
+        eventRanking: {
+          deleteMany: jest.fn(),
+          create: jest.fn(),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockTx),
+      );
+
+      // Using mapsCountMultipliers that rewards covering 2 maps
+      await service.recalculateEventPointsWithMultipliers('event-1', {
+        basePointsPerKill: 100,
+        timeOfDayMultipliers: null,
+        trackersMultipliers: null,
+        mapsCountMultipliers: { '2': 1.2 } as unknown as null,
+      });
+
+      // Both kill points should be updated with the maps multiplier
+      expect(mockTx.eventKillPoint.update).toHaveBeenCalledTimes(2);
+
+      // Verify the update was called with correct multiplier (1.2 for 2 maps)
+      expect(mockTx.eventKillPoint.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'kp-1' },
+          data: expect.objectContaining({
+            mapsMultiplier: 1.2,
+          }),
+        }),
+      );
+    });
+
+    it('should combine all multipliers correctly', async () => {
+      const killTime = new Date('2024-01-15T14:00:00');
+      const killPoints = [
+        {
+          id: 'kp-1',
+          killId: 'kill-1',
+          memberId: 1,
+          points: 100,
+          appliedMultiplier: 1.0,
+          timeOnMapSeconds: 3600,
+          afkPercentage: 10,
+          kill: {
+            id: 'kill-1',
+            killedAt: killTime,
+            heroNpc: {
+              npcName: 'Dragon',
+              eventId: 'event-1',
+              maps: [{ id: 'map-1' }],
+            },
+          },
+        },
+      ];
+
+      mockPrismaService.eventKillPoint.findMany.mockResolvedValue(killPoints);
+
+      const mockTx = {
+        eventKillPoint: {
+          update: jest.fn(),
+          findMany: jest.fn().mockResolvedValue([
+            { ...killPoints[0], points: 360 },
+          ]),
+        },
+        eventRanking: {
+          deleteMany: jest.fn(),
+          create: jest.fn(),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockTx),
+      );
+
+      await service.recalculateEventPointsWithMultipliers('event-1', {
+        basePointsPerKill: 100,
+        timeOfDayMultipliers: [
+          { from: '12:00', to: '18:00', multiplier: 1.5 },
+        ] as unknown as null,
+        trackersMultipliers: { '1': 2.0 } as unknown as null,
+        mapsCountMultipliers: { '1': 1.2 } as unknown as null,
+      });
+
+      // Combined multiplier: 1.5 * 2.0 * 1.2 = 3.6
+      // Points: 100 * 3.6 = 360
+      expect(mockTx.eventKillPoint.update).toHaveBeenCalledWith({
+        where: { id: 'kp-1' },
+        data: expect.objectContaining({
+          basePoints: 100,
+          points: 360,
+          timeMultiplier: 1.5,
+          trackersMultiplier: 2.0,
+          mapsMultiplier: 1.2,
+        }),
+      });
+
+      // Verify appliedMultiplier is approximately 3.6 (due to floating point)
+      const updateCall = mockTx.eventKillPoint.update.mock.calls[0][0];
+      expect(updateCall.data.appliedMultiplier).toBeCloseTo(3.6, 10);
+    });
+
+    it('should rebuild rankings from updated kill points', async () => {
+      const killTime = new Date('2024-01-15T12:00:00');
+      const killPoints = [
+        {
+          id: 'kp-1',
+          killId: 'kill-1',
+          memberId: 1,
+          points: 100,
+          appliedMultiplier: 1.0,
+          timeOnMapSeconds: 3600,
+          afkPercentage: 10,
+          kill: {
+            id: 'kill-1',
+            killedAt: killTime,
+            heroNpc: {
+              npcName: 'Dragon',
+              eventId: 'event-1',
+              maps: [{ id: 'map-1' }],
+            },
+          },
+        },
+      ];
+
+      mockPrismaService.eventKillPoint.findMany.mockResolvedValue(killPoints);
+
+      const mockTx = {
+        eventKillPoint: {
+          update: jest.fn(),
+          findMany: jest.fn().mockResolvedValue([
+            {
+              ...killPoints[0],
+              memberId: 1,
+              points: 200,
+              timeOnMapSeconds: 3600,
+              afkPercentage: 10,
+              kill: { heroNpc: { npcName: 'Dragon' } },
+            },
+          ]),
+        },
+        eventRanking: {
+          deleteMany: jest.fn(),
+          create: jest.fn(),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockTx),
+      );
+
+      await service.recalculateEventPointsWithMultipliers('event-1', {
+        basePointsPerKill: 100,
+        timeOfDayMultipliers: [
+          { from: '00:00', to: '23:59', multiplier: 2.0 },
+        ] as unknown as null,
+        trackersMultipliers: null,
+        mapsCountMultipliers: null,
+      });
+
+      expect(mockTx.eventRanking.deleteMany).toHaveBeenCalledWith({
+        where: { eventId: 'event-1' },
+      });
+
+      expect(mockTx.eventRanking.create).toHaveBeenCalledWith({
+        data: {
+          eventId: 'event-1',
+          memberId: 1,
+          heroNpcName: 'Dragon',
+          totalPoints: 200,
+          totalKills: 1,
+          totalTimeSeconds: 3600,
+          avgAfkPercentage: 10,
+        },
+      });
+    });
+  });
 });

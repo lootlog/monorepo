@@ -325,12 +325,33 @@ export class EventsService {
       });
     });
 
-    // Recalculate points if basePointsPerKill changed
-    if (
+    // Check if any multiplier configuration changed
+    const multipliersChanged =
+      this.hasJsonChanged(timeOfDayMultipliers, event.timeOfDayMultipliers) ||
+      this.hasJsonChanged(trackersMultipliers, event.trackersMultipliers) ||
+      this.hasJsonChanged(mapsCountMultipliers, event.mapsCountMultipliers);
+
+    const basePointsChanged =
       basePointsPerKill !== undefined &&
-      basePointsPerKill !== event.basePointsPerKill
-    ) {
-      await this.recalculateEventPoints(eventId, basePointsPerKill);
+      basePointsPerKill !== event.basePointsPerKill;
+
+    // Recalculate points if basePointsPerKill or any multiplier changed
+    if (basePointsChanged || multipliersChanged) {
+      await this.pointsService.recalculateEventPointsWithMultipliers(eventId, {
+        basePointsPerKill: basePointsPerKill ?? event.basePointsPerKill,
+        timeOfDayMultipliers:
+          timeOfDayMultipliers !== undefined
+            ? (timeOfDayMultipliers as unknown as Event['timeOfDayMultipliers'])
+            : event.timeOfDayMultipliers,
+        trackersMultipliers:
+          trackersMultipliers !== undefined
+            ? (trackersMultipliers as unknown as Event['trackersMultipliers'])
+            : event.trackersMultipliers,
+        mapsCountMultipliers:
+          mapsCountMultipliers !== undefined
+            ? (mapsCountMultipliers as unknown as Event['mapsCountMultipliers'])
+            : event.mapsCountMultipliers,
+      });
     }
 
     return updated;
@@ -354,6 +375,20 @@ export class EventsService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Compare two JSON values for deep equality.
+   * Returns true if the new value is defined and different from the old value.
+   */
+  private hasJsonChanged(
+    newValue: unknown,
+    oldValue: unknown,
+  ): boolean {
+    if (newValue === undefined) {
+      return false;
+    }
+    return JSON.stringify(newValue) !== JSON.stringify(oldValue);
   }
 
   async assignMemberToMap(

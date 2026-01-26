@@ -24,6 +24,10 @@ import { EventSummaryService } from './event-summary.service';
 // Default respawn randomness when creating new timers
 const DEFAULT_RESP_RANDOMNESS = 20; // 20%
 
+// Buffer time before auto-closing respawn window after maxSpawnTime
+// This gives players time to defeat heroes that respawn exactly at max time
+const AUTO_CLOSE_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Generate synthetic negative npcId from heroId for heroes without real npcId.
  * Uses negative values to avoid collision with real Margonem NPC IDs.
@@ -445,7 +449,7 @@ export class EventRespawnService {
     world: string,
     maxSpawnTime: Date,
   ): Promise<void> {
-    const delay = maxSpawnTime.getTime() - Date.now();
+    const delay = maxSpawnTime.getTime() - Date.now() + AUTO_CLOSE_BUFFER_MS;
 
     if (delay <= 0) {
       this.logger.warn({
@@ -475,6 +479,7 @@ export class EventRespawnService {
       jobId,
       delay,
       maxSpawnTime,
+      bufferMs: AUTO_CLOSE_BUFFER_MS,
     });
   }
 

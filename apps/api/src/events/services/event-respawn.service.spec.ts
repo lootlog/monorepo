@@ -449,8 +449,10 @@ describe('EventRespawnService', () => {
       expect(mockEventEmitter.emitTimerUpdate).toHaveBeenCalled();
     });
 
-    it('should not schedule auto-close if maxSpawnTime is in the past', async () => {
-      const pastMaxSpawnTime = new Date(Date.now() - 1000);
+    it('should not schedule auto-close if maxSpawnTime + buffer is in the past', async () => {
+      // AUTO_CLOSE_BUFFER_MS is 5 minutes (300000ms), so we need maxSpawnTime
+      // to be more than 5 minutes in the past for the job to be skipped
+      const pastMaxSpawnTime = new Date(Date.now() - 6 * 60 * 1000); // 6 minutes ago
 
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
