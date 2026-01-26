@@ -449,6 +449,8 @@ export const EventDetail = () => {
               <EventHeroLoots
                 guildId={guildId ?? ""}
                 heroNpcNames={event.heroNpcs?.map((h) => h.npcName) ?? []}
+                heroNpcs={event.heroNpcs}
+                showHeroTabs
                 world={event.world}
                 limit={5}
               />
@@ -466,6 +468,8 @@ export const EventDetail = () => {
               <RecentKillsPreview
                 guildId={guildId ?? ""}
                 eventId={eventId ?? ""}
+                heroNpcs={event.heroNpcs}
+                showHeroTabs
                 limit={5}
                 showHeroName
               />

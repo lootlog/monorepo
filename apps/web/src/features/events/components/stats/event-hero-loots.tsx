@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
+import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import {
   Package,
   Frown,
@@ -11,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEventLoots } from "../../hooks/queries/use-event-loots";
+import type { EventHeroNpc } from "../../hooks/queries/use-events";
 import { ItemTile } from "@/components/tiles";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
@@ -20,6 +23,8 @@ import { ItemRarity, type Loot } from "@/hooks/api/loots/use-loots";
 interface EventHeroLootsProps {
   guildId: string;
   heroNpcNames: string[];
+  heroNpcs?: EventHeroNpc[];
+  showHeroTabs?: boolean;
   world: string;
   limit?: number;
 }
@@ -81,13 +86,24 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
 export const EventHeroLoots = ({
   guildId,
   heroNpcNames,
+  heroNpcs,
+  showHeroTabs,
   world,
   limit = 10,
 }: EventHeroLootsProps) => {
   const { t } = useTranslation();
+  const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
+
+  const activeHeroName = selectedHeroName ?? heroNpcs?.[0]?.npcName ?? null;
+
+  const npcNamesToFetch =
+    showHeroTabs && heroNpcs && heroNpcs.length > 1 && activeHeroName
+      ? [activeHeroName]
+      : heroNpcNames;
+
   const { data: loots, isLoading } = useEventLoots({
     guildId,
-    npcNames: heroNpcNames,
+    npcNames: npcNamesToFetch,
     world,
     limit,
   });
@@ -112,6 +128,27 @@ export const EventHeroLoots = ({
         <Package className="w-4 h-4" />
         {t("events.loots.title")}
       </h2>
+
+      {showHeroTabs && heroNpcs && heroNpcs.length > 1 && (
+        <Tabs
+          value={activeHeroName ?? heroNpcs[0]?.npcName}
+          onValueChange={setSelectedHeroName}
+          className="mb-3"
+        >
+          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+            {heroNpcs.map((hero) => (
+              <TabsTrigger
+                key={hero.id}
+                value={hero.npcName}
+                className="flex-shrink-0 text-xs"
+              >
+                {hero.npcName}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+
       {!loots || loots.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
           <Frown className="w-8 h-8 mb-2 opacity-50" />
@@ -119,7 +156,7 @@ export const EventHeroLoots = ({
         </div>
       ) : (
         <>
-          <div className="space-y-2">
+          <div key={activeHeroName} className="space-y-2 animate-in fade-in-0 duration-200">
             {loots.map((loot) => (
               <LootItemsRow key={loot.id} loot={loot} />
             ))}
@@ -127,7 +164,7 @@ export const EventHeroLoots = ({
           <Link
             to="/$guildId"
             params={{ guildId }}
-            search={{ npcs: heroNpcNames.join(",") }}
+            search={{ npcs: activeHeroName ? activeHeroName : heroNpcNames.join(",") }}
             className="block mt-3"
           >
             <Button variant="outline" className="w-full" size="sm">

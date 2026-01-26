@@ -1,15 +1,20 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Skull, ChevronRight, Frown } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
+import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import { KillHistoryCard } from "./kill-history-card";
+import type { EventHeroNpc } from "../../hooks/queries/use-events";
 
 interface RecentKillsPreviewProps {
   guildId: string;
   eventId: string;
   heroId?: string;
+  heroNpcs?: EventHeroNpc[];
+  showHeroTabs?: boolean;
   limit?: number;
   showHeroName?: boolean;
 }
@@ -18,14 +23,27 @@ export const RecentKillsPreview = ({
   guildId,
   eventId,
   heroId,
+  heroNpcs,
+  showHeroTabs,
   limit = 5,
   showHeroName = false,
 }: RecentKillsPreviewProps) => {
   const { t } = useTranslation();
+  const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
+
+  const activeHero = selectedHeroId
+    ? heroNpcs?.find((h) => h.id === selectedHeroId)
+    : heroNpcs?.[0];
+
+  const activeHeroId =
+    showHeroTabs && heroNpcs && heroNpcs.length > 1
+      ? activeHero?.id
+      : heroId;
+
   const { data: kills, isLoading } = useRecentHeroKills({
     guildId,
     eventId,
-    heroId,
+    heroId: activeHeroId,
     limit,
   });
 
@@ -50,6 +68,26 @@ export const RecentKillsPreview = ({
         {t("events.kills.recentTitle")}
       </h2>
 
+      {showHeroTabs && heroNpcs && heroNpcs.length > 1 && (
+        <Tabs
+          value={activeHero?.id ?? heroNpcs[0]?.id}
+          onValueChange={setSelectedHeroId}
+          className="mb-3"
+        >
+          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+            {heroNpcs.map((hero) => (
+              <TabsTrigger
+                key={hero.id}
+                value={hero.id}
+                className="flex-shrink-0 text-xs"
+              >
+                {hero.npcName}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+
       {!kills || kills.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
           <Frown className="w-8 h-8 mb-2 opacity-50" />
@@ -62,7 +100,7 @@ export const RecentKillsPreview = ({
               <KillHistoryCard
                 key={kill.id}
                 kill={kill}
-                showHeroName={showHeroName || !heroId}
+                showHeroName={showHeroName || !activeHeroId}
                 minimal
                 guildId={guildId}
                 eventId={eventId}
@@ -73,12 +111,14 @@ export const RecentKillsPreview = ({
           {kills.length > 0 && (
             <Link
               to={
-                heroId
+                activeHeroId
                   ? "/$guildId/events/$eventId/heroes/$heroId/kills"
                   : "/$guildId/events/$eventId/kills"
               }
               params={
-                heroId ? { guildId, eventId, heroId } : { guildId, eventId }
+                activeHeroId
+                  ? { guildId, eventId, heroId: activeHeroId }
+                  : { guildId, eventId }
               }
               className="block mt-3"
             >
