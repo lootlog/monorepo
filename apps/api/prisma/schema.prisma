@@ -33,34 +33,27 @@ enum Permission {
   ADMIN
   LOOTLOG_MANAGE
   LOOTLOG_ACCESS
-  // Loots
   LOOTLOG_LOOTS_READ
   LOOTLOG_LOOTS_WRITE
   LOOTLOG_LOOTS_TITANS_READ
   LOOTLOG_LOOTS_HEROES_READ
-  // Timers
   LOOTLOG_TIMERS_READ
   LOOTLOG_TIMERS_WRITE
   LOOTLOG_TIMERS_RESET
   LOOTLOG_TIMERS_DELETE
   LOOTLOG_TIMERS_TITANS_READ
   LOOTLOG_TIMERS_HEROES_READ
-  // Reservations
   LOOTLOG_RESERVATIONS_READ
   LOOTLOG_RESERVATIONS_WRITE
-  // Members
   LOOTLOG_MEMBERS_READ
-  // Chat
   LOOTLOG_CHAT_READ
   LOOTLOG_CHAT_WRITE
   LOOTLOG_CHAT_TITANS_READ
   LOOTLOG_CHAT_HEROES_READ
-  // Notifications
   LOOTLOG_NOTIFICATIONS_READ
   LOOTLOG_NOTIFICATIONS_SEND
   LOOTLOG_NOTIFICATIONS_TITANS_READ
   LOOTLOG_NOTIFICATIONS_HEROES_READ
-  // Events
   LOOTLOG_EVENTS_MANAGE
   LOOTLOG_EVENTS_READ
   LOOTLOG_EVENTS_WRITE
@@ -208,7 +201,7 @@ model Timer {
   tempId                  String?
   wasReset                Boolean  @default(false)
   npc                     Json
-  windowOpenedAt          DateTime? // When the respawn window was opened (for summary calculation)
+  windowOpenedAt          DateTime?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -509,14 +502,13 @@ model Event {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  // Scoring multipliers configuration
-  basePointsPerKill             Int     @default(1) // Base points per kill before multipliers
+  basePointsPerKill             Int     @default(1)
   timeOfDayMultipliers          Json? // [{from: "06:00", to: "12:00", multiplier: 1.5}, ...]
-  trackersMultipliers           Json? // {1: 3.0, 2: 2.5, 3: 2.0, 4: 1.5, 5: 1.0} - fewer trackers = higher multiplier
-  mapsCountMultipliers          Json? // {1: 1.0, 2: 1.2, 3: 1.5, ...} - more maps = higher multiplier
-  trackingDurationMultipliers   Json? // {50: 0.5, 75: 0.75, 100: 1.0} - tracking % thresholds
-  assignmentTimeoutMinutes      Int     @default(5) // Minutes before minSpawnTime when assignments are allowed
-  mapAssignmentCap              Int? // Maximum members per map (null or 0 = no limit)
+  trackersMultipliers           Json? // {1: 3.0, 2: 2.5, 3: 2.0, 4: 1.5, 5: 1.0}
+  mapsCountMultipliers          Json? // {1: 1.0, 2: 1.2, 3: 1.5, ...}
+  trackingDurationMultipliers   Json? // {50: 0.5, 75: 0.75, 100: 1.0}
+  assignmentTimeoutMinutes      Int     @default(5)
+  mapAssignmentCap              Int?
 
   guild    Guild          @relation(fields: [guildId], references: [id])
   heroNpcs EventHeroNpc[]
@@ -575,10 +567,6 @@ model EventMapCoverageGap {
   startedAt          DateTime
   endedAt            DateTime?
   durationSeconds    Int?
-  // Indicates if there were assigned members when the gap started
-  // true = UNCOVERED (members assigned but not present)
-  // false = UNASSIGNED (no members assigned)
-  // This field simplifies gap type detection for existing records
   hadAssignedMembers Boolean?
 
   map     EventMap     @relation(fields: [mapId], references: [id], onDelete: Cascade)
@@ -645,10 +633,10 @@ model EventHeroKill {
   id                 String   @id @default(cuid())
   heroNpcId          String
   killedAt           DateTime @default(now())
-  minSpawnTimeAtKill DateTime // Respawn window min at time of kill
-  maxSpawnTimeAtKill DateTime // Respawn window max at time of kill
-  timerCreatedById   Int? // Member who submitted the timer (detected the kill)
-  isManualClose      Boolean  @default(false) // True if this was a manual window close, not an actual kill
+  minSpawnTimeAtKill DateTime
+  maxSpawnTimeAtKill DateTime
+  timerCreatedById   Int?
+  isManualClose      Boolean  @default(false)
 
   heroNpc        EventHeroNpc               @relation(fields: [heroNpcId], references: [id], onDelete: Cascade)
   timerCreatedBy Member?                    @relation("KillDetectedBy", fields: [timerCreatedById], references: [id])
@@ -664,19 +652,19 @@ model EventKillPoint {
   killId                  String
   memberId                Int
   mapName                 String
-  basePoints              Float // Points before multipliers
-  points                  Float // Final points after multipliers
-  appliedMultiplier       Float // Combined multiplier applied
-  timeMultiplier              Float? // Time-of-day multiplier
-  trackersMultiplier          Float? // Trackers count multiplier
-  mapsMultiplier              Float? // Maps count multiplier
-  trackingDurationMultiplier  Float? // Tracking duration percentage multiplier
-  trackingDurationSeconds     Int? // Total tracking time from first assignment to kill
-  trackingDurationPercentage  Float? // Percentage of window time spent tracking
+  basePoints              Float
+  points                  Float
+  appliedMultiplier       Float
+  timeMultiplier              Float?
+  trackersMultiplier          Float?
+  mapsMultiplier              Float?
+  trackingDurationMultiplier  Float?
+  trackingDurationSeconds     Int?
+  trackingDurationPercentage  Float?
   timeOnMapSeconds        Int
   afkPercentage           Float
   wasPresent              Boolean
-  mapPresenceData         Json? // Per-map presence data: [{mapId, mapName, presenceTimeSeconds, afkTimeSeconds}]
+  mapPresenceData         Json?
   createdAt               DateTime @default(now())
 
   kill   EventHeroKill @relation(fields: [killId], references: [id], onDelete: Cascade)
@@ -725,35 +713,26 @@ model EventPointsEditHistory {
   @@index([rankingId, editedAt(sort: Desc)])
 }
 
-// Summary of coverage tracking data for a single respawn window
-// Created when window closes, raw data (EventPresenceLog, EventMapCoverageGap) is deleted
 model EventRespawnWindowSummary {
   id        String  @id @default(cuid())
   heroNpcId String
-  killId    String? @unique // Null if auto-close without kill
+  killId    String? @unique
 
-  // Window timing
   windowOpenedAt DateTime
   windowClosedAt DateTime
   minSpawnTime   DateTime
   maxSpawnTime   DateTime
   wasManualClose Boolean @default(false)
 
-  // Aggregated coverage statistics
-  totalWindowSeconds     Int   // Duration of the window
-  totalCoverageSeconds   Int   // Time when someone was on map (non-AFK)
-  totalUncoveredSeconds  Int   // Gaps of type UNCOVERED
-  totalUnassignedSeconds Int   // Gaps of type UNASSIGNED
-  coveragePercentage     Float // totalCoverage / totalWindow * 100
+  totalWindowSeconds     Int
+  totalCoverageSeconds   Int
+  totalUncoveredSeconds  Int
+  totalUnassignedSeconds Int
+  coveragePercentage     Float
 
-  // Per-member breakdown (JSON)
-  memberStats Json // Array<{memberId, name, avatar, timeSeconds, afkSeconds, afkPercentage, maps[]}>
-
-  // Per-map breakdown (JSON)
-  mapStats Json // Array<{mapId, mapName, coverageSeconds, gapSeconds}>
-
-  // Timeline of gaps (JSON)
-  gapsTimeline Json // Array<{mapId, mapName, gapType, startedAt, endedAt, durationSeconds}>
+  memberStats  Json
+  mapStats     Json
+  gapsTimeline Json
 
   createdAt DateTime @default(now())
 
@@ -768,7 +747,7 @@ model MapTemplate {
   id        String   @id @default(cuid())
   guildId   String
   name      String
-  maps      Json     // [{ id: number, name: string }]
+  maps      Json
   createdAt DateTime @default(now())
 
   guild Guild @relation(fields: [guildId], references: [id])
