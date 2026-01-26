@@ -222,7 +222,7 @@ export class EventsService {
 
   async updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {
     const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId, active: true },
+      where: { id: eventId, guildId },
     });
 
     if (!event) {

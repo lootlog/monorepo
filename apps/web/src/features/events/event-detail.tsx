@@ -28,8 +28,9 @@ import { pl } from "date-fns/locale";
 import { EventEditDialog } from "./components/dialogs/event-edit-dialog";
 import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
+import { EndEventDialog } from "./components/dialogs/end-event-dialog";
+import { ResumeEventDialog } from "./components/dialogs/resume-event-dialog";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
-import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
@@ -72,6 +73,8 @@ export const EventDetail = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [heroDialogOpen, setHeroDialogOpen] = useState(false);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
+  const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const [selectedHero, setSelectedHero] = useState<EventHeroNpc | null>(null);
 
   const canManage =
@@ -143,6 +146,38 @@ export const EventDetail = () => {
               hero={selectedHero}
             />
           )}
+          <EndEventDialog
+            open={endDialogOpen}
+            onOpenChange={setEndDialogOpen}
+            eventName={event.name}
+            onConfirm={async () => {
+              try {
+                await updateEvent.mutateAsync({
+                  endsAt: new Date().toISOString(),
+                });
+                toast.success(t("events.endSuccess"));
+              } catch (_) {
+                toast.error(t("events.statusError"));
+              }
+            }}
+            isPending={updateEvent.isPending}
+          />
+          <ResumeEventDialog
+            open={resumeDialogOpen}
+            onOpenChange={setResumeDialogOpen}
+            eventName={event.name}
+            onConfirm={async () => {
+              try {
+                await updateEvent.mutateAsync({
+                  endsAt: null,
+                });
+                toast.success(t("events.resumeSuccess"));
+              } catch (_) {
+                toast.error(t("events.statusError"));
+              }
+            }}
+            isPending={updateEvent.isPending}
+          />
         </>
       )}
 
@@ -316,44 +351,20 @@ export const EventDetail = () => {
           )}
           {canManage &&
             (event.active ? (
-              <ConfirmDeleteDialog
-                title={t("events.endDialog.title")}
-                description={t("events.endDialog.description")}
-                onConfirm={async () => {
-                  try {
-                    await updateEvent.mutateAsync({
-                      active: false,
-                    });
-                    toast.success(t("events.endSuccess"));
-                  } catch (_) {
-                    toast.error(t("events.statusError"));
-                  }
-                }}
-                trigger={
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={updateEvent.isPending}
-                  >
-                    {t("events.end")}
-                  </Button>
-                }
-              />
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={updateEvent.isPending}
+                onClick={() => setEndDialogOpen(true)}
+              >
+                {t("events.end")}
+              </Button>
             ) : (
               <Button
                 variant="default"
                 size="sm"
                 disabled={updateEvent.isPending}
-                onClick={async () => {
-                  try {
-                    await updateEvent.mutateAsync({
-                      active: true,
-                    });
-                    toast.success(t("events.resumeSuccess"));
-                  } catch (_) {
-                    toast.error(t("events.statusError"));
-                  }
-                }}
+                onClick={() => setResumeDialogOpen(true)}
               >
                 {t("events.resume")}
               </Button>
