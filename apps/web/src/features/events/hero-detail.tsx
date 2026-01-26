@@ -96,6 +96,7 @@ export const HeroDetail = () => {
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
+    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
     permissions?.includes(Permission.ADMIN) ||
     permissions?.includes(Permission.OWNER);
 
