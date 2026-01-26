@@ -40,6 +40,7 @@ import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,
 } from './dto/update-points.dto';
+import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 
 @ApiTags('events')
 @ApiBearerAuth()
@@ -48,7 +49,7 @@ import {
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events')
   @ApiOperation({
@@ -65,13 +66,13 @@ export class EventsController {
     description: 'Forbidden - insufficient permissions',
   })
   async createEvent(
-    @Param('guildId') guildId: string,
     @Body() data: CreateEventDto,
+    @GuildData() guildData: { id: string },
   ) {
-    return this.eventsService.createEvent(guildId, data);
+    return this.eventsService.createEvent(guildData.id, data);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events')
   @ApiOperation({
@@ -94,14 +95,18 @@ export class EventsController {
     description: 'List of events',
   })
   async getEvents(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Query('world') world?: string,
     @Query('activeOnly') activeOnly?: string,
   ) {
-    return this.eventsService.getEvents(guildId, world, activeOnly !== 'false');
+    return this.eventsService.getEvents(
+      guildData.id,
+      world,
+      activeOnly !== 'false',
+    );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId')
   @ApiOperation({
@@ -116,13 +121,13 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Event not found' })
   async getEvent(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
   ) {
-    return this.eventsService.getEvent(guildId, eventId);
+    return this.eventsService.getEvent(guildData.id, eventId);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch('/guilds/:guildId/events/:eventId')
   @ApiOperation({
@@ -137,14 +142,14 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Event not found' })
   async updateEvent(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Body() data: UpdateEventDto,
   ) {
-    return this.eventsService.updateEvent(guildId, eventId, data);
+    return this.eventsService.updateEvent(guildData.id, eventId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete('/guilds/:guildId/events/:eventId')
   @ApiOperation({
@@ -159,13 +164,13 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Event not found' })
   async deleteEvent(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
   ) {
-    return this.eventsService.deleteEvent(guildId, eventId);
+    return this.eventsService.deleteEvent(guildData.id, eventId);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/maps/:mapId/assign')
   @ApiOperation({
@@ -181,20 +186,20 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Map not found' })
   async assignMember(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
     @Body() data: AssignMemberDto,
   ) {
     return this.eventsService.assignMemberToMap(
-      guildId,
+      guildData.id,
       eventId,
       mapId,
       data.memberId,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_WRITE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/maps/:mapId/self-assign')
   @ApiOperation({
@@ -210,20 +215,20 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Map not found' })
   async selfAssignMember(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
     @GuildMember() member: { id: number },
   ) {
     return this.eventsService.assignMemberToMap(
-      guildId,
+      guildData.id,
       eventId,
       mapId,
       member.id,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_WRITE)
   @UseGuards(PermissionsGuard)
   @Delete('/guilds/:guildId/events/:eventId/maps/:mapId/self-assign')
   @ApiOperation({
@@ -239,20 +244,20 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Map not found' })
   async selfUnassignMember(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
     @GuildMember() member: { id: number },
   ) {
     return this.eventsService.unassignMemberFromMap(
-      guildId,
+      guildData.id,
       eventId,
       mapId,
       member.id,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/heroes')
   @ApiOperation({
@@ -266,14 +271,14 @@ export class EventsController {
     description: 'Hero added successfully',
   })
   async addHero(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Body() data: CreateHeroDto,
   ) {
-    return this.eventsService.createHero(guildId, eventId, data);
+    return this.eventsService.createHero(guildData.id, eventId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch('/guilds/:guildId/events/:eventId/heroes/:heroId')
   @ApiOperation({
@@ -288,15 +293,15 @@ export class EventsController {
     description: 'Hero updated successfully',
   })
   async updateHero(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Body() data: UpdateHeroDto,
   ) {
-    return this.eventsService.updateHero(guildId, eventId, heroId, data);
+    return this.eventsService.updateHero(guildData.id, eventId, heroId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete('/guilds/:guildId/events/:eventId/heroes/:heroId')
   @ApiOperation({
@@ -311,14 +316,14 @@ export class EventsController {
     description: 'Hero deleted successfully',
   })
   async deleteHero(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.eventsService.deleteHero(guildId, eventId, heroId);
+    return this.eventsService.deleteHero(guildData.id, eventId, heroId);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/maps')
   @ApiOperation({
@@ -333,15 +338,15 @@ export class EventsController {
     description: 'Map added successfully',
   })
   async addMap(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Body() data: CreateMapDto,
   ) {
-    return this.eventsService.addMap(guildId, eventId, heroId, data);
+    return this.eventsService.addMap(guildData.id, eventId, heroId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete('/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId')
   @ApiOperation({
@@ -357,17 +362,17 @@ export class EventsController {
     description: 'Map deleted successfully',
   })
   async deleteMap(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('mapId') mapId: string,
   ) {
-    return this.eventsService.deleteMap(guildId, eventId, heroId, mapId);
+    return this.eventsService.deleteMap(guildData.id, eventId, heroId, mapId);
   }
 
   // ========== LOCATION MANAGEMENT ==========
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/locations')
   @ApiOperation({
@@ -382,14 +387,14 @@ export class EventsController {
     description: 'List of locations with maps',
   })
   async getLocations(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.eventsService.getLocations(guildId, eventId, heroId);
+    return this.eventsService.getLocations(guildData.id, eventId, heroId);
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/locations')
   @ApiOperation({
@@ -408,15 +413,20 @@ export class EventsController {
     description: 'Location with this name already exists',
   })
   async createLocation(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Body() data: CreateLocationDto,
   ) {
-    return this.eventsService.createLocation(guildId, eventId, heroId, data);
+    return this.eventsService.createLocation(
+      guildData.id,
+      eventId,
+      heroId,
+      data,
+    );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch(
     '/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId',
@@ -435,14 +445,14 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Location not found' })
   async updateLocation(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('locationId') locationId: string,
     @Body() data: UpdateLocationDto,
   ) {
     return this.eventsService.updateLocation(
-      guildId,
+      guildData.id,
       eventId,
       heroId,
       locationId,
@@ -450,7 +460,7 @@ export class EventsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete(
     '/guilds/:guildId/events/:eventId/heroes/:heroId/locations/:locationId',
@@ -470,20 +480,20 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Location not found' })
   async deleteLocation(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('locationId') locationId: string,
   ) {
     return this.eventsService.deleteLocation(
-      guildId,
+      guildData.id,
       eventId,
       heroId,
       locationId,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/locations/reorder')
   @ApiOperation({
@@ -498,15 +508,20 @@ export class EventsController {
     description: 'Locations reordered successfully',
   })
   async reorderLocations(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Body() data: ReorderLocationsDto,
   ) {
-    return this.eventsService.reorderLocations(guildId, eventId, heroId, data);
+    return this.eventsService.reorderLocations(
+      guildData.id,
+      eventId,
+      heroId,
+      data,
+    );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch('/guilds/:guildId/events/:eventId/heroes/:heroId/maps/:mapId/location')
   @ApiOperation({
@@ -524,14 +539,14 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Map or location not found' })
   async assignMapToLocation(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('mapId') mapId: string,
     @Body() data: AssignMapLocationDto,
   ) {
     return this.eventsService.assignMapToLocation(
-      guildId,
+      guildData.id,
       eventId,
       heroId,
       mapId,
@@ -539,7 +554,7 @@ export class EventsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Delete('/guilds/:guildId/events/:eventId/maps/:mapId/assign')
   @ApiOperation({
@@ -561,20 +576,20 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Map not found' })
   async unassignMember(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
     @Query('memberId') memberId?: string,
   ) {
     return this.eventsService.unassignMemberFromMap(
-      guildId,
+      guildData.id,
       eventId,
       mapId,
       memberId ? parseInt(memberId, 10) : undefined,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/ranking')
   @ApiOperation({
@@ -589,10 +604,10 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Event not found' })
   async getRanking(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
   ) {
-    return this.eventsService.getRanking(guildId, eventId);
+    return this.eventsService.getRanking(guildData.id, eventId);
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -600,7 +615,8 @@ export class EventsController {
   @Patch('/guilds/:guildId/events/:eventId/ranking/:rankingId')
   @ApiOperation({
     summary: 'Update ranking points',
-    description: 'Manually update total points for a ranking entry (OWNER/ADMIN only)',
+    description:
+      'Manually update total points for a ranking entry (OWNER/ADMIN only)',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID' })
   @ApiParam({ name: 'eventId', description: 'Event ID' })
@@ -611,14 +627,14 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Ranking not found' })
   async updateRankingPoints(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('rankingId') rankingId: string,
     @Body() data: UpdateRankingPointsDto,
     @UserId() userId: string,
   ) {
     return this.eventsService.updateRankingPoints(
-      guildId,
+      guildData.id,
       eventId,
       rankingId,
       data.totalPoints,
@@ -642,11 +658,15 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Ranking not found' })
   async getRankingEditHistory(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('rankingId') rankingId: string,
   ) {
-    return this.eventsService.getRankingEditHistory(guildId, eventId, rankingId);
+    return this.eventsService.getRankingEditHistory(
+      guildData.id,
+      eventId,
+      rankingId,
+    );
   }
 
   @Permissions(Permission.LOOTLOG_TIMERS_READ)
@@ -665,14 +685,14 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Event not found' })
   async getEventHeroTimers(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Query('world') world: string,
   ) {
-    return this.eventsService.getEventHeroTimers(guildId, eventId, world);
+    return this.eventsService.getEventHeroTimers(guildData.id, eventId, world);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/hero-stats')
   @ApiOperation({
@@ -687,13 +707,13 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Event not found' })
   async getEventHeroStats(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
   ) {
-    return this.eventsService.getEventHeroStats(guildId, eventId);
+    return this.eventsService.getEventHeroStats(guildData.id, eventId);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/kills')
   @ApiOperation({
@@ -724,14 +744,14 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Event not found' })
   async getEventKillHistory(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
     @Query('heroId') heroId?: string,
   ) {
     return this.eventsService.getEventKillHistory(
-      guildId,
+      guildData.id,
       eventId,
       limit ? parseInt(limit, 10) : 20,
       cursor,
@@ -739,7 +759,7 @@ export class EventsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/kills')
   @ApiOperation({
@@ -766,14 +786,14 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Hero not found' })
   async getHeroKillHistory(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
   ) {
     return this.eventsService.getHeroKillHistory(
-      guildId,
+      guildData.id,
       eventId,
       heroId,
       limit ? parseInt(limit, 10) : 20,
@@ -781,7 +801,7 @@ export class EventsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId')
   @ApiOperation({
@@ -800,12 +820,17 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Kill not found' })
   async getKillDetail(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('killId') killId: string,
   ) {
-    return this.eventsService.getKillDetail(guildId, eventId, heroId, killId);
+    return this.eventsService.getKillDetail(
+      guildData.id,
+      eventId,
+      heroId,
+      killId,
+    );
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -826,7 +851,7 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Kill point not found' })
   async updateKillPoint(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('killId') killId: string,
     @Param('killPointId') killPointId: string,
@@ -834,7 +859,7 @@ export class EventsController {
     @UserId() userId: string,
   ) {
     return this.eventsService.updateKillPoint(
-      guildId,
+      guildData.id,
       eventId,
       killId,
       killPointId,
@@ -843,7 +868,7 @@ export class EventsController {
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/kills/:killId/timeline')
   @ApiOperation({
@@ -862,20 +887,20 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Kill not found' })
   async getKillTimelineData(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Param('killId') killId: string,
   ) {
     return this.eventsService.getKillTimelineData(
-      guildId,
+      guildData.id,
       eventId,
       heroId,
       killId,
     );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/coverage-gaps')
   @ApiOperation({
@@ -891,14 +916,18 @@ export class EventsController {
     description: 'List of coverage gaps with type, duration, and timestamps',
   })
   async getHeroCoverageGaps(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.eventsService.getHeroCoverageGaps(guildId, eventId, heroId);
+    return this.eventsService.getHeroCoverageGaps(
+      guildData.id,
+      eventId,
+      heroId,
+    );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/maps/:mapId/coverage-gaps')
   @ApiOperation({
@@ -914,14 +943,14 @@ export class EventsController {
     description: 'List of coverage gaps with type, duration, and timestamps',
   })
   async getMapCoverageGaps(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
   ) {
-    return this.eventsService.getMapCoverageGaps(guildId, eventId, mapId);
+    return this.eventsService.getMapCoverageGaps(guildData.id, eventId, mapId);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/maps/:mapId/active-gap')
   @ApiOperation({
@@ -937,14 +966,14 @@ export class EventsController {
     description: 'Active gap or null if no gap is currently active',
   })
   async getActiveGapForMap(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('mapId') mapId: string,
   ) {
-    return this.eventsService.getActiveGapForMap(guildId, eventId, mapId);
+    return this.eventsService.getActiveGapForMap(guildData.id, eventId, mapId);
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/active-gaps')
   @ApiOperation({
@@ -960,14 +989,18 @@ export class EventsController {
     description: 'Array of active gaps for all maps of the hero',
   })
   async getActiveGapsForHero(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.eventsService.getActiveGapsForHero(guildId, eventId, heroId);
+    return this.eventsService.getActiveGapsForHero(
+      guildData.id,
+      eventId,
+      heroId,
+    );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/presence-stats')
   @ApiOperation({
@@ -984,14 +1017,18 @@ export class EventsController {
       'Presence statistics including total coverage time and per-member breakdown',
   })
   async getHeroPresenceStats(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.eventsService.getHeroPresenceStats(guildId, eventId, heroId);
+    return this.eventsService.getHeroPresenceStats(
+      guildData.id,
+      eventId,
+      heroId,
+    );
   }
 
-  @Permissions(Permission.LOOTLOG_ACCESS)
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/heroes/:heroId/respawn-config')
   @ApiOperation({
@@ -1008,14 +1045,18 @@ export class EventsController {
       'Respawn configuration including active timer status and default times',
   })
   async getHeroRespawnConfig(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
   ) {
-    return this.eventsService.getHeroRespawnConfig(guildId, eventId, heroId);
+    return this.eventsService.getHeroRespawnConfig(
+      guildData.id,
+      eventId,
+      heroId,
+    );
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/close-respawn-window')
   @ApiOperation({
@@ -1036,12 +1077,12 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Hero not found' })
   async closeRespawnWindow(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Body() data: CloseRespawnWindowDto,
   ) {
-    await this.eventsService.closeRespawnWindow(guildId, eventId, heroId, {
+    await this.eventsService.closeRespawnWindow(guildData.id, eventId, heroId, {
       createNewWindow: data.createNewWindow,
       newMinSpawnTime: data.newMinSpawnTime
         ? new Date(data.newMinSpawnTime)
@@ -1053,7 +1094,7 @@ export class EventsController {
     return { success: true };
   }
 
-  @Permissions(Permission.LOOTLOG_MANAGE)
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Post('/guilds/:guildId/events/:eventId/heroes/:heroId/open-respawn-window')
   @ApiOperation({
@@ -1074,13 +1115,13 @@ export class EventsController {
   })
   @ApiResponse({ status: 404, description: 'Hero not found' })
   async openRespawnWindow(
-    @Param('guildId') guildId: string,
+    @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
     @Param('heroId') heroId: string,
     @Body() data: OpenRespawnWindowDto,
   ) {
     const result = await this.eventsService.openRespawnWindow(
-      guildId,
+      guildData.id,
       eventId,
       heroId,
       {
@@ -1093,51 +1134,5 @@ export class EventsController {
       minSpawnTime: result.minSpawnTime,
       maxSpawnTime: result.maxSpawnTime,
     };
-  }
-
-  // ========== MONITORING ENDPOINTS ==========
-
-  @Permissions(Permission.OWNER, Permission.ADMIN)
-  @UseGuards(PermissionsGuard)
-  @Get('/guilds/:guildId/events/:eventId/auto-close-jobs')
-  @ApiOperation({
-    summary: 'Get auto-close job status',
-    description:
-      'Get status of scheduled auto-close jobs for event heroes (admin only). Shows pending, delayed, and failed jobs.',
-  })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiParam({ name: 'eventId', description: 'Event ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Auto-close job status with pending, delayed, and failed counts',
-  })
-  @ApiResponse({ status: 404, description: 'Event not found' })
-  async getAutoCloseJobsStatus(
-    @Param('guildId') guildId: string,
-    @Param('eventId') eventId: string,
-  ) {
-    return this.eventsService.getAutoCloseJobsStatus(guildId, eventId);
-  }
-
-  @Permissions(Permission.OWNER, Permission.ADMIN)
-  @UseGuards(PermissionsGuard)
-  @Get('/guilds/:guildId/events/:eventId/queue-health')
-  @ApiOperation({
-    summary: 'Get queue health status',
-    description:
-      'Get health status of Bull queues for event processing (admin only). Shows queue readiness and job counts.',
-  })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiParam({ name: 'eventId', description: 'Event ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Queue health status with counts for different job states',
-  })
-  @ApiResponse({ status: 404, description: 'Event not found' })
-  async getQueueHealth(
-    @Param('guildId') guildId: string,
-    @Param('eventId') eventId: string,
-  ) {
-    return this.eventsService.getQueueHealth(guildId, eventId);
   }
 }

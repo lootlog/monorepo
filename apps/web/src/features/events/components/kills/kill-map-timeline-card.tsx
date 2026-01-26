@@ -9,11 +9,11 @@ import {
   AvatarImage,
 } from "@lootlog/ui/components/avatar";
 import { Badge } from "@lootlog/ui/components/badge";
-import { format } from "date-fns";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { MapCoverageTimeline } from "../maps/map-coverage-timeline";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
-import { formatDuration } from "../../hooks/utils/use-local-coverage-timer";
+import { formatDurationPadded, formatTime, formatTimeShort } from "../../utils";
 import type {
   MapTimelineData,
   MapGap,
@@ -90,7 +90,7 @@ export const KillMapTimelineCard = ({
               #{map.numericMapId}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-1">
             {map.assignments.length > 0 && (
               <div className="flex -space-x-1.5">
                 {map.assignments.slice(0, 3).map((a) => (
@@ -141,8 +141,8 @@ export const KillMapTimelineCard = ({
             gaps={clippedGaps}
           />
           <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
-            <span>{format(startTime, "HH:mm:ss")}</span>
-            <span>{format(endTime, "HH:mm:ss")}</span>
+            <span>{formatTime(startTime)}</span>
+            <span>{formatTime(endTime)}</span>
           </div>
         </div>
 
@@ -170,9 +170,9 @@ export const KillMapTimelineCard = ({
                 </Avatar>
                 <span className="text-xs">{assignment.memberName}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto">
-                  {format(new Date(assignment.assignedAt), "HH:mm")}
+                  {formatTimeShort(new Date(assignment.assignedAt))}
                   {assignment.unassignedAt &&
-                    ` - ${format(new Date(assignment.unassignedAt), "HH:mm")}`}
+                    ` - ${formatTimeShort(new Date(assignment.unassignedAt))}`}
                 </span>
               </div>
             ))}
@@ -184,38 +184,42 @@ export const KillMapTimelineCard = ({
             <p className="text-xs font-medium text-muted-foreground">
               {t("events.killDetail.mapCoverage.gapDetails")}
             </p>
-            {clippedGaps.map((gap) => (
-              <div
-                key={gap.id}
-                className="flex items-center justify-between text-xs py-1 px-2 rounded bg-muted/30"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={cn(
-                      "w-2 h-2 rounded-full",
-                      gap.gapType === "UNASSIGNED"
-                        ? "bg-destructive"
-                        : "bg-yellow-500",
-                    )}
-                  />
-                  <span>
-                    {gap.gapType === "UNASSIGNED"
-                      ? t("events.maps.gap.unassigned")
-                      : t("events.maps.gap.uncovered")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-[10px]">
-                    {format(new Date(gap.startedAt), "HH:mm:ss")}
-                    {gap.endedAt &&
-                      ` - ${format(new Date(gap.endedAt), "HH:mm:ss")}`}
-                  </span>
-                  <span className="font-mono font-medium">
-                    {formatDuration(gap.durationSeconds ?? 0)}
-                  </span>
-                </div>
+            <ScrollArea className="max-h-[152px]">
+              <div className="space-y-1">
+                {clippedGaps.map((gap) => (
+                  <div
+                    key={gap.id}
+                    className="flex items-center justify-between text-xs py-1 px-2 rounded bg-muted/30"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full",
+                          gap.gapType === "UNASSIGNED"
+                            ? "bg-destructive"
+                            : "bg-yellow-500",
+                        )}
+                      />
+                      <span>
+                        {gap.gapType === "UNASSIGNED"
+                          ? t("events.maps.gap.unassigned")
+                          : t("events.maps.gap.uncovered")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground text-[10px]">
+                        {formatTime(new Date(gap.startedAt))}
+                        {gap.endedAt &&
+                          ` - ${formatTime(new Date(gap.endedAt))}`}
+                      </span>
+                      <span className="font-mono font-medium">
+                        {formatDurationPadded(gap.durationSeconds ?? 0)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </ScrollArea>
           </div>
         )}
 

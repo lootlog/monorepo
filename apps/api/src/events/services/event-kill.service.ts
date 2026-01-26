@@ -341,13 +341,21 @@ export class EventKillService {
       },
     });
 
-    // Collect unique assigned members
+    // Collect unique assigned members and their map assignments
     const memberMapAssignments = new Map<number, string[]>();
+    const memberMapIds = new Map<number, string[]>();
+    const mapIdToName = new Map<string, string>();
+
     for (const map of heroMaps) {
+      mapIdToName.set(map.id, map.mapName);
       for (const member of map.assignedMembers) {
-        const maps = memberMapAssignments.get(member.id) || [];
-        maps.push(map.mapName);
-        memberMapAssignments.set(member.id, maps);
+        const mapNames = memberMapAssignments.get(member.id) || [];
+        mapNames.push(map.mapName);
+        memberMapAssignments.set(member.id, mapNames);
+
+        const mapIds = memberMapIds.get(member.id) || [];
+        mapIds.push(map.id);
+        memberMapIds.set(member.id, mapIds);
       }
     }
 
@@ -391,16 +399,24 @@ export class EventKillService {
         timeOnMapSeconds: number;
         afkPercentage: number;
         wasPresent: boolean;
+        mapPresenceData: Array<{
+          mapId: string;
+          mapName: string;
+          presenceTimeSeconds: number;
+          afkTimeSeconds: number;
+        }>;
       }> = [];
 
       // Create points for each assigned member (only if autoCalculatePoints is enabled)
       if (shouldCalculatePoints) {
         // Get assignment history for tracking duration calculation
+        // Only get active (current window) assignments - filter by unassignedAt: null
         const mapIds = heroMaps.map((m) => m.id);
         const assignmentHistory = await tx.eventMapAssignmentHistory.findMany({
           where: {
             mapId: { in: mapIds },
             memberId: { in: assignedMemberIds },
+            unassignedAt: null,
           },
           select: {
             memberId: true,
@@ -419,11 +435,29 @@ export class EventKillService {
 
         for (const memberId of assignedMemberIds) {
           const mapNames = memberMapAssignments.get(memberId) || [];
+          const memberAssignedMapIds = memberMapIds.get(memberId) || [];
+
           const presenceStats = await this.pointsService.getMemberPresenceStats(
             eventHero.id,
             memberId,
             timerData.previousMinSpawnTime ?? undefined,
           );
+
+          // Get per-map presence stats for this member
+          const perMapPresenceStats =
+            await this.pointsService.getMemberPresenceStatsPerMap(
+              memberAssignedMapIds,
+              memberId,
+              timerData.previousMinSpawnTime ?? undefined,
+            );
+
+          // Build mapPresenceData with map names
+          const mapPresenceData = perMapPresenceStats.map((stat) => ({
+            mapId: stat.mapId,
+            mapName: mapIdToName.get(stat.mapId) || '',
+            presenceTimeSeconds: stat.presenceTimeSeconds,
+            afkTimeSeconds: stat.afkTimeSeconds,
+          }));
 
           // Calculate points per-member using their individual map count
           const {
@@ -461,6 +495,7 @@ export class EventKillService {
             timeOnMapSeconds: presenceStats.timeOnMapSeconds,
             afkPercentage: presenceStats.afkPercentage,
             wasPresent: presenceStats.wasPresent,
+            mapPresenceData,
           });
         }
 
@@ -839,18 +874,52 @@ export class EventKillService {
           },
         );
 
-        // Get presence stats per map
-        const assignedMapIds = [...new Set(assignments.map((a) => a.mapId))];
-        const presenceStats =
-          await this.pointsService.getMemberPresenceStatsPerMap(
-            assignedMapIds,
-            point.memberId,
-            kill.minSpawnTimeAtKill,
-          );
+        // Use stored mapPresenceData if available, otherwise fall back to querying logs
+        type MapPresenceEntry = {
+          mapId: string;
+          mapName: string;
+          presenceTimeSeconds: number;
+          afkTimeSeconds: number;
+        };
+        const storedMapPresence = point.mapPresenceData as
+          | MapPresenceEntry[]
+          | null;
 
-        const presenceByMapId = new Map(
-          presenceStats.map((s) => [s.mapId, s]),
-        );
+        let presenceByMapId: Map<
+          string,
+          { presenceTimeSeconds: number; afkTimeSeconds: number }
+        >;
+
+        if (storedMapPresence && storedMapPresence.length > 0) {
+          // Use stored presence data (presence logs may have been deleted)
+          presenceByMapId = new Map(
+            storedMapPresence.map((s) => [
+              s.mapId,
+              {
+                presenceTimeSeconds: s.presenceTimeSeconds,
+                afkTimeSeconds: s.afkTimeSeconds,
+              },
+            ]),
+          );
+        } else {
+          // Fall back to querying presence logs (for older kills without stored data)
+          const assignedMapIds = [...new Set(assignments.map((a) => a.mapId))];
+          const presenceStats =
+            await this.pointsService.getMemberPresenceStatsPerMap(
+              assignedMapIds,
+              point.memberId,
+              kill.minSpawnTimeAtKill,
+            );
+          presenceByMapId = new Map(
+            presenceStats.map((s) => [
+              s.mapId,
+              {
+                presenceTimeSeconds: s.presenceTimeSeconds,
+                afkTimeSeconds: s.afkTimeSeconds,
+              },
+            ]),
+          );
+        }
 
         // Build mapData array
         const mapData = assignments.map((assignment) => {

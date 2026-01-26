@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { format, differenceInSeconds } from "date-fns";
-import { pl } from "date-fns/locale";
+import { differenceInSeconds } from "date-fns";
 import { Clock, Users, Skull, ChevronRight, Hand } from "lucide-react";
 import {
   Tooltip,
@@ -13,6 +12,11 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { NpcTile } from "@/components/tiles";
 import type { HeroKill } from "../../hooks/queries/use-hero-kill-history";
 import { KillParticipantsList } from "./kill-participants-list";
+import {
+  formatDurationHuman,
+  formatDateTime,
+  formatDateTimeFull,
+} from "../../utils";
 
 interface KillHistoryCardProps {
   kill: HeroKill;
@@ -28,18 +32,7 @@ const formatRespawnTime = (minSpawn: string, killedAt: string): string => {
   const minDate = new Date(minSpawn);
   const killedDate = new Date(killedAt);
   const diffSeconds = differenceInSeconds(killedDate, minDate);
-
-  if (diffSeconds < 60) {
-    return `${diffSeconds}s`;
-  }
-  const minutes = Math.floor(diffSeconds / 60);
-  const seconds = diffSeconds % 60;
-  if (minutes < 60) {
-    return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  return formatDurationHuman(diffSeconds);
 };
 
 export const KillHistoryCard = ({
@@ -88,9 +81,7 @@ export const KillHistoryCard = ({
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                {format(new Date(kill.killedAt), "d MMM, HH:mm", {
-                  locale: pl,
-                })}
+                {formatDateTime(new Date(kill.killedAt))}
               </p>
             </div>
           </div>
@@ -99,7 +90,10 @@ export const KillHistoryCard = ({
             {kill.isManualClose && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-600/50">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 text-yellow-600 border-yellow-600/50"
+                  >
                     <Hand className="w-3 h-3" />
                   </Badge>
                 </TooltipTrigger>
@@ -118,9 +112,7 @@ export const KillHistoryCard = ({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    {t("events.kills.respawnTime")}
-                  </p>
+                  <p>{t("events.kills.respawnTime")}</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -182,9 +174,7 @@ export const KillHistoryCard = ({
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                {format(new Date(kill.killedAt), "d MMM, HH:mm", {
-                  locale: pl,
-                })}
+                {formatDateTime(new Date(kill.killedAt))}
               </p>
             </div>
           </div>
@@ -192,7 +182,10 @@ export const KillHistoryCard = ({
             {kill.isManualClose && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-600/50">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 text-yellow-600 border-yellow-600/50"
+                  >
                     <Hand className="w-3 h-3" />
                   </Badge>
                 </TooltipTrigger>
@@ -255,9 +248,7 @@ export const KillHistoryCard = ({
               <p className="font-semibold truncate">{kill.heroNpc.npcName}</p>
             )}
             <p className="text-sm text-muted-foreground">
-              {format(new Date(kill.killedAt), "d MMM yyyy, HH:mm", {
-                locale: pl,
-              })}
+              {formatDateTimeFull(new Date(kill.killedAt))}
             </p>
           </div>
         </div>
@@ -266,7 +257,10 @@ export const KillHistoryCard = ({
           {kill.isManualClose && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-600/50">
+                <Badge
+                  variant="outline"
+                  className="gap-1 text-yellow-600 border-yellow-600/50"
+                >
                   <Hand className="w-3 h-3" />
                   {t("events.kills.manualClose")}
                 </Badge>
@@ -286,9 +280,7 @@ export const KillHistoryCard = ({
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                <p>
-                  {t("events.kills.respawnTime")}
-                </p>
+                <p>{t("events.kills.respawnTime")}</p>
               </TooltipContent>
             </Tooltip>
           )}

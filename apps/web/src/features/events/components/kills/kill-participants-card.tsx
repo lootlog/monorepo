@@ -20,7 +20,6 @@ import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import {
   Users,
-  Clock,
   ChevronDown,
   Frown,
   MapPin,
@@ -34,6 +33,7 @@ import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
+import { formatDurationHuman, aggregateMapData } from "../../utils";
 
 interface KillParticipantsCardProps {
   participants: KillDetailParticipant[];
@@ -42,22 +42,6 @@ interface KillParticipantsCardProps {
   killId?: string;
   canEdit?: boolean;
 }
-
-const formatDuration = (seconds: number): string => {
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes < 60) {
-    return remainingSeconds > 0
-      ? `${minutes}m ${remainingSeconds}s`
-      : `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-};
 
 interface ParticipantRowProps {
   participant: KillDetailParticipant;
@@ -94,22 +78,16 @@ const ParticipantRow = ({
     ? { color: `#${roleColor.toString(16).padStart(6, "0")}` }
     : undefined;
 
-  const legacyAfkTimeSeconds = Math.round(
-    (participant.timeOnMapSeconds * participant.afkPercentage) / 100,
+  const aggregatedMaps = participant.mapData
+    ? aggregateMapData(participant.mapData)
+    : [];
+
+  const totalAfkSeconds = aggregatedMaps.reduce(
+    (sum, map) => sum + map.afkTimeSeconds,
+    0,
   );
 
-  const totalAfkSeconds =
-    participant.mapData?.reduce((sum, map) => sum + map.afkTimeSeconds, 0) ??
-    legacyAfkTimeSeconds;
-
-  const mapCount = participant.mapName
-    ? participant.mapName.split(",").length
-    : 0;
-
-  const hasDetailedMultipliers =
-    participant.timeMultiplier !== null &&
-    participant.trackersMultiplier !== null &&
-    participant.mapsMultiplier !== null;
+  const mapCount = aggregatedMaps.length;
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -175,15 +153,12 @@ const ParticipantRow = ({
             </Avatar>
 
             <div className="flex flex-col flex-1 min-w-0">
-              <span
-                className="font-medium truncate"
-                style={nameStyle}
-              >
+              <span className="font-medium truncate" style={nameStyle}>
                 {participant.member.name}
               </span>
               {participant.trackingDurationSeconds !== null && (
                 <span className="text-xs text-muted-foreground">
-                  {formatDuration(participant.trackingDurationSeconds)}{" "}
+                  {formatDurationHuman(participant.trackingDurationSeconds)}&nbsp;
                   {t("events.kills.trackingDuration")}
                 </span>
               )}
@@ -191,7 +166,7 @@ const ParticipantRow = ({
 
             {totalAfkSeconds > 0 && (
               <span className="text-xs text-amber-500 shrink-0">
-                {t("events.kills.afkTime")}: {formatDuration(totalAfkSeconds)}
+                {t("events.kills.afkTime")}: {formatDurationHuman(totalAfkSeconds)}
               </span>
             )}
 
@@ -247,62 +222,46 @@ const ParticipantRow = ({
                           {participant.basePoints}
                         </span>
                       </div>
-                      {hasDetailedMultipliers ? (
-                        <>
-                          <div className="flex justify-between gap-4">
-                            <span>
-                              {t("events.kills.pointsTooltip.timeMultiplier")}:
-                            </span>
-                            <span className="font-medium">
-                              &times;{participant.timeMultiplier?.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <span>
-                              {t(
-                                "events.kills.pointsTooltip.trackersMultiplier",
-                              )}{" "}
-                              {t("events.kills.pointsTooltip.trackersCount", {
-                                count: trackersCount,
-                              })}
-                              :
-                            </span>
-                            <span className="font-medium">
-                              &times;
-                              {participant.trackersMultiplier?.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <span>
-                              {t("events.kills.pointsTooltip.mapsMultiplier")}{" "}
-                              {t("events.kills.pointsTooltip.mapsCount", {
-                                count: mapCount,
-                              })}
-                              :
-                            </span>
-                            <span className="font-medium">
-                              &times;{participant.mapsMultiplier?.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="border-t border-border/50 pt-1 mt-1 flex justify-between gap-4">
-                            <span>
-                              {t("events.kills.pointsTooltip.total")}:
-                            </span>
-                            <span className="font-medium">
-                              {participant.basePoints} &times;{" "}
-                              {participant.appliedMultiplier.toFixed(2)} ={" "}
-                              {participant.points}
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex justify-between gap-4">
-                          <span>{t("events.kills.multipliers.title")}:</span>
-                          <span className="font-medium">
-                            &times;{participant.appliedMultiplier.toFixed(2)}
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.timeMultiplier")}:
+                        </span>
+                        <span className="font-medium">
+                          &times;{participant.timeMultiplier?.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.trackersMultiplier")}{" "}
+                          {t("events.kills.pointsTooltip.trackersCount", {
+                            count: trackersCount,
+                          })}
+                          :
+                        </span>
+                        <span className="font-medium">
+                          &times;{participant.trackersMultiplier?.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.mapsMultiplier")}{" "}
+                          {t("events.kills.pointsTooltip.mapsCount", {
+                            count: mapCount,
+                          })}
+                          :
+                        </span>
+                        <span className="font-medium">
+                          &times;{participant.mapsMultiplier?.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="border-t border-border/50 pt-1 mt-1 flex justify-between gap-4">
+                        <span>{t("events.kills.pointsTooltip.total")}:</span>
+                        <span className="font-medium">
+                          {participant.basePoints} &times;{" "}
+                          {participant.appliedMultiplier.toFixed(2)} ={" "}
+                          {participant.points}
+                        </span>
+                      </div>
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -336,9 +295,9 @@ const ParticipantRow = ({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="px-3 pb-3 pt-0 space-y-3 border-t border-border/50">
-            {participant.mapData && participant.mapData.length > 0 ? (
+            {aggregatedMaps.length > 0 && (
               <div className="pt-3 space-y-2">
-                {participant.mapData.map((mapInfo) => (
+                {aggregatedMaps.map((mapInfo) => (
                   <div key={mapInfo.mapId} className="text-sm">
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       <MapPin className="w-4 h-4 shrink-0" />
@@ -347,40 +306,21 @@ const ParticipantRow = ({
                     <div className="ml-5 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                       <span>
                         {t("events.kills.assignmentTime")}:{" "}
-                        {formatDuration(mapInfo.assignmentDurationSeconds)}
+                        {formatDurationHuman(mapInfo.assignmentDurationSeconds)}
                       </span>
                       <span>
                         {t("events.kills.presenceTime")}:{" "}
-                        {formatDuration(mapInfo.presenceTimeSeconds)}
+                        {formatDurationHuman(mapInfo.presenceTimeSeconds)}
                       </span>
                       {mapInfo.afkTimeSeconds > 0 && (
                         <span className="text-amber-500">
                           {t("events.kills.afkTime")}:{" "}
-                          {formatDuration(mapInfo.afkTimeSeconds)}
+                          {formatDurationHuman(mapInfo.afkTimeSeconds)}
                         </span>
                       )}
                     </div>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <div className="pt-3 flex items-center gap-4 text-sm flex-wrap">
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <MapPin className="w-4 h-4 shrink-0" />
-                  <span className="truncate max-w-[200px]">
-                    {participant.mapName}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Clock className="w-4 h-4 shrink-0" />
-                  <span>{formatDuration(participant.timeOnMapSeconds)}</span>
-                </div>
-                {legacyAfkTimeSeconds > 0 && (
-                  <span className="text-amber-500 text-xs">
-                    {t("events.kills.afkTime")}:{" "}
-                    {formatDuration(legacyAfkTimeSeconds)}
-                  </span>
-                )}
               </div>
             )}
           </div>
