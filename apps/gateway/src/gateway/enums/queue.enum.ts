@@ -38,4 +38,11 @@ export enum Queue {
   GUILDS_SEND_NOTIFICATION_RETRY = 'gateway-guilds-send-notification.retry',
 
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'gateway-guilds-members-refresh-job-update',
+
+  EVENT_MAP_STATUS_UPDATE = 'gateway-event-map-status-update',
+  EVENT_HERO_KILLED = 'gateway-event-hero-killed',
+  EVENT_RANKING_UPDATE = 'gateway-event-ranking-update',
+  EVENT_RESPAWN_WINDOW_OPENED = 'gateway-event-respawn-window-opened',
+  EVENT_RESPAWN_WINDOW_CLOSED = 'gateway-event-respawn-window-closed',
+  PRESENCE_CHECK_REQUEST = 'gateway-presence-check-request',
 }

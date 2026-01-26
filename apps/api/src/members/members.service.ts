@@ -402,9 +402,24 @@ export class MembersService {
       data: { active: false, roles: { set: [] } },
     });
 
-    await this.redisService.deleteByPattern(
-      getUserLootlogConfigCachePattern(discordId),
-    );
+    await Promise.all([
+      this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_MEMBERS_REMOVE,
+        {
+          id: discordId,
+          discordId,
+          userId: member.globalUserId,
+          guildId,
+        },
+      ),
+      this.redisService.deleteByPattern(
+        getUserLootlogConfigCachePattern(discordId),
+      ),
+      this.redisService.del(
+        getPermissionsCacheKey(member.globalUserId, guildId),
+      ),
+    ]);
 
     return deactivatedMember;
   }

@@ -1,5 +1,6 @@
 import { GATEWAY_SOCKET_PATH, GATEWAY_URL } from "@/config/gateway";
 import { io } from "socket.io-client";
+import { msgpackParser } from "@lootlog/socket-parser";
 
 export const socket = io(GATEWAY_URL, {
   transports: ["websocket"],
@@ -10,4 +11,5 @@ export const socket = io(GATEWAY_URL, {
   timeout: 20000,
   withCredentials: true,
   autoConnect: false,
+  parser: msgpackParser,
 });

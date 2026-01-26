@@ -1,5 +1,10 @@
 import { useState, useCallback, useMemo } from "react";
-import { getISOWeek, getISOWeekYear, getLastISOWeek, getDateOfISOWeek } from "./utils";
+import {
+  getISOWeek,
+  getISOWeekYear,
+  getLastISOWeek,
+  getDateOfISOWeek,
+} from "./utils";
 import { MONTH_NAMES } from "./constants";
 
 export function useScheduleNavigation() {

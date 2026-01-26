@@ -5,6 +5,7 @@ import {
   Max,
   IsArray,
   IsString,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MAX_PAGE_LIMIT } from '../config/pagination';
@@ -100,4 +101,12 @@ export class FetchLootsParamsDto {
   @IsArray()
   @IsString({ each: true })
   itemNames?: string[];
+
+  @IsOptional()
+  @IsDateString()
+  createdAtMin?: string;
+
+  @IsOptional()
+  @IsDateString()
+  createdAtMax?: string;
 }
