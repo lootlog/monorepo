@@ -236,6 +236,7 @@ export class TimersService implements OnModuleInit {
           npcId: data.npc.id,
           npcName: data.npc.name,
           npcIcon: data.npc.icon,
+          npcLvl: data.npc.lvl,
           timerData: {
             minSpawnTime,
             maxSpawnTime,

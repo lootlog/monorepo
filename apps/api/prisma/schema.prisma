@@ -611,6 +611,7 @@ model EventHeroNpc {
   npcId     Int?
   npcName   String
   npcIcon   String?
+  npcLvl    Int?
   createdAt DateTime @default(now())
 
   event             Event                       @relation(fields: [eventId], references: [id], onDelete: Cascade)

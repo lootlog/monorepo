@@ -16,7 +16,15 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 import { ReorderLocationsDto } from './dto/reorder-locations.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import { Event, EventHeroNpc, EventKillPoint, Prisma } from 'generated/client';
+import {
+  Event,
+  EventHeroNpc,
+  EventKillPoint,
+  Permission,
+  Prisma,
+  type Role,
+} from 'generated/client';
+import { filterHeroesByLevel } from 'src/shared/utils/can-view-event-hero';
 import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
 import type { KillTimerData } from './interfaces/kill-timer-data.interface';
 import type {
@@ -42,6 +50,7 @@ export interface CheckEventHeroKillParams {
   npcId: number;
   npcName: string;
   npcIcon: string;
+  npcLvl?: number;
   timerData: KillTimerData;
 }
 
@@ -1039,6 +1048,8 @@ export class EventsService {
       params.npcName,
       params.npcIcon,
       params.timerData,
+      false,
+      params.npcLvl,
     );
   }
 
@@ -1441,5 +1452,107 @@ export class EventsService {
       },
       workers: workers.length,
     };
+  }
+
+  // ========== HERO LEVEL FILTERING ==========
+
+  /**
+   * Filter heroes in an event by user's level range permissions.
+   * Returns filtered heroNpcs array.
+   */
+  filterEventHeroesByLevel<
+    T extends { heroNpcs: Array<{ npcLvl: number | null }> },
+  >(event: T, roles: Role[], permissions: Permission[]): T {
+    return {
+      ...event,
+      heroNpcs: filterHeroesByLevel(event.heroNpcs, roles, permissions),
+    };
+  }
+
+  /**
+   * Filter heroes in multiple events by user's level range permissions.
+   */
+  filterEventsHeroesByLevel<
+    T extends { heroNpcs: Array<{ npcLvl: number | null }> },
+  >(events: T[], roles: Role[], permissions: Permission[]): T[] {
+    return events.map((event) =>
+      this.filterEventHeroesByLevel(event, roles, permissions),
+    );
+  }
+
+  /**
+   * Check if a hero is visible to the user based on level restrictions.
+   */
+  isHeroVisibleToUser(
+    hero: { npcLvl: number | null },
+    roles: Role[],
+    permissions: Permission[],
+  ): boolean {
+    return filterHeroesByLevel([hero], roles, permissions).length > 0;
+  }
+
+  /**
+   * Get hero by ID and validate access.
+   * Throws NotFoundException if hero doesn't exist or user can't access it.
+   */
+  async getHeroWithAccessCheck(
+    guildId: string,
+    eventId: string,
+    heroId: string,
+    roles: Role[],
+    permissions: Permission[],
+  ): Promise<EventHeroNpc> {
+    const hero = await this.prisma.eventHeroNpc.findFirst({
+      where: {
+        id: heroId,
+        eventId,
+        event: { guildId },
+      },
+    });
+
+    if (!hero) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    if (!this.isHeroVisibleToUser(hero, roles, permissions)) {
+      throw new NotFoundException('Hero not found');
+    }
+
+    return hero;
+  }
+
+  /**
+   * Get map and validate that the associated hero is accessible to the user.
+   * Returns the map with hero data or throws.
+   */
+  async getMapWithHeroAccessCheck(
+    guildId: string,
+    eventId: string,
+    mapId: string,
+    roles: Role[],
+    permissions: Permission[],
+  ) {
+    const map = await this.prisma.eventMap.findFirst({
+      where: {
+        id: mapId,
+        heroNpc: {
+          eventId,
+          event: { guildId },
+        },
+      },
+      include: {
+        heroNpc: true,
+      },
+    });
+
+    if (!map) {
+      throw new NotFoundException('Map not found');
+    }
+
+    if (!this.isHeroVisibleToUser(map.heroNpc, roles, permissions)) {
+      throw new NotFoundException('Map not found');
+    }
+
+    return map;
   }
 }
