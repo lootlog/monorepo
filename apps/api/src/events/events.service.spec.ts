@@ -49,6 +49,7 @@ describe('EventsService', () => {
     getRanking: jest.fn(),
     calculateMemberPoints: jest.fn(),
     recalculateEventPoints: jest.fn(),
+    recalculateEventPointsWithMultipliers: jest.fn(),
     getMemberPresenceStats: jest.fn(),
     updateRankingAfterKill: jest.fn(),
     updateKillPoint: jest.fn(),
@@ -329,9 +330,13 @@ describe('EventsService', () => {
 
       await service.updateEvent(guildId, eventId, { basePointsPerKill: 200 });
 
-      expect(mockPointsService.recalculateEventPoints).toHaveBeenCalledWith(
+      expect(
+        mockPointsService.recalculateEventPointsWithMultipliers,
+      ).toHaveBeenCalledWith(
         eventId,
-        200,
+        expect.objectContaining({
+          basePointsPerKill: 200,
+        }),
       );
     });
   });
@@ -440,7 +445,9 @@ describe('EventsService', () => {
       });
       mockPrismaService.eventHeroNpc.update.mockResolvedValue({});
 
-      await service.updateHero(guildId, eventId, heroId, { npcName: 'Updated' });
+      await service.updateHero(guildId, eventId, heroId, {
+        npcName: 'Updated',
+      });
 
       expect(mockPrismaService.eventHeroNpc.update).toHaveBeenCalledWith({
         where: { id: heroId },
@@ -692,13 +699,9 @@ describe('EventsService', () => {
         true,
         false,
       );
-      expect(mockTrackingService.handlePlayerPresenceChange).toHaveBeenCalledWith(
-        'guild-1',
-        'Map One',
-        'discord-123',
-        true,
-        false,
-      );
+      expect(
+        mockTrackingService.handlePlayerPresenceChange,
+      ).toHaveBeenCalledWith('guild-1', 'Map One', 'discord-123', true, false);
     });
 
     it('should delegate coverage gap methods', async () => {
@@ -769,7 +772,9 @@ describe('EventsService', () => {
         npcId: 123,
         npcName: 'Hero',
         npcIcon: 'hero.gif',
-        timerData: {} as Parameters<typeof service.checkAndRecordEventHeroKill>[0]['timerData'],
+        timerData: {} as Parameters<
+          typeof service.checkAndRecordEventHeroKill
+        >[0]['timerData'],
       };
       await service.checkAndRecordEventHeroKill(params);
       expect(mockKillService.checkAndRecordEventHeroKill).toHaveBeenCalled();

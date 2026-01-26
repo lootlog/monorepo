@@ -32,7 +32,10 @@ export class HeroNpcDto {
   @IsString()
   npcName: string;
 
-  @ApiProperty({ description: 'Maps where the NPC can spawn', type: [HeroMapDto] })
+  @ApiProperty({
+    description: 'Maps where the NPC can spawn',
+    type: [HeroMapDto],
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => HeroMapDto)
@@ -85,10 +88,21 @@ export class CreateEventDto {
   assignmentTimeoutMinutes?: number;
 
   @ApiPropertyOptional({
-    description: 'Maximum number of members that can assign to a single map (null or 0 = no limit)',
+    description:
+      'Maximum number of members that can assign to a single map (null or 0 = no limit)',
   })
   @IsOptional()
   @IsInt()
   @Min(0)
   mapAssignmentCap?: number;
+
+  @ApiPropertyOptional({
+    description: 'Hero NPCs to track in this event',
+    type: [HeroNpcDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => HeroNpcDto)
+  heroNpcs?: HeroNpcDto[];
 }
