@@ -55,13 +55,20 @@ export class NpcsService {
     );
 
     if (validNpcs.length === 0) {
-      console.warn("No valid npcs to index (missing required fields)");
+      console.warn(
+        "No valid npcs to index (missing required fields):",
+        JSON.stringify(data.npcs, null, 2),
+      );
       return;
     }
 
     if (validNpcs.length !== data.npcs.length) {
+      const invalidNpcs = data.npcs.filter(
+        (npc) => !npc.world || !npc.id || !npc.name,
+      );
       console.warn(
-        `Skipped ${data.npcs.length - validNpcs.length} npcs due to missing required fields`,
+        `Skipped ${invalidNpcs.length} npcs due to missing required fields:`,
+        JSON.stringify(invalidNpcs, null, 2),
       );
     }
 

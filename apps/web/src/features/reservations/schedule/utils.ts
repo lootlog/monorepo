@@ -59,6 +59,13 @@ export function getISOWeek(date = new Date()) {
   return weekNumber;
 }
 
+export function getISOWeekYear(date = new Date()) {
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  return target.getFullYear();
+}
+
 export function getLastISOWeek(year: number) {
   return getISOWeek(new Date(year, 11, 28));
 }
