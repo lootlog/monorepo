@@ -177,6 +177,21 @@ body.si > #lootlog-root {
   z-index: 499 !important;
 }
 
+body.si > #lootlog-root * {
+  /* Matches NI behaviour */
+  user-select: none;
+}
+
+body.si > #lootlog-root .ll-custom-cursor-pointer * {
+  /* Needed because SI has * { cursor: default } */
+  cursor: inherit;
+}
+
+body.si > #lootlog-root .checkbox-custom [type="checkbox"] + label {
+  /* SI-specific fix, this matches the NI color */
+  color: #bebebe;
+}
+
 #lootlog-root {
   z-index: 500;
 }
@@ -225,9 +240,4 @@ body.si > #lootlog-root {
 
 .input-no-spinner {
   -moz-appearance: textfield; /* Firefox */
-}
-
-body.si #lootlog-root .checkbox-custom [type="checkbox"] + label {
-  /* SI-specific fix, this matches the NI color */
-  color: #bebebe;
 }
