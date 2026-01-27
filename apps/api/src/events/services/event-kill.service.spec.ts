@@ -7,6 +7,7 @@ import { EventPointsService } from './event-points.service';
 import { EventTrackingService } from './event-tracking.service';
 import { EventSummaryService } from './event-summary.service';
 import { PrismaService } from 'src/db/prisma.service';
+import { RedisService } from 'src/lib/redis/redis.service';
 import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
 import type { Event, EventHeroNpc } from 'generated/client';
 
@@ -84,6 +85,14 @@ describe('EventKillService', () => {
     createWindowSummary: jest.fn(),
   };
 
+  const mockRedisService = {
+    getClient: jest.fn().mockResolvedValue({}),
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+    setNX: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -91,6 +100,7 @@ describe('EventKillService', () => {
       providers: [
         EventKillService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: RedisService, useValue: mockRedisService },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
         { provide: EventEmitterService, useValue: mockEventEmitter },
         { provide: EventPointsService, useValue: mockPointsService },
@@ -159,9 +169,7 @@ describe('EventKillService', () => {
       const mockEvent = {
         id: eventId,
         guildId,
-        heroNpcs: [
-          { id: 'hero-1', npcId: null, npcName: 'Named Hero' },
-        ],
+        heroNpcs: [{ id: 'hero-1', npcId: null, npcName: 'Named Hero' }],
       };
 
       mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
@@ -204,9 +212,9 @@ describe('EventKillService', () => {
     it('should throw NotFoundException when event not found', async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.getEventHeroStats(guildId, eventId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getEventHeroStats(guildId, eventId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -326,7 +334,9 @@ describe('EventKillService', () => {
       mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
-      mockPrismaService.eventHeroKill.create.mockResolvedValue({ id: 'kill-1' });
+      mockPrismaService.eventHeroKill.create.mockResolvedValue({
+        id: 'kill-1',
+      });
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -357,7 +367,9 @@ describe('EventKillService', () => {
       mockPrismaService.$transaction.mockImplementation((callback) =>
         callback(mockPrismaService),
       );
-      mockPrismaService.eventHeroKill.create.mockResolvedValue({ id: 'kill-1' });
+      mockPrismaService.eventHeroKill.create.mockResolvedValue({
+        id: 'kill-1',
+      });
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -920,7 +932,12 @@ describe('EventKillService', () => {
         killedAt: new Date(),
         minSpawnTimeAtKill: new Date(),
         points: [
-          { id: 'point-1', memberId: 1, points: 100, member: { name: 'User 1' } },
+          {
+            id: 'point-1',
+            memberId: 1,
+            points: 100,
+            member: { name: 'User 1' },
+          },
         ],
         heroNpc: {
           id: heroId,
@@ -941,7 +958,9 @@ describe('EventKillService', () => {
       mockPrismaService.eventMap.findMany.mockResolvedValue([
         { id: 'map-1', mapName: 'Test Map' },
       ]);
-      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [],
+      );
       mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([]);
 
       const result = await service.getKillDetail(
