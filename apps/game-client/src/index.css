@@ -226,3 +226,8 @@ body.si > #lootlog-root {
 .input-no-spinner {
   -moz-appearance: textfield; /* Firefox */
 }
+
+body.si #lootlog-root .checkbox-custom [type="checkbox"] + label {
+  /* SI-specific fix, this matches the NI color */
+  color: #bebebe;
+}
