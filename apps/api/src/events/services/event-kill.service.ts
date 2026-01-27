@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
 import { CoverageGapType, Event, EventHeroNpc } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
+import { RedisService } from 'src/lib/redis/redis.service';
 import { EventEmitterService } from './event-emitter.service';
 import { EventPointsService } from './event-points.service';
 import { EventTrackingService } from './event-tracking.service';
@@ -10,6 +11,8 @@ import { EventSummaryService } from './event-summary.service';
 import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
 import type { AutoCloseRespawnWindowJobData } from '../respawn-window.processor';
 import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
+
+const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 
 interface GapTimelineEntry {
   mapId: string;
@@ -26,6 +29,7 @@ export class EventKillService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
     private readonly eventEmitter: EventEmitterService,
     private readonly pointsService: EventPointsService,
     private readonly trackingService: EventTrackingService,
@@ -190,59 +194,90 @@ export class EventKillService {
     isManualClose = false,
     npcLvl?: number,
   ): Promise<void> {
-    const result = await this.findActiveEventHeroByNpc(
-      guildId,
-      world,
-      npcId,
-      npcName,
+    const lockKey = this.getEventKillLockKey(guildId, world, npcId);
+
+    // Try to acquire lock - if another request already has it, silently return
+    const lockAcquired = await this.redis.setNX(
+      lockKey,
+      Date.now().toString(),
+      EVENT_KILL_LOCK_TTL_SECONDS,
     );
 
-    if (!result) {
+    if (!lockAcquired) {
+      this.logger.debug({
+        message: 'Skipping duplicate event hero kill - lock already held',
+        guildId,
+        world,
+        npcId,
+        npcName,
+      });
       return;
     }
 
-    let { eventHero } = result;
-    const { event } = result;
-
-    if (
-      eventHero.npcId === null ||
-      eventHero.npcIcon === null ||
-      eventHero.npcLvl === null
-    ) {
-      eventHero = await this.prisma.eventHeroNpc.update({
-        where: { id: eventHero.id },
-        data: {
-          ...(eventHero.npcId === null && { npcId }),
-          ...(eventHero.npcIcon === null && { npcIcon }),
-          ...(eventHero.npcLvl === null && npcLvl !== undefined && { npcLvl }),
-        },
-      });
-      this.logger.log({
-        message: 'Hero NPC data updated',
-        heroId: eventHero.id,
-        npcId: eventHero.npcId,
-        npcIcon: eventHero.npcIcon,
-        npcLvl: eventHero.npcLvl,
-      });
-    }
-
     try {
-      await this.recordHeroKill(guildId, eventHero, event, timerData, isManualClose);
-      this.logger.log({
-        message: isManualClose ? 'Manual close recorded' : 'Hero kill recorded',
+      const result = await this.findActiveEventHeroByNpc(
         guildId,
-        eventId: event.id,
-        heroId: eventHero.id,
-        npcName: eventHero.npcName,
-        isManualClose,
-      });
-    } catch (error) {
-      this.logger.error({
-        message: 'Failed to record hero kill',
-        guildId,
-        eventId: event.id,
-        heroId: eventHero.id,
-        error: error instanceof Error ? error.message : error,
+        world,
+        npcId,
+        npcName,
+      );
+
+      if (!result) {
+        return;
+      }
+
+      let { eventHero } = result;
+      const { event } = result;
+
+      if (
+        eventHero.npcId === null ||
+        eventHero.npcIcon === null ||
+        eventHero.npcLvl === null
+      ) {
+        eventHero = await this.prisma.eventHeroNpc.update({
+          where: { id: eventHero.id },
+          data: {
+            ...(eventHero.npcId === null && { npcId }),
+            ...(eventHero.npcIcon === null && { npcIcon }),
+            ...(eventHero.npcLvl === null && npcLvl !== undefined && { npcLvl }),
+          },
+        });
+        this.logger.log({
+          message: 'Hero NPC data updated',
+          heroId: eventHero.id,
+          npcId: eventHero.npcId,
+          npcIcon: eventHero.npcIcon,
+          npcLvl: eventHero.npcLvl,
+        });
+      }
+
+      try {
+        await this.recordHeroKill(guildId, eventHero, event, timerData, isManualClose);
+        this.logger.log({
+          message: isManualClose ? 'Manual close recorded' : 'Hero kill recorded',
+          guildId,
+          eventId: event.id,
+          heroId: eventHero.id,
+          npcName: eventHero.npcName,
+          isManualClose,
+        });
+      } catch (error) {
+        this.logger.error({
+          message: 'Failed to record hero kill',
+          guildId,
+          eventId: event.id,
+          heroId: eventHero.id,
+          error: error instanceof Error ? error.message : error,
+        });
+      }
+    } finally {
+      // Always release lock
+      await this.redis.del(lockKey).catch((err) => {
+        this.logger.error({
+          message: 'Failed to release event kill lock',
+          lockKey,
+          error: err instanceof Error ? err.message : err,
+        });
       });
     }
   }
@@ -1067,5 +1102,13 @@ export class EventKillService {
       hash |= 0;
     }
     return -Math.abs(hash || 1);
+  }
+
+  private getEventKillLockKey(
+    guildId: string,
+    world: string,
+    npcId: number,
+  ): string {
+    return `event:hero:kill:lock:${guildId}:${world}:${npcId}`;
   }
 }
