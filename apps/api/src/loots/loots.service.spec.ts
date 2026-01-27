@@ -110,7 +110,7 @@ describe('LootsService', () => {
         location: 'Test Location',
         lvl: 50,
         prof: 'w',
-        wt: 5,
+        wt: 10,
         hpp: 5000,
         icon: 'npc.png',
         type: 1,
@@ -273,7 +273,7 @@ describe('LootsService', () => {
           npcs: [
             {
               id: 1,
-              npcType: NpcType.COMMON,
+              npcType: NpcType.ELITE,
               allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
               lootlogConfigId: 'config1',
               createdAt: new Date(),
@@ -413,7 +413,7 @@ describe('LootsService', () => {
           npcs: [
             {
               id: 1,
-              npcType: NpcType.COMMON,
+              npcType: NpcType.ELITE,
               allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
               lootlogConfigId: 'config1',
               createdAt: new Date(),
@@ -428,7 +428,7 @@ describe('LootsService', () => {
           npcs: [
             {
               id: 2,
-              npcType: NpcType.COMMON,
+              npcType: NpcType.ELITE,
               allowedRarities: [ItemRarity.UNIQUE, ItemRarity.LEGENDARY],
               lootlogConfigId: 'config2',
               createdAt: new Date(),
@@ -503,7 +503,7 @@ describe('LootsService', () => {
           npcs: [
             {
               id: 1,
-              npcType: NpcType.COMMON,
+              npcType: NpcType.ELITE,
               allowedRarities: [ItemRarity.UNIQUE],
               lootlogConfigId: 'config1',
               createdAt: new Date(),
@@ -571,7 +571,7 @@ describe('LootsService', () => {
           npcs: [
             {
               id: 1,
-              npcType: NpcType.COMMON,
+              npcType: NpcType.ELITE,
               allowedRarities: [ItemRarity.HEROIC],
               lootlogConfigId: 'config1',
               createdAt: new Date(),
@@ -586,7 +586,7 @@ describe('LootsService', () => {
           npcs: [
             {
               id: 2,
-              npcType: NpcType.COMMON,
+              npcType: NpcType.ELITE,
               allowedRarities: [ItemRarity.UNIQUE],
               lootlogConfigId: 'config2',
               createdAt: new Date(),
