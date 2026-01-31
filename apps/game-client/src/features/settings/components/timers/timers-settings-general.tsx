@@ -89,6 +89,21 @@ export const TimersSettingsGeneral: FC = () => {
           id="show-type"
         />
       </div>
+      <div className="ll:flex ll:flex-col ll:gap-2">
+        <div>
+          <Label htmlFor="compact-view">Widok kompaktowy</Label>
+          <p className="ll:text-muted-foreground">
+            Ukrywa nagłówek i stopkę timerów, pokazując tylko zawartość.
+          </p>
+        </div>
+        <Switch
+          checked={generalConfig.compactView}
+          onCheckedChange={(value) =>
+            setGeneralConfig({ ...generalConfig, compactView: value })
+          }
+          id="compact-view"
+        />
+      </div>
       <div className="ll:space-y-1">
         <Label>Odliczaj do</Label>
         <ToggleGroup
