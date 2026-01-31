@@ -18,6 +18,7 @@ type TimersGeneralConfig = {
   timersGrouping: boolean;
   timersUnderBag: boolean;
   countdownMode: "min" | "max";
+  compactView: boolean;
 };
 
 type TimersDisplayConfig = {
@@ -138,6 +139,7 @@ export const useTimersStore = create<TimersState>()(
           timersGrouping: false,
           timersUnderBag: false,
           countdownMode: "max",
+          compactView: false,
         },
         setGeneralConfig: (config: TimersGeneralConfig) => {
           setWithTimestamp({ generalConfig: config });
