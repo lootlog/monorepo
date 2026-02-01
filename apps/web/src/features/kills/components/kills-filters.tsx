@@ -19,6 +19,8 @@ export type KillsFiltersState = {
   characterId?: number;
   npcTypes?: NpcType[];
   search?: string;
+  minLvl?: number;
+  maxLvl?: number;
 };
 
 type KillsFiltersProps = {
@@ -27,6 +29,8 @@ type KillsFiltersProps = {
   onCharacterChange: (characterId: number | undefined) => void;
   onNpcTypeChange: (npcTypes: NpcType[] | undefined) => void;
   onSearchChange: (search: string) => void;
+  onMinLvlChange: (minLvl: string) => void;
+  onMaxLvlChange: (maxLvl: string) => void;
 };
 
 export const KillsFilters: React.FC<KillsFiltersProps> = ({
@@ -35,6 +39,8 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
   onCharacterChange,
   onNpcTypeChange,
   onSearchChange,
+  onMinLvlChange,
+  onMaxLvlChange,
 }) => {
   const { t } = useTranslation();
   const { data } = usePlayerKillStats();
@@ -57,16 +63,24 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
     onNpcTypeChange(value === "all" ? undefined : [value as NpcType]);
   };
 
+  const handleMinLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onMinLvlChange(e.target.value);
+  };
+
+  const handleMaxLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onMaxLvlChange(e.target.value);
+  };
+
   return (
-    <div className="sticky top-0 z-10 bg-background border-b p-4">
-      <div className="flex flex-col md:flex-row gap-4 flex-wrap items-end">
-        <div className="relative w-full md:w-[240px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="sticky top-0 z-10 bg-background border-b px-4 py-3">
+      <div className="flex flex-col md:flex-row gap-2 flex-wrap items-center">
+        <div className="relative w-full md:w-[200px]">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t("kills.ranking.search")}
             value={filters.search ?? ""}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 h-10"
+            className="pl-8 h-9"
           />
         </div>
 
@@ -74,9 +88,9 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
           value={filters.world ?? "all"}
           onValueChange={handleWorldChange}
         >
-          <SelectTrigger className="w-full md:w-[180px] h-10">
+          <SelectTrigger className="w-full md:w-[170px] h-9">
             <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-muted-foreground" />
+              <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
               <SelectValue placeholder={t("kills.home.filters.allWorlds")} />
             </div>
           </SelectTrigger>
@@ -96,9 +110,9 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
           value={filters.characterId?.toString() ?? "all"}
           onValueChange={handleCharacterChange}
         >
-          <SelectTrigger className="w-full md:w-[220px] h-10">
+          <SelectTrigger className="w-full md:w-[200px] h-9">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
+              <User className="h-4 w-4 text-muted-foreground shrink-0" />
               <SelectValue
                 placeholder={t("kills.home.filters.allCharacters")}
               />
@@ -124,7 +138,7 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
           value={filters.npcTypes?.[0] ?? "all"}
           onValueChange={handleNpcTypeChange}
         >
-          <SelectTrigger className="w-full md:w-[160px] h-10">
+          <SelectTrigger className="w-full md:w-[140px] h-9">
             <SelectValue placeholder={t("kills.filters.allTypes")} />
           </SelectTrigger>
           <SelectContent>
@@ -136,6 +150,26 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
             ))}
           </SelectContent>
         </Select>
+
+        <div className="flex items-center gap-1.5">
+          <Input
+            type="number"
+            placeholder={t("kills.filters.minLevel")}
+            value={filters.minLvl ?? ""}
+            onChange={handleMinLvlChange}
+            className="w-full md:w-[70px] h-9"
+            min={0}
+          />
+          <span className="text-muted-foreground text-sm">-</span>
+          <Input
+            type="number"
+            placeholder={t("kills.filters.maxLevel")}
+            value={filters.maxLvl ?? ""}
+            onChange={handleMaxLvlChange}
+            className="w-full md:w-[70px] h-9"
+            min={0}
+          />
+        </div>
       </div>
     </div>
   );

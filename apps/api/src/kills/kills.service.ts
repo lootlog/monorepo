@@ -84,10 +84,14 @@ export class KillsService {
         data.characterId,
       );
 
+    console.log(config);
+
     const targetGuildIds = new Set([
       ...(config?.collectLootWhitelistGuildIds ?? []),
       ...(config?.addTimersWhitelistGuildIds ?? []),
     ]);
+
+    console.log(targetGuildIds);
 
     if (targetGuildIds.size === 0) {
       return { updated: 0 };
@@ -98,6 +102,8 @@ export class KillsService {
         const member = await this.prisma.member.findUnique({
           where: { memberId: { userId: discordId, guildId } },
         });
+
+        console.log(member);
 
         if (!member) {
           this.logger.log({
@@ -197,6 +203,7 @@ export class KillsService {
       where: {
         guildId,
         ...(npcTypes && { npcType: { in: npcTypes } }),
+        ...(query.world && { world: query.world }),
         ...npcLvlCondition,
         ...visibilityCondition,
       },
@@ -213,6 +220,8 @@ export class KillsService {
       {
         memberId: number;
         memberName: string;
+        memberAvatar: string | null;
+        memberUserId: string;
         totalKills: number;
         killsByType: Record<string, number>;
       }
@@ -232,6 +241,8 @@ export class KillsService {
         memberRankingMap.set(stat.memberId, {
           memberId: stat.memberId,
           memberName: stat.member.name,
+          memberAvatar: stat.member.avatar,
+          memberUserId: stat.member.userId,
           totalKills: stat.totalKills,
           killsByType: { [stat.npcType]: stat.totalKills },
         });
@@ -292,19 +303,8 @@ export class KillsService {
 
     const andConditions: Record<string, unknown>[] = [];
 
-    andConditions.push({
-      OR: [
-        { npcLvl: { gte: lvlFrom } },
-        ...(lvlFrom <= 0 ? [{ npcLvl: null }] : []),
-      ],
-    });
-
-    andConditions.push({
-      OR: [
-        { npcLvl: { lte: lvlTo } },
-        ...(lvlTo >= 0 ? [{ npcLvl: null }] : []),
-      ],
-    });
+    andConditions.push({ npcLvl: { gte: lvlFrom } });
+    andConditions.push({ npcLvl: { lte: lvlTo } });
 
     if (!hasReadTitans) {
       andConditions.push({
@@ -465,6 +465,12 @@ export class KillsService {
       ...(query.search && {
         npcName: { contains: query.search, mode: 'insensitive' as const },
       }),
+      ...((query.minLvl !== undefined || query.maxLvl !== undefined) && {
+        npcLvl: {
+          ...(query.minLvl !== undefined && { gte: query.minLvl }),
+          ...(query.maxLvl !== undefined && { lte: query.maxLvl }),
+        },
+      }),
     };
 
     const stats = await this.prisma.userKillStats.findMany({
@@ -509,11 +515,17 @@ export class KillsService {
       }
     }
 
-    const allNpcs = Array.from(npcMap.values()).sort((a, b) =>
-      query.sortOrder === 'asc'
+    const sortBy = query.sortBy ?? 'kills';
+    const sortAsc = query.sortOrder === 'asc';
+
+    const allNpcs = Array.from(npcMap.values()).sort((a, b) => {
+      if (sortBy === 'level') {
+        return sortAsc ? a.npcLvl - b.npcLvl : b.npcLvl - a.npcLvl;
+      }
+      return sortAsc
         ? a.totalKills - b.totalKills
-        : b.totalKills - a.totalKills,
-    );
+        : b.totalKills - a.totalKills;
+    });
 
     const total = allNpcs.length;
     const paginatedNpcs = allNpcs.slice(cursor, cursor + limit);
@@ -527,6 +539,252 @@ export class KillsService {
         limit,
         hasNext,
       },
+    };
+  }
+
+  async getGuildTopNpcs(
+    guildId: string,
+    permissions: Permission[],
+    roles: Role[],
+    limit: number = 10,
+    npcType?: NpcType,
+    world?: string,
+    search?: string,
+  ) {
+    const filteredRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    );
+    const administrativeUser = isAdministrativeUser(permissions);
+
+    const visibilityCondition = this.buildVisibilityCondition(
+      filteredRoles,
+      administrativeUser,
+    );
+
+    const stats = await this.prisma.npcKillStats.findMany({
+      where: {
+        guildId,
+        ...(npcType && { npcType }),
+        ...(world && { world }),
+        ...(search && {
+          npcName: { contains: search, mode: 'insensitive' as const },
+        }),
+        ...visibilityCondition,
+      },
+    });
+
+    const npcMap = new Map<
+      number,
+      {
+        npcId: number;
+        npcName: string;
+        npcType: string;
+        npcLvl: number;
+        npcProf: string | null;
+        npcIcon: string | null;
+        totalKills: number;
+      }
+    >();
+
+    for (const stat of stats) {
+      const existing = npcMap.get(stat.npcId);
+      if (existing) {
+        existing.totalKills += stat.totalKills;
+        if (stat.npcLvl > existing.npcLvl) {
+          existing.npcLvl = stat.npcLvl;
+          existing.npcName = stat.npcName;
+          existing.npcProf = stat.npcProf;
+          existing.npcIcon = stat.npcIcon;
+        }
+      } else {
+        npcMap.set(stat.npcId, {
+          npcId: stat.npcId,
+          npcName: stat.npcName,
+          npcType: stat.npcType,
+          npcLvl: stat.npcLvl,
+          npcProf: stat.npcProf,
+          npcIcon: stat.npcIcon,
+          totalKills: stat.totalKills,
+        });
+      }
+    }
+
+    const topNpcs = Array.from(npcMap.values())
+      .sort((a, b) => b.totalKills - a.totalKills)
+      .slice(0, limit);
+
+    return { topNpcs };
+  }
+
+  async getGuildTopKillersByType(
+    guildId: string,
+    permissions: Permission[],
+    roles: Role[],
+    npcTypes: NpcType[],
+    limit: number = 5,
+  ) {
+    const filteredRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    );
+    const administrativeUser = isAdministrativeUser(permissions);
+
+    const visibilityCondition = this.buildVisibilityCondition(
+      filteredRoles,
+      administrativeUser,
+    );
+
+    const stats = await this.prisma.npcKillStats.findMany({
+      where: {
+        guildId,
+        npcType: { in: npcTypes },
+        ...visibilityCondition,
+      },
+      include: {
+        member: true,
+      },
+    });
+
+    const resultByType: Record<
+      string,
+      Array<{
+        memberId: number;
+        memberName: string;
+        memberAvatar: string | null;
+        memberUserId: string;
+        totalKills: number;
+      }>
+    > = {};
+
+    for (const npcType of npcTypes) {
+      const memberMap = new Map<
+        number,
+        {
+          memberId: number;
+          memberName: string;
+          memberAvatar: string | null;
+          memberUserId: string;
+          totalKills: number;
+        }
+      >();
+
+      for (const stat of stats) {
+        if (stat.npcType !== npcType) continue;
+
+        const existing = memberMap.get(stat.memberId);
+        if (existing) {
+          existing.totalKills += stat.totalKills;
+        } else {
+          memberMap.set(stat.memberId, {
+            memberId: stat.memberId,
+            memberName: stat.member.name,
+            memberAvatar: stat.member.avatar,
+            memberUserId: stat.member.userId,
+            totalKills: stat.totalKills,
+          });
+        }
+      }
+
+      resultByType[npcType] = Array.from(memberMap.values())
+        .sort((a, b) => b.totalKills - a.totalKills)
+        .slice(0, limit);
+    }
+
+    return resultByType;
+  }
+
+  async getNpcKillers(
+    guildId: string,
+    permissions: Permission[],
+    roles: Role[],
+    npcId: number,
+    limit: number = 50,
+    world?: string,
+  ) {
+    const filteredRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    );
+    const administrativeUser = isAdministrativeUser(permissions);
+
+    const visibilityCondition = this.buildVisibilityCondition(
+      filteredRoles,
+      administrativeUser,
+    );
+
+    const stats = await this.prisma.npcKillStats.findMany({
+      where: {
+        guildId,
+        npcId,
+        ...(world && { world }),
+        ...visibilityCondition,
+      },
+      include: {
+        member: true,
+      },
+    });
+
+    if (stats.length === 0) {
+      return null;
+    }
+
+    const memberMap = new Map<
+      number,
+      {
+        memberId: number;
+        memberName: string;
+        memberAvatar: string | null;
+        memberUserId: string;
+        killCount: number;
+      }
+    >();
+
+    let totalGuildKills = 0;
+    let npcInfo: {
+      npcId: number;
+      npcName: string;
+      npcType: string;
+      npcLvl: number;
+      npcProf: string | null;
+      npcIcon: string | null;
+    } | null = null;
+
+    for (const stat of stats) {
+      totalGuildKills += stat.totalKills;
+
+      if (!npcInfo || stat.npcLvl > npcInfo.npcLvl) {
+        npcInfo = {
+          npcId: stat.npcId,
+          npcName: stat.npcName,
+          npcType: stat.npcType,
+          npcLvl: stat.npcLvl,
+          npcProf: stat.npcProf,
+          npcIcon: stat.npcIcon,
+        };
+      }
+
+      const existing = memberMap.get(stat.memberId);
+      if (existing) {
+        existing.killCount += stat.totalKills;
+      } else {
+        memberMap.set(stat.memberId, {
+          memberId: stat.memberId,
+          memberName: stat.member.name,
+          memberAvatar: stat.member.avatar,
+          memberUserId: stat.member.userId,
+          killCount: stat.totalKills,
+        });
+      }
+    }
+
+    const killers = Array.from(memberMap.values())
+      .sort((a, b) => b.killCount - a.killCount)
+      .slice(0, limit);
+
+    return {
+      npc: {
+        ...npcInfo!,
+        totalGuildKills,
+      },
+      killers,
     };
   }
 }

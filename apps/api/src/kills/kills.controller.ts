@@ -15,7 +15,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { Permission, type Role } from 'generated/client';
+import { Guild, Permission, type Role } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
 import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
@@ -32,9 +32,15 @@ import { GetUserNpcKillsDto } from './dto/get-user-npc-kills.dto';
 import {
   CreateKillResponseEntity,
   GuildKillStatsEntity,
+  GuildTopNpcsEntity,
+  GuildTopKillersByTypeEntity,
+  NpcKillersResponseEntity,
   UserKillStatsEntity,
   UserNpcKillsEntity,
 } from './entities/kill-stats.entity';
+import { GetNpcKillersDto } from './dto/get-npc-killers.dto';
+import { NpcType } from 'generated/client';
+import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 
 @ApiTags('kills')
 @ApiBearerAuth()
@@ -87,11 +93,11 @@ export class KillsController {
   async getGuildKillStats(
     @MemberPermissions() permissions: Permission[],
     @MemberRoles() roles: Role[],
-    @Param('guildId') guildId: string,
     @Query() query: GetGuildKillStatsDto,
+    @GuildData() guildData: Guild,
   ) {
     const stats = await this.killsService.getGuildKillStats(
-      guildId,
+      guildData.id,
       permissions,
       roles,
       query,
@@ -135,5 +141,123 @@ export class KillsController {
   ) {
     const result = await this.killsService.getUserNpcKills(discordId, query);
     return plainToInstance(UserNpcKillsEntity, result);
+  }
+
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/stats/kills/top-npcs')
+  @ApiOperation({
+    summary: 'Get top killed NPCs in guild',
+    description: 'Retrieves the most frequently killed NPCs in a guild.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Top killed NPCs',
+    type: GuildTopNpcsEntity,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async getGuildTopNpcs(
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
+    @GuildData() guildData: Guild,
+    @Query('limit') limit?: number,
+    @Query('npcType') npcType?: NpcType,
+    @Query('world') world?: string,
+    @Query('search') search?: string,
+  ) {
+    const result = await this.killsService.getGuildTopNpcs(
+      guildData.id,
+      permissions,
+      roles,
+      limit ?? 10,
+      npcType,
+      world,
+      search,
+    );
+    return plainToInstance(GuildTopNpcsEntity, result);
+  }
+
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/stats/kills/top-killers')
+  @ApiOperation({
+    summary: 'Get top killers by NPC type in guild',
+    description:
+      'Retrieves top members by kill count for specific NPC types (TITAN, HERO).',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Top killers by NPC type',
+    type: GuildTopKillersByTypeEntity,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async getGuildTopKillersByType(
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
+    @GuildData() guildData: Guild,
+    @Query('limit') limit?: number,
+  ) {
+    const result = await this.killsService.getGuildTopKillersByType(
+      guildData.id,
+      permissions,
+      roles,
+      [NpcType.TITAN, NpcType.HERO, NpcType.EVENT_HERO],
+      limit ?? 5,
+    );
+    return plainToInstance(GuildTopKillersByTypeEntity, result);
+  }
+
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/stats/kills/npcs/:npcId/killers')
+  @ApiOperation({
+    summary: 'Get killers ranking for a specific NPC',
+    description:
+      'Retrieves a ranking of members who killed a specific NPC, sorted by kill count.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: 'npcId', description: 'NPC ID', example: '999' })
+  @ApiResponse({
+    status: 200,
+    description: 'NPC killers ranking',
+    type: NpcKillersResponseEntity,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'NPC not found in guild kill stats',
+  })
+  async getNpcKillers(
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
+    @GuildData() guildData: Guild,
+    @Param('npcId') npcId: string,
+    @Query() query: GetNpcKillersDto,
+  ) {
+    const result = await this.killsService.getNpcKillers(
+      guildData.id,
+      permissions,
+      roles,
+      Number.parseInt(npcId, 10),
+      query.limit ?? 50,
+      query.world,
+    );
+
+    if (!result) {
+      return { npc: null, killers: [] };
+    }
+
+    return plainToInstance(NpcKillersResponseEntity, result);
   }
 }

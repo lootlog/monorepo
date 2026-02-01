@@ -67,11 +67,39 @@ export class GetUserNpcKillsDto {
 
   @ApiPropertyOptional({
     example: 'desc',
-    description: 'Sort order for kills count (asc or desc, default: desc)',
+    description: 'Sort order (asc or desc, default: desc)',
   })
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({
+    example: 'kills',
+    description: 'Sort by field (kills or level, default: kills)',
+  })
+  @IsOptional()
+  @IsIn(['kills', 'level'])
+  sortBy?: 'kills' | 'level';
+
+  @ApiPropertyOptional({
+    example: 100,
+    description: 'Minimum NPC level',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
+  @IsNumber()
+  @Min(0)
+  minLvl?: number;
+
+  @ApiPropertyOptional({
+    example: 300,
+    description: 'Maximum NPC level',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
+  @IsNumber()
+  @Min(0)
+  maxLvl?: number;
 
   parseNpcTypes(): NpcType[] | undefined {
     if (!this.npcType) return undefined;

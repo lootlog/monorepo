@@ -26,6 +26,14 @@ export class GetGuildKillStatsDto {
   @Min(0)
   maxLvl?: number;
 
+  @ApiPropertyOptional({
+    example: 'pandora',
+    description: 'Filter by world',
+  })
+  @IsOptional()
+  @IsString()
+  world?: string;
+
   parseNpcTypes(): NpcType[] | undefined {
     if (!this.npcType) return undefined;
     return this.npcType.split(',').map((t) => t.trim()) as NpcType[];
