@@ -15,8 +15,10 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { Permission } from 'generated/client';
+import { Permission, type Role } from 'generated/client';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
+import { MemberRoles } from 'src/shared/decorators/member-roles.decorator';
 import { AuthGuard } from 'src/shared/guards/auth.guard';
 import { Permissions } from 'src/shared/permissions/permissions.decorator';
 import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
@@ -24,12 +26,12 @@ import { KillsService } from './kills.service';
 import { CreateKillDto } from './dto/create-kill.dto';
 import {
   GetGuildKillStatsDto,
-  GetPlayerKillStatsDto,
+  GetUserKillStatsDto,
 } from './dto/get-kill-stats.dto';
 import {
   CreateKillResponseEntity,
   GuildKillStatsEntity,
-  PlayerKillStatsEntity,
+  UserKillStatsEntity,
 } from './entities/kill-stats.entity';
 
 @ApiTags('kills')
@@ -39,15 +41,12 @@ import {
 export class KillsController {
   constructor(private readonly killsService: KillsService) {}
 
-  @Permissions(Permission.LOOTLOG_LOOTS_WRITE)
-  @UseGuards(PermissionsGuard)
-  @Post('/guilds/:guildId/kills')
+  @Post('/kills')
   @ApiOperation({
-    summary: 'Record a kill for a guild',
+    summary: 'Record a kill',
     description:
-      'Records an NPC kill for a specific guild. Handles deduplication across players and guilds.',
+      'Records an NPC kill. Guilds are auto-detected from user lootlog config (loot/timer whitelists).',
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
   @ApiResponse({
     status: 201,
     description: 'Kill recorded successfully',
@@ -55,22 +54,13 @@ export class KillsController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Validation error or member not found',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: 'Validation error',
   })
   async createKill(
     @Body() data: CreateKillDto,
     @DiscordId() discordId: string,
-    @Param('guildId') guildId: string,
   ) {
-    const result = await this.killsService.createKillForGuild(
-      discordId,
-      guildId,
-      data,
-    );
+    const result = await this.killsService.createKill(discordId, data);
     return plainToInstance(CreateKillResponseEntity, result);
   }
 
@@ -80,7 +70,7 @@ export class KillsController {
   @ApiOperation({
     summary: 'Get guild kill statistics',
     description:
-      'Retrieves kill statistics for a guild including overview, member ranking, and recent kills.',
+      'Retrieves kill statistics for a guild including overview and member ranking.',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
   @ApiResponse({
@@ -93,29 +83,36 @@ export class KillsController {
     description: 'Forbidden - insufficient permissions',
   })
   async getGuildKillStats(
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
     @Param('guildId') guildId: string,
     @Query() query: GetGuildKillStatsDto,
   ) {
-    const stats = await this.killsService.getGuildKillStats(guildId, query);
+    const stats = await this.killsService.getGuildKillStats(
+      guildId,
+      permissions,
+      roles,
+      query,
+    );
     return plainToInstance(GuildKillStatsEntity, stats);
   }
 
   @Get('/users/@me/stats/kills')
   @ApiOperation({
-    summary: 'Get player kill statistics',
+    summary: 'Get personal kill statistics',
     description:
-      'Retrieves kill statistics for the authenticated player across all characters.',
+      'Retrieves kill statistics for the authenticated user across all guilds, deduplicated.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Player kill statistics',
-    type: PlayerKillStatsEntity,
+    description: 'User kill statistics',
+    type: UserKillStatsEntity,
   })
-  async getPlayerKillStats(
+  async getUserKillStats(
     @DiscordId() discordId: string,
-    @Query() query: GetPlayerKillStatsDto,
+    @Query() query: GetUserKillStatsDto,
   ) {
-    const stats = await this.killsService.getPlayerKillStats(discordId, query);
-    return plainToInstance(PlayerKillStatsEntity, stats);
+    const stats = await this.killsService.getUserKillStats(discordId, query);
+    return plainToInstance(UserKillStatsEntity, stats);
   }
 }

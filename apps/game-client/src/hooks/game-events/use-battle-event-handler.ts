@@ -2,7 +2,7 @@ import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { useCreateBattle } from "@/hooks/api/use-create-battle";
 import { useCreateKill } from "@/hooks/api/use-create-kill";
-import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
+import { NpcType } from "@/hooks/api/use-npcs";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
 import { Game } from "@/lib/game";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
@@ -11,6 +11,15 @@ import {
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
+import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+
+const TRACKABLE_NPC_TYPES = new Set([
+  NpcType.ELITE2,
+  NpcType.ELITE3,
+  NpcType.HERO,
+  NpcType.COLOSSUS,
+  NpcType.TITAN,
+]);
 
 const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
   const deadNpcs: Array<{
@@ -43,7 +52,6 @@ const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
 export const useBattleEventHandler = () => {
   const { mutate: createBattle } = useCreateBattle();
   const { mutate: createKill } = useCreateKill();
-  const { data: lootlogConfig } = useLootlogCharactersConfig();
 
   const handleBattleEvents = async (event: GameEvent) => {
     if (!event.f) return;
@@ -125,27 +133,32 @@ export const useBattleEventHandler = () => {
             const deadNpcs = extractDeadNpcs(
               useBattleStore.getState().battleWarriors,
             );
-            const characterConfig = lootlogConfig?.[String(characterId)];
-            const killGuildIds =
-              characterConfig?.trackKillsWhitelistGuildIds ?? [];
 
-            if (deadNpcs.length > 0 && killGuildIds.length > 0) {
-              const heroInfo = Game.hero;
+            if (deadNpcs.length > 0) {
+              const sortedByWt = [...deadNpcs].sort((a, b) => b.wt - a.wt);
+              const topNpc = sortedByWt[0];
 
-              for (const npc of deadNpcs) {
-                createKill({
-                  kill: {
+              if (topNpc) {
+                const npcType = getNpcTypeByWt(
+                  topNpc.wt,
+                  topNpc.prof,
+                  topNpc.type,
+                );
+
+                if (TRACKABLE_NPC_TYPES.has(npcType)) {
+                  const heroInfo = Game.hero;
+
+                  createKill({
                     world,
-                    npc,
+                    npc: topNpc,
                     characterId: String(characterId),
                     accountId: String(accountId),
                     characterName: heroInfo.nick,
                     characterLvl: heroInfo.lvl,
                     characterProf: heroInfo.prof,
                     characterIcon: heroInfo.img,
-                  },
-                  guildIds: killGuildIds,
-                });
+                  });
+                }
               }
             }
           }

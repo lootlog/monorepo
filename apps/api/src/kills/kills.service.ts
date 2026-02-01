@@ -1,331 +1,207 @@
-import {
-  Injectable,
-  Inject,
-  type OnModuleInit,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
-import Redlock, { ExecutionError } from 'redlock';
+import { Permission, NpcType, type Role } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
-import { RedisService } from 'src/lib/redis/redis.service';
+import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
+import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
-import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
 import type { CreateKillDto } from './dto/create-kill.dto';
 import type {
   GetGuildKillStatsDto,
-  GetPlayerKillStatsDto,
+  GetUserKillStatsDto,
 } from './dto/get-kill-stats.dto';
-import { NpcType, Prisma } from 'generated/client';
-
-const DEDUP_WINDOW_SECONDS = 30;
-const DEDUP_TTL_SECONDS = 60;
-const LOCK_TTL_MS = 10000;
 
 @Injectable()
-export class KillsService implements OnModuleInit {
-  private redlock: Redlock;
-
+export class KillsService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
+    private readonly userLootlogConfigService: UserLootlogConfigService,
   ) {}
 
-  async onModuleInit() {
-    const client = await this.redis.getClient();
-    this.redlock = new Redlock([client], {
-      driftFactor: 0.01,
-      retryCount: 3,
-      retryDelay: 100,
-      retryJitter: 50,
-      automaticExtensionThreshold: 5000,
-    });
-  }
-
-  private getWindowId(timestamp: number = Date.now()): number {
-    return Math.floor(timestamp / (DEDUP_WINDOW_SECONDS * 1000));
-  }
-
-  private getDedupKey(world: string, npcId: number, windowId: number): string {
-    return `kill:dedup:${world}:${npcId}:${windowId}`;
-  }
-
-  private getLockKey(world: string, npcId: number, windowId: number): string {
-    return `kill:lock:${world}:${npcId}:${windowId}`;
-  }
-
-  async createKillForGuild(
-    discordId: string,
-    guildId: string,
-    data: CreateKillDto,
-  ) {
-    const now = Date.now();
-    const windowId = this.getWindowId(now);
-    const npcId = Math.abs(data.npc.id);
+  async createKill(discordId: string, data: CreateKillDto) {
     const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type);
+    const npcId = Math.abs(data.npc.id);
+    const characterId = Number.parseInt(data.characterId, 10);
+    const accountId = Number.parseInt(data.accountId, 10);
 
-    const dedupKey = this.getDedupKey(data.world, npcId, windowId);
-    const lockKey = this.getLockKey(data.world, npcId, windowId);
-
-    let existingKillId = await this.redis.get(dedupKey);
-    let isNewKill = false;
-    let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
-
+    // ALWAYS save to UserKillStats for personal stats
     try {
-      if (!existingKillId) {
-        lock = await this.redlock.acquire([lockKey], LOCK_TTL_MS);
+      await this.prisma.userKillStats.upsert({
+        where: {
+          userId_characterId_world_npcId: {
+            userId: discordId,
+            characterId,
+            world: data.world,
+            npcId,
+          },
+        },
+        create: {
+          userId: discordId,
+          characterId,
+          accountId,
+          characterName: data.characterName,
+          characterLvl: data.characterLvl,
+          characterProf: data.characterProf,
+          characterIcon: data.characterIcon,
+          world: data.world,
+          npcId,
+          npcName: data.npc.name,
+          npcType,
+          npcLvl: data.npc.lvl,
+          npcIcon: data.npc.icon,
+          totalKills: 1,
+        },
+        update: {
+          totalKills: { increment: 1 },
+          lastKilledAt: new Date(),
+          characterName: data.characterName,
+          characterLvl: data.characterLvl,
+          characterProf: data.characterProf,
+          characterIcon: data.characterIcon,
+          npcName: data.npc.name,
+          npcLvl: data.npc.lvl,
+          npcIcon: data.npc.icon,
+        },
+      });
+    } catch (error) {
+      this.logger.error({
+        level: 'error',
+        message: 'Failed to upsert user kill stats',
+        error: error instanceof Error ? error.message : error,
+      });
+    }
 
-        existingKillId = await this.redis.get(dedupKey);
+    // Also save to NpcKillStats for each guild (if any)
+    const config =
+      await this.userLootlogConfigService.getLootlogCharacterConfig(
+        discordId,
+        data.accountId,
+        data.characterId,
+      );
 
-        if (!existingKillId) {
-          const kill = await this.prisma.kill.create({
-            data: {
+    const targetGuildIds = new Set([
+      ...(config?.collectLootWhitelistGuildIds ?? []),
+      ...(config?.addTimersWhitelistGuildIds ?? []),
+    ]);
+
+    if (targetGuildIds.size === 0) {
+      return { updated: 0 };
+    }
+
+    const results = await Promise.all(
+      Array.from(targetGuildIds).map(async (guildId) => {
+        const member = await this.prisma.member.findUnique({
+          where: { memberId: { userId: discordId, guildId } },
+        });
+
+        if (!member) {
+          this.logger.log({
+            level: 'debug',
+            message: `Member not found for guildId ${guildId}, skipping kill stats`,
+          });
+          return null;
+        }
+
+        try {
+          return await this.prisma.npcKillStats.upsert({
+            where: {
+              guildId_memberId_characterId_world_npcId: {
+                guildId,
+                memberId: member.id,
+                characterId,
+                world: data.world,
+                npcId,
+              },
+            },
+            create: {
+              guildId,
+              memberId: member.id,
+              userId: discordId,
+              characterId,
+              accountId,
+              characterName: data.characterName,
+              characterLvl: data.characterLvl,
+              characterProf: data.characterProf,
+              characterIcon: data.characterIcon,
               world: data.world,
               npcId,
               npcName: data.npc.name,
               npcType,
               npcLvl: data.npc.lvl,
               npcIcon: data.npc.icon,
+              totalKills: 1,
+            },
+            update: {
+              totalKills: { increment: 1 },
+              lastKilledAt: new Date(),
+              characterName: data.characterName,
+              characterLvl: data.characterLvl,
+              characterProf: data.characterProf,
+              characterIcon: data.characterIcon,
+              npcName: data.npc.name,
+              npcLvl: data.npc.lvl,
+              npcIcon: data.npc.icon,
             },
           });
-
-          existingKillId = kill.id;
-          isNewKill = true;
-
-          await this.redis.set(dedupKey, existingKillId, DEDUP_TTL_SECONDS);
-
-          this.logger.log({
-            level: 'debug',
-            message: `Created new kill ${existingKillId} for NPC ${npcId} in world ${data.world}`,
+        } catch (error) {
+          this.logger.error({
+            level: 'error',
+            message: `Failed to upsert kill stats for guildId ${guildId}`,
+            error: error instanceof Error ? error.message : error,
           });
+          return null;
         }
-      }
+      }),
+    );
 
-      const characterProf = data.characterProf
-        ? getProfByShortname(data.characterProf)
-        : undefined;
+    const updated = results.filter(Boolean).length;
 
-      await this.prisma.killParticipant.upsert({
-        where: {
-          killId_characterId: {
-            killId: existingKillId,
-            characterId: Number.parseInt(data.characterId, 10),
-          },
-        },
-        create: {
-          killId: existingKillId,
-          accountId: Number.parseInt(data.accountId, 10),
-          characterId: Number.parseInt(data.characterId, 10),
-          characterName: data.characterName,
-          characterLvl: data.characterLvl,
-          characterProf,
-          characterIcon: data.characterIcon,
-          world: data.world,
-        },
-        update: {},
-      });
-
-      const member = await this.prisma.member.findUnique({
-        where: { memberId: { userId: discordId, guildId } },
-      });
-
-      if (!member) {
-        throw new BadRequestException({ message: 'Member not found in guild' });
-      }
-
-      const guildKill = await this.prisma.guildKill.upsert({
-        where: {
-          killId_guildId: {
-            killId: existingKillId,
-            guildId,
-          },
-        },
-        create: {
-          killId: existingKillId,
-          guildId,
-          memberId: member.id,
-        },
-        update: {},
-      });
-
-      this.updateAggregatedStatsAsync(
-        existingKillId,
-        discordId,
-        guildId,
-        member.id,
-        Number.parseInt(data.accountId, 10),
-        Number.parseInt(data.characterId, 10),
-        data.world,
-        npcType,
-      );
-
-      return {
-        killId: existingKillId,
-        isNewKill,
-        guildKillId: guildKill.id,
-      };
-    } catch (error) {
-      if (error instanceof ExecutionError) {
-        this.logger.log({
-          level: 'error',
-          message: 'Lock acquisition failed for createKillForGuild',
-          world: data.world,
-          npcId,
-        });
-        throw new BadRequestException({
-          message: 'Kill creation in progress, please retry',
-        });
-      }
-      throw error;
-    } finally {
-      await lock?.release();
-    }
+    return { updated };
   }
 
-  private async updateAggregatedStatsAsync(
-    killId: string,
-    userId: string,
+  async getGuildKillStats(
     guildId: string,
-    memberId: number,
-    accountId: number,
-    characterId: number,
-    world: string,
-    npcType: NpcType,
+    permissions: Permission[],
+    roles: Role[],
+    query: GetGuildKillStatsDto,
   ) {
-    try {
-      await Promise.all([
-        this.prisma.playerKillStats.upsert({
-          where: {
-            userId_accountId_characterId_world_npcType: {
-              userId,
-              accountId,
-              characterId,
-              world,
-              npcType,
-            },
-          },
-          create: {
-            userId,
-            accountId,
-            characterId,
-            world,
-            npcType,
-            totalKills: 1,
-          },
-          update: {
-            totalKills: { increment: 1 },
-          },
-        }),
-
-        this.prisma.guildMemberKillStats.upsert({
-          where: {
-            guildId_memberId_npcType: {
-              guildId,
-              memberId,
-              npcType,
-            },
-          },
-          create: {
-            guildId,
-            memberId,
-            npcType,
-            totalKills: 1,
-          },
-          update: {
-            totalKills: { increment: 1 },
-          },
-        }),
-
-        this.prisma.guildKillStats.upsert({
-          where: {
-            guildId_npcType: {
-              guildId,
-              npcType,
-            },
-          },
-          create: {
-            guildId,
-            npcType,
-            totalKills: 1,
-          },
-          update: {
-            totalKills: { increment: 1 },
-          },
-        }),
-      ]);
-
-      this.logger.log({
-        level: 'debug',
-        message: `Updated aggregated stats for kill ${killId}`,
-      });
-    } catch (error) {
-      this.logger.error({
-        level: 'error',
-        message: 'Failed to update aggregated stats',
-        error: error instanceof Error ? error.message : error,
-        killId,
-      });
-    }
-  }
-
-  async getGuildKillStats(guildId: string, query: GetGuildKillStatsDto) {
     const npcTypes = query.parseNpcTypes();
-    const recentKillsLimit = query.recentKillsLimit ?? 20;
+    const filteredRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    );
+    const administrativeUser = isAdministrativeUser(permissions);
 
-    const whereConditions: Prisma.GuildKillWhereInput = {
-      guildId,
-      kill: {
-        ...(npcTypes && { npcType: { in: npcTypes } }),
-        ...(query.minLvl !== undefined && { npcLvl: { gte: query.minLvl } }),
-        ...(query.maxLvl !== undefined && { npcLvl: { lte: query.maxLvl } }),
-      },
-    };
+    const visibilityCondition = this.buildVisibilityCondition(
+      filteredRoles,
+      administrativeUser,
+    );
 
-    const [guildStats, memberStats, recentGuildKills] = await Promise.all([
-      this.prisma.guildKillStats.findMany({
-        where: {
-          guildId,
-          ...(npcTypes && { npcType: { in: npcTypes } }),
-        },
-      }),
-
-      this.prisma.guildMemberKillStats.findMany({
-        where: {
-          guildId,
-          ...(npcTypes && { npcType: { in: npcTypes } }),
-        },
-        include: {
-          member: true,
-        },
-      }),
-
-      this.prisma.guildKill.findMany({
-        where: whereConditions,
-        include: {
-          kill: {
-            include: {
-              participants: true,
+    const npcLvlCondition =
+      query.minLvl !== undefined || query.maxLvl !== undefined
+        ? {
+            npcLvl: {
+              ...(query.minLvl !== undefined && { gte: query.minLvl }),
+              ...(query.maxLvl !== undefined && { lte: query.maxLvl }),
             },
-          },
-          member: true,
-        },
-        orderBy: {
-          kill: {
-            killedAt: 'desc',
-          },
-        },
-        take: recentKillsLimit,
-      }),
-    ]);
+          }
+        : {};
+
+    const stats = await this.prisma.npcKillStats.findMany({
+      where: {
+        guildId,
+        ...(npcTypes && { npcType: { in: npcTypes } }),
+        ...npcLvlCondition,
+        ...visibilityCondition,
+      },
+      include: {
+        member: true,
+      },
+    });
 
     const killsByType: Record<string, number> = {};
     let totalKills = 0;
-
-    for (const stat of guildStats) {
-      killsByType[stat.npcType] = stat.totalKills;
-      totalKills += stat.totalKills;
-    }
 
     const memberRankingMap = new Map<
       number,
@@ -337,11 +213,16 @@ export class KillsService implements OnModuleInit {
       }
     >();
 
-    for (const stat of memberStats) {
+    for (const stat of stats) {
+      killsByType[stat.npcType] =
+        (killsByType[stat.npcType] ?? 0) + stat.totalKills;
+      totalKills += stat.totalKills;
+
       const existing = memberRankingMap.get(stat.memberId);
       if (existing) {
         existing.totalKills += stat.totalKills;
-        existing.killsByType[stat.npcType] = stat.totalKills;
+        existing.killsByType[stat.npcType] =
+          (existing.killsByType[stat.npcType] ?? 0) + stat.totalKills;
       } else {
         memberRankingMap.set(stat.memberId, {
           memberId: stat.memberId,
@@ -356,91 +237,200 @@ export class KillsService implements OnModuleInit {
       (a, b) => b.totalKills - a.totalKills,
     );
 
-    const recentKills = recentGuildKills.map((gk) => ({
-      killId: gk.kill.id,
-      npcName: gk.kill.npcName,
-      npcType: gk.kill.npcType,
-      npcLvl: gk.kill.npcLvl,
-      npcIcon: gk.kill.npcIcon,
-      killedAt: gk.kill.killedAt,
-      participants: gk.kill.participants.map((p) => ({
-        characterName: p.characterName,
-        characterLvl: p.characterLvl,
-        characterProf: p.characterProf,
-      })),
-    }));
-
     return {
       overview: {
         totalKills,
         killsByType,
       },
       memberRanking,
-      recentKills,
     };
   }
 
-  async getPlayerKillStats(discordId: string, query: GetPlayerKillStatsDto) {
+  private buildVisibilityCondition(
+    roles: Role[],
+    administrativeUser: boolean,
+  ): Record<string, unknown> {
+    if (administrativeUser || roles.length === 0) {
+      return {};
+    }
+
+    const orConditions: Record<string, unknown>[] = [];
+
+    for (const role of roles) {
+      const roleCondition = this.buildRoleVisibilityCondition(role);
+      if (roleCondition) {
+        orConditions.push(roleCondition);
+      }
+    }
+
+    if (orConditions.length === 0) {
+      return {};
+    }
+
+    return {
+      OR: orConditions,
+    };
+  }
+
+  private buildRoleVisibilityCondition(
+    role: Role,
+  ): Record<string, unknown> | null {
+    const hasReadTitans = role.permissions?.includes(
+      Permission.LOOTLOG_LOOTS_TITANS_READ,
+    );
+    const hasReadHeroes = role.permissions?.includes(
+      Permission.LOOTLOG_LOOTS_HEROES_READ,
+    );
+
+    const lvlFrom = role.lvlRangeFrom ?? 0;
+    const lvlTo = role.lvlRangeTo ?? 500;
+
+    const andConditions: Record<string, unknown>[] = [];
+
+    andConditions.push({
+      OR: [
+        { npcLvl: { gte: lvlFrom } },
+        ...(lvlFrom <= 0 ? [{ npcLvl: null }] : []),
+      ],
+    });
+
+    andConditions.push({
+      OR: [
+        { npcLvl: { lte: lvlTo } },
+        ...(lvlTo >= 0 ? [{ npcLvl: null }] : []),
+      ],
+    });
+
+    if (!hasReadTitans) {
+      andConditions.push({
+        npcType: {
+          not: NpcType.TITAN,
+        },
+      });
+    }
+
+    if (!hasReadHeroes) {
+      andConditions.push({
+        npcType: {
+          notIn: [NpcType.HERO, NpcType.EVENT_HERO],
+        },
+      });
+    }
+
+    if (andConditions.length === 0) {
+      return null;
+    }
+
+    return {
+      AND: andConditions,
+    };
+  }
+
+  async getUserKillStats(discordId: string, query: GetUserKillStatsDto) {
     const npcTypes = query.parseNpcTypes();
 
-    const playerStats = await this.prisma.playerKillStats.findMany({
+    // Query from UserKillStats - no deduplication needed since it's already per-user
+    const stats = await this.prisma.userKillStats.findMany({
       where: {
         userId: discordId,
+        ...(query.characterId !== undefined && {
+          characterId: query.characterId,
+        }),
         ...(query.world && { world: query.world }),
-        ...(npcTypes && { npcType: { in: npcTypes } }),
+        ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
       },
     });
 
-    if (playerStats.length === 0) {
-      return {
-        overview: {
-          totalKills: 0,
-          killsByType: {},
-          killsByWorld: {},
-        },
-        characters: [],
-      };
-    }
-
+    // Calculate overview
     const killsByType: Record<string, number> = {};
     const killsByWorld: Record<string, number> = {};
     let totalKills = 0;
 
-    const characterStatsMap = new Map<
-      string,
-      {
-        characterId: number;
-        totalKills: number;
-        killsByType: Record<string, number>;
-      }
-    >();
-
-    for (const stat of playerStats) {
-      const key = `${stat.accountId}-${stat.characterId}`;
-
+    for (const stat of stats) {
       killsByType[stat.npcType] =
         (killsByType[stat.npcType] ?? 0) + stat.totalKills;
       killsByWorld[stat.world] =
         (killsByWorld[stat.world] ?? 0) + stat.totalKills;
       totalKills += stat.totalKills;
+    }
 
-      const existing = characterStatsMap.get(key);
+    // Group by character
+    const characterMap = new Map<
+      number,
+      {
+        characterId: number;
+        characterName: string;
+        characterLvl: number;
+        characterProf: string | null;
+        characterIcon: string | null;
+        totalKills: number;
+        killsByType: Record<string, number>;
+      }
+    >();
+
+    for (const stat of stats) {
+      const existing = characterMap.get(stat.characterId);
       if (existing) {
         existing.totalKills += stat.totalKills;
         existing.killsByType[stat.npcType] =
           (existing.killsByType[stat.npcType] ?? 0) + stat.totalKills;
+        // Update character data if this record is more recent (higher level)
+        if (stat.characterLvl > existing.characterLvl) {
+          existing.characterName = stat.characterName;
+          existing.characterLvl = stat.characterLvl;
+          existing.characterProf = stat.characterProf;
+          existing.characterIcon = stat.characterIcon;
+        }
       } else {
-        characterStatsMap.set(key, {
+        characterMap.set(stat.characterId, {
           characterId: stat.characterId,
+          characterName: stat.characterName,
+          characterLvl: stat.characterLvl,
+          characterProf: stat.characterProf,
+          characterIcon: stat.characterIcon,
           totalKills: stat.totalKills,
           killsByType: { [stat.npcType]: stat.totalKills },
         });
       }
     }
 
-    const characterStats = Array.from(characterStatsMap.values()).sort(
+    const characters = Array.from(characterMap.values()).sort(
       (a, b) => b.totalKills - a.totalKills,
     );
+
+    // Get top NPCs (aggregate across all characters)
+    const npcMap = new Map<
+      string,
+      {
+        npcId: number;
+        npcName: string;
+        npcType: string;
+        npcLvl: number;
+        npcIcon: string | null;
+        totalKills: number;
+      }
+    >();
+
+    for (const stat of stats) {
+      const key = `${stat.world}:${stat.npcId}`;
+      const existing = npcMap.get(key);
+      if (existing) {
+        existing.totalKills += stat.totalKills;
+      } else {
+        npcMap.set(key, {
+          npcId: stat.npcId,
+          npcName: stat.npcName,
+          npcType: stat.npcType,
+          npcLvl: stat.npcLvl,
+          npcIcon: stat.npcIcon,
+          totalKills: stat.totalKills,
+        });
+      }
+    }
+
+    const topNpcs = Array.from(npcMap.values())
+      .sort((a, b) => b.totalKills - a.totalKills)
+      .slice(0, 10);
 
     return {
       overview: {
@@ -448,7 +438,8 @@ export class KillsService implements OnModuleInit {
         killsByType,
         killsByWorld,
       },
-      characters: characterStats,
+      characters,
+      topNpcs,
     };
   }
 }

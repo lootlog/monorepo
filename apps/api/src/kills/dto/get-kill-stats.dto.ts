@@ -26,25 +26,13 @@ export class GetGuildKillStatsDto {
   @Min(0)
   maxLvl?: number;
 
-  @ApiPropertyOptional({ example: 20, description: 'Limit for recent kills' })
-  @IsOptional()
-  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
-  @IsNumber()
-  @Min(1)
-  recentKillsLimit?: number;
-
   parseNpcTypes(): NpcType[] | undefined {
     if (!this.npcType) return undefined;
     return this.npcType.split(',').map((t) => t.trim()) as NpcType[];
   }
 }
 
-export class GetPlayerKillStatsDto {
-  @ApiPropertyOptional({ example: 'pandora', description: 'World name filter' })
-  @IsOptional()
-  @IsString()
-  world?: string;
-
+export class GetUserKillStatsDto {
   @ApiPropertyOptional({
     example: 'HERO,TITAN',
     description: 'Comma-separated NPC types to filter by',
@@ -52,6 +40,23 @@ export class GetPlayerKillStatsDto {
   @IsOptional()
   @IsString()
   npcType?: string;
+
+  @ApiPropertyOptional({
+    example: 12345,
+    description: 'Filter by character ID',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
+  @IsNumber()
+  characterId?: number;
+
+  @ApiPropertyOptional({
+    example: 'pandora',
+    description: 'Filter by world',
+  })
+  @IsOptional()
+  @IsString()
+  world?: string;
 
   parseNpcTypes(): NpcType[] | undefined {
     if (!this.npcType) return undefined;
