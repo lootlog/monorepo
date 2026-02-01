@@ -205,14 +205,16 @@ export const StatsNpcsList: React.FC = () => {
                   <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       {npc.npcIcon && (
-                        <NpcTile
-                          npc={{
-                            id: npc.npcId,
-                            name: npc.npcName,
-                            lvl: npc.npcLvl,
-                            icon: npc.npcIcon,
-                          }}
-                        />
+                        <div className="w-8 flex-shrink-0">
+                          <NpcTile
+                            npc={{
+                              id: npc.npcId,
+                              name: npc.npcName,
+                              lvl: npc.npcLvl,
+                              icon: npc.npcIcon,
+                            }}
+                          />
+                        </div>
                       )}
                       <div className="flex flex-col">
                         <span className="text-sm font-medium leading-tight">

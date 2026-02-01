@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useLocalStorage } from "usehooks-ts";
 import { Search } from "lucide-react";
 import {
@@ -55,7 +55,10 @@ const NPC_TYPE_ORDER: NpcType[] = [
 
 export const StatsRanking: React.FC = () => {
   const { t } = useTranslation();
-  useParams({ from: "/_authenticated/$guildId/stats/ranking" });
+  const { guildId } = useParams({
+    from: "/_authenticated/$guildId/stats/ranking",
+  });
+  const navigate = useNavigate();
   const [cursor, setCursor] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalParticipations", desc: true },
@@ -215,7 +218,16 @@ export const StatsRanking: React.FC = () => {
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="bg-background/30 border-b border-border h-14"
+                  className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() =>
+                    navigate({
+                      to: "/$guildId/stats/members/$memberId",
+                      params: {
+                        guildId,
+                        memberId: row.original.memberId.toString(),
+                      },
+                    })
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="whitespace-nowrap">

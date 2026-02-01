@@ -7,12 +7,14 @@ import { RedisService } from 'src/lib/redis/redis.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
+import { getStableNpcId } from 'src/shared/utils/get-stable-npc-id';
 import type { CreateKillDto } from './dto/create-kill.dto';
 import type {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from './dto/get-kill-stats.dto';
 import type { GetUserNpcKillsDto } from './dto/get-user-npc-kills.dto';
+import type { GetMemberKillsDto } from './dto/get-member-kills.dto';
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 
@@ -27,7 +29,7 @@ export class KillsService {
 
   async createKill(discordId: string, data: CreateKillDto) {
     const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof);
-    const npcId = Math.abs(data.npc.id);
+    const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
 
     // 1. User deduplication (30s window) - same user killing same NPC
     const userDedupKey = `kill:dedup:user:${discordId}:${data.world}:${npcId}`;
@@ -814,6 +816,129 @@ export class KillsService {
         totalMemberParticipations,
       },
       killers,
+    };
+  }
+
+  async getMemberKills(
+    guildId: string,
+    memberId: number,
+    permissions: Permission[],
+    roles: Role[],
+    query: GetMemberKillsDto,
+  ) {
+    const filteredRoles = roles.filter((role) =>
+      role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
+    );
+    const administrativeUser = isAdministrativeUser(permissions);
+
+    const visibilityCondition = this.buildVisibilityCondition(
+      filteredRoles,
+      administrativeUser,
+    );
+
+    const npcTypes = query.parseNpcTypes();
+    const limit = query.limit ?? 20;
+    const cursor = query.cursor ?? 0;
+
+    // Get the member info first
+    const member = await this.prisma.member.findFirst({
+      where: {
+        id: memberId,
+        guildId,
+      },
+    });
+
+    if (!member) {
+      return null;
+    }
+
+    // Get all kill stats for this member with visibility conditions
+    const stats = await this.prisma.npcKillStats.findMany({
+      where: {
+        guildId,
+        memberId,
+        ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
+        ...(query.world && { world: query.world }),
+        ...(query.search && {
+          npcName: { contains: query.search, mode: 'insensitive' as const },
+        }),
+        ...visibilityCondition,
+      },
+    });
+
+    // Calculate overview
+    const participationsByType: Record<string, number> = {};
+    let totalParticipations = 0;
+
+    // Aggregate NPCs by npcId
+    const npcMap = new Map<
+      number,
+      {
+        npcId: number;
+        npcName: string;
+        npcType: string;
+        npcLvl: number;
+        npcProf: string | null;
+        npcIcon: string | null;
+        totalKills: number;
+      }
+    >();
+
+    for (const stat of stats) {
+      participationsByType[stat.npcType] =
+        (participationsByType[stat.npcType] ?? 0) + stat.memberKills;
+      totalParticipations += stat.memberKills;
+
+      const existing = npcMap.get(stat.npcId);
+      if (existing) {
+        existing.totalKills += stat.memberKills;
+        // Keep the highest level version of the NPC
+        if (stat.npcLvl > existing.npcLvl) {
+          existing.npcLvl = stat.npcLvl;
+          existing.npcName = stat.npcName;
+          existing.npcProf = stat.npcProf;
+          existing.npcIcon = stat.npcIcon;
+        }
+      } else {
+        npcMap.set(stat.npcId, {
+          npcId: stat.npcId,
+          npcName: stat.npcName,
+          npcType: stat.npcType,
+          npcLvl: stat.npcLvl,
+          npcProf: stat.npcProf,
+          npcIcon: stat.npcIcon,
+          totalKills: stat.memberKills,
+        });
+      }
+    }
+
+    // Sort by kills descending and paginate
+    const allNpcs = Array.from(npcMap.values()).sort(
+      (a, b) => b.totalKills - a.totalKills,
+    );
+
+    const total = allNpcs.length;
+    const paginatedNpcs = allNpcs.slice(cursor, cursor + limit);
+    const hasNext = cursor + limit < total;
+
+    return {
+      member: {
+        memberId: member.id,
+        memberName: member.name,
+        memberAvatar: member.avatar,
+        memberUserId: member.userId,
+      },
+      overview: {
+        totalParticipations,
+        participationsByType,
+      },
+      npcs: paginatedNpcs,
+      pagination: {
+        total,
+        cursor,
+        limit,
+        hasNext,
+      },
     };
   }
 }

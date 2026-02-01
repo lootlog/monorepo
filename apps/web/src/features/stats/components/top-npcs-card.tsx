@@ -120,9 +120,11 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
       </CardHeader>
       <CardContent className="flex flex-col flex-1">
         {topNpcs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("kills.topNpcs.noData")}
-          </p>
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-sm text-muted-foreground text-center">
+              {t("kills.topNpcs.noData")}
+            </p>
+          </div>
         ) : (
           <div className="space-y-1">
             {topNpcs.map((npc, index) => (
@@ -144,14 +146,16 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
                     )}
                   </div>
                   {npc.npcIcon && (
-                    <NpcTile
-                      npc={{
-                        id: npc.npcId,
-                        name: npc.npcName,
-                        lvl: npc.npcLvl,
-                        icon: npc.npcIcon,
-                      }}
-                    />
+                    <div className="w-8 flex-shrink-0">
+                      <NpcTile
+                        npc={{
+                          id: npc.npcId,
+                          name: npc.npcName,
+                          lvl: npc.npcLvl,
+                          icon: npc.npcIcon,
+                        }}
+                      />
+                    </div>
                   )}
                   <div className="flex flex-col">
                     <span className="text-sm font-medium leading-tight">

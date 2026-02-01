@@ -90,7 +90,19 @@
     "killCount": "Bicia",
     "totalGuildKills": "Łącznie w klanie: {{count}} bić",
     "totalMembers": "Członków: {{count}}",
+    "uniqueGuildKills": "Unikalnych bić: {{count}}",
     "notFound": "Nie znaleziono danych o tym potworze",
     "noKillers": "Brak graczy, którzy zabili tego potwora"
+  },
+  "memberStats": {
+    "title": "Statystyki członka",
+    "totalParticipations": "Łącznie bić: {{count}}",
+    "byType": "Bicia według typu",
+    "npcsKilled": "Zabite potwory",
+    "npc": "Potwór",
+    "killCount": "Bicia",
+    "searchPlaceholder": "Szukaj potwora...",
+    "noData": "Ten członek nie ma jeszcze żadnych bić",
+    "notFound": "Nie znaleziono członka w klanie"
   }
 }

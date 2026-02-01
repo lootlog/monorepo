@@ -303,6 +303,106 @@ describe('KillsService', () => {
       expect(prismaService.npcKillStats.upsert).toHaveBeenCalledTimes(1);
       expect(prismaService.guildKillSummary.upsert).not.toHaveBeenCalled();
     });
+
+    describe('COLOSSUS stable ID handling', () => {
+      const colossusKillDto: CreateKillDto = {
+        world: 'pandora',
+        npc: {
+          id: 999999,
+          name: 'Wielki Kolos',
+          lvl: 350,
+          prof: 'w',
+          wt: 95, // COLOSSUS type (wt > 89)
+          icon: 'colossus.gif',
+        },
+        characterId: '67890',
+        accountId: '11111',
+      };
+
+      it('should use a stable negative ID for COLOSSUS NPCs', async () => {
+        userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
+          null,
+        );
+
+        await service.createKill(discordId, colossusKillDto);
+
+        const upsertCall = prismaService.userKillStats.upsert.mock.calls[0][0];
+        expect(upsertCall.where.userId_world_npcId.npcId).toBeLessThan(0);
+        expect(upsertCall.create.npcId).toBeLessThan(0);
+        expect(upsertCall.create.npcType).toBe(NpcType.COLOSSUS);
+      });
+
+      it('should use the same stable ID for COLOSSUS with same name but different spawn IDs', async () => {
+        userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
+          null,
+        );
+
+        // First kill with spawn ID 999999
+        await service.createKill(discordId, colossusKillDto);
+        const firstNpcId =
+          prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
+
+        jest.clearAllMocks();
+        redisService.setNX.mockResolvedValue(true);
+
+        // Second kill with different spawn ID but same name
+        const colossusKillDto2: CreateKillDto = {
+          ...colossusKillDto,
+          npc: {
+            ...colossusKillDto.npc,
+            id: 888888, // Different spawn ID
+          },
+        };
+
+        await service.createKill(discordId, colossusKillDto2);
+        const secondNpcId =
+          prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
+
+        expect(firstNpcId).toBe(secondNpcId);
+      });
+
+      it('should use different stable IDs for different COLOSSUS names', async () => {
+        userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
+          null,
+        );
+
+        await service.createKill(discordId, colossusKillDto);
+        const firstNpcId =
+          prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
+
+        jest.clearAllMocks();
+        redisService.setNX.mockResolvedValue(true);
+
+        const colossusKillDto2: CreateKillDto = {
+          ...colossusKillDto,
+          npc: {
+            ...colossusKillDto.npc,
+            name: 'Inny Kolos', // Different name
+          },
+        };
+
+        await service.createKill(discordId, colossusKillDto2);
+        const secondNpcId =
+          prismaService.userKillStats.upsert.mock.calls[0][0].create.npcId;
+
+        expect(firstNpcId).not.toBe(secondNpcId);
+      });
+
+      it('should use stable ID for Redis dedup key with COLOSSUS', async () => {
+        userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
+          null,
+        );
+
+        await service.createKill(discordId, colossusKillDto);
+
+        const setNXCall = redisService.setNX.mock.calls[0];
+        const dedupKey = setNXCall[0] as string;
+
+        // The dedup key should contain the stable (negative) ID, not the spawn ID
+        expect(dedupKey).toContain(':' + String(dedupKey.split(':').pop()));
+        expect(dedupKey).not.toContain(':999999');
+      });
+    });
   });
 
   describe('getGuildKillStats', () => {

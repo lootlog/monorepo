@@ -442,3 +442,71 @@ export class NpcKillersResponseEntity {
   })
   killers: NpcKillerEntity[];
 }
+
+export class MemberInfoEntity {
+  @Expose()
+  @ApiProperty({ example: 1, description: 'Member ID' })
+  memberId: number;
+
+  @Expose()
+  @ApiProperty({ example: 'PlayerName', description: 'Member name' })
+  memberName: string;
+
+  @Expose()
+  @ApiProperty({
+    example: 'abc123',
+    description: 'Member Discord avatar hash',
+    nullable: true,
+  })
+  memberAvatar: string | null;
+
+  @Expose()
+  @ApiProperty({ example: '123456789', description: 'Member Discord user ID' })
+  memberUserId: string;
+}
+
+export class MemberKillsOverviewEntity {
+  @Expose()
+  @ApiProperty({
+    example: 150,
+    description: 'Total participations by this member',
+  })
+  totalParticipations: number;
+
+  @Expose()
+  @ApiProperty({
+    type: KillsByTypeEntity,
+    description: 'Participations grouped by NPC type',
+  })
+  participationsByType: Record<string, number>;
+}
+
+export class MemberKillsResponseEntity {
+  @Expose()
+  @ApiProperty({
+    type: MemberInfoEntity,
+    description: 'Member information',
+  })
+  member: MemberInfoEntity;
+
+  @Expose()
+  @ApiProperty({
+    type: MemberKillsOverviewEntity,
+    description: 'Overview statistics',
+  })
+  overview: MemberKillsOverviewEntity;
+
+  @Expose()
+  @ApiProperty({
+    type: [NpcKillEntity],
+    description: 'List of NPCs killed by this member',
+  })
+  npcs: NpcKillEntity[];
+
+  @Expose()
+  @ApiProperty({
+    type: PaginationEntity,
+    description: 'Pagination info',
+  })
+  pagination: PaginationEntity;
+}
