@@ -35,10 +35,12 @@ import {
   GuildTopNpcsEntity,
   GuildTopKillersByTypeEntity,
   NpcKillersResponseEntity,
+  MemberKillsResponseEntity,
   UserKillStatsEntity,
   UserNpcKillsEntity,
 } from './entities/kill-stats.entity';
 import { GetNpcKillersDto } from './dto/get-npc-killers.dto';
+import { GetMemberKillsDto } from './dto/get-member-kills.dto';
 import { NpcType } from 'generated/client';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
 
@@ -259,5 +261,50 @@ export class KillsController {
     }
 
     return plainToInstance(NpcKillersResponseEntity, result);
+  }
+
+  @Permissions(Permission.LOOTLOG_ACCESS)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/stats/kills/members/:memberId')
+  @ApiOperation({
+    summary: 'Get kill statistics for a specific guild member',
+    description:
+      'Retrieves kill statistics for a specific member including overview and list of killed NPCs.',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: 'memberId', description: 'Member ID', example: '123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Member kill statistics',
+    type: MemberKillsResponseEntity,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Member not found in guild',
+  })
+  async getMemberKills(
+    @MemberPermissions() permissions: Permission[],
+    @MemberRoles() roles: Role[],
+    @GuildData() guildData: Guild,
+    @Param('memberId') memberId: string,
+    @Query() query: GetMemberKillsDto,
+  ) {
+    const result = await this.killsService.getMemberKills(
+      guildData.id,
+      Number.parseInt(memberId, 10),
+      permissions,
+      roles,
+      query,
+    );
+
+    if (!result) {
+      return { member: null, overview: null, npcs: [], pagination: null };
+    }
+
+    return plainToInstance(MemberKillsResponseEntity, result);
   }
 }

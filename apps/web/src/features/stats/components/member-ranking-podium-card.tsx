@@ -37,12 +37,14 @@ type PodiumSlotProps = {
   member?: PodiumMember;
   position: 1 | 2 | 3;
   guildMember?: GuildMember;
+  guildId?: string;
 };
 
 const PodiumSlot: React.FC<PodiumSlotProps> = ({
   member,
   position,
   guildMember,
+  guildId,
 }) => {
   const adaptedMember = guildMember
     ? {
@@ -90,7 +92,7 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
     );
   }
 
-  return (
+  const content = (
     <div className={cn("flex flex-col items-center w-28", heights[position])}>
       <div className="relative">
         {position === 1 && (
@@ -131,6 +133,20 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
       </div>
     </div>
   );
+
+  if (guildId) {
+    return (
+      <Link
+        to="/$guildId/stats/members/$memberId"
+        params={{ guildId, memberId: member.memberId.toString() }}
+        className="hover:opacity-80 transition-opacity"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 };
 
 type MemberRankingPodiumCardProps = {
@@ -225,6 +241,7 @@ export const MemberRankingPodiumCard: React.FC<
                     ? membersMap.get(sortedByType[1].memberUserId)
                     : undefined
                 }
+                guildId={guildId}
               />
               <PodiumSlot
                 member={sortedByType[0]}
@@ -234,6 +251,7 @@ export const MemberRankingPodiumCard: React.FC<
                     ? membersMap.get(sortedByType[0].memberUserId)
                     : undefined
                 }
+                guildId={guildId}
               />
               <PodiumSlot
                 member={sortedByType[2]}
@@ -243,6 +261,7 @@ export const MemberRankingPodiumCard: React.FC<
                     ? membersMap.get(sortedByType[2].memberUserId)
                     : undefined
                 }
+                guildId={guildId}
               />
             </div>
           )}
