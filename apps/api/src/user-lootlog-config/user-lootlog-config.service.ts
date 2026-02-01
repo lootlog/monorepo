@@ -92,6 +92,7 @@ export class UserLootlogConfigService {
       characterId: string;
       collectLootWhitelistGuildIds: string[];
       addTimersWhitelistGuildIds: string[];
+      trackKillsWhitelistGuildIds: string[];
     }> = [];
 
     const result = accountConfig.reduce((acc, config) => {
@@ -103,17 +104,23 @@ export class UserLootlogConfigService {
       const validTimerGuildIds = config.addTimersWhitelistGuildIds.filter(
         (guildId) => userGuildsWithWriteAccess.has(guildId),
       );
+      const validKillGuildIds = config.trackKillsWhitelistGuildIds.filter(
+        (guildId) => userGuildsWithWriteAccess.has(guildId),
+      );
 
       const needsUpdate =
         validLootGuildIds.length !==
           config.collectLootWhitelistGuildIds.length ||
-        validTimerGuildIds.length !== config.addTimersWhitelistGuildIds.length;
+        validTimerGuildIds.length !==
+          config.addTimersWhitelistGuildIds.length ||
+        validKillGuildIds.length !== config.trackKillsWhitelistGuildIds.length;
 
       if (needsUpdate) {
         configsToUpdate.push({
           characterId,
           collectLootWhitelistGuildIds: validLootGuildIds,
           addTimersWhitelistGuildIds: validTimerGuildIds,
+          trackKillsWhitelistGuildIds: validKillGuildIds,
         });
       }
 
@@ -121,6 +128,7 @@ export class UserLootlogConfigService {
         ...config,
         collectLootWhitelistGuildIds: validLootGuildIds,
         addTimersWhitelistGuildIds: validTimerGuildIds,
+        trackKillsWhitelistGuildIds: validKillGuildIds,
       };
 
       return {
@@ -143,6 +151,7 @@ export class UserLootlogConfigService {
             data: {
               collectLootWhitelistGuildIds: update.collectLootWhitelistGuildIds,
               addTimersWhitelistGuildIds: update.addTimersWhitelistGuildIds,
+              trackKillsWhitelistGuildIds: update.trackKillsWhitelistGuildIds,
             },
           }),
         ),
@@ -211,6 +220,9 @@ export class UserLootlogConfigService {
     const validTimerGuildIds = data.timerGuildIds.filter((guildId) =>
       userGuildsWithWriteAccess.has(guildId),
     );
+    const validKillGuildIds = (data.killGuildIds ?? []).filter((guildId) =>
+      userGuildsWithWriteAccess.has(guildId),
+    );
 
     const config = await this.prisma.userCharactersLootlogSettings.upsert({
       where: {
@@ -223,6 +235,7 @@ export class UserLootlogConfigService {
       update: {
         collectLootWhitelistGuildIds: validLootGuildIds,
         addTimersWhitelistGuildIds: validTimerGuildIds,
+        trackKillsWhitelistGuildIds: validKillGuildIds,
       },
       create: {
         userId: discordId,
@@ -230,6 +243,7 @@ export class UserLootlogConfigService {
         characterId: data.characterId,
         collectLootWhitelistGuildIds: validLootGuildIds,
         addTimersWhitelistGuildIds: validTimerGuildIds,
+        trackKillsWhitelistGuildIds: validKillGuildIds,
       },
     });
 

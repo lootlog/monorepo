@@ -1,0 +1,40 @@
+{
+  "title": "Statystyki killi",
+  "overview": {
+    "title": "Podsumowanie",
+    "totalKills": "Łączne kille",
+    "killsByType": "Kille według typu"
+  },
+  "filters": {
+    "title": "Filtry",
+    "npcType": "Typ NPC",
+    "levelRange": "Zakres poziomów",
+    "minLevel": "Min. poziom",
+    "maxLevel": "Max. poziom",
+    "allTypes": "Wszystkie typy",
+    "apply": "Zastosuj",
+    "reset": "Resetuj"
+  },
+  "memberRanking": {
+    "title": "Ranking członków",
+    "position": "#",
+    "member": "Członek",
+    "totalKills": "Łącznie",
+    "noData": "Brak danych o killach"
+  },
+  "recentKills": {
+    "title": "Ostatnie kille",
+    "npc": "NPC",
+    "level": "Poziom",
+    "type": "Typ",
+    "killedAt": "Data",
+    "participants": "Uczestnicy",
+    "noData": "Brak ostatnich killi"
+  },
+  "playerStats": {
+    "title": "Twoje statystyki killi",
+    "killsByWorld": "Kille według świata",
+    "characters": "Postaci",
+    "noData": "Brak danych o killach dla Twoich postaci"
+  }
+}

@@ -7,6 +7,7 @@ export type UseUpdateLootlogCharacterSettings = {
   characterId: string;
   lootGuildIds: string[];
   timerGuildIds: string[];
+  killGuildIds?: string[];
 };
 
 export const useUpdateLootlogCharactersConfig = () => {
@@ -45,6 +46,7 @@ export const useUpdateLootlogCharactersConfig = () => {
               ...previousData.data[variables.characterId],
               collectLootWhitelistGuildIds: variables.lootGuildIds,
               addTimersWhitelistGuildIds: variables.timerGuildIds,
+              trackKillsWhitelistGuildIds: variables.killGuildIds ?? [],
             },
           },
         };

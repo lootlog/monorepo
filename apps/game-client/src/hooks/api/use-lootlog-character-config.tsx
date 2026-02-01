@@ -13,6 +13,7 @@ export type LootlogCharacterConfig = {
   characterId: string;
   collectLootWhitelistGuildIds: string[];
   addTimersWhitelistGuildIds: string[];
+  trackKillsWhitelistGuildIds: string[];
 };
 
 export type LootlogCharacterConfigResponse = Record<
