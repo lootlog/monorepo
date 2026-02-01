@@ -24,9 +24,7 @@ model Guild {
   reservations      Reservation[]
   events            Event[]
   mapTemplates      MapTemplate[]
-  guildKills           GuildKill[]
-  guildMemberKillStats GuildMemberKillStats[]
-  guildKillStats       GuildKillStats[]
+  npcKillStats      NpcKillStats[]
 
   @@index([vanityUrl])
 }
@@ -187,8 +185,7 @@ model Member {
   eventRankings            EventRanking[]
   detectedKills            EventHeroKill[]            @relation("KillDetectedBy")
   mapAssignmentHistory     EventMapAssignmentHistory[]
-  guildKills               GuildKill[]
-  guildMemberKillStats     GuildMemberKillStats[]
+  npcKillStats             NpcKillStats[]
 
   @@unique(name: "memberId", [userId, guildId])
   @@index([id, guildId])
@@ -412,7 +409,6 @@ model UserCharactersLootlogSettings {
   characterId                  String
   collectLootWhitelistGuildIds String[] @default([])
   addTimersWhitelistGuildIds   String[] @default([])
-  trackKillsWhitelistGuildIds  String[] @default([])
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
 
@@ -762,103 +758,62 @@ model MapTemplate {
   @@index([guildId])
 }
 
-// Kill tracking models
+// Kill tracking - aggregated stats per NPC per member (guild-specific)
+model NpcKillStats {
+  id            String   @id @default(cuid())
+  guildId       String
+  memberId      Int
+  userId        String
+  characterId   Int
+  accountId     Int
+  characterName String
+  characterLvl  Int
+  characterProf String?
+  characterIcon String?
+  world         String
+  npcId         Int
+  npcName       String
+  npcType       NpcType
+  npcLvl        Int
+  npcIcon       String?
+  totalKills    Int      @default(0)
+  lastKilledAt  DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-// Global kill record - one monster killed
-model Kill {
-  id              String   @id @default(cuid())
-  world           String
-  npcId           Int
-  npcName         String
-  npcType         NpcType
-  npcLvl          Int
-  npcIcon         String?
-  killedAt        DateTime @default(now())
+  guild  Guild  @relation(fields: [guildId], references: [id])
+  member Member @relation(fields: [memberId], references: [id])
 
-  participants    KillParticipant[]
-  guildKills      GuildKill[]
-
-  @@index([world, npcId, killedAt])
-  @@index([killedAt])
-  @@index([npcType, npcLvl])
-}
-
-// Kill participant (each player separately)
-model KillParticipant {
-  id              String      @id @default(cuid())
-  killId          String
-  accountId       Int
-  characterId     Int
-  characterName   String
-  characterLvl    Int
-  characterProf   Profession?
-  characterIcon   String?
-  world           String
-  createdAt       DateTime    @default(now())
-
-  kill            Kill        @relation(fields: [killId], references: [id], onDelete: Cascade)
-
-  @@unique([killId, characterId])
-  @@index([accountId, characterId, world])
-}
-
-// Kill assigned to guild (each guild separately)
-model GuildKill {
-  id              String   @id @default(cuid())
-  killId          String
-  guildId         String
-  memberId        Int
-  createdAt       DateTime @default(now())
-
-  kill            Kill     @relation(fields: [killId], references: [id], onDelete: Cascade)
-  guild           Guild    @relation(fields: [guildId], references: [id])
-  member          Member   @relation(fields: [memberId], references: [id])
-
-  @@unique([killId, guildId])
-  @@index([guildId, createdAt])
-  @@index([memberId])
-}
-
-// Aggregated stats per player (global, private per user)
-model PlayerKillStats {
-  id              String   @id @default(cuid())
-  userId          String
-  accountId       Int
-  characterId     Int
-  world           String
-  npcType         NpcType
-  totalKills      Int      @default(0)
-  updatedAt       DateTime @updatedAt
-
-  @@unique([userId, accountId, characterId, world, npcType])
-  @@index([userId])
-}
-
-// Aggregated stats per member in guild
-model GuildMemberKillStats {
-  id              String   @id @default(cuid())
-  guildId         String
-  memberId        Int
-  npcType         NpcType
-  totalKills      Int      @default(0)
-  updatedAt       DateTime @updatedAt
-
-  guild           Guild    @relation(fields: [guildId], references: [id])
-  member          Member   @relation(fields: [memberId], references: [id])
-
-  @@unique([guildId, memberId, npcType])
+  @@unique([guildId, memberId, characterId, world, npcId])
+  @@index([guildId])
   @@index([guildId, npcType])
+  @@index([guildId, memberId])
+  @@index([memberId, npcId])
+  @@index([userId])
+  @@index([userId, characterId])
 }
 
-// Aggregated stats per guild
-model GuildKillStats {
-  id              String   @id @default(cuid())
-  guildId         String
-  npcType         NpcType
-  totalKills      Int      @default(0)
-  updatedAt       DateTime @updatedAt
+// Kill tracking - personal stats per NPC per user (no guild requirement)
+model UserKillStats {
+  id            String   @id @default(cuid())
+  userId        String
+  characterId   Int
+  accountId     Int
+  characterName String
+  characterLvl  Int
+  characterProf String?
+  characterIcon String?
+  world         String
+  npcId         Int
+  npcName       String
+  npcType       NpcType
+  npcLvl        Int
+  npcIcon       String?
+  totalKills    Int      @default(0)
+  lastKilledAt  DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  guild           Guild    @relation(fields: [guildId], references: [id])
-
-  @@unique([guildId, npcType])
+  @@unique([userId, characterId, world, npcId])
+  @@index([userId])
+  @@index([userId, characterId])
+  @@index([userId, npcType])
 }

@@ -28,33 +28,15 @@ export type MemberKillRanking = {
   killsByType: KillsByType;
 };
 
-export type RecentKillParticipant = {
-  characterName: string;
-  characterLvl: number;
-  characterProf?: string;
-};
-
-export type RecentKill = {
-  killId: string;
-  npcName: string;
-  npcType: NpcType;
-  npcLvl: number;
-  npcIcon?: string;
-  killedAt: string;
-  participants: RecentKillParticipant[];
-};
-
 export type GuildKillStatsResponse = {
   overview: KillStatsOverview;
   memberRanking: MemberKillRanking[];
-  recentKills: RecentKill[];
 };
 
 export type GuildKillStatsFilters = {
   npcTypes?: NpcType[];
   minLvl?: number;
   maxLvl?: number;
-  recentKillsLimit?: number;
 };
 
 export const useGuildKillStats = (filters: GuildKillStatsFilters = {}) => {
@@ -65,7 +47,6 @@ export const useGuildKillStats = (filters: GuildKillStatsFilters = {}) => {
     npcType: filters.npcTypes?.join(",") || undefined,
     minLvl: filters.minLvl || undefined,
     maxLvl: filters.maxLvl || undefined,
-    recentKillsLimit: filters.recentKillsLimit || undefined,
   };
 
   const queryString = stringify(queryParams, {

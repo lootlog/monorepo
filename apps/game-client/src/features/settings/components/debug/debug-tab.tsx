@@ -9,6 +9,45 @@ const createBaseEvent = (): Pick<GameEvent, "d" | "e" | "ev"> => ({
   ev: Date.now(),
 });
 
+const createUniqueKillNpcEvent = (): GameEvent => {
+  const uniqueId = Date.now();
+  const npcId = -Math.floor(Math.random() * 100000);
+  return {
+    ...createBaseEvent(),
+    f: {
+      init: "1",
+      endBattle: 1,
+      m: [`unique_battle_${uniqueId}`],
+      w: {
+        [String(npcId)]: {
+          id: npcId,
+          originalId: Math.abs(npcId),
+          name: `Debug Boss #${uniqueId}`,
+          lvl: 100,
+          prof: "",
+          icon: "debug.gif",
+          wt: 85,
+          type: 2,
+          hpp: 0,
+          team: 1,
+        },
+        "99999": {
+          id: 99999,
+          originalId: 99999,
+          name: "Player",
+          lvl: 150,
+          prof: "w",
+          icon: "player.gif",
+          wt: 0,
+          type: 0,
+          hpp: 100,
+          team: 0,
+        },
+      },
+    },
+  };
+};
+
 const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
   npcSpawn: {
     label: "NPC Spawn",
@@ -30,6 +69,42 @@ const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
     event: {
       ...createBaseEvent(),
       npcs_del: [{ id: 999999 }],
+    },
+  },
+  killNpc: {
+    label: "Kill NPC",
+    event: {
+      ...createBaseEvent(),
+      f: {
+        init: "1",
+        endBattle: 1,
+        w: {
+          "-12345": {
+            id: -12345,
+            originalId: 12345,
+            name: "Debug Boss",
+            lvl: 100,
+            prof: "",
+            icon: "debug.gif",
+            wt: 85,
+            type: 2,
+            hpp: 0,
+            team: 1,
+          },
+          "99999": {
+            id: 99999,
+            originalId: 99999,
+            name: "Player",
+            lvl: 150,
+            prof: "w",
+            icon: "player.gif",
+            wt: 0,
+            type: 0,
+            hpp: 100,
+            team: 0,
+          },
+        },
+      },
     },
   },
   townChange: {
@@ -136,9 +211,7 @@ export const DebugTab: FC = () => {
   return (
     <div className="ll:flex ll:flex-col ll:gap-4 ll:p-4">
       <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">
-          Event Templates
-        </h3>
+        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Event Templates</h3>
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           {Object.entries(EVENT_TEMPLATES).map(([key, { label, event }]) => (
             <Button
@@ -149,6 +222,14 @@ export const DebugTab: FC = () => {
               {label}
             </Button>
           ))}
+          <Button
+            onClick={() =>
+              triggerEvent(createUniqueKillNpcEvent(), "Kill NPC (unique)")
+            }
+            className="ll:px-2 ll:bg-green-700 hover:ll:bg-green-600"
+          >
+            Kill NPC (unique)
+          </Button>
         </div>
       </div>
 

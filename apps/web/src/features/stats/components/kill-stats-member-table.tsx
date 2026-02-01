@@ -15,7 +15,6 @@ import {
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import type { MemberKillRanking, NpcType } from "../hooks/use-guild-kill-stats";
-import { Badge } from "@lootlog/ui/components/badge";
 
 const NPC_TYPE_ORDER: NpcType[] = [
   "TITAN",
