@@ -5,10 +5,9 @@ import {
   CardTitle,
 } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { Badge } from "@lootlog/ui/components/badge";
 import { useTranslation } from "react-i18next";
 import { usePlayerKillStats } from "../hooks/use-player-kill-stats";
-import { Swords } from "lucide-react";
+import { Globe, Swords, Target } from "lucide-react";
 
 const NPC_TYPE_ORDER = [
   "TITAN",
@@ -20,9 +19,18 @@ const NPC_TYPE_ORDER = [
   "COMMON",
 ] as const;
 
-export const PlayerKillStatsCard: React.FC = () => {
+const capitalizeFirst = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1);
+
+type PlayerKillStatsCardProps = {
+  world?: string;
+};
+
+export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
+  world,
+}) => {
   const { t } = useTranslation();
-  const { data, isLoading } = usePlayerKillStats();
+  const { data, isLoading } = usePlayerKillStats({ world });
 
   if (isLoading) {
     return (
@@ -34,12 +42,15 @@ export const PlayerKillStatsCard: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-24" />
-            <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-6 w-20" />
-              ))}
+          <div className="space-y-4">
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <div className="grid grid-cols-2 gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -69,6 +80,10 @@ export const PlayerKillStatsCard: React.FC = () => {
     (type) => (data.overview.killsByType[type] ?? 0) > 0,
   );
 
+  const worldEntries = Object.entries(data.overview.killsByWorld)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
   return (
     <Card>
       <CardHeader>
@@ -78,42 +93,63 @@ export const PlayerKillStatsCard: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <div className="text-3xl font-bold">{data.overview.totalKills}</div>
-          <p className="text-sm text-muted-foreground">
-            {t("kills.overview.totalKills")}
-          </p>
+        <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+            <Target className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <div className="text-3xl font-bold tracking-tight">
+              {data.overview.totalKills.toLocaleString()}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("kills.overview.totalKills")}
+            </p>
+          </div>
         </div>
 
         {activeNpcTypes.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {t("kills.overview.killsByType")}
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {activeNpcTypes.map((type) => (
-                <Badge key={type} variant="secondary">
-                  {t(`npcType.${type}`)}: {data.overview.killsByType[type]}
-                </Badge>
+                <div
+                  key={type}
+                  className="flex items-center justify-between p-2 rounded-md bg-muted/50"
+                >
+                  <span className="text-sm">{t(`npcType.${type}`)}</span>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {data.overview.killsByType[type]?.toLocaleString()}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        {Object.keys(data.overview.killsByWorld).length > 0 && (
+        {worldEntries.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {t("kills.playerStats.killsByWorld")}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(data.overview.killsByWorld)
-                .sort(([, a], [, b]) => b - a)
-                .slice(0, 5)
-                .map(([world, count]) => (
-                  <Badge key={world} variant="outline">
-                    {world}: {count}
-                  </Badge>
-                ))}
+            <div className="space-y-1">
+              {worldEntries.map(([worldName, count]) => (
+                <div
+                  key={worldName}
+                  className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm">
+                      {capitalizeFirst(worldName)}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {count.toLocaleString()}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}

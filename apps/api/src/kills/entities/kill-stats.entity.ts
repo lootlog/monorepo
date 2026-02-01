@@ -194,3 +194,75 @@ export class UserKillStatsEntity {
   })
   topNpcs: TopNpcEntity[];
 }
+
+export class NpcKillEntity {
+  @Expose()
+  @ApiProperty({ example: 999, description: 'NPC ID' })
+  npcId: number;
+
+  @Expose()
+  @ApiProperty({ example: 'Boss Name', description: 'NPC name' })
+  npcName: string;
+
+  @Expose()
+  @ApiProperty({ example: 'HERO', description: 'NPC type' })
+  npcType: string;
+
+  @Expose()
+  @ApiProperty({ example: 300, description: 'NPC level' })
+  npcLvl: number;
+
+  @Expose()
+  @ApiProperty({
+    example: 'w',
+    description: 'NPC profession',
+    nullable: true,
+  })
+  npcProf: string | null;
+
+  @Expose()
+  @ApiProperty({
+    example: 'npc_icon.gif',
+    description: 'NPC icon',
+    nullable: true,
+  })
+  npcIcon: string | null;
+
+  @Expose()
+  @ApiProperty({ example: 25, description: 'Total kills of this NPC' })
+  totalKills: number;
+}
+
+export class PaginationEntity {
+  @Expose()
+  @ApiProperty({ example: 100, description: 'Total number of items' })
+  total: number;
+
+  @Expose()
+  @ApiProperty({ example: 0, description: 'Current cursor/offset' })
+  cursor: number;
+
+  @Expose()
+  @ApiProperty({ example: 20, description: 'Items per page' })
+  limit: number;
+
+  @Expose()
+  @ApiProperty({ example: true, description: 'Whether there are more items' })
+  hasNext: boolean;
+}
+
+export class UserNpcKillsEntity {
+  @Expose()
+  @ApiProperty({
+    type: [NpcKillEntity],
+    description: 'List of killed NPCs',
+  })
+  npcs: NpcKillEntity[];
+
+  @Expose()
+  @ApiProperty({
+    type: PaginationEntity,
+    description: 'Pagination info',
+  })
+  pagination: PaginationEntity;
+}

@@ -58,6 +58,16 @@ export class GetUserKillStatsDto {
   @IsString()
   world?: string;
 
+  @ApiPropertyOptional({
+    example: 5,
+    description: 'Limit number of top NPCs returned (default: 5)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
+  @IsNumber()
+  @Min(1)
+  topNpcsLimit?: number;
+
   parseNpcTypes(): NpcType[] | undefined {
     if (!this.npcType) return undefined;
     return this.npcType.split(',').map((t) => t.trim()) as NpcType[];
