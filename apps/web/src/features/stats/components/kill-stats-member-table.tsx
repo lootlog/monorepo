@@ -16,7 +16,11 @@ import {
 } from "@lootlog/ui/components/card";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@lootlog/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import { Button } from "@lootlog/ui/components/button";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, Crown, Medal, Trophy, Users } from "lucide-react";
@@ -104,7 +108,7 @@ export const KillStatsMemberTable: React.FC<KillStatsMemberTableProps> = ({
   }
 
   const activeNpcTypes = NPC_TYPE_ORDER.filter((type) =>
-    data.some((member) => (member.killsByType[type] ?? 0) > 0),
+    data.some((member) => (member.participationsByType[type] ?? 0) > 0),
   );
 
   return (
@@ -168,11 +172,13 @@ export const KillStatsMemberTable: React.FC<KillStatsMemberTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">
-                    {member.totalKills.toLocaleString()}
+                    {member.totalParticipations.toLocaleString()}
                   </TableCell>
                   {activeNpcTypes.map((type) => (
                     <TableCell key={type} className="text-right tabular-nums">
-                      {(member.killsByType[type] ?? 0).toLocaleString()}
+                      {(
+                        member.participationsByType[type] ?? 0
+                      ).toLocaleString()}
                     </TableCell>
                   ))}
                 </TableRow>

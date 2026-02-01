@@ -6,13 +6,11 @@ const STORAGE_KEY = "lootlog-home-filters";
 export type HomeFilters = {
   world: string | undefined;
   npcType: NpcType;
-  characterId: number | undefined;
 };
 
 const DEFAULT_FILTERS: HomeFilters = {
   world: undefined,
   npcType: "ELITE2",
-  characterId: undefined,
 };
 
 export const useHomeFilters = () => {

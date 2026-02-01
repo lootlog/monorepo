@@ -3,6 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import { Permission, NpcType, type Role } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
+import { RedisService } from 'src/lib/redis/redis.service';
 import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
 import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
 import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
@@ -13,39 +14,45 @@ import type {
 } from './dto/get-kill-stats.dto';
 import type { GetUserNpcKillsDto } from './dto/get-user-npc-kills.dto';
 
+const KILL_DEDUP_TTL_SECONDS = 30;
+
 @Injectable()
 export class KillsService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
     private readonly userLootlogConfigService: UserLootlogConfigService,
   ) {}
 
   async createKill(discordId: string, data: CreateKillDto) {
-    const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type);
+    const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof);
     const npcId = Math.abs(data.npc.id);
-    const characterId = Number.parseInt(data.characterId, 10);
-    const accountId = Number.parseInt(data.accountId, 10);
 
-    // ALWAYS save to UserKillStats for personal stats
+    // 1. User deduplication (30s window) - same user killing same NPC
+    const userDedupKey = `kill:dedup:user:${discordId}:${data.world}:${npcId}`;
+    const isNewUserKill = await this.redis.setNX(
+      userDedupKey,
+      '1',
+      KILL_DEDUP_TTL_SECONDS,
+    );
+
+    if (!isNewUserKill) {
+      return { deduplicated: true, updated: 0 };
+    }
+
+    // 2. Save to UserKillStats for personal stats
     try {
       await this.prisma.userKillStats.upsert({
         where: {
-          userId_characterId_world_npcId: {
+          userId_world_npcId: {
             userId: discordId,
-            characterId,
             world: data.world,
             npcId,
           },
         },
         create: {
           userId: discordId,
-          characterId,
-          accountId,
-          characterName: data.characterName,
-          characterLvl: data.characterLvl,
-          characterProf: data.characterProf,
-          characterIcon: data.characterIcon,
           world: data.world,
           npcId,
           npcName: data.npc.name,
@@ -58,10 +65,6 @@ export class KillsService {
         update: {
           totalKills: { increment: 1 },
           lastKilledAt: new Date(),
-          characterName: data.characterName,
-          characterLvl: data.characterLvl,
-          characterProf: data.characterProf,
-          characterIcon: data.characterIcon,
           npcName: data.npc.name,
           npcLvl: data.npc.lvl,
           npcProf: data.npc.prof,
@@ -76,7 +79,7 @@ export class KillsService {
       });
     }
 
-    // Also save to NpcKillStats for each guild (if any)
+    // 3. Get guild config for this character
     const config =
       await this.userLootlogConfigService.getLootlogCharacterConfig(
         discordId,
@@ -84,26 +87,21 @@ export class KillsService {
         data.characterId,
       );
 
-    console.log(config);
-
     const targetGuildIds = new Set([
       ...(config?.collectLootWhitelistGuildIds ?? []),
       ...(config?.addTimersWhitelistGuildIds ?? []),
     ]);
 
-    console.log(targetGuildIds);
-
     if (targetGuildIds.size === 0) {
       return { updated: 0 };
     }
 
+    // 4. Process each guild
     const results = await Promise.all(
       Array.from(targetGuildIds).map(async (guildId) => {
         const member = await this.prisma.member.findUnique({
           where: { memberId: { userId: discordId, guildId } },
         });
-
-        console.log(member);
 
         if (!member) {
           this.logger.log({
@@ -114,12 +112,12 @@ export class KillsService {
         }
 
         try {
-          return await this.prisma.npcKillStats.upsert({
+          // 4a. Always increment member participation (memberKills)
+          await this.prisma.npcKillStats.upsert({
             where: {
-              guildId_memberId_characterId_world_npcId: {
+              guildId_memberId_world_npcId: {
                 guildId,
                 memberId: member.id,
-                characterId,
                 world: data.world,
                 npcId,
               },
@@ -128,12 +126,6 @@ export class KillsService {
               guildId,
               memberId: member.id,
               userId: discordId,
-              characterId,
-              accountId,
-              characterName: data.characterName,
-              characterLvl: data.characterLvl,
-              characterProf: data.characterProf,
-              characterIcon: data.characterIcon,
               world: data.world,
               npcId,
               npcName: data.npc.name,
@@ -141,21 +133,59 @@ export class KillsService {
               npcLvl: data.npc.lvl,
               npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
-              totalKills: 1,
+              memberKills: 1,
             },
             update: {
-              totalKills: { increment: 1 },
+              memberKills: { increment: 1 },
               lastKilledAt: new Date(),
-              characterName: data.characterName,
-              characterLvl: data.characterLvl,
-              characterProf: data.characterProf,
-              characterIcon: data.characterIcon,
               npcName: data.npc.name,
               npcLvl: data.npc.lvl,
               npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
             },
           });
+
+          // 4b. Guild unique kill deduplication (30s window)
+          const guildDedupKey = `kill:dedup:guild:${guildId}:${data.world}:${npcId}`;
+          const isFirstGuildKill = await this.redis.setNX(
+            guildDedupKey,
+            '1',
+            KILL_DEDUP_TTL_SECONDS,
+          );
+
+          if (isFirstGuildKill) {
+            // First guild member to report this kill - increment unique kills
+            await this.prisma.guildKillSummary.upsert({
+              where: {
+                guildId_world_npcId: {
+                  guildId,
+                  world: data.world,
+                  npcId,
+                },
+              },
+              create: {
+                guildId,
+                world: data.world,
+                npcId,
+                npcName: data.npc.name,
+                npcType,
+                npcLvl: data.npc.lvl,
+                npcProf: data.npc.prof,
+                npcIcon: data.npc.icon,
+                uniqueKills: 1,
+              },
+              update: {
+                uniqueKills: { increment: 1 },
+                lastKilledAt: new Date(),
+                npcName: data.npc.name,
+                npcLvl: data.npc.lvl,
+                npcProf: data.npc.prof,
+                npcIcon: data.npc.icon,
+              },
+            });
+          }
+
+          return { guildId, isFirstGuildKill };
         } catch (error) {
           this.logger.error({
             level: 'error',
@@ -199,7 +229,8 @@ export class KillsService {
           }
         : {};
 
-    const stats = await this.prisma.npcKillStats.findMany({
+    // Fetch member participation stats
+    const memberStats = await this.prisma.npcKillStats.findMany({
       where: {
         guildId,
         ...(npcTypes && { npcType: { in: npcTypes } }),
@@ -212,8 +243,30 @@ export class KillsService {
       },
     });
 
-    const killsByType: Record<string, number> = {};
-    let totalKills = 0;
+    // Fetch unique guild kills
+    const guildSummary = await this.prisma.guildKillSummary.findMany({
+      where: {
+        guildId,
+        ...(npcTypes && { npcType: { in: npcTypes } }),
+        ...(query.world && { world: query.world }),
+        ...npcLvlCondition,
+        ...visibilityCondition,
+      },
+    });
+
+    // Calculate unique kills from GuildKillSummary
+    const uniqueKillsByType: Record<string, number> = {};
+    let guildUniqueKills = 0;
+
+    for (const summary of guildSummary) {
+      uniqueKillsByType[summary.npcType] =
+        (uniqueKillsByType[summary.npcType] ?? 0) + summary.uniqueKills;
+      guildUniqueKills += summary.uniqueKills;
+    }
+
+    // Calculate member participations from NpcKillStats
+    const participationsByType: Record<string, number> = {};
+    let totalMemberParticipations = 0;
 
     const memberRankingMap = new Map<
       number,
@@ -222,41 +275,43 @@ export class KillsService {
         memberName: string;
         memberAvatar: string | null;
         memberUserId: string;
-        totalKills: number;
-        killsByType: Record<string, number>;
+        totalParticipations: number;
+        participationsByType: Record<string, number>;
       }
     >();
 
-    for (const stat of stats) {
-      killsByType[stat.npcType] =
-        (killsByType[stat.npcType] ?? 0) + stat.totalKills;
-      totalKills += stat.totalKills;
+    for (const stat of memberStats) {
+      participationsByType[stat.npcType] =
+        (participationsByType[stat.npcType] ?? 0) + stat.memberKills;
+      totalMemberParticipations += stat.memberKills;
 
       const existing = memberRankingMap.get(stat.memberId);
       if (existing) {
-        existing.totalKills += stat.totalKills;
-        existing.killsByType[stat.npcType] =
-          (existing.killsByType[stat.npcType] ?? 0) + stat.totalKills;
+        existing.totalParticipations += stat.memberKills;
+        existing.participationsByType[stat.npcType] =
+          (existing.participationsByType[stat.npcType] ?? 0) + stat.memberKills;
       } else {
         memberRankingMap.set(stat.memberId, {
           memberId: stat.memberId,
           memberName: stat.member.name,
           memberAvatar: stat.member.avatar,
           memberUserId: stat.member.userId,
-          totalKills: stat.totalKills,
-          killsByType: { [stat.npcType]: stat.totalKills },
+          totalParticipations: stat.memberKills,
+          participationsByType: { [stat.npcType]: stat.memberKills },
         });
       }
     }
 
     const memberRanking = Array.from(memberRankingMap.values()).sort(
-      (a, b) => b.totalKills - a.totalKills,
+      (a, b) => b.totalParticipations - a.totalParticipations,
     );
 
     return {
       overview: {
-        totalKills,
-        killsByType,
+        guildUniqueKills,
+        totalMemberParticipations,
+        killsByType: uniqueKillsByType,
+        participationsByType,
       },
       memberRanking,
     };
@@ -334,13 +389,10 @@ export class KillsService {
   async getUserKillStats(discordId: string, query: GetUserKillStatsDto) {
     const npcTypes = query.parseNpcTypes();
 
-    // Query from UserKillStats - no deduplication needed since it's already per-user
+    // Query from UserKillStats - now aggregated per user (no character distinction)
     const stats = await this.prisma.userKillStats.findMany({
       where: {
         userId: discordId,
-        ...(query.characterId !== undefined && {
-          characterId: query.characterId,
-        }),
         ...(query.world && { world: query.world }),
         ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
       },
@@ -359,51 +411,7 @@ export class KillsService {
       totalKills += stat.totalKills;
     }
 
-    // Group by character
-    const characterMap = new Map<
-      number,
-      {
-        characterId: number;
-        characterName: string;
-        characterLvl: number;
-        characterProf: string | null;
-        characterIcon: string | null;
-        totalKills: number;
-        killsByType: Record<string, number>;
-      }
-    >();
-
-    for (const stat of stats) {
-      const existing = characterMap.get(stat.characterId);
-      if (existing) {
-        existing.totalKills += stat.totalKills;
-        existing.killsByType[stat.npcType] =
-          (existing.killsByType[stat.npcType] ?? 0) + stat.totalKills;
-        // Update character data if this record is more recent (higher level)
-        if (stat.characterLvl > existing.characterLvl) {
-          existing.characterName = stat.characterName;
-          existing.characterLvl = stat.characterLvl;
-          existing.characterProf = stat.characterProf;
-          existing.characterIcon = stat.characterIcon;
-        }
-      } else {
-        characterMap.set(stat.characterId, {
-          characterId: stat.characterId,
-          characterName: stat.characterName,
-          characterLvl: stat.characterLvl,
-          characterProf: stat.characterProf,
-          characterIcon: stat.characterIcon,
-          totalKills: stat.totalKills,
-          killsByType: { [stat.npcType]: stat.totalKills },
-        });
-      }
-    }
-
-    const characters = Array.from(characterMap.values()).sort(
-      (a, b) => b.totalKills - a.totalKills,
-    );
-
-    // Get top NPCs (aggregate across all characters)
+    // Get top NPCs
     const npcMap = new Map<
       string,
       {
@@ -445,7 +453,6 @@ export class KillsService {
         killsByType,
         killsByWorld,
       },
-      characters,
       topNpcs,
     };
   }
@@ -457,9 +464,6 @@ export class KillsService {
 
     const whereCondition = {
       userId: discordId,
-      ...(query.characterId !== undefined && {
-        characterId: query.characterId,
-      }),
       ...(query.world && { world: query.world }),
       ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
       ...(query.search && {
@@ -477,7 +481,7 @@ export class KillsService {
       where: whereCondition,
     });
 
-    // Aggregate by npcId (combine across characters/worlds if no specific filter)
+    // Aggregate by npcId (combine across worlds if no specific filter)
     const npcMap = new Map<
       number,
       {
@@ -561,7 +565,8 @@ export class KillsService {
       administrativeUser,
     );
 
-    const stats = await this.prisma.npcKillStats.findMany({
+    // Use GuildKillSummary for unique kills count
+    const summaries = await this.prisma.guildKillSummary.findMany({
       where: {
         guildId,
         ...(npcType && { npcType }),
@@ -582,35 +587,35 @@ export class KillsService {
         npcLvl: number;
         npcProf: string | null;
         npcIcon: string | null;
-        totalKills: number;
+        uniqueKills: number;
       }
     >();
 
-    for (const stat of stats) {
-      const existing = npcMap.get(stat.npcId);
+    for (const summary of summaries) {
+      const existing = npcMap.get(summary.npcId);
       if (existing) {
-        existing.totalKills += stat.totalKills;
-        if (stat.npcLvl > existing.npcLvl) {
-          existing.npcLvl = stat.npcLvl;
-          existing.npcName = stat.npcName;
-          existing.npcProf = stat.npcProf;
-          existing.npcIcon = stat.npcIcon;
+        existing.uniqueKills += summary.uniqueKills;
+        if (summary.npcLvl > existing.npcLvl) {
+          existing.npcLvl = summary.npcLvl;
+          existing.npcName = summary.npcName;
+          existing.npcProf = summary.npcProf;
+          existing.npcIcon = summary.npcIcon;
         }
       } else {
-        npcMap.set(stat.npcId, {
-          npcId: stat.npcId,
-          npcName: stat.npcName,
-          npcType: stat.npcType,
-          npcLvl: stat.npcLvl,
-          npcProf: stat.npcProf,
-          npcIcon: stat.npcIcon,
-          totalKills: stat.totalKills,
+        npcMap.set(summary.npcId, {
+          npcId: summary.npcId,
+          npcName: summary.npcName,
+          npcType: summary.npcType,
+          npcLvl: summary.npcLvl,
+          npcProf: summary.npcProf,
+          npcIcon: summary.npcIcon,
+          uniqueKills: summary.uniqueKills,
         });
       }
     }
 
     const topNpcs = Array.from(npcMap.values())
-      .sort((a, b) => b.totalKills - a.totalKills)
+      .sort((a, b) => b.uniqueKills - a.uniqueKills)
       .slice(0, limit);
 
     return { topNpcs };
@@ -651,7 +656,7 @@ export class KillsService {
         memberName: string;
         memberAvatar: string | null;
         memberUserId: string;
-        totalKills: number;
+        totalParticipations: number;
       }>
     > = {};
 
@@ -663,7 +668,7 @@ export class KillsService {
           memberName: string;
           memberAvatar: string | null;
           memberUserId: string;
-          totalKills: number;
+          totalParticipations: number;
         }
       >();
 
@@ -672,20 +677,20 @@ export class KillsService {
 
         const existing = memberMap.get(stat.memberId);
         if (existing) {
-          existing.totalKills += stat.totalKills;
+          existing.totalParticipations += stat.memberKills;
         } else {
           memberMap.set(stat.memberId, {
             memberId: stat.memberId,
             memberName: stat.member.name,
             memberAvatar: stat.member.avatar,
             memberUserId: stat.member.userId,
-            totalKills: stat.totalKills,
+            totalParticipations: stat.memberKills,
           });
         }
       }
 
       resultByType[npcType] = Array.from(memberMap.values())
-        .sort((a, b) => b.totalKills - a.totalKills)
+        .sort((a, b) => b.totalParticipations - a.totalParticipations)
         .slice(0, limit);
     }
 
@@ -710,6 +715,7 @@ export class KillsService {
       administrativeUser,
     );
 
+    // Get member participation stats
     const stats = await this.prisma.npcKillStats.findMany({
       where: {
         guildId,
@@ -722,7 +728,17 @@ export class KillsService {
       },
     });
 
-    if (stats.length === 0) {
+    // Get unique kills from summary
+    const summary = await this.prisma.guildKillSummary.findFirst({
+      where: {
+        guildId,
+        npcId,
+        ...(world && { world }),
+        ...visibilityCondition,
+      },
+    });
+
+    if (stats.length === 0 && !summary) {
       return null;
     }
 
@@ -733,11 +749,11 @@ export class KillsService {
         memberName: string;
         memberAvatar: string | null;
         memberUserId: string;
-        killCount: number;
+        participationCount: number;
       }
     >();
 
-    let totalGuildKills = 0;
+    let totalMemberParticipations = 0;
     let npcInfo: {
       npcId: number;
       npcName: string;
@@ -748,7 +764,7 @@ export class KillsService {
     } | null = null;
 
     for (const stat of stats) {
-      totalGuildKills += stat.totalKills;
+      totalMemberParticipations += stat.memberKills;
 
       if (!npcInfo || stat.npcLvl > npcInfo.npcLvl) {
         npcInfo = {
@@ -763,26 +779,39 @@ export class KillsService {
 
       const existing = memberMap.get(stat.memberId);
       if (existing) {
-        existing.killCount += stat.totalKills;
+        existing.participationCount += stat.memberKills;
       } else {
         memberMap.set(stat.memberId, {
           memberId: stat.memberId,
           memberName: stat.member.name,
           memberAvatar: stat.member.avatar,
           memberUserId: stat.member.userId,
-          killCount: stat.totalKills,
+          participationCount: stat.memberKills,
         });
       }
     }
 
+    // Fallback to summary if no member stats
+    if (!npcInfo && summary) {
+      npcInfo = {
+        npcId: summary.npcId,
+        npcName: summary.npcName,
+        npcType: summary.npcType,
+        npcLvl: summary.npcLvl,
+        npcProf: summary.npcProf,
+        npcIcon: summary.npcIcon,
+      };
+    }
+
     const killers = Array.from(memberMap.values())
-      .sort((a, b) => b.killCount - a.killCount)
+      .sort((a, b) => b.participationCount - a.participationCount)
       .slice(0, limit);
 
     return {
       npc: {
         ...npcInfo!,
-        totalGuildKills,
+        uniqueGuildKills: summary?.uniqueKills ?? 0,
+        totalMemberParticipations,
       },
       killers,
     };

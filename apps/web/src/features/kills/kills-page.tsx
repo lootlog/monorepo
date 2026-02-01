@@ -36,7 +36,6 @@ import type { NpcType } from "@/features/home/hooks/use-player-kill-stats";
 
 type KillsSearchParams = {
   world?: string;
-  characterId?: string;
   npcType?: string;
   search?: string;
   cursor?: string;
@@ -69,9 +68,6 @@ export const KillsPage: React.FC = () => {
 
   const filters: KillsFiltersState = {
     world: searchParams.world,
-    characterId: searchParams.characterId
-      ? Number(searchParams.characterId)
-      : undefined,
     npcTypes: searchParams.npcType
       ? (searchParams.npcType.split(",") as NpcType[])
       : undefined,
@@ -83,9 +79,7 @@ export const KillsPage: React.FC = () => {
   const cursor = searchParams.cursor ? Number(searchParams.cursor) : 0;
   const sortOrder = sorting[0]?.desc === false ? "asc" : "desc";
   const sortBy =
-    sorting[0]?.id === "npcLvl"
-      ? "level"
-      : ("kills" as "kills" | "level");
+    sorting[0]?.id === "npcLvl" ? "level" : ("kills" as "kills" | "level");
 
   const { data, isLoading } = useNpcKills({
     ...filters,
@@ -146,13 +140,6 @@ export const KillsPage: React.FC = () => {
 
   const handleWorldChange = (world: string | undefined) => {
     updateSearchParams({ world, cursor: undefined });
-  };
-
-  const handleCharacterChange = (characterId: number | undefined) => {
-    updateSearchParams({
-      characterId: characterId?.toString(),
-      cursor: undefined,
-    });
   };
 
   const handleNpcTypeChange = (npcTypes: NpcType[] | undefined) => {
@@ -224,7 +211,6 @@ export const KillsPage: React.FC = () => {
           maxLvl: maxLvlInput ? Number(maxLvlInput) : undefined,
         }}
         onWorldChange={handleWorldChange}
-        onCharacterChange={handleCharacterChange}
         onNpcTypeChange={handleNpcTypeChange}
         onSearchChange={handleSearchChange}
         onMinLvlChange={handleMinLvlChange}

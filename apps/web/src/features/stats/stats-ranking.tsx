@@ -36,9 +36,8 @@ import { Input } from "@lootlog/ui/components/input";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
-import { useGuildKillStats } from "./hooks/use-guild-kill-stats";
+import { useGuildKillStats, type NpcType } from "./hooks/use-guild-kill-stats";
 import { createRankingColumns } from "./components/ranking-columns";
-import type { NpcType } from "./hooks/use-guild-kill-stats";
 
 const WORLD_STORAGE_KEY = "stats-ranking-world";
 
@@ -59,7 +58,7 @@ export const StatsRanking: React.FC = () => {
   useParams({ from: "/_authenticated/$guildId/stats/ranking" });
   const [cursor, setCursor] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "totalKills", desc: true },
+    { id: "totalParticipations", desc: true },
   ]);
   const [selectedWorld, setSelectedWorld] = useLocalStorage<string | null>(
     WORLD_STORAGE_KEY,
@@ -93,7 +92,7 @@ export const StatsRanking: React.FC = () => {
   const memberRanking = data?.memberRanking ?? [];
   const filteredRanking = searchQuery
     ? memberRanking.filter((member) =>
-        member.memberName?.toLowerCase().includes(searchQuery.toLowerCase())
+        member.memberName?.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : memberRanking;
   const total = filteredRanking.length;
@@ -102,7 +101,9 @@ export const StatsRanking: React.FC = () => {
   const hasPrev = cursor > 0;
 
   const activeNpcTypes = NPC_TYPE_ORDER.filter((type) =>
-    memberRanking.some((member) => (member.killsByType[type] ?? 0) > 0),
+    memberRanking.some(
+      (member) => (member.participationsByType[type] ?? 0) > 0,
+    ),
   );
 
   const columns = createRankingColumns(cursor, activeNpcTypes, t);
@@ -136,7 +137,9 @@ export const StatsRanking: React.FC = () => {
       <div className="p-4 pb-4 bg-background border-b">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">{t("kills.fullRanking.title")}</h1>
+            <h1 className="text-xl font-bold">
+              {t("kills.fullRanking.title")}
+            </h1>
             <p className="text-muted-foreground">
               {t("kills.fullRanking.description")}
             </p>

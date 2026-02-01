@@ -36,7 +36,34 @@ export class KillsByTypeEntity {
   NPC?: number;
 }
 
-export class KillStatsOverviewEntity {
+export class GuildKillStatsOverviewEntity {
+  @Expose()
+  @ApiProperty({ example: 100, description: 'Total unique kills by guild' })
+  guildUniqueKills: number;
+
+  @Expose()
+  @ApiProperty({
+    example: 150,
+    description: 'Total member participations (sum of all member kills)',
+  })
+  totalMemberParticipations: number;
+
+  @Expose()
+  @ApiProperty({
+    type: KillsByTypeEntity,
+    description: 'Unique kills grouped by NPC type',
+  })
+  killsByType: Record<NpcType, number>;
+
+  @Expose()
+  @ApiProperty({
+    type: KillsByTypeEntity,
+    description: 'Member participations grouped by NPC type',
+  })
+  participationsByType: Record<NpcType, number>;
+}
+
+export class UserKillStatsOverviewEntity {
   @Expose()
   @ApiProperty({ example: 100, description: 'Total number of kills' })
   totalKills: number;
@@ -47,9 +74,7 @@ export class KillStatsOverviewEntity {
     description: 'Kills grouped by NPC type',
   })
   killsByType: Record<NpcType, number>;
-}
 
-export class UserKillStatsOverviewEntity extends KillStatsOverviewEntity {
   @Expose()
   @ApiProperty({
     example: { tempest: 50, pandora: 30 },
@@ -80,29 +105,32 @@ export class MemberKillRankingEntity {
   memberUserId: string;
 
   @Expose()
-  @ApiProperty({ example: 50, description: 'Total kills by this member' })
-  totalKills: number;
+  @ApiProperty({
+    example: 50,
+    description: 'Total participations by this member',
+  })
+  totalParticipations: number;
 
   @Expose()
   @ApiProperty({
     type: KillsByTypeEntity,
-    description: 'Kills grouped by NPC type',
+    description: 'Participations grouped by NPC type',
   })
-  killsByType: Record<NpcType, number>;
+  participationsByType: Record<NpcType, number>;
 }
 
 export class GuildKillStatsEntity {
   @Expose()
   @ApiProperty({
-    type: KillStatsOverviewEntity,
+    type: GuildKillStatsOverviewEntity,
     description: 'Kill stats overview',
   })
-  overview: KillStatsOverviewEntity;
+  overview: GuildKillStatsOverviewEntity;
 
   @Expose()
   @ApiProperty({
     type: [MemberKillRankingEntity],
-    description: 'Member ranking by kills',
+    description: 'Member ranking by participations',
   })
   memberRanking: MemberKillRankingEntity[];
 }
@@ -113,48 +141,37 @@ export class CreateKillResponseEntity {
   updated: number;
 }
 
-export class CharacterKillStatsEntity {
+export class TopNpcEntity {
   @Expose()
-  @ApiProperty({ example: 12345, description: 'Character ID' })
-  characterId: number;
+  @ApiProperty({ example: 999, description: 'NPC ID' })
+  npcId: number;
 
   @Expose()
-  @ApiProperty({ example: 'PlayerName', description: 'Character name' })
-  characterName: string;
+  @ApiProperty({ example: 'Boss Name', description: 'NPC name' })
+  npcName: string;
 
   @Expose()
-  @ApiProperty({ example: 500, description: 'Character level' })
-  characterLvl: number;
+  @ApiProperty({ example: 'HERO', description: 'NPC type' })
+  npcType: string;
+
+  @Expose()
+  @ApiProperty({ example: 300, description: 'NPC level' })
+  npcLvl: number;
 
   @Expose()
   @ApiProperty({
-    example: 'w',
-    description: 'Character profession shortname',
+    example: 'npc_icon.gif',
+    description: 'NPC icon',
     nullable: true,
   })
-  characterProf: string | null;
+  npcIcon: string | null;
 
   @Expose()
-  @ApiProperty({
-    example: 'icon.gif',
-    description: 'Character icon',
-    nullable: true,
-  })
-  characterIcon: string | null;
-
-  @Expose()
-  @ApiProperty({ example: 100, description: 'Total kills by this character' })
-  totalKills: number;
-
-  @Expose()
-  @ApiProperty({
-    type: KillsByTypeEntity,
-    description: 'Kills grouped by NPC type',
-  })
-  killsByType: Record<NpcType, number>;
+  @ApiProperty({ example: 25, description: 'Unique kills of this NPC' })
+  uniqueKills: number;
 }
 
-export class TopNpcEntity {
+export class UserTopNpcEntity {
   @Expose()
   @ApiProperty({ example: 999, description: 'NPC ID' })
   npcId: number;
@@ -194,17 +211,10 @@ export class UserKillStatsEntity {
 
   @Expose()
   @ApiProperty({
-    type: [CharacterKillStatsEntity],
-    description: 'Stats grouped by character',
-  })
-  characters: CharacterKillStatsEntity[];
-
-  @Expose()
-  @ApiProperty({
-    type: [TopNpcEntity],
+    type: [UserTopNpcEntity],
     description: 'Top NPCs by kill count',
   })
-  topNpcs: TopNpcEntity[];
+  topNpcs: UserTopNpcEntity[];
 }
 
 export class NpcKillEntity {
@@ -310,8 +320,11 @@ export class TopKillerEntity {
   memberUserId: string;
 
   @Expose()
-  @ApiProperty({ example: 50, description: 'Total kills of this type' })
-  totalKills: number;
+  @ApiProperty({
+    example: 50,
+    description: 'Total participations of this type',
+  })
+  totalParticipations: number;
 }
 
 export class GuildTopKillersByTypeEntity {
@@ -371,8 +384,18 @@ export class NpcInfoEntity {
   npcIcon: string | null;
 
   @Expose()
-  @ApiProperty({ example: 100, description: 'Total kills of this NPC in guild' })
-  totalGuildKills: number;
+  @ApiProperty({
+    example: 50,
+    description: 'Unique kills of this NPC in guild',
+  })
+  uniqueGuildKills: number;
+
+  @Expose()
+  @ApiProperty({
+    example: 75,
+    description: 'Total member participations for this NPC',
+  })
+  totalMemberParticipations: number;
 }
 
 export class NpcKillerEntity {
@@ -397,8 +420,11 @@ export class NpcKillerEntity {
   memberUserId: string;
 
   @Expose()
-  @ApiProperty({ example: 25, description: 'Number of kills of this NPC' })
-  killCount: number;
+  @ApiProperty({
+    example: 25,
+    description: 'Number of participations for this NPC',
+  })
+  participationCount: number;
 }
 
 export class NpcKillersResponseEntity {

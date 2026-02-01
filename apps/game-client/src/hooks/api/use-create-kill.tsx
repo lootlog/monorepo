@@ -6,7 +6,6 @@ export type KillNpcData = {
   name: string;
   icon?: string;
   prof?: string;
-  type: number;
   lvl: number;
   wt: number;
 };
@@ -16,10 +15,6 @@ export type CreateKillParams = {
   npc: KillNpcData;
   characterId: string;
   accountId: string;
-  characterName: string;
-  characterLvl: number;
-  characterProf?: string;
-  characterIcon?: string;
 };
 
 type CreateKillResponse = {

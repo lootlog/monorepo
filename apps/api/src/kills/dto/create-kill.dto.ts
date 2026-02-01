@@ -41,11 +41,6 @@ export class KillNpcDto {
   @IsOptional()
   @IsString()
   icon?: string;
-
-  @ApiProperty({ example: 2, description: 'NPC type (Margonem type)' })
-  @IsNotEmpty()
-  @IsNumber()
-  type: number;
 }
 
 export class CreateKillDto {
@@ -60,33 +55,19 @@ export class CreateKillDto {
   @Type(() => KillNpcDto)
   npc: KillNpcDto;
 
-  @ApiProperty({ example: '12345', description: 'Character ID' })
+  @ApiProperty({
+    example: '12345',
+    description: 'Character ID (for config lookup)',
+  })
   @IsNotEmpty()
   @IsString()
   characterId: string;
 
-  @ApiProperty({ example: '67890', description: 'Account ID' })
+  @ApiProperty({
+    example: '67890',
+    description: 'Account ID (for config lookup)',
+  })
   @IsNotEmpty()
   @IsString()
   accountId: string;
-
-  @ApiProperty({ example: 'PlayerName', description: 'Character name' })
-  @IsNotEmpty()
-  @IsString()
-  characterName: string;
-
-  @ApiProperty({ example: 150, description: 'Character level' })
-  @IsNotEmpty()
-  @IsNumber()
-  characterLvl: number;
-
-  @ApiProperty({ example: 'w', description: 'Character profession shortname' })
-  @IsOptional()
-  @IsString()
-  characterProf?: string;
-
-  @ApiProperty({ example: 'player_icon.gif', description: 'Character icon' })
-  @IsOptional()
-  @IsString()
-  characterIcon?: string;
 }

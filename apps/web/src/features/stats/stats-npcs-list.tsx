@@ -234,7 +234,7 @@ export const StatsNpcsList: React.FC = () => {
                     <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 w-fit">
                       <span className="text-xs text-muted-foreground">x</span>
                       <span className="text-sm font-semibold tabular-nums">
-                        {npc.totalKills.toLocaleString()}
+                        {npc.uniqueKills.toLocaleString()}
                       </span>
                     </div>
                   </TableCell>

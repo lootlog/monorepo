@@ -20,15 +20,6 @@ export class GetUserNpcKillsDto {
   npcType?: string;
 
   @ApiPropertyOptional({
-    example: 12345,
-    description: 'Filter by character ID',
-  })
-  @IsOptional()
-  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
-  @IsNumber()
-  characterId?: number;
-
-  @ApiPropertyOptional({
     example: 'pandora',
     description: 'Filter by world',
   })

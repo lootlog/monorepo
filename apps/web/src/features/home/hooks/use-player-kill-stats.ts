@@ -21,16 +21,6 @@ export type PlayerKillStatsOverview = {
   killsByWorld: Record<string, number>;
 };
 
-export type CharacterKillStats = {
-  characterId: number;
-  characterName: string;
-  characterLvl: number;
-  characterProf: string | null;
-  characterIcon: string | null;
-  totalKills: number;
-  killsByType: KillsByType;
-};
-
 export type TopNpc = {
   npcId: number;
   npcName: string;
@@ -51,14 +41,12 @@ export const TRACKABLE_NPC_TYPES: NpcType[] = [
 
 export type PlayerKillStatsResponse = {
   overview: PlayerKillStatsOverview;
-  characters: CharacterKillStats[];
   topNpcs: TopNpc[];
 };
 
 export type PlayerKillStatsFilters = {
   world?: string;
   npcTypes?: NpcType[];
-  characterId?: number;
   topNpcsLimit?: number;
 };
 
@@ -68,7 +56,6 @@ export const usePlayerKillStats = (filters: PlayerKillStatsFilters = {}) => {
   const queryParams = {
     world: filters.world || undefined,
     npcType: filters.npcTypes?.join(",") || undefined,
-    characterId: filters.characterId || undefined,
     topNpcsLimit: filters.topNpcsLimit || undefined,
   };
 

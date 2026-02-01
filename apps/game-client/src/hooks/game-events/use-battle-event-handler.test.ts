@@ -59,6 +59,7 @@ describe("useBattleEventHandler", () => {
       events: [],
       battleState: "idle",
       lastBattleHash: "",
+      lastKillHash: "",
       battleWarriors: {},
     });
     mockBattlePanelStore.isBattleCollectionEnabled = true;
@@ -296,14 +297,9 @@ describe("useBattleEventHandler", () => {
           prof: "w",
           icon: "boss.gif",
           wt: 85,
-          type: 2,
         },
         characterId: "12345",
         accountId: "67890",
-        characterName: "TestPlayer",
-        characterLvl: 500,
-        characterProf: "w",
-        characterIcon: "player.gif",
       });
     });
 
@@ -653,6 +649,7 @@ describe("useBattleEventHandler", () => {
       useBattleStore.setState({
         battleState: "in-battle",
         lastBattleHash: "duplicate-hash",
+        lastKillHash: "duplicate-hash",
         events: [
           {
             f: {

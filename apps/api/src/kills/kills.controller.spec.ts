@@ -46,14 +46,9 @@ describe('KillsController', () => {
       prof: 'w',
       wt: 85,
       icon: 'boss.gif',
-      type: 2,
     },
     characterId: '67890',
     accountId: '11111',
-    characterName: 'TestPlayer',
-    characterLvl: 500,
-    characterProf: 'm',
-    characterIcon: 'player.gif',
   };
 
   beforeEach(async () => {
@@ -127,38 +122,49 @@ describe('KillsController', () => {
 
   describe('getGuildKillStats', () => {
     const guildId = 'guild123';
+    const mockGuildData = { id: guildId } as any;
     const permissions = [Permission.LOOTLOG_LOOTS_READ];
     const roles = [mockRole];
 
     it('should fetch guild kill stats', async () => {
       const mockStats = {
         overview: {
-          totalKills: 100,
+          guildUniqueKills: 100,
+          totalMemberParticipations: 150,
           killsByType: {
             [NpcType.HERO]: 50,
             [NpcType.TITAN]: 30,
             [NpcType.ELITE3]: 20,
+          },
+          participationsByType: {
+            [NpcType.HERO]: 80,
+            [NpcType.TITAN]: 40,
+            [NpcType.ELITE3]: 30,
           },
         },
         memberRanking: [
           {
             memberId: 1,
             memberName: 'Player1',
-            totalKills: 60,
-            killsByType: {
-              [NpcType.HERO]: 30,
-              [NpcType.TITAN]: 20,
-              [NpcType.ELITE3]: 10,
+            memberAvatar: null,
+            memberUserId: 'user1',
+            totalParticipations: 90,
+            participationsByType: {
+              [NpcType.HERO]: 50,
+              [NpcType.TITAN]: 25,
+              [NpcType.ELITE3]: 15,
             },
           },
           {
             memberId: 2,
             memberName: 'Player2',
-            totalKills: 40,
-            killsByType: {
-              [NpcType.HERO]: 20,
-              [NpcType.TITAN]: 10,
-              [NpcType.ELITE3]: 10,
+            memberAvatar: null,
+            memberUserId: 'user2',
+            totalParticipations: 60,
+            participationsByType: {
+              [NpcType.HERO]: 30,
+              [NpcType.TITAN]: 15,
+              [NpcType.ELITE3]: 15,
             },
           },
         ],
@@ -169,8 +175,8 @@ describe('KillsController', () => {
       const result = await controller.getGuildKillStats(
         permissions,
         roles,
-        guildId,
         query,
+        mockGuildData,
       );
 
       expect(service.getGuildKillStats).toHaveBeenCalledWith(
@@ -185,8 +191,10 @@ describe('KillsController', () => {
     it('should handle empty results', async () => {
       const mockStats = {
         overview: {
-          totalKills: 0,
+          guildUniqueKills: 0,
+          totalMemberParticipations: 0,
           killsByType: {},
+          participationsByType: {},
         },
         memberRanking: [],
       };
@@ -196,8 +204,8 @@ describe('KillsController', () => {
       const result = await controller.getGuildKillStats(
         permissions,
         roles,
-        guildId,
         query,
+        mockGuildData,
       );
 
       expect(result).toEqual(plainToInstance(GuildKillStatsEntity, mockStats));
@@ -205,7 +213,12 @@ describe('KillsController', () => {
 
     it('should pass query filters to service', async () => {
       const mockStats = {
-        overview: { totalKills: 10, killsByType: { [NpcType.TITAN]: 10 } },
+        overview: {
+          guildUniqueKills: 10,
+          totalMemberParticipations: 15,
+          killsByType: { [NpcType.TITAN]: 10 },
+          participationsByType: { [NpcType.TITAN]: 15 },
+        },
         memberRanking: [],
       };
       service.getGuildKillStats.mockResolvedValue(mockStats);
@@ -215,7 +228,12 @@ describe('KillsController', () => {
       query.minLvl = 200;
       query.maxLvl = 400;
 
-      await controller.getGuildKillStats(permissions, roles, guildId, query);
+      await controller.getGuildKillStats(
+        permissions,
+        roles,
+        query,
+        mockGuildData,
+      );
 
       expect(service.getGuildKillStats).toHaveBeenCalledWith(
         guildId,
@@ -240,27 +258,13 @@ describe('KillsController', () => {
           },
           killsByWorld: { pandora: 150, tempest: 50 },
         },
-        characters: [
-          {
-            characterId: 12345,
-            characterName: 'MainChar',
-            characterLvl: 500,
-            characterProf: 'w',
-            characterIcon: 'icon.gif',
-            totalKills: 150,
-            killsByType: {
-              [NpcType.HERO]: 80,
-              [NpcType.TITAN]: 40,
-              [NpcType.ELITE3]: 30,
-            },
-          },
-        ],
         topNpcs: [
           {
             npcId: 999,
             npcName: 'Popular Boss',
             npcType: NpcType.HERO,
             npcLvl: 300,
+            npcProf: null,
             npcIcon: 'boss.gif',
             totalKills: 25,
           },
@@ -282,7 +286,6 @@ describe('KillsController', () => {
           killsByType: {},
           killsByWorld: {},
         },
-        characters: [],
         topNpcs: [],
       };
       service.getUserKillStats.mockResolvedValue(mockStats);
@@ -296,13 +299,11 @@ describe('KillsController', () => {
     it('should pass query filters to service', async () => {
       const mockStats = {
         overview: { totalKills: 0, killsByType: {}, killsByWorld: {} },
-        characters: [],
         topNpcs: [],
       };
       service.getUserKillStats.mockResolvedValue(mockStats);
 
       const query = new GetUserKillStatsDto();
-      query.characterId = 12345;
       query.world = 'pandora';
       query.npcType = 'HERO,TITAN';
 
