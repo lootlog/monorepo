@@ -17,6 +17,8 @@ import { Button } from "@lootlog/ui/components/button";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useEvent } from "@/features/events/hooks";
+import { useNpcKillers } from "@/features/stats/hooks/use-npc-killers";
+import { useMemberKills } from "@/features/stats/hooks/use-member-kills";
 import { ROUTES } from "@/config/routes";
 
 export const GuildLayout: FC = () => {
@@ -29,6 +31,12 @@ export const GuildLayout: FC = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
+  const { data: npcKillersData } = useNpcKillers(
+    params.npcId ? Number.parseInt(params.npcId, 10) : undefined,
+  );
+  const { data: memberKillsData } = useMemberKills(
+    params.memberId ? Number.parseInt(params.memberId, 10) : undefined,
+  );
 
   const getNavigationInfo = () => {
     const path = location.pathname;
@@ -149,16 +157,37 @@ export const GuildLayout: FC = () => {
 
     // Stats NPC killers: /$guildId/stats/npcs/$npcId
     if (path.startsWith(`${guildStats}/npcs/`)) {
-      const npcId = params.npcId;
       return {
         breadcrumbs: [
           { label: guild?.name || "Gildia", path: guildBase },
           { label: "Statystyki", path: guildStats },
           { label: "Potwory", path: guildStatsNpcs },
-          { label: `Potwór #${npcId}`, path: null },
+          {
+            label: npcKillersData?.npc?.npcName || `Potwór #${params.npcId}`,
+            path: null,
+          },
         ],
         showBack: true,
         backPath: guildStatsNpcs,
+      };
+    }
+
+    // Stats member kills: /$guildId/stats/members/$memberId
+    if (path.startsWith(`${guildStats}/members/`)) {
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Statystyki", path: guildStats },
+          { label: "Ranking członków", path: guildStatsRanking },
+          {
+            label:
+              memberKillsData?.member?.memberName ||
+              `Członek #${params.memberId}`,
+            path: null,
+          },
+        ],
+        showBack: true,
+        backPath: guildStatsRanking,
       };
     }
 
