@@ -18,6 +18,7 @@ import { Route as AuthenticatedGuildIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAtmeIndexRouteImport } from './routes/_authenticated/@me/index'
 import { Route as AuthenticatedGuildIdIndexRouteImport } from './routes/_authenticated/$guildId/index'
 import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
+import { Route as AuthenticatedAtmeKillsRouteImport } from './routes/_authenticated/@me/kills'
 import { Route as AuthenticatedAtmeBattlePanelRouteImport } from './routes/_authenticated/@me/battle-panel'
 import { Route as AuthenticatedGuildIdTimersRouteImport } from './routes/_authenticated/$guildId/timers'
 import { Route as AuthenticatedGuildIdStatsRouteImport } from './routes/_authenticated/$guildId/stats'
@@ -27,21 +28,26 @@ import { Route as AuthenticatedGuildIdEventsRouteImport } from './routes/_authen
 import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from './routes/_authenticated/$guildId/activity-logs'
 import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
 import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/_authenticated/@me/battle-panel/index'
+import { Route as AuthenticatedGuildIdStatsIndexRouteImport } from './routes/_authenticated/$guildId/stats/index'
 import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from './routes/_authenticated/$guildId/settings/index'
 import { Route as AuthenticatedGuildIdReservationsIndexRouteImport } from './routes/_authenticated/$guildId/reservations/index'
 import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
 import { Route as AuthenticatedAtmeBattlePanelStatsRouteImport } from './routes/_authenticated/@me/battle-panel/stats'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './routes/_authenticated/@me/battle-panel/statistics'
 import { Route as AuthenticatedAtmeBattlePanelBattlesRouteImport } from './routes/_authenticated/@me/battle-panel/battles'
+import { Route as AuthenticatedGuildIdStatsRankingRouteImport } from './routes/_authenticated/$guildId/stats/ranking'
 import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from './routes/_authenticated/$guildId/settings/roles'
 import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from './routes/_authenticated/$guildId/settings/npcs'
 import { Route as AuthenticatedGuildIdSettingsMembersRouteImport } from './routes/_authenticated/$guildId/settings/members'
 import { Route as AuthenticatedGuildIdSettingsMapTemplatesRouteImport } from './routes/_authenticated/$guildId/settings/map-templates'
 import { Route as AuthenticatedGuildIdReservationsReservationIdRouteImport } from './routes/_authenticated/$guildId/reservations/$reservationId'
 import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId'
+import { Route as AuthenticatedGuildIdStatsNpcsIndexRouteImport } from './routes/_authenticated/$guildId/stats/npcs.index'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h'
 import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.h2h'
 import { Route as AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport } from './routes/_authenticated/@me/battle-panel/battles_.$battleId'
+import { Route as AuthenticatedGuildIdStatsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/stats/npcs.$npcId'
+import { Route as AuthenticatedGuildIdStatsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/stats/members.$memberId'
 import { Route as AuthenticatedGuildIdSettingsRolesRoleIdRouteImport } from './routes/_authenticated/$guildId/settings/roles.$roleId'
 import { Route as AuthenticatedGuildIdEventsEventIdRankingRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.ranking'
 import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.kills'
@@ -96,6 +102,11 @@ const AuthenticatedAtmeSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAtmeRoute,
   } as any)
+const AuthenticatedAtmeKillsRoute = AuthenticatedAtmeKillsRouteImport.update({
+  id: '/kills',
+  path: '/kills',
+  getParentRoute: () => AuthenticatedAtmeRoute,
+} as any)
 const AuthenticatedAtmeBattlePanelRoute =
   AuthenticatedAtmeBattlePanelRouteImport.update({
     id: '/battle-panel',
@@ -150,6 +161,12 @@ const AuthenticatedAtmeBattlePanelIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
   } as any)
+const AuthenticatedGuildIdStatsIndexRoute =
+  AuthenticatedGuildIdStatsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
 const AuthenticatedGuildIdSettingsIndexRoute =
   AuthenticatedGuildIdSettingsIndexRouteImport.update({
     id: '/',
@@ -185,6 +202,12 @@ const AuthenticatedAtmeBattlePanelBattlesRoute =
     id: '/battles',
     path: '/battles',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedGuildIdStatsRankingRoute =
+  AuthenticatedGuildIdStatsRankingRouteImport.update({
+    id: '/ranking',
+    path: '/ranking',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
   } as any)
 const AuthenticatedGuildIdSettingsRolesRoute =
   AuthenticatedGuildIdSettingsRolesRouteImport.update({
@@ -222,6 +245,12 @@ const AuthenticatedGuildIdEventsEventIdRoute =
     path: '/events/$eventId',
     getParentRoute: () => AuthenticatedGuildIdRoute,
   } as any)
+const AuthenticatedGuildIdStatsNpcsIndexRoute =
+  AuthenticatedGuildIdStatsNpcsIndexRouteImport.update({
+    id: '/npcs/',
+    path: '/npcs/',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
 const AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute =
   AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport.update({
     id: '/statistics_/matchmaking-h2h',
@@ -239,6 +268,18 @@ const AuthenticatedAtmeBattlePanelBattlesBattleIdRoute =
     id: '/battles_/$battleId',
     path: '/battles/$battleId',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
+  } as any)
+const AuthenticatedGuildIdStatsNpcsNpcIdRoute =
+  AuthenticatedGuildIdStatsNpcsNpcIdRouteImport.update({
+    id: '/npcs/$npcId',
+    path: '/npcs/$npcId',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
+  } as any)
+const AuthenticatedGuildIdStatsMembersMemberIdRoute =
+  AuthenticatedGuildIdStatsMembersMemberIdRouteImport.update({
+    id: '/members/$memberId',
+    path: '/members/$memberId',
+    getParentRoute: () => AuthenticatedGuildIdStatsRoute,
   } as any)
 const AuthenticatedGuildIdSettingsRolesRoleIdRoute =
   AuthenticatedGuildIdSettingsRolesRoleIdRouteImport.update({
@@ -295,9 +336,10 @@ export interface FileRoutesByFullPath {
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
   '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
   '/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
-  '/$guildId/stats': typeof AuthenticatedGuildIdStatsRoute
+  '/$guildId/stats': typeof AuthenticatedGuildIdStatsRouteWithChildren
   '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
   '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
+  '/@me/kills': typeof AuthenticatedAtmeKillsRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/@me/': typeof AuthenticatedAtmeIndexRoute
@@ -307,20 +349,25 @@ export interface FileRoutesByFullPath {
   '/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
   '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
+  '/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
   '/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
   '/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
+  '/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
   '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
+  '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
   '/@me/battle-panel/battles/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
+  '/$guildId/stats/npcs': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
   '/$guildId/events/$eventId/heroes/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
   '/$guildId/events/$eventId/heroes/$heroId/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
   '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
@@ -332,8 +379,8 @@ export interface FileRoutesByTo {
   '/battles/$id': typeof BattlesIdRoute
   '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
   '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
-  '/$guildId/stats': typeof AuthenticatedGuildIdStatsRoute
   '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
+  '/@me/kills': typeof AuthenticatedAtmeKillsRoute
   '/$guildId': typeof AuthenticatedGuildIdIndexRoute
   '/@me': typeof AuthenticatedAtmeIndexRoute
   '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRoute
@@ -342,20 +389,25 @@ export interface FileRoutesByTo {
   '/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
   '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
+  '/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
   '/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
   '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsIndexRoute
   '/$guildId/settings': typeof AuthenticatedGuildIdSettingsIndexRoute
+  '/$guildId/stats': typeof AuthenticatedGuildIdStatsIndexRoute
   '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/@me/settings': typeof AuthenticatedAtmeSettingsIndexRoute
   '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
   '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
+  '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
   '/@me/battle-panel/battles/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
+  '/$guildId/stats/npcs': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
   '/$guildId/events/$eventId/heroes/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
   '/$guildId/events/$eventId/heroes/$heroId/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
   '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
@@ -373,9 +425,10 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
   '/_authenticated/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
   '/_authenticated/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
-  '/_authenticated/$guildId/stats': typeof AuthenticatedGuildIdStatsRoute
+  '/_authenticated/$guildId/stats': typeof AuthenticatedGuildIdStatsRouteWithChildren
   '/_authenticated/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
   '/_authenticated/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
+  '/_authenticated/@me/kills': typeof AuthenticatedAtmeKillsRoute
   '/_authenticated/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
   '/_authenticated/$guildId/': typeof AuthenticatedGuildIdIndexRoute
   '/_authenticated/@me/': typeof AuthenticatedAtmeIndexRoute
@@ -385,20 +438,25 @@ export interface FileRoutesById {
   '/_authenticated/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
   '/_authenticated/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
   '/_authenticated/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
+  '/_authenticated/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
   '/_authenticated/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
   '/_authenticated/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
   '/_authenticated/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
   '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
   '/_authenticated/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
   '/_authenticated/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
+  '/_authenticated/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
   '/_authenticated/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
   '/_authenticated/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
   '/_authenticated/$guildId/events_/$eventId_/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
   '/_authenticated/$guildId/events_/$eventId_/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
   '/_authenticated/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
+  '/_authenticated/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  '/_authenticated/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
   '/_authenticated/@me/battle-panel/battles_/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   '/_authenticated/@me/battle-panel/statistics_/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
+  '/_authenticated/$guildId/stats/npcs/': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
   '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
   '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
   '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
@@ -419,6 +477,7 @@ export interface FileRouteTypes {
     | '/$guildId/stats'
     | '/$guildId/timers'
     | '/@me/battle-panel'
+    | '/@me/kills'
     | '/@me/settings'
     | '/$guildId/'
     | '/@me/'
@@ -428,20 +487,25 @@ export interface FileRouteTypes {
     | '/$guildId/settings/members'
     | '/$guildId/settings/npcs'
     | '/$guildId/settings/roles'
+    | '/$guildId/stats/ranking'
     | '/@me/battle-panel/battles'
     | '/@me/battle-panel/statistics'
     | '/@me/battle-panel/stats'
     | '/@me/settings/appearance'
     | '/$guildId/reservations/'
     | '/$guildId/settings/'
+    | '/$guildId/stats/'
     | '/@me/battle-panel/'
     | '/@me/settings/'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
     | '/$guildId/settings/roles/$roleId'
+    | '/$guildId/stats/members/$memberId'
+    | '/$guildId/stats/npcs/$npcId'
     | '/@me/battle-panel/battles/$battleId'
     | '/@me/battle-panel/statistics/h2h'
     | '/@me/battle-panel/statistics/matchmaking-h2h'
+    | '/$guildId/stats/npcs'
     | '/$guildId/events/$eventId/heroes/$heroId'
     | '/$guildId/events/$eventId/heroes/$heroId/kills'
     | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
@@ -453,8 +517,8 @@ export interface FileRouteTypes {
     | '/battles/$id'
     | '/$guildId/activity-logs'
     | '/$guildId/events'
-    | '/$guildId/stats'
     | '/$guildId/timers'
+    | '/@me/kills'
     | '/$guildId'
     | '/@me'
     | '/$guildId/events/$eventId'
@@ -463,20 +527,25 @@ export interface FileRouteTypes {
     | '/$guildId/settings/members'
     | '/$guildId/settings/npcs'
     | '/$guildId/settings/roles'
+    | '/$guildId/stats/ranking'
     | '/@me/battle-panel/battles'
     | '/@me/battle-panel/statistics'
     | '/@me/battle-panel/stats'
     | '/@me/settings/appearance'
     | '/$guildId/reservations'
     | '/$guildId/settings'
+    | '/$guildId/stats'
     | '/@me/battle-panel'
     | '/@me/settings'
     | '/$guildId/events/$eventId/kills'
     | '/$guildId/events/$eventId/ranking'
     | '/$guildId/settings/roles/$roleId'
+    | '/$guildId/stats/members/$memberId'
+    | '/$guildId/stats/npcs/$npcId'
     | '/@me/battle-panel/battles/$battleId'
     | '/@me/battle-panel/statistics/h2h'
     | '/@me/battle-panel/statistics/matchmaking-h2h'
+    | '/$guildId/stats/npcs'
     | '/$guildId/events/$eventId/heroes/$heroId'
     | '/$guildId/events/$eventId/heroes/$heroId/kills'
     | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
@@ -496,6 +565,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/stats'
     | '/_authenticated/$guildId/timers'
     | '/_authenticated/@me/battle-panel'
+    | '/_authenticated/@me/kills'
     | '/_authenticated/@me/settings'
     | '/_authenticated/$guildId/'
     | '/_authenticated/@me/'
@@ -505,20 +575,25 @@ export interface FileRouteTypes {
     | '/_authenticated/$guildId/settings/members'
     | '/_authenticated/$guildId/settings/npcs'
     | '/_authenticated/$guildId/settings/roles'
+    | '/_authenticated/$guildId/stats/ranking'
     | '/_authenticated/@me/battle-panel/battles'
     | '/_authenticated/@me/battle-panel/statistics'
     | '/_authenticated/@me/battle-panel/stats'
     | '/_authenticated/@me/settings/appearance'
     | '/_authenticated/$guildId/reservations/'
     | '/_authenticated/$guildId/settings/'
+    | '/_authenticated/$guildId/stats/'
     | '/_authenticated/@me/battle-panel/'
     | '/_authenticated/@me/settings/'
     | '/_authenticated/$guildId/events_/$eventId_/kills'
     | '/_authenticated/$guildId/events_/$eventId_/ranking'
     | '/_authenticated/$guildId/settings/roles/$roleId'
+    | '/_authenticated/$guildId/stats/members/$memberId'
+    | '/_authenticated/$guildId/stats/npcs/$npcId'
     | '/_authenticated/@me/battle-panel/battles_/$battleId'
     | '/_authenticated/@me/battle-panel/statistics_/h2h'
     | '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
+    | '/_authenticated/$guildId/stats/npcs/'
     | '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId'
     | '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills'
     | '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId'
@@ -597,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAtmeSettingsRouteImport
       parentRoute: typeof AuthenticatedAtmeRoute
     }
+    '/_authenticated/@me/kills': {
+      id: '/_authenticated/@me/kills'
+      path: '/kills'
+      fullPath: '/@me/kills'
+      preLoaderRoute: typeof AuthenticatedAtmeKillsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
     '/_authenticated/@me/battle-panel': {
       id: '/_authenticated/@me/battle-panel'
       path: '/battle-panel'
@@ -660,6 +742,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAtmeBattlePanelIndexRouteImport
       parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
     }
+    '/_authenticated/$guildId/stats/': {
+      id: '/_authenticated/$guildId/stats/'
+      path: '/'
+      fullPath: '/$guildId/stats/'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
     '/_authenticated/$guildId/settings/': {
       id: '/_authenticated/$guildId/settings/'
       path: '/'
@@ -701,6 +790,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/@me/battle-panel/battles'
       preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesRouteImport
       parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/$guildId/stats/ranking': {
+      id: '/_authenticated/$guildId/stats/ranking'
+      path: '/ranking'
+      fullPath: '/$guildId/stats/ranking'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsRankingRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
     }
     '/_authenticated/$guildId/settings/roles': {
       id: '/_authenticated/$guildId/settings/roles'
@@ -744,6 +840,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRouteImport
       parentRoute: typeof AuthenticatedGuildIdRoute
     }
+    '/_authenticated/$guildId/stats/npcs/': {
+      id: '/_authenticated/$guildId/stats/npcs/'
+      path: '/npcs'
+      fullPath: '/$guildId/stats/npcs'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
     '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': {
       id: '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
       path: '/statistics/matchmaking-h2h'
@@ -764,6 +867,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/@me/battle-panel/battles/$battleId'
       preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport
       parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/$guildId/stats/npcs/$npcId': {
+      id: '/_authenticated/$guildId/stats/npcs/$npcId'
+      path: '/npcs/$npcId'
+      fullPath: '/$guildId/stats/npcs/$npcId'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/stats/members/$memberId': {
+      id: '/_authenticated/$guildId/stats/members/$memberId'
+      path: '/members/$memberId'
+      fullPath: '/$guildId/stats/members/$memberId'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
     }
     '/_authenticated/$guildId/settings/roles/$roleId': {
       id: '/_authenticated/$guildId/settings/roles/$roleId'
@@ -877,12 +994,38 @@ const AuthenticatedGuildIdSettingsRouteWithChildren =
     AuthenticatedGuildIdSettingsRouteChildren,
   )
 
+interface AuthenticatedGuildIdStatsRouteChildren {
+  AuthenticatedGuildIdStatsRankingRoute: typeof AuthenticatedGuildIdStatsRankingRoute
+  AuthenticatedGuildIdStatsIndexRoute: typeof AuthenticatedGuildIdStatsIndexRoute
+  AuthenticatedGuildIdStatsMembersMemberIdRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  AuthenticatedGuildIdStatsNpcsNpcIdRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  AuthenticatedGuildIdStatsNpcsIndexRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRoute
+}
+
+const AuthenticatedGuildIdStatsRouteChildren: AuthenticatedGuildIdStatsRouteChildren =
+  {
+    AuthenticatedGuildIdStatsRankingRoute:
+      AuthenticatedGuildIdStatsRankingRoute,
+    AuthenticatedGuildIdStatsIndexRoute: AuthenticatedGuildIdStatsIndexRoute,
+    AuthenticatedGuildIdStatsMembersMemberIdRoute:
+      AuthenticatedGuildIdStatsMembersMemberIdRoute,
+    AuthenticatedGuildIdStatsNpcsNpcIdRoute:
+      AuthenticatedGuildIdStatsNpcsNpcIdRoute,
+    AuthenticatedGuildIdStatsNpcsIndexRoute:
+      AuthenticatedGuildIdStatsNpcsIndexRoute,
+  }
+
+const AuthenticatedGuildIdStatsRouteWithChildren =
+  AuthenticatedGuildIdStatsRoute._addFileChildren(
+    AuthenticatedGuildIdStatsRouteChildren,
+  )
+
 interface AuthenticatedGuildIdRouteChildren {
   AuthenticatedGuildIdActivityLogsRoute: typeof AuthenticatedGuildIdActivityLogsRoute
   AuthenticatedGuildIdEventsRoute: typeof AuthenticatedGuildIdEventsRoute
   AuthenticatedGuildIdReservationsRoute: typeof AuthenticatedGuildIdReservationsRouteWithChildren
   AuthenticatedGuildIdSettingsRoute: typeof AuthenticatedGuildIdSettingsRouteWithChildren
-  AuthenticatedGuildIdStatsRoute: typeof AuthenticatedGuildIdStatsRoute
+  AuthenticatedGuildIdStatsRoute: typeof AuthenticatedGuildIdStatsRouteWithChildren
   AuthenticatedGuildIdTimersRoute: typeof AuthenticatedGuildIdTimersRoute
   AuthenticatedGuildIdIndexRoute: typeof AuthenticatedGuildIdIndexRoute
   AuthenticatedGuildIdEventsEventIdRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
@@ -900,7 +1043,7 @@ const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
     AuthenticatedGuildIdReservationsRouteWithChildren,
   AuthenticatedGuildIdSettingsRoute:
     AuthenticatedGuildIdSettingsRouteWithChildren,
-  AuthenticatedGuildIdStatsRoute: AuthenticatedGuildIdStatsRoute,
+  AuthenticatedGuildIdStatsRoute: AuthenticatedGuildIdStatsRouteWithChildren,
   AuthenticatedGuildIdTimersRoute: AuthenticatedGuildIdTimersRoute,
   AuthenticatedGuildIdIndexRoute: AuthenticatedGuildIdIndexRoute,
   AuthenticatedGuildIdEventsEventIdRoute:
@@ -975,6 +1118,7 @@ const AuthenticatedAtmeSettingsRouteWithChildren =
 
 interface AuthenticatedAtmeRouteChildren {
   AuthenticatedAtmeBattlePanelRoute: typeof AuthenticatedAtmeBattlePanelRouteWithChildren
+  AuthenticatedAtmeKillsRoute: typeof AuthenticatedAtmeKillsRoute
   AuthenticatedAtmeSettingsRoute: typeof AuthenticatedAtmeSettingsRouteWithChildren
   AuthenticatedAtmeIndexRoute: typeof AuthenticatedAtmeIndexRoute
 }
@@ -982,6 +1126,7 @@ interface AuthenticatedAtmeRouteChildren {
 const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
   AuthenticatedAtmeBattlePanelRoute:
     AuthenticatedAtmeBattlePanelRouteWithChildren,
+  AuthenticatedAtmeKillsRoute: AuthenticatedAtmeKillsRoute,
   AuthenticatedAtmeSettingsRoute: AuthenticatedAtmeSettingsRouteWithChildren,
   AuthenticatedAtmeIndexRoute: AuthenticatedAtmeIndexRoute,
 }

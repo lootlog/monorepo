@@ -24,5 +24,5 @@ export type F = {
   init?: "1";
   move?: number;
   myteam?: number;
-  w: W;
+  w?: W;
 };
