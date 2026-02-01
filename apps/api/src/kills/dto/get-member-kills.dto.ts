@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { NpcType } from 'generated/client';
 
 export class GetMemberKillsDto {
@@ -15,10 +22,20 @@ export class GetMemberKillsDto {
   @ApiPropertyOptional({
     example: 'HERO,TITAN',
     description: 'Comma-separated NPC types to filter',
+    enum: NpcType,
+    isArray: true,
   })
   @IsOptional()
-  @IsString()
-  npcType?: string;
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return value
+      .split(',')
+      .map((v: string) => v.trim())
+      .filter((v: string) => v.length > 0);
+  })
+  @IsEnum(NpcType, { each: true })
+  npcTypes?: NpcType[];
 
   @ApiPropertyOptional({
     example: 'Smok',
@@ -48,13 +65,4 @@ export class GetMemberKillsDto {
   @IsNumber()
   @Min(0)
   cursor?: number;
-
-  parseNpcTypes(): NpcType[] | undefined {
-    if (!this.npcType) {
-      return undefined;
-    }
-    const types = this.npcType.split(',').map((t) => t.trim() as NpcType);
-    const validTypes = Object.values(NpcType);
-    return types.filter((t) => validTypes.includes(t));
-  }
 }
