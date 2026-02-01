@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString, IsNotEmpty } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateOrUpdateLootlogCharacterConfigDto {
   @ApiProperty({
@@ -15,6 +15,14 @@ export class CreateOrUpdateLootlogCharacterConfigDto {
   })
   @IsArray()
   timerGuildIds!: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'List of guild IDs for kill tracking',
+  })
+  @IsOptional()
+  @IsArray()
+  killGuildIds?: string[];
 
   @ApiProperty({ description: 'Character ID' })
   @IsString()

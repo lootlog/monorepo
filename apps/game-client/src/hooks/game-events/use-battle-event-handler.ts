@@ -1,14 +1,49 @@
 import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { useCreateBattle } from "@/hooks/api/use-create-battle";
+import { useCreateKill } from "@/hooks/api/use-create-kill";
+import { useLootlogCharactersConfig } from "@/hooks/api/use-lootlog-character-config";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
 import { Game } from "@/lib/game";
 import { useBattlePanelStore } from "@/store/battle-panel.store";
-import { useBattleStore } from "@/store/game-store/battle.store";
+import {
+  useBattleStore,
+  type BattleWarriorsWithAccountId,
+} from "@/store/game-store/battle.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
+
+const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
+  const deadNpcs: Array<{
+    id: number;
+    name: string;
+    lvl: number;
+    prof: string;
+    icon: string;
+    wt: number;
+    type: number;
+  }> = [];
+
+  for (const [key, warrior] of Object.entries(warriors)) {
+    if (key.startsWith("-") && warrior.hpp === 0) {
+      deadNpcs.push({
+        id: Number.parseInt(key, 10),
+        name: warrior.name,
+        lvl: warrior.lvl,
+        prof: warrior.prof || "",
+        icon: warrior.icon,
+        wt: warrior.wt,
+        type: warrior.type,
+      });
+    }
+  }
+
+  return deadNpcs;
+};
 
 export const useBattleEventHandler = () => {
   const { mutate: createBattle } = useCreateBattle();
+  const { mutate: createKill } = useCreateKill();
+  const { data: lootlogConfig } = useLootlogCharactersConfig();
 
   const handleBattleEvents = async (event: GameEvent) => {
     if (!event.f) return;
@@ -84,6 +119,35 @@ export const useBattleEventHandler = () => {
               world,
               events,
             });
+          }
+
+          if (hasNegativeId) {
+            const deadNpcs = extractDeadNpcs(
+              useBattleStore.getState().battleWarriors,
+            );
+            const characterConfig = lootlogConfig?.[String(characterId)];
+            const killGuildIds =
+              characterConfig?.trackKillsWhitelistGuildIds ?? [];
+
+            if (deadNpcs.length > 0 && killGuildIds.length > 0) {
+              const heroInfo = Game.hero;
+
+              for (const npc of deadNpcs) {
+                createKill({
+                  kill: {
+                    world,
+                    npc,
+                    characterId: String(characterId),
+                    accountId: String(accountId),
+                    characterName: heroInfo.nick,
+                    characterLvl: heroInfo.lvl,
+                    characterProf: heroInfo.prof,
+                    characterIcon: heroInfo.img,
+                  },
+                  guildIds: killGuildIds,
+                });
+              }
+            }
           }
         }
       }

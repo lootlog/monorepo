@@ -27,6 +27,7 @@ import { SoundSettingsModule } from 'src/sound-settings/sound-settings.module';
 import { EventsModule } from 'src/events/events.module';
 import { MapsModule } from 'src/maps/maps.module';
 import { MapTemplatesModule } from 'src/map-templates/map-templates.module';
+import { KillsModule } from 'src/kills/kills.module';
 import type { RedisConfig } from 'src/config/redis.config';
 
 @Module({
@@ -77,6 +78,7 @@ import type { RedisConfig } from 'src/config/redis.config';
     EventsModule,
     MapsModule,
     MapTemplatesModule,
+    KillsModule,
   ],
   controllers: [],
   providers: [],
