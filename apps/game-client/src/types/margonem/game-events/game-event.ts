@@ -13,9 +13,9 @@ import type { PartyEvent } from "@/types/margonem/game-events/party";
 import type { TownEvent } from "@/types/margonem/game-events/town";
 
 export type GameEvent = {
-  d: D;
-  e: "ok" | "error";
-  ev: number;
+  d?: D;
+  e?: "ok" | "error";
+  ev?: number;
   f?: F;
   npcs?: Npcs;
   npcs_del?: NpcsDel;

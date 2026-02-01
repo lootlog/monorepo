@@ -3,7 +3,10 @@ import { Skeleton } from "@lootlog/ui/components/skeleton";
 import { useTranslation } from "react-i18next";
 import { Flame, Mountain, Shield, Sword } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
-import type { KillStatsOverview as KillStatsOverviewType, NpcType } from "../hooks/use-guild-kill-stats";
+import type {
+  KillStatsOverview as KillStatsOverviewType,
+  NpcType,
+} from "../hooks/use-guild-kill-stats";
 
 const NPC_TYPE_CONFIG: Record<
   string,
@@ -77,6 +80,7 @@ export const NpcTypeStatsCards: React.FC<NpcTypeStatsCardsProps> = ({
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {NPC_TYPES_TO_DISPLAY.map((type) => {
         const config = NPC_TYPE_CONFIG[type];
+        if (!config) return null;
         return (
           <Card
             key={type}

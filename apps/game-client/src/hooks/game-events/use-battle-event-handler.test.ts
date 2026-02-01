@@ -104,6 +104,8 @@ describe("useBattleEventHandler", () => {
         f: {
           w: {
             "12345": {
+              id: 12345,
+              originalId: 12345,
               name: "Player1",
               lvl: 100,
               hpp: 100,
@@ -150,6 +152,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "111": {
+                  id: 111,
+                  originalId: 111,
                   name: "Player1",
                   team: 1,
                   hpp: 100,
@@ -160,6 +164,8 @@ describe("useBattleEventHandler", () => {
                   type: 0,
                 },
                 "222": {
+                  id: 222,
+                  originalId: 222,
                   name: "Player2",
                   team: 2,
                   hpp: 0,
@@ -203,6 +209,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "111": {
+                  id: 111,
+                  originalId: 111,
                   name: "Player1",
                   team: 1,
                   hpp: 100,
@@ -213,6 +221,8 @@ describe("useBattleEventHandler", () => {
                   type: 0,
                 },
                 "222": {
+                  id: 222,
+                  originalId: 222,
                   name: "Player2",
                   team: 1,
                   hpp: 100,
@@ -252,6 +262,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Boss",
                   team: 2,
                   hpp: 0,
@@ -268,6 +280,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Boss",
             team: 2,
             hpp: 0,
@@ -312,6 +326,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Minion",
                   team: 2,
                   hpp: 0,
@@ -322,6 +338,8 @@ describe("useBattleEventHandler", () => {
                   type: 1,
                 },
                 "-200": {
+                  id: -200,
+                  originalId: -200,
                   name: "Boss",
                   team: 2,
                   hpp: 0,
@@ -332,6 +350,8 @@ describe("useBattleEventHandler", () => {
                   type: 2,
                 },
                 "-300": {
+                  id: -300,
+                  originalId: -300,
                   name: "Elite",
                   team: 2,
                   hpp: 0,
@@ -348,6 +368,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Minion",
             team: 2,
             hpp: 0,
@@ -358,6 +380,8 @@ describe("useBattleEventHandler", () => {
             type: 1,
           },
           "-200": {
+            id: -200,
+            originalId: -200,
             name: "Boss",
             team: 2,
             hpp: 0,
@@ -368,6 +392,8 @@ describe("useBattleEventHandler", () => {
             type: 2,
           },
           "-300": {
+            id: -300,
+            originalId: -300,
             name: "Elite",
             team: 2,
             hpp: 0,
@@ -408,6 +434,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Rat",
                   team: 2,
                   hpp: 0,
@@ -424,6 +452,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Rat",
             team: 2,
             hpp: 0,
@@ -456,6 +486,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Elite Rat",
                   team: 2,
                   hpp: 0,
@@ -472,6 +504,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Elite Rat",
             team: 2,
             hpp: 0,
@@ -504,6 +538,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Elite2 Boss",
                   team: 2,
                   hpp: 0,
@@ -520,6 +556,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Elite2 Boss",
             team: 2,
             hpp: 0,
@@ -552,6 +590,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Titan Boss",
                   team: 2,
                   hpp: 0,
@@ -568,6 +608,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Titan Boss",
             team: 2,
             hpp: 0,
@@ -600,6 +642,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Boss",
                   team: 2,
                   hpp: 50,
@@ -616,6 +660,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Boss",
             team: 2,
             hpp: 50,
@@ -655,6 +701,8 @@ describe("useBattleEventHandler", () => {
             f: {
               w: {
                 "-100": {
+                  id: -100,
+                  originalId: -100,
                   name: "Boss",
                   team: 2,
                   hpp: 0,
@@ -671,6 +719,8 @@ describe("useBattleEventHandler", () => {
         ],
         battleWarriors: {
           "-100": {
+            id: -100,
+            originalId: -100,
             name: "Boss",
             team: 2,
             hpp: 0,
