@@ -3,10 +3,6 @@ import { API_URL } from "@/config/api";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { Game } from "@/lib/game";
 
-export type UseLootlogCharactersConfigOptions = {
-  //   accountId?: string;
-};
-
 export type LootlogCharacterConfig = {
   userId: string;
   accountId: string;

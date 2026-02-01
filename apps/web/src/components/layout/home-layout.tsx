@@ -125,6 +125,17 @@ export const HomeLayout: FC = () => {
       };
     }
 
+    if (path === "/@me/kills") {
+      return {
+        breadcrumbs: [
+          { label: "Dashboard", path: ROUTES.user.dashboard },
+          { label: "Ranking NPC", path: null },
+        ],
+        showBack: true,
+        backPath: ROUTES.user.dashboard,
+      };
+    }
+
     return {
       breadcrumbs: [{ label: "Dashboard", path: null }],
       showBack: false,
@@ -241,7 +252,8 @@ export const HomeLayout: FC = () => {
             location.pathname === ROUTES.user.battlePanel.matchmakingH2h ||
             location.pathname.startsWith(
               `${ROUTES.user.battlePanel.statistics}/player-vs-player/`,
-            ) ? (
+            ) ||
+            location.pathname === "/@me/kills" ? (
               <div className="flex-1 min-h-0 overflow-auto">
                 <Outlet />
               </div>

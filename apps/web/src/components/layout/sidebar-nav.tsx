@@ -20,6 +20,7 @@ export interface MenuItem {
     variant?: "default" | "secondary" | "destructive" | "outline" | "white";
   };
   highlight?: boolean;
+  childPaths?: string[];
 }
 
 interface SidebarNavProps {
@@ -486,13 +487,20 @@ export const SidebarNav = ({
           enabled,
           badge,
           highlight,
+          childPaths,
         }) => {
           const url = `${basePath}${path}`;
           const normalizedPathname = pathname.replace(/\/$/, "");
           const normalizedUrl = url.replace(/\/$/, "");
           const isActive =
             path === ""
-              ? normalizedPathname === normalizedUrl
+              ? normalizedPathname === normalizedUrl ||
+                (childPaths?.some(
+                  (cp) =>
+                    normalizedPathname === `${normalizedUrl}${cp}` ||
+                    pathname.startsWith(`${normalizedUrl}${cp}/`),
+                ) ??
+                  false)
               : normalizedPathname === normalizedUrl ||
                 pathname.startsWith(`${normalizedUrl}/`);
 

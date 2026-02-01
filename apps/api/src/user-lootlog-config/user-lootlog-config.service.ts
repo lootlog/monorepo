@@ -68,11 +68,6 @@ export class UserLootlogConfigService {
 
   async getLootlogAccountConfig(discordId: string, accountId: string) {
     const cacheKey = this.getUserLootlogConfigCacheKey(discordId, accountId);
-    // const cached = await this.redisService.get(cacheKey);
-
-    // if (cached) {
-    //   return JSON.parse(cached);
-    // }
 
     const accountConfig =
       await this.prisma.userCharactersLootlogSettings.findMany({
@@ -168,11 +163,6 @@ export class UserLootlogConfigService {
       accountId,
       characterId,
     );
-    // const cached = await this.redisService.get(cacheKey);
-
-    // if (cached) {
-    //   return JSON.parse(cached);
-    // }
 
     const characterConfig =
       await this.prisma.userCharactersLootlogSettings.findFirst({
