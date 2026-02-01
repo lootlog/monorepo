@@ -14,9 +14,14 @@ export const getStableNpcId = (
     // Generate a deterministic hash from the name
     // Use a simple string hash that produces a stable negative number
     // (negative to avoid collision with real NPC IDs)
+    // Normalize and bound the name length to avoid unbounded iteration
+    const safeName = String(npcName ?? '');
+    const MAX_NPC_NAME_LENGTH = 256;
+    const length = Math.min(safeName.length, MAX_NPC_NAME_LENGTH);
+
     let hash = 0;
-    for (let i = 0; i < npcName.length; i++) {
-      const char = npcName.charCodeAt(i);
+    for (let i = 0; i < length; i++) {
+      const char = safeName.charCodeAt(i);
       hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
