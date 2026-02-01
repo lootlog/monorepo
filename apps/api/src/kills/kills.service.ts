@@ -210,7 +210,7 @@ export class KillsService {
     roles: Role[],
     query: GetGuildKillStatsDto,
   ) {
-    const npcTypes = query.parseNpcTypes();
+    const npcTypes = query.npcTypes;
     const filteredRoles = roles.filter((role) =>
       role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
     );
@@ -389,7 +389,7 @@ export class KillsService {
   }
 
   async getUserKillStats(discordId: string, query: GetUserKillStatsDto) {
-    const npcTypes = query.parseNpcTypes();
+    const npcTypes = query.npcTypes;
 
     // Query from UserKillStats - now aggregated per user (no character distinction)
     const stats = await this.prisma.userKillStats.findMany({
@@ -460,7 +460,7 @@ export class KillsService {
   }
 
   async getUserNpcKills(discordId: string, query: GetUserNpcKillsDto) {
-    const npcTypes = query.parseNpcTypes();
+    const npcTypes = query.npcTypes;
     const limit = query.limit ?? 20;
     const cursor = query.cursor ?? 0;
 
@@ -836,7 +836,7 @@ export class KillsService {
       administrativeUser,
     );
 
-    const npcTypes = query.parseNpcTypes();
+    const npcTypes = query.npcTypes;
     const limit = query.limit ?? 20;
     const cursor = query.cursor ?? 0;
 

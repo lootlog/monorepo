@@ -1,16 +1,26 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import type { NpcType } from 'generated/client';
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { NpcType } from 'generated/client';
 
 export class GetGuildKillStatsDto {
   @ApiPropertyOptional({
     example: 'HERO,TITAN',
     description: 'Comma-separated NPC types to filter by',
+    enum: NpcType,
+    isArray: true,
   })
   @IsOptional()
-  @IsString()
-  npcType?: string;
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return value
+      .split(',')
+      .map((v: string) => v.trim())
+      .filter((v: string) => v.length > 0);
+  })
+  @IsEnum(NpcType, { each: true })
+  npcTypes?: NpcType[];
 
   @ApiPropertyOptional({ example: 100, description: 'Minimum NPC level' })
   @IsOptional()
@@ -33,21 +43,26 @@ export class GetGuildKillStatsDto {
   @IsOptional()
   @IsString()
   world?: string;
-
-  parseNpcTypes(): NpcType[] | undefined {
-    if (!this.npcType) return undefined;
-    return this.npcType.split(',').map((t) => t.trim()) as NpcType[];
-  }
 }
 
 export class GetUserKillStatsDto {
   @ApiPropertyOptional({
     example: 'HERO,TITAN',
     description: 'Comma-separated NPC types to filter by',
+    enum: NpcType,
+    isArray: true,
   })
   @IsOptional()
-  @IsString()
-  npcType?: string;
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return value
+      .split(',')
+      .map((v: string) => v.trim())
+      .filter((v: string) => v.length > 0);
+  })
+  @IsEnum(NpcType, { each: true })
+  npcTypes?: NpcType[];
 
   @ApiPropertyOptional({
     example: 'pandora',
@@ -66,9 +81,4 @@ export class GetUserKillStatsDto {
   @IsNumber()
   @Min(1)
   topNpcsLimit?: number;
-
-  parseNpcTypes(): NpcType[] | undefined {
-    if (!this.npcType) return undefined;
-    return this.npcType.split(',').map((t) => t.trim()) as NpcType[];
-  }
 }

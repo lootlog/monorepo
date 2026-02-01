@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsEnum,
   IsIn,
   IsNumber,
   IsOptional,
@@ -8,16 +9,26 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import type { NpcType } from 'generated/client';
+import { NpcType } from 'generated/client';
 
 export class GetUserNpcKillsDto {
   @ApiPropertyOptional({
     example: 'HERO,TITAN',
     description: 'Comma-separated NPC types to filter by',
+    enum: NpcType,
+    isArray: true,
   })
   @IsOptional()
-  @IsString()
-  npcType?: string;
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    return value
+      .split(',')
+      .map((v: string) => v.trim())
+      .filter((v: string) => v.length > 0);
+  })
+  @IsEnum(NpcType, { each: true })
+  npcTypes?: NpcType[];
 
   @ApiPropertyOptional({
     example: 'pandora',
@@ -91,9 +102,4 @@ export class GetUserNpcKillsDto {
   @IsNumber()
   @Min(0)
   maxLvl?: number;
-
-  parseNpcTypes(): NpcType[] | undefined {
-    if (!this.npcType) return undefined;
-    return this.npcType.split(',').map((t) => t.trim()) as NpcType[];
-  }
 }

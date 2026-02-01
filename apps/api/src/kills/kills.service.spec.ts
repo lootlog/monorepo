@@ -465,14 +465,14 @@ describe('KillsService', () => {
       prismaService.npcKillStats.findMany.mockResolvedValue([]);
       prismaService.guildKillSummary.findMany.mockResolvedValue([]);
       const query = new GetGuildKillStatsDto();
-      query.npcType = 'TITAN';
+      query.npcTypes = [NpcType.TITAN];
 
       await service.getGuildKillStats(guildId, [], [], query);
 
       expect(prismaService.npcKillStats.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            npcType: { in: ['TITAN'] },
+            npcType: { in: [NpcType.TITAN] },
           }),
         }),
       );
@@ -782,14 +782,14 @@ describe('KillsService', () => {
     it('should filter by NPC types when provided', async () => {
       prismaService.userKillStats.findMany.mockResolvedValue([]);
       const query = new GetUserKillStatsDto();
-      query.npcType = 'HERO,TITAN';
+      query.npcTypes = [NpcType.HERO, NpcType.TITAN];
 
       await service.getUserKillStats(discordId, query);
 
       expect(prismaService.userKillStats.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            npcType: { in: ['HERO', 'TITAN'] },
+            npcType: { in: [NpcType.HERO, NpcType.TITAN] },
           }),
         }),
       );

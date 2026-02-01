@@ -15,12 +15,23 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  optimizeDeps: {
-    include: ["use-sync-external-store/shim"],
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+      {
+        find: /^use-sync-external-store\/shim\/with-selector(\.js)?$/,
+        replacement: path.resolve(
+          __dirname,
+          "./src/shims/use-sync-external-store-with-selector.ts",
+        ),
+      },
+      {
+        find: /^use-sync-external-store\/shim(\/index)?(\.js)?$/,
+        replacement: path.resolve(
+          __dirname,
+          "./src/shims/use-sync-external-store-shim.ts",
+        ),
+      },
+    ],
   },
   build: {
     minify: "terser",

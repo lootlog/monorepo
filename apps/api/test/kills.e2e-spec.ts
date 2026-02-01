@@ -291,7 +291,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
       });
 
       // Create 3 members
-      const member1 = await prisma.member.create({
+      await prisma.member.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
@@ -300,7 +300,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         },
       });
 
-      const member2 = await prisma.member.create({
+      await prisma.member.create({
         data: {
           userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
           guildId: guild.id,
@@ -309,7 +309,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         },
       });
 
-      const member3 = await prisma.member.create({
+      await prisma.member.create({
         data: {
           userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
           guildId: guild.id,
@@ -667,7 +667,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
       });
 
       // Create 3 members
-      const members = await Promise.all([
+      await Promise.all([
         prisma.member.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,

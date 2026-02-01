@@ -224,7 +224,7 @@ describe('KillsController', () => {
       service.getGuildKillStats.mockResolvedValue(mockStats);
 
       const query = new GetGuildKillStatsDto();
-      query.npcType = 'TITAN';
+      query.npcTypes = [NpcType.TITAN];
       query.minLvl = 200;
       query.maxLvl = 400;
 
@@ -305,7 +305,7 @@ describe('KillsController', () => {
 
       const query = new GetUserKillStatsDto();
       query.world = 'pandora';
-      query.npcType = 'HERO,TITAN';
+      query.npcTypes = [NpcType.HERO, NpcType.TITAN];
 
       await controller.getUserKillStats(discordId, query);
 
