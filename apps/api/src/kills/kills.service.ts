@@ -11,6 +11,7 @@ import type {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from './dto/get-kill-stats.dto';
+import type { GetUserNpcKillsDto } from './dto/get-user-npc-kills.dto';
 
 @Injectable()
 export class KillsService {
@@ -50,6 +51,7 @@ export class KillsService {
           npcName: data.npc.name,
           npcType,
           npcLvl: data.npc.lvl,
+          npcProf: data.npc.prof,
           npcIcon: data.npc.icon,
           totalKills: 1,
         },
@@ -62,6 +64,7 @@ export class KillsService {
           characterIcon: data.characterIcon,
           npcName: data.npc.name,
           npcLvl: data.npc.lvl,
+          npcProf: data.npc.prof,
           npcIcon: data.npc.icon,
         },
       });
@@ -130,6 +133,7 @@ export class KillsService {
               npcName: data.npc.name,
               npcType,
               npcLvl: data.npc.lvl,
+              npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
               totalKills: 1,
             },
@@ -142,6 +146,7 @@ export class KillsService {
               characterIcon: data.characterIcon,
               npcName: data.npc.name,
               npcLvl: data.npc.lvl,
+              npcProf: data.npc.prof,
               npcIcon: data.npc.icon,
             },
           });
@@ -406,6 +411,7 @@ export class KillsService {
         npcName: string;
         npcType: string;
         npcLvl: number;
+        npcProf: string | null;
         npcIcon: string | null;
         totalKills: number;
       }
@@ -422,6 +428,7 @@ export class KillsService {
           npcName: stat.npcName,
           npcType: stat.npcType,
           npcLvl: stat.npcLvl,
+          npcProf: stat.npcProf,
           npcIcon: stat.npcIcon,
           totalKills: stat.totalKills,
         });
@@ -430,7 +437,7 @@ export class KillsService {
 
     const topNpcs = Array.from(npcMap.values())
       .sort((a, b) => b.totalKills - a.totalKills)
-      .slice(0, 10);
+      .slice(0, query.topNpcsLimit ?? 5);
 
     return {
       overview: {
@@ -440,6 +447,86 @@ export class KillsService {
       },
       characters,
       topNpcs,
+    };
+  }
+
+  async getUserNpcKills(discordId: string, query: GetUserNpcKillsDto) {
+    const npcTypes = query.parseNpcTypes();
+    const limit = query.limit ?? 20;
+    const cursor = query.cursor ?? 0;
+
+    const whereCondition = {
+      userId: discordId,
+      ...(query.characterId !== undefined && {
+        characterId: query.characterId,
+      }),
+      ...(query.world && { world: query.world }),
+      ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
+      ...(query.search && {
+        npcName: { contains: query.search, mode: 'insensitive' as const },
+      }),
+    };
+
+    const stats = await this.prisma.userKillStats.findMany({
+      where: whereCondition,
+    });
+
+    // Aggregate by npcId (combine across characters/worlds if no specific filter)
+    const npcMap = new Map<
+      number,
+      {
+        npcId: number;
+        npcName: string;
+        npcType: string;
+        npcLvl: number;
+        npcProf: string | null;
+        npcIcon: string | null;
+        totalKills: number;
+      }
+    >();
+
+    for (const stat of stats) {
+      const existing = npcMap.get(stat.npcId);
+      if (existing) {
+        existing.totalKills += stat.totalKills;
+        // Keep the highest level version of the NPC
+        if (stat.npcLvl > existing.npcLvl) {
+          existing.npcLvl = stat.npcLvl;
+          existing.npcName = stat.npcName;
+          existing.npcProf = stat.npcProf;
+          existing.npcIcon = stat.npcIcon;
+        }
+      } else {
+        npcMap.set(stat.npcId, {
+          npcId: stat.npcId,
+          npcName: stat.npcName,
+          npcType: stat.npcType,
+          npcLvl: stat.npcLvl,
+          npcProf: stat.npcProf,
+          npcIcon: stat.npcIcon,
+          totalKills: stat.totalKills,
+        });
+      }
+    }
+
+    const allNpcs = Array.from(npcMap.values()).sort((a, b) =>
+      query.sortOrder === 'asc'
+        ? a.totalKills - b.totalKills
+        : b.totalKills - a.totalKills,
+    );
+
+    const total = allNpcs.length;
+    const paginatedNpcs = allNpcs.slice(cursor, cursor + limit);
+    const hasNext = cursor + limit < total;
+
+    return {
+      npcs: paginatedNpcs,
+      pagination: {
+        total,
+        cursor,
+        limit,
+        hasNext,
+      },
     };
   }
 }

@@ -775,6 +775,7 @@ model NpcKillStats {
   npcName       String
   npcType       NpcType
   npcLvl        Int
+  npcProf       String?
   npcIcon       String?
   totalKills    Int      @default(0)
   lastKilledAt  DateTime @default(now())
@@ -807,6 +808,7 @@ model UserKillStats {
   npcName       String
   npcType       NpcType
   npcLvl        Int
+  npcProf       String?
   npcIcon       String?
   totalKills    Int      @default(0)
   lastKilledAt  DateTime @default(now())

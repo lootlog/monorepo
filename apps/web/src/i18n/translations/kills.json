@@ -2,8 +2,8 @@
   "title": "Statystyki killi",
   "overview": {
     "title": "Podsumowanie",
-    "totalKills": "Łączne kille",
-    "killsByType": "Kille według typu"
+    "totalKills": "Łączne bicia",
+    "killsByType": "Bicia według typu"
   },
   "filters": {
     "title": "Filtry",
@@ -20,21 +20,43 @@
     "position": "#",
     "member": "Członek",
     "totalKills": "Łącznie",
-    "noData": "Brak danych o killach"
+    "noData": "Brak danych o biciach"
   },
   "recentKills": {
-    "title": "Ostatnie kille",
+    "title": "Ostatnie bicia",
     "npc": "NPC",
     "level": "Poziom",
     "type": "Typ",
     "killedAt": "Data",
     "participants": "Uczestnicy",
-    "noData": "Brak ostatnich killi"
+    "noData": "Brak ostatnich bić"
   },
   "playerStats": {
-    "title": "Twoje statystyki killi",
-    "killsByWorld": "Kille według świata",
+    "title": "Twoje statystyki bić",
+    "killsByWorld": "Bicia według świata",
     "characters": "Postaci",
-    "noData": "Brak danych o killach dla Twoich postaci"
+    "noData": "Brak danych o biciach dla Twoich postaci"
+  },
+  "home": {
+    "filters": {
+      "world": "Świat",
+      "allWorlds": "Wszystkie światy",
+      "character": "Postać",
+      "allCharacters": "Wszystkie postacie"
+    },
+    "topKilledNpcs": {
+      "title": "Najczęściej bite potwory",
+      "noData": "Brak danych o zabitych potworach",
+      "killCount": "x{{count}}",
+      "viewAll": "Zobacz pełny ranking"
+    }
+  },
+  "ranking": {
+    "title": "Ranking zabitych potworów",
+    "description": "Kompletna lista statystyk zabitych potworów",
+    "search": "Szukaj potwora...",
+    "noData": "Nie znaleziono potworów",
+    "loading": "Ładowanie danych...",
+    "total": "Łącznie: {{count}}"
   }
 }

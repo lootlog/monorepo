@@ -695,6 +695,7 @@ describe('KillsService', () => {
       }));
       prismaService.userKillStats.findMany.mockResolvedValue(manyNpcs);
       const query = new GetUserKillStatsDto();
+      query.topNpcsLimit = 10;
 
       const result = await service.getUserKillStats(discordId, query);
 

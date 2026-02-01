@@ -28,10 +28,12 @@ import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
 } from './dto/get-kill-stats.dto';
+import { GetUserNpcKillsDto } from './dto/get-user-npc-kills.dto';
 import {
   CreateKillResponseEntity,
   GuildKillStatsEntity,
   UserKillStatsEntity,
+  UserNpcKillsEntity,
 } from './entities/kill-stats.entity';
 
 @ApiTags('kills')
@@ -114,5 +116,24 @@ export class KillsController {
   ) {
     const stats = await this.killsService.getUserKillStats(discordId, query);
     return plainToInstance(UserKillStatsEntity, stats);
+  }
+
+  @Get('/users/@me/kills/npcs')
+  @ApiOperation({
+    summary: 'Get paginated list of killed NPCs',
+    description:
+      'Retrieves a paginated, searchable list of NPCs killed by the authenticated user.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of killed NPCs',
+    type: UserNpcKillsEntity,
+  })
+  async getUserNpcKills(
+    @DiscordId() discordId: string,
+    @Query() query: GetUserNpcKillsDto,
+  ) {
+    const result = await this.killsService.getUserNpcKills(discordId, query);
+    return plainToInstance(UserNpcKillsEntity, result);
   }
 }
