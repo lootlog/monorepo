@@ -770,4 +770,405 @@ describe('Kills E2E Tests (Deduplication)', () => {
       );
     });
   });
+
+  describe('POST /kills - COLOSSUS Stable ID Aggregation', () => {
+    function createColossusKillPayload(
+      spawnId: number,
+      name = 'Wielki Kolos',
+      overrides = {},
+    ) {
+      return {
+        world: 'pandora',
+        npc: {
+          id: spawnId,
+          name,
+          lvl: 350,
+          prof: 'w',
+          wt: 95, // COLOSSUS type (wt > 89)
+          icon: 'colossus.gif',
+        },
+        characterId: '67890',
+        accountId: '11111',
+        ...overrides,
+      };
+    }
+
+    it('should aggregate kills for same COLOSSUS name with different spawn IDs', async () => {
+      const guild = await prisma.guild.create({
+        data: TEST_GUILDS.GUILD_1,
+      });
+
+      await prisma.member.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          guildId: guild.id,
+          name: 'Test Member',
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        },
+      });
+
+      await prisma.userCharactersLootlogSettings.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: '11111',
+          characterId: '67890',
+          collectLootWhitelistGuildIds: [guild.id],
+          addTimersWhitelistGuildIds: [],
+        },
+      });
+
+      // Kill COLOSSUS with spawn ID 111111
+      const response1 = await request(app.getHttpServer())
+        .post('/kills')
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, 'Wielki Kolos'))
+        .expect(201);
+
+      expect(response1.body.updated).toBe(1);
+
+      // Clear dedup window to allow second kill
+      await redis.deleteByPattern('kill:dedup:*');
+
+      // Kill same COLOSSUS with different spawn ID 222222
+      const response2 = await request(app.getHttpServer())
+        .post('/kills')
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(222222, 'Wielki Kolos'))
+        .expect(201);
+
+      expect(response2.body.updated).toBe(1);
+
+      // Verify only 1 record with 2 kills (aggregated under stable ID)
+      const userKills = await prisma.userKillStats.findMany({
+        where: { userId: TEST_USERS.MEMBER_WITH_WRITE.discordId },
+      });
+      expect(userKills).toHaveLength(1);
+      expect(userKills[0].totalKills).toBe(2);
+      expect(userKills[0].npcId).toBeLessThan(0); // Stable negative ID
+      expect(userKills[0].npcType).toBe(NpcType.COLOSSUS);
+
+      // Verify NpcKillStats also aggregated
+      const npcKills = await prisma.npcKillStats.findMany({
+        where: { guildId: guild.id },
+      });
+      expect(npcKills).toHaveLength(1);
+      expect(npcKills[0].memberKills).toBe(2);
+      expect(npcKills[0].npcId).toBeLessThan(0);
+
+      // Verify GuildKillSummary aggregated
+      const guildSummary = await prisma.guildKillSummary.findMany({
+        where: { guildId: guild.id },
+      });
+      expect(guildSummary).toHaveLength(1);
+      expect(guildSummary[0].uniqueKills).toBe(2);
+      expect(guildSummary[0].npcId).toBeLessThan(0);
+    });
+
+    it('should create separate records for different COLOSSUS names', async () => {
+      const guild = await prisma.guild.create({
+        data: TEST_GUILDS.GUILD_1,
+      });
+
+      await prisma.member.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          guildId: guild.id,
+          name: 'Test Member',
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+        },
+      });
+
+      await prisma.userCharactersLootlogSettings.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: '11111',
+          characterId: '67890',
+          collectLootWhitelistGuildIds: [guild.id],
+          addTimersWhitelistGuildIds: [],
+        },
+      });
+
+      // Kill 'Kolos Ognia'
+      await request(app.getHttpServer())
+        .post('/kills')
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, 'Kolos Ognia'))
+        .expect(201);
+
+      await redis.deleteByPattern('kill:dedup:*');
+
+      // Kill 'Kolos Lodu'
+      await request(app.getHttpServer())
+        .post('/kills')
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(222222, 'Kolos Lodu'))
+        .expect(201);
+
+      // Verify 2 separate records with different stable IDs
+      const userKills = await prisma.userKillStats.findMany({
+        where: { userId: TEST_USERS.MEMBER_WITH_WRITE.discordId },
+        orderBy: { npcName: 'asc' },
+      });
+      expect(userKills).toHaveLength(2);
+      expect(userKills[0].npcId).not.toBe(userKills[1].npcId);
+      expect(userKills[0].npcId).toBeLessThan(0);
+      expect(userKills[1].npcId).toBeLessThan(0);
+      expect(userKills[0].npcType).toBe(NpcType.COLOSSUS);
+      expect(userKills[1].npcType).toBe(NpcType.COLOSSUS);
+    });
+
+    it('should return negative npcId in top-npcs stats response', async () => {
+      const guild = await prisma.guild.create({
+        data: TEST_GUILDS.GUILD_1,
+      });
+
+      const role = await prisma.role.create({
+        data: {
+          id: 'role-1',
+          guildId: guild.id,
+          name: 'Member',
+          permissions: [Permission.LOOTLOG_LOOTS_READ],
+        },
+      });
+
+      await prisma.member.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          guildId: guild.id,
+          name: 'Test Member',
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          roles: { connect: { id: role.id } },
+        },
+      });
+
+      await prisma.userCharactersLootlogSettings.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: '11111',
+          characterId: '67890',
+          collectLootWhitelistGuildIds: [guild.id],
+          addTimersWhitelistGuildIds: [],
+        },
+      });
+
+      // Create COLOSSUS kill
+      await request(app.getHttpServer())
+        .post('/kills')
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, 'Wielki Kolos'))
+        .expect(201);
+
+      // Query top NPCs filtered by COLOSSUS type
+      const response = await request(app.getHttpServer())
+        .get(`/guilds/${guild.id}/stats/kills/top-npcs?npcType=COLOSSUS`)
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .expect(200);
+
+      expect(response.body.topNpcs).toHaveLength(1);
+      expect(response.body.topNpcs[0].npcId).toBeLessThan(0);
+      expect(response.body.topNpcs[0].npcType).toBe('COLOSSUS');
+      expect(response.body.topNpcs[0].npcName).toBe('Wielki Kolos');
+    });
+
+    it('should accept negative npcId in getNpcKillers endpoint', async () => {
+      const guild = await prisma.guild.create({
+        data: TEST_GUILDS.GUILD_1,
+      });
+
+      const role = await prisma.role.create({
+        data: {
+          id: 'role-1',
+          guildId: guild.id,
+          name: 'Member',
+          permissions: [Permission.LOOTLOG_LOOTS_READ],
+        },
+      });
+
+      await prisma.member.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          guildId: guild.id,
+          name: 'Test Member',
+          globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          roles: { connect: { id: role.id } },
+        },
+      });
+
+      await prisma.userCharactersLootlogSettings.create({
+        data: {
+          userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          accountId: '11111',
+          characterId: '67890',
+          collectLootWhitelistGuildIds: [guild.id],
+          addTimersWhitelistGuildIds: [],
+        },
+      });
+
+      // Create COLOSSUS kill
+      await request(app.getHttpServer())
+        .post('/kills')
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, 'Wielki Kolos'))
+        .expect(201);
+
+      // Get the stable negative ID from the database
+      const userKills = await prisma.userKillStats.findFirst({
+        where: { npcType: NpcType.COLOSSUS },
+      });
+      const negativeNpcId = userKills!.npcId;
+
+      expect(negativeNpcId).toBeLessThan(0);
+
+      // Query killers endpoint with negative npcId
+      const response = await request(app.getHttpServer())
+        .get(`/guilds/${guild.id}/stats/kills/npcs/${negativeNpcId}/killers`)
+        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .expect(200);
+
+      expect(response.body.npc).toBeDefined();
+      expect(response.body.npc.npcId).toBe(negativeNpcId);
+      expect(response.body.npc.npcType).toBe('COLOSSUS');
+      expect(response.body.killers).toHaveLength(1);
+      expect(response.body.killers[0].memberName).toBe('Test Member');
+    });
+
+    it('should handle concurrent kills of same COLOSSUS from different spawn IDs', async () => {
+      const guild = await prisma.guild.create({
+        data: TEST_GUILDS.GUILD_1,
+      });
+
+      // Create 3 members
+      await Promise.all([
+        prisma.member.create({
+          data: {
+            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            guildId: guild.id,
+            name: 'Member 1',
+            globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
+          },
+        }),
+        prisma.member.create({
+          data: {
+            userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+            guildId: guild.id,
+            name: 'Member 2',
+            globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
+          },
+        }),
+        prisma.member.create({
+          data: {
+            userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+            guildId: guild.id,
+            name: 'Member 3',
+            globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
+          },
+        }),
+      ]);
+
+      // Configure all members
+      await Promise.all([
+        prisma.userCharactersLootlogSettings.create({
+          data: {
+            userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            accountId: '11111',
+            characterId: '1',
+            collectLootWhitelistGuildIds: [guild.id],
+            addTimersWhitelistGuildIds: [],
+          },
+        }),
+        prisma.userCharactersLootlogSettings.create({
+          data: {
+            userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+            accountId: '22222',
+            characterId: '2',
+            collectLootWhitelistGuildIds: [guild.id],
+            addTimersWhitelistGuildIds: [],
+          },
+        }),
+        prisma.userCharactersLootlogSettings.create({
+          data: {
+            userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+            accountId: '33333',
+            characterId: '3',
+            collectLootWhitelistGuildIds: [guild.id],
+            addTimersWhitelistGuildIds: [],
+          },
+        }),
+      ]);
+
+      // All 3 members kill the "same" COLOSSUS simultaneously
+      // Each member reports with a DIFFERENT spawn ID (as would happen in-game)
+      const responses = await Promise.all([
+        request(app.getHttpServer())
+          .post('/kills')
+          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .send(
+            createColossusKillPayload(111111, 'Wielki Kolos', {
+              accountId: '11111',
+              characterId: '1',
+            }),
+          ),
+        request(app.getHttpServer())
+          .post('/kills')
+          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_2.discordId)
+          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_2.id)
+          .send(
+            createColossusKillPayload(222222, 'Wielki Kolos', {
+              accountId: '22222',
+              characterId: '2',
+            }),
+          ),
+        request(app.getHttpServer())
+          .post('/kills')
+          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_3.discordId)
+          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_3.id)
+          .send(
+            createColossusKillPayload(333333, 'Wielki Kolos', {
+              accountId: '33333',
+              characterId: '3',
+            }),
+          ),
+      ]);
+
+      // All should succeed
+      responses.forEach((response) => {
+        expect(response.status).toBe(201);
+        expect(response.body.updated).toBe(1);
+      });
+
+      // Verify all 3 users have their own UserKillStats (per-user tracking)
+      const userKills = await prisma.userKillStats.findMany();
+      expect(userKills).toHaveLength(3);
+
+      // All should have same stable negative npcId (derived from name)
+      const npcIds = new Set(userKills.map((k) => k.npcId));
+      expect(npcIds.size).toBe(1);
+      expect(userKills[0].npcId).toBeLessThan(0);
+
+      // 3 member participations in NpcKillStats (same npcId)
+      const npcKills = await prisma.npcKillStats.findMany({
+        where: { guildId: guild.id },
+      });
+      expect(npcKills).toHaveLength(3);
+      const npcKillIds = new Set(npcKills.map((k) => k.npcId));
+      expect(npcKillIds.size).toBe(1);
+
+      // But only 1 unique guild kill (deduplication worked)
+      const guildSummary = await prisma.guildKillSummary.findMany({
+        where: { guildId: guild.id },
+      });
+      expect(guildSummary).toHaveLength(1);
+      expect(guildSummary[0].uniqueKills).toBe(1);
+      expect(guildSummary[0].npcId).toBeLessThan(0);
+    });
+  });
 });
