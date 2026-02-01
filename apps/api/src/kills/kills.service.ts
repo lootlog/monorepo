@@ -389,7 +389,9 @@ export class KillsService {
   }
 
   async getUserKillStats(discordId: string, query: GetUserKillStatsDto) {
-    const npcTypes = query.npcTypes;
+    const npcTypes = query.npcType
+      ? [query.npcType, ...(query.npcTypes ?? [])]
+      : query.npcTypes;
 
     // Query from UserKillStats - now aggregated per user (no character distinction)
     const stats = await this.prisma.userKillStats.findMany({

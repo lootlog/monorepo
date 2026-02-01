@@ -65,6 +65,15 @@ export class GetUserKillStatsDto {
   npcTypes?: NpcType[];
 
   @ApiPropertyOptional({
+    example: 'HERO',
+    description: 'Single NPC type to filter by (alternative to npcTypes)',
+    enum: NpcType,
+  })
+  @IsOptional()
+  @IsEnum(NpcType)
+  npcType?: NpcType;
+
+  @ApiPropertyOptional({
     example: 'pandora',
     description: 'Filter by world',
   })
