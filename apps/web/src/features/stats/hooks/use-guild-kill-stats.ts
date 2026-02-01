@@ -17,8 +17,10 @@ export type NpcType =
 export type KillsByType = Partial<Record<NpcType, number>>;
 
 export type KillStatsOverview = {
-  totalKills: number;
+  guildUniqueKills: number;
+  totalMemberParticipations: number;
   killsByType: KillsByType;
+  participationsByType: KillsByType;
 };
 
 export type MemberKillRanking = {
@@ -26,8 +28,8 @@ export type MemberKillRanking = {
   memberName: string;
   memberAvatar: string | null;
   memberUserId: string;
-  totalKills: number;
-  killsByType: KillsByType;
+  totalParticipations: number;
+  participationsByType: KillsByType;
 };
 
 export type GuildKillStatsResponse = {

@@ -10,7 +10,7 @@ export type TopNpc = {
   npcLvl: number;
   npcProf: string | null;
   npcIcon: string | null;
-  totalKills: number;
+  uniqueKills: number;
 };
 
 export type GuildTopNpcsResponse = {

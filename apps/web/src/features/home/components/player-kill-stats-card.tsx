@@ -60,15 +60,15 @@ export const PlayerKillStatsCard: React.FC<PlayerKillStatsCardProps> = ({
 
   if (!data || data.overview.totalKills === 0) {
     return (
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Swords className="h-5 w-5" />
             {t("kills.playerStats.title")}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
+        <CardContent className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground text-center">
             {t("kills.playerStats.noData")}
           </p>
         </CardContent>

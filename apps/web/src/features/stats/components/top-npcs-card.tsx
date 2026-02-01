@@ -94,7 +94,7 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
   }
 
   return (
-    <Card className="py-5">
+    <Card className="py-5 flex flex-col h-full">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -118,13 +118,13 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
           </Select>
         </div>
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="flex flex-col flex-1">
         {topNpcs.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("kills.topNpcs.noData")}
           </p>
         ) : (
-          <>
+          <div className="space-y-1">
             {topNpcs.map((npc, index) => (
               <Link
                 key={npc.npcId}
@@ -166,21 +166,21 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
                 <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50">
                   <span className="text-xs text-muted-foreground">x</span>
                   <span className="text-sm font-semibold tabular-nums">
-                    {npc.totalKills.toLocaleString()}
+                    {npc.uniqueKills.toLocaleString()}
                   </span>
                 </div>
               </Link>
             ))}
-            <Link
-              to="/$guildId/stats/npcs"
-              params={{ guildId }}
-              className="flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors pt-4"
-            >
-              {t("kills.topNpcs.viewAll")}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </>
+          </div>
         )}
+        <Link
+          to="/$guildId/stats/npcs"
+          params={{ guildId }}
+          className="flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors pt-4 mt-auto"
+        >
+          {t("kills.topNpcs.viewAll")}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </CardContent>
     </Card>
   );

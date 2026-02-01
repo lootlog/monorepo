@@ -1,7 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { useTranslation } from "react-i18next";
+import type { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@lootlog/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import { ArrowUpDown, Crown, Medal, Trophy } from "lucide-react";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import type { MemberKillRanking, NpcType } from "../hooks/use-guild-kill-stats";
@@ -76,7 +80,7 @@ export const createRankingColumns = (
       enableSorting: false,
     },
     {
-      accessorKey: "totalKills",
+      accessorKey: "totalParticipations",
       header: ({ column }) => (
         <div className="text-center">
           <Button
@@ -92,7 +96,7 @@ export const createRankingColumns = (
       ),
       cell: ({ row }) => (
         <div className="text-center font-semibold tabular-nums">
-          {row.original.totalKills.toLocaleString()}
+          {row.original.totalParticipations.toLocaleString()}
         </div>
       ),
     },
@@ -103,11 +107,12 @@ export const createRankingColumns = (
     .sort((a, b) => NPC_TYPE_ORDER.indexOf(a) - NPC_TYPE_ORDER.indexOf(b))
     .map((type) => ({
       id: `kills_${type}`,
-      accessorFn: (row: MemberKillRanking) => row.killsByType[type] ?? 0,
+      accessorFn: (row: MemberKillRanking) =>
+        row.participationsByType[type] ?? 0,
       header: () => <div className="text-center">{t(`npcType.${type}`)}</div>,
       cell: ({ row }: { row: { original: MemberKillRanking } }) => (
         <div className="text-center tabular-nums">
-          {(row.original.killsByType[type] ?? 0).toLocaleString()}
+          {(row.original.participationsByType[type] ?? 0).toLocaleString()}
         </div>
       ),
       enableSorting: false,

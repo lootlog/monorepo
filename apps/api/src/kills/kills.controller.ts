@@ -72,7 +72,7 @@ export class KillsController {
     return plainToInstance(CreateKillResponseEntity, result);
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/stats/kills')
   @ApiOperation({
@@ -143,7 +143,7 @@ export class KillsController {
     return plainToInstance(UserNpcKillsEntity, result);
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/stats/kills/top-npcs')
   @ApiOperation({
@@ -181,7 +181,7 @@ export class KillsController {
     return plainToInstance(GuildTopNpcsEntity, result);
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/stats/kills/top-killers')
   @ApiOperation({
@@ -215,7 +215,7 @@ export class KillsController {
     return plainToInstance(GuildTopKillersByTypeEntity, result);
   }
 
-  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/stats/kills/npcs/:npcId/killers')
   @ApiOperation({

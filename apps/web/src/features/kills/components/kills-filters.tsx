@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Globe, Search, User } from "lucide-react";
+import { Globe, Search } from "lucide-react";
 import { Input } from "@lootlog/ui/components/input";
 import {
   Select,
@@ -16,7 +16,6 @@ import {
 
 export type KillsFiltersState = {
   world?: string;
-  characterId?: number;
   npcTypes?: NpcType[];
   search?: string;
   minLvl?: number;
@@ -26,7 +25,6 @@ export type KillsFiltersState = {
 type KillsFiltersProps = {
   filters: KillsFiltersState;
   onWorldChange: (world: string | undefined) => void;
-  onCharacterChange: (characterId: number | undefined) => void;
   onNpcTypeChange: (npcTypes: NpcType[] | undefined) => void;
   onSearchChange: (search: string) => void;
   onMinLvlChange: (minLvl: string) => void;
@@ -36,7 +34,6 @@ type KillsFiltersProps = {
 export const KillsFilters: React.FC<KillsFiltersProps> = ({
   filters,
   onWorldChange,
-  onCharacterChange,
   onNpcTypeChange,
   onSearchChange,
   onMinLvlChange,
@@ -49,14 +46,8 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
     ? Object.keys(data.overview.killsByWorld).sort()
     : [];
 
-  const characters = data?.characters ?? [];
-
   const handleWorldChange = (value: string) => {
     onWorldChange(value === "all" ? undefined : value);
-  };
-
-  const handleCharacterChange = (value: string) => {
-    onCharacterChange(value === "all" ? undefined : Number(value));
   };
 
   const handleNpcTypeChange = (value: string) => {
@@ -101,34 +92,6 @@ export const KillsFilters: React.FC<KillsFiltersProps> = ({
             {worlds.map((world) => (
               <SelectItem key={world} value={world}>
                 {world.charAt(0).toUpperCase() + world.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.characterId?.toString() ?? "all"}
-          onValueChange={handleCharacterChange}
-        >
-          <SelectTrigger className="w-full md:w-[200px] h-9">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground shrink-0" />
-              <SelectValue
-                placeholder={t("kills.home.filters.allCharacters")}
-              />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">
-              {t("kills.home.filters.allCharacters")}
-            </SelectItem>
-            {characters.map((char) => (
-              <SelectItem
-                key={char.characterId}
-                value={char.characterId.toString()}
-              >
-                {char.characterName} ({char.characterLvl}
-                {char.characterProf})
               </SelectItem>
             ))}
           </SelectContent>

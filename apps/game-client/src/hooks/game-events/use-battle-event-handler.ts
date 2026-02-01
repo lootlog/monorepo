@@ -77,95 +77,94 @@ export const useBattleEventHandler = () => {
       battleStore.updateBattleWarriors(battleWarriorsWithAccountId);
     }
 
-    if (!battlePanelStore.isBattleCollectionEnabled) return;
-
-    battleStore.addEvent(event);
+    if (battlePanelStore.isBattleCollectionEnabled) {
+      battleStore.addEvent(event);
+    }
 
     if (
       event.f.endBattle === 1 &&
       useBattleStore.getState().battleState === "in-battle"
     ) {
-      const battleTurns = useBattleStore
-        .getState()
-        .events.reduce((acc: string[], curr) => {
-          if (!curr.f || !curr.f.m) return acc;
+      const battleWarriors = useBattleStore.getState().battleWarriors;
+      const hasNpcInBattle = Object.keys(battleWarriors).some((key) =>
+        key.startsWith("-"),
+      );
 
-          return [...acc, ...curr.f.m];
-        }, []);
+      // Kill tracking - always runs regardless of isBattleCollectionEnabled
+      if (hasNpcInBattle) {
+        const deadNpcs = extractDeadNpcs(battleWarriors);
 
-      const battleHash = await createSHA256Hash(JSON.stringify(battleTurns));
+        if (deadNpcs.length > 0) {
+          const sortedByWt = [...deadNpcs].sort((a, b) => b.wt - a.wt);
+          const topNpc = sortedByWt[0];
 
-      if (useBattleStore.getState().lastBattleHash !== battleHash) {
-        const events = mapBattleEventsToPayload(
-          useBattleStore.getState().events,
-        );
+          if (topNpc) {
+            const npcType = getNpcTypeByWt(topNpc.wt, topNpc.prof, topNpc.type);
 
-        if (events) {
-          const hasNegativeId = useBattleStore
-            .getState()
-            .events.some((event) => {
-              if (!event.f?.w) return false;
-              return Object.keys(event.f.w).some((key) => {
-                return key.startsWith("-");
-              });
-            });
+            if (TRACKABLE_NPC_TYPES.has(npcType)) {
+              // Deduplicate kills by hashing the dead NPCs
+              const killHash = await createSHA256Hash(
+                JSON.stringify(deadNpcs.map((npc) => npc.id).sort()),
+              );
+              const lastKillHash = useBattleStore.getState().lastKillHash;
 
-          const teams = new Set<number>();
-          useBattleStore.getState().events.forEach((event) => {
-            if (!event.f?.w) return;
-            Object.values(event.f.w).forEach((warrior) => {
-              if (warrior.team !== undefined) {
-                teams.add(warrior.team);
-              }
-            });
-          });
-
-          if (!hasNegativeId && teams.size > 1) {
-            createBattle({
-              accountId: String(accountId),
-              characterId: String(characterId),
-              world,
-              events,
-            });
-          }
-
-          if (hasNegativeId) {
-            const deadNpcs = extractDeadNpcs(
-              useBattleStore.getState().battleWarriors,
-            );
-
-            if (deadNpcs.length > 0) {
-              const sortedByWt = [...deadNpcs].sort((a, b) => b.wt - a.wt);
-              const topNpc = sortedByWt[0];
-
-              if (topNpc) {
-                const npcType = getNpcTypeByWt(
-                  topNpc.wt,
-                  topNpc.prof,
-                  topNpc.type,
-                );
-
-                if (TRACKABLE_NPC_TYPES.has(npcType)) {
-                  const heroInfo = Game.hero;
-
-                  createKill({
-                    world,
-                    npc: topNpc,
-                    characterId: String(characterId),
-                    accountId: String(accountId),
-                    characterName: heroInfo.nick,
-                    characterLvl: heroInfo.lvl,
-                    characterProf: heroInfo.prof,
-                    characterIcon: heroInfo.img,
-                  });
-                }
+              if (killHash !== lastKillHash) {
+                const { type: _, ...npcWithoutType } = topNpc;
+                createKill({
+                  world,
+                  npc: npcWithoutType,
+                  characterId: String(characterId),
+                  accountId: String(accountId),
+                });
+                battleStore.setLastKillHash(killHash);
               }
             }
           }
         }
       }
 
-      battleStore.setLastBattleHash(battleHash);
+      // Battle logging - only if enabled
+      if (battlePanelStore.isBattleCollectionEnabled) {
+        const battleTurns = useBattleStore
+          .getState()
+          .events.reduce((acc: string[], curr) => {
+            if (!curr.f || !curr.f.m) return acc;
+
+            return [...acc, ...curr.f.m];
+          }, []);
+
+        const battleHash = await createSHA256Hash(JSON.stringify(battleTurns));
+        const lastBattleHash = useBattleStore.getState().lastBattleHash;
+
+        if (lastBattleHash !== battleHash) {
+          const events = mapBattleEventsToPayload(
+            useBattleStore.getState().events,
+          );
+
+          if (events && !hasNpcInBattle) {
+            const teams = new Set<number>();
+            useBattleStore.getState().events.forEach((event) => {
+              if (!event.f?.w) return;
+              Object.values(event.f.w).forEach((warrior) => {
+                if (warrior.team !== undefined) {
+                  teams.add(warrior.team);
+                }
+              });
+            });
+
+            if (teams.size > 1) {
+              createBattle({
+                accountId: String(accountId),
+                characterId: String(characterId),
+                world,
+                events,
+              });
+            }
+          }
+        }
+
+        battleStore.setLastBattleHash(battleHash);
+      }
 
       battleStore.clearEvents();
       battleStore.setBattleState("idle");

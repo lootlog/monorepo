@@ -31,7 +31,7 @@ import { TRACKABLE_NPC_TYPES } from "../constants";
 
 const STORAGE_KEY = "stats-podium-npc-type";
 
-type PodiumMember = MemberKillRanking & { typeKills: number };
+type PodiumMember = MemberKillRanking & { typeParticipations: number };
 
 type PodiumSlotProps = {
   member?: PodiumMember;
@@ -116,7 +116,7 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
       </span>
 
       <span className="text-xs text-muted-foreground">
-        x{member.typeKills.toLocaleString()}
+        x{member.typeParticipations.toLocaleString()}
       </span>
 
       <div
@@ -149,9 +149,7 @@ export const MemberRankingPodiumCard: React.FC<
   );
   const { data: guildMembers } = useGuildMembers(true);
 
-  const membersMap = new Map(
-    guildMembers?.map((m) => [m.userId, m]) ?? [],
-  );
+  const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
 
   if (isLoading) {
     return (
@@ -178,9 +176,12 @@ export const MemberRankingPodiumCard: React.FC<
 
   const sortedByType: PodiumMember[] =
     data
-      ?.map((m) => ({ ...m, typeKills: m.killsByType[selectedNpcType] ?? 0 }))
-      .filter((m) => m.typeKills > 0)
-      .sort((a, b) => b.typeKills - a.typeKills)
+      ?.map((m) => ({
+        ...m,
+        typeParticipations: m.participationsByType[selectedNpcType] ?? 0,
+      }))
+      .filter((m) => m.typeParticipations > 0)
+      .sort((a, b) => b.typeParticipations - a.typeParticipations)
       .slice(0, 3) ?? [];
 
   return (

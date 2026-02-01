@@ -3,7 +3,11 @@ import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
 import { useLocalStorage } from "usehooks-ts";
 import { Crown, Medal, Search, Trophy, Users } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@lootlog/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import { Input } from "@lootlog/ui/components/input";
 import {
   Select,
@@ -102,9 +106,7 @@ export const NpcKillersPage: React.FC = () => {
     setCursor(0);
   };
 
-  const membersMap = new Map(
-    guildMembers?.map((m) => [m.userId, m]) ?? [],
-  );
+  const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
 
   const killers = data?.killers ?? [];
   const filteredKillers = search
@@ -113,7 +115,10 @@ export const NpcKillersPage: React.FC = () => {
       )
     : killers;
   const total = filteredKillers.length;
-  const paginatedKillers = filteredKillers.slice(cursor, cursor + ITEMS_PER_PAGE);
+  const paginatedKillers = filteredKillers.slice(
+    cursor,
+    cursor + ITEMS_PER_PAGE,
+  );
   const hasNext = cursor + ITEMS_PER_PAGE < total;
   const hasPrev = cursor > 0;
 
@@ -178,13 +183,15 @@ export const NpcKillersPage: React.FC = () => {
               </p>
               <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                 <span>
-                  {t("kills.npcKillers.totalGuildKills", {
-                    count: npc.totalGuildKills,
+                  {t("kills.npcKillers.uniqueGuildKills", {
+                    count: npc.uniqueGuildKills,
                   })}
                 </span>
                 <span className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  {t("kills.npcKillers.totalMembers", { count: killers.length })}
+                  {t("kills.npcKillers.totalMembers", {
+                    count: killers.length,
+                  })}
                 </span>
               </div>
             </div>
@@ -283,7 +290,7 @@ export const NpcKillersPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="font-semibold tabular-nums">
-                        {killer.killCount.toLocaleString()}
+                        {killer.participationCount.toLocaleString()}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -305,7 +312,9 @@ export const NpcKillersPage: React.FC = () => {
                 <PaginationPrevious
                   onClick={handlePreviousPage}
                   className={
-                    !hasPrev ? "pointer-events-none opacity-50" : "cursor-pointer"
+                    !hasPrev
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
                   }
                 />
               </PaginationItem>
@@ -313,7 +322,9 @@ export const NpcKillersPage: React.FC = () => {
                 <PaginationNext
                   onClick={handleNextPage}
                   className={
-                    !hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"
+                    !hasNext
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
                   }
                 />
               </PaginationItem>

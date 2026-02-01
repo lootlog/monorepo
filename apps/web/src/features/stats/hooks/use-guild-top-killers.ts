@@ -7,7 +7,7 @@ export type TopKiller = {
   memberName: string;
   memberAvatar: string | null;
   memberUserId: string;
-  totalKills: number;
+  totalParticipations: number;
 };
 
 export type GuildTopKillersResponse = {

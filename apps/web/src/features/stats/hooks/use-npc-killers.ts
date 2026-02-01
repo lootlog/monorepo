@@ -10,7 +10,8 @@ export type NpcInfo = {
   npcLvl: number;
   npcProf: string | null;
   npcIcon: string | null;
-  totalGuildKills: number;
+  uniqueGuildKills: number;
+  totalMemberParticipations: number;
 };
 
 export type NpcKiller = {
@@ -18,7 +19,7 @@ export type NpcKiller = {
   memberName: string;
   memberAvatar: string | null;
   memberUserId: string;
-  killCount: number;
+  participationCount: number;
 };
 
 export type NpcKillersResponse = {

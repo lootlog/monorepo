@@ -28,7 +28,6 @@ export type NpcKillsResponse = {
 export type NpcKillsFilters = {
   world?: string;
   npcTypes?: NpcType[];
-  characterId?: number;
   search?: string;
   cursor?: number;
   limit?: number;
@@ -44,7 +43,6 @@ export const useNpcKills = (filters: NpcKillsFilters = {}) => {
   const queryParams = {
     world: filters.world || undefined,
     npcType: filters.npcTypes?.join(",") || undefined,
-    characterId: filters.characterId || undefined,
     search: filters.search || undefined,
     cursor: filters.cursor || undefined,
     limit: filters.limit || undefined,

@@ -39,21 +39,18 @@ const getRankIcon = (index: number) => {
 type TopKilledNpcsCardProps = {
   world?: string;
   npcType: NpcType;
-  characterId?: number;
   onNpcTypeChange: (type: NpcType) => void;
 };
 
 export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
   world,
   npcType,
-  characterId,
   onNpcTypeChange,
 }) => {
   const { t } = useTranslation();
   const { data, isLoading } = usePlayerKillStats({
     world,
     npcTypes: [npcType],
-    characterId,
   });
 
   if (isLoading) {
@@ -90,7 +87,7 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
   const topNpcs = data?.topNpcs?.slice(0, 5) ?? [];
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -111,11 +108,13 @@ export const TopKilledNpcsCard: React.FC<TopKilledNpcsCardProps> = ({
           </Select>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex-1 flex flex-col">
         {topNpcs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("kills.home.topKilledNpcs.noData")}
-          </p>
+          <div className="flex-1 flex items-center justify-center py-8">
+            <p className="text-sm text-muted-foreground text-center">
+              {t("kills.home.topKilledNpcs.noData")}
+            </p>
+          </div>
         ) : (
           <div className="space-y-1">
             {topNpcs.map((npc, index) => (

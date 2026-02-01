@@ -12,7 +12,6 @@ export const Home: React.FC = () => {
         <HomeFiltersBar
           filters={filters}
           onWorldChange={(world) => updateFilters({ world })}
-          onCharacterChange={(characterId) => updateFilters({ characterId })}
         />
 
         <div className="grid gap-3 md:grid-cols-2">
@@ -20,7 +19,6 @@ export const Home: React.FC = () => {
           <TopKilledNpcsCard
             world={filters.world}
             npcType={filters.npcType}
-            characterId={filters.characterId}
             onNpcTypeChange={(npcType) => updateFilters({ npcType })}
           />
         </div>
