@@ -31,6 +31,9 @@ const ROUTES = {
     lootlog: (guildId: string) => `/${guildId}`,
     timers: (guildId: string) => `/${guildId}/timers`,
     stats: (guildId: string) => `/${guildId}/stats`,
+    statsNpcs: (guildId: string) => `/${guildId}/stats/npcs`,
+    statsNpcKillers: (guildId: string, npcId: string) =>
+      `/${guildId}/stats/npcs/${npcId}`,
     reservations: {
       base: (guildId: string) => `/${guildId}/reservations`,
       reservationId: (guildId: string, reservationId: string) =>

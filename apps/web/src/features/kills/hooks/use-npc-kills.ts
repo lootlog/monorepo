@@ -33,6 +33,9 @@ export type NpcKillsFilters = {
   cursor?: number;
   limit?: number;
   sortOrder?: "asc" | "desc";
+  sortBy?: "kills" | "level";
+  minLvl?: number;
+  maxLvl?: number;
 };
 
 export const useNpcKills = (filters: NpcKillsFilters = {}) => {
@@ -46,6 +49,9 @@ export const useNpcKills = (filters: NpcKillsFilters = {}) => {
     cursor: filters.cursor || undefined,
     limit: filters.limit || undefined,
     sortOrder: filters.sortOrder || undefined,
+    sortBy: filters.sortBy || undefined,
+    minLvl: filters.minLvl || undefined,
+    maxLvl: filters.maxLvl || undefined,
   };
 
   const queryString = stringify(queryParams, {

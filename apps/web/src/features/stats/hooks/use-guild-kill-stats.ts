@@ -24,6 +24,8 @@ export type KillStatsOverview = {
 export type MemberKillRanking = {
   memberId: number;
   memberName: string;
+  memberAvatar: string | null;
+  memberUserId: string;
   totalKills: number;
   killsByType: KillsByType;
 };
@@ -37,6 +39,7 @@ export type GuildKillStatsFilters = {
   npcTypes?: NpcType[];
   minLvl?: number;
   maxLvl?: number;
+  world?: string;
 };
 
 export const useGuildKillStats = (filters: GuildKillStatsFilters = {}) => {
@@ -47,6 +50,7 @@ export const useGuildKillStats = (filters: GuildKillStatsFilters = {}) => {
     npcType: filters.npcTypes?.join(",") || undefined,
     minLvl: filters.minLvl || undefined,
     maxLvl: filters.maxLvl || undefined,
+    world: filters.world || undefined,
   };
 
   const queryString = stringify(queryParams, {

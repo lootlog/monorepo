@@ -119,6 +119,49 @@ export const GuildLayout: FC = () => {
       };
     }
 
+    // Stats ranking: /$guildId/stats/ranking
+    const guildStatsRanking = `${guildStats}/ranking`;
+    if (path === guildStatsRanking) {
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Statystyki", path: guildStats },
+          { label: "Ranking członków", path: null },
+        ],
+        showBack: true,
+        backPath: guildStats,
+      };
+    }
+
+    // Stats NPC list: /$guildId/stats/npcs
+    const guildStatsNpcs = `${guildStats}/npcs`;
+    if (path === guildStatsNpcs) {
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Statystyki", path: guildStats },
+          { label: "Potwory", path: null },
+        ],
+        showBack: true,
+        backPath: guildStats,
+      };
+    }
+
+    // Stats NPC killers: /$guildId/stats/npcs/$npcId
+    if (path.startsWith(`${guildStats}/npcs/`)) {
+      const npcId = params.npcId;
+      return {
+        breadcrumbs: [
+          { label: guild?.name || "Gildia", path: guildBase },
+          { label: "Statystyki", path: guildStats },
+          { label: "Potwory", path: guildStatsNpcs },
+          { label: `Potwór #${npcId}`, path: null },
+        ],
+        showBack: true,
+        backPath: guildStatsNpcs,
+      };
+    }
+
     // Events handling
     if (path === guildEvents) {
       return {

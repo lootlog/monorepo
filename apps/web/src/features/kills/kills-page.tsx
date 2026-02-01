@@ -24,6 +24,7 @@ import {
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
 import { Spinner } from "@lootlog/ui/components/spinner";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   KillsFilters,
@@ -39,6 +40,9 @@ type KillsSearchParams = {
   npcType?: string;
   search?: string;
   cursor?: string;
+  minLvl?: string;
+  maxLvl?: string;
+  sortBy?: string;
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -51,6 +55,14 @@ export const KillsPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState(searchParams.search ?? "");
   const debouncedSearch = useDebounce(searchInput, 500);
   const prevDebouncedSearch = useRef(debouncedSearch);
+
+  const [minLvlInput, setMinLvlInput] = useState(searchParams.minLvl ?? "");
+  const [maxLvlInput, setMaxLvlInput] = useState(searchParams.maxLvl ?? "");
+  const debouncedMinLvl = useDebounce(minLvlInput, 500);
+  const debouncedMaxLvl = useDebounce(maxLvlInput, 500);
+  const prevDebouncedMinLvl = useRef(debouncedMinLvl);
+  const prevDebouncedMaxLvl = useRef(debouncedMaxLvl);
+
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalKills", desc: true },
   ]);
@@ -64,16 +76,23 @@ export const KillsPage: React.FC = () => {
       ? (searchParams.npcType.split(",") as NpcType[])
       : undefined,
     search: debouncedSearch || undefined,
+    minLvl: debouncedMinLvl ? Number(debouncedMinLvl) : undefined,
+    maxLvl: debouncedMaxLvl ? Number(debouncedMaxLvl) : undefined,
   };
 
   const cursor = searchParams.cursor ? Number(searchParams.cursor) : 0;
   const sortOrder = sorting[0]?.desc === false ? "asc" : "desc";
+  const sortBy =
+    sorting[0]?.id === "npcLvl"
+      ? "level"
+      : ("kills" as "kills" | "level");
 
   const { data, isLoading } = useNpcKills({
     ...filters,
     cursor,
     limit: ITEMS_PER_PAGE,
     sortOrder,
+    sortBy,
   });
 
   const updateSearchParams = useCallback(
@@ -105,6 +124,26 @@ export const KillsPage: React.FC = () => {
     }
   }, [debouncedSearch, updateSearchParams]);
 
+  useEffect(() => {
+    if (debouncedMinLvl !== prevDebouncedMinLvl.current) {
+      prevDebouncedMinLvl.current = debouncedMinLvl;
+      updateSearchParams({
+        minLvl: debouncedMinLvl || undefined,
+        cursor: undefined,
+      });
+    }
+  }, [debouncedMinLvl, updateSearchParams]);
+
+  useEffect(() => {
+    if (debouncedMaxLvl !== prevDebouncedMaxLvl.current) {
+      prevDebouncedMaxLvl.current = debouncedMaxLvl;
+      updateSearchParams({
+        maxLvl: debouncedMaxLvl || undefined,
+        cursor: undefined,
+      });
+    }
+  }, [debouncedMaxLvl, updateSearchParams]);
+
   const handleWorldChange = (world: string | undefined) => {
     updateSearchParams({ world, cursor: undefined });
   };
@@ -125,6 +164,14 @@ export const KillsPage: React.FC = () => {
 
   const handleSearchChange = (search: string) => {
     setSearchInput(search);
+  };
+
+  const handleMinLvlChange = (minLvl: string) => {
+    setMinLvlInput(minLvl);
+  };
+
+  const handleMaxLvlChange = (maxLvl: string) => {
+    setMaxLvlInput(maxLvl);
   };
 
   const handleNextPage = () => {
@@ -170,14 +217,21 @@ export const KillsPage: React.FC = () => {
       </div>
 
       <KillsFilters
-        filters={{ ...filters, search: searchInput }}
+        filters={{
+          ...filters,
+          search: searchInput,
+          minLvl: minLvlInput ? Number(minLvlInput) : undefined,
+          maxLvl: maxLvlInput ? Number(maxLvlInput) : undefined,
+        }}
         onWorldChange={handleWorldChange}
         onCharacterChange={handleCharacterChange}
         onNpcTypeChange={handleNpcTypeChange}
         onSearchChange={handleSearchChange}
+        onMinLvlChange={handleMinLvlChange}
+        onMaxLvlChange={handleMaxLvlChange}
       />
 
-      <div className="relative flex-1 min-h-0 w-full overflow-auto">
+      <ScrollArea className="relative flex-1 min-h-0 w-full">
         {isLoading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <Spinner className="size-8" />
@@ -229,7 +283,7 @@ export const KillsPage: React.FC = () => {
             </TableBody>
           </Table>
         )}
-      </div>
+      </ScrollArea>
 
       <div className="h-14 shrink-0 bg-background border-t py-4 flex items-center justify-between px-4">
         <div className="text-sm text-muted-foreground whitespace-nowrap">

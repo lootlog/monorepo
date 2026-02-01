@@ -63,14 +63,25 @@ export const createKillsColumns = (startRank: number): ColumnDef<NpcKill>[] => [
   },
   {
     accessorKey: "npcLvl",
-    header: () => <div className="text-center">Poziom</div>,
+    header: ({ column }) => (
+      <div className="text-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-8"
+        >
+          Poziom
+          <ArrowUpDown className="ml-2 h-3 w-3" />
+        </Button>
+      </div>
+    ),
     cell: ({ row }) => (
       <div className="text-center">
         {row.original.npcLvl}
         {row.original.npcProf}
       </div>
     ),
-    enableSorting: false,
   },
   {
     accessorKey: "npcType",

@@ -68,6 +68,18 @@ export class MemberKillRankingEntity {
   memberName: string;
 
   @Expose()
+  @ApiProperty({
+    example: 'abc123',
+    description: 'Member Discord avatar hash',
+    nullable: true,
+  })
+  memberAvatar: string | null;
+
+  @Expose()
+  @ApiProperty({ example: '123456789', description: 'Member Discord user ID' })
+  memberUserId: string;
+
+  @Expose()
   @ApiProperty({ example: 50, description: 'Total kills by this member' })
   totalKills: number;
 
@@ -265,4 +277,142 @@ export class UserNpcKillsEntity {
     description: 'Pagination info',
   })
   pagination: PaginationEntity;
+}
+
+export class GuildTopNpcsEntity {
+  @Expose()
+  @ApiProperty({
+    type: [TopNpcEntity],
+    description: 'Top NPCs by kill count in guild',
+  })
+  topNpcs: TopNpcEntity[];
+}
+
+export class TopKillerEntity {
+  @Expose()
+  @ApiProperty({ example: 1, description: 'Member ID' })
+  memberId: number;
+
+  @Expose()
+  @ApiProperty({ example: 'PlayerName', description: 'Member name' })
+  memberName: string;
+
+  @Expose()
+  @ApiProperty({
+    example: 'abc123',
+    description: 'Member Discord avatar hash',
+    nullable: true,
+  })
+  memberAvatar: string | null;
+
+  @Expose()
+  @ApiProperty({ example: '123456789', description: 'Member Discord user ID' })
+  memberUserId: string;
+
+  @Expose()
+  @ApiProperty({ example: 50, description: 'Total kills of this type' })
+  totalKills: number;
+}
+
+export class GuildTopKillersByTypeEntity {
+  @Expose()
+  @ApiProperty({
+    type: [TopKillerEntity],
+    description: 'Top TITAN killers',
+  })
+  TITAN?: TopKillerEntity[];
+
+  @Expose()
+  @ApiProperty({
+    type: [TopKillerEntity],
+    description: 'Top HERO killers',
+  })
+  HERO?: TopKillerEntity[];
+
+  @Expose()
+  @ApiProperty({
+    type: [TopKillerEntity],
+    description: 'Top EVENT_HERO killers',
+  })
+  EVENT_HERO?: TopKillerEntity[];
+}
+
+export class NpcInfoEntity {
+  @Expose()
+  @ApiProperty({ example: 999, description: 'NPC ID' })
+  npcId: number;
+
+  @Expose()
+  @ApiProperty({ example: 'Boss Name', description: 'NPC name' })
+  npcName: string;
+
+  @Expose()
+  @ApiProperty({ example: 'HERO', description: 'NPC type' })
+  npcType: string;
+
+  @Expose()
+  @ApiProperty({ example: 300, description: 'NPC level' })
+  npcLvl: number;
+
+  @Expose()
+  @ApiProperty({
+    example: 'w',
+    description: 'NPC profession',
+    nullable: true,
+  })
+  npcProf: string | null;
+
+  @Expose()
+  @ApiProperty({
+    example: 'npc_icon.gif',
+    description: 'NPC icon',
+    nullable: true,
+  })
+  npcIcon: string | null;
+
+  @Expose()
+  @ApiProperty({ example: 100, description: 'Total kills of this NPC in guild' })
+  totalGuildKills: number;
+}
+
+export class NpcKillerEntity {
+  @Expose()
+  @ApiProperty({ example: 1, description: 'Member ID' })
+  memberId: number;
+
+  @Expose()
+  @ApiProperty({ example: 'PlayerName', description: 'Member name' })
+  memberName: string;
+
+  @Expose()
+  @ApiProperty({
+    example: 'abc123',
+    description: 'Member Discord avatar hash',
+    nullable: true,
+  })
+  memberAvatar: string | null;
+
+  @Expose()
+  @ApiProperty({ example: '123456789', description: 'Member Discord user ID' })
+  memberUserId: string;
+
+  @Expose()
+  @ApiProperty({ example: 25, description: 'Number of kills of this NPC' })
+  killCount: number;
+}
+
+export class NpcKillersResponseEntity {
+  @Expose()
+  @ApiProperty({
+    type: NpcInfoEntity,
+    description: 'NPC information',
+  })
+  npc: NpcInfoEntity;
+
+  @Expose()
+  @ApiProperty({
+    type: [NpcKillerEntity],
+    description: 'List of killers ranked by kill count',
+  })
+  killers: NpcKillerEntity[];
 }
