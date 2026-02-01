@@ -19,6 +19,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ["use-sync-external-store/shim"],
+  },
   build: {
     minify: "terser",
     terserOptions: {
