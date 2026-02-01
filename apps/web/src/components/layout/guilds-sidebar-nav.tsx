@@ -111,7 +111,7 @@ export const GuildsSidebarNav: FC = () => {
       label: "Statystyki",
       icon: <BarChart4 className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.stats,
-      available: false,
+      available: true,
       enabled: Boolean(
         permissions?.includes(Permission.LOOTLOG_LOOTS_READ) ||
         permissions?.includes(Permission.OWNER),

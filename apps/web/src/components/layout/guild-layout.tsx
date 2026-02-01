@@ -17,9 +17,13 @@ import { Button } from "@lootlog/ui/components/button";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { useEvent } from "@/features/events/hooks";
+import { useNpcKillers } from "@/features/stats/hooks/use-npc-killers";
+import { useMemberKills } from "@/features/stats/hooks/use-member-kills";
 import { ROUTES } from "@/config/routes";
+import { useTranslation } from "react-i18next";
 
 export const GuildLayout: FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
@@ -29,6 +33,12 @@ export const GuildLayout: FC = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
+  const { data: npcKillersData } = useNpcKillers(
+    params.npcId ? Number.parseInt(params.npcId, 10) : undefined,
+  );
+  const { data: memberKillsData } = useMemberKills(
+    params.memberId ? Number.parseInt(params.memberId, 10) : undefined,
+  );
 
   const getNavigationInfo = () => {
     const path = location.pathname;
@@ -36,7 +46,9 @@ export const GuildLayout: FC = () => {
 
     if (!guildId) {
       return {
-        breadcrumbs: [{ label: guild?.name || "Gildia", path: null }],
+        breadcrumbs: [
+          { label: guild?.name || t("common.breadcrumbs.guild"), path: null },
+        ],
         showBack: false,
       };
     }
@@ -54,7 +66,9 @@ export const GuildLayout: FC = () => {
 
     if (path === guildBase) {
       return {
-        breadcrumbs: [{ label: guild?.name || "Gildia", path: null }],
+        breadcrumbs: [
+          { label: guild?.name || t("common.breadcrumbs.guild"), path: null },
+        ],
         showBack: false,
       };
     }
@@ -62,8 +76,11 @@ export const GuildLayout: FC = () => {
     if (path === guildTimers) {
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Timery", path: null },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.timers"), path: null },
         ],
         showBack: true,
         backPath: guildBase,
@@ -73,8 +90,11 @@ export const GuildLayout: FC = () => {
     if (path === guildReservations) {
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Rezerwacje", path: null },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.reservations"), path: null },
         ],
         showBack: true,
         backPath: guildBase,
@@ -83,8 +103,14 @@ export const GuildLayout: FC = () => {
     if (path.startsWith(guildReservations)) {
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Rezerwacje", path: guildReservations },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          {
+            label: t("common.breadcrumbs.reservations"),
+            path: guildReservations,
+          },
           {
             label: reservationId
               ? reservationId.charAt(0).toUpperCase() + reservationId.slice(1)
@@ -100,8 +126,11 @@ export const GuildLayout: FC = () => {
     if (path === guildActivityLogs) {
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Logi aktywności", path: null },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.activityLogs"), path: null },
         ],
         showBack: true,
         backPath: guildBase,
@@ -111,11 +140,95 @@ export const GuildLayout: FC = () => {
     if (path === guildStats) {
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Statystyki", path: null },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.stats"), path: null },
         ],
         showBack: true,
         backPath: guildBase,
+      };
+    }
+
+    // Stats ranking: /$guildId/stats/ranking
+    const guildStatsRanking = `${guildStats}/ranking`;
+    if (path === guildStatsRanking) {
+      return {
+        breadcrumbs: [
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.stats"), path: guildStats },
+          { label: t("common.breadcrumbs.memberRanking"), path: null },
+        ],
+        showBack: true,
+        backPath: guildStats,
+      };
+    }
+
+    // Stats NPC list: /$guildId/stats/npcs
+    const guildStatsNpcs = `${guildStats}/npcs`;
+    if (path === guildStatsNpcs) {
+      return {
+        breadcrumbs: [
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.stats"), path: guildStats },
+          { label: t("common.breadcrumbs.npcs"), path: null },
+        ],
+        showBack: true,
+        backPath: guildStats,
+      };
+    }
+
+    // Stats NPC killers: /$guildId/stats/npcs/$npcId
+    if (path.startsWith(`${guildStats}/npcs/`)) {
+      return {
+        breadcrumbs: [
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.stats"), path: guildStats },
+          { label: t("common.breadcrumbs.npcs"), path: guildStatsNpcs },
+          {
+            label:
+              npcKillersData?.npc?.npcName ||
+              t("common.breadcrumbs.npcFallback", { id: params.npcId }),
+            path: null,
+          },
+        ],
+        showBack: true,
+        backPath: guildStatsNpcs,
+      };
+    }
+
+    // Stats member kills: /$guildId/stats/members/$memberId
+    if (path.startsWith(`${guildStats}/members/`)) {
+      return {
+        breadcrumbs: [
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.stats"), path: guildStats },
+          {
+            label: t("common.breadcrumbs.memberRanking"),
+            path: guildStatsRanking,
+          },
+          {
+            label:
+              memberKillsData?.member?.memberName ||
+              t("common.breadcrumbs.memberFallback", { id: params.memberId }),
+            path: null,
+          },
+        ],
+        showBack: true,
+        backPath: guildStatsRanking,
       };
     }
 
@@ -123,8 +236,11 @@ export const GuildLayout: FC = () => {
     if (path === guildEvents) {
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Eventy", path: null },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.events"), path: null },
         ],
         showBack: true,
         backPath: guildBase,
@@ -134,9 +250,12 @@ export const GuildLayout: FC = () => {
     if (path === `${guildEvents}/create`) {
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Eventy", path: guildEvents },
-          { label: "Nowy event", path: null },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.events"), path: guildEvents },
+          { label: t("common.breadcrumbs.newEvent"), path: null },
         ],
         showBack: true,
         backPath: guildEvents,
@@ -150,10 +269,16 @@ export const GuildLayout: FC = () => {
       if (path === `${guildEventDetail}/kills`) {
         return {
           breadcrumbs: [
-            { label: guild?.name || "Gildia", path: guildBase },
-            { label: "Eventy", path: guildEvents },
-            { label: event?.name || "Event", path: guildEventDetail },
-            { label: "Historia bić", path: null },
+            {
+              label: guild?.name || t("common.breadcrumbs.guild"),
+              path: guildBase,
+            },
+            { label: t("common.breadcrumbs.events"), path: guildEvents },
+            {
+              label: event?.name || t("common.breadcrumbs.event"),
+              path: guildEventDetail,
+            },
+            { label: t("common.breadcrumbs.killHistory"), path: null },
           ],
           showBack: true,
           backPath: guildEventDetail,
@@ -165,16 +290,22 @@ export const GuildLayout: FC = () => {
         const heroPath = `${guildEventDetail}/heroes/${heroId}`;
         return {
           breadcrumbs: [
-            { label: guild?.name || "Gildia", path: guildBase },
-            { label: "Eventy", path: guildEvents },
-            { label: event?.name || "Event", path: guildEventDetail },
+            {
+              label: guild?.name || t("common.breadcrumbs.guild"),
+              path: guildBase,
+            },
+            { label: t("common.breadcrumbs.events"), path: guildEvents },
+            {
+              label: event?.name || t("common.breadcrumbs.event"),
+              path: guildEventDetail,
+            },
             {
               label:
                 event?.heroNpcs?.find((h) => h.id === heroId)?.npcName ||
-                "Heros",
+                t("common.breadcrumbs.hero"),
               path: heroPath,
             },
-            { label: "Historia bić", path: null },
+            { label: t("common.breadcrumbs.killHistory"), path: null },
           ],
           showBack: true,
           backPath: heroPath,
@@ -186,13 +317,19 @@ export const GuildLayout: FC = () => {
         const heroPath = `${guildEventDetail}/heroes/${heroId}`;
         return {
           breadcrumbs: [
-            { label: guild?.name || "Gildia", path: guildBase },
-            { label: "Eventy", path: guildEvents },
-            { label: event?.name || "Event", path: guildEventDetail },
+            {
+              label: guild?.name || t("common.breadcrumbs.guild"),
+              path: guildBase,
+            },
+            { label: t("common.breadcrumbs.events"), path: guildEvents },
+            {
+              label: event?.name || t("common.breadcrumbs.event"),
+              path: guildEventDetail,
+            },
             {
               label:
                 event?.heroNpcs?.find((h) => h.id === heroId)?.npcName ||
-                "Heros",
+                t("common.breadcrumbs.hero"),
               path: heroPath,
             },
             { label: killId ?? "Kill", path: null },
@@ -206,13 +343,19 @@ export const GuildLayout: FC = () => {
       if (heroId && path.includes("/heroes/")) {
         return {
           breadcrumbs: [
-            { label: guild?.name || "Gildia", path: guildBase },
-            { label: "Eventy", path: guildEvents },
-            { label: event?.name || "Event", path: guildEventDetail },
+            {
+              label: guild?.name || t("common.breadcrumbs.guild"),
+              path: guildBase,
+            },
+            { label: t("common.breadcrumbs.events"), path: guildEvents },
+            {
+              label: event?.name || t("common.breadcrumbs.event"),
+              path: guildEventDetail,
+            },
             {
               label:
                 event?.heroNpcs?.find((h) => h.id === heroId)?.npcName ||
-                "Heros",
+                t("common.breadcrumbs.hero"),
               path: null,
             },
           ],
@@ -225,10 +368,16 @@ export const GuildLayout: FC = () => {
       if (path === `${guildEventDetail}/ranking`) {
         return {
           breadcrumbs: [
-            { label: guild?.name || "Gildia", path: guildBase },
-            { label: "Eventy", path: guildEvents },
-            { label: event?.name || "Event", path: guildEventDetail },
-            { label: "Ranking", path: null },
+            {
+              label: guild?.name || t("common.breadcrumbs.guild"),
+              path: guildBase,
+            },
+            { label: t("common.breadcrumbs.events"), path: guildEvents },
+            {
+              label: event?.name || t("common.breadcrumbs.event"),
+              path: guildEventDetail,
+            },
+            { label: t("common.breadcrumbs.ranking"), path: null },
           ],
           showBack: true,
           backPath: guildEventDetail,
@@ -238,9 +387,12 @@ export const GuildLayout: FC = () => {
       // Event detail: /events/$eventId
       return {
         breadcrumbs: [
-          { label: guild?.name || "Gildia", path: guildBase },
-          { label: "Eventy", path: guildEvents },
-          { label: event?.name || "Event", path: null },
+          {
+            label: guild?.name || t("common.breadcrumbs.guild"),
+            path: guildBase,
+          },
+          { label: t("common.breadcrumbs.events"), path: guildEvents },
+          { label: event?.name || t("common.breadcrumbs.event"), path: null },
         ],
         showBack: true,
         backPath: guildEvents,
@@ -249,23 +401,47 @@ export const GuildLayout: FC = () => {
 
     if (path.startsWith(guildSettings)) {
       const breadcrumbs = [
-        { label: guild?.name || "Gildia", path: guildBase },
-        { label: "Ustawienia", path: null },
+        {
+          label: guild?.name || t("common.breadcrumbs.guild"),
+          path: guildBase,
+        },
+        { label: t("common.breadcrumbs.settings"), path: null },
       ];
 
       if (path === guildSettingsRoles) {
-        breadcrumbs[1] = { label: "Ustawienia", path: guildSettings };
-        breadcrumbs.push({ label: "Role", path: null });
+        breadcrumbs[1] = {
+          label: t("common.breadcrumbs.settings"),
+          path: guildSettings,
+        };
+        breadcrumbs.push({ label: t("common.breadcrumbs.roles"), path: null });
       } else if (path.startsWith(`${guildSettingsRoles}/`)) {
         const roleId = path.split("/").pop();
-        breadcrumbs[1] = { label: "Ustawienia", path: guildSettings };
-        breadcrumbs.push({ label: "Role", path: guildSettingsRoles });
-        breadcrumbs.push({ label: `Rola #${roleId}`, path: null });
+        breadcrumbs[1] = {
+          label: t("common.breadcrumbs.settings"),
+          path: guildSettings,
+        };
+        breadcrumbs.push({
+          label: t("common.breadcrumbs.roles"),
+          path: guildSettingsRoles,
+        });
+        breadcrumbs.push({
+          label: t("common.breadcrumbs.roleFallback", { id: roleId }),
+          path: null,
+        });
       } else if (path === guildSettingsMembers) {
-        breadcrumbs[1] = { label: "Ustawienia", path: guildSettings };
-        breadcrumbs.push({ label: "Członkowie", path: null });
+        breadcrumbs[1] = {
+          label: t("common.breadcrumbs.settings"),
+          path: guildSettings,
+        };
+        breadcrumbs.push({
+          label: t("common.breadcrumbs.members"),
+          path: null,
+        });
       } else if (path === guildSettingsNpcs) {
-        breadcrumbs[1] = { label: "Ustawienia", path: guildSettings };
+        breadcrumbs[1] = {
+          label: t("common.breadcrumbs.settings"),
+          path: guildSettings,
+        };
         breadcrumbs.push({ label: "NPCs", path: null });
       }
 
@@ -277,7 +453,9 @@ export const GuildLayout: FC = () => {
     }
 
     return {
-      breadcrumbs: [{ label: guild?.name || "Gildia", path: null }],
+      breadcrumbs: [
+        { label: guild?.name || t("common.breadcrumbs.guild"), path: null },
+      ],
       showBack: false,
     };
   };
