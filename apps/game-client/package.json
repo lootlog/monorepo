@@ -79,6 +79,6 @@
     "vite": "^7.3.1",
     "vite-plugin-babel": "^1.4.1",
     "vite-plugin-monkey": "^7.1.9",
-    "vitest": "4.0.5"
+    "vitest": "4.0.18"
   }
 }
