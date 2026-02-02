@@ -29,8 +29,11 @@ export const Timers = () => {
   const characterId = String(Game.hero.id);
   const gameInterface = Game.interface;
   const defaultWorld = Game.getWorldName();
-  const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
+  const { worldByGuildId, allowWorldSelection, guildIdByCharId } =
+    useSettingsStore();
 
+  const guildId = guildIdByCharId[characterId];
+  const world = guildId ? worldByGuildId[guildId] : undefined;
   const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
 
   const { data: timers } = useTimers({ world: desiredWorld });
@@ -61,8 +64,6 @@ export const Timers = () => {
     defaultColorNames,
     overriddenDefaultColors,
   } = useTimersStore();
-
-  const guildId = guildIdByCharId[characterId];
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 

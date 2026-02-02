@@ -21,8 +21,9 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   const accountId = String(Game.hero.account);
   const defaultWorld = Game.getWorldName();
 
-  const { guildIdByCharId, world, setWorld } = useSettingsStore();
+  const { guildIdByCharId, worldByGuildId, setWorld } = useSettingsStore();
   const guildId = guildIdByCharId[characterId];
+  const world = guildId ? worldByGuildId[guildId] : undefined;
   const { data: worlds, isFetched } = useWorlds({ guildId });
 
   const [recentWorlds, setRecentWorlds] = useLocalStorage<string[]>(
@@ -34,18 +35,18 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
     if (!isFetched || !guildId || !worlds) return;
     if (!world) {
       if (defaultWorld && worlds.includes(defaultWorld)) {
-        setWorld(defaultWorld);
+        setWorld(guildId, defaultWorld);
       } else if (worlds.length > 0) {
-        setWorld(worlds[0]);
+        setWorld(guildId, worlds[0]);
       }
       return;
     }
 
     if (!worlds.includes(world)) {
       if (defaultWorld && worlds.includes(defaultWorld)) {
-        setWorld(defaultWorld);
+        setWorld(guildId, defaultWorld);
       } else if (worlds.length > 0) {
-        setWorld(worlds[0]);
+        setWorld(guildId, worlds[0]);
       }
     }
   }, [guildId, isFetched, worlds, world, defaultWorld, setWorld]);
@@ -83,6 +84,8 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
   }, [worlds, recentWorlds]);
 
   const handleWorldChange = (newWorld: string) => {
+    if (!guildId) return;
+
     if (newWorld) {
       const updatedRecent = [
         newWorld,
@@ -91,7 +94,7 @@ export const WorldSelector: FC<WorldSelectorProps> = ({
       setRecentWorlds(updatedRecent);
     }
 
-    setWorld(newWorld);
+    setWorld(guildId, newWorld);
   };
 
   return (
