@@ -15,8 +15,10 @@ export const OnlinePlayersList: FC = () => {
   const characterId = String(Game.hero.id);
   const defaultWorld = Game.getWorldName();
 
-  const { allowWorldSelection, guildIdByCharId, world } = useSettingsStore();
+  const { allowWorldSelection, guildIdByCharId, worldByGuildId } =
+    useSettingsStore();
   const guildId = guildIdByCharId[characterId];
+  const world = guildId ? worldByGuildId[guildId] : undefined;
   const [onlinePlayers] = usePlayersPresence(guildId, world || defaultWorld);
   const { data: guildMembers } = useGuildMembers(guildId);
   const [searchQuery, setSearchQuery] = useState("");

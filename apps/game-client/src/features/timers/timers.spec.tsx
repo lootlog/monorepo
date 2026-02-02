@@ -172,7 +172,7 @@ describe("Timers Component", () => {
       overriddenDefaultColors: {},
     });
     vi.mocked(useSettingsStore).mockReturnValue({
-      world: "world1",
+      worldByGuildId: { guild1: "world1" },
       allowWorldSelection: false,
       guildIdByCharId: { char1: "guild1" },
     });
@@ -239,7 +239,7 @@ describe("Timers Component", () => {
       const { useSettingsStore } = await import("@/store/settings.store");
 
       vi.mocked(useSettingsStore).mockReturnValue({
-        world: "world2",
+        worldByGuildId: { guild1: "world2" },
         allowWorldSelection: false,
         guildIdByCharId: { char1: "guild1" },
       });
@@ -427,7 +427,7 @@ describe("Timers Component", () => {
       const { useSettingsStore } = await import("@/store/settings.store");
 
       vi.mocked(useSettingsStore).mockReturnValue({
-        world: "world1",
+        worldByGuildId: { guild2: "world1" },
         allowWorldSelection: false,
         guildIdByCharId: {
           char1: "guild2",
@@ -443,7 +443,7 @@ describe("Timers Component", () => {
       const { useSettingsStore } = await import("@/store/settings.store");
 
       vi.mocked(useSettingsStore).mockReturnValue({
-        world: "world3",
+        worldByGuildId: { guild1: "world3" },
         allowWorldSelection: true,
         guildIdByCharId: {
           char1: "guild1",
