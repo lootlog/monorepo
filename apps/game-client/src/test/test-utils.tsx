@@ -5,7 +5,6 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement, ReactNode } from "react";
 import { vi } from "vitest";
-import type { Socket } from "socket.io-client";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   queryClient?: QueryClient;
@@ -46,10 +45,15 @@ export function render(
   };
 }
 
-export interface MockSocket extends Socket {
+export interface MockSocket {
+  id: string;
+  connected: boolean;
   emit: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
   off: ReturnType<typeof vi.fn>;
+  connect: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  listenerCount: ReturnType<typeof vi.fn>;
 }
 
 export function createMockSocket(): MockSocket {

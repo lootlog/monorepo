@@ -13,7 +13,7 @@ import {
 } from "@lootlog/ui/components/alert-dialog";
 import { Button } from "@lootlog/ui/components/button";
 import { Trash2 } from "lucide-react";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 interface ConfirmDeleteDialogProps {
   onConfirm: () => void | Promise<void>;

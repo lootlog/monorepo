@@ -16,10 +16,10 @@
     "build": "pkgroll"
   },
   "dependencies": {
-    "@msgpack/msgpack": "^3.0.0"
+    "@msgpack/msgpack": "^3.1.3"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "pkgroll": "^2.20.1"
+    "pkgroll": "^2.23.0"
   }
 }
