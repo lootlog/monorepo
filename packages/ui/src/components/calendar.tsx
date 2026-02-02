@@ -42,7 +42,7 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          // @ts-ignore
+          // @ts-expect-error locale type mismatch
           format(date, "LLLL", { locale: props.locale }),
         ...formatters,
       }}

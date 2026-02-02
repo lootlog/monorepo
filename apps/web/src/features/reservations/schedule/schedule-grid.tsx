@@ -291,7 +291,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       0,
     );
 
-    let start = p1.getTime() <= p2.getTime() ? p1 : p2;
+    const start = p1.getTime() <= p2.getTime() ? p1 : p2;
     let end = p1.getTime() <= p2.getTime() ? p2 : p1;
 
     end = new Date(end.getTime() + 15 * 60 * 1000);
@@ -312,7 +312,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
     const endDay = new Date(end);
     endDay.setHours(0, 0, 0, 0);
 
-    let current = new Date(startDay);
+    const current = new Date(startDay);
     while (current <= endDay) {
       const currentEnd = new Date(current);
       currentEnd.setHours(23, 59, 59, 999);
