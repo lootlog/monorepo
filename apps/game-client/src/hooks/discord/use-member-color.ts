@@ -6,7 +6,9 @@ export const useMemberColor = (guildMember: { roles?: Role[] } | undefined) =>
   useMemo(() => {
     if (!guildMember?.roles?.length) return "FFF";
     const topRole = guildMember.roles.reduce((prev: Role, curr: Role) =>
-      curr.position > prev.position ? curr : prev
+      curr.position > prev.position ? curr : prev,
     );
-    return topRole.color === 0 ? "FFF" : topRole.color?.toString(16);
+    return topRole.color === 0
+      ? "FFF"
+      : topRole.color?.toString(16).padStart(6, "0");
   }, [guildMember]);
