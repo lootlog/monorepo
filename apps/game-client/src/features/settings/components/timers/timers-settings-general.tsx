@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";
-import { FC, useState } from "react";
+import { type FC, useState } from "react";
 
 const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 

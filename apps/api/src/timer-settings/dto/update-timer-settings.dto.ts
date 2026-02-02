@@ -25,6 +25,15 @@ class TimersGeneralConfigDto {
   removeTimerAfterMs?: number;
 
   @ApiProperty({
+    description: 'Enable/disable compact view for timers',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  compactView?: boolean;
+
+  @ApiProperty({
     description: 'Enable/disable grouping timers',
     example: false,
     required: false,
