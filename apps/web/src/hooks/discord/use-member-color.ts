@@ -10,5 +10,5 @@ export const useMemberColor = (guildMember: { roles?: Role[] } | undefined) =>
     );
     return topRole.color === 0 || !topRole.color
       ? "inherit"
-      : `#${topRole.color?.toString(16)}`;
+      : `#${topRole.color.toString(16).padStart(6, "0")}`;
   }, [guildMember]);
