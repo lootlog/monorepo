@@ -93,7 +93,10 @@ export const MemberStatsPage: React.FC = () => {
   } = useStatsSettings("member");
   const { data, isLoading } = useMemberKills(Number.parseInt(memberId, 10), {
     world: settings.world ?? undefined,
-    npcTypes: settings.npcType === "ALL" ? undefined : [settings.npcType!],
+    npcTypes:
+      settings.npcType && settings.npcType !== "ALL"
+        ? [settings.npcType]
+        : undefined,
     search: debouncedSearch || undefined,
     limit: ITEMS_PER_PAGE,
     cursor,
