@@ -11,13 +11,15 @@
   },
   "filters": {
     "title": "Filtry",
+    "world": "Świat",
     "npcType": "Typ NPC",
     "levelRange": "Zakres poziomów",
     "minLevel": "Min. poziom",
     "maxLevel": "Max. poziom",
     "allTypes": "Wszystkie typy",
     "apply": "Zastosuj",
-    "reset": "Resetuj"
+    "reset": "Resetuj",
+    "close": "Zamknij"
   },
   "memberRanking": {
     "title": "Ranking członków",
@@ -92,7 +94,8 @@
     "totalMembers": "Członków: {{count}}",
     "uniqueGuildKills": "Unikalnych bić: {{count}}",
     "notFound": "Nie znaleziono danych o tym potworze",
-    "noKillers": "Brak graczy, którzy zabili tego potwora"
+    "noKillers": "Brak graczy, którzy zabili tego potwora",
+    "searchPlaceholder": "Szukaj gracza..."
   },
   "memberStats": {
     "title": "Statystyki członka",
