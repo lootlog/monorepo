@@ -1,15 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useLocalStorage } from "usehooks-ts";
-import { Search } from "lucide-react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  flexRender,
-  type SortingState,
-} from "@tanstack/react-table";
+import { Search, Crown, Trophy, Medal } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,14 +24,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@lootlog/ui/components/avatar";
 import { Input } from "@lootlog/ui/components/input";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
+import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildKillStats, type NpcType } from "./hooks/use-guild-kill-stats";
-import { createRankingColumns } from "./components/ranking-columns";
-
-const WORLD_STORAGE_KEY = "stats-ranking-world";
+import { useStatsSettings } from "./hooks/use-stats-settings";
+import { LevelFilters } from "./components/level-filters";
+import { StatsRankingFiltersMobile } from "./components/stats-ranking-filters-mobile";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -53,6 +51,19 @@ const NPC_TYPE_ORDER: NpcType[] = [
   "COMMON",
 ];
 
+const getRankIcon = (rank: number) => {
+  switch (rank) {
+    case 1:
+      return <Crown className="h-4 w-4 text-yellow-500" />;
+    case 2:
+      return <Trophy className="h-4 w-4 text-slate-400" />;
+    case 3:
+      return <Medal className="h-4 w-4 text-amber-600" />;
+    default:
+      return null;
+  }
+};
+
 export const StatsRanking: React.FC = () => {
   const { t } = useTranslation();
   const { guildId } = useParams({
@@ -60,24 +71,37 @@ export const StatsRanking: React.FC = () => {
   });
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(0);
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "totalParticipations", desc: true },
-  ]);
-  const [selectedWorld, setSelectedWorld] = useLocalStorage<string | null>(
-    WORLD_STORAGE_KEY,
-    null,
-  );
+  const {
+    settings,
+    debouncedMinLvl,
+    debouncedMaxLvl,
+    setWorld,
+    setMinLvl,
+    setMaxLvl,
+  } = useStatsSettings("ranking");
   const [searchQuery, setSearchQuery] = useState("");
   const { data: worlds } = useWorlds();
 
   const { data, isLoading } = useGuildKillStats({
-    world: selectedWorld ?? undefined,
+    world: settings.world ?? undefined,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
   });
 
   const handleWorldChange = (value: string) => {
-    setSelectedWorld(value === "ALL" ? null : value);
+    setWorld(value === "ALL" ? null : value);
     setCursor(0);
   };
+
+  // Reset cursor when debounced filter values change
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCursor(0);
+  }, [debouncedMinLvl, debouncedMaxLvl]);
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -109,20 +133,6 @@ export const StatsRanking: React.FC = () => {
     ),
   );
 
-  const columns = createRankingColumns(cursor, activeNpcTypes, t);
-
-  const table = useReactTable({
-    data: paginatedData,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    manualSorting: false,
-  });
-
   const handleNextPage = () => {
     if (hasNext) {
       setCursor(cursor + ITEMS_PER_PAGE);
@@ -135,10 +145,20 @@ export const StatsRanking: React.FC = () => {
     }
   };
 
+  const handleRowClick = (memberId: number) => {
+    navigate({
+      to: "/$guildId/stats/members/$memberId",
+      params: {
+        guildId,
+        memberId: memberId.toString(),
+      },
+    });
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 pb-4 bg-background border-b">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-xl font-bold">
               {t("kills.fullRanking.title")}
@@ -147,7 +167,28 @@ export const StatsRanking: React.FC = () => {
               {t("kills.fullRanking.description")}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 md:hidden">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t("kills.fullRanking.searchPlaceholder")}
+                onChange={handleSearchChange}
+                className="pl-8 w-full"
+              />
+            </div>
+            <StatsRankingFiltersMobile
+              world={settings.world}
+              minLvl={settings.minLvl}
+              maxLvl={settings.maxLvl}
+              onWorldChange={handleWorldChange}
+              onMinLvlChange={setMinLvl}
+              onMaxLvlChange={setMaxLvl}
+            />
+          </div>
+
+          <div className="hidden md:flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -157,8 +198,14 @@ export const StatsRanking: React.FC = () => {
                 className="pl-8 w-[200px]"
               />
             </div>
+            <LevelFilters
+              minLvl={settings.minLvl}
+              maxLvl={settings.maxLvl}
+              onMinLvlChange={setMinLvl}
+              onMaxLvlChange={setMaxLvl}
+            />
             <Select
-              value={selectedWorld ?? "ALL"}
+              value={settings.world ?? "ALL"}
               onValueChange={handleWorldChange}
             >
               <SelectTrigger className="w-[160px]">
@@ -196,49 +243,79 @@ export const StatsRanking: React.FC = () => {
         ) : (
           <Table className="border-b">
             <TableHeader className="bg-background sticky top-0 z-10">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="border-b-1! border-border"
-                >
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="whitespace-nowrap">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
+              <TableRow className="border-b-1! border-border">
+                <TableHead className="whitespace-nowrap w-12 text-center">
+                  #
+                </TableHead>
+                <TableHead className="whitespace-nowrap">
+                  {t("kills.memberRanking.member")}
+                </TableHead>
+                <TableHead className="whitespace-nowrap text-center">
+                  {t("kills.memberRanking.totalKills")}
+                </TableHead>
+                {activeNpcTypes.map((type) => (
+                  <TableHead
+                    key={type}
+                    className="whitespace-nowrap text-center"
+                  >
+                    {t(`npcType.${type}`)}
+                  </TableHead>
+                ))}
+              </TableRow>
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() =>
-                    navigate({
-                      to: "/$guildId/stats/members/$memberId",
-                      params: {
-                        guildId,
-                        memberId: row.original.memberId.toString(),
-                      },
-                    })
-                  }
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+              {paginatedData.map((member, index) => {
+                const rank = cursor + index + 1;
+                const icon = getRankIcon(rank);
+                return (
+                  <TableRow
+                    key={member.memberId}
+                    className="bg-background/30 border-b border-border h-14 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleRowClick(member.memberId)}
+                  >
+                    <TableCell className="whitespace-nowrap">
+                      <div className="flex items-center justify-center w-8">
+                        {icon ?? (
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {rank}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+                    <TableCell className="whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage
+                            src={getDiscordAvatarUrl(
+                              member.memberUserId,
+                              member.memberAvatar,
+                              32,
+                            )}
+                          />
+                          <AvatarFallback className="text-xs">
+                            {member.memberName[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{member.memberName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <div className="text-center font-semibold tabular-nums">
+                        {member.totalParticipations.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    {activeNpcTypes.map((type) => (
+                      <TableCell key={type} className="whitespace-nowrap">
+                        <div className="text-center tabular-nums">
+                          {(
+                            member.participationsByType[type] ?? 0
+                          ).toLocaleString()}
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
