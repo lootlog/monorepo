@@ -22,20 +22,31 @@ export type GuildTopNpcsParams = {
   npcType?: string;
   world?: string;
   search?: string;
+  minLvl?: number;
+  maxLvl?: number;
 };
 
 export const useGuildTopNpcs = (params: GuildTopNpcsParams = {}) => {
-  const { limit = 10, npcType, world, search } = params;
+  const { limit = 10, npcType, world, search, minLvl, maxLvl } = params;
   const guildId = useGuildId();
   const { client } = useApiClient();
 
   const queryParams = stringify(
-    { limit, npcType, world, search },
+    { limit, npcType, world, search, minLvl, maxLvl },
     { skipNulls: true, addQueryPrefix: true },
   );
 
   return useQuery({
-    queryKey: ["guild-top-npcs", guildId, limit, npcType, world, search],
+    queryKey: [
+      "guild-top-npcs",
+      guildId,
+      limit,
+      npcType,
+      world,
+      search,
+      minLvl,
+      maxLvl,
+    ],
     queryFn: async () => {
       const response = await client.get<GuildTopNpcsResponse>(
         `/guilds/${guildId}/stats/kills/top-npcs${queryParams}`,

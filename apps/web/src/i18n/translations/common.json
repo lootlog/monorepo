@@ -1,4 +1,6 @@
 {
+  "search": "Szukaj...",
+  "noResults": "Brak wyników",
   "cancel": "Anuluj",
   "breadcrumbs": {
     "guild": "Gildia",

@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
-import { useLocalStorage } from "usehooks-ts";
 import { Crown, Medal, Search, Trophy, Users } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -34,20 +33,21 @@ import {
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
 import { Spinner } from "@lootlog/ui/components/spinner";
-import { ScrollArea } from "@lootlog/ui/components/scroll-area";
+import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useMemberKills } from "./hooks/use-member-kills";
+import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
+import { LevelFilters } from "./components/level-filters";
+import { MemberStatsFiltersMobile } from "./components/member-stats-filters-mobile";
 import type { NpcType } from "./hooks/use-guild-kill-stats";
 
 const ITEMS_PER_PAGE = 20;
-const WORLD_STORAGE_KEY = "stats-member-kills-world";
-const NPC_TYPE_STORAGE_KEY = "stats-member-kills-npc-type";
 
 const NPC_TYPE_ORDER: NpcType[] = [
   "TITAN",
@@ -82,30 +82,36 @@ export const MemberStatsPage: React.FC = () => {
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
-  const [selectedWorld, setSelectedWorld] = useLocalStorage<string | null>(
-    WORLD_STORAGE_KEY,
-    null,
-  );
-  const [selectedNpcType, setSelectedNpcType] = useLocalStorage<
-    NpcType | "ALL"
-  >(NPC_TYPE_STORAGE_KEY, "ALL");
-  const { data: worlds } = useWorlds();
+  const {
+    settings,
+    debouncedMinLvl,
+    debouncedMaxLvl,
+    setWorld,
+    setMinLvl,
+    setMaxLvl,
+    setNpcType,
+  } = useStatsSettings("member");
   const { data, isLoading } = useMemberKills(Number.parseInt(memberId, 10), {
-    world: selectedWorld ?? undefined,
-    npcTypes: selectedNpcType === "ALL" ? undefined : [selectedNpcType],
+    world: settings.world ?? undefined,
+    npcTypes:
+      settings.npcType && settings.npcType !== "ALL"
+        ? [settings.npcType]
+        : undefined,
     search: debouncedSearch || undefined,
     limit: ITEMS_PER_PAGE,
     cursor,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
   });
   const { data: guildMembers } = useGuildMembers(true);
 
-  const handleWorldChange = (value: string) => {
-    setSelectedWorld(value === "ALL" ? null : value);
+  const handleWorldChange = (value: string | null) => {
+    setWorld(value);
     setCursor(0);
   };
 
   const handleNpcTypeChange = (value: string) => {
-    setSelectedNpcType(value as NpcType | "ALL");
+    setNpcType(value as NpcType | "ALL");
     setCursor(0);
   };
 
@@ -113,6 +119,16 @@ export const MemberStatsPage: React.FC = () => {
     setSearch(value);
     setCursor(0);
   };
+
+  // Reset cursor when debounced filter values change
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCursor(0);
+  }, [debouncedMinLvl, debouncedMaxLvl]);
 
   const handleNextPage = () => {
     if (data?.pagination?.hasNext) {
@@ -172,9 +188,9 @@ export const MemberStatsPage: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 pb-4 bg-background border-b">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3 md:gap-4">
+            <Avatar className="h-12 w-12 md:h-16 md:w-16 shrink-0 border-2 border-background shadow-lg">
               <AvatarImage
                 src={getDiscordAvatarUrl(
                   member.memberUserId,
@@ -182,12 +198,15 @@ export const MemberStatsPage: React.FC = () => {
                   128,
                 )}
               />
-              <AvatarFallback className="text-xl">
+              <AvatarFallback className="text-lg md:text-xl">
                 {member.memberName[0]}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <h1 className="text-xl font-bold" style={{ color: memberColor }}>
+            <div className="flex flex-col min-w-0">
+              <h1
+                className="text-lg md:text-xl font-bold truncate"
+                style={{ color: memberColor }}
+              >
                 {member.memberName}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -196,18 +215,49 @@ export const MemberStatsPage: React.FC = () => {
                 })}
               </p>
               {activeTypes.length > 0 && (
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {activeTypes.map((type) => (
-                    <Badge key={type} variant="secondary" className="text-xs">
-                      {t(`npcType.${type}`)}:{" "}
-                      {overview?.participationsByType[type] ?? 0}
-                    </Badge>
-                  ))}
-                </div>
+                <ScrollArea className="mt-2 w-full">
+                  <div className="flex items-center gap-1.5 pb-2">
+                    {activeTypes.map((type) => (
+                      <Badge
+                        key={type}
+                        variant="secondary"
+                        className="text-xs whitespace-nowrap px-2 py-0.5"
+                      >
+                        {t(`npcType.${type}`)}:{" "}
+                        {overview?.participationsByType[type] ?? 0}
+                      </Badge>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Mobile: search + filter button */}
+          <div className="flex items-center gap-2 md:hidden">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t("kills.memberStats.searchPlaceholder")}
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-9 w-full"
+              />
+            </div>
+            <MemberStatsFiltersMobile
+              world={settings.world}
+              npcType={settings.npcType}
+              minLvl={settings.minLvl}
+              maxLvl={settings.maxLvl}
+              onWorldChange={handleWorldChange}
+              onNpcTypeChange={handleNpcTypeChange}
+              onMinLvlChange={setMinLvl}
+              onMaxLvlChange={setMaxLvl}
+            />
+          </div>
+
+          {/* Desktop: inline filters */}
+          <div className="hidden md:flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -217,25 +267,23 @@ export const MemberStatsPage: React.FC = () => {
                 className="pl-9 w-[200px]"
               />
             </div>
-            <Select
-              value={selectedWorld ?? "ALL"}
+            <LevelFilters
+              minLvl={settings.minLvl}
+              maxLvl={settings.maxLvl}
+              onMinLvlChange={setMinLvl}
+              onMaxLvlChange={setMaxLvl}
+              inputClassName="w-[100px]"
+            />
+            <WorldSwitcher
+              value={settings.world}
               onValueChange={handleWorldChange}
+              showAllOption
+              width="w-[160px]"
+            />
+            <Select
+              value={settings.npcType ?? "ALL"}
+              onValueChange={handleNpcTypeChange}
             >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t("kills.home.filters.world")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.home.filters.allWorlds")}
-                </SelectItem>
-                {worlds?.map((world) => (
-                  <SelectItem key={world} value={world}>
-                    {world.charAt(0).toUpperCase() + world.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedNpcType} onValueChange={handleNpcTypeChange}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>

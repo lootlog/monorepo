@@ -119,9 +119,9 @@ export const LootFiltersHeader = ({
         {!isMobile && (
           <div
             style={{ width: 320 }}
-            className="flex items-center gap-2 justify-end shrink-0 h-full border-l border-border pl-3"
+            className="flex items-center justify-between shrink-0 h-full border-l border-border px-3 box-border"
           >
-            <WorldSwitcher className="flex-1" />
+            <WorldSwitcher className="flex-1 max-w-48" />
             <div className="flex items-center gap-1 border-r border-border pr-2 mr-1">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -209,7 +209,7 @@ export const LootFiltersHeader = ({
                     onClick={onToggleFilters}
                     variant={isFiltersOpen ? "default" : "outline"}
                     size="icon"
-                    className="relative shrink-0"
+                    className="relative shrink-0 h-8 w-8"
                   >
                     <Filter className="h-4 w-4" />
                     <AnimatePresence>
@@ -229,7 +229,7 @@ export const LootFiltersHeader = ({
                   onClick={onToggleFilters}
                   variant={isFiltersOpen ? "default" : "outline"}
                   size="icon"
-                  className="relative shrink-0"
+                  className="relative shrink-0 h-8 w-8"
                 >
                   <Filter className="h-4 w-4" />
                   <AnimatePresence>
