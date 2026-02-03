@@ -373,6 +373,36 @@ export class LootsController {
     return { count };
   }
 
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/loots/:lootId')
+  @ApiOperation({
+    summary: 'Get single loot',
+    description: 'Retrieve a single loot by ID',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: 'lootId', description: 'Loot ID', example: '123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Loot details',
+    type: LootEntity,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  @ApiResponse({ status: 404, description: 'Loot not found' })
+  async fetchLootById(
+    @Param('lootId', new ParseIntPipe()) lootId: number,
+    @GuildData() guild: Guild,
+  ) {
+    const loot = await this.lootsService.fetchLootById(guild, lootId);
+    if (!loot) {
+      return null;
+    }
+    return plainToInstance(LootEntity, loot);
+  }
+
   @Post('/loots')
   @ApiOperation({
     summary: 'Create loot',
