@@ -1,11 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { LOOT_SHARE_COLOR_PALETTE } from "@/features/guild/constants/loot-share-color-palette";
-import { Sheet } from "@lootlog/ui/components/sheet";
 import { Card } from "@lootlog/ui/components/card";
-import { LootDetailsSheetContent } from "@/features/guild/components/loots-list/loot-details-sheet-content";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import {
   Calendar,
@@ -18,11 +16,10 @@ import {
 import { cn } from "@lootlog/ui/lib/utils";
 import { ItemTile } from "@/components/tiles";
 import { useTheme } from "@/hooks/context/use-theme";
-import { FrozenButton } from "@/components/effects/rukia-frost";
+import { useSelectedLoot } from "@/hooks/use-selected-loot";
 
 type Props = {
   loot: Loot;
-  canManageLoots: boolean;
 };
 
 type PlayerColorMap = Record<string, { color: string; idx: number }>;
@@ -208,74 +205,53 @@ const LootFooter = ({
 const LEGENDARY_GRADIENT =
   "linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(0,0,0,0) 50%, rgba(239,68,68,0.05) 100%)";
 
-export const LootsListItem = ({ loot, canManageLoots }: Props) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+export const LootsListItem = ({ loot }: Props) => {
+  const { openLootDetails } = useSelectedLoot();
   const date = timestampToDate(loot.createdAt);
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
 
-  const {
-    playerColorMap,
-    itemOwnerMap,
-    itemsByPlayer,
-    unassignedItems,
-    hasLegendaryItem,
-    sortedPlayers,
-  } = useLootData(loot);
-
-  const cardContent = (
-    <Card
-      onClick={() => setIsOpen(true)}
-      className={cn(
-        "group relative px-4 pt-2 pb-1 transition-all duration-300 cursor-pointer h-full flex flex-col gap-0",
-        "bg-card/40 backdrop-blur-sm border-border",
-        "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg hover:scale-[1.01]",
-        hasLegendaryItem &&
-          "border-red-500/80 shadow-[0_0_25px_rgba(239,68,68,0.3),_0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_30px_rgba(239,68,68,0.4),_0_0_15px_rgba(239,68,68,0.3)]",
-      )}
-      style={hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined}
-    >
-      <LootHeader npcs={loot.npcs} commentsCount={loot.commentsCount} />
-      <LootContent
-        sortedPlayers={sortedPlayers}
-        itemsByPlayer={itemsByPlayer}
-        unassignedItems={unassignedItems}
-      />
-      <LootFooter
-        location={loot.location}
-        date={date}
-        playersCount={loot.players.length}
-        itemsCount={loot.items.length}
-      />
-    </Card>
-  );
+  const { itemsByPlayer, unassignedItems, hasLegendaryItem, sortedPlayers } =
+    useLootData(loot);
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <div
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className="h-full"
-      >
-        {isRukiaTheme ? (
-          <FrozenButton
-            isHovered={isHovered}
-            isActive={false}
-            className="h-full"
-          >
-            {cardContent}
-          </FrozenButton>
-        ) : (
-          cardContent
+    <div
+      className={cn(
+        "h-full",
+        // Simple CSS frost effect for Rukia theme - no JS hover tracking needed
+        isRukiaTheme &&
+          "rounded-xl hover:shadow-[inset_0_0_8px_1px_rgba(200,230,255,0.4),0_0_10px_2px_rgba(180,220,255,0.25)] transition-shadow duration-300",
+      )}
+    >
+      <Card
+        onClick={() => openLootDetails(loot.id)}
+        className={cn(
+          "group relative px-4 pt-2 pb-1 cursor-pointer h-full flex flex-col gap-0",
+          // Removed backdrop-blur-sm - very expensive during scrolling
+          // Use solid background instead for better performance
+          "bg-card/95 border-border",
+          // Simplified hover transitions - only essential properties
+          "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
+          hasLegendaryItem &&
+            "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)]",
         )}
-      </div>
-      <LootDetailsSheetContent
-        loot={loot}
-        ownerMap={itemOwnerMap}
-        playerColorMap={playerColorMap}
-        canManageLoots={canManageLoots}
-      />
-    </Sheet>
+        style={
+          hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined
+        }
+      >
+        <LootHeader npcs={loot.npcs} commentsCount={loot.commentsCount} />
+        <LootContent
+          sortedPlayers={sortedPlayers}
+          itemsByPlayer={itemsByPlayer}
+          unassignedItems={unassignedItems}
+        />
+        <LootFooter
+          location={loot.location}
+          date={date}
+          playersCount={loot.players.length}
+          itemsCount={loot.items.length}
+        />
+      </Card>
+    </div>
   );
 };
