@@ -14,6 +14,7 @@ import { LootMappingService } from './services/loot-mapping.service';
 import { LootValidationService } from './services/loot-validation.service';
 import { LootQueryService } from './services/loot-query.service';
 import { LootCommentService } from './services/loot-comment.service';
+import { LootStatsService } from './services/loot-stats.service';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { LootCommentService } from './services/loot-comment.service';
     LootValidationService,
     LootQueryService,
     LootCommentService,
+    LootStatsService,
   ],
 })
 export class LootsModule {}

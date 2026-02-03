@@ -23,7 +23,9 @@ import { type Guild, Permission, type Role } from 'generated/client';
 import { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
 import { CreateLootDto } from 'src/loots/dto/create-loot.dto';
 import { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
+import { LootStatsQueryDto } from 'src/loots/dto/loot-stats.dto';
 import { LootsService } from 'src/loots/loots.service';
+import { LootStatsService } from 'src/loots/services/loot-stats.service';
 import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
 import { UserId } from 'src/shared/decorators/user-id.decorator';
 import { GuildData } from 'src/shared/decorators/guild-data.decorator';
@@ -35,13 +37,17 @@ import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
 import { ArrayValidationPipe } from 'src/shared/pipes/array-validation.pipe';
 import { LootEntity } from 'src/shared/entities/loot.entity';
 import { LootCommentEntity } from 'src/shared/entities/loot-comment.entity';
+import type { Period } from 'src/loots/dto/loot-stats.dto';
 
 @ApiTags('loots')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller()
 export class LootsController {
-  constructor(private readonly lootsService: LootsService) {}
+  constructor(
+    private readonly lootsService: LootsService,
+    private readonly lootStatsService: LootStatsService,
+  ) {}
 
   @Permissions(Permission.LOOTLOG_LOOTS_READ)
   @UseGuards(PermissionsGuard)
@@ -212,6 +218,60 @@ export class LootsController {
       },
     );
     return plainToInstance(LootEntity, loots);
+  }
+
+  @Permissions(Permission.LOOTLOG_LOOTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/loots/stats')
+  @ApiOperation({
+    summary: 'Get guild loot statistics',
+    description:
+      'Retrieve aggregated loot statistics for a guild with optional time period and filters',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiQuery({
+    name: 'period',
+    description: 'Time period for statistics',
+    required: false,
+    enum: ['24h', '3d', '7d', '14d', '30d', '90d', '180d', 'all'],
+  })
+  @ApiQuery({
+    name: 'world',
+    description: 'World name filter',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'npcTypes',
+    description: 'NPC types filter (comma-separated)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'excludeColossus',
+    description: 'Exclude COLOSSUS NPCs from statistics',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Loot statistics including overview, timeline, top NPCs, and top contributors',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions',
+  })
+  async getLootStats(
+    @GuildData() guild: Guild,
+    @Query('period') period?: Period,
+    @Query('world') world?: string,
+    @Query('npcTypes', new ArrayValidationPipe()) npcTypes?: string[],
+    @Query('excludeColossus') excludeColossus?: string,
+  ) {
+    return this.lootStatsService.getLootStats(
+      guild.id,
+      period ?? '7d',
+      world,
+      npcTypes,
+      excludeColossus === 'true',
+    );
   }
 
   @Permissions(Permission.LOOTLOG_LOOTS_READ)

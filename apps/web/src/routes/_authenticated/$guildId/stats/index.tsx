@@ -1,6 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Stats } from "@/features/stats/stats";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/$guildId/stats/")({
-  component: Stats,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/$guildId/stats/kills",
+      params: { guildId: params.guildId },
+    });
+  },
 });
