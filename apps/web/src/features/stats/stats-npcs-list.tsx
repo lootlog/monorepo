@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { useLocalStorage } from "usehooks-ts";
 import { Search } from "lucide-react";
 import {
   Table,
@@ -32,12 +31,13 @@ import { NpcTile } from "@/components/tiles/npc-tile";
 import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useGuildTopNpcs, type TopNpc } from "./hooks/use-guild-top-npcs";
+import { useStatsSettings } from "./hooks/use-stats-settings";
 import { TRACKABLE_NPC_TYPES } from "./constants";
+import { LevelFilters } from "./components/level-filters";
+import { StatsNpcsListFiltersMobile } from "./components/stats-npcs-list-filters-mobile";
 import type { NpcType } from "./hooks/use-guild-kill-stats";
 
 const ITEMS_PER_PAGE = 20;
-const STORAGE_KEY = "stats-npcs-list-type";
-const WORLD_STORAGE_KEY = "stats-npcs-list-world";
 
 export const StatsNpcsList: React.FC = () => {
   const { t } = useTranslation();
@@ -46,22 +46,26 @@ export const StatsNpcsList: React.FC = () => {
   });
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(0);
-  const [selectedNpcType, setSelectedNpcType] = useLocalStorage<
-    NpcType | "ALL"
-  >(STORAGE_KEY, "ALL");
-  const [selectedWorld, setSelectedWorld] = useLocalStorage<string | null>(
-    WORLD_STORAGE_KEY,
-    null,
-  );
+  const {
+    settings,
+    debouncedMinLvl,
+    debouncedMaxLvl,
+    setWorld,
+    setMinLvl,
+    setMaxLvl,
+    setNpcType,
+  } = useStatsSettings("npcs-list");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const { data: worlds } = useWorlds();
 
   const { data, isLoading } = useGuildTopNpcs({
     limit: 100,
-    npcType: selectedNpcType === "ALL" ? undefined : selectedNpcType,
-    world: selectedWorld ?? undefined,
+    npcType: settings.npcType === "ALL" ? undefined : settings.npcType,
+    world: settings.world ?? undefined,
     search: debouncedSearch || undefined,
+    minLvl: debouncedMinLvl,
+    maxLvl: debouncedMaxLvl,
   });
 
   const topNpcs = data?.topNpcs ?? [];
@@ -90,12 +94,12 @@ export const StatsNpcsList: React.FC = () => {
   };
 
   const handleNpcTypeChange = (value: string) => {
-    setSelectedNpcType(value as NpcType | "ALL");
+    setNpcType(value as NpcType | "ALL");
     setCursor(0);
   };
 
   const handleWorldChange = (value: string) => {
-    setSelectedWorld(value === "ALL" ? null : value);
+    setWorld(value === "ALL" ? null : value);
     setCursor(0);
   };
 
@@ -104,17 +108,51 @@ export const StatsNpcsList: React.FC = () => {
     setCursor(0);
   };
 
+  // Reset cursor when debounced filter values change
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCursor(0);
+  }, [debouncedMinLvl, debouncedMaxLvl]);
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 pb-4 bg-background border-b">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-xl font-bold">{t("kills.npcsList.title")}</h1>
             <p className="text-muted-foreground">
               {t("kills.npcsList.description")}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 md:hidden">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t("kills.npcsList.searchPlaceholder")}
+                value={search}
+                onChange={handleSearchChange}
+                className="pl-8 w-full"
+              />
+            </div>
+            <StatsNpcsListFiltersMobile
+              world={settings.world}
+              npcType={settings.npcType}
+              minLvl={settings.minLvl}
+              maxLvl={settings.maxLvl}
+              onWorldChange={handleWorldChange}
+              onNpcTypeChange={handleNpcTypeChange}
+              onMinLvlChange={setMinLvl}
+              onMaxLvlChange={setMaxLvl}
+            />
+          </div>
+
+          <div className="hidden md:flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -125,8 +163,14 @@ export const StatsNpcsList: React.FC = () => {
                 className="pl-8 w-[200px]"
               />
             </div>
+            <LevelFilters
+              minLvl={settings.minLvl}
+              maxLvl={settings.maxLvl}
+              onMinLvlChange={setMinLvl}
+              onMaxLvlChange={setMaxLvl}
+            />
             <Select
-              value={selectedWorld ?? "ALL"}
+              value={settings.world ?? "ALL"}
               onValueChange={handleWorldChange}
             >
               <SelectTrigger className="w-[140px]">
@@ -143,7 +187,10 @@ export const StatsNpcsList: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={selectedNpcType} onValueChange={handleNpcTypeChange}>
+            <Select
+              value={settings.npcType ?? "ALL"}
+              onValueChange={handleNpcTypeChange}
+            >
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
