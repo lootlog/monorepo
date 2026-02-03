@@ -8,11 +8,17 @@ import {
   MessageSquareWarning,
   MessagesSquare,
   Settings,
+  Swords,
   Timer,
   Users,
 } from "lucide-react";
 
 const BUTTONS: QuickAccessButtonProps[] = [
+  {
+    id: "create-party-gathering",
+    title: "Party finder",
+    icon: <Swords size="16" />,
+  },
   {
     id: "timers",
     title: "Timery",
@@ -46,7 +52,7 @@ export const QuickAccess = () => {
       id="quick-access"
       title="Lootlog"
       minHeight={56}
-      minWidth={218}
+      minWidth={250}
       closable={false}
     >
       <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">

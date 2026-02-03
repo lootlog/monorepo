@@ -1,4 +1,4 @@
-import { Notification } from "@/features/notifications/hooks/use-notifications";
+import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -8,7 +8,8 @@ export type NotificationType =
   | NpcType.COLOSSUS
   | NpcType.TITAN
   | NpcType.ELITE2
-  | "message";
+  | "message"
+  | "party-gathering";
 
 export interface NotificationSettings {
   show: boolean;
@@ -28,12 +29,35 @@ export type NotificationWithServers = Notification & {
   servers: string[];
 };
 
+export type PartyGatheringCharacter = {
+  nick: string;
+  lvl: number;
+  prof: string;
+  characterId: string;
+  accountId: string;
+  icon: string;
+};
+
+export type PartyGatheringNotification = {
+  notificationId: string;
+  guildId: string;
+  discordId: string;
+  world: string;
+  createdAt: string;
+  character: PartyGatheringCharacter;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  servers: string[];
+  type: "party-gathering";
+};
+
 interface NotificationsState {
-  notifications: NotificationWithServers[];
+  notifications: (NotificationWithServers | PartyGatheringNotification)[];
   settings: Record<string, NotificationsSettings>;
   setSettings: (characterId: string, settings: NotificationsSettings) => void;
   setState: (settings: Record<string, NotificationsSettings>) => void;
-  pushNotification: (notification: NotificationWithServers) => void;
+  pushNotification: (notification: NotificationWithServers | PartyGatheringNotification) => void;
   clearNotifications: () => void;
   removeNotification: (id: string) => void;
   removeNotificationByNpcId: (npcId: number, world?: string) => void;
@@ -80,6 +104,14 @@ export const recommendedSettings: NotificationsSettings = {
     guildIds: [],
     sound: false,
   },
+  "party-gathering": {
+    show: true,
+    highlight: true,
+    ignoreOtherWorlds: false,
+    autoHideTimeout: 0,
+    guildIds: [],
+    sound: false,
+  },
 };
 
 export const useNotificationsStore = create<NotificationsState>()(
@@ -96,7 +128,7 @@ export const useNotificationsStore = create<NotificationsState>()(
             [characterId]: settings,
           },
         })),
-      pushNotification: (notification: NotificationWithServers) =>
+      pushNotification: (notification: NotificationWithServers | PartyGatheringNotification) =>
         set((state) => {
           // If notification already exists, push members to it
           const existingNotification = state.notifications.find(
@@ -115,7 +147,16 @@ export const useNotificationsStore = create<NotificationsState>()(
             return { notifications: [...state.notifications] };
           }
 
-          if (notification.message) {
+          // Handle party-gathering notifications
+          if ("type" in notification && notification.type === "party-gathering") {
+            return {
+              notifications: [notification, ...state.notifications],
+            };
+          }
+
+          const regularNotification = notification as NotificationWithServers;
+
+          if (regularNotification.message) {
             return {
               notifications: [notification, ...state.notifications],
             };
@@ -123,9 +164,12 @@ export const useNotificationsStore = create<NotificationsState>()(
 
           // If the notification npc is already present, overwrite it and push to the front
           const existingNotificationIndex = state.notifications.findIndex(
-            (n) =>
-              n.npc?.id === notification.npc?.id &&
-              n.world === notification.world,
+            (n) => {
+              if ("type" in n && n.type === "party-gathering") return false;
+              const regularN = n as NotificationWithServers;
+              return regularN.npc?.id === regularNotification.npc?.id &&
+                regularN.world === regularNotification.world;
+            }
           );
           if (existingNotificationIndex !== -1) {
             state.notifications[existingNotificationIndex] = notification;
@@ -152,11 +196,14 @@ export const useNotificationsStore = create<NotificationsState>()(
       removeNotificationByNpcId: (npcId: number, world?: string) =>
         set((state) => ({
           notifications: state.notifications.filter(
-            (notification) =>
-              !(
-                notification.npc?.id === npcId &&
-                (world ? notification.world === world : true)
-              ),
+            (notification) => {
+              if ("type" in notification && notification.type === "party-gathering") return true;
+              const regularNotification = notification as NotificationWithServers;
+              return !(
+                regularNotification.npc?.id === npcId &&
+                (world ? regularNotification.world === world : true)
+              );
+            }
           ),
         })),
     }),

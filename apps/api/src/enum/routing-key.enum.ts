@@ -8,6 +8,8 @@ export enum RoutingKey {
   GUILDS_RESERVATIONS_DELETE = 'guilds.reservations.delete',
 
   GUILDS_NOTIFICATIONS_SEND = 'guilds.notifications.send',
+  GUILDS_NOTIFICATIONS_VOLUNTEER = 'guilds.notifications.volunteer',
+  GUILDS_PARTY_GATHERING = 'guilds.party-gathering',
 
   GUILDS_MEMBERS_ADD = 'guilds.members.add',
   GUILDS_MEMBERS_REMOVE = 'guilds.members.remove',
