@@ -170,6 +170,8 @@ export class KillsController {
     @Query('npcType') npcType?: NpcType,
     @Query('world') world?: string,
     @Query('search') search?: string,
+    @Query('minLvl') minLvl?: string,
+    @Query('maxLvl') maxLvl?: string,
   ) {
     const result = await this.killsService.getGuildTopNpcs(
       guildData.id,
@@ -179,6 +181,8 @@ export class KillsController {
       npcType,
       world,
       search,
+      minLvl ? Number.parseInt(minLvl, 10) : undefined,
+      maxLvl ? Number.parseInt(maxLvl, 10) : undefined,
     );
     return plainToInstance(GuildTopNpcsEntity, result);
   }
