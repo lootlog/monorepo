@@ -48,6 +48,83 @@ const createUniqueKillNpcEvent = (): GameEvent => {
   };
 };
 
+type DetectorNpcConfig = {
+  name: string;
+  wt: number;
+  icon: string;
+  lvl: number;
+  prof: string;
+};
+
+const DETECTOR_NPC_PRESETS: Record<string, DetectorNpcConfig> = {
+  titan: {
+    name: "Debug Tytan",
+    wt: 102,
+    icon: "tyt/maddok-tytan2.gif",
+    lvl: 231,
+    prof: "h",
+  },
+  hero: {
+    name: "Debug Heros",
+    wt: 85,
+    icon: "e2/worundriel02.gif",
+    lvl: 180,
+    prof: "b",
+  },
+  colossus: {
+    name: "Debug Kolos",
+    wt: 95,
+    icon: "kol/maddok-kolos.gif",
+    lvl: 200,
+    prof: "m",
+  },
+  elite2: {
+    name: "Debug Elite II",
+    wt: 25,
+    icon: "e2/demon-e2.gif",
+    lvl: 120,
+    prof: "w",
+  },
+};
+
+const createDetectorEvent = (preset: DetectorNpcConfig): GameEvent => {
+  const uniqueId = Date.now();
+  const npcId = Math.floor(Math.random() * 100000) + 900000;
+  const tplId = Math.floor(Math.random() * 10000) + 90000;
+  const iconId = Math.floor(Math.random() * 10000) + 90000;
+
+  return {
+    ...createBaseEvent(),
+    npcs: [
+      {
+        id: npcId,
+        icon: { id: iconId },
+        tpl: tplId,
+        x: Math.floor(Math.random() * 20) + 5,
+        y: Math.floor(Math.random() * 20) + 5,
+      },
+    ],
+    npc_tpls: [
+      {
+        id: tplId,
+        level: preset.lvl,
+        nick: `${preset.name} #${uniqueId % 1000}`,
+        prof: preset.prof,
+        type: 2,
+        warrior_type: preset.wt,
+        resp_rand: 0,
+        elasticLevelFactor: 0,
+      },
+    ],
+    icons: [
+      {
+        id: iconId,
+        icon: preset.icon,
+      },
+    ],
+  };
+};
+
 const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
   npcSpawn: {
     label: "NPC Spawn",
@@ -229,6 +306,61 @@ export const DebugTab: FC = () => {
             className="ll:px-2 ll:bg-green-700 hover:ll:bg-green-600"
           >
             Kill NPC (unique)
+          </Button>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">
+          NPC Detector Events
+        </h3>
+        <p className="ll:text-[10px] ll:text-gray-400 ll:mb-2">
+          Triggers NPC detection (requires detector settings enabled)
+        </p>
+        <div className="ll:flex ll:flex-wrap ll:gap-1">
+          <Button
+            onClick={() =>
+              triggerEvent(
+                createDetectorEvent(DETECTOR_NPC_PRESETS.titan),
+                "Detect Titan",
+              )
+            }
+            className="ll:px-2 ll:bg-purple-700 hover:ll:bg-purple-600"
+          >
+            Titan
+          </Button>
+          <Button
+            onClick={() =>
+              triggerEvent(
+                createDetectorEvent(DETECTOR_NPC_PRESETS.hero),
+                "Detect Hero",
+              )
+            }
+            className="ll:px-2 ll:bg-orange-700 hover:ll:bg-orange-600"
+          >
+            Hero
+          </Button>
+          <Button
+            onClick={() =>
+              triggerEvent(
+                createDetectorEvent(DETECTOR_NPC_PRESETS.colossus),
+                "Detect Colossus",
+              )
+            }
+            className="ll:px-2 ll:bg-blue-700 hover:ll:bg-blue-600"
+          >
+            Colossus
+          </Button>
+          <Button
+            onClick={() =>
+              triggerEvent(
+                createDetectorEvent(DETECTOR_NPC_PRESETS.elite2),
+                "Detect Elite II",
+              )
+            }
+            className="ll:px-2 ll:bg-yellow-700 hover:ll:bg-yellow-600"
+          >
+            Elite II
           </Button>
         </div>
       </div>

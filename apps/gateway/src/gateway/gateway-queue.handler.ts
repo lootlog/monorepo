@@ -16,6 +16,8 @@ import type {
 } from 'src/gateway/dto/reservation-event.dto';
 import type { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
+import type { SendPartyGatheringDto } from 'src/gateway/dto/send-party-gathering.dto';
+import type { VolunteerNotificationDto } from 'src/gateway/dto/volunteer-notification.dto';
 import type {
   EventMapStatusUpdatePayload,
   EventHeroKilledPayload,
@@ -604,6 +606,110 @@ export class GatewayQueueHandler {
   })
   handleSendNotificationDLQ(data: SendNotificationDto, amqpMsg: AmqpMessage) {
     this.logger.error('Message sent to DLQ - Send Notification:', {
+      data,
+      retryCount: this.retryService.getRetryCount(
+        amqpMsg.properties.headers || {},
+      ),
+      headers: amqpMsg.properties.headers,
+    });
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER,
+    queue: Queue.GUILDS_NOTIFICATIONS_VOLUNTEER,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_RETRY,
+    },
+  })
+  async handleVolunteerNotification(
+    data: VolunteerNotificationDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    const headers = amqpMsg.properties.headers || {};
+
+    const shouldContinue = await this.retryService.handleRetryLogic(
+      data,
+      headers,
+      RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
+      `volunteer notification: ${data.notificationId}`,
+    );
+
+    if (!shouldContinue) {
+      return;
+    }
+
+    await this.gatewayService.handleVolunteerNotification(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
+    queue: Queue.GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  handleVolunteerNotificationDLQ(
+    data: VolunteerNotificationDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    this.logger.error('Message sent to DLQ - Volunteer Notification:', {
+      data,
+      retryCount: this.retryService.getRetryCount(
+        amqpMsg.properties.headers || {},
+      ),
+      headers: amqpMsg.properties.headers,
+    });
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_PARTY_GATHERING,
+    queue: Queue.GUILDS_PARTY_GATHERING,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+      deadLetterExchange: RETRY_EXCHANGE_NAME,
+      deadLetterRoutingKey: RoutingKey.GUILDS_PARTY_GATHERING_RETRY,
+    },
+  })
+  async handlePartyGathering(
+    data: SendPartyGatheringDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    const headers = amqpMsg.properties.headers || {};
+
+    const shouldContinue = await this.retryService.handleRetryLogic(
+      data,
+      headers,
+      RoutingKey.GUILDS_PARTY_GATHERING_DLQ,
+      `party gathering: ${data.notificationId}`,
+    );
+
+    if (!shouldContinue) {
+      return;
+    }
+
+    await this.gatewayService.handlePartyGatheringSend(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEAD_LETTER_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_PARTY_GATHERING_DLQ,
+    queue: Queue.GUILDS_PARTY_GATHERING_DLQ,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  handlePartyGatheringDLQ(
+    data: SendPartyGatheringDto,
+    amqpMsg: AmqpMessage,
+  ) {
+    this.logger.error('Message sent to DLQ - Party Gathering:', {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},

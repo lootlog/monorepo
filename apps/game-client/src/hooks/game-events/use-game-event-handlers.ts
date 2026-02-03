@@ -11,6 +11,7 @@ import { useNpcsHandlers } from "@/hooks/game-events/use-npcs-handler";
 import { useNpcsDeleteHandlers } from "@/hooks/game-events/use-npcs-delete-handlers";
 import { useMapChangeHandler } from "@/hooks/game-events/use-map-change-handler";
 import { useAfkHandler } from "@/hooks/game-events/use-afk-handler";
+import { useFriendsHandler } from "@/hooks/game-events/use-friends-handler";
 
 const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "chat",
@@ -22,6 +23,8 @@ const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "f",
   "h",
   "town",
+  "friends",
+  "friends_max",
 ];
 
 export const useGameEventHandlers = () => {
@@ -36,6 +39,7 @@ export const useGameEventHandlers = () => {
   const { handleNpcsDelete } = useNpcsDeleteHandlers();
   const { handleMapChange } = useMapChangeHandler();
   const { handleAfkEvent } = useAfkHandler();
+  const { handleFriendsEvent, fetchFriends } = useFriendsHandler();
 
   const handleEvent = (event: GameEvent) => {
     // Check for relevant event keys
@@ -54,6 +58,7 @@ export const useGameEventHandlers = () => {
     handleNpcsDelete(event);
     handleMapChange(event);
     handleAfkEvent(event);
+    handleFriendsEvent(event);
   };
 
   const setupGameEventHandler = useEffectEvent(() => {
@@ -68,6 +73,8 @@ export const useGameEventHandlers = () => {
 
   const handleInitialEvents = useEffectEvent(() => {
     handleInitialNpcsDetection();
+    gameEventsManager.markStripFriendsFromNextEvent();
+    fetchFriends();
   });
 
   useEffect(() => {

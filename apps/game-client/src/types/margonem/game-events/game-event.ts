@@ -37,4 +37,6 @@ export type GameEvent = {
     stasis?: number; // 1 = AFK, 0 = active
   };
   town?: TownEvent;
+  friends?: string[];
+  friends_max?: number;
 };

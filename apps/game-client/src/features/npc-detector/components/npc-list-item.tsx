@@ -20,6 +20,9 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
+import { useEffect } from "react";
+
+const BUTTON_UNLOCK_DELAY_MS = 5000;
 
 export type NpcListItemProps = {
   npc: GameNpcWithLocation;
@@ -40,6 +43,26 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
   const key = npcType;
+
+  useEffect(() => {
+    if (!npc.notificationSent) return;
+
+    const timer = setTimeout(() => {
+      setNpcState(npc.id, { ...npc, notificationSent: false });
+    }, BUTTON_UNLOCK_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [npc.notificationSent]);
+
+  useEffect(() => {
+    if (!npc.msgSent) return;
+
+    const timer = setTimeout(() => {
+      setNpcState(npc.id, { ...npc, msgSent: false });
+    }, BUTTON_UNLOCK_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [npc.msgSent]);
 
   const handleRemoveNpc = (npcId: number) => {
     removeNpc(npcId);

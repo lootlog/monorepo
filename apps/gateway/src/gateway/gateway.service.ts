@@ -8,6 +8,8 @@ import type {
 } from 'src/gateway/dto/reservation-event.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
+import type { SendPartyGatheringDto } from 'src/gateway/dto/send-party-gathering.dto';
+import type { VolunteerNotificationDto } from 'src/gateway/dto/volunteer-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
 import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
@@ -241,5 +243,28 @@ export class GatewayService {
   handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
     this.gateway.server.to(eventsRoom).emit(GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED, data);
+  }
+
+  async handleVolunteerNotification(data: VolunteerNotificationDto) {
+    const sockets = await this.gateway.server.fetchSockets();
+    const targetSockets = sockets.filter(
+      (socket) => socket.data.discordId === data.targetDiscordId,
+    );
+
+    targetSockets.forEach((socket) => {
+      socket.emit(GatewayEvent.NOTIFICATIONS_VOLUNTEER, {
+        notificationId: data.notificationId,
+        volunteer: {
+          discordId: data.volunteerDiscordId,
+          world: data.world,
+          ...data.character,
+        },
+      });
+    });
+  }
+
+  handlePartyGatheringSend(data: SendPartyGatheringDto) {
+    const room = buildRoomName(data.guildId, 'notifications', 'base');
+    this.gateway.server.to(room).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
   }
 }

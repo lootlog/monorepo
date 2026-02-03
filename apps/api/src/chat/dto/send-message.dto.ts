@@ -18,13 +18,25 @@ export class SendMessageDto {
   characterData: ChatCharacterData;
   @IsOptional()
   npc?: NpcDto;
+  @IsOptional()
+  partyGathering?: PartyGatheringData;
 }
 
 export enum MessageType {
   NORMAL = 'NORMAL',
   NOTIFICATION = 'NOTIFICATION',
   NPC = 'NPC',
+  PARTY_GATHERING = 'PARTY_GATHERING',
 }
+
+export type PartyGatheringData = {
+  notificationId: string;
+  discordId: string;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  world: string;
+};
 
 export type ChatCharacterData = {
   nick: string;
