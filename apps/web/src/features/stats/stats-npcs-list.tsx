@@ -28,7 +28,7 @@ import { Input } from "@lootlog/ui/components/input";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useGuildTopNpcs, type TopNpc } from "./hooks/use-guild-top-npcs";
 import { useStatsSettings } from "./hooks/use-stats-settings";
@@ -57,7 +57,6 @@ export const StatsNpcsList: React.FC = () => {
   } = useStatsSettings("npcs-list");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
-  const { data: worlds } = useWorlds();
 
   const { data, isLoading } = useGuildTopNpcs({
     limit: 100,
@@ -98,8 +97,8 @@ export const StatsNpcsList: React.FC = () => {
     setCursor(0);
   };
 
-  const handleWorldChange = (value: string) => {
-    setWorld(value === "ALL" ? null : value);
+  const handleWorldChange = (value: string | null) => {
+    setWorld(value);
     setCursor(0);
   };
 
@@ -169,24 +168,12 @@ export const StatsNpcsList: React.FC = () => {
               onMinLvlChange={setMinLvl}
               onMaxLvlChange={setMaxLvl}
             />
-            <Select
-              value={settings.world ?? "ALL"}
+            <WorldSwitcher
+              value={settings.world}
               onValueChange={handleWorldChange}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t("kills.home.filters.world")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.home.filters.allWorlds")}
-                </SelectItem>
-                {worlds?.map((world) => (
-                  <SelectItem key={world} value={world}>
-                    {world.charAt(0).toUpperCase() + world.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              showAllOption
+              width="w-[160px]"
+            />
             <Select
               value={settings.npcType ?? "ALL"}
               onValueChange={handleNpcTypeChange}

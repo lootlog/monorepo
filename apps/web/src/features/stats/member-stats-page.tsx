@@ -35,9 +35,9 @@ import {
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea, ScrollBar } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useMemberKills } from "./hooks/use-member-kills";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
@@ -91,7 +91,6 @@ export const MemberStatsPage: React.FC = () => {
     setMaxLvl,
     setNpcType,
   } = useStatsSettings("member");
-  const { data: worlds } = useWorlds();
   const { data, isLoading } = useMemberKills(Number.parseInt(memberId, 10), {
     world: settings.world ?? undefined,
     npcTypes: settings.npcType === "ALL" ? undefined : [settings.npcType!],
@@ -103,8 +102,8 @@ export const MemberStatsPage: React.FC = () => {
   });
   const { data: guildMembers } = useGuildMembers(true);
 
-  const handleWorldChange = (value: string) => {
-    setWorld(value === "ALL" ? null : value);
+  const handleWorldChange = (value: string | null) => {
+    setWorld(value);
     setCursor(0);
   };
 
@@ -272,24 +271,12 @@ export const MemberStatsPage: React.FC = () => {
               onMaxLvlChange={setMaxLvl}
               inputClassName="w-[100px]"
             />
-            <Select
-              value={settings.world ?? "ALL"}
+            <WorldSwitcher
+              value={settings.world}
               onValueChange={handleWorldChange}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t("kills.home.filters.world")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.home.filters.allWorlds")}
-                </SelectItem>
-                {worlds?.map((world) => (
-                  <SelectItem key={world} value={world}>
-                    {world.charAt(0).toUpperCase() + world.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              showAllOption
+              width="w-[160px]"
+            />
             <Select
               value={settings.npcType ?? "ALL"}
               onValueChange={handleNpcTypeChange}

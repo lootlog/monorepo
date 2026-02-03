@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Filter, Globe, Sword, TrendingUp } from "lucide-react";
+import { Filter, Sword, TrendingUp } from "lucide-react";
 import { Label } from "@lootlog/ui/components/label";
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@lootlog/ui/components/select";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { TRACKABLE_NPC_TYPES } from "../constants";
 import type { NpcType } from "../hooks/use-guild-kill-stats";
 
@@ -27,7 +27,7 @@ type StatsNpcsListFiltersMobileProps = {
   npcType?: NpcType | "ALL";
   minLvl: string;
   maxLvl: string;
-  onWorldChange: (value: string) => void;
+  onWorldChange: (value: string | null) => void;
   onNpcTypeChange: (value: string) => void;
   onMinLvlChange: (value: string) => void;
   onMaxLvlChange: (value: string) => void;
@@ -44,7 +44,6 @@ export const StatsNpcsListFiltersMobile = ({
   onMaxLvlChange,
 }: StatsNpcsListFiltersMobileProps) => {
   const { t } = useTranslation();
-  const { data: worlds } = useWorlds();
 
   const handleMinLvlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -74,24 +73,12 @@ export const StatsNpcsListFiltersMobile = ({
         <div className="space-y-4 overflow-y-auto">
           <div className="space-y-2">
             <Label>{t("kills.filters.world")}</Label>
-            <Select value={world ?? "ALL"} onValueChange={onWorldChange}>
-              <SelectTrigger className="w-full">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
-                  <SelectValue placeholder={t("kills.home.filters.world")} />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.home.filters.allWorlds")}
-                </SelectItem>
-                {worlds?.map((w) => (
-                  <SelectItem key={w} value={w}>
-                    {w.charAt(0).toUpperCase() + w.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <WorldSwitcher
+              value={world}
+              onValueChange={onWorldChange}
+              showAllOption
+              width="w-full"
+            />
           </div>
 
           <div className="space-y-2">
