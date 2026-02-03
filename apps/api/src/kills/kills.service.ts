@@ -558,6 +558,8 @@ export class KillsService {
     npcType?: NpcType,
     world?: string,
     search?: string,
+    minLvl?: number,
+    maxLvl?: number,
   ) {
     const filteredRoles = roles.filter((role) =>
       role.permissions.includes(Permission.LOOTLOG_LOOTS_READ),
@@ -569,6 +571,16 @@ export class KillsService {
       administrativeUser,
     );
 
+    const npcLvlCondition =
+      minLvl !== undefined || maxLvl !== undefined
+        ? {
+            npcLvl: {
+              ...(minLvl !== undefined && { gte: minLvl }),
+              ...(maxLvl !== undefined && { lte: maxLvl }),
+            },
+          }
+        : {};
+
     // Use GuildKillSummary for unique kills count
     const summaries = await this.prisma.guildKillSummary.findMany({
       where: {
@@ -578,6 +590,7 @@ export class KillsService {
         ...(search && {
           npcName: { contains: search, mode: 'insensitive' as const },
         }),
+        ...npcLvlCondition,
         ...visibilityCondition,
       },
     });
@@ -854,6 +867,16 @@ export class KillsService {
       return null;
     }
 
+    const npcLvlCondition =
+      query.minLvl !== undefined || query.maxLvl !== undefined
+        ? {
+            npcLvl: {
+              ...(query.minLvl !== undefined && { gte: query.minLvl }),
+              ...(query.maxLvl !== undefined && { lte: query.maxLvl }),
+            },
+          }
+        : {};
+
     // Get all kill stats for this member with visibility conditions
     const stats = await this.prisma.npcKillStats.findMany({
       where: {
@@ -864,6 +887,7 @@ export class KillsService {
         ...(query.search && {
           npcName: { contains: query.search, mode: 'insensitive' as const },
         }),
+        ...npcLvlCondition,
         ...visibilityCondition,
       },
     });
