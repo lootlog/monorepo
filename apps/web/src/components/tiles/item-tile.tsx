@@ -2,7 +2,6 @@ import { parseItemStats } from "@/utils/item-tips/parse-item-stats";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ItemRarity, type Item } from "@/hooks/api/loots/use-loots";
@@ -109,43 +108,39 @@ export const ItemTile: FC<ItemTileProps> = ({
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger>
-          <ItemImage
-            rarity={rarity}
-            icon={icon}
-            color={color}
-            shareIndex={shareIndex}
-          />
-        </TooltipTrigger>
-        <TooltipContent className={tooltipBorderCn}>
-          <div className="flex flex-row border-b border-border/50 items-center justify-between pb-2">
-            <div className="flex flex-col justify-between">
-              <p className="font-heading mt-12 scroll:m-20 mr-8 text-md font-semibold tracking-tight first:mt-0 text-foreground">
-                {name}
-              </p>
-              <p className={rarityCn}>{t(`itemRarity.${rarity}`)}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("itemType.prefix")}
-                {t(`itemType.${type}`)}
-              </p>
-            </div>
-            <ItemImage rarity={rarity} icon={icon} color={color} />
+    <Tooltip delayDuration={100}>
+      <TooltipTrigger>
+        <ItemImage
+          rarity={rarity}
+          icon={icon}
+          color={color}
+          shareIndex={shareIndex}
+        />
+      </TooltipTrigger>
+      <TooltipContent className={tooltipBorderCn}>
+        <div className="flex flex-row border-b border-border/50 items-center justify-between pb-2">
+          <div className="flex flex-col justify-between">
+            <p className="font-heading mt-12 scroll:m-20 mr-8 text-md font-semibold tracking-tight first:mt-0 text-foreground">
+              {name}
+            </p>
+            <p className={rarityCn}>{t(`itemRarity.${rarity}`)}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("itemType.prefix")}
+              {t(`itemType.${type}`)}
+            </p>
           </div>
-          <div className="pt-2 text-xs flex flex-col gap-2">
-            {renderStats()}
+          <ItemImage rarity={rarity} icon={icon} color={color} />
+        </div>
+        <div className="pt-2 text-xs flex flex-col gap-2">{renderStats()}</div>
+        {shareNickname && (
+          <div className="text-xs py-2 text-muted-foreground">
+            Zdobyto przez:{" "}
+            <span className="font-semibold text-foreground">
+              {shareNickname}
+            </span>
           </div>
-          {shareNickname && (
-            <div className="text-xs py-2 text-muted-foreground">
-              Zdobyto przez:{" "}
-              <span className="font-semibold text-foreground">
-                {shareNickname}
-              </span>
-            </div>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 };

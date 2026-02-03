@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import {
@@ -24,7 +23,7 @@ type PlayerTileProps = {
 };
 
 export const PlayerTile: FC<PlayerTileProps> = ({
-  player: { id, lvl, prof, name, icon },
+  player: { lvl, prof, name, icon },
   idx,
   color,
   className = "",
@@ -36,7 +35,8 @@ export const PlayerTile: FC<PlayerTileProps> = ({
     <div className={cn("relative scale-90 origin-top", className)}>
       <div
         className={cn(
-          "w-[32px] h-[48px] relative cursor-pointer rounded-lg bg-muted/30 transition-all duration-200 hover:bg-muted/50",
+          // Simplified transition - only bg color, not all properties
+          "w-[32px] h-[48px] relative cursor-pointer rounded-lg bg-muted/30 transition-colors duration-200 hover:bg-muted/50",
         )}
         style={{
           backgroundImage: `url(${MARGONEM_CDN_CHARACTERS_URL}${icon})`,
@@ -57,32 +57,30 @@ export const PlayerTile: FC<PlayerTileProps> = ({
   );
 
   return (
-    <TooltipProvider key={id}>
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild>
-          {accountId && characterId && world ? (
-            <a
-              href={`${MARGONEM_PROFILE_URL},${accountId}#char_${characterId},${world}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {content}
-            </a>
-          ) : (
-            content
-          )}
-        </TooltipTrigger>
-        <TooltipContent className="bg-popover/95 backdrop-blur-md border-border/50">
-          <p className="text-foreground font-semibold">
-            {name}{" "}
-            <span className="text-muted-foreground font-normal">
-              ({lvl}
-              {prof?.charAt(0).toLowerCase()})
-            </span>
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={100}>
+      <TooltipTrigger asChild>
+        {accountId && characterId && world ? (
+          <a
+            href={`${MARGONEM_PROFILE_URL},${accountId}#char_${characterId},${world}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {content}
+          </a>
+        ) : (
+          content
+        )}
+      </TooltipTrigger>
+      <TooltipContent className="bg-popover/95 backdrop-blur-md border-border/50">
+        <p className="text-foreground font-semibold">
+          {name}{" "}
+          <span className="text-muted-foreground font-normal">
+            ({lvl}
+            {prof?.charAt(0).toLowerCase()})
+          </span>
+        </p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
