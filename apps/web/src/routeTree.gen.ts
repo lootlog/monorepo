@@ -327,7 +327,6 @@ const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedRouteWithChildren
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
@@ -368,14 +367,13 @@ export interface FileRoutesByFullPath {
   '/@me/battle-panel/battles/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
   '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
   '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
-  '/$guildId/stats/npcs/': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
+  '/$guildId/stats/npcs': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
   '/$guildId/events/$eventId/heroes/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
   '/$guildId/events/$eventId/heroes/$heroId/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
   '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
   '/$guildId/events/$eventId/heroes/$heroId/kills/$killId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof AuthenticatedRouteWithChildren
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/battles/$id': typeof BattlesIdRoute
@@ -467,7 +465,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/init'
     | '/signin'
     | '/$guildId'
@@ -508,14 +505,13 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/battles/$battleId'
     | '/@me/battle-panel/statistics/h2h'
     | '/@me/battle-panel/statistics/matchmaking-h2h'
-    | '/$guildId/stats/npcs/'
+    | '/$guildId/stats/npcs'
     | '/$guildId/events/$eventId/heroes/$heroId'
     | '/$guildId/events/$eventId/heroes/$heroId/kills'
     | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
     | '/$guildId/events/$eventId/heroes/$heroId/kills/$killId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/init'
     | '/signin'
     | '/battles/$id'
@@ -630,7 +626,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: '/'
+      fullPath: ''
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -847,7 +843,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated/$guildId/stats/npcs/': {
       id: '/_authenticated/$guildId/stats/npcs/'
       path: '/npcs'
-      fullPath: '/$guildId/stats/npcs/'
+      fullPath: '/$guildId/stats/npcs'
       preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRouteImport
       parentRoute: typeof AuthenticatedGuildIdStatsRoute
     }
