@@ -8,939 +8,939 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as SigninRouteImport } from "./routes/signin";
-import { Route as InitRouteImport } from "./routes/init";
-import { Route as AuthenticatedRouteImport } from "./routes/_authenticated";
-import { Route as BattlesIdRouteImport } from "./routes/battles.$id";
-import { Route as AuthenticatedAtmeRouteImport } from "./routes/_authenticated/@me";
-import { Route as AuthenticatedGuildIdRouteImport } from "./routes/_authenticated/$guildId";
-import { Route as AuthenticatedAtmeIndexRouteImport } from "./routes/_authenticated/@me/index";
-import { Route as AuthenticatedGuildIdIndexRouteImport } from "./routes/_authenticated/$guildId/index";
-import { Route as AuthenticatedAtmeSettingsRouteImport } from "./routes/_authenticated/@me/settings";
-import { Route as AuthenticatedAtmeKillsRouteImport } from "./routes/_authenticated/@me/kills";
-import { Route as AuthenticatedAtmeBattlePanelRouteImport } from "./routes/_authenticated/@me/battle-panel";
-import { Route as AuthenticatedGuildIdTimersRouteImport } from "./routes/_authenticated/$guildId/timers";
-import { Route as AuthenticatedGuildIdStatsRouteImport } from "./routes/_authenticated/$guildId/stats";
-import { Route as AuthenticatedGuildIdSettingsRouteImport } from "./routes/_authenticated/$guildId/settings";
-import { Route as AuthenticatedGuildIdReservationsRouteImport } from "./routes/_authenticated/$guildId/reservations";
-import { Route as AuthenticatedGuildIdEventsRouteImport } from "./routes/_authenticated/$guildId/events";
-import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from "./routes/_authenticated/$guildId/activity-logs";
-import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from "./routes/_authenticated/@me/settings/index";
-import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from "./routes/_authenticated/@me/battle-panel/index";
-import { Route as AuthenticatedGuildIdStatsIndexRouteImport } from "./routes/_authenticated/$guildId/stats/index";
-import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from "./routes/_authenticated/$guildId/settings/index";
-import { Route as AuthenticatedGuildIdReservationsIndexRouteImport } from "./routes/_authenticated/$guildId/reservations/index";
-import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from "./routes/_authenticated/@me/settings/appearance";
-import { Route as AuthenticatedAtmeBattlePanelStatsRouteImport } from "./routes/_authenticated/@me/battle-panel/stats";
-import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from "./routes/_authenticated/@me/battle-panel/statistics";
-import { Route as AuthenticatedAtmeBattlePanelBattlesRouteImport } from "./routes/_authenticated/@me/battle-panel/battles";
-import { Route as AuthenticatedGuildIdStatsRankingRouteImport } from "./routes/_authenticated/$guildId/stats/ranking";
-import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from "./routes/_authenticated/$guildId/settings/roles";
-import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from "./routes/_authenticated/$guildId/settings/npcs";
-import { Route as AuthenticatedGuildIdSettingsMembersRouteImport } from "./routes/_authenticated/$guildId/settings/members";
-import { Route as AuthenticatedGuildIdSettingsMapTemplatesRouteImport } from "./routes/_authenticated/$guildId/settings/map-templates";
-import { Route as AuthenticatedGuildIdReservationsReservationIdRouteImport } from "./routes/_authenticated/$guildId/reservations/$reservationId";
-import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from "./routes/_authenticated/$guildId/events_.$eventId";
-import { Route as AuthenticatedGuildIdStatsNpcsIndexRouteImport } from "./routes/_authenticated/$guildId/stats/npcs.index";
-import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from "./routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h";
-import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from "./routes/_authenticated/@me/battle-panel/statistics_.h2h";
-import { Route as AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport } from "./routes/_authenticated/@me/battle-panel/battles_.$battleId";
-import { Route as AuthenticatedGuildIdStatsNpcsNpcIdRouteImport } from "./routes/_authenticated/$guildId/stats/npcs.$npcId";
-import { Route as AuthenticatedGuildIdStatsMembersMemberIdRouteImport } from "./routes/_authenticated/$guildId/stats/members.$memberId";
-import { Route as AuthenticatedGuildIdSettingsRolesRoleIdRouteImport } from "./routes/_authenticated/$guildId/settings/roles.$roleId";
-import { Route as AuthenticatedGuildIdEventsEventIdRankingRouteImport } from "./routes/_authenticated/$guildId/events_.$eventId_.ranking";
-import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from "./routes/_authenticated/$guildId/events_.$eventId_.kills";
-import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport } from "./routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId";
-import { Route as AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport } from "./routes/_authenticated/@me/battle-panel/statistics_.player-vs-player.$myId.$opponentId";
-import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport } from "./routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills";
-import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport } from "./routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills_.$killId";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as InitRouteImport } from './routes/init'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as BattlesIdRouteImport } from './routes/battles.$id'
+import { Route as AuthenticatedAtmeRouteImport } from './routes/_authenticated/@me'
+import { Route as AuthenticatedGuildIdRouteImport } from './routes/_authenticated/$guildId'
+import { Route as AuthenticatedAtmeIndexRouteImport } from './routes/_authenticated/@me/index'
+import { Route as AuthenticatedGuildIdIndexRouteImport } from './routes/_authenticated/$guildId/index'
+import { Route as AuthenticatedAtmeSettingsRouteImport } from './routes/_authenticated/@me/settings'
+import { Route as AuthenticatedAtmeKillsRouteImport } from './routes/_authenticated/@me/kills'
+import { Route as AuthenticatedAtmeBattlePanelRouteImport } from './routes/_authenticated/@me/battle-panel'
+import { Route as AuthenticatedGuildIdTimersRouteImport } from './routes/_authenticated/$guildId/timers'
+import { Route as AuthenticatedGuildIdStatsRouteImport } from './routes/_authenticated/$guildId/stats'
+import { Route as AuthenticatedGuildIdSettingsRouteImport } from './routes/_authenticated/$guildId/settings'
+import { Route as AuthenticatedGuildIdReservationsRouteImport } from './routes/_authenticated/$guildId/reservations'
+import { Route as AuthenticatedGuildIdEventsRouteImport } from './routes/_authenticated/$guildId/events'
+import { Route as AuthenticatedGuildIdActivityLogsRouteImport } from './routes/_authenticated/$guildId/activity-logs'
+import { Route as AuthenticatedAtmeSettingsIndexRouteImport } from './routes/_authenticated/@me/settings/index'
+import { Route as AuthenticatedAtmeBattlePanelIndexRouteImport } from './routes/_authenticated/@me/battle-panel/index'
+import { Route as AuthenticatedGuildIdStatsIndexRouteImport } from './routes/_authenticated/$guildId/stats/index'
+import { Route as AuthenticatedGuildIdSettingsIndexRouteImport } from './routes/_authenticated/$guildId/settings/index'
+import { Route as AuthenticatedGuildIdReservationsIndexRouteImport } from './routes/_authenticated/$guildId/reservations/index'
+import { Route as AuthenticatedAtmeSettingsAppearanceRouteImport } from './routes/_authenticated/@me/settings/appearance'
+import { Route as AuthenticatedAtmeBattlePanelStatsRouteImport } from './routes/_authenticated/@me/battle-panel/stats'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsRouteImport } from './routes/_authenticated/@me/battle-panel/statistics'
+import { Route as AuthenticatedAtmeBattlePanelBattlesRouteImport } from './routes/_authenticated/@me/battle-panel/battles'
+import { Route as AuthenticatedGuildIdStatsRankingRouteImport } from './routes/_authenticated/$guildId/stats/ranking'
+import { Route as AuthenticatedGuildIdSettingsRolesRouteImport } from './routes/_authenticated/$guildId/settings/roles'
+import { Route as AuthenticatedGuildIdSettingsNpcsRouteImport } from './routes/_authenticated/$guildId/settings/npcs'
+import { Route as AuthenticatedGuildIdSettingsMembersRouteImport } from './routes/_authenticated/$guildId/settings/members'
+import { Route as AuthenticatedGuildIdSettingsMapTemplatesRouteImport } from './routes/_authenticated/$guildId/settings/map-templates'
+import { Route as AuthenticatedGuildIdReservationsReservationIdRouteImport } from './routes/_authenticated/$guildId/reservations/$reservationId'
+import { Route as AuthenticatedGuildIdEventsEventIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId'
+import { Route as AuthenticatedGuildIdStatsNpcsIndexRouteImport } from './routes/_authenticated/$guildId/stats/npcs.index'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.matchmaking-h2h'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.h2h'
+import { Route as AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport } from './routes/_authenticated/@me/battle-panel/battles_.$battleId'
+import { Route as AuthenticatedGuildIdStatsNpcsNpcIdRouteImport } from './routes/_authenticated/$guildId/stats/npcs.$npcId'
+import { Route as AuthenticatedGuildIdStatsMembersMemberIdRouteImport } from './routes/_authenticated/$guildId/stats/members.$memberId'
+import { Route as AuthenticatedGuildIdSettingsRolesRoleIdRouteImport } from './routes/_authenticated/$guildId/settings/roles.$roleId'
+import { Route as AuthenticatedGuildIdEventsEventIdRankingRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.ranking'
+import { Route as AuthenticatedGuildIdEventsEventIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.kills'
+import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId'
+import { Route as AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport } from './routes/_authenticated/@me/battle-panel/statistics_.player-vs-player.$myId.$opponentId'
+import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills'
+import { Route as AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport } from './routes/_authenticated/$guildId/events_.$eventId_.heroes_.$heroId_.kills_.$killId'
 
 const SigninRoute = SigninRouteImport.update({
-  id: "/signin",
-  path: "/signin",
+  id: '/signin',
+  path: '/signin',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const InitRoute = InitRouteImport.update({
-  id: "/init",
-  path: "/init",
+  id: '/init',
+  path: '/init',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: "/_authenticated",
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const BattlesIdRoute = BattlesIdRouteImport.update({
-  id: "/battles/$id",
-  path: "/battles/$id",
+  id: '/battles/$id',
+  path: '/battles/$id',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedAtmeRoute = AuthenticatedAtmeRouteImport.update({
-  id: "/@me",
-  path: "/@me",
+  id: '/@me',
+  path: '/@me',
   getParentRoute: () => AuthenticatedRoute,
-} as any);
+} as any)
 const AuthenticatedGuildIdRoute = AuthenticatedGuildIdRouteImport.update({
-  id: "/$guildId",
-  path: "/$guildId",
+  id: '/$guildId',
+  path: '/$guildId',
   getParentRoute: () => AuthenticatedRoute,
-} as any);
+} as any)
 const AuthenticatedAtmeIndexRoute = AuthenticatedAtmeIndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthenticatedAtmeRoute,
-} as any);
+} as any)
 const AuthenticatedGuildIdIndexRoute =
   AuthenticatedGuildIdIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeSettingsRoute =
   AuthenticatedAtmeSettingsRouteImport.update({
-    id: "/settings",
-    path: "/settings",
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeKillsRoute = AuthenticatedAtmeKillsRouteImport.update({
-  id: "/kills",
-  path: "/kills",
+  id: '/kills',
+  path: '/kills',
   getParentRoute: () => AuthenticatedAtmeRoute,
-} as any);
+} as any)
 const AuthenticatedAtmeBattlePanelRoute =
   AuthenticatedAtmeBattlePanelRouteImport.update({
-    id: "/battle-panel",
-    path: "/battle-panel",
+    id: '/battle-panel',
+    path: '/battle-panel',
     getParentRoute: () => AuthenticatedAtmeRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdTimersRoute =
   AuthenticatedGuildIdTimersRouteImport.update({
-    id: "/timers",
-    path: "/timers",
+    id: '/timers',
+    path: '/timers',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdStatsRoute =
   AuthenticatedGuildIdStatsRouteImport.update({
-    id: "/stats",
-    path: "/stats",
+    id: '/stats',
+    path: '/stats',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdSettingsRoute =
   AuthenticatedGuildIdSettingsRouteImport.update({
-    id: "/settings",
-    path: "/settings",
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdReservationsRoute =
   AuthenticatedGuildIdReservationsRouteImport.update({
-    id: "/reservations",
-    path: "/reservations",
+    id: '/reservations',
+    path: '/reservations',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdEventsRoute =
   AuthenticatedGuildIdEventsRouteImport.update({
-    id: "/events",
-    path: "/events",
+    id: '/events',
+    path: '/events',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdActivityLogsRoute =
   AuthenticatedGuildIdActivityLogsRouteImport.update({
-    id: "/activity-logs",
-    path: "/activity-logs",
+    id: '/activity-logs',
+    path: '/activity-logs',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeSettingsIndexRoute =
   AuthenticatedAtmeSettingsIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedAtmeSettingsRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelIndexRoute =
   AuthenticatedAtmeBattlePanelIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdStatsIndexRoute =
   AuthenticatedGuildIdStatsIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdSettingsIndexRoute =
   AuthenticatedGuildIdSettingsIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdReservationsIndexRoute =
   AuthenticatedGuildIdReservationsIndexRouteImport.update({
-    id: "/",
-    path: "/",
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeSettingsAppearanceRoute =
   AuthenticatedAtmeSettingsAppearanceRouteImport.update({
-    id: "/appearance",
-    path: "/appearance",
+    id: '/appearance',
+    path: '/appearance',
     getParentRoute: () => AuthenticatedAtmeSettingsRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelStatsRoute =
   AuthenticatedAtmeBattlePanelStatsRouteImport.update({
-    id: "/stats",
-    path: "/stats",
+    id: '/stats',
+    path: '/stats',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelStatisticsRoute =
   AuthenticatedAtmeBattlePanelStatisticsRouteImport.update({
-    id: "/statistics",
-    path: "/statistics",
+    id: '/statistics',
+    path: '/statistics',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelBattlesRoute =
   AuthenticatedAtmeBattlePanelBattlesRouteImport.update({
-    id: "/battles",
-    path: "/battles",
+    id: '/battles',
+    path: '/battles',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdStatsRankingRoute =
   AuthenticatedGuildIdStatsRankingRouteImport.update({
-    id: "/ranking",
-    path: "/ranking",
+    id: '/ranking',
+    path: '/ranking',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdSettingsRolesRoute =
   AuthenticatedGuildIdSettingsRolesRouteImport.update({
-    id: "/roles",
-    path: "/roles",
+    id: '/roles',
+    path: '/roles',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdSettingsNpcsRoute =
   AuthenticatedGuildIdSettingsNpcsRouteImport.update({
-    id: "/npcs",
-    path: "/npcs",
+    id: '/npcs',
+    path: '/npcs',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdSettingsMembersRoute =
   AuthenticatedGuildIdSettingsMembersRouteImport.update({
-    id: "/members",
-    path: "/members",
+    id: '/members',
+    path: '/members',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdSettingsMapTemplatesRoute =
   AuthenticatedGuildIdSettingsMapTemplatesRouteImport.update({
-    id: "/map-templates",
-    path: "/map-templates",
+    id: '/map-templates',
+    path: '/map-templates',
     getParentRoute: () => AuthenticatedGuildIdSettingsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdReservationsReservationIdRoute =
   AuthenticatedGuildIdReservationsReservationIdRouteImport.update({
-    id: "/$reservationId",
-    path: "/$reservationId",
+    id: '/$reservationId',
+    path: '/$reservationId',
     getParentRoute: () => AuthenticatedGuildIdReservationsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdEventsEventIdRoute =
   AuthenticatedGuildIdEventsEventIdRouteImport.update({
-    id: "/events_/$eventId",
-    path: "/events/$eventId",
+    id: '/events_/$eventId',
+    path: '/events/$eventId',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdStatsNpcsIndexRoute =
   AuthenticatedGuildIdStatsNpcsIndexRouteImport.update({
-    id: "/npcs/",
-    path: "/npcs/",
+    id: '/npcs/',
+    path: '/npcs/',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute =
   AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport.update({
-    id: "/statistics_/matchmaking-h2h",
-    path: "/statistics/matchmaking-h2h",
+    id: '/statistics_/matchmaking-h2h',
+    path: '/statistics/matchmaking-h2h',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelStatisticsH2hRoute =
   AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport.update({
-    id: "/statistics_/h2h",
-    path: "/statistics/h2h",
+    id: '/statistics_/h2h',
+    path: '/statistics/h2h',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelBattlesBattleIdRoute =
   AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport.update({
-    id: "/battles_/$battleId",
-    path: "/battles/$battleId",
+    id: '/battles_/$battleId',
+    path: '/battles/$battleId',
     getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdStatsNpcsNpcIdRoute =
   AuthenticatedGuildIdStatsNpcsNpcIdRouteImport.update({
-    id: "/npcs/$npcId",
-    path: "/npcs/$npcId",
+    id: '/npcs/$npcId',
+    path: '/npcs/$npcId',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdStatsMembersMemberIdRoute =
   AuthenticatedGuildIdStatsMembersMemberIdRouteImport.update({
-    id: "/members/$memberId",
-    path: "/members/$memberId",
+    id: '/members/$memberId',
+    path: '/members/$memberId',
     getParentRoute: () => AuthenticatedGuildIdStatsRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdSettingsRolesRoleIdRoute =
   AuthenticatedGuildIdSettingsRolesRoleIdRouteImport.update({
-    id: "/$roleId",
-    path: "/$roleId",
+    id: '/$roleId',
+    path: '/$roleId',
     getParentRoute: () => AuthenticatedGuildIdSettingsRolesRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdEventsEventIdRankingRoute =
   AuthenticatedGuildIdEventsEventIdRankingRouteImport.update({
-    id: "/events_/$eventId_/ranking",
-    path: "/events/$eventId/ranking",
+    id: '/events_/$eventId_/ranking',
+    path: '/events/$eventId/ranking',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdEventsEventIdKillsRoute =
   AuthenticatedGuildIdEventsEventIdKillsRouteImport.update({
-    id: "/events_/$eventId_/kills",
-    path: "/events/$eventId/kills",
+    id: '/events_/$eventId_/kills',
+    path: '/events/$eventId/kills',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport.update({
-    id: "/events_/$eventId_/heroes_/$heroId",
-    path: "/events/$eventId/heroes/$heroId",
+    id: '/events_/$eventId_/heroes_/$heroId',
+    path: '/events/$eventId/heroes/$heroId',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute =
   AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport.update(
     {
-      id: "/statistics_/player-vs-player/$myId/$opponentId",
-      path: "/statistics/player-vs-player/$myId/$opponentId",
+      id: '/statistics_/player-vs-player/$myId/$opponentId',
+      path: '/statistics/player-vs-player/$myId/$opponentId',
       getParentRoute: () => AuthenticatedAtmeBattlePanelRoute,
     } as any,
-  );
+  )
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport.update({
-    id: "/events_/$eventId_/heroes_/$heroId_/kills",
-    path: "/events/$eventId/heroes/$heroId/kills",
+    id: '/events_/$eventId_/heroes_/$heroId_/kills',
+    path: '/events/$eventId/heroes/$heroId/kills',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 const AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute =
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport.update({
-    id: "/events_/$eventId_/heroes_/$heroId_/kills_/$killId",
-    path: "/events/$eventId/heroes/$heroId/kills/$killId",
+    id: '/events_/$eventId_/heroes_/$heroId_/kills_/$killId',
+    path: '/events/$eventId/heroes/$heroId/kills/$killId',
     getParentRoute: () => AuthenticatedGuildIdRoute,
-  } as any);
+  } as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof AuthenticatedRouteWithChildren;
-  "/init": typeof InitRoute;
-  "/signin": typeof SigninRoute;
-  "/$guildId": typeof AuthenticatedGuildIdRouteWithChildren;
-  "/@me": typeof AuthenticatedAtmeRouteWithChildren;
-  "/battles/$id": typeof BattlesIdRoute;
-  "/$guildId/activity-logs": typeof AuthenticatedGuildIdActivityLogsRoute;
-  "/$guildId/events": typeof AuthenticatedGuildIdEventsRoute;
-  "/$guildId/reservations": typeof AuthenticatedGuildIdReservationsRouteWithChildren;
-  "/$guildId/settings": typeof AuthenticatedGuildIdSettingsRouteWithChildren;
-  "/$guildId/stats": typeof AuthenticatedGuildIdStatsRouteWithChildren;
-  "/$guildId/timers": typeof AuthenticatedGuildIdTimersRoute;
-  "/@me/battle-panel": typeof AuthenticatedAtmeBattlePanelRouteWithChildren;
-  "/@me/kills": typeof AuthenticatedAtmeKillsRoute;
-  "/@me/settings": typeof AuthenticatedAtmeSettingsRouteWithChildren;
-  "/$guildId/": typeof AuthenticatedGuildIdIndexRoute;
-  "/@me/": typeof AuthenticatedAtmeIndexRoute;
-  "/$guildId/events/$eventId": typeof AuthenticatedGuildIdEventsEventIdRoute;
-  "/$guildId/reservations/$reservationId": typeof AuthenticatedGuildIdReservationsReservationIdRoute;
-  "/$guildId/settings/map-templates": typeof AuthenticatedGuildIdSettingsMapTemplatesRoute;
-  "/$guildId/settings/members": typeof AuthenticatedGuildIdSettingsMembersRoute;
-  "/$guildId/settings/npcs": typeof AuthenticatedGuildIdSettingsNpcsRoute;
-  "/$guildId/settings/roles": typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren;
-  "/$guildId/stats/ranking": typeof AuthenticatedGuildIdStatsRankingRoute;
-  "/@me/battle-panel/battles": typeof AuthenticatedAtmeBattlePanelBattlesRoute;
-  "/@me/battle-panel/statistics": typeof AuthenticatedAtmeBattlePanelStatisticsRoute;
-  "/@me/battle-panel/stats": typeof AuthenticatedAtmeBattlePanelStatsRoute;
-  "/@me/settings/appearance": typeof AuthenticatedAtmeSettingsAppearanceRoute;
-  "/$guildId/reservations/": typeof AuthenticatedGuildIdReservationsIndexRoute;
-  "/$guildId/settings/": typeof AuthenticatedGuildIdSettingsIndexRoute;
-  "/$guildId/stats/": typeof AuthenticatedGuildIdStatsIndexRoute;
-  "/@me/battle-panel/": typeof AuthenticatedAtmeBattlePanelIndexRoute;
-  "/@me/settings/": typeof AuthenticatedAtmeSettingsIndexRoute;
-  "/$guildId/events/$eventId/kills": typeof AuthenticatedGuildIdEventsEventIdKillsRoute;
-  "/$guildId/events/$eventId/ranking": typeof AuthenticatedGuildIdEventsEventIdRankingRoute;
-  "/$guildId/settings/roles/$roleId": typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute;
-  "/$guildId/stats/members/$memberId": typeof AuthenticatedGuildIdStatsMembersMemberIdRoute;
-  "/$guildId/stats/npcs/$npcId": typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute;
-  "/@me/battle-panel/battles/$battleId": typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute;
-  "/@me/battle-panel/statistics/h2h": typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute;
-  "/@me/battle-panel/statistics/matchmaking-h2h": typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute;
-  "/$guildId/stats/npcs/": typeof AuthenticatedGuildIdStatsNpcsIndexRoute;
-  "/$guildId/events/$eventId/heroes/$heroId": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute;
-  "/$guildId/events/$eventId/heroes/$heroId/kills": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute;
-  "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId": typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute;
-  "/$guildId/events/$eventId/heroes/$heroId/kills/$killId": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute;
+  '/': typeof AuthenticatedRouteWithChildren
+  '/init': typeof InitRoute
+  '/signin': typeof SigninRoute
+  '/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
+  '/@me': typeof AuthenticatedAtmeRouteWithChildren
+  '/battles/$id': typeof BattlesIdRoute
+  '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
+  '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
+  '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
+  '/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
+  '/$guildId/stats': typeof AuthenticatedGuildIdStatsRouteWithChildren
+  '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
+  '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
+  '/@me/kills': typeof AuthenticatedAtmeKillsRoute
+  '/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
+  '/$guildId/': typeof AuthenticatedGuildIdIndexRoute
+  '/@me/': typeof AuthenticatedAtmeIndexRoute
+  '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRoute
+  '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
+  '/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
+  '/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
+  '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
+  '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
+  '/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
+  '/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
+  '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
+  '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
+  '/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
+  '/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
+  '/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
+  '/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
+  '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
+  '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
+  '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
+  '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  '/@me/battle-panel/battles/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
+  '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
+  '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
+  '/$guildId/stats/npcs/': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
+  '/$guildId/events/$eventId/heroes/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
+  '/$guildId/events/$eventId/heroes/$heroId/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
+  '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
+  '/$guildId/events/$eventId/heroes/$heroId/kills/$killId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof AuthenticatedRouteWithChildren;
-  "/init": typeof InitRoute;
-  "/signin": typeof SigninRoute;
-  "/battles/$id": typeof BattlesIdRoute;
-  "/$guildId/activity-logs": typeof AuthenticatedGuildIdActivityLogsRoute;
-  "/$guildId/events": typeof AuthenticatedGuildIdEventsRoute;
-  "/$guildId/timers": typeof AuthenticatedGuildIdTimersRoute;
-  "/@me/kills": typeof AuthenticatedAtmeKillsRoute;
-  "/$guildId": typeof AuthenticatedGuildIdIndexRoute;
-  "/@me": typeof AuthenticatedAtmeIndexRoute;
-  "/$guildId/events/$eventId": typeof AuthenticatedGuildIdEventsEventIdRoute;
-  "/$guildId/reservations/$reservationId": typeof AuthenticatedGuildIdReservationsReservationIdRoute;
-  "/$guildId/settings/map-templates": typeof AuthenticatedGuildIdSettingsMapTemplatesRoute;
-  "/$guildId/settings/members": typeof AuthenticatedGuildIdSettingsMembersRoute;
-  "/$guildId/settings/npcs": typeof AuthenticatedGuildIdSettingsNpcsRoute;
-  "/$guildId/settings/roles": typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren;
-  "/$guildId/stats/ranking": typeof AuthenticatedGuildIdStatsRankingRoute;
-  "/@me/battle-panel/battles": typeof AuthenticatedAtmeBattlePanelBattlesRoute;
-  "/@me/battle-panel/statistics": typeof AuthenticatedAtmeBattlePanelStatisticsRoute;
-  "/@me/battle-panel/stats": typeof AuthenticatedAtmeBattlePanelStatsRoute;
-  "/@me/settings/appearance": typeof AuthenticatedAtmeSettingsAppearanceRoute;
-  "/$guildId/reservations": typeof AuthenticatedGuildIdReservationsIndexRoute;
-  "/$guildId/settings": typeof AuthenticatedGuildIdSettingsIndexRoute;
-  "/$guildId/stats": typeof AuthenticatedGuildIdStatsIndexRoute;
-  "/@me/battle-panel": typeof AuthenticatedAtmeBattlePanelIndexRoute;
-  "/@me/settings": typeof AuthenticatedAtmeSettingsIndexRoute;
-  "/$guildId/events/$eventId/kills": typeof AuthenticatedGuildIdEventsEventIdKillsRoute;
-  "/$guildId/events/$eventId/ranking": typeof AuthenticatedGuildIdEventsEventIdRankingRoute;
-  "/$guildId/settings/roles/$roleId": typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute;
-  "/$guildId/stats/members/$memberId": typeof AuthenticatedGuildIdStatsMembersMemberIdRoute;
-  "/$guildId/stats/npcs/$npcId": typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute;
-  "/@me/battle-panel/battles/$battleId": typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute;
-  "/@me/battle-panel/statistics/h2h": typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute;
-  "/@me/battle-panel/statistics/matchmaking-h2h": typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute;
-  "/$guildId/stats/npcs": typeof AuthenticatedGuildIdStatsNpcsIndexRoute;
-  "/$guildId/events/$eventId/heroes/$heroId": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute;
-  "/$guildId/events/$eventId/heroes/$heroId/kills": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute;
-  "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId": typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute;
-  "/$guildId/events/$eventId/heroes/$heroId/kills/$killId": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute;
+  '/': typeof AuthenticatedRouteWithChildren
+  '/init': typeof InitRoute
+  '/signin': typeof SigninRoute
+  '/battles/$id': typeof BattlesIdRoute
+  '/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
+  '/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
+  '/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
+  '/@me/kills': typeof AuthenticatedAtmeKillsRoute
+  '/$guildId': typeof AuthenticatedGuildIdIndexRoute
+  '/@me': typeof AuthenticatedAtmeIndexRoute
+  '/$guildId/events/$eventId': typeof AuthenticatedGuildIdEventsEventIdRoute
+  '/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
+  '/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
+  '/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
+  '/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
+  '/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
+  '/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
+  '/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  '/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
+  '/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
+  '/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/$guildId/reservations': typeof AuthenticatedGuildIdReservationsIndexRoute
+  '/$guildId/settings': typeof AuthenticatedGuildIdSettingsIndexRoute
+  '/$guildId/stats': typeof AuthenticatedGuildIdStatsIndexRoute
+  '/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelIndexRoute
+  '/@me/settings': typeof AuthenticatedAtmeSettingsIndexRoute
+  '/$guildId/events/$eventId/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
+  '/$guildId/events/$eventId/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
+  '/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
+  '/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  '/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  '/@me/battle-panel/battles/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
+  '/@me/battle-panel/statistics/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
+  '/@me/battle-panel/statistics/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
+  '/$guildId/stats/npcs': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
+  '/$guildId/events/$eventId/heroes/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
+  '/$guildId/events/$eventId/heroes/$heroId/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
+  '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
+  '/$guildId/events/$eventId/heroes/$heroId/kills/$killId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/_authenticated": typeof AuthenticatedRouteWithChildren;
-  "/init": typeof InitRoute;
-  "/signin": typeof SigninRoute;
-  "/_authenticated/$guildId": typeof AuthenticatedGuildIdRouteWithChildren;
-  "/_authenticated/@me": typeof AuthenticatedAtmeRouteWithChildren;
-  "/battles/$id": typeof BattlesIdRoute;
-  "/_authenticated/$guildId/activity-logs": typeof AuthenticatedGuildIdActivityLogsRoute;
-  "/_authenticated/$guildId/events": typeof AuthenticatedGuildIdEventsRoute;
-  "/_authenticated/$guildId/reservations": typeof AuthenticatedGuildIdReservationsRouteWithChildren;
-  "/_authenticated/$guildId/settings": typeof AuthenticatedGuildIdSettingsRouteWithChildren;
-  "/_authenticated/$guildId/stats": typeof AuthenticatedGuildIdStatsRouteWithChildren;
-  "/_authenticated/$guildId/timers": typeof AuthenticatedGuildIdTimersRoute;
-  "/_authenticated/@me/battle-panel": typeof AuthenticatedAtmeBattlePanelRouteWithChildren;
-  "/_authenticated/@me/kills": typeof AuthenticatedAtmeKillsRoute;
-  "/_authenticated/@me/settings": typeof AuthenticatedAtmeSettingsRouteWithChildren;
-  "/_authenticated/$guildId/": typeof AuthenticatedGuildIdIndexRoute;
-  "/_authenticated/@me/": typeof AuthenticatedAtmeIndexRoute;
-  "/_authenticated/$guildId/events_/$eventId": typeof AuthenticatedGuildIdEventsEventIdRoute;
-  "/_authenticated/$guildId/reservations/$reservationId": typeof AuthenticatedGuildIdReservationsReservationIdRoute;
-  "/_authenticated/$guildId/settings/map-templates": typeof AuthenticatedGuildIdSettingsMapTemplatesRoute;
-  "/_authenticated/$guildId/settings/members": typeof AuthenticatedGuildIdSettingsMembersRoute;
-  "/_authenticated/$guildId/settings/npcs": typeof AuthenticatedGuildIdSettingsNpcsRoute;
-  "/_authenticated/$guildId/settings/roles": typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren;
-  "/_authenticated/$guildId/stats/ranking": typeof AuthenticatedGuildIdStatsRankingRoute;
-  "/_authenticated/@me/battle-panel/battles": typeof AuthenticatedAtmeBattlePanelBattlesRoute;
-  "/_authenticated/@me/battle-panel/statistics": typeof AuthenticatedAtmeBattlePanelStatisticsRoute;
-  "/_authenticated/@me/battle-panel/stats": typeof AuthenticatedAtmeBattlePanelStatsRoute;
-  "/_authenticated/@me/settings/appearance": typeof AuthenticatedAtmeSettingsAppearanceRoute;
-  "/_authenticated/$guildId/reservations/": typeof AuthenticatedGuildIdReservationsIndexRoute;
-  "/_authenticated/$guildId/settings/": typeof AuthenticatedGuildIdSettingsIndexRoute;
-  "/_authenticated/$guildId/stats/": typeof AuthenticatedGuildIdStatsIndexRoute;
-  "/_authenticated/@me/battle-panel/": typeof AuthenticatedAtmeBattlePanelIndexRoute;
-  "/_authenticated/@me/settings/": typeof AuthenticatedAtmeSettingsIndexRoute;
-  "/_authenticated/$guildId/events_/$eventId_/kills": typeof AuthenticatedGuildIdEventsEventIdKillsRoute;
-  "/_authenticated/$guildId/events_/$eventId_/ranking": typeof AuthenticatedGuildIdEventsEventIdRankingRoute;
-  "/_authenticated/$guildId/settings/roles/$roleId": typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute;
-  "/_authenticated/$guildId/stats/members/$memberId": typeof AuthenticatedGuildIdStatsMembersMemberIdRoute;
-  "/_authenticated/$guildId/stats/npcs/$npcId": typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute;
-  "/_authenticated/@me/battle-panel/battles_/$battleId": typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute;
-  "/_authenticated/@me/battle-panel/statistics_/h2h": typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute;
-  "/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h": typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute;
-  "/_authenticated/$guildId/stats/npcs/": typeof AuthenticatedGuildIdStatsNpcsIndexRoute;
-  "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute;
-  "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute;
-  "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId": typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute;
-  "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId": typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute;
+  __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/init': typeof InitRoute
+  '/signin': typeof SigninRoute
+  '/_authenticated/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
+  '/_authenticated/@me': typeof AuthenticatedAtmeRouteWithChildren
+  '/battles/$id': typeof BattlesIdRoute
+  '/_authenticated/$guildId/activity-logs': typeof AuthenticatedGuildIdActivityLogsRoute
+  '/_authenticated/$guildId/events': typeof AuthenticatedGuildIdEventsRoute
+  '/_authenticated/$guildId/reservations': typeof AuthenticatedGuildIdReservationsRouteWithChildren
+  '/_authenticated/$guildId/settings': typeof AuthenticatedGuildIdSettingsRouteWithChildren
+  '/_authenticated/$guildId/stats': typeof AuthenticatedGuildIdStatsRouteWithChildren
+  '/_authenticated/$guildId/timers': typeof AuthenticatedGuildIdTimersRoute
+  '/_authenticated/@me/battle-panel': typeof AuthenticatedAtmeBattlePanelRouteWithChildren
+  '/_authenticated/@me/kills': typeof AuthenticatedAtmeKillsRoute
+  '/_authenticated/@me/settings': typeof AuthenticatedAtmeSettingsRouteWithChildren
+  '/_authenticated/$guildId/': typeof AuthenticatedGuildIdIndexRoute
+  '/_authenticated/@me/': typeof AuthenticatedAtmeIndexRoute
+  '/_authenticated/$guildId/events_/$eventId': typeof AuthenticatedGuildIdEventsEventIdRoute
+  '/_authenticated/$guildId/reservations/$reservationId': typeof AuthenticatedGuildIdReservationsReservationIdRoute
+  '/_authenticated/$guildId/settings/map-templates': typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
+  '/_authenticated/$guildId/settings/members': typeof AuthenticatedGuildIdSettingsMembersRoute
+  '/_authenticated/$guildId/settings/npcs': typeof AuthenticatedGuildIdSettingsNpcsRoute
+  '/_authenticated/$guildId/settings/roles': typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
+  '/_authenticated/$guildId/stats/ranking': typeof AuthenticatedGuildIdStatsRankingRoute
+  '/_authenticated/@me/battle-panel/battles': typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  '/_authenticated/@me/battle-panel/statistics': typeof AuthenticatedAtmeBattlePanelStatisticsRoute
+  '/_authenticated/@me/battle-panel/stats': typeof AuthenticatedAtmeBattlePanelStatsRoute
+  '/_authenticated/@me/settings/appearance': typeof AuthenticatedAtmeSettingsAppearanceRoute
+  '/_authenticated/$guildId/reservations/': typeof AuthenticatedGuildIdReservationsIndexRoute
+  '/_authenticated/$guildId/settings/': typeof AuthenticatedGuildIdSettingsIndexRoute
+  '/_authenticated/$guildId/stats/': typeof AuthenticatedGuildIdStatsIndexRoute
+  '/_authenticated/@me/battle-panel/': typeof AuthenticatedAtmeBattlePanelIndexRoute
+  '/_authenticated/@me/settings/': typeof AuthenticatedAtmeSettingsIndexRoute
+  '/_authenticated/$guildId/events_/$eventId_/kills': typeof AuthenticatedGuildIdEventsEventIdKillsRoute
+  '/_authenticated/$guildId/events_/$eventId_/ranking': typeof AuthenticatedGuildIdEventsEventIdRankingRoute
+  '/_authenticated/$guildId/settings/roles/$roleId': typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
+  '/_authenticated/$guildId/stats/members/$memberId': typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  '/_authenticated/$guildId/stats/npcs/$npcId': typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  '/_authenticated/@me/battle-panel/battles_/$battleId': typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
+  '/_authenticated/@me/battle-panel/statistics_/h2h': typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
+  '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
+  '/_authenticated/$guildId/stats/npcs/': typeof AuthenticatedGuildIdStatsNpcsIndexRoute
+  '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
+  '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
+  '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
+  '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId': typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/init"
-    | "/signin"
-    | "/$guildId"
-    | "/@me"
-    | "/battles/$id"
-    | "/$guildId/activity-logs"
-    | "/$guildId/events"
-    | "/$guildId/reservations"
-    | "/$guildId/settings"
-    | "/$guildId/stats"
-    | "/$guildId/timers"
-    | "/@me/battle-panel"
-    | "/@me/kills"
-    | "/@me/settings"
-    | "/$guildId/"
-    | "/@me/"
-    | "/$guildId/events/$eventId"
-    | "/$guildId/reservations/$reservationId"
-    | "/$guildId/settings/map-templates"
-    | "/$guildId/settings/members"
-    | "/$guildId/settings/npcs"
-    | "/$guildId/settings/roles"
-    | "/$guildId/stats/ranking"
-    | "/@me/battle-panel/battles"
-    | "/@me/battle-panel/statistics"
-    | "/@me/battle-panel/stats"
-    | "/@me/settings/appearance"
-    | "/$guildId/reservations/"
-    | "/$guildId/settings/"
-    | "/$guildId/stats/"
-    | "/@me/battle-panel/"
-    | "/@me/settings/"
-    | "/$guildId/events/$eventId/kills"
-    | "/$guildId/events/$eventId/ranking"
-    | "/$guildId/settings/roles/$roleId"
-    | "/$guildId/stats/members/$memberId"
-    | "/$guildId/stats/npcs/$npcId"
-    | "/@me/battle-panel/battles/$battleId"
-    | "/@me/battle-panel/statistics/h2h"
-    | "/@me/battle-panel/statistics/matchmaking-h2h"
-    | "/$guildId/stats/npcs/"
-    | "/$guildId/events/$eventId/heroes/$heroId"
-    | "/$guildId/events/$eventId/heroes/$heroId/kills"
-    | "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId"
-    | "/$guildId/events/$eventId/heroes/$heroId/kills/$killId";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/init'
+    | '/signin'
+    | '/$guildId'
+    | '/@me'
+    | '/battles/$id'
+    | '/$guildId/activity-logs'
+    | '/$guildId/events'
+    | '/$guildId/reservations'
+    | '/$guildId/settings'
+    | '/$guildId/stats'
+    | '/$guildId/timers'
+    | '/@me/battle-panel'
+    | '/@me/kills'
+    | '/@me/settings'
+    | '/$guildId/'
+    | '/@me/'
+    | '/$guildId/events/$eventId'
+    | '/$guildId/reservations/$reservationId'
+    | '/$guildId/settings/map-templates'
+    | '/$guildId/settings/members'
+    | '/$guildId/settings/npcs'
+    | '/$guildId/settings/roles'
+    | '/$guildId/stats/ranking'
+    | '/@me/battle-panel/battles'
+    | '/@me/battle-panel/statistics'
+    | '/@me/battle-panel/stats'
+    | '/@me/settings/appearance'
+    | '/$guildId/reservations/'
+    | '/$guildId/settings/'
+    | '/$guildId/stats/'
+    | '/@me/battle-panel/'
+    | '/@me/settings/'
+    | '/$guildId/events/$eventId/kills'
+    | '/$guildId/events/$eventId/ranking'
+    | '/$guildId/settings/roles/$roleId'
+    | '/$guildId/stats/members/$memberId'
+    | '/$guildId/stats/npcs/$npcId'
+    | '/@me/battle-panel/battles/$battleId'
+    | '/@me/battle-panel/statistics/h2h'
+    | '/@me/battle-panel/statistics/matchmaking-h2h'
+    | '/$guildId/stats/npcs/'
+    | '/$guildId/events/$eventId/heroes/$heroId'
+    | '/$guildId/events/$eventId/heroes/$heroId/kills'
+    | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
+    | '/$guildId/events/$eventId/heroes/$heroId/kills/$killId'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/init"
-    | "/signin"
-    | "/battles/$id"
-    | "/$guildId/activity-logs"
-    | "/$guildId/events"
-    | "/$guildId/timers"
-    | "/@me/kills"
-    | "/$guildId"
-    | "/@me"
-    | "/$guildId/events/$eventId"
-    | "/$guildId/reservations/$reservationId"
-    | "/$guildId/settings/map-templates"
-    | "/$guildId/settings/members"
-    | "/$guildId/settings/npcs"
-    | "/$guildId/settings/roles"
-    | "/$guildId/stats/ranking"
-    | "/@me/battle-panel/battles"
-    | "/@me/battle-panel/statistics"
-    | "/@me/battle-panel/stats"
-    | "/@me/settings/appearance"
-    | "/$guildId/reservations"
-    | "/$guildId/settings"
-    | "/$guildId/stats"
-    | "/@me/battle-panel"
-    | "/@me/settings"
-    | "/$guildId/events/$eventId/kills"
-    | "/$guildId/events/$eventId/ranking"
-    | "/$guildId/settings/roles/$roleId"
-    | "/$guildId/stats/members/$memberId"
-    | "/$guildId/stats/npcs/$npcId"
-    | "/@me/battle-panel/battles/$battleId"
-    | "/@me/battle-panel/statistics/h2h"
-    | "/@me/battle-panel/statistics/matchmaking-h2h"
-    | "/$guildId/stats/npcs"
-    | "/$guildId/events/$eventId/heroes/$heroId"
-    | "/$guildId/events/$eventId/heroes/$heroId/kills"
-    | "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId"
-    | "/$guildId/events/$eventId/heroes/$heroId/kills/$killId";
+    | '/'
+    | '/init'
+    | '/signin'
+    | '/battles/$id'
+    | '/$guildId/activity-logs'
+    | '/$guildId/events'
+    | '/$guildId/timers'
+    | '/@me/kills'
+    | '/$guildId'
+    | '/@me'
+    | '/$guildId/events/$eventId'
+    | '/$guildId/reservations/$reservationId'
+    | '/$guildId/settings/map-templates'
+    | '/$guildId/settings/members'
+    | '/$guildId/settings/npcs'
+    | '/$guildId/settings/roles'
+    | '/$guildId/stats/ranking'
+    | '/@me/battle-panel/battles'
+    | '/@me/battle-panel/statistics'
+    | '/@me/battle-panel/stats'
+    | '/@me/settings/appearance'
+    | '/$guildId/reservations'
+    | '/$guildId/settings'
+    | '/$guildId/stats'
+    | '/@me/battle-panel'
+    | '/@me/settings'
+    | '/$guildId/events/$eventId/kills'
+    | '/$guildId/events/$eventId/ranking'
+    | '/$guildId/settings/roles/$roleId'
+    | '/$guildId/stats/members/$memberId'
+    | '/$guildId/stats/npcs/$npcId'
+    | '/@me/battle-panel/battles/$battleId'
+    | '/@me/battle-panel/statistics/h2h'
+    | '/@me/battle-panel/statistics/matchmaking-h2h'
+    | '/$guildId/stats/npcs'
+    | '/$guildId/events/$eventId/heroes/$heroId'
+    | '/$guildId/events/$eventId/heroes/$heroId/kills'
+    | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
+    | '/$guildId/events/$eventId/heroes/$heroId/kills/$killId'
   id:
-    | "__root__"
-    | "/_authenticated"
-    | "/init"
-    | "/signin"
-    | "/_authenticated/$guildId"
-    | "/_authenticated/@me"
-    | "/battles/$id"
-    | "/_authenticated/$guildId/activity-logs"
-    | "/_authenticated/$guildId/events"
-    | "/_authenticated/$guildId/reservations"
-    | "/_authenticated/$guildId/settings"
-    | "/_authenticated/$guildId/stats"
-    | "/_authenticated/$guildId/timers"
-    | "/_authenticated/@me/battle-panel"
-    | "/_authenticated/@me/kills"
-    | "/_authenticated/@me/settings"
-    | "/_authenticated/$guildId/"
-    | "/_authenticated/@me/"
-    | "/_authenticated/$guildId/events_/$eventId"
-    | "/_authenticated/$guildId/reservations/$reservationId"
-    | "/_authenticated/$guildId/settings/map-templates"
-    | "/_authenticated/$guildId/settings/members"
-    | "/_authenticated/$guildId/settings/npcs"
-    | "/_authenticated/$guildId/settings/roles"
-    | "/_authenticated/$guildId/stats/ranking"
-    | "/_authenticated/@me/battle-panel/battles"
-    | "/_authenticated/@me/battle-panel/statistics"
-    | "/_authenticated/@me/battle-panel/stats"
-    | "/_authenticated/@me/settings/appearance"
-    | "/_authenticated/$guildId/reservations/"
-    | "/_authenticated/$guildId/settings/"
-    | "/_authenticated/$guildId/stats/"
-    | "/_authenticated/@me/battle-panel/"
-    | "/_authenticated/@me/settings/"
-    | "/_authenticated/$guildId/events_/$eventId_/kills"
-    | "/_authenticated/$guildId/events_/$eventId_/ranking"
-    | "/_authenticated/$guildId/settings/roles/$roleId"
-    | "/_authenticated/$guildId/stats/members/$memberId"
-    | "/_authenticated/$guildId/stats/npcs/$npcId"
-    | "/_authenticated/@me/battle-panel/battles_/$battleId"
-    | "/_authenticated/@me/battle-panel/statistics_/h2h"
-    | "/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h"
-    | "/_authenticated/$guildId/stats/npcs/"
-    | "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId"
-    | "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills"
-    | "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId"
-    | "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/_authenticated'
+    | '/init'
+    | '/signin'
+    | '/_authenticated/$guildId'
+    | '/_authenticated/@me'
+    | '/battles/$id'
+    | '/_authenticated/$guildId/activity-logs'
+    | '/_authenticated/$guildId/events'
+    | '/_authenticated/$guildId/reservations'
+    | '/_authenticated/$guildId/settings'
+    | '/_authenticated/$guildId/stats'
+    | '/_authenticated/$guildId/timers'
+    | '/_authenticated/@me/battle-panel'
+    | '/_authenticated/@me/kills'
+    | '/_authenticated/@me/settings'
+    | '/_authenticated/$guildId/'
+    | '/_authenticated/@me/'
+    | '/_authenticated/$guildId/events_/$eventId'
+    | '/_authenticated/$guildId/reservations/$reservationId'
+    | '/_authenticated/$guildId/settings/map-templates'
+    | '/_authenticated/$guildId/settings/members'
+    | '/_authenticated/$guildId/settings/npcs'
+    | '/_authenticated/$guildId/settings/roles'
+    | '/_authenticated/$guildId/stats/ranking'
+    | '/_authenticated/@me/battle-panel/battles'
+    | '/_authenticated/@me/battle-panel/statistics'
+    | '/_authenticated/@me/battle-panel/stats'
+    | '/_authenticated/@me/settings/appearance'
+    | '/_authenticated/$guildId/reservations/'
+    | '/_authenticated/$guildId/settings/'
+    | '/_authenticated/$guildId/stats/'
+    | '/_authenticated/@me/battle-panel/'
+    | '/_authenticated/@me/settings/'
+    | '/_authenticated/$guildId/events_/$eventId_/kills'
+    | '/_authenticated/$guildId/events_/$eventId_/ranking'
+    | '/_authenticated/$guildId/settings/roles/$roleId'
+    | '/_authenticated/$guildId/stats/members/$memberId'
+    | '/_authenticated/$guildId/stats/npcs/$npcId'
+    | '/_authenticated/@me/battle-panel/battles_/$battleId'
+    | '/_authenticated/@me/battle-panel/statistics_/h2h'
+    | '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
+    | '/_authenticated/$guildId/stats/npcs/'
+    | '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId'
+    | '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills'
+    | '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId'
+    | '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren;
-  InitRoute: typeof InitRoute;
-  SigninRoute: typeof SigninRoute;
-  BattlesIdRoute: typeof BattlesIdRoute;
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  InitRoute: typeof InitRoute
+  SigninRoute: typeof SigninRoute
+  BattlesIdRoute: typeof BattlesIdRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/signin": {
-      id: "/signin";
-      path: "/signin";
-      fullPath: "/signin";
-      preLoaderRoute: typeof SigninRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/init": {
-      id: "/init";
-      path: "/init";
-      fullPath: "/init";
-      preLoaderRoute: typeof InitRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated": {
-      id: "/_authenticated";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/battles/$id": {
-      id: "/battles/$id";
-      path: "/battles/$id";
-      fullPath: "/battles/$id";
-      preLoaderRoute: typeof BattlesIdRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated/@me": {
-      id: "/_authenticated/@me";
-      path: "/@me";
-      fullPath: "/@me";
-      preLoaderRoute: typeof AuthenticatedAtmeRouteImport;
-      parentRoute: typeof AuthenticatedRoute;
-    };
-    "/_authenticated/$guildId": {
-      id: "/_authenticated/$guildId";
-      path: "/$guildId";
-      fullPath: "/$guildId";
-      preLoaderRoute: typeof AuthenticatedGuildIdRouteImport;
-      parentRoute: typeof AuthenticatedRoute;
-    };
-    "/_authenticated/@me/": {
-      id: "/_authenticated/@me/";
-      path: "/";
-      fullPath: "/@me/";
-      preLoaderRoute: typeof AuthenticatedAtmeIndexRouteImport;
-      parentRoute: typeof AuthenticatedAtmeRoute;
-    };
-    "/_authenticated/$guildId/": {
-      id: "/_authenticated/$guildId/";
-      path: "/";
-      fullPath: "/$guildId/";
-      preLoaderRoute: typeof AuthenticatedGuildIdIndexRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/@me/settings": {
-      id: "/_authenticated/@me/settings";
-      path: "/settings";
-      fullPath: "/@me/settings";
-      preLoaderRoute: typeof AuthenticatedAtmeSettingsRouteImport;
-      parentRoute: typeof AuthenticatedAtmeRoute;
-    };
-    "/_authenticated/@me/kills": {
-      id: "/_authenticated/@me/kills";
-      path: "/kills";
-      fullPath: "/@me/kills";
-      preLoaderRoute: typeof AuthenticatedAtmeKillsRouteImport;
-      parentRoute: typeof AuthenticatedAtmeRoute;
-    };
-    "/_authenticated/@me/battle-panel": {
-      id: "/_authenticated/@me/battle-panel";
-      path: "/battle-panel";
-      fullPath: "/@me/battle-panel";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelRouteImport;
-      parentRoute: typeof AuthenticatedAtmeRoute;
-    };
-    "/_authenticated/$guildId/timers": {
-      id: "/_authenticated/$guildId/timers";
-      path: "/timers";
-      fullPath: "/$guildId/timers";
-      preLoaderRoute: typeof AuthenticatedGuildIdTimersRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/stats": {
-      id: "/_authenticated/$guildId/stats";
-      path: "/stats";
-      fullPath: "/$guildId/stats";
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/settings": {
-      id: "/_authenticated/$guildId/settings";
-      path: "/settings";
-      fullPath: "/$guildId/settings";
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/reservations": {
-      id: "/_authenticated/$guildId/reservations";
-      path: "/reservations";
-      fullPath: "/$guildId/reservations";
-      preLoaderRoute: typeof AuthenticatedGuildIdReservationsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/events": {
-      id: "/_authenticated/$guildId/events";
-      path: "/events";
-      fullPath: "/$guildId/events";
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/activity-logs": {
-      id: "/_authenticated/$guildId/activity-logs";
-      path: "/activity-logs";
-      fullPath: "/$guildId/activity-logs";
-      preLoaderRoute: typeof AuthenticatedGuildIdActivityLogsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/@me/settings/": {
-      id: "/_authenticated/@me/settings/";
-      path: "/";
-      fullPath: "/@me/settings/";
-      preLoaderRoute: typeof AuthenticatedAtmeSettingsIndexRouteImport;
-      parentRoute: typeof AuthenticatedAtmeSettingsRoute;
-    };
-    "/_authenticated/@me/battle-panel/": {
-      id: "/_authenticated/@me/battle-panel/";
-      path: "/";
-      fullPath: "/@me/battle-panel/";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelIndexRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/$guildId/stats/": {
-      id: "/_authenticated/$guildId/stats/";
-      path: "/";
-      fullPath: "/$guildId/stats/";
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsIndexRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute;
-    };
-    "/_authenticated/$guildId/settings/": {
-      id: "/_authenticated/$guildId/settings/";
-      path: "/";
-      fullPath: "/$guildId/settings/";
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsIndexRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute;
-    };
-    "/_authenticated/$guildId/reservations/": {
-      id: "/_authenticated/$guildId/reservations/";
-      path: "/";
-      fullPath: "/$guildId/reservations/";
-      preLoaderRoute: typeof AuthenticatedGuildIdReservationsIndexRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdReservationsRoute;
-    };
-    "/_authenticated/@me/settings/appearance": {
-      id: "/_authenticated/@me/settings/appearance";
-      path: "/appearance";
-      fullPath: "/@me/settings/appearance";
-      preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceRouteImport;
-      parentRoute: typeof AuthenticatedAtmeSettingsRoute;
-    };
-    "/_authenticated/@me/battle-panel/stats": {
-      id: "/_authenticated/@me/battle-panel/stats";
-      path: "/stats";
-      fullPath: "/@me/battle-panel/stats";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatsRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/@me/battle-panel/statistics": {
-      id: "/_authenticated/@me/battle-panel/statistics";
-      path: "/statistics";
-      fullPath: "/@me/battle-panel/statistics";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/@me/battle-panel/battles": {
-      id: "/_authenticated/@me/battle-panel/battles";
-      path: "/battles";
-      fullPath: "/@me/battle-panel/battles";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/$guildId/stats/ranking": {
-      id: "/_authenticated/$guildId/stats/ranking";
-      path: "/ranking";
-      fullPath: "/$guildId/stats/ranking";
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsRankingRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute;
-    };
-    "/_authenticated/$guildId/settings/roles": {
-      id: "/_authenticated/$guildId/settings/roles";
-      path: "/roles";
-      fullPath: "/$guildId/settings/roles";
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute;
-    };
-    "/_authenticated/$guildId/settings/npcs": {
-      id: "/_authenticated/$guildId/settings/npcs";
-      path: "/npcs";
-      fullPath: "/$guildId/settings/npcs";
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNpcsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute;
-    };
-    "/_authenticated/$guildId/settings/members": {
-      id: "/_authenticated/$guildId/settings/members";
-      path: "/members";
-      fullPath: "/$guildId/settings/members";
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMembersRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute;
-    };
-    "/_authenticated/$guildId/settings/map-templates": {
-      id: "/_authenticated/$guildId/settings/map-templates";
-      path: "/map-templates";
-      fullPath: "/$guildId/settings/map-templates";
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdSettingsRoute;
-    };
-    "/_authenticated/$guildId/reservations/$reservationId": {
-      id: "/_authenticated/$guildId/reservations/$reservationId";
-      path: "/$reservationId";
-      fullPath: "/$guildId/reservations/$reservationId";
-      preLoaderRoute: typeof AuthenticatedGuildIdReservationsReservationIdRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdReservationsRoute;
-    };
-    "/_authenticated/$guildId/events_/$eventId": {
-      id: "/_authenticated/$guildId/events_/$eventId";
-      path: "/events/$eventId";
-      fullPath: "/$guildId/events/$eventId";
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/stats/npcs/": {
-      id: "/_authenticated/$guildId/stats/npcs/";
-      path: "/npcs";
-      fullPath: "/$guildId/stats/npcs/";
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute;
-    };
-    "/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h": {
-      id: "/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h";
-      path: "/statistics/matchmaking-h2h";
-      fullPath: "/@me/battle-panel/statistics/matchmaking-h2h";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/@me/battle-panel/statistics_/h2h": {
-      id: "/_authenticated/@me/battle-panel/statistics_/h2h";
-      path: "/statistics/h2h";
-      fullPath: "/@me/battle-panel/statistics/h2h";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/@me/battle-panel/battles_/$battleId": {
-      id: "/_authenticated/@me/battle-panel/battles_/$battleId";
-      path: "/battles/$battleId";
-      fullPath: "/@me/battle-panel/battles/$battleId";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/$guildId/stats/npcs/$npcId": {
-      id: "/_authenticated/$guildId/stats/npcs/$npcId";
-      path: "/npcs/$npcId";
-      fullPath: "/$guildId/stats/npcs/$npcId";
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute;
-    };
-    "/_authenticated/$guildId/stats/members/$memberId": {
-      id: "/_authenticated/$guildId/stats/members/$memberId";
-      path: "/members/$memberId";
-      fullPath: "/$guildId/stats/members/$memberId";
-      preLoaderRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdStatsRoute;
-    };
-    "/_authenticated/$guildId/settings/roles/$roleId": {
-      id: "/_authenticated/$guildId/settings/roles/$roleId";
-      path: "/$roleId";
-      fullPath: "/$guildId/settings/roles/$roleId";
-      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRoleIdRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdSettingsRolesRoute;
-    };
-    "/_authenticated/$guildId/events_/$eventId_/ranking": {
-      id: "/_authenticated/$guildId/events_/$eventId_/ranking";
-      path: "/events/$eventId/ranking";
-      fullPath: "/$guildId/events/$eventId/ranking";
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/events_/$eventId_/kills": {
-      id: "/_authenticated/$guildId/events_/$eventId_/kills";
-      path: "/events/$eventId/kills";
-      fullPath: "/$guildId/events/$eventId/kills";
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdKillsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId": {
-      id: "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId";
-      path: "/events/$eventId/heroes/$heroId";
-      fullPath: "/$guildId/events/$eventId/heroes/$heroId";
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId": {
-      id: "/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId";
-      path: "/statistics/player-vs-player/$myId/$opponentId";
-      fullPath: "/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId";
-      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport;
-      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute;
-    };
-    "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills": {
-      id: "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills";
-      path: "/events/$eventId/heroes/$heroId/kills";
-      fullPath: "/$guildId/events/$eventId/heroes/$heroId/kills";
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
-    "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId": {
-      id: "/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId";
-      path: "/events/$eventId/heroes/$heroId/kills/$killId";
-      fullPath: "/$guildId/events/$eventId/heroes/$heroId/kills/$killId";
-      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport;
-      parentRoute: typeof AuthenticatedGuildIdRoute;
-    };
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/init': {
+      id: '/init'
+      path: '/init'
+      fullPath: '/init'
+      preLoaderRoute: typeof InitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/battles/$id': {
+      id: '/battles/$id'
+      path: '/battles/$id'
+      fullPath: '/battles/$id'
+      preLoaderRoute: typeof BattlesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/@me': {
+      id: '/_authenticated/@me'
+      path: '/@me'
+      fullPath: '/@me'
+      preLoaderRoute: typeof AuthenticatedAtmeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/$guildId': {
+      id: '/_authenticated/$guildId'
+      path: '/$guildId'
+      fullPath: '/$guildId'
+      preLoaderRoute: typeof AuthenticatedGuildIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/@me/': {
+      id: '/_authenticated/@me/'
+      path: '/'
+      fullPath: '/@me/'
+      preLoaderRoute: typeof AuthenticatedAtmeIndexRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/$guildId/': {
+      id: '/_authenticated/$guildId/'
+      path: '/'
+      fullPath: '/$guildId/'
+      preLoaderRoute: typeof AuthenticatedGuildIdIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/@me/settings': {
+      id: '/_authenticated/@me/settings'
+      path: '/settings'
+      fullPath: '/@me/settings'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/kills': {
+      id: '/_authenticated/@me/kills'
+      path: '/kills'
+      fullPath: '/@me/kills'
+      preLoaderRoute: typeof AuthenticatedAtmeKillsRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/@me/battle-panel': {
+      id: '/_authenticated/@me/battle-panel'
+      path: '/battle-panel'
+      fullPath: '/@me/battle-panel'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelRouteImport
+      parentRoute: typeof AuthenticatedAtmeRoute
+    }
+    '/_authenticated/$guildId/timers': {
+      id: '/_authenticated/$guildId/timers'
+      path: '/timers'
+      fullPath: '/$guildId/timers'
+      preLoaderRoute: typeof AuthenticatedGuildIdTimersRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/stats': {
+      id: '/_authenticated/$guildId/stats'
+      path: '/stats'
+      fullPath: '/$guildId/stats'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/settings': {
+      id: '/_authenticated/$guildId/settings'
+      path: '/settings'
+      fullPath: '/$guildId/settings'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/reservations': {
+      id: '/_authenticated/$guildId/reservations'
+      path: '/reservations'
+      fullPath: '/$guildId/reservations'
+      preLoaderRoute: typeof AuthenticatedGuildIdReservationsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/events': {
+      id: '/_authenticated/$guildId/events'
+      path: '/events'
+      fullPath: '/$guildId/events'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/activity-logs': {
+      id: '/_authenticated/$guildId/activity-logs'
+      path: '/activity-logs'
+      fullPath: '/$guildId/activity-logs'
+      preLoaderRoute: typeof AuthenticatedGuildIdActivityLogsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/@me/settings/': {
+      id: '/_authenticated/@me/settings/'
+      path: '/'
+      fullPath: '/@me/settings/'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/@me/battle-panel/': {
+      id: '/_authenticated/@me/battle-panel/'
+      path: '/'
+      fullPath: '/@me/battle-panel/'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelIndexRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/$guildId/stats/': {
+      id: '/_authenticated/$guildId/stats/'
+      path: '/'
+      fullPath: '/$guildId/stats/'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/settings/': {
+      id: '/_authenticated/$guildId/settings/'
+      path: '/'
+      fullPath: '/$guildId/settings/'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/reservations/': {
+      id: '/_authenticated/$guildId/reservations/'
+      path: '/'
+      fullPath: '/$guildId/reservations/'
+      preLoaderRoute: typeof AuthenticatedGuildIdReservationsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdReservationsRoute
+    }
+    '/_authenticated/@me/settings/appearance': {
+      id: '/_authenticated/@me/settings/appearance'
+      path: '/appearance'
+      fullPath: '/@me/settings/appearance'
+      preLoaderRoute: typeof AuthenticatedAtmeSettingsAppearanceRouteImport
+      parentRoute: typeof AuthenticatedAtmeSettingsRoute
+    }
+    '/_authenticated/@me/battle-panel/stats': {
+      id: '/_authenticated/@me/battle-panel/stats'
+      path: '/stats'
+      fullPath: '/@me/battle-panel/stats'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatsRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics': {
+      id: '/_authenticated/@me/battle-panel/statistics'
+      path: '/statistics'
+      fullPath: '/@me/battle-panel/statistics'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/battles': {
+      id: '/_authenticated/@me/battle-panel/battles'
+      path: '/battles'
+      fullPath: '/@me/battle-panel/battles'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/$guildId/stats/ranking': {
+      id: '/_authenticated/$guildId/stats/ranking'
+      path: '/ranking'
+      fullPath: '/$guildId/stats/ranking'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsRankingRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/settings/roles': {
+      id: '/_authenticated/$guildId/settings/roles'
+      path: '/roles'
+      fullPath: '/$guildId/settings/roles'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/npcs': {
+      id: '/_authenticated/$guildId/settings/npcs'
+      path: '/npcs'
+      fullPath: '/$guildId/settings/npcs'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsNpcsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/members': {
+      id: '/_authenticated/$guildId/settings/members'
+      path: '/members'
+      fullPath: '/$guildId/settings/members'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMembersRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/settings/map-templates': {
+      id: '/_authenticated/$guildId/settings/map-templates'
+      path: '/map-templates'
+      fullPath: '/$guildId/settings/map-templates'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRoute
+    }
+    '/_authenticated/$guildId/reservations/$reservationId': {
+      id: '/_authenticated/$guildId/reservations/$reservationId'
+      path: '/$reservationId'
+      fullPath: '/$guildId/reservations/$reservationId'
+      preLoaderRoute: typeof AuthenticatedGuildIdReservationsReservationIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdReservationsRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId': {
+      id: '/_authenticated/$guildId/events_/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/$guildId/events/$eventId'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/stats/npcs/': {
+      id: '/_authenticated/$guildId/stats/npcs/'
+      path: '/npcs'
+      fullPath: '/$guildId/stats/npcs/'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h': {
+      id: '/_authenticated/@me/battle-panel/statistics_/matchmaking-h2h'
+      path: '/statistics/matchmaking-h2h'
+      fullPath: '/@me/battle-panel/statistics/matchmaking-h2h'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics_/h2h': {
+      id: '/_authenticated/@me/battle-panel/statistics_/h2h'
+      path: '/statistics/h2h'
+      fullPath: '/@me/battle-panel/statistics/h2h'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsH2hRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/@me/battle-panel/battles_/$battleId': {
+      id: '/_authenticated/@me/battle-panel/battles_/$battleId'
+      path: '/battles/$battleId'
+      fullPath: '/@me/battle-panel/battles/$battleId'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/$guildId/stats/npcs/$npcId': {
+      id: '/_authenticated/$guildId/stats/npcs/$npcId'
+      path: '/npcs/$npcId'
+      fullPath: '/$guildId/stats/npcs/$npcId'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/stats/members/$memberId': {
+      id: '/_authenticated/$guildId/stats/members/$memberId'
+      path: '/members/$memberId'
+      fullPath: '/$guildId/stats/members/$memberId'
+      preLoaderRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdStatsRoute
+    }
+    '/_authenticated/$guildId/settings/roles/$roleId': {
+      id: '/_authenticated/$guildId/settings/roles/$roleId'
+      path: '/$roleId'
+      fullPath: '/$guildId/settings/roles/$roleId'
+      preLoaderRoute: typeof AuthenticatedGuildIdSettingsRolesRoleIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdSettingsRolesRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/ranking': {
+      id: '/_authenticated/$guildId/events_/$eventId_/ranking'
+      path: '/events/$eventId/ranking'
+      fullPath: '/$guildId/events/$eventId/ranking'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/kills': {
+      id: '/_authenticated/$guildId/events_/$eventId_/kills'
+      path: '/events/$eventId/kills'
+      fullPath: '/$guildId/events/$eventId/kills'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdKillsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId': {
+      id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId'
+      path: '/events/$eventId/heroes/$heroId'
+      fullPath: '/$guildId/events/$eventId/heroes/$heroId'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId': {
+      id: '/_authenticated/@me/battle-panel/statistics_/player-vs-player/$myId/$opponentId'
+      path: '/statistics/player-vs-player/$myId/$opponentId'
+      fullPath: '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
+      preLoaderRoute: typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRouteImport
+      parentRoute: typeof AuthenticatedAtmeBattlePanelRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills': {
+      id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills'
+      path: '/events/$eventId/heroes/$heroId/kills'
+      fullPath: '/$guildId/events/$eventId/heroes/$heroId/kills'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
+    '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId': {
+      id: '/_authenticated/$guildId/events_/$eventId_/heroes_/$heroId_/kills_/$killId'
+      path: '/events/$eventId/heroes/$heroId/kills/$killId'
+      fullPath: '/$guildId/events/$eventId/heroes/$heroId/kills/$killId'
+      preLoaderRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRouteImport
+      parentRoute: typeof AuthenticatedGuildIdRoute
+    }
   }
 }
 
 interface AuthenticatedGuildIdReservationsRouteChildren {
-  AuthenticatedGuildIdReservationsReservationIdRoute: typeof AuthenticatedGuildIdReservationsReservationIdRoute;
-  AuthenticatedGuildIdReservationsIndexRoute: typeof AuthenticatedGuildIdReservationsIndexRoute;
+  AuthenticatedGuildIdReservationsReservationIdRoute: typeof AuthenticatedGuildIdReservationsReservationIdRoute
+  AuthenticatedGuildIdReservationsIndexRoute: typeof AuthenticatedGuildIdReservationsIndexRoute
 }
 
 const AuthenticatedGuildIdReservationsRouteChildren: AuthenticatedGuildIdReservationsRouteChildren =
@@ -949,34 +949,34 @@ const AuthenticatedGuildIdReservationsRouteChildren: AuthenticatedGuildIdReserva
       AuthenticatedGuildIdReservationsReservationIdRoute,
     AuthenticatedGuildIdReservationsIndexRoute:
       AuthenticatedGuildIdReservationsIndexRoute,
-  };
+  }
 
 const AuthenticatedGuildIdReservationsRouteWithChildren =
   AuthenticatedGuildIdReservationsRoute._addFileChildren(
     AuthenticatedGuildIdReservationsRouteChildren,
-  );
+  )
 
 interface AuthenticatedGuildIdSettingsRolesRouteChildren {
-  AuthenticatedGuildIdSettingsRolesRoleIdRoute: typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute;
+  AuthenticatedGuildIdSettingsRolesRoleIdRoute: typeof AuthenticatedGuildIdSettingsRolesRoleIdRoute
 }
 
 const AuthenticatedGuildIdSettingsRolesRouteChildren: AuthenticatedGuildIdSettingsRolesRouteChildren =
   {
     AuthenticatedGuildIdSettingsRolesRoleIdRoute:
       AuthenticatedGuildIdSettingsRolesRoleIdRoute,
-  };
+  }
 
 const AuthenticatedGuildIdSettingsRolesRouteWithChildren =
   AuthenticatedGuildIdSettingsRolesRoute._addFileChildren(
     AuthenticatedGuildIdSettingsRolesRouteChildren,
-  );
+  )
 
 interface AuthenticatedGuildIdSettingsRouteChildren {
-  AuthenticatedGuildIdSettingsMapTemplatesRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRoute;
-  AuthenticatedGuildIdSettingsMembersRoute: typeof AuthenticatedGuildIdSettingsMembersRoute;
-  AuthenticatedGuildIdSettingsNpcsRoute: typeof AuthenticatedGuildIdSettingsNpcsRoute;
-  AuthenticatedGuildIdSettingsRolesRoute: typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren;
-  AuthenticatedGuildIdSettingsIndexRoute: typeof AuthenticatedGuildIdSettingsIndexRoute;
+  AuthenticatedGuildIdSettingsMapTemplatesRoute: typeof AuthenticatedGuildIdSettingsMapTemplatesRoute
+  AuthenticatedGuildIdSettingsMembersRoute: typeof AuthenticatedGuildIdSettingsMembersRoute
+  AuthenticatedGuildIdSettingsNpcsRoute: typeof AuthenticatedGuildIdSettingsNpcsRoute
+  AuthenticatedGuildIdSettingsRolesRoute: typeof AuthenticatedGuildIdSettingsRolesRouteWithChildren
+  AuthenticatedGuildIdSettingsIndexRoute: typeof AuthenticatedGuildIdSettingsIndexRoute
 }
 
 const AuthenticatedGuildIdSettingsRouteChildren: AuthenticatedGuildIdSettingsRouteChildren =
@@ -991,19 +991,19 @@ const AuthenticatedGuildIdSettingsRouteChildren: AuthenticatedGuildIdSettingsRou
       AuthenticatedGuildIdSettingsRolesRouteWithChildren,
     AuthenticatedGuildIdSettingsIndexRoute:
       AuthenticatedGuildIdSettingsIndexRoute,
-  };
+  }
 
 const AuthenticatedGuildIdSettingsRouteWithChildren =
   AuthenticatedGuildIdSettingsRoute._addFileChildren(
     AuthenticatedGuildIdSettingsRouteChildren,
-  );
+  )
 
 interface AuthenticatedGuildIdStatsRouteChildren {
-  AuthenticatedGuildIdStatsRankingRoute: typeof AuthenticatedGuildIdStatsRankingRoute;
-  AuthenticatedGuildIdStatsIndexRoute: typeof AuthenticatedGuildIdStatsIndexRoute;
-  AuthenticatedGuildIdStatsMembersMemberIdRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRoute;
-  AuthenticatedGuildIdStatsNpcsNpcIdRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute;
-  AuthenticatedGuildIdStatsNpcsIndexRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRoute;
+  AuthenticatedGuildIdStatsRankingRoute: typeof AuthenticatedGuildIdStatsRankingRoute
+  AuthenticatedGuildIdStatsIndexRoute: typeof AuthenticatedGuildIdStatsIndexRoute
+  AuthenticatedGuildIdStatsMembersMemberIdRoute: typeof AuthenticatedGuildIdStatsMembersMemberIdRoute
+  AuthenticatedGuildIdStatsNpcsNpcIdRoute: typeof AuthenticatedGuildIdStatsNpcsNpcIdRoute
+  AuthenticatedGuildIdStatsNpcsIndexRoute: typeof AuthenticatedGuildIdStatsNpcsIndexRoute
 }
 
 const AuthenticatedGuildIdStatsRouteChildren: AuthenticatedGuildIdStatsRouteChildren =
@@ -1017,27 +1017,27 @@ const AuthenticatedGuildIdStatsRouteChildren: AuthenticatedGuildIdStatsRouteChil
       AuthenticatedGuildIdStatsNpcsNpcIdRoute,
     AuthenticatedGuildIdStatsNpcsIndexRoute:
       AuthenticatedGuildIdStatsNpcsIndexRoute,
-  };
+  }
 
 const AuthenticatedGuildIdStatsRouteWithChildren =
   AuthenticatedGuildIdStatsRoute._addFileChildren(
     AuthenticatedGuildIdStatsRouteChildren,
-  );
+  )
 
 interface AuthenticatedGuildIdRouteChildren {
-  AuthenticatedGuildIdActivityLogsRoute: typeof AuthenticatedGuildIdActivityLogsRoute;
-  AuthenticatedGuildIdEventsRoute: typeof AuthenticatedGuildIdEventsRoute;
-  AuthenticatedGuildIdReservationsRoute: typeof AuthenticatedGuildIdReservationsRouteWithChildren;
-  AuthenticatedGuildIdSettingsRoute: typeof AuthenticatedGuildIdSettingsRouteWithChildren;
-  AuthenticatedGuildIdStatsRoute: typeof AuthenticatedGuildIdStatsRouteWithChildren;
-  AuthenticatedGuildIdTimersRoute: typeof AuthenticatedGuildIdTimersRoute;
-  AuthenticatedGuildIdIndexRoute: typeof AuthenticatedGuildIdIndexRoute;
-  AuthenticatedGuildIdEventsEventIdRoute: typeof AuthenticatedGuildIdEventsEventIdRoute;
-  AuthenticatedGuildIdEventsEventIdKillsRoute: typeof AuthenticatedGuildIdEventsEventIdKillsRoute;
-  AuthenticatedGuildIdEventsEventIdRankingRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRoute;
-  AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute;
-  AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute;
-  AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute;
+  AuthenticatedGuildIdActivityLogsRoute: typeof AuthenticatedGuildIdActivityLogsRoute
+  AuthenticatedGuildIdEventsRoute: typeof AuthenticatedGuildIdEventsRoute
+  AuthenticatedGuildIdReservationsRoute: typeof AuthenticatedGuildIdReservationsRouteWithChildren
+  AuthenticatedGuildIdSettingsRoute: typeof AuthenticatedGuildIdSettingsRouteWithChildren
+  AuthenticatedGuildIdStatsRoute: typeof AuthenticatedGuildIdStatsRouteWithChildren
+  AuthenticatedGuildIdTimersRoute: typeof AuthenticatedGuildIdTimersRoute
+  AuthenticatedGuildIdIndexRoute: typeof AuthenticatedGuildIdIndexRoute
+  AuthenticatedGuildIdEventsEventIdRoute: typeof AuthenticatedGuildIdEventsEventIdRoute
+  AuthenticatedGuildIdEventsEventIdKillsRoute: typeof AuthenticatedGuildIdEventsEventIdKillsRoute
+  AuthenticatedGuildIdEventsEventIdRankingRoute: typeof AuthenticatedGuildIdEventsEventIdRankingRoute
+  AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdRoute
+  AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute
+  AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute: typeof AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute
 }
 
 const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
@@ -1062,20 +1062,20 @@ const AuthenticatedGuildIdRouteChildren: AuthenticatedGuildIdRouteChildren = {
     AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsRoute,
   AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute:
     AuthenticatedGuildIdEventsEventIdHeroesHeroIdKillsKillIdRoute,
-};
+}
 
 const AuthenticatedGuildIdRouteWithChildren =
-  AuthenticatedGuildIdRoute._addFileChildren(AuthenticatedGuildIdRouteChildren);
+  AuthenticatedGuildIdRoute._addFileChildren(AuthenticatedGuildIdRouteChildren)
 
 interface AuthenticatedAtmeBattlePanelRouteChildren {
-  AuthenticatedAtmeBattlePanelBattlesRoute: typeof AuthenticatedAtmeBattlePanelBattlesRoute;
-  AuthenticatedAtmeBattlePanelStatisticsRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRoute;
-  AuthenticatedAtmeBattlePanelStatsRoute: typeof AuthenticatedAtmeBattlePanelStatsRoute;
-  AuthenticatedAtmeBattlePanelIndexRoute: typeof AuthenticatedAtmeBattlePanelIndexRoute;
-  AuthenticatedAtmeBattlePanelBattlesBattleIdRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute;
-  AuthenticatedAtmeBattlePanelStatisticsH2hRoute: typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute;
-  AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute: typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute;
-  AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute: typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute;
+  AuthenticatedAtmeBattlePanelBattlesRoute: typeof AuthenticatedAtmeBattlePanelBattlesRoute
+  AuthenticatedAtmeBattlePanelStatisticsRoute: typeof AuthenticatedAtmeBattlePanelStatisticsRoute
+  AuthenticatedAtmeBattlePanelStatsRoute: typeof AuthenticatedAtmeBattlePanelStatsRoute
+  AuthenticatedAtmeBattlePanelIndexRoute: typeof AuthenticatedAtmeBattlePanelIndexRoute
+  AuthenticatedAtmeBattlePanelBattlesBattleIdRoute: typeof AuthenticatedAtmeBattlePanelBattlesBattleIdRoute
+  AuthenticatedAtmeBattlePanelStatisticsH2hRoute: typeof AuthenticatedAtmeBattlePanelStatisticsH2hRoute
+  AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute: typeof AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute
+  AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute: typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
 }
 
 const AuthenticatedAtmeBattlePanelRouteChildren: AuthenticatedAtmeBattlePanelRouteChildren =
@@ -1096,16 +1096,16 @@ const AuthenticatedAtmeBattlePanelRouteChildren: AuthenticatedAtmeBattlePanelRou
       AuthenticatedAtmeBattlePanelStatisticsMatchmakingH2hRoute,
     AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute:
       AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute,
-  };
+  }
 
 const AuthenticatedAtmeBattlePanelRouteWithChildren =
   AuthenticatedAtmeBattlePanelRoute._addFileChildren(
     AuthenticatedAtmeBattlePanelRouteChildren,
-  );
+  )
 
 interface AuthenticatedAtmeSettingsRouteChildren {
-  AuthenticatedAtmeSettingsAppearanceRoute: typeof AuthenticatedAtmeSettingsAppearanceRoute;
-  AuthenticatedAtmeSettingsIndexRoute: typeof AuthenticatedAtmeSettingsIndexRoute;
+  AuthenticatedAtmeSettingsAppearanceRoute: typeof AuthenticatedAtmeSettingsAppearanceRoute
+  AuthenticatedAtmeSettingsIndexRoute: typeof AuthenticatedAtmeSettingsIndexRoute
 }
 
 const AuthenticatedAtmeSettingsRouteChildren: AuthenticatedAtmeSettingsRouteChildren =
@@ -1113,18 +1113,18 @@ const AuthenticatedAtmeSettingsRouteChildren: AuthenticatedAtmeSettingsRouteChil
     AuthenticatedAtmeSettingsAppearanceRoute:
       AuthenticatedAtmeSettingsAppearanceRoute,
     AuthenticatedAtmeSettingsIndexRoute: AuthenticatedAtmeSettingsIndexRoute,
-  };
+  }
 
 const AuthenticatedAtmeSettingsRouteWithChildren =
   AuthenticatedAtmeSettingsRoute._addFileChildren(
     AuthenticatedAtmeSettingsRouteChildren,
-  );
+  )
 
 interface AuthenticatedAtmeRouteChildren {
-  AuthenticatedAtmeBattlePanelRoute: typeof AuthenticatedAtmeBattlePanelRouteWithChildren;
-  AuthenticatedAtmeKillsRoute: typeof AuthenticatedAtmeKillsRoute;
-  AuthenticatedAtmeSettingsRoute: typeof AuthenticatedAtmeSettingsRouteWithChildren;
-  AuthenticatedAtmeIndexRoute: typeof AuthenticatedAtmeIndexRoute;
+  AuthenticatedAtmeBattlePanelRoute: typeof AuthenticatedAtmeBattlePanelRouteWithChildren
+  AuthenticatedAtmeKillsRoute: typeof AuthenticatedAtmeKillsRoute
+  AuthenticatedAtmeSettingsRoute: typeof AuthenticatedAtmeSettingsRouteWithChildren
+  AuthenticatedAtmeIndexRoute: typeof AuthenticatedAtmeIndexRoute
 }
 
 const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
@@ -1133,31 +1133,31 @@ const AuthenticatedAtmeRouteChildren: AuthenticatedAtmeRouteChildren = {
   AuthenticatedAtmeKillsRoute: AuthenticatedAtmeKillsRoute,
   AuthenticatedAtmeSettingsRoute: AuthenticatedAtmeSettingsRouteWithChildren,
   AuthenticatedAtmeIndexRoute: AuthenticatedAtmeIndexRoute,
-};
+}
 
 const AuthenticatedAtmeRouteWithChildren =
-  AuthenticatedAtmeRoute._addFileChildren(AuthenticatedAtmeRouteChildren);
+  AuthenticatedAtmeRoute._addFileChildren(AuthenticatedAtmeRouteChildren)
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedGuildIdRoute: typeof AuthenticatedGuildIdRouteWithChildren;
-  AuthenticatedAtmeRoute: typeof AuthenticatedAtmeRouteWithChildren;
+  AuthenticatedGuildIdRoute: typeof AuthenticatedGuildIdRouteWithChildren
+  AuthenticatedAtmeRoute: typeof AuthenticatedAtmeRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedGuildIdRoute: AuthenticatedGuildIdRouteWithChildren,
   AuthenticatedAtmeRoute: AuthenticatedAtmeRouteWithChildren,
-};
+}
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
-);
+)
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   InitRoute: InitRoute,
   SigninRoute: SigninRoute,
   BattlesIdRoute: BattlesIdRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

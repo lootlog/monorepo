@@ -9,13 +9,6 @@ import {
 } from "@lootlog/ui/components/avatar";
 import { Input } from "@lootlog/ui/components/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -33,9 +26,9 @@ import {
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { NpcTile } from "@/components/tiles/npc-tile";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useNpcKillers } from "./hooks/use-npc-killers";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
@@ -92,14 +85,13 @@ export const NpcKillersPage: React.FC = () => {
   const [cursor, setCursor] = useState(0);
   const [search, setSearch] = useState("");
   const { settings, setWorld } = useStatsSettings("npc-killers");
-  const { data: worlds } = useWorlds();
   const { data, isLoading } = useNpcKillers(Number.parseInt(npcId, 10), {
     world: settings.world ?? undefined,
   });
   const { data: guildMembers } = useGuildMembers(true);
 
-  const handleWorldChange = (value: string) => {
-    setWorld(value === "ALL" ? null : value);
+  const handleWorldChange = (value: string | null) => {
+    setWorld(value);
     setCursor(0);
   };
 
@@ -211,24 +203,12 @@ export const NpcKillersPage: React.FC = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
-            <Select
-              value={settings.world ?? "ALL"}
+            <WorldSwitcher
+              value={settings.world}
               onValueChange={handleWorldChange}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t("kills.home.filters.world")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.home.filters.allWorlds")}
-                </SelectItem>
-                {worlds?.map((world) => (
-                  <SelectItem key={world} value={world}>
-                    {world.charAt(0).toUpperCase() + world.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              showAllOption
+              width="w-[160px]"
+            />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input

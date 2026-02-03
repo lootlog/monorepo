@@ -1,14 +1,6 @@
-import { useTranslation } from "react-i18next";
 import { useParams } from "@tanstack/react-router";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { useGuildKillStats } from "./hooks/use-guild-kill-stats";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { NpcTypeStatsCards } from "./components/kill-stats-overview";
@@ -18,7 +10,6 @@ import { LevelFilters } from "./components/level-filters";
 import { StatsOverviewFiltersMobile } from "./components/stats-overview-filters-mobile";
 
 export const Stats: React.FC = () => {
-  const { t } = useTranslation();
   const { guildId } = useParams({ from: "/_authenticated/$guildId" });
   const {
     settings,
@@ -28,7 +19,6 @@ export const Stats: React.FC = () => {
     setMinLvl,
     setMaxLvl,
   } = useStatsSettings("overview");
-  const { data: worlds } = useWorlds();
   const { data, isLoading } = useGuildKillStats({
     world: settings.world ?? undefined,
     minLvl: debouncedMinLvl,
@@ -44,9 +34,7 @@ export const Stats: React.FC = () => {
               world={settings.world}
               minLvl={settings.minLvl}
               maxLvl={settings.maxLvl}
-              onWorldChange={(value) =>
-                setWorld(value === "ALL" ? null : value)
-              }
+              onWorldChange={setWorld}
               onMinLvlChange={setMinLvl}
               onMaxLvlChange={setMaxLvl}
             />
@@ -59,26 +47,12 @@ export const Stats: React.FC = () => {
               onMinLvlChange={setMinLvl}
               onMaxLvlChange={setMaxLvl}
             />
-            <Select
-              value={settings.world ?? "ALL"}
-              onValueChange={(value) =>
-                setWorld(value === "ALL" ? null : value)
-              }
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={t("kills.home.filters.world")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.home.filters.allWorlds")}
-                </SelectItem>
-                {worlds?.map((world) => (
-                  <SelectItem key={world} value={world}>
-                    {world.charAt(0).toUpperCase() + world.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <WorldSwitcher
+              value={settings.world}
+              onValueChange={setWorld}
+              showAllOption
+              width="w-[160px]"
+            />
           </div>
 
           <NpcTypeStatsCards data={data?.overview} isLoading={isLoading} />

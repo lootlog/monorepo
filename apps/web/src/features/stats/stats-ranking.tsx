@@ -18,13 +18,6 @@ import {
   PaginationPrevious,
 } from "@lootlog/ui/components/pagination";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
-import {
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -32,7 +25,7 @@ import {
 import { Input } from "@lootlog/ui/components/input";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useWorlds } from "@/hooks/api/game-data/use-worlds";
+import { WorldSwitcher } from "@/components/common/world-switcher";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildKillStats, type NpcType } from "./hooks/use-guild-kill-stats";
 import { useStatsSettings } from "./hooks/use-stats-settings";
@@ -80,7 +73,6 @@ export const StatsRanking: React.FC = () => {
     setMaxLvl,
   } = useStatsSettings("ranking");
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: worlds } = useWorlds();
 
   const { data, isLoading } = useGuildKillStats({
     world: settings.world ?? undefined,
@@ -88,8 +80,8 @@ export const StatsRanking: React.FC = () => {
     maxLvl: debouncedMaxLvl,
   });
 
-  const handleWorldChange = (value: string) => {
-    setWorld(value === "ALL" ? null : value);
+  const handleWorldChange = (value: string | null) => {
+    setWorld(value);
     setCursor(0);
   };
 
@@ -204,24 +196,12 @@ export const StatsRanking: React.FC = () => {
               onMinLvlChange={setMinLvl}
               onMaxLvlChange={setMaxLvl}
             />
-            <Select
-              value={settings.world ?? "ALL"}
+            <WorldSwitcher
+              value={settings.world}
               onValueChange={handleWorldChange}
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={t("kills.home.filters.world")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">
-                  {t("kills.home.filters.allWorlds")}
-                </SelectItem>
-                {worlds?.map((world) => (
-                  <SelectItem key={world} value={world}>
-                    {world.charAt(0).toUpperCase() + world.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              showAllOption
+              width="w-[160px]"
+            />
           </div>
         </div>
       </div>
