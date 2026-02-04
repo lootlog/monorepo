@@ -46,6 +46,8 @@ export type MemberKillsFilters = {
   search?: string;
   limit?: number;
   cursor?: number;
+  minLvl?: number;
+  maxLvl?: number;
 };
 
 export const useMemberKills = (
@@ -61,6 +63,8 @@ export const useMemberKills = (
     search: filters.search || undefined,
     limit: filters.limit || undefined,
     cursor: filters.cursor || undefined,
+    minLvl: filters.minLvl || undefined,
+    maxLvl: filters.maxLvl || undefined,
   };
 
   const queryString = stringify(queryParams, {

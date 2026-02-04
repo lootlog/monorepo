@@ -1,0 +1,39 @@
+{
+  "stats": {
+    "title": "Statystyki lootów",
+    "selectWorldRequired": "Wybierz świat, aby zobaczyć statystyki",
+    "excludeColossus": "Wyklucz Kolosy",
+    "overview": {
+      "totalLoots": "Łącznie lootów",
+      "totalItems": "Łącznie przedmiotów",
+      "legendaryItems": "Legendarnych",
+      "heroicItems": "Heroicznych"
+    },
+    "filters": {
+      "period": "Okres",
+      "world": "Świat"
+    },
+    "timeline": {
+      "title": "Historia lootów",
+      "noData": "Brak danych w wybranym okresie"
+    },
+    "rarity": {
+      "title": "Rzadkość przedmiotów",
+      "noData": "Brak danych o rzadkości"
+    },
+    "topNpcs": {
+      "title": "Top źródła lootów",
+      "noData": "Brak danych o źródłach"
+    },
+    "topContributors": {
+      "title": "Top gracze",
+      "noData": "Brak danych o lootach",
+      "submissions": "lootów"
+    },
+    "topItems": {
+      "title": "Najczęściej wypadające legendy",
+      "noData": "Brak danych o przedmiotach"
+    },
+    "noData": "Brak danych o lootach w wybranym okresie"
+  }
+}
