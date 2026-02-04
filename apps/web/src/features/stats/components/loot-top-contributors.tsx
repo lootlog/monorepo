@@ -1,20 +1,11 @@
-import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useLocalStorage } from "usehooks-ts";
-import { ArrowRight, Crown, Users } from "lucide-react";
+import { Crown, Package } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@lootlog/ui/components/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@lootlog/ui/components/select";
 import { Skeleton } from "@lootlog/ui/components/skeleton";
 import {
   Avatar,
@@ -26,26 +17,20 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member.tsx";
-import type { MemberKillRanking, NpcType } from "../hooks/use-guild-kill-stats";
-import { TRACKABLE_NPC_TYPES } from "../constants";
-
-const STORAGE_KEY = "stats-podium-npc-type";
-
-type PodiumMember = MemberKillRanking & { typeParticipations: number };
+import type { TopContributor } from "../hooks/use-loot-stats";
 
 type PodiumSlotProps = {
-  member?: PodiumMember;
+  contributor?: TopContributor;
   position: 1 | 2 | 3;
   guildMember?: GuildMember;
-  guildId?: string;
 };
 
 const PodiumSlot: React.FC<PodiumSlotProps> = ({
-  member,
+  contributor,
   position,
   guildMember,
-  guildId,
 }) => {
+  const { t } = useTranslation();
   const adaptedMember = guildMember
     ? {
         roles: guildMember.roles.map((r) => ({
@@ -73,7 +58,7 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
     3: "text-amber-600",
   };
 
-  if (!member) {
+  if (!contributor) {
     return (
       <div className={cn("flex flex-col items-center w-28", heights[position])}>
         <div className="h-14 w-14 rounded-full bg-muted" />
@@ -92,7 +77,7 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
     );
   }
 
-  const content = (
+  return (
     <div className={cn("flex flex-col items-center w-28", heights[position])}>
       <div className="relative">
         {position === 1 && (
@@ -100,13 +85,9 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
         )}
         <Avatar className="h-14 w-14 border-2 border-background shadow-lg">
           <AvatarImage
-            src={getDiscordAvatarUrl(
-              member.memberUserId,
-              member.memberAvatar,
-              80,
-            )}
+            src={getDiscordAvatarUrl(contributor.userId, contributor.avatar, 80)}
           />
-          <AvatarFallback>{member.memberName[0]}</AvatarFallback>
+          <AvatarFallback>{contributor.name[0]}</AvatarFallback>
         </Avatar>
       </div>
 
@@ -114,11 +95,11 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
         className="text-sm font-medium truncate max-w-full mt-1"
         style={{ color: memberColor }}
       >
-        {member.memberName}
+        {contributor.name}
       </span>
 
       <span className="text-xs text-muted-foreground">
-        x{member.typeParticipations.toLocaleString()}
+        {contributor.count.toLocaleString()} {t("loots.stats.topContributors.submissions")}
       </span>
 
       <div
@@ -133,36 +114,18 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
       </div>
     </div>
   );
-
-  if (guildId) {
-    return (
-      <Link
-        to="/$guildId/stats/members/$memberId"
-        params={{ guildId, memberId: member.memberId.toString() }}
-        className="hover:opacity-80 transition-opacity"
-      >
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
 };
 
-type MemberRankingPodiumCardProps = {
-  data?: MemberKillRanking[];
+type LootTopContributorsProps = {
+  data?: TopContributor[];
   isLoading?: boolean;
-  guildId?: string;
 };
 
-export const MemberRankingPodiumCard: React.FC<
-  MemberRankingPodiumCardProps
-> = ({ data, isLoading, guildId }) => {
+export const LootTopContributors: React.FC<LootTopContributorsProps> = ({
+  data,
+  isLoading,
+}) => {
   const { t } = useTranslation();
-  const [selectedNpcType, setSelectedNpcType] = useLocalStorage<NpcType>(
-    STORAGE_KEY,
-    "ELITE2",
-  );
   const { data: guildMembers } = useGuildMembers(true);
 
   const membersMap = new Map(guildMembers?.map((m) => [m.userId, m]) ?? []);
@@ -171,13 +134,10 @@ export const MemberRankingPodiumCard: React.FC<
     return (
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <Skeleton className="h-5 w-40" />
-            </CardTitle>
-            <Skeleton className="h-8 w-[120px]" />
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            <Skeleton className="h-5 w-40" />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-end justify-center gap-2">
@@ -190,92 +150,48 @@ export const MemberRankingPodiumCard: React.FC<
     );
   }
 
-  const sortedByType: PodiumMember[] =
-    data
-      ?.map((m) => ({
-        ...m,
-        typeParticipations: m.participationsByType[selectedNpcType] ?? 0,
-      }))
-      .filter((m) => m.typeParticipations > 0)
-      .sort((a, b) => b.typeParticipations - a.typeParticipations)
-      .slice(0, 3) ?? [];
+  const topThree = data?.slice(0, 3) ?? [];
 
   return (
     <Card className="flex flex-col py-5">
       <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            {t("kills.memberRanking.title")}
-          </CardTitle>
-          <Select
-            value={selectedNpcType}
-            onValueChange={(value) => setSelectedNpcType(value as NpcType)}
-          >
-            <SelectTrigger className="w-[120px] h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TRACKABLE_NPC_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {t(`npcType.${type}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Package className="h-5 w-5" />
+          {t("loots.stats.topContributors.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">
         <div className="flex-1 flex items-center justify-center">
-          {sortedByType.length === 0 ? (
+          {topThree.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              {t("kills.memberRanking.noData")}
+              {t("loots.stats.topContributors.noData")}
             </p>
           ) : (
             <div className="flex items-end justify-center gap-2">
               <PodiumSlot
-                member={sortedByType[1]}
+                contributor={topThree[1]}
                 position={2}
                 guildMember={
-                  sortedByType[1]
-                    ? membersMap.get(sortedByType[1].memberUserId)
-                    : undefined
+                  topThree[1] ? membersMap.get(topThree[1].userId) : undefined
                 }
-                guildId={guildId}
               />
               <PodiumSlot
-                member={sortedByType[0]}
+                contributor={topThree[0]}
                 position={1}
                 guildMember={
-                  sortedByType[0]
-                    ? membersMap.get(sortedByType[0].memberUserId)
-                    : undefined
+                  topThree[0] ? membersMap.get(topThree[0].userId) : undefined
                 }
-                guildId={guildId}
               />
               <PodiumSlot
-                member={sortedByType[2]}
+                contributor={topThree[2]}
                 position={3}
                 guildMember={
-                  sortedByType[2]
-                    ? membersMap.get(sortedByType[2].memberUserId)
-                    : undefined
+                  topThree[2] ? membersMap.get(topThree[2].userId) : undefined
                 }
-                guildId={guildId}
               />
             </div>
           )}
         </div>
-        {guildId && (
-          <Link
-            to="/$guildId/stats/ranking"
-            params={{ guildId }}
-            className="flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-auto pt-4"
-          >
-            {t("kills.memberRanking.viewAll")}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
       </CardContent>
     </Card>
   );

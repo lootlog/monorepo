@@ -410,4 +410,8 @@ export class LootsService implements OnModuleInit {
       params,
     );
   }
+
+  async fetchLootById(guild: Guild, lootId: number) {
+    return this.lootQueryService.fetchLootById(guild, lootId);
+  }
 }

@@ -151,10 +151,16 @@ export const KillDetail = () => {
               <Hand className="w-5 h-5 text-yellow-600 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-yellow-600">
-                  {t("events.killDetail.manualCloseTitle", "Ręczne zamknięcie okna")}
+                  {t(
+                    "events.killDetail.manualCloseTitle",
+                    "Ręczne zamknięcie okna",
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t("events.killDetail.manualCloseDescription", "Okno respawnu zostało ręcznie zamknięte - heros mógł nie zostać zabity")}
+                  {t(
+                    "events.killDetail.manualCloseDescription",
+                    "Okno respawnu zostało ręcznie zamknięte - heros mógł nie zostać zabity",
+                  )}
                 </p>
               </div>
             </div>
@@ -280,11 +286,7 @@ export const KillDetail = () => {
                 ) : (
                   <div className="space-y-3">
                     {loots.map((loot) => (
-                      <LootsListItem
-                        key={loot.id}
-                        loot={loot}
-                        canManageLoots={false}
-                      />
+                      <LootsListItem key={loot.id} loot={loot} />
                     ))}
                   </div>
                 )}
