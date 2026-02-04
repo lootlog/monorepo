@@ -2,24 +2,43 @@ import { useWorlds } from "@/hooks/api/game-data/use-worlds";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocalStorage } from "usehooks-ts";
 import { FilterPopover } from "@lootlog/ui/components/filter-popover";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrostOverlay } from "@/components/effects/rukia-frost";
 
+const ALL_WORLDS_SENTINEL = "__ALL__";
+
 type WorldSwitcherProps = {
   className?: string;
+  value?: string | null;
+  onValueChange?: (world: string | null) => void;
+  showAllOption?: boolean;
+  width?: string;
+  triggerClassName?: string;
 };
 
-export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({ className }) => {
+export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({
+  className,
+  value,
+  onValueChange,
+  showAllOption = false,
+  width,
+  triggerClassName,
+}) => {
+  const { t } = useTranslation();
   const { data: worlds } = useWorlds();
-  const { setWorld, world } = useGuildContext();
+  const { setWorld: setContextWorld, world: contextWorld } = useGuildContext();
   const guildId = useGuildId();
   const storageKey = `lootlog:guild:${guildId ?? "global"}:world-order`;
   const [worldOrder, setWorldOrder] = useLocalStorage<string[]>(storageKey, []);
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
+
+  const isControlled = value !== undefined;
+  const currentWorld = isControlled ? value : contextWorld;
 
   const orderedWorlds = useMemo(() => {
     if (!worlds) return [];
@@ -28,37 +47,68 @@ export const WorldSwitcher: React.FC<WorldSwitcherProps> = ({ className }) => {
     return [...sanitizedOrder, ...remaining];
   }, [worldOrder, worlds]);
 
-  const handleSelect = (selectedWorld: string) => {
-    setWorld(selectedWorld);
-    setWorldOrder((prev) => [
-      selectedWorld,
-      ...prev.filter((w) => w !== selectedWorld),
-    ]);
+  const options = useMemo(() => {
+    const worldOptions =
+      orderedWorlds?.map((w) => ({
+        value: w,
+        label: w.charAt(0).toUpperCase() + w.slice(1),
+      })) ?? [];
+
+    if (showAllOption) {
+      return [
+        {
+          value: ALL_WORLDS_SENTINEL,
+          label: t("kills.home.filters.allWorlds"),
+        },
+        ...worldOptions,
+      ];
+    }
+
+    return worldOptions;
+  }, [orderedWorlds, showAllOption, t]);
+
+  const handleSelect = (selectedValue: string) => {
+    const actualWorld =
+      selectedValue === ALL_WORLDS_SENTINEL ? null : selectedValue;
+
+    if (isControlled) {
+      onValueChange?.(actualWorld);
+    } else {
+      setContextWorld(actualWorld ?? "");
+    }
+
+    if (actualWorld) {
+      setWorldOrder((prev) => [
+        actualWorld,
+        ...prev.filter((w) => w !== actualWorld),
+      ]);
+    }
   };
 
   useEffect(() => {
-    if (world && worlds?.includes(world)) {
-      setWorldOrder((prev) => [world, ...prev.filter((w) => w !== world)]);
+    if (currentWorld && worlds?.includes(currentWorld)) {
+      setWorldOrder((prev) => [
+        currentWorld,
+        ...prev.filter((w) => w !== currentWorld),
+      ]);
     }
-  }, [world, worlds, setWorldOrder]);
+  }, [currentWorld, worlds, setWorldOrder]);
+
+  const displayValue =
+    currentWorld ?? (showAllOption ? ALL_WORLDS_SENTINEL : undefined);
 
   return (
     <div className="relative">
       {isRukiaTheme && <FrostOverlay subtle rounded="rounded-md" />}
       <FilterPopover
-        options={
-          orderedWorlds?.map((w) => ({
-            value: w,
-            label: w.charAt(0).toUpperCase() + w.slice(1),
-          })) ?? []
-        }
-        value={world || undefined}
+        options={options}
+        value={displayValue}
         onValueChange={handleSelect}
-        placeholder="Wybierz świat"
-        emptyMessage="Brak światów"
-        searchPlaceholder="Szukaj świata..."
-        width={cn("w-[140px] md:w-[180px]", className)}
-        triggerClassName="h-9 shrink-0"
+        placeholder={t("kills.home.filters.world")}
+        emptyMessage={t("common.noResults")}
+        searchPlaceholder={t("common.search")}
+        width={cn(width ?? "w-[140px] md:w-[180px]", className)}
+        triggerClassName={cn("h-9 shrink-0", triggerClassName)}
         contentClassName="max-h-64"
         showSearch
       />

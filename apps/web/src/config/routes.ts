@@ -31,6 +31,8 @@ const ROUTES = {
     lootlog: (guildId: string) => `/${guildId}`,
     timers: (guildId: string) => `/${guildId}/timers`,
     stats: (guildId: string) => `/${guildId}/stats`,
+    statsKills: (guildId: string) => `/${guildId}/stats/kills`,
+    statsLoots: (guildId: string) => `/${guildId}/stats/loots`,
     statsNpcs: (guildId: string) => `/${guildId}/stats/npcs`,
     statsNpcKillers: (guildId: string, npcId: string) =>
       `/${guildId}/stats/npcs/${npcId}`,
@@ -71,6 +73,8 @@ const ROUTE_SEGMENTS = {
     timers: "/timers",
     reservations: "/reservations",
     stats: "/stats",
+    statsKills: "/stats/kills",
+    statsLoots: "/stats/loots",
     events: "/events",
     settings: "/settings",
     roles: "/roles",

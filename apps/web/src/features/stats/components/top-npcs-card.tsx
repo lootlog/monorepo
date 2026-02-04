@@ -40,9 +40,15 @@ const getRankIcon = (index: number) => {
 
 type TopNpcsCardProps = {
   world?: string;
+  minLvl?: number;
+  maxLvl?: number;
 };
 
-export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
+export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({
+  world,
+  minLvl,
+  maxLvl,
+}) => {
   const { t } = useTranslation();
   const guildId = useGuildId();
   const [selectedNpcType, setSelectedNpcType] = useLocalStorage<NpcType>(
@@ -54,6 +60,8 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
     limit: 5,
     npcType: selectedNpcType,
     world,
+    minLvl,
+    maxLvl,
   });
 
   if (isLoading) {
@@ -96,7 +104,7 @@ export const TopNpcsCard: React.FC<TopNpcsCardProps> = ({ world }) => {
   return (
     <Card className="py-5 flex flex-col h-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2">
             <Skull className="h-5 w-5" />
             {t("kills.topNpcs.title")}
