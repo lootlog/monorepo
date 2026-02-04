@@ -86,18 +86,7 @@ function ChartContainer({
     };
   }, []);
 
-  // Clone children and inject width/height props directly
   console.log("[ChartContainer] rendering with dimensions", dimensions);
-  const chartWithDimensions =
-    dimensions.width > 0 && dimensions.height > 0
-      ? React.cloneElement(
-          children as React.ReactElement<{ width?: number; height?: number }>,
-          {
-            width: dimensions.width,
-            height: dimensions.height,
-          },
-        )
-      : null;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -112,7 +101,14 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        {chartWithDimensions}
+        {dimensions.width > 0 && dimensions.height > 0 && (
+          <RechartsPrimitive.ResponsiveContainer
+            width={dimensions.width}
+            height={dimensions.height}
+          >
+            {children}
+          </RechartsPrimitive.ResponsiveContainer>
+        )}
       </div>
     </ChartContext.Provider>
   );
