@@ -4,11 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "devx": "vite",
+    "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint .",
-    "previewx": "vite preview",
-    "dev": "vite preview"
+    "preview": "vite preview"
   },
   "files": [
     "dist",
