@@ -9,7 +9,7 @@ import { TopNpcsCard } from "./components/top-npcs-card";
 import { LevelFilters } from "./components/level-filters";
 import { StatsOverviewFiltersMobile } from "./components/stats-overview-filters-mobile";
 
-export const Stats: React.FC = () => {
+export const KillStats: React.FC = () => {
   const { guildId } = useParams({ from: "/_authenticated/$guildId" });
   const {
     settings,
