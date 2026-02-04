@@ -27,7 +27,9 @@ export const LootStats: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-[400px] gap-4">
         <Globe className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">{t("loots.stats.selectWorldRequired")}</p>
+        <p className="text-muted-foreground">
+          {t("loots.stats.selectWorldRequired")}
+        </p>
         <WorldSwitcher value={settings.world} onValueChange={setWorld} />
       </div>
     );
@@ -36,7 +38,18 @@ export const LootStats: React.FC = () => {
   return (
     <div className="space-y-3">
       <div className="flex justify-end gap-2 items-center">
-        <div className="flex items-center gap-2 mr-auto">
+        <PeriodSelector
+          value={settings.period}
+          onValueChange={(value) => setPeriod(value as Period)}
+          width="w-[180px]"
+          className="h-9"
+        />
+        <WorldSwitcher
+          value={settings.world}
+          onValueChange={setWorld}
+          width="w-[140px]"
+        />
+        <div className="flex items-center gap-2">
           <Checkbox
             id="exclude-colossus"
             checked={settings.excludeColossus}
@@ -46,22 +59,15 @@ export const LootStats: React.FC = () => {
             {t("loots.stats.excludeColossus")}
           </Label>
         </div>
-        <PeriodSelector
-          value={settings.period}
-          onValueChange={(value) => setPeriod(value as Period)}
-          width="w-[180px]"
-        />
-        <WorldSwitcher
-          value={settings.world}
-          onValueChange={setWorld}
-          width="w-[140px]"
-        />
       </div>
 
       <LootOverviewCards data={data?.overview} isLoading={isLoading} />
 
       <div className="grid gap-3 md:grid-cols-2">
-        <LootTopContributors data={data?.topContributors} isLoading={isLoading} />
+        <LootTopContributors
+          data={data?.topContributors}
+          isLoading={isLoading}
+        />
         <LootRarityChart data={data?.byRarity} isLoading={isLoading} />
       </div>
 
