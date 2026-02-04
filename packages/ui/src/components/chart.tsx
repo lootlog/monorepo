@@ -56,17 +56,48 @@ function ChartContainer({
     if (!container) return;
 
     const updateDimensions = () => {
-      const { width, height } = container.getBoundingClientRect();
-      setDimensions({ width, height });
+      const rect = container.getBoundingClientRect();
+      const computedStyle = window.getComputedStyle(container);
+      console.log("[ChartContainer] measuring", {
+        rect: { width: rect.width, height: rect.height },
+        computedStyle: {
+          width: computedStyle.width,
+          height: computedStyle.height,
+          display: computedStyle.display,
+        },
+        offsetWidth: container.offsetWidth,
+        offsetHeight: container.offsetHeight,
+      });
+      setDimensions({
+        width: Math.floor(rect.width),
+        height: Math.floor(rect.height),
+      });
     };
 
-    updateDimensions();
+    // Initial measurement after a small delay to ensure CSS is applied
+    const timeoutId = setTimeout(updateDimensions, 50);
 
     const resizeObserver = new ResizeObserver(updateDimensions);
     resizeObserver.observe(container);
 
-    return () => resizeObserver.disconnect();
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
   }, []);
+
+  // Clone children and inject width/height props directly
+  console.log("[ChartContainer] rendering with dimensions", dimensions);
+  const chartWithDimensions =
+    dimensions.width > 0 && dimensions.height > 0
+      ? React.cloneElement(
+          children as React.ReactElement<{ width?: number; height?: number }>,
+          {
+            width: dimensions.width,
+            height: dimensions.height,
+          },
+        )
+      : null;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -74,7 +105,6 @@ function ChartContainer({
         ref={containerRef}
         data-slot="chart"
         data-chart={chartId}
-        style={{ minWidth: 100, minHeight: 100 }}
         className={cn(
           "w-full [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
           className,
@@ -82,14 +112,7 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        {dimensions.width > 0 && dimensions.height > 0 ? (
-          <RechartsPrimitive.ResponsiveContainer
-            width={dimensions.width}
-            height={dimensions.height}
-          >
-            {children}
-          </RechartsPrimitive.ResponsiveContainer>
-        ) : null}
+        {chartWithDimensions}
       </div>
     </ChartContext.Provider>
   );

@@ -23,6 +23,15 @@ export const LootStats: React.FC = () => {
     excludeColossus: settings.excludeColossus,
   });
 
+  // DEBUG: Remove after fixing charts
+  console.log("[LootStats] render", {
+    isLoading,
+    hasData: !!data,
+    timeline: data?.timeline?.length,
+    byRarity: data?.byRarity,
+    topNpcs: data?.topNpcs?.length,
+  });
+
   if (!settings.world) {
     return (
       <div className="flex flex-col items-center justify-center h-[400px] gap-4">
