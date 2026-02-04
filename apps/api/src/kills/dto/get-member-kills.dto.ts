@@ -11,6 +11,19 @@ import {
 import { NpcType } from 'generated/client';
 
 export class GetMemberKillsDto {
+  @ApiPropertyOptional({ example: 100, description: 'Minimum NPC level' })
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
+  @IsNumber()
+  @Min(0)
+  minLvl?: number;
+
+  @ApiPropertyOptional({ example: 200, description: 'Maximum NPC level' })
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
+  @IsNumber()
+  @Min(0)
+  maxLvl?: number;
   @ApiPropertyOptional({
     example: 'pandora',
     description: 'Filter by world',

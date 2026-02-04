@@ -5,14 +5,10 @@ import { useEffect, useRef, type FC } from "react";
 import { LootsListItem } from "@/features/guild/components/loots-list/loots-list-item";
 import { LootsListItemSkeleton } from "@/features/guild/components/loots-list/loots-list-item-skeleton";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
-import { useIsOwner } from "@/hooks/context/use-is-owner";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useLootsViewMode } from "@/hooks/use-loots-view-mode";
-import { Permission } from "@lootlog/types";
 
-const MANAGE_LOOTS_PERMISIONS = [Permission.LOOTLOG_MANAGE, Permission.ADMIN];
 const LOOTS_PAGE_LIMIT = 20;
 const GRID_COLUMNS = 2;
 
@@ -25,15 +21,10 @@ export const LootsList: FC = () => {
     isLoading,
   } = useLoots({ limit: LOOTS_PAGE_LIMIT });
 
-  const { data: permissions } = useGuildPermissions();
   const { world } = useGuildContext();
-  const isOwner = useIsOwner();
   const guildId = useGuildId();
   const scrollElementRef = useRef<HTMLDivElement>(null);
   const { viewMode } = useLootsViewMode();
-
-  const canManageLoots =
-    permissions?.some((p) => MANAGE_LOOTS_PERMISIONS.includes(p)) || isOwner;
 
   const allLoots = loots?.pages.flatMap((page) => page.data) ?? [];
   const totalCount = allLoots.length;
@@ -200,10 +191,7 @@ export const LootsList: FC = () => {
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 items-stretch">
                     {rowLoots.map((loot) => (
                       <div key={loot.id} className="h-full">
-                        <LootsListItem
-                          loot={loot}
-                          canManageLoots={canManageLoots}
-                        />
+                        <LootsListItem loot={loot} />
                       </div>
                     ))}
                   </div>
@@ -255,7 +243,7 @@ export const LootsList: FC = () => {
                     </div>
                   )
                 ) : loot ? (
-                  <LootsListItem loot={loot} canManageLoots={canManageLoots} />
+                  <LootsListItem loot={loot} />
                 ) : null}
               </div>
             );

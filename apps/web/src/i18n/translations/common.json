@@ -1,5 +1,11 @@
 {
+  "search": "Szukaj...",
+  "noResults": "Brak wyników",
   "cancel": "Anuluj",
+  "stats": {
+    "kills": "Statystyki killi",
+    "loots": "Statystyki lootów"
+  },
   "breadcrumbs": {
     "guild": "Gildia",
     "timers": "Timery",

@@ -208,6 +208,83 @@ export class LootQueryService {
     });
   }
 
+  async fetchLootById(
+    guild: Guild,
+    lootId: number,
+  ): Promise<LootQueryResult | null> {
+    const loot = await this.prisma.loot.findFirst({
+      where: {
+        id: lootId,
+        lootSubmissions: {
+          some: {
+            guildId: guild.id,
+          },
+        },
+      },
+      select: {
+        id: true,
+        uniqueId: true,
+        world: true,
+        source: true,
+        location: true,
+        lootShare: true,
+        createdAt: true,
+        updatedAt: true,
+        lootSubmissions: {
+          where: { guildId: guild.id },
+          include: {
+            member: {
+              select: {
+                name: true,
+                avatar: true,
+                userId: true,
+              },
+            },
+          },
+        },
+        lootItems: {
+          include: { itemSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootPlayers: {
+          include: { playerSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootNpcs: {
+          include: { npcSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    if (!loot) return null;
+
+    const commentsCount = await this.prisma.lootComment.count({
+      where: {
+        lootId: loot.id,
+        guildId: guild.id,
+      },
+    });
+
+    return {
+      id: loot.id,
+      uniqueId: loot.uniqueId,
+      world: loot.world,
+      source: loot.source,
+      location: loot.location,
+      lootShare: loot.lootShare,
+      createdAt: loot.createdAt,
+      updatedAt: loot.updatedAt,
+      items: this.mapItems(loot.lootItems),
+      players: loot.lootPlayers.map((entry) =>
+        this.mapPlayerFromSnapshot(entry),
+      ),
+      npcs: this.mapNpcs(loot.lootNpcs),
+      submissions: loot.lootSubmissions,
+      commentsCount,
+    };
+  }
+
   private buildBaseWhereCondition(
     guild: Guild,
     permissions: Permission[],
