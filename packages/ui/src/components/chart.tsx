@@ -48,50 +48,10 @@ function ChartContainer({
 }) {
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = React.useState({ width: 0, height: 0 });
-
-  React.useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateDimensions = () => {
-      const rect = container.getBoundingClientRect();
-      const computedStyle = window.getComputedStyle(container);
-      console.log("[ChartContainer] measuring", {
-        rect: { width: rect.width, height: rect.height },
-        computedStyle: {
-          width: computedStyle.width,
-          height: computedStyle.height,
-          display: computedStyle.display,
-        },
-        offsetWidth: container.offsetWidth,
-        offsetHeight: container.offsetHeight,
-      });
-      setDimensions({
-        width: Math.floor(rect.width),
-        height: Math.floor(rect.height),
-      });
-    };
-
-    // Initial measurement after a small delay to ensure CSS is applied
-    const timeoutId = setTimeout(updateDimensions, 50);
-
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    resizeObserver.observe(container);
-
-    return () => {
-      clearTimeout(timeoutId);
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  console.log("[ChartContainer] rendering with dimensions", dimensions);
 
   return (
     <ChartContext.Provider value={{ config }}>
       <div
-        ref={containerRef}
         data-slot="chart"
         data-chart={chartId}
         className={cn(
@@ -101,14 +61,9 @@ function ChartContainer({
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        {dimensions.width > 0 && dimensions.height > 0 && (
-          <RechartsPrimitive.ResponsiveContainer
-            width={dimensions.width}
-            height={dimensions.height}
-          >
-            {children}
-          </RechartsPrimitive.ResponsiveContainer>
-        )}
+        <RechartsPrimitive.ResponsiveContainer>
+          {children}
+        </RechartsPrimitive.ResponsiveContainer>
       </div>
     </ChartContext.Provider>
   );

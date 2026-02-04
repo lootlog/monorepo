@@ -10,6 +10,10 @@ export default defineConfig({
     port: 3000,
     host: "0.0.0.0",
   },
+  preview: {
+    port: 3000,
+    host: "0.0.0.0",
+  },
   resolve: {
     alias: [
       // Shim aliases for use-sync-external-store (React 19 has these built-in)
