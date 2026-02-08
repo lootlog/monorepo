@@ -20,7 +20,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QUERY_CLIENT_CACHE_TIME_MS } from "@/constants/query-client";
-import { ChatInput } from "./features/chat/chat-input";
+import { CommandWindow } from "./features/command/command";
 import { SocketProvider } from "@/contexts/socket-context";
 import { ErrorBoundary } from "react-error-boundary";
 import { PartyFinder } from "@/features/party-finder/party-finder";
@@ -71,7 +71,7 @@ function AppContent() {
         <AddTimer />
         <Settings />
         <Chat />
-        <ChatInput />
+        <CommandWindow />
         <OnlinePlayers />
         <NpcDetector />
         <Notifications />
