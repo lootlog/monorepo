@@ -22,7 +22,9 @@ export type WindowId =
   | "create-notification"
   | "quick-access"
   | "timer-settings-conflict"
-  | "catching-whitelist-warning";
+  | "catching-whitelist-warning"
+  | "party-finder"
+  | "create-party-gathering";
 
 interface WindowPositionState {
   x: number;
@@ -58,6 +60,8 @@ interface WindowsState {
   "quick-access": WindowData;
   "timer-settings-conflict": WindowData;
   "catching-whitelist-warning": WindowData;
+  "party-finder": WindowData;
+  "create-party-gathering": WindowData;
   currentWindowFocus?: WindowId;
   windowFocusHistory: WindowId[];
   setCurrentWindowFocus: (key: WindowId) => void;
@@ -147,7 +151,7 @@ export const useWindowsStore = create<WindowsState>()(
       "quick-access": {
         open: true,
         position: DEFAULT_POSITION,
-        size: { width: 180, height: 56 },
+        size: { width: 250, height: 56 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -162,6 +166,20 @@ export const useWindowsStore = create<WindowsState>()(
         open: false,
         position: DEFAULT_POSITION,
         size: { width: 400, height: 240 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "party-finder": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: DEFAULT_SIZE,
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "create-party-gathering": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: { width: 280, height: 220 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -239,6 +257,8 @@ export const useWindowsStore = create<WindowsState>()(
         "quick-access": state["quick-access"],
         "timer-settings-conflict": state["timer-settings-conflict"],
         "catching-whitelist-warning": state["catching-whitelist-warning"],
+        "party-finder": state["party-finder"],
+        "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,

@@ -7,6 +7,41 @@ class GameEventsManager {
   private eventProcessor: GameEventHandler | null = null;
   private isReady = false;
   private proxies: Array<{ cleanup: () => void }> = [];
+  private stripFriendsFromNextEvent = false;
+
+  markStripFriendsFromNextEvent() {
+    this.stripFriendsFromNextEvent = true;
+  }
+
+  private readonly FRIENDS_KEYS_TO_STRIP = [
+    "friends",
+    "friends_max",
+    "enemies",
+    "enemies_max",
+  ] as const;
+
+  private stripFriendsKeys(event: GameEvent): GameEvent {
+    if (!this.stripFriendsFromNextEvent) {
+      return event;
+    }
+
+    const hasFriendsKey = this.FRIENDS_KEYS_TO_STRIP.some(
+      (key) => event[key] !== undefined,
+    );
+
+    if (!hasFriendsKey) {
+      return event;
+    }
+
+    this.stripFriendsFromNextEvent = false;
+
+    const strippedEvent = { ...event };
+    for (const key of this.FRIENDS_KEYS_TO_STRIP) {
+      delete strippedEvent[key];
+    }
+
+    return strippedEvent;
+  }
 
   setProcessor(processor: GameEventHandler) {
     this.eventProcessor = processor;
@@ -19,7 +54,9 @@ class GameEventsManager {
 
   triggerManualEvent(event: GameEvent): boolean {
     if (!import.meta.env.DEV) {
-      console.warn("Manual event triggering is only available in development mode");
+      console.warn(
+        "Manual event triggering is only available in development mode",
+      );
       return false;
     }
 
@@ -91,18 +128,22 @@ class GameEventsManager {
         apply: (target, thisArg, args) => {
           this.onGameInitChange();
 
+          let modifiedArgs = args;
           if (typeof args[0] === "string") {
             try {
               const event = JSON.parse(args[0]);
               this.queueEvent(event);
+
+              const strippedEvent = this.stripFriendsKeys(event);
+              if (strippedEvent !== event) {
+                modifiedArgs = [JSON.stringify(strippedEvent), ...args.slice(1)];
+              }
             } catch (error) {
               console.warn("Failed to process game event:", error);
             }
           }
 
-          const result = target.apply(thisArg, args);
-
-          return result;
+          return target.apply(thisArg, modifiedArgs);
         },
       });
 
@@ -143,6 +184,7 @@ class GameEventsManager {
     this.isReady = false;
     this.gameInitCallback = null;
     this.gameInitCallbackExecuted = false;
+    this.stripFriendsFromNextEvent = false;
   }
 }
 

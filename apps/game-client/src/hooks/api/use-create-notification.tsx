@@ -7,6 +7,12 @@ export type UseCreateNotificationOptions = {
   guildIds: string[];
   world: string;
   message?: string;
+  isGatheringParty?: boolean;
+};
+
+export type CreateNotificationResponse = {
+  notificationId: string;
+  guildIds?: string[];
 };
 
 export const useCreateNotification = () => {
@@ -15,13 +21,7 @@ export const useCreateNotification = () => {
   const mutation = useMutation({
     mutationKey: ["create-notification"],
     mutationFn: (options: UseCreateNotificationOptions) =>
-      client.post("/notifications", options),
-    onSuccess: () => {
-      console.log("onSuccess");
-    },
-    onError: () => {
-      console.log("onError");
-    },
+      client.post<CreateNotificationResponse>("/notifications", options),
   });
 
   return mutation;

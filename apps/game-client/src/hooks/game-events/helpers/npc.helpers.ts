@@ -18,7 +18,6 @@ export const composeNpcFromEvent = (
   type: tpl.type,
   location: Game.map.name,
   notificationSent: processedSettings.autoSendNotification,
-  msgSent: processedSettings.autoSendMessage,
 });
 
 export const composeNpcFromGame = (
@@ -34,5 +33,4 @@ export const composeNpcFromGame = (
   type: npc.type,
   location: Game.map.name,
   notificationSent: processedSettings.autoSendNotification,
-  msgSent: processedSettings.autoSendMessage,
 });

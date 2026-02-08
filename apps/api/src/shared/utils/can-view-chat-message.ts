@@ -41,5 +41,35 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
     );
   }
 
+  if (data.type === MessageType.PARTY_GATHERING && data.npc) {
+    const npc = data.npc;
+    const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+
+    if (npcType === NpcType.TITAN) {
+      return roles.some(
+        (role) =>
+          role.permissions.includes(Permission.LOOTLOG_CHAT_TITANS_READ) &&
+          role.lvlRangeFrom <= npc.lvl &&
+          role.lvlRangeTo >= npc.lvl,
+      );
+    }
+
+    if (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO) {
+      return roles.some(
+        (role) =>
+          role.permissions.includes(Permission.LOOTLOG_CHAT_HEROES_READ) &&
+          role.lvlRangeFrom <= npc.lvl &&
+          role.lvlRangeTo >= npc.lvl,
+      );
+    }
+
+    return roles.some(
+      (role) =>
+        role.permissions.includes(Permission.LOOTLOG_CHAT_READ) &&
+        role.lvlRangeFrom <= npc.lvl &&
+        role.lvlRangeTo >= npc.lvl,
+    );
+  }
+
   return true;
 };

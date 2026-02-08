@@ -20,6 +20,12 @@ import {
 } from "@/utils/notifications-and-detector/background";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
+import { useEffect, useState } from "react";
+import { usePartyFinderStore } from "@/store/party-finder.store";
+import { useWindowsStore } from "@/store/windows.store";
+import { useSession } from "@/hooks/auth/use-session";
+
+const BUTTON_UNLOCK_DELAY_MS = 5000;
 
 export type NpcListItemProps = {
   npc: GameNpcWithLocation;
@@ -30,16 +36,41 @@ export const NPCS_WITH_LOCATION = [NpcType.HERO];
 
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { npcs, removeNpc, settings, setNpcState } = useNpcDetectorStore();
+  const {
+    setNotification,
+    partyGathering,
+    setPartyGathering,
+    setChatMessageId,
+  } = usePartyFinderStore();
+  const { setOpen } = useWindowsStore();
+  const { data: session } = useSession();
+  const discordId = session?.user?.discordId;
   const characterId = String(Game.hero.id);
   const world = Game.getWorldName();
-  const { mutate: sendChatMessage, isPending: isSendChatMessagePending } =
+  const { mutate: sendChatMessage, mutateAsync: sendChatMessageAsync } =
     useSendChatMessage();
-  const { mutate: createNotification, isPending: isCreateNotificationPending } =
-    useCreateNotification();
+  const {
+    mutate: createNotification,
+    mutateAsync: createNotificationAsync,
+    isPending: isCreateNotificationPending,
+  } = useCreateNotification();
+  const [isGatheringPartyPending, setIsGatheringPartyPending] = useState(false);
 
   const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
   const key = npcType;
+
+  const hasActivePartyGathering = partyGathering !== null;
+
+  useEffect(() => {
+    if (!npc.notificationSent) return;
+
+    const timer = setTimeout(() => {
+      setNpcState(npc.id, { ...npc, notificationSent: false });
+    }, BUTTON_UNLOCK_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [npc.notificationSent]);
 
   const handleRemoveNpc = (npcId: number) => {
     removeNpc(npcId);
@@ -72,33 +103,135 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
     };
 
     createNotification(payload, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         setNpcState(npc.id, {
           ...npc,
           notificationSent: true,
         });
+
+        setNotification(response.data.notificationId, {
+          id: npc.id,
+          name: npc.nick,
+          lvl: npc.lvl,
+          prof: npc.prof,
+          location: npc.location,
+          world: world,
+          icon: npc.icon,
+          x: npc.x,
+          y: npc.y,
+        });
+
+        sendChatMessage({
+          message: "",
+          guildIds: settingsByNpcType.guildIds,
+          type: MessageType.NPC,
+          characterData: {
+            nick: Game.hero.nick,
+            id: Game.hero.id,
+            acc: Game.hero.account,
+            lvl: Game.hero.lvl,
+            prof: Game.hero.prof,
+            icon: Game.hero.img,
+          },
+          npc: {
+            x: npc.x,
+            y: npc.y,
+            icon: npc.icon,
+            id: npc.id,
+            name: npc.nick,
+            hpp: 0,
+            location: npc.location,
+            lvl: npc.lvl,
+            prof: npc.prof,
+            type: npc.type,
+            wt: npc.wt,
+          },
+        });
+
+        setOpen("party-finder", true);
       },
     });
   };
 
-  const handleSendChatNotification = (npc: GameNpcWithLocation) => {
+  const handleGatherParty = async (npc: GameNpcWithLocation) => {
     if (settingsByNpcType.guildIds?.length === 0) {
-      window.message("Brak ustawionych gildii do wysłania wiadomości na czat.");
+      window.message("Brak ustawionych gildii do zbierania grupy.");
       return;
     }
 
-    sendChatMessage(
-      {
-        message: "",
+    if (!npc || !world || !discordId) return;
+
+    setIsGatheringPartyPending(true);
+
+    try {
+      const payload = {
+        npc: {
+          id: npc.id,
+          hpp: 0,
+          location: npc.location,
+          name: npc.nick,
+          wt: npc.wt,
+          x: npc.x,
+          y: npc.y,
+          lvl: npc.lvl,
+          prof: npc.prof,
+          icon: npc.icon,
+          type: npc.type,
+        },
+        world: world,
         guildIds: settingsByNpcType.guildIds,
-        type: MessageType.NPC,
+        isGatheringParty: true,
+      };
+
+      const notificationResponse = await createNotificationAsync(payload);
+
+      const notificationId = notificationResponse.data.notificationId;
+      const guildIds =
+        notificationResponse.data.guildIds ?? settingsByNpcType.guildIds;
+      const hero = Game.hero;
+
+      setNotification(notificationId, {
+        id: npc.id,
+        name: npc.nick,
+        lvl: npc.lvl,
+        prof: npc.prof,
+        location: npc.location,
+        world: world,
+        icon: npc.icon,
+        x: npc.x,
+        y: npc.y,
+      });
+
+      setPartyGathering({
+        notificationId,
+        discordId,
+        character: {
+          nick: hero.nick,
+          lvl: hero.lvl,
+          prof: hero.prof,
+          characterId: String(hero.id),
+          accountId: String(hero.account),
+          icon: hero.img,
+          clan: hero.clan
+            ? { id: hero.clan.id, name: hero.clan.name }
+            : undefined,
+        },
+        world,
+        createdAt: new Date().toISOString(),
+        guildIds,
+      });
+
+      const chatResults = await sendChatMessageAsync({
+        message: `${npc.nick} (${npc.lvl}${npc.prof ?? ""})`,
+        guildIds,
+        type: MessageType.PARTY_GATHERING,
         characterData: {
-          nick: Game.hero.nick,
-          id: Game.hero.id,
-          acc: Game.hero.account,
-          lvl: Game.hero.lvl,
-          prof: Game.hero.prof,
-          icon: Game.hero.img,
+          nick: hero.nick,
+          id: hero.id,
+          acc: hero.account,
+          lvl: hero.lvl,
+          prof: hero.prof,
+          icon: hero.img,
         },
         npc: {
           x: npc.x,
@@ -113,16 +246,31 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
           type: npc.type,
           wt: npc.wt,
         },
-      },
-      {
-        onSuccess: () => {
-          setNpcState(npc.id, {
-            ...npc,
-            msgSent: true,
-          });
+        partyGathering: {
+          notificationId,
+          discordId,
+          world,
         },
-      },
-    );
+      });
+
+      chatResults.forEach((result, index) => {
+        if (result.status === "fulfilled" && result.value?.data?.id) {
+          setChatMessageId(guildIds[index], result.value.data.id);
+        }
+      });
+
+      setNpcState(npc.id, {
+        ...npc,
+        notificationSent: true,
+      });
+
+      setOpen("party-finder", true);
+    } catch (error) {
+      console.error("Failed to gather party:", error);
+      window.message("Nie udało się rozpocząć zbierania grupy");
+    } finally {
+      setIsGatheringPartyPending(false);
+    }
   };
 
   return (
@@ -148,7 +296,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
           <span className="ll:mb-2 ll:text-xs">
             {npc.location} ({npc.x}, {npc.y})
           </span>
-          <span className="ll:flex ll:gap-1">
+          <span className="ll:flex ll:gap-1 ll:flex-wrap">
             {settingsByNpcType.guildIds?.length === 0 && (
               <span>Brak ustawionych serwerów - odwiedź ustawienia</span>
             )}
@@ -161,10 +309,10 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
                   {npc.notificationSent ? "Wysłano" : "Komunikat"}
                 </Button>
                 <Button
-                  disabled={isSendChatMessagePending || npc.msgSent}
-                  onClick={() => handleSendChatNotification(npc)}
+                  disabled={isGatheringPartyPending || hasActivePartyGathering}
+                  onClick={() => handleGatherParty(npc)}
                 >
-                  {npc.msgSent ? "Wysłano" : "Wiadomość"}
+                  {isGatheringPartyPending ? "..." : "Zbierz grupę"}
                 </Button>
               </>
             )}
