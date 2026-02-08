@@ -62,7 +62,10 @@ export const SingleNotificationPartyGathering: FC<
       <div className="ll:flex ll:gap-4 ll:py-1 ll:px-2">
         <div className="ll:flex ll:items-center ll:gap-2">
           <CharacterTile
-            character={notification.character}
+            character={{
+              ...notification.character,
+              id: Number(notification.character.characterId),
+            }}
             className="ll:scale-75"
           />
           <div className="ll:flex ll:flex-col">

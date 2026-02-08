@@ -150,8 +150,8 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
         {!isOwnMessage &&
           (() => {
             const isOutOfLvlRange =
-              partyGathering?.minLvl != null &&
-              partyGathering?.maxLvl != null &&
+              partyGathering?.minLvl !== undefined &&
+              partyGathering?.maxLvl !== undefined &&
               (heroLvl < partyGathering.minLvl ||
                 heroLvl > partyGathering.maxLvl);
 

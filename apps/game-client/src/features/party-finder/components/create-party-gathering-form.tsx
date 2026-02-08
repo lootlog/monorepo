@@ -25,12 +25,7 @@ const FormSchema = z
   })
   .refine(
     (data) => {
-      if (
-        data.minLvl &&
-        data.maxLvl &&
-        data.minLvl !== "" &&
-        data.maxLvl !== ""
-      ) {
+      if (data.minLvl && data.maxLvl) {
         return Number(data.minLvl) <= Number(data.maxLvl);
       }
       return true;
@@ -60,7 +55,7 @@ export const CreatePartyGatheringForm = () => {
     formState: { errors },
     reset,
   } = useForm<FormData>({
-    resolver: zodResolver(FormSchema),
+    resolver: zodResolver(FormSchema) as never,
     defaultValues: {
       description: "",
       minLvl: "",
@@ -154,7 +149,7 @@ export const CreatePartyGatheringForm = () => {
               window.message("Zbyt wiele prób. Spróbuj za chwilę.");
             } else if (status === 400) {
               window.message(
-                error.response?.data?.message || "Nieprawidłowe dane"
+                error.response?.data?.message || "Nieprawidłowe dane",
               );
             } else {
               window.message("Nie udało się utworzyć ogłoszenia");
