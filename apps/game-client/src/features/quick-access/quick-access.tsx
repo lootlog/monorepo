@@ -59,6 +59,13 @@ export const QuickAccess = () => {
       closable={false}
     >
       <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
+        {partyGathering && (
+          <QuickAccessButton
+            id="party-finder"
+            title="Aktywne zbieranie grupy"
+            icon=<Users size="16" />
+          />
+        )}
         {BUTTONS.map((button) => (
           <QuickAccessButton
             key={button.id}
@@ -68,13 +75,7 @@ export const QuickAccess = () => {
             href={button.href}
           />
         ))}
-        {partyGathering && (
-          <QuickAccessButton
-            id="party-finder"
-            title="Aktywne zbieranie grupy"
-            icon={<Users size="16" />}
-          />
-        )}
+
         <GuildListPopover />
       </div>
     </DraggableWindow>

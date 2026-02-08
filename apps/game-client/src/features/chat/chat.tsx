@@ -4,7 +4,7 @@ import {
   type ChatMessage as ChatMessageType,
   useChatMessages,
 } from "@/hooks/api/use-chat-messages";
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect, useLayoutEffect } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
@@ -55,9 +55,6 @@ export const Chat = () => {
   const scrollAreaRef =
     useRef<React.ElementRef<typeof ScrollArea.Viewport>>(null);
 
-  const selectedGuildIdRef = useRef<string>("");
-  selectedGuildIdRef.current = selectedGuildId ?? "";
-
   const { client } = useAuthenticatedApiClient();
   useChatMessagesListener(client);
 
@@ -68,6 +65,9 @@ export const Chat = () => {
   const { data: guildMembers } = useGuildMembers(selectedGuildId);
 
   const isUserNearBottomRef = useRef(true);
+  const scrollPendingRef = useRef(true);
+  const prevMessagesLenRef = useRef(0);
+
   const handleScroll = () => {
     const viewport = scrollAreaRef.current;
     if (!viewport) return;
@@ -86,14 +86,8 @@ export const Chat = () => {
   }, []);
 
   useEffect(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scrollAreaRef.current?.scrollTo({
-          top: scrollAreaRef.current.scrollHeight + 2000,
-          behavior: "instant",
-        });
-      });
-    });
+    scrollPendingRef.current = true;
+    prevMessagesLenRef.current = 0;
   }, [selectedGuildId, chatFilter]);
 
   useEffect(() => {
@@ -101,39 +95,6 @@ export const Chat = () => {
       setSelectedGuildId(guilds[0].id);
     }
   }, [selectedGuildId, setSelectedGuildId, guilds]);
-
-  useEffect(() => {
-    const unsubscribe = useChatCache.subscribe(
-      (state) => state.messageCache,
-      (newCache, prevCache) => {
-        const selected = selectedGuildIdRef.current;
-        for (const channel of Object.keys(newCache)) {
-          const newLen = newCache[channel]?.length ?? 0;
-          const oldLen = prevCache[channel]?.length ?? 0;
-          if (newLen > oldLen) {
-            if (selected === channel || selected === "all") {
-              if (isUserNearBottomRef.current) {
-                const viewport = scrollAreaRef.current;
-                if (!viewport) return;
-
-                requestAnimationFrame(() => {
-                  requestAnimationFrame(() => {
-                    viewport.scrollTo({
-                      top: viewport.scrollHeight,
-                      behavior: "smooth",
-                    });
-                  });
-                });
-              }
-            }
-            break;
-          }
-        }
-      },
-    );
-
-    return () => unsubscribe();
-  }, []);
 
   const currentMessages = useMemo(() => {
     let allMessages;
@@ -170,7 +131,10 @@ export const Chat = () => {
     return sorted.filter((msg) => {
       switch (chatFilter) {
         case "normal":
-          return msg.type === MessageType.NORMAL || msg.type === MessageType.NOTIFICATION;
+          return (
+            msg.type === MessageType.NORMAL ||
+            msg.type === MessageType.NOTIFICATION
+          );
         case "npc":
           return msg.type === MessageType.NPC;
         case "party":
@@ -181,19 +145,34 @@ export const Chat = () => {
     });
   }, [selectedGuildId, messageCache, chatFilter]);
 
-  const hasMessages = currentMessages.length > 0;
-  useEffect(() => {
-    if (hasMessages) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          scrollAreaRef.current?.scrollTo({
-            top: scrollAreaRef.current.scrollHeight + 2000,
-            behavior: "instant",
-          });
-        });
-      });
+  const hasVisibleMessages = currentMessages.some((m) => {
+    const members = memberCache[m.guildId] ?? {};
+    const member = members[m.senderId];
+    const guild = guilds?.find((g) => g.id === m.guildId);
+    return m.characterData && member?.name && guild;
+  });
+
+  useLayoutEffect(() => {
+    const viewport = scrollAreaRef.current;
+    if (!viewport) return;
+
+    const msgCount = currentMessages.length;
+
+    if (scrollPendingRef.current) {
+      if (hasVisibleMessages) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
+        scrollPendingRef.current = false;
+      }
+      prevMessagesLenRef.current = msgCount;
+      return;
     }
-  }, [hasMessages]);
+
+    if (msgCount > prevMessagesLenRef.current && isUserNearBottomRef.current) {
+      viewport.scrollTo({ top: viewport.scrollHeight });
+    }
+
+    prevMessagesLenRef.current = msgCount;
+  }, [currentMessages, hasVisibleMessages]);
 
   const currentMembers = useMemo(() => {
     if (selectedGuildId === "all") {

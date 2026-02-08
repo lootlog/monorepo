@@ -1,5 +1,10 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
@@ -168,7 +173,7 @@ export class ChatService {
 
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) {
-      return { success: false, message: 'Message not found' };
+      throw new NotFoundException('Message not found');
     }
 
     const message = messages[messageIndex];
@@ -203,7 +208,7 @@ export class ChatService {
 
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) {
-      return { success: false, message: 'Message not found' };
+      throw new NotFoundException('Message not found');
     }
 
     const message = messages[messageIndex];

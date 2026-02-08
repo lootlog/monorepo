@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import type { PartyGatheringCharacter } from "@/types/party-gathering";
 
 export type PartyFinderNpc = {
   id: number;
@@ -30,15 +31,7 @@ export type PartyFinderVolunteer = {
   clan?: Clan;
 };
 
-export type PartyGatheringCharacter = {
-  nick: string;
-  lvl: number;
-  prof: string;
-  characterId: string;
-  accountId: string;
-  icon: string;
-  clan?: Clan;
-};
+export type { PartyGatheringCharacter };
 
 export type PartyGatheringSession = {
   notificationId: string;
@@ -81,7 +74,9 @@ export const usePartyFinderStore = create<PartyFinderState>()(
       addVolunteer: (volunteer) =>
         set((state) => {
           if (
-            state.volunteers.some((v) => v.characterId === volunteer.characterId)
+            state.volunteers.some(
+              (v) => v.characterId === volunteer.characterId,
+            )
           ) {
             return state;
           }
@@ -89,20 +84,31 @@ export const usePartyFinderStore = create<PartyFinderState>()(
         }),
       removeVolunteer: (characterId) =>
         set((state) => ({
-          volunteers: state.volunteers.filter((v) => v.characterId !== characterId),
+          volunteers: state.volunteers.filter(
+            (v) => v.characterId !== characterId,
+          ),
         })),
       clearPartyFinder: () =>
-        set({ notificationId: null, npc: null, volunteers: [], partyGathering: null, chatMessageIds: {} }),
+        set({
+          notificationId: null,
+          npc: null,
+          volunteers: [],
+          partyGathering: null,
+          chatMessageIds: {},
+        }),
       setPartyGathering: (session) =>
-        set({ partyGathering: session, notificationId: session.notificationId, npc: null, volunteers: [] }),
-      clearPartyGathering: () =>
-        set({ partyGathering: null }),
+        set({
+          partyGathering: session,
+          notificationId: session.notificationId,
+          npc: null,
+          volunteers: [],
+        }),
+      clearPartyGathering: () => set({ partyGathering: null }),
       setChatMessageId: (guildId, messageId) =>
         set((state) => ({
           chatMessageIds: { ...state.chatMessageIds, [guildId]: messageId },
         })),
-      clearChatMessageIds: () =>
-        set({ chatMessageIds: {} }),
+      clearChatMessageIds: () => set({ chatMessageIds: {} }),
     }),
     {
       name: "ll-party-finder-storage",

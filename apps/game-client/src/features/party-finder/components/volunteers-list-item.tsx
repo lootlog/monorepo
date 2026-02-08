@@ -42,9 +42,12 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
   };
 
   const handleAddFriend = () => {
-    window._g(
-      "friends&a=finvite&nick=" + volunteer.nick.trim().split(" ").join("_"),
-    );
+    const sanitizedNick = volunteer.nick
+      .trim()
+      .split(" ")
+      .join("_")
+      .replace(/[&=?#]/g, "");
+    window._g(`friends&a=finvite&nick=${sanitizedNick}`);
   };
 
   const isVolunteerFriend = isFriend(volunteer.characterId);

@@ -11,14 +11,14 @@ type CancelPartyGatheringResponse = {
 
 export const useCancelPartyGathering = () => {
   const { client } = useAuthenticatedApiClient();
-  const partyGathering = usePartyFinderStore((s) => s.partyGathering);
-  const chatMessageIds = usePartyFinderStore((s) => s.chatMessageIds);
-  const clearPartyFinder = usePartyFinderStore((s) => s.clearPartyFinder);
   const setOpen = useWindowsStore((s) => s.setOpen);
 
   return useMutation({
     mutationKey: ["cancel-party-gathering"],
     mutationFn: async () => {
+      const { partyGathering, chatMessageIds, clearPartyFinder } =
+        usePartyFinderStore.getState();
+
       if (!partyGathering?.notificationId) {
         throw new Error("No active party gathering");
       }
@@ -38,7 +38,10 @@ export const useCancelPartyGathering = () => {
                 message: `${nick} zakończył zbieranie grupy`,
               })
               .catch((err) => {
-                console.warn(`Failed to update chat message in guild ${guildId}:`, err);
+                console.warn(
+                  `Failed to update chat message in guild ${guildId}:`,
+                  err,
+                );
               });
           }
           return Promise.resolve();
@@ -47,10 +50,11 @@ export const useCancelPartyGathering = () => {
 
       await Promise.allSettled(updatePromises);
 
+      clearPartyFinder();
+
       return response.data;
     },
     onSuccess: () => {
-      clearPartyFinder();
       setOpen("party-finder", false);
       window.message("Zbieranie grupy zakończone");
     },

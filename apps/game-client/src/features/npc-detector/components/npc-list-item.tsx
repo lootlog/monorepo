@@ -36,17 +36,24 @@ export const NPCS_WITH_LOCATION = [NpcType.HERO];
 
 export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   const { npcs, removeNpc, settings, setNpcState } = useNpcDetectorStore();
-  const { setNotification, partyGathering, setPartyGathering, setChatMessageId } =
-    usePartyFinderStore();
+  const {
+    setNotification,
+    partyGathering,
+    setPartyGathering,
+    setChatMessageId,
+  } = usePartyFinderStore();
   const { setOpen } = useWindowsStore();
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
   const characterId = String(Game.hero.id);
   const world = Game.getWorldName();
-  const { mutate: sendChatMessage } = useSendChatMessage();
-  const { mutateAsync: sendChatMessageAsync } = useSendChatMessage();
-  const { mutate: createNotification, isPending: isCreateNotificationPending } =
-    useCreateNotification();
+  const { mutate: sendChatMessage, mutateAsync: sendChatMessageAsync } =
+    useSendChatMessage();
+  const {
+    mutate: createNotification,
+    mutateAsync: createNotificationAsync,
+    isPending: isCreateNotificationPending,
+  } = useCreateNotification();
   const [isGatheringPartyPending, setIsGatheringPartyPending] = useState(false);
 
   const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
@@ -176,17 +183,11 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
         isGatheringParty: true,
       };
 
-      const notificationResponse = await new Promise<{ data: { notificationId: string; guildIds?: string[] } }>(
-        (resolve, reject) => {
-          createNotification(payload, {
-            onSuccess: resolve,
-            onError: reject,
-          });
-        },
-      );
+      const notificationResponse = await createNotificationAsync(payload);
 
       const notificationId = notificationResponse.data.notificationId;
-      const guildIds = notificationResponse.data.guildIds ?? settingsByNpcType.guildIds;
+      const guildIds =
+        notificationResponse.data.guildIds ?? settingsByNpcType.guildIds;
       const hero = Game.hero;
 
       setNotification(notificationId, {
@@ -211,7 +212,9 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
           characterId: String(hero.id),
           accountId: String(hero.account),
           icon: hero.img,
-          clan: hero.clan ? { id: hero.clan.id, name: hero.clan.name } : undefined,
+          clan: hero.clan
+            ? { id: hero.clan.id, name: hero.clan.name }
+            : undefined,
         },
         world,
         createdAt: new Date().toISOString(),

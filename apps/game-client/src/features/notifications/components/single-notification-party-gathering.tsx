@@ -29,8 +29,8 @@ export const SingleNotificationPartyGathering: FC<
   const { setOpen } = useWindowsStore();
 
   const heroLvl = Game.hero.lvl;
-  const minLvl = notification.minLvl || 1;
-  const maxLvl = notification.maxLvl || 500;
+  const minLvl = notification.minLvl ?? 1;
+  const maxLvl = notification.maxLvl ?? 500;
   const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
 
   const handleClick = () => {
@@ -83,10 +83,10 @@ export const SingleNotificationPartyGathering: FC<
                 "{notification.description}"
               </span>
             )}
-            {(notification.minLvl || notification.maxLvl) && (
+            {(notification.minLvl ?? notification.maxLvl) && (
               <span className="ll:text-[10px] ll:text-gray-400">
-                Poziom: {notification.minLvl || 1} -{" "}
-                {notification.maxLvl || 500}
+                Poziom: {notification.minLvl ?? 1} -{" "}
+                {notification.maxLvl ?? 500}
               </span>
             )}
             <span className="ll:text-[10px] ll:font-semibold ll:text-purple-400">

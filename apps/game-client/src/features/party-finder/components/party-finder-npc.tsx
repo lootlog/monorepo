@@ -21,7 +21,7 @@ export const PartyFinderNpc: FC = () => {
 
     return (
       <div className="ll:flex ll:items-center ll:pb-2 ll:px-2 ll:gap-2 ll:mt-1">
-        <div className="">
+        <div>
           <CharacterTile
             character={characterForTile}
             className="ll:h-12 ll:scale-75"
@@ -36,7 +36,9 @@ export const PartyFinderNpc: FC = () => {
             <p className="ll:text-[10px] ll:text-gray-400">{description}</p>
           )}
           <p className="ll:text-[10px]">
-            {minLvl && maxLvl ? `${minLvl}-${maxLvl} lvl` : world}
+            {minLvl !== null && maxLvl !== null
+              ? `${minLvl}-${maxLvl} lvl`
+              : world}
           </p>
         </div>
       </div>

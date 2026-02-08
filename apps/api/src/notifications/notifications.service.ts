@@ -55,6 +55,10 @@ export class NotificationsService {
     );
   }
 
+  private getPartyGatheringUserKey(discordId: string): string {
+    return `party-gathering:user:${discordId}`;
+  }
+
   private async getNotificationMetadata(
     notificationId: string,
   ): Promise<NotificationMetadata | null> {
@@ -62,7 +66,15 @@ export class NotificationsService {
       this.getNotificationKey(notificationId),
     );
     if (!data) return null;
-    return JSON.parse(data) as NotificationMetadata;
+    try {
+      return JSON.parse(data) as NotificationMetadata;
+    } catch {
+      this.logger.log({
+        level: 'error',
+        message: `Failed to parse notification metadata for ${notificationId}`,
+      });
+      return null;
+    }
   }
 
   async sendNotification(discordId: string, data: CreateNotificationDto) {
@@ -189,6 +201,13 @@ export class NotificationsService {
   }
 
   async sendPartyGathering(discordId: string, data: CreatePartyGatheringDto) {
+    const existingGathering = await this.redisService.get(
+      this.getPartyGatheringUserKey(discordId),
+    );
+    if (existingGathering) {
+      throw new BadRequestException('Active party gathering already exists');
+    }
+
     const notificationId = uuid();
     const createdAt = new Date().toISOString();
 
@@ -237,6 +256,12 @@ export class NotificationsService {
       createdAt,
     );
 
+    await this.redisService.set(
+      this.getPartyGatheringUserKey(discordId),
+      notificationId,
+      NOTIFICATION_TTL_SECONDS,
+    );
+
     guildIds.forEach((guildId) => {
       this.amqpConnection.publish(
         DEFAULT_EXCHANGE_NAME,
@@ -273,6 +298,7 @@ export class NotificationsService {
     }
 
     await this.redisService.del(this.getNotificationKey(notificationId));
+    await this.redisService.del(this.getPartyGatheringUserKey(discordId));
 
     metadata.guildIds.forEach((guildId) => {
       this.amqpConnection.publish(
