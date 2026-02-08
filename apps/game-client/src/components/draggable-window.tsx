@@ -26,6 +26,7 @@ export type DraggableWindowProps = {
   closable?: boolean;
   disableTitle?: boolean;
   draggableContent?: boolean;
+  contentClassName?: string;
 };
 
 export const DraggableWindow: FC<DraggableWindowProps> = ({
@@ -44,6 +45,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   closable = true,
   disableTitle = false,
   draggableContent = false,
+  contentClassName,
 }) => {
   const {
     opacity,
@@ -213,7 +215,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           />
         )}
         <div
-          className="ll:flex-1 ll:overflow-hidden ll:cursor-auto"
+          className={cn(
+            "ll:flex-1 ll:overflow-hidden ll:cursor-auto",
+            contentClassName,
+          )}
           onTouchStart={
             draggableContent ? onTouchStart : (e) => e.stopPropagation()
           }

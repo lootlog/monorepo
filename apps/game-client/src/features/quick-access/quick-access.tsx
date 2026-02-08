@@ -6,10 +6,10 @@ import {
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import {
-  MessageSquareWarning,
   MessagesSquare,
   Settings,
   Swords,
+  Terminal,
   Timer,
   Users,
 } from "lucide-react";
@@ -36,9 +36,9 @@ const BUTTONS: QuickAccessButtonProps[] = [
     icon: <MessagesSquare size="16" />,
   },
   {
-    id: "chat-input",
-    title: "Napisz wiadomość",
-    icon: <MessageSquareWarning size="16" />,
+    id: "command",
+    title: "Konsola",
+    icon: <Terminal size="16" />,
   },
   {
     id: "settings",
