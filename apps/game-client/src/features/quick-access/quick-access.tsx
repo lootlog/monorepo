@@ -63,7 +63,7 @@ export const QuickAccess = () => {
           <QuickAccessButton
             id="party-finder"
             title="Aktywne zbieranie grupy"
-            icon=<Users size="16" />
+            icon=<Swords size="16" className="ll:text-green-500" />
           />
         )}
         {BUTTONS.map((button) => (

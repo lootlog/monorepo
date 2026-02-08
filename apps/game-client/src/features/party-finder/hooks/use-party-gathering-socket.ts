@@ -3,7 +3,10 @@ import { useSocket } from "@/contexts/socket-context";
 import { useSession } from "@/hooks/auth/use-session";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 import { Game } from "@/lib/game";
-import { useNotificationsStore, type PartyGatheringNotification } from "@/store/notifications.store";
+import {
+  useNotificationsStore,
+  type PartyGatheringNotification,
+} from "@/store/notifications.store";
 import { useWindowsStore } from "@/store/windows.store";
 import { useEffect, useRef } from "react";
 import type { PartyGatheringSession } from "@/store/party-finder.store";
@@ -17,9 +20,9 @@ export const usePartyGatheringSocket = () => {
   const setOpen = useWindowsStore((s) => s.setOpen);
   const { data: sessionData } = useSession();
   const { settings: notificationsSettings } = useNotificationsStore();
-  const characterId = String(Game.hero.id);
-  const settings = notificationsSettings[characterId];
-  const world = Game.getWorldName();
+  const characterId = Game.hero ? String(Game.hero.id) : null;
+  const settings = characterId ? notificationsSettings[characterId] : undefined;
+  const world = Game.hero ? Game.getWorldName() : undefined;
   const { playSound } = useSoundPlayback();
 
   const settingsRef = useRef(settings);
@@ -83,5 +86,12 @@ export const usePartyGatheringSocket = () => {
       socket.off(GatewayEvent.PARTY_GATHERING_SEND, handler);
       socket.off(GatewayEvent.PARTY_GATHERING_CANCEL, cancelHandler);
     };
-  }, [socket, connected, pushNotification, removeNotification, setOpen, playSound]);
+  }, [
+    socket,
+    connected,
+    pushNotification,
+    removeNotification,
+    setOpen,
+    playSound,
+  ]);
 };

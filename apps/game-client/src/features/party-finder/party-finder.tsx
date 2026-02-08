@@ -51,7 +51,7 @@ export const PartyFinder = () => {
   };
 
   return (
-    <AnimatedWindow isOpen={open} windowKey="party-finder">
+    <AnimatedWindow isOpen={open && !!partyGathering} windowKey="party-finder">
       <DraggableWindow
         id="party-finder"
         title="Party finder"
