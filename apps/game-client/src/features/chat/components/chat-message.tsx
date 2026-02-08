@@ -23,9 +23,7 @@ import {
 import { Game } from "@/lib/game";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { CharacterTile } from "@/components/character-tile";
-import { useVolunteer } from "@/hooks/api/use-volunteer";
-import { CirclePlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PartyGatheringCard } from "./party-gathering-card";
 
 export type ChatMessageProps = {
   all: boolean;
@@ -36,7 +34,6 @@ export type ChatMessageProps = {
 export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
   const { data: guilds } = useGuilds();
   const memberColor = useMemberColor(member);
-  const { mutate: volunteer } = useVolunteer();
   const msgDate = new Date(message.timestamp);
   const now = new Date();
   const isMsgYesterdayOrOlder =
@@ -99,84 +96,14 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
   if (!guild) return null;
 
   if (message.type === MessageType.PARTY_GATHERING) {
-    const isOwnMessage = message.characterData.nick === Game.hero.nick;
-
     return (
-      <div
-        key={`${message.id}-${message.guildId}`}
-        className="ll:text-white ll:text-xs ll:w-full ll:select-text ll:cursor-text ll:flex ll:items-center ll:gap-1"
-      >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="ll:inline-block ll:select-text">
-              <span
-                className={cn("ll:text-[11px] ll:select-text", {
-                  "ll:opacity-50": isMsgYesterday,
-                })}
-              >
-                [{format(new Date(message.timestamp), "HH:mm")}]
-              </span>{" "}
-              {all && (
-                <span
-                  className={cn("ll:font-bold ll:mr-0.5 ll:select-text", {
-                    "ll:opacity-50": isMsgYesterday,
-                  })}
-                >
-                  [{guild.name}]{" "}
-                </span>
-              )}
-              <span
-                className={cn("ll:font-bold ll:select-text", {
-                  "ll:opacity-50": isMsgYesterday,
-                })}
-                style={{ color: "#FF8C00" }}
-              >
-                [G] {message.characterData.nick} szuka grupy
-              </span>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="ll:bg-black ll:p-2">
-            <div className="ll:flex ll:items-center ll:gap-2">
-              <CharacterTile
-                character={message.characterData}
-                className="ll:scale-75 ll:p-0"
-              />
-              <div className="ll:font-semibold ll:text-[11px]">
-                {message.characterData.nick} ({message.characterData.lvl}
-                {message.characterData.prof})
-              </div>
-            </div>
-            {message.partyGathering && (
-              <div className="ll:mt-1 ll:text-[10px] ll:text-gray-400">
-                {message.partyGathering.description && (
-                  <p>{message.partyGathering.description}</p>
-                )}
-                {message.partyGathering.minLvl &&
-                  message.partyGathering.maxLvl && (
-                    <p>
-                      Poziom: {message.partyGathering.minLvl}-
-                      {message.partyGathering.maxLvl}
-                    </p>
-                  )}
-              </div>
-            )}
-          </TooltipContent>
-        </Tooltip>
-        {!isOwnMessage && message.partyGathering && (
-          <Button
-            onClick={() => {
-              volunteer({
-                notificationId: message.partyGathering!.notificationId,
-                targetDiscordId: message.partyGathering!.discordId,
-                world: message.partyGathering!.world,
-              });
-            }}
-            className="ll:text-[#FF8C00] ll:hover:text-orange-300 ll:border-none ll:bg-transparent ll:hover:bg-transparent ll:p-0 ll:h-auto"
-          >
-            <CirclePlus className="ll:w-4 ll:h-4" />
-          </Button>
-        )}
-      </div>
+      <PartyGatheringCard
+        message={message}
+        member={member}
+        guild={guild}
+        all={all}
+        isMsgYesterday={isMsgYesterday}
+      />
     );
   }
 

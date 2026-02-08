@@ -9,7 +9,6 @@ export type EventNpc = Npcs[0];
 export interface ProcessedNpcSettings {
   settings: NpcDetectorSettingByNpc;
   icon: string;
-  autoSendMessage: boolean;
   autoSendNotification: boolean;
   guildIds: string[];
 }

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { gameEventsManager } from "@/lib/game-events-manager";
+import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
 import { useState, type FC } from "react";
 
@@ -124,6 +125,34 @@ const createDetectorEvent = (preset: DetectorNpcConfig): GameEvent => {
     ],
   };
 };
+
+const createPartyJoinEvent = (): GameEvent => ({
+  ...createBaseEvent(),
+  party: {
+    members: {
+      "617": {
+        id: 617,
+        nick: "cashtelan",
+        icon: "/kuf/her_xxxiii_nymph_cold_k2.gif",
+        commander: 1,
+        account: 9822301,
+      },
+      "12345": {
+        id: 12345,
+        nick: "Debug Player",
+        icon: "/eve/kup23-elf-k.gif",
+        account: 1234567,
+      },
+    },
+  },
+});
+
+const createPartyLeaveEvent = (): GameEvent => ({
+  ...createBaseEvent(),
+  party: {
+    members: {},
+  },
+});
 
 const EVENT_TEMPLATES: Record<string, { label: string; event: GameEvent }> = {
   npcSpawn: {
@@ -252,6 +281,7 @@ export const DebugTab: FC = () => {
   );
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [eventLog, setEventLog] = useState<LogEntry[]>([]);
+  const partyMembers = usePartyStore((s) => s.members);
   const zoomFactor = window.getZoomFactor ? window.getZoomFactor() : null;
 
   const addLogEntry = (eventType: string, success: boolean) => {
@@ -366,6 +396,33 @@ export const DebugTab: FC = () => {
       </div>
 
       <div>
+        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">
+          Party Events
+        </h3>
+        <p className="ll:text-[10px] ll:text-gray-400 ll:mb-2">
+          Triggers party member changes
+        </p>
+        <div className="ll:flex ll:flex-wrap ll:gap-1">
+          <Button
+            onClick={() =>
+              triggerEvent(createPartyJoinEvent(), "Party Join")
+            }
+            className="ll:px-2 ll:bg-teal-700 hover:ll:bg-teal-600"
+          >
+            Party Join
+          </Button>
+          <Button
+            onClick={() =>
+              triggerEvent(createPartyLeaveEvent(), "Party Leave")
+            }
+            className="ll:px-2 ll:bg-red-700 hover:ll:bg-red-600"
+          >
+            Party Leave
+          </Button>
+        </div>
+      </div>
+
+      <div>
         <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Raw JSON Event</h3>
         <div className="ll:flex ll:flex-wrap ll:gap-1 ll:mb-2">
           {Object.entries(EVENT_TEMPLATES).map(([key, { label }]) => (
@@ -426,6 +483,32 @@ export const DebugTab: FC = () => {
                   {entry.success ? "OK" : "FAIL"}
                 </span>
                 <span className="ll:text-white">{entry.eventType}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Party State</h3>
+        <div className="ll:bg-gray-800 ll:border ll:border-gray-600 ll:rounded ll:p-2">
+          {partyMembers.length === 0 ? (
+            <p className="ll:text-gray-500 ll:text-xs">No party members</p>
+          ) : (
+            partyMembers.map((member) => (
+              <div
+                key={member.id}
+                className="ll:text-xs ll:flex ll:gap-2 ll:items-center"
+              >
+                <span className="ll:text-white">
+                  {member.nick}
+                </span>
+                <span className="ll:text-gray-400">
+                  (ID: {member.id})
+                </span>
+                {member.leader && (
+                  <span className="ll:text-yellow-400">Leader</span>
+                )}
               </div>
             ))
           )}

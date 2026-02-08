@@ -10,6 +10,10 @@ export enum RoutingKey {
   GUILDS_NOTIFICATIONS_SEND = 'guilds.notifications.send',
   GUILDS_NOTIFICATIONS_VOLUNTEER = 'guilds.notifications.volunteer',
   GUILDS_PARTY_GATHERING = 'guilds.party-gathering',
+  GUILDS_PARTY_GATHERING_CANCEL = 'guilds.party-gathering.cancel',
+
+  GUILDS_DELETE_MESSAGE = 'guilds.delete.message',
+  GUILDS_UPDATE_MESSAGE = 'guilds.update.message',
 
   GUILDS_MEMBERS_ADD = 'guilds.members.add',
   GUILDS_MEMBERS_REMOVE = 'guilds.members.remove',

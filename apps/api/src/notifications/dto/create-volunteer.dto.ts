@@ -3,6 +3,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -51,6 +52,7 @@ class CharacterDto {
 export class CreateVolunteerDto {
   @IsNotEmpty()
   @IsString()
+  @MaxLength(50)
   world: string;
 
   @IsNotEmpty()

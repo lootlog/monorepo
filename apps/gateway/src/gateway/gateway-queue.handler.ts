@@ -720,6 +720,48 @@ export class GatewayQueueHandler {
 
   @RabbitSubscribe({
     exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
+    queue: Queue.GUILDS_PARTY_GATHERING_CANCEL,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handlePartyGatheringCancel(data: {
+    guildId: string;
+    notificationId: string;
+  }) {
+    await this.gatewayService.handlePartyGatheringCancel(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_UPDATE_MESSAGE,
+    queue: Queue.GUILDS_UPDATE_MESSAGE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleUpdateMessage(data: { guildId: string; messageId: string; message: string }) {
+    await this.gatewayService.handleChatMessageUpdate(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: RoutingKey.GUILDS_DELETE_MESSAGE,
+    queue: Queue.GUILDS_DELETE_MESSAGE,
+    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      durable: true,
+    },
+  })
+  async handleDeleteMessage(data: { guildId: string; messageId: string }) {
+    await this.gatewayService.handleChatMessageDelete(data);
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RoutingKey.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
     queue: Queue.GUILDS_MEMBERS_REFRESH_JOB_UPDATE,
     errorBehavior: MessageHandlerErrorBehavior.NACK,

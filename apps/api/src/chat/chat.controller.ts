@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -67,5 +67,64 @@ export class ChatController {
     @DiscordId() discordId: string,
   ) {
     return this.chatService.sendMessage(discordId, guild.id, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Patch(':messageId')
+  @ApiOperation({
+    summary: 'Update chat message',
+    description: 'Update the content of a chat message',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({
+    name: 'messageId',
+    description: 'Message ID',
+    example: 'msg_123',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Message updated successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions or not message owner',
+  })
+  async updateChatMessage(
+    @GuildData() guild: Guild,
+    @DiscordId() discordId: string,
+    @Param('messageId') messageId: string,
+    @Body('message') message: string,
+  ) {
+    return this.chatService.updateMessage(discordId, guild.id, messageId, message);
+  }
+
+  @Permissions(Permission.LOOTLOG_CHAT_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Delete(':messageId')
+  @ApiOperation({
+    summary: 'Delete chat message',
+    description: 'Delete a chat message from a guild',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({
+    name: 'messageId',
+    description: 'Message ID',
+    example: 'msg_123',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Message deleted successfully',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - insufficient permissions or not message owner',
+  })
+  async deleteChatMessage(
+    @GuildData() guild: Guild,
+    @DiscordId() discordId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.deleteMessage(discordId, guild.id, messageId);
   }
 }

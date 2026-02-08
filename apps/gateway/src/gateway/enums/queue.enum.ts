@@ -44,6 +44,10 @@ export enum Queue {
   GUILDS_PARTY_GATHERING = 'gateway-guilds-party-gathering',
   GUILDS_PARTY_GATHERING_DLQ = 'gateway-guilds-party-gathering.dlq',
   GUILDS_PARTY_GATHERING_RETRY = 'gateway-guilds-party-gathering.retry',
+  GUILDS_PARTY_GATHERING_CANCEL = 'gateway-guilds-party-gathering-cancel',
+
+  GUILDS_DELETE_MESSAGE = 'gateway-guilds-delete-message',
+  GUILDS_UPDATE_MESSAGE = 'gateway-guilds-update-message',
 
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'gateway-guilds-members-refresh-job-update',
 

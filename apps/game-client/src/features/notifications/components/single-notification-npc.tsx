@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
 import { useVolunteer } from "@/hooks/api/use-volunteer";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
-import type { NotificationWithServers } from "@/store/notifications.store";
+import {
+  useNotificationsStore,
+  type NotificationWithServers,
+} from "@/store/notifications.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import type { FC } from "react";
 
@@ -23,6 +27,8 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   const avatarUrl = getDiscordAvatarUrl(member?.userId, member?.avatar);
   const color = useMemberColor(member);
   const volunteer = useVolunteer();
+  const { clearNotifications } = useNotificationsStore();
+  const { setOpen } = useWindowsStore();
 
   const handleClick = () => {
     volunteer.mutate({
@@ -30,6 +36,8 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
       targetDiscordId: notification.discordId,
       world: notification.world,
     });
+    setOpen("notifications", false);
+    clearNotifications();
   };
 
   if (!notification.npc) return null;
@@ -71,9 +79,11 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
             {notification.npc.y})
           </span>
         </div>
-        <div className="ll:flex ll:items-center ll:justify-center ll:ml-auto ll:mr-4">
-          <Button onClick={handleClick}>Idę</Button>
-        </div>
+        {notification.isGatheringParty && (
+          <div className="ll:flex ll:items-center ll:justify-center ll:ml-auto ll:mr-4">
+            <Button onClick={handleClick}>Idę</Button>
+          </div>
+        )}
       </div>
     </div>
   );

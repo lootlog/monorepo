@@ -4,6 +4,7 @@ import {
   type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { usePartyFinderStore } from "@/store/party-finder.store";
 import {
   MessageSquareWarning,
   MessagesSquare,
@@ -47,6 +48,8 @@ const BUTTONS: QuickAccessButtonProps[] = [
 ];
 
 export const QuickAccess = () => {
+  const partyGathering = usePartyFinderStore((s) => s.partyGathering);
+
   return (
     <DraggableWindow
       id="quick-access"
@@ -65,6 +68,13 @@ export const QuickAccess = () => {
             href={button.href}
           />
         ))}
+        {partyGathering && (
+          <QuickAccessButton
+            id="party-finder"
+            title="Aktywne zbieranie grupy"
+            icon={<Users size="16" />}
+          />
+        )}
         <GuildListPopover />
       </div>
     </DraggableWindow>

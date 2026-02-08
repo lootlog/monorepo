@@ -9,6 +9,11 @@ export type UseCreatePartyGatheringOptions = {
   maxLvl?: number;
 };
 
+export type CreatePartyGatheringResponse = {
+  notificationId: string;
+  guildIds?: string[];
+};
+
 export const useCreatePartyGathering = () => {
   const { client } = useAuthenticatedApiClient();
 
@@ -18,7 +23,7 @@ export const useCreatePartyGathering = () => {
       const hero = Game.hero;
       const world = Game.getWorldName();
 
-      return client.post("/notifications/party-gathering", {
+      return client.post<CreatePartyGatheringResponse>("/notifications/party-gathering", {
         guildIds: options.guildIds,
         world,
         character: {
