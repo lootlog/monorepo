@@ -76,8 +76,14 @@ export const useSendChatMessage = () => {
       );
 
       const failures = results.filter((r) => r.status === "rejected");
+      if (failures.length === results.length) {
+        throw new Error("Nie udało się wysłać wiadomości na czat");
+      }
+
       if (failures.length > 0) {
-        console.warn(`Failed to send chat message to ${failures.length} guilds`);
+        console.warn(
+          `Failed to send chat message to ${failures.length} guilds`,
+        );
       }
 
       return results;
