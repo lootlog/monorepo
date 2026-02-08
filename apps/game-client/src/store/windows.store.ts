@@ -14,7 +14,7 @@ export type WindowId =
   | "settings"
   | "timers"
   | "chat"
-  | "chat-input"
+  | "command"
   | "online-players"
   | "add-timer"
   | "npc-detector"
@@ -51,7 +51,7 @@ interface WindowsState {
   settings: WindowData;
   timers: WindowData;
   chat: WindowData;
-  "chat-input": WindowData;
+  command: WindowData;
   "online-players": WindowData;
   "add-timer": WindowData;
   "npc-detector": WindowData & { state: NpcDetectorWindowState };
@@ -103,9 +103,12 @@ export const useWindowsStore = create<WindowsState>()(
         locked: false,
         autofocus: false,
       },
-      "chat-input": {
+      command: {
         open: true,
-        position: DEFAULT_POSITION,
+        position: {
+          x: Math.round((window.innerWidth - 242) / 2),
+          y: Math.round((window.innerHeight - 240) / 2),
+        },
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -242,7 +245,7 @@ export const useWindowsStore = create<WindowsState>()(
         settings: state.settings,
         timers: state.timers,
         chat: state.chat,
-        "chat-input": state["chat-input"],
+        command: state.command,
         "online-players": state["online-players"],
         "add-timer": state["add-timer"],
         "npc-detector": state["npc-detector"],
@@ -261,7 +264,25 @@ export const useWindowsStore = create<WindowsState>()(
         "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>;
+        if (version < 2) {
+          if (state["chat-input"]) {
+            state.command = state["chat-input"];
+            delete state["chat-input"];
+          }
+          if (Array.isArray(state.windowFocusHistory)) {
+            state.windowFocusHistory = (
+              state.windowFocusHistory as string[]
+            ).map((id) => (id === "chat-input" ? "command" : id));
+          }
+          if (state.currentWindowFocus === "chat-input") {
+            state.currentWindowFocus = "command";
+          }
+        }
+        return state as unknown as WindowsState;
+      },
     },
   ),
 );
