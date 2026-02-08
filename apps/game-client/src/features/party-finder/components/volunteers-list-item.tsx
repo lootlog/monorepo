@@ -7,8 +7,8 @@ import {
   type PartyFinderVolunteer,
 } from "@/store/party-finder.store";
 import { useFriendsStore } from "@/store/friends.store";
-import { Loader2, Plus, UserPlus, X } from "lucide-react";
-import { useEffect, useState, type FC } from "react";
+import { Loader2, Plus, RotateCcw, UserPlus, X } from "lucide-react";
+import { useEffect, type FC } from "react";
 
 export type VolunteersListItemProps = {
   volunteer: PartyFinderVolunteer;
@@ -19,25 +19,30 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
 }) => {
   const removeVolunteer = usePartyFinderStore((s) => s.removeVolunteer);
   const partyGathering = usePartyFinderStore((s) => s.partyGathering);
+  const inviteState = usePartyFinderStore(
+    (s) => s.inviteStates[volunteer.characterId],
+  );
+  const setInviteState = usePartyFinderStore((s) => s.setInviteState);
+  const clearInviteState = usePartyFinderStore((s) => s.clearInviteState);
   const isFriend = useFriendsStore((s) => s.isFriend);
-  const [invitePending, setInvitePending] = useState(false);
 
   useEffect(() => {
-    if (!invitePending) return;
+    if (inviteState !== "pending") return;
 
     const timeout = setTimeout(() => {
-      setInvitePending(false);
+      setInviteState(volunteer.characterId, "failed");
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [invitePending]);
+  }, [inviteState, volunteer.characterId, setInviteState]);
 
   const handleInviteToParty = () => {
-    setInvitePending(true);
+    setInviteState(volunteer.characterId, "pending");
     window._g(`party&a=inv&id=${volunteer.characterId}`);
   };
 
   const handleRemove = () => {
+    clearInviteState(volunteer.characterId);
     removeVolunteer(volunteer.characterId);
   };
 
@@ -70,8 +75,10 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
 
   return (
     <Tile
-      className="ll:px-1 ll:flex ll:flex-row ll:mb-0.5 ll:justify-between"
-      customBorderColor={shouldHighlight ? "#22c55e" : undefined}
+      className={cn(
+        "ll:px-1 ll:flex ll:flex-row ll:mb-0.5 ll:justify-between",
+        shouldHighlight && "ll:border-green-500",
+      )}
     >
       <div className="ll:flex ll:items-center">
         <div>
@@ -95,9 +102,13 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
             <UserPlus size="18" className="ll:text-blue-500" />
           </Button>
         )}
-        {invitePending ? (
+        {inviteState === "pending" ? (
           <Button className="ll:p-0" disabled>
             <Loader2 size="18" className="ll:text-yellow-500 ll:animate-spin" />
+          </Button>
+        ) : inviteState === "failed" ? (
+          <Button className="ll:p-0" onClick={handleInviteToParty}>
+            <RotateCcw size="18" className="ll:text-orange-400" />
           </Button>
         ) : (
           <Button className="ll:p-0" onClick={handleInviteToParty}>

@@ -10,12 +10,11 @@ export interface Friend {
   y: string;
   status: string;
   unknown1: string;
-  unknown2: string;
 }
 
 export function parseFriendsListFromEvent(friends: string[]): Friend[] {
   const friendsList: Friend[] = [];
-  const entrySize = 12;
+  const entrySize = 11;
 
   for (let i = 0; i < friends.length; i += entrySize) {
     friendsList.push({
@@ -30,7 +29,6 @@ export function parseFriendsListFromEvent(friends: string[]): Friend[] {
       y: friends[i + 8],
       status: friends[i + 9],
       unknown1: friends[i + 10],
-      unknown2: friends[i + 11],
     });
   }
 
