@@ -142,23 +142,22 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             "{partyGathering.description}"
           </p>
         )}
-        {partyGathering?.minLvl && partyGathering?.maxLvl && (
+        {(partyGathering?.minLvl || partyGathering?.maxLvl) && (
           <p className="ll:text-[10px] ll:text-gray-400">
-            Poziom: {partyGathering.minLvl}-{partyGathering.maxLvl}
+            Poziom: {partyGathering?.minLvl || 1} -{" "}
+            {partyGathering?.maxLvl || 500}
           </p>
         )}
         {!isOwnMessage &&
           (() => {
-            const isOutOfLvlRange =
-              partyGathering?.minLvl !== undefined &&
-              partyGathering?.maxLvl !== undefined &&
-              (heroLvl < partyGathering.minLvl ||
-                heroLvl > partyGathering.maxLvl);
+            const minLvl = partyGathering?.minLvl || 1;
+            const maxLvl = partyGathering?.maxLvl || 500;
+            const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
 
             return (
               <Button
                 onClick={handleVolunteer}
-                disabled={isPending || isOutOfLvlRange}
+                disabled={isPending || !meetsLevelReq}
                 className="ll:w-full ll:mt-0.5 ll:text-[11px] ll:h-6 ll:font-semibold ll:border-[#FF8C00] ll:text-[#FF8C00] ll:hover:bg-[#FF8C00]/20"
               >
                 {isPending ? (
@@ -166,8 +165,8 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
                     <Loader2 className="ll:w-3 ll:h-3 ll:animate-spin ll:mr-1" />
                     Zgłaszanie...
                   </>
-                ) : isOutOfLvlRange ? (
-                  "Poza zakresem poziomu"
+                ) : !meetsLevelReq ? (
+                  `Wymagany poziom ${minLvl}-${maxLvl}`
                 ) : (
                   "Dołącz do grupy"
                 )}

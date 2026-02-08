@@ -143,8 +143,8 @@ export const OldChatInput: FC<OldChatInputProps> = ({
   const onSubmit = (data: FormData) => {
     if (!selectedGuildId || !world) return;
 
-    if (data.message.startsWith("!party")) {
-      const description = data.message.slice("!party".length).trim() || undefined;
+    if (data.message.startsWith("!grp")) {
+      const description = data.message.slice("!grp".length).trim() || undefined;
       handlePartyCommand(description);
       setValue("message", "");
       return;
@@ -198,7 +198,7 @@ export const OldChatInput: FC<OldChatInputProps> = ({
       className="ll:flex ll:justify-center ll:flex-col ll:mt-1"
     >
       <Label className="ll:text-[9px] ll:text-gray-400">
-        (! = powiadomienie, !party = szukaj grupy)
+        (! = powiadomienie, !grp = szukaj grupy)
       </Label>
       <Input
         autoComplete="off"
