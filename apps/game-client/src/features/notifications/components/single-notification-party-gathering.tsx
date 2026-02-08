@@ -83,7 +83,7 @@ export const SingleNotificationPartyGathering: FC<
                 "{notification.description}"
               </span>
             )}
-            {(notification.minLvl ?? notification.maxLvl) && (
+            {(notification.minLvl !== null || notification.maxLvl !== null) && (
               <span className="ll:text-[10px] ll:text-gray-400">
                 Poziom: {notification.minLvl ?? 1} -{" "}
                 {notification.maxLvl ?? 500}
