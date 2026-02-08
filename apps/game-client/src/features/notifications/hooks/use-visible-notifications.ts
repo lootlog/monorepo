@@ -22,8 +22,9 @@ export interface UseVisibleNotificationsResult {
 const getKey = (n: Notification | PartyGatheringNotification) => {
   if ("type" in n && n.type === "party-gathering")
     return "party-gathering" as const;
-  if (!n.npc || !n.npc.wt) return "message" as const;
-  return getNpcTypeByWt(n.npc.wt);
+  const notification = n as Notification;
+  if (!notification.npc || !notification.npc.wt) return "message" as const;
+  return getNpcTypeByWt(notification.npc.wt);
 };
 
 export const useVisibleNotifications = ({

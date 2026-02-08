@@ -39,4 +39,6 @@ export type GameEvent = {
   town?: TownEvent;
   friends?: string[];
   friends_max?: number;
+  enemies?: string[];
+  enemies_max?: number;
 };
