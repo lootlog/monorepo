@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -58,6 +59,7 @@ export class CreatePartyGatheringDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   world: string;
 
   @ValidateNested()
@@ -66,6 +68,7 @@ export class CreatePartyGatheringDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(200)
   description?: string;
 
   @IsNumber()

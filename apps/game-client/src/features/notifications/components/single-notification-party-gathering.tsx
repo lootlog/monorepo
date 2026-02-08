@@ -4,8 +4,13 @@ import { useVolunteer } from "@/hooks/api/use-volunteer";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { getDiscordAvatarUrl } from "@/utils/discord/get-avatar-url";
 import type { FC } from "react";
-import type { PartyGatheringNotification } from "@/store/notifications.store";
+import {
+  useNotificationsStore,
+  type PartyGatheringNotification,
+} from "@/store/notifications.store";
+import { useWindowsStore } from "@/store/windows.store";
 import { CharacterTile } from "@/components/character-tile";
+import { Game } from "@/lib/game";
 
 export type SingleNotificationPartyGatheringProps = {
   notification: PartyGatheringNotification;
@@ -20,6 +25,13 @@ export const SingleNotificationPartyGathering: FC<
   const avatarUrl = getDiscordAvatarUrl(member?.userId, member?.avatar);
   const color = useMemberColor(member);
   const volunteer = useVolunteer();
+  const { clearNotifications } = useNotificationsStore();
+  const { setOpen } = useWindowsStore();
+
+  const heroLvl = Game.hero.lvl;
+  const minLvl = notification.minLvl || 1;
+  const maxLvl = notification.maxLvl || 500;
+  const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
 
   const handleClick = () => {
     volunteer.mutate({
@@ -27,6 +39,8 @@ export const SingleNotificationPartyGathering: FC<
       targetDiscordId: notification.discordId,
       world: notification.world,
     });
+    setOpen("notifications", false);
+    clearNotifications();
   };
 
   return (
@@ -47,11 +61,6 @@ export const SingleNotificationPartyGathering: FC<
 
       <div className="ll:flex ll:gap-4 ll:py-1 ll:px-2">
         <div className="ll:flex ll:items-center ll:gap-2">
-          {/* <img
-            src={notification.character.icon}
-            alt={notification.character.nick}
-            className="ll:h-10 ll:w-10 ll:rounded"
-          /> */}
           <CharacterTile
             character={notification.character}
             className="ll:scale-75"
@@ -77,12 +86,23 @@ export const SingleNotificationPartyGathering: FC<
                 {notification.maxLvl || 500}
               </span>
             )}
+            <span className="ll:text-[10px] ll:font-semibold ll:text-purple-400">
+              Szuka grupy
+            </span>
           </div>
         </div>
-        <div className="ll:flex ll:items-center ll:justify-center ll:ml-auto ll:mr-4">
-          <Button onClick={handleClick} disabled={volunteer.isPending}>
-            {volunteer.isPending ? "..." : "Idę!"}
+        <div className="ll:flex ll:flex-col ll:items-center ll:justify-center ll:ml-auto ll:mr-4 ll:gap-1">
+          <Button
+            onClick={handleClick}
+            disabled={volunteer.isPending || !meetsLevelReq}
+          >
+            {volunteer.isPending ? "..." : "Dołącz!"}
           </Button>
+          {!meetsLevelReq && (
+            <span className="ll:text-[9px] ll:text-red-400 ll:text-center">
+              Wymagany poziom {minLvl}-{maxLvl}
+            </span>
+          )}
         </div>
       </div>
     </div>

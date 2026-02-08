@@ -267,4 +267,36 @@ export class GatewayService {
     const room = buildRoomName(data.guildId, 'notifications', 'base');
     this.gateway.server.to(room).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
   }
+
+  handlePartyGatheringCancel(data: { guildId: string; notificationId: string }) {
+    const room = buildRoomName(data.guildId, 'notifications', 'base');
+    this.gateway.server.to(room).emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
+      notificationId: data.notificationId,
+    });
+  }
+
+  handleChatMessageUpdate(data: { guildId: string; messageId: string; message: string }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'chat', 'base'),
+      buildRoomName(data.guildId, 'chat', 'titans'),
+      buildRoomName(data.guildId, 'chat', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_UPDATE, {
+      messageId: data.messageId,
+      guildId: data.guildId,
+      message: data.message,
+    });
+  }
+
+  handleChatMessageDelete(data: { guildId: string; messageId: string }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'chat', 'base'),
+      buildRoomName(data.guildId, 'chat', 'titans'),
+      buildRoomName(data.guildId, 'chat', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_DELETE, {
+      messageId: data.messageId,
+      guildId: data.guildId,
+    });
+  }
 }

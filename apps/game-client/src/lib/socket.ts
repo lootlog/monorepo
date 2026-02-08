@@ -43,6 +43,16 @@ type ServerToClientEvents = {
     volunteer: PartyFinderVolunteer;
   }) => void;
   [GatewayEvent.PARTY_GATHERING_SEND]: (data: PartyGatheringSession & { guildId: string }) => void;
+  [GatewayEvent.PARTY_GATHERING_CANCEL]: (data: { notificationId: string }) => void;
+  [GatewayEvent.CHAT_MESSAGE_DELETE]: (data: {
+    guildId: string;
+    messageId: string;
+  }) => void;
+  [GatewayEvent.CHAT_MESSAGE_UPDATE]: (data: {
+    guildId: string;
+    messageId: string;
+    message: string;
+  }) => void;
 };
 
 type ClientToServerEvents = {

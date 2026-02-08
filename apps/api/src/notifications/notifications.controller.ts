@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -66,5 +66,32 @@ export class NotificationsController {
     @Body() data: CreatePartyGatheringDto,
   ) {
     return this.notificationsService.sendPartyGathering(discordId, data);
+  }
+
+  @Delete('party-gathering/:notificationId')
+  @ApiOperation({
+    summary: 'Cancel party gathering notification',
+    description: 'Cancel an active party gathering notification',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Party gathering notification cancelled successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Notification not found or expired',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Not the owner of this notification',
+  })
+  async cancelPartyGathering(
+    @DiscordId() discordId: string,
+    @Param('notificationId') notificationId: string,
+  ) {
+    return this.notificationsService.cancelPartyGathering(
+      discordId,
+      notificationId,
+    );
   }
 }

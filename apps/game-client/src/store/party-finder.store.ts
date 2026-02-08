@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type PartyFinderNpc = {
   id: number;
@@ -48,6 +49,7 @@ export type PartyGatheringSession = {
   maxLvl?: number;
   world: string;
   createdAt: string;
+  guildIds?: string[];
 };
 
 interface PartyFinderState {
@@ -55,38 +57,63 @@ interface PartyFinderState {
   npc: PartyFinderNpc | null;
   volunteers: PartyFinderVolunteer[];
   partyGathering: PartyGatheringSession | null;
+  chatMessageIds: Record<string, string>;
   setNotification: (notificationId: string, npc: PartyFinderNpc) => void;
   addVolunteer: (volunteer: PartyFinderVolunteer) => void;
   removeVolunteer: (characterId: string) => void;
   clearPartyFinder: () => void;
   setPartyGathering: (session: PartyGatheringSession) => void;
   clearPartyGathering: () => void;
+  setChatMessageId: (guildId: string, messageId: string) => void;
+  clearChatMessageIds: () => void;
 }
 
-export const usePartyFinderStore = create<PartyFinderState>((set) => ({
-  notificationId: null,
-  npc: null,
-  volunteers: [],
-  partyGathering: null,
-  setNotification: (notificationId, npc) =>
-    set({ notificationId, npc, volunteers: [] }),
-  addVolunteer: (volunteer) =>
-    set((state) => {
-      if (
-        state.volunteers.some((v) => v.characterId === volunteer.characterId)
-      ) {
-        return state;
-      }
-      return { volunteers: [...state.volunteers, volunteer] };
+export const usePartyFinderStore = create<PartyFinderState>()(
+  persist(
+    (set) => ({
+      notificationId: null,
+      npc: null,
+      volunteers: [],
+      partyGathering: null,
+      chatMessageIds: {},
+      setNotification: (notificationId, npc) =>
+        set({ notificationId, npc, volunteers: [] }),
+      addVolunteer: (volunteer) =>
+        set((state) => {
+          if (
+            state.volunteers.some((v) => v.characterId === volunteer.characterId)
+          ) {
+            return state;
+          }
+          return { volunteers: [...state.volunteers, volunteer] };
+        }),
+      removeVolunteer: (characterId) =>
+        set((state) => ({
+          volunteers: state.volunteers.filter((v) => v.characterId !== characterId),
+        })),
+      clearPartyFinder: () =>
+        set({ notificationId: null, npc: null, volunteers: [], partyGathering: null, chatMessageIds: {} }),
+      setPartyGathering: (session) =>
+        set({ partyGathering: session, notificationId: session.notificationId, npc: null, volunteers: [] }),
+      clearPartyGathering: () =>
+        set({ partyGathering: null }),
+      setChatMessageId: (guildId, messageId) =>
+        set((state) => ({
+          chatMessageIds: { ...state.chatMessageIds, [guildId]: messageId },
+        })),
+      clearChatMessageIds: () =>
+        set({ chatMessageIds: {} }),
     }),
-  removeVolunteer: (characterId) =>
-    set((state) => ({
-      volunteers: state.volunteers.filter((v) => v.characterId !== characterId),
-    })),
-  clearPartyFinder: () =>
-    set({ notificationId: null, npc: null, volunteers: [] }),
-  setPartyGathering: (session) =>
-    set({ partyGathering: session, notificationId: session.notificationId, npc: null, volunteers: [] }),
-  clearPartyGathering: () =>
-    set({ partyGathering: null }),
-}));
+    {
+      name: "ll-party-finder-storage",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({
+        partyGathering: state.partyGathering,
+        notificationId: state.notificationId,
+        npc: state.npc,
+        chatMessageIds: state.chatMessageIds,
+        volunteers: state.volunteers,
+      }),
+    },
+  ),
+);

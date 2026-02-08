@@ -1,5 +1,5 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
@@ -11,6 +11,7 @@ import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-u
 import { GuildsService } from 'src/guilds/guilds.service';
 import { Permission, Role } from 'generated/client';
 import { canViewChatMessage } from 'src/shared/utils/can-view-chat-message';
+import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
 
 const MAX_MESSAGES = 100;
 
@@ -25,6 +26,9 @@ export class ChatService {
 
   async sendMessage(discordId: string, guildId: string, data: SendMessageDto) {
     const key = `guild:${guildId}:messages`;
+    const npcType = data.npc
+      ? getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type)
+      : undefined;
     const msg = {
       id: v6(),
       message: data.message,
@@ -32,8 +36,9 @@ export class ChatService {
       timestamp: new Date().toISOString(),
       guildId,
       type: data.type,
-      npc: data.npc,
+      npc: data.npc ? { ...data.npc, type: npcType } : undefined,
       characterData: data.characterData,
+      partyGathering: data.partyGathering,
     };
     const messages = await this.getRawMessages(guildId);
     if (Array.isArray(messages) && messages.length >= MAX_MESSAGES) {
@@ -151,5 +156,71 @@ export class ChatService {
     );
 
     return undefined;
+  }
+
+  async updateMessage(
+    discordId: string,
+    guildId: string,
+    messageId: string,
+    newMessage: string,
+  ) {
+    const messages = await this.getRawMessages(guildId);
+
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) {
+      return { success: false, message: 'Message not found' };
+    }
+
+    const message = messages[messageIndex];
+    if (message.senderId !== discordId) {
+      throw new ForbiddenException('Not the owner of this message');
+    }
+
+    messages[messageIndex] = {
+      ...message,
+      message: newMessage,
+      partyGathering: undefined,
+    };
+
+    const key = `guild:${guildId}:messages`;
+    await this.redisService.set(key, JSON.stringify(messages));
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_UPDATE_MESSAGE,
+      {
+        guildId,
+        messageId,
+        message: newMessage,
+      },
+    );
+
+    return { success: true };
+  }
+
+  async deleteMessage(discordId: string, guildId: string, messageId: string) {
+    const messages = await this.getRawMessages(guildId);
+
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) {
+      return { success: false, message: 'Message not found' };
+    }
+
+    const message = messages[messageIndex];
+    if (message.senderId !== discordId) {
+      throw new ForbiddenException('Not the owner of this message');
+    }
+
+    const filteredMessages = messages.filter((m) => m.id !== messageId);
+    const key = `guild:${guildId}:messages`;
+    await this.redisService.set(key, JSON.stringify(filteredMessages));
+
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.GUILDS_DELETE_MESSAGE,
+      { guildId, messageId },
+    );
+
+    return { success: true };
   }
 }

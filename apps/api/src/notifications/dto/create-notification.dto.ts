@@ -1,9 +1,11 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { NpcDto } from 'src/loots/dto/create-loot.dto';
@@ -11,6 +13,7 @@ import { NpcDto } from 'src/loots/dto/create-loot.dto';
 export class CreateNotificationDto {
   @IsString()
   @IsOptional()
+  @MaxLength(500)
   message: string;
 
   @IsOptional()
@@ -24,5 +27,10 @@ export class CreateNotificationDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   world: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isGatheringParty?: boolean;
 }

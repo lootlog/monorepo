@@ -7,8 +7,8 @@ import {
   type PartyFinderVolunteer,
 } from "@/store/party-finder.store";
 import { useFriendsStore } from "@/store/friends.store";
-import { Plus, UserPlus, X } from "lucide-react";
-import type { FC } from "react";
+import { Loader2, Plus, UserPlus, X } from "lucide-react";
+import { useEffect, useState, type FC } from "react";
 
 export type VolunteersListItemProps = {
   volunteer: PartyFinderVolunteer;
@@ -20,10 +20,20 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
   const removeVolunteer = usePartyFinderStore((s) => s.removeVolunteer);
   const partyGathering = usePartyFinderStore((s) => s.partyGathering);
   const isFriend = useFriendsStore((s) => s.isFriend);
+  const [invitePending, setInvitePending] = useState(false);
 
-  console.log(isFriend);
+  useEffect(() => {
+    if (!invitePending) return;
+
+    const timeout = setTimeout(() => {
+      setInvitePending(false);
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [invitePending]);
 
   const handleInviteToParty = () => {
+    setInvitePending(true);
     window._g(`party&a=inv&id=${volunteer.characterId}`);
   };
 
@@ -71,7 +81,6 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
           className={cn(
             "ll:font-semibold ll:text-[11px] ll:min-w-16 ll:max-w-32 ll:whitespace-nowrap ll:truncate",
           )}
-          // style={{ color: `#${color}` }}
         >
           {volunteer.nick} ({volunteer.lvl}
           {volunteer.prof})
@@ -83,9 +92,15 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
             <UserPlus size="18" className="ll:text-blue-500" />
           </Button>
         )}
-        <Button className="ll:p-0" onClick={handleInviteToParty}>
-          <Plus size="18" className="ll:text-green-500" />
-        </Button>
+        {invitePending ? (
+          <Button className="ll:p-0" disabled>
+            <Loader2 size="18" className="ll:text-yellow-500 ll:animate-spin" />
+          </Button>
+        ) : (
+          <Button className="ll:p-0" onClick={handleInviteToParty}>
+            <Plus size="18" className="ll:text-green-500" />
+          </Button>
+        )}
         <Button className="ll:p-0" onClick={handleRemove}>
           <X size="18" className="ll:text-red-500" />
         </Button>
@@ -93,5 +108,3 @@ export const VolunteersListItem: FC<VolunteersListItemProps> = ({
     </Tile>
   );
 };
-
-// {"g":"t=friends&a=show&ev=1770056708.214851&browser_token=189409460","p":""}

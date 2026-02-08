@@ -33,7 +33,6 @@ const FormSchema = z.object({
       detect: z.boolean(),
       notifyWindow: z.boolean(),
       autoNotifyClan: z.boolean(),
-      autoNotifyChat: z.boolean(),
       notifySound: z.boolean(),
       highlight: z.boolean(),
       guildIds: z.array(z.string()),
@@ -128,13 +127,6 @@ export const DetectorSettingsTabForm: FC<DetectorSettingsTabFormProps> = ({
                   {...register(`settingsByNpcType.${field.key}.autoNotifyClan`)}
                 >
                   Auto komunikat
-                </Checkbox>
-                <Checkbox
-                  id={`${field.key}-autoNotifyChat`}
-                  disabled={!watchDetect}
-                  {...register(`settingsByNpcType.${field.key}.autoNotifyChat`)}
-                >
-                  Auto wiadomość na czacie
                 </Checkbox>
                 <Checkbox
                   id={`${field.key}-notifySound`}

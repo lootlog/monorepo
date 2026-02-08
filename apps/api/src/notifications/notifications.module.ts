@@ -9,11 +9,13 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigKey } from 'src/config/config-key.enum';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { NotificationsController } from 'src/notifications/notifications.controller';
+import { RedisModule } from 'src/lib/redis/redis.module';
 
 @Module({
   imports: [
     MembersModule,
     GuildsModule,
+    RedisModule,
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
