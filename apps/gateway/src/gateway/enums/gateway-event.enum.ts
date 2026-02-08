@@ -10,6 +10,11 @@ export enum GatewayEvent {
   RESERVATIONS_CREATE = 'reservations-create',
   RESERVATIONS_DELETE = 'reservations-delete',
   NOTIFICATIONS_SEND = 'notifications-send',
+  NOTIFICATIONS_VOLUNTEER = 'notifications-volunteer',
+  PARTY_GATHERING_SEND = 'party-gathering-send',
+  PARTY_GATHERING_CANCEL = 'party-gathering-cancel',
+  CHAT_MESSAGE_DELETE = 'chat-message-delete',
+  CHAT_MESSAGE_UPDATE = 'chat-message-update',
   MEMBERS_REFRESH_JOB_UPDATE = 'members-refresh-job-update',
   PERMISSIONS_UPDATED = 'permissions-updated',
 

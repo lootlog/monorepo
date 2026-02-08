@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useNotificationsStore,
   type NotificationWithServers,
+  type PartyGatheringNotification,
 } from "@/store/notifications.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
@@ -18,9 +19,12 @@ export interface UseVisibleNotificationsResult {
   now: number;
 }
 
-const getKey = (n: Notification) => {
-  if (!n.npc || !n.npc.wt) return "message" as const;
-  return getNpcTypeByWt(n.npc.wt);
+const getKey = (n: Notification | PartyGatheringNotification) => {
+  if ("type" in n && n.type === "party-gathering")
+    return "party-gathering" as const;
+  const notification = n as Notification;
+  if (!notification.npc || !notification.npc.wt) return "message" as const;
+  return getNpcTypeByWt(notification.npc.wt);
 };
 
 export const useVisibleNotifications = ({
@@ -65,7 +69,8 @@ export const useVisibleNotifications = ({
       if (!s) return false;
       if (!s.show) return false;
       if (s.ignoreOtherWorlds && n.world !== world) return false;
-      if (!s.guildIds.includes(n.guildId)) return false;
+      if (Array.isArray(s.guildIds) && !s.guildIds.includes(n.guildId))
+        return false;
       const timeout = s.autoHideTimeout || 0;
       if (timeout > 0) {
         const createdAtMs = new Date(n.createdAt).getTime();

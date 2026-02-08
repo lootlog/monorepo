@@ -9,6 +9,7 @@ import { io, type Socket } from "socket.io-client";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { ChatMessage } from "@/hooks/api/use-chat-messages";
 import { msgpackParser } from "@lootlog/socket-parser";
+import type { PartyFinderVolunteer, PartyGatheringSession } from "@/store/party-finder.store";
 
 type ServerToClientEvents = {
   [GatewayEvent.DISCONNECT]: () => void;
@@ -36,6 +37,21 @@ type ServerToClientEvents = {
   [GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE]: (data: {
     id: string;
     endsAt: string;
+  }) => void;
+  [GatewayEvent.NOTIFICATIONS_VOLUNTEER]: (data: {
+    notificationId: string;
+    volunteer: PartyFinderVolunteer;
+  }) => void;
+  [GatewayEvent.PARTY_GATHERING_SEND]: (data: PartyGatheringSession & { guildId: string }) => void;
+  [GatewayEvent.PARTY_GATHERING_CANCEL]: (data: { notificationId: string }) => void;
+  [GatewayEvent.CHAT_MESSAGE_DELETE]: (data: {
+    guildId: string;
+    messageId: string;
+  }) => void;
+  [GatewayEvent.CHAT_MESSAGE_UPDATE]: (data: {
+    guildId: string;
+    messageId: string;
+    message: string;
   }) => void;
 };
 
