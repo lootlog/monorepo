@@ -8,6 +8,8 @@ import type {
 } from 'src/gateway/dto/reservation-event.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
+import type { SendPartyGatheringDto } from 'src/gateway/dto/send-party-gathering.dto';
+import type { VolunteerNotificationDto } from 'src/gateway/dto/volunteer-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
 import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
@@ -110,12 +112,16 @@ export class GatewayService {
 
   handleGuildsReservationCreate(data: ReservationCreateEventDto) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
-    this.gateway.server.to(eventsRoom).emit(GatewayEvent.RESERVATIONS_CREATE, data);
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.RESERVATIONS_CREATE, data);
   }
 
   handleGuildsReservationDelete(data: ReservationDeleteEventDto) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
-    this.gateway.server.to(eventsRoom).emit(GatewayEvent.RESERVATIONS_DELETE, data);
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.RESERVATIONS_DELETE, data);
   }
 
   handleGuildMessageSend(data: SendMessageDto) {
@@ -150,7 +156,9 @@ export class GatewayService {
   handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
     // Emit directly to admin room - only owner/admin are in this room
     const adminRoom = buildRoomName(data.guildId, 'admin');
-    this.gateway.server.to(adminRoom).emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
+    this.gateway.server
+      .to(adminRoom)
+      .emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
   }
 
   async invalidateUserGuildsCache(discordId: string, userId: string) {
@@ -216,7 +224,9 @@ export class GatewayService {
 
   handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
-    this.gateway.server.to(eventsRoom).emit(GatewayEvent.EVENT_MAP_STATUS_UPDATE, data);
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_MAP_STATUS_UPDATE, data);
   }
 
   async checkPresenceForMap(guildId: string, mapName: string): Promise<void> {
@@ -225,21 +235,99 @@ export class GatewayService {
 
   handleEventHeroKilled(data: EventHeroKilledPayload) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
-    this.gateway.server.to(eventsRoom).emit(GatewayEvent.EVENT_HERO_KILLED, data);
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_HERO_KILLED, data);
   }
 
   handleEventRankingUpdate(data: EventRankingUpdatePayload) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
-    this.gateway.server.to(eventsRoom).emit(GatewayEvent.EVENT_RANKING_UPDATE, data);
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_RANKING_UPDATE, data);
   }
 
   handleEventRespawnWindowOpened(data: EventRespawnWindowPayload) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
-    this.gateway.server.to(eventsRoom).emit(GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED, data);
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED, data);
   }
 
   handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
     const eventsRoom = buildRoomName(data.guildId, 'events');
-    this.gateway.server.to(eventsRoom).emit(GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED, data);
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED, data);
+  }
+
+  async handleVolunteerNotification(data: VolunteerNotificationDto) {
+    const sockets = await this.gateway.server.fetchSockets();
+    const targetSockets = sockets.filter(
+      (socket) => socket.data.discordId === data.targetDiscordId,
+    );
+
+    targetSockets.forEach((socket) => {
+      socket.emit(GatewayEvent.NOTIFICATIONS_VOLUNTEER, {
+        notificationId: data.notificationId,
+        volunteer: {
+          discordId: data.volunteerDiscordId,
+          world: data.world,
+          ...data.character,
+        },
+      });
+    });
+  }
+
+  handlePartyGatheringSend(data: SendPartyGatheringDto) {
+    const rooms = [
+      buildRoomName(data.guildId, 'notifications', 'base'),
+      buildRoomName(data.guildId, 'notifications', 'titans'),
+      buildRoomName(data.guildId, 'notifications', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
+  }
+
+  handlePartyGatheringCancel(data: {
+    guildId: string;
+    notificationId: string;
+  }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'notifications', 'base'),
+      buildRoomName(data.guildId, 'notifications', 'titans'),
+      buildRoomName(data.guildId, 'notifications', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
+      notificationId: data.notificationId,
+    });
+  }
+
+  handleChatMessageUpdate(data: {
+    guildId: string;
+    messageId: string;
+    message: string;
+  }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'chat', 'base'),
+      buildRoomName(data.guildId, 'chat', 'titans'),
+      buildRoomName(data.guildId, 'chat', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_UPDATE, {
+      messageId: data.messageId,
+      guildId: data.guildId,
+      message: data.message,
+    });
+  }
+
+  handleChatMessageDelete(data: { guildId: string; messageId: string }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'chat', 'base'),
+      buildRoomName(data.guildId, 'chat', 'titans'),
+      buildRoomName(data.guildId, 'chat', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_DELETE, {
+      messageId: data.messageId,
+      guildId: data.guildId,
+    });
   }
 }

@@ -30,4 +30,18 @@ export type Engine = {
   showEqManager: ShowEqManager;
   iframeWindowManager: iframeWindowManager;
   chatController: ChatController;
+  party?: {
+    getMembers?: () => globalThis.Map<
+      number,
+      {
+        id: number;
+        nick: string;
+        icon: string;
+        leader: boolean;
+        hp: [number, number];
+        profession: string | null;
+        accountId: number;
+      }
+    >;
+  };
 };

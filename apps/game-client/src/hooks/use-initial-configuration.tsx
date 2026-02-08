@@ -26,6 +26,7 @@ export const useInitialConfiguration = () => {
 
   const initNotificationsConfiguration = () => {
     const characterId = String(Game.hero.id);
+    const allGuildIds = guilds?.map((guild) => guild.id) || [];
 
     if (!notificationsSettings[characterId]) {
       const recommendedNotificationsSettingsWithGuilds = Object.entries(
@@ -33,7 +34,7 @@ export const useInitialConfiguration = () => {
       ).reduce((acc, [key, value]) => {
         acc[key as keyof NotificationsSettings] = {
           ...value,
-          guildIds: guilds?.map((guild) => guild.id) || [],
+          guildIds: allGuildIds,
         };
         return acc;
       }, {} as NotificationsSettings);
@@ -42,6 +43,25 @@ export const useInitialConfiguration = () => {
         characterId,
         recommendedNotificationsSettingsWithGuilds,
       );
+      return;
+    }
+
+    const existing = notificationsSettings[characterId];
+    const missingKeys = Object.keys(recommendedNotificationsSettings).filter(
+      (key) => !(key in existing),
+    );
+
+    if (missingKeys.length > 0) {
+      const patched = { ...existing };
+      for (const key of missingKeys) {
+        patched[key as keyof NotificationsSettings] = {
+          ...recommendedNotificationsSettings[
+            key as keyof NotificationsSettings
+          ],
+          guildIds: allGuildIds,
+        };
+      }
+      setNotificationsSettings(characterId, patched);
     }
   };
 

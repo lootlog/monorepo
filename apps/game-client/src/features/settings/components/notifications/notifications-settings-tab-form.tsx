@@ -27,6 +27,7 @@ const mainFields = [
   { label: "Heros", key: NpcType.HERO },
   { label: "Kolos", key: NpcType.COLOSSUS },
   { label: "Tytan", key: NpcType.TITAN },
+  { label: "Zbieranie grupy", key: "party-gathering" },
 ] as const;
 
 const FormSchema = z.object({
@@ -37,6 +38,7 @@ const FormSchema = z.object({
       NpcType.COLOSSUS,
       NpcType.TITAN,
       "message",
+      "party-gathering",
     ]),
     z.object({
       show: z.boolean(),

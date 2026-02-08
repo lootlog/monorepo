@@ -10,6 +10,8 @@ import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { format } from "date-fns";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
+import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
+import type { PartyGatheringNotification } from "@/store/notifications.store";
 import {
   getBackgroundColor,
   getGradient,
@@ -21,10 +23,16 @@ import { useGuilds } from "@/hooks/api/use-guilds";
 import { Game } from "@/lib/game";
 
 export type SingleNotificationProps = {
-  notification: NotificationWithServers;
+  notification: NotificationWithServers | PartyGatheringNotification;
   index: number;
   showCloseButton?: boolean;
   now?: number;
+};
+
+const isPartyGatheringNotification = (
+  notification: NotificationWithServers | PartyGatheringNotification
+): notification is PartyGatheringNotification => {
+  return "type" in notification && notification.type === "party-gathering";
 };
 
 export const SingleNotification: FC<SingleNotificationProps> = ({
@@ -43,12 +51,14 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
     !guildMember ? notification.discordId : undefined,
   );
 
-  const npcType = notification.npc
+  const isPartyGathering = isPartyGatheringNotification(notification);
+
+  const npcType = !isPartyGathering && notification.npc
     ? getNpcTypeByWt(notification.npc.wt!)
     : undefined;
 
   const key = (
-    npcType ? npcType : "message"
+    isPartyGathering ? "party-gathering" : (npcType ? npcType : "message")
   ) as keyof (typeof settings)[string];
 
   const settingsByNpcType = characterId
@@ -98,7 +108,15 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
               : getBackgroundColor(key, settingsByNpcType?.highlight),
         }}
       >
-        {notification.npc && (
+        {isPartyGathering && (
+          <SingleNotificationPartyGathering
+            notification={notification}
+            member={guildMember}
+            serverNames={serverNames}
+            time={time}
+          />
+        )}
+        {!isPartyGathering && notification.npc && (
           <SingleNotificationNpc
             serverNames={serverNames}
             member={guildMember}
@@ -106,7 +124,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
             time={time}
           />
         )}
-        {notification.message && (
+        {!isPartyGathering && notification.message && (
           <SingleNotificationMessage
             notification={notification}
             member={guildMember}

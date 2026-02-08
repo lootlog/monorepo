@@ -6,6 +6,7 @@ const TEXT_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.ELITE2]: "rgba(219, 90, 186, 1)",
   [NpcType.TITAN]: "rgba(59, 130, 246, 1)",
   message: "rgba(219, 39, 99, 1)",
+  "party-gathering": "rgba(147, 51, 234, 1)",
 };
 
 const BACKGROUND_COLORS_BY_KEY: Record<string, string> = {
@@ -14,6 +15,7 @@ const BACKGROUND_COLORS_BY_KEY: Record<string, string> = {
   [NpcType.ELITE2]: "rgba(219, 90, 186, 0.6)",
   [NpcType.TITAN]: "rgba(59, 130, 246, 0.6)",
   message: "rgba(219, 39, 99, 0.6)",
+  "party-gathering": "rgba(147, 51, 234, 0.6)",
 };
 
 const BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE: Record<string, string> = {
@@ -22,6 +24,7 @@ const BASE_BACKGROUND_GRADIENT_BY_NPC_TYPE: Record<string, string> = {
   [NpcType.ELITE2]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.ELITE2]}, transparent)`,
   [NpcType.TITAN]: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY[NpcType.TITAN]}, transparent)`,
   message: `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY["message"]}, transparent)`,
+  "party-gathering": `linear-gradient(to top, ${BACKGROUND_COLORS_BY_KEY["party-gathering"]}, transparent)`,
 };
 
 export const getGradient = (key?: string, highlight?: boolean) => {

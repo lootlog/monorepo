@@ -43,6 +43,18 @@ export enum RoutingKey {
   GUILDS_NOTIFICATIONS_SEND_DLQ = 'guilds.notifications.send.dlq',
   GUILDS_NOTIFICATIONS_SEND_RETRY = 'guilds.notifications.send.retry',
 
+  GUILDS_NOTIFICATIONS_VOLUNTEER = 'guilds.notifications.volunteer',
+  GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ = 'guilds.notifications.volunteer.dlq',
+  GUILDS_NOTIFICATIONS_VOLUNTEER_RETRY = 'guilds.notifications.volunteer.retry',
+
+  GUILDS_PARTY_GATHERING = 'guilds.party-gathering',
+  GUILDS_PARTY_GATHERING_DLQ = 'guilds.party-gathering.dlq',
+  GUILDS_PARTY_GATHERING_RETRY = 'guilds.party-gathering.retry',
+  GUILDS_PARTY_GATHERING_CANCEL = 'guilds.party-gathering.cancel',
+
+  GUILDS_DELETE_MESSAGE = 'guilds.delete.message',
+  GUILDS_UPDATE_MESSAGE = 'guilds.update.message',
+
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'guilds.members.refresh.job.update',
 
   ACTIVITY_LOG_CREATE = 'activity.log.create',

@@ -23,6 +23,7 @@ import {
 import { Game } from "@/lib/game";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { CharacterTile } from "@/components/character-tile";
+import { PartyGatheringCard } from "./party-gathering-card";
 
 export type ChatMessageProps = {
   all: boolean;
@@ -94,6 +95,18 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
   const guild = guilds?.find((g) => g.id === message.guildId);
   if (!guild) return null;
 
+  if (message.type === MessageType.PARTY_GATHERING) {
+    return (
+      <PartyGatheringCard
+        message={message}
+        member={member}
+        guild={guild}
+        all={all}
+        isMsgYesterday={isMsgYesterday}
+      />
+    );
+  }
+
   return (
     <div
       key={`${message.id}-${message.guildId}`}
@@ -140,19 +153,21 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
               </span>
             </ContextMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent className="ll:bg-black ll:p-0 ll:px-2 ll:flex ll:items-center ll:gap-2">
-            <CharacterTile
-              character={message.characterData}
-              className="ll:scale-75 ll:p-0"
-            />
-            <div className="ll:font-semibold">
-              {message.characterData.nick} ({message.characterData.lvl}
-              {message.characterData.prof})
+          <TooltipContent className="ll:bg-black ll:p-2">
+            <div className="ll:flex ll:items-center ll:gap-2">
+              <CharacterTile
+                character={message.characterData}
+                className="ll:scale-75 ll:p-0"
+              />
+              <div className="ll:font-semibold ll:text-[11px]">
+                {message.characterData.nick} ({message.characterData.lvl}
+                {message.characterData.prof})
+              </div>
             </div>
           </TooltipContent>
         </Tooltip>
 
-        <ContextMenuContent className="ll-w-48 ll-flex ll-flex-col">
+        <ContextMenuContent className="ll:w-48 ll:flex ll:flex-col">
           {message.characterData.nick !== Game.hero.nick && (
             <ContextMenuItem
               onClick={() => {

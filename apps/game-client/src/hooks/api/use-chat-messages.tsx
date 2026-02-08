@@ -6,6 +6,7 @@ import type {
   ChatCharacterData,
   ChatNpc,
   MessageType,
+  PartyGatheringChatData,
 } from "./use-send-chat-message";
 
 export type ChatMessage = {
@@ -17,6 +18,7 @@ export type ChatMessage = {
   type: MessageType;
   characterData: ChatCharacterData;
   npc?: ChatNpc;
+  partyGathering?: PartyGatheringChatData;
 };
 
 export const QUERY_KEY = "guild-messages";
