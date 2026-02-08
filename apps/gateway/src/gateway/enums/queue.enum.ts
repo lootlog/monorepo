@@ -37,6 +37,18 @@ export enum Queue {
   GUILDS_SEND_NOTIFICATION_DLQ = 'gateway-guilds-send-notification.dlq',
   GUILDS_SEND_NOTIFICATION_RETRY = 'gateway-guilds-send-notification.retry',
 
+  GUILDS_NOTIFICATIONS_VOLUNTEER = 'gateway-guilds-notifications-volunteer',
+  GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ = 'gateway-guilds-notifications-volunteer.dlq',
+  GUILDS_NOTIFICATIONS_VOLUNTEER_RETRY = 'gateway-guilds-notifications-volunteer.retry',
+
+  GUILDS_PARTY_GATHERING = 'gateway-guilds-party-gathering',
+  GUILDS_PARTY_GATHERING_DLQ = 'gateway-guilds-party-gathering.dlq',
+  GUILDS_PARTY_GATHERING_RETRY = 'gateway-guilds-party-gathering.retry',
+  GUILDS_PARTY_GATHERING_CANCEL = 'gateway-guilds-party-gathering-cancel',
+
+  GUILDS_DELETE_MESSAGE = 'gateway-guilds-delete-message',
+  GUILDS_UPDATE_MESSAGE = 'gateway-guilds-update-message',
+
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'gateway-guilds-members-refresh-job-update',
 
   EVENT_MAP_STATUS_UPDATE = 'gateway-event-map-status-update',

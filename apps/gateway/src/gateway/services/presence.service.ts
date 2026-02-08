@@ -8,7 +8,7 @@ import { Platform } from 'src/gateway/enums/platform.enum';
 import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
-import { buildRoomName } from 'src/gateway/utils/room-utils';
+import { buildRoomName, parseRoomName } from 'src/gateway/utils/room-utils';
 import type {
   Socket,
   SocketUser,
@@ -30,9 +30,12 @@ export class PresenceService {
     const preparedUser = omit(user, ['sessionId', 'guilds', 'userId']);
 
     client.rooms.forEach((room) => {
+      const parsed = parseRoomName(room);
+      if (!parsed || parsed.feature !== 'presence') return;
+
       client.to(room).emit(event, {
         ...preparedUser,
-        guildId: room,
+        guildId: parsed.guildId,
       });
     });
   }
