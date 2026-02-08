@@ -5,7 +5,7 @@ import {
   useChatMessages,
 } from "@/hooks/api/use-chat-messages";
 import { useRef, useMemo, useEffect, useLayoutEffect } from "react";
-import * as ScrollArea from "@radix-ui/react-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
@@ -52,8 +52,7 @@ export const Chat = () => {
   );
   const { data: guilds } = useGuilds();
 
-  const scrollAreaRef =
-    useRef<React.ElementRef<typeof ScrollArea.Viewport>>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { client } = useAuthenticatedApiClient();
   useChatMessagesListener(client);
@@ -248,43 +247,33 @@ export const Chat = () => {
             </div>
           )}
           <div className="ll:flex-1 ll:overflow-hidden">
-            <ScrollArea.Root className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400">
-              <ScrollArea.Viewport
-                ref={scrollAreaRef}
-                className="ll:h-full ll:w-full ll:overflow-y-auto"
+            <ScrollArea
+              ref={scrollAreaRef}
+              className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400"
+            >
+              <div
+                className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
+                data-draggable="false"
               >
-                <div
-                  className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
-                  data-draggable="false"
-                >
-                  {currentMessages?.length === 0 ? (
-                    <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
-                      Brak wiadomości
-                    </div>
-                  ) : (
-                    currentMessages.map((message) => {
-                      const members = memberCache[message.guildId] ?? {};
-                      return (
-                        <ChatMessage
-                          key={message.id}
-                          message={message}
-                          all={selectedGuildId === "all"}
-                          member={members[message.senderId]}
-                        />
-                      );
-                    })
-                  )}
-                </div>
-              </ScrollArea.Viewport>
-
-              <ScrollArea.Scrollbar
-                orientation="vertical"
-                className="ll:flex ll:touch-none ll:select-none ll:bg-black ll:w-2 ll:rounded-full"
-              >
-                <ScrollArea.Thumb className="ll:flex-1 ll:bg-gray-500 ll:rounded-full" />
-              </ScrollArea.Scrollbar>
-              <ScrollArea.Corner className="ll:bg-gray-200" />
-            </ScrollArea.Root>
+                {currentMessages?.length === 0 ? (
+                  <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
+                    Brak wiadomości
+                  </div>
+                ) : (
+                  currentMessages.map((message) => {
+                    const members = memberCache[message.guildId] ?? {};
+                    return (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        all={selectedGuildId === "all"}
+                        member={members[message.senderId]}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
           </div>
           {selectedGuildId !== "all" && isChatInputEnabled && (
             <OldChatInput selectedGuildId={selectedGuildId} />
