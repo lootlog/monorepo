@@ -47,21 +47,15 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   draggableContent = false,
   contentClassName,
 }) => {
-  const {
-    opacity,
-    rawDefaultPosition,
-    defaultSize,
-    isLocked,
-    windowFocusHistory,
-  } = useWindowsStore(
-    useShallow((state) => ({
-      opacity: state[id].opacity,
-      rawDefaultPosition: state[id].position,
-      defaultSize: state[id].size,
-      isLocked: state[id].locked,
-      windowFocusHistory: state.windowFocusHistory,
-    })),
-  );
+  const { opacity, rawDefaultPosition, defaultSize, isLocked } =
+    useWindowsStore(
+      useShallow((state) => ({
+        opacity: state[id].opacity,
+        rawDefaultPosition: state[id].position,
+        defaultSize: state[id].size,
+        isLocked: state[id].locked,
+      })),
+    );
 
   const setPositionInStore = useWindowsStore((state) => state.setPosition);
   const setSizeInStore = useWindowsStore((state) => state.setSize);
@@ -169,10 +163,6 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     setCurrentWindowFocus(id);
   }, [id, setCurrentWindowFocus]);
 
-  const windowZIndex = windowFocusHistory.indexOf(id);
-  const zIndex =
-    windowZIndex === -1 ? 0 : windowFocusHistory.length - windowZIndex;
-
   return (
     <div
       className="ll:pointer-events-auto ll:absolute"
@@ -182,7 +172,6 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         maxHeight,
         top: position.y,
         left: position.x,
-        zIndex,
         cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
       }}
       onMouseDown={onMouseDown}
