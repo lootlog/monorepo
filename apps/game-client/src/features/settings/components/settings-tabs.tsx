@@ -12,6 +12,7 @@ import { DetectorSettingsTab } from "@/features/settings/components/detector/det
 import { GeneralSettingsTab } from "@/features/settings/components/general/general-settings-tab";
 import { HiddenTimersTab } from "@/features/settings/components/hidden-timers/hidden-timers-tab";
 import { NotificationsSettingsTab } from "@/features/settings/components/notifications/notifications-settings-tab";
+import { HotkeysSettingsTab } from "@/features/settings/components/hotkeys/hotkeys-settings-tab";
 import { SoundsSettingsTab } from "@/features/settings/components/sounds/sounds-settings-tab";
 import { TimersSettingsTab } from "@/features/settings/components/timers/timers-settings-tab";
 import {
@@ -20,6 +21,7 @@ import {
   Clock,
   Crosshair,
   EyeOff,
+  Keyboard,
   Settings,
   Swords,
   Target,
@@ -83,6 +85,12 @@ const TABS_LIST: {
     label: "Panel walk (beta)",
     icon: Swords,
     content: <BattlePanelSettingsTab />,
+  },
+  {
+    value: "hotkeys",
+    label: "Skróty klawiszowe",
+    icon: Keyboard,
+    content: <HotkeysSettingsTab />,
   },
   // {
   //   value: "chat",

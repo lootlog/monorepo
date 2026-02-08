@@ -7,6 +7,7 @@ import { usePartyStore } from "@/store/party.store";
 import { useSession } from "@/hooks/auth/use-session";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { VolunteersList } from "@/features/party-finder/components/volunteers-list";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -71,9 +72,9 @@ export const PartyFinder = () => {
               {partyMembers.length}/10
             </span>
           </div>
-          <div className="ll:flex-1 ll:overflow-auto">
+          <ScrollArea className="ll:flex-1">
             <VolunteersList />
-          </div>
+          </ScrollArea>
           {isOwner && (
             <div className="ll:shrink-0 ll:p-2 ll:border-t ll:border-gray-700 ll:flex ll:flex-col ll:gap-1.5">
               {invitableVolunteers.length > 0 && (
