@@ -144,6 +144,7 @@ export const CommandWindow = () => {
                   onKeyDown={(e) => {
                     if (suggestions.handleKeyDown(e)) return;
                     if (e.key === "Escape") {
+                      setValue("message", "");
                       setOpen("command", false);
                       return;
                     }
