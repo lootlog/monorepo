@@ -8,7 +8,7 @@ import { useSession } from "@/hooks/auth/use-session";
 import { useCancelPartyGathering } from "@/hooks/api/use-cancel-party-gathering";
 import { VolunteersList } from "@/features/party-finder/components/volunteers-list";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const PartyFinder = () => {
   const {
@@ -24,6 +24,13 @@ export const PartyFinder = () => {
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
   const [isInvitingAll, setIsInvitingAll] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const isOwner = partyGathering && partyGathering.discordId === discordId;
 
@@ -34,10 +41,13 @@ export const PartyFinder = () => {
   const handleInviteAll = async () => {
     setIsInvitingAll(true);
     for (const v of invitableVolunteers) {
+      if (!isMountedRef.current) break;
       window._g(`party&a=inv&id=${v.characterId}`);
       await new Promise((r) => setTimeout(r, 200));
     }
-    setIsInvitingAll(false);
+    if (isMountedRef.current) {
+      setIsInvitingAll(false);
+    }
   };
 
   return (
@@ -53,7 +63,9 @@ export const PartyFinder = () => {
         <div className="ll:flex ll:flex-col ll:h-full">
           <div className="ll:shrink-0 ll:flex ll:items-center ll:justify-center ll:gap-1 ll:py-1.5 ll:border-b ll:border-gray-700">
             <span className="ll:text-[11px] ll:text-gray-300">Grupa:</span>
-            <span className={`ll:text-[11px] ll:font-semibold ${partyMembers.length >= 10 ? "ll:text-red-400" : "ll:text-green-400"}`}>
+            <span
+              className={`ll:text-[11px] ll:font-semibold ${partyMembers.length >= 10 ? "ll:text-red-400" : "ll:text-green-400"}`}
+            >
               {partyMembers.length}/10
             </span>
           </div>

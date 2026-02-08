@@ -142,16 +142,16 @@ export const PartyGatheringCard: FC<PartyGatheringCardProps> = ({
             "{partyGathering.description}"
           </p>
         )}
-        {(partyGathering?.minLvl || partyGathering?.maxLvl) && (
+        {(partyGathering?.minLvl ?? partyGathering?.maxLvl) && (
           <p className="ll:text-[10px] ll:text-gray-400">
-            Poziom: {partyGathering?.minLvl || 1} -{" "}
-            {partyGathering?.maxLvl || 500}
+            Poziom: {partyGathering?.minLvl ?? 1} -{" "}
+            {partyGathering?.maxLvl ?? 500}
           </p>
         )}
         {!isOwnMessage &&
           (() => {
-            const minLvl = partyGathering?.minLvl || 1;
-            const maxLvl = partyGathering?.maxLvl || 500;
+            const minLvl = partyGathering?.minLvl ?? 1;
+            const maxLvl = partyGathering?.maxLvl ?? 500;
             const meetsLevelReq = heroLvl >= minLvl && heroLvl <= maxLvl;
 
             return (

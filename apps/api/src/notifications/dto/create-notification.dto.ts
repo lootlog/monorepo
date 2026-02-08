@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsNotEmpty,
@@ -23,6 +24,8 @@ export class CreateNotificationDto {
 
   @IsArray()
   @IsNotEmpty()
+  @IsString({ each: true })
+  @ArrayMaxSize(10)
   guildIds: string[];
 
   @IsString()

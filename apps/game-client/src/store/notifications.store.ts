@@ -1,5 +1,6 @@
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
 import { NpcType } from "@/hooks/api/use-npcs";
+import type { PartyGatheringCharacterBase } from "@/types/party-gathering";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
@@ -29,14 +30,7 @@ export type NotificationWithServers = Notification & {
   servers: string[];
 };
 
-export type PartyGatheringCharacter = {
-  nick: string;
-  lvl: number;
-  prof: string;
-  characterId: string;
-  accountId: string;
-  icon: string;
-};
+export type PartyGatheringCharacter = PartyGatheringCharacterBase;
 
 export type PartyGatheringNotification = {
   notificationId: string;
@@ -57,7 +51,9 @@ interface NotificationsState {
   settings: Record<string, NotificationsSettings>;
   setSettings: (characterId: string, settings: NotificationsSettings) => void;
   setState: (settings: Record<string, NotificationsSettings>) => void;
-  pushNotification: (notification: NotificationWithServers | PartyGatheringNotification) => void;
+  pushNotification: (
+    notification: NotificationWithServers | PartyGatheringNotification,
+  ) => void;
   clearNotifications: () => void;
   removeNotification: (id: string) => void;
   removeNotificationByNpcId: (npcId: number, world?: string) => void;
@@ -128,7 +124,9 @@ export const useNotificationsStore = create<NotificationsState>()(
             [characterId]: settings,
           },
         })),
-      pushNotification: (notification: NotificationWithServers | PartyGatheringNotification) =>
+      pushNotification: (
+        notification: NotificationWithServers | PartyGatheringNotification,
+      ) =>
         set((state) => {
           // If notification already exists, push members to it
           const existingNotification = state.notifications.find(
@@ -148,7 +146,10 @@ export const useNotificationsStore = create<NotificationsState>()(
           }
 
           // Handle party-gathering notifications
-          if ("type" in notification && notification.type === "party-gathering") {
+          if (
+            "type" in notification &&
+            notification.type === "party-gathering"
+          ) {
             return {
               notifications: [notification, ...state.notifications],
             };
@@ -167,9 +168,11 @@ export const useNotificationsStore = create<NotificationsState>()(
             (n) => {
               if ("type" in n && n.type === "party-gathering") return false;
               const regularN = n as NotificationWithServers;
-              return regularN.npc?.id === regularNotification.npc?.id &&
-                regularN.world === regularNotification.world;
-            }
+              return (
+                regularN.npc?.id === regularNotification.npc?.id &&
+                regularN.world === regularNotification.world
+              );
+            },
           );
           if (existingNotificationIndex !== -1) {
             state.notifications[existingNotificationIndex] = notification;
@@ -195,16 +198,18 @@ export const useNotificationsStore = create<NotificationsState>()(
         })),
       removeNotificationByNpcId: (npcId: number, world?: string) =>
         set((state) => ({
-          notifications: state.notifications.filter(
-            (notification) => {
-              if ("type" in notification && notification.type === "party-gathering") return true;
-              const regularNotification = notification as NotificationWithServers;
-              return !(
-                regularNotification.npc?.id === npcId &&
-                (world ? regularNotification.world === world : true)
-              );
-            }
-          ),
+          notifications: state.notifications.filter((notification) => {
+            if (
+              "type" in notification &&
+              notification.type === "party-gathering"
+            )
+              return true;
+            const regularNotification = notification as NotificationWithServers;
+            return !(
+              regularNotification.npc?.id === npcId &&
+              (world ? regularNotification.world === world : true)
+            );
+          }),
         })),
     }),
     {
