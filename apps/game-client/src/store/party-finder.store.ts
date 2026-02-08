@@ -51,6 +51,7 @@ interface PartyFinderState {
   volunteers: PartyFinderVolunteer[];
   partyGathering: PartyGatheringSession | null;
   chatMessageIds: Record<string, string>;
+  inviteStates: Record<string, "pending" | "failed">;
   setNotification: (notificationId: string, npc: PartyFinderNpc) => void;
   addVolunteer: (volunteer: PartyFinderVolunteer) => void;
   removeVolunteer: (characterId: string) => void;
@@ -59,6 +60,8 @@ interface PartyFinderState {
   clearPartyGathering: () => void;
   setChatMessageId: (guildId: string, messageId: string) => void;
   clearChatMessageIds: () => void;
+  setInviteState: (characterId: string, state: "pending" | "failed") => void;
+  clearInviteState: (characterId: string) => void;
 }
 
 export const usePartyFinderStore = create<PartyFinderState>()(
@@ -69,6 +72,7 @@ export const usePartyFinderStore = create<PartyFinderState>()(
       volunteers: [],
       partyGathering: null,
       chatMessageIds: {},
+      inviteStates: {},
       setNotification: (notificationId, npc) =>
         set({ notificationId, npc, volunteers: [] }),
       addVolunteer: (volunteer) =>
@@ -95,6 +99,7 @@ export const usePartyFinderStore = create<PartyFinderState>()(
           volunteers: [],
           partyGathering: null,
           chatMessageIds: {},
+          inviteStates: {},
         }),
       setPartyGathering: (session) =>
         set({
@@ -102,6 +107,7 @@ export const usePartyFinderStore = create<PartyFinderState>()(
           notificationId: session.notificationId,
           npc: null,
           volunteers: [],
+          inviteStates: {},
         }),
       clearPartyGathering: () => set({ partyGathering: null }),
       setChatMessageId: (guildId, messageId) =>
@@ -109,6 +115,15 @@ export const usePartyFinderStore = create<PartyFinderState>()(
           chatMessageIds: { ...state.chatMessageIds, [guildId]: messageId },
         })),
       clearChatMessageIds: () => set({ chatMessageIds: {} }),
+      setInviteState: (characterId, state) =>
+        set((s) => ({
+          inviteStates: { ...s.inviteStates, [characterId]: state },
+        })),
+      clearInviteState: (characterId) =>
+        set((s) => {
+          const { [characterId]: _, ...rest } = s.inviteStates;
+          return { inviteStates: rest };
+        }),
     }),
     {
       name: "ll-party-finder-storage",

@@ -12,6 +12,7 @@ export const useFriendsHandler = () => {
       const friends = parseFriendsListFromEvent(event.friends);
       setFriends(friends);
     }
+
     if (event.friends_max !== undefined) {
       setFriendsMax(event.friends_max);
     }

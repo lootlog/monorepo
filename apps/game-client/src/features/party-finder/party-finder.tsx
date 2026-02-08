@@ -23,6 +23,7 @@ export const PartyFinder = () => {
   const discordId = session?.user?.discordId;
   const { mutate: cancelPartyGathering, isPending: isCancelling } =
     useCancelPartyGathering();
+  const setInviteState = usePartyFinderStore((s) => s.setInviteState);
   const [isInvitingAll, setIsInvitingAll] = useState(false);
   const isMountedRef = useRef(true);
 
@@ -42,6 +43,7 @@ export const PartyFinder = () => {
     setIsInvitingAll(true);
     for (const v of invitableVolunteers) {
       if (!isMountedRef.current) break;
+      setInviteState(v.characterId, "pending");
       window._g(`party&a=inv&id=${v.characterId}`);
       await new Promise((r) => setTimeout(r, 200));
     }
