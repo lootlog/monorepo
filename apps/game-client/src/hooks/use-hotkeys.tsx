@@ -4,9 +4,11 @@ import {
   type HotkeyAction,
   type HotkeyBinding,
 } from "@/store/hotkeys.store";
-import { useEffect } from "react";
+import { usePartyFinderStore } from "@/store/party-finder.store";
+import { usePartyStore } from "@/store/party.store";
+import { useEffect, useRef } from "react";
 
-const ACTION_TO_WINDOW: Record<HotkeyAction, WindowId> = {
+const ACTION_TO_WINDOW: Partial<Record<HotkeyAction, WindowId>> = {
   "toggle-command": "command",
   "toggle-chat": "chat",
   "toggle-settings": "settings",
@@ -23,9 +25,28 @@ const matchesBinding = (event: KeyboardEvent, binding: HotkeyBinding) => {
   );
 };
 
+const inviteAll = async (
+  setInviteState: (id: string, state: "pending" | "failed") => void,
+) => {
+  const volunteers = usePartyFinderStore.getState().volunteers;
+  const partyMembers = usePartyStore.getState().members;
+
+  const invitable = volunteers.filter(
+    (v) => !partyMembers.some((m) => m.id === Number.parseInt(v.characterId)),
+  );
+
+  for (const v of invitable) {
+    setInviteState(v.characterId, "pending");
+    window._g(`party&a=inv&id=${v.characterId}`);
+    await new Promise((r) => setTimeout(r, 200));
+  }
+};
+
 export const useHotkeys = () => {
   const { toggleOpen } = useWindowsStore();
   const bindings = useHotkeysStore((s) => s.bindings);
+  const setInviteState = usePartyFinderStore((s) => s.setInviteState);
+  const isInvitingRef = useRef(false);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -37,10 +58,20 @@ export const useHotkeys = () => {
       for (const [action, binding] of Object.entries(bindings)) {
         if (matchesBinding(event, binding)) {
           event.preventDefault();
+
           const windowId = ACTION_TO_WINDOW[action as HotkeyAction];
           if (windowId) {
             toggleOpen(windowId, true);
+            return;
           }
+
+          if (action === "invite-all" && !isInvitingRef.current) {
+            isInvitingRef.current = true;
+            inviteAll(setInviteState).finally(() => {
+              isInvitingRef.current = false;
+            });
+          }
+
           return;
         }
       }
@@ -50,7 +81,7 @@ export const useHotkeys = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [bindings, toggleOpen]);
+  }, [bindings, toggleOpen, setInviteState]);
 
   return null;
 };

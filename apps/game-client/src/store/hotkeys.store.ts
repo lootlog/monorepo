@@ -6,7 +6,8 @@ export type HotkeyAction =
   | "toggle-chat"
   | "toggle-settings"
   | "toggle-timers"
-  | "toggle-online-players";
+  | "toggle-online-players"
+  | "invite-all";
 
 export type HotkeyBinding = {
   key: string;
@@ -15,7 +16,7 @@ export type HotkeyBinding = {
   alt: boolean;
 };
 
-export type HotkeyCategory = "communication" | "windows";
+export type HotkeyCategory = "communication" | "windows" | "party";
 
 export type HotkeyActionConfig = {
   action: HotkeyAction;
@@ -28,6 +29,7 @@ export type HotkeyActionConfig = {
 export const HOTKEY_CATEGORY_LABELS: Record<HotkeyCategory, string> = {
   communication: "Komunikacja",
   windows: "Okna",
+  party: "Grupa",
 };
 
 export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
@@ -65,6 +67,13 @@ export const HOTKEY_ACTIONS: HotkeyActionConfig[] = [
     description: "Otwórz/zamknij okno graczy online",
     category: "windows",
     defaultBinding: { key: "P", shift: true, ctrl: false, alt: false },
+  },
+  {
+    action: "invite-all",
+    label: "Zaproś wszystkich",
+    description: "Zaproś wszystkich z party findera",
+    category: "party",
+    defaultBinding: { key: "I", shift: true, ctrl: false, alt: false },
   },
 ];
 
@@ -107,7 +116,19 @@ export const useHotkeysStore = create<HotkeysState>()(
       name: "ll:hotkeys:state",
       partialize: (state) => ({ bindings: state.bindings }),
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        const state = persisted as { bindings: Record<string, HotkeyBinding> };
+        if (version < 2) {
+          const defaults = getDefaultBindings();
+          for (const [action, binding] of Object.entries(defaults)) {
+            if (!state.bindings[action]) {
+              state.bindings[action] = binding;
+            }
+          }
+        }
+        return state as unknown as HotkeysState;
+      },
     },
   ),
 );
