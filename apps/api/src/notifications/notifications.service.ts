@@ -205,7 +205,7 @@ export class NotificationsService {
       this.getPartyGatheringUserKey(discordId),
     );
     if (existingGathering) {
-      throw new BadRequestException('Active party gathering already exists');
+      await this.cancelPartyGatheringByUser(discordId);
     }
 
     const notificationId = uuid();
@@ -309,5 +309,32 @@ export class NotificationsService {
     });
 
     return { success: true, guildIds: metadata.guildIds };
+  }
+
+  async cancelPartyGatheringByUser(discordId: string) {
+    const notificationId = await this.redisService.get(
+      this.getPartyGatheringUserKey(discordId),
+    );
+
+    if (!notificationId) {
+      return { success: true, guildIds: [] };
+    }
+
+    const metadata = await this.getNotificationMetadata(notificationId);
+
+    await this.redisService.del(this.getNotificationKey(notificationId));
+    await this.redisService.del(this.getPartyGatheringUserKey(discordId));
+
+    const guildIds = metadata?.guildIds ?? [];
+
+    guildIds.forEach((guildId) => {
+      this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
+        { guildId, notificationId },
+      );
+    });
+
+    return { success: true, guildIds };
   }
 }

@@ -10,13 +10,19 @@ export const useSilentCancelPartyGathering = () => {
     const { partyGathering, chatMessageIds, clearPartyFinder } =
       usePartyFinderStore.getState();
 
-    if (!partyGathering?.notificationId) return;
+    if (!partyGathering) return;
 
     try {
+      const hasNotificationId = !!partyGathering.notificationId;
+
       const response = await client.delete<{
         success: boolean;
         guildIds: string[];
-      }>(`/notifications/party-gathering/${partyGathering.notificationId}`);
+      }>(
+        hasNotificationId
+          ? `/notifications/party-gathering/${partyGathering.notificationId}`
+          : "/notifications/party-gathering",
+      );
 
       const guildIds = response.data.guildIds;
       const nick = Game.hero.nick;

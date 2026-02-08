@@ -19,12 +19,16 @@ export const useCancelPartyGathering = () => {
       const { partyGathering, chatMessageIds, clearPartyFinder } =
         usePartyFinderStore.getState();
 
-      if (!partyGathering?.notificationId) {
+      if (!partyGathering) {
         throw new Error("No active party gathering");
       }
 
+      const hasNotificationId = !!partyGathering.notificationId;
+
       const response = await client.delete<CancelPartyGatheringResponse>(
-        `/notifications/party-gathering/${partyGathering.notificationId}`,
+        hasNotificationId
+          ? `/notifications/party-gathering/${partyGathering.notificationId}`
+          : "/notifications/party-gathering",
       );
 
       const guildIds = response.data.guildIds;
