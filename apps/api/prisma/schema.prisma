@@ -144,6 +144,11 @@ enum RefreshJobStatus {
   FAILED
 }
 
+enum AddonLanguage {
+  JAVASCRIPT
+  TYPESCRIPT
+}
+
 model Role {
   id           String       @id
   guildId      String
@@ -426,6 +431,25 @@ model UserSettings {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+model UserAddon {
+  id          String        @id @default(cuid())
+  userId      String
+  runtimeId   String
+  name        String
+  description String?
+  version     String        @default("0.1.0")
+  language    AddonLanguage @default(TYPESCRIPT)
+  sourceCode  String
+  compiledCode String
+  installed   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([userId, runtimeId])
+  @@index([userId, installed])
+  @@index([userId, updatedAt])
 }
 
 model MemberRefreshJob {

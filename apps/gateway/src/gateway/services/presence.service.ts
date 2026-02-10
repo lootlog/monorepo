@@ -15,6 +15,7 @@ import type {
   PlayerPresence,
 } from 'src/gateway/types/socket-user.type';
 import type { EventPresenceUpdateDto } from 'src/gateway/dto/event-presence-update.dto';
+import type { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
 
 @Injectable()
 export class PresenceService {
@@ -22,12 +23,28 @@ export class PresenceService {
 
   constructor(private amqpConnection: AmqpConnection) {}
 
+  private extractGuildIds(user: Partial<SocketUser>): string[] {
+    if (!user.guilds?.length) {
+      return [];
+    }
+
+    return getGuildIds(user.guilds);
+  }
+
   emitPresenceToRooms(
     client: Socket,
     user: Partial<SocketUser>,
     event: GatewayEvent,
   ): void {
-    const preparedUser = omit(user, ['sessionId', 'guilds', 'userId']);
+    const guildIds =
+      user.guilds && user.guilds.length > 0
+        ? this.extractGuildIds(user)
+        : this.extractGuildIds(client.data);
+
+    const preparedUser = {
+      ...omit(user, ['sessionId', 'guilds', 'userId']),
+      guildIds,
+    };
 
     client.rooms.forEach((room) => {
       const parsed = parseRoomName(room);
@@ -183,19 +200,34 @@ export class PresenceService {
   async fetchServerPresence(
     server: Server,
     client: Socket,
-    guildId: string,
-    world: string,
+    data: RequestServerPresenceDto,
   ): Promise<Record<string, unknown[]>> {
-    const presenceRoom = buildRoomName(guildId, 'presence');
+    const requestedGuildIds = Array.from(
+      new Set([
+        ...(data.guildIds ?? []),
+        ...(data.guildId ? [data.guildId] : []),
+      ]),
+    );
 
-    if (!client.rooms.has(presenceRoom)) {
+    if (requestedGuildIds.length === 0) {
       return {};
     }
 
-    const socketsInRoom = await server.in(presenceRoom).fetchSockets();
+    const presenceRooms = requestedGuildIds
+      .map((guildId) => buildRoomName(guildId, 'presence'))
+      .filter((roomName) => client.rooms.has(roomName));
 
-    let filteredSockets = socketsInRoom.filter(
-      (s) => s.data.player?.world === world,
+    if (presenceRooms.length === 0) {
+      return {};
+    }
+
+    const socketsInRoom = await server.in(presenceRooms).fetchSockets();
+    const uniqueSockets = Array.from(
+      new Map(socketsInRoom.map((socket) => [socket.id, socket])).values(),
+    );
+
+    let filteredSockets = uniqueSockets.filter(
+      (s) => s.data.player?.world === data.world,
     );
 
     if (client.data.platform === Platform.GAME) {
@@ -205,8 +237,22 @@ export class PresenceService {
     }
 
     const users = filteredSockets
-      .map((s) => omit(s.data, ['sessionId', 'userId', 'guilds']))
-      .sort((a, b) => b.player.lvl - a.player.lvl);
+      .map((socket) => {
+        const data = socket.data as SocketUser;
+        const presenceData = omit(data, ['sessionId', 'userId', 'guilds']) as Omit<
+          SocketUser,
+          'sessionId' | 'userId' | 'guilds'
+        >;
+
+        return {
+          ...presenceData,
+          guildIds: this.extractGuildIds(data),
+        };
+      })
+      .sort(
+        (a, b) =>
+          Number(b.player?.lvl ?? 0) - Number(a.player?.lvl ?? 0),
+      );
 
     return groupBy(users, 'discordId');
   }

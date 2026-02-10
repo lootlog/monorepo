@@ -71,7 +71,11 @@ type ClientToServerEvents = {
     };
   }) => void;
 
-  [GatewayEvent.REQUEST_SERVER_PRESENCE]: () => void;
+  [GatewayEvent.REQUEST_SERVER_PRESENCE]: (data: {
+    guildId?: string;
+    guildIds?: string[];
+    world: string;
+  }) => void;
 
   [GatewayEvent.PRESENCE_UPDATE]: (data: {
     isAfk?: boolean;

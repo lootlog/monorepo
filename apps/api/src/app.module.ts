@@ -28,6 +28,7 @@ import { EventsModule } from 'src/events/events.module';
 import { MapsModule } from 'src/maps/maps.module';
 import { MapTemplatesModule } from 'src/map-templates/map-templates.module';
 import { KillsModule } from 'src/kills/kills.module';
+import { UserAddonsModule } from 'src/user-addons/user-addons.module';
 import type { RedisConfig } from 'src/config/redis.config';
 
 @Module({
@@ -79,6 +80,7 @@ import type { RedisConfig } from 'src/config/redis.config';
     MapsModule,
     MapTemplatesModule,
     KillsModule,
+    UserAddonsModule,
   ],
   controllers: [],
   providers: [],

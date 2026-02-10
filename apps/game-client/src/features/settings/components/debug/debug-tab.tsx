@@ -1,4 +1,11 @@
+import { LOADED_ADDONS } from "@/addons/loader";
+import {
+  DISABLED_ADDONS_STORAGE_KEY,
+  isAddonEnabled,
+  useAddonsStore,
+} from "@/addons/state";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { gameEventsManager } from "@/lib/game-events-manager";
 import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
@@ -281,6 +288,9 @@ export const DebugTab: FC = () => {
   );
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [eventLog, setEventLog] = useState<LogEntry[]>([]);
+  const disabledAddonIds = useAddonsStore((s) => s.disabledAddonIds);
+  const setAddonEnabled = useAddonsStore((s) => s.setAddonEnabled);
+  const resetAddonOverrides = useAddonsStore((s) => s.resetAddonOverrides);
   const partyMembers = usePartyStore((s) => s.members);
   const zoomFactor = window.getZoomFactor ? window.getZoomFactor() : null;
 
@@ -313,6 +323,14 @@ export const DebugTab: FC = () => {
       setRawJson(JSON.stringify(template.event, null, 2));
       setJsonError(null);
     }
+  };
+
+  const handleAddonToggle = (addonId: string, checked: boolean) => {
+    setAddonEnabled(addonId, checked);
+  };
+
+  const handleResetAddonOverrides = () => {
+    resetAddonOverrides();
   };
 
   return (
@@ -513,6 +531,61 @@ export const DebugTab: FC = () => {
             ))
           )}
         </div>
+      </div>
+
+      <div>
+        <div className="ll:flex ll:items-center ll:justify-between ll:mb-2">
+          <h3 className="ll:text-sm ll:font-semibold">Addon Runtime</h3>
+          <Button
+            onClick={handleResetAddonOverrides}
+            disabled={disabledAddonIds.length === 0}
+            className="ll:px-2 ll:text-[10px] ll:h-4"
+          >
+            Reset Overrides
+          </Button>
+        </div>
+        <div className="ll:bg-gray-800 ll:border ll:border-gray-600 ll:rounded ll:p-2 ll:space-y-2">
+          {LOADED_ADDONS.length === 0 ? (
+            <p className="ll:text-gray-500 ll:text-xs">
+              No addons discovered in <code>src/addons/extensions</code>
+            </p>
+          ) : (
+            LOADED_ADDONS.map((addon) => {
+              const enabled = isAddonEnabled(addon, disabledAddonIds);
+
+              return (
+                <div
+                  key={addon.id}
+                  className="ll:flex ll:items-center ll:justify-between ll:gap-2 ll:border ll:border-gray-700 ll:rounded ll:p-2"
+                >
+                  <div className="ll:min-w-0">
+                    <p className="ll:text-xs ll:text-white ll:font-semibold">
+                      {addon.name}
+                    </p>
+                    <p className="ll:text-[10px] ll:text-gray-400 ll:truncate">
+                      {addon.id}
+                    </p>
+                    {addon.description && (
+                      <p className="ll:text-[10px] ll:text-gray-300">
+                        {addon.description}
+                      </p>
+                    )}
+                  </div>
+                  <Switch
+                    checked={enabled}
+                    onCheckedChange={(checked) =>
+                      handleAddonToggle(addon.id, checked)
+                    }
+                    aria-label={`Toggle addon ${addon.name}`}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
+        <p className="ll:text-[10px] ll:text-gray-400 ll:mt-1">
+          Storage key: <code>{DISABLED_ADDONS_STORAGE_KEY}</code>
+        </p>
       </div>
 
       <div>

@@ -1,9 +1,14 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class RequestServerPresenceDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  guildId: string;
+  guildId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  guildIds?: string[];
 
   @IsNotEmpty()
   @IsString()

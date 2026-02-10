@@ -1,0 +1,40 @@
+export interface ItemsMarkManager {
+  healItems: number[];
+  lootboxes: number[];
+  expiresItems: number[];
+  enhanceReagentItems: number[];
+  noBonusItems: number[];
+
+  init(item: any): void;
+  newItem(item: any): void;
+  removeItem(item: any): void;
+  checkLvlRequired(item: any): boolean;
+  checkHealItem(item: any): boolean;
+  checkLootBox(item: any): boolean;
+  checkExpiresItem(item: any): boolean;
+  checkEnhanceReagentItem(item: any): boolean;
+  checkNoBonusItem(item: any): boolean;
+  isLowHealth(hpp?: number): boolean;
+  getHealItems(): number[];
+  getLootBox(): number[];
+  markEnhanceReagentItems(reagentItems?: number[]): void;
+  unmarkEnhanceReagentItems(): void;
+  markNoBonusItems(item: any): void;
+  markHealItems(hpp?: number | boolean): void;
+  markLootBoxes(lvl?: number | boolean): void;
+  markOneLootBox(id: number, lvl: number): void;
+  markExpireItem(item: any): void;
+  addClassToElements(elements: any, cl: string | string[], item: any): void;
+  removeClassFromElements(elements: any, cl: string | string[], item: any): void;
+  heroHpChanged(hp: number): void;
+  heroLvlChanged(lvl: number): void;
+  compareAllItems(otherItems?: any): void;
+  removeDuplicatesLowerScore(invEq: any[]): any[];
+  mapItems(x: any): any;
+  setItemType(x: any): any;
+  clearMarkHigherScore(x: any): any;
+  addMarkHigherScore(x: any): void;
+  itemInBagAndCanEquipFilter(x: any): boolean;
+  sameItemsFilter(obj: any, eq: any[]): boolean;
+  [key: string]: any;
+}

@@ -8,6 +8,8 @@ const ROUTES = {
   user: {
     base: USER_BASE,
     dashboard: USER_BASE,
+    addons: `${USER_BASE}/addons`,
+    addon: (addonId: string) => `${USER_BASE}/addons/${addonId}`,
     battlePanel: {
       base: `${USER_BASE}/battle-panel`,
       stats: `${USER_BASE}/battle-panel/stats`,
@@ -63,6 +65,7 @@ const ROUTES = {
 const ROUTE_SEGMENTS = {
   user: {
     base: "/@me",
+    addons: "/addons",
     battlePanel: "/battle-panel",
     battles: "/battles",
     stats: "/stats",

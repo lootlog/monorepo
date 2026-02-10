@@ -101,14 +101,9 @@ export class Gateway {
   @SubscribeMessage(GatewayEvent.REQUEST_SERVER_PRESENCE)
   async handlePresenceFetch(
     @ConnectedSocket() client: Socket,
-    @MessageBody() { guildId, world }: RequestServerPresenceDto,
+    @MessageBody() data: RequestServerPresenceDto,
   ): Promise<Record<string, unknown[]>> {
-    return this.presenceService.fetchServerPresence(
-      this.server,
-      client,
-      guildId,
-      world,
-    );
+    return this.presenceService.fetchServerPresence(this.server, client, data);
   }
 
   @UseFilters(new BaseWsExceptionFilter())

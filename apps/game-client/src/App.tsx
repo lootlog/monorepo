@@ -27,6 +27,7 @@ import { PartyFinder } from "@/features/party-finder/party-finder";
 import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
 import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
 import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
+import { AddonsRuntime } from "@/addons/runtime";
 
 const isDev = import.meta.env.MODE === "development";
 
@@ -65,24 +66,27 @@ function AppContent() {
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
 
   return (
-    gameInitialized && (
-      <>
-        <Timers />
-        <AddTimer />
-        <Settings />
-        <Chat />
-        <CommandWindow />
-        <OnlinePlayers />
-        <NpcDetector />
-        <Notifications />
-        <QuickAccess />
-        <CatchingWhitelistWarning />
-        <Toaster />
-        <PartyFinder />
-        <CreatePartyGathering />
-        {ConflictDialog}
-      </>
-    )
+    <>
+      <AddonsRuntime />
+      {gameInitialized && (
+        <>
+          <Timers />
+          <AddTimer />
+          <Settings />
+          <Chat />
+          <CommandWindow />
+          <OnlinePlayers />
+          <NpcDetector />
+          <Notifications />
+          <QuickAccess />
+          <CatchingWhitelistWarning />
+          <Toaster />
+          <PartyFinder />
+          <CreatePartyGathering />
+          {ConflictDialog}
+        </>
+      )}
+    </>
   );
 }
 

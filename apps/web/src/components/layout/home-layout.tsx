@@ -22,11 +22,34 @@ export const HomeLayout: FC = () => {
 
   const getNavigationInfo = () => {
     const path = location.pathname;
+    const normalizedPath = path.replace(/\/$/, "");
 
     if (path === ROUTES.user.dashboard) {
       return {
         breadcrumbs: [{ label: "Dashboard", path: null }],
         showBack: false,
+      };
+    }
+
+    if (path === ROUTES.user.addons) {
+      return {
+        breadcrumbs: [{ label: "Dodatki", path: null }],
+        showBack: false,
+      };
+    }
+
+    if (normalizedPath.startsWith(`${ROUTES.user.addons}/`)) {
+      const addonId = normalizedPath.slice(`${ROUTES.user.addons}/`.length);
+      const addonLabel =
+        addonId === "new" ? "Nowy addon" : `Addon ${addonId.slice(0, 8)}`;
+
+      return {
+        breadcrumbs: [
+          { label: "Dodatki", path: ROUTES.user.addons },
+          { label: addonLabel, path: null },
+        ],
+        showBack: true,
+        backPath: ROUTES.user.addons,
       };
     }
 
@@ -89,7 +112,6 @@ export const HomeLayout: FC = () => {
       };
     }
 
-    const normalizedPath = path.replace(/\/$/, "");
     const battlesPath = ROUTES.user.battlePanel.battles;
 
     if (normalizedPath === battlesPath) {
