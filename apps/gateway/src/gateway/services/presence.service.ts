@@ -42,7 +42,7 @@ export class PresenceService {
         : this.extractGuildIds(client.data);
 
     const preparedUser = {
-      ...omit(user, ['sessionId', 'guilds', 'userId']),
+      ...omit(user, ['sessionId', 'guilds', 'userId', 'playerPresence']),
       guildIds,
     };
 
@@ -172,15 +172,15 @@ export class PresenceService {
     client: Socket,
     guildId: string,
   ): Promise<Record<string, PlayerPresence[]>> {
-    const presenceRoom = buildRoomName(guildId, 'presence');
-
-    if (!client.rooms.has(presenceRoom)) {
+    const clientGuildIds = this.extractGuildIds(client.data);
+    if (!clientGuildIds.includes(guildId)) {
       this.logger.warn(
         `User ${client.data?.discordId} tried to fetch presence for guild ${guildId} they're not in`,
       );
       return {};
     }
 
+    const presenceRoom = buildRoomName(guildId, 'presence');
     const socketsInRoom = await server.in(presenceRoom).fetchSockets();
     const result: Record<string, PlayerPresence[]> = {};
 
@@ -202,6 +202,11 @@ export class PresenceService {
     client: Socket,
     data: RequestServerPresenceDto,
   ): Promise<Record<string, unknown[]>> {
+    const clientGuildIds = this.extractGuildIds(client.data);
+    if (clientGuildIds.length === 0) {
+      return {};
+    }
+
     const requestedGuildIds = Array.from(
       new Set([
         ...(data.guildIds ?? []),
@@ -213,9 +218,12 @@ export class PresenceService {
       return {};
     }
 
-    const presenceRooms = requestedGuildIds
-      .map((guildId) => buildRoomName(guildId, 'presence'))
-      .filter((roomName) => client.rooms.has(roomName));
+    const authorizedGuildIds = requestedGuildIds.filter((guildId) =>
+      clientGuildIds.includes(guildId),
+    );
+    const presenceRooms = authorizedGuildIds.map((guildId) =>
+      buildRoomName(guildId, 'presence'),
+    );
 
     if (presenceRooms.length === 0) {
       return {};
@@ -226,9 +234,10 @@ export class PresenceService {
       new Map(socketsInRoom.map((socket) => [socket.id, socket])).values(),
     );
 
-    let filteredSockets = uniqueSockets.filter(
-      (s) => s.data.player?.world === data.world,
-    );
+    let filteredSockets = uniqueSockets.filter((s) => {
+      const world = s.data.player?.world ?? s.data.playerPresence?.world;
+      return world === data.world;
+    });
 
     if (client.data.platform === Platform.GAME) {
       filteredSockets = filteredSockets.filter(
@@ -239,13 +248,30 @@ export class PresenceService {
     const users = filteredSockets
       .map((socket) => {
         const data = socket.data as SocketUser;
-        const presenceData = omit(data, ['sessionId', 'userId', 'guilds']) as Omit<
-          SocketUser,
-          'sessionId' | 'userId' | 'guilds'
-        >;
+        const fallbackPlayer =
+          data.player ??
+          (data.playerPresence
+            ? {
+                world: data.playerPresence.world,
+                name: data.playerPresence.name,
+                characterId: data.playerPresence.characterId,
+                accountId: data.playerPresence.accountId,
+                icon: data.playerPresence.icon,
+                lvl: data.playerPresence.lvl,
+                prof: data.playerPresence.prof,
+                location: {
+                  x: 0,
+                  y: 0,
+                  map: data.playerPresence.mapName ?? '',
+                },
+              }
+            : undefined);
 
         return {
-          ...presenceData,
+          discordId: data.discordId,
+          platform: data.platform,
+          status: data.status ?? UserPresenceStatus.ONLINE,
+          player: fallbackPlayer,
           guildIds: this.extractGuildIds(data),
         };
       })
@@ -264,8 +290,6 @@ export class PresenceService {
   ): Promise<void> {
     const presenceRoom = buildRoomName(guildId, 'presence');
     const socketsInRoom = await server.in(presenceRoom).fetchSockets();
-
-    console.log('checking presence for map', mapName);
 
     for (const socket of socketsInRoom) {
       const playerPresence = socket.data?.playerPresence;

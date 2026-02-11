@@ -16,6 +16,9 @@ export type GameEvent = {
   d?: D;
   e?: "ok" | "error";
   ev?: number;
+  tracking?: {
+    action?: "CLEAR";
+  };
   f?: F;
   npcs?: Npcs;
   npcs_del?: NpcsDel;

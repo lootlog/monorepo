@@ -86,6 +86,10 @@ export const isAddonEnabled = (
   addon: GameClientAddon,
   disabledAddonIds: ReadonlySet<string> | readonly string[],
 ): boolean => {
+  if (addon.alwaysEnabled) {
+    return true;
+  }
+
   if (hasDisabledAddon(disabledAddonIds, addon.id)) {
     return false;
   }

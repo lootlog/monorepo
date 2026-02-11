@@ -1,3 +1,4 @@
+import { Game } from "@/lib/game";
 import type { GameClientAddon } from "./types";
 
 type AddonModule = {
@@ -51,6 +52,10 @@ const loadAddons = (): GameClientAddon[] => {
   for (const [modulePath, addonModule] of Object.entries(addonModules)) {
     const addon = normalizeAddon(modulePath, addonModule);
     if (!addon) {
+      continue;
+    }
+
+    if (addon.interfaces && !addon.interfaces.includes(Game.interface)) {
       continue;
     }
 

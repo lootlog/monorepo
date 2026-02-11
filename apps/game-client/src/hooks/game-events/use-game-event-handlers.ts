@@ -13,6 +13,7 @@ import { useMapChangeHandler } from "@/hooks/game-events/use-map-change-handler"
 import { useAfkHandler } from "@/hooks/game-events/use-afk-handler";
 import { useFriendsHandler } from "@/hooks/game-events/use-friends-handler";
 import { usePartyHandler } from "@/hooks/game-events/use-party-handler";
+import { useOtherHandler } from "@/hooks/game-events/use-other-handler";
 
 const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "chat",
@@ -27,6 +28,8 @@ const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "friends",
   "friends_max",
   "party",
+  "other",
+  "tracking",
 ];
 
 export const useGameEventHandlers = () => {
@@ -43,6 +46,7 @@ export const useGameEventHandlers = () => {
   const { handleAfkEvent } = useAfkHandler();
   const { handleFriendsEvent, fetchFriends } = useFriendsHandler();
   const { handlePartyEvent, handleInitialPartyDetection } = usePartyHandler();
+  const { handleOtherEvent, handleInitialOthersDetection } = useOtherHandler();
 
   const handleEvent = (event: GameEvent) => {
     // Check for relevant event keys
@@ -63,6 +67,7 @@ export const useGameEventHandlers = () => {
     handleAfkEvent(event);
     handleFriendsEvent(event);
     handlePartyEvent(event);
+    handleOtherEvent(event);
   };
 
   const setupGameEventHandler = useEffectEvent(() => {
@@ -78,6 +83,7 @@ export const useGameEventHandlers = () => {
   const handleInitialEvents = useEffectEvent(() => {
     handleInitialNpcsDetection();
     handleInitialPartyDetection();
+    handleInitialOthersDetection();
     gameEventsManager.markStripFriendsFromNextEvent();
     fetchFriends();
   });

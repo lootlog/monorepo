@@ -70,7 +70,10 @@ export class SubscriptionService {
 
       client.data = user;
 
-      client.join(featureRooms);
+      // Ensure room membership is completed before client receives JOIN result.
+      // Otherwise initial request-server-presence may run before the socket
+      // joins presence rooms and return an empty snapshot.
+      await client.join(featureRooms);
 
       this.presenceService.emitPresenceToRooms(
         client,

@@ -22,6 +22,8 @@ export type GameClientAddonBase = {
   version?: string;
   order?: number;
   defaultEnabled?: boolean;
+  alwaysEnabled?: boolean;
+  interfaces?: Array<"si" | "ni">;
 };
 
 export type GameClientComponentAddon = GameClientAddonBase & {

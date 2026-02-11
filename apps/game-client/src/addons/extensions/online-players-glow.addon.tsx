@@ -14,6 +14,8 @@ const onlinePlayersGlowAddon: GameClientAddon = {
   description: "Podswietla graczy online, ktorzy uzywaja addonu Lootlog.",
   order: 100,
   defaultEnabled: true,
+  alwaysEnabled: true,
+  interfaces: ["ni"],
   Mount: OnlinePlayersGlowMount,
 };
 

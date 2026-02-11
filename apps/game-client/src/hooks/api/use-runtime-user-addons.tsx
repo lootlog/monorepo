@@ -1,5 +1,6 @@
 import { API_URL } from "@/config/api";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
+import { isDevMode } from "@/lib/is-dev-mode";
 import { useQuery } from "@tanstack/react-query";
 
 export type RuntimeUserAddon = {
@@ -22,7 +23,7 @@ export const useRuntimeUserAddons = (enabled = true) => {
         withCredentials: true,
       }),
     select: (response) => response.data,
-    enabled,
+    enabled: enabled && isDevMode,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0,

@@ -7,9 +7,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { gameEventsManager } from "@/lib/game-events-manager";
+import {
+  dumpOthersDebugState,
+  getOthersDebugSnapshot,
+  useOthersStore,
+} from "@/store/others.store";
 import { usePartyStore } from "@/store/party.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import { useState, type FC } from "react";
+import { useMemo, useState, type FC } from "react";
 
 const createBaseEvent = (): Pick<GameEvent, "d" | "e" | "ev"> => ({
   d: ["", "", ""],
@@ -292,7 +297,23 @@ export const DebugTab: FC = () => {
   const setAddonEnabled = useAddonsStore((s) => s.setAddonEnabled);
   const resetAddonOverrides = useAddonsStore((s) => s.resetAddonOverrides);
   const partyMembers = usePartyStore((s) => s.members);
+  const othersByRuntimeId = useOthersStore((s) => s.playersByRuntimeId);
+  const othersDebugLogs = useOthersStore((s) => s.debugLogs);
+  const clearOthersDebugLogs = useOthersStore((s) => s.clearDebugLogs);
+  const [othersSnapshot, setOthersSnapshot] = useState(() =>
+    getOthersDebugSnapshot(),
+  );
+  const [othersSnapshotUpdatedAt, setOthersSnapshotUpdatedAt] = useState(
+    () => new Date(),
+  );
   const zoomFactor = window.getZoomFactor ? window.getZoomFactor() : null;
+  const liveOthers = useMemo(
+    () =>
+      Object.values(othersByRuntimeId).sort((a, b) =>
+        a.runtimeId.localeCompare(b.runtimeId),
+      ),
+    [othersByRuntimeId],
+  );
 
   const addLogEntry = (eventType: string, success: boolean) => {
     setEventLog((prev) => [
@@ -331,6 +352,19 @@ export const DebugTab: FC = () => {
 
   const handleResetAddonOverrides = () => {
     resetAddonOverrides();
+  };
+
+  const handleRefreshOthersSnapshot = () => {
+    setOthersSnapshot(getOthersDebugSnapshot());
+    setOthersSnapshotUpdatedAt(new Date());
+  };
+
+  const handleDumpOthersDebugState = () => {
+    dumpOthersDebugState();
+  };
+
+  const handleClearOthersDebugLogs = () => {
+    clearOthersDebugLogs();
   };
 
   return (
@@ -535,6 +569,101 @@ export const DebugTab: FC = () => {
 
       <div>
         <div className="ll:flex ll:items-center ll:justify-between ll:mb-2">
+          <h3 className="ll:text-sm ll:font-semibold">Others Store Debug</h3>
+          <div className="ll:flex ll:gap-1">
+            <Button
+              onClick={handleRefreshOthersSnapshot}
+              className="ll:px-2 ll:text-[10px] ll:h-4"
+            >
+              Refresh Snapshot
+            </Button>
+            <Button
+              onClick={handleDumpOthersDebugState}
+              className="ll:px-2 ll:text-[10px] ll:h-4 ll:bg-indigo-700 hover:ll:bg-indigo-600"
+            >
+              Dump to Console
+            </Button>
+            <Button
+              onClick={handleClearOthersDebugLogs}
+              disabled={othersDebugLogs.length === 0}
+              className="ll:px-2 ll:text-[10px] ll:h-4 ll:bg-red-700 hover:ll:bg-red-600"
+            >
+              Clear Logs
+            </Button>
+          </div>
+        </div>
+
+        <p className="ll:text-[10px] ll:text-gray-400 ll:mb-2">
+          Live players: {liveOthers.length} | Snapshot players:{" "}
+          {othersSnapshot.count} | Snapshot updated:{" "}
+          {othersSnapshotUpdatedAt.toLocaleTimeString()}
+        </p>
+
+        <div className="ll:bg-gray-800 ll:border ll:border-gray-600 ll:rounded ll:p-2 ll:space-y-2">
+          <div>
+            <p className="ll:text-xs ll:text-white ll:font-semibold ll:mb-1">
+              Players by Runtime ID
+            </p>
+            <div className="ll:max-h-24 ll:overflow-y-auto">
+              {liveOthers.length === 0 ? (
+                <p className="ll:text-gray-500 ll:text-xs">No tracked players</p>
+              ) : (
+                liveOthers.map((player) => (
+                  <div
+                    key={player.runtimeId}
+                    className="ll:text-xs ll:flex ll:gap-2 ll:items-center ll:font-mono"
+                  >
+                    <span className="ll:text-cyan-300">{player.runtimeId}</span>
+                    <span className="ll:text-gray-300">
+                      char: {player.characterId}
+                    </span>
+                    <span className="ll:text-gray-300">
+                      acc: {player.accountId}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="ll:text-xs ll:text-white ll:font-semibold ll:mb-1">
+              Recent Debug Logs
+            </p>
+            <div className="ll:max-h-32 ll:overflow-y-auto ll:space-y-1">
+              {othersDebugLogs.length === 0 ? (
+                <p className="ll:text-gray-500 ll:text-xs">No debug logs</p>
+              ) : (
+                othersDebugLogs.slice(0, 30).map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="ll:text-[10px] ll:border ll:border-gray-700 ll:rounded ll:p-1"
+                  >
+                    <div className="ll:flex ll:items-center ll:gap-2 ll:flex-wrap">
+                      <span className="ll:text-gray-500">
+                        {new Date(entry.timestamp).toLocaleTimeString()}
+                      </span>
+                      <span className="ll:text-emerald-300">{entry.source}</span>
+                      <span className="ll:text-white">{entry.type}</span>
+                      <span className="ll:text-gray-400">
+                        {entry.beforeCount} → {entry.afterCount}
+                      </span>
+                    </div>
+                    {entry.details && (
+                      <pre className="ll:mt-1 ll:text-[10px] ll:text-gray-300 ll:whitespace-pre-wrap ll:break-all">
+                        {JSON.stringify(entry.details, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="ll:flex ll:items-center ll:justify-between ll:mb-2">
           <h3 className="ll:text-sm ll:font-semibold">Addon Runtime</h3>
           <Button
             onClick={handleResetAddonOverrides}
@@ -552,6 +681,7 @@ export const DebugTab: FC = () => {
           ) : (
             LOADED_ADDONS.map((addon) => {
               const enabled = isAddonEnabled(addon, disabledAddonIds);
+              const isAlwaysEnabled = addon.alwaysEnabled === true;
 
               return (
                 <div
@@ -570,12 +700,18 @@ export const DebugTab: FC = () => {
                         {addon.description}
                       </p>
                     )}
+                    {isAlwaysEnabled && (
+                      <p className="ll:text-[10px] ll:text-emerald-300">
+                        Always enabled
+                      </p>
+                    )}
                   </div>
                   <Switch
                     checked={enabled}
                     onCheckedChange={(checked) =>
                       handleAddonToggle(addon.id, checked)
                     }
+                    disabled={isAlwaysEnabled}
                     aria-label={`Toggle addon ${addon.name}`}
                   />
                 </div>

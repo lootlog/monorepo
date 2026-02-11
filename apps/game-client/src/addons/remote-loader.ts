@@ -5,6 +5,7 @@ import type {
   GameClientSetupAddon,
 } from "@/addons/types";
 import type { RuntimeUserAddon } from "@/hooks/api/use-runtime-user-addons";
+import { isDevMode } from "@/lib/is-dev-mode";
 import React from "react";
 import * as reactJsxRuntime from "react/jsx-runtime";
 
@@ -62,6 +63,10 @@ const normalizeRuntimeAddon = (
       typeof candidate.defaultEnabled === "boolean"
         ? candidate.defaultEnabled
         : true,
+    alwaysEnabled:
+      typeof candidate.alwaysEnabled === "boolean"
+        ? candidate.alwaysEnabled
+        : false,
   };
 
   if (typeof candidate.Mount === "function") {
@@ -130,6 +135,10 @@ const loadSingleRuntimeAddon = (
 export const loadRuntimeAddons = (
   runtimeAddons: RuntimeUserAddon[],
 ): GameClientAddon[] => {
+  if (!isDevMode) {
+    return [];
+  }
+
   const loadedAddons: GameClientAddon[] = [];
   const seenAddonIds = new Set<string>();
 
