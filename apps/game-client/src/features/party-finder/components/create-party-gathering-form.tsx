@@ -45,7 +45,7 @@ export const CreatePartyGatheringForm = () => {
   const { mutateAsync: sendChatMessage } = useSendChatMessage();
   const setPartyGathering = usePartyFinderStore((s) => s.setPartyGathering);
   const setChatMessageId = usePartyFinderStore((s) => s.setChatMessageId);
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
 

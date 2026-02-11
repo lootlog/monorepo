@@ -1,10 +1,35 @@
-import { type FC, useCallback } from "react";
+import { type FC, useCallback, useRef } from "react";
 
 const getScale = () => {
   if (typeof window.getZoomFactor === "function") {
     return window.getZoomFactor();
   }
   return window.visualViewport?.scale ?? 1;
+};
+
+let resizeSessionCounter = 0;
+let activeResizeSessionId: number | null = null;
+let cancelActiveResizeSession: (() => void) | null = null;
+
+export const cancelWindowResizeSession = () => {
+  if (!cancelActiveResizeSession) return;
+  const cancel = cancelActiveResizeSession;
+  cancelActiveResizeSession = null;
+  cancel();
+};
+
+const getTouchByIdentifier = (touchList: TouchList, identifier: number) => {
+  for (let i = 0; i < touchList.length; i += 1) {
+    const touch = touchList.item(i);
+    if (touch && touch.identifier === identifier) {
+      return touch;
+    }
+  }
+  return null;
+};
+
+const hasTouchIdentifier = (touchList: TouchList, identifier: number) => {
+  return getTouchByIdentifier(touchList, identifier) !== null;
 };
 
 interface WindowResizeHandleProps {
@@ -26,14 +51,18 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
   onResizeStart,
   onResizeEnd,
 }) => {
+  const activeTouchIdRef = useRef<number | null>(null);
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      cancelWindowResizeSession();
 
       onResizeStart();
+      const sessionId = ++resizeSessionCounter;
+      activeResizeSessionId = sessionId;
 
-      const scale = getScale();
       const startX = e.clientX;
       const startY = e.clientY;
       const startWidth =
@@ -44,6 +73,7 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
           ?.offsetHeight || minHeight;
 
       const handleMouseMove = (e: MouseEvent) => {
+        if (activeResizeSessionId !== sessionId) return;
         const scale = getScale();
         const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
         const viewportHeight =
@@ -65,12 +95,27 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
         onResize({ width: newWidth, height: newHeight });
       };
 
-      const handleMouseUp = () => {
-        onResizeEnd();
+      const cleanupMouseListeners = () => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       };
 
+      const finishMouseResize = () => {
+        if (activeResizeSessionId === sessionId) {
+          activeResizeSessionId = null;
+        }
+        if (cancelActiveResizeSession === finishMouseResize) {
+          cancelActiveResizeSession = null;
+        }
+        onResizeEnd();
+        cleanupMouseListeners();
+      };
+
+      const handleMouseUp = () => {
+        finishMouseResize();
+      };
+
+      cancelActiveResizeSession = finishMouseResize;
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
@@ -89,10 +134,15 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
     (e: React.TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      if (e.touches.length > 1) return;
+      cancelWindowResizeSession();
 
       onResizeStart();
+      const sessionId = ++resizeSessionCounter;
+      activeResizeSessionId = sessionId;
 
       const touch = e.touches[0];
+      activeTouchIdRef.current = touch.identifier;
       const startX = touch.pageX - window.scrollX;
       const startY = touch.pageY - window.scrollY;
       const startWidth =
@@ -103,8 +153,14 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
           ?.offsetHeight || minHeight;
 
       const handleTouchMove = (e: TouchEvent) => {
+        if (activeResizeSessionId !== sessionId) return;
+        const activeTouchId = activeTouchIdRef.current;
+        const touch =
+          activeTouchId === null
+            ? e.touches[0]
+            : getTouchByIdentifier(e.touches, activeTouchId);
+        if (!touch) return;
         e.preventDefault();
-        const touch = e.touches[0];
         const scale = getScale();
         const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
         const viewportHeight =
@@ -128,16 +184,45 @@ export const WindowResizeHandle: FC<WindowResizeHandleProps> = ({
         onResize({ width: newWidth, height: newHeight });
       };
 
-      const handleTouchEnd = () => {
-        onResizeEnd();
+      const cleanupTouchListeners = () => {
         document.removeEventListener("touchmove", handleTouchMove);
         document.removeEventListener("touchend", handleTouchEnd);
+        document.removeEventListener("touchcancel", handleTouchEnd);
+        window.removeEventListener("touchend", handleTouchEnd);
+        window.removeEventListener("touchcancel", handleTouchEnd);
       };
 
+      const finishTouchResize = () => {
+        activeTouchIdRef.current = null;
+        activeResizeSessionId = null;
+        if (cancelActiveResizeSession === finishTouchResize) {
+          cancelActiveResizeSession = null;
+        }
+        onResizeEnd();
+        cleanupTouchListeners();
+      };
+
+      const handleTouchEnd = (e: TouchEvent) => {
+        if (activeResizeSessionId !== sessionId) return;
+        const activeTouchId = activeTouchIdRef.current;
+        if (activeTouchId !== null) {
+          const activeTouchStillPresent = hasTouchIdentifier(
+            e.touches,
+            activeTouchId,
+          );
+          if (activeTouchStillPresent) return;
+        }
+        finishTouchResize();
+      };
+
+      cancelActiveResizeSession = finishTouchResize;
       document.addEventListener("touchmove", handleTouchMove, {
         passive: false,
       });
       document.addEventListener("touchend", handleTouchEnd);
+      document.addEventListener("touchcancel", handleTouchEnd);
+      window.addEventListener("touchend", handleTouchEnd);
+      window.addEventListener("touchcancel", handleTouchEnd);
     },
     [
       minWidth,

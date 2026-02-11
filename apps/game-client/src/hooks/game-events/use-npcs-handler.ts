@@ -21,7 +21,7 @@ import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 
 export const useNpcsHandlers = () => {
   const { addNpc } = useNpcDetectorStore();
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { handleSendMessage, handleSendNotification } = useMessagingHandlers();
   const { playSound } = useSoundPlayback();
 

@@ -28,7 +28,7 @@ export const SingleNotificationNpc: FC<SingleNotificationNpcProps> = ({
   const color = useMemberColor(member);
   const volunteer = useVolunteer();
   const { clearNotifications } = useNotificationsStore();
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   const handleClick = () => {
     volunteer.mutate({

@@ -42,10 +42,8 @@ export const Chat = () => {
 
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);
-  const {
-    chat: { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state.chat.open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     `ll:chat:selected-guild:${accountId}:${characterId}`,
     "",

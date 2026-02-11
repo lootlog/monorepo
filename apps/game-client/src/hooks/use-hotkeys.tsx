@@ -43,7 +43,7 @@ const inviteAll = async (
 };
 
 export const useHotkeys = () => {
-  const { toggleOpen } = useWindowsStore();
+  const toggleOpen = useWindowsStore((state) => state.toggleOpen);
   const bindings = useHotkeysStore((s) => s.bindings);
   const setInviteState = usePartyFinderStore((s) => s.setInviteState);
   const isInvitingRef = useRef(false);

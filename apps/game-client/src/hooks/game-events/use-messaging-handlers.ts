@@ -11,7 +11,7 @@ export const useMessagingHandlers = () => {
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
 
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   const handleSendMessage = (guildIds: string[], npc: GameNpcWithLocation) => {
     sendChatMessage(

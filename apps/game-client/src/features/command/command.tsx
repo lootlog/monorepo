@@ -30,10 +30,9 @@ export const CommandWindow = () => {
   const characterId = String(Game.hero.id);
   const world = Game.getWorldName();
 
-  const {
-    command: { open, autofocus },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state.command.open);
+  const autofocus = useWindowsStore((state) => state.command.autofocus);
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { mutate: sendChatMessage } = useSendChatMessage();
   const { mutate: createNotification } = useCreateNotification();
   const { handlePartyCommand } = usePartyCommand();
