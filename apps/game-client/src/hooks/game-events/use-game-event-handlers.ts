@@ -44,6 +44,26 @@ export const useGameEventHandlers = () => {
   const { handleFriendsEvent, fetchFriends } = useFriendsHandler();
   const { handlePartyEvent, handleInitialPartyDetection } = usePartyHandler();
 
+  const runEventHandler = (handlerName: string, handler: () => unknown) => {
+    try {
+      const result = handler();
+
+      if (result instanceof Promise) {
+        result.catch((error) => {
+          console.warn(
+            `[GameEventHandlers] Failed to process ${handlerName} handler:`,
+            error,
+          );
+        });
+      }
+    } catch (error) {
+      console.warn(
+        `[GameEventHandlers] Failed to process ${handlerName} handler:`,
+        error,
+      );
+    }
+  };
+
   const handleEvent = (event: GameEvent) => {
     // Check for relevant event keys
     const hasRelevantKey = RELEVANT_EVENT_KEYS.some(
@@ -52,17 +72,17 @@ export const useGameEventHandlers = () => {
     if (!hasRelevantKey) return;
 
     // Process different event types
-    handleChatEvents(event);
-    handleDialogEvents(event);
-    handleBattleEvents(event);
-    handleNpcDetection(event);
-    handleLootFromBattle(event);
-    handleDialogLoot(event);
-    handleNpcsDelete(event);
-    handleMapChange(event);
-    handleAfkEvent(event);
-    handleFriendsEvent(event);
-    handlePartyEvent(event);
+    runEventHandler("chat", () => handleChatEvents(event));
+    runEventHandler("dialog", () => handleDialogEvents(event));
+    runEventHandler("battle", () => handleBattleEvents(event));
+    runEventHandler("npc-detection", () => handleNpcDetection(event));
+    runEventHandler("loot-from-battle", () => handleLootFromBattle(event));
+    runEventHandler("dialog-loot", () => handleDialogLoot(event));
+    runEventHandler("npcs-delete", () => handleNpcsDelete(event));
+    runEventHandler("map-change", () => handleMapChange(event));
+    runEventHandler("afk", () => handleAfkEvent(event));
+    runEventHandler("friends", () => handleFriendsEvent(event));
+    runEventHandler("party", () => handlePartyEvent(event));
   };
 
   const setupGameEventHandler = useEffectEvent(() => {
