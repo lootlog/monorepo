@@ -1,0 +1,14 @@
+{
+  "name": "@lootlog/margonem-types",
+  "version": "1.0.0",
+  "private": true,
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts"
+    },
+    "./margonem-engine-types-v2": {
+      "types": "./src/margonem-engine-types-v2/index.d.ts"
+    }
+  }
+}
