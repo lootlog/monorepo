@@ -4,10 +4,8 @@ import { useWindowsStore } from "@/store/windows.store";
 import { CreatePartyGatheringForm } from "@/features/party-finder/components/create-party-gathering-form";
 
 export const CreatePartyGathering = () => {
-  const {
-    "create-party-gathering": { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state["create-party-gathering"].open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   return (
     <AnimatedWindow isOpen={open} windowKey="create-party-gathering">

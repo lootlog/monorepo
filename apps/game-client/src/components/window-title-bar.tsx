@@ -18,6 +18,7 @@ interface WindowTitleBarProps {
   onOpacityChange: (opacity: WindowOpacity) => void;
   onLockToggle: () => void;
   onClose?: () => void;
+  onTouchStart?: (e: React.TouchEvent<HTMLDivElement>) => void;
 }
 
 export const WindowTitleBar: FC<WindowTitleBarProps> = ({
@@ -29,6 +30,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   onOpacityChange,
   onLockToggle,
   onClose,
+  onTouchStart,
 }) => {
   const handleOpacityChange = useCallback(() => {
     const currentIndex = OPACITY_LEVELS.indexOf(opacity);
@@ -37,11 +39,15 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
   }, [opacity, onOpacityChange]);
 
   return (
-    <div className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:shrink-0">
-      <div className="ll:flex ll:items-center ll:gap-1">
+    <div
+      className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:shrink-0"
+      onTouchStart={onTouchStart}
+    >
+      <div className="ll:flex ll:items-center ll:gap-1" data-draggable="false">
         <Tooltip>
           <TooltipTrigger asChild>
             <Blend
+              data-draggable="false"
               className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={handleOpacityChange}
@@ -60,12 +66,14 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
           <TooltipTrigger asChild>
             {isLocked ? (
               <Lock
+                data-draggable="false"
                 className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
                 size="14"
                 onClick={onLockToggle}
               />
             ) : (
               <Unlock
+                data-draggable="false"
                 className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
                 size="14"
                 onClick={onLockToggle}
@@ -81,6 +89,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <XIcon
+              data-draggable="false"
               size="18"
               type="button"
               className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"

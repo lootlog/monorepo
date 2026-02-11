@@ -4,10 +4,8 @@ import { OnlinePlayersList } from "@/features/online-players/components/online-p
 import { useWindowsStore } from "@/store/windows.store";
 
 export const OnlinePlayers = () => {
-  const {
-    "online-players": { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state["online-players"].open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   return (
     <AnimatedWindow isOpen={open} windowKey="online-players">
