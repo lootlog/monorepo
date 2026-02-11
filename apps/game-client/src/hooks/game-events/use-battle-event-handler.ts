@@ -21,6 +21,30 @@ const TRACKABLE_NPC_TYPES = new Set([
   NpcType.TITAN,
 ]);
 
+const parseNumericValue = (value: unknown) => {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsedValue = Number.parseFloat(value);
+    return Number.isFinite(parsedValue) ? parsedValue : null;
+  }
+
+  return null;
+};
+
+const isWarriorDead = (warrior: BattleWarriorsWithAccountId[string]) => {
+  const legacyHpp = parseNumericValue((warrior as { hpp?: unknown }).hpp);
+  if (legacyHpp !== null) return legacyHpp <= 0;
+
+  const hpData = (warrior as { hp?: { hpp?: unknown; cur?: unknown } }).hp;
+  const nestedHpp = parseNumericValue(hpData?.hpp);
+  if (nestedHpp !== null) return nestedHpp <= 0;
+
+  const currentHp = parseNumericValue(hpData?.cur);
+  if (currentHp !== null) return currentHp <= 0;
+
+  return false;
+};
+
 const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
   const deadNpcs: Array<{
     id: number;
@@ -33,7 +57,7 @@ const extractDeadNpcs = (warriors: BattleWarriorsWithAccountId) => {
   }> = [];
 
   for (const [key, warrior] of Object.entries(warriors)) {
-    if (key.startsWith("-") && warrior.hpp === 0) {
+    if (key.startsWith("-") && isWarriorDead(warrior)) {
       deadNpcs.push({
         id: Number.parseInt(key, 10),
         name: warrior.name,
@@ -70,9 +94,10 @@ export const useBattleEventHandler = () => {
     }
 
     if (event.f.w) {
+      const previousBattleWarriors = useBattleStore.getState().battleWarriors;
       const battleWarriorsWithAccountId = addAccountIdsToWarriors(
         event.f.w,
-        useBattleStore.getState().battleWarriors,
+        previousBattleWarriors,
       );
       battleStore.updateBattleWarriors(battleWarriorsWithAccountId);
     }

@@ -317,6 +317,60 @@ describe("useBattleEventHandler", () => {
       });
     });
 
+    it("should track kill when npc hp is sent as string 0.00", async () => {
+      useBattleStore.setState({
+        battleState: "in-battle",
+        lastBattleHash: "",
+        events: [
+          {
+            f: {
+              m: ["turn1"],
+            },
+          },
+        ],
+        battleWarriors: {
+          "-100": {
+            id: -100,
+            originalId: -100,
+            name: "Boss",
+            team: 2,
+            hpp: "0.00",
+            hp: {
+              cur: 0,
+              hpp: "0.00",
+            },
+            lvl: 300,
+            icon: "boss.gif",
+            prof: "w",
+            wt: 85,
+            type: 2,
+          } as any,
+        },
+      });
+
+      const { result } = renderHook(() => useBattleEventHandler());
+
+      const endEvent: GameEvent = {
+        f: { endBattle: 1, m: ["final"] },
+      };
+
+      await result.current.handleBattleEvents(endEvent);
+
+      expect(mockCreateKill).toHaveBeenCalledWith({
+        world: "pandora",
+        npc: {
+          id: -100,
+          name: "Boss",
+          lvl: 300,
+          prof: "w",
+          icon: "boss.gif",
+          wt: 85,
+        },
+        characterId: "12345",
+        accountId: "67890",
+      });
+    });
+
     it("should only track highest wt NPC when multiple NPCs die", async () => {
       useBattleStore.setState({
         battleState: "in-battle",
