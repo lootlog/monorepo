@@ -36,7 +36,7 @@
     "@tanstack/query-sync-storage-persister": "^5.90.22",
     "@tanstack/react-query": "^5.90.20",
     "@tanstack/react-query-persist-client": "^5.90.22",
-    "axios": "^1.13.4",
+    "axios": "^1.13.5",
     "better-auth": "^1.4.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

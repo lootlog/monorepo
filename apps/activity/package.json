@@ -40,7 +40,7 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "7.3.0",
     "@prisma/client-runtime-utils": "7.3.0",
-    "axios": "^1.13.4",
+    "axios": "^1.13.5",
     "cache-manager": "^7.2.8",
     "cacheable": "^2.3.2",
     "class-transformer": "^0.5.1",
