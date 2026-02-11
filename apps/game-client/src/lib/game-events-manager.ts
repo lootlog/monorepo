@@ -1,6 +1,7 @@
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
 
 type GameEventHandler = (event: GameEvent) => void;
+type RawGameEventPayload = string | GameEvent;
 
 class GameEventsManager {
   private eventQueue: GameEvent[] = [];
@@ -129,17 +130,17 @@ class GameEventsManager {
           this.onGameInitChange();
 
           let modifiedArgs = args;
-          if (typeof args[0] === "string") {
-            try {
-              const event = JSON.parse(args[0]);
-              this.queueEvent(event);
+          const parsedEvent = this.parseGameEventPayload(args[0]);
 
-              const strippedEvent = this.stripFriendsKeys(event);
-              if (strippedEvent !== event) {
-                modifiedArgs = [JSON.stringify(strippedEvent), ...args.slice(1)];
-              }
-            } catch (error) {
-              console.warn("Failed to process game event:", error);
+          if (parsedEvent) {
+            this.queueEvent(parsedEvent);
+
+            const strippedEvent = this.stripFriendsKeys(parsedEvent);
+            if (strippedEvent !== parsedEvent) {
+              modifiedArgs = [
+                this.serializeGameEventPayload(args[0], strippedEvent),
+                ...args.slice(1),
+              ];
             }
           }
 
@@ -155,6 +156,34 @@ class GameEventsManager {
         },
       });
     });
+  }
+
+  private parseGameEventPayload(payload: unknown): GameEvent | null {
+    if (typeof payload === "string") {
+      try {
+        return JSON.parse(payload) as GameEvent;
+      } catch (error) {
+        console.warn("Failed to process game event:", error);
+        return null;
+      }
+    }
+
+    if (payload && typeof payload === "object") {
+      return payload as GameEvent;
+    }
+
+    return null;
+  }
+
+  private serializeGameEventPayload(
+    originalPayload: unknown,
+    event: GameEvent,
+  ): RawGameEventPayload {
+    if (typeof originalPayload === "string") {
+      return JSON.stringify(event);
+    }
+
+    return event;
   }
 
   private gameInitCallbackExecuted = false;
