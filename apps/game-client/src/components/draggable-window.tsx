@@ -59,6 +59,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         isLocked: state[id].locked,
       })),
     );
+  const windowFocusHistory = useWindowsStore(
+    (state) => state.windowFocusHistory,
+  );
 
   const setPositionInStore = useWindowsStore((state) => state.setPosition);
   const setSizeInStore = useWindowsStore((state) => state.setSize);
@@ -144,20 +147,26 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       cancelWindowResizeSession();
-      setCurrentWindowFocus(id);
       handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
     },
-    [id, setCurrentWindowFocus, handleMouseDown],
+    [handleMouseDown],
   );
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       cancelWindowResizeSession();
-      setCurrentWindowFocus(id);
       handleTouchStart(e as React.TouchEvent<HTMLElement>);
     },
-    [id, setCurrentWindowFocus, handleTouchStart],
+    [handleTouchStart],
   );
+
+  const onMouseDownCapture = useCallback(() => {
+    setCurrentWindowFocus(id);
+  }, [id, setCurrentWindowFocus]);
+
+  const onTouchStartCapture = useCallback(() => {
+    setCurrentWindowFocus(id);
+  }, [id, setCurrentWindowFocus]);
 
   useEffect(() => {
     if (isResizing) return;
@@ -172,9 +181,9 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     setLockedInStore(id, !isLocked);
   }, [id, isLocked, setLockedInStore]);
 
-  const onContentClick = useCallback(() => {
-    setCurrentWindowFocus(id);
-  }, [id, setCurrentWindowFocus]);
+  const windowZIndex = windowFocusHistory.indexOf(id);
+  const zIndex =
+    windowZIndex === -1 ? 0 : windowFocusHistory.length - windowZIndex;
 
   return (
     <div
@@ -186,8 +195,11 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         maxHeight,
         top: position.y,
         left: position.x,
+        zIndex,
         cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
       }}
+      onMouseDownCapture={onMouseDownCapture}
+      onTouchStartCapture={onTouchStartCapture}
       onMouseDown={onMouseDown}
       onTouchStart={disableTitle ? onTouchStart : undefined}
       onWheel={(e) => e.stopPropagation()}
@@ -228,7 +240,6 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
           onMouseDown={
             draggableContent ? onMouseDown : (e) => e.stopPropagation()
           }
-          onClick={onContentClick}
         >
           {children}
         </div>
