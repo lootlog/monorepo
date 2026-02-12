@@ -596,13 +596,19 @@ describe('GatewayService', () => {
         data: {
           discordId: 'discord-123',
         },
-        rooms: new Set(['socket-123', 'guild-1:presence', 'old-guild:presence']),
+        rooms: new Set([
+          'socket-123',
+          'guild-1:presence',
+          'old-guild:presence',
+        ]),
         leave: jest.fn(),
         join: jest.fn(),
         emit: jest.fn(),
       };
 
-      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockGuildsService.getUserGuilds.mockResolvedValue({
+        guilds: updatedGuilds,
+      });
       mockServer.fetchSockets.mockResolvedValue([mockUserSocket]);
 
       await service.rebalanceUserSocketRooms(discordId, userId);
@@ -626,7 +632,9 @@ describe('GatewayService', () => {
       const discordId = 'discord-123';
       const userId = 'user-123';
 
-      mockGuildsService.getUserGuilds.mockResolvedValue([]);
+      mockGuildsService.getUserGuilds.mockResolvedValue({
+        guilds: [],
+      });
       mockServer.fetchSockets.mockResolvedValue([]);
 
       await service.rebalanceUserSocketRooms(discordId, userId);
@@ -681,7 +689,9 @@ describe('GatewayService', () => {
         emit: jest.fn(),
       };
 
-      mockGuildsService.getUserGuilds.mockResolvedValue(updatedGuilds);
+      mockGuildsService.getUserGuilds.mockResolvedValue({
+        guilds: updatedGuilds,
+      });
       mockServer.fetchSockets.mockResolvedValue([
         mockTargetSocket,
         mockOtherSocket,

@@ -273,12 +273,10 @@ export class PresenceService {
           status: data.status ?? UserPresenceStatus.ONLINE,
           player: fallbackPlayer,
           guildIds: this.extractGuildIds(data),
+          lootlogSettings: data.lootlogSettings,
         };
       })
-      .sort(
-        (a, b) =>
-          Number(b.player?.lvl ?? 0) - Number(a.player?.lvl ?? 0),
-      );
+      .sort((a, b) => Number(b.player?.lvl ?? 0) - Number(a.player?.lvl ?? 0));
 
     return groupBy(users, 'discordId');
   }

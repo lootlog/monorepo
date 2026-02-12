@@ -4,6 +4,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type PlayerPresenceResponse = Record<string, PlayerPresence[]>;
 
+export type PresenceLootlogGuildStatus = {
+  timersEnabled: boolean;
+  lootEnabled: boolean;
+};
+
+export type PresenceLootlogSettings = {
+  accountId: string;
+  characterId: string;
+  guildStatusByGuildId: Record<string, PresenceLootlogGuildStatus>;
+};
+
 export type PlayerPresence = {
   discordId: string;
   sessionId?: string;
@@ -11,6 +22,7 @@ export type PlayerPresence = {
   status: "online" | "offline";
   guildId?: string;
   guildIds?: string[];
+  lootlogSettings?: PresenceLootlogSettings;
   player?: {
     world: string;
     name: string;
@@ -61,7 +73,9 @@ const normalizeNumber = (value: unknown): number | undefined => {
 const normalizePlayer = (
   rawPresence: Record<string, unknown>,
 ): PlayerPresence["player"] | undefined => {
-  const rawPlayer = isRecord(rawPresence.player) ? rawPresence.player : undefined;
+  const rawPlayer = isRecord(rawPresence.player)
+    ? rawPresence.player
+    : undefined;
   const rawLegacyPresence = isRecord(rawPresence.playerPresence)
     ? (rawPresence.playerPresence as LegacyPlayerPresenceData)
     : undefined;
@@ -81,20 +95,12 @@ const normalizePlayer = (
   const prof = typeof source.prof === "string" ? source.prof : undefined;
   const lvl = normalizeNumber(source.lvl);
 
-  if (
-    !world ||
-    !name ||
-    !icon ||
-    !characterId ||
-    !accountId ||
-    !prof
-  ) {
+  if (!world || !name || !icon || !characterId || !accountId || !prof) {
     return undefined;
   }
 
-  const rawLocation = rawPlayer && isRecord(rawPlayer.location)
-    ? rawPlayer.location
-    : undefined;
+  const rawLocation =
+    rawPlayer && isRecord(rawPlayer.location) ? rawPlayer.location : undefined;
   const mapNameFromLocation =
     rawLocation && typeof rawLocation.map === "string"
       ? rawLocation.map
@@ -117,6 +123,57 @@ const normalizePlayer = (
       y: normalizeNumber(rawLocation?.y) ?? 0,
       map: mapNameFromLocation ?? mapNameFromPresence ?? "",
     },
+  };
+};
+
+const normalizeLootlogSettings = (
+  rawPresence: Record<string, unknown>,
+): PresenceLootlogSettings | undefined => {
+  const rawLootlogSettings = isRecord(rawPresence.lootlogSettings)
+    ? rawPresence.lootlogSettings
+    : undefined;
+
+  if (!rawLootlogSettings) {
+    return undefined;
+  }
+
+  const accountId =
+    typeof rawLootlogSettings.accountId === "string"
+      ? rawLootlogSettings.accountId
+      : undefined;
+  const characterId =
+    typeof rawLootlogSettings.characterId === "string"
+      ? rawLootlogSettings.characterId
+      : undefined;
+  const rawGuildStatusByGuildId = isRecord(
+    rawLootlogSettings.guildStatusByGuildId,
+  )
+    ? rawLootlogSettings.guildStatusByGuildId
+    : undefined;
+
+  if (!accountId || !characterId || !rawGuildStatusByGuildId) {
+    return undefined;
+  }
+
+  const guildStatusByGuildId: Record<string, PresenceLootlogGuildStatus> = {};
+
+  for (const [guildId, rawGuildStatus] of Object.entries(
+    rawGuildStatusByGuildId,
+  )) {
+    if (!guildId || !isRecord(rawGuildStatus)) {
+      continue;
+    }
+
+    guildStatusByGuildId[guildId] = {
+      timersEnabled: rawGuildStatus.timersEnabled === true,
+      lootEnabled: rawGuildStatus.lootEnabled === true,
+    };
+  }
+
+  return {
+    accountId,
+    characterId,
+    guildStatusByGuildId,
   };
 };
 
@@ -157,6 +214,7 @@ const normalizePresence = (
     status,
     guildId,
     guildIds,
+    lootlogSettings: normalizeLootlogSettings(rawPresence),
     player: normalizePlayer(rawPresence),
   };
 };
@@ -228,6 +286,8 @@ const normalizePresenceResponse = (data: unknown): PlayerPresenceResponse => {
         player: normalizedPresence.player ?? existing.player,
         sessionId: normalizedPresence.sessionId ?? existing.sessionId,
         guildIds: mergeGuildIds(existing.guildIds, normalizedPresence.guildIds),
+        lootlogSettings:
+          normalizedPresence.lootlogSettings ?? existing.lootlogSettings,
       });
     }
 
@@ -365,11 +425,17 @@ export const usePlayersPresence = (
       }
 
       const currentGuildIds = requestedGuildIdsRef.current;
-      if (!normalizedData.guildId || !currentGuildIds.includes(normalizedData.guildId)) {
+      if (
+        !normalizedData.guildId ||
+        !currentGuildIds.includes(normalizedData.guildId)
+      ) {
         return;
       }
 
-      if (!worldRef.current || normalizedData.player?.world !== worldRef.current) {
+      if (
+        !worldRef.current ||
+        normalizedData.player?.world !== worldRef.current
+      ) {
         return;
       }
 
@@ -404,6 +470,8 @@ export const usePlayersPresence = (
                 existing.guildIds,
                 normalizedData.guildIds,
               ),
+              lootlogSettings:
+                normalizedData.lootlogSettings ?? existing.lootlogSettings,
             };
 
             const nextList = [...list];

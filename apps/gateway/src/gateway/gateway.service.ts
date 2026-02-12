@@ -167,10 +167,11 @@ export class GatewayService {
 
   async rebalanceUserSocketRooms(discordId: string, userId: string) {
     try {
-      const updatedGuilds = await this.guildsService.getUserGuilds({
+      const updatedGuildsResponse = await this.guildsService.getUserGuilds({
         discordId,
         userId,
       });
+      const { guilds: updatedGuilds, lootlogSettings } = updatedGuildsResponse;
 
       const sockets = await this.gateway.server.fetchSockets();
       const userSockets = sockets.filter(
@@ -208,9 +209,11 @@ export class GatewayService {
         }
 
         socket.data.guilds = updatedGuilds;
+        socket.data.lootlogSettings = lootlogSettings;
 
         socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
           guilds: updatedGuilds,
+          lootlogSettings,
           featureRooms: newFeatureRooms,
         });
       }

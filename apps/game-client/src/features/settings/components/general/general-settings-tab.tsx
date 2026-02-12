@@ -1,4 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { OnlinePlayersGlowSettings } from "@/features/settings/components/general/online-players-glow-settings";
 import { useSettingsStore } from "@/store/settings.store";
 import { FC } from "react";
 
@@ -21,6 +22,7 @@ export const GeneralSettingsTab: FC = () => {
           Pozwalaj na wybór świata - nie działa na zgrupowanych timerach
         </Checkbox>
       </div>
+      <OnlinePlayersGlowSettings />
     </div>
   );
 };

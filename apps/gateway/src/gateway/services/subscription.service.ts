@@ -43,10 +43,13 @@ export class SubscriptionService {
     player: SocketUserPlayer | undefined,
   ): Promise<JoinResult> {
     try {
-      const guilds = await this.guildsService.getUserGuilds({
+      const guildsResponse = await this.guildsService.getUserGuilds({
         discordId,
         userId,
+        accountId: player?.accountId,
+        characterId: player?.characterId,
       });
+      const { guilds, lootlogSettings } = guildsResponse;
 
       if (guilds.length === 0) {
         this.logger.warn(
@@ -66,7 +69,7 @@ export class SubscriptionService {
 
       const guildIds = getGuildIds(guilds);
 
-      const user = buildUser(client, player, guilds);
+      const user = buildUser(client, player, guilds, lootlogSettings);
 
       client.data = user;
 

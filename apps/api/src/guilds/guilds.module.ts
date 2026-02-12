@@ -18,6 +18,7 @@ import { DiscordModule } from 'src/discord/discord.module';
 import { RedisModule } from 'src/lib/redis/redis.module';
 import { PrismaModule } from 'src/db/prisma.module';
 import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.interceptor';
+import { UserLootlogConfigModule } from 'src/user-lootlog-config/user-lootlog-config.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.inter
     RedisModule,
     DiscordModule,
     PrismaModule,
+    forwardRef(() => UserLootlogConfigModule),
   ],
   controllers: [GuildsController, GuildsInternalController],
   providers: [

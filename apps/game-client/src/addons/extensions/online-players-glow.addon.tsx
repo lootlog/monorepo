@@ -1,10 +1,10 @@
 import type { GameClientAddon, GameClientComponentAddon } from "@/addons/types";
-import { useAddonPlayersGlow } from "@/features/online-players/hooks/use-addon-players-glow";
+import { useOnlinePlayersGlowAddon } from "@/addons/extensions/online-players-glow/use-online-players-glow-addon";
 
 const OnlinePlayersGlowMount: GameClientComponentAddon["Mount"] = ({
   enabled,
 }) => {
-  useAddonPlayersGlow(enabled);
+  useOnlinePlayersGlowAddon(enabled);
   return null;
 };
 
