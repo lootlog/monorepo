@@ -180,6 +180,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     <div
       className="ll:pointer-events-auto ll:absolute"
       ref={draggableRef}
+      data-ll-draggable-window={id}
       style={{
         ...style,
         maxHeight,
@@ -191,6 +192,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       onTouchStart={disableTitle ? onTouchStart : undefined}
       onWheel={(e) => e.stopPropagation()}
       onClick={handleClick}
+      id={id}
     >
       <div
         className={cn(

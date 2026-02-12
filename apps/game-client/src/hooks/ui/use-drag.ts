@@ -172,7 +172,7 @@ export const useDrag = ({
     if (!(evt.target instanceof HTMLElement)) return;
     if (evt.target.getAttribute("data-state") === "input") return;
     if (evt.target.getAttribute("data-slot") === "hidden") return;
-    if (evt.target.closest("[data-draggable='false']")) return;
+    if (evt.target.closest("[data-ll-draggable='false']")) return;
 
     evt.stopPropagation();
     startDrag(evt.clientX, evt.clientY);
@@ -184,7 +184,7 @@ export const useDrag = ({
     if (!(evt.target instanceof HTMLElement)) return;
     if (evt.target.getAttribute("data-state") === "input") return;
     if (evt.target.getAttribute("data-slot") === "hidden") return;
-    if (evt.target.closest("[data-draggable='false']")) return;
+    if (evt.target.closest("[data-ll-draggable='false']")) return;
     const touch = evt.touches[0];
     activeTouchIdRef.current = touch.identifier;
     evt.stopPropagation();
@@ -197,10 +197,14 @@ export const useDrag = ({
   const handleMouseMove = useCallback(
     (evt: MouseEvent) => {
       if (!isDragging) return;
+      if ((evt.buttons & 1) === 0) {
+        endDrag();
+        return;
+      }
       evt.preventDefault();
       dragTo(evt.clientX, evt.clientY);
     },
-    [isDragging, dragTo],
+    [isDragging, dragTo, endDrag],
   );
 
   const handleTouchMove = useCallback(
@@ -319,6 +323,47 @@ export const useDrag = ({
     handleTouchEnd,
     handleTouchCancel,
   ]);
+
+  useEffect(() => {
+    const handleGlobalMouseDown = (evt: MouseEvent) => {
+      if (!isDragging) return;
+      const current = ref.current;
+      if (!current) return;
+      if (!(evt.target instanceof Node)) return;
+      if (!current.contains(evt.target)) {
+        cancelDrag();
+      }
+    };
+
+    const handleGlobalTouchStart = (evt: TouchEvent) => {
+      if (!isDragging) return;
+      const current = ref.current;
+      if (!current) return;
+      if (!(evt.target instanceof Node)) {
+        cancelDrag();
+        return;
+      }
+      if (!current.contains(evt.target)) {
+        cancelDrag();
+      }
+    };
+
+    const handleWindowBlur = () => {
+      if (isDragging) {
+        cancelDrag();
+      }
+    };
+
+    document.addEventListener("mousedown", handleGlobalMouseDown, true);
+    document.addEventListener("touchstart", handleGlobalTouchStart, true);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      document.removeEventListener("mousedown", handleGlobalMouseDown, true);
+      document.removeEventListener("touchstart", handleGlobalTouchStart, true);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [isDragging, cancelDrag, ref]);
 
   // Usunięto clampowanie pozycji i setFinalPosition z efektu mount/ref
 
