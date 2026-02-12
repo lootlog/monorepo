@@ -204,7 +204,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
       onTouchStart={disableTitle ? onTouchStart : undefined}
       onWheel={(e) => e.stopPropagation()}
       onClick={handleClick}
-      id={id}
+      id={`ll-${id}`}
     >
       <div
         className={cn(
