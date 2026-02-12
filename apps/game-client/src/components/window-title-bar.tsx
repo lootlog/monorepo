@@ -43,11 +43,14 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
       className="ll:flex ll:items-center ll:justify-between ll:px-1 ll:shrink-0"
       onTouchStart={onTouchStart}
     >
-      <div className="ll:flex ll:items-center ll:gap-1" data-draggable="false">
+      <div
+        className="ll:flex ll:items-center ll:gap-1"
+        data-ll-draggable="false"
+      >
         <Tooltip>
           <TooltipTrigger asChild>
             <Blend
-              data-draggable="false"
+              data-ll-draggable="false"
               className="ll-custom-cursor-pointer ll:mt-0.5 ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
               size="14"
               onClick={handleOpacityChange}
@@ -66,14 +69,14 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
           <TooltipTrigger asChild>
             {isLocked ? (
               <Lock
-                data-draggable="false"
+                data-ll-draggable="false"
                 className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
                 size="14"
                 onClick={onLockToggle}
               />
             ) : (
               <Unlock
-                data-draggable="false"
+                data-ll-draggable="false"
                 className="ll:stroke-gray-300 ll:text-xs ll:absolute ll:-right-5 ll:hover:stroke-gray-100 ll:transition-colors"
                 size="14"
                 onClick={onLockToggle}
@@ -89,7 +92,7 @@ export const WindowTitleBar: FC<WindowTitleBarProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <XIcon
-              data-draggable="false"
+              data-ll-draggable="false"
               size="18"
               type="button"
               className="ll-custom-cursor-pointer ll:stroke-gray-300 ll:hover:stroke-gray-100 ll:transition-colors"
