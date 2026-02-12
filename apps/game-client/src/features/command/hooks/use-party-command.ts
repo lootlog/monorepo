@@ -17,7 +17,7 @@ export const usePartyCommand = () => {
   const discordId = session?.user?.discordId;
   const setPartyGathering = usePartyFinderStore((s) => s.setPartyGathering);
   const setChatMessageId = usePartyFinderStore((s) => s.setChatMessageId);
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const silentCancel = useSilentCancelPartyGathering();
 
   const handlePartyCommand = async (

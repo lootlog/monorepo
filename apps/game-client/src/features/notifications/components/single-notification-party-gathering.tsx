@@ -26,7 +26,7 @@ export const SingleNotificationPartyGathering: FC<
   const color = useMemberColor(member);
   const volunteer = useVolunteer();
   const { clearNotifications } = useNotificationsStore();
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   const heroLvl = Game.hero.lvl;
   const minLvl = notification.minLvl ?? 1;

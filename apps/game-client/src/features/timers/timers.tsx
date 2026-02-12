@@ -38,11 +38,9 @@ export const Timers = () => {
 
   const { data: timers } = useTimers({ world: desiredWorld });
 
-  const {
-    timers: { open },
-    toggleOpen,
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state.timers.open);
+  const toggleOpen = useWindowsStore((state) => state.toggleOpen);
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   useTimersSocket();
 

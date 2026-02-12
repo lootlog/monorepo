@@ -4,10 +4,8 @@ import { AddTimerForm } from "@/features/timers/components/add-timer-form";
 import { useWindowsStore } from "@/store/windows.store";
 
 export const AddTimer = () => {
-  const {
-    "add-timer": { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state["add-timer"].open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   return (
     <AnimatedWindow isOpen={open} windowKey="add-timer">

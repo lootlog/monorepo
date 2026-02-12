@@ -8,7 +8,10 @@ import {
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { WindowTitleBar } from "./window-title-bar";
-import { WindowResizeHandle } from "./window-resize-handle";
+import {
+  cancelWindowResizeSession,
+  WindowResizeHandle,
+} from "./window-resize-handle";
 
 export type DraggableWindowProps = {
   children: React.ReactNode;
@@ -97,7 +100,13 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     [id, setPositionInStore],
   );
 
-  const { position, handleMouseDown, handleTouchStart, isDragging } = useDrag({
+  const {
+    position,
+    handleMouseDown,
+    handleTouchStart,
+    isDragging,
+    cancelDrag,
+  } = useDrag({
     ref: draggableRef,
     defaultState: defaultPosition,
     onDragStop,
@@ -112,8 +121,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
   );
 
   const handleResizeStart = useCallback(() => {
+    cancelDrag();
+    setCurrentWindowFocus(id);
     setIsResizing(true);
-  }, []);
+  }, [cancelDrag, id, setCurrentWindowFocus]);
 
   const handleResizeEnd = useCallback(() => {
     setIsResizing(false);
@@ -132,6 +143,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      cancelWindowResizeSession();
       setCurrentWindowFocus(id);
       handleMouseDown(e as React.MouseEvent<HTMLElement, MouseEvent>);
     },
@@ -140,6 +152,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
+      cancelWindowResizeSession();
       setCurrentWindowFocus(id);
       handleTouchStart(e as React.TouchEvent<HTMLElement>);
     },
@@ -167,6 +180,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
     <div
       className="ll:pointer-events-auto ll:absolute"
       ref={draggableRef}
+      data-ll-draggable-window={id}
       style={{
         ...style,
         maxHeight,
@@ -175,9 +189,10 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
         cursor: isLocked ? "default" : isDragging ? "grabbing" : "grab",
       }}
       onMouseDown={onMouseDown}
-      onTouchStart={onTouchStart}
+      onTouchStart={disableTitle ? onTouchStart : undefined}
       onWheel={(e) => e.stopPropagation()}
       onClick={handleClick}
+      id={id}
     >
       <div
         className={cn(
@@ -201,6 +216,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             onOpacityChange={handleOpacityChange}
             onLockToggle={handleLockToggle}
             onClose={onClose}
+            onTouchStart={onTouchStart}
           />
         )}
         <div
@@ -208,9 +224,7 @@ export const DraggableWindow: FC<DraggableWindowProps> = ({
             "ll:flex-1 ll:overflow-hidden ll:cursor-auto",
             contentClassName,
           )}
-          onTouchStart={
-            draggableContent ? onTouchStart : (e) => e.stopPropagation()
-          }
+          onTouchStart={(e) => e.stopPropagation()}
           onMouseDown={
             draggableContent ? onMouseDown : (e) => e.stopPropagation()
           }

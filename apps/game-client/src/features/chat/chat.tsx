@@ -42,10 +42,8 @@ export const Chat = () => {
 
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);
-  const {
-    chat: { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state.chat.open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     `ll:chat:selected-guild:${accountId}:${characterId}`,
     "",
@@ -253,7 +251,7 @@ export const Chat = () => {
             >
               <div
                 className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
-                data-draggable="false"
+                data-ll-draggable="false"
               >
                 {currentMessages?.length === 0 ? (
                   <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
