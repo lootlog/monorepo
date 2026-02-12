@@ -12,10 +12,8 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export const PartyFinder = () => {
-  const {
-    "party-finder": { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state["party-finder"].open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   const partyGathering = usePartyFinderStore((s) => s.partyGathering);
   const volunteers = usePartyFinderStore((s) => s.volunteers);

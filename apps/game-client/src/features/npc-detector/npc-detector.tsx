@@ -10,10 +10,8 @@ import { useWindowsStore } from "@/store/windows.store";
 import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 
 export const NpcDetector = () => {
-  const {
-    "npc-detector": { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state["npc-detector"].open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { npcs, clearNpcs, settings } = useNpcDetectorStore();
 
   const handleClose = () => {

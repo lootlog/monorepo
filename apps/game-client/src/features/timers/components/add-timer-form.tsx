@@ -158,7 +158,7 @@ export const AddTimerForm: React.FC = () => {
     setSelectedGuildIdsForTimers,
     guildIdByCharId,
   } = useSettingsStore();
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: guilds } = useGuilds();
 
   const [searchQuery, setSearchQuery] = useState("");

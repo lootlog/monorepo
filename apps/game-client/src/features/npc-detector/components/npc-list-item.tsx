@@ -42,7 +42,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
     setPartyGathering,
     setChatMessageId,
   } = usePartyFinderStore();
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { data: session } = useSession();
   const discordId = session?.user?.discordId;
   const characterId = String(Game.hero.id);
