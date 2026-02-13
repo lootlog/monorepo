@@ -4,8 +4,10 @@ import {
   Delete,
   Param,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { FastifyReply } from 'fastify';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -99,8 +101,8 @@ export class NotificationsController {
     description: 'Party gathering notification cancelled successfully',
   })
   @ApiResponse({
-    status: 400,
-    description: 'Notification not found or expired',
+    status: 204,
+    description: 'Notification already expired or not found (idempotent)',
   })
   @ApiResponse({
     status: 403,
@@ -109,10 +111,17 @@ export class NotificationsController {
   async cancelPartyGathering(
     @DiscordId() discordId: string,
     @Param('notificationId') notificationId: string,
+    @Res() reply: FastifyReply,
   ) {
-    return this.notificationsService.cancelPartyGathering(
+    const result = await this.notificationsService.cancelPartyGathering(
       discordId,
       notificationId,
     );
+
+    if (result.status === 'expired') {
+      return reply.status(204).send();
+    }
+
+    return reply.status(200).send({ success: true, guildIds: result.guildIds });
   }
 }
