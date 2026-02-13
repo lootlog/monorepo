@@ -102,6 +102,17 @@ http:
       entryPoints:
         - "web"
 
+    admin:
+      rule: "PathPrefix(`/admin`)"
+      service: "admin"
+      middlewares:
+        - "cors"
+        - "apiForwardAuthAdmin"
+        - "apiCompress"
+      priority: 25
+      entryPoints:
+        - "web"
+
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
@@ -155,6 +166,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:4027"
+    admin:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3004"
   middlewares:
     apiStripPrefix:
       stripPrefix:
@@ -172,6 +187,18 @@ http:
         authResponseHeaders:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"
+          - "X-Auth-User-Role"
+        authRequestHeaders:
+          - "Authorization"
+          - "Cookie"
+    apiForwardAuthAdmin:
+      forwardAuth:
+        address: "http://host.docker.internal:4001/auth/verify-sensitive"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - "X-Auth-User-Id"
+          - "X-Auth-Discord-Id"
+          - "X-Auth-User-Role"
         authRequestHeaders:
           - "Authorization"
           - "Cookie"

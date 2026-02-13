@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       service:
-        description: "Service name (api, auth, gateway, etc.)"
+        description: "Service name (admin, api, auth, gateway, etc.)"
         required: true
         type: string
       environment:

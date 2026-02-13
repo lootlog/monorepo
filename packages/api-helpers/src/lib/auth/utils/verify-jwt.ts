@@ -31,6 +31,7 @@ export async function validateToken({
     return {
       userId: payload.sub,
       discordId: payload.discordId as string,
+      role: typeof payload.role === "string" ? payload.role : undefined,
     };
   } catch (error) {
     throw error;

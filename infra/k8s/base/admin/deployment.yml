@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin
+spec:
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      labels:
+        app: admin
+    spec:
+      serviceAccountName: admin
+      containers:
+        - name: admin
+          image: kamilwronka7/lootlog-admin:latest
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+
+          ports:
+            - name: container-port
+              containerPort: 3004
+
+          env:
+            - name: PORT
+              value: "3004"
+            - name: HOSTNAME
+              value: "0.0.0.0"
+            - name: NODE_ENV
+              value: "production"
+            - name: ENV
+              valueFrom:
+                secretKeyRef:
+                  key: env
+                  name: lootlog-admin-secrets
+            - name: AUTH_SERVICE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lootlog-admin-secrets
+                  key: authServiceUrl
+
+          livenessProbe:
+            tcpSocket:
+              port: 3004
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 3004
+            initialDelaySeconds: 5
+            periodSeconds: 5

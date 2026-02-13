@@ -1,0 +1,9 @@
+namespace: lootlog-dev
+resources:
+  - ../../base/admin
+patchesStrategicMerge:
+  - hpa.yml
+images:
+  - name: kamilwronka7/lootlog-admin
+    newTag: dev-9bd9970b7f8bf5f023979d458ae38d3b440f8007
+namePrefix: dev-

@@ -19,4 +19,5 @@ export type VerifyTokenOptions = {
 export type VerifyTokenResponse = {
   discordId?: string;
   userId?: string;
+  role?: string;
 };

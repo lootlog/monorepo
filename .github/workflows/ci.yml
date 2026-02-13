@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
+      admin: ${{ steps.filter.outputs.admin }}
       api: ${{ steps.filter.outputs.api }}
       auth: ${{ steps.filter.outputs.auth }}
       gateway: ${{ steps.filter.outputs.gateway }}
@@ -41,6 +42,9 @@ jobs:
         id: filter
         with:
           filters: |
+            admin:
+              - 'apps/admin/**'
+              - 'packages/**'
             api:
               - 'apps/api/**'
               - 'packages/**'
@@ -67,6 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: |
+      needs.changes.outputs.admin == 'true' ||
       needs.changes.outputs.api == 'true' ||
       needs.changes.outputs.auth == 'true' ||
       needs.changes.outputs.gateway == 'true' ||
@@ -320,6 +325,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: |
+      needs.changes.outputs.admin == 'true' ||
       needs.changes.outputs.api == 'true' ||
       needs.changes.outputs.auth == 'true' ||
       needs.changes.outputs.gateway == 'true' ||
@@ -354,6 +360,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: |
+      needs.changes.outputs.admin == 'true' ||
       needs.changes.outputs.api == 'true' ||
       needs.changes.outputs.auth == 'true' ||
       needs.changes.outputs.gateway == 'true' ||
@@ -371,7 +378,7 @@ jobs:
 
       - name: Build Docker images (no push)
         run: |
-          services=(api auth gateway discord-bot search battlelog-service)
+          services=(admin api auth gateway discord-bot search battlelog-service)
           for service in "${services[@]}"; do
             echo "Building $service..."
             docker build \

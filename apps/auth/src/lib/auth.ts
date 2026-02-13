@@ -5,6 +5,7 @@ import { PostgresDialect } from "kysely";
 import { APP_CONFIG } from "../config/app.config.js";
 import pg from "pg";
 import { admin, bearer, jwt } from "better-auth/plugins";
+import { authAccessControl } from "./auth.permissions.js";
 
 const { user, password, port, host, database } = APP_CONFIG.postgres;
 const { clientId, clientSecret } = APP_CONFIG.discord;
@@ -22,8 +23,10 @@ const poolConfig = {
     : undefined,
 };
 
+export const authPool = new pg.Pool(poolConfig);
+
 const dialect = new PostgresDialect({
-  pool: new pg.Pool(poolConfig),
+  pool: authPool,
 });
 
 export const auth: any = betterAuth({
@@ -88,7 +91,10 @@ export const auth: any = betterAuth({
       },
     }),
     bearer(),
-    admin({ adminUserIds: APP_CONFIG.adminAccountIds }),
+    admin({
+      ...authAccessControl,
+      adminUserIds: APP_CONFIG.adminAccountIds,
+    }),
   ],
   socialProviders: {
     discord: {

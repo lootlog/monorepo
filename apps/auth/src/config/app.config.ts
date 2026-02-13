@@ -2,10 +2,17 @@ import "dotenv/config";
 import { z } from "zod";
 import { RuntimeEnvironment } from "@lootlog/types";
 
+const splitCsv = (val: string) => {
+  return val
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+};
+
 const configSchema = z.object({
   PORT: z.string().transform(Number),
   ENV: z.nativeEnum(RuntimeEnvironment),
-  TRUSTED_ORIGINS: z.string().transform((val) => val.split(",")),
+  TRUSTED_ORIGINS: z.string().transform(splitCsv),
   APP_URL: z.string(),
   POSTGRESQL_HOST: z.string(),
   POSTGRESQL_PORT: z.string().transform(Number),
@@ -17,7 +24,7 @@ const configSchema = z.object({
   POSTGRESQL_SSL_CA: z.string().optional(),
   COOKIE_DOMAIN: z.string(),
   COOKIE_PREFIX: z.string(),
-  ADMIN_ACCOUNT_IDS: z.string().transform((val) => val.split(",")),
+  ADMIN_ACCOUNT_IDS: z.string().transform(splitCsv),
   AUTH_SECRET: z.string(),
 });
 

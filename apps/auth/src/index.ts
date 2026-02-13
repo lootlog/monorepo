@@ -21,6 +21,7 @@ import { logger } from "hono/logger";
 import { healthzController } from "./healthz/healthz.controller.js";
 import { sessionMiddleware } from "./lib/middleware/session.middleware.js";
 import { authController } from "./auth/auth.controller.js";
+import { ensureAdminAuditLogTable } from "./lib/audit/admin-audit.repository.js";
 
 const app = new Hono<{
   Variables: {
@@ -47,11 +48,20 @@ app.on(["POST", "GET"], "/idp/**", (c) => {
   return auth.handler(c.req.raw);
 });
 
-const port = APP_CONFIG.port;
+const bootstrap = async () => {
+  await ensureAdminAuditLogTable();
 
-console.log(`Server is running on ${APP_CONFIG.appUrl}`);
+  const port = APP_CONFIG.port;
 
-serve({
-  fetch: app.fetch,
-  port,
+  console.log(`Server is running on ${APP_CONFIG.appUrl}`);
+
+  serve({
+    fetch: app.fetch,
+    port,
+  });
+};
+
+bootstrap().catch((error) => {
+  console.error("Failed to bootstrap auth service", error);
+  process.exit(1);
 });

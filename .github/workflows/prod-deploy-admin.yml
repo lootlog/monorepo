@@ -1,0 +1,23 @@
+name: Deploy Admin to prod
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-admin-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  security-events: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service: admin
+      environment: prod
+      enable_notifications: false
+    secrets:
+      DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+      DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}

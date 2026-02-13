@@ -167,3 +167,26 @@ EXPOSE 4000
 ENTRYPOINT ["dumb-init", "--"]
 
 CMD ["pnpm", "start"]
+
+FROM base AS admin
+
+LABEL org.opencontainers.image.title="Lootlog Admin"
+LABEL org.opencontainers.image.description="Next.js admin console for user management and moderation"
+LABEL org.opencontainers.image.vendor="Lootlog"
+
+WORKDIR /prod/admin
+
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /usr/src/app/apps/admin/.next/standalone ./
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /usr/src/app/apps/admin/.next/static ./apps/admin/.next/static
+
+USER nodejs
+
+EXPOSE 3004
+
+ENV PORT=3004
+ENV HOSTNAME=0.0.0.0
+ENV NODE_ENV=production
+
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["node", "apps/admin/server.js"]
