@@ -31,7 +31,7 @@ export const useCancelPartyGathering = () => {
           : "/notifications/party-gathering",
       );
 
-      const guildIds = response.data.guildIds;
+      const guildIds = response.data?.guildIds ?? [];
       const nick = Game.hero.nick;
 
       const updatePromises = Object.entries(chatMessageIds).map(
@@ -56,7 +56,7 @@ export const useCancelPartyGathering = () => {
 
       clearPartyFinder();
 
-      return response.data;
+      return response.data ?? { success: true, guildIds: [] };
     },
     onSuccess: () => {
       setOpen("party-finder", false);
