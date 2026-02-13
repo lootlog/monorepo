@@ -11,6 +11,7 @@ export enum RoutingKey {
   GUILDS_NOTIFICATIONS_VOLUNTEER = 'guilds.notifications.volunteer',
   GUILDS_PARTY_GATHERING = 'guilds.party-gathering',
   GUILDS_PARTY_GATHERING_CANCEL = 'guilds.party-gathering.cancel',
+  NOTIFICATIONS_GUILD_SEND_COMMAND = 'notifications.guild.send.command',
 
   GUILDS_DELETE_MESSAGE = 'guilds.delete.message',
   GUILDS_UPDATE_MESSAGE = 'guilds.update.message',

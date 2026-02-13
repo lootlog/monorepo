@@ -3,3 +3,4 @@ export const SEARCH_API_URL = import.meta.env.VITE_SEARCH_API_URL;
 export const BATTLELOG_API_URL = import.meta.env.VITE_BATTLELOG_API_URL;
 export const AUTH_API_URL = import.meta.env.VITE_AUTH_SERVICE_URL;
 export const ACTIVITY_API_URL = import.meta.env.VITE_ACTIVITY_API_URL;
+export const NOTIFICATIONS_API_URL = import.meta.env.VITE_NOTIFICATIONS_API_URL;

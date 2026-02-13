@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
-import { Permission } from 'generated/client';
+import { NpcType, Permission } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { GuildsService } from 'src/guilds/guilds.service';
 import type { CreateNotificationDto } from 'src/notifications/dto/create-notification.dto';
@@ -133,11 +133,33 @@ export class NotificationsService {
     }
     const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type);
     guildIds.forEach((guildId) => {
-      this.emitNotification({
+      const payload = {
         ...basePayload,
         guildId,
         npc: { ...data.npc, type: npcType },
-      });
+      };
+
+      this.emitNotification(payload);
+
+      if (npcType === NpcType.TITAN) {
+        this.emitGuildNotificationCommand({
+          eventId: uuid(),
+          correlationId: notificationId,
+          notificationId,
+          guildId,
+          createdAt,
+          createdByDiscordId: discordId,
+          world: data.world,
+          type: 'NPC_TITAN',
+          npc: {
+            name: data.npc.name,
+            wt: data.npc.wt,
+            lvl: data.npc.lvl,
+            prof: data.npc.prof,
+            type: npcType,
+          },
+        });
+      }
     });
     return { notificationId, guildIds };
   }
@@ -146,6 +168,14 @@ export class NotificationsService {
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
       RoutingKey.GUILDS_NOTIFICATIONS_SEND,
+      payload,
+    );
+  }
+
+  async emitGuildNotificationCommand(payload: unknown) {
+    this.amqpConnection.publish(
+      DEFAULT_EXCHANGE_NAME,
+      RoutingKey.NOTIFICATIONS_GUILD_SEND_COMMAND,
       payload,
     );
   }

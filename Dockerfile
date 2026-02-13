@@ -40,6 +40,7 @@ RUN find ./packages -name "src" -type d -exec rm -rf {} + 2>/dev/null || true &&
 RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     pnpm deploy --filter=@lootlog/auth --prod /prod/auth && \
     pnpm deploy --filter=@lootlog/search --prod /prod/search && \
+    pnpm deploy --filter=@lootlog/notifications --prod /prod/notifications && \
     pnpm deploy --filter=@lootlog/discord-bot --prod /prod/discord-bot && \
     pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway && \
     pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service && \
@@ -108,6 +109,23 @@ LABEL org.opencontainers.image.vendor="Lootlog"
 
 COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/discord-bot /prod/discord-bot
 WORKDIR /prod/discord-bot
+
+USER nodejs
+
+EXPOSE 4000
+
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["pnpm", "start"]
+
+FROM base AS notifications
+
+LABEL org.opencontainers.image.title="Lootlog Notifications Service"
+LABEL org.opencontainers.image.description="Notification scheduling and Discord delivery orchestration"
+LABEL org.opencontainers.image.vendor="Lootlog"
+
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/notifications /prod/notifications
+WORKDIR /prod/notifications
 
 USER nodejs
 

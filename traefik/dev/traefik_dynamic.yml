@@ -102,6 +102,18 @@ http:
       entryPoints:
         - "web"
 
+    notifications:
+      rule: "PathPrefix(`/api/notifications`)"
+      service: "notifications"
+      middlewares:
+        - "cors"
+        - "apiStripPrefix"
+        - "apiForwardAuth"
+        - "apiCompress"
+      priority: 10
+      entryPoints:
+        - "web"
+
     web-client:
       rule: "PathPrefix(`/`)"
       service: "web-client"
@@ -155,6 +167,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:4027"
+    notifications:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:4028"
   middlewares:
     apiStripPrefix:
       stripPrefix:
@@ -164,6 +180,7 @@ http:
           - "/api/lootlog"
           - "/api/battlelog"
           - "/api/activity"
+          - "/api/notifications"
           - "/gateway"
     apiForwardAuth:
       forwardAuth:

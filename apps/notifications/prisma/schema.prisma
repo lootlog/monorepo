@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model GuildDiscordNotificationConfig {
+  guildId            String   @id
+  channelId          String?
+  enabled            Boolean  @default(false)
+  updatedByDiscordId String
+  createdAt          DateTime @default(now()) @db.Timestamptz
+  updatedAt          DateTime @updatedAt @db.Timestamptz
+}
+
+model NotificationDeliveryLog {
+  id           String                   @id @default(cuid())
+  eventId      String                   @unique
+  guildId      String
+  notificationId String
+  channelId    String?
+  type         String
+  payload      Json
+  status       NotificationDeliveryStatus @default(PENDING)
+  errorCode    String?
+  errorMessage String?
+  attemptCount Int                      @default(1)
+  createdAt    DateTime                 @default(now()) @db.Timestamptz
+  updatedAt    DateTime                 @updatedAt @db.Timestamptz
+
+  @@index([guildId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+}
+
+model GuildBotPermissionStatus {
+  guildId            String   @id
+  ok                 Boolean
+  missingPermissions Json
+  checkedAt          DateTime @db.Timestamptz
+  source             String
+  createdAt          DateTime @default(now()) @db.Timestamptz
+  updatedAt          DateTime @updatedAt @db.Timestamptz
+}
+
+model WatchlistSubscription {
+  id          String   @id @default(cuid())
+  guildId     String
+  userDiscordId String
+  itemName    String
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @updatedAt @db.Timestamptz
+
+  @@index([guildId, enabled])
+  @@index([userDiscordId])
+}

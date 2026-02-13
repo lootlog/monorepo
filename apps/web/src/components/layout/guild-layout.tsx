@@ -21,6 +21,7 @@ import { useNpcKillers } from "@/features/stats/hooks/use-npc-killers";
 import { useMemberKills } from "@/features/stats/hooks/use-member-kills";
 import { ROUTES } from "@/config/routes";
 import { useTranslation } from "react-i18next";
+import { DiscordBotPermissionsAnnouncement } from "@/components/common/discord-bot-permissions-announcement";
 
 export const GuildLayout: FC = () => {
   const { t } = useTranslation();
@@ -469,6 +470,7 @@ export const GuildLayout: FC = () => {
           <GuildSidebar />
           <div className="flex flex-row w-full h-full min-h-0">
             <div className="w-full h-full flex flex-col min-h-0">
+              <DiscordBotPermissionsAnnouncement />
               <PageHeader>
                 <div className="flex flex-row gap-2 items-center justify-between w-full">
                   <div className="flex flex-row gap-2 items-center">

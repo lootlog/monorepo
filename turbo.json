@@ -22,7 +22,11 @@
     "R2_REGION",
     "R2_BUCKET_NAME",
     "GOOGLE_TAG_ID",
-    "AUTH_SERVICE_URL"
+    "AUTH_SERVICE_URL",
+    "NOTIFICATIONS_POSTGRESQL_CONNECTION_URI",
+    "API_SERVICE_URL",
+    "DISCORD_BOT_SERVICE_URL",
+    "NOTIFICATIONS_API_URL"
   ],
   "tasks": {
     "build": {
@@ -97,7 +101,8 @@
         "^build",
         "api:generate",
         "battlelog:generate",
-        "activity:generate"
+        "activity:generate",
+        "notifications:generate"
       ],
       "outputs": [],
       "inputs": [
@@ -115,7 +120,8 @@
         "^build",
         "api:generate",
         "battlelog:generate",
-        "activity:generate"
+        "activity:generate",
+        "notifications:generate"
       ],
       "cache": false,
       "outputs": [],
@@ -147,6 +153,17 @@
       "cache": false
     },
     "activity:studio": {
+      "cache": false,
+      "interactive": false
+    },
+    "notifications:migrate:dev": {
+      "cache": false,
+      "interactive": true
+    },
+    "notifications:generate": {
+      "cache": false
+    },
+    "notifications:studio": {
       "cache": false,
       "interactive": false
     }
