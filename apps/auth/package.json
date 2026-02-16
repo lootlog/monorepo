@@ -27,7 +27,7 @@
     "@lootlog/types": "workspace:*",
     "@lootlog/typescript-config": "workspace:*",
     "@types/pg": "^8.16.0",
-    "pkgroll": "^2.23.0",
+    "pkgroll": "^2.25.2",
     "tsx": "^4.21.0"
   }
 }
