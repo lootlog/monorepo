@@ -793,10 +793,7 @@ export class EventTrackingService implements OnModuleInit {
     }
 
     for (const log of activeLogs) {
-      if (!membersByMap.has(log.mapId)) {
-        membersByMap.set(log.mapId, new Set());
-      }
-      membersByMap.get(log.mapId)?.add(log.memberId);
+      membersByMap.get(log.mapId)!.add(log.memberId);
     }
 
     return membersByMap;

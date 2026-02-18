@@ -304,19 +304,16 @@ export class EventKillService {
           continue;
         }
 
-        if (
-          eventHero.npcId === null ||
-          eventHero.npcIcon === null ||
-          eventHero.npcLvl === null
-        ) {
+        const updateData = {
+          ...(eventHero.npcId === null && { npcId }),
+          ...(eventHero.npcIcon === null && { npcIcon }),
+          ...(eventHero.npcLvl === null && npcLvl !== undefined && { npcLvl }),
+        };
+
+        if (Object.keys(updateData).length > 0) {
           eventHero = await this.prisma.eventHeroNpc.update({
             where: { id: eventHero.id },
-            data: {
-              ...(eventHero.npcId === null && { npcId }),
-              ...(eventHero.npcIcon === null && { npcIcon }),
-              ...(eventHero.npcLvl === null &&
-                npcLvl !== undefined && { npcLvl }),
-            },
+            data: updateData,
           });
           this.logger.log({
             message: 'Hero NPC data updated',

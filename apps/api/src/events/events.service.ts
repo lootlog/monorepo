@@ -257,9 +257,7 @@ export class EventsService {
                     mapName: true,
                     locationId: true,
                     assignedMembers: {
-                      select: {
-                        ...memberSelectWithTopRole,
-                      },
+                      select: memberSelectWithTopRole,
                     },
                   },
                 },
@@ -273,9 +271,7 @@ export class EventsService {
                 mapName: true,
                 locationId: true,
                 assignedMembers: {
-                  select: {
-                    ...memberSelectWithTopRole,
-                  },
+                  select: memberSelectWithTopRole,
                 },
               },
             },
@@ -1078,7 +1074,7 @@ export class EventsService {
         attempts: 5,
         backoff: { type: 'exponential', delay: 1000 },
         removeOnComplete: true,
-        removeOnFail: true,
+        removeOnFail: false,
       },
     );
   }

@@ -9,7 +9,6 @@ import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState, useEffect } from "react";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 export const EventKillsHistory = () => {
   const { t } = useTranslation();
@@ -17,7 +16,6 @@ export const EventKillsHistory = () => {
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     urlHeroId,
   );
-  const { data: guild } = useGuild();
 
   useEffect(() => {
     setSelectedHeroId(urlHeroId);
@@ -43,7 +41,7 @@ export const EventKillsHistory = () => {
 
   useEventSocket({
     eventId,
-    guildId: guild?.id,
+    guildId,
     heroId: selectedHeroId,
   });
 
