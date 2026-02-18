@@ -10,5 +10,6 @@ export function buildRespawnAutoCloseJobId(
 }
 
 export function getRespawnAutoCloseDelay(maxSpawnTime: Date): number {
-  return maxSpawnTime.getTime() - Date.now() + AUTO_CLOSE_BUFFER_MS;
+  const delay = maxSpawnTime.getTime() - Date.now() + AUTO_CLOSE_BUFFER_MS;
+  return Math.max(0, delay);
 }

@@ -12,13 +12,11 @@ import { Trophy, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
-  const { data: guild } = useGuild();
 
   const { data: permissions } = useGuildPermissions();
   const canEditPoints =
@@ -33,14 +31,18 @@ export const EventRankingPage = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-  const { data: rankings = [], isLoading: isRankingLoading } = useEventRanking({
+  const {
+    data: rankings = [],
+    isLoading: isRankingLoading,
+    error: rankingError,
+  } = useEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
 
   useEventSocket({
     eventId,
-    guildId: guild?.id,
+    guildId,
   });
 
   useEffect(() => {
@@ -122,6 +124,14 @@ export const EventRankingPage = () => {
           )}
 
           <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+            {rankingError && (
+              <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {t(
+                  "events.ranking.error",
+                  "Nie udało się pobrać rankingu. Dane mogą być niepełne.",
+                )}
+              </div>
+            )}
             <EventRankingTable
               rankings={filteredRankings}
               guildId={guildId}

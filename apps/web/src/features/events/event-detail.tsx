@@ -48,7 +48,6 @@ import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
-import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -59,7 +58,6 @@ export const EventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const navigate = useNavigate();
-  const { data: guild } = useGuild();
 
   const {
     data: event,
@@ -69,7 +67,11 @@ export const EventDetail = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-  const { data: eventMaps, isLoading: isMapsLoading } = useEventMaps({
+  const {
+    data: eventMaps,
+    isLoading: isMapsLoading,
+    error: mapsError,
+  } = useEventMaps({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -86,14 +88,14 @@ export const EventDetail = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-  const { data: rankings = [] } = useEventRanking({
+  const { data: rankings = [], error: rankingError } = useEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
 
   useEventSocket({
     eventId,
-    guildId: guild?.id,
+    guildId,
   });
   const { deleteHero, updateEvent, deleteEvent } = useEventMutations(
     guildId ?? "",
@@ -470,6 +472,26 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          {(mapsError || rankingError) && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {mapsError && (
+                <p>
+                  {t(
+                    "events.maps.error",
+                    "Nie udało się pobrać map eventu. Część danych może być niepełna.",
+                  )}
+                </p>
+              )}
+              {rankingError && (
+                <p>
+                  {t(
+                    "events.ranking.error",
+                    "Nie udało się pobrać rankingu. Część danych może być niepełna.",
+                  )}
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2 h-fit">
