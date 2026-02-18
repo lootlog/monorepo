@@ -43,7 +43,7 @@ describe("useCancelPartyGathering", () => {
           nick: "Test",
           lvl: 100,
           prof: "w",
-          id: "1",
+          characterId: "1",
           accountId: "1",
           icon: "test.gif",
         },
