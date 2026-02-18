@@ -20,19 +20,11 @@ import { EventEmitterService } from './event-emitter.service';
 import { EventKillService } from './event-kill.service';
 import { EventTrackingService } from './event-tracking.service';
 import { EventSummaryService } from './event-summary.service';
+import { getSyntheticNpcId } from '../utils/get-synthetic-npc-id';
 
 const DEFAULT_RESP_RANDOMNESS = 20;
 
 const AUTO_CLOSE_BUFFER_MS = 5 * 60 * 1000;
-
-function getSyntheticNpcId(heroId: string): number {
-  let hash = 0;
-  for (let i = 0; i < heroId.length; i++) {
-    hash = ((hash << 5) - hash) + heroId.charCodeAt(i);
-    hash |= 0;
-  }
-  return -Math.abs(hash || 1);
-}
 
 @Injectable()
 export class EventRespawnService {

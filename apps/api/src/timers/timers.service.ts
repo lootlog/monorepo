@@ -38,6 +38,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import Redlock, { ExecutionError } from 'redlock';
 import { EventsService } from 'src/events/events.service';
+import { getSyntheticNpcId } from 'src/events/utils/get-synthetic-npc-id';
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -139,6 +140,130 @@ export class TimersService implements OnModuleInit {
     };
   }
 
+  private async findPreviousTimerForKillContext(
+    guildId: string,
+    world: string,
+    npcId: number,
+    npcName: string,
+    npcData: NpcData,
+  ): Promise<{
+    previousTimer: Timer | null;
+    migratedSyntheticNpcId: number | null;
+  }> {
+    const previousTimer = await this.prisma.timer.findUnique({
+      where: { timerId: { guildId, world, npcId } },
+    });
+    if (previousTimer) {
+      return { previousTimer, migratedSyntheticNpcId: null };
+    }
+
+    try {
+      const heroMatch = await this.eventsService.findActiveEventHeroByNpc(
+        guildId,
+        world,
+        npcId,
+        npcName,
+      );
+      if (!heroMatch || heroMatch.eventHero.npcId !== null) {
+        return { previousTimer: null, migratedSyntheticNpcId: null };
+      }
+
+      const syntheticNpcId = getSyntheticNpcId(heroMatch.eventHero.id);
+      if (syntheticNpcId === npcId) {
+        return { previousTimer: null, migratedSyntheticNpcId: null };
+      }
+
+      const syntheticTimer = await this.prisma.timer.findUnique({
+        where: { timerId: { guildId, world, npcId: syntheticNpcId } },
+      });
+      if (!syntheticTimer) {
+        return { previousTimer: null, migratedSyntheticNpcId: null };
+      }
+
+      const migratedTimer = await this.prisma.timer.upsert({
+        where: { timerId: { guildId, world, npcId } },
+        create: {
+          createdById: syntheticTimer.createdById,
+          guildId,
+          npcId,
+          world,
+          minSpawnTime: syntheticTimer.minSpawnTime,
+          maxSpawnTime: syntheticTimer.maxSpawnTime,
+          latestRespBaseSeconds: syntheticTimer.latestRespBaseSeconds,
+          latestRespawnRandomness: syntheticTimer.latestRespawnRandomness,
+          tempId: syntheticTimer.tempId,
+          wasReset: syntheticTimer.wasReset,
+          npc: npcData,
+          windowOpenedAt: syntheticTimer.windowOpenedAt,
+        },
+        update: {},
+      });
+
+      try {
+        await this.prisma.timer.delete({
+          where: { timerId: { guildId, world, npcId: syntheticNpcId } },
+        });
+      } catch (error) {
+        if (
+          !(
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2025'
+          )
+        ) {
+          throw error;
+        }
+      }
+
+      this.logger.log({
+        level: 'debug',
+        message: 'Migrated synthetic event timer to real NPC ID',
+        guildId,
+        world,
+        syntheticNpcId,
+        realNpcId: npcId,
+      });
+
+      return {
+        previousTimer: migratedTimer,
+        migratedSyntheticNpcId: syntheticNpcId,
+      };
+    } catch (error) {
+      this.logger.warn({
+        level: 'warn',
+        message: 'Failed to resolve synthetic timer context for event hero',
+        guildId,
+        world,
+        npcId,
+        npcName,
+        error: error instanceof Error ? error.message : error,
+      });
+      return { previousTimer: null, migratedSyntheticNpcId: null };
+    }
+  }
+
+  private async findTimerAfterLockFailure(
+    guildId: string,
+    world: string,
+    npcId: number,
+  ) {
+    const maxAttempts = 10;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const timer = await this.prisma.timer.findUnique({
+        where: { timerId: { guildId, world, npcId } },
+        include: { member: true },
+      });
+      if (timer) {
+        return timer;
+      }
+
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    }
+
+    return null;
+  }
+
   async createTimerForGuild(
     discordId: string,
     userId: string,
@@ -187,16 +312,19 @@ export class TimersService implements OnModuleInit {
 
       mainLock = await this.redlock.acquire([lockKey], this.lockTtl);
 
-      // Fetch previous timer before upsert to get previous spawn times
-      const previousTimer = await this.prisma.timer.findUnique({
-        where: { timerId: { guildId, world: data.world, npcId: data.npc.id } },
-      });
-
       const { minSpawnTime, maxSpawnTime } = validateAndCalculateSpawnTimes(
         data,
         now,
       );
       const npcData = this.buildNpcData(data.npc);
+      const { previousTimer, migratedSyntheticNpcId } =
+        await this.findPreviousTimerForKillContext(
+          guildId,
+          data.world,
+          data.npc.id,
+          data.npc.name,
+          npcData,
+        );
       const respawnRandomness =
         data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
 
@@ -224,6 +352,14 @@ export class TimersService implements OnModuleInit {
         this.redis.set(dedupKey, JSON.stringify(newTimer), DEDUP_TTL_SECONDS),
         this.invalidateTimersCache(guildId),
       ]);
+
+      if (migratedSyntheticNpcId !== null) {
+        this.emitDeleteTimer({
+          guildId,
+          world: data.world,
+          npcId: migratedSyntheticNpcId,
+        });
+      }
 
       this.emitUpdateTimer(newTimer);
 
@@ -257,6 +393,22 @@ export class TimersService implements OnModuleInit {
       return newTimer;
     } catch (error) {
       if (error instanceof ExecutionError) {
+        const existingTimer = await this.findTimerAfterLockFailure(
+          guildId,
+          data.world,
+          data.npc.id,
+        );
+        if (existingTimer) {
+          this.logger.log({
+            level: 'debug',
+            message: 'Lock contention resolved by returning existing timer',
+            guildId,
+            npcId: data.npc.id,
+            world: data.world,
+          });
+          return existingTimer;
+        }
+
         this.logger.log({
           level: 'error',
           message: `Lock acquisition failed for createTimerForGuild`,

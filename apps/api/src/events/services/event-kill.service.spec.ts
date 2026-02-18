@@ -601,9 +601,16 @@ describe('EventKillService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             assignedAt: expect.objectContaining({
-              gte: windowOpenedAt,
               lte: expect.any(Date),
             }),
+            OR: expect.arrayContaining([
+              { unassignedAt: null },
+              {
+                unassignedAt: expect.objectContaining({
+                  gte: windowOpenedAt,
+                }),
+              },
+            ]),
           }),
         }),
       );
@@ -704,6 +711,95 @@ describe('EventKillService', () => {
       expect(calculateCall[3]).toBe(1);
     });
 
+    it('should award points to member assigned before window start when assignment overlaps kill window', async () => {
+      const now = Date.now();
+      const windowOpenedAt = new Date(now - 5 * 60 * 1000);
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 1, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date(now - 30 * 60 * 1000),
+              unassignedAt: null,
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 300,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      await service.recordHeroKill(
+        guildId,
+        mockEventHero,
+        mockEvent,
+        timerDataInWindow,
+      );
+
+      const createManyArgs = txMock.eventKillPoint.createMany.mock.calls[0][0];
+      expect(createManyArgs.data[0].memberId).toBe(1);
+      expect(txMock.eventMapAssignmentHistory.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            assignedAt: expect.objectContaining({
+              lte: expect.any(Date),
+            }),
+            OR: expect.arrayContaining([
+              { unassignedAt: null },
+              {
+                unassignedAt: expect.objectContaining({
+                  gte: windowOpenedAt,
+                }),
+              },
+            ]),
+          }),
+        }),
+      );
+    });
+
     it('should ignore assignments from previous windows', async () => {
       const now = Date.now();
       const windowOpenedAt = new Date(now - 60 * 1000);
@@ -739,6 +835,7 @@ describe('EventKillService', () => {
               mapId: 'map-1',
               memberId: 1,
               assignedAt: new Date(now - 20 * 60 * 1000),
+              unassignedAt: new Date(now - 10 * 60 * 1000),
             },
             {
               mapId: 'map-1',
@@ -823,6 +920,7 @@ describe('EventKillService', () => {
               mapId: 'map-1',
               memberId: 1,
               assignedAt: new Date('2026-02-18T05:29:05.185Z'),
+              unassignedAt: new Date('2026-02-18T06:00:00.000Z'),
             },
             {
               mapId: 'map-1',
@@ -1641,6 +1739,80 @@ describe('EventKillService', () => {
         beforeKill.getTime(),
       );
       expect(passedKilledAt.getTime()).toBeLessThanOrEqual(afterKill.getTime());
+    });
+  });
+
+  // ==========================================================================
+  // getKillTimelineData
+  // ==========================================================================
+  describe('getKillTimelineData', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+    const heroId = 'hero-1';
+    const killId = 'kill-1';
+
+    it('should use summary windowOpenedAt for assignment overlap filtering', async () => {
+      const killedAt = new Date('2026-02-18T11:25:18.230Z');
+      const minSpawnTimeAtKill = new Date('2026-02-18T11:25:18.230Z');
+      const windowOpenedAt = new Date('2026-02-18T09:27:52.727Z');
+
+      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue({
+        minSpawnTimeAtKill,
+        killedAt,
+      });
+      mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue({
+        gapsTimeline: [],
+        windowOpenedAt,
+      });
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1', mapId: 1 },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([]);
+
+      await service.getKillTimelineData(guildId, eventId, heroId, killId);
+
+      expect(mockPrismaService.eventMapAssignmentHistory.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            assignedAt: { lte: killedAt },
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: windowOpenedAt } },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('should fall back to minSpawnTimeAtKill when summary is missing', async () => {
+      const killedAt = new Date('2026-02-18T11:25:18.230Z');
+      const minSpawnTimeAtKill = new Date('2026-02-18T10:00:00.000Z');
+
+      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue({
+        minSpawnTimeAtKill,
+        killedAt,
+      });
+      mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1', mapId: 1 },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([]);
+
+      await service.getKillTimelineData(guildId, eventId, heroId, killId);
+
+      expect(mockPrismaService.eventMapAssignmentHistory.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            assignedAt: { lte: killedAt },
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: minSpawnTimeAtKill } },
+            ],
+          }),
+        }),
+      );
     });
   });
 

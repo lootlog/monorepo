@@ -11,6 +11,7 @@ import { EventSummaryService } from './event-summary.service';
 import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
 import type { AutoCloseRespawnWindowJobData } from '../respawn-window.processor';
 import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
+import { getSyntheticNpcId } from '../utils/get-synthetic-npc-id';
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 15;
@@ -451,7 +452,11 @@ export class EventKillService {
       const assignmentHistory = await tx.eventMapAssignmentHistory.findMany({
         where: {
           mapId: { in: mapIds },
-          assignedAt: { gte: scoringWindowStartTime, lte: killedAt },
+          assignedAt: { lte: killedAt },
+          OR: [
+            { unassignedAt: null },
+            { unassignedAt: { gte: scoringWindowStartTime } },
+          ],
         },
         select: {
           mapId: true,
@@ -470,13 +475,20 @@ export class EventKillService {
       >();
 
       for (const history of assignmentHistory) {
-        // Defensive clamp in case mocks or external callers bypass query constraints.
-        if (history.assignedAt < scoringWindowStartTime) {
+        const mapName = mapIdToName.get(history.mapId);
+        if (!mapName) {
           continue;
         }
 
-        const mapName = mapIdToName.get(history.mapId);
-        if (!mapName) {
+        const intervalStart =
+          history.assignedAt > scoringWindowStartTime
+            ? history.assignedAt
+            : scoringWindowStartTime;
+        const intervalEndCandidate = history.unassignedAt ?? killedAt;
+        const intervalEnd =
+          intervalEndCandidate < killedAt ? intervalEndCandidate : killedAt;
+
+        if (intervalEnd < intervalStart) {
           continue;
         }
 
@@ -489,14 +501,6 @@ export class EventKillService {
           memberMapIds.set(history.memberId, new Set<string>());
         }
         memberMapIds.get(history.memberId)?.add(history.mapId);
-
-        const intervalStart =
-          history.assignedAt > scoringWindowStartTime
-            ? history.assignedAt
-            : scoringWindowStartTime;
-        const intervalEndCandidate = history.unassignedAt ?? killedAt;
-        const intervalEnd =
-          intervalEndCandidate < killedAt ? intervalEndCandidate : killedAt;
 
         if (intervalEnd > intervalStart) {
           if (!memberTrackingIntervals.has(history.memberId)) {
@@ -1048,11 +1052,13 @@ export class EventKillService {
 
     const summary = await this.prisma.eventRespawnWindowSummary.findUnique({
       where: { killId },
-      select: { gapsTimeline: true },
+      select: { gapsTimeline: true, windowOpenedAt: true },
     });
 
     const summaryGaps =
       (summary?.gapsTimeline as unknown as GapTimelineEntry[] | null) ?? [];
+    const scoringWindowStartTime =
+      summary?.windowOpenedAt ?? kill.minSpawnTimeAtKill;
 
     const maps = await this.prisma.eventMap.findMany({
       where: { heroNpcId: heroId },
@@ -1068,7 +1074,7 @@ export class EventKillService {
               assignedAt: { lte: kill.killedAt },
               OR: [
                 { unassignedAt: null },
-                { unassignedAt: { gte: kill.minSpawnTimeAtKill } },
+                { unassignedAt: { gte: scoringWindowStartTime } },
               ],
             },
             include: {
@@ -1175,7 +1181,7 @@ export class EventKillService {
       return;
     }
 
-    const effectiveNpcId = npcId ?? this.getSyntheticNpcId(heroId);
+    const effectiveNpcId = npcId ?? getSyntheticNpcId(heroId);
     const jobId = `auto-close-${heroId}-${maxSpawnTime.getTime()}`;
 
     await this.respawnWindowQueue.add(
@@ -1196,15 +1202,6 @@ export class EventKillService {
       delayMs: delay,
       jobId,
     });
-  }
-
-  private getSyntheticNpcId(heroId: string): number {
-    let hash = 0;
-    for (let i = 0; i < heroId.length; i++) {
-      hash = (hash << 5) - hash + heroId.charCodeAt(i);
-      hash |= 0;
-    }
-    return -Math.abs(hash || 1);
   }
 
   private getEventKillLockKey(
