@@ -70,7 +70,12 @@ export class EventsService {
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
-    const { startsAt, endsAt, heroNpcs, ...eventData } = data;
+    const { startsAt, endsAt, heroNpcs, world, ...eventData } = data;
+    const normalizedWorld = world.trim().toLowerCase();
+
+    if (!normalizedWorld) {
+      throw new BadRequestException('World is required');
+    }
 
     const startDate = startsAt ? new Date(startsAt) : new Date();
     const endDate = endsAt ? new Date(endsAt) : null;
@@ -85,6 +90,7 @@ export class EventsService {
     const event = await this.prisma.event.create({
       data: {
         ...eventData,
+        world: normalizedWorld,
         active,
         guildId,
         startsAt: startDate,
@@ -396,19 +402,27 @@ export class EventsService {
 
   async deleteEvent(guildId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId, active: true },
+      where: { id: eventId, guildId },
+      select: { id: true },
     });
 
     if (!event) {
       throw new NotFoundException('Event not found');
     }
 
-    await this.prisma.event.update({
+    const jobs = await Promise.all([
+      this.respawnWindowQueue.getJobs(['waiting']),
+      this.respawnWindowQueue.getJobs(['delayed']),
+    ]);
+
+    const eventJobs = jobs.flat().filter((job) => job.data.eventId === eventId);
+
+    for (const job of eventJobs) {
+      await job.remove().catch(() => undefined);
+    }
+
+    await this.prisma.event.delete({
       where: { id: eventId },
-      data: {
-        active: false,
-        endsAt: new Date(),
-      },
     });
 
     return { success: true };

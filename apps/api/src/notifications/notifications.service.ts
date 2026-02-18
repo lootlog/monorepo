@@ -283,10 +283,18 @@ export class NotificationsService {
     return { notificationId, guildIds };
   }
 
-  async cancelPartyGathering(discordId: string, notificationId: string) {
+  async cancelPartyGathering(
+    discordId: string,
+    notificationId: string,
+  ): Promise<
+    { status: 'success'; guildIds: string[] } | { status: 'expired' }
+  > {
     const metadata = await this.getNotificationMetadata(notificationId);
+
     if (!metadata) {
-      throw new BadRequestException('Notification not found or expired');
+      await this.redisService.del(this.getNotificationKey(notificationId));
+      await this.redisService.del(this.getPartyGatheringUserKey(discordId));
+      return { status: 'expired' };
     }
 
     if (metadata.discordId !== discordId) {
@@ -308,7 +316,7 @@ export class NotificationsService {
       );
     });
 
-    return { success: true, guildIds: metadata.guildIds };
+    return { status: 'success', guildIds: metadata.guildIds };
   }
 
   async cancelPartyGatheringByUser(discordId: string) {

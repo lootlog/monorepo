@@ -1,7 +1,6 @@
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { Game } from "@/lib/game";
-import axios from "axios";
 
 export const useSilentCancelPartyGathering = () => {
   const { client } = useAuthenticatedApiClient();
@@ -24,7 +23,7 @@ export const useSilentCancelPartyGathering = () => {
           : "/notifications/party-gathering",
       );
 
-      const guildIds = response.data.guildIds;
+      const guildIds = response.data?.guildIds ?? [];
       const nick = Game.hero.nick;
 
       const updatePromises = Object.entries(chatMessageIds).map(
@@ -47,11 +46,7 @@ export const useSilentCancelPartyGathering = () => {
 
       await Promise.allSettled(updatePromises);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 400) {
-        // Expired gathering — swallow silently
-      } else {
-        console.warn("Silent cancel failed:", error);
-      }
+      console.warn("Silent cancel failed:", error);
     } finally {
       clearPartyFinder();
     }
