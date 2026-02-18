@@ -27,9 +27,13 @@ interface PresenceUpdatePayload {
 
 interface UseEventPresenceOptions {
   guildId?: string;
+  world?: string;
 }
 
-export const useEventPresence = ({ guildId }: UseEventPresenceOptions) => {
+export const useEventPresence = ({
+  guildId,
+  world,
+}: UseEventPresenceOptions) => {
   const { socket, connected, joined } = useGateway();
   const [presenceData, setPresenceData] = useState<
     Map<string, PlayerPresence[]>
@@ -52,42 +56,69 @@ export const useEventPresence = ({ guildId }: UseEventPresenceOptions) => {
             newMap.set(discordId, filtered);
           }
         } else if (player) {
+          if (world && player.world !== world) {
+            const existing = newMap.get(discordId) || [];
+            const filtered = existing.filter(
+              (p) => p.sessionId !== player.sessionId,
+            );
+            if (filtered.length === 0) {
+              newMap.delete(discordId);
+            } else {
+              newMap.set(discordId, filtered);
+            }
+
+            return newMap;
+          }
+
           const existing = newMap.get(discordId) || [];
           const idx = existing.findIndex(
             (p) => p.sessionId === player.sessionId,
           );
           if (idx >= 0) {
-            existing[idx] = player;
+            const updated = [...existing];
+            updated[idx] = player;
+            newMap.set(discordId, updated);
           } else {
-            existing.push(player);
+            newMap.set(discordId, [...existing, player]);
           }
-          newMap.set(discordId, existing);
         }
 
         return newMap;
       });
     },
-    [guildId],
+    [guildId, world],
   );
 
   const fetchInitialPresence = useCallback(() => {
-    if (!socket || !connected || !joined || !guildId) return;
+    if (!socket || !connected || !joined || !guildId || !world) return;
 
     socket.emit(
       GatewayEvent.PRESENCE_FETCH,
-      { guildId },
+      { guildId, world },
       (response: Record<string, PlayerPresence[]>) => {
         const newMap = new Map<string, PlayerPresence[]>();
         for (const [discordId, players] of Object.entries(response)) {
-          newMap.set(discordId, players);
+          const filteredPlayers = players.filter((player) => {
+            return !world || player.world === world;
+          });
+
+          if (filteredPlayers.length > 0) {
+            newMap.set(discordId, filteredPlayers);
+          }
         }
         setPresenceData(newMap);
       },
     );
-  }, [socket, connected, joined, guildId]);
+  }, [socket, connected, joined, guildId, world]);
 
   useEffect(() => {
-    if (!socket || !connected || !joined || !guildId) {
+    if (!guildId || !world) {
+      setPresenceData(new Map());
+    }
+  }, [guildId, world]);
+
+  useEffect(() => {
+    if (!socket || !connected || !joined || !guildId || !world) {
       return;
     }
 
@@ -103,6 +134,7 @@ export const useEventPresence = ({ guildId }: UseEventPresenceOptions) => {
     connected,
     joined,
     guildId,
+    world,
     handlePresenceUpdate,
     fetchInitialPresence,
   ]);

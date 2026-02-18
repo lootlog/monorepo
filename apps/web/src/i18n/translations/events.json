@@ -18,6 +18,15 @@
   "endSuccess": "Zakończono event",
   "resumeSuccess": "Wznowiono event",
   "statusError": "Błąd podczas zmiany statusu",
+  "deleteSuccess": "Usunięto event",
+  "deleteError": "Błąd podczas usuwania eventu",
+  "deleteDialog": {
+    "title": "Usunąć event?",
+    "description": "Czy na pewno chcesz usunąć event „{{name}}”? Ta operacja usuwa wszystkie dane eventowe i jest nieodwracalna.",
+    "confirmLabel": "Wpisz nazwę eventu, aby potwierdzić",
+    "confirmPlaceholder": "Nazwa eventu",
+    "confirmHint": "Aby usunąć event, wpisz dokładnie: {{name}}"
+  },
   "endDialog": {
     "title": "Zakończyć event?",
     "description": "Czy na pewno chcesz zakończyć ten event? Będzie on oznaczony jako nieaktywny."
