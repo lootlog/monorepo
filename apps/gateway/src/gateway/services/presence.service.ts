@@ -154,6 +154,7 @@ export class PresenceService {
     server: Server,
     client: Socket,
     guildId: string,
+    world?: string,
   ): Promise<Record<string, PlayerPresence[]>> {
     const presenceRoom = buildRoomName(guildId, 'presence');
 
@@ -168,7 +169,10 @@ export class PresenceService {
     const result: Record<string, PlayerPresence[]> = {};
 
     for (const socket of socketsInRoom) {
-      if (socket.data.playerPresence) {
+      if (
+        socket.data.playerPresence &&
+        (!world || socket.data.playerPresence.world === world)
+      ) {
         const discordId = socket.data.discordId;
         if (!result[discordId]) {
           result[discordId] = [];

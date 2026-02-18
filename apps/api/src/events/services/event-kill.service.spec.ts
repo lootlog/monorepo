@@ -303,6 +303,39 @@ describe('EventKillService', () => {
       windowOpenedAt: new Date(),
     };
 
+    it('should skip duplicate kill when dedup window is active', async () => {
+      mockRedisService.get.mockResolvedValueOnce('1');
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(mockRedisService.setNX).not.toHaveBeenCalled();
+      expect(mockPrismaService.eventHeroNpc.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('should skip duplicate kill when lock is already held', async () => {
+      mockRedisService.get.mockResolvedValueOnce(null);
+      mockRedisService.setNX.mockResolvedValueOnce(false);
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(mockPrismaService.eventHeroNpc.findFirst).not.toHaveBeenCalled();
+      expect(mockRedisService.del).not.toHaveBeenCalled();
+    });
+
     it('should skip if NPC is not an event hero', async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
 
@@ -316,6 +349,9 @@ describe('EventKillService', () => {
       );
 
       expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
+      );
     });
 
     it('should update hero npcId if missing', async () => {
@@ -329,14 +365,31 @@ describe('EventKillService', () => {
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockRedisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
       mockPrismaService.eventHeroNpc.update.mockResolvedValue(updatedHero);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([]),
+          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+        },
+      };
       mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockPrismaService),
+        callback(txMock),
       );
-      mockPrismaService.eventHeroKill.create.mockResolvedValue({
-        id: 'kill-1',
-      });
+      mockQueue.getJobs.mockResolvedValue([]);
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -364,12 +417,26 @@ describe('EventKillService', () => {
 
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 0 }),
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([]),
+          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+        },
+      };
       mockPrismaService.$transaction.mockImplementation((callback) =>
-        callback(mockPrismaService),
+        callback(txMock),
       );
-      mockPrismaService.eventHeroKill.create.mockResolvedValue({
-        id: 'kill-1',
-      });
+      mockQueue.getJobs.mockResolvedValue([]);
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -381,12 +448,48 @@ describe('EventKillService', () => {
         true, // isManualClose
       );
 
-      expect(mockPrismaService.eventHeroKill.create).toHaveBeenCalledWith(
+      expect(txMock.eventHeroKill.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             isManualClose: true,
           }),
         }),
+      );
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        `event:hero:kill:dedup:${guildId}:${world}:${npcId}`,
+        expect.any(String),
+        15,
+      );
+    });
+
+    it('should not set dedup marker when record fails', async () => {
+      const mockHero = {
+        id: 'hero-1',
+        npcId,
+        npcIcon,
+        npcName,
+        event: { id: 'event-1' },
+      };
+
+      mockRedisService.get
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.eventMap.findMany.mockResolvedValue([]);
+      mockPrismaService.$transaction.mockRejectedValue(new Error('boom'));
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(mockRedisService.set).not.toHaveBeenCalled();
+      expect(mockRedisService.del).toHaveBeenCalledWith(
+        `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
       );
     });
   });
@@ -417,12 +520,19 @@ describe('EventKillService', () => {
       windowOpenedAt: new Date(),
     };
 
-    it('should create kill record with points for assigned members', async () => {
+    it('should create kill record with points for members assigned in current window', async () => {
+      const now = Date.now();
+      const windowOpenedAt = new Date(now - 15 * 60 * 1000);
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
       const mockMaps = [
         {
           id: 'map-1',
           mapName: 'Map 1',
-          assignedMembers: [{ id: 1 }, { id: 2 }],
+          assignedMembers: [],
         },
       ];
 
@@ -444,7 +554,18 @@ describe('EventKillService', () => {
           update: jest.fn().mockResolvedValue({}),
         },
         eventMapAssignmentHistory: {
-          findMany: jest.fn().mockResolvedValue([]),
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date(now - 10 * 60 * 1000),
+            },
+            {
+              mapId: 'map-1',
+              memberId: 2,
+              assignedAt: new Date(now - 5 * 60 * 1000),
+            },
+          ]),
           updateMany: jest.fn().mockResolvedValue({ count: 2 }),
         },
       };
@@ -472,11 +593,373 @@ describe('EventKillService', () => {
         guildId,
         mockEventHero,
         mockEvent,
-        timerData,
+        timerDataInWindow,
       );
 
       expect(txMock.eventHeroKill.create).toHaveBeenCalled();
+      expect(txMock.eventMapAssignmentHistory.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            assignedAt: expect.objectContaining({
+              gte: windowOpenedAt,
+              lte: expect.any(Date),
+            }),
+          }),
+        }),
+      );
+      expect(mockPointsService.getMemberPresenceStats).toHaveBeenCalledWith(
+        mockEventHero.id,
+        1,
+        windowOpenedAt,
+      );
       expect(mockPointsService.updateRankingAfterKill).toHaveBeenCalled();
+    });
+
+    it('should award points to member previously assigned but currently unassigned', async () => {
+      const now = Date.now();
+      const windowOpenedAt = new Date(now - 5 * 60 * 1000);
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+      const mockMaps = [
+        {
+          id: 'map-1',
+          mapName: 'Map 1',
+          assignedMembers: [],
+        },
+      ];
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue(mockMaps);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 1, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date(now - 2 * 60 * 1000),
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 300,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1.0,
+        timeMultiplier: 1.0,
+        trackersMultiplier: 1.0,
+        mapsMultiplier: 1.0,
+      });
+
+      await service.recordHeroKill(
+        guildId,
+        mockEventHero,
+        mockEvent,
+        timerDataInWindow,
+      );
+
+      expect(txMock.eventKillPoint.createMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.arrayContaining([
+            expect.objectContaining({
+              memberId: 1,
+              mapName: 'Map 1',
+            }),
+          ]),
+        }),
+      );
+      expect(mockPointsService.calculateMemberPoints).toHaveBeenCalled();
+      const calculateCall =
+        mockPointsService.calculateMemberPoints.mock.calls[0];
+      expect(calculateCall[0]).toBe(mockEvent);
+      expect(calculateCall[2]).toBe(1);
+      expect(calculateCall[3]).toBe(1);
+    });
+
+    it('should ignore assignments from previous windows', async () => {
+      const now = Date.now();
+      const windowOpenedAt = new Date(now - 60 * 1000);
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 2, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          // Includes one stale assignment that must be ignored.
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date(now - 20 * 60 * 1000),
+            },
+            {
+              mapId: 'map-1',
+              memberId: 2,
+              assignedAt: new Date(now - 20 * 1000),
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 20,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 20, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      await service.recordHeroKill(
+        guildId,
+        mockEventHero,
+        mockEvent,
+        timerDataInWindow,
+      );
+
+      const createManyArgs = txMock.eventKillPoint.createMany.mock.calls[0][0];
+      const memberIds = createManyArgs.data.map(
+        (entry: { memberId: number }) => entry.memberId,
+      );
+      expect(memberIds).toEqual([2]);
+      expect(mockPointsService.calculateMemberPoints).toHaveBeenCalledTimes(1);
+    });
+
+    it('should calculate tracking duration only within current window', async () => {
+      jest.useFakeTimers();
+      const killedAt = new Date('2026-02-18T06:08:31.185Z');
+      jest.setSystemTime(killedAt);
+
+      const windowOpenedAt = new Date('2026-02-18T06:08:25.185Z');
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 2, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          // Includes one stale assignment that should be ignored.
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date('2026-02-18T05:29:05.185Z'),
+            },
+            {
+              mapId: 'map-1',
+              memberId: 2,
+              assignedAt: new Date('2026-02-18T06:08:26.061Z'),
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 5,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 5, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      try {
+        await service.recordHeroKill(
+          guildId,
+          mockEventHero,
+          mockEvent,
+          timerDataInWindow,
+        );
+
+        const createManyArgs =
+          txMock.eventKillPoint.createMany.mock.calls[0][0];
+        const createdPoint = createManyArgs.data[0];
+
+        expect(createdPoint.trackingDurationSeconds).toBe(5);
+        expect(createdPoint.trackingDurationPercentage).toBe(83);
+        expect(createdPoint.trackingDurationSeconds).toBeLessThanOrEqual(6);
+        expect(createdPoint.memberId).toBe(2);
+
+        const calculateCall =
+          mockPointsService.calculateMemberPoints.mock.calls[0];
+        expect(calculateCall[4]).toBe(83);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('should keep tracking duration percentage null when window duration is zero', async () => {
+      jest.useFakeTimers();
+      const killedAt = new Date('2026-02-18T06:08:31.185Z');
+      jest.setSystemTime(killedAt);
+
+      const timerDataZeroWindow = {
+        ...timerData,
+        previousMinSpawnTime: killedAt,
+        windowOpenedAt: killedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 1, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: killedAt,
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 0,
+        afkPercentage: 0,
+        wasPresent: false,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 0, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      try {
+        await service.recordHeroKill(
+          guildId,
+          mockEventHero,
+          mockEvent,
+          timerDataZeroWindow,
+        );
+
+        const createManyArgs =
+          txMock.eventKillPoint.createMany.mock.calls[0][0];
+        const createdPoint = createManyArgs.data[0];
+        expect(createdPoint.trackingDurationSeconds).toBe(0);
+        expect(createdPoint.trackingDurationPercentage).toBeNull();
+        const calculateCall =
+          mockPointsService.calculateMemberPoints.mock.calls[0];
+        expect(calculateCall[4]).toBeUndefined();
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('should handle kill with no assigned members', async () => {

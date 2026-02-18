@@ -109,7 +109,10 @@ export const HeroDetail = () => {
     eventId: eventId ?? "",
   });
 
-  const { presenceData } = useEventPresence({ guildId: guild?.id });
+  const { presenceData } = useEventPresence({
+    guildId: guild?.id,
+    world: event?.world,
+  });
 
   useEventSocket({ eventId, guildId: guild?.id, heroId });
 
