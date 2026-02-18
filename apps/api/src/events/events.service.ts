@@ -7,6 +7,7 @@ import {
 import type { Queue } from 'bullmq';
 import { PrismaService } from 'src/db/prisma.service';
 import { RESPAWN_WINDOW_QUEUE } from './constants/respawn-queue.constant';
+import { EVENT_HERO_KILL_QUEUE } from './constants/event-hero-kill-queue.constant';
 import type { AutoCloseRespawnWindowJobData } from './respawn-window.processor';
 import { CreateEventDto } from './dto/create-event.dto';
 import { CreateHeroDto } from './dto/create-hero.dto';
@@ -26,12 +27,22 @@ import {
 } from 'generated/client';
 import { filterHeroesByLevel } from 'src/shared/utils/can-view-event-hero';
 import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
-import type { KillTimerData } from './interfaces/kill-timer-data.interface';
+import type {
+  CheckEventHeroKillParams,
+  EventHeroKillJobData,
+  KillTimerData,
+} from './interfaces';
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
   MapStatus,
 } from './interfaces/respawn-window.interface';
+import {
+  EVENT_HERO_KILL_JOB_NAME,
+  buildEventHeroKillJobId,
+  createEventHeroKillJobData,
+  getEventHeroKillWindowKey,
+} from './utils/event-hero-kill-job';
 
 import { EventPointsService } from './services/event-points.service';
 import { EventTrackingService } from './services/event-tracking.service';
@@ -44,18 +55,25 @@ interface TimerNpcData {
   icon: string;
 }
 
-export interface CheckEventHeroKillParams {
-  guildId: string;
-  world: string;
-  npcId: number;
-  npcName: string;
-  npcIcon: string;
-  npcLvl?: number;
-  timerData: KillTimerData;
-}
+const memberSelectWithTopRole = {
+  id: true,
+  name: true,
+  avatar: true,
+  userId: true,
+  roles: {
+    select: {
+      position: true,
+      color: true,
+    },
+    orderBy: {
+      position: 'desc' as const,
+    },
+    take: 1,
+  },
+};
 
 export type { MapStatus, CloseRespawnWindowOptions, OpenRespawnWindowOptions };
-export type { KillTimerData };
+export type { CheckEventHeroKillParams, KillTimerData };
 
 @Injectable()
 export class EventsService {
@@ -67,6 +85,8 @@ export class EventsService {
     private readonly respawnService: EventRespawnService,
     @InjectQueue(RESPAWN_WINDOW_QUEUE)
     private readonly respawnWindowQueue: Queue<AutoCloseRespawnWindowJobData>,
+    @InjectQueue(EVENT_HERO_KILL_QUEUE)
+    private readonly eventHeroKillQueue: Queue<EventHeroKillJobData>,
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
@@ -118,9 +138,7 @@ export class EventsService {
             maps: {
               include: {
                 assignedMembers: {
-                  include: {
-                    roles: true,
-                  },
+                  select: memberSelectWithTopRole,
                 },
               },
             },
@@ -133,32 +151,31 @@ export class EventsService {
   }
 
   async getEvents(guildId: string, world?: string, activeOnly = true) {
+    const normalizedWorld = world?.trim().toLowerCase();
+
     return this.prisma.event.findMany({
       where: {
         guildId,
-        ...(world && { world }),
+        ...(normalizedWorld && { world: normalizedWorld }),
         ...(activeOnly && { active: true }),
       },
-      include: {
+      select: {
+        id: true,
+        guildId: true,
+        name: true,
+        world: true,
+        active: true,
+        startsAt: true,
+        endsAt: true,
+        createdAt: true,
+        updatedAt: true,
         heroNpcs: {
-          include: {
-            maps: {
-              include: {
-                assignedMembers: {
-                  include: {
-                    roles: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        rankings: {
-          include: {
-            member: true,
-          },
-          orderBy: {
-            totalPoints: 'desc',
+          select: {
+            id: true,
+            npcId: true,
+            npcName: true,
+            npcIcon: true,
+            npcLvl: true,
           },
         },
       },
@@ -167,30 +184,81 @@ export class EventsService {
   }
 
   async getEvent(guildId: string, eventId: string) {
+    return this.getEventOverview(guildId, eventId);
+  }
+
+  async getEventOverview(guildId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
       where: {
         id: eventId,
         guildId,
       },
-      include: {
+      select: {
+        id: true,
+        guildId: true,
+        name: true,
+        world: true,
+        active: true,
+        startsAt: true,
+        endsAt: true,
+        createdAt: true,
+        updatedAt: true,
+        basePointsPerKill: true,
+        timeOfDayMultipliers: true,
+        trackersMultipliers: true,
+        mapsCountMultipliers: true,
+        trackingDurationMultipliers: true,
+        assignmentTimeoutMinutes: true,
+        mapAssignmentCap: true,
         heroNpcs: {
-          include: {
+          select: {
+            id: true,
+            npcId: true,
+            npcName: true,
+            npcIcon: true,
+            npcLvl: true,
+          },
+        },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    return event;
+  }
+
+  async getEventMaps(guildId: string, eventId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: {
+        id: eventId,
+        guildId,
+      },
+      select: {
+        id: true,
+        heroNpcs: {
+          select: {
+            id: true,
+            npcId: true,
+            npcName: true,
+            npcIcon: true,
+            npcLvl: true,
             locations: {
               orderBy: { order: 'asc' },
-              include: {
+              select: {
+                id: true,
+                name: true,
+                order: true,
                 maps: {
-                  include: {
+                  select: {
+                    id: true,
+                    mapId: true,
+                    mapName: true,
+                    locationId: true,
                     assignedMembers: {
-                      include: {
-                        roles: true,
-                      },
-                    },
-                    presenceLogs: {
-                      where: {
-                        endedAt: null,
-                      },
-                      include: {
-                        member: true,
+                      select: {
+                        ...memberSelectWithTopRole,
                       },
                     },
                   },
@@ -199,36 +267,18 @@ export class EventsService {
             },
             maps: {
               where: { locationId: null },
-              include: {
+              select: {
+                id: true,
+                mapId: true,
+                mapName: true,
+                locationId: true,
                 assignedMembers: {
-                  include: {
-                    roles: true,
-                  },
-                },
-                presenceLogs: {
-                  where: {
-                    endedAt: null,
-                  },
-                  include: {
-                    member: true,
+                  select: {
+                    ...memberSelectWithTopRole,
                   },
                 },
               },
             },
-            kills: {
-              orderBy: {
-                killedAt: 'desc',
-              },
-              take: 10,
-            },
-          },
-        },
-        rankings: {
-          include: {
-            member: true,
-          },
-          orderBy: {
-            totalPoints: 'desc',
           },
         },
       },
@@ -350,9 +400,7 @@ export class EventsService {
               maps: {
                 include: {
                   assignedMembers: {
-                    include: {
-                      roles: true,
-                    },
+                    select: memberSelectWithTopRole,
                   },
                 },
               },
@@ -512,9 +560,7 @@ export class EventsService {
         maps: {
           include: {
             assignedMembers: {
-              include: {
-                roles: true,
-              },
+              select: memberSelectWithTopRole,
             },
           },
         },
@@ -716,7 +762,7 @@ export class EventsService {
         maps: {
           include: {
             assignedMembers: {
-              include: { roles: true },
+              select: memberSelectWithTopRole,
             },
           },
         },
@@ -769,7 +815,7 @@ export class EventsService {
         maps: {
           include: {
             assignedMembers: {
-              include: { roles: true },
+              select: memberSelectWithTopRole,
             },
           },
         },
@@ -888,7 +934,7 @@ export class EventsService {
       data: { locationId },
       include: {
         assignedMembers: {
-          include: { roles: true },
+          select: memberSelectWithTopRole,
         },
         location: true,
       },
@@ -915,7 +961,7 @@ export class EventsService {
         maps: {
           include: {
             assignedMembers: {
-              include: { roles: true },
+              select: memberSelectWithTopRole,
             },
           },
         },
@@ -1011,8 +1057,35 @@ export class EventsService {
     return this.killService.getEventHeroStats(guildId, eventId);
   }
 
+  async enqueueEventHeroKillCheck(
+    params: CheckEventHeroKillParams,
+    isManualClose = false,
+  ): Promise<void> {
+    const windowKey = getEventHeroKillWindowKey(params.timerData);
+    const jobId = buildEventHeroKillJobId({
+      guildId: params.guildId,
+      world: params.world,
+      npcId: params.npcId,
+      windowKey,
+      isManualClose,
+    });
+
+    await this.eventHeroKillQueue.add(
+      EVENT_HERO_KILL_JOB_NAME,
+      createEventHeroKillJobData(params, isManualClose),
+      {
+        jobId,
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+  }
+
   async checkAndRecordEventHeroKill(
     params: CheckEventHeroKillParams,
+    isManualClose = false,
   ): Promise<void> {
     return this.killService.checkAndRecordEventHeroKill(
       params.guildId,
@@ -1021,7 +1094,7 @@ export class EventsService {
       params.npcName,
       params.npcIcon,
       params.timerData,
-      false,
+      isManualClose,
       params.npcLvl,
     );
   }

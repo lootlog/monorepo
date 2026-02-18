@@ -144,6 +144,67 @@ export class EventsController {
     );
   }
 
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/overview')
+  @ApiOperation({
+    summary: 'Get event overview',
+    description:
+      'Get lightweight event overview for read-only views (without maps and rankings)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event overview',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEventOverview(
+    @GuildData() guildData: { id: string },
+    @Param('eventId') eventId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
+  ) {
+    const event = await this.eventsService.getEventOverview(
+      guildData.id,
+      eventId,
+    );
+    return this.eventsService.filterEventHeroesByLevel(
+      event,
+      roles,
+      permissions,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/maps')
+  @ApiOperation({
+    summary: 'Get event maps',
+    description:
+      'Get map assignments grouped by hero for a specific event (read model for realtime map updates)',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event maps data',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async getEventMaps(
+    @GuildData() guildData: { id: string },
+    @Param('eventId') eventId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
+  ) {
+    const event = await this.eventsService.getEventMaps(guildData.id, eventId);
+    return this.eventsService.filterEventHeroesByLevel(
+      event,
+      roles,
+      permissions,
+    );
+  }
+
   @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
   @UseGuards(PermissionsGuard)
   @Patch('/guilds/:guildId/events/:eventId')
@@ -658,8 +719,26 @@ export class EventsController {
   async getRanking(
     @GuildData() guildData: { id: string },
     @Param('eventId') eventId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
   ) {
-    return this.eventsService.getRanking(guildData.id, eventId);
+    const [eventOverview, rankings] = await Promise.all([
+      this.eventsService.getEventOverview(guildData.id, eventId),
+      this.eventsService.getRanking(guildData.id, eventId),
+    ]);
+
+    const filteredOverview = this.eventsService.filterEventHeroesByLevel(
+      eventOverview,
+      roles,
+      permissions,
+    );
+    const visibleHeroNames = new Set(
+      filteredOverview.heroNpcs.map((hero) => hero.npcName),
+    );
+
+    return rankings.filter((ranking) =>
+      visibleHeroNames.has(ranking.heroNpcName),
+    );
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)

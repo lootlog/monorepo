@@ -1,18 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import type { Npc } from "@/hooks/api/game-data/use-npcs";
-import type { GuildMember } from "@/hooks/api/members/use-guild-member";
+
+interface EventTimerNpc {
+  name: string;
+  icon: string | null;
+}
 
 export interface EventTimer {
   npcId: number;
   world: string;
   minSpawnTime: string;
   maxSpawnTime: string;
-  npc: Npc;
-  member: GuildMember;
-  latestRespBaseSeconds: number;
-  latestRespawnRandomness: number;
-  wasReset: boolean;
+  npc: EventTimerNpc;
 }
 
 interface UseEventHeroTimersOptions {

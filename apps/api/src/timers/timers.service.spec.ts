@@ -46,7 +46,7 @@ describe('TimersService', () => {
   };
 
   const mockEventsService = {
-    checkAndRecordEventHeroKill: jest.fn().mockResolvedValue(undefined),
+    enqueueEventHeroKillCheck: jest.fn().mockResolvedValue(undefined),
     findActiveEventHeroByNpc: jest.fn().mockResolvedValue(null),
   };
 
@@ -334,6 +334,38 @@ describe('TimersService', () => {
       expect(mockRedlockLock.release).toHaveBeenCalled();
     });
 
+    it('should return existing timer and skip event kill enqueue when current window has not opened yet', async () => {
+      const futureMinSpawnTime = new Date(Date.now() + 10 * 60 * 1000);
+      const existingTimer = {
+        ...mockTimer,
+        minSpawnTime: futureMinSpawnTime,
+        maxSpawnTime: new Date(Date.now() + 20 * 60 * 1000),
+      };
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.findUnique
+        .mockResolvedValueOnce(existingTimer)
+        .mockResolvedValueOnce(existingTimer);
+
+      const result = await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
+
+      expect(result).toMatchObject({
+        guildId: existingTimer.guildId,
+        npcId: existingTimer.npcId,
+        world: existingTimer.world,
+      });
+      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+      expect(
+        mockEventsService.enqueueEventHeroKillCheck,
+      ).not.toHaveBeenCalled();
+    });
+
     it('should migrate synthetic timer context to real npcId for event hero scoring window', async () => {
       const syntheticNpcId = getSyntheticNpcId('hero-1');
       const syntheticTimer = {
@@ -365,7 +397,12 @@ describe('TimersService', () => {
         event: { id: 'event-1' },
       });
 
-      await service.createTimerForGuild('discord123', userId, 'guild1', mockDto);
+      await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
 
       expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
         where: {
@@ -377,7 +414,7 @@ describe('TimersService', () => {
         },
       });
 
-      expect(mockEventsService.checkAndRecordEventHeroKill).toHaveBeenCalledWith(
+      expect(mockEventsService.enqueueEventHeroKillCheck).toHaveBeenCalledWith(
         expect.objectContaining({
           timerData: expect.objectContaining({
             previousMinSpawnTime: syntheticTimer.minSpawnTime,
@@ -404,13 +441,15 @@ describe('TimersService', () => {
       mockRedisService.set.mockResolvedValue(undefined);
       mockEventsService.findActiveEventHeroByNpc.mockResolvedValue(null);
 
-      mockPrismaService.timer.findUnique.mockImplementation(async (args: any) => {
-        const queriedNpcId = args?.where?.timerId?.npcId;
-        if (queriedNpcId !== mockDto.npc.id) {
-          return null;
-        }
-        return createdTimer;
-      });
+      mockPrismaService.timer.findUnique.mockImplementation(
+        async (args: any) => {
+          const queriedNpcId = args?.where?.timerId?.npcId;
+          if (queriedNpcId !== mockDto.npc.id) {
+            return null;
+          }
+          return createdTimer;
+        },
+      );
 
       mockPrismaService.timer.upsert.mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 40));
@@ -447,7 +486,9 @@ describe('TimersService', () => {
       );
 
       expect(results).toHaveLength(totalCalls);
-      expect(results.every((timer) => timer.npcId === mockDto.npc.id)).toBe(true);
+      expect(results.every((timer) => timer.npcId === mockDto.npc.id)).toBe(
+        true,
+      );
       expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
     });
   });

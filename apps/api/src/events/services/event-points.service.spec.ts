@@ -2,6 +2,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { EventPointsService } from './event-points.service';
 import { PrismaService } from 'src/db/prisma.service';
+import { EventEmitterService } from './event-emitter.service';
 import type { Event } from 'generated/client';
 import type {
   TimeOfDayMultiplier,
@@ -16,6 +17,7 @@ describe('EventPointsService', () => {
   const mockPrismaService = {
     event: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
     },
     eventRanking: {
       findMany: jest.fn(),
@@ -43,6 +45,10 @@ describe('EventPointsService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockEventEmitter = {
+    emitRankingUpdate: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -52,6 +58,10 @@ describe('EventPointsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: EventEmitterService,
+          useValue: mockEventEmitter,
         },
       ],
     }).compile();
@@ -80,9 +90,12 @@ describe('EventPointsService', () => {
         name: 'Test Event',
         world: 'tempest',
         basePointsPerKill: basePoints,
-        timeOfDayMultipliers: timeMultipliers as unknown as Event['timeOfDayMultipliers'],
-        trackersMultipliers: trackersMultipliers as unknown as Event['trackersMultipliers'],
-        mapsCountMultipliers: mapsCountMultipliers as unknown as Event['mapsCountMultipliers'],
+        timeOfDayMultipliers:
+          timeMultipliers as unknown as Event['timeOfDayMultipliers'],
+        trackersMultipliers:
+          trackersMultipliers as unknown as Event['trackersMultipliers'],
+        mapsCountMultipliers:
+          mapsCountMultipliers as unknown as Event['mapsCountMultipliers'],
         trackingDurationMultipliers: null,
         assignmentTimeoutMinutes: 5,
         mapAssignmentCap: null,
@@ -430,10 +443,9 @@ describe('EventPointsService', () => {
 
     describe('edge cases', () => {
       it('should handle basePointsPerKill of 0', () => {
-        const event = createMockEvent(
-          0,
-          [{ from: '00:00', to: '23:59', multiplier: 2.0 }],
-        );
+        const event = createMockEvent(0, [
+          { from: '00:00', to: '23:59', multiplier: 2.0 },
+        ]);
         const killTime = new Date('2024-01-15T12:00:00');
 
         const result = service.calculateMemberPoints(event, killTime, 1, 1);
@@ -453,10 +465,9 @@ describe('EventPointsService', () => {
       });
 
       it('should handle very small multipliers', () => {
-        const event = createMockEvent(
-          100,
-          [{ from: '00:00', to: '23:59', multiplier: 0.1 }],
-        );
+        const event = createMockEvent(100, [
+          { from: '00:00', to: '23:59', multiplier: 0.1 },
+        ]);
         const killTime = new Date('2024-01-15T12:00:00');
 
         const result = service.calculateMemberPoints(event, killTime, 1, 1);
@@ -466,10 +477,9 @@ describe('EventPointsService', () => {
       });
 
       it('should correctly handle 0.5 multiplier with base points of 1 (fractional result)', () => {
-        const event = createMockEvent(
-          1,
-          [{ from: '00:00', to: '23:59', multiplier: 0.5 }],
-        );
+        const event = createMockEvent(1, [
+          { from: '00:00', to: '23:59', multiplier: 0.5 },
+        ]);
         const killTime = new Date('2024-01-15T12:00:00');
 
         const result = service.calculateMemberPoints(event, killTime, 1, 1);
@@ -480,10 +490,9 @@ describe('EventPointsService', () => {
       });
 
       it('should correctly handle 0.4 multiplier with base points of 1', () => {
-        const event = createMockEvent(
-          1,
-          [{ from: '00:00', to: '23:59', multiplier: 0.4 }],
-        );
+        const event = createMockEvent(1, [
+          { from: '00:00', to: '23:59', multiplier: 0.4 },
+        ]);
         const killTime = new Date('2024-01-15T12:00:00');
 
         const result = service.calculateMemberPoints(event, killTime, 1, 1);
@@ -494,10 +503,9 @@ describe('EventPointsService', () => {
       });
 
       it('should correctly handle multipliers resulting in many decimal places', () => {
-        const event = createMockEvent(
-          1,
-          [{ from: '00:00', to: '23:59', multiplier: 0.333 }],
-        );
+        const event = createMockEvent(1, [
+          { from: '00:00', to: '23:59', multiplier: 0.333 },
+        ]);
         const killTime = new Date('2024-01-15T12:00:00');
 
         const result = service.calculateMemberPoints(event, killTime, 1, 1);
@@ -521,7 +529,7 @@ describe('EventPointsService', () => {
 
       it('should handle NaN keys in multipliers gracefully', () => {
         const event = createMockEvent(100, null, {
-          'invalid': 2.0,
+          invalid: 2.0,
           '3': 1.5,
         } as TrackersMultipliers);
         const killTime = new Date('2024-01-15T12:00:00');
@@ -555,7 +563,24 @@ describe('EventPointsService', () => {
       });
       expect(mockPrismaService.eventRanking.findMany).toHaveBeenCalledWith({
         where: { eventId: 'event-1' },
-        include: { member: true },
+        select: {
+          id: true,
+          eventId: true,
+          memberId: true,
+          heroNpcName: true,
+          totalPoints: true,
+          totalKills: true,
+          totalTimeSeconds: true,
+          avgAfkPercentage: true,
+          pointsModified: true,
+          updatedAt: true,
+          member: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
         orderBy: { totalPoints: 'desc' },
       });
       expect(result).toEqual(mockRankings);
@@ -747,7 +772,11 @@ describe('EventPointsService', () => {
         },
       ];
 
-      await service.updateRankingAfterKill('event-1', 'Dragon', killPoints as any);
+      await service.updateRankingAfterKill(
+        'event-1',
+        'Dragon',
+        killPoints as any,
+      );
 
       expect(mockPrismaService.eventRanking.create).toHaveBeenCalledWith({
         data: {
@@ -768,7 +797,9 @@ describe('EventPointsService', () => {
         totalKills: 5,
         avgAfkPercentage: 20,
       };
-      mockPrismaService.eventRanking.findUnique.mockResolvedValue(existingRanking);
+      mockPrismaService.eventRanking.findUnique.mockResolvedValue(
+        existingRanking,
+      );
       mockPrismaService.eventRanking.update.mockResolvedValue({});
 
       const killPoints = [
@@ -781,7 +812,11 @@ describe('EventPointsService', () => {
         },
       ];
 
-      await service.updateRankingAfterKill('event-1', 'Dragon', killPoints as any);
+      await service.updateRankingAfterKill(
+        'event-1',
+        'Dragon',
+        killPoints as any,
+      );
 
       expect(mockPrismaService.eventRanking.update).toHaveBeenCalledWith({
         where: {
@@ -821,7 +856,11 @@ describe('EventPointsService', () => {
         },
       ];
 
-      await service.updateRankingAfterKill('event-1', 'Dragon', killPoints as any);
+      await service.updateRankingAfterKill(
+        'event-1',
+        'Dragon',
+        killPoints as any,
+      );
 
       expect(mockPrismaService.eventRanking.create).toHaveBeenCalledTimes(2);
     });
@@ -835,7 +874,14 @@ describe('EventPointsService', () => {
       mockPrismaService.eventKillPoint.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.updateKillPoint('guild-1', 'event-1', 'kill-1', 'kp-1', 200, 'user-1'),
+        service.updateKillPoint(
+          'guild-1',
+          'event-1',
+          'kill-1',
+          'kp-1',
+          200,
+          'user-1',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -853,12 +899,16 @@ describe('EventPointsService', () => {
         totalPoints: 500,
       };
 
-      mockPrismaService.eventKillPoint.findFirst.mockResolvedValue(existingKillPoint);
+      mockPrismaService.eventKillPoint.findFirst.mockResolvedValue(
+        existingKillPoint,
+      );
       mockPrismaService.eventKillPoint.update.mockResolvedValue({
         ...existingKillPoint,
         points: 200,
       });
-      mockPrismaService.eventRanking.findFirst.mockResolvedValue(existingRanking);
+      mockPrismaService.eventRanking.findFirst.mockResolvedValue(
+        existingRanking,
+      );
       mockPrismaService.eventRanking.update.mockResolvedValue({});
       mockPrismaService.eventPointsEditHistory.create.mockResolvedValue({});
 
@@ -887,7 +937,9 @@ describe('EventPointsService', () => {
         },
       });
 
-      expect(mockPrismaService.eventPointsEditHistory.create).toHaveBeenCalledWith({
+      expect(
+        mockPrismaService.eventPointsEditHistory.create,
+      ).toHaveBeenCalledWith({
         data: {
           rankingId: 'ranking-1',
           previousPoints: 500,
@@ -908,7 +960,9 @@ describe('EventPointsService', () => {
         kill: { heroNpc: { npcName: 'Dragon' } },
       };
 
-      mockPrismaService.eventKillPoint.findFirst.mockResolvedValue(existingKillPoint);
+      mockPrismaService.eventKillPoint.findFirst.mockResolvedValue(
+        existingKillPoint,
+      );
       mockPrismaService.eventKillPoint.update.mockResolvedValue({
         ...existingKillPoint,
       });
@@ -922,7 +976,9 @@ describe('EventPointsService', () => {
         'user-1',
       );
 
-      expect(mockPrismaService.eventPointsEditHistory.create).not.toHaveBeenCalled();
+      expect(
+        mockPrismaService.eventPointsEditHistory.create,
+      ).not.toHaveBeenCalled();
     });
 
     it('should handle zero multiplier by using newPoints as basePoints', async () => {
@@ -935,7 +991,9 @@ describe('EventPointsService', () => {
         kill: { heroNpc: { npcName: 'Dragon' } },
       };
 
-      mockPrismaService.eventKillPoint.findFirst.mockResolvedValue(existingKillPoint);
+      mockPrismaService.eventKillPoint.findFirst.mockResolvedValue(
+        existingKillPoint,
+      );
       mockPrismaService.eventKillPoint.update.mockResolvedValue({});
       mockPrismaService.eventRanking.findFirst.mockResolvedValue(null);
 
@@ -966,7 +1024,13 @@ describe('EventPointsService', () => {
       mockPrismaService.eventRanking.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.updateRankingPoints('guild-1', 'event-1', 'ranking-1', 1000, 'user-1'),
+        service.updateRankingPoints(
+          'guild-1',
+          'event-1',
+          'ranking-1',
+          1000,
+          'user-1',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -976,7 +1040,9 @@ describe('EventPointsService', () => {
         totalPoints: 500,
       };
 
-      mockPrismaService.eventRanking.findFirst.mockResolvedValue(existingRanking);
+      mockPrismaService.eventRanking.findFirst.mockResolvedValue(
+        existingRanking,
+      );
       mockPrismaService.eventPointsEditHistory.create.mockResolvedValue({});
       mockPrismaService.eventRanking.update.mockResolvedValue({
         ...existingRanking,
@@ -991,7 +1057,9 @@ describe('EventPointsService', () => {
         'user-1',
       );
 
-      expect(mockPrismaService.eventPointsEditHistory.create).toHaveBeenCalledWith({
+      expect(
+        mockPrismaService.eventPointsEditHistory.create,
+      ).toHaveBeenCalledWith({
         data: {
           rankingId: 'ranking-1',
           previousPoints: 500,
@@ -1028,7 +1096,9 @@ describe('EventPointsService', () => {
         { id: 'h1', editedAt: new Date('2024-01-15') },
         { id: 'h2', editedAt: new Date('2024-01-14') },
       ];
-      mockPrismaService.eventPointsEditHistory.findMany.mockResolvedValue(mockHistory);
+      mockPrismaService.eventPointsEditHistory.findMany.mockResolvedValue(
+        mockHistory,
+      );
 
       const result = await service.getRankingEditHistory(
         'guild-1',
@@ -1036,7 +1106,9 @@ describe('EventPointsService', () => {
         'ranking-1',
       );
 
-      expect(mockPrismaService.eventPointsEditHistory.findMany).toHaveBeenCalledWith({
+      expect(
+        mockPrismaService.eventPointsEditHistory.findMany,
+      ).toHaveBeenCalledWith({
         where: { rankingId: 'ranking-1' },
         orderBy: { editedAt: 'desc' },
       });
@@ -1252,9 +1324,11 @@ describe('EventPointsService', () => {
       const mockTx = {
         eventKillPoint: {
           update: jest.fn(),
-          findMany: jest.fn().mockResolvedValue(
-            killPoints.map((kp) => ({ ...kp, points: 150 })),
-          ),
+          findMany: jest
+            .fn()
+            .mockResolvedValue(
+              killPoints.map((kp) => ({ ...kp, points: 150 })),
+            ),
         },
         eventRanking: {
           deleteMany: jest.fn(),
@@ -1336,9 +1410,11 @@ describe('EventPointsService', () => {
       const mockTx = {
         eventKillPoint: {
           update: jest.fn(),
-          findMany: jest.fn().mockResolvedValue(
-            killPoints.map((kp) => ({ ...kp, points: 120 })),
-          ),
+          findMany: jest
+            .fn()
+            .mockResolvedValue(
+              killPoints.map((kp) => ({ ...kp, points: 120 })),
+            ),
         },
         eventRanking: {
           deleteMany: jest.fn(),
@@ -1401,9 +1477,9 @@ describe('EventPointsService', () => {
       const mockTx = {
         eventKillPoint: {
           update: jest.fn(),
-          findMany: jest.fn().mockResolvedValue([
-            { ...killPoints[0], points: 360 },
-          ]),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([{ ...killPoints[0], points: 360 }]),
         },
         eventRanking: {
           deleteMany: jest.fn(),

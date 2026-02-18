@@ -5,16 +5,20 @@ import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/types";
-import { useEvent } from "./hooks/queries/use-event";
+import { useEventOverview } from "./hooks/queries/use-event-overview";
+import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
+import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
+  const { data: guild } = useGuild();
 
   const { data: permissions } = useGuildPermissions();
   const canEditPoints =
@@ -23,25 +27,34 @@ export const EventRankingPage = () => {
 
   const {
     data: event,
-    isLoading,
-    error,
-  } = useEvent({
+    isLoading: isEventLoading,
+    error: eventError,
+  } = useEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
+  });
+  const { data: rankings = [], isLoading: isRankingLoading } = useEventRanking({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
+
+  useEventSocket({
+    eventId,
+    guildId: guild?.id,
   });
 
   useEffect(() => {
     if (event && !selectedHeroName) {
       const firstHeroWithRankings = event.heroNpcs?.find((hero) =>
-        event.rankings?.some((r) => r.heroNpcName === hero.npcName),
+        rankings.some((r) => r.heroNpcName === hero.npcName),
       );
       const defaultHeroName =
         firstHeroWithRankings?.npcName ?? event.heroNpcs?.[0]?.npcName ?? null;
       setSelectedHeroName(defaultHeroName);
     }
-  }, [event, selectedHeroName]);
+  }, [event, rankings, selectedHeroName]);
 
-  if (isLoading) {
+  if (isEventLoading || isRankingLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -49,7 +62,7 @@ export const EventRankingPage = () => {
     );
   }
 
-  if (error || !event) {
+  if (eventError || !event) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />
@@ -64,7 +77,6 @@ export const EventRankingPage = () => {
   }
 
   const heroes = event.heroNpcs || [];
-  const rankings = event.rankings || [];
 
   const filteredRankings = selectedHeroName
     ? rankings.filter((r) => r.heroNpcName === selectedHeroName)

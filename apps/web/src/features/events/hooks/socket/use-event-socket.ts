@@ -2,7 +2,6 @@ import { useEffect, useCallback } from "react";
 import { useGateway } from "@/hooks/utils/use-gateway";
 import { GatewayEvent } from "@/config/gateway";
 import { useQueryClient } from "@tanstack/react-query";
-import type { EventRanking } from "../queries/use-events";
 
 interface MapStatusUpdatePayload {
   guildId: string;
@@ -13,17 +12,12 @@ interface MapStatusUpdatePayload {
 interface HeroKilledPayload {
   guildId: string;
   eventId: string;
-  heroNpcId: string;
-  kill: {
-    id: string;
-    killedAt: string;
-  };
+  killId: string;
 }
 
 interface RankingUpdatePayload {
   guildId: string;
   eventId: string;
-  rankings: EventRanking[];
 }
 
 interface RespawnWindowPayload {
@@ -50,7 +44,7 @@ export const useEventSocket = ({
     (payload: MapStatusUpdatePayload) => {
       if (payload.guildId === guildId && payload.eventId === eventId) {
         queryClient.invalidateQueries({
-          queryKey: ["event", guildId, eventId],
+          queryKey: ["event-maps", guildId, eventId],
         });
         queryClient.invalidateQueries({
           queryKey: ["map-active-gap", guildId, eventId, payload.mapId],
@@ -64,7 +58,19 @@ export const useEventSocket = ({
     (payload: HeroKilledPayload) => {
       if (payload.guildId === guildId && payload.eventId === eventId) {
         queryClient.invalidateQueries({
-          queryKey: ["event", guildId, eventId],
+          queryKey: ["event-overview", guildId, eventId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["event-kill-history", guildId, eventId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["hero-kill-history", guildId, eventId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["recent-hero-kills", guildId, eventId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["event-hero-stats", guildId, eventId],
         });
       }
     },
@@ -75,7 +81,7 @@ export const useEventSocket = ({
     (payload: RankingUpdatePayload) => {
       if (payload.guildId === guildId && payload.eventId === eventId) {
         queryClient.invalidateQueries({
-          queryKey: ["event", guildId, eventId],
+          queryKey: ["event-ranking", guildId, eventId],
         });
       }
     },
@@ -93,7 +99,7 @@ export const useEventSocket = ({
             queryKey: ["event-hero-timers", guildId, eventId],
           });
           queryClient.invalidateQueries({
-            queryKey: ["event", guildId, eventId],
+            queryKey: ["event-maps", guildId, eventId],
           });
         }
       }
