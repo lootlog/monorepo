@@ -10,6 +10,7 @@ import { TIMER_LIMITS } from 'src/timers/constants/timer-limits';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { EventsService } from 'src/events/events.service';
+import { getSyntheticNpcId } from 'src/events/utils/get-synthetic-npc-id';
 
 describe('TimersService', () => {
   let service: TimersService;
@@ -45,7 +46,8 @@ describe('TimersService', () => {
   };
 
   const mockEventsService = {
-    checkAndRecordEventHeroKill: jest.fn().mockResolvedValue(undefined),
+    enqueueEventHeroKillCheck: jest.fn().mockResolvedValue(undefined),
+    findActiveEventHeroByNpc: jest.fn().mockResolvedValue(null),
   };
 
   const mockLogger = {
@@ -258,6 +260,27 @@ describe('TimersService', () => {
       expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
     });
 
+    it('should return existing timer when lock cannot be acquired but timer was created concurrently', async () => {
+      const ExecutionError = require('redlock').ExecutionError;
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedlock.acquire.mockRejectedValue(new ExecutionError('Lock failed'));
+      mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
+
+      const result = await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
+
+      expect(result).toMatchObject({
+        guildId: mockTimer.guildId,
+        npcId: mockTimer.npcId,
+        world: mockTimer.world,
+      });
+      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+    });
+
     it('should return cached timer on deduplication hit', async () => {
       const cachedTimer = JSON.stringify(mockTimer);
       mockRedisService.get.mockResolvedValue(cachedTimer);
@@ -309,6 +332,164 @@ describe('TimersService', () => {
       ).rejects.toThrow('Database error');
 
       expect(mockRedlockLock.release).toHaveBeenCalled();
+    });
+
+    it('should return existing timer and skip event kill enqueue when current window has not opened yet', async () => {
+      const futureMinSpawnTime = new Date(Date.now() + 10 * 60 * 1000);
+      const existingTimer = {
+        ...mockTimer,
+        minSpawnTime: futureMinSpawnTime,
+        maxSpawnTime: new Date(Date.now() + 20 * 60 * 1000),
+      };
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.findUnique
+        .mockResolvedValueOnce(existingTimer)
+        .mockResolvedValueOnce(existingTimer);
+
+      const result = await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
+
+      expect(result).toMatchObject({
+        guildId: existingTimer.guildId,
+        npcId: existingTimer.npcId,
+        world: existingTimer.world,
+      });
+      expect(mockPrismaService.timer.upsert).not.toHaveBeenCalled();
+      expect(
+        mockEventsService.enqueueEventHeroKillCheck,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('should migrate synthetic timer context to real npcId for event hero scoring window', async () => {
+      const syntheticNpcId = getSyntheticNpcId('hero-1');
+      const syntheticTimer = {
+        guildId: 'guild1',
+        world: 'test-world',
+        npcId: syntheticNpcId,
+        minSpawnTime: new Date('2026-02-18T09:27:52.727Z'),
+        maxSpawnTime: new Date('2026-02-18T11:30:00.000Z'),
+        latestRespBaseSeconds: 3600,
+        latestRespawnRandomness: 10,
+        createdById: 1,
+        tempId: null,
+        wasReset: false,
+        windowOpenedAt: new Date('2026-02-18T09:27:52.727Z'),
+        npc: { ...mockDto.npc, id: syntheticNpcId },
+      };
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(syntheticTimer);
+      mockPrismaService.timer.upsert
+        .mockResolvedValueOnce({ ...syntheticTimer, npcId: mockDto.npc.id })
+        .mockResolvedValueOnce(mockTimer);
+      mockPrismaService.timer.delete.mockResolvedValue(syntheticTimer);
+      mockEventsService.findActiveEventHeroByNpc.mockResolvedValue({
+        eventHero: { id: 'hero-1', npcId: null },
+        event: { id: 'event-1' },
+      });
+
+      await service.createTimerForGuild(
+        'discord123',
+        userId,
+        'guild1',
+        mockDto,
+      );
+
+      expect(mockPrismaService.timer.delete).toHaveBeenCalledWith({
+        where: {
+          timerId: {
+            guildId: 'guild1',
+            world: 'test-world',
+            npcId: syntheticNpcId,
+          },
+        },
+      });
+
+      expect(mockEventsService.enqueueEventHeroKillCheck).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timerData: expect.objectContaining({
+            previousMinSpawnTime: syntheticTimer.minSpawnTime,
+            previousMaxSpawnTime: syntheticTimer.maxSpawnTime,
+            windowOpenedAt: syntheticTimer.windowOpenedAt,
+          }),
+        }),
+      );
+
+      expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('timers.delete'),
+        expect.objectContaining({ npcId: syntheticNpcId }),
+      );
+    });
+
+    it('should handle 50 concurrent createTimerForGuild calls idempotently for the same npc', async () => {
+      const ExecutionError = require('redlock').ExecutionError;
+      const totalCalls = 50;
+      let createdTimer: typeof mockTimer | null = null;
+      let mainLockHeld = false;
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockEventsService.findActiveEventHeroByNpc.mockResolvedValue(null);
+
+      mockPrismaService.timer.findUnique.mockImplementation(
+        async (args: any) => {
+          const queriedNpcId = args?.where?.timerId?.npcId;
+          if (queriedNpcId !== mockDto.npc.id) {
+            return null;
+          }
+          return createdTimer;
+        },
+      );
+
+      mockPrismaService.timer.upsert.mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 40));
+        createdTimer = mockTimer;
+        return mockTimer;
+      });
+
+      mockRedlock.acquire.mockImplementation(async (keys: string[]) => {
+        const key = keys[0];
+        if (key === 'timer:lock:guild1:test-world:123') {
+          if (mainLockHeld) {
+            throw new ExecutionError('Lock failed');
+          }
+          mainLockHeld = true;
+          return {
+            release: jest.fn().mockImplementation(async () => {
+              mainLockHeld = false;
+            }),
+          };
+        }
+
+        return { release: jest.fn().mockResolvedValue(undefined) };
+      });
+
+      const results = await Promise.all(
+        Array.from({ length: totalCalls }, (_, i) =>
+          service.createTimerForGuild(
+            `discord-${i}`,
+            `user-${i}`,
+            'guild1',
+            mockDto,
+          ),
+        ),
+      );
+
+      expect(results).toHaveLength(totalCalls);
+      expect(results.every((timer) => timer.npcId === mockDto.npc.id)).toBe(
+        true,
+      );
+      expect(mockPrismaService.timer.upsert).toHaveBeenCalledTimes(1);
     });
   });
 

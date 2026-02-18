@@ -24,7 +24,7 @@ export const useLocationMutations = (
 ) => {
   const { client } = useApiClient();
   const queryClient = useQueryClient();
-  const queryKey = ["event", guildId, eventId];
+  const queryKeyMaps = ["event-maps", guildId, eventId];
 
   const createLocation = useMutation({
     mutationFn: async (data: CreateLocationData) => {
@@ -35,8 +35,7 @@ export const useLocationMutations = (
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 
@@ -55,8 +54,7 @@ export const useLocationMutations = (
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 
@@ -68,8 +66,7 @@ export const useLocationMutations = (
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 
@@ -82,11 +79,11 @@ export const useLocationMutations = (
       return response.data;
     },
     onMutate: async (data: ReorderLocationsData) => {
-      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: queryKeyMaps });
 
-      const previousEvent = queryClient.getQueryData(queryKey);
+      const previousMaps = queryClient.getQueryData(queryKeyMaps);
 
-      queryClient.setQueryData(queryKey, (old: any) => {
+      queryClient.setQueryData(queryKeyMaps, (old: any) => {
         if (!old) return old;
 
         const updatedHeroNpcs = old.heroNpcs?.map((hero: any) => {
@@ -105,12 +102,15 @@ export const useLocationMutations = (
         return { ...old, heroNpcs: updatedHeroNpcs };
       });
 
-      return { previousEvent };
+      return { previousMaps };
     },
     onError: (_err, _data, context) => {
-      if (context?.previousEvent) {
-        queryClient.setQueryData(queryKey, context.previousEvent);
+      if (context?.previousMaps) {
+        queryClient.setQueryData(queryKeyMaps, context.previousMaps);
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 
@@ -129,8 +129,7 @@ export const useLocationMutations = (
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 

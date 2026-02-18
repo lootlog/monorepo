@@ -3,7 +3,9 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEvent } from "./hooks/queries/use-event";
+import { useEventOverview } from "./hooks/queries/use-event-overview";
+import { useEventRanking } from "./hooks/queries/use-event-ranking";
+import { useEventMaps } from "./hooks/queries/use-event-maps";
 import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
 import { EventMapGrid } from "./components/maps/event-map-grid";
 import {
@@ -104,7 +106,7 @@ export const HeroDetail = () => {
     data: event,
     isLoading,
     error,
-  } = useEvent({
+  } = useEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -117,6 +119,14 @@ export const HeroDetail = () => {
   useEventSocket({ eventId, guildId: guild?.id, heroId });
 
   const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
+  const { data: rankings = [] } = useEventRanking({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
+  const { data: eventMaps, isLoading: isMapsLoading } = useEventMaps({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
 
   const { data: timers } = useEventHeroTimers({
     guildId: guildId ?? "",
@@ -124,7 +134,15 @@ export const HeroDetail = () => {
     world: event?.world ?? "",
   });
 
-  const hero = event?.heroNpcs?.find((h) => h.id === heroId);
+  const heroBase = event?.heroNpcs?.find((h) => h.id === heroId);
+  const heroMapsData = eventMaps?.heroNpcs?.find((h) => h.id === heroId);
+  const hero = heroBase
+    ? {
+        ...heroBase,
+        locations: heroMapsData?.locations ?? [],
+        maps: heroMapsData?.maps ?? [],
+      }
+    : undefined;
   const heroTimer = timers?.find(
     (t) => t.npcId === hero?.npcId || t.npc?.name === hero?.npcName,
   );
@@ -134,7 +152,7 @@ export const HeroDetail = () => {
     heroTimer?.maxSpawnTime ?? null,
   );
 
-  if (isLoading) {
+  if (isLoading || isMapsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -455,11 +473,9 @@ export const HeroDetail = () => {
 
             <div className="space-y-4">
               <EventRankingPreview
-                rankings={
-                  event.rankings?.filter(
-                    (r) => r.heroNpcName === hero.npcName,
-                  ) ?? []
-                }
+                rankings={rankings.filter(
+                  (r) => r.heroNpcName === hero.npcName,
+                )}
                 heroNpcs={[hero]}
                 guildId={guildId ?? ""}
                 eventId={eventId ?? ""}

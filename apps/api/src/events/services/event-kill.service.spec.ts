@@ -20,6 +20,7 @@ describe('EventKillService', () => {
     },
     eventHeroNpc: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     eventMap: {
@@ -73,6 +74,7 @@ describe('EventKillService', () => {
     calculateMemberPoints: jest.fn(),
     getMemberPresenceStats: jest.fn(),
     getMemberPresenceStatsPerMap: jest.fn(),
+    getMembersPresenceStatsPerMap: jest.fn(),
     updateRankingAfterKill: jest.fn(),
   };
 
@@ -195,8 +197,20 @@ describe('EventKillService', () => {
       const mockEvent = {
         id: eventId,
         heroNpcs: [
-          { id: 'hero-1', npcId: 123, npcName: 'Hero 1', kills: [{}, {}, {}] },
-          { id: 'hero-2', npcId: 456, npcName: 'Hero 2', kills: [{}] },
+          {
+            id: 'hero-1',
+            npcId: 123,
+            npcName: 'Hero 1',
+            npcLvl: 100,
+            _count: { kills: 3 },
+          },
+          {
+            id: 'hero-2',
+            npcId: 456,
+            npcName: 'Hero 2',
+            npcLvl: 120,
+            _count: { kills: 1 },
+          },
         ],
       };
 
@@ -235,7 +249,9 @@ describe('EventKillService', () => {
         event: { id: 'event-1', guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHeroNpc);
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([mockHeroNpc])
+        .mockResolvedValueOnce([]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -256,9 +272,9 @@ describe('EventKillService', () => {
         event: { id: 'event-1', guildId, world, active: true },
       };
 
-      mockPrismaService.eventHeroNpc.findFirst
-        .mockResolvedValueOnce(null) // First call by npcId
-        .mockResolvedValueOnce(mockHeroNpc); // Second call by name
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([mockHeroNpc]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -268,11 +284,13 @@ describe('EventKillService', () => {
       );
 
       expect(result).not.toBeNull();
-      expect(mockPrismaService.eventHeroNpc.findFirst).toHaveBeenCalledTimes(2);
+      expect(mockPrismaService.eventHeroNpc.findMany).toHaveBeenCalledTimes(2);
     });
 
     it('should return null if hero not found', async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
 
       const result = await service.findActiveEventHeroByNpc(
         guildId,
@@ -294,13 +312,14 @@ describe('EventKillService', () => {
     const npcId = 123;
     const npcName = 'Test Hero';
     const npcIcon = 'icon.png';
+    const windowOpenedAt = new Date('2026-02-18T08:00:00.000Z');
     const timerData = {
-      minSpawnTime: new Date(),
-      maxSpawnTime: new Date(),
+      minSpawnTime: new Date('2026-02-18T10:00:00.000Z'),
+      maxSpawnTime: new Date('2026-02-18T12:00:00.000Z'),
       memberId: 1,
-      previousMinSpawnTime: new Date(),
-      previousMaxSpawnTime: new Date(),
-      windowOpenedAt: new Date(),
+      previousMinSpawnTime: new Date('2026-02-18T08:00:00.000Z'),
+      previousMaxSpawnTime: new Date('2026-02-18T09:00:00.000Z'),
+      windowOpenedAt,
     };
 
     it('should skip duplicate kill when dedup window is active', async () => {
@@ -316,7 +335,7 @@ describe('EventKillService', () => {
       );
 
       expect(mockRedisService.setNX).not.toHaveBeenCalled();
-      expect(mockPrismaService.eventHeroNpc.findFirst).not.toHaveBeenCalled();
+      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
     });
 
     it('should skip duplicate kill when lock is already held', async () => {
@@ -332,12 +351,14 @@ describe('EventKillService', () => {
         timerData,
       );
 
-      expect(mockPrismaService.eventHeroNpc.findFirst).not.toHaveBeenCalled();
+      expect(mockPrismaService.eventHeroNpc.findMany).not.toHaveBeenCalled();
       expect(mockRedisService.del).not.toHaveBeenCalled();
     });
 
     it('should skip if NPC is not an event hero', async () => {
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
 
       await service.checkAndRecordEventHeroKill(
         guildId,
@@ -364,7 +385,9 @@ describe('EventKillService', () => {
       };
       const updatedHero = { ...mockHero, npcId, npcIcon };
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([mockHero])
+        .mockResolvedValueOnce([]);
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -415,7 +438,9 @@ describe('EventKillService', () => {
         event: { id: 'event-1' },
       };
 
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([mockHero])
+        .mockResolvedValueOnce([]);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       const txMock = {
         eventHeroKill: {
@@ -456,13 +481,60 @@ describe('EventKillService', () => {
         }),
       );
       expect(mockRedisService.set).toHaveBeenCalledWith(
-        `event:hero:kill:dedup:${guildId}:${world}:${npcId}`,
+        expect.stringContaining(
+          `event:hero:kill:dedup:${guildId}:${world}:${npcId}:hero-1:`,
+        ),
         expect.any(String),
-        15,
+        120,
+      );
+      expect(mockRedisService.set).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `event:hero:kill:dedup:${guildId}:${world}:${npcId}:`,
+        ),
+        expect.any(String),
+        120,
       );
     });
 
-    it('should not set dedup marker when record fails', async () => {
+    it('should process all matching heroes', async () => {
+      const heroA = {
+        id: 'hero-1',
+        npcId,
+        npcIcon,
+        npcName,
+        event: { id: 'event-1' },
+      };
+      const heroB = {
+        id: 'hero-2',
+        npcId,
+        npcIcon,
+        npcName,
+        event: { id: 'event-2' },
+      };
+
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([heroA, heroB])
+        .mockResolvedValueOnce([]);
+      mockRedisService.get.mockResolvedValue(null);
+
+      const recordSpy = jest
+        .spyOn(service, 'recordHeroKill')
+        .mockResolvedValue({ id: 'kill-1' } as any);
+
+      await service.checkAndRecordEventHeroKill(
+        guildId,
+        world,
+        npcId,
+        npcName,
+        npcIcon,
+        timerData,
+      );
+
+      expect(recordSpy).toHaveBeenCalledTimes(2);
+      recordSpy.mockRestore();
+    });
+
+    it('should throw and not set global dedup when record fails', async () => {
       const mockHero = {
         id: 'hero-1',
         npcId,
@@ -474,20 +546,26 @@ describe('EventKillService', () => {
       mockRedisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
-      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.eventHeroNpc.findMany
+        .mockResolvedValueOnce([mockHero])
+        .mockResolvedValueOnce([]);
       mockPrismaService.eventMap.findMany.mockResolvedValue([]);
       mockPrismaService.$transaction.mockRejectedValue(new Error('boom'));
 
-      await service.checkAndRecordEventHeroKill(
-        guildId,
-        world,
-        npcId,
-        npcName,
-        npcIcon,
-        timerData,
-      );
+      await expect(
+        service.checkAndRecordEventHeroKill(
+          guildId,
+          world,
+          npcId,
+          npcName,
+          npcIcon,
+          timerData,
+        ),
+      ).rejects.toThrow('boom');
 
-      expect(mockRedisService.set).not.toHaveBeenCalled();
+      const globalDedupFragment = `event:hero:kill:dedup:${guildId}:${world}:${npcId}:${windowOpenedAt.getTime()}:timer`;
+      const setCalls = mockRedisService.set.mock.calls.map((call) => call[0]);
+      expect(setCalls).not.toContain(globalDedupFragment);
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `event:hero:kill:lock:${guildId}:${world}:${npcId}`,
       );
@@ -601,9 +679,16 @@ describe('EventKillService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             assignedAt: expect.objectContaining({
-              gte: windowOpenedAt,
               lte: expect.any(Date),
             }),
+            OR: expect.arrayContaining([
+              { unassignedAt: null },
+              {
+                unassignedAt: expect.objectContaining({
+                  gte: windowOpenedAt,
+                }),
+              },
+            ]),
           }),
         }),
       );
@@ -704,6 +789,95 @@ describe('EventKillService', () => {
       expect(calculateCall[3]).toBe(1);
     });
 
+    it('should award points to member assigned before window start when assignment overlaps kill window', async () => {
+      const now = Date.now();
+      const windowOpenedAt = new Date(now - 5 * 60 * 1000);
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 1, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date(now - 30 * 60 * 1000),
+              unassignedAt: null,
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 300,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      await service.recordHeroKill(
+        guildId,
+        mockEventHero,
+        mockEvent,
+        timerDataInWindow,
+      );
+
+      const createManyArgs = txMock.eventKillPoint.createMany.mock.calls[0][0];
+      expect(createManyArgs.data[0].memberId).toBe(1);
+      expect(txMock.eventMapAssignmentHistory.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            assignedAt: expect.objectContaining({
+              lte: expect.any(Date),
+            }),
+            OR: expect.arrayContaining([
+              { unassignedAt: null },
+              {
+                unassignedAt: expect.objectContaining({
+                  gte: windowOpenedAt,
+                }),
+              },
+            ]),
+          }),
+        }),
+      );
+    });
+
     it('should ignore assignments from previous windows', async () => {
       const now = Date.now();
       const windowOpenedAt = new Date(now - 60 * 1000);
@@ -739,6 +913,7 @@ describe('EventKillService', () => {
               mapId: 'map-1',
               memberId: 1,
               assignedAt: new Date(now - 20 * 60 * 1000),
+              unassignedAt: new Date(now - 10 * 60 * 1000),
             },
             {
               mapId: 'map-1',
@@ -823,6 +998,7 @@ describe('EventKillService', () => {
               mapId: 'map-1',
               memberId: 1,
               assignedAt: new Date('2026-02-18T05:29:05.185Z'),
+              unassignedAt: new Date('2026-02-18T06:00:00.000Z'),
             },
             {
               mapId: 'map-1',
@@ -1645,6 +1821,88 @@ describe('EventKillService', () => {
   });
 
   // ==========================================================================
+  // getKillTimelineData
+  // ==========================================================================
+  describe('getKillTimelineData', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+    const heroId = 'hero-1';
+    const killId = 'kill-1';
+
+    it('should use summary windowOpenedAt for assignment overlap filtering', async () => {
+      const killedAt = new Date('2026-02-18T11:25:18.230Z');
+      const minSpawnTimeAtKill = new Date('2026-02-18T11:25:18.230Z');
+      const windowOpenedAt = new Date('2026-02-18T09:27:52.727Z');
+
+      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue({
+        minSpawnTimeAtKill,
+        killedAt,
+      });
+      mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue({
+        gapsTimeline: [],
+        windowOpenedAt,
+      });
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1', mapId: 1 },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [],
+      );
+
+      await service.getKillTimelineData(guildId, eventId, heroId, killId);
+
+      expect(
+        mockPrismaService.eventMapAssignmentHistory.findMany,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            assignedAt: { lte: killedAt },
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: windowOpenedAt } },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('should fall back to minSpawnTimeAtKill when summary is missing', async () => {
+      const killedAt = new Date('2026-02-18T11:25:18.230Z');
+      const minSpawnTimeAtKill = new Date('2026-02-18T10:00:00.000Z');
+
+      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue({
+        minSpawnTimeAtKill,
+        killedAt,
+      });
+      mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue(
+        null,
+      );
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1', mapId: 1 },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [],
+      );
+
+      await service.getKillTimelineData(guildId, eventId, heroId, killId);
+
+      expect(
+        mockPrismaService.eventMapAssignmentHistory.findMany,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            assignedAt: { lte: killedAt },
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: minSpawnTimeAtKill } },
+            ],
+          }),
+        }),
+      );
+    });
+  });
+
+  // ==========================================================================
   // getHeroKillHistory
   // ==========================================================================
   describe('getHeroKillHistory', () => {
@@ -1725,7 +1983,7 @@ describe('EventKillService', () => {
       mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
         [],
       );
-      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([]);
+      mockPointsService.getMembersPresenceStatsPerMap.mockResolvedValue([]);
 
       const result = await service.getKillDetail(
         guildId,

@@ -9,7 +9,7 @@ import type {
 } from "../../hooks/queries/use-events";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface EventRankingPreviewProps {
   rankings: EventRanking[];
@@ -38,13 +38,35 @@ export const EventRankingPreview = ({
     defaultHeroName,
   );
 
-  const filteredRankings = selectedHeroName
-    ? rankings.filter((r) => r.heroNpcName === selectedHeroName)
-    : rankings;
+  useEffect(() => {
+    if (!defaultHeroName) return;
+    if (!selectedHeroName) {
+      setSelectedHeroName(defaultHeroName);
+      return;
+    }
+    const selectedHeroStillExists = heroNpcs.some(
+      (hero) => hero.npcName === selectedHeroName,
+    );
+    if (!selectedHeroStillExists) {
+      setSelectedHeroName(defaultHeroName);
+    }
+  }, [defaultHeroName, heroNpcs, selectedHeroName]);
 
-  const sortedRankings = [...filteredRankings]
-    .sort((a, b) => b.totalPoints - a.totalPoints)
-    .slice(0, limit);
+  const filteredRankings = useMemo(
+    () =>
+      selectedHeroName
+        ? rankings.filter((r) => r.heroNpcName === selectedHeroName)
+        : rankings,
+    [rankings, selectedHeroName],
+  );
+
+  const sortedRankings = useMemo(
+    () =>
+      [...filteredRankings]
+        .sort((a, b) => b.totalPoints - a.totalPoints)
+        .slice(0, limit),
+    [filteredRankings, limit],
+  );
 
   if (heroNpcs.length === 0) {
     return null;
@@ -79,7 +101,7 @@ export const EventRankingPreview = ({
 
       <div
         key={selectedHeroName}
-        className="h-[180px] flex flex-col animate-in fade-in-0 duration-200"
+        className="min-h-[180px] flex flex-col animate-in fade-in-0 duration-200"
       >
         {sortedRankings.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">

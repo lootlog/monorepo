@@ -223,8 +223,6 @@ export class PresenceService {
     const presenceRoom = buildRoomName(guildId, 'presence');
     const socketsInRoom = await server.in(presenceRoom).fetchSockets();
 
-    console.log('checking presence for map', mapName);
-
     for (const socket of socketsInRoom) {
       const playerPresence = socket.data?.playerPresence;
       if (playerPresence?.mapName === mapName) {

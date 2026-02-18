@@ -10,8 +10,13 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEvent } from "./hooks/queries/use-event";
-import type { EventHeroNpc } from "./hooks/queries/use-events";
+import { useEventOverview } from "./hooks/queries/use-event-overview";
+import { useEventMaps } from "./hooks/queries/use-event-maps";
+import type {
+  EventHeroNpc,
+  EventMap,
+  EventMapLocation,
+} from "./hooks/queries/use-events";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
@@ -37,10 +42,17 @@ import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
 import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
 import { useEventHeroStats } from "./hooks/queries/use-event-hero-stats";
+import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
+import { useEventSocket } from "./hooks/socket/use-event-socket";
+
+type EventDetailHero = EventHeroNpc & {
+  locations: EventMapLocation[];
+  maps: EventMap[];
+};
 
 export const EventDetail = () => {
   const { t } = useTranslation();
@@ -51,7 +63,15 @@ export const EventDetail = () => {
     data: event,
     isLoading,
     error,
-  } = useEvent({
+  } = useEventOverview({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
+  const {
+    data: eventMaps,
+    isLoading: isMapsLoading,
+    error: mapsError,
+  } = useEventMaps({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -68,6 +88,15 @@ export const EventDetail = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
+  const { data: rankings = [], error: rankingError } = useEventRanking({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
+
+  useEventSocket({
+    eventId,
+    guildId,
+  });
   const { deleteHero, updateEvent, deleteEvent } = useEventMutations(
     guildId ?? "",
     eventId ?? "",
@@ -79,7 +108,28 @@ export const EventDetail = () => {
   const [endDialogOpen, setEndDialogOpen] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedHero, setSelectedHero] = useState<EventHeroNpc | null>(null);
+  const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
+    null,
+  );
+
+  const heroMapsById = new Map(
+    (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
+  );
+  const heroes: EventDetailHero[] = (event?.heroNpcs ?? []).map((hero) => {
+    const mapsData = heroMapsById.get(hero.id);
+    return {
+      ...hero,
+      locations: mapsData?.locations ?? [],
+      maps: mapsData?.maps ?? [],
+    };
+  });
+  const eventForEditDialog = event
+    ? {
+        ...event,
+        startsAt: event.startsAt ?? undefined,
+        endsAt: event.endsAt ?? undefined,
+      }
+    : null;
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -92,12 +142,20 @@ export const EventDetail = () => {
     permissions?.includes(Permission.OWNER);
 
   const handleEditHero = (hero: EventHeroNpc) => {
-    setSelectedHero(hero);
+    setSelectedHero({
+      ...hero,
+      locations: hero.locations ?? [],
+      maps: hero.maps ?? [],
+    });
     setHeroDialogOpen(true);
   };
 
   const handleManageMaps = (hero: EventHeroNpc) => {
-    setSelectedHero(hero);
+    setSelectedHero({
+      ...hero,
+      locations: hero.locations ?? [],
+      maps: hero.maps ?? [],
+    });
     setMapDialogOpen(true);
   };
 
@@ -110,7 +168,7 @@ export const EventDetail = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isMapsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -137,7 +195,7 @@ export const EventDetail = () => {
           <EventEditDialog
             open={editDialogOpen}
             onOpenChange={setEditDialogOpen}
-            event={event}
+            event={eventForEditDialog!}
           />
           <HeroManageDialog
             open={heroDialogOpen}
@@ -414,6 +472,26 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          {(mapsError || rankingError) && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {mapsError && (
+                <p>
+                  {t(
+                    "events.maps.error",
+                    "Nie udało się pobrać map eventu. Część danych może być niepełna.",
+                  )}
+                </p>
+              )}
+              {rankingError && (
+                <p>
+                  {t(
+                    "events.ranking.error",
+                    "Nie udało się pobrać rankingu. Część danych może być niepełna.",
+                  )}
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2 h-fit">
@@ -437,7 +515,7 @@ export const EventDetail = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  {event.heroNpcs?.map((hero) => (
+                  {heroes.map((hero) => (
                     <HeroCard
                       key={hero.id}
                       hero={hero}
@@ -456,7 +534,7 @@ export const EventDetail = () => {
                       t={t}
                     />
                   ))}
-                  {(!event.heroNpcs || event.heroNpcs.length === 0) && (
+                  {heroes.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                       <Swords className="w-8 h-8 mb-2 opacity-50" />
                       <p className="text-sm">{t("events.heroes.empty")}</p>
@@ -467,8 +545,8 @@ export const EventDetail = () => {
 
               <EventHeroLoots
                 guildId={guildId ?? ""}
-                heroNpcNames={event.heroNpcs?.map((h) => h.npcName) ?? []}
-                heroNpcs={event.heroNpcs}
+                heroNpcNames={heroes.map((h) => h.npcName)}
+                heroNpcs={heroes}
                 showHeroTabs
                 world={event.world}
                 limit={5}
@@ -477,8 +555,8 @@ export const EventDetail = () => {
 
             <div className="space-y-4">
               <EventRankingPreview
-                rankings={event.rankings || []}
-                heroNpcs={event.heroNpcs || []}
+                rankings={rankings}
+                heroNpcs={heroes}
                 guildId={guildId ?? ""}
                 eventId={eventId ?? ""}
                 limit={5}
@@ -487,7 +565,7 @@ export const EventDetail = () => {
               <RecentKillsPreview
                 guildId={guildId ?? ""}
                 eventId={eventId ?? ""}
-                heroNpcs={event.heroNpcs}
+                heroNpcs={heroes}
                 showHeroTabs
                 limit={5}
                 showHeroName
