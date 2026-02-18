@@ -166,7 +166,7 @@ export class EventsController {
     return this.eventsService.updateEvent(guildData.id, eventId, data);
   }
 
-  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
   @Delete('/guilds/:guildId/events/:eventId')
   @ApiOperation({
