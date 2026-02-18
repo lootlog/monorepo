@@ -879,6 +879,287 @@ describe('EventKillService', () => {
       }
     });
 
+    it('should not double count tracking duration for overlapping assignments on multiple maps', async () => {
+      jest.useFakeTimers();
+      const killedAt = new Date('2026-02-18T06:10:00.000Z');
+      jest.setSystemTime(killedAt);
+
+      const windowOpenedAt = new Date('2026-02-18T06:00:00.000Z');
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+        { id: 'map-2', mapName: 'Map 2' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 1, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date('2026-02-18T06:05:00.000Z'),
+              unassignedAt: new Date('2026-02-18T06:10:00.000Z'),
+            },
+            {
+              mapId: 'map-2',
+              memberId: 1,
+              assignedAt: new Date('2026-02-18T06:06:00.000Z'),
+              unassignedAt: new Date('2026-02-18T06:09:00.000Z'),
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 300,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+        { mapId: 'map-2', presenceTimeSeconds: 180, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      try {
+        await service.recordHeroKill(
+          guildId,
+          mockEventHero,
+          mockEvent,
+          timerDataInWindow,
+        );
+
+        const createManyArgs =
+          txMock.eventKillPoint.createMany.mock.calls[0][0];
+        const createdPoint = createManyArgs.data[0];
+
+        expect(createdPoint.trackingDurationSeconds).toBe(300);
+        expect(createdPoint.trackingDurationPercentage).toBe(50);
+
+        const calculateCall =
+          mockPointsService.calculateMemberPoints.mock.calls[0];
+        expect(calculateCall[2]).toBe(2);
+        expect(calculateCall[4]).toBe(50);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('should exclude real gaps between map switches from tracking duration', async () => {
+      jest.useFakeTimers();
+      const killedAt = new Date('2026-02-18T06:10:00.000Z');
+      jest.setSystemTime(killedAt);
+
+      const windowOpenedAt = new Date('2026-02-18T06:00:00.000Z');
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+        { id: 'map-2', mapName: 'Map 2' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 1, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date('2026-02-18T06:00:00.000Z'),
+              unassignedAt: new Date('2026-02-18T06:05:00.000Z'),
+            },
+            {
+              mapId: 'map-2',
+              memberId: 1,
+              assignedAt: new Date('2026-02-18T06:05:10.000Z'),
+              unassignedAt: null,
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 590,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+        { mapId: 'map-2', presenceTimeSeconds: 290, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      try {
+        await service.recordHeroKill(
+          guildId,
+          mockEventHero,
+          mockEvent,
+          timerDataInWindow,
+        );
+
+        const createManyArgs =
+          txMock.eventKillPoint.createMany.mock.calls[0][0];
+        const createdPoint = createManyArgs.data[0];
+
+        expect(createdPoint.trackingDurationSeconds).toBe(590);
+        expect(createdPoint.trackingDurationPercentage).toBe(98);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('should keep tracking duration continuous when map switch has no gap', async () => {
+      jest.useFakeTimers();
+      const killedAt = new Date('2026-02-18T06:10:00.000Z');
+      jest.setSystemTime(killedAt);
+
+      const windowOpenedAt = new Date('2026-02-18T06:00:00.000Z');
+      const timerDataInWindow = {
+        ...timerData,
+        previousMinSpawnTime: windowOpenedAt,
+        windowOpenedAt,
+      };
+
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1' },
+        { id: 'map-2', mapName: 'Map 2' },
+      ]);
+
+      const txMock = {
+        eventHeroKill: {
+          create: jest.fn().mockResolvedValue({ id: 'kill-1' }),
+        },
+        eventKillPoint: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue([
+              { id: 'point-1', killId: 'kill-1', memberId: 1, points: 100 },
+            ]),
+        },
+        eventMap: {
+          update: jest.fn().mockResolvedValue({}),
+        },
+        eventMapAssignmentHistory: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              mapId: 'map-1',
+              memberId: 1,
+              assignedAt: new Date('2026-02-18T06:00:00.000Z'),
+              unassignedAt: new Date('2026-02-18T06:05:00.000Z'),
+            },
+            {
+              mapId: 'map-2',
+              memberId: 1,
+              assignedAt: new Date('2026-02-18T06:05:00.000Z'),
+              unassignedAt: null,
+            },
+          ]),
+          updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+        },
+      };
+
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(txMock),
+      );
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockPointsService.getMemberPresenceStats.mockResolvedValue({
+        timeOnMapSeconds: 600,
+        afkPercentage: 0,
+        wasPresent: true,
+      });
+      mockPointsService.getMemberPresenceStatsPerMap.mockResolvedValue([
+        { mapId: 'map-1', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+        { mapId: 'map-2', presenceTimeSeconds: 300, afkTimeSeconds: 0 },
+      ]);
+      mockPointsService.calculateMemberPoints.mockReturnValue({
+        points: 100,
+        appliedMultiplier: 1,
+        timeMultiplier: 1,
+        trackersMultiplier: 1,
+        mapsMultiplier: 1,
+        trackingDurationMultiplier: 1,
+      });
+
+      try {
+        await service.recordHeroKill(
+          guildId,
+          mockEventHero,
+          mockEvent,
+          timerDataInWindow,
+        );
+
+        const createManyArgs =
+          txMock.eventKillPoint.createMany.mock.calls[0][0];
+        const createdPoint = createManyArgs.data[0];
+
+        expect(createdPoint.trackingDurationSeconds).toBe(600);
+        expect(createdPoint.trackingDurationPercentage).toBe(100);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('should keep tracking duration percentage null when window duration is zero', async () => {
       jest.useFakeTimers();
       const killedAt = new Date('2026-02-18T06:08:31.185Z');
