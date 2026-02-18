@@ -457,13 +457,17 @@ export class EventKillService {
           mapId: true,
           memberId: true,
           assignedAt: true,
+          unassignedAt: true,
         },
         orderBy: { assignedAt: 'asc' },
       });
 
       const memberMapAssignments = new Map<number, Set<string>>();
       const memberMapIds = new Map<number, Set<string>>();
-      const memberFirstAssignment = new Map<number, Date>();
+      const memberTrackingIntervals = new Map<
+        number,
+        Array<{ start: Date; end: Date }>
+      >();
 
       for (const history of assignmentHistory) {
         // Defensive clamp in case mocks or external callers bypass query constraints.
@@ -486,9 +490,21 @@ export class EventKillService {
         }
         memberMapIds.get(history.memberId)?.add(history.mapId);
 
-        const current = memberFirstAssignment.get(history.memberId);
-        if (!current || history.assignedAt < current) {
-          memberFirstAssignment.set(history.memberId, history.assignedAt);
+        const intervalStart =
+          history.assignedAt > scoringWindowStartTime
+            ? history.assignedAt
+            : scoringWindowStartTime;
+        const intervalEndCandidate = history.unassignedAt ?? killedAt;
+        const intervalEnd =
+          intervalEndCandidate < killedAt ? intervalEndCandidate : killedAt;
+
+        if (intervalEnd > intervalStart) {
+          if (!memberTrackingIntervals.has(history.memberId)) {
+            memberTrackingIntervals.set(history.memberId, []);
+          }
+          memberTrackingIntervals
+            .get(history.memberId)
+            ?.push({ start: intervalStart, end: intervalEnd });
         }
       }
 
@@ -527,10 +543,9 @@ export class EventKillService {
           afkTimeSeconds: stat.afkTimeSeconds,
         }));
 
-        const firstAssignment = memberFirstAssignment.get(memberId);
-        const trackingDurationSeconds = firstAssignment
-          ? Math.floor((killedAt.getTime() - firstAssignment.getTime()) / 1000)
-          : null;
+        const trackingIntervals = memberTrackingIntervals.get(memberId) ?? [];
+        const trackingDurationSeconds =
+          this.calculateTrackingDurationSeconds(trackingIntervals);
 
         const windowDurationSeconds = Math.max(
           0,
@@ -1090,6 +1105,39 @@ export class EventKillService {
     );
 
     return results;
+  }
+
+  private calculateTrackingDurationSeconds(
+    intervals: Array<{ start: Date; end: Date }>,
+  ): number {
+    if (intervals.length === 0) {
+      return 0;
+    }
+
+    const sortedIntervals = [...intervals].sort(
+      (a, b) => a.start.getTime() - b.start.getTime(),
+    );
+
+    let totalMs = 0;
+    let currentStartMs = sortedIntervals[0].start.getTime();
+    let currentEndMs = sortedIntervals[0].end.getTime();
+
+    for (let i = 1; i < sortedIntervals.length; i++) {
+      const nextStartMs = sortedIntervals[i].start.getTime();
+      const nextEndMs = sortedIntervals[i].end.getTime();
+
+      if (nextStartMs <= currentEndMs) {
+        currentEndMs = Math.max(currentEndMs, nextEndMs);
+        continue;
+      }
+
+      totalMs += currentEndMs - currentStartMs;
+      currentStartMs = nextStartMs;
+      currentEndMs = nextEndMs;
+    }
+
+    totalMs += currentEndMs - currentStartMs;
+    return Math.round(totalMs / 1000);
   }
 
   private async cancelScheduledAutoClose(heroId: string): Promise<void> {
