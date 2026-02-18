@@ -44,7 +44,8 @@ interface CreateMapData {
 export const useEventMutations = (guildId: string, eventId: string) => {
   const { client } = useApiClient();
   const queryClient = useQueryClient();
-  const queryKey = ["event", guildId, eventId];
+  const queryKeyOverview = ["event-overview", guildId, eventId];
+  const queryKeyMaps = ["event-maps", guildId, eventId];
 
   const updateEvent = useMutation({
     mutationFn: async (data: UpdateEventData) => {
@@ -54,11 +55,9 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       );
       return response.data;
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(queryKey, (oldData: unknown) => ({
-        ...(oldData as object),
-        ...data,
-      }));
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeyOverview });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
@@ -72,6 +71,8 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+      queryClient.invalidateQueries({ queryKey: queryKeyOverview });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 
@@ -84,7 +85,9 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: queryKeyOverview });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
 
@@ -103,7 +106,9 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: queryKeyOverview });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
 
@@ -115,7 +120,9 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: queryKeyOverview });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
 
@@ -134,7 +141,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 
@@ -152,7 +159,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: queryKeyMaps });
     },
   });
 
