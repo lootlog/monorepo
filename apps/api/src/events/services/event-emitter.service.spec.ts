@@ -37,12 +37,11 @@ describe('EventEmitterService', () => {
     const guildId = 'guild-1';
     const eventId = 'event-1';
     const mapId = 'map-1';
-    const mapName = 'Test Map';
 
     it('should publish map status update to RabbitMQ', async () => {
       mockAmqpConnection.publish.mockResolvedValue(undefined);
 
-      await service.emitMapStatusUpdate(guildId, eventId, mapId, mapName);
+      await service.emitMapStatusUpdate(guildId, eventId, mapId);
 
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,
@@ -51,17 +50,18 @@ describe('EventEmitterService', () => {
           guildId,
           eventId,
           mapId,
-          mapName,
         },
       );
     });
 
     it('should handle publish errors gracefully', async () => {
-      mockAmqpConnection.publish.mockRejectedValue(new Error('Connection lost'));
+      mockAmqpConnection.publish.mockRejectedValue(
+        new Error('Connection lost'),
+      );
 
       // Should not throw
       await expect(
-        service.emitMapStatusUpdate(guildId, eventId, mapId, mapName),
+        service.emitMapStatusUpdate(guildId, eventId, mapId),
       ).resolves.not.toThrow();
 
       expect(mockAmqpConnection.publish).toHaveBeenCalled();
@@ -90,7 +90,9 @@ describe('EventEmitterService', () => {
     });
 
     it('should handle publish errors gracefully', async () => {
-      mockAmqpConnection.publish.mockRejectedValue(new Error('Connection lost'));
+      mockAmqpConnection.publish.mockRejectedValue(
+        new Error('Connection lost'),
+      );
 
       await expect(
         service.emitHeroKilled(guildId, eventId, killId),
@@ -116,7 +118,9 @@ describe('EventEmitterService', () => {
     });
 
     it('should handle publish errors gracefully', async () => {
-      mockAmqpConnection.publish.mockRejectedValue(new Error('Connection lost'));
+      mockAmqpConnection.publish.mockRejectedValue(
+        new Error('Connection lost'),
+      );
 
       await expect(
         service.emitRespawnWindowOpened(guildId, eventId, heroId),
@@ -142,7 +146,9 @@ describe('EventEmitterService', () => {
     });
 
     it('should handle publish errors gracefully', async () => {
-      mockAmqpConnection.publish.mockRejectedValue(new Error('Connection lost'));
+      mockAmqpConnection.publish.mockRejectedValue(
+        new Error('Connection lost'),
+      );
 
       await expect(
         service.emitRespawnWindowClosed(guildId, eventId, heroId),
@@ -172,9 +178,41 @@ describe('EventEmitterService', () => {
     });
 
     it('should handle publish errors gracefully', async () => {
-      mockAmqpConnection.publish.mockRejectedValue(new Error('Connection lost'));
+      mockAmqpConnection.publish.mockRejectedValue(
+        new Error('Connection lost'),
+      );
 
       await expect(service.emitTimerUpdate(mockTimer)).resolves.not.toThrow();
+    });
+  });
+
+  describe('emitRankingUpdate', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+
+    it('should publish ranking update event', async () => {
+      mockAmqpConnection.publish.mockResolvedValue(undefined);
+
+      await service.emitRankingUpdate(guildId, eventId);
+
+      expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.EVENT_RANKING_UPDATE,
+        {
+          guildId,
+          eventId,
+        },
+      );
+    });
+
+    it('should handle publish errors gracefully', async () => {
+      mockAmqpConnection.publish.mockRejectedValue(
+        new Error('Connection lost'),
+      );
+
+      await expect(
+        service.emitRankingUpdate(guildId, eventId),
+      ).resolves.not.toThrow();
     });
   });
 });

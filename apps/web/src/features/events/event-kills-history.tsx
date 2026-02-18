@@ -4,10 +4,12 @@ import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, Skull, Loader2, Swords } from "lucide-react";
-import { useEvent } from "./hooks/queries/use-event";
+import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState, useEffect } from "react";
+import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { useGuild } from "@/hooks/api/guilds/use-guild";
 
 export const EventKillsHistory = () => {
   const { t } = useTranslation();
@@ -15,12 +17,13 @@ export const EventKillsHistory = () => {
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     urlHeroId,
   );
+  const { data: guild } = useGuild();
 
   useEffect(() => {
     setSelectedHeroId(urlHeroId);
   }, [urlHeroId]);
 
-  const { data: event, isLoading: eventLoading } = useEvent({
+  const { data: event, isLoading: eventLoading } = useEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -36,6 +39,12 @@ export const EventKillsHistory = () => {
     eventId: eventId ?? "",
     heroId: selectedHeroId,
     limit: 20,
+  });
+
+  useEventSocket({
+    eventId,
+    guildId: guild?.id,
+    heroId: selectedHeroId,
   });
 
   const heroes = event?.heroNpcs ?? [];

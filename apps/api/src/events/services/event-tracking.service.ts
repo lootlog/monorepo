@@ -37,7 +37,11 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  private getPresenceLockKey(guildId: string, mapName: string, discordId: string): string {
+  private getPresenceLockKey(
+    guildId: string,
+    mapName: string,
+    discordId: string,
+  ): string {
     return `presence:lock:${guildId}:${mapName}:${discordId}`;
   }
 
@@ -84,7 +88,9 @@ export class EventTrackingService implements OnModuleInit {
 
     const wasUnassigned = map.assignedMembers.length === 0;
 
-    const isAlreadyAssigned = map.assignedMembers.some((m) => m.id === memberId);
+    const isAlreadyAssigned = map.assignedMembers.some(
+      (m) => m.id === memberId,
+    );
     if (isAlreadyAssigned) {
       this.logger.debug({
         message: 'Member already assigned to map, skipping',
@@ -132,18 +138,17 @@ export class EventTrackingService implements OnModuleInit {
     if (wasUnassigned) {
       await this.closeUnassignedGap(mapId);
       await this.openUncoveredGap(mapId, map.heroNpcId);
-      this.amqpConnection.publish(DEFAULT_EXCHANGE_NAME, RoutingKey.PRESENCE_CHECK_REQUEST, {
-        guildId,
-        mapName: map.mapName,
-      });
+      this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.PRESENCE_CHECK_REQUEST,
+        {
+          guildId,
+          mapName: map.mapName,
+        },
+      );
     }
 
-    await this.eventEmitter.emitMapStatusUpdate(
-      guildId,
-      eventId,
-      mapId,
-      map.mapName,
-    );
+    await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId);
 
     return updated;
   }
@@ -177,7 +182,9 @@ export class EventTrackingService implements OnModuleInit {
     const updated = await this.prisma.eventMap.update({
       where: { id: mapId },
       data: {
-        assignedMembers: memberId ? { disconnect: { id: memberId } } : { set: [] },
+        assignedMembers: memberId
+          ? { disconnect: { id: memberId } }
+          : { set: [] },
       },
       include: {
         assignedMembers: true,
@@ -202,12 +209,7 @@ export class EventTrackingService implements OnModuleInit {
       await this.closeUncoveredGap(mapId);
     }
 
-    await this.eventEmitter.emitMapStatusUpdate(
-      guildId,
-      eventId,
-      mapId,
-      map.mapName,
-    );
+    await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, mapId);
 
     return updated;
   }
@@ -413,7 +415,11 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  async getHeroCoverageGaps(guildId: string, eventId: string, heroNpcId: string) {
+  async getHeroCoverageGaps(
+    guildId: string,
+    eventId: string,
+    heroNpcId: string,
+  ) {
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: {
         id: heroNpcId,
@@ -463,7 +469,11 @@ export class EventTrackingService implements OnModuleInit {
     });
   }
 
-  async getActiveGapsForHero(guildId: string, eventId: string, heroNpcId: string) {
+  async getActiveGapsForHero(
+    guildId: string,
+    eventId: string,
+    heroNpcId: string,
+  ) {
     const hero = await this.prisma.eventHeroNpc.findFirst({
       where: {
         id: heroNpcId,
@@ -654,15 +664,22 @@ export class EventTrackingService implements OnModuleInit {
       activeTimers.map((t) => `${t.guildId}:${t.world}:${t.npcId}`),
     );
 
-    for (const map of eventMaps) {
+    const activeMaps = eventMaps.filter((map) => {
       const effectiveNpcId =
         map.heroNpc.npcId ?? this.getSyntheticNpcId(map.heroNpc.id);
       const timerKey = `${guildId}:${map.heroNpc.event.world}:${effectiveNpcId}`;
-      const hasActiveWindow = activeTimerSet.has(timerKey);
+      return activeTimerSet.has(timerKey);
+    });
 
-      if (!hasActiveWindow) {
-        continue;
-      }
+    const assignedActiveMapIds = activeMaps
+      .filter((map) => map.assignedMembers.length > 0)
+      .map((map) => map.id);
+
+    const activeNonAfkByMap =
+      await this.getActiveNonAfkMembersByMap(assignedActiveMapIds);
+
+    for (const map of activeMaps) {
+      const nonAfkMembers = activeNonAfkByMap.get(map.id) ?? new Set<number>();
 
       if (member) {
         if (hasPlayer) {
@@ -689,6 +706,12 @@ export class EventTrackingService implements OnModuleInit {
             memberId: member.id,
             isAfk,
           });
+
+          if (isAfk) {
+            nonAfkMembers.delete(member.id);
+          } else {
+            nonAfkMembers.add(member.id);
+          }
         } else {
           const result = await this.prisma.eventPresenceLog.updateMany({
             where: {
@@ -706,6 +729,8 @@ export class EventTrackingService implements OnModuleInit {
               memberId: member.id,
             });
           }
+
+          nonAfkMembers.delete(member.id);
         }
       }
 
@@ -717,21 +742,14 @@ export class EventTrackingService implements OnModuleInit {
 
       if (hasPlayer) {
         if (isAfk) {
-          const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
-            map.id,
-          );
-          if (activeNonAfkPlayers.length === 0) {
+          if (nonAfkMembers.size === 0) {
             await this.openUncoveredGap(map.id, map.heroNpcId);
           }
         } else {
           await this.closeUncoveredGap(map.id);
         }
       } else {
-        const activeNonAfkPlayers = await this.getActiveNonAfkPlayersOnMap(
-          map.id,
-        );
-
-        if (activeNonAfkPlayers.length === 0) {
+        if (nonAfkMembers.size === 0) {
           await this.openUncoveredGap(map.id, map.heroNpcId);
         }
       }
@@ -740,25 +758,48 @@ export class EventTrackingService implements OnModuleInit {
         guildId,
         map.heroNpc.eventId,
         map.id,
-        map.mapName,
       );
     }
   }
 
   async getActiveNonAfkPlayersOnMap(mapId: string): Promise<number[]> {
+    const mapMembers = await this.getActiveNonAfkMembersByMap([mapId]);
+    return Array.from(mapMembers.get(mapId) ?? []);
+  }
+
+  private async getActiveNonAfkMembersByMap(
+    mapIds: string[],
+  ): Promise<Map<string, Set<number>>> {
+    if (mapIds.length === 0) {
+      return new Map();
+    }
+
     const activeLogs = await this.prisma.eventPresenceLog.findMany({
       where: {
-        mapId,
+        mapId: { in: mapIds },
         endedAt: null,
         isAfk: false,
       },
       select: {
+        mapId: true,
         memberId: true,
       },
-      distinct: ['memberId'],
+      distinct: ['mapId', 'memberId'],
     });
 
-    return activeLogs.map((log) => log.memberId);
+    const membersByMap = new Map<string, Set<number>>();
+    for (const mapId of mapIds) {
+      membersByMap.set(mapId, new Set());
+    }
+
+    for (const log of activeLogs) {
+      if (!membersByMap.has(log.mapId)) {
+        membersByMap.set(log.mapId, new Set());
+      }
+      membersByMap.get(log.mapId)?.add(log.memberId);
+    }
+
+    return membersByMap;
   }
 
   async getActivePlayersOnMap(mapId: string): Promise<number[]> {
@@ -929,30 +970,10 @@ export class EventTrackingService implements OnModuleInit {
     };
   }
 
-  private async hasActiveRespawnWindow(
-    guildId: string,
-    world: string,
-    npcId: number | null,
-    heroId: string,
-  ): Promise<boolean> {
-    const effectiveNpcId = npcId ?? this.getSyntheticNpcId(heroId);
-
-    const timer = await this.prisma.timer.findUnique({
-      where: {
-        timerId: { guildId, world, npcId: effectiveNpcId },
-      },
-      select: { maxSpawnTime: true },
-    });
-
-    if (!timer) return false;
-
-    return new Date(timer.maxSpawnTime) > new Date();
-  }
-
   private getSyntheticNpcId(heroId: string): number {
     let hash = 0;
     for (let i = 0; i < heroId.length; i++) {
-      hash = ((hash << 5) - hash) + heroId.charCodeAt(i);
+      hash = (hash << 5) - hash + heroId.charCodeAt(i);
       hash |= 0;
     }
     return -Math.abs(hash || 1);

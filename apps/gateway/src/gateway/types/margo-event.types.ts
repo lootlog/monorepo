@@ -17,27 +17,6 @@ export interface EventPresenceLog {
   timestamp: number;
 }
 
-export interface HeroKill {
-  killerDiscordId: string;
-  killerCharacterId: string;
-  killerCharacterName: string;
-  heroNpcId: string;
-  heroName: string;
-  heroLevel: number;
-  killedAt: string;
-  mapId: string;
-  mapName: string;
-}
-
-export interface EventRanking {
-  discordId: string;
-  characterId: string;
-  characterName: string;
-  points: number;
-  kills: number;
-  rank: number;
-}
-
 export interface EventPresenceUpdatePayload {
   guildId: string;
   eventId: string;
@@ -48,14 +27,12 @@ export interface EventPresenceUpdatePayload {
 export interface EventHeroKilledPayload {
   guildId: string;
   eventId: string;
-  heroNpcId: string;
-  kill: HeroKill;
+  killId: string;
 }
 
 export interface EventRankingUpdatePayload {
   guildId: string;
   eventId: string;
-  rankings: EventRanking[];
 }
 
 export interface EventRespawnWindowPayload {
@@ -68,5 +45,4 @@ export interface EventMapStatusUpdatePayload {
   guildId: string;
   eventId: string;
   mapId: string;
-  mapName: string;
 }

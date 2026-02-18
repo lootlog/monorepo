@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Event, EventKillPoint } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
+import { EventEmitterService } from './event-emitter.service';
 import type {
   TimeOfDayMultiplier,
   TrackersMultipliers,
@@ -12,7 +13,10 @@ const DEFAULT_MULTIPLIER = 1.0;
 
 @Injectable()
 export class EventPointsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitterService,
+  ) {}
 
   async getRanking(guildId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
@@ -25,8 +29,23 @@ export class EventPointsService {
 
     return this.prisma.eventRanking.findMany({
       where: { eventId },
-      include: {
-        member: true,
+      select: {
+        id: true,
+        eventId: true,
+        memberId: true,
+        heroNpcName: true,
+        totalPoints: true,
+        totalKills: true,
+        totalTimeSeconds: true,
+        avgAfkPercentage: true,
+        pointsModified: true,
+        updatedAt: true,
+        member: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         totalPoints: 'desc',
@@ -299,6 +318,8 @@ export class EventPointsService {
         });
       }
     });
+
+    await this.emitRankingUpdateByEventId(eventId);
   }
 
   async recalculateEventPointsWithMultipliers(
@@ -477,6 +498,8 @@ export class EventPointsService {
         });
       }
     });
+
+    await this.emitRankingUpdateByEventId(eventId);
   }
 
   async getMemberPresenceStats(
@@ -630,6 +653,83 @@ export class EventPointsService {
     }));
   }
 
+  async getMembersPresenceStatsPerMap(
+    mapIds: string[],
+    memberIds: number[],
+    since?: Date,
+  ): Promise<
+    Array<{
+      memberId: number;
+      mapId: string;
+      presenceTimeSeconds: number;
+      afkTimeSeconds: number;
+    }>
+  > {
+    if (mapIds.length === 0 || memberIds.length === 0) {
+      return [];
+    }
+
+    const logs = await this.prisma.eventPresenceLog.findMany({
+      where: {
+        mapId: { in: mapIds },
+        memberId: { in: memberIds },
+        ...(since && {
+          OR: [
+            { startedAt: { gte: since } },
+            { endedAt: { gte: since } },
+            { endedAt: null, startedAt: { lte: since } },
+          ],
+        }),
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    const now = new Date();
+    const memberMapStats = new Map<
+      string,
+      {
+        memberId: number;
+        mapId: string;
+        presenceTimeMs: number;
+        afkTimeMs: number;
+      }
+    >();
+
+    for (const log of logs) {
+      const key = `${log.memberId}:${log.mapId}`;
+      if (!memberMapStats.has(key)) {
+        memberMapStats.set(key, {
+          memberId: log.memberId,
+          mapId: log.mapId,
+          presenceTimeMs: 0,
+          afkTimeMs: 0,
+        });
+      }
+
+      const stats = memberMapStats.get(key);
+      if (!stats) continue;
+
+      const effectiveStart =
+        since && log.startedAt < since ? since : log.startedAt;
+      const endTime = log.endedAt || now;
+      const duration = endTime.getTime() - effectiveStart.getTime();
+
+      if (duration > 0) {
+        stats.presenceTimeMs += duration;
+        if (log.isAfk) {
+          stats.afkTimeMs += duration;
+        }
+      }
+    }
+
+    return Array.from(memberMapStats.values()).map((stats) => ({
+      memberId: stats.memberId,
+      mapId: stats.mapId,
+      presenceTimeSeconds: Math.round(stats.presenceTimeMs / 1000),
+      afkTimeSeconds: Math.round(stats.afkTimeMs / 1000),
+    }));
+  }
+
   async updateRankingAfterKill(
     eventId: string,
     heroNpcName: string,
@@ -682,6 +782,8 @@ export class EventPointsService {
         });
       }
     }
+
+    await this.emitRankingUpdateByEventId(eventId);
   }
 
   async updateKillPoint(
@@ -758,6 +860,8 @@ export class EventPointsService {
           },
         });
       }
+
+      await this.eventEmitter.emitRankingUpdate(guildId, eventId);
     }
 
     return updated;
@@ -794,10 +898,14 @@ export class EventPointsService {
       },
     });
 
-    return this.prisma.eventRanking.update({
+    const updated = await this.prisma.eventRanking.update({
       where: { id: rankingId },
       data: { totalPoints: newTotalPoints, pointsModified: true },
     });
+
+    await this.eventEmitter.emitRankingUpdate(guildId, eventId);
+
+    return updated;
   }
 
   async getRankingEditHistory(
@@ -821,5 +929,18 @@ export class EventPointsService {
       where: { rankingId },
       orderBy: { editedAt: 'desc' },
     });
+  }
+
+  private async emitRankingUpdateByEventId(eventId: string): Promise<void> {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      select: { guildId: true, id: true },
+    });
+
+    if (!event) {
+      return;
+    }
+
+    await this.eventEmitter.emitRankingUpdate(event.guildId, event.id);
   }
 }

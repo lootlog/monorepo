@@ -59,7 +59,7 @@ export const useCloseRespawnWindow = () => {
         queryKey: ["event-hero-timers", guildId, variables.eventId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["event", guildId, variables.eventId],
+        queryKey: ["event-maps", guildId, variables.eventId],
       });
       queryClient.invalidateQueries({
         queryKey: ["map-active-gap", guildId, variables.eventId],
@@ -102,7 +102,7 @@ export const useOpenRespawnWindow = () => {
         queryKey: ["event-hero-timers", guildId, variables.eventId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["event", guildId, variables.eventId],
+        queryKey: ["event-maps", guildId, variables.eventId],
       });
       queryClient.invalidateQueries({
         queryKey: ["map-active-gap", guildId, variables.eventId],

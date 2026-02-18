@@ -16,7 +16,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
-import { useEvent } from "@/features/events/hooks";
+import { useEventOverview } from "@/features/events/hooks";
 import { useNpcKillers } from "@/features/stats/hooks/use-npc-killers";
 import { useMemberKills } from "@/features/stats/hooks/use-member-kills";
 import { ROUTES } from "@/config/routes";
@@ -29,7 +29,7 @@ export const GuildLayout: FC = () => {
   const params = useParams({ strict: false });
   const { data: guild } = useGuild({ retry: false });
   const { guildId, eventId } = params;
-  const { data: event } = useEvent({
+  const { data: event } = useEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });

@@ -328,6 +328,33 @@ export class TimersService implements OnModuleInit {
       const respawnRandomness =
         data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
 
+      if (previousTimer && previousTimer.minSpawnTime > now) {
+        const existingTimer = await this.prisma.timer.findUnique({
+          where: {
+            timerId: { guildId, world: data.world, npcId: data.npc.id },
+          },
+          include: { member: true },
+        });
+        const duplicateTimer = existingTimer ?? previousTimer;
+
+        await this.redis.set(
+          dedupKey,
+          JSON.stringify(duplicateTimer),
+          DEDUP_TTL_SECONDS,
+        );
+
+        this.logger.log({
+          level: 'debug',
+          message: 'Skipping timer update before minSpawnTime',
+          guildId,
+          npcId: data.npc.id,
+          world: data.world,
+          minSpawnTime: previousTimer.minSpawnTime,
+        });
+
+        return duplicateTimer as Timer;
+      }
+
       const timerData = {
         maxSpawnTime,
         minSpawnTime,
@@ -363,10 +390,8 @@ export class TimersService implements OnModuleInit {
 
       this.emitUpdateTimer(newTimer);
 
-      // Check if this timer represents an event hero kill
-      // Fire and forget - don't block timer creation
-      this.eventsService
-        .checkAndRecordEventHeroKill({
+      await this.eventsService
+        .enqueueEventHeroKillCheck({
           guildId,
           world: data.world,
           npcId: data.npc.id,
@@ -385,8 +410,11 @@ export class TimersService implements OnModuleInit {
         .catch((err) => {
           this.logger.error({
             level: 'error',
-            message: 'Failed to check/record event hero kill',
+            message: 'Failed to enqueue event hero kill check',
             error: err instanceof Error ? err.message : err,
+            guildId,
+            world: data.world,
+            npcId: data.npc.id,
           });
         });
 

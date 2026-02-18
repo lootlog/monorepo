@@ -43,12 +43,12 @@ interface EventEditDialogProps {
     name: string;
     active: boolean;
     createdAt: string;
-    startsAt?: string;
-    endsAt?: string;
-    timeOfDayMultipliers?: TimeOfDayMultiplier[];
-    trackersMultipliers?: Record<string, number>;
-    mapsCountMultipliers?: Record<string, number>;
-    trackingDurationMultipliers?: Record<string, number>;
+    startsAt?: string | null;
+    endsAt?: string | null;
+    timeOfDayMultipliers?: TimeOfDayMultiplier[] | null;
+    trackersMultipliers?: Record<string, number> | null;
+    mapsCountMultipliers?: Record<string, number> | null;
+    trackingDurationMultipliers?: Record<string, number> | null;
     assignmentTimeoutMinutes?: number;
     mapAssignmentCap?: number;
     basePointsPerKill?: number;
@@ -827,7 +827,9 @@ export const EventEditDialog = ({
                             <div className="flex-1 grid grid-cols-2 gap-2">
                               <div>
                                 <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                  {t("events.scoring.trackingDuration.percentage")}
+                                  {t(
+                                    "events.scoring.trackingDuration.percentage",
+                                  )}
                                 </Label>
                                 <Input
                                   type="number"
@@ -846,7 +848,9 @@ export const EventEditDialog = ({
                               </div>
                               <div>
                                 <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                  {t("events.scoring.trackingDuration.multiplier")}
+                                  {t(
+                                    "events.scoring.trackingDuration.multiplier",
+                                  )}
                                 </Label>
                                 <Input
                                   type="number"

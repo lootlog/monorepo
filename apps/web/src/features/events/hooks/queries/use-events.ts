@@ -32,8 +32,9 @@ interface EventHeroNpc {
   npcId: number | null;
   npcName: string;
   npcIcon: string | null;
-  locations: EventMapLocation[];
-  maps: EventMap[];
+  npcLvl?: number | null;
+  locations?: EventMapLocation[];
+  maps?: EventMap[];
 }
 
 interface EventRanking {
@@ -64,8 +65,9 @@ interface Event {
   startsAt?: string;
   endsAt?: string;
   createdAt: string;
+  updatedAt?: string;
   heroNpcs: EventHeroNpc[];
-  rankings: EventRanking[];
+  rankings?: EventRanking[];
   timeOfDayMultipliers?: TimeOfDayMultiplier[];
   trackersMultipliers?: Record<string, number>;
   mapsCountMultipliers?: Record<string, number>;
