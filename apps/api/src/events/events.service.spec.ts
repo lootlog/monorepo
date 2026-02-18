@@ -19,6 +19,7 @@ describe('EventsService', () => {
       findMany: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
     eventHeroNpc: {
       create: jest.fn(),
@@ -200,6 +201,34 @@ describe('EventsService', () => {
         include: expect.any(Object),
       });
     });
+
+    it('should normalize world to lowercase and trim spaces', async () => {
+      const dtoWithMixedCaseWorld = {
+        name: 'Test Event',
+        world: '  Tempest  ',
+      };
+      mockPrismaService.event.create.mockResolvedValue({});
+
+      await service.createEvent(guildId, dtoWithMixedCaseWorld);
+
+      expect(mockPrismaService.event.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          world: 'tempest',
+        }),
+        include: expect.any(Object),
+      });
+    });
+
+    it('should throw when world is empty after trim', async () => {
+      await expect(
+        service.createEvent(guildId, {
+          name: 'Test Event',
+          world: '   ',
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.event.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('getEvents', () => {
@@ -353,17 +382,42 @@ describe('EventsService', () => {
       );
     });
 
-    it('should soft delete event', async () => {
+    it('should hard delete event and remove pending jobs', async () => {
+      const removeEventJob = jest.fn().mockResolvedValue(undefined);
+      const removeOtherEventJob = jest.fn().mockResolvedValue(undefined);
+
       mockPrismaService.event.findFirst.mockResolvedValue({ id: eventId });
-      mockPrismaService.event.update.mockResolvedValue({});
+      mockQueue.getJobs
+        .mockResolvedValueOnce([
+          { data: { eventId }, remove: removeEventJob },
+          { data: { eventId: 'event-2' }, remove: removeOtherEventJob },
+        ])
+        .mockResolvedValueOnce([{ data: { eventId }, remove: removeEventJob }]);
+      mockPrismaService.event.delete.mockResolvedValue({});
 
       const result = await service.deleteEvent(guildId, eventId);
 
-      expect(mockPrismaService.event.update).toHaveBeenCalledWith({
+      expect(removeEventJob).toHaveBeenCalledTimes(2);
+      expect(removeOtherEventJob).not.toHaveBeenCalled();
+      expect(mockPrismaService.event.delete).toHaveBeenCalledWith({
         where: { id: eventId },
-        data: { active: false, endsAt: expect.any(Date) },
       });
       expect(result).toEqual({ success: true });
+    });
+
+    it('should delete inactive event too', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue({
+        id: eventId,
+        active: false,
+      });
+      mockQueue.getJobs.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      mockPrismaService.event.delete.mockResolvedValue({});
+
+      await service.deleteEvent(guildId, eventId);
+
+      expect(mockPrismaService.event.delete).toHaveBeenCalledWith({
+        where: { id: eventId },
+      });
     });
   });
 

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useParams, Link } from "@tanstack/react-router";
+import { useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
@@ -22,6 +22,7 @@ import {
   Clock,
   TrendingUp,
   CalendarDays,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -39,10 +40,12 @@ import { useEventHeroStats } from "./hooks/queries/use-event-hero-stats";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
+import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 
 export const EventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
+  const navigate = useNavigate();
 
   const {
     data: event,
@@ -65,7 +68,7 @@ export const EventDetail = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-  const { deleteHero, updateEvent } = useEventMutations(
+  const { deleteHero, updateEvent, deleteEvent } = useEventMutations(
     guildId ?? "",
     eventId ?? "",
   );
@@ -75,11 +78,16 @@ export const EventDetail = () => {
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedHero, setSelectedHero] = useState<EventHeroNpc | null>(null);
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
     permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
+    permissions?.includes(Permission.ADMIN) ||
+    permissions?.includes(Permission.OWNER);
+
+  const canDeleteEvent =
     permissions?.includes(Permission.ADMIN) ||
     permissions?.includes(Permission.OWNER);
 
@@ -178,6 +186,26 @@ export const EventDetail = () => {
               }
             }}
             isPending={updateEvent.isPending}
+          />
+          <DeleteEventDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            eventName={event.name}
+            requireEventNameConfirmation
+            isPending={deleteEvent.isPending}
+            onConfirm={async () => {
+              try {
+                await deleteEvent.mutateAsync();
+                toast.success(t("events.deleteSuccess"));
+                setDeleteDialogOpen(false);
+                navigate({
+                  to: "/$guildId/events",
+                  params: { guildId: guildId ?? "" },
+                });
+              } catch {
+                toast.error(t("events.deleteError"));
+              }
+            }}
           />
         </>
       )}
@@ -370,6 +398,17 @@ export const EventDetail = () => {
                 {t("events.resume")}
               </Button>
             ))}
+          {canDeleteEvent && (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={deleteEvent.isPending}
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {t("events.delete")}
+            </Button>
+          )}
         </div>
       </div>
 

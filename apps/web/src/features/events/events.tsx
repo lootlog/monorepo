@@ -4,18 +4,38 @@ import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { Trophy, Plus, Swords, CalendarDays, AlertCircle, Globe, ShieldX } from "lucide-react";
+import {
+  Trophy,
+  Plus,
+  Swords,
+  CalendarDays,
+  AlertCircle,
+  Globe,
+  ShieldX,
+  Trash2,
+} from "lucide-react";
 import { Badge } from "@lootlog/ui/components/badge";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { isAxiosError } from "axios";
-import { type Event, useEvents } from "@/features/events/hooks/queries/use-events";
+import { toast } from "sonner";
+import { Permission } from "@lootlog/types";
+import {
+  type Event,
+  useEvents,
+} from "@/features/events/hooks/queries/use-events";
+import { useDeleteEvent } from "@/features/events/hooks/mutations/use-delete-event";
+import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
+import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 
 export const Events = () => {
   const { t } = useTranslation();
   const { guildId } = useParams({ strict: false });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const { data: permissions } = useGuildPermissions();
+  const deleteEvent = useDeleteEvent(guildId ?? "");
 
   const {
     data: events,
@@ -25,6 +45,10 @@ export const Events = () => {
     guildId: guildId ?? "",
     activeOnly: false,
   });
+
+  const canDeleteEvent =
+    permissions?.includes(Permission.ADMIN) ||
+    permissions?.includes(Permission.OWNER);
 
   if (error) {
     const isForbidden = isAxiosError(error) && error.response?.status === 403;
@@ -115,8 +139,10 @@ export const Events = () => {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-base">{event.name}</h3>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                        <h3 className="font-semibold text-base">
+                          {event.name}
+                        </h3>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
                           <div className="flex items-center gap-1">
                             <Globe className="w-3 h-3" />
                             <span>{event.world}</span>
@@ -147,12 +173,30 @@ export const Events = () => {
                                 : t("events.ongoing")}
                             </span>
                           </div>
+                          <Badge
+                            variant={event.active ? "default" : "secondary"}
+                          >
+                            {event.active
+                              ? t("events.active")
+                              : t("events.inactive")}
+                          </Badge>
                         </div>
                       </div>
                     </div>
-                    <Badge variant={event.active ? "default" : "secondary"}>
-                      {event.active ? t("events.active") : t("events.inactive")}
-                    </Badge>
+                    {canDeleteEvent && (
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setEventToDelete(event);
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </Card>
               </Link>
@@ -163,6 +207,25 @@ export const Events = () => {
         <EventCreateDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
+        />
+        <DeleteEventDialog
+          open={!!eventToDelete}
+          onOpenChange={(open) => {
+            if (!open) setEventToDelete(null);
+          }}
+          eventName={eventToDelete?.name ?? ""}
+          requireEventNameConfirmation
+          isPending={deleteEvent.isPending}
+          onConfirm={async () => {
+            if (!eventToDelete) return;
+            try {
+              await deleteEvent.mutateAsync(eventToDelete.id);
+              toast.success(t("events.deleteSuccess"));
+              setEventToDelete(null);
+            } catch {
+              toast.error(t("events.deleteError"));
+            }
+          }}
         />
       </div>
     </ScrollArea>

@@ -1,6 +1,27 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import type { HeroKill, KillHistoryResponse } from "./use-hero-kill-history";
+import type {
+  HeroKill,
+  KillHistoryResponse,
+  KillParticipant,
+  HeroKillHeroNpc,
+} from "./use-hero-kill-history";
+
+interface ApiHeroKill {
+  id: string;
+  heroNpcId: string;
+  killedAt: string;
+  minSpawnTimeAtKill: string;
+  maxSpawnTimeAtKill: string;
+  isManualClose: boolean;
+  heroNpc: HeroKillHeroNpc;
+  points: KillParticipant[];
+}
+
+interface ApiKillHistoryResponse {
+  data: ApiHeroKill[];
+  nextCursor: string | null;
+}
 
 interface UseEventKillHistoryOptions {
   guildId: string;
@@ -29,10 +50,17 @@ export const useEventKillHistory = ({
         params.set("heroId", heroId);
       }
 
-      const response = await client.get<KillHistoryResponse>(
+      const response = await client.get<ApiKillHistoryResponse>(
         `/guilds/${guildId}/events/${eventId}/kills?${params.toString()}`,
       );
-      return response.data;
+
+      return {
+        ...response.data,
+        data: response.data.data.map((kill) => ({
+          ...kill,
+          participants: kill.points ?? [],
+        })),
+      } satisfies KillHistoryResponse;
     },
     enabled: !!guildId && !!eventId,
     initialPageParam: "",
