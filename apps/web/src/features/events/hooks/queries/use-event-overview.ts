@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
+import type { EventScoringRules } from "../../types/scoring-rules";
 
 export interface EventOverviewHeroNpc {
   id: string;
@@ -20,16 +21,11 @@ export interface EventOverview {
   createdAt: string;
   updatedAt: string;
   basePointsPerKill?: number;
-  timeOfDayMultipliers?: Array<{
-    from: string;
-    to: string;
-    multiplier: number;
-  }> | null;
-  trackersMultipliers?: Record<string, number> | null;
-  mapsCountMultipliers?: Record<string, number> | null;
-  trackingDurationMultipliers?: Record<string, number> | null;
   assignmentTimeoutMinutes?: number;
+  participationConfirmationMinutes?: number;
   mapAssignmentCap?: number;
+  rulebookMarkdown?: string | null;
+  scoringRules: EventScoringRules;
   heroNpcs: EventOverviewHeroNpc[];
 }
 

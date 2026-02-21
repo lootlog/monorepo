@@ -1,24 +1,17 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-export interface TimeOfDayMultiplier {
-  from: string;
-  to: string;
-  multiplier: number;
-}
+import type { EventScoringRules } from "../../types/scoring-rules";
 
 export interface UpdateEventData {
   name?: string;
   startsAt?: string;
   endsAt?: string | null;
   active?: boolean;
-  timeOfDayMultipliers?: TimeOfDayMultiplier[] | null;
-  trackersMultipliers?: Record<number, number> | null;
-  mapsCountMultipliers?: Record<number, number> | null;
-  trackingDurationMultipliers?: Record<number, number> | null;
   assignmentTimeoutMinutes?: number;
+  participationConfirmationMinutes?: number;
   mapAssignmentCap?: number;
-  basePointsPerKill?: number;
+  rulebookMarkdown?: string | null;
+  scoringRules?: EventScoringRules;
 }
 
 interface HeroMapData {
@@ -59,6 +52,36 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
+    },
+  });
+
+  const recalculatePoints = useMutation({
+    mutationFn: async () => {
+      const response = await client.post(
+        `/guilds/${guildId}/events/${eventId}/recalculate-points`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeyOverview });
+      queryClient.invalidateQueries({
+        queryKey: ["event-ranking", guildId, eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["event-kill-history", guildId, eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["hero-kill-history", guildId, eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["event-member-kill-history", guildId, eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["recent-hero-kills", guildId, eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["kill-detail", guildId, eventId],
+      });
     },
   });
 
@@ -165,6 +188,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
 
   return {
     updateEvent,
+    recalculatePoints,
     deleteEvent,
     addHero,
     updateHero,

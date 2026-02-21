@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { KillParticipant, HeroKillHeroNpc } from "./use-hero-kill-history";
+import type { EventScoringRules } from "../../types/scoring-rules";
 
 export interface KillDetailMember {
   id: number;
@@ -40,17 +41,7 @@ export interface KillDetail {
   points: KillDetailParticipant[];
 }
 
-export interface EventConfig {
-  basePointsPerKill: number;
-  timeOfDayMultipliers: Array<{
-    from: string;
-    to: string;
-    multiplier: number;
-  }> | null;
-  trackersMultipliers: Record<string, number> | null;
-  mapsCountMultipliers: Record<string, number> | null;
-  trackingDurationMultipliers: Record<string, number> | null;
-}
+export type EventConfig = EventScoringRules;
 
 export interface KillDetailResponse {
   kill: KillDetail;

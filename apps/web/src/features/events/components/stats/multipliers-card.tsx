@@ -9,103 +9,94 @@ interface MultipliersCardProps {
 }
 
 export const MultipliersCard = ({ eventConfig, t }: MultipliersCardProps) => {
-  const hasTimeMultipliers =
-    eventConfig.timeOfDayMultipliers &&
-    eventConfig.timeOfDayMultipliers.length > 0;
-  const hasTrackersMultipliers =
-    eventConfig.trackersMultipliers &&
-    Object.keys(eventConfig.trackersMultipliers).length > 0;
-  const hasMapsMultipliers =
-    eventConfig.mapsCountMultipliers &&
-    Object.keys(eventConfig.mapsCountMultipliers).length > 0;
-
-  if (!hasTimeMultipliers && !hasTrackersMultipliers && !hasMapsMultipliers) {
-    return null;
-  }
-
   return (
     <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
       <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
         <Calculator className="w-4 h-4" />
-        {t("events.killDetail.multipliers.title")}
+        {t("events.killDetail.multipliers.title", "Zasady punktacji")}
       </h3>
 
-      <div className="space-y-3">
-        <div className="text-sm">
-          <span className="text-muted-foreground">
-            {t("events.killDetail.multipliers.basePoints")}:
-          </span>{" "}
-          <span className="font-medium">{eventConfig.basePointsPerKill}</span>
+      <div className="space-y-3 text-sm">
+        <div>
+          <p className="font-medium mb-1">
+            {t("events.killDetail.multipliers.baseSection", "Podstawa")}
+          </p>
+          <div className="space-y-1 text-muted-foreground">
+            {eventConfig.baseThresholds.map((threshold) => (
+              <p key={threshold.percentage}>
+                {`>= ${threshold.percentage}% = ${threshold.points.toFixed(2)} pkt`}
+              </p>
+            ))}
+            <p>
+              {t(
+                "events.killDetail.multipliers.leaveGrace",
+                "Dla progu 75%: punkt 1.0 tylko jeśli kill był do {{minutes}} min od zejścia",
+                { minutes: eventConfig.leaveGraceMinutes },
+              )}
+            </p>
+          </div>
         </div>
 
-        {hasTimeMultipliers && (
-          <div>
-            <h4 className="text-sm font-medium mb-1.5">
-              {t("events.killDetail.multipliers.timeOfDay")}
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5">
-              {eventConfig.timeOfDayMultipliers!.map((m, idx) => (
-                <div
-                  key={idx}
-                  className="px-2.5 py-1.5 rounded bg-muted/30 text-sm"
-                >
-                  <span className="text-muted-foreground">
-                    {m.from} - {m.to}
-                  </span>
-                  <span className="ml-2 font-medium text-primary">
-                    x{m.multiplier}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {hasTrackersMultipliers && (
-          <div>
-            <h4 className="text-sm font-medium mb-1.5">
-              {t("events.killDetail.multipliers.trackers")}
-            </h4>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-1.5">
-              {Object.entries(eventConfig.trackersMultipliers!).map(
-                ([count, multiplier]) => (
-                  <div
-                    key={count}
-                    className="px-2.5 py-1.5 rounded bg-muted/30 text-sm text-center"
-                  >
-                    <span className="text-muted-foreground">{count}+</span>
-                    <span className="ml-1 font-medium text-primary">
-                      x{multiplier}
-                    </span>
-                  </div>
-                ),
+        <div>
+          <p className="font-medium mb-1">
+            {t("events.killDetail.multipliers.bonusesSection", "Bonusy")}
+          </p>
+          <div className="space-y-1 text-muted-foreground">
+            <p>
+              {t(
+                "events.killDetail.multipliers.groupBonus",
+                "Mała grupa ({{min}}-{{max}} osób): +{{points}}",
+                {
+                  min: eventConfig.groupBonus.minAssignedMembers,
+                  max: eventConfig.groupBonus.maxAssignedMembers,
+                  points: eventConfig.groupBonus.points.toFixed(2),
+                },
               )}
-            </div>
-          </div>
-        )}
-
-        {hasMapsMultipliers && (
-          <div>
-            <h4 className="text-sm font-medium mb-1.5">
-              {t("events.killDetail.multipliers.maps")}
-            </h4>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-1.5">
-              {Object.entries(eventConfig.mapsCountMultipliers!).map(
-                ([count, multiplier]) => (
-                  <div
-                    key={count}
-                    className="px-2.5 py-1.5 rounded bg-muted/30 text-sm text-center"
-                  >
-                    <span className="text-muted-foreground">{count}</span>
-                    <span className="ml-1 font-medium text-primary">
-                      x{multiplier}
-                    </span>
-                  </div>
-                ),
+            </p>
+            <p>
+              {t(
+                "events.killDetail.multipliers.nightBonus",
+                "Nocna warta {{from}}-{{to}} (>= {{coverage}}% czasu): +{{points}}",
+                {
+                  from: eventConfig.nightBonus.windowStart,
+                  to: eventConfig.nightBonus.windowEnd,
+                  coverage: eventConfig.nightBonus.requiredCoveragePercentage,
+                  points: eventConfig.nightBonus.points.toFixed(2),
+                },
               )}
-            </div>
+            </p>
+            <p>
+              {t(
+                "events.killDetail.multipliers.pvpBonus",
+                "Kill w godzinach {{from}}-{{to}}: +{{points}}",
+                {
+                  from: eventConfig.pvpBonus.windowStart,
+                  to: eventConfig.pvpBonus.windowEnd,
+                  points: eventConfig.pvpBonus.points.toFixed(2),
+                },
+              )}
+            </p>
           </div>
-        )}
+        </div>
+
+        <div className="pt-2 border-t border-border/50 text-muted-foreground">
+          <p>
+            {t(
+              "events.killDetail.multipliers.cap",
+              "Maksymalnie {{points}} pkt za jednego herosa",
+              { points: eventConfig.hardCapPoints.toFixed(2) },
+            )}
+          </p>
+          <p>
+            {t(
+              "events.killDetail.multipliers.timezone",
+              "Strefa: {{timezone}}",
+              {
+                timezone: eventConfig.timezone,
+              },
+            )}
+          </p>
+        </div>
       </div>
     </Card>
   );

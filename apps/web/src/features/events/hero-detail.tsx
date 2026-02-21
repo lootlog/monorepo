@@ -51,6 +51,7 @@ import { getMapStatus } from "./components/maps/map-card";
 import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -329,6 +330,10 @@ export const HeroDetail = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <EventParticipationConfirmationDialog
+        guildId={guildId}
+        eventId={eventId}
+      />
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {hero.npcIcon ? (

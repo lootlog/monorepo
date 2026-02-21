@@ -12,10 +12,12 @@ import {
   registerDecorator,
   ValidationOptions,
   ValidationArguments,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { HeroNpcDto } from './create-event.dto';
+import { EventScoringRulesDto } from './event-scoring-rules.dto';
 
 function IsMultiplierRecord(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -107,8 +109,9 @@ export class UpdateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Time of day multipliers array: [{from: "06:00", to: "12:00", multiplier: 1.5}, ...]',
+      'DEPRECATED: legacy multipliers are no longer used for scoring. Field is accepted for backward compatibility and ignored.',
     type: [TimeOfDayMultiplierDto],
+    deprecated: true,
   })
   @IsOptional()
   @IsArray()
@@ -118,7 +121,8 @@ export class UpdateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Trackers count multipliers: {1: 3.0, 2: 2.5, ...} - fewer trackers = higher multiplier',
+      'DEPRECATED: legacy multipliers are no longer used for scoring. Field is accepted for backward compatibility and ignored.',
+    deprecated: true,
   })
   @IsOptional()
   @IsMultiplierRecord({
@@ -129,7 +133,8 @@ export class UpdateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Maps count multipliers: {1: 1.0, 2: 1.2, ...} - more maps = higher multiplier',
+      'DEPRECATED: legacy multipliers are no longer used for scoring. Field is accepted for backward compatibility and ignored.',
+    deprecated: true,
   })
   @IsOptional()
   @IsMultiplierRecord({
@@ -140,7 +145,8 @@ export class UpdateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Tracking duration multipliers: {50: 0.5, 75: 0.75, 100: 1.0} - percentage thresholds',
+      'DEPRECATED: legacy multipliers are no longer used for scoring. Field is accepted for backward compatibility and ignored.',
+    deprecated: true,
   })
   @IsOptional()
   @IsMultiplierRecord({
@@ -158,10 +164,37 @@ export class UpdateEventDto {
   assignmentTimeoutMinutes?: number;
 
   @ApiPropertyOptional({
-    description: 'Maximum number of members that can assign to a single map (null or 0 = no limit)',
+    description:
+      'Minutes from kill time to confirm participation (0 disables confirmations)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  participationConfirmationMinutes?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Maximum number of members that can assign to a single map (null or 0 = no limit)',
   })
   @IsOptional()
   @IsInt()
   @Min(0)
   mapAssignmentCap?: number;
+
+  @ApiPropertyOptional({
+    description: 'Optional event rulebook displayed to participants',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10_000)
+  rulebookMarkdown?: string;
+
+  @ApiPropertyOptional({
+    description: 'Scoring rules configuration for this event',
+    type: EventScoringRulesDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => EventScoringRulesDto)
+  scoringRules?: EventScoringRulesDto;
 }

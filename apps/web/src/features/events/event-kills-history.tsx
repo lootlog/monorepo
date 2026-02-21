@@ -9,6 +9,7 @@ import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState, useEffect } from "react";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 export const EventKillsHistory = () => {
   const { t } = useTranslation();
@@ -75,6 +76,10 @@ export const EventKillsHistory = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <EventParticipationConfirmationDialog
+        guildId={guildId}
+        eventId={eventId}
+      />
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="p-1.5 rounded-lg bg-red-500/10">

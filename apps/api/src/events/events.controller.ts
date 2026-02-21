@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -225,6 +226,31 @@ export class EventsController {
     @Body() data: UpdateEventDto,
   ) {
     return this.eventsService.updateEvent(guildData.id, eventId, data);
+  }
+
+  @Permissions(Permission.LOOTLOG_EVENTS_MANAGE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/recalculate-points')
+  @ApiOperation({
+    summary: 'Recalculate event points',
+    description:
+      'Manually recalculate all event kill points with current rules',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Points recalculated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Event not found' })
+  async recalculatePoints(
+    @GuildData() guildData: { id: string },
+    @Param('eventId') eventId: string,
+  ) {
+    return this.eventsService.recalculateEventPointsForEvent(
+      guildData.id,
+      eventId,
+    );
   }
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
@@ -704,6 +730,61 @@ export class EventsController {
 
   @Permissions(Permission.LOOTLOG_EVENTS_READ)
   @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/participation-confirmations/pending')
+  @ApiOperation({
+    summary: 'Get participation confirmations',
+    description:
+      'Get pending and expired kill participation confirmations for currently authenticated member',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Participation confirmations',
+  })
+  async getPendingParticipationConfirmations(
+    @GuildData() guildData: { id: string },
+    @Param('eventId') eventId: string,
+    @GuildMember() member: { id: number },
+  ) {
+    return this.eventsService.getPendingParticipationConfirmations(
+      guildData.id,
+      eventId,
+      member.id,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_EVENTS_WRITE)
+  @UseGuards(PermissionsGuard)
+  @Post('/guilds/:guildId/events/:eventId/kills/:killId/confirm-participation')
+  @ApiOperation({
+    summary: 'Confirm participation in kill tracking',
+    description:
+      'Confirm member participation for a kill within configured confirmation window',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'killId', description: 'Kill ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Participation confirmed',
+  })
+  async confirmParticipationForKill(
+    @GuildData() guildData: { id: string },
+    @Param('eventId') eventId: string,
+    @Param('killId') killId: string,
+    @GuildMember() member: { id: number },
+  ) {
+    return this.eventsService.confirmParticipationForKill(
+      guildData.id,
+      eventId,
+      killId,
+      member.id,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @UseGuards(PermissionsGuard)
   @Get('/guilds/:guildId/events/:eventId/ranking')
   @ApiOperation({
     summary: 'Get event ranking',
@@ -923,6 +1004,83 @@ export class EventsController {
     const result = await this.eventsService.getEventKillHistory(
       guildData.id,
       eventId,
+      limit ? parseInt(limit, 10) : 20,
+      cursor,
+      heroId,
+    );
+
+    return {
+      ...result,
+      data: result.data.filter((kill) =>
+        this.eventsService.isHeroVisibleToUser(
+          { npcLvl: kill.heroNpc.npcLvl },
+          roles,
+          permissions,
+        ),
+      ),
+    };
+  }
+
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get('/guilds/:guildId/events/:eventId/members/:memberId/kills')
+  @ApiOperation({
+    summary: 'Get member kill history',
+    description:
+      'Get paginated kill history for a specific member in an event, with detailed point breakdown per kill',
+  })
+  @ApiParam({ name: 'guildId', description: 'Guild ID' })
+  @ApiParam({ name: 'eventId', description: 'Event ID' })
+  @ApiParam({ name: 'memberId', description: 'Member ID' })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of kills to return (default 20)',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'cursor',
+    description: 'Cursor for pagination',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'heroId',
+    description: 'Filter by hero ID (optional)',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of member kills with point breakdown',
+  })
+  @ApiResponse({ status: 404, description: 'Event or member not found' })
+  async getMemberKillHistory(
+    @GuildData() guildData: { id: string },
+    @Param('eventId') eventId: string,
+    @Param('memberId') memberId: string,
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+    @Query('heroId') heroId?: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
+  ) {
+    const parsedMemberId = parseInt(memberId, 10);
+    if (Number.isNaN(parsedMemberId)) {
+      throw new BadRequestException('Invalid member ID');
+    }
+
+    if (heroId) {
+      await this.eventsService.getHeroWithAccessCheck(
+        guildData.id,
+        eventId,
+        heroId,
+        roles,
+        permissions,
+      );
+    }
+
+    const result = await this.eventsService.getMemberKillHistory(
+      guildData.id,
+      eventId,
+      parsedMemberId,
       limit ? parseInt(limit, 10) : 20,
       cursor,
       heroId,

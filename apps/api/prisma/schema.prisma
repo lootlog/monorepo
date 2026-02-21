@@ -511,7 +511,10 @@ model Event {
   mapsCountMultipliers          Json? // {1: 1.0, 2: 1.2, 3: 1.5, ...}
   trackingDurationMultipliers   Json? // {50: 0.5, 75: 0.75, 100: 1.0}
   assignmentTimeoutMinutes      Int     @default(5)
+  participationConfirmationMinutes Int  @default(0)
   mapAssignmentCap              Int?
+  scoringRules                  Json    @default("{\"baseThresholds\":[{\"percentage\":75,\"points\":1},{\"percentage\":50,\"points\":0.5},{\"percentage\":25,\"points\":0.25}],\"leaveGraceMinutes\":10,\"groupBonus\":{\"minAssignedMembers\":1,\"maxAssignedMembers\":4,\"points\":0.5},\"nightBonus\":{\"windowStart\":\"03:00\",\"windowEnd\":\"08:00\",\"requiredCoveragePercentage\":75,\"points\":0.5},\"pvpBonus\":{\"windowStart\":\"08:00\",\"windowEnd\":\"11:00\",\"points\":0.5},\"hardCapPoints\":2,\"timezone\":\"Europe/Warsaw\"}")
+  rulebookMarkdown              String?
 
   guild    Guild          @relation(fields: [guildId], references: [id])
   heroNpcs EventHeroNpc[]
@@ -656,6 +659,9 @@ model EventKillPoint {
   memberId                Int
   mapName                 String
   basePoints              Float
+  groupBonusPoints        Float?
+  nightBonusPoints        Float?
+  pvpBonusPoints          Float?
   points                  Float
   appliedMultiplier       Float
   timeMultiplier              Float?
@@ -664,6 +670,8 @@ model EventKillPoint {
   trackingDurationMultiplier  Float?
   trackingDurationSeconds     Int?
   trackingDurationPercentage  Float?
+  confirmationDeadlineAt      DateTime?
+  confirmedAt                 DateTime?
   timeOnMapSeconds        Int
   afkPercentage           Float
   wasPresent              Boolean
@@ -675,6 +683,7 @@ model EventKillPoint {
 
   @@unique([killId, memberId, mapName])
   @@index([memberId])
+  @@index([memberId, confirmationDeadlineAt, confirmedAt])
 }
 
 model EventRanking {

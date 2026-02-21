@@ -40,6 +40,9 @@ export const useUpdatePoints = (guildId: string, eventId: string) => {
         queryKey: ["hero-kill-history", guildId, eventId],
       });
       queryClient.invalidateQueries({
+        queryKey: ["event-member-kill-history", guildId, eventId],
+      });
+      queryClient.invalidateQueries({
         queryKey: ["recent-hero-kills", guildId, eventId],
       });
       queryClient.invalidateQueries({

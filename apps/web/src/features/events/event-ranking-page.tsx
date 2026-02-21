@@ -12,6 +12,7 @@ import { Trophy, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
@@ -86,6 +87,10 @@ export const EventRankingPage = () => {
 
   return (
     <ScrollArea className="h-full bg-background/50">
+      <EventParticipationConfirmationDialog
+        guildId={guildId}
+        eventId={eventId}
+      />
       <div className="flex flex-col gap-3">
         <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
