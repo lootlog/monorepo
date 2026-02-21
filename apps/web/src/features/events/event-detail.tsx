@@ -25,9 +25,9 @@ import {
   Pencil,
   Plus,
   Clock,
-  TrendingUp,
   CalendarDays,
   Trash2,
+  BookText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -36,6 +36,8 @@ import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { EndEventDialog } from "./components/dialogs/end-event-dialog";
 import { ResumeEventDialog } from "./components/dialogs/resume-event-dialog";
+import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { toast } from "sonner";
@@ -48,6 +50,7 @@ import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { normalizeScoringRules } from "./utils/scoring-rules";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -108,6 +111,7 @@ export const EventDetail = () => {
   const [endDialogOpen, setEndDialogOpen] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
   const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
     null,
   );
@@ -130,6 +134,7 @@ export const EventDetail = () => {
         endsAt: event.endsAt ?? undefined,
       }
     : null;
+  const scoringRules = normalizeScoringRules(event?.scoringRules);
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -190,6 +195,10 @@ export const EventDetail = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <EventParticipationConfirmationDialog
+        guildId={guildId}
+        eventId={eventId}
+      />
       {event && (
         <>
           <EventEditDialog
@@ -265,6 +274,13 @@ export const EventDetail = () => {
               }
             }}
           />
+          <EventRulesDialog
+            open={rulesDialogOpen}
+            onOpenChange={setRulesDialogOpen}
+            eventName={event.name}
+            rulebookMarkdown={event.rulebookMarkdown}
+            scoringRules={scoringRules}
+          />
         </>
       )}
 
@@ -321,111 +337,18 @@ export const EventDetail = () => {
                   </p>
                 </TooltipContent>
               </Tooltip>
-
-              {(() => {
-                const hasTimeMultipliers =
-                  event.timeOfDayMultipliers &&
-                  event.timeOfDayMultipliers.length > 0;
-                const hasTrackersMultipliers =
-                  event.trackersMultipliers &&
-                  Object.keys(event.trackersMultipliers).length > 0;
-                const hasMapsMultipliers =
-                  event.mapsCountMultipliers &&
-                  Object.keys(event.mapsCountMultipliers).length > 0;
-
-                const multiplierCount =
-                  (hasTimeMultipliers ? 1 : 0) +
-                  (hasTrackersMultipliers ? 1 : 0) +
-                  (hasMapsMultipliers ? 1 : 0);
-
-                if (multiplierCount === 0) return null;
-
-                return (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        variant="outline"
-                        className="text-xs gap-1 cursor-help"
-                      >
-                        <TrendingUp className="w-3 h-3" />
-                        {t("events.header.multipliers", {
-                          count: multiplierCount,
-                          defaultValue:
-                            multiplierCount === 1
-                              ? "{{count}} mnożnik"
-                              : "{{count}} mnożniki",
-                        })}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <div className="space-y-1.5 text-xs">
-                        {hasTimeMultipliers && (
-                          <div>
-                            <p className="font-medium">
-                              {t(
-                                "events.header.timeMultipliers",
-                                "Mnożniki czasowe",
-                              )}
-                              :
-                            </p>
-                            {event.timeOfDayMultipliers?.map((m, idx) => (
-                              <p key={idx} className="text-muted-foreground">
-                                {m.from} - {m.to}: x{m.multiplier}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                        {hasTrackersMultipliers && (
-                          <div>
-                            <p className="font-medium">
-                              {t(
-                                "events.header.trackersMultipliers",
-                                "Mnożniki za obecność",
-                              )}
-                              :
-                            </p>
-                            {Object.entries(event.trackersMultipliers ?? {})
-                              .sort(([a], [b]) => Number(a) - Number(b))
-                              .map(([count, multiplier]) => (
-                                <p
-                                  key={count}
-                                  className="text-muted-foreground"
-                                >
-                                  {`${count}+ ${t("events.header.people")}: x${multiplier}`}
-                                </p>
-                              ))}
-                          </div>
-                        )}
-                        {hasMapsMultipliers && (
-                          <div>
-                            <p className="font-medium">
-                              {t(
-                                "events.header.mapsMultipliers",
-                                "Mnożniki za mapy",
-                              )}
-                              :
-                            </p>
-                            {Object.entries(event.mapsCountMultipliers ?? {})
-                              .sort(([a], [b]) => Number(a) - Number(b))
-                              .map(([count, multiplier]) => (
-                                <p
-                                  key={count}
-                                  className="text-muted-foreground"
-                                >
-                                  {`${count} ${t("events.header.mapsLabel")}: x${multiplier}`}
-                                </p>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })()}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRulesDialogOpen(true)}
+          >
+            <BookText className="w-4 h-4 mr-2" />
+            {t("events.rulesDialog.trigger", "Zasady eventu")}
+          </Button>
           {canManage && (
             <Button
               variant="outline"

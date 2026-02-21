@@ -135,9 +135,17 @@ export const EventRankingPreview = ({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">
+                    <Link
+                      to="/$guildId/events/$eventId/members/$memberId"
+                      params={{
+                        guildId,
+                        eventId,
+                        memberId: String(ranking.memberId),
+                      }}
+                      className="text-xs font-medium truncate hover:underline block"
+                    >
                       {ranking.member?.name || `Gracz #${ranking.memberId}`}
-                    </p>
+                    </Link>
                   </div>
 
                   <div className="text-right shrink-0">

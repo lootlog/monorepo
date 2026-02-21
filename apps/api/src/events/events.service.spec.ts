@@ -85,6 +85,7 @@ describe('EventsService', () => {
     recordHeroKill: jest.fn(),
     getHeroKillHistory: jest.fn(),
     getEventKillHistory: jest.fn(),
+    getMemberKillHistory: jest.fn(),
     getKillDetail: jest.fn(),
     getKillTimelineData: jest.fn(),
   };
@@ -110,6 +111,13 @@ describe('EventsService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockPointsService.calculateMemberPoints.mockReturnValue({
+      totalPoints: 1,
+      basePoints: 1,
+      groupBonus: 0,
+      nightBonus: 0,
+      pvpBonus: 0,
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -405,7 +413,7 @@ describe('EventsService', () => {
       );
     });
 
-    it('should recalculate points when basePointsPerKill changes', async () => {
+    it('should not recalculate points automatically when basePointsPerKill changes', async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
       mockPrismaService.$transaction.mockImplementation(async (callback) =>
         callback(mockPrismaService),
@@ -416,12 +424,25 @@ describe('EventsService', () => {
 
       expect(
         mockPointsService.recalculateEventPointsWithMultipliers,
-      ).toHaveBeenCalledWith(
+      ).not.toHaveBeenCalled();
+    });
+
+    it('should recalculate points manually via dedicated method', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue({
+        id: eventId,
+        basePointsPerKill: 150,
+      });
+
+      const result = await service.recalculateEventPointsForEvent(
+        guildId,
         eventId,
-        expect.objectContaining({
-          basePointsPerKill: 200,
-        }),
       );
+
+      expect(mockPointsService.recalculateEventPoints).toHaveBeenCalledWith(
+        eventId,
+        150,
+      );
+      expect(result).toEqual({ success: true });
     });
   });
 

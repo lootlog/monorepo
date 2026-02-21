@@ -6,6 +6,8 @@ export * from "./use-event-hero-timers";
 export * from "./use-event-hero-stats";
 export * from "./use-event-loots";
 export * from "./use-event-kill-history";
+export * from "./use-event-member-kill-history";
+export * from "./use-event-participation-confirmations";
 export * from "./use-hero-kill-history";
 export * from "./use-recent-hero-kills";
 export * from "./use-kill-detail";

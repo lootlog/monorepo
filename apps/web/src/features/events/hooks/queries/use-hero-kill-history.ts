@@ -21,6 +21,9 @@ export interface KillParticipant {
   mapName: string;
   points: number;
   basePoints: number;
+  groupBonusPoints?: number | null;
+  nightBonusPoints?: number | null;
+  pvpBonusPoints?: number | null;
   appliedMultiplier: number;
   timeMultiplier: number | null;
   trackersMultiplier: number | null;

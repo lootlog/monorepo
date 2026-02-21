@@ -74,7 +74,9 @@ export const KillParticipantsList = ({
               <p className="text-xs text-muted-foreground">
                 {t("events.kills.pointsBreakdown", {
                   base: participant.basePoints,
-                  multiplier: participant.appliedMultiplier.toFixed(2),
+                  group: participant.groupBonusPoints ?? 0,
+                  night: participant.nightBonusPoints ?? 0,
+                  pvp: participant.pvpBonusPoints ?? 0,
                 })}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -150,15 +152,19 @@ export const KillParticipantsList = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <p className="text-xs text-muted-foreground cursor-help">
-                  {participant.basePoints} x{" "}
-                  {participant.appliedMultiplier.toFixed(2)}
+                  {participant.basePoints} +{" "}
+                  {(participant.groupBonusPoints ?? 0) +
+                    (participant.nightBonusPoints ?? 0) +
+                    (participant.pvpBonusPoints ?? 0)}
                 </p>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
                   {t("events.kills.pointsBreakdown", {
                     base: participant.basePoints,
-                    multiplier: participant.appliedMultiplier.toFixed(2),
+                    group: participant.groupBonusPoints ?? 0,
+                    night: participant.nightBonusPoints ?? 0,
+                    pvp: participant.pvpBonusPoints ?? 0,
                   })}
                 </p>
               </TooltipContent>

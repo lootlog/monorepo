@@ -45,6 +45,10 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
   const nameStyle = roleColor
     ? { color: `#${roleColor.toString(16).padStart(6, "0")}` }
     : undefined;
+  const bonuses =
+    (participant.groupBonusPoints ?? 0) +
+    (participant.nightBonusPoints ?? 0) +
+    (participant.pvpBonusPoints ?? 0);
 
   return (
     <div
@@ -98,15 +102,16 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
         <Tooltip>
           <TooltipTrigger asChild>
             <p className="text-xs text-muted-foreground cursor-help">
-              {participant.basePoints} x{" "}
-              {participant.appliedMultiplier.toFixed(2)}
+              {participant.basePoints} + {bonuses}
             </p>
           </TooltipTrigger>
           <TooltipContent>
             <p>
               {t("events.kills.pointsBreakdown", {
                 base: participant.basePoints,
-                multiplier: participant.appliedMultiplier.toFixed(2),
+                group: participant.groupBonusPoints ?? 0,
+                night: participant.nightBonusPoints ?? 0,
+                pvp: participant.pvpBonusPoints ?? 0,
               })}
             </p>
           </TooltipContent>

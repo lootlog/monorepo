@@ -29,6 +29,7 @@ import { LootsListItem } from "@/features/guild/components/loots-list/loots-list
 import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 const formatDurationSeconds = (totalSeconds: number): string => {
   if (totalSeconds < 60) {
@@ -116,6 +117,10 @@ export const KillDetail = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <EventParticipationConfirmationDialog
+        guildId={guildId}
+        eventId={eventId}
+      />
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {kill.heroNpc.npcIcon ? (

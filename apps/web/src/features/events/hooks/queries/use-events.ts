@@ -43,17 +43,14 @@ interface EventRanking {
   heroNpcName: string;
   totalPoints: number;
   totalKills: number;
+  totalTimeSeconds: number;
+  avgAfkPercentage: number;
   pointsModified: boolean;
+  updatedAt?: string;
   member: {
     id: number;
     name: string;
   };
-}
-
-interface TimeOfDayMultiplier {
-  from: string;
-  to: string;
-  multiplier: number;
 }
 
 interface Event {
@@ -68,11 +65,8 @@ interface Event {
   updatedAt?: string;
   heroNpcs: EventHeroNpc[];
   rankings?: EventRanking[];
-  timeOfDayMultipliers?: TimeOfDayMultiplier[];
-  trackersMultipliers?: Record<string, number>;
-  mapsCountMultipliers?: Record<string, number>;
-  trackingDurationMultipliers?: Record<string, number>;
   assignmentTimeoutMinutes?: number;
+  participationConfirmationMinutes?: number;
   basePointsPerKill?: number;
 }
 

@@ -46,7 +46,6 @@ interface KillParticipantsCardProps {
 interface ParticipantRowProps {
   participant: KillDetailParticipant;
   rank: number;
-  trackersCount: number;
   isExpanded: boolean;
   onToggle: () => void;
   canEdit?: boolean;
@@ -61,7 +60,6 @@ const formatPoints = (points: number): string => {
 const ParticipantRow = ({
   participant,
   rank,
-  trackersCount,
   isExpanded,
   onToggle,
   canEdit,
@@ -90,8 +88,16 @@ const ParticipantRow = ({
     (sum, map) => sum + map.afkTimeSeconds,
     0,
   );
-
-  const mapCount = aggregatedMaps.length;
+  const groupBonus = participant.groupBonusPoints ?? 0;
+  const nightBonus = participant.nightBonusPoints ?? 0;
+  const pvpBonus = participant.pvpBonusPoints ?? 0;
+  const uncappedTotal =
+    participant.basePoints + groupBonus + nightBonus + pvpBonus;
+  const capReduction = Math.max(0, uncappedTotal - participant.points);
+  const trackingDurationPercentage =
+    typeof participant.trackingDurationPercentage === "number"
+      ? `${Math.round(participant.trackingDurationPercentage)}%`
+      : "—";
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -163,7 +169,8 @@ const ParticipantRow = ({
               </span>
               {participant.trackingDurationSeconds !== null && (
                 <span className="text-xs text-muted-foreground">
-                  {formatDurationHuman(participant.trackingDurationSeconds)}&nbsp;
+                  {formatDurationHuman(participant.trackingDurationSeconds)}
+                  &nbsp;
                   {t("events.kills.trackingDuration")}
                 </span>
               )}
@@ -171,7 +178,8 @@ const ParticipantRow = ({
 
             {totalAfkSeconds > 0 && (
               <span className="text-xs text-amber-500 shrink-0">
-                {t("events.kills.afkTime")}: {formatDurationHuman(totalAfkSeconds)}
+                {t("events.kills.afkTime")}:{" "}
+                {formatDurationHuman(totalAfkSeconds)}
               </span>
             )}
 
@@ -230,55 +238,47 @@ const ParticipantRow = ({
                       </div>
                       <div className="flex justify-between gap-4">
                         <span>
-                          {t("events.kills.pointsTooltip.timeMultiplier")}:
+                          {t("events.kills.pointsTooltip.trackingPercentage")}:
                         </span>
                         <span className="font-medium">
-                          &times;{participant.timeMultiplier?.toFixed(2)}
+                          {trackingDurationPercentage}
                         </span>
                       </div>
                       <div className="flex justify-between gap-4">
                         <span>
-                          {t("events.kills.pointsTooltip.trackersMultiplier")}{" "}
-                          {t("events.kills.pointsTooltip.trackersCount", {
-                            count: trackersCount,
-                          })}
-                          :
+                          {t("events.kills.pointsTooltip.groupBonus")}:
                         </span>
                         <span className="font-medium">
-                          &times;{participant.trackersMultiplier?.toFixed(2)}
+                          +{formatPoints(groupBonus)}
                         </span>
                       </div>
                       <div className="flex justify-between gap-4">
                         <span>
-                          {t("events.kills.pointsTooltip.mapsMultiplier")}{" "}
-                          {t("events.kills.pointsTooltip.mapsCount", {
-                            count: mapCount,
-                          })}
-                          :
+                          {t("events.kills.pointsTooltip.nightBonus")}:
                         </span>
                         <span className="font-medium">
-                          &times;{participant.mapsMultiplier?.toFixed(2)}
+                          +{formatPoints(nightBonus)}
                         </span>
                       </div>
                       <div className="flex justify-between gap-4">
-                        <span>
-                          {t("events.kills.pointsTooltip.trackingDurationMultiplier")}{" "}
-                          {participant.trackingDurationPercentage !== null && (
-                            <span className="text-muted-foreground">
-                              ({Math.round(participant.trackingDurationPercentage)}%)
-                            </span>
-                          )}
-                          :
-                        </span>
+                        <span>{t("events.kills.pointsTooltip.pvpBonus")}:</span>
                         <span className="font-medium">
-                          &times;{participant.trackingDurationMultiplier?.toFixed(2)}
+                          +{formatPoints(pvpBonus)}
                         </span>
                       </div>
+                      {capReduction > 0 && (
+                        <div className="flex justify-between gap-4">
+                          <span>
+                            {t("events.kills.pointsTooltip.capReduction")}:
+                          </span>
+                          <span className="font-medium">
+                            -{formatPoints(capReduction)}
+                          </span>
+                        </div>
+                      )}
                       <div className="border-t border-border/50 pt-1 mt-1 flex justify-between gap-4">
                         <span>{t("events.kills.pointsTooltip.total")}:</span>
                         <span className="font-medium">
-                          {formatPoints(participant.basePoints)} &times;{" "}
-                          {participant.appliedMultiplier.toFixed(2)} ={" "}
                           {formatPoints(participant.points)}
                         </span>
                       </div>
@@ -363,7 +363,6 @@ export const KillParticipantsCard = ({
   const { updateKillPoint } = useUpdatePoints(guildId ?? "", eventId ?? "");
 
   const sorted = [...participants].sort((a, b) => b.points - a.points);
-  const trackersCount = participants.length;
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -410,7 +409,6 @@ export const KillParticipantsCard = ({
               key={p.id}
               participant={p}
               rank={idx + 1}
-              trackersCount={trackersCount}
               isExpanded={expandedIds.has(p.id)}
               onToggle={() => toggleExpand(p.id)}
               canEdit={canEdit}

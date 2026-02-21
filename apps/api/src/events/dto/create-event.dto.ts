@@ -8,9 +8,11 @@ import {
   IsNumber,
   IsDateString,
   Min,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EventScoringRulesDto } from './event-scoring-rules.dto';
 
 export class HeroMapDto {
   @ApiProperty({ description: 'Margonem map ID' })
@@ -89,12 +91,39 @@ export class CreateEventDto {
 
   @ApiPropertyOptional({
     description:
+      'Minutes from kill time to confirm participation (0 disables confirmations)',
+    default: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  participationConfirmationMinutes?: number;
+
+  @ApiPropertyOptional({
+    description:
       'Maximum number of members that can assign to a single map (null or 0 = no limit)',
   })
   @IsOptional()
   @IsInt()
   @Min(0)
   mapAssignmentCap?: number;
+
+  @ApiPropertyOptional({
+    description: 'Optional event rulebook displayed to participants',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10_000)
+  rulebookMarkdown?: string;
+
+  @ApiPropertyOptional({
+    description: 'Scoring rules configuration for this event',
+    type: EventScoringRulesDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => EventScoringRulesDto)
+  scoringRules?: EventScoringRulesDto;
 
   @ApiPropertyOptional({
     description: 'Hero NPCs to track in this event',

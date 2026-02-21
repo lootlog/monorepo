@@ -22,7 +22,6 @@ import {
   EventHeroNpc,
   EventKillPoint,
   Permission,
-  Prisma,
   type Role,
 } from 'generated/client';
 import { filterHeroesByLevel } from 'src/shared/utils/can-view-event-hero';
@@ -43,6 +42,7 @@ import {
   createEventHeroKillJobData,
   getEventHeroKillWindowKey,
 } from './utils/event-hero-kill-job';
+import { normalizeEventScoringRules } from './utils/scoring-rules.util';
 
 import { EventPointsService } from './services/event-points.service';
 import { EventTrackingService } from './services/event-tracking.service';
@@ -90,8 +90,22 @@ export class EventsService {
   ) {}
 
   async createEvent(guildId: string, data: CreateEventDto) {
-    const { startsAt, endsAt, heroNpcs, world, ...eventData } = data;
+    const {
+      startsAt,
+      endsAt,
+      heroNpcs,
+      world,
+      scoringRules,
+      rulebookMarkdown,
+      ...eventData
+    } = data;
     const normalizedWorld = world.trim().toLowerCase();
+    const normalizedScoringRules = normalizeEventScoringRules(scoringRules);
+    const trimmedRulebookMarkdown = rulebookMarkdown?.trim();
+    const normalizedRulebookMarkdown =
+      trimmedRulebookMarkdown && trimmedRulebookMarkdown.length > 0
+        ? trimmedRulebookMarkdown
+        : null;
 
     if (!normalizedWorld) {
       throw new BadRequestException('World is required');
@@ -115,6 +129,8 @@ export class EventsService {
         guildId,
         startsAt: startDate,
         endsAt: endDate,
+        scoringRules: normalizedScoringRules,
+        rulebookMarkdown: normalizedRulebookMarkdown,
         ...(heroNpcs && {
           heroNpcs: {
             create: heroNpcs.map((npc) => ({
@@ -204,12 +220,11 @@ export class EventsService {
         createdAt: true,
         updatedAt: true,
         basePointsPerKill: true,
-        timeOfDayMultipliers: true,
-        trackersMultipliers: true,
-        mapsCountMultipliers: true,
-        trackingDurationMultipliers: true,
         assignmentTimeoutMinutes: true,
+        participationConfirmationMinutes: true,
         mapAssignmentCap: true,
+        scoringRules: true,
+        rulebookMarkdown: true,
         heroNpcs: {
           select: {
             id: true,
@@ -301,12 +316,15 @@ export class EventsService {
       startsAt,
       endsAt,
       active,
-      timeOfDayMultipliers,
-      trackersMultipliers,
-      mapsCountMultipliers,
-      trackingDurationMultipliers,
+      timeOfDayMultipliers: _deprecatedTimeOfDayMultipliers,
+      trackersMultipliers: _deprecatedTrackersMultipliers,
+      mapsCountMultipliers: _deprecatedMapsCountMultipliers,
+      trackingDurationMultipliers: _deprecatedTrackingDurationMultipliers,
       assignmentTimeoutMinutes,
+      participationConfirmationMinutes,
       basePointsPerKill,
+      scoringRules,
+      rulebookMarkdown,
       ...updateData
     } = data;
 
@@ -353,27 +371,24 @@ export class EventsService {
           ...((endsAt !== undefined || isExplicitDeactivation) && {
             endsAt: newEndDate,
           }),
-          ...(timeOfDayMultipliers !== undefined && {
-            timeOfDayMultipliers:
-              timeOfDayMultipliers as unknown as Prisma.InputJsonValue,
-          }),
-          ...(trackersMultipliers !== undefined && {
-            trackersMultipliers:
-              trackersMultipliers as unknown as Prisma.InputJsonValue,
-          }),
-          ...(mapsCountMultipliers !== undefined && {
-            mapsCountMultipliers:
-              mapsCountMultipliers as unknown as Prisma.InputJsonValue,
-          }),
-          ...(trackingDurationMultipliers !== undefined && {
-            trackingDurationMultipliers:
-              trackingDurationMultipliers as unknown as Prisma.InputJsonValue,
-          }),
           ...(assignmentTimeoutMinutes !== undefined && {
             assignmentTimeoutMinutes,
           }),
+          ...(participationConfirmationMinutes !== undefined && {
+            participationConfirmationMinutes,
+          }),
           ...(basePointsPerKill !== undefined && {
             basePointsPerKill,
+          }),
+          ...(scoringRules !== undefined && {
+            scoringRules: normalizeEventScoringRules(scoringRules),
+          }),
+          ...(rulebookMarkdown !== undefined && {
+            rulebookMarkdown:
+              typeof rulebookMarkdown === 'string' &&
+              rulebookMarkdown.trim().length > 0
+                ? rulebookMarkdown.trim()
+                : null,
           }),
           ...(heroNpcs && {
             heroNpcs: {
@@ -406,42 +421,25 @@ export class EventsService {
       });
     });
 
-    const multipliersChanged =
-      this.hasJsonChanged(timeOfDayMultipliers, event.timeOfDayMultipliers) ||
-      this.hasJsonChanged(trackersMultipliers, event.trackersMultipliers) ||
-      this.hasJsonChanged(mapsCountMultipliers, event.mapsCountMultipliers) ||
-      this.hasJsonChanged(
-        trackingDurationMultipliers,
-        event.trackingDurationMultipliers,
-      );
+    return updated;
+  }
 
-    const basePointsChanged =
-      basePointsPerKill !== undefined &&
-      basePointsPerKill !== event.basePointsPerKill;
+  async recalculateEventPointsForEvent(guildId: string, eventId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, guildId },
+      select: { id: true, basePointsPerKill: true },
+    });
 
-    if (basePointsChanged || multipliersChanged) {
-      await this.pointsService.recalculateEventPointsWithMultipliers(eventId, {
-        basePointsPerKill: basePointsPerKill ?? event.basePointsPerKill,
-        timeOfDayMultipliers:
-          timeOfDayMultipliers !== undefined
-            ? (timeOfDayMultipliers as unknown as Event['timeOfDayMultipliers'])
-            : event.timeOfDayMultipliers,
-        trackersMultipliers:
-          trackersMultipliers !== undefined
-            ? (trackersMultipliers as unknown as Event['trackersMultipliers'])
-            : event.trackersMultipliers,
-        mapsCountMultipliers:
-          mapsCountMultipliers !== undefined
-            ? (mapsCountMultipliers as unknown as Event['mapsCountMultipliers'])
-            : event.mapsCountMultipliers,
-        trackingDurationMultipliers:
-          trackingDurationMultipliers !== undefined
-            ? (trackingDurationMultipliers as unknown as Event['trackingDurationMultipliers'])
-            : event.trackingDurationMultipliers,
-      });
+    if (!event) {
+      throw new NotFoundException('Event not found');
     }
 
-    return updated;
+    await this.pointsService.recalculateEventPoints(
+      event.id,
+      event.basePointsPerKill,
+    );
+
+    return { success: true };
   }
 
   async deleteEvent(guildId: string, eventId: string) {
@@ -470,13 +468,6 @@ export class EventsService {
     });
 
     return { success: true };
-  }
-
-  private hasJsonChanged(newValue: unknown, oldValue: unknown): boolean {
-    if (newValue === undefined) {
-      return false;
-    }
-    return JSON.stringify(newValue) !== JSON.stringify(oldValue);
   }
 
   async assignMemberToMap(
@@ -1124,17 +1115,28 @@ export class EventsService {
   }
 
   calculateMemberPoints(
-    event: Event,
+    _event: Event,
     killTime: Date,
-    heroMapCount: number,
+    _heroMapCount: number,
     assignedMembersCount: number,
   ): { points: number; appliedMultiplier: number } {
-    return this.pointsService.calculateMemberPoints(
-      event,
-      killTime,
-      heroMapCount,
+    const result = this.pointsService.calculateMemberPoints({
+      trackingDurationPercentage: 100,
       assignedMembersCount,
-    );
+      killTime,
+      respawnStartTime: killTime,
+      memberLeaveTime: null,
+    });
+
+    const appliedMultiplier =
+      result.basePoints > 0
+        ? Math.round((result.totalPoints / result.basePoints) * 10000) / 10000
+        : 0;
+
+    return {
+      points: result.totalPoints,
+      appliedMultiplier,
+    };
   }
 
   async recalculateEventPoints(
@@ -1243,6 +1245,50 @@ export class EventsService {
       limit,
       cursor,
       heroId,
+    );
+  }
+
+  async getMemberKillHistory(
+    guildId: string,
+    eventId: string,
+    memberId: number,
+    limit = 20,
+    cursor?: string,
+    heroId?: string,
+  ) {
+    return this.killService.getMemberKillHistory(
+      guildId,
+      eventId,
+      memberId,
+      limit,
+      cursor,
+      heroId,
+    );
+  }
+
+  async getPendingParticipationConfirmations(
+    guildId: string,
+    eventId: string,
+    memberId: number,
+  ) {
+    return this.pointsService.getPendingParticipationConfirmations(
+      guildId,
+      eventId,
+      memberId,
+    );
+  }
+
+  async confirmParticipationForKill(
+    guildId: string,
+    eventId: string,
+    killId: string,
+    memberId: number,
+  ) {
+    return this.pointsService.confirmParticipationForKill(
+      guildId,
+      eventId,
+      killId,
+      memberId,
     );
   }
 
