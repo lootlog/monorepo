@@ -31,7 +31,7 @@
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
     "@types/node": "^24.10.9",
-    "pkgroll": "^2.23.0",
+    "pkgroll": "^2.26.3",
     "typescript": "^5.9.3"
   }
 }
