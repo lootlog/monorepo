@@ -2,7 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import type { Event } from "../queries/use-events";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
 
 interface CreateEventData {
   name: string;
@@ -11,7 +14,8 @@ interface CreateEventData {
   endsAt?: string;
   participationConfirmationMinutes?: number;
   rulebookMarkdown?: string | null;
-  scoringRules?: EventScoringRules;
+  scoringMode?: EventScoringMode;
+  scoringRules?: EventScoringRules | null;
 }
 
 export const useCreateEvent = () => {

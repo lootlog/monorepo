@@ -4,6 +4,12 @@
   "create": "Utwórz Event",
   "edit": "Edytuj Event",
   "editButton": "Edytuj",
+  "editSections": {
+    "ariaLabel": "Edycja eventu",
+    "settings": "Ustawienia eventu",
+    "rulebook": "Regulamin",
+    "scoring": "Ustawienia punktów"
+  },
   "delete": "Usuń Event",
   "active": "Aktywny",
   "inactive": "Nieaktywny",
@@ -280,9 +286,12 @@
     "pointsTooltip": {
       "basePoints": "Punkty bazowe",
       "trackingPercentage": "Czas obstawiania respawnu",
+      "bonusItem": "Bonus: {{name}}",
+      "bonusTotal": "Bonusy razem",
       "groupBonus": "Bonus małej grupy",
       "nightBonus": "Bonus nocnej warty",
       "pvpBonus": "Bonus żółtej mapy/PvP",
+      "unnamedBonus": "Nienazwany bonus",
       "capReduction": "Redukcja przez limit 2.0",
       "total": "Łącznie"
     },
@@ -325,10 +334,16 @@
     "noLoots": "Brak łupów pasujących do tego bicia",
     "respawnTime": "Czas respawnu",
     "respawnTimeDescription": "Czas od minimalnego respawnu do momentu zabicia",
+    "respawnWindowTime": "Maksymalne okno respawnu",
+    "respawnWindowTimeDescription": "Czas od minimalnego do maksymalnego respawnu",
+    "respawnFasterBy": "{{duration}} szybciej niż max",
+    "respawnComparedToMax": "{{percentage}}% maksymalnego czasu",
     "respawnMinLabel": "Min. respawn",
+    "respawnMaxLabel": "Max. respawn",
     "killTimeLabel": "Moment zabicia",
     "multipliers": {
       "title": "Zasady punktacji",
+      "simpleMode": "Tryb prosty: 1 punkt za eligible gracza.",
       "baseSection": "Podstawa",
       "bonusesSection": "Bonusy",
       "leaveGrace": "Dla progu 75%: punkt 1.0 tylko jeśli kill był do {{minutes}} min od zejścia",
@@ -336,7 +351,8 @@
       "nightBonus": "Nocna warta {{from}}-{{to}} (>= {{coverage}}% czasu): +{{points}}",
       "pvpBonus": "Kill w godzinach {{from}}-{{to}}: +{{points}}",
       "cap": "Maksymalnie {{points}} pkt za jednego herosa",
-      "timezone": "Strefa: {{timezone}}"
+      "timezone": "Strefa: {{timezone}}",
+      "minTrackingForBonuses": "Min. pokrycie dla bonusów: {{percentage}}%"
     },
     "mapCoverage": {
       "title": "Pokrycie map",
@@ -375,6 +391,61 @@
     "pvpBonusTitle": "Bonus: żółta mapa / PvP",
     "timezoneFixedHint": "Strefa czasowa dla bonusów godzinowych: Europe/Warsaw",
     "groupRangeError": "Maksymalna liczba osób musi być większa lub równa minimalnej",
+    "mode": "Tryb punktacji",
+    "chooseMode": "Krok 1/2: wybierz tryb punktacji",
+    "configureEvent": "Krok 2/2: skonfiguruj event",
+    "modeHint": "Tryb prosty daje 1 pkt za eligible gracza. Tryb zaawansowany pozwala budować reguły z klocków.",
+    "modeSimpleTitle": "Tryb prosty",
+    "modeSimpleDescription": "Każdy eligible gracz otrzymuje 1 pkt.",
+    "modeAdvancedTitle": "Tryb zaawansowany",
+    "modeAdvancedDescription": "Reguły JEŻELI/WTEDY z akcjami punktowymi budowanymi z klocków.",
+    "rules": "Reguły JEŻELI + akcja",
+    "ifLabel": "JEŻELI",
+    "thenLabel": "WTEDY",
+    "andLabel": "i",
+    "always": "zawsze",
+    "timezoneLabel": "Strefa czasowa",
+    "minTrackingPercentForBonuses": "Min. pokrycie dla bonusów (%)",
+    "ruleName": "Nazwa reguły / bonusu",
+    "ruleNameHint": "Przy akcji „Dodaj bonus” ta nazwa pojawi się w rozbiciu punktów.",
+    "unnamedBonus": "Nienazwany bonus",
+    "ruleEnabled": "Reguła aktywna",
+    "ruleDisabledSuffix": "(WYŁ.)",
+    "addRule": "Dodaj regułę",
+    "addCondition": "Dodaj warunek",
+    "conditionAndHint": "Warunki w regule są łączone spójnikiem \"i\"",
+    "conditionType": {
+      "NUMERIC": "Warunek liczbowy",
+      "BOOLEAN": "Warunek logiczny",
+      "KILL_TIME_IN_WINDOW": "Godzina zabicia w oknie",
+      "RESPAWN_WINDOW_COVERAGE": "Pokrycie okna respawnu"
+    },
+    "actionType": {
+      "SET_BASE": "Ustaw podstawę",
+      "ADD_BONUS": "Dodaj bonus",
+      "ZERO_BASE": "Wyzeruj podstawę"
+    },
+    "factor": {
+      "trackingDurationPercentage": "Pokrycie czasu respawnu (%)",
+      "trackingDurationSeconds": "Czas na mapie (sekundy)",
+      "assignedMembersCount": "Liczba przypisanych graczy",
+      "minutesSinceLeaveToKill": "Minuty od zejścia do zabicia",
+      "timeOnMapSeconds": "Czas na mapie (sekundy)",
+      "afkPercentage": "Czas AFK (%)",
+      "respawnDurationSeconds": "Długość respawnu (sekundy)",
+      "respawnProgressPercentage": "Postęp respawnu (%)",
+      "eligible": "Gracz eligible",
+      "memberPresentAtKill": "Obecny przy zabiciu",
+      "wasPresent": "Był obecny"
+    },
+    "booleanValue": {
+      "true": "tak",
+      "false": "nie"
+    },
+    "conditionSummary": {
+      "killTimeInWindow": "Godzina zabicia w przedziale {{from}}-{{to}}",
+      "respawnWindowCoverage": "Pokrycie czasu respu w oknie {{from}}-{{to}} {{operator}} {{value}}%"
+    },
     "summary": {
       "baseTitle": "Podstawa",
       "baseRule": ">= {{percentage}}% czasu = {{points}} pkt",
@@ -384,7 +455,9 @@
       "nightBonus": "Nocna warta {{from}}-{{to}}, wymagane {{coverage}}%: +{{points}}",
       "pvpBonus": "Kill {{from}}-{{to}}: +{{points}}",
       "cap": "Maksymalnie {{points}} pkt za kill",
-      "timezone": "Strefa: {{timezone}}"
+      "minTrackingForBonuses": "Min. pokrycie dla bonusów: {{percentage}}%",
+      "timezone": "Strefa: {{timezone}}",
+      "simple": "Tryb prosty: każdy eligible gracz otrzymuje 1 pkt."
     },
     "rule": {
       "base75": "Podstawa: >= 75% czasu respu = 1.0 pkt",

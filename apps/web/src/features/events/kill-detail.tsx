@@ -29,7 +29,9 @@ import { LootsListItem } from "@/features/guild/components/loots-list/loots-list
 import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
+import { useSession } from "@/hooks/auth/use-session";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
+import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
 
 const formatDurationSeconds = (totalSeconds: number): string => {
   if (totalSeconds < 60) {
@@ -48,13 +50,14 @@ const formatDurationSeconds = (totalSeconds: number): string => {
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   const minDate = new Date(minSpawn);
   const maxDate = new Date(maxSpawn);
-  const diffSeconds = differenceInSeconds(maxDate, minDate);
+  const diffSeconds = Math.max(0, differenceInSeconds(maxDate, minDate));
   return formatDurationSeconds(diffSeconds);
 };
 
 export const KillDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId, heroId, killId } = useParams({ strict: false });
+  const { data: session } = useSession();
 
   const { data: permissions } = useGuildPermissions();
   const canEditPoints =
@@ -109,11 +112,57 @@ export const KillDetail = () => {
 
   const { kill, eventConfig } = data;
   const participants = kill.points ?? [];
-  const respawnWindow = kill.isManualClose
-    ? kill.windowDurationSeconds
+  const currentDiscordId = session?.user?.discordId;
+  const highlightedRuleIds = Array.from(
+    new Set(
+      participants
+        .filter((participant) => participant.member.userId === currentDiscordId)
+        .flatMap((participant) => {
+          const evaluatedRuleIds = getAppliedRuleIdsForParticipant({
+            kill,
+            participant,
+            scoringRules: eventConfig.scoringRules,
+            assignedMembersCount: participants.length,
+          });
+          const bonusBreakdownRuleIds = (participant.bonusBreakdown ?? [])
+            .map((bonus) => bonus.ruleId)
+            .filter(
+              (ruleId): ruleId is string =>
+                typeof ruleId === "string" && ruleId.trim().length > 0,
+            );
+
+          return [...evaluatedRuleIds, ...bonusBreakdownRuleIds];
+        }),
+    ),
+  );
+  const respawnDurationText =
+    typeof kill.respawnDurationSeconds === "number"
+      ? formatDurationSeconds(kill.respawnDurationSeconds)
+      : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
+  const windowDurationText =
+    typeof kill.windowDurationSeconds === "number"
       ? formatDurationSeconds(kill.windowDurationSeconds)
-      : null
-    : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
+      : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
+  const fasterThanMaxSeconds =
+    typeof kill.windowDurationSeconds === "number" &&
+    typeof kill.respawnDurationSeconds === "number"
+      ? Math.max(0, kill.windowDurationSeconds - kill.respawnDurationSeconds)
+      : null;
+  const respawnComparedToMaxPercentage =
+    typeof kill.windowDurationSeconds === "number" &&
+    typeof kill.respawnDurationSeconds === "number" &&
+    kill.windowDurationSeconds > 0
+      ? Math.max(
+          0,
+          Math.round(
+            (kill.respawnDurationSeconds / kill.windowDurationSeconds) * 100,
+          ),
+        )
+      : null;
+  const fasterThanMaxText =
+    typeof fasterThanMaxSeconds === "number"
+      ? formatDurationSeconds(fasterThanMaxSeconds)
+      : null;
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
@@ -215,7 +264,7 @@ export const KillDetail = () => {
                       </p>
                     </div>
                   </div>
-                  {respawnWindow && (
+                  {respawnDurationText && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex items-center gap-2 cursor-help">
@@ -223,7 +272,7 @@ export const KillDetail = () => {
                             <Clock className="w-4 h-4 text-orange-500" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold">{respawnWindow}</p>
+                            <p className="text-lg font-bold">{respawnDurationText}</p>
                             <p className="text-xs text-muted-foreground">
                               {t("events.killDetail.respawnTime")}
                             </p>
@@ -255,6 +304,60 @@ export const KillDetail = () => {
                       </TooltipContent>
                     </Tooltip>
                   )}
+                  {windowDurationText && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 cursor-help">
+                          <div className="p-1.5 rounded-md bg-orange-500/10">
+                            <Clock className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold">{windowDurationText}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {t("events.killDetail.respawnWindowTime")}
+                            </p>
+                            {fasterThanMaxText && (
+                              <p className="text-[11px] text-muted-foreground">
+                                {t("events.killDetail.respawnFasterBy", {
+                                  duration: fasterThanMaxText,
+                                })}
+                              </p>
+                            )}
+                            {typeof respawnComparedToMaxPercentage === "number" && (
+                              <p className="text-[11px] text-muted-foreground">
+                                {t("events.killDetail.respawnComparedToMax", {
+                                  percentage: respawnComparedToMaxPercentage,
+                                })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-1 text-sm">
+                          <p className="font-medium">
+                            {t("events.killDetail.respawnWindowTimeDescription")}
+                          </p>
+                          <p>
+                            {t("events.killDetail.respawnMinLabel")}:{" "}
+                            {format(
+                              new Date(kill.minSpawnTimeAtKill),
+                              "d MMMM yyyy, HH:mm:ss",
+                              { locale: pl },
+                            )}
+                          </p>
+                          <p>
+                            {t("events.killDetail.respawnMaxLabel")}:{" "}
+                            {format(
+                              new Date(kill.maxSpawnTimeAtKill),
+                              "d MMMM yyyy, HH:mm:ss",
+                              { locale: pl },
+                            )}
+                          </p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-md bg-primary/10">
                       <Calculator className="w-4 h-4 text-primary" />
@@ -271,7 +374,11 @@ export const KillDetail = () => {
                 </div>
               </Card>
 
-              <MultipliersCard eventConfig={eventConfig} t={t} />
+              <MultipliersCard
+                eventConfig={eventConfig}
+                highlightedRuleIds={highlightedRuleIds}
+                t={t}
+              />
 
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                 <h3 className="text-base font-semibold mb-3 flex items-center gap-2">

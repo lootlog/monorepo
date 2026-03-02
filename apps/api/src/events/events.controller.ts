@@ -1155,7 +1155,7 @@ export class EventsController {
   @ApiOperation({
     summary: 'Get kill details',
     description:
-      'Get detailed information about a specific kill including participants, multipliers, and matching loots',
+      'Get detailed information about a specific kill including participants, scoring breakdown, and matching loots',
   })
   @ApiParam({ name: 'guildId', description: 'Guild ID' })
   @ApiParam({ name: 'eventId', description: 'Event ID' })

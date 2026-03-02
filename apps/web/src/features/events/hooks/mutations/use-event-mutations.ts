@@ -1,6 +1,9 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
 
 export interface UpdateEventData {
   name?: string;
@@ -11,7 +14,8 @@ export interface UpdateEventData {
   participationConfirmationMinutes?: number;
   mapAssignmentCap?: number;
   rulebookMarkdown?: string | null;
-  scoringRules?: EventScoringRules;
+  scoringMode?: EventScoringMode;
+  scoringRules?: EventScoringRules | null;
 }
 
 interface HeroMapData {

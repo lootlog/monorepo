@@ -63,145 +63,235 @@ describe('EventPointsService', () => {
   });
 
   describe('calculateMemberPoints', () => {
-    it('applies the highest matching base threshold', () => {
-      const killTime = new Date('2026-01-15T05:00:00.000Z');
-      const respawnStartTime = new Date('2026-01-15T03:00:00.000Z');
+    const getDefaultParams = () => ({
+      scoringMode: 'ADVANCED' as const,
+      eligible: true,
+      trackingDurationPercentage: 50,
+      trackingDurationSeconds: 3600,
+      assignedMembersCount: 8,
+      killTime: new Date('2026-01-15T05:00:00.000Z'),
+      respawnStartTime: new Date('2026-01-15T03:00:00.000Z'),
+      memberLeaveTime: null,
+      memberPresentAtKill: true,
+      timeOnMapSeconds: 900,
+      afkPercentage: 0,
+      wasPresent: true,
+    });
 
+    it('supports SIMPLE mode with 1 point for eligible member', () => {
+      const eligible = service.calculateMemberPoints({
+        ...getDefaultParams(),
+        scoringMode: 'SIMPLE',
+      });
+      expect(eligible.totalPoints).toBe(1);
+      expect(eligible.basePoints).toBe(1);
+
+      const notEligible = service.calculateMemberPoints({
+        ...getDefaultParams(),
+        scoringMode: 'SIMPLE',
+        eligible: false,
+      });
+      expect(notEligible.totalPoints).toBe(0);
+    });
+
+    it('applies advanced thresholds and leave-grace rule', () => {
       const full = service.calculateMemberPoints({
+        ...getDefaultParams(),
         trackingDurationPercentage: 80,
-        assignedMembersCount: 8,
-        killTime,
-        respawnStartTime,
+        assignedMembersCount: 10,
+        memberPresentAtKill: true,
       });
       expect(full.basePoints).toBe(1);
 
-      const medium = service.calculateMemberPoints({
-        trackingDurationPercentage: 60,
-        assignedMembersCount: 8,
-        killTime,
-        respawnStartTime,
-      });
-      expect(medium.basePoints).toBe(0.5);
-
-      const low = service.calculateMemberPoints({
-        trackingDurationPercentage: 30,
-        assignedMembersCount: 8,
-        killTime,
-        respawnStartTime,
-      });
-      expect(low.basePoints).toBe(0.25);
-
-      const none = service.calculateMemberPoints({
-        trackingDurationPercentage: 20,
-        assignedMembersCount: 8,
-        killTime,
-        respawnStartTime,
-      });
-      expect(none.basePoints).toBe(0);
-    });
-
-    it('applies leave grace rule only for >=75% base tier', () => {
-      const killTime = new Date('2026-01-15T05:00:00.000Z');
-      const respawnStartTime = new Date('2026-01-15T03:00:00.000Z');
-
-      const withinGrace = service.calculateMemberPoints({
-        trackingDurationPercentage: 80,
-        assignedMembersCount: 10,
-        killTime,
-        respawnStartTime,
-        memberLeaveTime: new Date('2026-01-15T04:51:00.000Z'),
-      });
-      expect(withinGrace.basePoints).toBe(1);
-
       const afterGrace = service.calculateMemberPoints({
+        ...getDefaultParams(),
         trackingDurationPercentage: 80,
         assignedMembersCount: 10,
-        killTime,
-        respawnStartTime,
+        memberPresentAtKill: false,
         memberLeaveTime: new Date('2026-01-15T04:49:00.000Z'),
       });
       expect(afterGrace.basePoints).toBe(0);
-
-      const below75Tier = service.calculateMemberPoints({
-        trackingDurationPercentage: 60,
-        assignedMembersCount: 10,
-        killTime,
-        respawnStartTime,
-        memberLeaveTime: new Date('2026-01-15T04:00:00.000Z'),
-      });
-      expect(below75Tier.basePoints).toBe(0.5);
     });
 
-    it('adds group bonus for 1-4 assigned members', () => {
-      const killTime = new Date('2026-01-15T05:00:00.000Z');
-      const respawnStartTime = new Date('2026-01-15T03:00:00.000Z');
-
-      const smallGroup = service.calculateMemberPoints({
-        trackingDurationPercentage: 50,
-        assignedMembersCount: 4,
-        killTime,
-        respawnStartTime,
-      });
-      expect(smallGroup.groupBonus).toBe(0.5);
-
-      const largeGroup = service.calculateMemberPoints({
-        trackingDurationPercentage: 50,
-        assignedMembersCount: 5,
-        killTime,
-        respawnStartTime,
-      });
-      expect(largeGroup.groupBonus).toBe(0);
-    });
-
-    it('adds night bonus when at least 75% of respawn duration is in 03:00-08:00 Warsaw', () => {
-      const inNight = service.calculateMemberPoints({
-        trackingDurationPercentage: 50,
-        assignedMembersCount: 8,
-        killTime: new Date('2026-01-15T06:00:00.000Z'),
-        respawnStartTime: new Date('2026-01-15T02:00:00.000Z'),
-      });
-      expect(inNight.nightBonus).toBe(0.5);
-
-      const belowCoverage = service.calculateMemberPoints({
-        trackingDurationPercentage: 50,
-        assignedMembersCount: 8,
-        killTime: new Date('2026-01-15T06:00:00.000Z'),
-        respawnStartTime: new Date('2026-01-15T00:00:00.000Z'),
-      });
-      expect(belowCoverage.nightBonus).toBe(0);
-    });
-
-    it('adds pvp bonus when kill time is in 08:00-11:00 Warsaw', () => {
-      const inPvp = service.calculateMemberPoints({
-        trackingDurationPercentage: 50,
-        assignedMembersCount: 8,
-        killTime: new Date('2026-01-15T07:30:00.000Z'),
-        respawnStartTime: new Date('2026-01-15T05:00:00.000Z'),
-      });
-      expect(inPvp.pvpBonus).toBe(0.5);
-
-      const outsidePvp = service.calculateMemberPoints({
-        trackingDurationPercentage: 50,
-        assignedMembersCount: 8,
-        killTime: new Date('2026-01-15T10:00:00.000Z'),
-        respawnStartTime: new Date('2026-01-15T08:00:00.000Z'),
-      });
-      expect(outsidePvp.pvpBonus).toBe(0);
-    });
-
-    it('caps total points at 2.0', () => {
-      const capped = service.calculateMemberPoints({
+    it('adds bonuses and applies hard cap', () => {
+      const result = service.calculateMemberPoints({
+        ...getDefaultParams(),
         trackingDurationPercentage: 90,
         assignedMembersCount: 2,
         killTime: new Date('2026-01-15T07:30:00.000Z'),
         respawnStartTime: new Date('2026-01-15T02:00:00.000Z'),
       });
 
-      expect(capped.basePoints).toBe(1);
-      expect(capped.groupBonus).toBe(0.5);
-      expect(capped.nightBonus).toBe(0.5);
-      expect(capped.pvpBonus).toBe(0.5);
-      expect(capped.totalPoints).toBe(2);
+      expect(result.basePoints).toBe(1);
+      expect(result.bonusPoints).toBe(1.5);
+      expect(result.totalPoints).toBe(2);
+      expect(result.appliedBonuses).toHaveLength(3);
+      expect(result.appliedBonuses.map((bonus) => bonus.ruleId)).toEqual(
+        expect.arrayContaining(['bonus-small-group', 'bonus-night', 'bonus-pvp']),
+      );
+    });
+
+    it('blocks all bonus actions when tracking is below configured threshold', () => {
+      const result = service.calculateMemberPoints({
+        ...getDefaultParams(),
+        trackingDurationPercentage: 49,
+        assignedMembersCount: 2,
+        killTime: new Date('2026-01-15T07:30:00.000Z'),
+        respawnStartTime: new Date('2026-01-15T02:00:00.000Z'),
+      });
+
+      expect(result.basePoints).toBe(0.25);
+      expect(result.bonusPoints).toBe(0);
+      expect(result.totalPoints).toBe(0.25);
+      expect(result.appliedBonuses).toHaveLength(0);
+    });
+
+    it('allows bonuses below 50% when minTrackingPercentForBonuses is lowered', () => {
+      const result = service.calculateMemberPoints({
+        ...getDefaultParams(),
+        scoringRules: {
+          version: 1,
+          timezone: 'Europe/Warsaw',
+          hardCapPoints: 2,
+          minTrackingPercentForBonuses: 30,
+          rules: [
+            {
+              id: 'base-25',
+              enabled: true,
+              conditions: [
+                {
+                  type: 'NUMERIC',
+                  factor: 'trackingDurationPercentage',
+                  operator: '>=',
+                  value: 25,
+                },
+              ],
+              action: { type: 'SET_BASE', points: 0.25 },
+            },
+            {
+              id: 'bonus-group',
+              enabled: true,
+              conditions: [
+                {
+                  type: 'NUMERIC',
+                  factor: 'assignedMembersCount',
+                  operator: '<=',
+                  value: 4,
+                },
+              ],
+              action: { type: 'ADD_BONUS', points: 0.5 },
+            },
+            {
+              id: 'bonus-night',
+              enabled: true,
+              conditions: [
+                {
+                  type: 'RESPAWN_WINDOW_COVERAGE',
+                  from: '03:00',
+                  to: '08:00',
+                  operator: '>=',
+                  value: 75,
+                },
+              ],
+              action: { type: 'ADD_BONUS', points: 0.5 },
+            },
+            {
+              id: 'bonus-pvp',
+              enabled: true,
+              conditions: [
+                {
+                  type: 'KILL_TIME_IN_WINDOW',
+                  from: '08:00',
+                  to: '11:00',
+                },
+              ],
+              action: { type: 'ADD_BONUS', points: 0.5 },
+            },
+          ],
+        },
+        trackingDurationPercentage: 40,
+        assignedMembersCount: 2,
+        killTime: new Date('2026-01-15T07:30:00.000Z'),
+        respawnStartTime: new Date('2026-01-15T02:00:00.000Z'),
+      });
+
+      expect(result.basePoints).toBe(0.25);
+      expect(result.bonusPoints).toBe(1.5);
+      expect(result.totalPoints).toBe(1.75);
+      expect(result.appliedBonuses).toHaveLength(3);
+    });
+
+    it('supports respawnProgressPercentage numeric conditions', () => {
+      const scoringRules = {
+        version: 1 as const,
+        timezone: 'Europe/Warsaw',
+        hardCapPoints: 10,
+        minTrackingPercentForBonuses: 0,
+        rules: [
+          {
+            id: 'base',
+            enabled: true,
+            conditions: [
+              {
+                type: 'NUMERIC' as const,
+                factor: 'trackingDurationPercentage' as const,
+                operator: '>=' as const,
+                value: 0,
+              },
+            ],
+            action: { type: 'SET_BASE' as const, points: 1 },
+          },
+          {
+            id: 'bonus-progress',
+            enabled: true,
+            conditions: [
+              {
+                type: 'NUMERIC' as const,
+                factor: 'respawnProgressPercentage' as const,
+                operator: '>=' as const,
+                value: 75,
+              },
+            ],
+            action: {
+              type: 'ADD_BONUS' as const,
+              points: 1,
+            },
+          },
+        ],
+      };
+
+      const withMaxRespawn = service.calculateMemberPoints({
+        ...getDefaultParams(),
+        scoringRules,
+        trackingDurationPercentage: 100,
+        killTime: new Date('2026-01-15T03:30:00.000Z'),
+        respawnStartTime: new Date('2026-01-15T02:00:00.000Z'),
+        maxRespawnTime: new Date('2026-01-15T04:00:00.000Z'),
+      });
+
+      expect(withMaxRespawn.bonusPoints).toBe(1);
+      expect(withMaxRespawn.totalPoints).toBe(2);
+      expect(withMaxRespawn.appliedBonuses).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            ruleId: 'bonus-progress',
+            points: 1,
+          }),
+        ]),
+      );
+
+      const withoutMaxRespawn = service.calculateMemberPoints({
+        ...getDefaultParams(),
+        scoringRules,
+        trackingDurationPercentage: 100,
+        killTime: new Date('2026-01-15T03:30:00.000Z'),
+        respawnStartTime: new Date('2026-01-15T02:00:00.000Z'),
+        maxRespawnTime: null,
+      });
+
+      expect(withoutMaxRespawn.bonusPoints).toBe(0);
+      expect(withoutMaxRespawn.totalPoints).toBe(1);
+      expect(withoutMaxRespawn.appliedBonuses).toHaveLength(0);
     });
   });
 
@@ -272,6 +362,8 @@ describe('EventPointsService', () => {
       mockPrismaService.event.findUnique.mockResolvedValue({
         id: eventId,
         guildId: 'guild-1',
+        scoringMode: 'ADVANCED',
+        scoringRules: null,
       });
 
       await service.recalculateEventPoints(eventId, 1);
@@ -281,16 +373,19 @@ describe('EventPointsService', () => {
           where: { id: 'kp-1' },
           data: expect.objectContaining({
             basePoints: 0.5,
-            groupBonusPoints: 0.5,
-            nightBonusPoints: 0.5,
-            pvpBonusPoints: 0,
             points: 1.5,
             trackingDurationSeconds: 4032,
             trackingDurationPercentage: 56,
-            timeMultiplier: null,
-            trackersMultiplier: null,
-            mapsMultiplier: null,
-            trackingDurationMultiplier: null,
+            bonusBreakdown: expect.arrayContaining([
+              expect.objectContaining({
+                ruleId: 'bonus-small-group',
+                points: 0.5,
+              }),
+              expect.objectContaining({
+                ruleId: 'bonus-night',
+                points: 0.5,
+              }),
+            ]),
           }),
         }),
       );
@@ -380,6 +475,8 @@ describe('EventPointsService', () => {
       mockPrismaService.event.findUnique.mockResolvedValue({
         id: eventId,
         guildId: 'guild-1',
+        scoringMode: 'ADVANCED',
+        scoringRules: null,
       });
 
       await service.recalculateEventPoints(eventId, 1);
@@ -401,6 +498,51 @@ describe('EventPointsService', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('updateKillPoint', () => {
+    it('sets basePoints equal to manually edited points and clears bonus breakdown', async () => {
+      mockPrismaService.eventKillPoint.findFirst.mockResolvedValue({
+        id: 'kp-1',
+        killId: 'kill-1',
+        memberId: 123,
+        points: 1.5,
+        confirmationDeadlineAt: null,
+        confirmedAt: null,
+        kill: {
+          heroNpc: {
+            npcName: 'Test Hero',
+          },
+        },
+      });
+      mockPrismaService.eventKillPoint.update.mockResolvedValue({
+        id: 'kp-1',
+      });
+      mockPrismaService.eventRanking.findFirst.mockResolvedValue({
+        id: 'ranking-1',
+        totalPoints: 10,
+      });
+      mockPrismaService.eventRanking.update.mockResolvedValue({});
+      mockPrismaService.eventPointsEditHistory.create.mockResolvedValue({});
+
+      await service.updateKillPoint(
+        'guild-1',
+        'event-1',
+        'kill-1',
+        'kp-1',
+        2.5,
+        'user-1',
+      );
+
+      expect(mockPrismaService.eventKillPoint.update).toHaveBeenCalledWith({
+        where: { id: 'kp-1' },
+        data: {
+          points: 2.5,
+          basePoints: 2.5,
+          bonusBreakdown: [],
+        },
+      });
     });
   });
 });

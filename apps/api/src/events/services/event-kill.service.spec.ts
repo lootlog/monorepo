@@ -663,9 +663,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       await service.recordHeroKill(
@@ -760,9 +759,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       await service.recordHeroKill(
@@ -849,9 +847,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       await service.recordHeroKill(
@@ -943,9 +940,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       await service.recordHeroKill(
@@ -1027,9 +1023,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       try {
@@ -1118,9 +1113,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       try {
@@ -1207,9 +1201,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       try {
@@ -1306,9 +1299,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       try {
@@ -1406,9 +1398,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       try {
@@ -1497,9 +1488,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       try {
@@ -1577,9 +1567,8 @@ describe('EventKillService', () => {
       mockPointsService.calculateMemberPoints.mockReturnValue({
         totalPoints: 1,
         basePoints: 1,
-        groupBonus: 0,
-        nightBonus: 0,
-        pvpBonus: 0,
+        bonusPoints: 0,
+        appliedBonuses: [],
       });
 
       try {
@@ -2286,10 +2275,12 @@ describe('EventKillService', () => {
     it('should return kill details with participants and event config', async () => {
       const killedAt = new Date('2026-02-20T05:27:46.133Z');
       const minSpawnTimeAtKill = new Date('2026-02-20T03:27:46.133Z');
+      const maxSpawnTimeAtKill = new Date('2026-02-20T06:07:46.133Z');
       const mockKill = {
         id: killId,
         killedAt,
         minSpawnTimeAtKill,
+        maxSpawnTimeAtKill,
         points: [
           {
             id: 'point-1',
@@ -2303,9 +2294,8 @@ describe('EventKillService', () => {
           npcName: 'Test Hero',
           event: {
             basePointsPerKill: 100,
-            timeOfDayMultipliers: null,
-            trackersMultipliers: null,
-            mapsCountMultipliers: null,
+            scoringMode: 'ADVANCED',
+            scoringRules: null,
           },
         },
       };
@@ -2328,22 +2318,22 @@ describe('EventKillService', () => {
 
       expect(result.kill.id).toBe(killId);
       expect(result.kill.points).toHaveLength(1);
-      expect(result.kill.windowDurationSeconds).toBe(7200);
-      expect(result.eventConfig.timezone).toBe('Europe/Warsaw');
-      expect(result.eventConfig.baseThresholds).toEqual([
-        { percentage: 75, points: 1 },
-        { percentage: 50, points: 0.5 },
-        { percentage: 25, points: 0.25 },
-      ]);
+      expect(result.kill.respawnDurationSeconds).toBe(7200);
+      expect(result.kill.windowDurationSeconds).toBe(9600);
+      expect(result.eventConfig.scoringMode).toBe('ADVANCED');
+      expect(result.eventConfig.scoringRules?.timezone).toBe('Europe/Warsaw');
+      expect(result.eventConfig.scoringRules?.rules.length).toBeGreaterThan(0);
     });
 
     it('should clamp tracking and assignment durations to minSpawn->kill window', async () => {
       const killedAt = new Date('2026-02-20T05:27:46.133Z');
       const minSpawnTimeAtKill = new Date('2026-02-20T03:27:46.133Z');
+      const maxSpawnTimeAtKill = new Date('2026-02-20T06:07:46.133Z');
       const mockKill = {
         id: killId,
         killedAt,
         minSpawnTimeAtKill,
+        maxSpawnTimeAtKill,
         points: [
           {
             id: 'point-1',
@@ -2360,9 +2350,8 @@ describe('EventKillService', () => {
           npcName: 'Test Hero',
           event: {
             basePointsPerKill: 100,
-            timeOfDayMultipliers: null,
-            trackersMultipliers: null,
-            mapsCountMultipliers: null,
+            scoringMode: 'ADVANCED',
+            scoringRules: null,
           },
         },
       };

@@ -1,7 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
-import { CoverageGapType, Event, EventHeroNpc } from 'generated/client';
+import {
+  CoverageGapType,
+  Event,
+  EventHeroNpc,
+  type Prisma,
+} from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { EventEmitterService } from './event-emitter.service';
@@ -22,7 +27,10 @@ import {
   buildEventHeroKillHeroDedupKey,
   getEventHeroKillWindowKey,
 } from '../utils/event-hero-kill-job';
-import { normalizeEventScoringRules } from '../utils/scoring-rules.util';
+import {
+  normalizeEventScoringMode,
+  normalizeEventScoringRules,
+} from '../utils/scoring-rules.util';
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
@@ -462,6 +470,7 @@ export class EventKillService {
     const scoringWindowStartTime =
       windowOpenedAt > killedAt ? killedAt : windowOpenedAt;
     const minSpawnTimeAtKill = timerData.previousMinSpawnTime ?? killedAt;
+    const maxSpawnTimeAtKill = timerData.previousMaxSpawnTime ?? killedAt;
     const trackingWindowStartTime =
       minSpawnTimeAtKill > killedAt ? killedAt : minSpawnTimeAtKill;
     const trackingWindowDurationSeconds = Math.max(
@@ -484,7 +493,13 @@ export class EventKillService {
       mapIdToName.set(map.id, map.mapName);
     }
 
-    const scoringRules = normalizeEventScoringRules(event.scoringRules);
+    const scoringMode = normalizeEventScoringMode(
+      (event as { scoringMode?: unknown }).scoringMode,
+    );
+    const scoringRules =
+      scoringMode === 'ADVANCED'
+        ? normalizeEventScoringRules(event.scoringRules)
+        : null;
     const confirmationMinutes = Math.max(
       0,
       event.participationConfirmationMinutes ?? 0,
@@ -501,7 +516,7 @@ export class EventKillService {
           heroNpcId: eventHero.id,
           killedAt,
           minSpawnTimeAtKill,
-          maxSpawnTimeAtKill: timerData.previousMaxSpawnTime ?? killedAt,
+          maxSpawnTimeAtKill,
           timerCreatedById: timerData.memberId,
           isManualClose,
         },
@@ -512,20 +527,13 @@ export class EventKillService {
         memberId: number;
         mapName: string;
         basePoints: number;
-        groupBonusPoints: number;
-        nightBonusPoints: number;
-        pvpBonusPoints: number;
         points: number;
-        appliedMultiplier: number;
-        timeMultiplier: number | null;
-        trackersMultiplier: number | null;
-        mapsMultiplier: number | null;
-        trackingDurationMultiplier: number | null;
         trackingDurationSeconds: number | null;
         trackingDurationPercentage: number | null;
         timeOnMapSeconds: number;
         afkPercentage: number;
         wasPresent: boolean;
+        bonusBreakdown: Prisma.InputJsonValue;
         mapPresenceData: Array<{
           mapId: string;
           mapName: string;
@@ -689,39 +697,39 @@ export class EventKillService {
           }
         }
 
-        const { totalPoints, basePoints, groupBonus, nightBonus, pvpBonus } =
-          this.pointsService.calculateMemberPoints({
-            scoringRules,
-            trackingDurationPercentage,
-            assignedMembersCount: assignedMemberIds.length,
-            killTime: killedAt,
-            respawnStartTime: trackingWindowStartTime,
-            memberLeaveTime: memberPresentAtKill ? null : memberLeaveTime,
-          });
-        const appliedMultiplier =
-          basePoints > 0
-            ? Math.round((totalPoints / basePoints) * 10_000) / 10_000
-            : 0;
+        const {
+          totalPoints,
+          basePoints,
+          appliedBonuses,
+        } = this.pointsService.calculateMemberPoints({
+          scoringMode,
+          scoringRules,
+          eligible: true,
+          trackingDurationPercentage,
+          trackingDurationSeconds: trackingDurationSeconds ?? undefined,
+          assignedMembersCount: assignedMemberIds.length,
+          killTime: killedAt,
+          respawnStartTime: trackingWindowStartTime,
+          maxRespawnTime: maxSpawnTimeAtKill,
+          memberLeaveTime: memberPresentAtKill ? null : memberLeaveTime,
+          memberPresentAtKill,
+          timeOnMapSeconds: presenceStats.timeOnMapSeconds,
+          afkPercentage: presenceStats.afkPercentage,
+          wasPresent: presenceStats.wasPresent,
+        });
 
         killPointsData.push({
           killId: heroKill.id,
           memberId,
           mapName: mapNames.join(', '),
           basePoints,
-          groupBonusPoints: groupBonus,
-          nightBonusPoints: nightBonus,
-          pvpBonusPoints: pvpBonus,
           points: totalPoints,
-          appliedMultiplier,
-          timeMultiplier: null,
-          trackersMultiplier: null,
-          mapsMultiplier: null,
-          trackingDurationMultiplier: null,
           trackingDurationSeconds,
           trackingDurationPercentage: trackingDurationPercentage ?? null,
           timeOnMapSeconds: presenceStats.timeOnMapSeconds,
           afkPercentage: presenceStats.afkPercentage,
           wasPresent: presenceStats.wasPresent,
+          bonusBreakdown: appliedBonuses as Prisma.InputJsonValue,
           mapPresenceData,
           confirmationDeadlineAt,
           confirmedAt: autoConfirmedAt,
@@ -1284,24 +1292,39 @@ export class EventKillService {
       };
     });
 
-    const windowDurationSeconds = Math.max(
+    const respawnDurationSeconds = Math.max(
       0,
       this.getTrackingWindowDurationSeconds(
         kill.killedAt,
         kill.minSpawnTimeAtKill,
       ),
     );
-    const scoringRules = normalizeEventScoringRules(
-      kill.heroNpc.event.scoringRules,
+    const windowDurationSeconds = Math.max(
+      0,
+      this.getSpawnWindowDurationSeconds(
+        kill.minSpawnTimeAtKill,
+        kill.maxSpawnTimeAtKill,
+      ),
     );
+    const scoringMode = normalizeEventScoringMode(
+      (kill.heroNpc.event as { scoringMode?: unknown }).scoringMode,
+    );
+    const scoringRules =
+      scoringMode === 'ADVANCED'
+        ? normalizeEventScoringRules(kill.heroNpc.event.scoringRules)
+        : null;
 
     return {
       kill: {
         ...kill,
         points: pointsWithMapData,
+        respawnDurationSeconds,
         windowDurationSeconds,
       },
-      eventConfig: scoringRules,
+      eventConfig: {
+        scoringMode,
+        scoringRules,
+      },
     };
   }
 
@@ -1464,6 +1487,18 @@ export class EventKillService {
       0,
       Math.floor(
         (killedAt.getTime() - trackingWindowStartTime.getTime()) / 1000,
+      ),
+    );
+  }
+
+  private getSpawnWindowDurationSeconds(
+    minSpawnTimeAtKill: Date,
+    maxSpawnTimeAtKill: Date,
+  ): number {
+    return Math.max(
+      0,
+      Math.floor(
+        (maxSpawnTimeAtKill.getTime() - minSpawnTimeAtKill.getTime()) / 1000,
       ),
     );
   }

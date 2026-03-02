@@ -31,7 +31,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import { EventEditDialog } from "./components/dialogs/event-edit-dialog";
 import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { EndEventDialog } from "./components/dialogs/end-event-dialog";
@@ -50,7 +49,10 @@ import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
-import { normalizeScoringRules } from "./utils/scoring-rules";
+import {
+  normalizeScoringMode,
+  normalizeScoringRules,
+} from "./utils/scoring-rules";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -105,7 +107,6 @@ export const EventDetail = () => {
     eventId ?? "",
   );
 
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [heroDialogOpen, setHeroDialogOpen] = useState(false);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
@@ -127,14 +128,9 @@ export const EventDetail = () => {
       maps: mapsData?.maps ?? [],
     };
   });
-  const eventForEditDialog = event
-    ? {
-        ...event,
-        startsAt: event.startsAt ?? undefined,
-        endsAt: event.endsAt ?? undefined,
-      }
-    : null;
-  const scoringRules = normalizeScoringRules(event?.scoringRules);
+  const scoringMode = normalizeScoringMode(event?.scoringMode);
+  const scoringRules =
+    scoringMode === "ADVANCED" ? normalizeScoringRules(event?.scoringRules) : null;
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -201,11 +197,6 @@ export const EventDetail = () => {
       />
       {event && (
         <>
-          <EventEditDialog
-            open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            event={eventForEditDialog!}
-          />
           <HeroManageDialog
             open={heroDialogOpen}
             onOpenChange={setHeroDialogOpen}
@@ -279,6 +270,7 @@ export const EventDetail = () => {
             onOpenChange={setRulesDialogOpen}
             eventName={event.name}
             rulebookMarkdown={event.rulebookMarkdown}
+            scoringMode={scoringMode}
             scoringRules={scoringRules}
           />
         </>
@@ -353,7 +345,15 @@ export const EventDetail = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setEditDialogOpen(true)}
+              onClick={() =>
+                navigate({
+                  to: "/$guildId/events/$eventId/edit",
+                  params: {
+                    guildId: guildId ?? "",
+                    eventId: eventId ?? "",
+                  },
+                })
+              }
             >
               <Pencil className="w-4 h-4 mr-2" />
               {t("events.editButton")}

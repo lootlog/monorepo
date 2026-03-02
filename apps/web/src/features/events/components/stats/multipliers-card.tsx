@@ -2,13 +2,25 @@ import { Card } from "@lootlog/ui/components/card";
 import { Calculator } from "lucide-react";
 import type { EventConfig } from "../../hooks/queries/use-kill-detail";
 import type { TFunction } from "i18next";
+import {
+  formatScoringAction,
+  formatScoringCondition,
+} from "../../utils/scoring-rule-labels";
 
 interface MultipliersCardProps {
   eventConfig: EventConfig;
+  highlightedRuleIds?: string[];
   t: TFunction;
 }
 
-export const MultipliersCard = ({ eventConfig, t }: MultipliersCardProps) => {
+export const MultipliersCard = ({
+  eventConfig,
+  highlightedRuleIds = [],
+  t,
+}: MultipliersCardProps) => {
+  const rules = eventConfig.scoringRules?.rules ?? [];
+  const andLabel = t("events.scoring.andLabel", "i");
+
   return (
     <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
       <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
@@ -17,74 +29,62 @@ export const MultipliersCard = ({ eventConfig, t }: MultipliersCardProps) => {
       </h3>
 
       <div className="space-y-3 text-sm">
-        <div>
-          <p className="font-medium mb-1">
-            {t("events.killDetail.multipliers.baseSection", "Podstawa")}
-          </p>
-          <div className="space-y-1 text-muted-foreground">
-            {eventConfig.baseThresholds.map((threshold) => (
-              <p key={threshold.percentage}>
-                {`>= ${threshold.percentage}% = ${threshold.points.toFixed(2)} pkt`}
-              </p>
-            ))}
-            <p>
-              {t(
-                "events.killDetail.multipliers.leaveGrace",
-                "Dla progu 75%: punkt 1.0 tylko jeśli kill był do {{minutes}} min od zejścia",
-                { minutes: eventConfig.leaveGraceMinutes },
-              )}
-            </p>
+        {eventConfig.scoringMode === "SIMPLE" ? (
+          <div className="text-muted-foreground">
+            {t(
+              "events.killDetail.multipliers.simpleMode",
+              "Tryb prosty: 1 punkt za eligible gracza.",
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="space-y-2 text-muted-foreground">
+            {rules.map((rule) => {
+              const isHighlighted = highlightedRuleIds.includes(rule.id);
 
-        <div>
-          <p className="font-medium mb-1">
-            {t("events.killDetail.multipliers.bonusesSection", "Bonusy")}
-          </p>
-          <div className="space-y-1 text-muted-foreground">
-            <p>
-              {t(
-                "events.killDetail.multipliers.groupBonus",
-                "Mała grupa ({{min}}-{{max}} osób): +{{points}}",
-                {
-                  min: eventConfig.groupBonus.minAssignedMembers,
-                  max: eventConfig.groupBonus.maxAssignedMembers,
-                  points: eventConfig.groupBonus.points.toFixed(2),
-                },
-              )}
-            </p>
-            <p>
-              {t(
-                "events.killDetail.multipliers.nightBonus",
-                "Nocna warta {{from}}-{{to}} (>= {{coverage}}% czasu): +{{points}}",
-                {
-                  from: eventConfig.nightBonus.windowStart,
-                  to: eventConfig.nightBonus.windowEnd,
-                  coverage: eventConfig.nightBonus.requiredCoveragePercentage,
-                  points: eventConfig.nightBonus.points.toFixed(2),
-                },
-              )}
-            </p>
-            <p>
-              {t(
-                "events.killDetail.multipliers.pvpBonus",
-                "Kill w godzinach {{from}}-{{to}}: +{{points}}",
-                {
-                  from: eventConfig.pvpBonus.windowStart,
-                  to: eventConfig.pvpBonus.windowEnd,
-                  points: eventConfig.pvpBonus.points.toFixed(2),
-                },
-              )}
-            </p>
+              return (
+                <div
+                  key={rule.id}
+                  className={`rounded-md border p-2 ${
+                    isHighlighted ? "border-green-500/70 bg-green-500/5" : ""
+                  }`}
+                >
+                  <p
+                    className={`text-xs font-medium ${
+                      isHighlighted
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {rule.name ||
+                      (rule.action.type === "ADD_BONUS"
+                        ? t("events.scoring.unnamedBonus", "Nienazwany bonus")
+                        : rule.id)}{" "}
+                    {rule.enabled === false
+                      ? t("events.scoring.ruleDisabledSuffix", "(WYŁ.)")
+                      : ""}
+                  </p>
+                  <p className="text-xs mt-1">
+                    {t("events.scoring.ifLabel", "JEŻELI")}{" "}
+                    {rule.conditions.length > 0
+                      ? rule.conditions
+                          .map((condition) => formatScoringCondition(condition, t))
+                          .join(` ${andLabel} `)
+                      : t("events.scoring.always", "zawsze")}{" "}
+                    {t("events.scoring.thenLabel", "WTEDY")}{" "}
+                    {formatScoringAction(rule.action, t)}
+                  </p>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        )}
 
         <div className="pt-2 border-t border-border/50 text-muted-foreground">
           <p>
             {t(
               "events.killDetail.multipliers.cap",
               "Maksymalnie {{points}} pkt za jednego herosa",
-              { points: eventConfig.hardCapPoints.toFixed(2) },
+              { points: (eventConfig.scoringRules?.hardCapPoints ?? 2).toFixed(2) },
             )}
           </p>
           <p>
@@ -92,7 +92,17 @@ export const MultipliersCard = ({ eventConfig, t }: MultipliersCardProps) => {
               "events.killDetail.multipliers.timezone",
               "Strefa: {{timezone}}",
               {
-                timezone: eventConfig.timezone,
+                timezone: eventConfig.scoringRules?.timezone ?? "Europe/Warsaw",
+              },
+            )}
+          </p>
+          <p>
+            {t(
+              "events.killDetail.multipliers.minTrackingForBonuses",
+              "Min. pokrycie dla bonusów: {{percentage}}%",
+              {
+                percentage:
+                  eventConfig.scoringRules?.minTrackingPercentForBonuses ?? 50,
               },
             )}
           </p>

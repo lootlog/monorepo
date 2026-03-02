@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
 
 export interface EventOverviewHeroNpc {
   id: string;
@@ -25,7 +28,8 @@ export interface EventOverview {
   participationConfirmationMinutes?: number;
   mapAssignmentCap?: number;
   rulebookMarkdown?: string | null;
-  scoringRules: EventScoringRules;
+  scoringMode: EventScoringMode;
+  scoringRules: EventScoringRules | null;
   heroNpcs: EventOverviewHeroNpc[];
 }
 

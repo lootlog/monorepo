@@ -1,8 +1,19 @@
 import {
-  DEFAULT_EVENT_SCORING_RULES,
+  DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  EVENT_SCORING_ACTION_TYPES,
+  EVENT_SCORING_BOOLEAN_FACTORS,
+  EVENT_SCORING_CONDITION_TYPES,
+  EVENT_SCORING_MODES,
+  EVENT_SCORING_NUMERIC_FACTORS,
+  EVENT_SCORING_NUMERIC_OPERATORS,
   EVENT_SCORING_TIMEZONE,
+  type EventScoringAction,
+  type EventScoringBooleanFactor,
+  type EventScoringCondition,
+  type EventScoringMode,
+  type EventScoringNumericFactor,
+  type EventScoringNumericOperator,
   type EventScoringRules,
-  type EventScoringThreshold,
 } from '../constants/scoring-rules.constant';
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -11,146 +22,221 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function toNonNegativeNumber(value: unknown, fallback: number): number {
+function toNumber(value: unknown, fallback: number, min = 0, max?: number) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return fallback;
   }
 
-  return Math.max(0, value);
-}
-
-function toNumberInRange(
-  value: unknown,
-  fallback: number,
-  min: number,
-  max: number,
-): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return fallback;
-  }
-
-  return Math.min(max, Math.max(min, value));
+  const bounded = Math.max(min, value);
+  return max === undefined ? bounded : Math.min(max, bounded);
 }
 
 function toClock(value: unknown, fallback: string): string {
   if (typeof value !== 'string') {
     return fallback;
   }
-
   return CLOCK_PATTERN.test(value) ? value : fallback;
 }
 
-function normalizeBaseThresholds(value: unknown): EventScoringThreshold[] {
-  if (!Array.isArray(value)) {
-    return [...DEFAULT_EVENT_SCORING_RULES.baseThresholds];
+function toMode(value: unknown, fallback: EventScoringMode): EventScoringMode {
+  if (typeof value !== 'string') {
+    return fallback;
   }
-
-  const parsed = value
-    .map((entry) => {
-      if (!isRecord(entry)) {
-        return null;
-      }
-
-      const percentage = toNumberInRange(entry.percentage, NaN, 0, 100);
-      const points = toNonNegativeNumber(entry.points, NaN);
-
-      if (!Number.isFinite(percentage) || !Number.isFinite(points)) {
-        return null;
-      }
-
-      return {
-        percentage: Math.round(percentage * 100) / 100,
-        points: Math.round(points * 100) / 100,
-      };
-    })
-    .filter((entry): entry is EventScoringThreshold => entry !== null)
-    .sort((a, b) => b.percentage - a.percentage);
-
-  return parsed.length > 0
-    ? parsed
-    : [...DEFAULT_EVENT_SCORING_RULES.baseThresholds];
+  if ((EVENT_SCORING_MODES as readonly string[]).includes(value)) {
+    return value as EventScoringMode;
+  }
+  return fallback;
 }
 
-function normalizeTimezone(_value: unknown): string {
-  return EVENT_SCORING_TIMEZONE;
+function parseAction(value: unknown): EventScoringAction | null {
+  if (!isRecord(value) || typeof value.type !== 'string') {
+    return null;
+  }
+
+  if (!(EVENT_SCORING_ACTION_TYPES as readonly string[]).includes(value.type)) {
+    return null;
+  }
+
+  if (value.type === 'ZERO_BASE') {
+    return { type: 'ZERO_BASE' };
+  }
+
+  const points = toNumber(value.points, NaN, 0);
+  if (!Number.isFinite(points)) {
+    return null;
+  }
+
+  if (value.type === 'SET_BASE') {
+    return {
+      type: 'SET_BASE',
+      points: Math.round(points * 100) / 100,
+    };
+  }
+
+  return {
+    type: 'ADD_BONUS',
+    points: Math.round(points * 100) / 100,
+  };
+}
+
+function parseCondition(value: unknown): EventScoringCondition | null {
+  if (!isRecord(value) || typeof value.type !== 'string') {
+    return null;
+  }
+
+  if (
+    !(EVENT_SCORING_CONDITION_TYPES as readonly string[]).includes(value.type)
+  ) {
+    return null;
+  }
+
+  if (value.type === 'NUMERIC') {
+    if (
+      typeof value.factor !== 'string' ||
+      !(EVENT_SCORING_NUMERIC_FACTORS as readonly string[]).includes(
+        value.factor,
+      ) ||
+      typeof value.operator !== 'string' ||
+      !(EVENT_SCORING_NUMERIC_OPERATORS as readonly string[]).includes(
+        value.operator,
+      )
+    ) {
+      return null;
+    }
+
+    const parsedValue = toNumber(value.value, NaN);
+    if (!Number.isFinite(parsedValue)) {
+      return null;
+    }
+
+    return {
+      type: 'NUMERIC',
+      factor: value.factor as EventScoringNumericFactor,
+      operator: value.operator as EventScoringNumericOperator,
+      value: Math.round(parsedValue * 100) / 100,
+    };
+  }
+
+  if (value.type === 'BOOLEAN') {
+    if (
+      typeof value.factor !== 'string' ||
+      !(EVENT_SCORING_BOOLEAN_FACTORS as readonly string[]).includes(
+        value.factor,
+      ) ||
+      typeof value.value !== 'boolean'
+    ) {
+      return null;
+    }
+
+    return {
+      type: 'BOOLEAN',
+      factor: value.factor as EventScoringBooleanFactor,
+      value: value.value,
+    };
+  }
+
+  if (value.type === 'KILL_TIME_IN_WINDOW') {
+    return {
+      type: 'KILL_TIME_IN_WINDOW',
+      from: toClock(value.from, '00:00'),
+      to: toClock(value.to, '23:59'),
+    };
+  }
+
+  if (
+    typeof value.operator !== 'string' ||
+    !(EVENT_SCORING_NUMERIC_OPERATORS as readonly string[]).includes(
+      value.operator,
+    )
+  ) {
+    return null;
+  }
+
+  const parsedValue = toNumber(value.value, NaN, 0, 100);
+  if (!Number.isFinite(parsedValue)) {
+    return null;
+  }
+
+  return {
+    type: 'RESPAWN_WINDOW_COVERAGE',
+    from: toClock(value.from, '00:00'),
+    to: toClock(value.to, '23:59'),
+    operator: value.operator as EventScoringNumericOperator,
+    value: Math.round(parsedValue * 100) / 100,
+  };
+}
+
+function deepCloneDefaultRules(): EventScoringRules {
+  return JSON.parse(
+    JSON.stringify(DEFAULT_ADVANCED_EVENT_SCORING_RULES),
+  ) as EventScoringRules;
 }
 
 export function normalizeEventScoringRules(value: unknown): EventScoringRules {
-  const source = isRecord(value) ? value : {};
+  if (!isRecord(value)) {
+    return deepCloneDefaultRules();
+  }
 
-  const baseThresholds = normalizeBaseThresholds(source.baseThresholds);
+  const parsedRules = (
+    Array.isArray(value.rules)
+      ? value.rules.map((entry, index) => {
+          if (!isRecord(entry)) {
+            return null;
+          }
 
-  const groupBonusSource = isRecord(source.groupBonus) ? source.groupBonus : {};
-  const nightBonusSource = isRecord(source.nightBonus) ? source.nightBonus : {};
-  const pvpBonusSource = isRecord(source.pvpBonus) ? source.pvpBonus : {};
+          const action = parseAction(entry.action);
+          if (!action) {
+            return null;
+          }
 
-  const minAssignedMembers = Math.floor(
-    toNonNegativeNumber(
-      groupBonusSource.minAssignedMembers,
-      DEFAULT_EVENT_SCORING_RULES.groupBonus.minAssignedMembers,
-    ),
-  );
-  const maxAssignedMembers = Math.floor(
-    toNonNegativeNumber(
-      groupBonusSource.maxAssignedMembers,
-      DEFAULT_EVENT_SCORING_RULES.groupBonus.maxAssignedMembers,
-    ),
-  );
+          const conditions = Array.isArray(entry.conditions)
+            ? entry.conditions
+                .map((condition) => parseCondition(condition))
+                .filter((condition): condition is EventScoringCondition =>
+                  condition !== null,
+                )
+            : [];
+
+          const parsedRule: EventScoringRules['rules'][number] = {
+            id:
+              typeof entry.id === 'string' && entry.id.trim().length > 0
+                ? entry.id.trim()
+                : `rule-${index + 1}`,
+            enabled: entry.enabled !== false,
+            conditions,
+            action,
+          };
+
+          if (typeof entry.name === 'string' && entry.name.trim().length > 0) {
+            parsedRule.name = entry.name.trim();
+          }
+
+          return parsedRule;
+        })
+      : []
+  ).filter((rule) => rule !== null) as EventScoringRules['rules'];
 
   return {
-    baseThresholds,
-    leaveGraceMinutes: Math.floor(
-      toNonNegativeNumber(
-        source.leaveGraceMinutes,
-        DEFAULT_EVENT_SCORING_RULES.leaveGraceMinutes,
-      ),
+    version: 1,
+    timezone:
+      typeof value.timezone === 'string' && value.timezone.trim().length > 0
+        ? value.timezone.trim()
+        : EVENT_SCORING_TIMEZONE,
+    hardCapPoints: toNumber(
+      value.hardCapPoints,
+      DEFAULT_ADVANCED_EVENT_SCORING_RULES.hardCapPoints,
+      0,
     ),
-    groupBonus: {
-      minAssignedMembers: Math.min(minAssignedMembers, maxAssignedMembers),
-      maxAssignedMembers: Math.max(minAssignedMembers, maxAssignedMembers),
-      points: toNonNegativeNumber(
-        groupBonusSource.points,
-        DEFAULT_EVENT_SCORING_RULES.groupBonus.points,
-      ),
-    },
-    nightBonus: {
-      windowStart: toClock(
-        nightBonusSource.windowStart,
-        DEFAULT_EVENT_SCORING_RULES.nightBonus.windowStart,
-      ),
-      windowEnd: toClock(
-        nightBonusSource.windowEnd,
-        DEFAULT_EVENT_SCORING_RULES.nightBonus.windowEnd,
-      ),
-      requiredCoveragePercentage: toNumberInRange(
-        nightBonusSource.requiredCoveragePercentage,
-        DEFAULT_EVENT_SCORING_RULES.nightBonus.requiredCoveragePercentage,
-        0,
-        100,
-      ),
-      points: toNonNegativeNumber(
-        nightBonusSource.points,
-        DEFAULT_EVENT_SCORING_RULES.nightBonus.points,
-      ),
-    },
-    pvpBonus: {
-      windowStart: toClock(
-        pvpBonusSource.windowStart,
-        DEFAULT_EVENT_SCORING_RULES.pvpBonus.windowStart,
-      ),
-      windowEnd: toClock(
-        pvpBonusSource.windowEnd,
-        DEFAULT_EVENT_SCORING_RULES.pvpBonus.windowEnd,
-      ),
-      points: toNonNegativeNumber(
-        pvpBonusSource.points,
-        DEFAULT_EVENT_SCORING_RULES.pvpBonus.points,
-      ),
-    },
-    hardCapPoints: toNonNegativeNumber(
-      source.hardCapPoints,
-      DEFAULT_EVENT_SCORING_RULES.hardCapPoints,
+    minTrackingPercentForBonuses: toNumber(
+      value.minTrackingPercentForBonuses,
+      DEFAULT_ADVANCED_EVENT_SCORING_RULES.minTrackingPercentForBonuses,
+      0,
+      100,
     ),
-    timezone: normalizeTimezone(source.timezone),
+    rules: parsedRules.length > 0 ? parsedRules : deepCloneDefaultRules().rules,
   };
+}
+
+export function normalizeEventScoringMode(value: unknown): EventScoringMode {
+  return toMode(value, 'SIMPLE');
 }

@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import type { KillParticipant, HeroKillHeroNpc } from "./use-hero-kill-history";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
 
 export interface KillDetailMember {
   id: number;
@@ -35,13 +38,17 @@ export interface KillDetail {
   maxSpawnTimeAtKill: string;
   timerCreatedById: number | null;
   isManualClose: boolean;
+  respawnDurationSeconds: number | null;
   windowDurationSeconds: number | null;
   heroNpc: KillDetailHeroNpc;
   timerCreatedBy: KillDetailMember | null;
   points: KillDetailParticipant[];
 }
 
-export type EventConfig = EventScoringRules;
+export interface EventConfig {
+  scoringMode: EventScoringMode;
+  scoringRules: EventScoringRules | null;
+}
 
 export interface KillDetailResponse {
   kill: KillDetail;

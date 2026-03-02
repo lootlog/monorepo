@@ -46,9 +46,8 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
     ? { color: `#${roleColor.toString(16).padStart(6, "0")}` }
     : undefined;
   const bonuses =
-    (participant.groupBonusPoints ?? 0) +
-    (participant.nightBonusPoints ?? 0) +
-    (participant.pvpBonusPoints ?? 0);
+    Math.round(Math.max(0, participant.points - participant.basePoints) * 100) /
+    100;
 
   return (
     <div
@@ -99,23 +98,16 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
       </div>
       <div className="text-right shrink-0">
         <p className="text-lg font-bold text-primary">{participant.points}</p>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="text-xs text-muted-foreground cursor-help">
-              {participant.basePoints} + {bonuses}
-            </p>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              {t("events.kills.pointsBreakdown", {
-                base: participant.basePoints,
-                group: participant.groupBonusPoints ?? 0,
-                night: participant.nightBonusPoints ?? 0,
-                pvp: participant.pvpBonusPoints ?? 0,
-              })}
-            </p>
-          </TooltipContent>
-        </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="text-xs text-muted-foreground cursor-help">
+                {participant.basePoints} + {bonuses}
+              </p>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{`base: ${participant.basePoints}, bonus: ${bonuses}`}</p>
+            </TooltipContent>
+          </Tooltip>
       </div>
     </div>
   );

@@ -15,25 +15,24 @@ export interface ParticipantMapData {
   afkTimeSeconds: number;
 }
 
+export interface BonusBreakdownItem {
+  ruleId: string;
+  ruleName: string | null;
+  points: number;
+}
+
 export interface KillParticipant {
   id: string;
   memberId: number;
   mapName: string;
   points: number;
   basePoints: number;
-  groupBonusPoints?: number | null;
-  nightBonusPoints?: number | null;
-  pvpBonusPoints?: number | null;
-  appliedMultiplier: number;
-  timeMultiplier: number | null;
-  trackersMultiplier: number | null;
-  mapsMultiplier: number | null;
-  trackingDurationMultiplier: number | null;
   trackingDurationSeconds: number | null;
   trackingDurationPercentage: number | null;
   timeOnMapSeconds: number;
   afkPercentage: number;
   wasPresent: boolean;
+  bonusBreakdown?: BonusBreakdownItem[] | null;
   member: KillParticipantMember;
   mapData?: ParticipantMapData[];
 }

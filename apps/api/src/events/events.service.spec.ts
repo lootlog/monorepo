@@ -52,7 +52,6 @@ describe('EventsService', () => {
     getRanking: jest.fn(),
     calculateMemberPoints: jest.fn(),
     recalculateEventPoints: jest.fn(),
-    recalculateEventPointsWithMultipliers: jest.fn(),
     getMemberPresenceStats: jest.fn(),
     updateRankingAfterKill: jest.fn(),
     updateKillPoint: jest.fn(),
@@ -114,9 +113,8 @@ describe('EventsService', () => {
     mockPointsService.calculateMemberPoints.mockReturnValue({
       totalPoints: 1,
       basePoints: 1,
-      groupBonus: 0,
-      nightBonus: 0,
-      pvpBonus: 0,
+      bonusPoints: 0,
+      appliedBonuses: [],
     });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -422,9 +420,7 @@ describe('EventsService', () => {
 
       await service.updateEvent(guildId, eventId, { basePointsPerKill: 200 });
 
-      expect(
-        mockPointsService.recalculateEventPointsWithMultipliers,
-      ).not.toHaveBeenCalled();
+      expect(mockPointsService.recalculateEventPoints).not.toHaveBeenCalled();
     });
 
     it('should recalculate points manually via dedicated method', async () => {

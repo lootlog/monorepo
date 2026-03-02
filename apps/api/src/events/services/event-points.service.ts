@@ -3,34 +3,45 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { Event, EventKillPoint } from 'generated/client';
+import type { EventKillPoint, Prisma } from 'generated/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { EventEmitterService } from './event-emitter.service';
 import {
-  DEFAULT_EVENT_SCORING_RULES,
+  DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  type EventScoringMode,
   type EventScoringRules,
 } from '../constants/scoring-rules.constant';
 import {
-  calculateLocalWindowOverlapMs,
-  isLocalTimeInRange,
-} from '../utils/scoring-time.util';
-import { normalizeEventScoringRules } from '../utils/scoring-rules.util';
+  normalizeEventScoringMode,
+  normalizeEventScoringRules,
+} from '../utils/scoring-rules.util';
+import {
+  evaluateEventScoring,
+  type EventScoringAppliedBonus,
+} from '../utils/scoring-engine.util';
 
 export type CalculateMemberPointsParams = {
-  scoringRules?: EventScoringRules;
+  scoringMode?: EventScoringMode;
+  scoringRules?: EventScoringRules | null;
+  eligible: boolean;
   trackingDurationPercentage?: number;
+  trackingDurationSeconds?: number;
   assignedMembersCount: number;
   killTime: Date;
   respawnStartTime: Date;
+  maxRespawnTime?: Date | null;
   memberLeaveTime?: Date | null;
+  memberPresentAtKill: boolean;
+  timeOnMapSeconds: number;
+  afkPercentage: number;
+  wasPresent: boolean;
 };
 
 export type CalculatedMemberPoints = {
   totalPoints: number;
   basePoints: number;
-  groupBonus: number;
-  nightBonus: number;
-  pvpBonus: number;
+  bonusPoints: number;
+  appliedBonuses: EventScoringAppliedBonus[];
 };
 
 @Injectable()
@@ -78,82 +89,41 @@ export class EventPointsService {
   calculateMemberPoints(
     params: CalculateMemberPointsParams,
   ): CalculatedMemberPoints {
-    const scoringRules = params.scoringRules ?? DEFAULT_EVENT_SCORING_RULES;
-    const trackingPercentage = params.trackingDurationPercentage ?? 0;
-
-    let basePoints = 0;
-    for (const threshold of scoringRules.baseThresholds) {
-      if (trackingPercentage >= threshold.percentage) {
-        basePoints = threshold.points;
-        break;
-      }
-    }
-
-    if (
-      basePoints >= 1 &&
-      params.memberLeaveTime &&
-      params.memberLeaveTime < params.killTime
-    ) {
-      const leaveDiffMs =
-        params.killTime.getTime() - params.memberLeaveTime.getTime();
-      if (leaveDiffMs > scoringRules.leaveGraceMinutes * 60_000) {
-        basePoints = 0;
-      }
-    }
-
-    const groupBonus =
-      params.assignedMembersCount >=
-        scoringRules.groupBonus.minAssignedMembers &&
-      params.assignedMembersCount <= scoringRules.groupBonus.maxAssignedMembers
-        ? scoringRules.groupBonus.points
-        : 0;
-
-    const respawnStartTime =
+    const scoringMode = normalizeEventScoringMode(params.scoringMode);
+    const scoringRules =
+      scoringMode === 'ADVANCED'
+        ? normalizeEventScoringRules(
+            params.scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+          )
+        : DEFAULT_ADVANCED_EVENT_SCORING_RULES;
+    const normalizedRespawnStartTime =
       params.respawnStartTime > params.killTime
         ? params.killTime
         : params.respawnStartTime;
-    const respawnDurationMs = Math.max(
-      0,
-      params.killTime.getTime() - respawnStartTime.getTime(),
-    );
+    const respawnProgressPercentage = this.calculateRespawnProgressPercentage({
+      killTime: params.killTime,
+      respawnStartTime: normalizedRespawnStartTime,
+      maxRespawnTime: params.maxRespawnTime,
+    });
 
-    const nightOverlapMs =
-      respawnDurationMs > 0
-        ? calculateLocalWindowOverlapMs({
-            startUtc: respawnStartTime,
-            endUtc: params.killTime,
-            timeZone: scoringRules.timezone,
-            windowFrom: scoringRules.nightBonus.windowStart,
-            windowTo: scoringRules.nightBonus.windowEnd,
-          })
-        : 0;
-    const nightCoveragePercentage =
-      respawnDurationMs > 0 ? (nightOverlapMs / respawnDurationMs) * 100 : 0;
-    const nightBonus =
-      nightCoveragePercentage >=
-      scoringRules.nightBonus.requiredCoveragePercentage
-        ? scoringRules.nightBonus.points
-        : 0;
-
-    const pvpBonus = isLocalTimeInRange({
-      date: params.killTime,
-      timeZone: scoringRules.timezone,
-      from: scoringRules.pvpBonus.windowStart,
-      to: scoringRules.pvpBonus.windowEnd,
-    })
-      ? scoringRules.pvpBonus.points
-      : 0;
-
-    const rawTotalPoints = basePoints + groupBonus + nightBonus + pvpBonus;
-    const totalPoints = Math.min(rawTotalPoints, scoringRules.hardCapPoints);
-
-    return {
-      totalPoints,
-      basePoints,
-      groupBonus,
-      nightBonus,
-      pvpBonus,
-    };
+    return evaluateEventScoring({
+      mode: scoringMode,
+      rules: scoringRules,
+      context: {
+        eligible: params.eligible,
+        trackingDurationPercentage: params.trackingDurationPercentage,
+        trackingDurationSeconds: params.trackingDurationSeconds,
+        respawnProgressPercentage,
+        assignedMembersCount: params.assignedMembersCount,
+        killTime: params.killTime,
+        respawnStartTime: normalizedRespawnStartTime,
+        memberLeaveTime: params.memberLeaveTime,
+        memberPresentAtKill: params.memberPresentAtKill,
+        timeOnMapSeconds: params.timeOnMapSeconds,
+        afkPercentage: params.afkPercentage,
+        wasPresent: params.wasPresent,
+      },
+    });
   }
 
   private getTrackingDurationSecondsForRanking(params: {
@@ -274,6 +244,31 @@ export class EventPointsService {
     );
   }
 
+  private calculateRespawnProgressPercentage(params: {
+    killTime: Date;
+    respawnStartTime: Date;
+    maxRespawnTime: Date | null | undefined;
+  }): number | undefined {
+    if (!params.maxRespawnTime) {
+      return undefined;
+    }
+
+    const maxRespawnTime = params.maxRespawnTime;
+    const fullWindowMs =
+      maxRespawnTime.getTime() - params.respawnStartTime.getTime();
+
+    if (fullWindowMs <= 0) {
+      return undefined;
+    }
+
+    const elapsedWindowMs = Math.min(
+      fullWindowMs,
+      Math.max(0, params.killTime.getTime() - params.respawnStartTime.getTime()),
+    );
+
+    return Math.round((elapsedWindowMs / fullWindowMs) * 100);
+  }
+
   private calculateTrackingMetricsForKill(params: {
     assignments: Array<{
       mapId: string;
@@ -338,26 +333,13 @@ export class EventPointsService {
     return this.recalculateEventPointsWithCurrentRules(eventId);
   }
 
-  async recalculateEventPointsWithMultipliers(
-    eventId: string,
-    _eventConfig?: Pick<
-      Event,
-      | 'basePointsPerKill'
-      | 'timeOfDayMultipliers'
-      | 'trackersMultipliers'
-      | 'mapsCountMultipliers'
-      | 'trackingDurationMultipliers'
-    >,
-  ): Promise<void> {
-    return this.recalculateEventPointsWithCurrentRules(eventId);
-  }
-
   private async recalculateEventPointsWithCurrentRules(
     eventId: string,
   ): Promise<void> {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       select: {
+        scoringMode: true,
         scoringRules: true,
       },
     });
@@ -366,7 +348,13 @@ export class EventPointsService {
       return;
     }
 
-    const scoringRules = normalizeEventScoringRules(event.scoringRules);
+    const scoringMode = normalizeEventScoringMode(
+      (event as { scoringMode?: unknown }).scoringMode,
+    );
+    const scoringRules =
+      scoringMode === 'ADVANCED'
+        ? normalizeEventScoringRules(event.scoringRules)
+        : null;
 
     const killPoints = await this.prisma.eventKillPoint.findMany({
       where: {
@@ -503,37 +491,37 @@ export class EventPointsService {
           respawnStartTime,
         });
 
-        const { totalPoints, basePoints, groupBonus, nightBonus, pvpBonus } =
-          this.calculateMemberPoints({
-            scoringRules,
-            trackingDurationPercentage,
-            assignedMembersCount,
-            killTime: killPoint.kill.killedAt,
-            respawnStartTime,
-            memberLeaveTime: memberState.memberPresentAtKill
-              ? null
-              : memberState.memberLeaveTime,
-          });
-        const appliedMultiplier =
-          basePoints > 0
-            ? Math.round((totalPoints / basePoints) * 10000) / 10000
-            : 0;
+        const {
+          totalPoints,
+          basePoints,
+          appliedBonuses,
+        } = this.calculateMemberPoints({
+          scoringMode,
+          scoringRules,
+          eligible: true,
+          trackingDurationPercentage,
+          trackingDurationSeconds,
+          assignedMembersCount,
+          killTime: killPoint.kill.killedAt,
+          respawnStartTime,
+          maxRespawnTime: killPoint.kill.maxSpawnTimeAtKill,
+          memberLeaveTime: memberState.memberPresentAtKill
+            ? null
+            : memberState.memberLeaveTime,
+          memberPresentAtKill: memberState.memberPresentAtKill,
+          timeOnMapSeconds: killPoint.timeOnMapSeconds,
+          afkPercentage: killPoint.afkPercentage,
+          wasPresent: killPoint.wasPresent,
+        });
 
         await tx.eventKillPoint.update({
           where: { id: killPoint.id },
           data: {
             basePoints,
-            groupBonusPoints: groupBonus,
-            nightBonusPoints: nightBonus,
-            pvpBonusPoints: pvpBonus,
             points: totalPoints,
-            appliedMultiplier,
-            timeMultiplier: null,
-            trackersMultiplier: null,
-            mapsMultiplier: null,
-            trackingDurationMultiplier: null,
             trackingDurationSeconds,
             trackingDurationPercentage: trackingDurationPercentage ?? null,
+            bonusBreakdown: appliedBonuses as Prisma.InputJsonValue,
           },
         });
       }
@@ -1273,10 +1261,8 @@ export class EventPointsService {
       where: { id: killPointId },
       data: {
         points: newPoints,
-        basePoints:
-          killPoint.appliedMultiplier > 0
-            ? Math.round((newPoints / killPoint.appliedMultiplier) * 100) / 100
-            : newPoints,
+        basePoints: newPoints,
+        bonusBreakdown: [] as Prisma.InputJsonValue,
       },
     });
 

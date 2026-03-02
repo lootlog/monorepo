@@ -1,5 +1,9 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useQuery } from "@tanstack/react-query";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
 
 interface Member {
   id: number;
@@ -68,6 +72,8 @@ interface Event {
   assignmentTimeoutMinutes?: number;
   participationConfirmationMinutes?: number;
   basePointsPerKill?: number;
+  scoringMode?: EventScoringMode;
+  scoringRules?: EventScoringRules | null;
 }
 
 interface UseEventsOptions {

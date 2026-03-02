@@ -48,11 +48,6 @@ export const KillHistoryCard = ({
 
   const participants = kill.participants ?? [];
   const totalPoints = participants.reduce((sum, p) => sum + p.points, 0);
-  const avgMultiplier =
-    participants.length > 0
-      ? participants.reduce((sum, p) => sum + p.appliedMultiplier, 0) /
-        participants.length
-      : 1;
 
   const respawnTime = kill.isManualClose
     ? null
@@ -115,12 +110,6 @@ export const KillHistoryCard = ({
                   <p>{t("events.kills.respawnTime")}</p>
                 </TooltipContent>
               </Tooltip>
-            )}
-
-            {avgMultiplier > 1 && (
-              <Badge variant="secondary" className="font-bold">
-                x{avgMultiplier.toFixed(2)}
-              </Badge>
             )}
 
             <span className="text-muted-foreground flex items-center gap-1">

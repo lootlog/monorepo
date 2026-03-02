@@ -57,6 +57,38 @@ const formatPoints = (points: number): string => {
   return Number.isInteger(points) ? String(points) : points.toFixed(2);
 };
 
+const normalizeBonusBreakdown = (
+  bonusBreakdown: KillDetailParticipant["bonusBreakdown"],
+) => {
+  if (!Array.isArray(bonusBreakdown)) {
+    return [];
+  }
+
+  return bonusBreakdown
+    .map((entry) => {
+      const points =
+        typeof entry?.points === "number" && Number.isFinite(entry.points)
+          ? Math.max(0, Math.round(entry.points * 100) / 100)
+          : null;
+      if (points === null || points <= 0) {
+        return null;
+      }
+
+      return {
+        ruleId:
+          typeof entry.ruleId === "string" && entry.ruleId.length > 0
+            ? entry.ruleId
+            : "rule",
+        ruleName:
+          typeof entry.ruleName === "string" && entry.ruleName.trim().length > 0
+            ? entry.ruleName.trim()
+            : null,
+        points,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+};
+
 const ParticipantRow = ({
   participant,
   rank,
@@ -88,16 +120,28 @@ const ParticipantRow = ({
     (sum, map) => sum + map.afkTimeSeconds,
     0,
   );
-  const groupBonus = participant.groupBonusPoints ?? 0;
-  const nightBonus = participant.nightBonusPoints ?? 0;
-  const pvpBonus = participant.pvpBonusPoints ?? 0;
-  const uncappedTotal =
-    participant.basePoints + groupBonus + nightBonus + pvpBonus;
+  const bonusBreakdown = normalizeBonusBreakdown(participant.bonusBreakdown);
+  const fallbackBonusPoints =
+    Math.round(Math.max(0, participant.points - participant.basePoints) * 10000) /
+    10000;
+  const bonusPoints =
+    bonusBreakdown.length > 0
+      ? Math.round(
+          bonusBreakdown.reduce((sum, item) => sum + item.points, 0) * 10000,
+        ) / 10000
+      : fallbackBonusPoints;
+  const uncappedTotal = participant.basePoints + bonusPoints;
   const capReduction = Math.max(0, uncappedTotal - participant.points);
   const trackingDurationPercentage =
     typeof participant.trackingDurationPercentage === "number"
       ? `${Math.round(participant.trackingDurationPercentage)}%`
       : "—";
+  const getBonusName = (bonus: (typeof bonusBreakdown)[number]) => {
+    if (bonus.ruleName) {
+      return bonus.ruleName;
+    }
+    return t("events.kills.pointsTooltip.unnamedBonus", "Nienazwany bonus");
+  };
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -244,28 +288,48 @@ const ParticipantRow = ({
                           {trackingDurationPercentage}
                         </span>
                       </div>
-                      <div className="flex justify-between gap-4">
-                        <span>
-                          {t("events.kills.pointsTooltip.groupBonus")}:
-                        </span>
-                        <span className="font-medium">
-                          +{formatPoints(groupBonus)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span>
-                          {t("events.kills.pointsTooltip.nightBonus")}:
-                        </span>
-                        <span className="font-medium">
-                          +{formatPoints(nightBonus)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span>{t("events.kills.pointsTooltip.pvpBonus")}:</span>
-                        <span className="font-medium">
-                          +{formatPoints(pvpBonus)}
-                        </span>
-                      </div>
+                      {bonusBreakdown.length > 0 ? (
+                        <>
+                          {bonusBreakdown.map((bonus) => (
+                            <div
+                              key={`${bonus.ruleId}:${bonus.points}:${bonus.ruleName ?? ""}`}
+                              className="flex justify-between gap-4"
+                            >
+                              <span>
+                                {t("events.kills.pointsTooltip.bonusItem", {
+                                  name: getBonusName(bonus),
+                                })}
+                                :
+                              </span>
+                              <span className="font-medium">
+                                +{formatPoints(bonus.points)}
+                              </span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between gap-4">
+                            <span>
+                              {t(
+                                "events.kills.pointsTooltip.bonusTotal",
+                                "Bonusy razem",
+                              )}
+                              :
+                            </span>
+                            <span className="font-medium">
+                              +{formatPoints(bonusPoints)}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between gap-4">
+                          <span>
+                            {t("events.kills.pointsTooltip.bonusTotal", "Bonusy razem")}
+                            :
+                          </span>
+                          <span className="font-medium">
+                            +{formatPoints(bonusPoints)}
+                          </span>
+                        </div>
+                      )}
                       {capReduction > 0 && (
                         <div className="flex justify-between gap-4">
                           <span>
