@@ -9,10 +9,12 @@ import {
   IsDateString,
   Min,
   MaxLength,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EventScoringRulesDto } from './event-scoring-rules.dto';
+import { EVENT_SCORING_MODES } from '../constants/scoring-rules.constant';
 
 export class HeroMapDto {
   @ApiProperty({ description: 'Margonem map ID' })
@@ -72,7 +74,7 @@ export class CreateEventDto {
   endsAt?: string;
 
   @ApiPropertyOptional({
-    description: 'Base points awarded per hero kill before multipliers',
+    description: 'Legacy base points value kept for compatibility',
     default: 1,
   })
   @IsOptional()
@@ -124,6 +126,16 @@ export class CreateEventDto {
   @ValidateNested()
   @Type(() => EventScoringRulesDto)
   scoringRules?: EventScoringRulesDto;
+
+  @ApiPropertyOptional({
+    description: 'Scoring mode used for this event',
+    enum: EVENT_SCORING_MODES,
+    default: 'SIMPLE',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(EVENT_SCORING_MODES)
+  scoringMode?: 'SIMPLE' | 'ADVANCED';
 
   @ApiPropertyOptional({
     description: 'Hero NPCs to track in this event',

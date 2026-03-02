@@ -1,107 +1,77 @@
 import type { TFunction } from "i18next";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
+import {
+  formatScoringAction,
+  formatScoringCondition,
+} from "../../utils/scoring-rule-labels";
 
 interface EventScoringRulesSummaryProps {
-  rules: EventScoringRules;
+  scoringMode: EventScoringMode;
+  rules: EventScoringRules | null;
   t: TFunction;
 }
 
 export const EventScoringRulesSummary = ({
+  scoringMode,
   rules,
   t,
 }: EventScoringRulesSummaryProps) => {
-  const sortedThresholds = [...rules.baseThresholds].sort(
-    (a, b) => b.percentage - a.percentage,
-  );
+  const andLabel = t("events.scoring.andLabel", "i");
+
+  if (scoringMode === "SIMPLE") {
+    return (
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <p>
+          {t(
+            "events.scoring.summary.simple",
+            "Tryb prosty: każdy eligible gracz otrzymuje 1 pkt.",
+          )}
+        </p>
+      </div>
+    );
+  }
+
+  const normalizedRules = rules?.rules ?? [];
 
   return (
     <div className="space-y-3 text-sm">
-      <div>
-        <p className="font-medium mb-1">
-          {t("events.scoring.summary.baseTitle", "Podstawa")}
-        </p>
-        <div className="space-y-1 text-muted-foreground">
-          {sortedThresholds.map((threshold, index) => (
-            <p key={`${threshold.percentage}-${threshold.points}-${index}`}>
-              {t(
-                "events.scoring.summary.baseRule",
-                ">= {{percentage}}% czasu = {{points}} pkt",
-                {
-                  percentage: threshold.percentage,
-                  points: threshold.points,
-                },
-              )}
+      <div className="text-muted-foreground">
+        {t("events.scoring.summary.cap", "Maksymalnie {{points}} pkt za kill", {
+          points: rules?.hardCapPoints ?? 2,
+        })}
+        {" · "}
+        {t(
+          "events.scoring.summary.minTrackingForBonuses",
+          "Min. pokrycie dla bonusów: {{percentage}}%",
+          {
+            percentage: rules?.minTrackingPercentForBonuses ?? 50,
+          },
+        )}
+      </div>
+      <div className="space-y-2">
+        {normalizedRules.map((rule) => (
+          <div key={rule.id} className="rounded-md border p-2">
+            <p className="font-medium text-xs">
+              {rule.name || rule.id}{" "}
+              {rule.enabled === false
+                ? t("events.scoring.ruleDisabledSuffix", "(WYŁ.)")
+                : ""}
             </p>
-          ))}
-          <p>
-            {t(
-              "events.scoring.summary.leaveGrace",
-              "Jeśli gracz z progu top opuścił mapę, kill musi nastąpić do {{minutes}} min.",
-              {
-                minutes: rules.leaveGraceMinutes,
-              },
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div>
-        <p className="font-medium mb-1">
-          {t("events.scoring.summary.bonusTitle", "Bonusy")}
-        </p>
-        <div className="space-y-1 text-muted-foreground">
-          <p>
-            {t(
-              "events.scoring.summary.groupBonus",
-              "Mała grupa ({{min}}-{{max}}): +{{points}}",
-              {
-                min: rules.groupBonus.minAssignedMembers,
-                max: rules.groupBonus.maxAssignedMembers,
-                points: rules.groupBonus.points,
-              },
-            )}
-          </p>
-          <p>
-            {t(
-              "events.scoring.summary.nightBonus",
-              "Nocna warta {{from}}-{{to}}, wymagane {{coverage}}%: +{{points}}",
-              {
-                from: rules.nightBonus.windowStart,
-                to: rules.nightBonus.windowEnd,
-                coverage: rules.nightBonus.requiredCoveragePercentage,
-                points: rules.nightBonus.points,
-              },
-            )}
-          </p>
-          <p>
-            {t(
-              "events.scoring.summary.pvpBonus",
-              "Kill {{from}}-{{to}}: +{{points}}",
-              {
-                from: rules.pvpBonus.windowStart,
-                to: rules.pvpBonus.windowEnd,
-                points: rules.pvpBonus.points,
-              },
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className="pt-2 border-t border-border/50 text-muted-foreground">
-        <p>
-          {t(
-            "events.scoring.summary.cap",
-            "Maksymalnie {{points}} pkt za kill",
-            {
-              points: rules.hardCapPoints,
-            },
-          )}
-        </p>
-        <p>
-          {t("events.scoring.summary.timezone", "Strefa: {{timezone}}", {
-            timezone: rules.timezone,
-          })}
-        </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t("events.scoring.ifLabel", "JEŻELI")}{" "}
+              {rule.conditions.length > 0
+                ? rule.conditions
+                    .map((condition) => formatScoringCondition(condition, t))
+                    .join(` ${andLabel} `)
+                : t("events.scoring.always", "zawsze")}{" "}
+              {t("events.scoring.thenLabel", "WTEDY")}{" "}
+              {formatScoringAction(rule.action, t)}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );

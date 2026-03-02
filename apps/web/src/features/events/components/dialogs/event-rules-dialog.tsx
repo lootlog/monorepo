@@ -9,14 +9,18 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { BookOpen, Scale } from "lucide-react";
 import { EventScoringRulesSummary } from "./event-scoring-rules-summary";
-import type { EventScoringRules } from "../../types/scoring-rules";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
 
 interface EventRulesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventName: string;
   rulebookMarkdown?: string | null;
-  scoringRules: EventScoringRules;
+  scoringMode: EventScoringMode;
+  scoringRules: EventScoringRules | null;
 }
 
 export const EventRulesDialog = ({
@@ -24,6 +28,7 @@ export const EventRulesDialog = ({
   onOpenChange,
   eventName,
   rulebookMarkdown,
+  scoringMode,
   scoringRules,
 }: EventRulesDialogProps) => {
   const { t } = useTranslation();
@@ -72,7 +77,11 @@ export const EventRulesDialog = ({
                 {t("events.rulesDialog.scoringTitle", "Zasady punktacji")}
               </p>
               <div className="rounded-lg border bg-muted/20 p-3">
-                <EventScoringRulesSummary rules={scoringRules} t={t} />
+                <EventScoringRulesSummary
+                  scoringMode={scoringMode}
+                  rules={scoringRules}
+                  t={t}
+                />
               </div>
             </div>
           </div>

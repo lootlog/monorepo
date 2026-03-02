@@ -24,6 +24,10 @@ import {
   Permission,
   type Role,
 } from 'generated/client';
+import {
+  DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+  type EventScoringMode,
+} from './constants/scoring-rules.constant';
 import { filterHeroesByLevel } from 'src/shared/utils/can-view-event-hero';
 import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
 import type {
@@ -42,7 +46,10 @@ import {
   createEventHeroKillJobData,
   getEventHeroKillWindowKey,
 } from './utils/event-hero-kill-job';
-import { normalizeEventScoringRules } from './utils/scoring-rules.util';
+import {
+  normalizeEventScoringMode,
+  normalizeEventScoringRules,
+} from './utils/scoring-rules.util';
 
 import { EventPointsService } from './services/event-points.service';
 import { EventTrackingService } from './services/event-tracking.service';
@@ -95,12 +102,19 @@ export class EventsService {
       endsAt,
       heroNpcs,
       world,
+      scoringMode,
       scoringRules,
       rulebookMarkdown,
       ...eventData
     } = data;
     const normalizedWorld = world.trim().toLowerCase();
-    const normalizedScoringRules = normalizeEventScoringRules(scoringRules);
+    const normalizedScoringMode = normalizeEventScoringMode(scoringMode);
+    const normalizedScoringRules =
+      normalizedScoringMode === 'ADVANCED'
+        ? normalizeEventScoringRules(
+            scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+          )
+        : null;
     const trimmedRulebookMarkdown = rulebookMarkdown?.trim();
     const normalizedRulebookMarkdown =
       trimmedRulebookMarkdown && trimmedRulebookMarkdown.length > 0
@@ -129,6 +143,7 @@ export class EventsService {
         guildId,
         startsAt: startDate,
         endsAt: endDate,
+        scoringMode: normalizedScoringMode,
         scoringRules: normalizedScoringRules,
         rulebookMarkdown: normalizedRulebookMarkdown,
         ...(heroNpcs && {
@@ -223,6 +238,7 @@ export class EventsService {
         assignmentTimeoutMinutes: true,
         participationConfirmationMinutes: true,
         mapAssignmentCap: true,
+        scoringMode: true,
         scoringRules: true,
         rulebookMarkdown: true,
         heroNpcs: {
@@ -316,17 +332,29 @@ export class EventsService {
       startsAt,
       endsAt,
       active,
-      timeOfDayMultipliers: _deprecatedTimeOfDayMultipliers,
-      trackersMultipliers: _deprecatedTrackersMultipliers,
-      mapsCountMultipliers: _deprecatedMapsCountMultipliers,
-      trackingDurationMultipliers: _deprecatedTrackingDurationMultipliers,
       assignmentTimeoutMinutes,
       participationConfirmationMinutes,
       basePointsPerKill,
+      scoringMode,
       scoringRules,
       rulebookMarkdown,
       ...updateData
     } = data;
+    const existingScoringMode = normalizeEventScoringMode(
+      (event as { scoringMode?: unknown }).scoringMode,
+    );
+    const targetScoringMode: EventScoringMode = normalizeEventScoringMode(
+      scoringMode ?? existingScoringMode,
+    );
+    let nextScoringRules: Event['scoringRules'] | undefined;
+    if (scoringMode !== undefined || scoringRules !== undefined) {
+      nextScoringRules =
+        targetScoringMode === 'ADVANCED'
+          ? normalizeEventScoringRules(
+              scoringRules ?? event.scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+            )
+          : null;
+    }
 
     const newStartDate =
       startsAt !== undefined
@@ -380,8 +408,11 @@ export class EventsService {
           ...(basePointsPerKill !== undefined && {
             basePointsPerKill,
           }),
-          ...(scoringRules !== undefined && {
-            scoringRules: normalizeEventScoringRules(scoringRules),
+          ...(scoringMode !== undefined && {
+            scoringMode: targetScoringMode,
+          }),
+          ...(nextScoringRules !== undefined && {
+            scoringRules: nextScoringRules,
           }),
           ...(rulebookMarkdown !== undefined && {
             rulebookMarkdown:
@@ -1119,23 +1150,25 @@ export class EventsService {
     killTime: Date,
     _heroMapCount: number,
     assignedMembersCount: number,
-  ): { points: number; appliedMultiplier: number } {
+  ): { points: number } {
     const result = this.pointsService.calculateMemberPoints({
+      scoringMode: 'SIMPLE',
+      scoringRules: null,
+      eligible: true,
       trackingDurationPercentage: 100,
+      trackingDurationSeconds: 0,
       assignedMembersCount,
       killTime,
       respawnStartTime: killTime,
       memberLeaveTime: null,
+      memberPresentAtKill: true,
+      timeOnMapSeconds: 0,
+      afkPercentage: 0,
+      wasPresent: true,
     });
-
-    const appliedMultiplier =
-      result.basePoints > 0
-        ? Math.round((result.totalPoints / result.basePoints) * 10000) / 10000
-        : 0;
 
     return {
       points: result.totalPoints,
-      appliedMultiplier,
     };
   }
 

@@ -138,11 +138,10 @@ const MemberKillCard = ({
   const { t } = useTranslation();
   const point = kill.memberPoint;
   const basePoints = point?.basePoints ?? 0;
-  const groupBonus = point?.groupBonusPoints ?? 0;
-  const nightBonus = point?.nightBonusPoints ?? 0;
-  const pvpBonus = point?.pvpBonusPoints ?? 0;
+  const bonusPoints =
+    Math.round(Math.max(0, (point?.points ?? 0) - basePoints) * 100) / 100;
   const totalPoints = point?.points ?? 0;
-  const uncappedTotal = basePoints + groupBonus + nightBonus + pvpBonus;
+  const uncappedTotal = basePoints + bonusPoints;
   const hasManualAdjustment = Math.abs(uncappedTotal - totalPoints) > 0.0001;
   const trackingDurationPercentage =
     typeof point?.trackingDurationPercentage === "number"
@@ -173,19 +172,9 @@ const MemberKillCard = ({
       tone: "neutral" as const,
     },
     {
-      label: t("events.kills.breakdownGroup"),
-      value: formatPoints(groupBonus),
-      tone: groupBonus > 0 ? ("primary" as const) : ("neutral" as const),
-    },
-    {
-      label: t("events.kills.breakdownNight"),
-      value: formatPoints(nightBonus),
-      tone: nightBonus > 0 ? ("primary" as const) : ("neutral" as const),
-    },
-    {
-      label: t("events.kills.breakdownPvp"),
-      value: formatPoints(pvpBonus),
-      tone: pvpBonus > 0 ? ("primary" as const) : ("neutral" as const),
+      label: t("events.kills.breakdownBonus", "Bonus"),
+      value: formatPoints(bonusPoints),
+      tone: bonusPoints > 0 ? ("primary" as const) : ("neutral" as const),
     },
   ];
 
