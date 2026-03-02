@@ -7,6 +7,7 @@ export {
 
 export {
   aggregateMapData,
+  formatMapNamesFromMapData,
   type MapDataEntry,
   type AggregatedMapData,
 } from "./aggregate-map-data";

@@ -12,6 +12,7 @@ import {
 import { Clock, AlertCircle } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { KillParticipant } from "../../hooks/queries/use-hero-kill-history";
+import { formatMapNamesFromMapData } from "../../utils";
 
 interface KillParticipantsListProps {
   participants: KillParticipant[];
@@ -61,6 +62,7 @@ export const KillParticipantsList = ({
             Math.round(
               Math.max(0, participant.points - participant.basePoints) * 100,
             ) / 100;
+          const mapNamesLabel = formatMapNamesFromMapData(participant.mapData);
           return (
             <Tooltip key={participant.id}>
               <TooltipTrigger asChild>
@@ -79,9 +81,7 @@ export const KillParticipantsList = ({
                 <p className="text-xs text-muted-foreground">
                   {`base: ${participant.basePoints}, bonus: ${bonusPoints}`}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {participant.mapName}
-                </p>
+                <p className="text-xs text-muted-foreground">{mapNamesLabel}</p>
               </TooltipContent>
             </Tooltip>
           );
@@ -102,6 +102,7 @@ export const KillParticipantsList = ({
           Math.round(
             Math.max(0, participant.points - participant.basePoints) * 100,
           ) / 100;
+        const mapNamesLabel = formatMapNamesFromMapData(participant.mapData);
         return (
           <div
             key={participant.id}
@@ -122,7 +123,7 @@ export const KillParticipantsList = ({
                 {participant.member.name}
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                s{participant.mapName}
+                {mapNamesLabel}
               </p>
             </div>
 

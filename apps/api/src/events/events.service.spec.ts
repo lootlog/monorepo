@@ -182,6 +182,17 @@ describe('EventsService', () => {
       expect(result).toEqual(createdEvent);
     });
 
+    it('should request created hero maps sorted by mapId', async () => {
+      mockPrismaService.event.create.mockResolvedValue({});
+
+      await service.createEvent(guildId, createDto);
+
+      const queryArg = mockPrismaService.event.create.mock.calls[0][0];
+      expect(queryArg.include.heroNpcs.include.maps.orderBy).toEqual({
+        mapId: 'asc',
+      });
+    });
+
     it('should create event without hero npcs', async () => {
       const dtoWithoutHeroes = { name: 'Test Event', world: 'tempest' };
       const createdEvent = { id: 'event-1', ...dtoWithoutHeroes, guildId };
@@ -347,6 +358,24 @@ describe('EventsService', () => {
       expect(result).toEqual(event);
     });
 
+    it('should request maps sorted by mapId in each location and ungrouped maps', async () => {
+      const event = { id: eventId, heroNpcs: [] };
+      mockPrismaService.event.findFirst.mockResolvedValue(event);
+
+      await service.getEventMaps(guildId, eventId);
+
+      const queryArg = mockPrismaService.event.findFirst.mock.calls[0][0];
+
+      expect(
+        queryArg.select.heroNpcs.select.locations.select.maps.orderBy,
+      ).toEqual({
+        mapId: 'asc',
+      });
+      expect(queryArg.select.heroNpcs.select.maps.orderBy).toEqual({
+        mapId: 'asc',
+      });
+    });
+
     it('should throw NotFoundException when maps event not found', async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(null);
 
@@ -387,6 +416,21 @@ describe('EventsService', () => {
       await service.updateEvent(guildId, eventId, { name: 'Updated' });
 
       expect(mockPrismaService.$transaction).toHaveBeenCalled();
+    });
+
+    it('should request updated hero maps sorted by mapId', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
+      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+        callback(mockPrismaService),
+      );
+      mockPrismaService.event.update.mockResolvedValue({});
+
+      await service.updateEvent(guildId, eventId, { name: 'Updated' });
+
+      const callArg = mockPrismaService.event.update.mock.calls[0][0];
+      expect(callArg.include.heroNpcs.include.maps.orderBy).toEqual({
+        mapId: 'asc',
+      });
     });
 
     it('should set endsAt when deactivating event', async () => {
@@ -527,6 +571,22 @@ describe('EventsService', () => {
         }),
         include: expect.any(Object),
       });
+    });
+
+    it('should request created hero maps sorted by mapId', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue({
+        id: eventId,
+        world: 'tempest',
+      });
+      mockPrismaService.eventHeroNpc.create.mockResolvedValue({});
+
+      await service.createHero(guildId, eventId, {
+        npcId: 123,
+        npcName: 'Hero',
+      });
+
+      const queryArg = mockPrismaService.eventHeroNpc.create.mock.calls[0][0];
+      expect(queryArg.include.maps.orderBy).toEqual({ mapId: 'asc' });
     });
 
     it('should lookup npcId from timers when not provided', async () => {
@@ -741,6 +801,93 @@ describe('EventsService', () => {
           order: 3,
         }),
         include: expect.any(Object),
+      });
+    });
+
+    it('should request location maps sorted by mapId', async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue({
+        id: heroId,
+      });
+      mockPrismaService.eventMapLocation.findFirst.mockResolvedValue(null);
+      mockPrismaService.eventMapLocation.aggregate.mockResolvedValue({
+        _max: { order: 2 },
+      });
+      mockPrismaService.eventMapLocation.create.mockResolvedValue({});
+
+      await service.createLocation(guildId, eventId, heroId, {
+        name: 'Location',
+      });
+
+      const queryArg =
+        mockPrismaService.eventMapLocation.create.mock.calls[0][0];
+      expect(queryArg.include.maps.orderBy).toEqual({ mapId: 'asc' });
+    });
+  });
+
+  describe('updateLocation', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+    const heroId = 'hero-1';
+    const locationId = 'loc-1';
+
+    it('should throw NotFoundException when location not found', async () => {
+      mockPrismaService.eventMapLocation.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.updateLocation(guildId, eventId, heroId, locationId, {
+          name: 'Updated',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should request updated location maps sorted by mapId', async () => {
+      mockPrismaService.eventMapLocation.findFirst
+        .mockResolvedValueOnce({
+          id: locationId,
+          name: 'Location',
+        })
+        .mockResolvedValueOnce(null);
+      mockPrismaService.eventMapLocation.update.mockResolvedValue({});
+
+      await service.updateLocation(guildId, eventId, heroId, locationId, {
+        name: 'Updated',
+      });
+
+      const queryArg =
+        mockPrismaService.eventMapLocation.update.mock.calls[0][0];
+      expect(queryArg.include.maps.orderBy).toEqual({ mapId: 'asc' });
+    });
+  });
+
+  describe('getLocations', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+    const heroId = 'hero-1';
+
+    it('should throw NotFoundException when hero not found', async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.getLocations(guildId, eventId, heroId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should request locations with maps sorted by mapId', async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue({
+        id: heroId,
+      });
+      mockPrismaService.eventMapLocation.findMany.mockResolvedValue([]);
+
+      await service.getLocations(guildId, eventId, heroId);
+
+      expect(mockPrismaService.eventMapLocation.findMany).toHaveBeenCalledWith({
+        where: { heroNpcId: heroId },
+        orderBy: { order: 'asc' },
+        include: expect.objectContaining({
+          maps: expect.objectContaining({
+            orderBy: { mapId: 'asc' },
+          }),
+        }),
       });
     });
   });

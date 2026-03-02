@@ -148,10 +148,11 @@ export const MapCard = ({
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const memberCount = map.assignedMembers?.length || 0;
-  const isAssignedToMe = map.assignedMembers?.some(
-    (m) => m.id === currentMemberId,
-  );
+  const assignedMembers = map.assignedMembers ?? [];
+  const memberCount = assignedMembers.length;
+  const isAssignedToMe = assignedMembers.some((m) => m.id === currentMemberId);
+  const displayedAssignedMembers = assignedMembers.slice(0, 3);
+  const hiddenMembersCount = memberCount - displayedAssignedMembers.length;
   const playersOnMap = getPlayersOnMap(map.mapName, presenceData);
 
   const initialStartedAt = activeGap?.startedAt
@@ -208,9 +209,9 @@ export const MapCard = ({
           </div>
 
           {memberCount > 0 && (
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className="flex -space-x-1.5">
-                {map.assignedMembers.slice(0, 3).map((member) => {
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex -space-x-1.5 shrink-0">
+                {displayedAssignedMembers.map((member) => {
                   const memberPlayers = presenceData?.get(member.userId) || [];
                   const playerOnThisMap = memberPlayers.find(
                     (p) => p.mapName === map.mapName,
@@ -249,14 +250,19 @@ export const MapCard = ({
                   </div>
                 )}
               </div>
-              {memberCount === 1 && map.assignedMembers[0] ? (
-                <MemberName
-                  member={map.assignedMembers[0]}
-                  className="text-xs"
-                />
+              {memberCount === 1 && assignedMembers[0] ? (
+                <MemberName member={assignedMembers[0]} className="text-xs" />
               ) : memberCount > 1 ? (
-                <span className="text-xs text-muted-foreground">
-                  {memberCount}
+                <span
+                  className="text-xs text-muted-foreground min-w-0 truncate"
+                  title={assignedMembers
+                    .map((member) => member.name)
+                    .join(", ")}
+                >
+                  {displayedAssignedMembers
+                    .map((member) => member.name)
+                    .join(", ")}
+                  {hiddenMembersCount > 0 ? ` +${hiddenMembersCount}` : ""}
                 </span>
               ) : null}
             </div>

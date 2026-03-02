@@ -273,19 +273,6 @@ export const KillHistoryCard = ({
               </TooltipContent>
             </Tooltip>
           )}
-
-          {avgMultiplier > 1 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="secondary" className="font-bold">
-                  x{avgMultiplier.toFixed(2)}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t("events.kills.multipliers.title")}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
         </div>
       </div>
 

@@ -659,7 +659,6 @@ model EventKillPoint {
   id                      String   @id @default(cuid())
   killId                  String
   memberId                Int
-  mapName                 String
   basePoints              Float
   points                  Float
   trackingDurationSeconds     Int?
@@ -676,7 +675,7 @@ model EventKillPoint {
   kill   EventHeroKill @relation(fields: [killId], references: [id], onDelete: Cascade)
   member Member        @relation(fields: [memberId], references: [id])
 
-  @@unique([killId, memberId, mapName])
+  @@unique([killId, memberId])
   @@index([memberId])
   @@index([memberId, confirmationDeadlineAt, confirmedAt])
 }

@@ -24,7 +24,6 @@ export interface BonusBreakdownItem {
 export interface KillParticipant {
   id: string;
   memberId: number;
-  mapName: string;
   points: number;
   basePoints: number;
   trackingDurationSeconds: number | null;

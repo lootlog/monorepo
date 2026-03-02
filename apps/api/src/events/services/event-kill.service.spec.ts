@@ -775,7 +775,6 @@ describe('EventKillService', () => {
           data: expect.arrayContaining([
             expect.objectContaining({
               memberId: 1,
-              mapName: 'Map 1',
             }),
           ]),
         }),
@@ -2107,6 +2106,81 @@ describe('EventKillService', () => {
       expect(result.data).toHaveLength(2);
     });
 
+    it('should include mapData for participants', async () => {
+      const mockHero = { id: heroId };
+      const killedAt = new Date('2026-03-02T11:45:19.661Z');
+      const minSpawnTimeAtKill = new Date('2026-03-02T10:39:27.459Z');
+      const mockKills = [
+        {
+          id: 'kill-1',
+          heroNpcId: heroId,
+          killedAt,
+          minSpawnTimeAtKill,
+          maxSpawnTimeAtKill: new Date('2026-03-02T13:19:27.459Z'),
+          isManualClose: false,
+          heroNpc: {
+            id: heroId,
+            npcId: 1,
+            npcName: 'Hero',
+            npcIcon: null,
+            npcLvl: 300,
+          },
+          points: [
+            {
+              id: 'point-1',
+              memberId: 1,
+              points: 1,
+              mapPresenceData: [
+                {
+                  mapId: 'map-1',
+                  mapName: 'Map 1',
+                  presenceTimeSeconds: 120,
+                  afkTimeSeconds: 0,
+                },
+              ],
+              member: {
+                id: 1,
+                name: 'User 1',
+                avatar: null,
+                userId: 'user-1',
+              },
+            },
+          ],
+        },
+      ];
+
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1', heroNpcId: heroId },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
+        {
+          heroNpcId: heroId,
+          mapId: 'map-1',
+          memberId: 1,
+          assignedAt: new Date('2026-03-02T10:45:19.661Z'),
+          unassignedAt: null,
+        },
+      ]);
+
+      const result = await service.getHeroKillHistory(
+        guildId,
+        eventId,
+        heroId,
+        20,
+      );
+
+      expect(result.data[0]?.points[0]?.mapData).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            mapId: 'map-1',
+            mapName: 'Map 1',
+          }),
+        ]),
+      );
+    });
+
     it('should throw NotFoundException when hero not found', async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
 
@@ -2133,13 +2207,15 @@ describe('EventKillService', () => {
         avatar: null,
         userId: 'user-1',
       };
+      const killedAt = new Date('2026-03-02T11:45:19.661Z');
+      const minSpawnTimeAtKill = new Date('2026-03-02T10:39:27.459Z');
       const mockKills = [
         {
           id: 'kill-1',
           heroNpcId: heroId,
-          killedAt: new Date(),
-          minSpawnTimeAtKill: new Date(),
-          maxSpawnTimeAtKill: new Date(),
+          killedAt,
+          minSpawnTimeAtKill,
+          maxSpawnTimeAtKill: new Date('2026-03-02T13:19:27.459Z'),
           isManualClose: false,
           heroNpc: {
             id: heroId,
@@ -2148,14 +2224,28 @@ describe('EventKillService', () => {
             npcIcon: null,
             npcLvl: 300,
           },
-          points: [{ id: 'kp-1', memberId, points: 1 }],
+          points: [
+            {
+              id: 'kp-1',
+              memberId,
+              points: 1,
+              mapPresenceData: [
+                {
+                  mapId: 'map-1',
+                  mapName: 'Map 1',
+                  presenceTimeSeconds: 120,
+                  afkTimeSeconds: 0,
+                },
+              ],
+            },
+          ],
         },
         {
           id: 'kill-2',
           heroNpcId: heroId,
-          killedAt: new Date(),
-          minSpawnTimeAtKill: new Date(),
-          maxSpawnTimeAtKill: new Date(),
+          killedAt: new Date('2026-03-02T11:15:19.661Z'),
+          minSpawnTimeAtKill: new Date('2026-03-02T10:39:27.459Z'),
+          maxSpawnTimeAtKill: new Date('2026-03-02T13:19:27.459Z'),
           isManualClose: false,
           heroNpc: {
             id: heroId,
@@ -2164,13 +2254,31 @@ describe('EventKillService', () => {
             npcIcon: null,
             npcLvl: 300,
           },
-          points: [{ id: 'kp-2', memberId, points: 0.5 }],
+          points: [
+            {
+              id: 'kp-2',
+              memberId,
+              points: 0.5,
+            },
+          ],
         },
       ];
 
       mockPrismaService.event.findFirst.mockResolvedValue(mockEvent);
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: 'map-1', mapName: 'Map 1', heroNpcId: heroId },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
+        {
+          heroNpcId: heroId,
+          mapId: 'map-1',
+          memberId,
+          assignedAt: new Date('2026-03-02T10:45:19.661Z'),
+          unassignedAt: null,
+        },
+      ]);
 
       const result = await service.getMemberKillHistory(
         guildId,
@@ -2184,7 +2292,15 @@ describe('EventKillService', () => {
       expect(result.data[0]).toEqual(
         expect.objectContaining({
           id: 'kill-1',
-          memberPoint: expect.objectContaining({ id: 'kp-1' }),
+          memberPoint: expect.objectContaining({
+            id: 'kp-1',
+            mapData: expect.arrayContaining([
+              expect.objectContaining({
+                mapId: 'map-1',
+                mapName: 'Map 1',
+              }),
+            ]),
+          }),
         }),
       );
     });
