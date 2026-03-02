@@ -167,6 +167,7 @@ export class EventsService {
         heroNpcs: {
           include: {
             maps: {
+              orderBy: { mapId: 'asc' },
               include: {
                 assignedMembers: {
                   select: memberSelectWithTopRole,
@@ -282,6 +283,7 @@ export class EventsService {
                 name: true,
                 order: true,
                 maps: {
+                  orderBy: { mapId: 'asc' },
                   select: {
                     id: true,
                     mapId: true,
@@ -296,6 +298,7 @@ export class EventsService {
             },
             maps: {
               where: { locationId: null },
+              orderBy: { mapId: 'asc' },
               select: {
                 id: true,
                 mapId: true,
@@ -351,7 +354,9 @@ export class EventsService {
       nextScoringRules =
         targetScoringMode === 'ADVANCED'
           ? normalizeEventScoringRules(
-              scoringRules ?? event.scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+              scoringRules ??
+                event.scoringRules ??
+                DEFAULT_ADVANCED_EVENT_SCORING_RULES,
             )
           : null;
     }
@@ -440,6 +445,7 @@ export class EventsService {
           heroNpcs: {
             include: {
               maps: {
+                orderBy: { mapId: 'asc' },
                 include: {
                   assignedMembers: {
                     select: memberSelectWithTopRole,
@@ -576,6 +582,7 @@ export class EventsService {
       },
       include: {
         maps: {
+          orderBy: { mapId: 'asc' },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,
@@ -778,6 +785,7 @@ export class EventsService {
       },
       include: {
         maps: {
+          orderBy: { mapId: 'asc' },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,
@@ -831,6 +839,7 @@ export class EventsService {
       },
       include: {
         maps: {
+          orderBy: { mapId: 'asc' },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,
@@ -977,6 +986,7 @@ export class EventsService {
       orderBy: { order: 'asc' },
       include: {
         maps: {
+          orderBy: { mapId: 'asc' },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,

@@ -20,7 +20,11 @@ import {
   useEventMemberKillHistory,
 } from "./hooks/queries/use-event-member-kill-history";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
-import { formatDateTime, formatDurationHuman } from "./utils";
+import {
+  formatDateTime,
+  formatDurationHuman,
+  formatMapNamesFromMapData,
+} from "./utils";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 const formatPoints = (value: number) => {
@@ -152,6 +156,7 @@ const MemberKillCard = ({
     typeof trackingDurationSeconds === "number" && trackingDurationSeconds >= 0
       ? formatDurationHuman(trackingDurationSeconds)
       : "—";
+  const mapNames = formatMapNamesFromMapData(point?.mapData);
 
   const respawnDuration =
     kill.isManualClose === true
@@ -257,11 +262,9 @@ const MemberKillCard = ({
                   />
                 ))}
               </div>
-              {point.mapName && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {point.mapName}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground truncate">
+                {mapNames}
+              </p>
               {hasManualAdjustment && (
                 <p className="text-xs text-amber-500">
                   {t("events.kills.manualAdjustment", {

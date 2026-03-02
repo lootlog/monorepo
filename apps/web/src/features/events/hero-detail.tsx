@@ -402,7 +402,10 @@ export const HeroDetail = () => {
                 <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
                   <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4" />
-                    {t("events.participants.title")}
+                    {t("events.participants.title")}{" "}
+                    <span className="text-muted-foreground">
+                      ({uniqueMembers.length})
+                    </span>
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     {uniqueMembers.map((member) => (

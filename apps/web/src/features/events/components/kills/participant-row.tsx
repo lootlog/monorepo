@@ -13,6 +13,7 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import { cn } from "@/utils/cn";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import type { TFunction } from "i18next";
+import { formatMapNamesFromMapData } from "../../utils";
 
 const formatDuration = (seconds: number): string => {
   if (seconds < 60) {
@@ -48,6 +49,7 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
   const bonuses =
     Math.round(Math.max(0, participant.points - participant.basePoints) * 100) /
     100;
+  const mapNamesLabel = formatMapNamesFromMapData(participant.mapData);
 
   return (
     <div
@@ -67,7 +69,7 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
           {participant.member.name}
         </p>
         <p className="text-sm text-muted-foreground truncate">
-          {participant.mapName}
+          {mapNamesLabel}
         </p>
       </div>
       <div className="flex items-center gap-4 text-sm text-muted-foreground shrink-0">
@@ -98,16 +100,16 @@ export const ParticipantRow = ({ participant, t }: ParticipantRowProps) => {
       </div>
       <div className="text-right shrink-0">
         <p className="text-lg font-bold text-primary">{participant.points}</p>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="text-xs text-muted-foreground cursor-help">
-                {participant.basePoints} + {bonuses}
-              </p>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{`base: ${participant.basePoints}, bonus: ${bonuses}`}</p>
-            </TooltipContent>
-          </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="text-xs text-muted-foreground cursor-help">
+              {participant.basePoints} + {bonuses}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{`base: ${participant.basePoints}, bonus: ${bonuses}`}</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
