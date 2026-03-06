@@ -1064,7 +1064,7 @@ describe('EventsService', () => {
         expect.objectContaining({
           attempts: 5,
           backoff: { type: 'exponential', delay: 1000 },
-          jobId: 'event-hero-kill:guild-1:tempest:123:1771401600000:timer',
+          jobId: 'event-hero-kill-guild-1-tempest-123-1771401600000-timer',
         }),
       );
     });

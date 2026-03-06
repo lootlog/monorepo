@@ -7,6 +7,11 @@ import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
 export const EVENT_HERO_KILL_JOB_NAME = 'process-event-hero-kill';
 const MANUAL_CLOSE_SUFFIX = 'manual';
 const TIMER_UPDATE_SUFFIX = 'timer';
+const JOB_ID_SEPARATOR = '-';
+
+function sanitizeJobIdPart(value: string | number): string {
+  return String(value).replaceAll(':', '_');
+}
 
 function toRequiredDate(value: string, field: string): Date {
   const parsed = new Date(value);
@@ -75,7 +80,17 @@ export function buildEventHeroKillJobId(data: {
   isManualClose: boolean;
 }): string {
   const mode = data.isManualClose ? MANUAL_CLOSE_SUFFIX : TIMER_UPDATE_SUFFIX;
-  return `event-hero-kill:${data.guildId}:${data.world}:${data.npcId}:${data.windowKey}:${mode}`;
+  const parts = [
+    'event',
+    'hero',
+    'kill',
+    data.guildId,
+    data.world,
+    data.npcId,
+    data.windowKey,
+    mode,
+  ];
+  return parts.map(sanitizeJobIdPart).join(JOB_ID_SEPARATOR);
 }
 
 export function buildEventHeroKillDedupKey(data: {
