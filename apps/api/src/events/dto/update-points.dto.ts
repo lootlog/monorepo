@@ -4,7 +4,6 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UpdateKillPointDto {
   @ApiProperty({ description: 'New points value for this kill point' })
   @IsNumber({
-    maxDecimalPlaces: 2,
     allowInfinity: false,
     allowNaN: false,
   })
@@ -15,7 +14,6 @@ export class UpdateKillPointDto {
 export class UpdateRankingPointsDto {
   @ApiProperty({ description: 'New total points value for this ranking' })
   @IsNumber({
-    maxDecimalPlaces: 2,
     allowInfinity: false,
     allowNaN: false,
   })

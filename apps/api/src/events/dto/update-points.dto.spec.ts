@@ -7,7 +7,7 @@ import {
 
 describe('Update points DTO validation', () => {
   describe('UpdateRankingPointsDto', () => {
-    it('accepts decimal values up to two decimal places', async () => {
+    it('accepts decimal values', async () => {
       const dto = plainToInstance(UpdateRankingPointsDto, {
         totalPoints: 1.75,
       });
@@ -16,13 +16,13 @@ describe('Update points DTO validation', () => {
       expect(errors).toHaveLength(0);
     });
 
-    it('rejects values with more than two decimal places', async () => {
+    it('accepts decimal values with more than two decimal places', async () => {
       const dto = plainToInstance(UpdateRankingPointsDto, {
         totalPoints: 1.234,
       });
       const errors = await validate(dto);
 
-      expect(errors.length).toBeGreaterThan(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('rejects negative values', async () => {
@@ -45,18 +45,18 @@ describe('Update points DTO validation', () => {
   });
 
   describe('UpdateKillPointDto', () => {
-    it('accepts decimal values up to two decimal places', async () => {
+    it('accepts decimal values', async () => {
       const dto = plainToInstance(UpdateKillPointDto, { points: 0.25 });
       const errors = await validate(dto);
 
       expect(errors).toHaveLength(0);
     });
 
-    it('rejects values with more than two decimal places', async () => {
+    it('accepts decimal values with more than two decimal places', async () => {
       const dto = plainToInstance(UpdateKillPointDto, { points: 0.125 });
       const errors = await validate(dto);
 
-      expect(errors.length).toBeGreaterThan(0);
+      expect(errors).toHaveLength(0);
     });
 
     it('rejects negative values', async () => {
