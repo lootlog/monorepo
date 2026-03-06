@@ -1,5 +1,6 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, Logger } from '@nestjs/common';
+import { GatewayConfig } from './constants/gateway-config.constant';
 
 export interface RetryConfig {
   maxRetries?: number;
@@ -18,7 +19,7 @@ export class RetryService {
 
   shouldRetry(
     headers: Record<string, unknown>,
-    maxRetries: number = 3,
+    maxRetries: number = GatewayConfig.DEFAULT_MAX_RETRIES,
   ): boolean {
     const retryCount = this.getRetryCount(headers);
     return retryCount < maxRetries;
@@ -64,7 +65,7 @@ export class RetryService {
     config: RetryConfig = {},
   ): Promise<boolean> {
     const retryCount = this.getRetryCount(headers);
-    const maxRetries = config.maxRetries || 3;
+    const maxRetries = config.maxRetries || GatewayConfig.DEFAULT_MAX_RETRIES;
 
     if (!this.shouldRetry(headers, maxRetries)) {
       this.logger.warn(
@@ -74,9 +75,6 @@ export class RetryService {
       return false;
     }
 
-    this.logger.log(
-      `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
-    );
     return true;
   }
 }

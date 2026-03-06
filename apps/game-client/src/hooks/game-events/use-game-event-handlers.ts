@@ -9,6 +9,10 @@ import { useChatEventsHandlers } from "@/hooks/game-events/use-chat-events-handl
 import { useDialogHandlers } from "@/hooks/game-events/use-dialog-handlers";
 import { useNpcsHandlers } from "@/hooks/game-events/use-npcs-handler";
 import { useNpcsDeleteHandlers } from "@/hooks/game-events/use-npcs-delete-handlers";
+import { useMapChangeHandler } from "@/hooks/game-events/use-map-change-handler";
+import { useAfkHandler } from "@/hooks/game-events/use-afk-handler";
+import { useFriendsHandler } from "@/hooks/game-events/use-friends-handler";
+import { usePartyHandler } from "@/hooks/game-events/use-party-handler";
 
 const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "chat",
@@ -18,6 +22,11 @@ const RELEVANT_EVENT_KEYS: (keyof GameEvent)[] = [
   "item",
   "loot",
   "f",
+  "h",
+  "town",
+  "friends",
+  "friends_max",
+  "party",
 ];
 
 export const useGameEventHandlers = () => {
@@ -30,6 +39,30 @@ export const useGameEventHandlers = () => {
   const { handleLootFromBattle, handleDialogLoot } = useLootHandlers();
   const { handleBattleEvents } = useBattleEventHandler();
   const { handleNpcsDelete } = useNpcsDeleteHandlers();
+  const { handleMapChange } = useMapChangeHandler();
+  const { handleAfkEvent } = useAfkHandler();
+  const { handleFriendsEvent, fetchFriends } = useFriendsHandler();
+  const { handlePartyEvent, handleInitialPartyDetection } = usePartyHandler();
+
+  const runEventHandler = (handlerName: string, handler: () => unknown) => {
+    try {
+      const result = handler();
+
+      if (result instanceof Promise) {
+        result.catch((error) => {
+          console.warn(
+            `[GameEventHandlers] Failed to process ${handlerName} handler:`,
+            error,
+          );
+        });
+      }
+    } catch (error) {
+      console.warn(
+        `[GameEventHandlers] Failed to process ${handlerName} handler:`,
+        error,
+      );
+    }
+  };
 
   const handleEvent = (event: GameEvent) => {
     // Check for relevant event keys
@@ -39,13 +72,17 @@ export const useGameEventHandlers = () => {
     if (!hasRelevantKey) return;
 
     // Process different event types
-    handleChatEvents(event);
-    handleDialogEvents(event);
-    handleBattleEvents(event);
-    handleNpcDetection(event);
-    handleLootFromBattle(event);
-    handleDialogLoot(event);
-    handleNpcsDelete(event);
+    runEventHandler("chat", () => handleChatEvents(event));
+    runEventHandler("dialog", () => handleDialogEvents(event));
+    runEventHandler("battle", () => handleBattleEvents(event));
+    runEventHandler("npc-detection", () => handleNpcDetection(event));
+    runEventHandler("loot-from-battle", () => handleLootFromBattle(event));
+    runEventHandler("dialog-loot", () => handleDialogLoot(event));
+    runEventHandler("npcs-delete", () => handleNpcsDelete(event));
+    runEventHandler("map-change", () => handleMapChange(event));
+    runEventHandler("afk", () => handleAfkEvent(event));
+    runEventHandler("friends", () => handleFriendsEvent(event));
+    runEventHandler("party", () => handlePartyEvent(event));
   };
 
   const setupGameEventHandler = useEffectEvent(() => {
@@ -60,6 +97,9 @@ export const useGameEventHandlers = () => {
 
   const handleInitialEvents = useEffectEvent(() => {
     handleInitialNpcsDetection();
+    handleInitialPartyDetection();
+    gameEventsManager.markStripFriendsFromNextEvent();
+    fetchFriends();
   });
 
   useEffect(() => {

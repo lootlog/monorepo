@@ -1,12 +1,48 @@
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
 
 type GameEventHandler = (event: GameEvent) => void;
+type RawGameEventPayload = string | GameEvent;
 
 class GameEventsManager {
   private eventQueue: GameEvent[] = [];
   private eventProcessor: GameEventHandler | null = null;
   private isReady = false;
   private proxies: Array<{ cleanup: () => void }> = [];
+  private stripFriendsFromNextEvent = false;
+
+  markStripFriendsFromNextEvent() {
+    this.stripFriendsFromNextEvent = true;
+  }
+
+  private readonly FRIENDS_KEYS_TO_STRIP = [
+    "friends",
+    "friends_max",
+    "enemies",
+    "enemies_max",
+  ] as const;
+
+  private stripFriendsKeys(event: GameEvent): GameEvent {
+    if (!this.stripFriendsFromNextEvent) {
+      return event;
+    }
+
+    const hasFriendsKey = this.FRIENDS_KEYS_TO_STRIP.some(
+      (key) => event[key] !== undefined,
+    );
+
+    if (!hasFriendsKey) {
+      return event;
+    }
+
+    this.stripFriendsFromNextEvent = false;
+
+    const strippedEvent = { ...event };
+    for (const key of this.FRIENDS_KEYS_TO_STRIP) {
+      delete strippedEvent[key];
+    }
+
+    return strippedEvent;
+  }
 
   setProcessor(processor: GameEventHandler) {
     this.eventProcessor = processor;
@@ -15,6 +51,28 @@ class GameEventsManager {
 
   removeProcessor() {
     this.eventProcessor = null;
+  }
+
+  triggerManualEvent(event: GameEvent): boolean {
+    if (!import.meta.env.DEV) {
+      console.warn(
+        "Manual event triggering is only available in development mode",
+      );
+      return false;
+    }
+
+    if (!this.eventProcessor) {
+      console.warn("Event processor not ready");
+      return false;
+    }
+
+    try {
+      this.eventProcessor(event);
+      return true;
+    } catch (error) {
+      console.error("Failed to trigger manual event:", error);
+      return false;
+    }
   }
 
   setReady(ready: boolean) {
@@ -71,18 +129,22 @@ class GameEventsManager {
         apply: (target, thisArg, args) => {
           this.onGameInitChange();
 
-          if (typeof args[0] === "string") {
-            try {
-              const event = JSON.parse(args[0]);
-              this.queueEvent(event);
-            } catch (error) {
-              console.warn("Failed to process game event:", error);
+          let modifiedArgs = args;
+          const parsedEvent = this.parseGameEventPayload(args[0]);
+
+          if (parsedEvent) {
+            this.queueEvent(parsedEvent);
+
+            const strippedEvent = this.stripFriendsKeys(parsedEvent);
+            if (strippedEvent !== parsedEvent) {
+              modifiedArgs = [
+                this.serializeGameEventPayload(args[0], strippedEvent),
+                ...args.slice(1),
+              ];
             }
           }
 
-          const result = target.apply(thisArg, args);
-
-          return result;
+          return target.apply(thisArg, modifiedArgs);
         },
       });
 
@@ -94,6 +156,34 @@ class GameEventsManager {
         },
       });
     });
+  }
+
+  private parseGameEventPayload(payload: unknown): GameEvent | null {
+    if (typeof payload === "string") {
+      try {
+        return JSON.parse(payload) as GameEvent;
+      } catch (error) {
+        console.warn("Failed to process game event:", error);
+        return null;
+      }
+    }
+
+    if (payload && typeof payload === "object") {
+      return payload as GameEvent;
+    }
+
+    return null;
+  }
+
+  private serializeGameEventPayload(
+    originalPayload: unknown,
+    event: GameEvent,
+  ): RawGameEventPayload {
+    if (typeof originalPayload === "string") {
+      return JSON.stringify(event);
+    }
+
+    return event;
   }
 
   private gameInitCallbackExecuted = false;
@@ -123,6 +213,7 @@ class GameEventsManager {
     this.isReady = false;
     this.gameInitCallback = null;
     this.gameInitCallbackExecuted = false;
+    this.stripFriendsFromNextEvent = false;
   }
 }
 

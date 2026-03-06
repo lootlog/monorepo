@@ -4,15 +4,22 @@ import {
   type QuickAccessButtonProps,
 } from "@/features/quick-access/components/quick-access-button";
 import { GuildListPopover } from "@/features/quick-access/components/guild-list-popover";
+import { usePartyFinderStore } from "@/store/party-finder.store";
 import {
-  MessageSquareWarning,
   MessagesSquare,
   Settings,
+  Swords,
+  Terminal,
   Timer,
   Users,
 } from "lucide-react";
 
 const BUTTONS: QuickAccessButtonProps[] = [
+  {
+    id: "create-party-gathering",
+    title: "Party finder",
+    icon: <Swords size="16" />,
+  },
   {
     id: "timers",
     title: "Timery",
@@ -29,9 +36,9 @@ const BUTTONS: QuickAccessButtonProps[] = [
     icon: <MessagesSquare size="16" />,
   },
   {
-    id: "chat-input",
-    title: "Napisz wiadomość",
-    icon: <MessageSquareWarning size="16" />,
+    id: "command",
+    title: "Konsola",
+    icon: <Terminal size="16" />,
   },
   {
     id: "settings",
@@ -41,15 +48,24 @@ const BUTTONS: QuickAccessButtonProps[] = [
 ];
 
 export const QuickAccess = () => {
+  const partyGathering = usePartyFinderStore((s) => s.partyGathering);
+
   return (
     <DraggableWindow
       id="quick-access"
       title="Lootlog"
       minHeight={56}
-      minWidth={218}
+      minWidth={250}
       closable={false}
     >
       <div className="ll:flex ll:gap-1 ll:px-1 ll:py-1">
+        {partyGathering && (
+          <QuickAccessButton
+            id="party-finder"
+            title="Aktywne zbieranie grupy"
+            icon=<Swords size="16" className="ll:text-green-500" />
+          />
+        )}
         {BUTTONS.map((button) => (
           <QuickAccessButton
             key={button.id}
@@ -59,6 +75,7 @@ export const QuickAccess = () => {
             href={button.href}
           />
         ))}
+
         <GuildListPopover />
       </div>
     </DraggableWindow>

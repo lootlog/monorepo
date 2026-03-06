@@ -10,6 +10,7 @@ import {
   Logs,
   RefreshCcw,
   Settings,
+  Trophy,
 } from "lucide-react";
 import { useEffect, useState, type FC } from "react";
 import { useGuilds } from "@/hooks/api/guilds/use-guilds";
@@ -24,6 +25,8 @@ import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
+import { useEvents } from "@/features/events/hooks";
+import { ActiveEventsBanner } from "./active-events-banner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -36,6 +39,19 @@ export const GuildsSidebarNav: FC = () => {
   const { mutate: refreshMember } = useMemberRefresh();
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
+
+  const canViewEvents =
+    permissions?.includes(Permission.LOOTLOG_EVENTS_READ) ||
+    permissions?.includes(Permission.LOOTLOG_EVENTS_MANAGE) ||
+    permissions?.includes(Permission.OWNER);
+
+  const { data: activeEvents } = useEvents({
+    guildId: guildId ?? "",
+    activeOnly: true,
+    enabled: Boolean(canViewEvents),
+  });
+  const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
+  const activeEventCount = activeEvents?.length ?? 0;
 
   const menuItems: MenuItem[] = [
     {
@@ -69,10 +85,33 @@ export const GuildsSidebarNav: FC = () => {
       ),
     },
     {
+      label: "Eventy",
+      icon: (
+        <div className="relative mr-1">
+          <Trophy
+            className={`h-4 w-4 ${hasActiveEvents ? "text-yellow-500" : ""}`}
+          />
+          {hasActiveEvents && (
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+            </span>
+          )}
+        </div>
+      ),
+      path: ROUTE_SEGMENTS.guild.events,
+      available: true,
+      enabled: Boolean(canViewEvents),
+      badge: hasActiveEvents
+        ? { content: activeEventCount, variant: "default" as const }
+        : undefined,
+      highlight: hasActiveEvents,
+    },
+    {
       label: "Statystyki",
       icon: <BarChart4 className="mr-1 h-4 w-4" />,
       path: ROUTE_SEGMENTS.guild.stats,
-      available: false,
+      available: true,
       enabled: Boolean(
         permissions?.includes(Permission.LOOTLOG_LOOTS_READ) ||
         permissions?.includes(Permission.OWNER),
@@ -197,6 +236,15 @@ export const GuildsSidebarNav: FC = () => {
       items={menuItems}
       basePath={`/${guildId}`}
       header={header}
+      beforeItems={
+        canViewEvents ? (
+          <ActiveEventsBanner
+            events={activeEvents ?? []}
+            guildId={guildId ?? ""}
+            onNavigate={handleItemClick}
+          />
+        ) : undefined
+      }
       onItemClick={handleItemClick}
     />
   );

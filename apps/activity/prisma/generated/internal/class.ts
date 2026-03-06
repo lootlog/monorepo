@@ -15,8 +15,8 @@ import type * as Prisma from './prismaNamespace';
 
 const config: runtime.GetPrismaClientConfig = {
   previewFeatures: ['views'],
-  clientVersion: '7.1.0',
-  engineVersion: 'ab635e6b9d606fa5c8fb8b1a7f909c3c3c1c98ba',
+  clientVersion: '7.3.0',
+  engineVersion: '9d6ad21cbbceab97458517b147a6a09ff43aa735',
   activeProvider: 'postgresql',
   inlineSchema:
     'generator client {\n  provider        = "prisma-client"\n  output          = "./generated"\n  previewFeatures = ["views"]\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nenum ActivityType {\n  CONNECT_EVENT\n  DISCONNECT_EVENT\n}\n\nenum ActivitySource {\n  GAME\n  WEB_APP\n}\n\n// TimescaleDB hypertable with 1-day chunks and 7-day retention policy\nmodel Activity {\n  id             String       @default(cuid())\n  userId         String\n  guildId        String\n  discordId      String\n  type           ActivityType\n  createdAt      DateTime     @default(now()) @db.Timestamptz\n  idempotencyKey String\n\n  source ActivitySource\n\n  world String? @db.Text\n\n  details Json?\n\n  actorSnapshotId String?\n  actorSnapshot   ActivityActorSnapshot? @relation("ActivityActorSnapshot_Activity", fields: [actorSnapshotId], references: [id])\n\n  @@id([id, createdAt])\n  @@unique([idempotencyKey, createdAt])\n  @@index([createdAt(sort: Desc), guildId])\n  @@index([createdAt(sort: Desc), userId])\n  @@index([createdAt(sort: Desc), type])\n  @@index([guildId, createdAt(sort: Desc)])\n}\n\nmodel ActivityActorSnapshot {\n  id String @id @default(cuid())\n\n  accountId   Int\n  characterId Int\n  name        String  @db.Text\n  clanName    String? @db.Text\n  clanId      Int?\n  icon        String\n  lvl         Int\n  prof        String\n\n  source      ActivitySource\n  fingerprint String         @unique\n\n  createdAt DateTime @default(now()) @db.Timestamptz\n\n  activities Activity[] @relation("ActivityActorSnapshot_Activity")\n}\n',
@@ -41,13 +41,15 @@ async function decodeBase64AsWasm(
 
 config.compilerWasm = {
   getRuntime: async () =>
-    await import('@prisma/client/runtime/query_compiler_bg.postgresql.js'),
+    await import('@prisma/client/runtime/query_compiler_fast_bg.postgresql.js'),
 
   getQueryCompilerWasmModule: async () => {
     const { wasm } =
-      await import('@prisma/client/runtime/query_compiler_bg.postgresql.wasm-base64.js');
+      await import('@prisma/client/runtime/query_compiler_fast_bg.postgresql.wasm-base64.js');
     return await decodeBase64AsWasm(wasm);
   },
+
+  importName: './query_compiler_fast_bg.js',
 };
 
 export type LogOptions<ClientOptions extends Prisma.PrismaClientOptions> =

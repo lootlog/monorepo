@@ -132,7 +132,6 @@ export class LootMappingService {
         location: npc.location,
         type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
         margonemType: npc.type,
-        hpp: npc.hpp,
       })),
     };
   }
@@ -189,7 +188,6 @@ export class LootMappingService {
       location: npc.location,
       type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
       margonemType: npc.type,
-      hpp: npc.hpp,
     }));
   }
 
@@ -208,7 +206,6 @@ export class LootMappingService {
         icon: player.icon,
         characterId: Number(characterId),
         accountId: Number(accountId),
-        hpp: player.hpp,
       };
     });
   }
@@ -320,7 +317,6 @@ export class LootMappingService {
       };
 
       return {
-        hpp: player.hpp,
         lvl: player.lvl,
         playerSnapshot: {
           connectOrCreate: {

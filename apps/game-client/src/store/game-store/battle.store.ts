@@ -11,6 +11,7 @@ interface BattleState {
   events: GameEvent[];
   battleState: "idle" | "in-battle";
   lastBattleHash: string;
+  lastKillHash: string;
   battleWarriors: BattleWarriorsWithAccountId;
 }
 
@@ -19,6 +20,7 @@ interface BattleActions {
   clearEvents: () => void;
   setBattleState: (state: "idle" | "in-battle") => void;
   setLastBattleHash: (hash: string) => void;
+  setLastKillHash: (hash: string) => void;
   startBattle: (hash: string) => void;
   endBattle: () => void;
   updateBattleWarriors: (warriors: BattleWarriorsWithAccountId | null) => void;
@@ -28,6 +30,7 @@ export const useBattleStore = create<BattleState & BattleActions>((set) => ({
   events: [],
   battleState: "idle",
   lastBattleHash: "",
+  lastKillHash: "",
   battleWarriors: {},
 
   addEvent: (event) =>
@@ -40,6 +43,8 @@ export const useBattleStore = create<BattleState & BattleActions>((set) => ({
   setBattleState: (battleState) => set({ battleState }),
 
   setLastBattleHash: (hash) => set({ lastBattleHash: hash }),
+
+  setLastKillHash: (hash) => set({ lastKillHash: hash }),
 
   startBattle: (hash) =>
     set({

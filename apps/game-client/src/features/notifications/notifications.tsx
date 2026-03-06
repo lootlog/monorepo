@@ -8,7 +8,7 @@ import { useWindowsStore } from "@/store/windows.store";
 
 export const Notifications = () => {
   useNotifications();
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { clearNotifications } = useNotificationsStore();
   const { notifications: filteredNotifications, now } = useVisibleNotifications(
     {

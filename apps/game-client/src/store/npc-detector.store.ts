@@ -5,7 +5,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 export type GameNpcWithLocation = GameNpc & {
   location: string;
-  msgSent: boolean;
   notificationSent: boolean;
 };
 
@@ -13,7 +12,6 @@ export interface NpcDetectorSettingByNpc {
   detect: boolean;
   notifyWindow: boolean;
   autoNotifyClan: boolean;
-  autoNotifyChat: boolean;
   notifySound: boolean;
   highlight: boolean;
   guildIds: string[];
@@ -47,7 +45,6 @@ export const recommendedSettings: NpcDetectorSettings = {
     detect: false,
     notifyWindow: false,
     autoNotifyClan: false,
-    autoNotifyChat: false,
     notifySound: false,
     highlight: false,
     guildIds: [],
@@ -56,7 +53,6 @@ export const recommendedSettings: NpcDetectorSettings = {
     detect: true,
     notifyWindow: true,
     autoNotifyClan: false,
-    autoNotifyChat: false,
     notifySound: false,
     highlight: true,
     guildIds: [],
@@ -65,7 +61,6 @@ export const recommendedSettings: NpcDetectorSettings = {
     detect: true,
     notifyWindow: true,
     autoNotifyClan: false,
-    autoNotifyChat: false,
     notifySound: false,
     highlight: true,
     guildIds: [],
@@ -74,7 +69,6 @@ export const recommendedSettings: NpcDetectorSettings = {
     detect: true,
     notifyWindow: true,
     autoNotifyClan: false,
-    autoNotifyChat: false,
     notifySound: false,
     highlight: true,
     guildIds: [],

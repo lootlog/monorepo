@@ -9,6 +9,11 @@ const mockSetOpen = vi.fn();
 const mockToggleTimerFiltersEnabled = vi.fn();
 const mockToggleColorFiltersEnabled = vi.fn();
 const mockSetTimersSortOrder = vi.fn();
+let mockWindowsState: {
+  timers: { open: boolean };
+  toggleOpen: typeof mockToggleOpen;
+  setOpen: typeof mockSetOpen;
+};
 
 vi.mock("@/hooks/api/use-timers");
 vi.mock("@/hooks/api/use-guild-permissions");
@@ -121,6 +126,12 @@ describe("Timers Component", () => {
     const { useTimersFiltering } = await import("./hooks/use-timers-filtering");
     const { useSocket } = await import("@/contexts/socket-context");
 
+    mockWindowsState = {
+      timers: { open: true },
+      toggleOpen: mockToggleOpen,
+      setOpen: mockSetOpen,
+    };
+
     vi.mocked(useTimers).mockReturnValue({
       data: [],
       isLoading: false,
@@ -138,11 +149,14 @@ describe("Timers Component", () => {
     vi.mocked(useGlobalStore).mockReturnValue({
       gameState: { world: "world1", gameInterface: "si", characterId: "char1" },
     });
-    vi.mocked(useWindowsStore).mockReturnValue({
-      timers: { open: true },
-      toggleOpen: mockToggleOpen,
-      setOpen: mockSetOpen,
-    });
+    vi.mocked(useWindowsStore).mockImplementation(((selector?: unknown) => {
+      if (typeof selector === "function") {
+        return (selector as (state: typeof mockWindowsState) => unknown)(
+          mockWindowsState,
+        );
+      }
+      return mockWindowsState;
+    }) as never);
     vi.mocked(useTimersStore).mockReturnValue({
       hiddenTimers: {},
       pinnedTimers: {},
@@ -172,7 +186,7 @@ describe("Timers Component", () => {
       overriddenDefaultColors: {},
     });
     vi.mocked(useSettingsStore).mockReturnValue({
-      world: "world1",
+      worldByGuildId: { guild1: "world1" },
       allowWorldSelection: false,
       guildIdByCharId: { char1: "guild1" },
     });
@@ -239,7 +253,7 @@ describe("Timers Component", () => {
       const { useSettingsStore } = await import("@/store/settings.store");
 
       vi.mocked(useSettingsStore).mockReturnValue({
-        world: "world2",
+        worldByGuildId: { guild1: "world2" },
         allowWorldSelection: false,
         guildIdByCharId: { char1: "guild1" },
       });
@@ -408,13 +422,7 @@ describe("Timers Component", () => {
     });
 
     it("11.2 should hide window when open is false (HIGH PRIORITY)", async () => {
-      const { useWindowsStore } = await import("@/store/windows.store");
-
-      vi.mocked(useWindowsStore).mockReturnValue({
-        timers: { open: false },
-        toggleOpen: mockToggleOpen,
-        setOpen: mockSetOpen,
-      });
+      mockWindowsState.timers.open = false;
 
       render(<Timers />);
 
@@ -427,7 +435,7 @@ describe("Timers Component", () => {
       const { useSettingsStore } = await import("@/store/settings.store");
 
       vi.mocked(useSettingsStore).mockReturnValue({
-        world: "world1",
+        worldByGuildId: { guild2: "world1" },
         allowWorldSelection: false,
         guildIdByCharId: {
           char1: "guild2",
@@ -443,7 +451,7 @@ describe("Timers Component", () => {
       const { useSettingsStore } = await import("@/store/settings.store");
 
       vi.mocked(useSettingsStore).mockReturnValue({
-        world: "world3",
+        worldByGuildId: { guild1: "world3" },
         allowWorldSelection: true,
         guildIdByCharId: {
           char1: "guild1",

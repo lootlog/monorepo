@@ -3,20 +3,20 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 interface SettingsState {
   allowWorldSelection?: boolean;
-  world?: string;
+  worldByGuildId: Record<string, string>;
   guildIdByCharId: Record<string, string>;
   selectedGuildIdsForTimersByCharId: Record<string, string[]>;
   setGuildId: (charId: string, guildId: string) => void;
   setSelectedGuildIdsForTimers: (charId: string, guildIds: string[]) => void;
-  setWorld: (world: string) => void;
+  setWorld: (guildId: string, world: string) => void;
   toggleAllowWorldSelection: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set, get) => ({
-      world: undefined,
+    (set) => ({
       allowWorldSelection: false,
+      worldByGuildId: {},
       guildIdByCharId: {},
       selectedGuildIdsForTimersByCharId: {},
       setGuildId: (charId: string, guildId: string) => {
@@ -35,8 +35,13 @@ export const useSettingsStore = create<SettingsState>()(
           },
         }));
       },
-      setWorld: (world: string) => {
-        set({ world });
+      setWorld: (guildId: string, world: string) => {
+        set((state) => ({
+          worldByGuildId: {
+            ...state.worldByGuildId,
+            [guildId]: world,
+          },
+        }));
       },
       toggleAllowWorldSelection: () => {
         set((state) => ({ allowWorldSelection: !state.allowWorldSelection }));
@@ -46,13 +51,13 @@ export const useSettingsStore = create<SettingsState>()(
       name: "ll:settings:state",
       partialize: (state) => ({
         allowWorldSelection: state.allowWorldSelection,
-        world: state.world,
+        worldByGuildId: state.worldByGuildId,
         guildIdByCharId: state.guildIdByCharId,
         selectedGuildIdsForTimersByCharId:
           state.selectedGuildIdsForTimersByCharId,
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
     },
   ),
 );

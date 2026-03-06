@@ -31,12 +31,18 @@ const ROUTES = {
     lootlog: (guildId: string) => `/${guildId}`,
     timers: (guildId: string) => `/${guildId}/timers`,
     stats: (guildId: string) => `/${guildId}/stats`,
+    statsKills: (guildId: string) => `/${guildId}/stats/kills`,
+    statsLoots: (guildId: string) => `/${guildId}/stats/loots`,
+    statsNpcs: (guildId: string) => `/${guildId}/stats/npcs`,
+    statsNpcKillers: (guildId: string, npcId: string) =>
+      `/${guildId}/stats/npcs/${npcId}`,
     reservations: {
       base: (guildId: string) => `/${guildId}/reservations`,
       reservationId: (guildId: string, reservationId: string) =>
         `/${guildId}/reservations/${reservationId}`,
     },
     activityLogs: (guildId: string) => `/${guildId}/activity-logs`,
+    events: (guildId: string) => `/${guildId}/events`,
     settings: {
       base: (guildId: string) => `/${guildId}/settings`,
       roles: (guildId: string) => `/${guildId}/settings/roles`,
@@ -67,6 +73,9 @@ const ROUTE_SEGMENTS = {
     timers: "/timers",
     reservations: "/reservations",
     stats: "/stats",
+    statsKills: "/stats/kills",
+    statsLoots: "/stats/loots",
+    events: "/events",
     settings: "/settings",
     roles: "/roles",
     npcs: "/npcs",
@@ -74,6 +83,7 @@ const ROUTE_SEGMENTS = {
     appearance: "/appearance",
     servers: "/servers",
     activityLogs: "/activity-logs",
+    mapTemplates: "/map-templates",
   },
 } as const;
 

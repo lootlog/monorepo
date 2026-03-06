@@ -4,8 +4,8 @@ import {
   type ChatMessage as ChatMessageType,
   useChatMessages,
 } from "@/hooks/api/use-chat-messages";
-import { useRef, useMemo, useEffect } from "react";
-import * as ScrollArea from "@radix-ui/react-scroll-area";
+import { useRef, useMemo, useEffect, useLayoutEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalStorage } from "react-use";
 import { useWindowsStore } from "@/store/windows.store";
 import { useChatMessagesListener } from "@/features/chat/hooks/use-chat-messages";
@@ -13,34 +13,44 @@ import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { GuildSwitcher } from "@/components/guild-switcher";
 import { Game } from "@/lib/game";
 import { useChatCache } from "./hooks/use-chat-cache";
-import { useChatStore } from "@/store/chat.store";
+import { type ChatFilter, useChatStore } from "@/store/chat.store";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
 import { ChatMessage } from "./components/chat-message";
 import { OldChatInput } from "@/features/chat/components/old-chat-input";
 import { useGuilds } from "@/hooks/api/use-guilds";
 import { ChatWindowActions } from "@/features/chat/components/chat-window-actions";
+import { MessageType } from "@/hooks/api/use-send-chat-message";
+import { cn } from "@/lib/utils";
+
+const CHAT_FILTERS: { key: ChatFilter; label: string }[] = [
+  { key: "all", label: "Wszystko" },
+  { key: "normal", label: "Czat" },
+  { key: "npc", label: "NPC" },
+  { key: "party", label: "Grupa" },
+];
 
 export const Chat = () => {
-  const { isIntegratedMode, isChatInputEnabled, toggleChatInputEnabled } =
-    useChatStore();
+  const {
+    isIntegratedMode,
+    isChatInputEnabled,
+    toggleChatInputEnabled,
+    chatFilter,
+    setChatFilter,
+    filtersVisible,
+    toggleFiltersVisible,
+  } = useChatStore();
 
   const characterId = String(Game.hero.id);
   const accountId = String(Game.hero.account);
-  const {
-    chat: { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state.chat.open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const [selectedGuildId, setSelectedGuildId] = useLocalStorage(
     `ll:chat:selected-guild:${accountId}:${characterId}`,
     "",
   );
   const { data: guilds } = useGuilds();
 
-  const scrollAreaRef =
-    useRef<React.ElementRef<typeof ScrollArea.Viewport>>(null);
-
-  const selectedGuildIdRef = useRef<string>("");
-  selectedGuildIdRef.current = selectedGuildId ?? "";
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { client } = useAuthenticatedApiClient();
   useChatMessagesListener(client);
@@ -52,6 +62,9 @@ export const Chat = () => {
   const { data: guildMembers } = useGuildMembers(selectedGuildId);
 
   const isUserNearBottomRef = useRef(true);
+  const scrollPendingRef = useRef(true);
+  const prevMessagesLenRef = useRef(0);
+
   const handleScroll = () => {
     const viewport = scrollAreaRef.current;
     if (!viewport) return;
@@ -70,54 +83,15 @@ export const Chat = () => {
   }, []);
 
   useEffect(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scrollAreaRef.current?.scrollTo({
-          top: scrollAreaRef.current.scrollHeight + 2000,
-          behavior: "instant",
-        });
-      });
-    });
-  }, [selectedGuildId]);
+    scrollPendingRef.current = true;
+    prevMessagesLenRef.current = 0;
+  }, [selectedGuildId, chatFilter]);
 
   useEffect(() => {
     if (!selectedGuildId && guilds && guilds.length > 0) {
       setSelectedGuildId(guilds[0].id);
     }
   }, [selectedGuildId, setSelectedGuildId, guilds]);
-
-  useEffect(() => {
-    const unsubscribe = useChatCache.subscribe(
-      (state) => state.messageCache,
-      (newCache, prevCache) => {
-        const selected = selectedGuildIdRef.current;
-        for (const channel of Object.keys(newCache)) {
-          const newLen = newCache[channel]?.length ?? 0;
-          const oldLen = prevCache[channel]?.length ?? 0;
-          if (newLen > oldLen) {
-            if (selected === channel || selected === "all") {
-              if (isUserNearBottomRef.current) {
-                const viewport = scrollAreaRef.current;
-                if (!viewport) return;
-
-                requestAnimationFrame(() => {
-                  requestAnimationFrame(() => {
-                    viewport.scrollTo({
-                      top: viewport.scrollHeight,
-                      behavior: "smooth",
-                    });
-                  });
-                });
-              }
-            }
-            break;
-          }
-        }
-      },
-    );
-
-    return () => unsubscribe();
-  }, []);
 
   const currentMessages = useMemo(() => {
     let allMessages;
@@ -144,11 +118,58 @@ export const Chat = () => {
       );
       if (!duplicate) unique.push(msg);
     }
-    return unique.sort(
+    const sorted = unique.sort(
       (a, b) =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
-  }, [selectedGuildId, messageCache]);
+
+    if (chatFilter === "all") return sorted;
+
+    return sorted.filter((msg) => {
+      switch (chatFilter) {
+        case "normal":
+          return (
+            msg.type === MessageType.NORMAL ||
+            msg.type === MessageType.NOTIFICATION
+          );
+        case "npc":
+          return msg.type === MessageType.NPC;
+        case "party":
+          return msg.type === MessageType.PARTY_GATHERING;
+        default:
+          return true;
+      }
+    });
+  }, [selectedGuildId, messageCache, chatFilter]);
+
+  const hasVisibleMessages = currentMessages.some((m) => {
+    const members = memberCache[m.guildId] ?? {};
+    const member = members[m.senderId];
+    const guild = guilds?.find((g) => g.id === m.guildId);
+    return m.characterData && member?.name && guild;
+  });
+
+  useLayoutEffect(() => {
+    const viewport = scrollAreaRef.current;
+    if (!viewport) return;
+
+    const msgCount = currentMessages.length;
+
+    if (scrollPendingRef.current) {
+      if (hasVisibleMessages) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "instant" });
+        scrollPendingRef.current = false;
+      }
+      prevMessagesLenRef.current = msgCount;
+      return;
+    }
+
+    if (msgCount > prevMessagesLenRef.current && isUserNearBottomRef.current) {
+      viewport.scrollTo({ top: viewport.scrollHeight });
+    }
+
+    prevMessagesLenRef.current = msgCount;
+  }, [currentMessages, hasVisibleMessages]);
 
   const currentMembers = useMemo(() => {
     if (selectedGuildId === "all") {
@@ -192,54 +213,65 @@ export const Chat = () => {
         actions=<ChatWindowActions
           chatInputEnabled={isChatInputEnabled}
           toggleChatInputEnabled={toggleChatInputEnabled}
+          filtersVisible={filtersVisible}
+          toggleFiltersVisible={toggleFiltersVisible}
         />
       >
         <div className="ll:flex ll:flex-col ll:h-full ll:w-full">
-          <div className="ll:shrink-0 ll:pt-1 ll:pb-2">
+          <div className="ll:shrink-0 ll:pt-1 ll:pb-1">
             <GuildSwitcher
               allowAll
               value={selectedGuildId}
               onChange={setSelectedGuildId}
             />
           </div>
-          <div className="ll:flex-1 ll:overflow-hidden">
-            <ScrollArea.Root className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400">
-              <ScrollArea.Viewport
-                ref={scrollAreaRef}
-                className="ll:h-full ll:w-full ll:overflow-y-auto"
-              >
-                <div
-                  className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
-                  data-draggable="false"
-                >
-                  {currentMessages?.length === 0 ? (
-                    <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
-                      Brak wiadomości
-                    </div>
-                  ) : (
-                    currentMessages.map((message) => {
-                      const members = memberCache[message.guildId] ?? {};
-                      return (
-                        <ChatMessage
-                          key={message.id}
-                          message={message}
-                          all={selectedGuildId === "all"}
-                          member={members[message.senderId]}
-                        />
-                      );
-                    })
+          {filtersVisible && (
+            <div className="ll:shrink-0 ll:flex ll:gap-0.5 ll:px-1 ll:pb-1">
+              {CHAT_FILTERS.map((filter) => (
+                <button
+                  key={filter.key}
+                  type="button"
+                  onClick={() => setChatFilter(filter.key)}
+                  className={cn(
+                    "ll:flex-1 ll:text-[10px] ll:py-0.5 ll:rounded-sm ll:border ll:transition-colors",
+                    chatFilter === filter.key
+                      ? "ll:bg-gray-600 ll:border-gray-500 ll:text-white"
+                      : "ll:bg-transparent ll:border-gray-700 ll:text-gray-400 ll:hover:text-gray-300 ll:hover:border-gray-600",
                   )}
-                </div>
-              </ScrollArea.Viewport>
-
-              <ScrollArea.Scrollbar
-                orientation="vertical"
-                className="ll:flex ll:touch-none ll:select-none ll:bg-black ll:w-2 ll:rounded-full"
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="ll:flex-1 ll:overflow-hidden">
+            <ScrollArea
+              ref={scrollAreaRef}
+              className="ll:h-full ll:w-full ll:box-border ll:border ll:rounded-sm ll:border-gray-400"
+            >
+              <div
+                className="ll:flex ll:flex-col ll:gap-1 ll:p-1 ll:w-full ll:rounded-lg"
+                data-ll-draggable="false"
               >
-                <ScrollArea.Thumb className="ll:flex-1 ll:bg-gray-500 ll:rounded-full" />
-              </ScrollArea.Scrollbar>
-              <ScrollArea.Corner className="ll:bg-gray-200" />
-            </ScrollArea.Root>
+                {currentMessages?.length === 0 ? (
+                  <div className="ll:flex ll:items-center ll:justify-center ll:h-full ll:text-gray-500 ll:text-xs">
+                    Brak wiadomości
+                  </div>
+                ) : (
+                  currentMessages.map((message) => {
+                    const members = memberCache[message.guildId] ?? {};
+                    return (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        all={selectedGuildId === "all"}
+                        member={members[message.senderId]}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
           </div>
           {selectedGuildId !== "all" && isChatInputEnabled && (
             <OldChatInput selectedGuildId={selectedGuildId} />

@@ -29,17 +29,18 @@ export const Timers = () => {
   const characterId = String(Game.hero.id);
   const gameInterface = Game.interface;
   const defaultWorld = Game.getWorldName();
-  const { world, allowWorldSelection, guildIdByCharId } = useSettingsStore();
+  const { worldByGuildId, allowWorldSelection, guildIdByCharId } =
+    useSettingsStore();
 
+  const guildId = guildIdByCharId[characterId];
+  const world = guildId ? worldByGuildId[guildId] : undefined;
   const desiredWorld = world && allowWorldSelection ? world : defaultWorld;
 
   const { data: timers } = useTimers({ world: desiredWorld });
 
-  const {
-    timers: { open },
-    toggleOpen,
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state.timers.open);
+  const toggleOpen = useWindowsStore((state) => state.toggleOpen);
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   useTimersSocket();
 
@@ -61,8 +62,6 @@ export const Timers = () => {
     defaultColorNames,
     overriddenDefaultColors,
   } = useTimersStore();
-
-  const guildId = guildIdByCharId[characterId];
 
   const [showHiddenTimers, setShowHiddenTimers] = useState(false);
 
@@ -166,6 +165,7 @@ export const Timers = () => {
           isUnderBag={generalConfig.timersUnderBag}
           minColumnWidth={displayConfig.minColumnWidth}
           onAddTimer={() => toggleOpen("add-timer")}
+          compactView={generalConfig.compactView}
         />
       </UnderBagTimers>
     );
@@ -178,16 +178,22 @@ export const Timers = () => {
         title="Timery"
         onClose={() => setOpen("timers", false)}
         minHeight={108}
-        actions=<TimersActions
-          timerFiltersEnabled={timerFiltersEnabled}
-          toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
-          colorFiltersEnabled={colorFiltersEnabled}
-          toggleColorFiltersEnabled={toggleColorFiltersEnabled}
-          timersSortOrder={timersSortOrder ?? "asc"}
-          setTimersSortOrder={setTimersSortOrder}
-          showHiddenTimers={showHiddenTimers}
-          setShowHiddenTimers={setShowHiddenTimers}
-        />
+        disableTitle={generalConfig.compactView}
+        draggableContent={generalConfig.compactView}
+        actions={
+          !generalConfig.compactView ? (
+            <TimersActions
+              timerFiltersEnabled={timerFiltersEnabled}
+              toggleTimerFiltersEnabled={toggleTimerFiltersEnabled}
+              colorFiltersEnabled={colorFiltersEnabled}
+              toggleColorFiltersEnabled={toggleColorFiltersEnabled}
+              timersSortOrder={timersSortOrder ?? "asc"}
+              setTimersSortOrder={setTimersSortOrder}
+              showHiddenTimers={showHiddenTimers}
+              setShowHiddenTimers={setShowHiddenTimers}
+            />
+          ) : undefined
+        }
       >
         <div className="ll:flex ll:flex-col ll:h-full">
           <TimersContent
@@ -202,6 +208,7 @@ export const Timers = () => {
             isUnderBag={generalConfig.timersUnderBag}
             minColumnWidth={displayConfig.minColumnWidth}
             onAddTimer={() => toggleOpen("add-timer")}
+            compactView={generalConfig.compactView}
           />
         </div>
       </DraggableWindow>

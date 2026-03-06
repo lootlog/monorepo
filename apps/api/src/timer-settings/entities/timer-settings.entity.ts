@@ -17,6 +17,7 @@ export class TimerSettingsEntity {
       timersGrouping: false,
       timersUnderBag: false,
       countdownMode: 'max',
+      compactView: false,
     },
   })
   generalConfig: Record<string, unknown>;

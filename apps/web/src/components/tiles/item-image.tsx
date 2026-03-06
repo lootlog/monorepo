@@ -20,13 +20,15 @@ export const ItemImage: FC<ItemImageProps> = ({
     <div className="relative">
       <div
         className={cn(
-          "w-[32px] h-[32px] relative cursor-pointer border-2 box-content rounded-md transition-all duration-200",
+          // Removed transition-all - not needed and causes repaints
+          "w-[32px] h-[32px] relative cursor-pointer border-2 box-content rounded-md",
           {
-            "border-orange-600 bg-card/80 shadow-[0_0_20px_rgba(234,88,12,0.6),_inset_0_0_10px_rgba(234,88,12,0.5)]":
+            // Simplified shadows - single shadow instead of multiple for better performance
+            "border-orange-600 bg-card/80 shadow-[0_0_12px_rgba(234,88,12,0.5)]":
               rarity === ItemRarity.LEGENDARY,
-            "border-blue-500 bg-card/80 shadow-[0_0_16px_rgba(59,130,246,0.5),_inset_0_0_8px_rgba(59,130,246,0.4)]":
+            "border-blue-500 bg-card/80 shadow-[0_0_10px_rgba(59,130,246,0.4)]":
               rarity === ItemRarity.HEROIC,
-            "border-amber-300 bg-card/80 shadow-[0_0_16px_rgba(252,211,77,0.5),_inset_0_0_8px_rgba(252,211,77,0.4)]":
+            "border-amber-300 bg-card/80 shadow-[0_0_10px_rgba(252,211,77,0.4)]":
               rarity === ItemRarity.UNIQUE,
             "border-primary/40 bg-muted/50": rarity === ItemRarity.UPGRADED,
             "border-border/50 bg-muted/30": rarity === ItemRarity.COMMON,

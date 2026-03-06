@@ -14,7 +14,7 @@ export type WindowId =
   | "settings"
   | "timers"
   | "chat"
-  | "chat-input"
+  | "command"
   | "online-players"
   | "add-timer"
   | "npc-detector"
@@ -22,7 +22,9 @@ export type WindowId =
   | "create-notification"
   | "quick-access"
   | "timer-settings-conflict"
-  | "catching-whitelist-warning";
+  | "catching-whitelist-warning"
+  | "party-finder"
+  | "create-party-gathering";
 
 interface WindowPositionState {
   x: number;
@@ -49,7 +51,7 @@ interface WindowsState {
   settings: WindowData;
   timers: WindowData;
   chat: WindowData;
-  "chat-input": WindowData;
+  command: WindowData;
   "online-players": WindowData;
   "add-timer": WindowData;
   "npc-detector": WindowData & { state: NpcDetectorWindowState };
@@ -58,6 +60,8 @@ interface WindowsState {
   "quick-access": WindowData;
   "timer-settings-conflict": WindowData;
   "catching-whitelist-warning": WindowData;
+  "party-finder": WindowData;
+  "create-party-gathering": WindowData;
   currentWindowFocus?: WindowId;
   windowFocusHistory: WindowId[];
   setCurrentWindowFocus: (key: WindowId) => void;
@@ -99,9 +103,12 @@ export const useWindowsStore = create<WindowsState>()(
         locked: false,
         autofocus: false,
       },
-      "chat-input": {
+      command: {
         open: true,
-        position: DEFAULT_POSITION,
+        position: {
+          x: Math.round((window.innerWidth - 242) / 2),
+          y: Math.round((window.innerHeight - 240) / 2),
+        },
         size: { width: 242, height: 240 },
         opacity: DEFAULT_OPACITY,
         locked: false,
@@ -147,7 +154,7 @@ export const useWindowsStore = create<WindowsState>()(
       "quick-access": {
         open: true,
         position: DEFAULT_POSITION,
-        size: { width: 180, height: 56 },
+        size: { width: 250, height: 56 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -162,6 +169,20 @@ export const useWindowsStore = create<WindowsState>()(
         open: false,
         position: DEFAULT_POSITION,
         size: { width: 400, height: 240 },
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "party-finder": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: DEFAULT_SIZE,
+        opacity: DEFAULT_OPACITY,
+        locked: false,
+      },
+      "create-party-gathering": {
+        open: false,
+        position: DEFAULT_POSITION,
+        size: { width: 280, height: 220 },
         opacity: DEFAULT_OPACITY,
         locked: false,
       },
@@ -224,7 +245,7 @@ export const useWindowsStore = create<WindowsState>()(
         settings: state.settings,
         timers: state.timers,
         chat: state.chat,
-        "chat-input": state["chat-input"],
+        command: state.command,
         "online-players": state["online-players"],
         "add-timer": state["add-timer"],
         "npc-detector": state["npc-detector"],
@@ -239,9 +260,29 @@ export const useWindowsStore = create<WindowsState>()(
         "quick-access": state["quick-access"],
         "timer-settings-conflict": state["timer-settings-conflict"],
         "catching-whitelist-warning": state["catching-whitelist-warning"],
+        "party-finder": state["party-finder"],
+        "create-party-gathering": state["create-party-gathering"],
       }),
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>;
+        if (version < 2) {
+          if (state["chat-input"]) {
+            state.command = state["chat-input"];
+            delete state["chat-input"];
+          }
+          if (Array.isArray(state.windowFocusHistory)) {
+            state.windowFocusHistory = (
+              state.windowFocusHistory as string[]
+            ).map((id) => (id === "chat-input" ? "command" : id));
+          }
+          if (state.currentWindowFocus === "chat-input") {
+            state.currentWindowFocus = "command";
+          }
+        }
+        return state as unknown as WindowsState;
+      },
     },
   ),
 );

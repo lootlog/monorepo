@@ -76,9 +76,9 @@ class PlayerDto {
   @IsString()
   icon: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
-  hpp: number;
+  hpp?: number;
 }
 
 export class NpcDto {
@@ -110,13 +110,9 @@ export class NpcDto {
   @IsNumber()
   wt: number;
 
-  @ValidateIf((o) => {
-    // npc type
-    return !(o.type === 5 || o.type === 0);
-  })
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
-  hpp: number;
+  hpp?: number;
 
   @IsNotEmpty()
   @IsString()

@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTimersStore } from "@/store/timers.store";
-import { FC, useState } from "react";
+import { type FC, useState } from "react";
 
 const MAX_REMOVE_TIMER_AFTER_MS = 120000; // 2 minutes
 
@@ -87,6 +87,21 @@ export const TimersSettingsGeneral: FC = () => {
             setGeneralConfig({ ...generalConfig, timersUnderBag: value })
           }
           id="show-type"
+        />
+      </div>
+      <div className="ll:flex ll:flex-col ll:gap-2">
+        <div>
+          <Label htmlFor="compact-view">Widok kompaktowy</Label>
+          <p className="ll:text-muted-foreground">
+            Ukrywa nagłówek i stopkę timerów, pokazując tylko zawartość.
+          </p>
+        </div>
+        <Switch
+          checked={generalConfig.compactView}
+          onCheckedChange={(value) =>
+            setGeneralConfig({ ...generalConfig, compactView: value })
+          }
+          id="compact-view"
         />
       </div>
       <div className="ll:space-y-1">

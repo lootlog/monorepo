@@ -43,7 +43,27 @@ export enum RoutingKey {
   GUILDS_NOTIFICATIONS_SEND_DLQ = 'guilds.notifications.send.dlq',
   GUILDS_NOTIFICATIONS_SEND_RETRY = 'guilds.notifications.send.retry',
 
+  GUILDS_NOTIFICATIONS_VOLUNTEER = 'guilds.notifications.volunteer',
+  GUILDS_NOTIFICATIONS_VOLUNTEER_DLQ = 'guilds.notifications.volunteer.dlq',
+  GUILDS_NOTIFICATIONS_VOLUNTEER_RETRY = 'guilds.notifications.volunteer.retry',
+
+  GUILDS_PARTY_GATHERING = 'guilds.party-gathering',
+  GUILDS_PARTY_GATHERING_DLQ = 'guilds.party-gathering.dlq',
+  GUILDS_PARTY_GATHERING_RETRY = 'guilds.party-gathering.retry',
+  GUILDS_PARTY_GATHERING_CANCEL = 'guilds.party-gathering.cancel',
+
+  GUILDS_DELETE_MESSAGE = 'guilds.delete.message',
+  GUILDS_UPDATE_MESSAGE = 'guilds.update.message',
+
   GUILDS_MEMBERS_REFRESH_JOB_UPDATE = 'guilds.members.refresh.job.update',
 
   ACTIVITY_LOG_CREATE = 'activity.log.create',
+
+  EVENT_MAP_STATUS_UPDATE = 'event.map-status.update',
+  EVENT_HERO_KILLED = 'event.hero.killed',
+  EVENT_RANKING_UPDATE = 'event.ranking.update',
+  EVENT_RESPAWN_WINDOW_OPENED = 'event.respawn-window.opened',
+  EVENT_RESPAWN_WINDOW_CLOSED = 'event.respawn-window.closed',
+  PRESENCE_COVERAGE_CHECK = 'presence.coverage.check',
+  PRESENCE_CHECK_REQUEST = 'presence.check.request',
 }
