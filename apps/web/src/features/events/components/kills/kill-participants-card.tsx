@@ -33,6 +33,7 @@ import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
+import { parseEditablePoints } from "../../utils/parse-editable-points";
 import { formatDurationHuman, aggregateMapData } from "../../utils";
 
 interface KillParticipantsCardProps {
@@ -100,7 +101,7 @@ const ParticipantRow = ({
 }: ParticipantRowProps) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(formatPoints(participant.points));
+  const [editValue, setEditValue] = useState(String(participant.points));
 
   const avatarUrl = getDiscordAvatarUrl(
     participant.member.userId,
@@ -122,8 +123,9 @@ const ParticipantRow = ({
   );
   const bonusBreakdown = normalizeBonusBreakdown(participant.bonusBreakdown);
   const fallbackBonusPoints =
-    Math.round(Math.max(0, participant.points - participant.basePoints) * 10000) /
-    10000;
+    Math.round(
+      Math.max(0, participant.points - participant.basePoints) * 10000,
+    ) / 10000;
   const bonusPoints =
     bonusBreakdown.length > 0
       ? Math.round(
@@ -145,25 +147,24 @@ const ParticipantRow = ({
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditValue(formatPoints(participant.points));
+    setEditValue(String(participant.points));
     setIsEditing(true);
   };
 
   const handleCancelEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditing(false);
-    setEditValue(formatPoints(participant.points));
+    setEditValue(String(participant.points));
   };
 
   const handleConfirmEdit = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newPoints = Number.parseFloat(editValue);
-    if (Number.isNaN(newPoints) || newPoints < 0) {
+    const newPoints = parseEditablePoints(editValue);
+    if (newPoints === null) {
       return;
     }
-    const roundedPoints = Math.round(newPoints * 100) / 100;
     if (onEditPoints) {
-      await onEditPoints(participant.id, roundedPoints);
+      await onEditPoints(participant.id, newPoints);
     }
     setIsEditing(false);
   };
@@ -177,7 +178,7 @@ const ParticipantRow = ({
       handleConfirmEdit(e as unknown as React.MouseEvent);
     } else if (e.key === "Escape") {
       setIsEditing(false);
-      setEditValue(formatPoints(participant.points));
+      setEditValue(String(participant.points));
     }
   };
 
@@ -235,7 +236,7 @@ const ParticipantRow = ({
                 <Input
                   type="number"
                   min={0}
-                  step={0.01}
+                  step="any"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -322,7 +323,10 @@ const ParticipantRow = ({
                       ) : (
                         <div className="flex justify-between gap-4">
                           <span>
-                            {t("events.kills.pointsTooltip.bonusTotal", "Bonusy razem")}
+                            {t(
+                              "events.kills.pointsTooltip.bonusTotal",
+                              "Bonusy razem",
+                            )}
                             :
                           </span>
                           <span className="font-medium">
