@@ -149,7 +149,7 @@ const RankingRow = ({
             <Input
               type="number"
               min={0}
-              step={0.01}
+              step="any"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={handleKeyDown}
