@@ -99,7 +99,7 @@ export const useGameEventHandlers = () => {
     handleInitialNpcsDetection();
     handleInitialPartyDetection();
     gameEventsManager.markStripFriendsFromNextEvent();
-    fetchFriends();
+    // fetchFriends();
   });
 
   useEffect(() => {
