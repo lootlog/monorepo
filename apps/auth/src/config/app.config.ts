@@ -19,6 +19,8 @@ const configSchema = z.object({
   COOKIE_PREFIX: z.string(),
   ADMIN_ACCOUNT_IDS: z.string().transform((val) => val.split(",")),
   AUTH_SECRET: z.string(),
+  INTERNAL_SERVICE_AUTH_SECRET: z.string(),
+  FORWARDED_AUTH_SIGNATURE_SECRET: z.string(),
 });
 
 const {
@@ -38,6 +40,8 @@ const {
   COOKIE_PREFIX,
   ADMIN_ACCOUNT_IDS,
   AUTH_SECRET,
+  INTERNAL_SERVICE_AUTH_SECRET,
+  FORWARDED_AUTH_SIGNATURE_SECRET,
 } = configSchema.parse(process.env);
 
 export const APP_CONFIG = {
@@ -50,6 +54,8 @@ export const APP_CONFIG = {
   cookiePrefix: COOKIE_PREFIX,
   adminAccountIds: ADMIN_ACCOUNT_IDS,
   authSecret: AUTH_SECRET,
+  internalServiceAuthSecret: INTERNAL_SERVICE_AUTH_SECRET,
+  forwardedAuthSignatureSecret: FORWARDED_AUTH_SIGNATURE_SECRET,
   postgres: {
     host: POSTGRESQL_HOST,
     port: POSTGRESQL_PORT,

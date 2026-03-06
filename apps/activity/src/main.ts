@@ -51,7 +51,12 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerDocument);
-  SwaggerModule.setup(path, app, document);
+  const env = configService.get<ServiceConfig>(ConfigKey.SERVICE, {
+    infer: true,
+  })?.env;
+  if (env === 'local' || env === 'dev') {
+    SwaggerModule.setup(path, app, document);
+  }
 
   await app.startAllMicroservices();
   await app.listen(port, '0.0.0.0');

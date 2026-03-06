@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { authenticateHeaders } from '@lootlog/api-helpers';
 import { Platform } from 'src/gateway/enums/platform.enum';
 import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
 import type { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
@@ -13,12 +14,21 @@ export interface ConnectionMetadata {
 export class ConnectionService {
   private readonly logger = new Logger(ConnectionService.name);
 
-  getConnectionMetadata(request: Socket['request']): ConnectionMetadata {
-    const discordId = (request.headers['x-auth-discord-id'] as string) || null;
-    const userId = (request.headers['x-auth-user-id'] as string) || null;
+  async getConnectionMetadata(
+    request: Socket['request'],
+  ): Promise<ConnectionMetadata> {
+    const authenticatedUser = await authenticateHeaders({
+      headers: request.headers as Record<string, unknown>,
+      authServiceUrl: process.env.AUTH_SERVICE_URL,
+      forwardedAuthSecret: process.env.FORWARDED_AUTH_SIGNATURE_SECRET,
+    });
     const platform = this.determineUserPlatform(request.headers.origin);
 
-    return { discordId, userId, platform };
+    return {
+      discordId: authenticatedUser?.discordId ?? null,
+      userId: authenticatedUser?.userId ?? null,
+      platform,
+    };
   }
 
   determineUserPlatform(requestOrigin: string | undefined): Platform {

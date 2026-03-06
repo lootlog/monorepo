@@ -48,13 +48,12 @@ export const auth: any = betterAuth({
       enabled: true,
       maxAge: 5 * 60,
     },
-    expiresIn: 60 * 60 * 24 * 365, // 1 year
-    updateAge: 60 * 60 * 24 * 30, // 30 days
+    expiresIn: 60 * 60 * 24 * 30, // 30 days
+    updateAge: 60 * 60 * 24, // 1 day
     freshAge: 0,
   },
   emailAndPassword: {
-    enabled: true,
-    minPasswordLength: 1,
+    enabled: false,
   },
   trustedOrigins: APP_CONFIG.trustedOrigins,
   advanced: {
@@ -76,7 +75,7 @@ export const auth: any = betterAuth({
       jwt: {
         issuer: APP_CONFIG.appUrl,
         audience: APP_CONFIG.appUrl,
-        expirationTime: "365d",
+        expirationTime: "24h",
         definePayload: ({ user }) => {
           return {
             id: user.id,

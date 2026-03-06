@@ -172,6 +172,8 @@ http:
         authResponseHeaders:
           - "X-Auth-User-Id"
           - "X-Auth-Discord-Id"
+          - "X-Auth-Timestamp"
+          - "X-Auth-Signature"
         authRequestHeaders:
           - "Authorization"
           - "Cookie"

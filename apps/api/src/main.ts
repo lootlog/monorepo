@@ -46,7 +46,12 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  const env = configService.get<ServiceConfig>('service', {
+    infer: true,
+  })?.env;
+  if (env === 'local' || env === 'dev') {
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   await app.startAllMicroservices();
   await app.listen(port, '0.0.0.0');

@@ -4,6 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { RedisService } from 'src/lib/redis/redis.service';
+import { of } from 'rxjs';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -31,6 +32,8 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    process.env.INTERNAL_SERVICE_AUTH_SECRET = 'test-internal-secret';
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -54,9 +57,35 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('should call the internal auth token endpoint with the shared secret', async () => {
+    mockRedisService.get.mockResolvedValue(null);
+    mockHttpService.post.mockReturnValue(
+      of({
+        data: {
+          accessToken: 'token',
+          expiresIn: 3600,
+          scopes: ['identify'],
+        },
+      }),
+    );
+
+    await service.getIdpToken('user-123');
+
+    expect(mockHttpService.post).toHaveBeenCalledWith(
+      'http://localhost:3001/auth/internal/idp-token',
+      { userId: 'user-123' },
+      expect.objectContaining({
+        headers: {
+          'X-Internal-Service-Secret': 'test-internal-secret',
+        },
+      }),
+    );
   });
 });

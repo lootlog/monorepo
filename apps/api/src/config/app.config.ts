@@ -32,6 +32,8 @@ export const APP_CONFIG: ConfigModuleOptions = {
     REDIS_PASSWORD: Joi.string().allow('').required(),
     REDIS_USERNAME: Joi.string().allow('').required(),
     AUTH_SERVICE_URL: Joi.string().required(),
+    INTERNAL_SERVICE_AUTH_SECRET: Joi.string().required(),
+    FORWARDED_AUTH_SIGNATURE_SECRET: Joi.string().required(),
     RESERVATIONS_CARDS_URL: Joi.string().uri().required(),
     OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().allow(''),
     OTEL_EXPORTER_OTLP_HEADERS: Joi.string().allow(''),

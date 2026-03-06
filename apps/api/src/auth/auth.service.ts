@@ -23,6 +23,7 @@ const DEFAULT_REQUEST_TIMEOUT = 5000;
 @Injectable()
 export class AuthService {
   private authServiceUrl: string;
+  private internalServiceSecret: string;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -32,15 +33,21 @@ export class AuthService {
   ) {
     const authConfig = this.configService.get<AuthConfig>(ConfigKey.AUTH);
     this.authServiceUrl = authConfig.serviceUrl;
+    this.internalServiceSecret = process.env.INTERNAL_SERVICE_AUTH_SECRET || '';
   }
 
   private async fetchIdpToken(userId: string): Promise<GetIdpTokenResponse> {
     try {
-      const url = `${this.authServiceUrl}/auth/idp-token`;
+      const url = `${this.authServiceUrl}/auth/internal/idp-token`;
       const response$ = this.httpService.post<GetIdpTokenResponse>(
         url,
         { userId },
-        { timeout: DEFAULT_REQUEST_TIMEOUT },
+        {
+          timeout: DEFAULT_REQUEST_TIMEOUT,
+          headers: {
+            'X-Internal-Service-Secret': this.internalServiceSecret,
+          },
+        },
       );
 
       const response = await firstValueFrom(response$);

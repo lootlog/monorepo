@@ -3,6 +3,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/db/prisma.service';
 import {
+  createSignedAuthHeaders,
   createTestTimerPayload,
   TEST_GUILDS,
   TEST_USERS,
@@ -79,8 +80,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(timerPayload)
         .expect(201);
 
@@ -128,8 +133,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(timerPayload)
         .expect(201);
 
@@ -177,8 +186,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(timerPayload)
         .expect(400);
     });
@@ -216,8 +229,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
         .map(() =>
           request(app.getHttpServer())
             .post(`/guilds/${guild1.id}/timers`)
-            .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-            .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+            .set(
+              createSignedAuthHeaders({
+                discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+                id: TEST_USERS.MEMBER_WITH_WRITE.id,
+              }),
+            )
             .send(timerPayload),
         );
 
@@ -274,8 +291,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
           .map(() =>
             request(app.getHttpServer())
               .post(`/guilds/${guild1.id}/timers`)
-              .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-              .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+              .set(
+                createSignedAuthHeaders({
+                  discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+                  id: TEST_USERS.MEMBER_WITH_WRITE.id,
+                }),
+              )
               .send(timerPayload),
           ),
       );
@@ -360,8 +381,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       for (let i = 0; i < 5; i++) {
         await request(app.getHttpServer())
           .patch(`/guilds/${guild1.id}/timers/999/reset`)
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+              id: TEST_USERS.MEMBER_WITH_WRITE.id,
+            }),
+          )
           .send({ world: 'test-world' })
           .expect(200);
 
@@ -409,15 +434,23 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response1 = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(timerPayload)
         .expect(201);
 
       const response2 = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(timerPayload)
         .expect(201);
 
@@ -455,8 +488,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       const cacheKeysBefore = await (
@@ -488,8 +525,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const timerPayload = createTestTimerPayload();
       await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(timerPayload)
         .expect(201);
 
@@ -529,8 +570,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId,
+            id: TEST_USERS.MEMBER_WITHOUT_ACCESS.id,
+          }),
+        )
         .send(timerPayload)
         .expect(403);
     });
@@ -586,8 +631,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response1 = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response1.body).toHaveLength(1);
@@ -599,8 +648,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response2 = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response2.body).toHaveLength(1);
@@ -684,8 +737,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'Smok', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveLength(2);
@@ -770,8 +827,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'Boss', world: 'world-1' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveLength(1);
@@ -833,8 +894,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'Test', world: 'test-world', limit: 2 })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveLength(2);
@@ -869,8 +934,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'NonExistentNPC', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveLength(0);
@@ -948,8 +1017,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'Test Boss', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveLength(1);
@@ -986,8 +1059,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'Boss', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId,
+            id: TEST_USERS.MEMBER_WITHOUT_ACCESS.id,
+          }),
+        )
         .expect(403);
     });
 
@@ -1020,15 +1097,23 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'Boss' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(400);
 
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(400);
     });
 
@@ -1085,8 +1170,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
         .query({ search: 'dragon', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveLength(1);

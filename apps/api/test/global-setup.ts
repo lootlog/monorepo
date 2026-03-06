@@ -48,6 +48,9 @@ export default async function globalSetup() {
   process.env.REDIS_PASSWORD = '';
   process.env.REDIS_USERNAME = '';
   process.env.RABBITMQ_URI = rabbitmqUri;
+  process.env.AUTH_SERVICE_URL = 'http://localhost/api/auth';
+  process.env.INTERNAL_SERVICE_AUTH_SECRET = 'test-internal-service-secret';
+  process.env.FORWARDED_AUTH_SIGNATURE_SECRET = 'test-forwarded-auth-secret';
 
   console.log('✅ Test containers started');
   console.log('📊 PostgreSQL:', postgresConnectionString);

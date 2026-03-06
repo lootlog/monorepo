@@ -46,7 +46,7 @@ export class Gateway {
 
   async handleConnection(client: Socket) {
     const { discordId, platform, userId } =
-      this.connectionService.getConnectionMetadata(client.request);
+      await this.connectionService.getConnectionMetadata(client.request);
 
     const validation = this.connectionService.validateConnection(
       discordId,

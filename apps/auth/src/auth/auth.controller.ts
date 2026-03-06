@@ -2,7 +2,11 @@ import { Hono } from "hono";
 import { APIError } from "better-auth/api";
 import { auth } from "../lib/auth.js";
 import { APP_CONFIG } from "../config/app.config.js";
-import { type JwksKeys, validateToken } from "@lootlog/api-helpers";
+import {
+  createForwardedAuthSignature,
+  type JwksKeys,
+  validateToken,
+} from "@lootlog/api-helpers";
 
 const authController = new Hono<{
   Variables: {
@@ -17,6 +21,17 @@ authController.get("/verify", async (c) => {
   if (user) {
     c.res.headers.set("X-Auth-Discord-Id", user.discordId);
     c.res.headers.set("X-Auth-User-Id", user.id);
+    const timestamp = Date.now().toString();
+    c.res.headers.set("X-Auth-Timestamp", timestamp);
+    c.res.headers.set(
+      "X-Auth-Signature",
+      createForwardedAuthSignature(
+        user.id,
+        user.discordId,
+        timestamp,
+        APP_CONFIG.forwardedAuthSignatureSecret,
+      ),
+    );
 
     return c.json({ status: "OK" });
   }
@@ -45,6 +60,17 @@ authController.get("/verify", async (c) => {
 
   c.res.headers.set("X-Auth-Discord-Id", discordId);
   c.res.headers.set("X-Auth-User-Id", userId);
+  const timestamp = Date.now().toString();
+  c.res.headers.set("X-Auth-Timestamp", timestamp);
+  c.res.headers.set(
+    "X-Auth-Signature",
+    createForwardedAuthSignature(
+      userId,
+      discordId,
+      timestamp,
+      APP_CONFIG.forwardedAuthSignatureSecret,
+    ),
+  );
 
   return c.json({ status: "OK" });
 });
@@ -75,13 +101,23 @@ authController.get("/@me/scopes", async (c) => {
 
   const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
   if (expiresAt && expiresAt < new Date()) {
-    return c.json({ error: "IDP token has expired. Please reconnect your account." }, 401);
+    return c.json(
+      { error: "IDP token has expired. Please reconnect your account." },
+      401,
+    );
   }
 
   return c.json(token.scopes || []);
 });
 
-authController.post("/idp-token", async (c) => {
+authController.post("/internal/idp-token", async (c) => {
+  const internalSecretHeader = c.req.raw.headers.get(
+    "x-internal-service-secret",
+  );
+  if (internalSecretHeader !== APP_CONFIG.internalServiceAuthSecret) {
+    return c.body(null, 401);
+  }
+
   const body = await c.req.json();
   const { userId } = body;
 
@@ -115,7 +151,9 @@ authController.post("/idp-token", async (c) => {
 
   return c.json({
     accessToken: token.accessToken,
-    expiresIn: expiresAt ? Math.floor((expiresAt.getTime() - Date.now()) / 1000) : 0,
+    expiresIn: expiresAt
+      ? Math.floor((expiresAt.getTime() - Date.now()) / 1000)
+      : 0,
     scopes: token.scopes || [],
   });
 });

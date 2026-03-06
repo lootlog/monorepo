@@ -3,7 +3,11 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/db/prisma.service';
 import { RedisService } from '../src/lib/redis/redis.service';
-import { TEST_GUILDS, TEST_USERS } from './test-helpers';
+import {
+  createSignedAuthHeaders,
+  TEST_GUILDS,
+  TEST_USERS,
+} from './test-helpers';
 import { createTestingModuleWithMocks } from './test-module-helpers';
 import { Permission, NpcType } from 'generated/client';
 
@@ -108,8 +112,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Send first request - should succeed
       const response1 = await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(killPayload)
         .expect(201);
 
@@ -119,8 +127,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Send second request immediately - should be deduplicated
       const response2 = await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(killPayload)
         .expect(201);
 
@@ -181,8 +193,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
         .map(() =>
           request(app.getHttpServer())
             .post('/kills')
-            .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-            .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+            .set(
+              createSignedAuthHeaders({
+                discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+                id: TEST_USERS.MEMBER_WITH_WRITE.id,
+              }),
+            )
             .send(killPayload),
         );
 
@@ -246,8 +262,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Kill NPC 1
       const response1 = await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(
           createTestKillPayload({
             npc: { ...createTestKillPayload().npc, id: -1001 },
@@ -260,8 +280,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Kill NPC 2 - different NPC, should not be deduplicated
       const response2 = await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(
           createTestKillPayload({
             npc: { ...createTestKillPayload().npc, id: -1002 },
@@ -355,18 +379,30 @@ describe('Kills E2E Tests (Deduplication)', () => {
       const responses = await Promise.all([
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+              id: TEST_USERS.MEMBER_WITH_WRITE.id,
+            }),
+          )
           .send({ ...killPayload, accountId: '11111', characterId: '1' }),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_2.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_2.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+              id: TEST_USERS_EXTENDED.MEMBER_2.id,
+            }),
+          )
           .send({ ...killPayload, accountId: '22222', characterId: '2' }),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_3.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_3.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+              id: TEST_USERS_EXTENDED.MEMBER_3.id,
+            }),
+          )
           .send({ ...killPayload, accountId: '33333', characterId: '3' }),
       ]);
 
@@ -450,8 +486,9 @@ describe('Kills E2E Tests (Deduplication)', () => {
       const requests = userIds.map((user) =>
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', user.discordId)
-          .set('x-auth-user-id', user.id)
+          .set(
+            createSignedAuthHeaders({ discordId: user.discordId, id: user.id }),
+          )
           .send({
             ...killPayload,
             accountId: user.accountId,
@@ -534,18 +571,30 @@ describe('Kills E2E Tests (Deduplication)', () => {
       const responses = await Promise.all([
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+              id: TEST_USERS.MEMBER_WITH_WRITE.id,
+            }),
+          )
           .send({ ...basePayload, characterId: 'char1' }),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+              id: TEST_USERS.MEMBER_WITH_WRITE.id,
+            }),
+          )
           .send({ ...basePayload, characterId: 'char2' }),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+              id: TEST_USERS.MEMBER_WITH_WRITE.id,
+            }),
+          )
           .send({ ...basePayload, characterId: 'char3' }),
       ]);
 
@@ -624,8 +673,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(createTestKillPayload())
         .expect(201);
 
@@ -731,26 +784,42 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await Promise.all([
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+              id: TEST_USERS.MEMBER_WITH_WRITE.id,
+            }),
+          )
           .send({ ...killPayload, accountId: '11111', characterId: '1' }),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_2.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_2.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+              id: TEST_USERS_EXTENDED.MEMBER_2.id,
+            }),
+          )
           .send({ ...killPayload, accountId: '22222', characterId: '2' }),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_3.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_3.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+              id: TEST_USERS_EXTENDED.MEMBER_3.id,
+            }),
+          )
           .send({ ...killPayload, accountId: '33333', characterId: '3' }),
       ]);
 
       // Now check stats
       const statsResponse = await request(app.getHttpServer())
         .get(`/guilds/${guild.id}/stats/kills`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       // 1 unique guild kill
@@ -820,8 +889,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Kill COLOSSUS with spawn ID 111111
       const response1 = await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(createColossusKillPayload(111111, 'Wielki Kolos'))
         .expect(201);
 
@@ -833,8 +906,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Kill same COLOSSUS with different spawn ID 222222
       const response2 = await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(createColossusKillPayload(222222, 'Wielki Kolos'))
         .expect(201);
 
@@ -893,8 +970,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Kill 'Kolos Ognia'
       await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(createColossusKillPayload(111111, 'Kolos Ognia'))
         .expect(201);
 
@@ -903,8 +984,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Kill 'Kolos Lodu'
       await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(createColossusKillPayload(222222, 'Kolos Lodu'))
         .expect(201);
 
@@ -958,16 +1043,24 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Create COLOSSUS kill
       await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(createColossusKillPayload(111111, 'Wielki Kolos'))
         .expect(201);
 
       // Query top NPCs filtered by COLOSSUS type
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild.id}/stats/kills/top-npcs?npcType=COLOSSUS`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body.topNpcs).toHaveLength(1);
@@ -1013,8 +1106,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Create COLOSSUS kill
       await request(app.getHttpServer())
         .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(createColossusKillPayload(111111, 'Wielki Kolos'))
         .expect(201);
 
@@ -1029,8 +1126,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Query killers endpoint with negative npcId
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild.id}/stats/kills/npcs/${negativeNpcId}/killers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body.npc).toBeDefined();
@@ -1109,8 +1210,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
       const responses = await Promise.all([
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+              id: TEST_USERS.MEMBER_WITH_WRITE.id,
+            }),
+          )
           .send(
             createColossusKillPayload(111111, 'Wielki Kolos', {
               accountId: '11111',
@@ -1119,8 +1224,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
           ),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_2.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_2.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
+              id: TEST_USERS_EXTENDED.MEMBER_2.id,
+            }),
+          )
           .send(
             createColossusKillPayload(222222, 'Wielki Kolos', {
               accountId: '22222',
@@ -1129,8 +1238,12 @@ describe('Kills E2E Tests (Deduplication)', () => {
           ),
         request(app.getHttpServer())
           .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_3.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_3.id)
+          .set(
+            createSignedAuthHeaders({
+              discordId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
+              id: TEST_USERS_EXTENDED.MEMBER_3.id,
+            }),
+          )
           .send(
             createColossusKillPayload(333333, 'Wielki Kolos', {
               accountId: '33333',

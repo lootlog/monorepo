@@ -2,7 +2,12 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/db/prisma.service';
-import { createTestLootPayload, TEST_GUILDS, TEST_USERS } from './test-helpers';
+import {
+  createSignedAuthHeaders,
+  createTestLootPayload,
+  TEST_GUILDS,
+  TEST_USERS,
+} from './test-helpers';
 import { createTestingModuleWithMocks } from './test-module-helpers';
 import { Permission, NpcType, ItemRarity } from 'generated/client';
 
@@ -96,8 +101,12 @@ describe('Loots E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/loots')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(lootPayload)
         .expect(201);
 
@@ -202,8 +211,12 @@ describe('Loots E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/loots')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(lootPayload)
         .expect(201);
 
@@ -254,8 +267,12 @@ describe('Loots E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .post('/loots')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(lootPayload)
         .expect(400);
 
@@ -293,8 +310,12 @@ describe('Loots E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .post('/loots')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(lootPayload)
         .expect(400);
 
@@ -332,8 +353,12 @@ describe('Loots E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .post('/loots')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId,
+            id: TEST_USERS.MEMBER_WITHOUT_ACCESS.id,
+          }),
+        )
         .send(lootPayload)
         .expect(403);
     });
@@ -395,8 +420,12 @@ describe('Loots E2E Tests (Whitelist)', () => {
         .map(() =>
           request(app.getHttpServer())
             .post('/loots')
-            .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-            .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+            .set(
+              createSignedAuthHeaders({
+                discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+                id: TEST_USERS.MEMBER_WITH_WRITE.id,
+              }),
+            )
             .send(lootPayload),
         );
 

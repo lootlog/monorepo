@@ -5,15 +5,18 @@ Shared NestJS utilities for backend microservices.
 ## Exports
 
 **Guards:**
-- `AuthGuard` - Validates `x-auth-discord-id` and `x-auth-user-id` headers
+
+- `AuthGuard` - Validates bearer JWTs or signed forwarded auth headers
 
 **Decorators:**
+
 - `@UserId()` - Extract user ID from request
 - `@DiscordId()` - Extract Discord ID from request
 - `@GuildId()` - Extract guild ID from URL params
 - `@RequiredPermissions()` - Mark required permissions on handlers
 
 **Middleware:**
+
 - `LoggerMiddleware` - Winston HTTP request/response logging
 
 ## Usage

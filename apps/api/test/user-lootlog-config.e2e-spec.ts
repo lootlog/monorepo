@@ -3,7 +3,11 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/db/prisma.service';
 import { RedisService } from '../src/lib/redis/redis.service';
-import { TEST_GUILDS, TEST_USERS } from './test-helpers';
+import {
+  createSignedAuthHeaders,
+  TEST_GUILDS,
+  TEST_USERS,
+} from './test-helpers';
 import { createTestingModuleWithMocks } from './test-module-helpers';
 import { Permission } from 'generated/client';
 
@@ -77,8 +81,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .get('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toEqual({});
@@ -122,8 +130,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .get('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveProperty('1');
@@ -183,8 +195,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .get('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body).toHaveProperty('1');
@@ -258,8 +274,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .get('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .expect(200);
 
       expect(response.body['1'].collectLootWhitelistGuildIds).toEqual([
@@ -306,8 +326,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .put('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(payload)
         .expect(200);
 
@@ -422,8 +446,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .put('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(payload)
         .expect(200);
 
@@ -493,8 +521,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .put('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(payload)
         .expect(200);
 
@@ -516,8 +548,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       await request(app.getHttpServer())
         .put('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(payload)
         .expect(400);
     });
@@ -531,8 +567,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       await request(app.getHttpServer())
         .put('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(payload)
         .expect(400);
     });
@@ -546,8 +586,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       await request(app.getHttpServer())
         .put('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(payload)
         .expect(400);
     });
@@ -586,8 +630,12 @@ describe('User Lootlog Config E2E Tests', () => {
 
       const response = await request(app.getHttpServer())
         .put('/users/@me/lootlog-config/accounts/12345')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set(
+          createSignedAuthHeaders({
+            discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+            id: TEST_USERS.MEMBER_WITH_WRITE.id,
+          }),
+        )
         .send(payload)
         .expect(200);
 

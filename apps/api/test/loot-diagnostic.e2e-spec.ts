@@ -1,7 +1,11 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { createTestLootPayload, TEST_USERS } from './test-helpers';
+import {
+  createSignedAuthHeaders,
+  createTestLootPayload,
+  TEST_USERS,
+} from './test-helpers';
 import { createTestingModuleWithMocks } from './test-module-helpers';
 
 describe('Loot Diagnostic', () => {
@@ -32,8 +36,12 @@ describe('Loot Diagnostic', () => {
 
     const response = await request(app.getHttpServer())
       .post('/loots')
-      .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-      .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+      .set(
+        createSignedAuthHeaders({
+          discordId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
+          id: TEST_USERS.MEMBER_WITH_WRITE.id,
+        }),
+      )
       .send(lootPayload);
 
     console.log('Response status:', response.status);

@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto';
+
 export interface TestUser {
   id: string;
   email: string;
@@ -34,6 +36,24 @@ export const TEST_GUILDS = {
     active: true,
   },
 } as const;
+
+export function createSignedAuthHeaders(
+  user: Pick<TestUser, 'id' | 'discordId'>,
+) {
+  const timestamp = Date.now().toString();
+  const secret =
+    process.env.FORWARDED_AUTH_SIGNATURE_SECRET || 'test-forwarded-auth-secret';
+  const signature = createHmac('sha256', secret)
+    .update(`${user.id}:${user.discordId}:${timestamp}`)
+    .digest('hex');
+
+  return {
+    'x-auth-user-id': user.id,
+    'x-auth-discord-id': user.discordId,
+    'x-auth-timestamp': timestamp,
+    'x-auth-signature': signature,
+  };
+}
 
 export function createTestLootPayload(overrides = {}) {
   return {

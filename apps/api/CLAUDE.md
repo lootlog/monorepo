@@ -36,9 +36,14 @@ src/
 
 ## Authentication
 
-Runs behind Traefik with Forward Auth. AuthGuard reads headers injected by Traefik:
+Runs behind Traefik with Forward Auth. AuthGuard accepts:
+
+- Bearer JWTs validated against the auth service JWKS endpoint
+- signed headers injected by Traefik/Auth verify:
 - `x-auth-discord-id`
 - `x-auth-user-id`
+- `x-auth-timestamp`
+- `x-auth-signature`
 
 PermissionsGuard checks guild-level permissions cached in Redis.
 
@@ -59,6 +64,7 @@ PermissionsGuard checks guild-level permissions cached in Redis.
 ### Events
 
 Publishes to RabbitMQ exchange `lootlog.topic`:
+
 - `guilds.timers.update/delete`
 - `guilds.members.update/refresh`
 
@@ -67,13 +73,14 @@ Consumed by: Gateway (Socket.IO broadcast), Discord Bot, Search service
 ### Distributed Locking
 
 Timer creation uses Redis locks to prevent race conditions:
+
 1. Deduplication lock (10s)
 2. Creation lock (5s)
 3. Redlock for concurrent Discord API requests
 
 ## API Endpoints
 
-Swagger: `http://localhost:4003/api/docs`
+Swagger: `http://localhost:4003/api/docs` in local/dev only
 
 - `/guilds/*` - Guild management
 - `/guilds/:guildId/members/*` - Member operations
