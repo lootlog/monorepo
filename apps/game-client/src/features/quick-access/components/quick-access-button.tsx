@@ -20,7 +20,7 @@ export const QuickAccessButton: FC<QuickAccessButtonProps> = ({
   icon,
   href,
 }) => {
-  const { toggleOpen } = useWindowsStore();
+  const toggleOpen = useWindowsStore((state) => state.toggleOpen);
 
   const handleClick = () => {
     if (href) {

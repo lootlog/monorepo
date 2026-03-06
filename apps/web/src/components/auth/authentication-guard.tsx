@@ -14,7 +14,7 @@ type Props = {
 };
 
 export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
-  const { data: scopes } = useAuthScopes();
+  const { data: scopes, isFetched, isError } = useAuthScopes();
 
   const hasRequiredScopes = REQUIRED_SCOPES.every((scope) =>
     scopes?.includes(scope),
@@ -30,7 +30,7 @@ export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
 
   return (
     <>
-      <Dialog open={!hasRequiredScopes}>
+      <Dialog open={!hasRequiredScopes && isFetched && !isError}>
         <DialogContent className="p-4">
           <DialogTitle>Wymagane ponowne zalogowanie</DialogTitle>
           <DialogDescription>

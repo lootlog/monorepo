@@ -3,5 +3,5 @@ resources:
   - ../../base/gateway
 images:
   - name: kamilwronka7/lootlog-gateway
-    newTag: prod-613e45da5e93fe4f6394f7151a08e302c549738c
+    newTag: prod-cf89b083638023880d76a2360fca4e0194ba7340
 namePrefix: prod-

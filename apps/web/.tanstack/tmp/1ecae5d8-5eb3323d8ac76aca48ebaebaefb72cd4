@@ -1,0 +1,6 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { KillsPage } from "@/features/kills/kills-page";
+
+export const Route = createFileRoute("/_authenticated/@me/_kills")({
+  component: KillsPage,
+});

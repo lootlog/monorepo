@@ -1,5 +1,3 @@
-"use client";
-
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ChevronDown } from "lucide-react";

@@ -54,6 +54,8 @@ export class LootQueryService {
       world,
       hid,
       itemNames,
+      createdAtMin,
+      createdAtMax,
     }: FetchLootsParamsDto,
   ) {
     const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
@@ -72,6 +74,8 @@ export class LootQueryService {
       hid,
       itemNames,
       cursor,
+      createdAtMin,
+      createdAtMax,
     });
 
     const lootsWithRelations = await this.prisma.loot.findMany({
@@ -175,6 +179,8 @@ export class LootQueryService {
       world,
       hid,
       itemNames,
+      createdAtMin,
+      createdAtMax,
     }: FetchLootsParamsDto,
   ) {
     const baseWhere = this.buildBaseWhereCondition(guild, permissions, roles, {
@@ -193,11 +199,90 @@ export class LootQueryService {
       hid,
       itemNames,
       cursor: null,
+      createdAtMin,
+      createdAtMax,
     });
 
     return this.prisma.loot.count({
       where: baseWhere,
     });
+  }
+
+  async fetchLootById(
+    guild: Guild,
+    lootId: number,
+  ): Promise<LootQueryResult | null> {
+    const loot = await this.prisma.loot.findFirst({
+      where: {
+        id: lootId,
+        lootSubmissions: {
+          some: {
+            guildId: guild.id,
+          },
+        },
+      },
+      select: {
+        id: true,
+        uniqueId: true,
+        world: true,
+        source: true,
+        location: true,
+        lootShare: true,
+        createdAt: true,
+        updatedAt: true,
+        lootSubmissions: {
+          where: { guildId: guild.id },
+          include: {
+            member: {
+              select: {
+                name: true,
+                avatar: true,
+                userId: true,
+              },
+            },
+          },
+        },
+        lootItems: {
+          include: { itemSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootPlayers: {
+          include: { playerSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+        lootNpcs: {
+          include: { npcSnapshot: true },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    if (!loot) return null;
+
+    const commentsCount = await this.prisma.lootComment.count({
+      where: {
+        lootId: loot.id,
+        guildId: guild.id,
+      },
+    });
+
+    return {
+      id: loot.id,
+      uniqueId: loot.uniqueId,
+      world: loot.world,
+      source: loot.source,
+      location: loot.location,
+      lootShare: loot.lootShare,
+      createdAt: loot.createdAt,
+      updatedAt: loot.updatedAt,
+      items: this.mapItems(loot.lootItems),
+      players: loot.lootPlayers.map((entry) =>
+        this.mapPlayerFromSnapshot(entry),
+      ),
+      npcs: this.mapNpcs(loot.lootNpcs),
+      submissions: loot.lootSubmissions,
+      commentsCount,
+    };
   }
 
   private buildBaseWhereCondition(
@@ -220,6 +305,8 @@ export class LootQueryService {
       hid,
       itemNames,
       cursor,
+      createdAtMin,
+      createdAtMax,
     }: {
       npcTypes?: string[];
       npcs?: string[];
@@ -236,6 +323,8 @@ export class LootQueryService {
       hid?: string;
       itemNames?: string[];
       cursor?: number | null;
+      createdAtMin?: string;
+      createdAtMax?: string;
     },
   ): Prisma.LootWhereInput {
     const filteredRoles = roles.filter((role) =>
@@ -267,6 +356,10 @@ export class LootQueryService {
     const cursorCondition = this.buildCursorCondition(cursor ?? null);
     const hidCondition = this.buildHidCondition(hid);
     const itemNamesCondition = this.buildItemNamesCondition(itemNames);
+    const createdAtCondition = this.buildCreatedAtCondition(
+      createdAtMin,
+      createdAtMax,
+    );
 
     const baseWhere: Prisma.LootWhereInput = {
       lootSubmissions: {
@@ -293,6 +386,7 @@ export class LootQueryService {
       searchCondition,
       hidCondition,
       itemNamesCondition,
+      createdAtCondition,
     ].filter(Boolean) as Prisma.LootWhereInput[];
 
     if (andConditions.length > 0) {
@@ -601,6 +695,32 @@ export class LootQueryService {
       id: {
         lt: Number(cursor),
       },
+    };
+  }
+
+  private buildCreatedAtCondition(
+    createdAtMin?: string,
+    createdAtMax?: string,
+  ): Prisma.LootWhereInput | null {
+    const hasMin = createdAtMin !== undefined && createdAtMin !== null;
+    const hasMax = createdAtMax !== undefined && createdAtMax !== null;
+
+    if (!hasMin && !hasMax) {
+      return null;
+    }
+
+    const createdAtCondition: Prisma.DateTimeFilter = {};
+
+    if (hasMin) {
+      createdAtCondition.gte = new Date(createdAtMin);
+    }
+
+    if (hasMax) {
+      createdAtCondition.lte = new Date(createdAtMax);
+    }
+
+    return {
+      createdAt: createdAtCondition,
     };
   }
 

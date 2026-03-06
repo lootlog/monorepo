@@ -8,6 +8,12 @@ export enum RoutingKey {
   GUILDS_RESERVATIONS_DELETE = 'guilds.reservations.delete',
 
   GUILDS_NOTIFICATIONS_SEND = 'guilds.notifications.send',
+  GUILDS_NOTIFICATIONS_VOLUNTEER = 'guilds.notifications.volunteer',
+  GUILDS_PARTY_GATHERING = 'guilds.party-gathering',
+  GUILDS_PARTY_GATHERING_CANCEL = 'guilds.party-gathering.cancel',
+
+  GUILDS_DELETE_MESSAGE = 'guilds.delete.message',
+  GUILDS_UPDATE_MESSAGE = 'guilds.update.message',
 
   GUILDS_MEMBERS_ADD = 'guilds.members.add',
   GUILDS_MEMBERS_REMOVE = 'guilds.members.remove',
@@ -59,4 +65,14 @@ export enum RoutingKey {
   SEARCH_ITEMS_INDEX = 'search.items.index',
 
   ACTIVITY_LOG_CREATE = 'activity.log.create',
+
+  EVENT_MAP_STATUS_UPDATE = 'event.map-status.update',
+  EVENT_HERO_KILLED = 'event.hero.killed',
+  EVENT_RANKING_UPDATE = 'event.ranking.update',
+  PRESENCE_COVERAGE_CHECK = 'presence.coverage.check',
+
+  EVENT_RESPAWN_WINDOW_OPENED = 'event.respawn-window.opened',
+  EVENT_RESPAWN_WINDOW_CLOSED = 'event.respawn-window.closed',
+
+  PRESENCE_CHECK_REQUEST = 'presence.check.request',
 }

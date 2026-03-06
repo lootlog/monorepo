@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Stats } from "@/features/stats/stats";
+import { StatsLayout } from "@/components/layout/stats-layout";
 
 export const Route = createFileRoute("/_authenticated/$guildId/stats")({
-  component: Stats,
+  component: StatsLayout,
 });

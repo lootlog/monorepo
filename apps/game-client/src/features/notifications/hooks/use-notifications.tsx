@@ -16,6 +16,7 @@ export type Notification = {
   notificationId: string;
   world: string;
   createdAt: string;
+  isGatheringParty?: boolean;
 };
 
 const getNotificationType = (n: Notification) => {

@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Bell,
   Users,
+  Trophy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -99,6 +100,17 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       Permission.LOOTLOG_NOTIFICATIONS_SEND,
       Permission.LOOTLOG_NOTIFICATIONS_TITANS_READ,
       Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ,
+    ],
+  },
+  {
+    name: "Eventy",
+    icon: Trophy,
+    color: "text-fuchsia-500",
+    bgColor: "bg-fuchsia-500/20",
+    permissions: [
+      Permission.LOOTLOG_EVENTS_READ,
+      Permission.LOOTLOG_EVENTS_WRITE,
+      Permission.LOOTLOG_EVENTS_MANAGE,
     ],
   },
 ];

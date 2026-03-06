@@ -11,6 +11,7 @@ const menuItems: MenuItem[] = [
     available: true,
     enabled: true,
     divided: false,
+    childPaths: ["/kills"],
   },
   {
     label: "Panel walk",

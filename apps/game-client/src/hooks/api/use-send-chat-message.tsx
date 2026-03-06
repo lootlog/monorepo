@@ -6,7 +6,17 @@ export enum MessageType {
   NORMAL = "NORMAL",
   NOTIFICATION = "NOTIFICATION",
   NPC = "NPC",
+  PARTY_GATHERING = "PARTY_GATHERING",
 }
+
+export type PartyGatheringChatData = {
+  notificationId: string;
+  discordId: string;
+  description?: string;
+  minLvl?: number;
+  maxLvl?: number;
+  world: string;
+};
 
 export type ChatCharacterData = {
   nick: string;
@@ -37,6 +47,7 @@ export type UseSendChatMessageOptions = {
   type: MessageType;
   characterData: ChatCharacterData;
   npc?: ChatNpc;
+  partyGathering?: PartyGatheringChatData;
 };
 
 export const useSendChatMessage = () => {
@@ -44,29 +55,42 @@ export const useSendChatMessage = () => {
 
   const mutation = useMutation({
     mutationKey: [QUERY_KEY],
-    mutationFn: ({
+    mutationFn: async ({
       message,
       guildIds,
       type,
       characterData,
       npc,
+      partyGathering,
     }: UseSendChatMessageOptions) => {
-      return Promise.all(
+      const results = await Promise.allSettled(
         guildIds.map((guildId) =>
           client.post(`/guilds/${guildId}/chat-messages`, {
             message,
             type,
             characterData,
             npc,
+            partyGathering,
           }),
         ),
       );
+
+      const failures = results.filter((r) => r.status === "rejected");
+      if (failures.length === results.length) {
+        throw new Error("Nie udało się wysłać wiadomości na czat");
+      }
+
+      if (failures.length > 0) {
+        console.warn(
+          `Failed to send chat message to ${failures.length} guilds`,
+        );
+      }
+
+      return results;
     },
-    onSuccess: () => {
-      console.log("onSuccess");
-    },
-    onError: () => {
-      console.log("onError");
+    onError: (error) => {
+      console.error("Chat message error:", error);
+      window.message("Nie udało się wysłać wiadomości na czat");
     },
   });
 

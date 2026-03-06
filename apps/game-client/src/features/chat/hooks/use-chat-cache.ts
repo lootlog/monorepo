@@ -7,6 +7,8 @@ interface ChatCache {
   messageCache: Record<string, ChatMessage[]>;
   memberCache: Record<string, Record<string, GuildMember>>;
   getAllMessages: () => ChatMessage[];
+  removeMessage: (guildId: string, messageId: string) => void;
+  updateMessage: (guildId: string, messageId: string, message: string) => void;
 }
 
 export const useChatCache = create(
@@ -46,6 +48,28 @@ export const useChatCache = create(
         messageCache: {
           ...state.messageCache,
           [channel]: [...(state.messageCache[channel] ?? []), message],
+        },
+      })),
+
+    removeMessage: (guildId, messageId) =>
+      set((state) => ({
+        messageCache: {
+          ...state.messageCache,
+          [guildId]: (state.messageCache[guildId] ?? []).filter(
+            (m) => m.id !== messageId,
+          ),
+        },
+      })),
+
+    updateMessage: (guildId, messageId, message) =>
+      set((state) => ({
+        messageCache: {
+          ...state.messageCache,
+          [guildId]: (state.messageCache[guildId] ?? []).map((m) =>
+            m.id === messageId
+              ? { ...m, message, partyGathering: undefined }
+              : m,
+          ),
         },
       })),
 

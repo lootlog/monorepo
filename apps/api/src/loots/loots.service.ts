@@ -122,6 +122,11 @@ export class LootsService implements OnModuleInit {
       ]);
 
       const npcData = this.lootMappingService.processNpcs(body.npcs);
+
+      if (npcData.highest.wt < 10) {
+        throw new BadRequestException(ErrorKey.NPC_WT_TOO_LOW);
+      }
+
       const highestWtNpcType = getNpcTypeByWt(
         npcData.highest.wt,
         npcData.highest.prof,
@@ -404,5 +409,9 @@ export class LootsService implements OnModuleInit {
       roles,
       params,
     );
+  }
+
+  async fetchLootById(guild: Guild, lootId: number) {
+    return this.lootQueryService.fetchLootById(guild, lootId);
   }
 }

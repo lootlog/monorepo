@@ -2,6 +2,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { plainToInstance } from 'class-transformer';
 import { LootsController } from './loots.controller';
 import { LootsService } from './loots.service';
+import { LootStatsService } from './services/loot-stats.service';
 import type { CreateLootDto } from './dto/create-loot.dto';
 import type { UpdateLootDto } from './dto/update-loot.dto';
 import type { CreateCommentDto } from './dto/create-comment-dto';
@@ -110,9 +111,16 @@ describe('LootsController', () => {
       updateLoot: jest.fn(),
     };
 
+    const mockLootStatsService = {
+      getLootStats: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LootsController],
-      providers: [{ provide: LootsService, useValue: mockLootsService }],
+      providers: [
+        { provide: LootsService, useValue: mockLootsService },
+        { provide: LootStatsService, useValue: mockLootStatsService },
+      ],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: () => true })

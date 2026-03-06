@@ -1,0 +1,111 @@
+{
+  "title": "Statystyki killi",
+  "guildStats": {
+    "title": "Statystyki klanu",
+    "noData": "Brak danych o biciach w klanie"
+  },
+  "overview": {
+    "title": "Podsumowanie",
+    "totalKills": "Łączne bicia",
+    "killsByType": "Bicia według typu"
+  },
+  "filters": {
+    "title": "Filtry",
+    "world": "Świat",
+    "npcType": "Typ NPC",
+    "levelRange": "Zakres poziomów",
+    "minLevel": "Min. poziom",
+    "maxLevel": "Max. poziom",
+    "allTypes": "Wszystkie typy",
+    "apply": "Zastosuj",
+    "reset": "Resetuj",
+    "close": "Zamknij"
+  },
+  "memberRanking": {
+    "title": "Ranking członków",
+    "position": "#",
+    "member": "Członek",
+    "totalKills": "Łącznie",
+    "noData": "Brak danych o biciach",
+    "viewAll": "Zobacz pełny ranking"
+  },
+  "recentKills": {
+    "title": "Ostatnie bicia",
+    "npc": "NPC",
+    "level": "Poziom",
+    "type": "Typ",
+    "killedAt": "Data",
+    "participants": "Uczestnicy",
+    "noData": "Brak ostatnich bić"
+  },
+  "playerStats": {
+    "title": "Twoje statystyki bić",
+    "killsByWorld": "Bicia według świata",
+    "characters": "Postaci",
+    "noData": "Brak danych o biciach dla Twoich postaci"
+  },
+  "home": {
+    "filters": {
+      "world": "Świat",
+      "allWorlds": "Wszystkie światy",
+      "character": "Postać",
+      "allCharacters": "Wszystkie postacie"
+    },
+    "topKilledNpcs": {
+      "title": "Najczęściej bite potwory",
+      "noData": "Brak danych o zabitych potworach",
+      "killCount": "x{{count}}",
+      "viewAll": "Zobacz pełny ranking"
+    }
+  },
+  "ranking": {
+    "title": "Ranking zabitych potworów",
+    "description": "Kompletna lista statystyk zabitych potworów",
+    "search": "Szukaj potwora...",
+    "noData": "Nie znaleziono potworów",
+    "loading": "Ładowanie danych...",
+    "total": "Łącznie: {{count}}"
+  },
+  "topNpcs": {
+    "title": "Najczęściej bite potwory",
+    "noData": "Brak danych o potworach",
+    "viewAll": "Zobacz pełny ranking"
+  },
+  "npcsList": {
+    "title": "Ranking potworów",
+    "description": "Pełna lista najczęściej bitych potworów",
+    "searchPlaceholder": "Szukaj potwora..."
+  },
+  "topBossKillers": {
+    "title": "Najlepsi zabójcy według typu NPC",
+    "titans": "Tytani",
+    "heroes": "Herosi",
+    "noData": "Brak danych"
+  },
+  "fullRanking": {
+    "title": "Ranking członków klanu",
+    "description": "Pełna lista statystyk bić członków klanu",
+    "searchPlaceholder": "Szukaj członka..."
+  },
+  "npcKillers": {
+    "member": "Członek",
+    "killCount": "Bicia",
+    "totalGuildKills": "Łącznie w klanie: {{count}} bić",
+    "totalMembers": "Członków: {{count}}",
+    "uniqueGuildKills": "Unikalnych bić: {{count}}",
+    "notFound": "Nie znaleziono danych o tym potworze",
+    "noKillers": "Brak graczy, którzy zabili tego potwora",
+    "searchPlaceholder": "Szukaj gracza..."
+  },
+  "memberStats": {
+    "title": "Statystyki członka",
+    "totalParticipations": "Łącznie bić: {{count}}",
+    "byType": "Bicia według typu",
+    "npcsKilled": "Zabite potwory",
+    "npc": "Potwór",
+    "killCount": "Bicia",
+    "searchPlaceholder": "Szukaj potwora...",
+    "noData": "Ten członek nie ma jeszcze żadnych bić",
+    "notFound": "Nie znaleziono członka w klanie"
+  }
+}

@@ -141,7 +141,8 @@ describe('GatewayService', () => {
       await service.handleGuildsTimerUpdate(timerDto);
 
       // Wait for async promise chain to complete
-      expect(mockServer.in).toHaveBeenCalledWith('guild-123');
+      // Feature room for titan timers
+      expect(mockServer.in).toHaveBeenCalledWith('guild-123:timers:titans');
       expect(mockServer.fetchSockets).toHaveBeenCalled();
       expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
         GatewayEvent.TIMERS_CREATE,
@@ -149,33 +150,17 @@ describe('GatewayService', () => {
       );
     });
 
-    it('should not emit to sockets without TITAN permissions', async () => {
-      const mockSocketWithoutPermissions = {
-        ...mockSocket,
-        data: {
-          discordId: 'discord-123',
-          guilds: [
-            {
-              guild: { id: 'guild-123', ownerId: 'different-user' },
-              roles: [
-                {
-                  permissions: [Permission.LOOTLOG_LOOTS_READ],
-                  lvlRangeFrom: 50,
-                  lvlRangeTo: 150,
-                },
-              ],
-            },
-          ],
-        },
-        emit: jest.fn(),
-      };
-
-      mockServer.fetchSockets.mockResolvedValue([mockSocketWithoutPermissions]);
+    it('should not emit to sockets without TITAN permissions (socket not in room)', async () => {
+      // Socket without TITAN permission would not be in the 'guild-123:timers:titans' room
+      // so fetchSockets from that room returns empty
+      mockServer.fetchSockets.mockResolvedValue([]);
 
       await service.handleGuildsTimerUpdate(timerDto);
 
-      // Wait for async promise chain to complete
-      expect(mockSocketWithoutPermissions.emit).not.toHaveBeenCalled();
+      // Feature room for titan timers
+      expect(mockServer.in).toHaveBeenCalledWith('guild-123:timers:titans');
+      expect(mockServer.fetchSockets).toHaveBeenCalled();
+      // No sockets to emit to since none are in the room
     });
 
     it('should emit to administrative users regardless of specific permissions', async () => {
@@ -270,7 +255,7 @@ describe('GatewayService', () => {
   });
 
   describe('handleGuildsTimerDelete', () => {
-    it('should emit timer delete event to guild room', async () => {
+    it('should emit timer delete event to all timer rooms', async () => {
       const deleteDto: DeleteTimerDto = {
         guildId: 'guild-123',
         world: 'world-1',
@@ -279,7 +264,11 @@ describe('GatewayService', () => {
 
       await service.handleGuildsTimerDelete(deleteDto);
 
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123');
+      expect(mockServer.to).toHaveBeenCalledWith([
+        'guild-123:timers:base',
+        'guild-123:timers:titans',
+        'guild-123:timers:heroes',
+      ]);
       expect(mockServer.emit).toHaveBeenCalledWith(
         GatewayEvent.TIMERS_DELETE,
         deleteDto,
@@ -288,7 +277,7 @@ describe('GatewayService', () => {
   });
 
   describe('handleGuildsReservationCreate', () => {
-    it('should emit reservation create event to guild room', () => {
+    it('should emit reservation create event to events room', () => {
       const payload: ReservationCreateEventDto = {
         guildId: 'guild-123',
         reservation: {
@@ -303,7 +292,7 @@ describe('GatewayService', () => {
 
       service.handleGuildsReservationCreate(payload);
 
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123');
+      expect(mockServer.to).toHaveBeenCalledWith('guild-123:events');
       expect(mockServer.emit).toHaveBeenCalledWith(
         GatewayEvent.RESERVATIONS_CREATE,
         payload,
@@ -312,7 +301,7 @@ describe('GatewayService', () => {
   });
 
   describe('handleGuildsReservationDelete', () => {
-    it('should emit reservation delete event to guild room', () => {
+    it('should emit reservation delete event to events room', () => {
       const payload: ReservationDeleteEventDto = {
         guildId: 'guild-123',
         reservation: {
@@ -327,7 +316,7 @@ describe('GatewayService', () => {
 
       service.handleGuildsReservationDelete(payload);
 
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123');
+      expect(mockServer.to).toHaveBeenCalledWith('guild-123:events');
       expect(mockServer.emit).toHaveBeenCalledWith(
         GatewayEvent.RESERVATIONS_DELETE,
         payload,
@@ -378,7 +367,8 @@ describe('GatewayService', () => {
               guild: { id: 'guild-123', ownerId: 'different-user' },
               roles: [
                 {
-                  permissions: [Permission.LOOTLOG_CHAT_READ],
+                  // HEROES permission allows user to be in guild-123:chat:heroes room
+                  permissions: [Permission.LOOTLOG_CHAT_HEROES_READ],
                   lvlRangeFrom: 1,
                   lvlRangeTo: 999,
                 },
@@ -396,7 +386,8 @@ describe('GatewayService', () => {
 
       await flushPromises();
 
-      expect(mockServer.in).toHaveBeenCalledWith('guild-123');
+      // Feature room for hero-tier chat (npc.type = HERO)
+      expect(mockServer.in).toHaveBeenCalledWith('guild-123:chat:heroes');
       expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
         messageDto,
@@ -528,12 +519,8 @@ describe('GatewayService', () => {
 
       await service.handleMembersRefreshJobUpdate(refreshDto);
 
-      expect(mockServer.in).toHaveBeenCalledWith('guild-123');
-      expect(mockOwnerSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
-        refreshDto,
-      );
-      expect(mockRegularSocket.emit).not.toHaveBeenCalled();
+      // Admin room broadcast
+      expect(mockServer.to).toHaveBeenCalledWith('guild-123:admin');
     });
 
     it('should emit to ADMIN users', async () => {
@@ -570,11 +557,7 @@ describe('GatewayService', () => {
 
       await service.handleMembersRefreshJobUpdate(refreshDto);
 
-      expect(mockServer.in).toHaveBeenCalledWith('guild-123');
-      expect(mockAdminSocket.emit).toHaveBeenCalledWith(
-        GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE,
-        refreshDto,
-      );
+      expect(mockServer.to).toHaveBeenCalledWith('guild-123:admin');
     });
   });
 
@@ -599,11 +582,11 @@ describe('GatewayService', () => {
 
       const updatedGuilds = [
         {
-          guild: { id: 'guild-1' },
+          guild: { id: 'guild-1', ownerId: 'discord-123' },
           roles: [],
         },
         {
-          guild: { id: 'guild-2' },
+          guild: { id: 'guild-2', ownerId: 'discord-123' },
           roles: [],
         },
       ];
@@ -613,7 +596,7 @@ describe('GatewayService', () => {
         data: {
           discordId: 'discord-123',
         },
-        rooms: new Set(['socket-123', 'guild-1', 'old-guild']),
+        rooms: new Set(['socket-123', 'guild-1:presence', 'old-guild:presence']),
         leave: jest.fn(),
         join: jest.fn(),
         emit: jest.fn(),
@@ -628,11 +611,14 @@ describe('GatewayService', () => {
         discordId,
         userId,
       });
-      expect(mockUserSocket.leave).toHaveBeenCalledWith('old-guild');
-      expect(mockUserSocket.join).toHaveBeenCalledWith('guild-2');
+      expect(mockUserSocket.leave).toHaveBeenCalledWith('old-guild:presence');
+      expect(mockUserSocket.join).toHaveBeenCalledWith('guild-2:presence');
       expect(mockUserSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.PERMISSIONS_UPDATED,
-        { guilds: updatedGuilds },
+        expect.objectContaining({
+          guilds: updatedGuilds,
+          featureRooms: expect.any(Array),
+        }),
       );
     });
 

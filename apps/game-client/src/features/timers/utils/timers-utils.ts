@@ -96,7 +96,7 @@ export const filterTimersByVisibility = (
   showHiddenTimers: boolean,
 ): TimerWithTimeLeft[] => {
   if (showHiddenTimers) return timers;
-  return timers.filter((t) => !hiddenTimers.includes(t.npc.name));
+  return timers.filter((t) => !hiddenTimers.includes(t.npc?.name));
 };
 
 export const filterTimersBySearchText = (

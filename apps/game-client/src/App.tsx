@@ -20,14 +20,20 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QUERY_CLIENT_CACHE_TIME_MS } from "@/constants/query-client";
-import { ChatInput } from "./features/chat/chat-input";
+import { CommandWindow } from "./features/command/command";
 import { SocketProvider } from "@/contexts/socket-context";
 import { ErrorBoundary } from "react-error-boundary";
+import { PartyFinder } from "@/features/party-finder/party-finder";
+import { CreatePartyGathering } from "@/features/party-finder/create-party-gathering";
+import { usePartyFinderSocket } from "@/features/party-finder/hooks/use-party-finder-socket";
+import { usePartyGatheringSocket } from "@/features/party-finder/hooks/use-party-gathering-socket";
+
+const isDev = import.meta.env.MODE === "development";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      gcTime: QUERY_CLIENT_CACHE_TIME_MS,
+      gcTime: isDev ? 0 : QUERY_CLIENT_CACHE_TIME_MS,
       staleTime: 0,
       refetchOnMount: "always",
       refetchOnWindowFocus: false,
@@ -52,6 +58,8 @@ function AppContent() {
   useInitialConfiguration();
   useHotkeys();
   useTimerSettingsMutationsRegistry();
+  usePartyFinderSocket();
+  usePartyGatheringSocket();
 
   const { ConflictDialog } = useTimerSettingsSync();
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
@@ -63,13 +71,15 @@ function AppContent() {
         <AddTimer />
         <Settings />
         <Chat />
-        <ChatInput />
+        <CommandWindow />
         <OnlinePlayers />
         <NpcDetector />
         <Notifications />
         <QuickAccess />
         <CatchingWhitelistWarning />
         <Toaster />
+        <PartyFinder />
+        <CreatePartyGathering />
         {ConflictDialog}
       </>
     )

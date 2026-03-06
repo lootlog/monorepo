@@ -10,11 +10,12 @@ import type { Npcs } from "@/types/margonem/game-events/npcs";
 import type { NpcsDel } from "@/types/margonem/game-events/npcs_del";
 import type { Other } from "@/types/margonem/game-events/other";
 import type { PartyEvent } from "@/types/margonem/game-events/party";
+import type { TownEvent } from "@/types/margonem/game-events/town";
 
 export type GameEvent = {
-  d: D;
-  e: "ok" | "error";
-  ev: number;
+  d?: D;
+  e?: "ok" | "error";
+  ev?: number;
   f?: F;
   npcs?: Npcs;
   npcs_del?: NpcsDel;
@@ -32,4 +33,12 @@ export type GameEvent = {
     avg_duration: number;
     avg_timeframe: number;
   };
+  h?: {
+    stasis?: number; // 1 = AFK, 0 = active
+  };
+  town?: TownEvent;
+  friends?: string[];
+  friends_max?: number;
+  enemies?: string[];
+  enemies_max?: number;
 };

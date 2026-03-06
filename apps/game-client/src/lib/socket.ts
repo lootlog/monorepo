@@ -8,6 +8,8 @@ import type { Notification } from "@/features/notifications/hooks/use-notificati
 import { io, type Socket } from "socket.io-client";
 import type { PlayerPresence } from "@/features/online-players/hooks/use-players-presence";
 import type { ChatMessage } from "@/hooks/api/use-chat-messages";
+import { msgpackParser } from "@lootlog/socket-parser";
+import type { PartyFinderVolunteer, PartyGatheringSession } from "@/store/party-finder.store";
 
 type ServerToClientEvents = {
   [GatewayEvent.DISCONNECT]: () => void;
@@ -36,6 +38,21 @@ type ServerToClientEvents = {
     id: string;
     endsAt: string;
   }) => void;
+  [GatewayEvent.NOTIFICATIONS_VOLUNTEER]: (data: {
+    notificationId: string;
+    volunteer: PartyFinderVolunteer;
+  }) => void;
+  [GatewayEvent.PARTY_GATHERING_SEND]: (data: PartyGatheringSession & { guildId: string }) => void;
+  [GatewayEvent.PARTY_GATHERING_CANCEL]: (data: { notificationId: string }) => void;
+  [GatewayEvent.CHAT_MESSAGE_DELETE]: (data: {
+    guildId: string;
+    messageId: string;
+  }) => void;
+  [GatewayEvent.CHAT_MESSAGE_UPDATE]: (data: {
+    guildId: string;
+    messageId: string;
+    message: string;
+  }) => void;
 };
 
 type ClientToServerEvents = {
@@ -55,6 +72,12 @@ type ClientToServerEvents = {
   }) => void;
 
   [GatewayEvent.REQUEST_SERVER_PRESENCE]: () => void;
+
+  [GatewayEvent.PRESENCE_UPDATE]: (data: {
+    isAfk?: boolean;
+    mapId?: number;
+    mapName?: string;
+  }) => void;
 };
 
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -72,6 +95,7 @@ export const getSocket = (): AppSocket => {
       timeout: 20000,
       withCredentials: true,
       autoConnect: false,
+      parser: msgpackParser,
     }) as AppSocket;
   }
 

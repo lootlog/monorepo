@@ -21,7 +21,7 @@ import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 
 export const useNpcsHandlers = () => {
   const { addNpc } = useNpcDetectorStore();
-  const { setOpen } = useWindowsStore();
+  const setOpen = useWindowsStore((state) => state.setOpen);
   const { handleSendMessage, handleSendNotification } = useMessagingHandlers();
   const { playSound } = useSoundPlayback();
 
@@ -49,7 +49,6 @@ export const useNpcsHandlers = () => {
         sendNotification({
           composedNpc,
           guildIds: processedSettings.guildIds,
-          autoSendMessage: processedSettings.autoSendMessage,
           autoSendNotification: processedSettings.autoSendNotification,
           npcType,
           detectorSettings: processedSettings.settings,
@@ -86,7 +85,6 @@ export const useNpcsHandlers = () => {
         sendNotification({
           composedNpc,
           guildIds: processedSettings.guildIds,
-          autoSendMessage: processedSettings.autoSendMessage,
           autoSendNotification: processedSettings.autoSendNotification,
           npcType,
           detectorSettings: processedSettings.settings,
@@ -119,14 +117,12 @@ export const useNpcsHandlers = () => {
         ""
       : Game.getNpcIcon(npc.icon.id) || "";
 
-    const autoSendMessage = settings.autoNotifyChat ?? false;
     const autoSendNotification = settings.autoNotifyClan ?? false;
     const guildIds = settings.guildIds ?? [];
 
     return {
       settings,
       icon,
-      autoSendMessage,
       autoSendNotification,
       guildIds,
     };
@@ -145,14 +141,12 @@ export const useNpcsHandlers = () => {
 
     const icon = Game.getNpcIcon(npc.tpl) || npc.icon || "";
 
-    const autoSendMessage = settings.autoNotifyChat ?? false;
     const autoSendNotification = settings.autoNotifyClan ?? false;
     const guildIds = settings.guildIds ?? [];
 
     return {
       settings,
       icon,
-      autoSendMessage,
       autoSendNotification,
       guildIds,
     };
@@ -161,24 +155,19 @@ export const useNpcsHandlers = () => {
   const sendNotification = ({
     composedNpc,
     guildIds,
-    autoSendMessage,
     autoSendNotification,
     npcType,
     detectorSettings,
   }: {
     composedNpc: GameNpcWithLocation;
     guildIds: string[];
-    autoSendMessage: boolean;
     autoSendNotification: boolean;
     npcType: DetectorNpcType;
     detectorSettings: NpcDetectorSettingByNpc;
   }) => {
-    if (autoSendMessage) {
-      handleSendMessage(guildIds, composedNpc);
-    }
-
     if (autoSendNotification) {
       handleSendNotification(composedNpc, guildIds);
+      handleSendMessage(guildIds, composedNpc);
     }
 
     if (detectorSettings.notifySound) {

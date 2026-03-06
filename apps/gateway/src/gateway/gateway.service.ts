@@ -8,19 +8,28 @@ import type {
 } from 'src/gateway/dto/reservation-event.dto';
 import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
 import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
+import type { SendPartyGatheringDto } from 'src/gateway/dto/send-party-gathering.dto';
+import type { VolunteerNotificationDto } from 'src/gateway/dto/volunteer-notification.dto';
 import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
 import { Gateway } from 'src/gateway/gateway';
-import { canViewNpcTimer } from '@lootlog/api-helpers/permissions';
-import {
-  isAdministrativeUserFromRoles,
-  isOwnerOrAdminFromRoles,
-} from 'src/guilds/utils/is-administrative-user';
+import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { GuildsService } from 'src/guilds/guilds.service';
-import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
 import type { UserGuildData } from 'src/guilds/types/guild.types';
-import { canViewChatMessage } from './utils/can-view-chat-message';
-import { canViewNpcNotification } from './utils/can-view-npc-notifications';
+import type {
+  EventHeroKilledPayload,
+  EventRankingUpdatePayload,
+  EventRespawnWindowPayload,
+  EventMapStatusUpdatePayload,
+} from 'src/gateway/types/margo-event.types';
+import {
+  buildRoomName,
+  getNpcTier,
+  checkLevelRange,
+  calculateUserRooms,
+  type FeatureName,
+  type TierName,
+} from 'src/gateway/utils/room-utils';
 
 @Injectable()
 export class GatewayService {
@@ -32,129 +41,111 @@ export class GatewayService {
     private readonly guildsService: GuildsService,
   ) {}
 
-  private emitToEligibleSockets({
+  private emitToFeatureRoom({
     guildId,
+    feature,
+    tier,
     event,
     data,
+    npcLevel,
   }: {
     guildId: string;
+    feature: FeatureName;
+    tier: TierName;
     event: GatewayEvent;
     data: unknown;
+    npcLevel?: number;
   }) {
-    this.gateway.server
-      .in(guildId)
-      .fetchSockets()
-      .then((sockets) => {
-        sockets.forEach((socket) => {
-          const desiredGuild = socket.data.guilds?.find(
-            (g: UserGuildData) => g.guild.id === guildId,
-          );
-          if (!desiredGuild) return;
+    const room = buildRoomName(guildId, feature, tier);
 
-          const isOwner = desiredGuild.guild.ownerId === socket.data.discordId;
-
-          if (isOwner) {
-            this.logger.debug(
-              `Guild owner ${socket.data.discordId} sending event ${event} in guild ${guildId}`,
+    if (npcLevel !== undefined) {
+      // Level filtering required - fetch sockets and filter
+      this.gateway.server
+        .in(room)
+        .fetchSockets()
+        .then((sockets) => {
+          sockets.forEach((socket) => {
+            const guildData = socket.data.guilds?.find(
+              (g: UserGuildData) => g.guild.id === guildId,
             );
-            socket.emit(event, data);
-            return;
-          }
+            if (!guildData) return;
 
-          const roles = desiredGuild.roles || [];
-          const administrativeUser = isAdministrativeUserFromRoles(roles);
-
-          if (administrativeUser) {
-            this.logger.debug(
-              `Administrative user ${socket.data.discordId} sending event ${event} in guild ${guildId}`,
-            );
-            socket.emit(event, data);
-            return;
-          }
-
-          if (data instanceof SendMessageDto) {
-            if (!data.characterData) {
-              this.logger.log(
-                `Missing character data for chat message in guild ${guildId} from user ${socket.data.discordId}`,
-              );
-              return;
-            }
-            const canViewChat = canViewChatMessage(data, roles);
-            if (!canViewChat) {
-              this.logger.log(
-                `User ${socket.data.discordId} cannot view chat message ${JSON.stringify(data)} in guild ${guildId}`,
-              );
+            // Owner/Admin bypass level checks
+            const isOwner = guildData.guild.ownerId === socket.data.discordId;
+            if (isOwner || isAdministrativeUserFromRoles(guildData.roles)) {
+              socket.emit(event, data);
               return;
             }
 
-            socket.emit(event, data);
-          } else if (data instanceof CreateTimerDto) {
-            const canViewNpc = canViewNpcTimer(
-              { lvl: data.npc?.lvl ?? 0, type: data.npc.type },
-              roles,
-            );
-
-            if (!canViewNpc) {
-              this.logger.debug(
-                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
-              );
-              return;
+            // Check level range for regular members
+            if (checkLevelRange(guildData.roles, npcLevel)) {
+              socket.emit(event, data);
             }
-
-            socket.emit(event, data);
-          } else if (data instanceof SendNotificationDto) {
-            const canViewNpc = canViewNpcNotification(data.npc, roles);
-
-            if (!canViewNpc) {
-              this.logger.debug(
-                `User ${socket.data.discordId} cannot view NPC ${data.npc?.type} lvl ${data.npc?.lvl ?? 0} in guild ${guildId}`,
-              );
-              return;
-            }
-
-            socket.emit(event, data);
-          }
+          });
         });
-      });
+    } else {
+      // No level filtering - direct room broadcast
+      this.gateway.server.to(room).emit(event, data);
+    }
   }
 
   handleGuildsTimerUpdate(data: CreateTimerDto) {
-    this.emitToEligibleSockets({
+    const tier = getNpcTier(data.npc);
+    this.emitToFeatureRoom({
       guildId: data.guildId,
+      feature: 'timers',
+      tier,
       event: GatewayEvent.TIMERS_CREATE,
-      data: Object.assign(new CreateTimerDto(), data),
+      data,
+      npcLevel: data.npc?.lvl,
     });
   }
 
   handleGuildsTimerDelete(data: DeleteTimerDto) {
-    this.gateway.server.to(data.guildId).emit(GatewayEvent.TIMERS_DELETE, data);
+    const rooms = [
+      buildRoomName(data.guildId, 'timers', 'base'),
+      buildRoomName(data.guildId, 'timers', 'titans'),
+      buildRoomName(data.guildId, 'timers', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.TIMERS_DELETE, data);
   }
 
   handleGuildsReservationCreate(data: ReservationCreateEventDto) {
+    const eventsRoom = buildRoomName(data.guildId, 'events');
     this.gateway.server
-      .to(data.guildId)
+      .to(eventsRoom)
       .emit(GatewayEvent.RESERVATIONS_CREATE, data);
   }
 
   handleGuildsReservationDelete(data: ReservationDeleteEventDto) {
+    const eventsRoom = buildRoomName(data.guildId, 'events');
     this.gateway.server
-      .to(data.guildId)
+      .to(eventsRoom)
       .emit(GatewayEvent.RESERVATIONS_DELETE, data);
   }
 
   handleGuildMessageSend(data: SendMessageDto) {
-    this.emitToEligibleSockets({
+    // For NPC messages, use npc data; for regular messages, use 'base' tier
+    const tier = getNpcTier(data.npc);
+    this.emitToFeatureRoom({
       guildId: data.guildId,
+      feature: 'chat',
+      tier,
       event: GatewayEvent.CHAT_MESSAGE,
-      data: Object.assign(new SendMessageDto(), data),
+      data,
+      npcLevel: data.npc?.lvl,
     });
   }
 
   handleGuildNotificationSend(data: SendNotificationDto) {
-    this.emitToEligibleSockets({
+    const tier = getNpcTier(data.npc);
+    this.emitToFeatureRoom({
       guildId: data.guildId,
+      feature: 'notifications',
+      tier,
       event: GatewayEvent.NOTIFICATIONS_SEND,
-      data: Object.assign(new SendNotificationDto(), data),
+      data,
+      npcLevel: data.npc?.lvl,
     });
   }
 
@@ -162,33 +153,16 @@ export class GatewayService {
     await this.redis.del(discordId);
   }
 
-  async handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
-    const sockets = await this.gateway.server.in(data.guildId).fetchSockets();
-
-    sockets.forEach((socket) => {
-      const desiredGuild = socket.data.guilds?.find(
-        (g: any) => g.guild.id === data.guildId,
-      );
-
-      if (!desiredGuild) return;
-
-      const roles = desiredGuild.roles || [];
-      const hasPermission = isOwnerOrAdminFromRoles(roles);
-
-      if (!hasPermission) {
-        this.logger.debug(
-          `User ${socket.data.discordId} does not have OWNER/ADMIN permissions for refresh job in guild ${data.guildId}`,
-        );
-        return;
-      }
-
-      socket.emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
-    });
+  handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
+    // Emit directly to admin room - only owner/admin are in this room
+    const adminRoom = buildRoomName(data.guildId, 'admin');
+    this.gateway.server
+      .to(adminRoom)
+      .emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
   }
 
   async invalidateUserGuildsCache(discordId: string, userId: string) {
     await this.guildsService.invalidateUserGuildsCache(discordId, userId);
-    this.logger.debug(`Invalidated guilds cache for user ${discordId}`);
   }
 
   async rebalanceUserSocketRooms(discordId: string, userId: string) {
@@ -198,14 +172,12 @@ export class GatewayService {
         userId,
       });
 
-      const updatedGuildIds = getGuildIds(updatedGuilds);
       const sockets = await this.gateway.server.fetchSockets();
       const userSockets = sockets.filter(
         (socket) => socket.data.discordId === discordId,
       );
 
       if (userSockets.length === 0) {
-        this.logger.debug(`No active sockets found for user ${discordId}`);
         return;
       }
 
@@ -214,41 +186,148 @@ export class GatewayService {
           (room) => room !== socket.id,
         );
 
-        const roomsToLeave = currentRooms.filter(
-          (room) => !updatedGuildIds.includes(room),
+        const { rooms: newFeatureRooms } = calculateUserRooms(
+          updatedGuilds,
+          discordId,
+          socket.data.platform,
         );
-        const roomsToJoin = updatedGuildIds.filter(
-          (guildId) => !currentRooms.includes(guildId),
+
+        const roomsToLeave = currentRooms.filter(
+          (room) => !newFeatureRooms.includes(room),
+        );
+        const roomsToJoin = newFeatureRooms.filter(
+          (room) => !currentRooms.includes(room),
         );
 
         for (const room of roomsToLeave) {
-          await socket.leave(room);
-          this.logger.debug(
-            `User ${discordId} left room ${room} (lost permissions)`,
-          );
+          socket.leave(room);
         }
 
         for (const room of roomsToJoin) {
-          await socket.join(room);
+          socket.join(room);
         }
 
-        if (roomsToJoin.length > 0) {
-          this.logger.debug(
-            `User ${discordId} joined ${roomsToJoin.length} new rooms (gained permissions)`,
-          );
-        }
+        socket.data.guilds = updatedGuilds;
 
         socket.emit(GatewayEvent.PERMISSIONS_UPDATED, {
           guilds: updatedGuilds,
+          featureRooms: newFeatureRooms,
         });
       }
-
-      this.logger.debug(`Rebalanced socket rooms for user ${discordId}`);
     } catch (error) {
       this.logger.error(
         `Failed to rebalance socket rooms for user ${discordId}: ${error.message}`,
         error.stack,
       );
     }
+  }
+
+  handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
+    const eventsRoom = buildRoomName(data.guildId, 'events');
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_MAP_STATUS_UPDATE, data);
+  }
+
+  async checkPresenceForMap(guildId: string, mapName: string): Promise<void> {
+    await this.gateway.checkPresenceForMap(guildId, mapName);
+  }
+
+  handleEventHeroKilled(data: EventHeroKilledPayload) {
+    const eventsRoom = buildRoomName(data.guildId, 'events');
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_HERO_KILLED, data);
+  }
+
+  handleEventRankingUpdate(data: EventRankingUpdatePayload) {
+    const eventsRoom = buildRoomName(data.guildId, 'events');
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_RANKING_UPDATE, data);
+  }
+
+  handleEventRespawnWindowOpened(data: EventRespawnWindowPayload) {
+    const eventsRoom = buildRoomName(data.guildId, 'events');
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED, data);
+  }
+
+  handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
+    const eventsRoom = buildRoomName(data.guildId, 'events');
+    this.gateway.server
+      .to(eventsRoom)
+      .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED, data);
+  }
+
+  async handleVolunteerNotification(data: VolunteerNotificationDto) {
+    const sockets = await this.gateway.server.fetchSockets();
+    const targetSockets = sockets.filter(
+      (socket) => socket.data.discordId === data.targetDiscordId,
+    );
+
+    targetSockets.forEach((socket) => {
+      socket.emit(GatewayEvent.NOTIFICATIONS_VOLUNTEER, {
+        notificationId: data.notificationId,
+        volunteer: {
+          discordId: data.volunteerDiscordId,
+          world: data.world,
+          ...data.character,
+        },
+      });
+    });
+  }
+
+  handlePartyGatheringSend(data: SendPartyGatheringDto) {
+    const rooms = [
+      buildRoomName(data.guildId, 'notifications', 'base'),
+      buildRoomName(data.guildId, 'notifications', 'titans'),
+      buildRoomName(data.guildId, 'notifications', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
+  }
+
+  handlePartyGatheringCancel(data: {
+    guildId: string;
+    notificationId: string;
+  }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'notifications', 'base'),
+      buildRoomName(data.guildId, 'notifications', 'titans'),
+      buildRoomName(data.guildId, 'notifications', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
+      notificationId: data.notificationId,
+    });
+  }
+
+  handleChatMessageUpdate(data: {
+    guildId: string;
+    messageId: string;
+    message: string;
+  }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'chat', 'base'),
+      buildRoomName(data.guildId, 'chat', 'titans'),
+      buildRoomName(data.guildId, 'chat', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_UPDATE, {
+      messageId: data.messageId,
+      guildId: data.guildId,
+      message: data.message,
+    });
+  }
+
+  handleChatMessageDelete(data: { guildId: string; messageId: string }) {
+    const rooms = [
+      buildRoomName(data.guildId, 'chat', 'base'),
+      buildRoomName(data.guildId, 'chat', 'titans'),
+      buildRoomName(data.guildId, 'chat', 'heroes'),
+    ];
+    this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_DELETE, {
+      messageId: data.messageId,
+      guildId: data.guildId,
+    });
   }
 }

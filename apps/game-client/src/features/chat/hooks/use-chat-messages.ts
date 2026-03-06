@@ -46,8 +46,54 @@ export const useChatMessagesListener = (client: AxiosInstance) => {
     [queryClient, client],
   );
 
+  const handleChatMessageDelete = useCallback(
+    (data: { guildId: string; messageId: string }) => {
+      queryClient.setQueryData(
+        [QUERY_KEY, data.guildId],
+        (old: AxiosResponse<ChatMessage[]>) => {
+          if (!old) return old;
+
+          return {
+            data: old.data.filter((m) => m.id !== data.messageId),
+          };
+        },
+      );
+      useChatCache.getState().removeMessage(data.guildId, data.messageId);
+    },
+    [queryClient],
+  );
+
+  const handleChatMessageUpdate = useCallback(
+    (data: { guildId: string; messageId: string; message: string }) => {
+      queryClient.setQueryData(
+        [QUERY_KEY, data.guildId],
+        (old: AxiosResponse<ChatMessage[]>) => {
+          if (!old) return old;
+
+          return {
+            data: old.data.map((m) =>
+              m.id === data.messageId
+                ? { ...m, message: data.message, partyGathering: undefined }
+                : m,
+            ),
+          };
+        },
+      );
+      useChatCache
+        .getState()
+        .updateMessage(data.guildId, data.messageId, data.message);
+    },
+    [queryClient],
+  );
+
   const handlerRef = useRef(handleChatMessage);
   handlerRef.current = handleChatMessage;
+
+  const deleteHandlerRef = useRef(handleChatMessageDelete);
+  deleteHandlerRef.current = handleChatMessageDelete;
+
+  const updateHandlerRef = useRef(handleChatMessageUpdate);
+  updateHandlerRef.current = handleChatMessageUpdate;
 
   useEffect(() => {
     if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE) || !connected) return;
@@ -58,6 +104,39 @@ export const useChatMessagesListener = (client: AxiosInstance) => {
 
     return () => {
       socket?.off(GatewayEvent.CHAT_MESSAGE, onChatMessage);
+    };
+  }, [connected, socket]);
+
+  useEffect(() => {
+    if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE_DELETE) || !connected)
+      return;
+
+    const onChatMessageDelete = (data: {
+      guildId: string;
+      messageId: string;
+    }) => deleteHandlerRef.current(data);
+
+    socket?.on(GatewayEvent.CHAT_MESSAGE_DELETE, onChatMessageDelete);
+
+    return () => {
+      socket?.off(GatewayEvent.CHAT_MESSAGE_DELETE, onChatMessageDelete);
+    };
+  }, [connected, socket]);
+
+  useEffect(() => {
+    if (socket?.hasListeners(GatewayEvent.CHAT_MESSAGE_UPDATE) || !connected)
+      return;
+
+    const onChatMessageUpdate = (data: {
+      guildId: string;
+      messageId: string;
+      message: string;
+    }) => updateHandlerRef.current(data);
+
+    socket?.on(GatewayEvent.CHAT_MESSAGE_UPDATE, onChatMessageUpdate);
+
+    return () => {
+      socket?.off(GatewayEvent.CHAT_MESSAGE_UPDATE, onChatMessageUpdate);
     };
   }, [connected, socket]);
 };

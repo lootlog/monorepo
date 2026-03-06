@@ -12,6 +12,7 @@ import {
 } from "@lootlog/ui/components/drawer";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 import { useLocalStorage } from "usehooks-ts";
+import { LootDetailsDialog } from "@/features/guild/components/loots-list/loot-details-dialog";
 
 const FILTERS_OPEN_KEY = "loots-filters-open";
 
@@ -103,6 +104,7 @@ export const Guild: React.FC = () => {
           )}
         </div>
       </div>
+      <LootDetailsDialog />
     </>
   );
 };

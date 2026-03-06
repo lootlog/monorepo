@@ -4,10 +4,8 @@ import { SettingsTabs } from "@/features/settings/components/settings-tabs";
 import { useWindowsStore } from "@/store/windows.store";
 
 export const Settings = () => {
-  const {
-    settings: { open },
-    setOpen,
-  } = useWindowsStore();
+  const open = useWindowsStore((state) => state.settings.open);
+  const setOpen = useWindowsStore((state) => state.setOpen);
 
   return (
     <AnimatedWindow isOpen={open} windowKey="settings">

@@ -48,4 +48,44 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const prefixedKey = `${this.prefix}:${key}`;
     return this.client.del(prefixedKey);
   }
+
+  async hset(key: string, field: string, value: string): Promise<number> {
+    const prefixedKey = `${this.prefix}:${key}`;
+    return this.client.hset(prefixedKey, field, value);
+  }
+
+  async hget(key: string, field: string): Promise<string | null> {
+    const prefixedKey = `${this.prefix}:${key}`;
+    return this.client.hget(prefixedKey, field);
+  }
+
+  async hgetall(key: string): Promise<Record<string, string>> {
+    const prefixedKey = `${this.prefix}:${key}`;
+    return this.client.hgetall(prefixedKey);
+  }
+
+  async hdel(key: string, field: string): Promise<number> {
+    const prefixedKey = `${this.prefix}:${key}`;
+    return this.client.hdel(prefixedKey, field);
+  }
+
+  async scan(pattern: string): Promise<string[]> {
+    const prefixedPattern = `${this.prefix}:${pattern}`;
+    const keys: string[] = [];
+    let cursor = '0';
+
+    do {
+      const [nextCursor, matchedKeys] = await this.client.scan(
+        cursor,
+        'MATCH',
+        prefixedPattern,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+      keys.push(...matchedKeys);
+    } while (cursor !== '0');
+
+    return keys.map((key) => key.replace(`${this.prefix}:`, ''));
+  }
 }
