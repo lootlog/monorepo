@@ -30,6 +30,7 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
 import { useRankingEditHistory } from "../../hooks/queries/use-ranking-edit-history";
+import { parseEditablePoints } from "../../utils/parse-editable-points";
 
 interface EventRankingTableProps {
   rankings: EventRanking[];
@@ -84,8 +85,8 @@ const RankingRow = ({
   };
 
   const handleConfirmEdit = async () => {
-    const newPoints = parseInt(editValue, 10);
-    if (isNaN(newPoints) || newPoints < 0) {
+    const newPoints = parseEditablePoints(editValue);
+    if (newPoints === null) {
       return;
     }
     if (onEditPoints) {
@@ -148,6 +149,7 @@ const RankingRow = ({
             <Input
               type="number"
               min={0}
+              step={0.01}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={handleKeyDown}
