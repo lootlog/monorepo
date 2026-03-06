@@ -230,6 +230,7 @@ const AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute =
   )
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedRouteWithChildren
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/$guildId': typeof AuthenticatedGuildIdRouteWithChildren
@@ -263,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId': typeof AuthenticatedAtmeBattlePanelStatisticsPlayerVsPlayerMyIdOpponentIdRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof AuthenticatedRouteWithChildren
   '/init': typeof InitRoute
   '/signin': typeof SigninRoute
   '/battles/$id': typeof BattlesIdRoute
@@ -327,6 +329,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/init'
     | '/signin'
     | '/$guildId'
@@ -360,6 +363,7 @@ export interface FileRouteTypes {
     | '/@me/battle-panel/statistics/player-vs-player/$myId/$opponentId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/init'
     | '/signin'
     | '/battles/$id'
@@ -447,7 +451,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
