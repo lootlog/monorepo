@@ -7,6 +7,10 @@ describe("parseEditablePoints", () => {
     expect(parseEditablePoints("0.25")).toBe(0.25);
   });
 
+  it("supports comma as decimal separator", () => {
+    expect(parseEditablePoints("2,75")).toBe(2.75);
+  });
+
   it("keeps full floating-point precision from input", () => {
     expect(parseEditablePoints("1.234")).toBe(1.234);
     expect(parseEditablePoints("0.125")).toBe(0.125);
@@ -16,5 +20,7 @@ describe("parseEditablePoints", () => {
     expect(parseEditablePoints("-0.25")).toBeNull();
     expect(parseEditablePoints("NaN")).toBeNull();
     expect(parseEditablePoints("abc")).toBeNull();
+    expect(parseEditablePoints("2abc")).toBeNull();
+    expect(parseEditablePoints("")).toBeNull();
   });
 });
