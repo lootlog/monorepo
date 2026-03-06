@@ -10,8 +10,13 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
-import { useEvent } from "./hooks/queries/use-event";
-import type { EventHeroNpc } from "./hooks/queries/use-events";
+import { useEventOverview } from "./hooks/queries/use-event-overview";
+import { useEventMaps } from "./hooks/queries/use-event-maps";
+import type {
+  EventHeroNpc,
+  EventMap,
+  EventMapLocation,
+} from "./hooks/queries/use-events";
 import { EventRankingPreview } from "./components/ranking/event-ranking-preview";
 import {
   Trophy,
@@ -20,27 +25,39 @@ import {
   Pencil,
   Plus,
   Clock,
-  TrendingUp,
   CalendarDays,
   Trash2,
+  BookText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import { EventEditDialog } from "./components/dialogs/event-edit-dialog";
 import { HeroManageDialog } from "./components/dialogs/hero-manage-dialog";
 import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { EndEventDialog } from "./components/dialogs/end-event-dialog";
 import { ResumeEventDialog } from "./components/dialogs/resume-event-dialog";
+import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { toast } from "sonner";
 import { Permission } from "@lootlog/types";
 import { useEventHeroTimers } from "./hooks/queries/use-event-hero-timers";
 import { useEventHeroStats } from "./hooks/queries/use-event-hero-stats";
+import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
+import { useEventSocket } from "./hooks/socket/use-event-socket";
+import {
+  normalizeScoringMode,
+  normalizeScoringRules,
+} from "./utils/scoring-rules";
+
+type EventDetailHero = EventHeroNpc & {
+  locations: EventMapLocation[];
+  maps: EventMap[];
+};
 
 export const EventDetail = () => {
   const { t } = useTranslation();
@@ -51,7 +68,15 @@ export const EventDetail = () => {
     data: event,
     isLoading,
     error,
-  } = useEvent({
+  } = useEventOverview({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
+  const {
+    data: eventMaps,
+    isLoading: isMapsLoading,
+    error: mapsError,
+  } = useEventMaps({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -68,18 +93,44 @@ export const EventDetail = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
+  const { data: rankings = [], error: rankingError } = useEventRanking({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
+
+  useEventSocket({
+    eventId,
+    guildId,
+  });
   const { deleteHero, updateEvent, deleteEvent } = useEventMutations(
     guildId ?? "",
     eventId ?? "",
   );
 
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [heroDialogOpen, setHeroDialogOpen] = useState(false);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedHero, setSelectedHero] = useState<EventHeroNpc | null>(null);
+  const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
+  const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
+    null,
+  );
+
+  const heroMapsById = new Map(
+    (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
+  );
+  const heroes: EventDetailHero[] = (event?.heroNpcs ?? []).map((hero) => {
+    const mapsData = heroMapsById.get(hero.id);
+    return {
+      ...hero,
+      locations: mapsData?.locations ?? [],
+      maps: mapsData?.maps ?? [],
+    };
+  });
+  const scoringMode = normalizeScoringMode(event?.scoringMode);
+  const scoringRules =
+    scoringMode === "ADVANCED" ? normalizeScoringRules(event?.scoringRules) : null;
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -92,12 +143,20 @@ export const EventDetail = () => {
     permissions?.includes(Permission.OWNER);
 
   const handleEditHero = (hero: EventHeroNpc) => {
-    setSelectedHero(hero);
+    setSelectedHero({
+      ...hero,
+      locations: hero.locations ?? [],
+      maps: hero.maps ?? [],
+    });
     setHeroDialogOpen(true);
   };
 
   const handleManageMaps = (hero: EventHeroNpc) => {
-    setSelectedHero(hero);
+    setSelectedHero({
+      ...hero,
+      locations: hero.locations ?? [],
+      maps: hero.maps ?? [],
+    });
     setMapDialogOpen(true);
   };
 
@@ -110,7 +169,7 @@ export const EventDetail = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isMapsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -132,13 +191,12 @@ export const EventDetail = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <EventParticipationConfirmationDialog
+        guildId={guildId}
+        eventId={eventId}
+      />
       {event && (
         <>
-          <EventEditDialog
-            open={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            event={event}
-          />
           <HeroManageDialog
             open={heroDialogOpen}
             onOpenChange={setHeroDialogOpen}
@@ -207,6 +265,14 @@ export const EventDetail = () => {
               }
             }}
           />
+          <EventRulesDialog
+            open={rulesDialogOpen}
+            onOpenChange={setRulesDialogOpen}
+            eventName={event.name}
+            rulebookMarkdown={event.rulebookMarkdown}
+            scoringMode={scoringMode}
+            scoringRules={scoringRules}
+          />
         </>
       )}
 
@@ -263,116 +329,31 @@ export const EventDetail = () => {
                   </p>
                 </TooltipContent>
               </Tooltip>
-
-              {(() => {
-                const hasTimeMultipliers =
-                  event.timeOfDayMultipliers &&
-                  event.timeOfDayMultipliers.length > 0;
-                const hasTrackersMultipliers =
-                  event.trackersMultipliers &&
-                  Object.keys(event.trackersMultipliers).length > 0;
-                const hasMapsMultipliers =
-                  event.mapsCountMultipliers &&
-                  Object.keys(event.mapsCountMultipliers).length > 0;
-
-                const multiplierCount =
-                  (hasTimeMultipliers ? 1 : 0) +
-                  (hasTrackersMultipliers ? 1 : 0) +
-                  (hasMapsMultipliers ? 1 : 0);
-
-                if (multiplierCount === 0) return null;
-
-                return (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge
-                        variant="outline"
-                        className="text-xs gap-1 cursor-help"
-                      >
-                        <TrendingUp className="w-3 h-3" />
-                        {t("events.header.multipliers", {
-                          count: multiplierCount,
-                          defaultValue:
-                            multiplierCount === 1
-                              ? "{{count}} mnożnik"
-                              : "{{count}} mnożniki",
-                        })}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <div className="space-y-1.5 text-xs">
-                        {hasTimeMultipliers && (
-                          <div>
-                            <p className="font-medium">
-                              {t(
-                                "events.header.timeMultipliers",
-                                "Mnożniki czasowe",
-                              )}
-                              :
-                            </p>
-                            {event.timeOfDayMultipliers?.map((m, idx) => (
-                              <p key={idx} className="text-muted-foreground">
-                                {m.from} - {m.to}: x{m.multiplier}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                        {hasTrackersMultipliers && (
-                          <div>
-                            <p className="font-medium">
-                              {t(
-                                "events.header.trackersMultipliers",
-                                "Mnożniki za obecność",
-                              )}
-                              :
-                            </p>
-                            {Object.entries(event.trackersMultipliers ?? {})
-                              .sort(([a], [b]) => Number(a) - Number(b))
-                              .map(([count, multiplier]) => (
-                                <p
-                                  key={count}
-                                  className="text-muted-foreground"
-                                >
-                                  {`${count}+ ${t("events.header.people")}: x${multiplier}`}
-                                </p>
-                              ))}
-                          </div>
-                        )}
-                        {hasMapsMultipliers && (
-                          <div>
-                            <p className="font-medium">
-                              {t(
-                                "events.header.mapsMultipliers",
-                                "Mnożniki za mapy",
-                              )}
-                              :
-                            </p>
-                            {Object.entries(event.mapsCountMultipliers ?? {})
-                              .sort(([a], [b]) => Number(a) - Number(b))
-                              .map(([count, multiplier]) => (
-                                <p
-                                  key={count}
-                                  className="text-muted-foreground"
-                                >
-                                  {`${count} ${t("events.header.mapsLabel")}: x${multiplier}`}
-                                </p>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })()}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRulesDialogOpen(true)}
+          >
+            <BookText className="w-4 h-4 mr-2" />
+            {t("events.rulesDialog.trigger", "Zasady eventu")}
+          </Button>
           {canManage && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setEditDialogOpen(true)}
+              onClick={() =>
+                navigate({
+                  to: "/$guildId/events/$eventId/edit",
+                  params: {
+                    guildId: guildId ?? "",
+                    eventId: eventId ?? "",
+                  },
+                })
+              }
             >
               <Pencil className="w-4 h-4 mr-2" />
               {t("events.editButton")}
@@ -414,6 +395,26 @@ export const EventDetail = () => {
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          {(mapsError || rankingError) && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {mapsError && (
+                <p>
+                  {t(
+                    "events.maps.error",
+                    "Nie udało się pobrać map eventu. Część danych może być niepełna.",
+                  )}
+                </p>
+              )}
+              {rankingError && (
+                <p>
+                  {t(
+                    "events.ranking.error",
+                    "Nie udało się pobrać rankingu. Część danych może być niepełna.",
+                  )}
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2 h-fit">
@@ -437,7 +438,7 @@ export const EventDetail = () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  {event.heroNpcs?.map((hero) => (
+                  {heroes.map((hero) => (
                     <HeroCard
                       key={hero.id}
                       hero={hero}
@@ -456,7 +457,7 @@ export const EventDetail = () => {
                       t={t}
                     />
                   ))}
-                  {(!event.heroNpcs || event.heroNpcs.length === 0) && (
+                  {heroes.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                       <Swords className="w-8 h-8 mb-2 opacity-50" />
                       <p className="text-sm">{t("events.heroes.empty")}</p>
@@ -467,8 +468,8 @@ export const EventDetail = () => {
 
               <EventHeroLoots
                 guildId={guildId ?? ""}
-                heroNpcNames={event.heroNpcs?.map((h) => h.npcName) ?? []}
-                heroNpcs={event.heroNpcs}
+                heroNpcNames={heroes.map((h) => h.npcName)}
+                heroNpcs={heroes}
                 showHeroTabs
                 world={event.world}
                 limit={5}
@@ -477,8 +478,8 @@ export const EventDetail = () => {
 
             <div className="space-y-4">
               <EventRankingPreview
-                rankings={event.rankings || []}
-                heroNpcs={event.heroNpcs || []}
+                rankings={rankings}
+                heroNpcs={heroes}
                 guildId={guildId ?? ""}
                 eventId={eventId ?? ""}
                 limit={5}
@@ -487,7 +488,7 @@ export const EventDetail = () => {
               <RecentKillsPreview
                 guildId={guildId ?? ""}
                 eventId={eventId ?? ""}
-                heroNpcs={event.heroNpcs}
+                heroNpcs={heroes}
                 showHeroTabs
                 limit={5}
                 showHeroName

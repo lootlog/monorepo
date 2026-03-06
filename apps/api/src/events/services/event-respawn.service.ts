@@ -20,19 +20,15 @@ import { EventEmitterService } from './event-emitter.service';
 import { EventKillService } from './event-kill.service';
 import { EventTrackingService } from './event-tracking.service';
 import { EventSummaryService } from './event-summary.service';
+import { getSyntheticNpcId } from '../utils/get-synthetic-npc-id';
+import {
+  buildRespawnAutoCloseJobId,
+  getRespawnAutoCloseDelay,
+  RESPAWN_AUTO_CLOSE_JOB_NAME,
+  AUTO_CLOSE_BUFFER_MS,
+} from '../utils/respawn-auto-close-job';
 
 const DEFAULT_RESP_RANDOMNESS = 20;
-
-const AUTO_CLOSE_BUFFER_MS = 5 * 60 * 1000;
-
-function getSyntheticNpcId(heroId: string): number {
-  let hash = 0;
-  for (let i = 0; i < heroId.length; i++) {
-    hash = ((hash << 5) - hash) + heroId.charCodeAt(i);
-    hash |= 0;
-  }
-  return -Math.abs(hash || 1);
-}
 
 @Injectable()
 export class EventRespawnService {
@@ -97,7 +93,59 @@ export class EventRespawnService {
       },
     });
 
-    if (timer) {
+    if (timer && isAutoClose) {
+      const closedAt = new Date();
+
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          if (hero.maps.length > 0) {
+            await Promise.all(
+              hero.maps.map((map) =>
+                tx.eventMap.update({
+                  where: { id: map.id },
+                  data: {
+                    assignedMembers: { set: [] },
+                  },
+                }),
+              ),
+            );
+
+            await tx.eventMapAssignmentHistory.updateMany({
+              where: {
+                mapId: { in: hero.maps.map((map) => map.id) },
+                unassignedAt: null,
+              },
+              data: {
+                unassignedAt: closedAt,
+              },
+            });
+          }
+        });
+
+        await this.trackingService.closeAllGapsForHero(heroId);
+
+        await this.summaryService.createWindowSummary(
+          heroId,
+          null,
+          timer.windowOpenedAt ?? timer.minSpawnTime ?? closedAt,
+          closedAt,
+          timer.minSpawnTime,
+          timer.maxSpawnTime,
+          false,
+        );
+      } catch (err) {
+        this.logger.error({
+          message: 'Failed to close auto respawn window without scoring',
+          heroId,
+          eventId,
+          guildId,
+          error: err instanceof Error ? err.message : err,
+        });
+        throw new InternalServerErrorException(
+          'Window auto-closed but cleanup failed. Please contact support.',
+        );
+      }
+    } else if (timer) {
       try {
         await this.killService.recordHeroKill(
           guildId,
@@ -111,11 +159,11 @@ export class EventRespawnService {
             previousMaxSpawnTime: timer.maxSpawnTime,
             windowOpenedAt: timer.windowOpenedAt,
           },
-          !isAutoClose,
+          true,
         );
       } catch (err) {
         this.logger.error({
-          message: `Failed to record hero kill on ${isAutoClose ? 'auto' : 'manual'} window close`,
+          message: 'Failed to record hero kill on manual window close',
           heroId,
           eventId,
           guildId,
@@ -128,14 +176,7 @@ export class EventRespawnService {
     }
 
     for (const map of hero.maps) {
-      if (map.assignedMembers.length > 0) {
-        await this.eventEmitter.emitMapStatusUpdate(
-          guildId,
-          eventId,
-          map.id,
-          map.mapName,
-        );
-      }
+      await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
     }
 
     if (timer) {
@@ -309,12 +350,7 @@ export class EventRespawnService {
     await this.eventEmitter.emitRespawnWindowOpened(guildId, eventId, heroId);
 
     for (const map of heroMaps) {
-      await this.eventEmitter.emitMapStatusUpdate(
-        guildId,
-        eventId,
-        map.id,
-        map.mapName,
-      );
+      await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
     }
 
     await this.eventEmitter.emitTimerUpdate(timer);
@@ -386,7 +422,7 @@ export class EventRespawnService {
     world: string,
     maxSpawnTime: Date,
   ): Promise<void> {
-    const delay = maxSpawnTime.getTime() - Date.now() + AUTO_CLOSE_BUFFER_MS;
+    const delay = getRespawnAutoCloseDelay(maxSpawnTime);
 
     if (delay <= 0) {
       this.logger.warn({
@@ -397,10 +433,10 @@ export class EventRespawnService {
       return;
     }
 
-    const jobId = this.getAutoCloseJobId(heroId, maxSpawnTime);
+    const jobId = buildRespawnAutoCloseJobId(heroId, maxSpawnTime);
 
     await this.respawnWindowQueue.add(
-      'auto-close-respawn-window',
+      RESPAWN_AUTO_CLOSE_JOB_NAME,
       { guildId, eventId, heroId, npcId, world },
       {
         delay,
@@ -433,9 +469,5 @@ export class EventRespawnService {
         });
       }
     }
-  }
-
-  private getAutoCloseJobId(heroId: string, maxSpawnTime: Date): string {
-    return `respawn-close-${heroId}-${maxSpawnTime.getTime()}`;
   }
 }
