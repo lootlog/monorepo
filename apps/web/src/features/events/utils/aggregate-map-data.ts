@@ -38,3 +38,21 @@ export const aggregateMapData = (
 
   return Array.from(aggregated.values());
 };
+
+export const formatMapNamesFromMapData = (
+  mapData: MapDataEntry[] | null | undefined,
+): string => {
+  if (!Array.isArray(mapData) || mapData.length === 0) {
+    return "—";
+  }
+
+  const names = aggregateMapData(mapData)
+    .map((entry) => entry.mapName.trim())
+    .filter((entry) => entry.length > 0);
+
+  if (names.length === 0) {
+    return "—";
+  }
+
+  return names.join(", ");
+};

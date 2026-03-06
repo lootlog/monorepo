@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import {
   Trophy,
   Pencil,
@@ -70,6 +71,7 @@ const RankingRow = ({
     });
 
   const isTop3 = position <= 3;
+  const memberLabel = ranking.member?.name || `Gracz #${ranking.memberId}`;
 
   const handleEditClick = () => {
     setEditValue(String(ranking.totalPoints));
@@ -120,9 +122,21 @@ const RankingRow = ({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">
-          {ranking.member?.name || `Gracz #${ranking.memberId}`}
-        </p>
+        {guildId && eventId ? (
+          <Link
+            to="/$guildId/events/$eventId/members/$memberId"
+            params={{
+              guildId,
+              eventId,
+              memberId: String(ranking.memberId),
+            }}
+            className="font-medium truncate hover:underline"
+          >
+            {memberLabel}
+          </Link>
+        ) : (
+          <p className="font-medium truncate">{memberLabel}</p>
+        )}
         <p className="text-xs text-muted-foreground">
           {t("events.ranking.killCount", { count: ranking.totalKills })}
         </p>

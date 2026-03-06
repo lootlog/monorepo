@@ -4,10 +4,12 @@ import { Button } from "@lootlog/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { AlertCircle, Skull, Loader2, Swords } from "lucide-react";
-import { useEvent } from "./hooks/queries/use-event";
+import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState, useEffect } from "react";
+import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 export const EventKillsHistory = () => {
   const { t } = useTranslation();
@@ -20,7 +22,7 @@ export const EventKillsHistory = () => {
     setSelectedHeroId(urlHeroId);
   }, [urlHeroId]);
 
-  const { data: event, isLoading: eventLoading } = useEvent({
+  const { data: event, isLoading: eventLoading } = useEventOverview({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -36,6 +38,12 @@ export const EventKillsHistory = () => {
     eventId: eventId ?? "",
     heroId: selectedHeroId,
     limit: 20,
+  });
+
+  useEventSocket({
+    eventId,
+    guildId,
+    heroId: selectedHeroId,
   });
 
   const heroes = event?.heroNpcs ?? [];
@@ -68,6 +76,10 @@ export const EventKillsHistory = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
+      <EventParticipationConfirmationDialog
+        guildId={guildId}
+        eventId={eventId}
+      />
       <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="p-1.5 rounded-lg bg-red-500/10">

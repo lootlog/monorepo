@@ -8,6 +8,8 @@ import { EventTrackingService } from './services/event-tracking.service';
 import { EventKillService } from './services/event-kill.service';
 import { EventRespawnService } from './services/event-respawn.service';
 import { RESPAWN_WINDOW_QUEUE } from './constants/respawn-queue.constant';
+import { EVENT_HERO_KILL_QUEUE } from './constants/event-hero-kill-queue.constant';
+import { EVENT_HERO_KILL_JOB_NAME } from './utils/event-hero-kill-job';
 
 describe('EventsService', () => {
   let service: EventsService;
@@ -50,7 +52,6 @@ describe('EventsService', () => {
     getRanking: jest.fn(),
     calculateMemberPoints: jest.fn(),
     recalculateEventPoints: jest.fn(),
-    recalculateEventPointsWithMultipliers: jest.fn(),
     getMemberPresenceStats: jest.fn(),
     updateRankingAfterKill: jest.fn(),
     updateKillPoint: jest.fn(),
@@ -83,6 +84,7 @@ describe('EventsService', () => {
     recordHeroKill: jest.fn(),
     getHeroKillHistory: jest.fn(),
     getEventKillHistory: jest.fn(),
+    getMemberKillHistory: jest.fn(),
     getKillDetail: jest.fn(),
     getKillTimelineData: jest.fn(),
   };
@@ -101,8 +103,19 @@ describe('EventsService', () => {
     name: 'respawn-window',
   };
 
+  const mockEventHeroKillQueue = {
+    add: jest.fn(),
+    name: 'event-hero-kill',
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockPointsService.calculateMemberPoints.mockReturnValue({
+      totalPoints: 1,
+      basePoints: 1,
+      bonusPoints: 0,
+      appliedBonuses: [],
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -113,6 +126,10 @@ describe('EventsService', () => {
         { provide: EventKillService, useValue: mockKillService },
         { provide: EventRespawnService, useValue: mockRespawnService },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
+        {
+          provide: getQueueToken(EVENT_HERO_KILL_QUEUE),
+          useValue: mockEventHeroKillQueue,
+        },
       ],
     }).compile();
 
@@ -163,6 +180,17 @@ describe('EventsService', () => {
         include: expect.any(Object),
       });
       expect(result).toEqual(createdEvent);
+    });
+
+    it('should request created hero maps sorted by mapId', async () => {
+      mockPrismaService.event.create.mockResolvedValue({});
+
+      await service.createEvent(guildId, createDto);
+
+      const queryArg = mockPrismaService.event.create.mock.calls[0][0];
+      expect(queryArg.include.heroNpcs.include.maps.orderBy).toEqual({
+        mapId: 'asc',
+      });
     });
 
     it('should create event without hero npcs', async () => {
@@ -242,7 +270,7 @@ describe('EventsService', () => {
 
       expect(mockPrismaService.event.findMany).toHaveBeenCalledWith({
         where: { guildId, active: true },
-        include: expect.any(Object),
+        select: expect.any(Object),
         orderBy: [{ active: 'desc' }, { createdAt: 'desc' }],
       });
       expect(result).toEqual(events);
@@ -255,7 +283,7 @@ describe('EventsService', () => {
 
       expect(mockPrismaService.event.findMany).toHaveBeenCalledWith({
         where: { guildId, world: 'tempest', active: true },
-        include: expect.any(Object),
+        select: expect.any(Object),
         orderBy: expect.any(Array),
       });
     });
@@ -267,7 +295,7 @@ describe('EventsService', () => {
 
       expect(mockPrismaService.event.findMany).toHaveBeenCalledWith({
         where: { guildId },
-        include: expect.any(Object),
+        select: expect.any(Object),
         orderBy: expect.any(Array),
       });
     });
@@ -290,6 +318,68 @@ describe('EventsService', () => {
       mockPrismaService.event.findFirst.mockResolvedValue(null);
 
       await expect(service.getEvent(guildId, eventId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('getEventOverview', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+
+    it('should return event overview when found', async () => {
+      const event = { id: eventId, guildId, active: true };
+      mockPrismaService.event.findFirst.mockResolvedValue(event);
+
+      const result = await service.getEventOverview(guildId, eventId);
+
+      expect(result).toEqual(event);
+    });
+
+    it('should throw NotFoundException when overview event not found', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue(null);
+
+      await expect(service.getEventOverview(guildId, eventId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('getEventMaps', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+
+    it('should return event maps when found', async () => {
+      const event = { id: eventId, heroNpcs: [] };
+      mockPrismaService.event.findFirst.mockResolvedValue(event);
+
+      const result = await service.getEventMaps(guildId, eventId);
+
+      expect(result).toEqual(event);
+    });
+
+    it('should request maps sorted by mapId in each location and ungrouped maps', async () => {
+      const event = { id: eventId, heroNpcs: [] };
+      mockPrismaService.event.findFirst.mockResolvedValue(event);
+
+      await service.getEventMaps(guildId, eventId);
+
+      const queryArg = mockPrismaService.event.findFirst.mock.calls[0][0];
+
+      expect(
+        queryArg.select.heroNpcs.select.locations.select.maps.orderBy,
+      ).toEqual({
+        mapId: 'asc',
+      });
+      expect(queryArg.select.heroNpcs.select.maps.orderBy).toEqual({
+        mapId: 'asc',
+      });
+    });
+
+    it('should throw NotFoundException when maps event not found', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue(null);
+
+      await expect(service.getEventMaps(guildId, eventId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -328,6 +418,21 @@ describe('EventsService', () => {
       expect(mockPrismaService.$transaction).toHaveBeenCalled();
     });
 
+    it('should request updated hero maps sorted by mapId', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
+      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+        callback(mockPrismaService),
+      );
+      mockPrismaService.event.update.mockResolvedValue({});
+
+      await service.updateEvent(guildId, eventId, { name: 'Updated' });
+
+      const callArg = mockPrismaService.event.update.mock.calls[0][0];
+      expect(callArg.include.heroNpcs.include.maps.orderBy).toEqual({
+        mapId: 'asc',
+      });
+    });
+
     it('should set endsAt when deactivating event', async () => {
       mockPrismaService.event.findFirst.mockResolvedValue({
         ...existingEvent,
@@ -350,7 +455,7 @@ describe('EventsService', () => {
       );
     });
 
-    it('should recalculate points when basePointsPerKill changes', async () => {
+    it('should not recalculate points automatically when basePointsPerKill changes', async () => {
       mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
       mockPrismaService.$transaction.mockImplementation(async (callback) =>
         callback(mockPrismaService),
@@ -359,14 +464,25 @@ describe('EventsService', () => {
 
       await service.updateEvent(guildId, eventId, { basePointsPerKill: 200 });
 
-      expect(
-        mockPointsService.recalculateEventPointsWithMultipliers,
-      ).toHaveBeenCalledWith(
+      expect(mockPointsService.recalculateEventPoints).not.toHaveBeenCalled();
+    });
+
+    it('should recalculate points manually via dedicated method', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue({
+        id: eventId,
+        basePointsPerKill: 150,
+      });
+
+      const result = await service.recalculateEventPointsForEvent(
+        guildId,
         eventId,
-        expect.objectContaining({
-          basePointsPerKill: 200,
-        }),
       );
+
+      expect(mockPointsService.recalculateEventPoints).toHaveBeenCalledWith(
+        eventId,
+        150,
+      );
+      expect(result).toEqual({ success: true });
     });
   });
 
@@ -455,6 +571,22 @@ describe('EventsService', () => {
         }),
         include: expect.any(Object),
       });
+    });
+
+    it('should request created hero maps sorted by mapId', async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue({
+        id: eventId,
+        world: 'tempest',
+      });
+      mockPrismaService.eventHeroNpc.create.mockResolvedValue({});
+
+      await service.createHero(guildId, eventId, {
+        npcId: 123,
+        npcName: 'Hero',
+      });
+
+      const queryArg = mockPrismaService.eventHeroNpc.create.mock.calls[0][0];
+      expect(queryArg.include.maps.orderBy).toEqual({ mapId: 'asc' });
     });
 
     it('should lookup npcId from timers when not provided', async () => {
@@ -671,6 +803,93 @@ describe('EventsService', () => {
         include: expect.any(Object),
       });
     });
+
+    it('should request location maps sorted by mapId', async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue({
+        id: heroId,
+      });
+      mockPrismaService.eventMapLocation.findFirst.mockResolvedValue(null);
+      mockPrismaService.eventMapLocation.aggregate.mockResolvedValue({
+        _max: { order: 2 },
+      });
+      mockPrismaService.eventMapLocation.create.mockResolvedValue({});
+
+      await service.createLocation(guildId, eventId, heroId, {
+        name: 'Location',
+      });
+
+      const queryArg =
+        mockPrismaService.eventMapLocation.create.mock.calls[0][0];
+      expect(queryArg.include.maps.orderBy).toEqual({ mapId: 'asc' });
+    });
+  });
+
+  describe('updateLocation', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+    const heroId = 'hero-1';
+    const locationId = 'loc-1';
+
+    it('should throw NotFoundException when location not found', async () => {
+      mockPrismaService.eventMapLocation.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.updateLocation(guildId, eventId, heroId, locationId, {
+          name: 'Updated',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should request updated location maps sorted by mapId', async () => {
+      mockPrismaService.eventMapLocation.findFirst
+        .mockResolvedValueOnce({
+          id: locationId,
+          name: 'Location',
+        })
+        .mockResolvedValueOnce(null);
+      mockPrismaService.eventMapLocation.update.mockResolvedValue({});
+
+      await service.updateLocation(guildId, eventId, heroId, locationId, {
+        name: 'Updated',
+      });
+
+      const queryArg =
+        mockPrismaService.eventMapLocation.update.mock.calls[0][0];
+      expect(queryArg.include.maps.orderBy).toEqual({ mapId: 'asc' });
+    });
+  });
+
+  describe('getLocations', () => {
+    const guildId = 'guild-1';
+    const eventId = 'event-1';
+    const heroId = 'hero-1';
+
+    it('should throw NotFoundException when hero not found', async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.getLocations(guildId, eventId, heroId),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should request locations with maps sorted by mapId', async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue({
+        id: heroId,
+      });
+      mockPrismaService.eventMapLocation.findMany.mockResolvedValue([]);
+
+      await service.getLocations(guildId, eventId, heroId);
+
+      expect(mockPrismaService.eventMapLocation.findMany).toHaveBeenCalledWith({
+        where: { heroNpcId: heroId },
+        orderBy: { order: 'asc' },
+        include: expect.objectContaining({
+          maps: expect.objectContaining({
+            orderBy: { mapId: 'asc' },
+          }),
+        }),
+      });
+    });
   });
 
   describe('reorderLocations', () => {
@@ -810,6 +1029,46 @@ describe('EventsService', () => {
   });
 
   describe('delegation to KillService', () => {
+    it('should enqueue event hero kill check job with deterministic jobId', async () => {
+      const params = {
+        guildId: 'guild-1',
+        world: 'tempest',
+        npcId: 123,
+        npcName: 'Hero',
+        npcIcon: 'hero.gif',
+        npcLvl: 250,
+        timerData: {
+          minSpawnTime: new Date('2026-02-18T10:00:00.000Z'),
+          maxSpawnTime: new Date('2026-02-18T12:00:00.000Z'),
+          memberId: 1,
+          previousMinSpawnTime: new Date('2026-02-18T08:00:00.000Z'),
+          previousMaxSpawnTime: new Date('2026-02-18T09:00:00.000Z'),
+          windowOpenedAt: new Date('2026-02-18T08:00:00.000Z'),
+        },
+      } as const;
+
+      await service.enqueueEventHeroKillCheck(params);
+
+      expect(mockEventHeroKillQueue.add).toHaveBeenCalledWith(
+        EVENT_HERO_KILL_JOB_NAME,
+        expect.objectContaining({
+          guildId: 'guild-1',
+          world: 'tempest',
+          npcId: 123,
+          isManualClose: false,
+          timerData: expect.objectContaining({
+            minSpawnTime: '2026-02-18T10:00:00.000Z',
+            windowOpenedAt: '2026-02-18T08:00:00.000Z',
+          }),
+        }),
+        expect.objectContaining({
+          attempts: 5,
+          backoff: { type: 'exponential', delay: 1000 },
+          jobId: 'event-hero-kill-guild-1-tempest-123-1771401600000-timer',
+        }),
+      );
+    });
+
     it('should delegate getEventHeroTimers', async () => {
       await service.getEventHeroTimers('guild-1', 'event-1', 'tempest');
       expect(mockKillService.getEventHeroTimers).toHaveBeenCalledWith(

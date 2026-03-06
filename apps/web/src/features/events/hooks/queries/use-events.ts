@@ -1,5 +1,9 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useQuery } from "@tanstack/react-query";
+import type {
+  EventScoringMode,
+  EventScoringRules,
+} from "../../types/scoring-rules";
 
 interface Member {
   id: number;
@@ -32,8 +36,9 @@ interface EventHeroNpc {
   npcId: number | null;
   npcName: string;
   npcIcon: string | null;
-  locations: EventMapLocation[];
-  maps: EventMap[];
+  npcLvl?: number | null;
+  locations?: EventMapLocation[];
+  maps?: EventMap[];
 }
 
 interface EventRanking {
@@ -42,17 +47,14 @@ interface EventRanking {
   heroNpcName: string;
   totalPoints: number;
   totalKills: number;
+  totalTimeSeconds: number;
+  avgAfkPercentage: number;
   pointsModified: boolean;
+  updatedAt?: string;
   member: {
     id: number;
     name: string;
   };
-}
-
-interface TimeOfDayMultiplier {
-  from: string;
-  to: string;
-  multiplier: number;
 }
 
 interface Event {
@@ -64,14 +66,14 @@ interface Event {
   startsAt?: string;
   endsAt?: string;
   createdAt: string;
+  updatedAt?: string;
   heroNpcs: EventHeroNpc[];
-  rankings: EventRanking[];
-  timeOfDayMultipliers?: TimeOfDayMultiplier[];
-  trackersMultipliers?: Record<string, number>;
-  mapsCountMultipliers?: Record<string, number>;
-  trackingDurationMultipliers?: Record<string, number>;
+  rankings?: EventRanking[];
   assignmentTimeoutMinutes?: number;
+  participationConfirmationMinutes?: number;
   basePointsPerKill?: number;
+  scoringMode?: EventScoringMode;
+  scoringRules?: EventScoringRules | null;
 }
 
 interface UseEventsOptions {

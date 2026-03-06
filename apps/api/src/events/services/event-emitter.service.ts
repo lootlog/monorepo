@@ -13,7 +13,6 @@ export class EventEmitterService {
     guildId: string,
     eventId: string,
     mapId: string,
-    mapName: string,
   ): Promise<void> {
     try {
       await this.amqpConnection.publish(
@@ -23,7 +22,6 @@ export class EventEmitterService {
           guildId,
           eventId,
           mapId,
-          mapName,
         },
       );
     } catch (error) {
@@ -48,6 +46,21 @@ export class EventEmitterService {
       );
     } catch (error) {
       this.logger.error('Failed to emit hero killed event', error);
+    }
+  }
+
+  async emitRankingUpdate(guildId: string, eventId: string): Promise<void> {
+    try {
+      await this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.EVENT_RANKING_UPDATE,
+        {
+          guildId,
+          eventId,
+        },
+      );
+    } catch (error) {
+      this.logger.error('Failed to emit ranking update event', error);
     }
   }
 

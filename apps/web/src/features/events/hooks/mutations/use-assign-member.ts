@@ -29,9 +29,8 @@ export const useAssignMember = () => {
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event", guildId, eventId],
+        queryKey: ["event-maps", guildId, eventId],
       });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
 };
@@ -51,9 +50,8 @@ export const useUnassignMember = () => {
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event", guildId, eventId],
+        queryKey: ["event-maps", guildId, eventId],
       });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
 };
@@ -77,9 +75,8 @@ export const useSelfAssignMember = () => {
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event", guildId, eventId],
+        queryKey: ["event-maps", guildId, eventId],
       });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
 };
@@ -98,9 +95,8 @@ export const useSelfUnassignMember = () => {
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["event", guildId, eventId],
+        queryKey: ["event-maps", guildId, eventId],
       });
-      queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
 };

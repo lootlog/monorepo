@@ -2,110 +2,111 @@ import { Card } from "@lootlog/ui/components/card";
 import { Calculator } from "lucide-react";
 import type { EventConfig } from "../../hooks/queries/use-kill-detail";
 import type { TFunction } from "i18next";
+import {
+  formatScoringAction,
+  formatScoringCondition,
+} from "../../utils/scoring-rule-labels";
 
 interface MultipliersCardProps {
   eventConfig: EventConfig;
+  highlightedRuleIds?: string[];
   t: TFunction;
 }
 
-export const MultipliersCard = ({ eventConfig, t }: MultipliersCardProps) => {
-  const hasTimeMultipliers =
-    eventConfig.timeOfDayMultipliers &&
-    eventConfig.timeOfDayMultipliers.length > 0;
-  const hasTrackersMultipliers =
-    eventConfig.trackersMultipliers &&
-    Object.keys(eventConfig.trackersMultipliers).length > 0;
-  const hasMapsMultipliers =
-    eventConfig.mapsCountMultipliers &&
-    Object.keys(eventConfig.mapsCountMultipliers).length > 0;
-
-  if (!hasTimeMultipliers && !hasTrackersMultipliers && !hasMapsMultipliers) {
-    return null;
-  }
+export const MultipliersCard = ({
+  eventConfig,
+  highlightedRuleIds = [],
+  t,
+}: MultipliersCardProps) => {
+  const rules = eventConfig.scoringRules?.rules ?? [];
+  const andLabel = t("events.scoring.andLabel", "i");
 
   return (
     <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
       <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
         <Calculator className="w-4 h-4" />
-        {t("events.killDetail.multipliers.title")}
+        {t("events.killDetail.multipliers.title", "Zasady punktacji")}
       </h3>
 
-      <div className="space-y-3">
-        <div className="text-sm">
-          <span className="text-muted-foreground">
-            {t("events.killDetail.multipliers.basePoints")}:
-          </span>{" "}
-          <span className="font-medium">{eventConfig.basePointsPerKill}</span>
-        </div>
+      <div className="space-y-3 text-sm">
+        {eventConfig.scoringMode === "SIMPLE" ? (
+          <div className="text-muted-foreground">
+            {t(
+              "events.killDetail.multipliers.simpleMode",
+              "Tryb prosty: 1 punkt za eligible gracza.",
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2 text-muted-foreground">
+            {rules.map((rule) => {
+              const isHighlighted = highlightedRuleIds.includes(rule.id);
 
-        {hasTimeMultipliers && (
-          <div>
-            <h4 className="text-sm font-medium mb-1.5">
-              {t("events.killDetail.multipliers.timeOfDay")}
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5">
-              {eventConfig.timeOfDayMultipliers!.map((m, idx) => (
+              return (
                 <div
-                  key={idx}
-                  className="px-2.5 py-1.5 rounded bg-muted/30 text-sm"
+                  key={rule.id}
+                  className={`rounded-md border p-2 ${
+                    isHighlighted ? "border-green-500/70 bg-green-500/5" : ""
+                  }`}
                 >
-                  <span className="text-muted-foreground">
-                    {m.from} - {m.to}
-                  </span>
-                  <span className="ml-2 font-medium text-primary">
-                    x{m.multiplier}
-                  </span>
+                  <p
+                    className={`text-xs font-medium ${
+                      isHighlighted
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {rule.name ||
+                      (rule.action.type === "ADD_BONUS"
+                        ? t("events.scoring.unnamedBonus", "Nienazwany bonus")
+                        : rule.id)}{" "}
+                    {rule.enabled === false
+                      ? t("events.scoring.ruleDisabledSuffix", "(WYŁ.)")
+                      : ""}
+                  </p>
+                  <p className="text-xs mt-1">
+                    {t("events.scoring.ifLabel", "JEŻELI")}{" "}
+                    {rule.conditions.length > 0
+                      ? rule.conditions
+                          .map((condition) => formatScoringCondition(condition, t))
+                          .join(` ${andLabel} `)
+                      : t("events.scoring.always", "zawsze")}{" "}
+                    {t("events.scoring.thenLabel", "WTEDY")}{" "}
+                    {formatScoringAction(rule.action, t)}
+                  </p>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
 
-        {hasTrackersMultipliers && (
-          <div>
-            <h4 className="text-sm font-medium mb-1.5">
-              {t("events.killDetail.multipliers.trackers")}
-            </h4>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-1.5">
-              {Object.entries(eventConfig.trackersMultipliers!).map(
-                ([count, multiplier]) => (
-                  <div
-                    key={count}
-                    className="px-2.5 py-1.5 rounded bg-muted/30 text-sm text-center"
-                  >
-                    <span className="text-muted-foreground">{count}+</span>
-                    <span className="ml-1 font-medium text-primary">
-                      x{multiplier}
-                    </span>
-                  </div>
-                ),
-              )}
-            </div>
-          </div>
-        )}
-
-        {hasMapsMultipliers && (
-          <div>
-            <h4 className="text-sm font-medium mb-1.5">
-              {t("events.killDetail.multipliers.maps")}
-            </h4>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-1.5">
-              {Object.entries(eventConfig.mapsCountMultipliers!).map(
-                ([count, multiplier]) => (
-                  <div
-                    key={count}
-                    className="px-2.5 py-1.5 rounded bg-muted/30 text-sm text-center"
-                  >
-                    <span className="text-muted-foreground">{count}</span>
-                    <span className="ml-1 font-medium text-primary">
-                      x{multiplier}
-                    </span>
-                  </div>
-                ),
-              )}
-            </div>
-          </div>
-        )}
+        <div className="pt-2 border-t border-border/50 text-muted-foreground">
+          <p>
+            {t(
+              "events.killDetail.multipliers.cap",
+              "Maksymalnie {{points}} pkt za jednego herosa",
+              { points: (eventConfig.scoringRules?.hardCapPoints ?? 2).toFixed(2) },
+            )}
+          </p>
+          <p>
+            {t(
+              "events.killDetail.multipliers.timezone",
+              "Strefa: {{timezone}}",
+              {
+                timezone: eventConfig.scoringRules?.timezone ?? "Europe/Warsaw",
+              },
+            )}
+          </p>
+          <p>
+            {t(
+              "events.killDetail.multipliers.minTrackingForBonuses",
+              "Min. pokrycie dla bonusów: {{percentage}}%",
+              {
+                percentage:
+                  eventConfig.scoringRules?.minTrackingPercentForBonuses ?? 50,
+              },
+            )}
+          </p>
+        </div>
       </div>
     </Card>
   );
