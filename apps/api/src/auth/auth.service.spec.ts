@@ -21,7 +21,9 @@ describe('AuthService', () => {
 
   const mockConfigService = {
     get: jest.fn().mockReturnValue({
-      serviceUrl: 'http://localhost:3001',
+      serviceUrl: 'http://localhost/api/auth',
+      internalUrl: 'http://localhost:3001',
+      jwksUri: 'http://localhost:3001/idp/jwks',
     }),
   };
 

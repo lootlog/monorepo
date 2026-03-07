@@ -30,7 +30,7 @@ export class MapsService {
     // Fetch from external API
     const apiUrl = this.configService.get<string>('MAPS_API_URL');
     if (!apiUrl) {
-      this.logger.error('MAPS_API_URL is not configured');
+      this.logger.warn('MAPS_API_URL is not configured; returning empty map list');
       return [];
     }
 

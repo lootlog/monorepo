@@ -23,6 +23,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     PORT: Joi.number().required(),
     API_URL: Joi.string().uri().required(),
     AUTH_SERVICE_URL: Joi.string().uri().required(),
+    AUTH_JWKS_URI: Joi.string().uri().required(),
     RABBITMQ_URI: Joi.string().required(),
     SERVICE_NAME: Joi.string().default('gateway'),
     REDIS_HOST: Joi.string().required(),

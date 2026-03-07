@@ -20,6 +20,7 @@ export class ConnectionService {
     const authenticatedUser = await authenticateHeaders({
       headers: request.headers as Record<string, unknown>,
       authServiceUrl: process.env.AUTH_SERVICE_URL,
+      authJwksUri: process.env.AUTH_JWKS_URI,
       forwardedAuthSecret: process.env.FORWARDED_AUTH_SIGNATURE_SECRET,
     });
     const platform = this.determineUserPlatform(request.headers.origin);

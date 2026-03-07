@@ -7,6 +7,11 @@ declare global {
       PORT: string;
       SERVICE_NAME: string;
 
+      API_URL: string;
+      AUTH_SERVICE_URL: string;
+      AUTH_JWKS_URI: string;
+      FORWARDED_AUTH_SIGNATURE_SECRET: string;
+
       REDIS_PASSWORD: string;
       REDIS_HOST: string;
       REDIS_PORT: string;

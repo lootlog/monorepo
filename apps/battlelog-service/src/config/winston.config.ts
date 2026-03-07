@@ -7,16 +7,19 @@ import { RuntimeEnvironment } from 'src/types/runtime.types';
 
 export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
   const { ENV, HOSTNAME, AXIOM_DATASET, AXIOM_TOKEN } = process.env;
+  const hasAxiomConfig = Boolean(AXIOM_DATASET && AXIOM_TOKEN);
 
   const transports =
     ENV === RuntimeEnvironment.LOCAL
       ? [new winston.transports.Console({ level: 'debug' })]
-      : [
-          new AxiomTransport({
-            dataset: AXIOM_DATASET,
-            token: AXIOM_TOKEN,
-          }),
-        ];
+      : hasAxiomConfig
+        ? [
+            new AxiomTransport({
+              dataset: AXIOM_DATASET,
+              token: AXIOM_TOKEN,
+            }),
+          ]
+        : [new winston.transports.Console({ level: 'info' })];
 
   return {
     level: 'info',

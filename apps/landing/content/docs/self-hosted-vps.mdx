@@ -1,0 +1,379 @@
+---
+title: Wdrożenie self-hosted na VPS
+description: Jak uruchomić Lootlog na własnym serwerze VPS z Docker Compose, Traefik i automatycznym TLS
+---
+
+## Dla kogo jest ten poradnik?
+
+Ta dokumentacja opisuje pełny proces uruchomienia Lootlog na pojedynczym VPS-ie przy użyciu przygotowanych skryptów deploymentowych.
+
+<Callout type="info">
+Ta ścieżka jest przeznaczona dla administratorów własnej instancji Lootlog. Jeśli chcesz tylko korzystać z dodatku jako gracz, przejdź do [Instalacji](/docs/installation).
+</Callout>
+
+## Wymagania
+
+Przed startem przygotuj:
+
+- VPS z Ubuntu lub Debianem
+- domenę wskazującą na publiczny adres IP serwera
+- otwarte porty `80` i `443`
+- `root` albo konto z `sudo`
+- `DISCORD_CLIENT_ID` i `DISCORD_CLIENT_SECRET`
+- `DISCORD_BOT_TOKEN`
+
+## Instalacja
+
+Najprostsza ścieżka to uruchomienie instalatora bezpośrednio z GitHub:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lootlog/lootlog/main/scripts/install-vps.sh | sudo bash
+```
+
+Instalator:
+
+- doinstaluje Docker Engine i plugin Compose, jeśli ich brakuje
+- pobierze wybrany release projektu
+- zapisze trwałą konfigurację w `/opt/lootlog/shared`
+- wygeneruje pliki `.env` i konfigurację Traefika
+- zbuduje obrazy na VPS-ie
+- uruchomi migracje
+- wystawi cały stack za Traefikiem z automatycznym certyfikatem Let's Encrypt
+
+## Aktualizacja
+
+Aby zaktualizować instancję do najnowszego release'u:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lootlog/lootlog/main/scripts/update-vps.sh | sudo bash
+```
+
+Aby wdrożyć konkretną wersję:
+
+```bash
+sudo /opt/lootlog/current/scripts/update-vps.sh --release v1.2.3
+```
+
+Skrypt aktualizacyjny:
+
+- używa istniejącej konfiguracji z `/opt/lootlog/shared/install.env`
+- pobiera nowy release
+- przebudowuje obrazy
+- uruchamia migracje
+- przełącza aktywny release dopiero po udanym deployu
+
+## Status wdrożenia
+
+Szybki podgląd aktywnej wersji i stanu kontenerów:
+
+```bash
+sudo /opt/lootlog/current/scripts/status-vps.sh
+```
+
+Skrypt pokazuje:
+
+- aktywny release
+- poprzedni release
+- listę zainstalowanych release'ów
+- domenę i tryb storage
+- wynik `docker compose ps`
+
+## Rollback
+
+Cofnięcie do poprzedniego release'u:
+
+```bash
+sudo /opt/lootlog/current/scripts/rollback-vps.sh
+```
+
+Cofnięcie do konkretnej, już pobranej wersji:
+
+```bash
+sudo /opt/lootlog/current/scripts/rollback-vps.sh --release v1.2.2
+```
+
+Rollback ponownie wdraża wskazany release i przepina `current` dopiero po udanym restarcie usług.
+
+## Cleanup starych release'ów
+
+Usunięcie starych katalogów release'ów:
+
+```bash
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh
+```
+
+Podgląd bez kasowania plików:
+
+```bash
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh --dry-run
+```
+
+Zostawienie większej liczby release'ów:
+
+```bash
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh --keep 4
+```
+
+Cleanup zawsze zachowuje:
+
+- aktywny release
+- poprzedni release, jeśli istnieje
+- co najmniej dwa release'y łącznie
+
+## Minimalny rozmiar VPS
+
+Rozsądne minimum dla małej instancji:
+
+- `4 vCPU`
+- `8 GB RAM`
+- `80 GB SSD`
+
+Wygodniejszy baseline dla kilku aktywnych użytkowników i regularnych aktualizacji:
+
+- `6 vCPU`
+- `12-16 GB RAM`
+- `120 GB SSD`
+
+To ma znaczenie, bo na jednej maszynie działają jednocześnie:
+
+- buildy Dockerowe
+- PostgreSQL, Redis, RabbitMQ i Meilisearch
+- usługi aplikacyjne Lootlog
+- przechowywanie kilku release'ów oraz warstw obrazów
+
+Jeśli używasz wbudowanego MinIO do battlelogów, zaplanuj większy zapas miejsca na dysku.
+
+## Ważne ścieżki na serwerze
+
+- `/opt/lootlog/current` - aktywny release
+- `/opt/lootlog/releases/<tag>` - pobrane release'y
+- `/opt/lootlog/shared/install.env` - trwała konfiguracja wdrożenia
+- `/opt/lootlog/shared/.env.production` - publiczne i build-time wartości produkcyjne
+- `/opt/lootlog/shared/env/` - per-serwisowe pliki środowiskowe
+- `/opt/lootlog/shared/traefik/` - wygenerowana konfiguracja Traefika i `acme.json`
+
+## Przydatne komendy
+
+Sprawdzenie stanu stacka:
+
+```bash
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+```
+
+Podgląd logów:
+
+```bash
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f
+```
+
+## Troubleshooting
+
+### TLS się nie wydaje
+
+Objawy:
+
+- Traefik nie pobiera certyfikatu Let's Encrypt
+- aplikacja nie działa po HTTPS
+
+Sprawdź:
+
+- czy domena wskazuje na publiczny adres IP VPS-a
+- czy porty `80` i `443` są otwarte w firewallu systemowym i u dostawcy VPS-a
+- czy nic innego nie nasłuchuje już na `80` lub `443`
+
+Przydatne komendy:
+
+```bash
+dig +short twoja-domena.pl
+ss -ltnp | grep -E ':80|:443'
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f traefik
+```
+
+### Build obrazów kończy się błędem
+
+Objawy:
+
+- `docker build` albo `docker compose build` kończy się błędem
+- frontend lub backend nie kończą budowania
+
+Sprawdź:
+
+- ilość wolnego RAM-u i miejsca na dysku
+- czy daemon Dockera działa
+- czy release został poprawnie pobrany
+
+Przydatne komendy:
+
+```bash
+systemctl status docker
+df -h
+free -h
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml build
+```
+
+### Discord OAuth albo bot nie działają
+
+Objawy:
+
+- redirect OAuth kończy się błędem
+- logowanie nie działa
+- bot jest offline albo nie reaguje
+
+Sprawdź:
+
+- czy `DISCORD_CLIENT_ID` i `DISCORD_CLIENT_SECRET` są poprawne
+- czy redirect URL w Discord Developer Portal to `https://<domena>/api/auth`
+- czy `DISCORD_BOT_TOKEN` jest prawidłowy
+- czy bot został zaproszony z odpowiednimi uprawnieniami
+
+Przydatne komendy:
+
+```bash
+sudo /opt/lootlog/current/scripts/status-vps.sh
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f auth discord-bot
+```
+
+### Migracje nie przechodzą
+
+Objawy:
+
+- `auth-migrate`, `api-migrate`, `battlelog-migrate` albo `activity-migrate` kończą się błędem
+
+Sprawdź:
+
+- czy kontenery baz danych są healthy
+- czy credentials w `/opt/lootlog/shared/env/` są spójne
+- czy wcześniejsze nieudane kontenery nie maskują właściwego błędu
+
+Przydatne komendy:
+
+```bash
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml logs auth-migrate api-migrate battlelog-migrate activity-migrate
+```
+
+### Battlelog storage nie działa
+
+Objawy:
+
+- uploady battlelogów kończą się błędem
+- publiczne lub raw battle data nie są dostępne
+
+Sprawdź:
+
+- w trybie MinIO: czy `minio` i `minio-init` zakończyły start poprawnie
+- w trybie zewnętrznego S3: czy endpoint, bucket i klucze są poprawne
+- czy bucket istnieje i ma uprawnienia read/write
+
+Przydatne komendy:
+
+```bash
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f battlelog-service minio minio-init
+```
+
+### Mapy lub reservation cards są puste
+
+Objawy:
+
+- lista map jest pusta
+- reservation cards nie zwracają danych
+
+To może być oczekiwane, jeśli podczas self-hostingu pozostawisz puste `MAPS_API_URL` albo `RESERVATIONS_CARDS_URL`. Te integracje są opcjonalne i system ma się wtedy degradować bez crasha.
+
+Aby je włączyć, uzupełnij `/opt/lootlog/shared/install.env` i uruchom:
+
+```bash
+sudo /opt/lootlog/current/scripts/update-vps.sh
+```
+
+### Kończy się miejsce na dysku
+
+Objawy:
+
+- buildy Dockera wywalają się bez jasnego powodu
+- aktualizacje zwalniają z czasem
+- pojawia się `no space left on device`
+
+Sprawdź:
+
+- użycie przestrzeni przez obrazy i cache Dockera
+- liczbę release'ów w `/opt/lootlog/releases`
+- logi kontenerów i wolumeny
+
+Przydatne komendy:
+
+```bash
+df -h
+docker system df
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh --dry-run
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh
+```
+
+## Recovery po nieudanym update
+
+Objawy:
+
+- `update-vps.sh` kończy się błędem w połowie
+- katalog nowego release'u już istnieje, ale deploy nie doszedł do końca
+- chcesz szybko wrócić do ostatniej stabilnej wersji
+
+Co warto wiedzieć:
+
+- `/opt/lootlog/current` przełącza się dopiero po udanym deployu
+- jeśli update padł wcześniej, poprzedni release powinien nadal być aktywny
+- nieudany release może nadal leżeć w `/opt/lootlog/releases/<tag>`
+
+Zalecana ścieżka odzyskiwania:
+
+1. Sprawdź, który release jest aktywny:
+
+```bash
+sudo /opt/lootlog/current/scripts/status-vps.sh
+```
+
+2. Obejrzyj logi:
+
+```bash
+cd /opt/lootlog/current
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f
+```
+
+3. Jeśli aktywny release się zmienił i nowa wersja jest uszkodzona, zrób rollback:
+
+```bash
+sudo /opt/lootlog/current/scripts/rollback-vps.sh
+```
+
+4. Jeśli problemem jest miejsce na dysku albo uszkodzony pobrany release, zrób cleanup:
+
+```bash
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh --dry-run
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh
+```
+
+5. Po naprawieniu przyczyny ponów update:
+
+```bash
+sudo /opt/lootlog/current/scripts/update-vps.sh
+```
+
+## Szybki health snapshot
+
+Jeśli chcesz od razu zobaczyć aktywny release, poprzedni release, listę wersji i stan usług, użyj:
+
+```bash
+sudo /opt/lootlog/current/scripts/status-vps.sh
+```
+
+## Co dalej?
+
+- Jeśli wdrażasz Lootlog po raz pierwszy, zacznij od skryptu instalacyjnego.
+- Jeśli utrzymujesz instancję produkcyjną, regularnie używaj `status-vps.sh`, `update-vps.sh` i `cleanup-vps.sh`.
+- Jeśli chcesz po prostu korzystać z dodatku jako gracz, wróć do [Instalacji](/docs/installation).

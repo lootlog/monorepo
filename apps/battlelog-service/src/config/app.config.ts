@@ -30,6 +30,7 @@ export const APP_CONFIG: ConfigModuleOptions = {
     REDIS_PASSWORD: Joi.string().required(),
     REDIS_USERNAME: Joi.string().required(),
     AUTH_SERVICE_URL: Joi.string().uri().required(),
+    AUTH_JWKS_URI: Joi.string().uri().required(),
     FORWARDED_AUTH_SIGNATURE_SECRET: Joi.string().required(),
     R2_ACCESS_KEY_ID: Joi.string().required(),
     R2_SECRET_ACCESS_KEY: Joi.string().required(),

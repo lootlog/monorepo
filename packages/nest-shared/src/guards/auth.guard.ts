@@ -13,6 +13,7 @@ export class AuthGuard implements CanActivate {
     const user = await authenticateHeaders({
       headers: request.headers,
       authServiceUrl: process.env.AUTH_SERVICE_URL,
+      authJwksUri: process.env.AUTH_JWKS_URI,
       forwardedAuthSecret: process.env.FORWARDED_AUTH_SIGNATURE_SECRET,
     });
 

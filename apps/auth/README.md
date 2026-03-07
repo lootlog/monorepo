@@ -9,7 +9,6 @@ The Auth service handles user authentication and authorization for the entire Lo
 ## Features
 
 - **Discord OAuth** - Login with Discord account
-- **Email/Password Authentication** - Traditional login option
 - **JWT Tokens** - Secure token-based authentication
 - **JWKS Endpoint** - Public keys for JWT verification by other services
 - **Session Management** - User session handling with Redis
@@ -33,8 +32,6 @@ Uses the `lootlog-users-db` PostgreSQL database for:
 
 ## API Endpoints
 
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
 - `GET /api/auth/discord` - Discord OAuth flow
 - `GET /api/auth/.well-known/jwks.json` - JWKS public keys
 - `POST /api/auth/logout` - User logout

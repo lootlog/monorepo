@@ -49,6 +49,8 @@ export default async function globalSetup() {
   process.env.REDIS_USERNAME = '';
   process.env.RABBITMQ_URI = rabbitmqUri;
   process.env.AUTH_SERVICE_URL = 'http://localhost/api/auth';
+  process.env.AUTH_INTERNAL_URL = 'http://localhost:4001';
+  process.env.AUTH_JWKS_URI = 'http://localhost/api/auth/idp/jwks';
   process.env.INTERNAL_SERVICE_AUTH_SECRET = 'test-internal-service-secret';
   process.env.FORWARDED_AUTH_SIGNATURE_SECRET = 'test-forwarded-auth-secret';
 

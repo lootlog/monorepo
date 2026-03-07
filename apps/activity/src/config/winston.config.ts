@@ -10,6 +10,7 @@ export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
     process.env;
 
   const isLocal = ENV === RuntimeEnvironment.LOCAL;
+  const hasAxiomConfig = Boolean(AXIOM_DATASET && AXIOM_TOKEN);
 
   const localFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -27,12 +28,14 @@ export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
 
   const transports = isLocal
     ? [new winston.transports.Console({ level: 'debug' })]
-    : [
-        new AxiomTransport({
-          dataset: AXIOM_DATASET,
-          token: AXIOM_TOKEN,
-        }),
-      ];
+    : hasAxiomConfig
+      ? [
+          new AxiomTransport({
+            dataset: AXIOM_DATASET,
+            token: AXIOM_TOKEN,
+          }),
+        ]
+      : [new winston.transports.Console({ level: 'info' })];
 
   return {
     level: 'info',

@@ -18,10 +18,19 @@ declare global {
 
       RABBITMQ_URI: string;
 
+      AUTH_SERVICE_URL: string;
+      AUTH_INTERNAL_URL: string;
+      AUTH_JWKS_URI: string;
+      INTERNAL_SERVICE_AUTH_SECRET: string;
+      FORWARDED_AUTH_SIGNATURE_SECRET: string;
+
       REDIS_PASSWORD: string;
       REDIS_HOST: string;
       REDIS_PORT: string;
       REDIS_USERNAME: string;
+
+      RESERVATIONS_CARDS_URL?: string;
+      MAPS_API_URL?: string;
 
       OTEL_EXPORTER_OTLP_ENDPOINT: string;
       OTEL_EXPORTER_OTLP_HEADERS: string;

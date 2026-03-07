@@ -105,10 +105,12 @@ export function verifyForwardedAuthHeaders(
 export async function authenticateHeaders({
   headers,
   authServiceUrl,
+  authJwksUri,
   forwardedAuthSecret,
 }: {
   headers: Record<string, unknown>;
   authServiceUrl?: string;
+  authJwksUri?: string;
   forwardedAuthSecret?: string;
 }): Promise<AuthenticatedUser | null> {
   const authorization = getHeaderValue(headers, "authorization");
@@ -120,7 +122,7 @@ export async function authenticateHeaders({
         token,
         issuer: authServiceUrl,
         audience: authServiceUrl,
-        jwksUri: `${authServiceUrl}/idp/jwks`,
+        jwksUri: authJwksUri || `${authServiceUrl}/idp/jwks`,
       });
 
       if (verifiedUser.userId && verifiedUser.discordId) {

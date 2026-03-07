@@ -233,9 +233,11 @@ export class ReservationsService {
       }
     }
 
-    const externalUrl = this.configService.getOrThrow<string>(
-      'RESERVATIONS_CARDS_URL',
-    );
+    const externalUrl = this.configService.get<string>('RESERVATIONS_CARDS_URL');
+    if (!externalUrl) {
+      this.redis.del(cacheKey).catch(() => undefined);
+      return {};
+    }
 
     const response = await lastValueFrom(
       this.httpService.get<unknown>(externalUrl),

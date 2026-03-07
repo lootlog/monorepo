@@ -8,8 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.mjs",
     "build": "pkgroll",
-    "auth:migrate:dev": "pnpm dlx @better-auth/cli migrate",
-    "auth:migrate:prod": "pnpm dlx @better-auth/cli migrate --y"
+    "auth:migrate:dev": "pnpm dlx @better-auth/cli migrate --config ./src/lib/auth.ts",
+    "auth:migrate:prod": "pnpm dlx @better-auth/cli migrate --config ./src/lib/auth.ts --y"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.9",

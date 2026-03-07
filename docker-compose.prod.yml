@@ -1,102 +1,465 @@
+x-build-args: &build-args
+  VITE_API_URL: ${VITE_API_URL}
+  VITE_SEARCH_API_URL: ${VITE_SEARCH_API_URL}
+  VITE_AUTH_SERVICE_URL: ${VITE_AUTH_SERVICE_URL}
+  VITE_GATEWAY_URL: ${VITE_GATEWAY_URL}
+  VITE_GATEWAY_SOCKET_PATH: ${VITE_GATEWAY_SOCKET_PATH}
+  VITE_BATTLELOG_API_URL: ${VITE_BATTLELOG_API_URL}
+  VITE_ACTIVITY_API_URL: ${VITE_ACTIVITY_API_URL}
+  VITE_ADDON_INSTALL_URL: ${VITE_ADDON_INSTALL_URL}
+  VITE_BATTLELOG_PUBLIC_URL: ${VITE_BATTLELOG_PUBLIC_URL}
+  VITE_DISCORD_CLIENT_ID: ${VITE_DISCORD_CLIENT_ID}
+  VITE_DISCORD_BOT_PERMISSIONS: ${VITE_DISCORD_BOT_PERMISSIONS}
+  VITE_LOOTLOG_APP_URL: ${VITE_LOOTLOG_APP_URL}
+  NEXT_PUBLIC_AUTH_SERVICE_URL: ${NEXT_PUBLIC_AUTH_SERVICE_URL}
+  NEXT_PUBLIC_ADDON_URL: ${NEXT_PUBLIC_ADDON_URL}
+  GAME_CLIENT_URL: ${GAME_CLIENT_URL}
+
 services:
-  rabbitmq:
-    image: rabbitmq:4-management-alpine
-    container_name: "rabbitmq-lootlog"
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-    ports:
-      - 5672:5672
-      - 15672:15672
-    volumes:
-      - rabbitdata:/var/lib/rabbitmq
-      - rabbitlog:/var/log/rabbitmq
-
-  lootlog-users-db:
-    image: postgres:17-alpine
-    container_name: "lootlog-users-db"
-    restart: always
-    # set shared memory limit when using docker-compose
-    shm_size: 128mb
-    # or set shared memory limit when deploy via swarm stack
-    volumes:
-      - lootlog-users-db:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${USERS_DB_NAME}
-      POSTGRES_USER: ${USERS_DB_USER}
-      POSTGRES_PASSWORD: ${USERS_DB_PASSWORD}
-    ports:
-      - "5432:5432"
-
-  lootlog-db:
-    image: postgres:17-alpine
-    container_name: "lootlog-db"
-    restart: always
-    # set shared memory limit when using docker-compose
-    shm_size: 128mb
-    # or set shared memory limit when deploy via swarm stack
-    volumes:
-      - lootlog-db:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${LOOTLOG_DB_DB}
-      POSTGRES_USER: ${LOOTLOG_DB_USER}
-      POSTGRES_PASSWORD: ${LOOTLOG_DB_PASSWORD}
-    ports:
-      - "5433:5432"
-
-  meilisearch:
-    image: "getmeili/meilisearch:v1.10.0"
-    environment:
-      - MEILISEARCH_MASTER_KEY=${MEILISEARCH_MASTER_KEY}
-    ports:
-      - 7700:7700
-    volumes:
-      - "meilisearch:/meili_data"
-    healthcheck:
-      test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
-      retries: 3
-      timeout: 5s
-
   traefik:
-    image: "traefik:v3.3"
-    container_name: "traefik"
-    # network_mode: "host"
-    command:
-      #- "--log.level=DEBUG"
-      # - "--api.insecure=true"
-      # - "--providers.docker=true"
-      # - "--providers.docker.exposedbydefault=false"
-      # - "--entryPoints.web.address=:80"
-      # - "--configFile=/etc/traefik/traefik_dynamic.yml"
+    image: traefik:v3.3
+    restart: unless-stopped
     ports:
       - "80:80"
-      - "8080:8080"
+      - "443:443"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
-      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - ./.deploy/traefik/static.yml:/etc/traefik/traefik.yml:ro
+      - ./.deploy/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./.deploy/traefik/acme/acme.json:/letsencrypt/acme.json
+    networks:
+      - edge
+      - core
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/rabbitmq.env
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - rabbitmq-log:/var/log/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    networks:
+      - core
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/redis.env
+    command: ["sh", "-c", "redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.10.0
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/meilisearch.env
+    volumes:
+      - meilisearch-data:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7700/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  auth-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    shm_size: 256mb
+    env_file:
+      - ./.deploy/env/auth-db.env
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  api-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    shm_size: 256mb
+    env_file:
+      - ./.deploy/env/api-db.env
+    volumes:
+      - api-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  battlelog-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    shm_size: 256mb
+    env_file:
+      - ./.deploy/env/battlelog-db.env
+    volumes:
+      - battlelog-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  activity-db:
+    image: timescale/timescaledb:latest-pg17
+    restart: unless-stopped
+    shm_size: 512mb
+    env_file:
+      - ./.deploy/env/activity-db.env
+    volumes:
+      - activity-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+    restart: unless-stopped
+    profiles: ["minio"]
+    env_file:
+      - ./.deploy/env/storage.env
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-02-21T16-00-46Z
+    profiles: ["minio"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file:
+      - ./.deploy/env/storage.env
+    entrypoint: >
+      /bin/sh -c
+      "
+      mc alias set lootlog http://minio:9000 \"$$MINIO_ROOT_USER\" \"$$MINIO_ROOT_PASSWORD\" &&
+      mc mb --ignore-existing lootlog/$$R2_BUCKET_NAME
+      "
+    restart: "no"
+    networks:
+      - core
+
+  auth-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: auth-migrate
+      args: *build-args
+    env_file:
+      - ./.deploy/env/auth.env
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - core
+
+  api-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api-migrate
+      args: *build-args
+    env_file:
+      - ./.deploy/env/api.env
+    depends_on:
+      api-db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - core
+
+  battlelog-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: battlelog-migrate
+      args: *build-args
+    env_file:
+      - ./.deploy/env/battlelog.env
+    depends_on:
+      battlelog-db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - core
+
+  activity-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: activity-migrate
+      args: *build-args
+    env_file:
+      - ./.deploy/env/activity.env
+    depends_on:
+      activity-db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - core
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+      args: *build-args
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - core
+
+  landing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: landing
+      args: *build-args
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - core
+
+  game-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: game-client
+      args: *build-args
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/@lootlog/entrypoint.user.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - core
 
   auth:
     build:
-      target: auth
       context: .
-    container_name: "auth"
-    restart: always
-    environment:
-      - PORT=4000
+      dockerfile: Dockerfile
+      target: auth
+      args: *build-args
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/auth.env
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4001/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
 
   search:
     build:
-      target: search
       context: .
-    container_name: "search"
-    restart: always
-    environment:
-      - PORT=4000
+      dockerfile: Dockerfile
+      target: search
+      args: *build-args
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/search.env
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4002/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+      args: *build-args
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/api.env
+    depends_on:
+      api-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4003/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: gateway
+      args: *build-args
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/gateway.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4004/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  battlelog-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: battlelog-service
+      args: *build-args
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/battlelog.env
+    depends_on:
+      battlelog-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4005/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  activity:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: activity
+      args: *build-args
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/activity.env
+    depends_on:
+      activity-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4027/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+  discord-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: discord-bot
+      args: *build-args
+    restart: unless-stopped
+    env_file:
+      - ./.deploy/env/discord-bot.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4008/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+    networks:
+      - core
+
+networks:
+  edge:
+    driver: bridge
+  core:
+    driver: bridge
 
 volumes:
-  rabbitdata:
-  rabbitlog:
-  lootlog-db:
-  lootlog-users-db:
-  meilisearch:
+  rabbitmq-data:
+  rabbitmq-log:
+  redis-data:
+  meilisearch-data:
+  auth-db-data:
+  api-db-data:
+  battlelog-db-data:
+  activity-db-data:
+  minio-data:

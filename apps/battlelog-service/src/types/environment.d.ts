@@ -12,6 +12,15 @@ declare global {
 
       POSTGRESQL_CONNECTION_URI: string;
 
+      AUTH_SERVICE_URL: string;
+      AUTH_JWKS_URI: string;
+      FORWARDED_AUTH_SIGNATURE_SECRET: string;
+      R2_ACCESS_KEY_ID: string;
+      R2_SECRET_ACCESS_KEY: string;
+      R2_ENDPOINT: string;
+      R2_REGION: string;
+      R2_BUCKET_NAME: string;
+
       REDIS_PASSWORD: string;
       REDIS_HOST: string;
       REDIS_PORT: string;

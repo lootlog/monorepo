@@ -146,6 +146,46 @@ The following infrastructure services will be running:
 - **Redis**: localhost:6379
 - **Meilisearch**: localhost:7700
 
+## Self-Hosted VPS
+
+Lootlog now includes a production-oriented Docker Compose deployment for a single VPS with Traefik and automatic TLS.
+
+Detailed deployment and operations guide:
+
+- [https://lootlog.pl/docs/self-hosted-vps](https://lootlog.pl/docs/self-hosted-vps)
+
+### Quick commands
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lootlog/lootlog/main/scripts/install-vps.sh | sudo bash
+```
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lootlog/lootlog/main/scripts/update-vps.sh | sudo bash
+```
+
+```bash
+sudo /opt/lootlog/current/scripts/update-vps.sh --release v1.2.3
+```
+
+```bash
+sudo /opt/lootlog/current/scripts/rollback-vps.sh
+```
+
+```bash
+sudo /opt/lootlog/current/scripts/rollback-vps.sh --release v1.2.2
+```
+
+```bash
+sudo /opt/lootlog/current/scripts/cleanup-vps.sh
+```
+
+```bash
+sudo /opt/lootlog/current/scripts/status-vps.sh
+```
+
+The full requirements, deployment flow, rollback, cleanup, troubleshooting, and VPS sizing guidance live in the public docs above.
+
 ## Configuration
 
 ### Environment Variables

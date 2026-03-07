@@ -1,0 +1,257 @@
+http:
+  routers:
+    landing:
+      rule: "Host(`{{APP_DOMAIN}}`) && (Path(`/`) || PathPrefix(`/docs`) || Path(`/terms-of-service`) || Path(`/privacy-policy`) || PathPrefix(`/screenshots`) || Path(`/favicon.ico`) || PathPrefix(`/static`) || PathPrefix(`/globe.svg`) || PathPrefix(`/window.svg`) || PathPrefix(`/vercel.svg`) || PathPrefix(`/next.svg`))"
+      service: landing
+      priority: 70
+      middlewares:
+        - secureHeaders
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    addon:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/addon`)"
+      service: gameClient
+      priority: 65
+      middlewares:
+        - secureHeaders
+        - addonStripPrefix
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    gateway:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/socket.io`)"
+      service: gateway
+      priority: 60
+      middlewares:
+        - secureHeaders
+        - cors
+        - apiForwardAuth
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    auth:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/api/auth`)"
+      service: auth
+      priority: 55
+      middlewares:
+        - secureHeaders
+        - cors
+        - authStripPrefix
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    search:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/api/search`)"
+      service: search
+      priority: 50
+      middlewares:
+        - secureHeaders
+        - cors
+        - searchStripPrefix
+        - apiForwardAuth
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    api-internal:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/api/lootlog/internal`)"
+      service: api
+      priority: 49
+      middlewares:
+        - secureHeaders
+        - cors
+        - apiStripPrefix
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    api:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/api/lootlog`)"
+      service: api
+      priority: 48
+      middlewares:
+        - secureHeaders
+        - cors
+        - apiStripPrefix
+        - apiForwardAuth
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    battlelog-public:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/api/battlelog/battles/public`)"
+      service: battlelog
+      priority: 47
+      middlewares:
+        - secureHeaders
+        - cors
+        - battlelogStripPrefix
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    battlelog:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/api/battlelog`)"
+      service: battlelog
+      priority: 46
+      middlewares:
+        - secureHeaders
+        - cors
+        - battlelogStripPrefix
+        - apiForwardAuth
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    activity:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/api/activity`)"
+      service: activity
+      priority: 45
+      middlewares:
+        - secureHeaders
+        - cors
+        - activityStripPrefix
+        - apiForwardAuth
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    web:
+      rule: "Host(`{{APP_DOMAIN}}`) && PathPrefix(`/`)"
+      service: web
+      priority: 1
+      middlewares:
+        - secureHeaders
+        - compress
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    web:
+      loadBalancer:
+        servers:
+          - url: "http://web:80"
+    landing:
+      loadBalancer:
+        servers:
+          - url: "http://landing:80"
+    gameClient:
+      loadBalancer:
+        servers:
+          - url: "http://game-client:80"
+    auth:
+      loadBalancer:
+        servers:
+          - url: "http://auth:4001"
+    search:
+      loadBalancer:
+        servers:
+          - url: "http://search:4002"
+    api:
+      loadBalancer:
+        servers:
+          - url: "http://api:4003"
+    gateway:
+      loadBalancer:
+        servers:
+          - url: "http://gateway:4004"
+    battlelog:
+      loadBalancer:
+        servers:
+          - url: "http://battlelog-service:4005"
+    activity:
+      loadBalancer:
+        servers:
+          - url: "http://activity:4027"
+
+  middlewares:
+    authStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/api/auth"
+    searchStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/api/search"
+    apiStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/api/lootlog"
+    battlelogStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/api/battlelog"
+    activityStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/api/activity"
+    addonStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/addon"
+    apiForwardAuth:
+      forwardAuth:
+        address: "http://auth:4001/auth/verify"
+        authResponseHeaders:
+          - "X-Auth-User-Id"
+          - "X-Auth-Discord-Id"
+          - "X-Auth-Timestamp"
+          - "X-Auth-Signature"
+        authRequestHeaders:
+          - "Authorization"
+          - "Cookie"
+    compress:
+      compress: {}
+    secureHeaders:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+    cors:
+      headers:
+        accessControlAllowOriginListRegex:
+          - "^https://{{APP_DOMAIN_REGEX}}$"
+          - "^https://(.+\\.)?margonem\\.(pl|com)$"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+          - "PATCH"
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400
+        addVaryHeader: true
