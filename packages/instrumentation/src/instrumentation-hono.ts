@@ -6,7 +6,7 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
-import resources from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import {
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
   SEMRESATTRS_SERVICE_NAME,
@@ -23,8 +23,6 @@ import {
   TraceIdRatioBasedSampler,
   BatchSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
-
-const { Resource } = resources;
 
 export interface HonoObservabilityConfig {
   serviceName: string;
@@ -98,7 +96,7 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
   // For Hono, we don't use auto-instrumentations
   // The @hono/otel middleware handles HTTP spans
   sdkInstance = new NodeSDK({
-    resource: new Resource(resourceAttributes),
+    resource: resourceFromAttributes(resourceAttributes),
     sampler,
     spanProcessor: new BatchSpanProcessor(traceExporter, {
       maxQueueSize: 2048,

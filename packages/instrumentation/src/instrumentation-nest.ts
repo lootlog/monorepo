@@ -14,7 +14,7 @@ import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentation
 import { NestInstrumentation } from "@opentelemetry/instrumentation-nestjs-core";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
-import resources from "@opentelemetry/resources";
+import { envDetector, resourceFromAttributes } from "@opentelemetry/resources";
 import {
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
   SEMRESATTRS_SERVICE_NAME,
@@ -35,8 +35,6 @@ import {
   type ReadableSpan,
   type Span,
 } from "@opentelemetry/sdk-trace-base";
-
-const { Resource, envDetector } = resources;
 
 export interface ObservabilityConfig {
   serviceName: string;
@@ -373,7 +371,6 @@ export function initObservability(config: ObservabilityConfig): void {
     "@opentelemetry/instrumentation-mysql": { enabled: false },
     "@opentelemetry/instrumentation-mysql2": { enabled: false },
     "@opentelemetry/instrumentation-redis": { enabled: false },
-    "@opentelemetry/instrumentation-redis-4": { enabled: false },
     "@opentelemetry/instrumentation-ioredis": { enabled: false },
     "@opentelemetry/instrumentation-mongodb": { enabled: false },
     "@opentelemetry/instrumentation-grpc": { enabled: false },
@@ -404,7 +401,7 @@ export function initObservability(config: ObservabilityConfig): void {
   });
 
   sdkInstance = new NodeSDK({
-    resource: new Resource(resourceAttributes),
+    resource: resourceFromAttributes(resourceAttributes),
     resourceDetectors: detectors,
     sampler,
     spanProcessor: filteringProcessor,
