@@ -29,11 +29,11 @@
   },
   "dependencies": {
     "@lootlog/types": "workspace:*",
-    "hono": "^4.11.7",
-    "jose": "^6.1.3"
+    "hono": "^4.12.5",
+    "jose": "^6.2.1"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "pkgroll": "^2.23.0"
+    "pkgroll": "^2.27.0"
   }
 }
