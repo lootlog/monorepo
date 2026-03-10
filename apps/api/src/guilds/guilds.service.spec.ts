@@ -43,9 +43,22 @@ describe('GuildsService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockTransactionClient = {
+    lootlogConfigNpc: {
+      deleteMany: jest.fn(),
+    },
+    lootlogConfig: {
+      deleteMany: jest.fn(),
+    },
+    guild: {
+      update: jest.fn(),
+    },
+  };
+
   const mockMembersService = {
     getGuildMemberById: jest.fn(),
     deleteMembersByGuildId: jest.fn(),
+    notifyMembersRemoved: jest.fn(),
     isMemberSoftStale: jest.fn(),
     refreshGuildMemberWithinBudget: jest.fn(),
     queueMemberRefresh: jest.fn(),
@@ -124,6 +137,13 @@ describe('GuildsService', () => {
     }).compile();
 
     service = module.get<GuildsService>(GuildsService);
+    mockPrismaService.$transaction.mockImplementation(
+      async (
+        callback: (
+          tx: typeof mockTransactionClient,
+        ) => Promise<unknown> | unknown,
+      ) => callback(mockTransactionClient),
+    );
     mockMembersService.isMemberSoftStale.mockReturnValue(true);
     mockMembersService.refreshGuildMemberWithinBudget.mockResolvedValue({
       member: null,
@@ -134,6 +154,7 @@ describe('GuildsService', () => {
       queued: true,
       nextRefreshAt: null,
     });
+    mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
     mockPrismaService.member.findMany.mockResolvedValue([]);
   });
 
@@ -383,6 +404,64 @@ describe('GuildsService', () => {
         priority: expect.any(Number),
         reason: 'guild-connect-background',
       });
+    });
+  });
+
+  describe('deleteGuild', () => {
+    it('should notify affected members after deleting the guild', async () => {
+      const affectedMembers = [
+        {
+          discordId: 'discord-123',
+          guildId: 'guild-123',
+          globalUserId: 'user-123',
+        },
+        {
+          discordId: 'discord-456',
+          guildId: 'guild-123',
+          globalUserId: 'user-456',
+        },
+      ];
+      mockPrismaService.guild.findUnique.mockResolvedValue({
+        vanityUrl: 'guild-vanity',
+      });
+      mockMembersService.deleteMembersByGuildId.mockResolvedValue({
+        count: 2,
+        affectedMembers,
+      });
+      mockRolesService.deleteRolesByGuildId.mockResolvedValue(undefined);
+      mockTransactionClient.lootlogConfigNpc.deleteMany.mockResolvedValue({
+        count: 0,
+      });
+      mockTransactionClient.lootlogConfig.deleteMany.mockResolvedValue({
+        count: 0,
+      });
+      mockTransactionClient.guild.update.mockResolvedValue(
+        createGuild({ active: false }),
+      );
+
+      await service.deleteGuild({ guildId: 'guild-123' });
+
+      expect(mockMembersService.deleteMembersByGuildId).toHaveBeenCalledWith(
+        'guild-123',
+        { tx: mockTransactionClient },
+      );
+      expect(mockMembersService.notifyMembersRemoved).toHaveBeenCalledWith(
+        affectedMembers,
+      );
+    });
+
+    it('should not notify affected members when guild deletion fails', async () => {
+      const error = new Error('guild delete failed');
+      mockPrismaService.guild.findUnique.mockResolvedValue({
+        vanityUrl: null,
+      });
+      mockPrismaService.$transaction.mockRejectedValue(error);
+
+      await expect(
+        service.deleteGuild({ guildId: 'guild-123' }),
+      ).rejects.toThrow(error);
+
+      expect(mockMembersService.notifyMembersRemoved).not.toHaveBeenCalled();
     });
   });
 });

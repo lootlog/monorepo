@@ -907,6 +907,12 @@ export class GuildsService {
         where: { id: guildId },
         select: { vanityUrl: true },
       });
+      let deletedMembers = {
+        count: 0,
+        affectedMembers: [] as Awaited<
+          ReturnType<MembersService['deleteMembersByGuildId']>
+        >['affectedMembers'],
+      };
 
       await this.prisma.$transaction(async (tx) => {
         await tx.lootlogConfigNpc.deleteMany({
@@ -915,7 +921,10 @@ export class GuildsService {
 
         await tx.lootlogConfig.deleteMany({ where: { id: guildId } });
 
-        await this.membersService.deleteMembersByGuildId(guildId);
+        deletedMembers = await this.membersService.deleteMembersByGuildId(
+          guildId,
+          { tx },
+        );
         await this.rolesService.deleteRolesByGuildId(guildId);
 
         await tx.guild.update({
@@ -925,6 +934,9 @@ export class GuildsService {
       });
 
       await Promise.all([
+        this.membersService.notifyMembersRemoved(
+          deletedMembers.affectedMembers,
+        ),
         this.redisService.deleteByPattern(getPermissionsCachePattern(guildId)),
         this.redisService.del(getGuildCacheKey(guildId)),
         guild?.vanityUrl

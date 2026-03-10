@@ -11,7 +11,6 @@ import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PrismaService } from 'src/db/prisma.service';
 import { RedisService } from 'src/lib/redis/redis.service';
-import { MEMBER_CACHE_SOFT_TTL } from 'src/members/constants/member-cache.constant';
 import { MembersService } from 'src/members/members.service';
 import { MEMBER_REFRESH_PRIORITY } from 'src/members/constants/member-refresh-queue.constant';
 
@@ -81,7 +80,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
     }
 
     const guildIds = guilds.map((g) => g.id);
-    const staleThreshold = new Date(Date.now() - MEMBER_CACHE_SOFT_TTL);
+    const staleThreshold = this.membersService.getMemberSoftStaleThreshold();
 
     const staleMembers = await this.prisma.member.findMany({
       where: {
