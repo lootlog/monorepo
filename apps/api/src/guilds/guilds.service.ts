@@ -7,6 +7,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import type { APIGuild } from 'discord-api-types/v10';
 
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
@@ -36,6 +37,14 @@ import {
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { MEMBER_REFRESH_PRIORITY } from 'src/members/constants/member-refresh-queue.constant';
+
+const DISCORD_ADMINISTRATOR_PERMISSION = 0x8n;
+
+interface GuildRefreshCandidate {
+  guild: Guild;
+  isDiscordOwner: boolean;
+  hasDiscordAdmin: boolean;
+}
 
 @Injectable()
 export class GuildsService {
@@ -360,12 +369,15 @@ export class GuildsService {
 
   async getUserGuildsWithPermissions(discordId: string, userId?: string) {
     const requiredPermissions = [Permission.LOOTLOG_ACCESS];
-    const guilds = userId
+    const guildCandidates = userId
       ? await this.getCandidateGuildsForUser(discordId, userId)
-      : await this.getGuildsForRequiredPermissions(
-          discordId,
-          requiredPermissions,
+      : this.toGuildRefreshCandidates(
+          await this.getGuildsForRequiredPermissions(
+            discordId,
+            requiredPermissions,
+          ),
         );
+    const guilds = guildCandidates.map((candidate) => candidate.guild);
 
     if (guilds.length === 0) {
       return [];
@@ -380,7 +392,7 @@ export class GuildsService {
       members = await this.refreshGuildCandidatesWithinBudget({
         discordId,
         userId,
-        guilds,
+        guildCandidates,
         members,
         requiredPermissions,
         maxImmediateRefreshes: 2,
@@ -401,7 +413,11 @@ export class GuildsService {
     requiredPermission: Permission,
   ): Promise<Guild[]> {
     const requiredPermissions = [requiredPermission];
-    const guilds = await this.getCandidateGuildsForUser(discordId, userId);
+    const guildCandidates = await this.getCandidateGuildsForUser(
+      discordId,
+      userId,
+    );
+    const guilds = guildCandidates.map((candidate) => candidate.guild);
 
     if (guilds.length === 0) {
       return [];
@@ -410,7 +426,7 @@ export class GuildsService {
     const members = await this.refreshGuildCandidatesWithinBudget({
       discordId,
       userId,
-      guilds,
+      guildCandidates,
       members: await this.getGuildMembersForPermissions(
         discordId,
         guilds.map((guild) => guild.id),
@@ -430,17 +446,22 @@ export class GuildsService {
   private async getCandidateGuildsForUser(
     discordId: string,
     userId: string,
-  ): Promise<Guild[]> {
+  ): Promise<GuildRefreshCandidate[]> {
     try {
       const discordGuilds = await this.discordService.getUserGuilds(userId);
 
       if (!discordGuilds || discordGuilds.length === 0) {
-        return this.getGuildsForRequiredPermissions(discordId, [
-          Permission.LOOTLOG_ACCESS,
-        ]);
+        return this.toGuildRefreshCandidates(
+          await this.getGuildsForRequiredPermissions(discordId, [
+            Permission.LOOTLOG_ACCESS,
+          ]),
+        );
       }
 
       const discordGuildIds = discordGuilds.map((guild) => guild.id);
+      const discordGuildMap = new Map(
+        discordGuilds.map((guild) => [guild.id, guild] as const),
+      );
       const guilds = await this.prisma.guild.findMany({
         where: {
           id: { in: discordGuildIds },
@@ -456,7 +477,19 @@ export class GuildsService {
         await this.discordService.clearUserGuildIdsCache(userId);
       }
 
-      return guilds;
+      return guilds.map((guild) => {
+        const discordGuild = discordGuildMap.get(guild.id);
+
+        return {
+          guild,
+          isDiscordOwner: discordGuild
+            ? this.isDiscordOwnerGuild(discordGuild, discordId)
+            : false,
+          hasDiscordAdmin: discordGuild
+            ? this.hasDiscordAdministratorAccess(discordGuild)
+            : false,
+        };
+      });
     } catch (error) {
       this.logger.log({
         level: 'warn',
@@ -467,9 +500,11 @@ export class GuildsService {
         error,
       });
 
-      return this.getGuildsForRequiredPermissions(discordId, [
-        Permission.LOOTLOG_ACCESS,
-      ]);
+      return this.toGuildRefreshCandidates(
+        await this.getGuildsForRequiredPermissions(discordId, [
+          Permission.LOOTLOG_ACCESS,
+        ]),
+      );
     }
   }
 
@@ -507,7 +542,7 @@ export class GuildsService {
   private async refreshGuildCandidatesWithinBudget(options: {
     discordId: string;
     userId: string;
-    guilds: Guild[];
+    guildCandidates: GuildRefreshCandidate[];
     members: Array<{
       guildId: string;
       active: boolean;
@@ -527,19 +562,19 @@ export class GuildsService {
     const {
       discordId,
       userId,
-      guilds,
+      guildCandidates,
       members,
       requiredPermissions,
       maxImmediateRefreshes,
     } = options;
 
+    const guilds = guildCandidates.map((candidate) => candidate.guild);
     const memberMap = new Map(
       members.map((member) => [member.guildId, member]),
     );
-    const candidates = guilds
-      .filter((guild) => guild.ownerId !== discordId)
-      .map((guild) => {
-        const member = memberMap.get(guild.id);
+    const candidates = guildCandidates
+      .map((candidate) => {
+        const member = memberMap.get(candidate.guild.id);
         const hasPermissions = this.memberHasRequiredPermissions(
           member,
           requiredPermissions,
@@ -554,8 +589,15 @@ export class GuildsService {
         }
 
         return {
-          guildId: guild.id,
-          priorityRank: member === undefined ? 0 : hasPermissions ? 2 : 1,
+          guildId: candidate.guild.id,
+          priorityRank:
+            member === undefined
+              ? 0
+              : !hasPermissions
+                ? 1
+                : candidate.isDiscordOwner || candidate.hasDiscordAdmin
+                  ? 2
+                  : 3,
         };
       })
       .filter((candidate) => candidate !== null)
@@ -703,6 +745,38 @@ export class GuildsService {
         requiredPermissions.includes(permission),
       ),
     );
+  }
+
+  private toGuildRefreshCandidates(guilds: Guild[]): GuildRefreshCandidate[] {
+    return guilds.map((guild) => ({
+      guild,
+      isDiscordOwner: false,
+      hasDiscordAdmin: false,
+    }));
+  }
+
+  private isDiscordOwnerGuild(
+    discordGuild: APIGuild,
+    discordId: string,
+  ): boolean {
+    const guildData = discordGuild as APIGuild & {
+      owner?: boolean;
+      owner_id?: string;
+    };
+
+    return Boolean(guildData.owner || guildData.owner_id === discordId);
+  }
+
+  private hasDiscordAdministratorAccess(discordGuild: APIGuild): boolean {
+    try {
+      return (
+        (BigInt(discordGuild.permissions) &
+          DISCORD_ADMINISTRATOR_PERMISSION) ===
+        DISCORD_ADMINISTRATOR_PERMISSION
+      );
+    } catch {
+      return false;
+    }
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {
