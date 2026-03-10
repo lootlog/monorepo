@@ -9,12 +9,11 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
 import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PrismaService } from 'src/db/prisma.service';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { MEMBER_CACHE_SOFT_TTL } from 'src/members/constants/member-cache.constant';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
+import { MembersService } from 'src/members/members.service';
+import { MEMBER_REFRESH_PRIORITY } from 'src/members/constants/member-refresh-queue.constant';
 
 @Injectable()
 export class MemberSyncInterceptor implements NestInterceptor {
@@ -23,7 +22,7 @@ export class MemberSyncInterceptor implements NestInterceptor {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly prisma: PrismaService,
-    private readonly amqpConnection: AmqpConnection,
+    private readonly membersService: MembersService,
     private readonly redis: RedisService,
   ) {}
 
@@ -90,13 +89,15 @@ export class MemberSyncInterceptor implements NestInterceptor {
         guildId: { in: guildIds },
         globalUserId: { not: null },
         active: true,
-        updatedAt: { lt: staleThreshold },
+        OR: [
+          { lastDiscordSyncAt: null },
+          { lastDiscordSyncAt: { lt: staleThreshold } },
+        ],
       },
       select: {
         userId: true,
         guildId: true,
         globalUserId: true,
-        updatedAt: true,
       },
     });
 
@@ -117,15 +118,13 @@ export class MemberSyncInterceptor implements NestInterceptor {
 
     for (const member of staleMembers) {
       try {
-        await this.amqpConnection.publish(
-          DEFAULT_EXCHANGE_NAME,
-          RoutingKey.GUILDS_MEMBERS_REFRESH,
-          {
-            discordId: member.userId,
-            guildId: member.guildId,
-            userId: member.globalUserId,
-          },
-        );
+        await this.membersService.queueMemberRefresh({
+          discordId: member.userId,
+          guildId: member.guildId,
+          userId: member.globalUserId,
+          priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+          reason: 'guild-list-sync',
+        });
 
         this.logger.log({
           level: 'debug',

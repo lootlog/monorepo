@@ -1,4 +1,9 @@
-import { REST, RateLimitError } from '@discordjs/rest';
+import {
+  REST,
+  RateLimitError,
+  RequestMethod,
+  parseResponse,
+} from '@discordjs/rest';
 import {
   Injectable,
   Inject,
@@ -190,7 +195,16 @@ export class DiscordService implements OnModuleInit {
 
       let guilds: APIGuild[];
       try {
-        guilds = (await rest.get(path)) as APIGuild[];
+        const response = await rest.queueRequest({
+          fullRoute: path,
+          method: RequestMethod.Get,
+        });
+        await this.rateLimiter.updateRateLimitFromHeaders(
+          userId,
+          'guilds',
+          response.headers,
+        );
+        guilds = (await parseResponse(response)) as APIGuild[];
       } catch (error: unknown) {
         if (error instanceof RateLimitError) {
           await this.rateLimiter.setRateLimitForUser(
@@ -338,7 +352,16 @@ export class DiscordService implements OnModuleInit {
 
       let member: APIGuildMember;
       try {
-        member = (await rest.get(path)) as APIGuildMember;
+        const response = await rest.queueRequest({
+          fullRoute: path,
+          method: RequestMethod.Get,
+        });
+        await this.rateLimiter.updateRateLimitFromHeaders(
+          userId,
+          'guild-member',
+          response.headers,
+        );
+        member = (await parseResponse(response)) as APIGuildMember;
         this.logger.log({
           level: 'info',
           message: 'Discord API returned member data',
