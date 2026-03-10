@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { MembersService } from './members.service';
 import { MembersConsumer } from './members.consumer';
 import { MemberBulkRefreshProcessor } from './member-bulk-refresh.processor';
+import { MemberRefreshProcessor } from './member-refresh.processor';
 import { GuildsModule } from 'src/guilds/guilds.module';
 import { MembersController } from './members.controller';
 import { RolesModule } from 'src/roles/roles.module';
@@ -20,6 +21,7 @@ import {
   MEMBER_BULK_REFRESH_QUEUE,
   MEMBER_REFRESH_QUEUE,
 } from './constants/member-refresh-queue.constant';
+import { MemberRefreshSchedulerService } from './member-refresh-scheduler.service';
 
 @Module({
   imports: [
@@ -43,8 +45,10 @@ import {
     MembersService,
     MembersConsumer,
     MemberBulkRefreshProcessor,
+    MemberRefreshProcessor,
+    MemberRefreshSchedulerService,
     RetryService,
   ],
-  exports: [MembersService],
+  exports: [MembersService, MemberRefreshSchedulerService],
 })
 export class MembersModule {}

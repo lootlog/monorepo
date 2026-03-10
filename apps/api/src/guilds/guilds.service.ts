@@ -33,14 +33,12 @@ import {
   GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from 'src/shared/constants/cache.constant';
-import { MEMBER_CACHE_SOFT_TTL } from 'src/members/constants/member-cache.constant';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
+import { MEMBER_REFRESH_PRIORITY } from 'src/members/constants/member-refresh-queue.constant';
 
 @Injectable()
 export class GuildsService {
-  private readonly SYNC_THROTTLE_TTL = 150;
-
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Inject(forwardRef(() => MembersService))
@@ -61,9 +59,11 @@ export class GuildsService {
 
     let guilds: Guild[] = [];
     if (source === 'game') {
-      guilds = await this.getGuildsForRequiredPermissions(discordId, [
+      guilds = await this.getFreshenedGuildsForRequiredPermissions(
+        discordId,
+        userId,
         Permission.LOOTLOG_ACCESS,
-      ]);
+      );
     } else {
       try {
         const discordGuilds = await this.discordService.getUserGuilds(userId);
@@ -234,6 +234,7 @@ export class GuildsService {
             members: {
               some: {
                 userId: discordId,
+                active: true,
                 globalUserId: { not: null },
                 roles: {
                   some: {
@@ -308,11 +309,13 @@ export class GuildsService {
       roles: member?.roles || [],
     };
 
-    await this.redisService.set(
-      cacheKey,
-      JSON.stringify(context),
-      PERMISSIONS_CACHE_TTL_SECONDS,
-    );
+    if (!member.isStale && !member.refreshQueued) {
+      await this.redisService.set(
+        cacheKey,
+        JSON.stringify(context),
+        PERMISSIONS_CACHE_TTL_SECONDS,
+      );
+    }
 
     return context;
   }
@@ -325,6 +328,7 @@ export class GuildsService {
       this.prisma.member.findMany({
         where: {
           userId: discordId,
+          active: true,
           guildId: { in: guildIds },
         },
         include: { roles: true, guild: true },
@@ -355,17 +359,139 @@ export class GuildsService {
   }
 
   async getUserGuildsWithPermissions(discordId: string, userId?: string) {
-    const guilds = await this.getGuildsForRequiredPermissions(discordId, [
-      Permission.LOOTLOG_ACCESS,
-    ]);
+    const requiredPermissions = [Permission.LOOTLOG_ACCESS];
+    const guilds = userId
+      ? await this.getCandidateGuildsForUser(discordId, userId)
+      : await this.getGuildsForRequiredPermissions(
+          discordId,
+          requiredPermissions,
+        );
 
-    const guildIds = guilds.map((guild) => guild.id);
-    const members = await this.prisma.member.findMany({
+    if (guilds.length === 0) {
+      return [];
+    }
+
+    let members = await this.getGuildMembersForPermissions(
+      discordId,
+      guilds.map((guild) => guild.id),
+    );
+
+    if (userId) {
+      members = await this.refreshGuildCandidatesWithinBudget({
+        discordId,
+        userId,
+        guilds,
+        members,
+        requiredPermissions,
+        maxImmediateRefreshes: 2,
+      });
+    }
+
+    return this.buildGuildPermissionsResult(
+      discordId,
+      guilds,
+      members,
+      requiredPermissions,
+    );
+  }
+
+  private async getFreshenedGuildsForRequiredPermissions(
+    discordId: string,
+    userId: string,
+    requiredPermission: Permission,
+  ): Promise<Guild[]> {
+    const requiredPermissions = [requiredPermission];
+    const guilds = await this.getCandidateGuildsForUser(discordId, userId);
+
+    if (guilds.length === 0) {
+      return [];
+    }
+
+    const members = await this.refreshGuildCandidatesWithinBudget({
+      discordId,
+      userId,
+      guilds,
+      members: await this.getGuildMembersForPermissions(
+        discordId,
+        guilds.map((guild) => guild.id),
+      ),
+      requiredPermissions,
+      maxImmediateRefreshes: 2,
+    });
+
+    return this.filterGuildsByPermissions(
+      discordId,
+      guilds,
+      members,
+      requiredPermissions,
+    );
+  }
+
+  private async getCandidateGuildsForUser(
+    discordId: string,
+    userId: string,
+  ): Promise<Guild[]> {
+    try {
+      const discordGuilds = await this.discordService.getUserGuilds(userId);
+
+      if (!discordGuilds || discordGuilds.length === 0) {
+        return this.getGuildsForRequiredPermissions(discordId, [
+          Permission.LOOTLOG_ACCESS,
+        ]);
+      }
+
+      const discordGuildIds = discordGuilds.map((guild) => guild.id);
+      const guilds = await this.prisma.guild.findMany({
+        where: {
+          id: { in: discordGuildIds },
+          active: true,
+        },
+      });
+
+      const comparedGuilds = guilds.every((guild) =>
+        discordGuildIds.includes(guild.id),
+      );
+
+      if (!comparedGuilds) {
+        await this.discordService.clearUserGuildIdsCache(userId);
+      }
+
+      return guilds;
+    } catch (error) {
+      this.logger.log({
+        level: 'warn',
+        message:
+          'Failed to load Discord guild candidates, falling back to cached member permissions',
+        discordId,
+        userId,
+        error,
+      });
+
+      return this.getGuildsForRequiredPermissions(discordId, [
+        Permission.LOOTLOG_ACCESS,
+      ]);
+    }
+  }
+
+  private async getGuildMembersForPermissions(
+    discordId: string,
+    guildIds: string[],
+  ) {
+    if (guildIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.member.findMany({
       where: {
         userId: discordId,
         guildId: { in: guildIds },
       },
-      include: {
+      select: {
+        guildId: true,
+        active: true,
+        globalUserId: true,
+        lastDiscordSyncAt: true,
+        updatedAt: true,
         roles: {
           select: {
             id: true,
@@ -376,15 +502,156 @@ export class GuildsService {
         },
       },
     });
+  }
 
-    const memberMap = new Map(members.map((m) => [m.guildId, m]));
+  private async refreshGuildCandidatesWithinBudget(options: {
+    discordId: string;
+    userId: string;
+    guilds: Guild[];
+    members: Array<{
+      guildId: string;
+      active: boolean;
+      globalUserId: string | null;
+      lastDiscordSyncAt: Date | null;
+      updatedAt: Date;
+      roles: Array<{
+        id: string;
+        lvlRangeFrom: number | null;
+        lvlRangeTo: number | null;
+        permissions: Permission[];
+      }>;
+    }>;
+    requiredPermissions: Permission[];
+    maxImmediateRefreshes: number;
+  }) {
+    const {
+      discordId,
+      userId,
+      guilds,
+      members,
+      requiredPermissions,
+      maxImmediateRefreshes,
+    } = options;
+
+    const memberMap = new Map(
+      members.map((member) => [member.guildId, member]),
+    );
+    const candidates = guilds
+      .filter((guild) => guild.ownerId !== discordId)
+      .map((guild) => {
+        const member = memberMap.get(guild.id);
+        const hasPermissions = this.memberHasRequiredPermissions(
+          member,
+          requiredPermissions,
+        );
+        const softStale =
+          !member ||
+          !member.active ||
+          this.membersService.isMemberSoftStale(member);
+
+        if (!softStale) {
+          return null;
+        }
+
+        return {
+          guildId: guild.id,
+          priorityRank: member === undefined ? 0 : hasPermissions ? 2 : 1,
+        };
+      })
+      .filter((candidate) => candidate !== null)
+      .sort(
+        (a, b) =>
+          a.priorityRank - b.priorityRank || a.guildId.localeCompare(b.guildId),
+      );
+
+    if (candidates.length === 0) {
+      return members;
+    }
+
+    let immediateAttempts = 0;
+    for (const candidate of candidates) {
+      if (immediateAttempts < maxImmediateRefreshes) {
+        const refreshResult =
+          await this.membersService.refreshGuildMemberWithinBudget({
+            discordId,
+            guildId: candidate.guildId,
+            userId,
+            priority: MEMBER_REFRESH_PRIORITY.CONNECT,
+            reason: 'guild-connect',
+          });
+
+        if (!refreshResult.refreshQueued) {
+          immediateAttempts++;
+        }
+        continue;
+      }
+
+      await this.membersService.queueMemberRefresh({
+        discordId,
+        guildId: candidate.guildId,
+        userId,
+        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+        reason: 'guild-connect-background',
+      });
+    }
+
+    return this.getGuildMembersForPermissions(
+      discordId,
+      guilds.map((guild) => guild.id),
+    );
+  }
+
+  private filterGuildsByPermissions(
+    discordId: string,
+    guilds: Guild[],
+    members: Array<{
+      guildId: string;
+      active: boolean;
+      roles: Array<{ permissions: Permission[] }>;
+    }>,
+    requiredPermissions: Permission[],
+  ): Guild[] {
+    const memberMap = new Map(
+      members.map((member) => [member.guildId, member]),
+    );
+
+    return guilds.filter((guild) => {
+      if (guild.ownerId === discordId) {
+        return true;
+      }
+
+      return this.memberHasRequiredPermissions(
+        memberMap.get(guild.id),
+        requiredPermissions,
+      );
+    });
+  }
+
+  private buildGuildPermissionsResult(
+    discordId: string,
+    guilds: Guild[],
+    members: Array<{
+      guildId: string;
+      active: boolean;
+      roles: Array<{
+        id: string;
+        lvlRangeFrom: number | null;
+        lvlRangeTo: number | null;
+        permissions: Permission[];
+      }>;
+    }>,
+    requiredPermissions: Permission[],
+  ) {
+    const memberMap = new Map(
+      members.map((member) => [member.guildId, member]),
+    );
     const allPermissions = Object.values(Permission);
 
-    const result = guilds.map((guild) => {
-      const member = memberMap.get(guild.id);
-      const isOwner = guild.ownerId === discordId;
+    return guilds
+      .map((guild) => {
+        const member = memberMap.get(guild.id);
+        const isOwner = guild.ownerId === discordId;
 
-      if (!member) {
         if (isOwner) {
           return {
             guild: { id: guild.id, ownerId: guild.ownerId },
@@ -398,105 +665,44 @@ export class GuildsService {
             ],
           };
         }
+
+        if (!this.memberHasRequiredPermissions(member, requiredPermissions)) {
+          return null;
+        }
+
         return {
           guild: { id: guild.id, ownerId: guild.ownerId },
-          roles: [],
+          roles: member?.roles
+            .map((role) => ({
+              id: role.id,
+              lvlRangeFrom: role.lvlRangeFrom,
+              lvlRangeTo: role.lvlRangeTo,
+              permissions: role.permissions,
+            }))
+            .filter((role) => role.permissions.length > 0),
         };
-      }
-
-      const rolesWithPermissions = member.roles
-        .map((role) => ({
-          id: role.id,
-          lvlRangeFrom: role.lvlRangeFrom,
-          lvlRangeTo: role.lvlRangeTo,
-          permissions: isOwner ? allPermissions : role.permissions,
-        }))
-        .filter((role) => role.permissions.length > 0);
-
-      return {
-        guild: { id: guild.id, ownerId: guild.ownerId },
-        roles: rolesWithPermissions,
-      };
-    });
-
-    if (userId) {
-      this.queueStaleMemberRefreshes(discordId, userId, members).catch(
-        (error) => {
-          this.logger.log({
-            level: 'error',
-            message: 'Error queuing stale member refreshes',
-            stack: (error as Error).stack,
-          });
-        },
-      );
-    }
-
-    return result;
+      })
+      .filter((item) => item !== null);
   }
 
-  private async queueStaleMemberRefreshes(
-    discordId: string,
-    userId: string,
-    members: Array<{ guildId: string; globalUserId: string | null; updatedAt: Date }>,
-  ) {
-    const throttleKey = `member:sync:throttle:${discordId}`;
-    const isThrottled = await this.redisService.get(throttleKey);
-
-    if (isThrottled) {
-      this.logger.log({
-        level: 'debug',
-        message: `Sync throttled for user ${discordId}, skipping refresh`,
-      });
-      return;
+  private memberHasRequiredPermissions(
+    member:
+      | {
+          active: boolean;
+          roles: Array<{ permissions: Permission[] }>;
+        }
+      | undefined,
+    requiredPermissions: Permission[],
+  ): boolean {
+    if (!member?.active) {
+      return false;
     }
 
-    const staleThreshold = new Date(Date.now() - MEMBER_CACHE_SOFT_TTL);
-
-    const staleMembers = members.filter(
-      (m) =>
-        m.globalUserId !== null &&
-        m.updatedAt < staleThreshold,
+    return member.roles.some((role) =>
+      role.permissions.some((permission) =>
+        requiredPermissions.includes(permission),
+      ),
     );
-
-    if (staleMembers.length === 0) {
-      this.logger.log({
-        level: 'debug',
-        message: `No stale members found for user ${userId} in ${members.length} guilds`,
-      });
-      return;
-    }
-
-    await this.redisService.set(throttleKey, '1', this.SYNC_THROTTLE_TTL);
-
-    this.logger.log({
-      level: 'info',
-      message: `Queueing refresh for ${staleMembers.length} stale members for user ${userId}`,
-    });
-
-    for (const member of staleMembers) {
-      try {
-        await this.amqpConnection.publish(
-          DEFAULT_EXCHANGE_NAME,
-          RoutingKey.GUILDS_MEMBERS_REFRESH,
-          {
-            discordId,
-            guildId: member.guildId,
-            userId: member.globalUserId,
-          },
-        );
-
-        this.logger.log({
-          level: 'debug',
-          message: `Queued refresh for member ${discordId} in guild ${member.guildId}`,
-        });
-      } catch (error) {
-        this.logger.log({
-          level: 'error',
-          message: `Failed to queue refresh for member ${discordId}`,
-          stack: (error as Error).stack,
-        });
-      }
-    }
   }
 
   async updateGuildConfig(guildId: string, data: UpdateGuildConfigDto) {

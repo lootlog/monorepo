@@ -12,6 +12,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { MembersService } from './members.service';
 import { PrismaService } from 'src/db/prisma.service';
 import { DiscordService } from 'src/discord/discord.service';
+import { DiscordRateLimiterService } from 'src/discord/discord-rate-limiter.service';
 import { GuildsService } from 'src/guilds/guilds.service';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { ErrorKey } from './enum/error-key.enum';
@@ -19,11 +20,14 @@ import { RuntimeEnvironment } from 'src/types/runtime.types';
 import { ConfigKey } from 'src/config/config-key.enum';
 import type { APIGuildMember } from 'discord-api-types/v10';
 import { type Member, type Guild, MemberType } from 'generated/client';
+import { MemberRefreshSchedulerService } from './member-refresh-scheduler.service';
 
 describe('MembersService', () => {
   let service: MembersService;
   let prismaService: any;
   let discordService: jest.Mocked<DiscordService>;
+  let rateLimiter: jest.Mocked<DiscordRateLimiterService>;
+  let refreshScheduler: jest.Mocked<MemberRefreshSchedulerService>;
   let guildsService: jest.Mocked<GuildsService>;
   let amqpConnection: jest.Mocked<AmqpConnection>;
 
@@ -48,6 +52,9 @@ describe('MembersService', () => {
     banner: null,
     active: true,
     globalUserId: 'user-123',
+    lastDiscordSyncAt: new Date(),
+    lastDiscordAttemptAt: new Date(),
+    lastDiscordStatus: 'SUCCESS',
     createdAt: new Date(),
     updatedAt: new Date(),
     roles: [],
@@ -97,6 +104,20 @@ describe('MembersService', () => {
       getGuildById: jest.fn(),
     };
 
+    const mockRateLimiter = {
+      getNextAvailableAtForUser: jest.fn().mockResolvedValue(null),
+    };
+
+    const mockRefreshScheduler = {
+      enqueueRefresh: jest.fn().mockResolvedValue({
+        queued: true,
+        nextRefreshAt: new Date(Date.now() + 5000),
+      }),
+      isUserRefreshLocked: jest.fn().mockResolvedValue(false),
+      acquireUserRefreshLock: jest.fn().mockResolvedValue(true),
+      releaseUserRefreshLock: jest.fn(),
+    };
+
     const mockAmqpConnection = {
       publish: jest.fn(),
     };
@@ -130,6 +151,11 @@ describe('MembersService', () => {
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: DiscordService, useValue: mockDiscordService },
+        { provide: DiscordRateLimiterService, useValue: mockRateLimiter },
+        {
+          provide: MemberRefreshSchedulerService,
+          useValue: mockRefreshScheduler,
+        },
         { provide: GuildsService, useValue: mockGuildsService },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: ConfigService, useValue: mockConfigService },
@@ -140,6 +166,8 @@ describe('MembersService', () => {
     service = module.get<MembersService>(MembersService);
     prismaService = module.get(PrismaService);
     discordService = module.get(DiscordService);
+    rateLimiter = module.get(DiscordRateLimiterService);
+    refreshScheduler = module.get(MemberRefreshSchedulerService);
     guildsService = module.get(GuildsService);
     amqpConnection = module.get(AmqpConnection);
 
@@ -213,20 +241,26 @@ describe('MembersService', () => {
     });
 
     it('should return stale data when Discord API returns null', async () => {
-      const staleMember = { ...mockMember, updatedAt: new Date(0) };
-      prismaService.member.findUnique
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(staleMember);
+      const staleMember = {
+        ...mockMember,
+        updatedAt: new Date(0),
+        lastDiscordSyncAt: new Date(0),
+      };
+      prismaService.member.findUnique.mockResolvedValue(staleMember);
       discordService.getGuildMember.mockResolvedValue(null);
 
       const result = await service.getGuildMemberById(options);
 
-      expect(result).toEqual({
-        ...staleMember,
-        isStale: true,
-        staleWarning:
-          'Using cached data due to Discord API rate limiting or errors',
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          ...staleMember,
+          isStale: true,
+          refreshQueued: false,
+          nextRefreshAt: null,
+          staleWarning:
+            'Using cached data due to Discord API rate limiting or errors',
+        }),
+      );
       expect(service['logger'].log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: 'warn',
@@ -254,7 +288,11 @@ describe('MembersService', () => {
         where: {
           memberId: { userId: options.discordId, guildId: options.guildId },
         },
-        data: { active: false, roles: { set: [] } },
+        data: expect.objectContaining({
+          active: false,
+          lastDiscordStatus: 'NOT_FOUND',
+          roles: { set: [] },
+        }),
       });
     });
 
@@ -280,25 +318,32 @@ describe('MembersService', () => {
     });
 
     it('should return stale data when auth service unavailable', async () => {
-      const staleMember = { ...mockMember, updatedAt: new Date(0) };
-      prismaService.member.findUnique
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(staleMember);
+      const staleMember = {
+        ...mockMember,
+        updatedAt: new Date(0),
+        lastDiscordSyncAt: new Date(0),
+      };
+      prismaService.member.findUnique.mockResolvedValue(staleMember);
       discordService.getGuildMember.mockRejectedValue(
         new ServiceUnavailableException('Service unavailable'),
       );
 
       const result = await service.getGuildMemberById(options);
 
-      expect(result).toEqual({
-        ...staleMember,
-        isStale: true,
-        staleWarning: 'Data may be outdated due to service issues',
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          ...staleMember,
+          isStale: true,
+          refreshQueued: false,
+          nextRefreshAt: null,
+          staleWarning:
+            'Using cached data due to Discord API rate limiting or errors',
+        }),
+      );
       expect(service['logger'].log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: 'warn',
-          message: 'Auth service unavailable, serving stale data',
+          message: 'Auth service unavailable, keeping cached member state',
         }),
       );
     });
@@ -319,21 +364,28 @@ describe('MembersService', () => {
     });
 
     it('should return stale data on general error when refresh=false', async () => {
-      const staleMember = { ...mockMember, updatedAt: new Date(0) };
-      prismaService.member.findUnique
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(staleMember);
+      const staleMember = {
+        ...mockMember,
+        updatedAt: new Date(0),
+        lastDiscordSyncAt: new Date(0),
+      };
+      prismaService.member.findUnique.mockResolvedValue(staleMember);
       discordService.getGuildMember.mockRejectedValue(
         new Error('Network error'),
       );
 
       const result = await service.getGuildMemberById(options);
 
-      expect(result).toEqual({
-        ...staleMember,
-        isStale: true,
-        staleWarning: 'Using cached data due to API error',
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          ...staleMember,
+          isStale: true,
+          refreshQueued: false,
+          nextRefreshAt: null,
+          staleWarning:
+            'Using cached data due to Discord API rate limiting or errors',
+        }),
+      );
       expect(service['logger'].log).toHaveBeenCalledWith(
         expect.objectContaining({
           level: 'error',
@@ -569,7 +621,11 @@ describe('MembersService', () => {
         where: {
           memberId: { userId: options.discordId, guildId: options.guildId },
         },
-        data: { active: false, roles: { set: [] } },
+        data: expect.objectContaining({
+          active: false,
+          lastDiscordStatus: 'MANUALLY_DEACTIVATED',
+          roles: { set: [] },
+        }),
       });
     });
   });
@@ -583,7 +639,10 @@ describe('MembersService', () => {
       expect(result).toBe(5);
       expect(prismaService.member.updateMany).toHaveBeenCalledWith({
         where: { guildId: 'guild-123' },
-        data: { active: false },
+        data: expect.objectContaining({
+          active: false,
+          lastDiscordStatus: 'GUILD_DEACTIVATED',
+        }),
       });
       expect(service['logger'].log).toHaveBeenCalledWith({
         level: 'info',
