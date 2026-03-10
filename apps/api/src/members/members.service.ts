@@ -22,7 +22,7 @@ import {
 import type { APIGuildMember } from 'discord-api-types/v10';
 import { ErrorKey } from 'src/members/enum/error-key.enum';
 import { GuildsService } from 'src/guilds/guilds.service';
-import type { Member, Role } from 'generated/client';
+import type { Member, Prisma, Role } from 'generated/client';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { ConfigKey } from 'src/config/config-key.enum';
@@ -57,6 +57,17 @@ type MemberRefreshAttempt = {
 
 type StoredMemberWithRoles = Member & {
   roles: Role[];
+};
+
+type MemberRemovalNotificationTarget = {
+  discordId: string;
+  guildId: string;
+  globalUserId: string | null;
+};
+
+type DeleteMembersByGuildIdResult = {
+  count: number;
+  affectedMembers: MemberRemovalNotificationTarget[];
 };
 
 @Injectable()
@@ -446,7 +457,14 @@ export class MembersService {
       return true;
     }
 
-    return lastSyncAt.getTime() < Date.now() - getMemberCacheSoftTtl(this.env);
+    return lastSyncAt.getTime() < this.getMemberSoftStaleThreshold().getTime();
+  }
+
+  getMemberSoftStaleThreshold(referenceTime: number | Date = Date.now()): Date {
+    const baseTime =
+      referenceTime instanceof Date ? referenceTime.getTime() : referenceTime;
+
+    return new Date(baseTime - getMemberCacheSoftTtl(this.env));
   }
 
   async createOrUpdateMember({
@@ -562,32 +580,41 @@ export class MembersService {
       },
     });
 
-    await Promise.all([
-      this.amqpConnection.publish(
-        DEFAULT_EXCHANGE_NAME,
-        RoutingKey.GUILDS_MEMBERS_REMOVE,
-        {
-          id: discordId,
-          discordId,
-          userId: member.globalUserId,
-          guildId,
-        },
-      ),
-      this.redisService.deleteByPattern(
-        getUserLootlogConfigCachePattern(discordId),
-      ),
-      this.redisService.del(
-        getPermissionsCacheKey(member.globalUserId, guildId),
-      ),
-    ]);
+    await this.notifyMemberRemoved({
+      discordId,
+      guildId,
+      globalUserId: member.globalUserId,
+    });
 
     return deactivatedMember;
   }
 
-  async deleteMembersByGuildId(guildId: string): Promise<number> {
+  async deleteMembersByGuildId(
+    guildId: string,
+    options?: {
+      tx?: Prisma.TransactionClient;
+    },
+  ): Promise<DeleteMembersByGuildIdResult> {
+    const client = options?.tx ?? this.prisma;
+
     try {
-      const result = await this.prisma.member.updateMany({
-        where: { guildId },
+      const affectedMembers = await client.member.findMany({
+        where: {
+          guildId,
+          active: true,
+        },
+        select: {
+          userId: true,
+          guildId: true,
+          globalUserId: true,
+        },
+      });
+
+      const result = await client.member.updateMany({
+        where: {
+          guildId,
+          active: true,
+        },
         data: {
           active: false,
           lastDiscordAttemptAt: new Date(),
@@ -599,7 +626,14 @@ export class MembersService {
         level: 'info',
         message: `Deactivated ${result.count} members from guild ${guildId}`,
       });
-      return result.count;
+      return {
+        count: result.count,
+        affectedMembers: affectedMembers.map((member) => ({
+          discordId: member.userId,
+          guildId: member.guildId,
+          globalUserId: member.globalUserId,
+        })),
+      };
     } catch (error) {
       this.logger.log({
         level: 'error',
@@ -607,6 +641,18 @@ export class MembersService {
         stack: (error as Error).stack,
       });
       throw error;
+    }
+  }
+
+  async notifyMembersRemoved(
+    members: MemberRemovalNotificationTarget[],
+    batchSize = 25,
+  ): Promise<void> {
+    for (let index = 0; index < members.length; index += batchSize) {
+      const batch = members.slice(index, index + batchSize);
+      await Promise.all(
+        batch.map((member) => this.notifyMemberRemoved(member)),
+      );
     }
   }
 
@@ -751,5 +797,43 @@ export class MembersService {
           : {}),
       },
     });
+
+    if (deactivate && existingMember.active) {
+      await this.notifyMemberRemoved({
+        discordId,
+        guildId,
+        globalUserId: existingMember.globalUserId,
+      });
+    }
+  }
+
+  private async notifyMemberRemoved(
+    member: MemberRemovalNotificationTarget,
+  ): Promise<void> {
+    const operations: Promise<unknown>[] = [
+      this.redisService.deleteByPattern(
+        getUserLootlogConfigCachePattern(member.discordId),
+      ),
+    ];
+
+    if (member.globalUserId) {
+      operations.push(
+        this.amqpConnection.publish(
+          DEFAULT_EXCHANGE_NAME,
+          RoutingKey.GUILDS_MEMBERS_REMOVE,
+          {
+            id: member.discordId,
+            discordId: member.discordId,
+            userId: member.globalUserId,
+            guildId: member.guildId,
+          },
+        ),
+        this.redisService.del(
+          getPermissionsCacheKey(member.globalUserId, member.guildId),
+        ),
+      );
+    }
+
+    await Promise.all(operations);
   }
 }
