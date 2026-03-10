@@ -20,6 +20,17 @@ export interface MemberRefreshScheduleResult {
   nextRefreshAt: Date | null;
 }
 
+type MemberRefreshJobState =
+  | 'active'
+  | 'completed'
+  | 'delayed'
+  | 'failed'
+  | 'paused'
+  | 'prioritized'
+  | 'unknown'
+  | 'waiting'
+  | 'waiting-children';
+
 @Injectable()
 export class MemberRefreshSchedulerService {
   private readonly MEMBER_ENDPOINT = 'guild-member';
@@ -48,42 +59,21 @@ export class MemberRefreshSchedulerService {
 
     const existingJob = await this.memberRefreshQueue.getJob(jobId);
     if (existingJob) {
-      await this.updateExistingJob(existingJob, data, delay);
+      const existingState = await this.getExistingJobState(existingJob);
+
+      if (this.shouldReplaceExistingJob(existingState)) {
+        await this.replaceExistingJob(jobId, existingJob, data, delay);
+      } else {
+        await this.updateExistingJob(existingJob, data, delay, existingState);
+      }
+
       return {
         queued: true,
         nextRefreshAt,
       };
     }
 
-    await this.memberRefreshQueue.add('member-refresh', data, {
-      jobId,
-      delay,
-      priority: data.priority,
-      attempts: 10,
-      backoff: {
-        type: 'fixed',
-        delay: 1000,
-      },
-      removeOnComplete: {
-        age: 3600,
-        count: 1000,
-      },
-      removeOnFail: {
-        age: 86400,
-        count: 1000,
-      },
-    });
-
-    this.logger.log({
-      level: 'debug',
-      message: 'Queued member refresh job',
-      jobId,
-      guildId: data.guildId,
-      userId: data.userId,
-      priority: data.priority,
-      reason: data.reason,
-      delay,
-    });
+    await this.addRefreshJob(jobId, data, delay);
 
     return {
       queued: true,
@@ -142,6 +132,7 @@ export class MemberRefreshSchedulerService {
     job: Job<MemberRefreshJobData>,
     data: MemberRefreshJobData,
     delay: number,
+    state: MemberRefreshJobState,
   ): Promise<void> {
     const nextData: MemberRefreshJobData = {
       ...job.data,
@@ -164,18 +155,135 @@ export class MemberRefreshSchedulerService {
       }
     }
 
-    if (delay === 0) {
-      try {
-        await job.promote();
-      } catch (error) {
-        this.logger.log({
-          level: 'debug',
-          message: 'Failed to promote member refresh job',
-          jobId: job.id,
-          error,
-        });
-      }
+    if (state === 'delayed' && delay === 0) {
+      await this.promoteDelayedJob(job);
     }
+  }
+
+  private async addRefreshJob(
+    jobId: string,
+    data: MemberRefreshJobData,
+    delay: number,
+  ): Promise<void> {
+    await this.memberRefreshQueue.add('member-refresh', data, {
+      jobId,
+      delay,
+      priority: data.priority,
+      attempts: 10,
+      backoff: {
+        type: 'fixed',
+        delay: 1000,
+      },
+      removeOnComplete: {
+        age: 3600,
+        count: 1000,
+      },
+      removeOnFail: {
+        age: 86400,
+        count: 1000,
+      },
+    });
+
+    this.logger.log({
+      level: 'debug',
+      message: 'Queued member refresh job',
+      jobId,
+      guildId: data.guildId,
+      userId: data.userId,
+      priority: data.priority,
+      reason: data.reason,
+      delay,
+    });
+  }
+
+  private async replaceExistingJob(
+    jobId: string,
+    job: Job<MemberRefreshJobData>,
+    data: MemberRefreshJobData,
+    delay: number,
+  ): Promise<void> {
+    await this.removeExistingJob(job);
+    await this.addRefreshJob(jobId, data, delay);
+  }
+
+  private async removeExistingJob(
+    job: Job<MemberRefreshJobData>,
+  ): Promise<void> {
+    try {
+      await job.remove();
+    } catch (error) {
+      if (this.isMissingJobError(error)) {
+        return;
+      }
+
+      this.logger.log({
+        level: 'debug',
+        message: 'Failed to remove stale member refresh job before requeue',
+        jobId: job.id,
+        error,
+      });
+      throw error;
+    }
+  }
+
+  private async promoteDelayedJob(
+    job: Job<MemberRefreshJobData>,
+  ): Promise<void> {
+    try {
+      await job.promote();
+    } catch (error) {
+      if (this.isJobNotInStateError(error)) {
+        const currentState = await this.getExistingJobState(job);
+
+        if (currentState !== 'delayed') {
+          this.logger.log({
+            level: 'debug',
+            message:
+              'Skipped promoting member refresh job because it already left delayed state',
+            jobId: job.id,
+            state: currentState,
+          });
+          return;
+        }
+      }
+
+      this.logger.log({
+        level: 'debug',
+        message: 'Failed to promote member refresh job',
+        jobId: job.id,
+        error,
+      });
+    }
+  }
+
+  private async getExistingJobState(
+    job: Job<MemberRefreshJobData>,
+  ): Promise<MemberRefreshJobState> {
+    return (await job.getState()) as MemberRefreshJobState;
+  }
+
+  private shouldReplaceExistingJob(state: MemberRefreshJobState): boolean {
+    return state === 'completed' || state === 'failed' || state === 'unknown';
+  }
+
+  private isJobNotInStateError(
+    error: unknown,
+  ): error is Error & { code: number } {
+    return Boolean(
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code?: unknown }).code === -3,
+    );
+  }
+
+  private isMissingJobError(error: unknown): error is Error & { code: number } {
+    return Boolean(
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code?: unknown }).code === -1,
+    );
   }
 
   private getJobId(userId: string, guildId: string): string {
