@@ -2,6 +2,7 @@ import { type FC, Fragment, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
+  type PartyGatheringNotification,
   type NotificationWithServers,
   useNotificationsStore,
 } from "@/store/notifications.store";
@@ -11,7 +12,6 @@ import { format } from "date-fns";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
-import type { PartyGatheringNotification } from "@/store/notifications.store";
 import {
   getBackgroundColor,
   getGradient,
