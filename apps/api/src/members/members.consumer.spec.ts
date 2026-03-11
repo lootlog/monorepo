@@ -4,17 +4,10 @@ import { getQueueToken } from "@nestjs/bullmq";
 import { MembersConsumer } from "./members.consumer";
 import { PrismaService } from "src/db/prisma.service";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import {
-  MEMBER_BULK_REFRESH_QUEUE,
-  MEMBER_REFRESH_PRIORITY,
-} from "./constants/member-refresh-queue.constant";
-import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
+import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 
 describe("MembersConsumer", () => {
   let consumer: MembersConsumer;
-  let memberRefreshScheduler: {
-    enqueueRefresh: jest.Mock;
-  };
   let prismaService: {
     memberRefreshJob: {
       update: jest.Mock;
@@ -46,13 +39,6 @@ describe("MembersConsumer", () => {
       },
     };
 
-    const mockMemberRefreshScheduler = {
-      enqueueRefresh: jest.fn().mockResolvedValue({
-        queued: true,
-        nextRefreshAt: null,
-      }),
-    };
-
     const mockAmqpConnection = {
       publish: jest.fn(),
     };
@@ -71,10 +57,6 @@ describe("MembersConsumer", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersConsumer,
-        {
-          provide: MemberRefreshSchedulerService,
-          useValue: mockMemberRefreshScheduler,
-        },
         {
           provide: PrismaService,
           useValue: mockPrismaService,
@@ -95,7 +77,6 @@ describe("MembersConsumer", () => {
     }).compile();
 
     consumer = module.get<MembersConsumer>(MembersConsumer);
-    memberRefreshScheduler = module.get(MemberRefreshSchedulerService);
     prismaService = module.get(PrismaService);
     amqpConnection = module.get(AmqpConnection);
   });
@@ -179,58 +160,6 @@ describe("MembersConsumer", () => {
           completedAt: expect.any(Date),
         },
       });
-    });
-  });
-
-  describe("handleMemberRefresh", () => {
-    const payload = {
-      discordId: "discord-123",
-      guildId: "guild-123",
-      userId: "user-123",
-    };
-
-    it("should successfully refresh member in background", async () => {
-      await consumer.handleMemberRefresh(payload);
-
-      expect(memberRefreshScheduler.enqueueRefresh).toHaveBeenCalledWith({
-        discordId: payload.discordId,
-        guildId: payload.guildId,
-        userId: payload.userId,
-        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-        reason: "legacy-rabbit-refresh",
-      });
-
-      expect(consumer["logger"].log).toHaveBeenCalledWith({
-        level: "debug",
-        message: expect.stringContaining("Processing background refresh"),
-      });
-      expect(consumer["logger"].log).toHaveBeenCalledWith({
-        level: "debug",
-        message: expect.stringContaining("Queued refresh for member"),
-      });
-    });
-
-    it("should handle errors gracefully", async () => {
-      const error = new Error("Refresh failed");
-      memberRefreshScheduler.enqueueRefresh.mockRejectedValue(error);
-
-      await consumer.handleMemberRefresh(payload);
-
-      expect(consumer["logger"].log).toHaveBeenCalledWith({
-        level: "error",
-        message: expect.stringContaining("Failed to refresh member"),
-        stack: expect.any(String),
-      });
-    });
-
-    it("should not throw error on failure", async () => {
-      memberRefreshScheduler.enqueueRefresh.mockRejectedValue(
-        new Error("Network error"),
-      );
-
-      await expect(
-        consumer.handleMemberRefresh(payload),
-      ).resolves.not.toThrow();
     });
   });
 

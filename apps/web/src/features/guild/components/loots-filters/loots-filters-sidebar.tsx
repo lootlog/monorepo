@@ -194,7 +194,6 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
           mergedFilters.players.length > 0 ? mergedFilters.players : null,
         playerLevelMin: mergedFilters.playerLevelMin || null,
         playerLevelMax: mergedFilters.playerLevelMax || null,
-        location: null,
       };
     });
   };
