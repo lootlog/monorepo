@@ -9,19 +9,11 @@ import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { Queue } from "src/enum/queue.enum";
 import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
-import { MemberRefreshSchedulerService } from "./member-refresh-scheduler.service";
-import { MEMBER_REFRESH_PRIORITY } from "./constants/member-refresh-queue.constant";
 
 interface BulkRefreshPayload {
   jobId: number;
   guildId: string;
   memberIds: string[];
-}
-
-interface MemberRefreshPayload {
-  discordId: string;
-  guildId: string;
-  userId: string;
 }
 
 @Injectable()
@@ -30,7 +22,6 @@ export class MembersConsumer {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
     private readonly bulkRefreshQueue: BullQueue,
-    private readonly memberRefreshScheduler: MemberRefreshSchedulerService,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
@@ -85,41 +76,6 @@ export class MembersConsumer {
       });
 
       await this.emitJobUpdate(jobId);
-    }
-  }
-
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_REFRESH,
-    queue: Queue.GUILDS_MEMBERS_REFRESH,
-  })
-  async handleMemberRefresh(payload: MemberRefreshPayload) {
-    const { discordId, guildId, userId } = payload;
-
-    this.logger.log({
-      level: "debug",
-      message: `Processing background refresh for member ${discordId} in guild ${guildId}`,
-    });
-
-    try {
-      await this.memberRefreshScheduler.enqueueRefresh({
-        discordId,
-        guildId,
-        userId,
-        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-        reason: "legacy-rabbit-refresh",
-      });
-
-      this.logger.log({
-        level: "debug",
-        message: `Queued refresh for member ${discordId} in guild ${guildId}`,
-      });
-    } catch (error) {
-      this.logger.log({
-        level: "error",
-        message: `Failed to refresh member ${discordId} in guild ${guildId}`,
-        stack: (error as Error).stack,
-      });
     }
   }
 

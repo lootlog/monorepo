@@ -2,6 +2,10 @@ import type { GameEvent } from "@/types/margonem/game-events/game-event";
 
 type GameEventHandler = (event: GameEvent) => void;
 type RawGameEventPayload = string | GameEvent;
+type SuccessDataHandler = (...args: unknown[]) => unknown;
+type SuccessDataContainer = {
+  successData?: SuccessDataHandler;
+};
 
 class GameEventsManager {
   private eventQueue: GameEvent[] = [];
@@ -116,46 +120,66 @@ class GameEventsManager {
   }
 
   private setupSuccessDataProxies() {
-    const targets: Array<{ obj: any; prop: string }> = [
-      { obj: window, prop: "successData" },
-      { obj: window.Engine?.communication, prop: "successData" },
+    const proxyTargets: Array<{
+      container: SuccessDataContainer | undefined;
+      property: "successData";
+    }> = [
+      {
+        container: window as Window & SuccessDataContainer,
+        property: "successData",
+      },
+      {
+        container: window.Engine?.communication as SuccessDataContainer,
+        property: "successData",
+      },
     ];
 
-    targets.forEach(({ obj, prop }) => {
-      if (!obj || !obj[prop]) return;
+    for (const { container, property } of proxyTargets) {
+      if (!container) {
+        continue;
+      }
 
-      const original = obj[prop] as Function;
-      const proxy = new Proxy(original, {
+      const originalSuccessData = container[property];
+      if (!originalSuccessData) {
+        continue;
+      }
+
+      const proxiedSuccessData = new Proxy(originalSuccessData, {
         apply: (target, thisArg, args) => {
           this.onGameInitChange();
 
-          let modifiedArgs = args;
-          const parsedEvent = this.parseGameEventPayload(args[0]);
-
-          if (parsedEvent) {
-            this.queueEvent(parsedEvent);
-
-            const strippedEvent = this.stripFriendsKeys(parsedEvent);
-            if (strippedEvent !== parsedEvent) {
-              modifiedArgs = [
-                this.serializeGameEventPayload(args[0], strippedEvent),
-                ...args.slice(1),
-              ];
-            }
-          }
-
-          return target.apply(thisArg, modifiedArgs);
+          const forwardedArgs = this.buildForwardedSuccessDataArgs(args);
+          return target.apply(thisArg, forwardedArgs);
         },
       });
 
-      (obj as any)[prop] = proxy;
+      container[property] = proxiedSuccessData;
 
       this.proxies.push({
         cleanup: () => {
-          (obj as any)[prop] = original;
+          container[property] = originalSuccessData;
         },
       });
-    });
+    }
+  }
+
+  private buildForwardedSuccessDataArgs(args: unknown[]): unknown[] {
+    const parsedEvent = this.parseGameEventPayload(args[0]);
+    if (!parsedEvent) {
+      return args;
+    }
+
+    this.queueEvent(parsedEvent);
+
+    const strippedEvent = this.stripFriendsKeys(parsedEvent);
+    if (strippedEvent === parsedEvent) {
+      return args;
+    }
+
+    return [
+      this.serializeGameEventPayload(args[0], strippedEvent),
+      ...args.slice(1),
+    ];
   }
 
   private parseGameEventPayload(payload: unknown): GameEvent | null {
