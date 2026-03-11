@@ -29,6 +29,8 @@ on:
         required: true
       DOCKER_REGISTRY_PASSWORD:
         required: true
+      INFRA_REPO_PUSH_TOKEN:
+        required: true
 
 permissions:
   contents: write
@@ -37,7 +39,9 @@ permissions:
 env:
   IMAGE_NAME: kamilwronka7/lootlog-${{ inputs.service }}
   IMAGE_TAG: ${{ inputs.environment }}-${{ github.sha }}
-  KUSTOMIZE_PATH: infra/k8s/${{ inputs.environment }}/${{ inputs.service }}/kustomization.yml
+  INFRA_REPOSITORY: lootlog/infra
+  INFRA_REPO_PATH: infra-repo
+  KUSTOMIZE_PATH: apps/${{ inputs.environment }}/${{ inputs.service }}/kustomization.yml
   DOCKER_TARGET: ${{ inputs.docker_target || inputs.service }}
 
 jobs:
@@ -138,18 +142,24 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout code
+      - name: Checkout infra repository
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ env.INFRA_REPOSITORY }}
+          ref: ${{ inputs.environment == 'prod' && 'main' || 'develop' }}
+          token: ${{ secrets.INFRA_REPO_PUSH_TOKEN }}
+          path: ${{ env.INFRA_REPO_PATH }}
+          fetch-depth: 0
 
       - name: Update kustomization.yaml image tag
         uses: mikefarah/yq@v4.52.2
         with:
-          cmd: yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i ${{ env.KUSTOMIZE_PATH }}
+          cmd: yq e '( .images[] | select(.name == strenv(IMAGE_NAME)) ).newTag = strenv(IMAGE_TAG)' -i ${{ env.INFRA_REPO_PATH }}/${{ env.KUSTOMIZE_PATH }}
 
       - name: Commit and push with retry
         run: |
+          cd ${{ env.INFRA_REPO_PATH }}
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
