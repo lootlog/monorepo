@@ -35,6 +35,18 @@ type MemberRefreshJobState =
 export class MemberRefreshSchedulerService {
   private readonly MEMBER_ENDPOINT = 'guild-member';
   private readonly USER_LOCK_TTL_SECONDS = 30;
+  private readonly EXTEND_USER_REFRESH_LOCK_SCRIPT = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+  return redis.call("EXPIRE", KEYS[1], ARGV[2])
+end
+return 0
+`;
+  private readonly RELEASE_USER_REFRESH_LOCK_SCRIPT = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+  return redis.call("DEL", KEYS[1])
+end
+return 0
+`;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -103,22 +115,20 @@ export class MemberRefreshSchedulerService {
     ttlSeconds: number,
   ): Promise<void> {
     const lockKey = this.getUserLockKey(userId);
-    const currentOwner = await this.redisService.get(lockKey);
-    if (currentOwner !== owner) {
-      return;
-    }
-
-    await this.redisService.expire(lockKey, ttlSeconds);
+    await this.redisService.eval<number>(
+      this.EXTEND_USER_REFRESH_LOCK_SCRIPT,
+      [lockKey],
+      [owner, ttlSeconds],
+    );
   }
 
   async releaseUserRefreshLock(userId: string, owner: string): Promise<void> {
     const lockKey = this.getUserLockKey(userId);
-    const currentOwner = await this.redisService.get(lockKey);
-    if (currentOwner !== owner) {
-      return;
-    }
-
-    await this.redisService.del(lockKey);
+    await this.redisService.eval<number>(
+      this.RELEASE_USER_REFRESH_LOCK_SCRIPT,
+      [lockKey],
+      [owner],
+    );
   }
 
   async getNextRefreshAt(userId: string): Promise<Date | null> {

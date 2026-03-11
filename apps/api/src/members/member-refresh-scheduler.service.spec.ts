@@ -21,8 +21,7 @@ describe('MemberRefreshSchedulerService', () => {
   let redisService: {
     get: jest.Mock;
     setNX: jest.Mock;
-    expire: jest.Mock;
-    del: jest.Mock;
+    eval: jest.Mock;
   };
   let logger: {
     log: jest.Mock;
@@ -52,8 +51,7 @@ describe('MemberRefreshSchedulerService', () => {
     const mockRedisService = {
       get: jest.fn(),
       setNX: jest.fn(),
-      expire: jest.fn(),
-      del: jest.fn(),
+      eval: jest.fn(),
     };
 
     const mockLogger = {
@@ -250,11 +248,18 @@ describe('MemberRefreshSchedulerService', () => {
     it('should delegate refresh lock helpers to Redis', async () => {
       redisService.get.mockResolvedValue('owner-1');
       redisService.setNX.mockResolvedValue(true);
+      redisService.eval.mockResolvedValue(1);
 
       await expect(service.isUserRefreshLocked('user-123')).resolves.toBe(true);
       await expect(
         service.acquireUserRefreshLock('user-123', 'owner-1'),
       ).resolves.toBe(true);
+      await expect(
+        service.extendUserRefreshLock('user-123', 'owner-1', 45),
+      ).resolves.toBeUndefined();
+      await expect(
+        service.releaseUserRefreshLock('user-123', 'owner-1'),
+      ).resolves.toBeUndefined();
 
       expect(redisService.get).toHaveBeenCalledWith(
         'member:refresh:lock:user-123',
@@ -263,6 +268,18 @@ describe('MemberRefreshSchedulerService', () => {
         'member:refresh:lock:user-123',
         'owner-1',
         30,
+      );
+      expect(redisService.eval).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('redis.call("EXPIRE", KEYS[1], ARGV[2])'),
+        ['member:refresh:lock:user-123'],
+        ['owner-1', 45],
+      );
+      expect(redisService.eval).toHaveBeenNthCalledWith(
+        2,
+        expect.stringContaining('redis.call("DEL", KEYS[1])'),
+        ['member:refresh:lock:user-123'],
+        ['owner-1'],
       );
     });
 
