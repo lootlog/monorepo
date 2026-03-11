@@ -87,14 +87,20 @@ export const EventCreateDialog = ({
   const onSubmit = (data: FormData) => {
     if (data.endsAt && data.startsAt && data.endsAt <= data.startsAt) {
       toast.error(
-        t("events.createDialog.endDateMustBeAfterStart", "Data końca musi być po dacie startu"),
+        t(
+          "events.createDialog.endDateMustBeAfterStart",
+          "Data końca musi być po dacie startu",
+        ),
       );
       return;
     }
 
     if (!data.name.trim() || !data.world.trim()) {
       toast.error(
-        t("events.createDialog.nameWorldRequired", "Nazwa eventu i świat są wymagane"),
+        t(
+          "events.createDialog.nameWorldRequired",
+          "Nazwa eventu i świat są wymagane",
+        ),
       );
       return;
     }
@@ -148,8 +154,14 @@ export const EventCreateDialog = ({
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
                 {step === 1
-                  ? t("events.scoring.chooseMode", "Krok 1/2: wybierz tryb punktacji")
-                  : t("events.scoring.configureEvent", "Krok 2/2: skonfiguruj event")}
+                  ? t(
+                      "events.scoring.chooseMode",
+                      "Krok 1/2: wybierz tryb punktacji",
+                    )
+                  : t(
+                      "events.scoring.configureEvent",
+                      "Krok 2/2: skonfiguruj event",
+                    )}
               </DialogDescription>
             </div>
           </div>

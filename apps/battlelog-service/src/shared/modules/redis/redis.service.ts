@@ -2,11 +2,11 @@ import {
   Injectable,
   type OnModuleInit,
   type OnModuleDestroy,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
-import { ConfigKey } from 'src/config/config-key.enum';
-import type { RedisConfig } from 'src/config/redis.config';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import Redis from "ioredis";
+import { ConfigKey } from "src/config/config-key.enum";
+import type { RedisConfig } from "src/config/redis.config";
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -25,14 +25,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async getClient(): Promise<Redis> {
     if (!this.client) {
-      throw new Error('Redis client is not initialized');
+      throw new Error("Redis client is not initialized");
     }
     return this.client;
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
     if (ttlSeconds) {
-      await this.client.set(key, value, 'EX', ttlSeconds);
+      await this.client.set(key, value, "EX", ttlSeconds);
     } else {
       await this.client.set(key, value);
     }
@@ -52,8 +52,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     ttlSeconds?: number,
   ): Promise<boolean> {
     if (ttlSeconds) {
-      const result = await this.client.set(key, value, 'EX', ttlSeconds, 'NX');
-      return result === 'OK';
+      const result = await this.client.set(key, value, "EX", ttlSeconds, "NX");
+      return result === "OK";
     } else {
       const result = await this.client.setnx(key, value);
       return result === 1;

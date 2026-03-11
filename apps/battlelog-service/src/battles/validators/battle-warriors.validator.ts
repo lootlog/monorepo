@@ -3,35 +3,35 @@ import {
   validate,
   type ValidationOptions,
   type ValidationArguments,
-} from 'class-validator';
-import { CreateBattleFightEventWarriorDto } from 'src/battles/dto/create-battle.dto';
+} from "class-validator";
+import { CreateBattleFightEventWarriorDto } from "src/battles/dto/create-battle.dto";
 
 export function ValidateWarriorsRecord(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
-      name: 'validateWarriorsRecord',
+      name: "validateWarriorsRecord",
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       validator: {
         async validate(value: any) {
-          if (!value || typeof value !== 'object') {
+          if (!value || typeof value !== "object") {
             return false;
           }
 
           const teams = new Set<number>();
 
           for (const [key, warrior] of Object.entries(value)) {
-            if (typeof key !== 'string') {
+            if (typeof key !== "string") {
               return false;
             }
 
             // Reject battles with NPC warriors (keys starting with minus sign)
-            if (key.startsWith('-')) {
+            if (key.startsWith("-")) {
               return false;
             }
 
-            if (!warrior || typeof warrior !== 'object') {
+            if (!warrior || typeof warrior !== "object") {
               return false;
             }
 
@@ -44,7 +44,7 @@ export function ValidateWarriorsRecord(validationOptions?: ValidationOptions) {
             }
 
             // Collect team numbers
-            if ('team' in warrior && typeof warrior.team === 'number') {
+            if ("team" in warrior && typeof warrior.team === "number") {
               teams.add(warrior.team);
             }
           }

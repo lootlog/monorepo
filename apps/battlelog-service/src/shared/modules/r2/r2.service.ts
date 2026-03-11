@@ -2,13 +2,13 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-} from '@aws-sdk/client-s3';
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
-import type { R2Config } from 'src/config/r2.config';
-import { RedisService } from '../redis/redis.service';
-import { gzipSync, gunzipSync } from 'zlib';
+} from "@aws-sdk/client-s3";
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { ConfigKey } from "src/config/config-key.enum";
+import type { R2Config } from "src/config/r2.config";
+import { RedisService } from "../redis/redis.service";
+import { gzipSync, gunzipSync } from "zlib";
 
 @Injectable()
 export class R2Service {
@@ -16,8 +16,8 @@ export class R2Service {
   private readonly client: S3Client;
   private readonly config: R2Config;
 
-  private readonly CACHE_PREFIX = 'battle:raw';
-  private readonly LRU_KEY = 'battle:raw:lru';
+  private readonly CACHE_PREFIX = "battle:raw";
+  private readonly LRU_KEY = "battle:raw:lru";
   private readonly MAX_CACHE_SIZE = 1000;
   private readonly CACHE_TTL = 24 * 60 * 60; // 24 hours
 
@@ -51,12 +51,12 @@ export class R2Service {
         Bucket: this.config.bucketName,
         Key: key,
         Body: compressedData,
-        ContentType: 'application/json',
-        ContentEncoding: 'gzip',
+        ContentType: "application/json",
+        ContentEncoding: "gzip",
         Metadata: {
-          'battle-id': battleId,
-          'uploaded-at': new Date().toISOString(),
-          compressed: 'gzip',
+          "battle-id": battleId,
+          "uploaded-at": new Date().toISOString(),
+          compressed: "gzip",
         },
       });
 
@@ -96,15 +96,15 @@ export class R2Service {
       }
 
       const isCompressed =
-        response.Metadata?.compressed === 'gzip' ||
-        response.ContentEncoding === 'gzip';
+        response.Metadata?.compressed === "gzip" ||
+        response.ContentEncoding === "gzip";
 
       let decompressedData: string;
 
       if (isCompressed) {
         const compressedBuffer = await response.Body.transformToByteArray();
         const decompressedBuffer = gunzipSync(compressedBuffer);
-        decompressedData = decompressedBuffer.toString('utf-8');
+        decompressedData = decompressedBuffer.toString("utf-8");
         this.logger.debug(`Decompressed battle ${battleId} data`);
       } else {
         decompressedData = await response.Body.transformToString();
@@ -134,7 +134,7 @@ export class R2Service {
     try {
       const key = `battles/${battleId}.json`;
 
-      const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+      const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
       const command = new DeleteObjectCommand({
         Bucket: this.config.bucketName,
         Key: key,
@@ -159,7 +159,7 @@ export class R2Service {
       const redis = await this.redisService.getClient();
       const pipeline = redis.pipeline();
 
-      pipeline.set(cacheKey, data, 'EX', this.CACHE_TTL);
+      pipeline.set(cacheKey, data, "EX", this.CACHE_TTL);
       pipeline.zadd(this.LRU_KEY, timestamp, battleId);
 
       await pipeline.exec();
@@ -206,7 +206,7 @@ export class R2Service {
         }
       }
     } catch (error) {
-      this.logger.warn('Failed to enforce LRU limit:', error);
+      this.logger.warn("Failed to enforce LRU limit:", error);
     }
   }
 

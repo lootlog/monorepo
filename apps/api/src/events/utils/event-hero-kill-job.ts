@@ -1,16 +1,16 @@
 import type {
   EventHeroKillJobData,
   SerializedKillTimerData,
-} from '../interfaces/check-event-hero-kill-params.interface';
-import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
+} from "../interfaces/check-event-hero-kill-params.interface";
+import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
 
-export const EVENT_HERO_KILL_JOB_NAME = 'process-event-hero-kill';
-const MANUAL_CLOSE_SUFFIX = 'manual';
-const TIMER_UPDATE_SUFFIX = 'timer';
-const JOB_ID_SEPARATOR = '-';
+export const EVENT_HERO_KILL_JOB_NAME = "process-event-hero-kill";
+const MANUAL_CLOSE_SUFFIX = "manual";
+const TIMER_UPDATE_SUFFIX = "timer";
+const JOB_ID_SEPARATOR = "-";
 
 function sanitizeJobIdPart(value: string | number): string {
-  return String(value).replaceAll(':', '_');
+  return String(value).replaceAll(":", "_");
 }
 
 function toRequiredDate(value: string, field: string): Date {
@@ -49,18 +49,18 @@ export function deserializeKillTimerData(
   timerData: SerializedKillTimerData,
 ): KillTimerData {
   return {
-    minSpawnTime: toRequiredDate(timerData.minSpawnTime, 'minSpawnTime'),
-    maxSpawnTime: toRequiredDate(timerData.maxSpawnTime, 'maxSpawnTime'),
+    minSpawnTime: toRequiredDate(timerData.minSpawnTime, "minSpawnTime"),
+    maxSpawnTime: toRequiredDate(timerData.maxSpawnTime, "maxSpawnTime"),
     memberId: timerData.memberId,
     previousMinSpawnTime: toOptionalDate(
       timerData.previousMinSpawnTime,
-      'previousMinSpawnTime',
+      "previousMinSpawnTime",
     ),
     previousMaxSpawnTime: toOptionalDate(
       timerData.previousMaxSpawnTime,
-      'previousMaxSpawnTime',
+      "previousMaxSpawnTime",
     ),
-    windowOpenedAt: toOptionalDate(timerData.windowOpenedAt, 'windowOpenedAt'),
+    windowOpenedAt: toOptionalDate(timerData.windowOpenedAt, "windowOpenedAt"),
   };
 }
 
@@ -81,9 +81,9 @@ export function buildEventHeroKillJobId(data: {
 }): string {
   const mode = data.isManualClose ? MANUAL_CLOSE_SUFFIX : TIMER_UPDATE_SUFFIX;
   const parts = [
-    'event',
-    'hero',
-    'kill',
+    "event",
+    "hero",
+    "kill",
     data.guildId,
     data.world,
     data.npcId,

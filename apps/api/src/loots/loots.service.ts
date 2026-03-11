@@ -4,29 +4,29 @@ import {
   Inject,
   Injectable,
   type OnModuleInit,
-} from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import type { CreateLootDto } from 'src/loots/dto/create-loot.dto';
-import type { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
-import { ErrorKey } from './enum/error-key.enum';
-import { PlayersService } from 'src/players/players.service';
-import { NpcsService } from 'src/npcs/npcs.service';
-import { ItemsService } from 'src/items/items.service';
-import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
-import { PrismaService } from 'src/db/prisma.service';
-import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
-import { Permission, type Guild, type Role } from 'generated/client';
-import { GuildsService } from 'src/guilds/guilds.service';
-import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
-import type { UpdateLootDto } from 'src/loots/dto/update-loot.dto';
-import type { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
-import { LootMappingService } from './services/loot-mapping.service';
-import { LootValidationService } from './services/loot-validation.service';
-import { LootQueryService } from './services/loot-query.service';
-import { LootCommentService } from './services/loot-comment.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import Redlock, { ExecutionError } from 'redlock';
+} from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
+import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
+import { ErrorKey } from "./enum/error-key.enum";
+import { PlayersService } from "src/players/players.service";
+import { NpcsService } from "src/npcs/npcs.service";
+import { ItemsService } from "src/items/items.service";
+import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
+import { PrismaService } from "src/db/prisma.service";
+import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
+import { Permission, type Guild, type Role } from "generated/client";
+import { GuildsService } from "src/guilds/guilds.service";
+import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
+import type { CreateCommentDto } from "src/loots/dto/create-comment-dto";
+import { LootMappingService } from "./services/loot-mapping.service";
+import { LootValidationService } from "./services/loot-validation.service";
+import { LootQueryService } from "./services/loot-query.service";
+import { LootCommentService } from "./services/loot-comment.service";
+import { RedisService } from "src/lib/redis/redis.service";
+import Redlock, { ExecutionError } from "redlock";
 
 @Injectable()
 export class LootsService implements OnModuleInit {
@@ -244,11 +244,11 @@ export class LootsService implements OnModuleInit {
     } catch (error: unknown) {
       if (error instanceof ExecutionError) {
         this.logger.log({
-          level: 'error',
-          message: 'Lock acquisition failed for createLoot',
+          level: "error",
+          message: "Lock acquisition failed for createLoot",
           uniqueId,
         });
-        throw new BadRequestException('Failed to acquire lock');
+        throw new BadRequestException("Failed to acquire lock");
       }
 
       throw error;
@@ -334,7 +334,7 @@ export class LootsService implements OnModuleInit {
       name: lp.playerSnapshot.name,
       lvl: lp.lvl ?? 0,
       prof: lp.playerSnapshot.prof,
-      icon: lp.playerSnapshot.icon ?? '',
+      icon: lp.playerSnapshot.icon ?? "",
       characterId: String(lp.playerSnapshot.characterId),
       accountId: String(lp.playerSnapshot.accountId),
     }));
@@ -348,7 +348,7 @@ export class LootsService implements OnModuleInit {
       lvl: li.itemSnapshot.lvl ?? 0,
       rarity: li.itemSnapshot.rarity,
       prof: [],
-      type: li.itemSnapshot.itemType ?? '',
+      type: li.itemSnapshot.itemType ?? "",
     }));
 
     const mappedLootShare = this.lootMappingService.parseLootShareForUpdate(
@@ -363,9 +363,9 @@ export class LootsService implements OnModuleInit {
 
     if (Object.keys(mappedLootShare).length < items.length) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message:
-          'Loot share does not include all items, some items may not be shared',
+          "Loot share does not include all items, some items may not be shared",
         lootId,
         lootShareMsg: data.msg,
         mappedItemsCount: Object.keys(mappedLootShare).length,

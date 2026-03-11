@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
-import { ItemRarity, NpcType } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import type { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
-import type { UpdateLootlogConfigDto } from 'src/lootlog-config/dto/update-lootlog-config.dto';
-import { LootlogConfigEntity } from 'src/shared/entities/lootlog-config.entity';
-import { LootlogConfigNpcEntity } from 'src/shared/entities/lootlog-config-npc.entity';
+import { Injectable } from "@nestjs/common";
+import { plainToInstance } from "class-transformer";
+import { ItemRarity, NpcType } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import type { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
+import type { UpdateLootlogConfigDto } from "src/lootlog-config/dto/update-lootlog-config.dto";
+import { LootlogConfigEntity } from "src/shared/entities/lootlog-config.entity";
+import { LootlogConfigNpcEntity } from "src/shared/entities/lootlog-config-npc.entity";
 
 @Injectable()
 export class LootlogConfigService {
@@ -19,7 +19,7 @@ export class LootlogConfigService {
       include: {
         npcs: {
           orderBy: {
-            id: 'desc',
+            id: "desc",
           },
         },
       },
@@ -40,7 +40,7 @@ export class LootlogConfigService {
       include: {
         npcs: {
           orderBy: {
-            id: 'desc',
+            id: "desc",
           },
         },
       },

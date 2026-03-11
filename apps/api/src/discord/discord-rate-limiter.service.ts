@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { RedisService } from 'src/lib/redis/redis.service';
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { RedisService } from "src/lib/redis/redis.service";
 
 interface UserRateLimitData {
   bucket?: string | null;
@@ -22,7 +22,7 @@ export interface DiscordRateLimitState {
 
 @Injectable()
 export class DiscordRateLimiterService {
-  private readonly RATE_LIMIT_KEY_PREFIX = 'discord:ratelimit:user:';
+  private readonly RATE_LIMIT_KEY_PREFIX = "discord:ratelimit:user:";
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -40,7 +40,7 @@ export class DiscordRateLimiterService {
 
     const waitTime = state.resetAt - Date.now();
     this.logger.log({
-      level: 'warn',
+      level: "warn",
       message: `Rate limit active for user ${userId} on endpoint ${endpoint}. Wait time: ${waitTime}ms`,
       userId,
       endpoint,
@@ -70,14 +70,14 @@ export class DiscordRateLimiterService {
     }
 
     const remaining =
-      typeof rateLimitData.remaining === 'number'
+      typeof rateLimitData.remaining === "number"
         ? rateLimitData.remaining
         : null;
 
     return {
       bucket: rateLimitData.bucket ?? null,
       limit:
-        typeof rateLimitData.limit === 'number' ? rateLimitData.limit : null,
+        typeof rateLimitData.limit === "number" ? rateLimitData.limit : null,
       remaining,
       resetAt: rateLimitData.resetAt,
       retryAfter: rateLimitData.retryAfter,
@@ -103,12 +103,12 @@ export class DiscordRateLimiterService {
     endpoint: string,
     headers: { get(name: string): string | null },
   ): Promise<void> {
-    const bucket = headers.get('x-ratelimit-bucket');
-    const limitHeader = headers.get('x-ratelimit-limit');
-    const remainingHeader = headers.get('x-ratelimit-remaining');
+    const bucket = headers.get("x-ratelimit-bucket");
+    const limitHeader = headers.get("x-ratelimit-limit");
+    const remainingHeader = headers.get("x-ratelimit-remaining");
     const resetAfterHeader =
-      headers.get('x-ratelimit-reset-after') ?? headers.get('retry-after');
-    const resetHeader = headers.get('x-ratelimit-reset');
+      headers.get("x-ratelimit-reset-after") ?? headers.get("retry-after");
+    const resetHeader = headers.get("x-ratelimit-reset");
 
     const limit = limitHeader ? Number.parseInt(limitHeader, 10) : null;
     const remaining = remainingHeader
@@ -156,8 +156,8 @@ export class DiscordRateLimiterService {
     );
 
     this.logger.log({
-      level: 'debug',
-      message: 'Updated Discord rate limit state from headers',
+      level: "debug",
+      message: "Updated Discord rate limit state from headers",
       userId,
       endpoint,
       bucket,
@@ -189,8 +189,8 @@ export class DiscordRateLimiterService {
     await this.redis.set(key, JSON.stringify(rateLimitData), ttlSeconds);
 
     this.logger.log({
-      level: 'warn',
-      message: 'Set rate limit for user',
+      level: "warn",
+      message: "Set rate limit for user",
       userId,
       endpoint,
       retryAfterMs,

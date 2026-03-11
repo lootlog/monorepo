@@ -4,8 +4,8 @@ import {
   NotFoundException,
   type CanActivate,
   type ExecutionContext,
-} from '@nestjs/common';
-import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
+} from "@nestjs/common";
+import { PrismaService } from "src/shared/modules/prisma/prisma.service";
 
 @Injectable()
 export class BattleAccessGuard implements CanActivate {
@@ -17,11 +17,11 @@ export class BattleAccessGuard implements CanActivate {
     const battleId = request.params.battleId;
 
     if (!userId) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException("User not authenticated");
     }
 
     if (!battleId) {
-      throw new ForbiddenException('Battle ID is required');
+      throw new ForbiddenException("Battle ID is required");
     }
 
     try {
@@ -35,10 +35,10 @@ export class BattleAccessGuard implements CanActivate {
       }
 
       throw new ForbiddenException(
-        'Access denied: Battle is private and you are not the owner',
+        "Access denied: Battle is private and you are not the owner",
       );
     } catch (error) {
-      if (error.name === 'NotFoundError') {
+      if (error.name === "NotFoundError") {
         throw new NotFoundException(`Battle with ID ${battleId} not found`);
       }
       throw error;

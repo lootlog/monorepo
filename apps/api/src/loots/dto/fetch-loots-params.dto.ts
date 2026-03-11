@@ -6,9 +6,9 @@ import {
   IsArray,
   IsString,
   IsDateString,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { MAX_PAGE_LIMIT } from '../config/pagination';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { MAX_PAGE_LIMIT } from "../config/pagination";
 
 export class FetchLootsParamsDto {
   @IsOptional()

@@ -2,12 +2,12 @@
   "name": "@lootlog/cli",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "module": "ESNext",
-  "exports": "./dist/index.mjs",
   "bin": {
     "lootlog": "./dist/index.mjs"
   },
+  "type": "module",
+  "module": "ESNext",
+  "exports": "./dist/index.mjs",
   "scripts": {
     "env:generate": "tsx src/commands/env/generate.ts"
   },

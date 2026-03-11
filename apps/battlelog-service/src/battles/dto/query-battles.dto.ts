@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+import { Transform, Type } from "class-transformer";
 import {
   IsArray,
   IsBoolean,
@@ -9,11 +9,11 @@ import {
   IsString,
   Max,
   Min,
-} from 'class-validator';
+} from "class-validator";
 
 export enum SortOrder {
-  ASC = 'asc',
-  DESC = 'desc',
+  ASC = "asc",
+  DESC = "desc",
 }
 
 export class QueryBattlesDto {
@@ -33,7 +33,7 @@ export class QueryBattlesDto {
   sortOrder?: SortOrder = SortOrder.DESC;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   @IsBoolean()
   includeTotal?: boolean = false;
 
@@ -44,20 +44,20 @@ export class QueryBattlesDto {
 
   @IsOptional()
   @IsArray()
-  @IsIn(['solo', 'group'], { each: true })
+  @IsIn(["solo", "group"], { each: true })
   @Transform(({ value }) => {
     if (Array.isArray(value)) return value;
-    if (typeof value === 'string') return value.split(',').map((v) => v.trim());
+    if (typeof value === "string") return value.split(",").map((v) => v.trim());
     return [value];
   })
-  type?: Array<'solo' | 'group'>;
+  type?: Array<"solo" | "group">;
 
   @IsOptional()
   @IsString()
   userId?: string;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   @IsBoolean()
   public?: boolean;
 
@@ -66,7 +66,7 @@ export class QueryBattlesDto {
   @IsString({ each: true })
   @Transform(({ value }) => {
     if (Array.isArray(value)) return value;
-    if (typeof value === 'string') return value.split(',').map((v) => v.trim());
+    if (typeof value === "string") return value.split(",").map((v) => v.trim());
     return [value];
   })
   characterId?: Array<string>;
@@ -77,21 +77,21 @@ export class QueryBattlesDto {
 
   @IsOptional()
   @IsArray()
-  @IsIn(['won', 'lost', 'flee'], { each: true })
+  @IsIn(["won", "lost", "flee"], { each: true })
   @Transform(({ value }) => {
     if (Array.isArray(value)) return value;
-    if (typeof value === 'string') return value.split(',').map((v) => v.trim());
+    if (typeof value === "string") return value.split(",").map((v) => v.trim());
     return [value];
   })
-  result?: Array<'won' | 'lost' | 'flee'>; // Battle result filter
+  result?: Array<"won" | "lost" | "flee">; // Battle result filter
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   @IsBoolean()
   ph?: boolean; // Filter battles with honor points
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   @IsBoolean()
   matchmaking?: boolean; // Filter matchmaking battles (Otchłań)
 

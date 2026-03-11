@@ -1,9 +1,9 @@
 // oxlint-disable-next-line consistent-type-imports
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger } from '@nestjs/common';
-import type { Guild, Role } from 'discord.js';
-import { RoutingKey } from 'src/bot/enums/routing-key.enum';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { Injectable, Logger } from "@nestjs/common";
+import type { Guild, Role } from "discord.js";
+import { RoutingKey } from "src/bot/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 
 @Injectable()
 export class BotService {

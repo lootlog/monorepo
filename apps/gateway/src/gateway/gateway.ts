@@ -1,4 +1,4 @@
-import { UseFilters, UsePipes, ValidationPipe, Logger } from '@nestjs/common';
+import { UseFilters, UsePipes, ValidationPipe, Logger } from "@nestjs/common";
 import {
   BaseWsExceptionFilter,
   ConnectedSocket,
@@ -6,29 +6,29 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from '@nestjs/websockets';
-import type { Server } from 'socket.io';
-import type { JoinGatewayDto } from 'src/gateway/dto/join-gateway.dto';
-import type { RequestServerPresenceDto } from 'src/gateway/dto/request-server-presence.dto';
-import type { EventPresenceUpdateDto } from 'src/gateway/dto/event-presence-update.dto';
-import type { RequestPlayerPresenceDto } from 'src/gateway/dto/request-player-presence.dto';
-import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
-import { GatewayConfig } from 'src/gateway/constants/gateway-config.constant';
-import { RuntimeEnvironment } from 'src/types/common.types';
-import { WsDiscordId, WsUserId } from 'src/shared/decorators/user-id.decorator';
+} from "@nestjs/websockets";
+import type { Server } from "socket.io";
+import type { JoinGatewayDto } from "src/gateway/dto/join-gateway.dto";
+import type { RequestServerPresenceDto } from "src/gateway/dto/request-server-presence.dto";
+import type { EventPresenceUpdateDto } from "src/gateway/dto/event-presence-update.dto";
+import type { RequestPlayerPresenceDto } from "src/gateway/dto/request-player-presence.dto";
+import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
+import { GatewayConfig } from "src/gateway/constants/gateway-config.constant";
+import { RuntimeEnvironment } from "src/types/common.types";
+import { WsDiscordId, WsUserId } from "src/shared/decorators/user-id.decorator";
 import type {
   Socket,
   PlayerPresence,
-} from 'src/gateway/types/socket-user.type';
+} from "src/gateway/types/socket-user.type";
 import {
   ConnectionService,
   PresenceService,
   SubscriptionService,
-} from './services';
+} from "./services";
 
 @WebSocketGateway({
   namespace:
-    process.env.ENV === RuntimeEnvironment.LOCAL ? '/gateway' : undefined,
+    process.env.ENV === RuntimeEnvironment.LOCAL ? "/gateway" : undefined,
   pingInterval: GatewayConfig.SOCKET_PING_INTERVAL_MS,
   pingTimeout: GatewayConfig.SOCKET_PING_TIMEOUT_MS,
 })

@@ -41,7 +41,7 @@ const CREATE_GUILD_MODAL_INITIAL_STATE = {
 
 const createGuildModalReducer = (
   state: CreateGuildModalState,
-  action: CreateGuildModalAction
+  action: CreateGuildModalAction,
 ): CreateGuildModalState => {
   switch (action.type) {
     case "OPEN":
@@ -59,7 +59,7 @@ const createGuildModalReducer = (
 
 const installAddonModalReducer = (
   state: InstallAddonModalState,
-  action: InstallAddonModalAction
+  action: InstallAddonModalAction,
 ): InstallAddonModalState => {
   switch (action.type) {
     case "OPEN":
@@ -78,11 +78,11 @@ const installAddonModalReducer = (
 export const GlobalContextProvider: React.FC<Props> = ({ children }) => {
   const [reservationsModalState, reservationsModalDispatch] = useReducer(
     createGuildModalReducer,
-    CREATE_GUILD_MODAL_INITIAL_STATE
+    CREATE_GUILD_MODAL_INITIAL_STATE,
   );
   const [installAddonModalState, installAddonModalDispatch] = useReducer(
     installAddonModalReducer,
-    { isOpen: false }
+    { isOpen: false },
   );
 
   const value = {
@@ -102,6 +102,6 @@ export const GlobalContextProvider: React.FC<Props> = ({ children }) => {
 };
 
 export const GlobalContext = createContext<GlobalContextProviderValue>(
-  {} as GlobalContextProviderValue
+  {} as GlobalContextProviderValue,
 );
 GlobalContext.displayName = "GlobalContext";

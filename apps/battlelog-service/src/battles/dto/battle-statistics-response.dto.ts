@@ -23,7 +23,7 @@ export interface HeadToHeadRecordDto {
 
 export interface StreakDto {
   current: {
-    type: 'wins' | 'losses' | 'none';
+    type: "wins" | "losses" | "none";
     count: number;
   };
   longest: {

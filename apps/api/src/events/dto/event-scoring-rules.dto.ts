@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
 import {
   IsArray,
   IsBoolean,
@@ -10,15 +10,15 @@ import {
   Max,
   Min,
   ValidateNested,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   EVENT_SCORING_ACTION_TYPES,
   EVENT_SCORING_BOOLEAN_FACTORS,
   EVENT_SCORING_CONDITION_TYPES,
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
-} from '../constants/scoring-rules.constant';
+} from "../constants/scoring-rules.constant";
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -46,14 +46,14 @@ export class EventScoringConditionDto {
   @IsIn(EVENT_SCORING_NUMERIC_OPERATORS)
   operator?: string;
 
-  @ApiPropertyOptional({ description: 'Numeric value for compare conditions' })
+  @ApiPropertyOptional({ description: "Numeric value for compare conditions" })
   @IsOptional()
   @IsNumber()
   value?: number;
 
   @ApiPropertyOptional({
-    description: 'Window start in HH:mm',
-    example: '03:00',
+    description: "Window start in HH:mm",
+    example: "03:00",
   })
   @IsOptional()
   @IsString()
@@ -61,8 +61,8 @@ export class EventScoringConditionDto {
   from?: string;
 
   @ApiPropertyOptional({
-    description: 'Window end in HH:mm',
-    example: '08:00',
+    description: "Window end in HH:mm",
+    example: "08:00",
   })
   @IsOptional()
   @IsString()
@@ -79,7 +79,7 @@ export class EventScoringActionDto {
   type: string;
 
   @ApiPropertyOptional({
-    description: 'Action points for SET_BASE / ADD_BONUS',
+    description: "Action points for SET_BASE / ADD_BONUS",
   })
   @IsOptional()
   @IsNumber()
@@ -89,20 +89,20 @@ export class EventScoringActionDto {
 
 export class EventScoringRuleDto {
   @ApiProperty({
-    description: 'Rule identifier',
+    description: "Rule identifier",
   })
   @IsString()
   id: string;
 
   @ApiPropertyOptional({
-    description: 'Optional display name',
+    description: "Optional display name",
   })
   @IsOptional()
   @IsString()
   name?: string;
 
   @ApiPropertyOptional({
-    description: 'Rule toggle',
+    description: "Rule toggle",
     default: true,
   })
   @IsOptional()
@@ -127,7 +127,7 @@ export class EventScoringRuleDto {
 
 export class EventScoringRulesDto {
   @ApiProperty({
-    description: 'Ruleset version',
+    description: "Ruleset version",
     default: 1,
   })
   @IsNumber()
@@ -136,14 +136,14 @@ export class EventScoringRulesDto {
   version: number;
 
   @ApiProperty({
-    description: 'Timezone used for local-time windows',
-    example: 'Europe/Warsaw',
+    description: "Timezone used for local-time windows",
+    example: "Europe/Warsaw",
   })
   @IsString()
   timezone: string;
 
   @ApiProperty({
-    description: 'Maximum total points per kill',
+    description: "Maximum total points per kill",
     example: 2,
   })
   @IsNumber()
@@ -152,7 +152,7 @@ export class EventScoringRulesDto {
 
   @ApiPropertyOptional({
     description:
-      'Minimum tracking percentage required to receive ADD_BONUS actions',
+      "Minimum tracking percentage required to receive ADD_BONUS actions",
     example: 50,
   })
   @IsOptional()

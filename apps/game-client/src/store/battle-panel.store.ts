@@ -23,6 +23,6 @@ export const useBattlePanelStore = create<BattlePanelState>()(
       }),
       storage: createJSONStorage(() => localStorage),
       version: 1,
-    }
-  )
+    },
+  ),
 );

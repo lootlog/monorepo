@@ -1,14 +1,14 @@
 {
   "name": "@lootlog/battlelog-service",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
   "private": true,
+  "description": "",
   "license": "MIT",
+  "author": "",
   "scripts": {
     "prebuild": "pnpm battlelog:generate",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "oxfmt src test",
     "start": "node --import ./dist/instrumentation.js dist/main.js",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -52,7 +52,6 @@
     "@types/node": "^24.12.0",
     "@types/supertest": "^6.0.3",
     "jest": "^30.2.0",
-    "prettier": "^3.8.1",
     "prisma": "^6.19.2",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
@@ -60,24 +59,24 @@
     "typescript": "^5.9.3"
   },
   "jest": {
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
     "moduleFileExtensions": [
       "js",
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "^generated/client$": "<rootDir>/../generated/client",
+      "^src/(.*)$": "<rootDir>/$1"
+    },
     "rootDir": "src",
+    "testEnvironment": "node",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1",
-      "^generated/client$": "<rootDir>/../generated/client"
     }
   }
 }

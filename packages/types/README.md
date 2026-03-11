@@ -18,6 +18,7 @@ The Types package provides a centralized collection of TypeScript types, interfa
 ## Type Categories
 
 ### Domain Types
+
 - `User` - User account information
 - `Guild` - Clan/guild data
 - `Loot` - Loot item records
@@ -28,6 +29,7 @@ The Types package provides a centralized collection of TypeScript types, interfa
 - `Timer` - Boss timer data
 
 ### API Types
+
 - `CreateGuildDto` - Guild creation request
 - `UpdateLootDto` - Loot update request
 - `BattleResponse` - Battle data response
@@ -35,11 +37,13 @@ The Types package provides a centralized collection of TypeScript types, interfa
 - `PaginatedResponse<T>` - Paginated results
 
 ### Event Types
+
 - `GuildCreatedEvent` - RabbitMQ event types
 - `LootAddedEvent` - Event payloads
 - `TimerUpdatedEvent` - Real-time events
 
 ### Utility Types
+
 - `ApiResponse<T>` - Standard API response wrapper
 - `PaginationParams` - Pagination parameters
 - `SortParams` - Sorting options
@@ -47,12 +51,7 @@ The Types package provides a centralized collection of TypeScript types, interfa
 ## Usage
 
 ```typescript
-import type {
-  User,
-  Guild,
-  Loot,
-  CreateGuildDto
-} from '@lootlog/types';
+import type { User, Guild, Loot, CreateGuildDto } from "@lootlog/types";
 
 // Backend
 async function createGuild(dto: CreateGuildDto): Promise<Guild> {

@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "ignorePatterns": [
+    ".agents/**",
+    ".claude/**",
+    ".next/**",
+    ".source/**",
+    ".turbo/**",
+    "build/**",
+    "coverage/**",
+    "dist/**",
+    "node_modules/**",
+    "out/**",
+    "pnpm-lock.yaml",
+    "**/generated/**",
+    "**/prisma/generated/**",
+  ],
+}

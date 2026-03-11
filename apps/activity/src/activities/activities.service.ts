@@ -1,9 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/shared/db/prisma.service';
-import { CreateActivityDto } from './dto/create-activity.dto';
-import { ActivityEntity } from './entities/activity.entity';
-import { createHash } from 'node:crypto';
-import { ActivityType, Prisma } from '../../prisma/generated/client';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "src/shared/db/prisma.service";
+import { CreateActivityDto } from "./dto/create-activity.dto";
+import { ActivityEntity } from "./entities/activity.entity";
+import { createHash } from "node:crypto";
+import { ActivityType, Prisma } from "../../prisma/generated/client";
 
 @Injectable()
 export class ActivitiesService {
@@ -47,7 +47,7 @@ export class ActivitiesService {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
+        error.code === "P2002"
       ) {
         this.logger.log(
           `Duplicate activity detected via idempotency key: ${dto.idempotencyKey}`,
@@ -113,7 +113,7 @@ export class ActivitiesService {
     guildId: string,
   ): Promise<Record<ActivityType, number>> {
     const stats = await this.prisma.activity.groupBy({
-      by: ['type'],
+      by: ["type"],
       where: { guildId },
       _count: { type: true },
     });
@@ -128,11 +128,11 @@ export class ActivitiesService {
   }
 
   private async findOrCreateActorSnapshot(
-    snapshot: CreateActivityDto['actorSnapshot'],
-    source: CreateActivityDto['source'],
+    snapshot: CreateActivityDto["actorSnapshot"],
+    source: CreateActivityDto["source"],
   ): Promise<string> {
     if (!snapshot) {
-      throw new Error('Actor snapshot is required');
+      throw new Error("Actor snapshot is required");
     }
 
     const fingerprint = this.generateFingerprint(snapshot, source);
@@ -159,8 +159,8 @@ export class ActivitiesService {
       return actorSnapshot.id;
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to create or find actor snapshot',
+        level: "error",
+        message: "Failed to create or find actor snapshot",
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
@@ -168,8 +168,8 @@ export class ActivitiesService {
   }
 
   private generateFingerprint(
-    snapshot: CreateActivityDto['actorSnapshot'],
-    source: CreateActivityDto['source'],
+    snapshot: CreateActivityDto["actorSnapshot"],
+    source: CreateActivityDto["source"],
   ): string {
     const data = JSON.stringify({
       accountId: snapshot.accountId,
@@ -183,6 +183,6 @@ export class ActivitiesService {
       source,
     });
 
-    return createHash('sha256').update(data).digest('hex');
+    return createHash("sha256").update(data).digest("hex");
   }
 }

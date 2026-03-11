@@ -2,35 +2,36 @@
   "name": "@lootlog/app",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT",
   "description": "Full-stack microservices application for Margonem clan loot tracking, battle logging, and Discord bot integration",
+  "keywords": [
+    "battle-logging",
+    "clan-management",
+    "discord-bot",
+    "lootlog",
+    "margonem",
+    "microservices",
+    "nestjs",
+    "react",
+    "turborepo",
+    "typescript"
+  ],
+  "homepage": "https://lootlog.pl",
+  "bugs": {
+    "url": "https://github.com/lootlog/lootlog/issues"
+  },
+  "license": "MIT",
   "author": "Kamil <kamilwronka7@gmail.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/lootlog/lootlog.git"
   },
-  "bugs": {
-    "url": "https://github.com/lootlog/lootlog/issues"
-  },
-  "homepage": "https://lootlog.pl",
-  "keywords": [
-    "margonem",
-    "lootlog",
-    "clan-management",
-    "battle-logging",
-    "discord-bot",
-    "microservices",
-    "turborepo",
-    "nestjs",
-    "react",
-    "typescript"
-  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --concurrency 12",
     "start": "turbo start",
     "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",
     "knip": "knip",
@@ -68,11 +69,14 @@
     "husky": "^9.1.7",
     "knip": "^5.86.0",
     "lint-staged": "^16.3.2",
+    "oxfmt": "^0.38.0",
     "oxlint": "^1.51.0",
-    "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "turbo": "^2.8.14",
     "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "packageManager": "pnpm@10.20.0",
   "pnpm": {
@@ -121,8 +125,5 @@
       "unrs-resolver",
       "workerd"
     ]
-  },
-  "engines": {
-    "node": ">=20"
   }
 }

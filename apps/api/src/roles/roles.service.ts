@@ -3,18 +3,18 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { Permission, type Prisma } from 'generated/client';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { PrismaService } from 'src/db/prisma.service';
-import type { GuildRoleDto } from 'src/guilds/dto/create-guild.dto';
-import type { CreateRoleDto } from 'src/roles/dto/create-role.dto';
-import type { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
-import type { UpdateRolePermissionsDto } from 'src/roles/dto/update-role-permissions.dto';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { getPermissionsCachePattern } from 'src/shared/constants/cache.constant';
-import { PermissionResolver } from 'src/shared/permissions/permission-resolver';
+} from "@nestjs/common";
+import { Permission, type Prisma } from "generated/client";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { PrismaService } from "src/db/prisma.service";
+import type { GuildRoleDto } from "src/guilds/dto/create-guild.dto";
+import type { CreateRoleDto } from "src/roles/dto/create-role.dto";
+import type { DeleteRoleDto } from "src/roles/dto/delete-role.dto";
+import type { UpdateRolePermissionsDto } from "src/roles/dto/update-role-permissions.dto";
+import { RedisService } from "src/lib/redis/redis.service";
+import { getPermissionsCachePattern } from "src/shared/constants/cache.constant";
+import { PermissionResolver } from "src/shared/permissions/permission-resolver";
 
 @Injectable()
 export class RolesService {
@@ -27,7 +27,7 @@ export class RolesService {
   async getRolesByGuildId(guildId: string) {
     const roles = await this.prisma.role.findMany({
       where: { guildId },
-      orderBy: { position: 'desc' },
+      orderBy: { position: "desc" },
     });
 
     return roles;
@@ -57,8 +57,8 @@ export class RolesService {
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to bulk create roles',
+        level: "error",
+        message: "Failed to bulk create roles",
         guildId,
         error: error instanceof Error ? error.stack : error,
       });
@@ -95,8 +95,8 @@ export class RolesService {
       );
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to create or update role',
+        level: "error",
+        message: "Failed to create or update role",
         roleId: data.id,
         guildId: data.guildId,
         error: error instanceof Error ? error.stack : error,
@@ -186,8 +186,8 @@ export class RolesService {
       );
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to delete roles by guild ID',
+        level: "error",
+        message: "Failed to delete roles by guild ID",
         guildId,
         error: error instanceof Error ? error.stack : error,
       });

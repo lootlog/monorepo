@@ -396,25 +396,19 @@ export const DebugTab: FC = () => {
       </div>
 
       <div>
-        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">
-          Party Events
-        </h3>
+        <h3 className="ll:text-sm ll:font-semibold ll:mb-2">Party Events</h3>
         <p className="ll:text-[10px] ll:text-gray-400 ll:mb-2">
           Triggers party member changes
         </p>
         <div className="ll:flex ll:flex-wrap ll:gap-1">
           <Button
-            onClick={() =>
-              triggerEvent(createPartyJoinEvent(), "Party Join")
-            }
+            onClick={() => triggerEvent(createPartyJoinEvent(), "Party Join")}
             className="ll:px-2 ll:bg-teal-700 hover:ll:bg-teal-600"
           >
             Party Join
           </Button>
           <Button
-            onClick={() =>
-              triggerEvent(createPartyLeaveEvent(), "Party Leave")
-            }
+            onClick={() => triggerEvent(createPartyLeaveEvent(), "Party Leave")}
             className="ll:px-2 ll:bg-red-700 hover:ll:bg-red-600"
           >
             Party Leave
@@ -500,12 +494,8 @@ export const DebugTab: FC = () => {
                 key={member.id}
                 className="ll:text-xs ll:flex ll:gap-2 ll:items-center"
               >
-                <span className="ll:text-white">
-                  {member.nick}
-                </span>
-                <span className="ll:text-gray-400">
-                  (ID: {member.id})
-                </span>
+                <span className="ll:text-white">{member.nick}</span>
+                <span className="ll:text-gray-400">(ID: {member.id})</span>
                 {member.leader && (
                   <span className="ll:text-yellow-400">Leader</span>
                 )}

@@ -97,7 +97,7 @@ jobs:
         run: pnpm lint
 
       - name: Check formatting
-        run: pnpm format --check
+        run: pnpm format:check
 
   test-api:
     name: Test API

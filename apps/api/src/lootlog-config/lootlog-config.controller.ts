@@ -1,24 +1,24 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, UseGuards } from "@nestjs/common";
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiParam,
-} from '@nestjs/swagger';
-import { type Guild, Permission } from 'generated/client';
-import { UpdateLootlogConfigNpcDto } from 'src/lootlog-config/dto/update-lootlog-config-npc.dto';
-import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
-import { GuildData } from 'src/shared/decorators/guild-data.decorator';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { Permissions } from 'src/shared/permissions/permissions.decorator';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import { LootlogConfigEntity } from 'src/shared/entities/lootlog-config.entity';
+} from "@nestjs/swagger";
+import { type Guild, Permission } from "generated/client";
+import { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
+import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
+import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { Permissions } from "src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { LootlogConfigEntity } from "src/shared/entities/lootlog-config.entity";
 
-@ApiTags('lootlog-config')
+@ApiTags("lootlog-config")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
-@Controller('guilds/:guildId/lootlog-config')
+@Controller("guilds/:guildId/lootlog-config")
 export class LootlogConfigController {
   constructor(private readonly lootlogConfigService: LootlogConfigService) {}
 
@@ -26,50 +26,50 @@ export class LootlogConfigController {
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
-    summary: 'Get lootlog configuration',
-    description: 'Retrieve lootlog configuration for a guild',
+    summary: "Get lootlog configuration",
+    description: "Retrieve lootlog configuration for a guild",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiResponse({
     status: 200,
-    description: 'Lootlog configuration',
+    description: "Lootlog configuration",
     type: LootlogConfigEntity,
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - admin permission required',
+    description: "Forbidden - admin permission required",
   })
-  @ApiResponse({ status: 404, description: 'Configuration not found' })
+  @ApiResponse({ status: 404, description: "Configuration not found" })
   async getLootlogConfig(@GuildData() guild: Guild) {
     return this.lootlogConfigService.getLootlogConfig(guild.id);
   }
 
   @Permissions(Permission.ADMIN)
   @UseGuards(PermissionsGuard)
-  @Put(':npcId')
+  @Put(":npcId")
   @ApiOperation({
-    summary: 'Update NPC configuration',
+    summary: "Update NPC configuration",
     description:
-      'Update allowed rarities for a specific NPC type in lootlog configuration',
+      "Update allowed rarities for a specific NPC type in lootlog configuration",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({
-    name: 'npcId',
-    description: 'NPC configuration ID',
-    example: '1',
+    name: "npcId",
+    description: "NPC configuration ID",
+    example: "1",
   })
   @ApiResponse({
     status: 200,
-    description: 'NPC configuration updated successfully',
+    description: "NPC configuration updated successfully",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - admin permission required',
+    description: "Forbidden - admin permission required",
   })
-  @ApiResponse({ status: 404, description: 'NPC configuration not found' })
+  @ApiResponse({ status: 404, description: "NPC configuration not found" })
   async updateNpc(
     @GuildData() guild: Guild,
-    @Param('npcId') npcId: string,
+    @Param("npcId") npcId: string,
     @Body() data: UpdateLootlogConfigNpcDto,
   ) {
     return this.lootlogConfigService.updateNpc(guild.id, npcId, data);

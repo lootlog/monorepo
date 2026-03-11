@@ -4,5 +4,5 @@ import { AppearanceSettings } from "@/features/appearance-settings";
 export const Route = createFileRoute("/_authenticated/@me/settings/appearance")(
   {
     component: AppearanceSettings,
-  }
+  },
 );

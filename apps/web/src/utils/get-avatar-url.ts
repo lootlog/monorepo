@@ -1,7 +1,7 @@
 export const getDiscordAvatarUrl = (
   userId?: string,
   avatar?: string | null | undefined,
-  size: number = 128
+  size: number = 128,
 ): string => {
   if (avatar?.startsWith("http")) {
     return avatar;

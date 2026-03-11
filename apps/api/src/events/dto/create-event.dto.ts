@@ -10,34 +10,34 @@ import {
   Min,
   MaxLength,
   IsIn,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { EventScoringRulesDto } from './event-scoring-rules.dto';
-import { EVENT_SCORING_MODES } from '../constants/scoring-rules.constant';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { EventScoringRulesDto } from "./event-scoring-rules.dto";
+import { EVENT_SCORING_MODES } from "../constants/scoring-rules.constant";
 
 export class HeroMapDto {
-  @ApiProperty({ description: 'Margonem map ID' })
+  @ApiProperty({ description: "Margonem map ID" })
   @IsInt()
   mapId: number;
 
-  @ApiProperty({ description: 'Map name' })
+  @ApiProperty({ description: "Map name" })
   @IsString()
   mapName: string;
 }
 
 export class HeroNpcDto {
-  @ApiPropertyOptional({ description: 'NPC ID' })
+  @ApiPropertyOptional({ description: "NPC ID" })
   @IsOptional()
   @IsInt()
   npcId?: number;
 
-  @ApiProperty({ description: 'NPC name' })
+  @ApiProperty({ description: "NPC name" })
   @IsString()
   npcName: string;
 
   @ApiProperty({
-    description: 'Maps where the NPC can spawn',
+    description: "Maps where the NPC can spawn",
     type: [HeroMapDto],
   })
   @IsArray()
@@ -47,34 +47,34 @@ export class HeroNpcDto {
 }
 
 export class CreateEventDto {
-  @ApiProperty({ description: 'Event name' })
+  @ApiProperty({ description: "Event name" })
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'World name' })
+  @ApiProperty({ description: "World name" })
   @IsString()
   world: string;
 
   @ApiPropertyOptional({
-    description: 'Whether the event is active',
+    description: "Whether the event is active",
     default: true,
   })
   @IsOptional()
   @IsBoolean()
   active?: boolean;
 
-  @ApiPropertyOptional({ description: 'Event start time' })
+  @ApiPropertyOptional({ description: "Event start time" })
   @IsOptional()
   @IsDateString()
   startsAt?: string;
 
-  @ApiPropertyOptional({ description: 'Event end time' })
+  @ApiPropertyOptional({ description: "Event end time" })
   @IsOptional()
   @IsDateString()
   endsAt?: string;
 
   @ApiPropertyOptional({
-    description: 'Legacy base points value kept for compatibility',
+    description: "Legacy base points value kept for compatibility",
     default: 1,
   })
   @IsOptional()
@@ -83,7 +83,7 @@ export class CreateEventDto {
   basePointsPerKill?: number;
 
   @ApiPropertyOptional({
-    description: 'Minutes before minSpawnTime when assignments are allowed',
+    description: "Minutes before minSpawnTime when assignments are allowed",
     default: 5,
   })
   @IsOptional()
@@ -93,7 +93,7 @@ export class CreateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Minutes from kill time to confirm participation (0 disables confirmations)',
+      "Minutes from kill time to confirm participation (0 disables confirmations)",
     default: 0,
   })
   @IsOptional()
@@ -103,7 +103,7 @@ export class CreateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Maximum number of members that can assign to a single map (null or 0 = no limit)',
+      "Maximum number of members that can assign to a single map (null or 0 = no limit)",
   })
   @IsOptional()
   @IsInt()
@@ -111,7 +111,7 @@ export class CreateEventDto {
   mapAssignmentCap?: number;
 
   @ApiPropertyOptional({
-    description: 'Optional event rulebook displayed to participants',
+    description: "Optional event rulebook displayed to participants",
   })
   @IsOptional()
   @IsString()
@@ -119,7 +119,7 @@ export class CreateEventDto {
   rulebookMarkdown?: string;
 
   @ApiPropertyOptional({
-    description: 'Scoring rules configuration for this event',
+    description: "Scoring rules configuration for this event",
     type: EventScoringRulesDto,
   })
   @IsOptional()
@@ -128,17 +128,17 @@ export class CreateEventDto {
   scoringRules?: EventScoringRulesDto;
 
   @ApiPropertyOptional({
-    description: 'Scoring mode used for this event',
+    description: "Scoring mode used for this event",
     enum: EVENT_SCORING_MODES,
-    default: 'SIMPLE',
+    default: "SIMPLE",
   })
   @IsOptional()
   @IsString()
   @IsIn(EVENT_SCORING_MODES)
-  scoringMode?: 'SIMPLE' | 'ADVANCED';
+  scoringMode?: "SIMPLE" | "ADVANCED";
 
   @ApiPropertyOptional({
-    description: 'Hero NPCs to track in this event',
+    description: "Hero NPCs to track in this event",
     type: [HeroNpcDto],
   })
   @IsOptional()

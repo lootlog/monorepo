@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Context, On, type ContextOf } from 'necord';
-import { Events } from 'discord.js';
-import { BotService } from 'src/bot/bot.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Context, On, type ContextOf } from "necord";
+import { Events } from "discord.js";
+import { BotService } from "src/bot/bot.service";
 
 @Injectable()
 export class BotDiscordEventsHandler {
@@ -11,7 +11,7 @@ export class BotDiscordEventsHandler {
 
   @On(Events.ClientReady)
   public async handleReady(@Context() [client]: ContextOf<Events.ClientReady>) {
-    this.logger.log('Bot is ready and logged in as: ', client.user.username);
+    this.logger.log("Bot is ready and logged in as: ", client.user.username);
   }
 
   @On(Events.GuildCreate)

@@ -1,12 +1,12 @@
-import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import type { Job } from 'bullmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { EVENT_HERO_KILL_QUEUE } from './constants/event-hero-kill-queue.constant';
-import { EventsService } from './events.service';
-import type { EventHeroKillJobData } from './interfaces/check-event-hero-kill-params.interface';
-import { deserializeKillTimerData } from './utils/event-hero-kill-job';
+import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
+import { Inject, Injectable, forwardRef } from "@nestjs/common";
+import type { Job } from "bullmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
+import { EventsService } from "./events.service";
+import type { EventHeroKillJobData } from "./interfaces/check-event-hero-kill-params.interface";
+import { deserializeKillTimerData } from "./utils/event-hero-kill-job";
 
 @Injectable()
 @Processor(EVENT_HERO_KILL_QUEUE)
@@ -37,11 +37,11 @@ export class EventHeroKillProcessor extends WorkerHost {
     );
   }
 
-  @OnWorkerEvent('failed')
+  @OnWorkerEvent("failed")
   onFailed(job: Job<EventHeroKillJobData>, error: Error): void {
     this.logger.log({
-      level: 'error',
-      message: 'Event hero kill job failed',
+      level: "error",
+      message: "Event hero kill job failed",
       jobId: job.id,
       guildId: job.data.guildId,
       world: job.data.world,

@@ -30,7 +30,7 @@ export type SingleNotificationProps = {
 };
 
 const isPartyGatheringNotification = (
-  notification: NotificationWithServers | PartyGatheringNotification
+  notification: NotificationWithServers | PartyGatheringNotification,
 ): notification is PartyGatheringNotification => {
   return "type" in notification && notification.type === "party-gathering";
 };
@@ -53,12 +53,13 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const isPartyGathering = isPartyGatheringNotification(notification);
 
-  const npcType = !isPartyGathering && notification.npc
-    ? getNpcTypeByWt(notification.npc.wt!)
-    : undefined;
+  const npcType =
+    !isPartyGathering && notification.npc
+      ? getNpcTypeByWt(notification.npc.wt!)
+      : undefined;
 
   const key = (
-    isPartyGathering ? "party-gathering" : (npcType ? npcType : "message")
+    isPartyGathering ? "party-gathering" : npcType ? npcType : "message"
   ) as keyof (typeof settings)[string];
 
   const settingsByNpcType = characterId

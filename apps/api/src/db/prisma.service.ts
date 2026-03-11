@@ -1,5 +1,5 @@
-import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { PrismaClient, Prisma } from 'generated/client';
+import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
+import { PrismaClient, Prisma } from "generated/client";
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -9,15 +9,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
     super({
       log: [
-        { emit: 'event', level: 'query' },
-        { emit: 'stdout', level: 'info' },
-        { emit: 'stdout', level: 'warn' },
-        { emit: 'stdout', level: 'error' },
+        { emit: "event", level: "query" },
+        { emit: "stdout", level: "info" },
+        { emit: "stdout", level: "warn" },
+        { emit: "stdout", level: "error" },
       ],
-      errorFormat: 'colorless',
+      errorFormat: "colorless",
     });
 
-    this.$on('query', (event: Prisma.QueryEvent) => {
+    this.$on("query", (event: Prisma.QueryEvent) => {
       const { duration, query, params, target } = event;
 
       if (duration >= this.SLOW_QUERY_THRESHOLD_MS) {

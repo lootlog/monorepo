@@ -82,7 +82,9 @@ export const useMapCoverageTimer = (
   return {
     ...state,
     isLoading,
-    formattedDuration: state.gapType ? formatDurationPadded(state.elapsedSeconds) : null,
+    formattedDuration: state.gapType
+      ? formatDurationPadded(state.elapsedSeconds)
+      : null,
   };
 };
 

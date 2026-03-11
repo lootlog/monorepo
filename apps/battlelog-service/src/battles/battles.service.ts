@@ -3,25 +3,25 @@ import {
   Logger,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { Prisma } from '../../generated/client';
-import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
+} from "@nestjs/common";
+import { Prisma } from "../../generated/client";
+import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
 import {
   SortOrder,
   type QueryBattlesDto,
-} from 'src/battles/dto/query-battles.dto';
-import type { UpdateBattleDto } from 'src/battles/dto/update-battle.dto';
-import type { PaginationOptions } from 'src/battles/interfaces/pagination.interface';
-import { BattleAnalyticsService } from 'src/battles/services/battle-analytics.service';
-import { PaginationService } from 'src/battles/services/pagination.service';
-import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { R2Service } from 'src/shared/modules/r2/r2.service';
+} from "src/battles/dto/query-battles.dto";
+import type { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
+import type { PaginationOptions } from "src/battles/interfaces/pagination.interface";
+import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
+import { PaginationService } from "src/battles/services/pagination.service";
+import { PrismaService } from "src/shared/modules/prisma/prisma.service";
+import { R2Service } from "src/shared/modules/r2/r2.service";
 import {
   BattleProcessor,
   type Warrior,
   type BattleAnalysis,
   type ParsedMove,
-} from './battle-processor';
+} from "./battle-processor";
 import type {
   BattleWithRelations,
   CreateBattleParams,
@@ -30,7 +30,7 @@ import type {
   GetAllBattlesResult,
   IBattlesService,
   RawBattleData,
-} from './interfaces/battle-service.interface';
+} from "./interfaces/battle-service.interface";
 
 @Injectable()
 export class BattlesService implements IBattlesService {
@@ -67,7 +67,7 @@ export class BattlesService implements IBattlesService {
     } catch (error) {
       this.logger.error(`Failed to create battle for user ${userId}:`, error);
       throw new Error(
-        `Battle creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Battle creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -91,9 +91,9 @@ export class BattlesService implements IBattlesService {
         },
       };
     } catch (error) {
-      this.logger.error('Failed to retrieve public battles:', error);
+      this.logger.error("Failed to retrieve public battles:", error);
       throw new Error(
-        `Failed to retrieve public battles: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to retrieve public battles: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -120,9 +120,9 @@ export class BattlesService implements IBattlesService {
         },
       };
     } catch (error) {
-      this.logger.error('Failed to retrieve dashboard battles:', error);
+      this.logger.error("Failed to retrieve dashboard battles:", error);
       throw new Error(
-        `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to retrieve dashboard battles: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -138,7 +138,7 @@ export class BattlesService implements IBattlesService {
     try {
       const userCharacters = await this.prisma.userCharacter.findMany({
         where: { userId },
-        orderBy: { lastSeenAt: 'desc' },
+        orderBy: { lastSeenAt: "desc" },
         select: {
           characterId: true,
           name: true,
@@ -156,9 +156,9 @@ export class BattlesService implements IBattlesService {
 
       return { characters };
     } catch (error) {
-      this.logger.error('Failed to retrieve user characters:', error);
+      this.logger.error("Failed to retrieve user characters:", error);
       throw new Error(
-        `Failed to retrieve user characters: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to retrieve user characters: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -168,17 +168,17 @@ export class BattlesService implements IBattlesService {
       const userCharacters = await this.prisma.userCharacter.findMany({
         where: { userId },
         select: { world: true },
-        distinct: ['world'],
-        orderBy: { world: 'asc' },
+        distinct: ["world"],
+        orderBy: { world: "asc" },
       });
 
       const worlds = userCharacters.map((char) => char.world);
 
       return { worlds };
     } catch (error) {
-      this.logger.error('Failed to retrieve user worlds:', error);
+      this.logger.error("Failed to retrieve user worlds:", error);
       throw new Error(
-        `Failed to retrieve user worlds: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to retrieve user worlds: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -256,7 +256,7 @@ export class BattlesService implements IBattlesService {
         );
       }
 
-      return { message: 'Battle deleted successfully' };
+      return { message: "Battle deleted successfully" };
     } catch (error) {
       this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
       throw error;
@@ -301,9 +301,9 @@ export class BattlesService implements IBattlesService {
 
       return analysis;
     } catch (error) {
-      this.logger.error('Failed to analyze battle data:', error);
+      this.logger.error("Failed to analyze battle data:", error);
       throw new Error(
-        `Battle analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Battle analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -317,7 +317,7 @@ export class BattlesService implements IBattlesService {
 
     if (query.world) where.world = query.world;
     if (query.userId) where.userId = query.userId;
-    if (typeof query.public === 'boolean') where.public = query.public;
+    if (typeof query.public === "boolean") where.public = query.public;
 
     let characterIds = query.characterId || [];
     if (query.result?.length && !characterIds.length && userId) {
@@ -334,19 +334,19 @@ export class BattlesService implements IBattlesService {
     }
 
     if (query.type?.length) {
-      const hasSolo = query.type.includes('solo');
-      const hasGroup = query.type.includes('group');
+      const hasSolo = query.type.includes("solo");
+      const hasGroup = query.type.includes("group");
       if (hasSolo && !hasGroup) {
-        where.type = '1v1';
+        where.type = "1v1";
       } else if (hasGroup && !hasSolo) {
-        where.type = { not: '1v1' };
+        where.type = { not: "1v1" };
       }
     }
 
     if (query.result?.length && characterIds.length) {
       const resultConditions: Prisma.BattleWhereInput[] = [];
 
-      if (query.result.includes('won')) {
+      if (query.result.includes("won")) {
         characterIds.forEach((charId) => {
           [1, 2].forEach((team) => {
             resultConditions.push({
@@ -360,7 +360,7 @@ export class BattlesService implements IBattlesService {
         });
       }
 
-      if (query.result.includes('lost')) {
+      if (query.result.includes("lost")) {
         characterIds.forEach((charId) => {
           [1, 2].forEach((team) => {
             resultConditions.push({
@@ -374,7 +374,7 @@ export class BattlesService implements IBattlesService {
         });
       }
 
-      if (query.result.includes('flee')) {
+      if (query.result.includes("flee")) {
         resultConditions.push({ hasFlee: true });
       }
 
@@ -399,7 +399,7 @@ export class BattlesService implements IBattlesService {
       andConditions.push({
         warriors: {
           some: {
-            name: { contains: query.search, mode: 'insensitive' },
+            name: { contains: query.search, mode: "insensitive" },
           },
         },
       });
@@ -454,7 +454,7 @@ export class BattlesService implements IBattlesService {
       });
 
       if (!battle.public && battle.userId !== requestingUserId) {
-        throw new ForbiddenException('Access denied: Battle is private');
+        throw new ForbiddenException("Access denied: Battle is private");
       }
     } catch (error) {
       this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
@@ -465,8 +465,8 @@ export class BattlesService implements IBattlesService {
   private handlePrismaError(error: unknown, message: string): void {
     if (
       (error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025') ||
-      (error instanceof Error && error.name === 'NotFoundError')
+        error.code === "P2025") ||
+      (error instanceof Error && error.name === "NotFoundError")
     ) {
       throw new NotFoundException(message);
     }
@@ -638,16 +638,16 @@ export class BattlesService implements IBattlesService {
 
       return battle;
     } catch (error) {
-      this.logger.error('Failed to store battle in database:', error);
+      this.logger.error("Failed to store battle in database:", error);
       throw new Error(
-        `Database storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Database storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
 
   private async storeRawBattleData(
     battleId: string,
-    data: Omit<CreateBattleDto, 'events'> & {
+    data: Omit<CreateBattleDto, "events"> & {
       events: ParsedMove[];
     },
   ): Promise<void> {
@@ -665,7 +665,7 @@ export class BattlesService implements IBattlesService {
         error,
       );
       throw new Error(
-        `R2 storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `R2 storage failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
@@ -688,7 +688,7 @@ export class BattlesService implements IBattlesService {
           },
           name: {
             contains: query.trim(),
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
         select: {
@@ -697,16 +697,16 @@ export class BattlesService implements IBattlesService {
           prof: true,
           lvl: true,
         },
-        distinct: ['name'],
+        distinct: ["name"],
         take: 10,
         orderBy: {
-          name: 'asc',
+          name: "asc",
         },
       });
 
       return { warriors };
     } catch (error) {
-      this.logger.error('Failed to search warriors:', error);
+      this.logger.error("Failed to search warriors:", error);
       throw error;
     }
   }

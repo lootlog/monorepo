@@ -1,12 +1,12 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
 import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from 'src/config/rabbitmq.config';
+} from "src/config/rabbitmq.config";
 
 interface AmqpMessage {
   properties: {
@@ -45,17 +45,17 @@ export class RetryService {
   getRetryCount(headers: Record<string, unknown>): number {
     // Sprawdź najpierw x-retry-count (jeśli jest ustawiony manualnie)
     if (
-      headers['x-retry-count'] &&
-      typeof headers['x-retry-count'] === 'number'
+      headers["x-retry-count"] &&
+      typeof headers["x-retry-count"] === "number"
     ) {
-      return headers['x-retry-count'];
+      return headers["x-retry-count"];
     }
 
     // Jeśli nie ma x-retry-count, użyj x-death count
-    const xDeath = headers['x-death'];
+    const xDeath = headers["x-death"];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
       const count = xDeath[0]?.count;
-      return typeof count === 'number' ? count : 0;
+      return typeof count === "number" ? count : 0;
     }
 
     return 0;
@@ -73,15 +73,15 @@ export class RetryService {
     const dlqExchange = config.dlqExchange || DEAD_LETTER_EXCHANGE_NAME;
 
     this.logger.log({
-      level: 'warn',
+      level: "warn",
       message: `Sending message to DLQ: ${dlqRoutingKey}`,
     });
 
     await this.amqp.publish(dlqExchange, dlqRoutingKey, message, {
       headers: {
         ...headers,
-        'x-final-attempt': true,
-        'x-sent-to-dlq-at': new Date().toISOString(),
+        "x-final-attempt": true,
+        "x-sent-to-dlq-at": new Date().toISOString(),
       },
     });
   }
@@ -128,7 +128,7 @@ export class RetryService {
 
     if (!this.shouldRetry(headers, maxRetries)) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `Max retries (${maxRetries}) exceeded for ${identifier}, sending to DLQ`,
       });
       await this.sendToDlq(data, dlqRoutingKey, headers, config);
@@ -136,7 +136,7 @@ export class RetryService {
     }
 
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `Processing ${identifier} (attempt ${retryCount + 1}/${maxRetries})`,
     });
     return true;
@@ -156,19 +156,19 @@ export class RetryService {
     const retryDelayMs = config.retryDelayMs || 30000;
 
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `[RETRY QUEUE] Processing retry for ${identifier}`,
     });
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `[RETRY QUEUE] Current headers: ${JSON.stringify(headers)}`,
     });
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `[RETRY QUEUE] Current retry count: ${currentRetryCount}`,
     });
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `[RETRY QUEUE] TTL: ${retryDelayMs}ms`,
     });
 
@@ -176,11 +176,11 @@ export class RetryService {
     // Retry count będzie automatycznie zwiększony przez x-death mechanism
 
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
     });
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
     });
 

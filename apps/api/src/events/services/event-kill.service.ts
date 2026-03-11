@@ -1,36 +1,36 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import type { Queue } from 'bullmq';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import type { Queue } from "bullmq";
 import {
   CoverageGapType,
   Event,
   EventHeroNpc,
   type Prisma,
-} from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { EventEmitterService } from './event-emitter.service';
-import { EventPointsService } from './event-points.service';
-import { EventTrackingService } from './event-tracking.service';
-import { EventSummaryService } from './event-summary.service';
-import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
-import type { AutoCloseRespawnWindowJobData } from '../respawn-window.processor';
-import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
-import { getSyntheticNpcId } from '../utils/get-synthetic-npc-id';
+} from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import { RedisService } from "src/lib/redis/redis.service";
+import { EventEmitterService } from "./event-emitter.service";
+import { EventPointsService } from "./event-points.service";
+import { EventTrackingService } from "./event-tracking.service";
+import { EventSummaryService } from "./event-summary.service";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
+import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
+import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
+import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
 import {
   buildRespawnAutoCloseJobId,
   getRespawnAutoCloseDelay,
   RESPAWN_AUTO_CLOSE_JOB_NAME,
-} from '../utils/respawn-auto-close-job';
+} from "../utils/respawn-auto-close-job";
 import {
   buildEventHeroKillDedupKey,
   buildEventHeroKillHeroDedupKey,
   getEventHeroKillWindowKey,
-} from '../utils/event-hero-kill-job';
+} from "../utils/event-hero-kill-job";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from '../utils/scoring-rules.util';
+} from "../utils/scoring-rules.util";
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
@@ -96,7 +96,7 @@ export class EventKillService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     if (event.heroNpcs.length === 0) {
@@ -187,13 +187,13 @@ export class EventKillService {
   }
 
   private extractEventTimerNpc(npcData: unknown): EventTimerNpc {
-    if (!npcData || typeof npcData !== 'object') {
-      return { name: '', icon: null };
+    if (!npcData || typeof npcData !== "object") {
+      return { name: "", icon: null };
     }
     const npc = npcData as { name?: unknown; icon?: unknown };
     return {
-      name: typeof npc.name === 'string' ? npc.name : '',
-      icon: typeof npc.icon === 'string' ? npc.icon : null,
+      name: typeof npc.name === "string" ? npc.name : "",
+      icon: typeof npc.icon === "string" ? npc.icon : null,
     };
   }
 
@@ -218,7 +218,7 @@ export class EventKillService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     return event.heroNpcs.map((hero) => ({
@@ -253,7 +253,7 @@ export class EventKillService {
     const dedupHit = await this.redis.get(dedupKey);
     if (dedupHit) {
       this.logger.debug({
-        message: 'Skipping duplicate event hero kill - dedup window active',
+        message: "Skipping duplicate event hero kill - dedup window active",
         guildId,
         world,
         npcId,
@@ -271,7 +271,7 @@ export class EventKillService {
 
     if (!lockAcquired) {
       this.logger.debug({
-        message: 'Skipping duplicate event hero kill - lock already held',
+        message: "Skipping duplicate event hero kill - lock already held",
         guildId,
         world,
         npcId,
@@ -285,7 +285,7 @@ export class EventKillService {
       if (dedupHitAfterLock) {
         this.logger.debug({
           message:
-            'Skipping duplicate event hero kill - dedup window active after lock',
+            "Skipping duplicate event hero kill - dedup window active after lock",
           guildId,
           world,
           npcId,
@@ -320,7 +320,7 @@ export class EventKillService {
         const heroDedupHit = await this.redis.get(heroDedupKey);
         if (heroDedupHit) {
           this.logger.debug({
-            message: 'Skipping duplicate event hero kill for hero',
+            message: "Skipping duplicate event hero kill for hero",
             guildId,
             world,
             npcId,
@@ -342,7 +342,7 @@ export class EventKillService {
             data: updateData,
           });
           this.logger.log({
-            message: 'Hero NPC data updated',
+            message: "Hero NPC data updated",
             heroId: eventHero.id,
             npcId: eventHero.npcId,
             npcIcon: eventHero.npcIcon,
@@ -366,8 +366,8 @@ export class EventKillService {
 
         this.logger.log({
           message: isManualClose
-            ? 'Manual close recorded'
-            : 'Hero kill recorded',
+            ? "Manual close recorded"
+            : "Hero kill recorded",
           guildId,
           eventId: event.id,
           heroId: eventHero.id,
@@ -385,7 +385,7 @@ export class EventKillService {
       // Always release lock
       await this.redis.del(lockKey).catch((err) => {
         this.logger.error({
-          message: 'Failed to release event kill lock',
+          message: "Failed to release event kill lock",
           lockKey,
           error: err instanceof Error ? err.message : err,
         });
@@ -514,7 +514,7 @@ export class EventKillService {
       (event as { scoringMode?: unknown }).scoringMode,
     );
     const scoringRules =
-      scoringMode === 'ADVANCED'
+      scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
         : null;
     const confirmationMinutes = Math.max(
@@ -576,7 +576,7 @@ export class EventKillService {
           assignedAt: true,
           unassignedAt: true,
         },
-        orderBy: { assignedAt: 'asc' },
+        orderBy: { assignedAt: "asc" },
       });
 
       const memberMapIds = new Map<number, Set<string>>();
@@ -632,7 +632,7 @@ export class EventKillService {
       const assignedMemberIds = Array.from(memberMapIds.keys());
       if (assignedMemberIds.length === 0) {
         this.logger.log({
-          message: 'No assignments for hero kill in current window',
+          message: "No assignments for hero kill in current window",
           heroId: eventHero.id,
           eventId: event.id,
         });
@@ -658,7 +658,7 @@ export class EventKillService {
 
         const mapPresenceData = perMapPresenceStats.map((stat) => ({
           mapId: stat.mapId,
-          mapName: mapIdToName.get(stat.mapId) || '',
+          mapName: mapIdToName.get(stat.mapId) || "",
           presenceTimeSeconds: stat.presenceTimeSeconds,
           afkTimeSeconds: stat.afkTimeSeconds,
         }));
@@ -794,7 +794,7 @@ export class EventKillService {
         );
       }
       this.logger.debug({
-        message: 'Opened UNASSIGNED gaps for new respawn window',
+        message: "Opened UNASSIGNED gaps for new respawn window",
         heroId: eventHero.id,
         mapsCount: heroMaps.length,
       });
@@ -863,7 +863,7 @@ export class EventKillService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const kills = await this.prisma.eventHeroKill.findMany({
@@ -871,7 +871,7 @@ export class EventKillService {
         heroNpcId: heroId,
         ...(cursor && { id: { lt: cursor } }),
       },
-      orderBy: { killedAt: 'desc' },
+      orderBy: { killedAt: "desc" },
       take: limit + 1,
       include: {
         heroNpc: {
@@ -930,7 +930,7 @@ export class EventKillService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const kills = await this.prisma.eventHeroKill.findMany({
@@ -941,7 +941,7 @@ export class EventKillService {
         },
         ...(cursor && { id: { lt: cursor } }),
       },
-      orderBy: { killedAt: 'desc' },
+      orderBy: { killedAt: "desc" },
       take: limit + 1,
       include: {
         heroNpc: {
@@ -1001,7 +1001,7 @@ export class EventKillService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const member = await this.prisma.member.findFirst({
@@ -1015,7 +1015,7 @@ export class EventKillService {
     });
 
     if (!member) {
-      throw new NotFoundException('Member not found');
+      throw new NotFoundException("Member not found");
     }
 
     const kills = await this.prisma.eventHeroKill.findMany({
@@ -1031,7 +1031,7 @@ export class EventKillService {
         },
         ...(cursor && { id: { lt: cursor } }),
       },
-      orderBy: { killedAt: 'desc' },
+      orderBy: { killedAt: "desc" },
       take: limit + 1,
       include: {
         heroNpc: {
@@ -1058,7 +1058,7 @@ export class EventKillService {
             },
           },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: "desc",
           },
           take: 1,
         },
@@ -1145,7 +1145,7 @@ export class EventKillService {
                     color: true,
                   },
                   orderBy: {
-                    position: 'desc',
+                    position: "desc",
                   },
                   take: 1,
                 },
@@ -1157,7 +1157,7 @@ export class EventKillService {
     });
 
     if (!kill) {
-      throw new NotFoundException('Kill not found');
+      throw new NotFoundException("Kill not found");
     }
 
     const heroMaps = await this.prisma.eventMap.findMany({
@@ -1196,7 +1196,7 @@ export class EventKillService {
         assignedAt: true,
         unassignedAt: true,
       },
-      orderBy: [{ memberId: 'asc' }, { assignedAt: 'asc' }],
+      orderBy: [{ memberId: "asc" }, { assignedAt: "asc" }],
     });
 
     const assignmentsByMember = new Map<
@@ -1300,7 +1300,7 @@ export class EventKillService {
 
         return {
           mapId: assignment.mapId,
-          mapName: mapIdToName.get(assignment.mapId) || '',
+          mapName: mapIdToName.get(assignment.mapId) || "",
           assignedAt: assignment.assignedAt.toISOString(),
           unassignedAt: assignment.unassignedAt?.toISOString() || null,
           assignmentDurationSeconds,
@@ -1333,7 +1333,7 @@ export class EventKillService {
       (kill.heroNpc.event as { scoringMode?: unknown }).scoringMode,
     );
     const scoringRules =
-      scoringMode === 'ADVANCED'
+      scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(kill.heroNpc.event.scoringRules)
         : null;
 
@@ -1422,7 +1422,7 @@ export class EventKillService {
           assignedAt: true,
           unassignedAt: true,
         },
-        orderBy: [{ memberId: 'asc' }, { assignedAt: 'asc' }],
+        orderBy: [{ memberId: "asc" }, { assignedAt: "asc" }],
       })) ?? [];
 
     const assignmentsByHeroMember = new Map<
@@ -1479,7 +1479,7 @@ export class EventKillService {
 
             return {
               mapId: assignment.mapId,
-              mapName: mapIdToName.get(assignment.mapId) || '',
+              mapName: mapIdToName.get(assignment.mapId) || "",
               assignedAt: assignment.assignedAt.toISOString(),
               unassignedAt: assignment.unassignedAt?.toISOString() || null,
               assignmentDurationSeconds,
@@ -1508,7 +1508,7 @@ export class EventKillService {
     }
 
     for (const entry of mapPresenceData) {
-      if (!entry || typeof entry !== 'object') {
+      if (!entry || typeof entry !== "object") {
         continue;
       }
 
@@ -1518,19 +1518,19 @@ export class EventKillService {
         afkTimeSeconds?: unknown;
       };
       if (
-        typeof parsedEntry.mapId !== 'string' ||
+        typeof parsedEntry.mapId !== "string" ||
         parsedEntry.mapId.length < 1
       ) {
         continue;
       }
 
       const presenceTimeSeconds =
-        typeof parsedEntry.presenceTimeSeconds === 'number' &&
+        typeof parsedEntry.presenceTimeSeconds === "number" &&
         Number.isFinite(parsedEntry.presenceTimeSeconds)
           ? Math.max(0, Math.round(parsedEntry.presenceTimeSeconds))
           : 0;
       const afkTimeSeconds =
-        typeof parsedEntry.afkTimeSeconds === 'number' &&
+        typeof parsedEntry.afkTimeSeconds === "number" &&
         Number.isFinite(parsedEntry.afkTimeSeconds)
           ? Math.max(0, Math.round(parsedEntry.afkTimeSeconds))
           : 0;
@@ -1566,7 +1566,7 @@ export class EventKillService {
     });
 
     if (!kill) {
-      throw new NotFoundException('Kill not found');
+      throw new NotFoundException("Kill not found");
     }
 
     const summary = await this.prisma.eventRespawnWindowSummary.findUnique({
@@ -1601,7 +1601,7 @@ export class EventKillService {
                 select: { id: true, name: true, avatar: true, userId: true },
               },
             },
-            orderBy: { assignedAt: 'asc' },
+            orderBy: { assignedAt: "asc" },
           });
 
         const gapsForMap = summaryGaps.filter((g) => g.mapId === map.id);
@@ -1769,13 +1769,13 @@ export class EventKillService {
   }
 
   private async cancelScheduledAutoClose(heroId: string): Promise<void> {
-    const delayedJobs = await this.respawnWindowQueue.getJobs(['delayed']);
+    const delayedJobs = await this.respawnWindowQueue.getJobs(["delayed"]);
 
     for (const job of delayedJobs) {
       if (job.data.heroId === heroId) {
         await job.remove();
         this.logger.log({
-          message: 'Cancelled scheduled auto-close job (kill recorded)',
+          message: "Cancelled scheduled auto-close job (kill recorded)",
           heroId,
           jobId: job.id,
         });
@@ -1795,7 +1795,7 @@ export class EventKillService {
 
     if (delay <= 0) {
       this.logger.log({
-        message: 'Not scheduling auto-close - maxSpawnTime already passed',
+        message: "Not scheduling auto-close - maxSpawnTime already passed",
         heroId,
         maxSpawnTime,
       });
@@ -1817,7 +1817,7 @@ export class EventKillService {
     );
 
     this.logger.log({
-      message: 'Scheduled auto-close for new respawn window',
+      message: "Scheduled auto-close for new respawn window",
       heroId,
       maxSpawnTime,
       delayMs: delay,

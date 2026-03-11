@@ -58,7 +58,9 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
       name: rarity,
       value: count,
       percentage:
-        filteredTotal > 0 ? Math.round((count / filteredTotal) * 100 * 10) / 10 : 0,
+        filteredTotal > 0
+          ? Math.round((count / filteredTotal) * 100 * 10) / 10
+          : 0,
       fill: RARITY_COLORS[rarity],
     };
   });
@@ -116,10 +118,13 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
                       <div className="flex items-center gap-2">
                         <div
                           className="h-2.5 w-2.5 rounded-[2px]"
-                          style={{ backgroundColor: String(item.payload?.fill ?? "") }}
+                          style={{
+                            backgroundColor: String(item.payload?.fill ?? ""),
+                          }}
                         />
                         <span className="text-muted-foreground">
-                          {chartConfig[name as "LEGENDARY" | "HEROIC"]?.label ?? String(name)}
+                          {chartConfig[name as "LEGENDARY" | "HEROIC"]?.label ??
+                            String(name)}
                         </span>
                       </div>
                       <span className="font-mono font-medium tabular-nums">

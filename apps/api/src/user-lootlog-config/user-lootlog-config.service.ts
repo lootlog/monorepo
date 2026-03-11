@@ -1,12 +1,12 @@
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { Permission } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import type { CreateOrUpdateLootlogCharacterConfigDto } from 'src/user-lootlog-config/dto/create-user-account-config.dto';
-import { GuildsService } from 'src/guilds/guilds.service';
-import { RedisService } from 'src/lib/redis/redis.service';
+import { Inject, Injectable, forwardRef } from "@nestjs/common";
+import { Permission } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
+import { GuildsService } from "src/guilds/guilds.service";
+import { RedisService } from "src/lib/redis/redis.service";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 3600;
-const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = 'user-lootlog-config';
+const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
 
 @Injectable()
 export class UserLootlogConfigService {
@@ -76,7 +76,7 @@ export class UserLootlogConfigService {
           accountId,
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
       });
 
@@ -172,7 +172,7 @@ export class UserLootlogConfigService {
           characterId,
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
       });
 

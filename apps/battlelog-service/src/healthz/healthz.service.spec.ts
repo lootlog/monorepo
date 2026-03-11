@@ -1,7 +1,7 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { HealthzService } from './healthz.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { HealthzService } from "./healthz.service";
 
-describe('HealthzService', () => {
+describe("HealthzService", () => {
   let service: HealthzService;
 
   beforeEach(async () => {
@@ -12,19 +12,19 @@ describe('HealthzService', () => {
     service = module.get<HealthzService>(HealthzService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('healthCheck', () => {
-    it('should return OK string', () => {
+  describe("healthCheck", () => {
+    it("should return OK string", () => {
       const result = service.healthCheck();
-      expect(result).toBe('OK');
+      expect(result).toBe("OK");
     });
 
-    it('should return a string', () => {
+    it("should return a string", () => {
       const result = service.healthCheck();
-      expect(typeof result).toBe('string');
+      expect(typeof result).toBe("string");
     });
   });
 });

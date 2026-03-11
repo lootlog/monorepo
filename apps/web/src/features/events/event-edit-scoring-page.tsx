@@ -102,7 +102,10 @@ export const EventEditScoringPage = () => {
       );
     } catch {
       toast.error(
-        t("events.scoring.recalculateError", "Nie udało się przeliczyć punktów"),
+        t(
+          "events.scoring.recalculateError",
+          "Nie udało się przeliczyć punktów",
+        ),
       );
     }
   };
@@ -132,7 +135,9 @@ export const EventEditScoringPage = () => {
       <Card className="max-w-4xl mx-auto p-4 space-y-5">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg font-semibold">{t("events.editSections.scoring")}</h1>
+            <h1 className="text-lg font-semibold">
+              {t("events.editSections.scoring")}
+            </h1>
             <p className="text-sm text-muted-foreground">{event.name}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -185,7 +190,11 @@ export const EventEditScoringPage = () => {
                 <Settings className="size-3" />
                 {t("events.scoring.title")}
               </Label>
-              <ScoringRulesEditor control={form.control} register={form.register} t={t} />
+              <ScoringRulesEditor
+                control={form.control}
+                register={form.register}
+                t={t}
+              />
             </div>
           )}
 
@@ -205,7 +214,10 @@ export const EventEditScoringPage = () => {
               ) : (
                 <>
                   <RefreshCcw className="size-3.5 mr-1.5" />
-                  {t("events.scoring.recalculateButton", "Przelicz historyczne punkty")}
+                  {t(
+                    "events.scoring.recalculateButton",
+                    "Przelicz historyczne punkty",
+                  )}
                 </>
               )}
             </Button>

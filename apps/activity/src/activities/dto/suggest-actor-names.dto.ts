@@ -5,8 +5,8 @@ import {
   Max,
   MaxLength,
   Min,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class SuggestActorNamesDto {
   @IsString()

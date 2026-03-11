@@ -1,7 +1,7 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma } from '../../../generated/client';
-import type { QueryBattleAnalyticsDto } from 'src/battles/dto/query-battle-analytics.dto';
-import type { QueryBattleStatisticsDto } from 'src/battles/dto/query-battle-statistics.dto';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Prisma } from "../../../generated/client";
+import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
+import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
 import type {
   ProfessionWinRateDto,
   HeadToHeadPaginatedResponseDto,
@@ -11,14 +11,14 @@ import type {
   RatingGrowthDataPointDto,
   RatingDeltaByOpponentDto,
   PlayerVsPlayerPaginatedResponseDto,
-} from 'src/battles/dto/battle-statistics-response.dto';
-import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { RedisService } from 'src/shared/modules/redis/redis.service';
+} from "src/battles/dto/battle-statistics-response.dto";
+import { PrismaService } from "src/shared/modules/prisma/prisma.service";
+import { RedisService } from "src/shared/modules/redis/redis.service";
 
 @Injectable()
 export class BattleAnalyticsService {
   private readonly logger = new Logger(BattleAnalyticsService.name);
-  private readonly ANALYTICS_CACHE_PREFIX = 'analytics';
+  private readonly ANALYTICS_CACHE_PREFIX = "analytics";
   private readonly ANALYTICS_CACHE_TTL = 5 * 60;
 
   constructor(
@@ -36,10 +36,10 @@ export class BattleAnalyticsService {
     winRatio: number;
     totalPH: number;
   }> {
-    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const phFilter = query.ph ? 'ph' : 'all';
-    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
-    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const phFilter = query.ph ? "ph" : "all";
+    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
+    const cacheKey = `${this.ANALYTICS_CACHE_PREFIX}:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -90,7 +90,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
       ...(query.matchmaking !== undefined && {
@@ -169,10 +169,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<ProfessionWinRateDto[]> {
-    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const phFilter = query.ph ? 'ph' : 'all';
-    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
-    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const phFilter = query.ph ? "ph" : "all";
+    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
+    const cacheKey = `statistics:profession-win-rate:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -189,7 +189,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
@@ -303,7 +303,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
@@ -324,7 +324,7 @@ export class BattleAnalyticsService {
         warriors: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -443,38 +443,38 @@ export class BattleAnalyticsService {
       );
     }
 
-    const sortBy = query.sortBy || 'totalBattles';
-    const sortOrder = query.sortOrder || 'desc';
+    const sortBy = query.sortBy || "totalBattles";
+    const sortOrder = query.sortOrder || "desc";
     filteredRecords.sort((a, b) => {
       let compareResult = 0;
 
       switch (sortBy) {
-        case 'wins':
+        case "wins":
           compareResult = a.wins - b.wins;
           break;
-        case 'losses':
+        case "losses":
           compareResult = a.losses - b.losses;
           break;
-        case 'totalBattles':
+        case "totalBattles":
           compareResult = a.totalBattles - b.totalBattles;
           break;
-        case 'winRate':
+        case "winRate":
           compareResult = a.winRate - b.winRate;
           break;
-        case 'lastBattleDate':
+        case "lastBattleDate":
           compareResult =
             new Date(a.lastBattleDate).getTime() -
             new Date(b.lastBattleDate).getTime();
           break;
-        case 'totalRatingDelta':
+        case "totalRatingDelta":
           compareResult = (a.totalRatingDelta ?? 0) - (b.totalRatingDelta ?? 0);
           break;
-        case 'avgRatingDelta':
+        case "avgRatingDelta":
           compareResult = (a.avgRatingDelta ?? 0) - (b.avgRatingDelta ?? 0);
           break;
       }
 
-      return sortOrder === 'desc' ? -compareResult : compareResult;
+      return sortOrder === "desc" ? -compareResult : compareResult;
     });
 
     const totalRecords = filteredRecords.length;
@@ -482,8 +482,8 @@ export class BattleAnalyticsService {
     let startIndex = 0;
     if (query.cursor) {
       try {
-        const decodedCursor = Buffer.from(query.cursor, 'base64').toString(
-          'utf-8',
+        const decodedCursor = Buffer.from(query.cursor, "base64").toString(
+          "utf-8",
         );
         const cursorIndex = Number.parseInt(decodedCursor, 10);
         if (!Number.isNaN(cursorIndex) && cursorIndex >= 0) {
@@ -501,11 +501,11 @@ export class BattleAnalyticsService {
     const hasNext = endIndex < totalRecords;
     const hasPrev = startIndex > 0;
     const nextCursor = hasNext
-      ? Buffer.from(endIndex.toString()).toString('base64')
+      ? Buffer.from(endIndex.toString()).toString("base64")
       : undefined;
     const previousCursor = hasPrev
       ? Buffer.from(Math.max(0, startIndex - size).toString()).toString(
-          'base64',
+          "base64",
         )
       : undefined;
 
@@ -534,10 +534,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<StreakDto> {
-    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const phFilter = query.ph ? 'ph' : 'all';
-    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
-    const cacheKey = `statistics:streak:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const phFilter = query.ph ? "ph" : "all";
+    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
+    const cacheKey = `statistics:streak:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -548,7 +548,7 @@ export class BattleAnalyticsService {
 
     if (characterIds.length === 0) {
       return {
-        current: { type: 'none', count: 0 },
+        current: { type: "none", count: 0 },
         longest: { wins: 0, losses: 0 },
       };
     }
@@ -557,7 +557,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
@@ -578,7 +578,7 @@ export class BattleAnalyticsService {
         warriors: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -596,13 +596,13 @@ export class BattleAnalyticsService {
 
     if (filteredBattles.length === 0) {
       return {
-        current: { type: 'none', count: 0 },
+        current: { type: "none", count: 0 },
         longest: { wins: 0, losses: 0 },
       };
     }
 
     let currentStreak = 0;
-    let currentType: 'wins' | 'losses' | 'none' = 'none';
+    let currentType: "wins" | "losses" | "none" = "none";
     let longestWinStreak = 0;
     let longestLossStreak = 0;
     let tempWinStreak = 0;
@@ -618,12 +618,12 @@ export class BattleAnalyticsService {
       const isWin = userWarrior.team === battle.winningTeam;
 
       if (isCurrentStreakActive) {
-        if (currentType === 'none') {
-          currentType = isWin ? 'wins' : 'losses';
+        if (currentType === "none") {
+          currentType = isWin ? "wins" : "losses";
           currentStreak = 1;
         } else if (
-          (currentType === 'wins' && isWin) ||
-          (currentType === 'losses' && !isWin)
+          (currentType === "wins" && isWin) ||
+          (currentType === "losses" && !isWin)
         ) {
           currentStreak++;
         } else {
@@ -664,10 +664,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<BattleDurationStatsDto> {
-    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const phFilter = query.ph ? 'ph' : 'all';
-    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
-    const cacheKey = `statistics:duration:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const phFilter = query.ph ? "ph" : "all";
+    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
+    const cacheKey = `statistics:duration:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -689,7 +689,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       hasFlee: false,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
@@ -710,7 +710,7 @@ export class BattleAnalyticsService {
         warriors: true,
       },
       orderBy: {
-        duration: 'asc',
+        duration: "asc",
       },
     });
 
@@ -795,10 +795,10 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<PhGrowthDataPointDto[]> {
-    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const phFilter = query.ph ? 'ph' : 'all';
-    const matchmakingFilter = query.matchmaking ? 'matchmaking' : 'all';
-    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
+    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const phFilter = query.ph ? "ph" : "all";
+    const matchmakingFilter = query.matchmaking ? "matchmaking" : "all";
+    const cacheKey = `statistics:ph-growth:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}:${phFilter}:${matchmakingFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -815,7 +815,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
       ...(query.matchmaking !== undefined && {
@@ -835,7 +835,7 @@ export class BattleAnalyticsService {
         warriors: true,
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: "asc",
       },
     });
 
@@ -933,17 +933,17 @@ export class BattleAnalyticsService {
   }
 
   private getDateFilter(period?: string): Date | undefined {
-    if (!period || period === 'all') return undefined;
+    if (!period || period === "all") return undefined;
 
     const now = new Date();
     const periodMap: Record<string, number> = {
-      '24h': 1,
-      '3d': 3,
-      '7d': 7,
-      '14d': 14,
-      '30d': 30,
-      '90d': 90,
-      '180d': 180,
+      "24h": 1,
+      "3d": 3,
+      "7d": 7,
+      "14d": 14,
+      "30d": 30,
+      "90d": 90,
+      "180d": 180,
     };
 
     const days = periodMap[period];
@@ -954,8 +954,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<RatingGrowthDataPointDto[]> {
-    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:rating-growth:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const cacheKey = `statistics:rating-growth:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -972,7 +972,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       matchmaking: true,
       rating: { not: null },
       ratingDelta: { not: null },
@@ -991,7 +991,7 @@ export class BattleAnalyticsService {
         warriors: true,
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: "asc",
       },
     });
 
@@ -1029,8 +1029,8 @@ export class BattleAnalyticsService {
     query: QueryBattleStatisticsDto,
     userId: string,
   ): Promise<RatingDeltaByOpponentDto[]> {
-    const levelFilter = `${query.minLevel || 'any'}-${query.maxLevel || 'any'}`;
-    const cacheKey = `statistics:rating-delta-by-opponent:${userId}:${query.characterId || 'all'}:${query.world || 'all'}:${query.period || 'all'}:${levelFilter}`;
+    const levelFilter = `${query.minLevel || "any"}-${query.maxLevel || "any"}`;
+    const cacheKey = `statistics:rating-delta-by-opponent:${userId}:${query.characterId || "all"}:${query.world || "all"}:${query.period || "all"}:${levelFilter}`;
 
     const cachedResult = await this.redisService.get(cacheKey);
     if (cachedResult) {
@@ -1047,7 +1047,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       matchmaking: true,
       ratingDelta: { not: null },
       hasFlee: false,
@@ -1066,7 +1066,7 @@ export class BattleAnalyticsService {
         warriors: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -1202,7 +1202,7 @@ export class BattleAnalyticsService {
 
     const where: Prisma.BattleWhereInput = {
       userId,
-      type: '1v1',
+      type: "1v1",
       matchmaking: true,
       ...(query.world && { world: query.world }),
       ...(startDate && { createdAt: { gte: startDate } }),
@@ -1219,7 +1219,7 @@ export class BattleAnalyticsService {
         warriors: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -1247,8 +1247,8 @@ export class BattleAnalyticsService {
     let startIndex = 0;
     if (query.cursor) {
       try {
-        const decodedCursor = Buffer.from(query.cursor, 'base64').toString(
-          'utf-8',
+        const decodedCursor = Buffer.from(query.cursor, "base64").toString(
+          "utf-8",
         );
         const cursorIndex = Number.parseInt(decodedCursor, 10);
         if (!Number.isNaN(cursorIndex) && cursorIndex >= 0) {
@@ -1281,16 +1281,16 @@ export class BattleAnalyticsService {
         userRating: battle.rating ?? 0,
         opponentRating: battle.opponentRating ?? 0,
         userWarrior: {
-          name: userWarrior?.name ?? '',
+          name: userWarrior?.name ?? "",
           lvl: userWarrior?.lvl ?? 0,
-          prof: userWarrior?.prof ?? '',
-          icon: userWarrior?.icon ?? '',
+          prof: userWarrior?.prof ?? "",
+          icon: userWarrior?.icon ?? "",
         },
         opponentWarrior: {
-          name: opponentWarrior?.name ?? '',
+          name: opponentWarrior?.name ?? "",
           lvl: opponentWarrior?.lvl ?? 0,
-          prof: opponentWarrior?.prof ?? '',
-          icon: opponentWarrior?.icon ?? '',
+          prof: opponentWarrior?.prof ?? "",
+          icon: opponentWarrior?.icon ?? "",
         },
       };
     });
@@ -1298,11 +1298,11 @@ export class BattleAnalyticsService {
     const hasNext = endIndex < totalRecords;
     const hasPrev = startIndex > 0;
     const nextCursor = hasNext
-      ? Buffer.from(endIndex.toString()).toString('base64')
+      ? Buffer.from(endIndex.toString()).toString("base64")
       : undefined;
     const previousCursor = hasPrev
       ? Buffer.from(Math.max(0, startIndex - size).toString()).toString(
-          'base64',
+          "base64",
         )
       : undefined;
 
@@ -1333,7 +1333,7 @@ export class BattleAnalyticsService {
     minLevel?: number,
     maxLevel?: number,
   ): boolean {
-    if (battle.type !== '1v1') return false;
+    if (battle.type !== "1v1") return false;
 
     const opponentWarrior = battle.warriors.find(
       (w: any) => !characterIds.includes(w.originalId),

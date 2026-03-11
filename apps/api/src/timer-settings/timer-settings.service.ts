@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
-import type { UpdateTimerSettingsDto } from './dto/update-timer-settings.dto';
-import type { UpdateGuildTimerSettingsDto } from './dto/update-guild-timer-settings.dto';
-import type { MigrateTimerSettingsDto } from './dto/migrate-timer-settings.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
+import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
+import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";
+import type { MigrateTimerSettingsDto } from "./dto/migrate-timer-settings.dto";
 
 @Injectable()
 export class TimerSettingsService {
@@ -82,17 +82,17 @@ export class TimerSettingsService {
   }
 
   async migrateSettings(userId: string, dto: MigrateTimerSettingsDto) {
-    const { localData, conflictResolution = 'local' } = dto;
+    const { localData, conflictResolution = "local" } = dto;
 
     const existingGlobalSettings =
       await this.prisma.userTimerSettings.findUnique({
         where: { userId },
       });
 
-    if (existingGlobalSettings && conflictResolution === 'remote') {
+    if (existingGlobalSettings && conflictResolution === "remote") {
       return {
         global: existingGlobalSettings,
-        message: 'Using remote (backend) settings',
+        message: "Using remote (backend) settings",
       };
     }
 
@@ -108,7 +108,7 @@ export class TimerSettingsService {
       create: {
         userId,
         ...(globalSettings as Record<string, unknown>),
-      } as Parameters<typeof this.prisma.userTimerSettings.upsert>[0]['create'],
+      } as Parameters<typeof this.prisma.userTimerSettings.upsert>[0]["create"],
     });
 
     const updatedGuilds = await Promise.all(
@@ -130,7 +130,7 @@ export class TimerSettingsService {
             ...(settings as Record<string, unknown>),
           } as Parameters<
             typeof this.prisma.userGuildTimerSettings.upsert
-          >[0]['create'],
+          >[0]["create"],
         });
       }),
     );
@@ -138,7 +138,7 @@ export class TimerSettingsService {
     return {
       global: updatedGlobal,
       guilds: updatedGuilds,
-      message: 'Migration completed successfully',
+      message: "Migration completed successfully",
     };
   }
 
@@ -169,14 +169,14 @@ export class TimerSettingsService {
         removeTimerAfterMs: 30000,
         timersGrouping: false,
         timersUnderBag: false,
-        countdownMode: 'max',
+        countdownMode: "max",
       },
       displayConfig: {
         showType: true,
         showLevel: false,
         fontSize: 11,
         minColumnWidth: 120,
-        singleTimerDisplayMode: 'row',
+        singleTimerDisplayMode: "row",
       },
       customColors: {},
       timersColors: {},
@@ -185,7 +185,7 @@ export class TimerSettingsService {
       hiddenDefaultColors: [],
       timerFiltersEnabled: true,
       colorFiltersEnabled: false,
-      timersSortOrder: 'asc',
+      timersSortOrder: "asc",
       syncEnabled: true,
     };
   }
@@ -210,7 +210,7 @@ export class TimerSettingsService {
       hiddenDefaultColors: (localData.hiddenDefaultColors as string[]) ?? [],
       timerFiltersEnabled: (localData.timerFiltersEnabled as boolean) ?? true,
       colorFiltersEnabled: (localData.colorFiltersEnabled as boolean) ?? false,
-      timersSortOrder: (localData.timersSortOrder as string) ?? 'desc',
+      timersSortOrder: (localData.timersSortOrder as string) ?? "desc",
       syncEnabled: (localData.syncEnabled as boolean) ?? true,
     };
   }

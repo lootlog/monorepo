@@ -1,12 +1,12 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { BattlesService } from './battles.service';
-import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { R2Service } from 'src/shared/modules/r2/r2.service';
-import { PaginationService } from './services/pagination.service';
-import { BattleAnalyticsService } from './services/battle-analytics.service';
-import { RedisService } from 'src/shared/modules/redis/redis.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { BattlesService } from "./battles.service";
+import { PrismaService } from "src/shared/modules/prisma/prisma.service";
+import { R2Service } from "src/shared/modules/r2/r2.service";
+import { PaginationService } from "./services/pagination.service";
+import { BattleAnalyticsService } from "./services/battle-analytics.service";
+import { RedisService } from "src/shared/modules/redis/redis.service";
 
-describe('BattlesService', () => {
+describe("BattlesService", () => {
   let service: BattlesService;
 
   beforeEach(async () => {
@@ -84,7 +84,7 @@ describe('BattlesService', () => {
     service = module.get<BattlesService>(BattlesService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

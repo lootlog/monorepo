@@ -1,22 +1,22 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { v6 } from 'uuid';
-import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { GuildsService } from 'src/guilds/guilds.service';
-import { Permission, Role } from 'generated/client';
-import { canViewChatMessage } from 'src/shared/utils/can-view-chat-message';
-import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
+} from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import type { SendMessageDto } from "src/chat/dto/send-message.dto";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { RedisService } from "src/lib/redis/redis.service";
+import { v6 } from "uuid";
+import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import { GuildsService } from "src/guilds/guilds.service";
+import { Permission, Role } from "generated/client";
+import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
+import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
 
 const MAX_MESSAGES = 100;
 
@@ -69,8 +69,8 @@ export class ChatService {
       return JSON.parse(messages);
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to parse chat messages from Redis',
+        level: "error",
+        message: "Failed to parse chat messages from Redis",
         guildId,
         error: error instanceof Error ? error.stack : error,
       });
@@ -125,8 +125,8 @@ export class ChatService {
       );
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to parse chat messages from Redis',
+        level: "error",
+        message: "Failed to parse chat messages from Redis",
         guildId,
         error: error instanceof Error ? error.stack : error,
       });
@@ -173,12 +173,12 @@ export class ChatService {
 
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) {
-      throw new NotFoundException('Message not found');
+      throw new NotFoundException("Message not found");
     }
 
     const message = messages[messageIndex];
     if (message.senderId !== discordId) {
-      throw new ForbiddenException('Not the owner of this message');
+      throw new ForbiddenException("Not the owner of this message");
     }
 
     messages[messageIndex] = {
@@ -208,12 +208,12 @@ export class ChatService {
 
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) {
-      throw new NotFoundException('Message not found');
+      throw new NotFoundException("Message not found");
     }
 
     const message = messages[messageIndex];
     if (message.senderId !== discordId) {
-      throw new ForbiddenException('Not the owner of this message');
+      throw new ForbiddenException("Not the owner of this message");
     }
 
     const filteredMessages = messages.filter((m) => m.id !== messageId);

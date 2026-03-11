@@ -26,6 +26,7 @@ The Battlelog Service processes battle data from the game, tracks warrior perfor
 ## Database
 
 Uses the `battle-log-db` PostgreSQL database for:
+
 - Battle records
 - Warrior statistics
 - Character data
@@ -59,6 +60,7 @@ pnpm dev                      # Start development server
 ## Environment Variables
 
 See `.env.sample` for required configuration:
+
 - Database connection
 - RabbitMQ connection
 - JWT configuration for authentication

@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
-import { DiscordService } from 'src/discord/discord.service';
-import type { UpdateUserPreferencesDto } from 'src/users/dto/update-user-preferences.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
+import { DiscordService } from "src/discord/discord.service";
+import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 
 @Injectable()
 export class UsersService {

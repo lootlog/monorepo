@@ -6,37 +6,37 @@ import {
   forwardRef,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
-import type { APIGuild } from 'discord-api-types/v10';
+} from "@nestjs/common";
+import type { APIGuild } from "discord-api-types/v10";
 
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { type Guild, Permission } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import type { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
-import type { DeleteGuildDto } from 'src/guilds/dto/delete-guild.dto';
-import type { UpdateGuildDto } from 'src/guilds/dto/update-guild.dto';
-import type { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
-import { ErrorKey } from 'src/guilds/enum/error-key.enum';
-import { MembersService } from 'src/members/members.service';
-import { RolesService } from 'src/roles/roles.service';
-import { generateSlug } from 'src/shared/utils/generate-slug';
-import { LootlogConfigService } from 'src/lootlog-config/lootlog-config.service';
-import { RESTRICTED_VANITY_URLS } from 'src/guilds/constants/restricted-vanity-urls';
-import { UsersService } from 'src/users/users.service';
-import { DiscordService } from 'src/discord/discord.service';
-import { RedisService } from 'src/lib/redis/redis.service';
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { type Guild, Permission } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
+import type { DeleteGuildDto } from "src/guilds/dto/delete-guild.dto";
+import type { UpdateGuildDto } from "src/guilds/dto/update-guild.dto";
+import type { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
+import { ErrorKey } from "src/guilds/enum/error-key.enum";
+import { MembersService } from "src/members/members.service";
+import { RolesService } from "src/roles/roles.service";
+import { generateSlug } from "src/shared/utils/generate-slug";
+import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
+import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
+import { UsersService } from "src/users/users.service";
+import { DiscordService } from "src/discord/discord.service";
+import { RedisService } from "src/lib/redis/redis.service";
 import {
   getPermissionsCachePattern,
   getPermissionsCacheKey,
   getGuildCacheKey,
   GUILD_CACHE_TTL_SECONDS,
   PERMISSIONS_CACHE_TTL_SECONDS,
-} from 'src/shared/constants/cache.constant';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { MEMBER_REFRESH_PRIORITY } from 'src/members/constants/member-refresh-queue.constant';
+} from "src/shared/constants/cache.constant";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
 
 const DISCORD_ADMINISTRATOR_PERMISSION = 0x8n;
 
@@ -67,7 +67,7 @@ export class GuildsService {
     const userPreferences = await this.usersService.getUserPreferences(userId);
 
     let guilds: Guild[] = [];
-    if (source === 'game') {
+    if (source === "game") {
       guilds = await this.getFreshenedGuildsForRequiredPermissions(
         discordId,
         userId,
@@ -79,7 +79,7 @@ export class GuildsService {
 
         if (!discordGuilds || discordGuilds.length === 0) {
           this.logger.log({
-            level: 'warn',
+            level: "warn",
             message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
           });
           return [];
@@ -107,7 +107,7 @@ export class GuildsService {
           error.getStatus() === HttpStatus.UNAUTHORIZED
         ) {
           this.logger.log({
-            level: 'warn',
+            level: "warn",
             message: `User authentication failed for userId: ${userId}, returning empty guilds`,
           });
           return [];
@@ -141,7 +141,7 @@ export class GuildsService {
 
       if (!discordGuilds || discordGuilds.length === 0) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `No guilds found for user ${userId} with Discord ID ${discordId}`,
         });
         return [];
@@ -163,7 +163,7 @@ export class GuildsService {
         error.getStatus() === HttpStatus.UNAUTHORIZED
       ) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `User authentication failed for userId: ${userId}, returning empty guilds`,
         });
         return [];
@@ -492,9 +492,9 @@ export class GuildsService {
       });
     } catch (error) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message:
-          'Failed to load Discord guild candidates, falling back to cached member permissions',
+          "Failed to load Discord guild candidates, falling back to cached member permissions",
         discordId,
         userId,
         error,
@@ -619,7 +619,7 @@ export class GuildsService {
             guildId: candidate.guildId,
             userId,
             priority: MEMBER_REFRESH_PRIORITY.CONNECT,
-            reason: 'guild-connect',
+            reason: "guild-connect",
           });
 
         if (!refreshResult.refreshQueued) {
@@ -633,7 +633,7 @@ export class GuildsService {
         guildId: candidate.guildId,
         userId,
         priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-        reason: 'guild-connect-background',
+        reason: "guild-connect-background",
       });
     }
 
@@ -699,7 +699,7 @@ export class GuildsService {
             guild: { id: guild.id, ownerId: guild.ownerId },
             roles: [
               {
-                id: 'owner',
+                id: "owner",
                 lvlRangeFrom: 0,
                 lvlRangeTo: 999,
                 permissions: allPermissions,
@@ -817,7 +817,7 @@ export class GuildsService {
     const worlds = await this.prisma.timer.findMany({
       where: { guildId },
       select: { world: true },
-      distinct: ['world'],
+      distinct: ["world"],
     });
 
     return worlds.map((world) => world.world);
@@ -851,8 +851,8 @@ export class GuildsService {
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to create/update guild',
+        level: "error",
+        message: "Failed to create/update guild",
         error: error instanceof Error ? error.stack : error,
       });
       throw error;
@@ -893,8 +893,8 @@ export class GuildsService {
       ]);
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to update guild',
+        level: "error",
+        message: "Failed to update guild",
         error: error instanceof Error ? error.stack : error,
       });
       throw error;
@@ -910,8 +910,8 @@ export class GuildsService {
       let deletedMembers = {
         count: 0,
         affectedMembers: [] as Awaited<
-          ReturnType<MembersService['deleteMembersByGuildId']>
-        >['affectedMembers'],
+          ReturnType<MembersService["deleteMembersByGuildId"]>
+        >["affectedMembers"],
       };
 
       await this.prisma.$transaction(async (tx) => {
@@ -945,8 +945,8 @@ export class GuildsService {
       ]);
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Failed to delete guild',
+        level: "error",
+        message: "Failed to delete guild",
         error: error instanceof Error ? error.stack : error,
       });
       throw error;

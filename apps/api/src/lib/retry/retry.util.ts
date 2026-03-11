@@ -8,7 +8,7 @@ export interface RetryOptions {
 }
 
 const DEFAULT_OPTIONS: Required<
-  Omit<RetryOptions, 'retryableErrors' | 'onRetry'>
+  Omit<RetryOptions, "retryableErrors" | "onRetry">
 > = {
   maxAttempts: 3,
   initialDelay: 1000,
@@ -59,7 +59,7 @@ export async function retry<T>(
     }
   }
 
-  throw new Error(lastError?.message || 'Retry failed');
+  throw new Error(lastError?.message || "Retry failed");
 }
 
 function sleep(ms: number): Promise<void> {
@@ -69,7 +69,7 @@ function sleep(ms: number): Promise<void> {
 export class RetryableError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'RetryableError';
+    this.name = "RetryableError";
   }
 }
 

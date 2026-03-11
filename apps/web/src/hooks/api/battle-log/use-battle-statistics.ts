@@ -67,11 +67,14 @@ export const useBattleStatistics = (params?: UseBattleStatisticsParams) => {
     queryFn: () => {
       const searchParams = new URLSearchParams();
 
-      if (params?.characterId) searchParams.append("characterId", params.characterId);
+      if (params?.characterId)
+        searchParams.append("characterId", params.characterId);
       if (params?.world) searchParams.append("world", params.world);
       if (params?.period) searchParams.append("period", params.period);
 
-      return client.get<BattleStatistics>(`/battles/@me/statistics?${searchParams}`);
+      return client.get<BattleStatistics>(
+        `/battles/@me/statistics?${searchParams}`,
+      );
     },
     select: (response) => response.data,
     staleTime: 1000 * 60 * 5,

@@ -8,27 +8,27 @@ import {
   Post,
   Req,
   UseGuards,
-} from '@nestjs/common';
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiParam,
-} from '@nestjs/swagger';
-import { type Guild, Permission } from 'generated/client';
-import { GuildData } from 'src/shared/decorators/guild-data.decorator';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { Permissions } from 'src/shared/permissions/permissions.decorator';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import { ReservationsService } from './reservations.service';
-import { CreateReservationDto } from './dto/create-reservation.dto';
-import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
+} from "@nestjs/swagger";
+import { type Guild, Permission } from "generated/client";
+import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { Permissions } from "src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { ReservationsService } from "./reservations.service";
+import { CreateReservationDto } from "./dto/create-reservation.dto";
+import { DiscordId } from "src/shared/decorators/discord-id.decorator";
 
-@ApiTags('reservations')
+@ApiTags("reservations")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
-@Controller('guilds/:guildId/reservations')
+@Controller("guilds/:guildId/reservations")
 export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
@@ -36,17 +36,17 @@ export class ReservationsController {
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
-    summary: 'Get reservations',
-    description: 'Retrieve reservations for a guild',
+    summary: "Get reservations",
+    description: "Retrieve reservations for a guild",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiResponse({
     status: 200,
-    description: 'List of reservations',
+    description: "List of reservations",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: "Forbidden - insufficient permissions",
   })
   async getReservations(@GuildData() guild: Guild) {
     return this.reservationsService.getReservations(guild.id);
@@ -56,17 +56,17 @@ export class ReservationsController {
   @UseGuards(PermissionsGuard)
   @Post()
   @ApiOperation({
-    summary: 'Create reservation',
-    description: 'Create a new reservation to a guild',
+    summary: "Create reservation",
+    description: "Create a new reservation to a guild",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiResponse({
     status: 201,
-    description: 'Reservation created successfully',
+    description: "Reservation created successfully",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: "Forbidden - insufficient permissions",
   })
   async createReservation(
     @Body() data: CreateReservationDto,
@@ -77,22 +77,22 @@ export class ReservationsController {
 
   @Permissions(Permission.LOOTLOG_RESERVATIONS_WRITE)
   @UseGuards(PermissionsGuard)
-  @Delete(':reservationRecordId')
+  @Delete(":reservationRecordId")
   @ApiOperation({
-    summary: 'Delete reservation',
-    description: 'Deletes a reservation the user owns or can moderate',
+    summary: "Delete reservation",
+    description: "Deletes a reservation the user owns or can moderate",
   })
   @ApiParam({
-    name: 'reservationRecordId',
-    description: 'Reservation record identifier',
+    name: "reservationRecordId",
+    description: "Reservation record identifier",
     example: 123,
   })
   @ApiResponse({
     status: 200,
-    description: 'Reservation deleted successfully',
+    description: "Reservation deleted successfully",
   })
   async deleteReservation(
-    @Param('reservationRecordId', ParseIntPipe) reservationRecordId: number,
+    @Param("reservationRecordId", ParseIntPipe) reservationRecordId: number,
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
     @Req() request: Request & { permissions?: Permission[]; guild?: Guild },
@@ -108,18 +108,18 @@ export class ReservationsController {
 
   @Permissions(Permission.LOOTLOG_RESERVATIONS_READ)
   @UseGuards(PermissionsGuard)
-  @Get('cards')
+  @Get("cards")
   @ApiOperation({
-    summary: 'Get reservations cards',
-    description: 'Retrieve reservations cards',
+    summary: "Get reservations cards",
+    description: "Retrieve reservations cards",
   })
   @ApiResponse({
     status: 200,
-    description: 'List of reservations cards',
+    description: "List of reservations cards",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: "Forbidden - insufficient permissions",
   })
   async getReservationsCards() {
     return this.reservationsService.getReservationsCards();

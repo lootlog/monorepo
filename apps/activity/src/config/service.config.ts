@@ -1,6 +1,6 @@
-import { RuntimeEnvironment } from '@lootlog/types';
-import { registerAs } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
+import { RuntimeEnvironment } from "@lootlog/types";
+import { registerAs } from "@nestjs/config";
+import { ConfigKey } from "src/config/config-key.enum";
 
 export interface ServiceConfig {
   env: RuntimeEnvironment;

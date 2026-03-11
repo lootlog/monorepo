@@ -187,42 +187,42 @@ export type KnownActionType =
   | IgnoredActionType;
 
 export const isSystemAction = (
-  actionType: string
+  actionType: string,
 ): actionType is SystemActionType =>
   SYSTEM_ACTION_TYPES.includes(actionType as SystemActionType);
 
 export const isSpellAction = (
-  actionType: string
+  actionType: string,
 ): actionType is SpellActionType =>
   SPELL_ACTION_TYPES.includes(actionType as SpellActionType);
 
 export const isBuffAction = (
-  actionType: string
+  actionType: string,
 ): actionType is BuffActionType =>
   BUFF_ACTION_TYPES.includes(actionType as BuffActionType);
 
 export const isPassiveAction = (
-  actionType: string
+  actionType: string,
 ): actionType is PassiveActionType =>
   PASSIVE_ACTION_TYPES.includes(actionType as PassiveActionType);
 
 export const isAttackAction = (
-  actionType: string
+  actionType: string,
 ): actionType is AttackActionType =>
   ATTACK_ACTION_TYPES.includes(actionType as AttackActionType);
 
 export const isOutcomeAction = (
-  actionType: string
+  actionType: string,
 ): actionType is OutcomeActionType =>
   OUTCOME_ACTION_TYPES.includes(actionType as OutcomeActionType);
 
 export const isIgnoredAction = (
-  actionType: string
+  actionType: string,
 ): actionType is IgnoredActionType =>
   IGNORED_ACTION_TYPES.includes(actionType as IgnoredActionType);
 
 export const isKnownAction = (
-  actionType: string
+  actionType: string,
 ): actionType is KnownActionType =>
   isSystemAction(actionType) ||
   isSpellAction(actionType) ||
@@ -234,7 +234,7 @@ export const isKnownAction = (
 
 export const isSpellActionInContext = (
   actionType: string,
-  actionsList: string[]
+  actionsList: string[],
 ): actionType is SpellActionType => {
   if (actionType === "+oth_dmg") {
     return actionsList.includes("tspell");
@@ -244,7 +244,7 @@ export const isSpellActionInContext = (
 
 export const isAttackActionInContext = (
   actionType: string,
-  actionsList: string[]
+  actionsList: string[],
 ): actionType is AttackActionType => {
   if (actionType === "+oth_dmg") {
     return !actionsList.includes("tspell");
@@ -257,7 +257,7 @@ export const isAttackActionInContext = (
 
 export const isPassiveActionInContext = (
   actionType: string,
-  actionsList: string[]
+  actionsList: string[],
 ): actionType is PassiveActionType => {
   if (actionType === "-poison_lowdmg_per") {
     return actionsList.some((action) => isPassiveAction(action));

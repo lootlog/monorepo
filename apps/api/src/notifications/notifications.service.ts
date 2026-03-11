@@ -1,24 +1,24 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
   ForbiddenException,
   Inject,
   Injectable,
-} from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { Permission } from 'generated/client';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { GuildsService } from 'src/guilds/guilds.service';
-import type { CreateNotificationDto } from 'src/notifications/dto/create-notification.dto';
-import type { CreatePartyGatheringDto } from 'src/notifications/dto/create-party-gathering.dto';
-import type { CreateVolunteerDto } from 'src/notifications/dto/create-volunteer.dto';
-import { Error } from 'src/notifications/enum/error.enum';
-import { omit } from 'lodash';
-import { v4 as uuid } from 'uuid';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
-import { RedisService } from 'src/lib/redis/redis.service';
+} from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { Permission } from "generated/client";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { GuildsService } from "src/guilds/guilds.service";
+import type { CreateNotificationDto } from "src/notifications/dto/create-notification.dto";
+import type { CreatePartyGatheringDto } from "src/notifications/dto/create-party-gathering.dto";
+import type { CreateVolunteerDto } from "src/notifications/dto/create-volunteer.dto";
+import { Error } from "src/notifications/enum/error.enum";
+import { omit } from "lodash";
+import { v4 as uuid } from "uuid";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
+import { RedisService } from "src/lib/redis/redis.service";
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 
@@ -70,7 +70,7 @@ export class NotificationsService {
       return JSON.parse(data) as NotificationMetadata;
     } catch {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to parse notification metadata for ${notificationId}`,
       });
       return null;
@@ -97,7 +97,7 @@ export class NotificationsService {
     );
     if (userGuilds.length === 0) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `User ${discordId} has no permission to send notifications`,
       });
       throw new ForbiddenException();
@@ -107,13 +107,13 @@ export class NotificationsService {
       .filter((id) => data.guildIds.includes(id));
     if (!guildIds.length) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `User ${discordId} tried to send notification to unauthorized guilds: ${data.guildIds}`,
       });
       throw new ForbiddenException();
     }
     const basePayload = {
-      ...omit(data, ['guildIds']),
+      ...omit(data, ["guildIds"]),
       discordId,
       notificationId,
       createdAt,
@@ -157,15 +157,15 @@ export class NotificationsService {
   ) {
     const metadata = await this.getNotificationMetadata(notificationId);
     if (!metadata) {
-      throw new BadRequestException('Notification expired or not found');
+      throw new BadRequestException("Notification expired or not found");
     }
 
     if (data.targetDiscordId !== metadata.discordId) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `User ${discordId} tried to volunteer to invalid target ${data.targetDiscordId} for notification ${notificationId}`,
       });
-      throw new ForbiddenException('Invalid target');
+      throw new ForbiddenException("Invalid target");
     }
 
     const volunteerGuilds =
@@ -181,10 +181,10 @@ export class NotificationsService {
     );
     if (!hasCommonGuild) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `User ${discordId} tried to volunteer to notification ${notificationId} but is not a member of notification guilds`,
       });
-      throw new ForbiddenException('Not a member of notification guild');
+      throw new ForbiddenException("Not a member of notification guild");
     }
 
     this.amqpConnection.publish(
@@ -216,7 +216,7 @@ export class NotificationsService {
       data.maxLvl !== undefined &&
       data.minLvl > data.maxLvl
     ) {
-      throw new BadRequestException('minLvl cannot be greater than maxLvl');
+      throw new BadRequestException("minLvl cannot be greater than maxLvl");
     }
 
     const userGuilds = await this.guildsService.getGuildsForRequiredPermissions(
@@ -231,7 +231,7 @@ export class NotificationsService {
 
     if (userGuilds.length === 0) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `User ${discordId} has no permission to send party gathering`,
       });
       throw new ForbiddenException();
@@ -243,7 +243,7 @@ export class NotificationsService {
 
     if (!guildIds.length) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `User ${discordId} tried to send party gathering to unauthorized guilds: ${data.guildIds}`,
       });
       throw new ForbiddenException();
@@ -287,22 +287,22 @@ export class NotificationsService {
     discordId: string,
     notificationId: string,
   ): Promise<
-    { status: 'success'; guildIds: string[] } | { status: 'expired' }
+    { status: "success"; guildIds: string[] } | { status: "expired" }
   > {
     const metadata = await this.getNotificationMetadata(notificationId);
 
     if (!metadata) {
       await this.redisService.del(this.getNotificationKey(notificationId));
       await this.redisService.del(this.getPartyGatheringUserKey(discordId));
-      return { status: 'expired' };
+      return { status: "expired" };
     }
 
     if (metadata.discordId !== discordId) {
       this.logger.log({
-        level: 'warn',
+        level: "warn",
         message: `User ${discordId} tried to cancel notification ${notificationId} owned by ${metadata.discordId}`,
       });
-      throw new ForbiddenException('Not the owner of this notification');
+      throw new ForbiddenException("Not the owner of this notification");
     }
 
     await this.redisService.del(this.getNotificationKey(notificationId));
@@ -316,7 +316,7 @@ export class NotificationsService {
       );
     });
 
-    return { status: 'success', guildIds: metadata.guildIds };
+    return { status: "success", guildIds: metadata.guildIds };
   }
 
   async cancelPartyGatheringByUser(discordId: string) {

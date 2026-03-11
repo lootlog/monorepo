@@ -20,9 +20,9 @@ The API Helpers package provides reusable authentication and authorization utili
 ### NestJS Services (API, Battlelog, Discord Bot, Gateway)
 
 ```typescript
-import { JwtAuthGuard } from '@lootlog/api-helpers';
+import { JwtAuthGuard } from "@lootlog/api-helpers";
 
-@Controller('guilds')
+@Controller("guilds")
 @UseGuards(JwtAuthGuard)
 export class GuildsController {
   @Get()
@@ -36,12 +36,12 @@ export class GuildsController {
 ### Hono Services (Auth, Search)
 
 ```typescript
-import { jwtMiddleware } from '@lootlog/api-helpers';
+import { jwtMiddleware } from "@lootlog/api-helpers";
 
-app.use('/api/*', jwtMiddleware());
+app.use("/api/*", jwtMiddleware());
 
-app.get('/api/protected', (c) => {
-  const user = c.get('user');
+app.get("/api/protected", (c) => {
+  const user = c.get("user");
   return c.json({ userId: user.id });
 });
 ```
@@ -75,4 +75,5 @@ pnpm build               # Build package
 ## Environment Variables
 
 Services using this package need:
+
 - `AUTH_SERVICE_URL` - URL to Auth service JWKS endpoint

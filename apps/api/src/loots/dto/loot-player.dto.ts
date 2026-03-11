@@ -1,4 +1,4 @@
-import { Profession } from 'generated/client';
+import { Profession } from "generated/client";
 
 export type LootPlayerDto = {
   id: string;

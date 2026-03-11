@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
 import {
   Prisma,
   Permission,
@@ -8,14 +8,14 @@ import {
   NpcType,
   type Guild,
   type Role,
-} from 'generated/client';
-import type { FetchLootsParamsDto } from 'src/loots/dto/fetch-loots-params.dto';
-import type { LootItemDto } from 'src/loots/dto/loot-item.dto';
-import type { LootNpcDto } from 'src/loots/dto/loot-npc.dto';
-import type { LootQueryResult } from 'src/loots/dto/loot-query-result.dto';
-import { DEFAULT_PAGE_LIMIT } from '../config/pagination';
-import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
+} from "generated/client";
+import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
+import type { LootItemDto } from "src/loots/dto/loot-item.dto";
+import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";
+import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
+import { DEFAULT_PAGE_LIMIT } from "../config/pagination";
+import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
 
 type LootItemWithSnapshot = Prisma.LootItemGetPayload<{
   include: { itemSnapshot: true };
@@ -80,7 +80,7 @@ export class LootQueryService {
 
     const lootsWithRelations = await this.prisma.loot.findMany({
       where: baseWhere,
-      orderBy: { id: 'desc' },
+      orderBy: { id: "desc" },
       take: limit,
       select: {
         id: true,
@@ -105,15 +105,15 @@ export class LootQueryService {
         },
         lootItems: {
           include: { itemSnapshot: true },
-          orderBy: { id: 'asc' },
+          orderBy: { id: "asc" },
         },
         lootPlayers: {
           include: { playerSnapshot: true },
-          orderBy: { id: 'asc' },
+          orderBy: { id: "asc" },
         },
         lootNpcs: {
           include: { npcSnapshot: true },
-          orderBy: { id: 'asc' },
+          orderBy: { id: "asc" },
         },
       },
     });
@@ -123,7 +123,7 @@ export class LootQueryService {
     const lootIds = lootsWithRelations.map((l) => l.id);
 
     const commentsCounts = await this.prisma.lootComment.groupBy({
-      by: ['lootId'],
+      by: ["lootId"],
       where: {
         lootId: { in: lootIds },
         guildId: guild.id,
@@ -244,15 +244,15 @@ export class LootQueryService {
         },
         lootItems: {
           include: { itemSnapshot: true },
-          orderBy: { id: 'asc' },
+          orderBy: { id: "asc" },
         },
         lootPlayers: {
           include: { playerSnapshot: true },
-          orderBy: { id: 'asc' },
+          orderBy: { id: "asc" },
         },
         lootNpcs: {
           include: { npcSnapshot: true },
-          orderBy: { id: 'asc' },
+          orderBy: { id: "asc" },
         },
       },
     });
@@ -742,7 +742,7 @@ export class LootQueryService {
         {
           location: {
             contains: trimmedSearch,
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
         {
@@ -751,7 +751,7 @@ export class LootQueryService {
               itemSnapshot: {
                 name: {
                   contains: trimmedSearch,
-                  mode: 'insensitive',
+                  mode: "insensitive",
                 },
               },
             },
@@ -763,7 +763,7 @@ export class LootQueryService {
               npcSnapshot: {
                 name: {
                   contains: trimmedSearch,
-                  mode: 'insensitive',
+                  mode: "insensitive",
                 },
               },
             },
@@ -775,7 +775,7 @@ export class LootQueryService {
               playerSnapshot: {
                 name: {
                   contains: trimmedSearch,
-                  mode: 'insensitive',
+                  mode: "insensitive",
                 },
               },
             },
@@ -855,7 +855,7 @@ export class LootQueryService {
   private parseStatsSnapshot(
     statsSnapshot: Prisma.JsonValue | null,
   ): Record<string, string> {
-    if (!statsSnapshot || typeof statsSnapshot !== 'object') {
+    if (!statsSnapshot || typeof statsSnapshot !== "object") {
       return {};
     }
     return statsSnapshot as Record<string, string>;
@@ -870,7 +870,7 @@ export class LootQueryService {
   private parseRequiredProf(reqp?: string | null): Profession[] {
     if (!reqp) return Object.values(Profession);
     return reqp
-      .split('')
+      .split("")
       .map((short) => getProfByShortname(short))
       .filter(Boolean);
   }

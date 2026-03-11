@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { HttpModule } from '@nestjs/axios';
-import { PermissionsService } from './permissions.service';
-import { PermissionsGuard } from 'src/shared/guards/permissions.guard';
+import { Module } from "@nestjs/common";
+import { HttpModule } from "@nestjs/axios";
+import { PermissionsService } from "./permissions.service";
+import { PermissionsGuard } from "src/shared/guards/permissions.guard";
 
 @Module({
   imports: [HttpModule],

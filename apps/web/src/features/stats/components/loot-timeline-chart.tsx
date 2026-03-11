@@ -134,7 +134,9 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
               content={
                 <ChartTooltipContent
                   labelFormatter={(_, payload) => {
-                    const item = payload[0]?.payload as Record<string, unknown> | undefined;
+                    const item = payload[0]?.payload as
+                      | Record<string, unknown>
+                      | undefined;
                     const fullDate = item?.fullDate;
                     if (typeof fullDate !== "string") return "";
                     const date = new Date(fullDate);

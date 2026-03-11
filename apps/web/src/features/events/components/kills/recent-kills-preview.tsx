@@ -36,9 +36,7 @@ export const RecentKillsPreview = ({
     : heroNpcs?.[0];
 
   const activeHeroId =
-    showHeroTabs && heroNpcs && heroNpcs.length > 1
-      ? activeHero?.id
-      : heroId;
+    showHeroTabs && heroNpcs && heroNpcs.length > 1 ? activeHero?.id : heroId;
 
   const { data: kills, isLoading } = useRecentHeroKills({
     guildId,

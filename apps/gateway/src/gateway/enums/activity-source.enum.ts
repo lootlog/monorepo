@@ -1,4 +1,4 @@
 export enum ActivitySource {
-  GAME = 'GAME',
-  WEB_APP = 'WEB_APP',
+  GAME = "GAME",
+  WEB_APP = "WEB_APP",
 }

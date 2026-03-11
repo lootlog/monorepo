@@ -1,15 +1,15 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsOptional,
   ValidateIf,
-} from 'class-validator';
+} from "class-validator";
 
 export class CloseRespawnWindowDto {
   @ApiPropertyOptional({
-    description: 'Whether to create a new respawn window after closing',
+    description: "Whether to create a new respawn window after closing",
     default: true,
   })
   @IsOptional()
@@ -18,7 +18,7 @@ export class CloseRespawnWindowDto {
 
   @ApiPropertyOptional({
     description:
-      'Minimum spawn time for the new window (ISO date string). Required when createNewWindow is true.',
+      "Minimum spawn time for the new window (ISO date string). Required when createNewWindow is true.",
   })
   @ValidateIf((o) => o.createNewWindow)
   @IsNotEmpty()
@@ -27,7 +27,7 @@ export class CloseRespawnWindowDto {
 
   @ApiPropertyOptional({
     description:
-      'Maximum spawn time for the new window (ISO date string). Required when createNewWindow is true.',
+      "Maximum spawn time for the new window (ISO date string). Required when createNewWindow is true.",
   })
   @ValidateIf((o) => o.createNewWindow)
   @IsNotEmpty()

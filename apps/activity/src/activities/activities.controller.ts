@@ -8,67 +8,67 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   SerializeOptions,
-} from '@nestjs/common';
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import { AuthGuard, RequiredPermissions } from '@lootlog/nest-shared';
-import { PermissionsGuard } from 'src/shared/guards/permissions.guard';
-import { Permission } from '@lootlog/types';
-import { ActivitiesService } from './activities.service';
-import { ActivitiesQueryService } from './services/activities-query.service';
-import { QueryActivitiesDto } from './dto/query-activities.dto';
-import { SuggestActorNamesDto } from './dto/suggest-actor-names.dto';
-import { SuggestWorldsDto } from './dto/suggest-worlds.dto';
-import { SuggestClanNamesDto } from './dto/suggest-clan-names.dto';
+} from "@nestjs/swagger";
+import { AuthGuard, RequiredPermissions } from "@lootlog/nest-shared";
+import { PermissionsGuard } from "src/shared/guards/permissions.guard";
+import { Permission } from "@lootlog/types";
+import { ActivitiesService } from "./activities.service";
+import { ActivitiesQueryService } from "./services/activities-query.service";
+import { QueryActivitiesDto } from "./dto/query-activities.dto";
+import { SuggestActorNamesDto } from "./dto/suggest-actor-names.dto";
+import { SuggestWorldsDto } from "./dto/suggest-worlds.dto";
+import { SuggestClanNamesDto } from "./dto/suggest-clan-names.dto";
 import {
   ActivityEntity,
   PaginatedActivitiesEntity,
-} from './entities/activity.entity';
+} from "./entities/activity.entity";
 
-@ApiTags('guilds')
+@ApiTags("guilds")
 @ApiBearerAuth()
 @UseGuards(AuthGuard, PermissionsGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@Controller('guilds')
+@Controller("guilds")
 export class ActivitiesController {
   constructor(
     private readonly activitiesService: ActivitiesService,
     private readonly activitiesQueryService: ActivitiesQueryService,
   ) {}
 
-  @Get(':guildId/activity-logs')
+  @Get(":guildId/activity-logs")
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: PaginatedActivitiesEntity })
-  @ApiOperation({ summary: 'Get activities for a specific guild' })
+  @ApiOperation({ summary: "Get activities for a specific guild" })
   @ApiResponse({ status: 200, type: PaginatedActivitiesEntity })
   findByGuild(
-    @Param('guildId') guildId: string,
+    @Param("guildId") guildId: string,
     @Query() query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
     return this.activitiesQueryService.findByGuild(guildId, query);
   }
 
-  @Get(':guildId/activity-logs/actor-name-suggestions')
+  @Get(":guildId/activity-logs/actor-name-suggestions")
   @RequiredPermissions(Permission.ADMIN)
-  @ApiOperation({ summary: 'Get actor name suggestions for a guild' })
+  @ApiOperation({ summary: "Get actor name suggestions for a guild" })
   @ApiResponse({
     status: 200,
     schema: {
-      type: 'object',
+      type: "object",
       properties: {
         suggestions: {
-          type: 'array',
-          items: { type: 'string' },
+          type: "array",
+          items: { type: "string" },
         },
       },
     },
   })
   async suggestActorNames(
-    @Param('guildId') guildId: string,
+    @Param("guildId") guildId: string,
     @Query() query: SuggestActorNamesDto,
   ): Promise<{ suggestions: string[] }> {
     const suggestions = await this.activitiesQueryService.suggestActorNames(
@@ -80,23 +80,23 @@ export class ActivitiesController {
     return { suggestions };
   }
 
-  @Get(':guildId/activity-logs/world-suggestions')
+  @Get(":guildId/activity-logs/world-suggestions")
   @RequiredPermissions(Permission.ADMIN)
-  @ApiOperation({ summary: 'Get world suggestions for a guild' })
+  @ApiOperation({ summary: "Get world suggestions for a guild" })
   @ApiResponse({
     status: 200,
     schema: {
-      type: 'object',
+      type: "object",
       properties: {
         worlds: {
-          type: 'array',
-          items: { type: 'string' },
+          type: "array",
+          items: { type: "string" },
         },
       },
     },
   })
   async suggestWorlds(
-    @Param('guildId') guildId: string,
+    @Param("guildId") guildId: string,
     @Query() query: SuggestWorldsDto,
   ): Promise<{ worlds: string[] }> {
     const worlds = await this.activitiesQueryService.suggestWorlds(
@@ -108,23 +108,23 @@ export class ActivitiesController {
     return { worlds };
   }
 
-  @Get(':guildId/activity-logs/clan-name-suggestions')
+  @Get(":guildId/activity-logs/clan-name-suggestions")
   @RequiredPermissions(Permission.ADMIN)
-  @ApiOperation({ summary: 'Get clan name suggestions for a guild' })
+  @ApiOperation({ summary: "Get clan name suggestions for a guild" })
   @ApiResponse({
     status: 200,
     schema: {
-      type: 'object',
+      type: "object",
       properties: {
         suggestions: {
-          type: 'array',
-          items: { type: 'string' },
+          type: "array",
+          items: { type: "string" },
         },
       },
     },
   })
   async suggestClanNames(
-    @Param('guildId') guildId: string,
+    @Param("guildId") guildId: string,
     @Query() query: SuggestClanNamesDto,
   ): Promise<{ suggestions: string[] }> {
     const suggestions = await this.activitiesQueryService.suggestClanNames(
@@ -136,43 +136,43 @@ export class ActivitiesController {
     return { suggestions };
   }
 
-  @Get(':guildId/users/:userId/activity-logs')
+  @Get(":guildId/users/:userId/activity-logs")
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: PaginatedActivitiesEntity })
-  @ApiOperation({ summary: 'Get activities for a specific user in a guild' })
+  @ApiOperation({ summary: "Get activities for a specific user in a guild" })
   @ApiResponse({ status: 200, type: PaginatedActivitiesEntity })
   findByUser(
-    @Param('guildId') guildId: string,
-    @Param('userId') userId: string,
+    @Param("guildId") guildId: string,
+    @Param("userId") userId: string,
     @Query() query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
     return this.activitiesQueryService.findByUser(userId, guildId, query);
   }
 
-  @Get(':guildId/activity-logs/:id')
+  @Get(":guildId/activity-logs/:id")
   @RequiredPermissions(Permission.ADMIN)
   @SerializeOptions({ type: ActivityEntity })
-  @ApiOperation({ summary: 'Get a single activity by ID' })
+  @ApiOperation({ summary: "Get a single activity by ID" })
   @ApiResponse({ status: 200, type: ActivityEntity })
-  @ApiResponse({ status: 404, description: 'Activity not found' })
+  @ApiResponse({ status: 404, description: "Activity not found" })
   findOne(
-    @Param('guildId') guildId: string,
-    @Param('id') id: string,
+    @Param("guildId") guildId: string,
+    @Param("id") id: string,
   ): Promise<ActivityEntity> {
     return this.activitiesQueryService.findOne(id, guildId);
   }
 
-  @Delete(':guildId/activity-logs/:id')
+  @Delete(":guildId/activity-logs/:id")
   @RequiredPermissions(Permission.OWNER)
-  @ApiOperation({ summary: 'Delete a specific activity by ID' })
+  @ApiOperation({ summary: "Delete a specific activity by ID" })
   @ApiResponse({
     status: 200,
-    schema: { type: 'object', properties: { count: { type: 'number' } } },
+    schema: { type: "object", properties: { count: { type: "number" } } },
   })
-  @ApiResponse({ status: 404, description: 'Activity not found' })
+  @ApiResponse({ status: 404, description: "Activity not found" })
   async deleteActivity(
-    @Param('guildId') guildId: string,
-    @Param('id') id: string,
+    @Param("guildId") guildId: string,
+    @Param("id") id: string,
   ): Promise<{ count: number }> {
     const count = await this.activitiesService.deleteOne(id, guildId);
     return { count };

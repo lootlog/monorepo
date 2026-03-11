@@ -1,11 +1,11 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
-import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { RedisService } from 'src/lib/redis/redis.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { AuthService } from "./auth.service";
+import { HttpService } from "@nestjs/axios";
+import { ConfigService } from "@nestjs/config";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { RedisService } from "src/lib/redis/redis.service";
 
-describe('AuthService', () => {
+describe("AuthService", () => {
   let service: AuthService;
 
   const mockLogger = {
@@ -20,7 +20,7 @@ describe('AuthService', () => {
 
   const mockConfigService = {
     get: jest.fn().mockReturnValue({
-      serviceUrl: 'http://localhost:3001',
+      serviceUrl: "http://localhost:3001",
     }),
   };
 
@@ -56,7 +56,7 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

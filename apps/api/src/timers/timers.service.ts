@@ -1,4 +1,4 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   BadRequestException,
   ConflictException,
@@ -7,7 +7,7 @@ import {
   Inject,
   Injectable,
   type OnModuleInit,
-} from '@nestjs/common';
+} from "@nestjs/common";
 import {
   NpcType,
   Permission,
@@ -15,34 +15,34 @@ import {
   type Timer,
   type Guild,
   type Role,
-} from 'generated/client';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { PrismaService } from 'src/db/prisma.service';
-import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
-import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
-import { ErrorKey } from 'src/timers/enum/error-key.enum';
-import { GuildsService } from 'src/guilds/guilds.service';
-import type { GetTimersDto } from 'src/timers/dto/get-timers.dto';
-import type { ResetTimerDto } from 'src/timers/dto/reset-timer.dto';
-import { DEFAULT_RESPAWN_RANDOMNESS } from 'src/timers/constants/respawn';
-import type { CreateManualTimerDto } from 'src/timers/dto/create-manual-timer.dto';
-import { generateUniqueIntId } from 'src/shared/utils/generate-unique-int-id';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { canViewNpcTimer } from '@lootlog/api-helpers/permissions';
-import type { CreateTimerFromGameClientDto } from 'src/timers/dto/create-timer-from-game-client.dto';
-import { validateAndCalculateSpawnTimes } from 'src/timers/utils/validate-spawn-times';
-import { TIMER_LIMITS, TIMER_TYPES } from 'src/timers/constants/timer-limits';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import Redlock, { ExecutionError } from 'redlock';
-import { EventsService } from 'src/events/events.service';
-import { getSyntheticNpcId } from 'src/events/utils/get-synthetic-npc-id';
+} from "generated/client";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { PrismaService } from "src/db/prisma.service";
+import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
+import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
+import { ErrorKey } from "src/timers/enum/error-key.enum";
+import { GuildsService } from "src/guilds/guilds.service";
+import type { GetTimersDto } from "src/timers/dto/get-timers.dto";
+import type { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
+import { DEFAULT_RESPAWN_RANDOMNESS } from "src/timers/constants/respawn";
+import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
+import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
+import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
+import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
+import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
+import { RedisService } from "src/lib/redis/redis.service";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import Redlock, { ExecutionError } from "redlock";
+import { EventsService } from "src/events/events.service";
+import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
-  if (typeof npc === 'string') {
+  if (typeof npc === "string") {
     return JSON.parse(npc);
   }
   return npc as { lvl: number; type: NpcType };
@@ -104,14 +104,14 @@ export class TimersService implements OnModuleInit {
   }
 
   private getTimersCacheKey(guildId: string, world?: string): string {
-    return `timer:list:${guildId}:${world || 'all'}`;
+    return `timer:list:${guildId}:${world || "all"}`;
   }
 
   private async invalidateTimersCache(guildId: string): Promise<void> {
     const count = await this.redis.deleteByPattern(`timer:list:${guildId}:*`);
     if (count > 0) {
       this.logger.log({
-        level: 'debug',
+        level: "debug",
         message: `Invalidated ${count} cache entries for guild ${guildId}`,
       });
     }
@@ -207,7 +207,7 @@ export class TimersService implements OnModuleInit {
         if (
           !(
             error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === 'P2025'
+            error.code === "P2025"
           )
         ) {
           throw error;
@@ -215,8 +215,8 @@ export class TimersService implements OnModuleInit {
       }
 
       this.logger.log({
-        level: 'debug',
-        message: 'Migrated synthetic event timer to real NPC ID',
+        level: "debug",
+        message: "Migrated synthetic event timer to real NPC ID",
         guildId,
         world,
         syntheticNpcId,
@@ -229,8 +229,8 @@ export class TimersService implements OnModuleInit {
       };
     } catch (error) {
       this.logger.warn({
-        level: 'warn',
-        message: 'Failed to resolve synthetic timer context for event hero',
+        level: "warn",
+        message: "Failed to resolve synthetic timer context for event hero",
         guildId,
         world,
         npcId,
@@ -285,7 +285,7 @@ export class TimersService implements OnModuleInit {
     const cached = await this.redis.get(dedupKey);
     if (cached) {
       this.logger.log({
-        level: 'debug',
+        level: "debug",
         message: `Deduplication hit for ${dedupKey}`,
       });
       return JSON.parse(cached) as Timer;
@@ -304,7 +304,7 @@ export class TimersService implements OnModuleInit {
       const cachedAfterLock = await this.redis.get(dedupKey);
       if (cachedAfterLock) {
         this.logger.log({
-          level: 'debug',
+          level: "debug",
           message: `Deduplication hit after lock for ${dedupKey}`,
         });
         return JSON.parse(cachedAfterLock) as Timer;
@@ -344,8 +344,8 @@ export class TimersService implements OnModuleInit {
         );
 
         this.logger.log({
-          level: 'debug',
-          message: 'Skipping timer update before minSpawnTime',
+          level: "debug",
+          message: "Skipping timer update before minSpawnTime",
           guildId,
           npcId: data.npc.id,
           world: data.world,
@@ -409,8 +409,8 @@ export class TimersService implements OnModuleInit {
         })
         .catch((err) => {
           this.logger.error({
-            level: 'error',
-            message: 'Failed to enqueue event hero kill check',
+            level: "error",
+            message: "Failed to enqueue event hero kill check",
             error: err instanceof Error ? err.message : err,
             guildId,
             world: data.world,
@@ -428,8 +428,8 @@ export class TimersService implements OnModuleInit {
         );
         if (existingTimer) {
           this.logger.log({
-            level: 'debug',
-            message: 'Lock contention resolved by returning existing timer',
+            level: "debug",
+            message: "Lock contention resolved by returning existing timer",
             guildId,
             npcId: data.npc.id,
             world: data.world,
@@ -438,7 +438,7 @@ export class TimersService implements OnModuleInit {
         }
 
         this.logger.log({
-          level: 'error',
+          level: "error",
           message: `Lock acquisition failed for createTimerForGuild`,
           guildId,
           npcId: data.npc.id,
@@ -485,7 +485,7 @@ export class TimersService implements OnModuleInit {
     } else {
       throw new BadRequestException({
         message:
-          'Either minSeconds/maxSeconds or customMinSpawnTime/customMaxSpawnTime must be provided',
+          "Either minSeconds/maxSeconds or customMinSpawnTime/customMaxSpawnTime must be provided",
       });
     }
 
@@ -503,12 +503,12 @@ export class TimersService implements OnModuleInit {
         npc: {
           id: npcId,
           name: data.name,
-          prof: '',
-          location: '',
-          wt: '',
+          prof: "",
+          location: "",
+          wt: "",
           lvl: 0,
-          type: '',
-          icon: '',
+          type: "",
+          icon: "",
           margonemType: TIMER_TYPES.CUSTOM_MANUAL,
         },
         guild: { connect: { id: guildId } },
@@ -534,7 +534,7 @@ export class TimersService implements OnModuleInit {
     const cached = await this.redis.get(cacheKey);
 
     if (cached) {
-      this.logger.log({ level: 'debug', message: `Cache hit for ${cacheKey}` });
+      this.logger.log({ level: "debug", message: `Cache hit for ${cacheKey}` });
       const cachedTimers = JSON.parse(cached) as Timer[];
       return this.filterTimersByPermissions(
         cachedTimers,
@@ -549,7 +549,7 @@ export class TimersService implements OnModuleInit {
         maxSpawnTime: { gt: now.toISOString() },
         world,
       },
-      orderBy: { maxSpawnTime: 'desc' },
+      orderBy: { maxSpawnTime: "desc" },
       include: { member: true },
     });
 
@@ -586,7 +586,7 @@ export class TimersService implements OnModuleInit {
           maxSpawnTime: { gt: now.toISOString() },
           world,
         },
-        orderBy: { maxSpawnTime: 'desc' },
+        orderBy: { maxSpawnTime: "desc" },
         include: { member: true },
       }),
       this.guildsService.getMultipleGuildsPermissions(discordId, guildIds),
@@ -663,7 +663,7 @@ export class TimersService implements OnModuleInit {
     } catch (error) {
       if (error instanceof ExecutionError) {
         this.logger.log({
-          level: 'error',
+          level: "error",
           message: `Lock acquisition failed for resetTimer`,
           guildId,
           npcId: npcIdNum,
@@ -690,7 +690,7 @@ export class TimersService implements OnModuleInit {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
+        error.code === "P2025"
       ) {
         throw new BadRequestException({ message: ErrorKey.TIMER_NOT_FOUND });
       }
@@ -731,7 +731,7 @@ export class TimersService implements OnModuleInit {
       FROM "Timer" t
       WHERE t."guildId" = ${guildId}
         AND t."world" = ${world}
-        AND t."npc"->>'name' ILIKE ${'%' + search + '%'}
+        AND t."npc"->>'name' ILIKE ${"%" + search + "%"}
         AND COALESCE(t."npc"->>'margonemType', '0') != ${manualTimerType}
       ORDER BY t."npcId", t."updatedAt" DESC
       LIMIT ${limitNum}
@@ -744,13 +744,13 @@ export class TimersService implements OnModuleInit {
 
         return {
           npcId: timer.npcId,
-          name: (timer.npc as { name?: string })?.name || '',
+          name: (timer.npc as { name?: string })?.name || "",
           lvl: npc.lvl,
           type: npc.type,
-          prof: (timer.npc as { prof?: string })?.prof || '',
-          location: (timer.npc as { location?: string })?.location || '',
+          prof: (timer.npc as { prof?: string })?.prof || "",
+          location: (timer.npc as { location?: string })?.location || "",
           wt: (timer.npc as { wt?: string | number })?.wt || 0,
-          icon: (timer.npc as { icon?: string })?.icon || '',
+          icon: (timer.npc as { icon?: string })?.icon || "",
           latestRespBaseSeconds: timer.latestRespBaseSeconds,
           latestRespawnRandomness: timer.latestRespawnRandomness,
         };

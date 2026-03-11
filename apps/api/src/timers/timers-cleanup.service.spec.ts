@@ -1,9 +1,9 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
-import { TimersCleanupService } from './timers-cleanup.service';
-import { PrismaService } from 'src/db/prisma.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { ConfigService } from "@nestjs/config";
+import { TimersCleanupService } from "./timers-cleanup.service";
+import { PrismaService } from "src/db/prisma.service";
 
-describe('TimersCleanupService', () => {
+describe("TimersCleanupService", () => {
   const mockPrismaService = {
     $executeRaw: jest.fn(),
   };
@@ -35,8 +35,8 @@ describe('TimersCleanupService', () => {
     return module.get<TimersCleanupService>(TimersCleanupService);
   };
 
-  describe('cleanupExpiredTimers', () => {
-    it('should delete only expired manual timers with default retention', async () => {
+  describe("cleanupExpiredTimers", () => {
+    it("should delete only expired manual timers with default retention", async () => {
       mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(42);
@@ -46,9 +46,9 @@ describe('TimersCleanupService', () => {
       expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
     });
 
-    it('should skip cleanup when disabled', async () => {
+    it("should skip cleanup when disabled", async () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'TIMER_CLEANUP_ENABLED') return 'false';
+        if (key === "TIMER_CLEANUP_ENABLED") return "false";
         return undefined;
       });
       const service = await createService();
@@ -58,9 +58,9 @@ describe('TimersCleanupService', () => {
       expect(mockPrismaService.$executeRaw).not.toHaveBeenCalled();
     });
 
-    it('should use custom retention days from config', async () => {
+    it("should use custom retention days from config", async () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'TIMER_RETENTION_DAYS') return '14';
+        if (key === "TIMER_RETENTION_DAYS") return "14";
         return undefined;
       });
       const service = await createService();
@@ -71,17 +71,17 @@ describe('TimersCleanupService', () => {
       expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
     });
 
-    it('should handle cleanup errors gracefully', async () => {
+    it("should handle cleanup errors gracefully", async () => {
       mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockRejectedValue(
-        new Error('Database error'),
+        new Error("Database error"),
       );
 
       await expect(service.cleanupExpiredTimers()).resolves.not.toThrow();
     });
 
-    it('should preserve game NPC timers and only delete manual timers', async () => {
+    it("should preserve game NPC timers and only delete manual timers", async () => {
       mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(5);
@@ -92,8 +92,8 @@ describe('TimersCleanupService', () => {
     });
   });
 
-  describe('cleanupExpiredTimersManual', () => {
-    it('should delete only manual timers with specified retention period', async () => {
+  describe("cleanupExpiredTimersManual", () => {
+    it("should delete only manual timers with specified retention period", async () => {
       mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(25);
@@ -104,7 +104,7 @@ describe('TimersCleanupService', () => {
       expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
     });
 
-    it('should use default retention days if not specified', async () => {
+    it("should use default retention days if not specified", async () => {
       mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(15);
@@ -114,7 +114,7 @@ describe('TimersCleanupService', () => {
       expect(result).toBe(15);
     });
 
-    it('should preserve game NPC timers in manual cleanup', async () => {
+    it("should preserve game NPC timers in manual cleanup", async () => {
       mockConfigService.get.mockReturnValue(undefined);
       const service = await createService();
       mockPrismaService.$executeRaw.mockResolvedValue(8);

@@ -1,7 +1,11 @@
 {
   "name": "@lootlog/web",
-  "private": true,
   "version": "1.0.0",
+  "private": true,
+  "files": [
+    "dist",
+    "nginx.conf"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,10 +13,6 @@
     "lint": "oxlint .",
     "preview": "vite preview"
   },
-  "files": [
-    "dist",
-    "nginx.conf"
-  ],
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@lootlog/socket-parser": "workspace:*",

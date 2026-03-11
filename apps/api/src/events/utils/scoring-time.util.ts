@@ -14,11 +14,11 @@ function getDateFormatter(timeZone: string): Intl.DateTimeFormat {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat('en-CA', {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   });
   dateFormatterCache.set(timeZone, formatter);
   return formatter;
@@ -30,10 +30,10 @@ function getTimeFormatter(timeZone: string): Intl.DateTimeFormat {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat('en-GB', {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
     timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: false,
   });
   timeFormatterCache.set(timeZone, formatter);
@@ -46,15 +46,15 @@ function getOffsetFormatter(timeZone: string): Intl.DateTimeFormat {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat('en-US', {
+  const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone,
-    timeZoneName: 'shortOffset',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    timeZoneName: "shortOffset",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   });
   offsetFormatterCache.set(timeZone, formatter);
@@ -65,13 +65,13 @@ function getPartValue(
   parts: Intl.DateTimeFormatPart[],
   type: Intl.DateTimeFormatPartTypes,
 ): string {
-  return parts.find((part) => part.type === type)?.value ?? '';
+  return parts.find((part) => part.type === type)?.value ?? "";
 }
 
 function parseWindowClock(clock: string): { hour: number; minute: number } {
-  const [hourRaw, minuteRaw] = clock.split(':');
-  const hour = Number.parseInt(hourRaw ?? '0', 10);
-  const minute = Number.parseInt(minuteRaw ?? '0', 10);
+  const [hourRaw, minuteRaw] = clock.split(":");
+  const hour = Number.parseInt(hourRaw ?? "0", 10);
+  const minute = Number.parseInt(minuteRaw ?? "0", 10);
 
   return {
     hour: Number.isFinite(hour) ? hour : 0,
@@ -82,9 +82,9 @@ function parseWindowClock(clock: string): { hour: number; minute: number } {
 function getLocalDate(date: Date, timeZone: string): LocalDate {
   const parts = getDateFormatter(timeZone).formatToParts(date);
   return {
-    year: Number.parseInt(getPartValue(parts, 'year'), 10),
-    month: Number.parseInt(getPartValue(parts, 'month'), 10),
-    day: Number.parseInt(getPartValue(parts, 'day'), 10),
+    year: Number.parseInt(getPartValue(parts, "year"), 10),
+    month: Number.parseInt(getPartValue(parts, "month"), 10),
+    day: Number.parseInt(getPartValue(parts, "day"), 10),
   };
 }
 
@@ -94,16 +94,16 @@ function getLocalTime(
 ): { hour: number; minute: number } {
   const parts = getTimeFormatter(timeZone).formatToParts(date);
   return {
-    hour: Number.parseInt(getPartValue(parts, 'hour'), 10),
-    minute: Number.parseInt(getPartValue(parts, 'minute'), 10),
+    hour: Number.parseInt(getPartValue(parts, "hour"), 10),
+    minute: Number.parseInt(getPartValue(parts, "minute"), 10),
   };
 }
 
 function getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
   const parts = getOffsetFormatter(timeZone).formatToParts(date);
-  const offsetToken = getPartValue(parts, 'timeZoneName');
+  const offsetToken = getPartValue(parts, "timeZoneName");
 
-  if (!offsetToken || offsetToken === 'GMT' || offsetToken === 'UTC') {
+  if (!offsetToken || offsetToken === "GMT" || offsetToken === "UTC") {
     return 0;
   }
 
@@ -112,9 +112,9 @@ function getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
     return 0;
   }
 
-  const sign = match[1] === '-' ? -1 : 1;
-  const hours = Number.parseInt(match[2] ?? '0', 10);
-  const minutes = Number.parseInt(match[3] ?? '0', 10);
+  const sign = match[1] === "-" ? -1 : 1;
+  const hours = Number.parseInt(match[2] ?? "0", 10);
+  const minutes = Number.parseInt(match[3] ?? "0", 10);
   return sign * (hours * 60 + minutes);
 }
 

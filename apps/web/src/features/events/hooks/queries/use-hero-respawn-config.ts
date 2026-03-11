@@ -2,10 +2,7 @@ import { useMemo } from "react";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { useEventHeroTimers } from "./use-event-hero-timers";
-import {
-  useWindowStatus,
-  type WindowStatus,
-} from "../use-window-status";
+import { useWindowStatus, type WindowStatus } from "../use-window-status";
 
 export type { WindowStatus };
 

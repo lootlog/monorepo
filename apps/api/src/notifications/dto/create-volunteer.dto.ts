@@ -3,9 +3,9 @@ import {
   IsString,
   MaxLength,
   ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { CharacterDto } from 'src/notifications/dto/shared-character.dto';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { CharacterDto } from "src/notifications/dto/shared-character.dto";
 
 export class CreateVolunteerDto {
   @IsNotEmpty()

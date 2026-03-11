@@ -1,9 +1,9 @@
-import type { Battle, BattleWarrior } from '../../../generated/client';
-import type { QueryBattlesDto } from '../dto/query-battles.dto';
-import type { UpdateBattleDto } from '../dto/update-battle.dto';
-import type { CreateBattleDto } from '../dto/create-battle.dto';
-import type { PaginationResult } from './pagination.interface';
-import type { BattleAnalysis, ParsedMove } from '../battle-processor';
+import type { Battle, BattleWarrior } from "../../../generated/client";
+import type { QueryBattlesDto } from "../dto/query-battles.dto";
+import type { UpdateBattleDto } from "../dto/update-battle.dto";
+import type { CreateBattleDto } from "../dto/create-battle.dto";
+import type { PaginationResult } from "./pagination.interface";
+import type { BattleAnalysis, ParsedMove } from "../battle-processor";
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {
@@ -23,9 +23,9 @@ export interface CreateBattleResult {
 
 export interface GetAllBattlesResult {
   battles: BattleWithRelations[];
-  pagination: PaginationResult<BattleWithRelations>['pagination'];
+  pagination: PaginationResult<BattleWithRelations>["pagination"];
   meta: {
-    performance: PaginationResult<BattleWithRelations>['performance'];
+    performance: PaginationResult<BattleWithRelations>["performance"];
   };
 }
 
@@ -37,7 +37,7 @@ export interface DeleteBattleResult {
 export interface RawBattleData {
   battleId: string;
   timestamp: string;
-  rawData: Omit<CreateBattleDto, 'events'> & {
+  rawData: Omit<CreateBattleDto, "events"> & {
     events: ParsedMove[];
   };
 }
@@ -101,14 +101,14 @@ export interface IBattlesService {
 export class BattleNotFoundError extends Error {
   constructor(battleId: string) {
     super(`Battle with ID ${battleId} not found`);
-    this.name = 'BattleNotFoundError';
+    this.name = "BattleNotFoundError";
   }
 }
 
 export class BattleProcessingError extends Error {
   constructor(message: string, cause?: Error) {
     super(message);
-    this.name = 'BattleProcessingError';
+    this.name = "BattleProcessingError";
     this.cause = cause;
   }
 }
@@ -116,7 +116,7 @@ export class BattleProcessingError extends Error {
 export class R2StorageError extends Error {
   constructor(message: string, battleId?: string, cause?: Error) {
     super(battleId ? `${message} for battle ${battleId}` : message);
-    this.name = 'R2StorageError';
+    this.name = "R2StorageError";
     this.cause = cause;
   }
 }

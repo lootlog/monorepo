@@ -26,6 +26,7 @@ The Auth service handles user authentication and authorization for the entire Lo
 ## Database
 
 Uses the `lootlog-users-db` PostgreSQL database for:
+
 - User accounts
 - Discord profiles
 - Sessions
@@ -53,6 +54,7 @@ pnpm dev                 # Start development server
 ## Environment Variables
 
 See `.env.sample` for required configuration:
+
 - Database connection
 - Discord OAuth credentials
 - JWT secrets

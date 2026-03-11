@@ -25,14 +25,15 @@ Eventy klanowe to system koordynacji polowań na sezonowych herosów w Margonem.
 
 Dostęp do eventów kontrolują dedykowane uprawnienia:
 
-| Uprawnienie | Opis |
-|-------------|------|
-| `LOOTLOG_EVENTS_READ` | Przeglądanie eventów, herosów, map i rankingów |
-| `LOOTLOG_EVENTS_WRITE` | Samodzielne przypisywanie się do map |
+| Uprawnienie             | Opis                                                                   |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `LOOTLOG_EVENTS_READ`   | Przeglądanie eventów, herosów, map i rankingów                         |
+| `LOOTLOG_EVENTS_WRITE`  | Samodzielne przypisywanie się do map                                   |
 | `LOOTLOG_EVENTS_MANAGE` | Tworzenie eventów, zarządzanie herosami i mapami, przypisywanie innych |
 
 <Callout type="info">
-**Konfiguracja uprawnień:** Uprawnienia eventowe konfigurujesz w ustawieniach klanu → Role → wybrana rola → sekcja "Eventy".
+  **Konfiguracja uprawnień:** Uprawnienia eventowe konfigurujesz w ustawieniach
+  klanu → Role → wybrana rola → sekcja "Eventy".
 </Callout>
 
 ### Edycja punktów
@@ -54,7 +55,8 @@ Aby utworzyć nowy event, potrzebujesz uprawnienia `EVENTS_MANAGE`.
 - **Data zakończenia** - kiedy event się kończy
 
 <Callout type="tip">
-**Daty są opcjonalne.** Możesz utworzyć event bez dat i ustawić je później w edycji.
+  **Daty są opcjonalne.** Możesz utworzyć event bez dat i ustawić je później w
+  edycji.
 </Callout>
 
 Po utworzeniu eventu możesz dodawać do niego herosów.
@@ -72,7 +74,9 @@ Opcjonalnie:
 - **ID NPC** - identyfikator z gry (np. z URL potwora)
 
 <Callout type="info">
-**Automatyczne wykrywanie ID:** Jeśli nie znasz ID herosa, zostaw pole puste. System automatycznie wykryje ID po pierwszym zbiciu herosa (wymaga poprawnej nazwy).
+  **Automatyczne wykrywanie ID:** Jeśli nie znasz ID herosa, zostaw pole puste.
+  System automatycznie wykryje ID po pierwszym zbiciu herosa (wymaga poprawnej
+  nazwy).
 </Callout>
 
 ### Dodawanie map
@@ -99,7 +103,8 @@ Punkty = Bazowe × Pora dnia × Tropiciele × Mapy
 Podstawowa liczba punktów za bicie. Możesz ją zmienić w ustawieniach herosa.
 
 <Callout type="info">
-**Przeliczanie historii:** Zmiana punktów bazowych automatycznie przeliczy punkty dla wszystkich historycznych bić.
+  **Przeliczanie historii:** Zmiana punktów bazowych automatycznie przeliczy
+  punkty dla wszystkich historycznych bić.
 </Callout>
 
 ### Mnożnik pory dnia
@@ -148,12 +153,12 @@ Parametr `mapAssignmentCap` określa maksymalną liczbę osób na jednej mapie. 
 
 Każda mapa może mieć jeden z statusów:
 
-| Status | Znaczenie |
-|--------|-----------|
-| **Monitoruje** | Przypisany członek jest na mapie |
-| **Nieobecny** | Przypisany członek nie jest na mapie |
-| **AFK** | Przypisany członek jest AFK |
-| **Nieprzypisany** | Nikt nie jest przypisany do mapy |
+| Status            | Znaczenie                            |
+| ----------------- | ------------------------------------ |
+| **Monitoruje**    | Przypisany członek jest na mapie     |
+| **Nieobecny**     | Przypisany członek nie jest na mapie |
+| **AFK**           | Przypisany członek jest AFK          |
+| **Nieprzypisany** | Nikt nie jest przypisany do mapy     |
 
 ### Luki w pokryciu
 
@@ -168,11 +173,11 @@ Okno odrodzenia (respawnu) określa przedział czasowy, w którym heros może si
 
 ### Statusy okna
 
-| Status | Znaczenie |
-|--------|-----------|
-| **Okno otwarte** | Heros może się pojawić w każdej chwili |
-| **Oczekiwanie** | Okno zostanie otwarte o określonej godzinie |
-| **Brak okna** | Nie ma aktywnego okna respawnu |
+| Status           | Znaczenie                                   |
+| ---------------- | ------------------------------------------- |
+| **Okno otwarte** | Heros może się pojawić w każdej chwili      |
+| **Oczekiwanie**  | Okno zostanie otwarte o określonej godzinie |
+| **Brak okna**    | Nie ma aktywnego okna respawnu              |
 
 ### Otwieranie okna
 
@@ -190,7 +195,8 @@ Okno można zamknąć ręcznie lub zostanie zamknięte automatycznie:
 - **Ręcznie** - moderator może zamknąć okno przyciskiem "Zamknij okno"
 
 <Callout type="tip">
-**Po biciu herosa:** System automatycznie zamyka okno, czyści przypisania do map i nalicza punkty uczestnikom.
+  **Po biciu herosa:** System automatycznie zamyka okno, czyści przypisania do
+  map i nalicza punkty uczestnikom.
 </Callout>
 
 ## Rankingi

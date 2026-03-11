@@ -1,4 +1,4 @@
-import { RuntimeEnvironment } from '@lootlog/types';
+import { RuntimeEnvironment } from "@lootlog/types";
 
 declare global {
   namespace NodeJS {

@@ -27,10 +27,7 @@ export const useLocalCoverageTimer = (
   const initializedRef = useRef(false);
   const usedBackendValueRef = useRef(false);
 
-  const gapType = useMemo(
-    () => getGapTypeFromStatus(status),
-    [status],
-  );
+  const gapType = useMemo(() => getGapTypeFromStatus(status), [status]);
 
   useEffect(() => {
     const prevGapType = prevGapTypeRef.current;

@@ -1,11 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/shared/db/prisma.service';
-import type { QueryActivitiesDto } from '../dto/query-activities.dto';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "src/shared/db/prisma.service";
+import type { QueryActivitiesDto } from "../dto/query-activities.dto";
 import {
   ActivityEntity,
   PaginatedActivitiesEntity,
-} from '../entities/activity.entity';
-import type { Prisma } from '../../../prisma/generated/client';
+} from "../entities/activity.entity";
+import type { Prisma } from "../../../prisma/generated/client";
 
 @Injectable()
 export class ActivitiesQueryService {
@@ -38,7 +38,7 @@ export class ActivitiesQueryService {
     if (query.world) {
       where.world = {
         contains: query.world,
-        mode: 'insensitive',
+        mode: "insensitive",
       };
     }
 
@@ -48,14 +48,14 @@ export class ActivitiesQueryService {
       if (query.playerName) {
         where.actorSnapshot.name = {
           contains: query.playerName,
-          mode: 'insensitive',
+          mode: "insensitive",
         };
       }
 
       if (query.clanName) {
         where.actorSnapshot.clanName = {
           contains: query.clanName,
-          mode: 'insensitive',
+          mode: "insensitive",
         };
       }
     }
@@ -77,7 +77,7 @@ export class ActivitiesQueryService {
     const activities = await this.prisma.activity.findMany({
       where,
       take: limit + 1,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       include: {
         actorSnapshot: true,
       },
@@ -117,13 +117,13 @@ export class ActivitiesQueryService {
     if (trimmedSearch) {
       where.name = {
         contains: trimmedSearch,
-        mode: 'insensitive',
+        mode: "insensitive",
       };
     }
 
     const snapshots = await this.prisma.activityActorSnapshot.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limitValue * 2,
       select: { name: true },
     });
@@ -161,25 +161,25 @@ export class ActivitiesQueryService {
       guildId,
       world: {
         not: null,
-        notIn: [''],
+        notIn: [""],
       },
     };
 
     if (trimmedSearch) {
       where.world = {
-        ...(typeof where.world === 'object' && where.world !== null
+        ...(typeof where.world === "object" && where.world !== null
           ? where.world
           : {}),
         contains: trimmedSearch,
-        mode: 'insensitive',
+        mode: "insensitive",
       };
     }
 
     const worlds = await this.prisma.activity.findMany({
       where,
-      distinct: ['world'],
+      distinct: ["world"],
       select: { world: true },
-      orderBy: { world: 'asc' },
+      orderBy: { world: "asc" },
       take: limitValue,
     });
 
@@ -202,23 +202,23 @@ export class ActivitiesQueryService {
       },
       clanName: {
         not: null,
-        notIn: [''],
+        notIn: [""],
       },
     };
 
     if (trimmedSearch) {
       where.clanName = {
-        ...(typeof where.clanName === 'object' && where.clanName !== null
+        ...(typeof where.clanName === "object" && where.clanName !== null
           ? where.clanName
           : {}),
         contains: trimmedSearch,
-        mode: 'insensitive',
+        mode: "insensitive",
       };
     }
 
     const snapshots = await this.prisma.activityActorSnapshot.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limitValue * 2,
       select: { clanName: true },
     });
