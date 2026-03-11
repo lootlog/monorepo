@@ -9,14 +9,14 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { ErrorKey } from "./enum/error-key.enum";
 import { PlayersService } from "src/players/players.service";
 import { NpcsService } from "src/npcs/npcs.service";
 import { ItemsService } from "src/items/items.service";
-import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
 import { PrismaService } from "src/db/prisma.service";
 import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
-import { Permission, type Guild, type Role } from "generated/client";
+import { NpcType, Permission, type Guild, type Role } from "generated/client";
 import { GuildsService } from "src/guilds/guilds.service";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";
@@ -128,6 +128,7 @@ export class LootsService implements OnModuleInit {
       }
 
       const highestWtNpcType = getNpcTypeByWt(
+        NpcType,
         npcData.highest.wt,
         npcData.highest.prof,
         npcData.highest.type,

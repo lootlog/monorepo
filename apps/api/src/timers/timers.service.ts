@@ -16,9 +16,9 @@ import {
   type Guild,
   type Role,
 } from "generated/client";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { PrismaService } from "src/db/prisma.service";
-import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
 import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
 import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { GuildsService } from "src/guilds/guilds.service";
@@ -134,7 +134,7 @@ export class TimersService implements OnModuleInit {
       location: npc.location,
       wt: String(npc.wt),
       lvl: npc.lvl,
-      type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
+      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
       icon: npc.icon,
       margonemType: String(npc.type),
     };

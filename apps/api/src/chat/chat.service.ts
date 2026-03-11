@@ -14,9 +14,9 @@ import { RedisService } from "src/lib/redis/redis.service";
 import { v6 } from "uuid";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { GuildsService } from "src/guilds/guilds.service";
-import { Permission, Role } from "generated/client";
+import { NpcType, Permission, Role } from "generated/client";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
-import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
 
 const MAX_MESSAGES = 100;
 
@@ -32,7 +32,7 @@ export class ChatService {
   async sendMessage(discordId: string, guildId: string, data: SendMessageDto) {
     const key = `guild:${guildId}:messages`;
     const npcType = data.npc
-      ? getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type)
+      ? getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof, data.npc.type)
       : undefined;
     const msg = {
       id: v6(),

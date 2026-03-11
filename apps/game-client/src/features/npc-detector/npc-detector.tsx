@@ -7,7 +7,8 @@ import {
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
 import { useWindowsStore } from "@/store/windows.store";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { getNpcTypeByWt } from "@lootlog/types";
+import { NpcType } from "@/hooks/api/use-npcs";
 
 export const NpcDetector = () => {
   const open = useWindowsStore((state) => state["npc-detector"].open);
@@ -22,7 +23,7 @@ export const NpcDetector = () => {
   const characterId = String(Game.hero.id);
 
   const filteredNpcs = npcs.filter((npc) => {
-    const npcType = getNpcTypeByWt(npc.wt);
+    const npcType = getNpcTypeByWt(NpcType, npc.wt);
     const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
     return settingsByNpcType?.notifyWindow && settingsByNpcType?.detect;
   });

@@ -5,7 +5,8 @@ import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
 import type { GameNpc } from "@/types/margonem/npcs";
 import { useEffect, useRef } from "react";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { getNpcTypeByWt } from "@lootlog/types";
+import { NpcType } from "@/hooks/api/use-npcs";
 import { useSoundPlayback } from "@/hooks/use-sound-playback";
 
 export type Notification = {
@@ -21,7 +22,7 @@ export type Notification = {
 
 const getNotificationType = (n: Notification) => {
   if (!n.npc || !n.npc.wt) return "message" as const;
-  return getNpcTypeByWt(n.npc.wt);
+  return getNpcTypeByWt(NpcType, n.npc.wt);
 };
 
 export const useNotifications = () => {

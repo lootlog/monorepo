@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { createHash } from "node:crypto";
+import { getNpcTypeByWt } from "@lootlog/types";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import { Prisma, Profession, type ItemRarity } from "generated/client";
+import { NpcType, Prisma, Profession, type ItemRarity } from "generated/client";
 import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
 import { getItemTypeByCl } from "src/shared/utils/get-item-type-by-cl";
-import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
@@ -130,7 +130,7 @@ export class LootMappingService {
         icon: npc.icon,
         wt: npc.wt,
         location: npc.location,
-        type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
+        type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
         margonemType: npc.type,
       })),
     };
@@ -186,7 +186,7 @@ export class LootMappingService {
       icon: npc.icon,
       wt: npc.wt,
       location: npc.location,
-      type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
+      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
       margonemType: npc.type,
     }));
   }
@@ -338,7 +338,7 @@ export class LootMappingService {
 
   mapLootNpcsToConnectOrCreate(npcs: CreateLootDto["npcs"]) {
     return npcs.map((npc) => {
-      const type = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+      const type = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
 
       return {
         npcSnapshot: {

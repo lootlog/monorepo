@@ -1,6 +1,6 @@
 import { Role, NpcType, Permission } from "generated/client";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { MessageType, SendMessageDto } from "src/chat/dto/send-message.dto";
-import { getNpcTypeByWt } from "./get-npc-type-by-wt";
 
 export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
   if (!data) return false;
@@ -13,7 +13,7 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
     const npc = data.npc;
     if (!npc) return false;
 
-    const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
 
     if (npcType === NpcType.TITAN) {
       return roles.some(
@@ -43,7 +43,7 @@ export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
 
   if (data.type === MessageType.PARTY_GATHERING && data.npc) {
     const npc = data.npc;
-    const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+    const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
 
     if (npcType === NpcType.TITAN) {
       return roles.some(
