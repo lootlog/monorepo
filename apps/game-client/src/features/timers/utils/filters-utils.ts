@@ -8,29 +8,40 @@ type FiltersConfig = {
   selectedColors: string[];
 };
 
+const hasCustomNpcTypes = (selectedNpcTypes: NpcType[]): boolean => {
+  const defaultSelectedNpcTypes = DEFAULT_TIMERS_FILTERS.selectedNpcTypes;
+
+  return (
+    selectedNpcTypes.length !== defaultSelectedNpcTypes.length ||
+    !selectedNpcTypes.every((npcType) =>
+      defaultSelectedNpcTypes.includes(npcType),
+    )
+  );
+};
+
 export const checkFiltersActive = (
   searchText: string,
   hiddenTimersCount: number,
   filters: FiltersConfig,
 ): boolean => {
-  const hasSearchText = !!searchText;
-  const hasHiddenTimers = hiddenTimersCount > 0;
-  const hasCustomLvlRange =
-    filters.minLvl !== DEFAULT_TIMERS_FILTERS.minLvl ||
-    filters.maxLvl !== DEFAULT_TIMERS_FILTERS.maxLvl;
-  const hasCustomNpcTypes =
-    filters.selectedNpcTypes.length !==
-      DEFAULT_TIMERS_FILTERS.selectedNpcTypes.length ||
-    !filters.selectedNpcTypes.every((type) =>
-      DEFAULT_TIMERS_FILTERS.selectedNpcTypes.includes(type),
-    );
-  const hasColorFilters = filters.selectedColors.length > 0;
+  if (searchText) {
+    return true;
+  }
 
-  return (
-    hasSearchText ||
-    hasHiddenTimers ||
-    hasCustomLvlRange ||
-    hasCustomNpcTypes ||
-    hasColorFilters
-  );
+  if (hiddenTimersCount > 0) {
+    return true;
+  }
+
+  if (
+    filters.minLvl !== DEFAULT_TIMERS_FILTERS.minLvl ||
+    filters.maxLvl !== DEFAULT_TIMERS_FILTERS.maxLvl
+  ) {
+    return true;
+  }
+
+  if (hasCustomNpcTypes(filters.selectedNpcTypes)) {
+    return true;
+  }
+
+  return filters.selectedColors.length > 0;
 };
