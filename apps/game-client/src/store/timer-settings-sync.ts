@@ -5,9 +5,9 @@ import type {
 import { useTimersStore } from "./timers.store";
 
 let syncTimeoutId: NodeJS.Timeout | null = null;
-let guildSyncTimeouts: Map<string, NodeJS.Timeout> = new Map();
+const guildSyncTimeouts: Map<string, NodeJS.Timeout> = new Map();
 let pendingGlobalPayload: UpdateTimerSettingsPayload = {};
-let pendingGuildPayloads: Map<string, UpdateGuildTimerSettingsPayload> =
+const pendingGuildPayloads: Map<string, UpdateGuildTimerSettingsPayload> =
   new Map();
 
 const SYNC_DEBOUNCE_MS = 500;
@@ -16,7 +16,7 @@ type MutateGlobalFn = (payload: UpdateTimerSettingsPayload) => void;
 type MutateGuildFn = (payload: UpdateGuildTimerSettingsPayload) => void;
 
 let globalMutateFn: MutateGlobalFn | null = null;
-let guildMutateFns: Map<string, MutateGuildFn> = new Map();
+const guildMutateFns: Map<string, MutateGuildFn> = new Map();
 
 export const registerGlobalSettingsMutation = (mutateFn: MutateGlobalFn) => {
   globalMutateFn = mutateFn;
