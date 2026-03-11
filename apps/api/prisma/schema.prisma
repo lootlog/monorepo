@@ -175,6 +175,9 @@ model Member {
   globalUserId      String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+  lastDiscordSyncAt DateTime?
+  lastDiscordAttemptAt DateTime?
+  lastDiscordStatus String?
   guild                    Guild                      @relation(fields: [guildId], references: [id])
   roles                    Role[]
   timers                   Timer[]

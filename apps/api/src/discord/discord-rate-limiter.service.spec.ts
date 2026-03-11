@@ -102,6 +102,71 @@ describe('DiscordRateLimiterService', () => {
       });
       expect(redisService.del).not.toHaveBeenCalled();
     });
+
+    it('should not block when bucket state still has remaining requests', async () => {
+      const resetAt = Date.now() + 60_000;
+      const activeData = {
+        bucket: 'bucket-1',
+        limit: 5,
+        remaining: 3,
+        retryAfter: 0,
+        resetAt,
+      };
+      redisService.get.mockResolvedValue(JSON.stringify(activeData));
+
+      const result = await service.checkRateLimitForUser(userId, endpoint);
+
+      expect(result).toBe(false);
+      expect(mockLogger.log).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'warn',
+          message: expect.stringContaining('Rate limit active'),
+        }),
+      );
+    });
+  });
+
+  describe('updateRateLimitFromHeaders', () => {
+    const userId = 'user-123';
+    const endpoint = 'guild-member';
+
+    it('should persist header state without marking the bucket blocked when requests remain', async () => {
+      const headers = {
+        get: jest.fn((name: string) => {
+          switch (name.toLowerCase()) {
+            case 'x-ratelimit-bucket':
+              return 'bucket-123';
+            case 'x-ratelimit-limit':
+              return '5';
+            case 'x-ratelimit-remaining':
+              return '4';
+            case 'x-ratelimit-reset-after':
+              return '10';
+            default:
+              return null;
+          }
+        }),
+      };
+
+      await service.updateRateLimitFromHeaders(userId, endpoint, headers);
+
+      expect(redisService.set).toHaveBeenCalledWith(
+        'discord:ratelimit:user:user-123:guild-member',
+        expect.stringContaining('"remaining":4'),
+        10,
+      );
+
+      redisService.get.mockResolvedValue(
+        (redisService.set.mock.calls[0] ?? [])[1] as string,
+      );
+
+      await expect(
+        service.checkRateLimitForUser(userId, endpoint),
+      ).resolves.toBe(false);
+      await expect(
+        service.getNextAvailableAtForUser(userId, endpoint),
+      ).resolves.toBeNull();
+    });
   });
 
   describe('setRateLimitForUser', () => {
