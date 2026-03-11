@@ -20,7 +20,8 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
 
   if (events.length === 0) return null;
 
-  const featuredEvent = events[0]!;
+  const featuredEvent = events[0];
+  if (!featuredEvent) return null;
   const hasMoreEvents = events.length > 1;
   const otherEvents = events.slice(1);
 

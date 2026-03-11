@@ -1,7 +1,7 @@
 import { IsOptional, IsIn, IsString, IsBoolean } from "class-validator";
 import { Transform } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { ItemRarity, NpcType, ItemType } from "generated/client";
+import { ItemRarity, NpcType } from "generated/client";
 
 export type Period =
   | "24h"

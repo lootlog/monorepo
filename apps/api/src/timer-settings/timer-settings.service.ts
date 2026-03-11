@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import type { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";
 import type { UpdateGuildTimerSettingsDto } from "./dto/update-guild-timer-settings.dto";

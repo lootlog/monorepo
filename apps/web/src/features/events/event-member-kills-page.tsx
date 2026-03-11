@@ -336,12 +336,12 @@ export const EventMemberKillsPage = () => {
     heroId: selectedHeroId,
   });
 
-  const heroes = event?.heroNpcs ?? [];
+  const heroes = event?.heroNpcs;
   const allKills = killsData?.pages.flatMap((page) => page.data) ?? [];
   const member = killsData?.pages[0]?.member;
   const memberIdNumber = Number.parseInt(memberId ?? "", 10);
   const selectedHero = selectedHeroId
-    ? heroes.find((hero) => hero.id === selectedHeroId)
+    ? heroes?.find((hero) => hero.id === selectedHeroId)
     : undefined;
   const memberRankings = useMemo(
     () =>
@@ -387,7 +387,7 @@ export const EventMemberKillsPage = () => {
     return memberRankings
       .filter((entry) => entry.totalKills > 0)
       .map((entry) => {
-        const hero = heroes.find(
+        const hero = heroes?.find(
           (candidate) => candidate.npcName === entry.heroNpcName,
         );
         const stats = buildStatsSummary([
@@ -413,6 +413,7 @@ export const EventMemberKillsPage = () => {
       })
       .sort((a, b) => b.totalPoints - a.totalPoints);
   }, [heroes, memberRankings, selectedHero]);
+  const heroTabs = heroes ?? [];
   const contextStats = useMemo(() => {
     if (selectedHero) {
       const ranking = memberRankings.find(
@@ -617,7 +618,7 @@ export const EventMemberKillsPage = () => {
               <TabsTrigger value="all" className="flex-shrink-0 text-xs">
                 {t("events.kills.allHeroes")}
               </TabsTrigger>
-              {heroes.map((hero) => (
+              {heroTabs.map((hero) => (
                 <TabsTrigger
                   key={hero.id}
                   value={hero.id}

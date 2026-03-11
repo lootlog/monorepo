@@ -116,18 +116,16 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
             />
             <XAxis type="number" hide />
             <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(_, payload) => {
-                    const item = payload[0]?.payload as
-                      | Record<string, unknown>
-                      | undefined;
-                    return String(item?.fullName ?? "");
-                  }}
-                />
-              }
+              content=<ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const item = payload[0]?.payload as
+                    | Record<string, unknown>
+                    | undefined;
+                  return String(item?.fullName ?? "");
+                }}
+              />
             />
-            <ChartLegend content={<ChartLegendContent />} />
+            <ChartLegend content=<ChartLegendContent /> />
             <Bar
               dataKey="LEGENDARY"
               stackId="a"

@@ -6,7 +6,6 @@ import { RoutingKey } from "src/enum/routing-key.enum";
 
 describe("EventEmitterService", () => {
   let service: EventEmitterService;
-  let amqpConnection: AmqpConnection;
 
   const mockAmqpConnection = {
     publish: jest.fn(),
@@ -26,7 +25,6 @@ describe("EventEmitterService", () => {
     }).compile();
 
     service = module.get<EventEmitterService>(EventEmitterService);
-    amqpConnection = module.get<AmqpConnection>(AmqpConnection);
   });
 
   it("should be defined", () => {

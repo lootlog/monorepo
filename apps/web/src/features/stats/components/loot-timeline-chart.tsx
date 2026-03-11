@@ -131,25 +131,23 @@ export const LootTimelineChart: React.FC<LootTimelineChartProps> = ({
               width={35}
             />
             <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(_, payload) => {
-                    const item = payload[0]?.payload as
-                      | Record<string, unknown>
-                      | undefined;
-                    const fullDate = item?.fullDate;
-                    if (typeof fullDate !== "string") return "";
-                    const date = new Date(fullDate);
-                    return date.toLocaleDateString("pl-PL", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    });
-                  }}
-                />
-              }
+              content=<ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const item = payload[0]?.payload as
+                    | Record<string, unknown>
+                    | undefined;
+                  const fullDate = item?.fullDate;
+                  if (typeof fullDate !== "string") return "";
+                  const date = new Date(fullDate);
+                  return date.toLocaleDateString("pl-PL", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                }}
+              />
             />
             <Area
               type="monotone"

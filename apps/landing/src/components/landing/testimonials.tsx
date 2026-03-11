@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 interface TestimonialCardProps {
@@ -29,9 +30,12 @@ function TestimonialCard({
       <div className="flex items-center gap-4 mb-4">
         <div className="relative">
           <div className="absolute inset-0 bg-primary/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-          <img
+          <Image
             src={avatar}
             alt={name}
+            width={48}
+            height={48}
+            unoptimized
             className="relative h-12 w-12 rounded-full border-2 border-white/10 object-cover"
           />
         </div>

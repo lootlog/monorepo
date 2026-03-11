@@ -9,7 +9,6 @@ import { EventsService } from "./events.service";
 
 describe("RespawnWindowProcessor", () => {
   let processor: RespawnWindowProcessor;
-  let eventsService: EventsService;
   let logger: { log: jest.Mock };
 
   const mockEventsService = {
@@ -38,7 +37,6 @@ describe("RespawnWindowProcessor", () => {
     }).compile();
 
     processor = module.get<RespawnWindowProcessor>(RespawnWindowProcessor);
-    eventsService = module.get<EventsService>(EventsService);
     logger = mockLogger;
   });
 

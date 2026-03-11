@@ -210,9 +210,11 @@ export const HeroDetail = () => {
   );
 
   const handleSelfAssignClick = async (mapId: string) => {
+    if (!eventId) return;
+
     try {
       await selfAssignMember.mutateAsync({
-        eventId: eventId!,
+        eventId,
         mapId,
       });
       toast.success(t("events.maps.assignSuccess"));
@@ -222,9 +224,11 @@ export const HeroDetail = () => {
   };
 
   const handleSelfUnassignClick = async (mapId: string) => {
+    if (!eventId) return;
+
     try {
       await selfUnassignMember.mutateAsync({
-        eventId: eventId!,
+        eventId,
         mapId,
       });
       toast.success(t("events.maps.unassignSuccess"));
@@ -248,7 +252,7 @@ export const HeroDetail = () => {
         memberId,
       });
       toast.success(t("events.maps.assignSuccess"));
-    } catch (error) {
+    } catch {
       toast.error(t("events.maps.assignError"));
     }
   };
@@ -263,7 +267,7 @@ export const HeroDetail = () => {
         memberId,
       });
       toast.success(t("events.maps.unassignSuccess"));
-    } catch (error) {
+    } catch {
       toast.error(t("events.maps.unassignError"));
     }
   };
@@ -277,13 +281,13 @@ export const HeroDetail = () => {
       await Promise.all(
         allMaps.map((map) =>
           unassignMember.mutateAsync({
-            eventId: eventId!,
+            eventId,
             mapId: map.id,
           }),
         ),
       );
       toast.success(t("events.maps.clearAllSuccess"));
-    } catch (error) {
+    } catch {
       toast.error(t("events.maps.clearAllError"));
     }
   };
@@ -303,7 +307,7 @@ export const HeroDetail = () => {
       });
       toast.success(t("events.respawn.closeSuccess"));
       setCloseWindowOpen(false);
-    } catch (_error) {
+    } catch {
       toast.error(t("events.respawn.closeError"));
     }
   };
@@ -323,7 +327,7 @@ export const HeroDetail = () => {
       });
       toast.success(t("events.respawn.openSuccess"));
       setOpenWindowOpen(false);
-    } catch (_error) {
+    } catch {
       toast.error(t("events.respawn.openError"));
     }
   };

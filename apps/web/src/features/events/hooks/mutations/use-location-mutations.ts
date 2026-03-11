@@ -1,6 +1,20 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+interface EventMapLocationSnapshot {
+  id: string;
+  order?: number | null;
+}
+
+interface EventMapHeroSnapshot {
+  id: string;
+  locations?: EventMapLocationSnapshot[];
+}
+
+interface EventMapQuerySnapshot {
+  heroNpcs?: EventMapHeroSnapshot[];
+}
+
 interface CreateLocationData {
   name: string;
 }
@@ -83,18 +97,25 @@ export const useLocationMutations = (
 
       const previousMaps = queryClient.getQueryData(queryKeyMaps);
 
-      queryClient.setQueryData(queryKeyMaps, (old: any) => {
+      queryClient.setQueryData(queryKeyMaps, (old: EventMapQuerySnapshot) => {
         if (!old) return old;
 
-        const updatedHeroNpcs = old.heroNpcs?.map((hero: any) => {
+        const updatedHeroNpcs = old.heroNpcs?.map((hero) => {
           if (hero.id !== heroId) return hero;
 
           const reorderedLocations = data.locationIds
             .map((id, index) => {
-              const location = hero.locations?.find((l: any) => l.id === id);
+              const location = hero.locations?.find(
+                (currentLocation) => currentLocation.id === id,
+              );
               return location ? { ...location, order: index } : null;
             })
-            .filter(Boolean);
+            .filter(
+              (
+                location,
+              ): location is EventMapLocationSnapshot & { order: number } =>
+                location !== null,
+            );
 
           return { ...hero, locations: reorderedLocations };
         });

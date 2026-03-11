@@ -166,7 +166,7 @@ export const EventDetail = () => {
     try {
       await deleteHero.mutateAsync(heroId);
       toast.success(t("events.heroes.deleted"));
-    } catch (_) {
+    } catch {
       toast.error(t("events.heroes.deleteError"));
     }
   };
@@ -225,7 +225,7 @@ export const EventDetail = () => {
                   endsAt: new Date().toISOString(),
                 });
                 toast.success(t("events.endSuccess"));
-              } catch (_) {
+              } catch {
                 toast.error(t("events.statusError"));
               }
             }}
@@ -241,7 +241,7 @@ export const EventDetail = () => {
                   endsAt: null,
                 });
                 toast.success(t("events.resumeSuccess"));
-              } catch (_) {
+              } catch {
                 toast.error(t("events.statusError"));
               }
             }}

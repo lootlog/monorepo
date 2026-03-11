@@ -32,8 +32,8 @@ describe("MembersService", () => {
   let service: MembersService;
   let prismaService: any;
   let discordService: jest.Mocked<DiscordService>;
-  let rateLimiter: jest.Mocked<DiscordRateLimiterService>;
-  let refreshScheduler: jest.Mocked<MemberRefreshSchedulerService>;
+  let _rateLimiter: jest.Mocked<DiscordRateLimiterService>;
+  let _refreshScheduler: jest.Mocked<MemberRefreshSchedulerService>;
   let guildsService: jest.Mocked<GuildsService>;
   let amqpConnection: jest.Mocked<AmqpConnection>;
 
@@ -172,8 +172,8 @@ describe("MembersService", () => {
     service = module.get<MembersService>(MembersService);
     prismaService = module.get(PrismaService);
     discordService = module.get(DiscordService);
-    rateLimiter = module.get(DiscordRateLimiterService);
-    refreshScheduler = module.get(MemberRefreshSchedulerService);
+    _rateLimiter = module.get(DiscordRateLimiterService);
+    _refreshScheduler = module.get(MemberRefreshSchedulerService);
     guildsService = module.get(GuildsService);
     amqpConnection = module.get(AmqpConnection);
 

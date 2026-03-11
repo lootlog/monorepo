@@ -13,7 +13,6 @@ import { EVENT_HERO_KILL_JOB_NAME } from "./utils/event-hero-kill-job";
 
 describe("EventsService", () => {
   let service: EventsService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     event: {
@@ -134,7 +133,6 @@ describe("EventsService", () => {
     }).compile();
 
     service = module.get<EventsService>(EventsService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   it("should be defined", () => {

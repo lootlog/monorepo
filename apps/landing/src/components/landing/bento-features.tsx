@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@lootlog/ui/lib/utils";
 import { motion } from "framer-motion";
 
@@ -41,9 +42,12 @@ function BentoCard({
 
         <div className="mt-auto w-full rounded-xl overflow-hidden bg-black/20 border border-white/5 relative group-hover:scale-[1.02] transition-transform duration-500">
           {image ? (
-            <img
+            <Image
               src={image}
               alt={title}
+              width={800}
+              height={450}
+              unoptimized
               className="w-full h-auto object-cover"
             />
           ) : (
@@ -364,7 +368,7 @@ export function BentoFeatures() {
           title="Synchronizacja Timerów"
           description="Wspólne odliczanie dla całego klanu."
           className="md:col-span-1 md:row-span-2"
-          visual={<TimersVisual />}
+          visual=<TimersVisual />
         />
 
         {/* Loot - Wide */}
@@ -372,7 +376,7 @@ export function BentoFeatures() {
           title="Lootlog z Filtrami"
           description="Zaawansowane filtrowanie łupów."
           className="md:col-span-2 md:row-span-1"
-          visual={<LootVisual />}
+          visual=<LootVisual />
         />
 
         {/* Notifications - Standard */}
@@ -380,7 +384,7 @@ export function BentoFeatures() {
           title="Powiadomienia"
           description="Bądź zawsze na bieżąco."
           className="md:col-span-1 md:row-span-1"
-          visual={<NotificationVisual />}
+          visual=<NotificationVisual />
         />
 
         {/* Battles - Standard */}
@@ -388,7 +392,7 @@ export function BentoFeatures() {
           title="Analiza Walk"
           description="Wykresy, statystyki, wnioski."
           className="md:col-span-1 md:row-span-1"
-          visual={<BattleVisual />}
+          visual=<BattleVisual />
         />
 
         {/* Chat - Wide */}
@@ -396,7 +400,7 @@ export function BentoFeatures() {
           title="Czat Zintegrowany"
           description="Komunikacja bez wychodzenia z gry."
           className="md:col-span-2 md:row-span-1"
-          visual={<ChatVisual />}
+          visual=<ChatVisual />
         />
 
         {/* Reservations - Standard */}
@@ -404,7 +408,7 @@ export function BentoFeatures() {
           title="System Rezerwacji"
           description="Koniec z kłótniami o respy."
           className="md:col-span-1 md:row-span-1"
-          visual={<ReservationVisual />}
+          visual=<ReservationVisual />
         />
       </div>
     </div>

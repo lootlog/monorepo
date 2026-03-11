@@ -181,7 +181,7 @@ describe("EventKillService", () => {
       ]);
       mockPrismaService.member.findMany.mockResolvedValue([{ id: 1 }]);
 
-      const result = await service.getEventHeroTimers(guildId, eventId, world);
+      await service.getEventHeroTimers(guildId, eventId, world);
 
       expect(mockPrismaService.$queryRaw).toHaveBeenCalled();
     });

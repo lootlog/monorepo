@@ -59,7 +59,7 @@ describe("LootsService", () => {
   let npcsService: {
     bulkIndexNpcs: jest.Mock;
   };
-  let itemsService: {
+  let _itemsService: {
     bulkIndexItems: jest.Mock;
   };
   let guildsService: {
@@ -71,7 +71,7 @@ describe("LootsService", () => {
   let userLootlogConfigService: {
     getLootlogCharacterConfig: jest.Mock;
   };
-  let redisService: {
+  let _redisService: {
     getClient: jest.Mock;
     get: jest.Mock;
     del: jest.Mock;
@@ -186,7 +186,7 @@ describe("LootsService", () => {
       getLootlogCharacterConfig: jest.fn(),
     };
 
-    const mockRedisClient = {} as any;
+    const mockRedisClient = {} as Record<string, never>;
 
     const mockRedisService = {
       getClient: jest.fn().mockResolvedValue(mockRedisClient),
@@ -237,11 +237,11 @@ describe("LootsService", () => {
     prismaService = module.get(PrismaService);
     playersService = module.get(PlayersService);
     npcsService = module.get(NpcsService);
-    itemsService = module.get(ItemsService);
+    _itemsService = module.get(ItemsService);
     guildsService = module.get(GuildsService);
     lootlogConfigService = module.get(LootlogConfigService);
     userLootlogConfigService = module.get(UserLootlogConfigService);
-    redisService = module.get(RedisService);
+    _redisService = module.get(RedisService);
   });
 
   afterEach(() => {

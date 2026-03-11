@@ -23,7 +23,6 @@ import { type Guild, Permission, type Role } from "generated/client";
 import { CreateCommentDto } from "src/loots/dto/create-comment-dto";
 import { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
-import { LootStatsQueryDto } from "src/loots/dto/loot-stats.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
 import { DiscordId } from "src/shared/decorators/discord-id.decorator";

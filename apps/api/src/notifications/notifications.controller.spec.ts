@@ -8,7 +8,6 @@ jest.mock("uuid", () => ({
 
 describe("NotificationsController", () => {
   let controller: NotificationsController;
-  let service: NotificationsService;
 
   const mockNotificationsService = {
     cancelPartyGathering: jest.fn(),
@@ -26,7 +25,6 @@ describe("NotificationsController", () => {
     }).compile();
 
     controller = module.get<NotificationsController>(NotificationsController);
-    service = module.get<NotificationsService>(NotificationsService);
     jest.clearAllMocks();
   });
 

@@ -21,10 +21,15 @@ import {
   getScoringConditionTypeLabel,
   getScoringFactorLabel,
 } from "../../utils/scoring-rule-labels";
+import type { EventScoringRules } from "../../types/scoring-rules";
+
+type ScoringRulesFormValues = {
+  scoringRules: EventScoringRules;
+};
 
 interface ScoringRulesEditorProps {
-  control: Control<any>;
-  register: UseFormRegister<any>;
+  control: Control<ScoringRulesFormValues>;
+  register: UseFormRegister<ScoringRulesFormValues>;
   t: TFunction;
 }
 
@@ -55,8 +60,8 @@ const RuleConditionsEditor = ({
   ruleIndex,
   t,
 }: {
-  control: Control<any>;
-  register: UseFormRegister<any>;
+  control: Control<ScoringRulesFormValues>;
+  register: UseFormRegister<ScoringRulesFormValues>;
   ruleIndex: number;
   t: TFunction;
 }) => {
@@ -101,8 +106,8 @@ const RuleConditionRow = ({
   onRemove,
   t,
 }: {
-  control: Control<any>;
-  register: UseFormRegister<any>;
+  control: Control<ScoringRulesFormValues>;
+  register: UseFormRegister<ScoringRulesFormValues>;
   ruleIndex: number;
   conditionIndex: number;
   canRemove: boolean;
@@ -283,8 +288,8 @@ const RuleActionEditor = ({
   ruleIndex,
   t,
 }: {
-  control: Control<any>;
-  register: UseFormRegister<any>;
+  control: Control<ScoringRulesFormValues>;
+  register: UseFormRegister<ScoringRulesFormValues>;
   ruleIndex: number;
   t: TFunction;
 }) => {

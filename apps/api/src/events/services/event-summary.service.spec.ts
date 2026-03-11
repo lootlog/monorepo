@@ -5,7 +5,6 @@ import { EventSummaryService } from "./event-summary.service";
 
 describe("EventSummaryService", () => {
   let service: EventSummaryService;
-  let prisma: PrismaService;
 
   const mockTransaction = jest.fn();
 
@@ -45,7 +44,6 @@ describe("EventSummaryService", () => {
     }).compile();
 
     service = module.get<EventSummaryService>(EventSummaryService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   it("should be defined", () => {

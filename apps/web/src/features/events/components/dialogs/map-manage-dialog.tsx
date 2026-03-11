@@ -124,9 +124,18 @@ export const MapManageDialog = ({
     );
   };
 
-  const allMapsFromLocations = hero.locations?.flatMap((loc) => loc.maps) ?? [];
-  const allMaps = [...allMapsFromLocations, ...hero.maps];
-  const addedMapIds = new Set(allMaps.map((m) => m.mapId));
+  const allMapsFromLocations = useMemo(
+    () => hero.locations?.flatMap((location) => location.maps) ?? [],
+    [hero.locations],
+  );
+  const allMaps = useMemo(
+    () => [...allMapsFromLocations, ...hero.maps],
+    [allMapsFromLocations, hero.maps],
+  );
+  const addedMapIds = useMemo(
+    () => new Set(allMaps.map((map) => map.mapId)),
+    [allMaps],
+  );
 
   const filteredGameMaps = useMemo(() => {
     if (!gameMaps) return [];

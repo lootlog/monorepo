@@ -75,7 +75,6 @@ const categorizeAction = (
   } else if (isOutcomeAction(actionType)) {
     parsedActions.outcomeActions.push(action);
   } else if (isIgnoredAction(actionType)) {
-    return;
   }
 };
 
