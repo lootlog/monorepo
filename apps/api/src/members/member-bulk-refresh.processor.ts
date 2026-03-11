@@ -68,14 +68,18 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
       for (const memberId of memberIds) {
         try {
-          await this.membersService.refreshMember({
+          const refreshedMember = await this.membersService.refreshMember({
             discordId: memberId,
             guildId,
             skipTtlCheck: true,
           });
 
           progress.processedCount++;
-          progress.refreshedIds.push(memberId);
+          if (refreshedMember?.refreshQueued) {
+            progress.skippedIds.push(memberId);
+          } else {
+            progress.refreshedIds.push(memberId);
+          }
 
           if (progress.processedCount % this.JOB_UPDATE_INTERVAL === 0) {
             await this.updateJobProgress(jobId, progress);

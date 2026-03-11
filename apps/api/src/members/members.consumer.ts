@@ -4,12 +4,13 @@ import type { Queue as BullQueue } from 'bullmq';
 import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import type { Logger } from 'winston';
-import { MembersService } from 'src/members/members.service';
 import { PrismaService } from 'src/db/prisma.service';
 import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
 import { RoutingKey } from 'src/enum/routing-key.enum';
 import { Queue } from 'src/enum/queue.enum';
 import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
+import { MemberRefreshSchedulerService } from './member-refresh-scheduler.service';
+import { MEMBER_REFRESH_PRIORITY } from './constants/member-refresh-queue.constant';
 
 interface BulkRefreshPayload {
   jobId: number;
@@ -25,13 +26,11 @@ interface MemberRefreshPayload {
 
 @Injectable()
 export class MembersConsumer {
-  private readonly MEMBER_REFRESH_DELAY_MS = 200;
-
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
     private readonly bulkRefreshQueue: BullQueue,
-    private readonly membersService: MembersService,
+    private readonly memberRefreshScheduler: MemberRefreshSchedulerService,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
@@ -103,19 +102,17 @@ export class MembersConsumer {
     });
 
     try {
-      await this.sleep(this.MEMBER_REFRESH_DELAY_MS);
-
-      await this.membersService.getGuildMemberById({
+      await this.memberRefreshScheduler.enqueueRefresh({
         discordId,
         guildId,
         userId,
-        refresh: false,
-        standalone: false,
+        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
+        reason: 'legacy-rabbit-refresh',
       });
 
       this.logger.log({
         level: 'debug',
-        message: `Successfully refreshed member ${discordId} in guild ${guildId}`,
+        message: `Queued refresh for member ${discordId} in guild ${guildId}`,
       });
     } catch (error) {
       this.logger.log({
@@ -124,10 +121,6 @@ export class MembersConsumer {
         stack: (error as Error).stack,
       });
     }
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private async emitJobUpdate(jobId: number) {
