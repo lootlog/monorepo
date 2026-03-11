@@ -1,3 +1,31 @@
-# `@lootlog/typescript-config`
+# @lootlog/typescript-config
 
-Shared typescript configuration for the workspace.
+Shared TypeScript configuration presets for the Lootlog monorepo.
+
+## Overview
+
+- Provides reusable `tsconfig` bases for Node-style services, Hono apps, Vite apps, Next.js apps, and React libraries.
+- Keeps compiler defaults consistent across workspaces without duplicating JSON config.
+
+## Available Presets
+
+- `base.json`
+- `hono.json`
+- `nextjs.json`
+- `react-library.json`
+- `vite.json`
+
+## Usage
+
+Example:
+
+```json
+{
+  "extends": "@lootlog/typescript-config/vite.json"
+}
+```
+
+## Notes
+
+- This workspace does not define build scripts; it only stores shared JSON config files.
+- Update these presets carefully because they affect multiple apps and packages at once.

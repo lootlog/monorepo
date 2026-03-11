@@ -1,79 +1,29 @@
-# API Helpers
+# @lootlog/api-helpers
 
-Shared authentication utilities for validating JWT tokens across services.
+Shared auth and request-context helpers for backend services.
 
 ## Overview
 
-The API Helpers package provides reusable authentication and authorization utilities used by all backend services. It handles JWT validation using JWKS (JSON Web Key Set) from the Auth service.
+- Provides reusable helpers for validating Auth-issued JWTs and extracting user metadata from trusted headers.
+- Supports the Hono services used in this monorepo and keeps auth-adjacent logic out of individual apps.
+- Ships an additional `permissions` subpath export for permission-related helpers.
 
-## Features
+## Exports
 
-- **JWT Validation** - Verify JWT tokens from Auth service
-- **JWKS Integration** - Fetch and cache public keys
-- **NestJS Guards** - Ready-to-use authentication guards
-- **Hono Middleware** - Authentication middleware for Hono apps
-- **Token Parsing** - Extract user claims from tokens
-- **Type-Safe** - Full TypeScript support
-
-## Usage
-
-### NestJS Services (API, Battlelog, Discord Bot, Gateway)
-
-```typescript
-import { JwtAuthGuard } from "@lootlog/api-helpers";
-
-@Controller("guilds")
-@UseGuards(JwtAuthGuard)
-export class GuildsController {
-  @Get()
-  findAll(@Request() req) {
-    // req.user contains decoded JWT claims
-    console.log(req.user.id);
-  }
-}
-```
-
-### Hono Services (Auth, Search)
-
-```typescript
-import { jwtMiddleware } from "@lootlog/api-helpers";
-
-app.use("/api/*", jwtMiddleware());
-
-app.get("/api/protected", (c) => {
-  const user = c.get("user");
-  return c.json({ userId: user.id });
-});
-```
-
-## Exported Utilities
-
-- `JwtAuthGuard` - NestJS guard for route protection
-- `jwtMiddleware()` - Hono middleware for authentication
-- `validateToken(token)` - Manual token validation
-- `getJwks()` - Fetch JWKS from Auth service
-- `extractUser(token)` - Extract user claims
-
-## How It Works
-
-1. Auth service generates JWT tokens signed with private key
-2. Auth service exposes JWKS endpoint with public keys
-3. API Helpers fetches and caches public keys
-4. Services use API Helpers to validate incoming JWT tokens
-5. User claims are extracted and made available to controllers
+- `userMetadataFromHeaders`
+- `validateToken`
+- JWT verification types from `verify-jwt.types`
+- `@lootlog/api-helpers/permissions`
 
 ## Development
 
-```bash
-# From monorepo root
-cd packages/api-helpers
-pnpm build               # Build package
+Run commands from the monorepo root:
 
-# Used by other services automatically via workspace:*
+```bash
+pnpm --filter @lootlog/api-helpers build
 ```
 
-## Environment Variables
+## Notes
 
-Services using this package need:
-
-- `AUTH_SERVICE_URL` - URL to Auth service JWKS endpoint
+- Main exports are defined in `src/index.ts`.
+- Token verification is implemented with `jose` and expects either a JWKS object or a remote JWKS URL.

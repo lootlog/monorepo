@@ -1,69 +1,29 @@
-# Game Client
+# @lootlog/game-client
 
-In-game companion overlay for Margonem built with React 19.
+React userscript client for the in-game Margonem experience.
 
 ## Overview
 
-The Game Client is an overlay application that runs alongside the Margonem game, providing real-time information, notifications, and quick access to Lootlog features directly in the game window.
-
-## Features
-
-- **Real-Time Notifications** - Boss timers, loot drops, clan updates
-- **Quick Access Panel** - Fast access to clan features
-- **Timer Display** - Visual countdown for boss spawns
-- **Battle Logging** - Automatic battle data capture
-- **Loot Tracking** - Real-time loot recording
-- **Socket.IO Integration** - Live updates from Gateway service
-- **Minimal UI** - Non-intrusive overlay design
-
-## Tech Stack
-
-- **React 19** - Modern React with concurrent features
-- **Vite** - Fast build tool and dev server
-- **TanStack Query** - Data fetching and caching
-- **Socket.IO Client** - WebSocket connections
-- **Tailwind CSS** - Utility-first styling
-- **Radix UI** - Accessible components from `@lootlog/ui`
-
-## Architecture
-
-The client communicates with:
-
-- **Gateway Service** - WebSocket connections for real-time updates
-- **API Service** - REST endpoints for data fetching
-- **Auth Service** - User authentication
+- Built with Vite and `vite-plugin-monkey` to inject Lootlog UI into supported Margonem domains.
+- Combines timers, notifications, chat, quick access tools, party finder, NPC detection, and settings into a single overlay.
+- Uses React Query, Socket.IO, Zustand, and shared workspace packages such as `@lootlog/types` and `@lootlog/socket-parser`.
 
 ## Development
 
-```bash
-# From monorepo root
-cd apps/game-client
-pnpm dev                 # Start development server
-
-# Client runs on http://localhost:5174
-```
-
-## Building
+Run commands from the monorepo root:
 
 ```bash
-# From monorepo root
-pnpm build:game-client   # Build for production
-
-# Output: apps/game-client/dist/
+pnpm --filter @lootlog/game-client dev
 ```
 
-## Deployment
+## Key Scripts
 
-The game client is designed to be:
+- `pnpm --filter @lootlog/game-client build`
+- `pnpm --filter @lootlog/game-client preview`
+- `pnpm --filter @lootlog/game-client test`
+- `pnpm --filter @lootlog/game-client test:coverage`
 
-- Loaded as an overlay in the browser
-- Injected into the game via browser extension
-- Served as a standalone companion window
+## Notes
 
-## Environment Variables
-
-See `.env.sample` for required configuration:
-
-- API URL
-- Gateway WebSocket URL
-- Auth service URL
+- `build` also copies the userscript entrypoint after the Vite bundle is created.
+- Vite configuration lives in `vite.config.ts`, including the userscript match and exclude rules.
