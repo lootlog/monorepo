@@ -52,3 +52,9 @@ example-data
 GEMINI.md
 
 .pnpm-store
+
+prompts
+
+.agent/skills/context7/.env
+.agents/skills/context7/.env
+.claude/skills/context7/.env
