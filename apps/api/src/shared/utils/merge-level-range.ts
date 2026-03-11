@@ -1,4 +1,4 @@
-import type { Permission, Role } from 'generated/client';
+import type { Permission, Role } from "generated/client";
 
 export function mergeLevelRanges(
   roles: Role[],

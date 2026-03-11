@@ -5,6 +5,7 @@ This document outlines the styling conventions and patterns used in the web appl
 ## Page Structure
 
 ### Root Container
+
 All feature pages use a consistent root container structure:
 
 ```tsx
@@ -15,6 +16,7 @@ All feature pages use a consistent root container structure:
 ```
 
 ### Page Header
+
 Headers follow a specific pattern with icon, title, and optional actions:
 
 ```tsx
@@ -54,25 +56,23 @@ Headers follow a specific pattern with icon, title, and optional actions:
 ```
 
 ### Content Area
+
 Content should be wrapped with horizontal padding:
 
 ```tsx
-<div className="px-3">
-  {/* Content cards, lists, forms */}
-</div>
+<div className="px-3">{/* Content cards, lists, forms */}</div>
 ```
 
 Or for forms, apply padding directly:
 
 ```tsx
-<form className="px-3 space-y-4">
-  {/* Form content */}
-</form>
+<form className="px-3 space-y-4">{/* Form content */}</form>
 ```
 
 ## Cards
 
 ### Standard Card
+
 ```tsx
 <Card className="p-4 bg-card/40 backdrop-blur-sm border-border">
   {/* Card content */}
@@ -80,6 +80,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Interactive Card (clickable)
+
 ```tsx
 <Card className="p-4 bg-card/40 backdrop-blur-sm hover:bg-card/60 transition-all cursor-pointer border-border hover:border-primary/30">
   {/* Card content */}
@@ -87,6 +88,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Active/Highlighted Card
+
 ```tsx
 <Card className={`p-4 bg-card/40 backdrop-blur-sm ${
   isActive
@@ -96,6 +98,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Empty State Card
+
 ```tsx
 <Card className="flex flex-col items-center justify-center h-64 gap-4 bg-card/40 backdrop-blur-sm">
   <Icon className="w-16 h-16 text-muted-foreground" />
@@ -110,6 +113,7 @@ Or for forms, apply padding directly:
 ## Loading States
 
 ### Centered Spinner
+
 ```tsx
 <div className="flex items-center justify-center h-64">
   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -117,6 +121,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Button Loading State
+
 ```tsx
 <Button disabled={isPending}>
   {isPending ? (
@@ -140,6 +145,7 @@ Or for forms, apply padding directly:
 ## Badges and Tags
 
 ### Map/Location Tag
+
 ```tsx
 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
   <MapPin className="w-3 h-3" />
@@ -148,14 +154,11 @@ Or for forms, apply padding directly:
 ```
 
 ### Removable Tag
+
 ```tsx
 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
   {tagName}
-  <button
-    type="button"
-    onClick={onRemove}
-    className="hover:text-destructive"
-  >
+  <button type="button" onClick={onRemove} className="hover:text-destructive">
     <X className="w-3 h-3" />
   </button>
 </span>
@@ -164,6 +167,7 @@ Or for forms, apply padding directly:
 ## List Items
 
 ### Standard List Item with Actions
+
 ```tsx
 <div className="p-3 bg-muted/50 rounded-lg border border-border">
   <div className="flex items-start justify-between mb-2">
@@ -180,6 +184,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Nested List Item
+
 ```tsx
 <div className="p-2 bg-muted/30 rounded-lg border border-border/50">
   {/* Content */}
@@ -189,6 +194,7 @@ Or for forms, apply padding directly:
 ## Forms
 
 ### Form Structure
+
 ```tsx
 <form onSubmit={handleSubmit} className="px-3 space-y-4">
   <Card className="p-4 bg-card/40 backdrop-blur-sm border-border space-y-4">
@@ -202,6 +208,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Form Field
+
 ```tsx
 <div className="space-y-2">
   <Label htmlFor="fieldId">{t("field.label")}</Label>
@@ -215,6 +222,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Switch Field
+
 ```tsx
 <div className="flex items-center justify-between">
   <Label htmlFor="switchId">{t("switch.label")}</Label>
@@ -223,6 +231,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Inline Form (e.g., add to list)
+
 ```tsx
 <div className="space-y-3 p-3 border rounded-lg">
   <Input placeholder="Field 1" />
@@ -245,6 +254,7 @@ Or for forms, apply padding directly:
 ## Button Patterns
 
 ### Header Action Button
+
 ```tsx
 <Button size="sm">
   <Plus className="w-4 h-4 mr-2" />
@@ -253,6 +263,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Outline Action Button
+
 ```tsx
 <Button variant="outline" size="sm">
   <Icon className="w-4 h-4 mr-1" />
@@ -261,6 +272,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Icon-only Button
+
 ```tsx
 <Button variant="ghost" size="icon">
   <Icon className="w-4 h-4" />
@@ -268,6 +280,7 @@ Or for forms, apply padding directly:
 ```
 
 ### Destructive Icon Button
+
 ```tsx
 <Button
   variant="ghost"
@@ -299,7 +312,9 @@ Or for forms, apply padding directly:
 Always use translation keys with fallback values:
 
 ```tsx
-{t("feature.title", "Default Title")}
+{
+  t("feature.title", "Default Title");
+}
 ```
 
 For sub-pages, include description translations:

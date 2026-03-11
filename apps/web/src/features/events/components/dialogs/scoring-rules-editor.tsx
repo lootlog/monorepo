@@ -201,8 +201,12 @@ const RuleConditionRow = ({
             )}
             className="h-9 rounded-md border bg-background px-2 text-sm"
           >
-            <option value="true">{t("events.scoring.booleanValue.true", "tak")}</option>
-            <option value="false">{t("events.scoring.booleanValue.false", "nie")}</option>
+            <option value="true">
+              {t("events.scoring.booleanValue.true", "tak")}
+            </option>
+            <option value="false">
+              {t("events.scoring.booleanValue.false", "nie")}
+            </option>
           </select>
         </div>
       )}
@@ -266,7 +270,7 @@ const RuleConditionRow = ({
       <p className="text-[11px] text-muted-foreground">
         {t(
           "events.scoring.conditionAndHint",
-          "Warunki w regule są łączone spójnikiem \"i\"",
+          'Warunki w regule są łączone spójnikiem "i"',
         )}
       </p>
     </div>
@@ -380,7 +384,10 @@ export const ScoringRulesEditor = ({
           {t("events.scoring.rules", "Reguły JEŻELI + akcja")}
         </Label>
         {fields.map((field, ruleIndex) => (
-          <div key={field.id} className="rounded-lg border bg-background/70 p-3 space-y-3">
+          <div
+            key={field.id}
+            className="rounded-lg border bg-background/70 p-3 space-y-3"
+          >
             <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
               <Input
                 {...register(`scoringRules.rules.${ruleIndex}.name`)}
@@ -459,7 +466,10 @@ export const ScoringRulesEditor = ({
         </Button>
       </div>
 
-      <input type="hidden" {...register("scoringRules.version", { value: 1 })} />
+      <input
+        type="hidden"
+        {...register("scoringRules.version", { value: 1 })}
+      />
     </div>
   );
 };

@@ -1,4 +1,11 @@
 {
   "title": "Dokumentacja",
-  "pages": ["index", "installation", "getting-started", "features", "events", "faq"]
+  "pages": [
+    "index",
+    "installation",
+    "getting-started",
+    "features",
+    "events",
+    "faq"
+  ]
 }

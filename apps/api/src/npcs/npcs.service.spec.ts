@@ -1,8 +1,8 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { NpcsService } from './npcs.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { NpcsService } from "./npcs.service";
 
-describe('NpcsService', () => {
+describe("NpcsService", () => {
   let service: NpcsService;
 
   const mockAmqpConnection = {
@@ -23,7 +23,7 @@ describe('NpcsService', () => {
     service = module.get<NpcsService>(NpcsService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

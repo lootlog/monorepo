@@ -13,7 +13,7 @@ export const setupNpcsHandlers = async () => {
   await channel.bindQueue(
     Queue.SEARCH_NPCS_INDEX,
     APP_CONFIG.rabbitmq.exchange,
-    RoutingKey.SEARCH_NPCS_INDEX
+    RoutingKey.SEARCH_NPCS_INDEX,
   );
 
   channel
@@ -28,7 +28,7 @@ export const setupNpcsHandlers = async () => {
           channel?.ack(msg);
         }
       },
-      { noAck: false }
+      { noAck: false },
     )
     .catch((error) => {
       console.error("Error consuming message:", error);

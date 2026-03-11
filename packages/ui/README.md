@@ -19,6 +19,7 @@ The UI package provides a collection of reusable, accessible, and customizable R
 ## Components
 
 ### Form Components
+
 - `Button` - Various button styles and sizes
 - `Input` - Text input with validation
 - `Select` - Dropdown select menu
@@ -28,6 +29,7 @@ The UI package provides a collection of reusable, accessible, and customizable R
 - `Textarea` - Multi-line text input
 
 ### Layout Components
+
 - `Card` - Container with header, content, footer
 - `Dialog` - Modal dialog
 - `Popover` - Floating popover menu
@@ -36,6 +38,7 @@ The UI package provides a collection of reusable, accessible, and customizable R
 - `Accordion` - Collapsible sections
 
 ### Feedback Components
+
 - `Toast` - Notification messages
 - `Alert` - Alert banners
 - `Tooltip` - Hover tooltips
@@ -44,6 +47,7 @@ The UI package provides a collection of reusable, accessible, and customizable R
 - `Progress` - Progress bar
 
 ### Data Display
+
 - `Table` - Data tables
 - `Avatar` - User avatars
 - `Separator` - Visual divider

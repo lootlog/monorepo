@@ -1,4 +1,4 @@
-import { NpcType, Permission, type Role } from 'generated/client';
+import { NpcType, Permission, type Role } from "generated/client";
 
 export const canViewNpcTimer = (
   npc: { lvl: number; type: NpcType } | null,

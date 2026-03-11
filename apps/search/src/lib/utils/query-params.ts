@@ -3,7 +3,7 @@ import { type z } from "zod";
 
 export const parseQueryParams = <T extends z.ZodTypeAny>(
   url: string,
-  schema: T
+  schema: T,
 ) => {
   const { searchParams } = new URL(url);
   const queryParams = Object.fromEntries(searchParams);
@@ -11,7 +11,7 @@ export const parseQueryParams = <T extends z.ZodTypeAny>(
     (r: { [key: string]: string }, key) => (
       queryParams[key] && (r[key] = queryParams[key]), r
     ),
-    {}
+    {},
   );
 
   return parseSchema(trimmedParams, schema);

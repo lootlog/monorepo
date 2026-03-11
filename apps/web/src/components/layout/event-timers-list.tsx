@@ -62,8 +62,12 @@ const TimerItem: FC<TimerItemProps> = ({
   if (timeLeft <= 0) return null;
 
   const isClose = timeLeft < 60000;
-  const minTime = format(new Date(timer.minSpawnTime), "HH:mm:ss", { locale: pl });
-  const maxTime = format(new Date(timer.maxSpawnTime), "HH:mm:ss", { locale: pl });
+  const minTime = format(new Date(timer.minSpawnTime), "HH:mm:ss", {
+    locale: pl,
+  });
+  const maxTime = format(new Date(timer.maxSpawnTime), "HH:mm:ss", {
+    locale: pl,
+  });
 
   return (
     <Tooltip>
@@ -172,7 +176,9 @@ export const EventTimersList: FC<EventTimersListProps> = ({
           }}
           className="w-full px-2 py-1 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-yellow-500/10 transition-colors"
         >
-          <span>{isExpanded ? "Zwiń" : `+${activeTimers.length - 3} więcej`}</span>
+          <span>
+            {isExpanded ? "Zwiń" : `+${activeTimers.length - 3} więcej`}
+          </span>
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}

@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import type { CreateLootDto } from 'src/loots/dto/create-loot.dto';
-import type { LootlogConfigNpc } from 'generated/client';
-import { LootMappingService } from './loot-mapping.service';
+import { Injectable } from "@nestjs/common";
+import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
+import type { LootlogConfigNpc } from "generated/client";
+import { LootMappingService } from "./loot-mapping.service";
 
 @Injectable()
 export class LootValidationService {
   constructor(private readonly lootMappingService: LootMappingService) {}
 
   getLootForGivenConfig(
-    loot: CreateLootDto['loots'],
+    loot: CreateLootDto["loots"],
     npcs: LootlogConfigNpc[],
     highestWtNpcType: string,
   ) {

@@ -130,7 +130,9 @@ export const EventDetail = () => {
   });
   const scoringMode = normalizeScoringMode(event?.scoringMode);
   const scoringRules =
-    scoringMode === "ADVANCED" ? normalizeScoringRules(event?.scoringRules) : null;
+    scoringMode === "ADVANCED"
+      ? normalizeScoringRules(event?.scoringRules)
+      : null;
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||

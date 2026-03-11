@@ -6,12 +6,13 @@ import type {
   EventScoringNumericFactor,
 } from "../types/scoring-rules";
 
-const CONDITION_TYPE_FALLBACKS: Record<EventScoringCondition["type"], string> = {
-  NUMERIC: "Warunek liczbowy",
-  BOOLEAN: "Warunek logiczny",
-  KILL_TIME_IN_WINDOW: "Godzina zabicia w oknie",
-  RESPAWN_WINDOW_COVERAGE: "Pokrycie okna respawnu",
-};
+const CONDITION_TYPE_FALLBACKS: Record<EventScoringCondition["type"], string> =
+  {
+    NUMERIC: "Warunek liczbowy",
+    BOOLEAN: "Warunek logiczny",
+    KILL_TIME_IN_WINDOW: "Godzina zabicia w oknie",
+    RESPAWN_WINDOW_COVERAGE: "Pokrycie okna respawnu",
+  };
 
 const ACTION_TYPE_FALLBACKS: Record<EventScoringAction["type"], string> = {
   SET_BASE: "Ustaw podstawę",
@@ -39,8 +40,7 @@ const FACTOR_FALLBACKS: Record<
 export const getScoringConditionTypeLabel = (
   type: EventScoringCondition["type"],
   t: TFunction,
-) =>
-  t(`events.scoring.conditionType.${type}`, CONDITION_TYPE_FALLBACKS[type]);
+) => t(`events.scoring.conditionType.${type}`, CONDITION_TYPE_FALLBACKS[type]);
 
 export const getScoringActionTypeLabel = (
   type: EventScoringAction["type"],

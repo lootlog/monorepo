@@ -1,6 +1,6 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from "node:crypto";
 
-jest.mock('uuid', () => ({
+jest.mock("uuid", () => ({
   v6: () => randomUUID(),
   v4: () => randomUUID(),
   v5: jest.fn(),

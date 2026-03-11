@@ -1,10 +1,10 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { TimersController } from './timers.controller';
-import { TimersService } from './timers.service';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { TimersController } from "./timers.controller";
+import { TimersService } from "./timers.service";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
-describe('TimersController', () => {
+describe("TimersController", () => {
   let controller: TimersController;
 
   const mockTimersService = {
@@ -35,7 +35,7 @@ describe('TimersController', () => {
     controller = module.get<TimersController>(TimersController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 });

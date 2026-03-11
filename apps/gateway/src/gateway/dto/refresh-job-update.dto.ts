@@ -1,7 +1,7 @@
 export class RefreshJobUpdateDto {
   jobId: number;
   guildId: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   totalMembers: number;
   processedMembers: number;
   failedMembers: number;

@@ -5,8 +5,8 @@ import {
   IsBoolean,
   IsInt,
   Min,
-} from 'class-validator';
-import { Transform } from 'class-transformer';
+} from "class-validator";
+import { Transform } from "class-transformer";
 
 export class QueryBattleStatisticsDto {
   @IsOptional()
@@ -19,8 +19,8 @@ export class QueryBattleStatisticsDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['24h', '3d', '7d', '14d', '30d', '90d', '180d', 'all'])
-  period?: '24h' | '3d' | '7d' | '14d' | '30d' | '90d' | '180d' | 'all';
+  @IsIn(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"])
+  period?: "24h" | "3d" | "7d" | "14d" | "30d" | "90d" | "180d" | "all";
 
   @IsOptional()
   @Transform(({ value }) => Number.parseInt(value, 10))
@@ -47,30 +47,30 @@ export class QueryBattleStatisticsDto {
   @IsOptional()
   @IsString()
   @IsIn([
-    'wins',
-    'losses',
-    'totalBattles',
-    'winRate',
-    'lastBattleDate',
-    'totalRatingDelta',
-    'avgRatingDelta',
+    "wins",
+    "losses",
+    "totalBattles",
+    "winRate",
+    "lastBattleDate",
+    "totalRatingDelta",
+    "avgRatingDelta",
   ])
   sortBy?:
-    | 'wins'
-    | 'losses'
-    | 'totalBattles'
-    | 'winRate'
-    | 'lastBattleDate'
-    | 'totalRatingDelta'
-    | 'avgRatingDelta' = 'totalBattles';
+    | "wins"
+    | "losses"
+    | "totalBattles"
+    | "winRate"
+    | "lastBattleDate"
+    | "totalRatingDelta"
+    | "avgRatingDelta" = "totalBattles";
 
   @IsOptional()
   @IsString()
-  @IsIn(['asc', 'desc'])
-  sortOrder?: 'asc' | 'desc' = 'desc';
+  @IsIn(["asc", "desc"])
+  sortOrder?: "asc" | "desc" = "desc";
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => value === "true" || value === true)
   @IsBoolean()
   includeTotal?: boolean = false;
 
@@ -85,12 +85,12 @@ export class QueryBattleStatisticsDto {
   minBattles?: number;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => value === "true" || value === true)
   @IsBoolean()
   ph?: boolean;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => value === "true" || value === true)
   @IsBoolean()
   matchmaking?: boolean;
 }

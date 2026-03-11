@@ -21,12 +21,7 @@ const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
-const toNumber = (
-  value: unknown,
-  fallback: number,
-  min = 0,
-  max?: number,
-) => {
+const toNumber = (value: unknown, fallback: number, min = 0, max?: number) => {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return fallback;
   }
@@ -151,9 +146,7 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
   };
 };
 
-export const normalizeScoringMode = (
-  value: unknown,
-): EventScoringMode => {
+export const normalizeScoringMode = (value: unknown): EventScoringMode => {
   if (typeof value !== "string") {
     return "SIMPLE";
   }

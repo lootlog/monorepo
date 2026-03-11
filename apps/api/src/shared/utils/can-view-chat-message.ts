@@ -1,6 +1,6 @@
-import { Role, NpcType, Permission } from 'generated/client';
-import { MessageType, SendMessageDto } from 'src/chat/dto/send-message.dto';
-import { getNpcTypeByWt } from './get-npc-type-by-wt';
+import { Role, NpcType, Permission } from "generated/client";
+import { MessageType, SendMessageDto } from "src/chat/dto/send-message.dto";
+import { getNpcTypeByWt } from "./get-npc-type-by-wt";
 
 export const canViewChatMessage = (data: SendMessageDto, roles: Role[]) => {
   if (!data) return false;

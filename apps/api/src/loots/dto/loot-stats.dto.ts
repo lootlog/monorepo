@@ -1,31 +1,31 @@
-import { IsOptional, IsIn, IsString, IsBoolean } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
-import { ItemRarity, NpcType, ItemType } from 'generated/client';
+import { IsOptional, IsIn, IsString, IsBoolean } from "class-validator";
+import { Transform } from "class-transformer";
+import { ApiProperty } from "@nestjs/swagger";
+import { ItemRarity, NpcType, ItemType } from "generated/client";
 
 export type Period =
-  | '24h'
-  | '3d'
-  | '7d'
-  | '14d'
-  | '30d'
-  | '90d'
-  | '180d'
-  | 'all';
+  | "24h"
+  | "3d"
+  | "7d"
+  | "14d"
+  | "30d"
+  | "90d"
+  | "180d"
+  | "all";
 
 export class LootStatsQueryDto {
   @ApiProperty({
-    description: 'Time period for statistics',
-    enum: ['24h', '3d', '7d', '14d', '30d', '90d', '180d', 'all'],
-    default: '7d',
+    description: "Time period for statistics",
+    enum: ["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"],
+    default: "7d",
     required: false,
   })
   @IsOptional()
-  @IsIn(['24h', '3d', '7d', '14d', '30d', '90d', '180d', 'all'])
-  period?: Period = '7d';
+  @IsIn(["24h", "3d", "7d", "14d", "30d", "90d", "180d", "all"])
+  period?: Period = "7d";
 
   @ApiProperty({
-    description: 'World name filter',
+    description: "World name filter",
     required: false,
   })
   @IsOptional()
@@ -33,7 +33,7 @@ export class LootStatsQueryDto {
   world?: string;
 
   @ApiProperty({
-    description: 'NPC types filter (comma-separated)',
+    description: "NPC types filter (comma-separated)",
     required: false,
   })
   @IsOptional()
@@ -41,12 +41,12 @@ export class LootStatsQueryDto {
   npcTypes?: string;
 
   @ApiProperty({
-    description: 'Exclude COLOSSUS NPCs from statistics',
+    description: "Exclude COLOSSUS NPCs from statistics",
     required: false,
   })
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => value === "true" || value === true)
   excludeColossus?: boolean;
 }
 

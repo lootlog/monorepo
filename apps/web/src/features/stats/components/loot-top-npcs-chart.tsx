@@ -95,7 +95,10 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1">
-        <ChartContainer config={chartConfig} className="h-full min-h-[280px] w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="h-full min-h-[280px] w-full"
+        >
           <BarChart
             data={chartData}
             layout="vertical"

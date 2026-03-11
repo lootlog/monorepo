@@ -10,7 +10,7 @@ export const useSession = () => {
   const { data: scopes, isPending } = useAuthScopes();
 
   const hasRequiredScopes = REQUIRED_SCOPES.every((scope) =>
-    scopes?.includes(scope)
+    scopes?.includes(scope),
   );
 
   if (!session.data && !session.isPending && !messageSent) {
@@ -21,7 +21,7 @@ export const useSession = () => {
   if (!hasRequiredScopes && !isPending && !scopeMessageSent) {
     scopeMessageSent = true;
     window.message(
-      "Brak wymaganych uprawnień, zaloguj się ponownie, aby załadować dodatek"
+      "Brak wymaganych uprawnień, zaloguj się ponownie, aby załadować dodatek",
     );
   }
 

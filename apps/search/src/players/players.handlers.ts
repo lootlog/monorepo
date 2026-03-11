@@ -13,7 +13,7 @@ export const setupPlayersHandlers = async () => {
   await channel.bindQueue(
     Queue.SEARCH_PLAYERS_INDEX,
     APP_CONFIG.rabbitmq.exchange,
-    RoutingKey.SEARCH_PLAYERS_INDEX
+    RoutingKey.SEARCH_PLAYERS_INDEX,
   );
 
   channel
@@ -28,7 +28,7 @@ export const setupPlayersHandlers = async () => {
           channel?.ack(msg);
         }
       },
-      { noAck: false }
+      { noAck: false },
     )
     .catch((error) => {
       console.error("Błąd podczas konsumowania wiadomości:", error);

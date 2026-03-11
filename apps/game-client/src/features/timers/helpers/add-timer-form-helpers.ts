@@ -15,7 +15,7 @@ export const parseDurationToSeconds = (input: string): number => {
 
 export function calculateMaxOffsetFromMinOffset(
   minOffsetSeconds: number,
-  respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS
+  respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
 ): number {
   const multiplier = respawnRandomness / 100;
   return Math.round((minOffsetSeconds * (1 + multiplier)) / (1 - multiplier));
@@ -33,7 +33,7 @@ export function formatSecondsToHHMMSS(seconds: number): string {
 
 export function calculateRespBaseSecondsFromMinOffset(
   minOffsetSeconds: number,
-  respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS
+  respawnRandomness: number = DEFAULT_RESPAWN_RANDOMNESS,
 ): number {
   const multiplier = respawnRandomness / 100;
   const baseSeconds = minOffsetSeconds / (1 - multiplier);

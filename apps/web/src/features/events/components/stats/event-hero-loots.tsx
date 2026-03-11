@@ -156,7 +156,10 @@ export const EventHeroLoots = ({
         </div>
       ) : (
         <>
-          <div key={activeHeroName} className="space-y-2 animate-in fade-in-0 duration-200">
+          <div
+            key={activeHeroName}
+            className="space-y-2 animate-in fade-in-0 duration-200"
+          >
             {loots.map((loot) => (
               <LootItemsRow key={loot.id} loot={loot} />
             ))}
@@ -164,7 +167,9 @@ export const EventHeroLoots = ({
           <Link
             to="/$guildId"
             params={{ guildId }}
-            search={{ npcs: activeHeroName ? activeHeroName : heroNpcNames.join(",") }}
+            search={{
+              npcs: activeHeroName ? activeHeroName : heroNpcNames.join(","),
+            }}
             className="block mt-3"
           >
             <Button variant="outline" className="w-full" size="sm">

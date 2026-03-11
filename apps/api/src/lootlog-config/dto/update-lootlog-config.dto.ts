@@ -1,5 +1,5 @@
-import { ItemRarity, NpcType } from 'generated/client';
-import { IsArray, IsEnum } from 'class-validator';
+import { ItemRarity, NpcType } from "generated/client";
+import { IsArray, IsEnum } from "class-validator";
 
 export class UpdateLootlogConfigDto {
   @IsArray({ each: true })

@@ -116,7 +116,10 @@ export const HeroCard = ({
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuContent
+                  align="end"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <DropdownMenuItem onClick={() => onEditHero(hero)}>
                     <Pencil className="w-4 h-4 mr-2" />
                     Edytuj

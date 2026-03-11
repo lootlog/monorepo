@@ -1,5 +1,5 @@
-import { LootSource } from 'generated/client';
-import { Type } from 'class-transformer';
+import { LootSource } from "generated/client";
+import { Type } from "class-transformer";
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -11,7 +11,7 @@ import {
   IsString,
   ValidateIf,
   ValidateNested,
-} from 'class-validator';
+} from "class-validator";
 
 class LootDto {
   @IsNotEmpty()

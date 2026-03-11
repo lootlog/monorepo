@@ -4,11 +4,11 @@ import {
   ExecutionContext,
   ForbiddenException,
   Logger,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { REQUIRED_PERMISSIONS_KEY } from '@lootlog/nest-shared';
-import { PermissionsService } from 'src/permissions/permissions.service';
-import { Permission } from '@lootlog/types';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { REQUIRED_PERMISSIONS_KEY } from "@lootlog/nest-shared";
+import { PermissionsService } from "src/permissions/permissions.service";
+import { Permission } from "@lootlog/types";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -36,12 +36,12 @@ export class PermissionsGuard implements CanActivate {
 
     if (!guildId) {
       this.logger.log({
-        level: 'warn',
-        message: 'Missing guildId in request params',
+        level: "warn",
+        message: "Missing guildId in request params",
         userId,
         discordId,
       });
-      throw new ForbiddenException('Guild ID is required');
+      throw new ForbiddenException("Guild ID is required");
     }
 
     const userPermissions =
@@ -57,15 +57,15 @@ export class PermissionsGuard implements CanActivate {
 
     if (!hasPermission) {
       this.logger.log({
-        level: 'warn',
-        message: 'User lacks required permissions',
+        level: "warn",
+        message: "User lacks required permissions",
         userId,
         discordId,
         guildId,
         requiredPermissions,
         userPermissions,
       });
-      throw new ForbiddenException('Insufficient permissions');
+      throw new ForbiddenException("Insufficient permissions");
     }
 
     return true;

@@ -1,14 +1,14 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable } from '@nestjs/common';
-import type { Job } from 'bullmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { MembersService } from './members.service';
-import { PrismaService } from 'src/db/prisma.service';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Inject, Injectable } from "@nestjs/common";
+import type { Job } from "bullmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { MembersService } from "./members.service";
+import { PrismaService } from "src/db/prisma.service";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 
 interface BulkRefreshJobData {
   jobId: number;
@@ -47,14 +47,14 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
     const { jobId, guildId, memberIds } = job.data;
 
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `Starting bulk refresh job ${jobId} for guild ${guildId} with ${memberIds.length} members`,
     });
 
     try {
       await this.prisma.memberRefreshJob.update({
         where: { id: jobId },
-        data: { status: 'PROCESSING' },
+        data: { status: "PROCESSING" },
       });
 
       await this.emitJobUpdate(jobId);
@@ -86,7 +86,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
           }
 
           this.logger.log({
-            level: 'debug',
+            level: "debug",
             message: this.getRefreshOutcomeMessage(
               memberId,
               jobId,
@@ -95,7 +95,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
           });
         } catch (error) {
           this.logger.log({
-            level: 'error',
+            level: "error",
             message: `Failed to refresh member ${memberId} in job ${jobId}`,
             error,
           });
@@ -115,7 +115,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       await this.prisma.memberRefreshJob.update({
         where: { id: jobId },
         data: {
-          status: 'COMPLETED',
+          status: "COMPLETED",
           processedMembers: progress.processedCount,
           completedAt: new Date(),
         },
@@ -124,12 +124,12 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       await this.emitJobUpdateWithDetails(jobId, progress);
 
       this.logger.log({
-        level: 'info',
+        level: "info",
         message: `Completed bulk refresh job ${jobId} for guild ${guildId}. Refreshed: ${progress.refreshedIds.length}, Skipped: ${progress.skippedIds.length}, Failed: ${progress.failedIds.length}`,
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Fatal error in bulk refresh job ${jobId}`,
         stack: (error as Error).stack,
       });
@@ -137,7 +137,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       await this.prisma.memberRefreshJob.update({
         where: { id: jobId },
         data: {
-          status: 'FAILED',
+          status: "FAILED",
           completedAt: new Date(),
         },
       });
@@ -160,32 +160,32 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
   private recordRefreshOutcome(
     memberId: string,
-    refreshedMember: Awaited<ReturnType<MembersService['refreshMember']>>,
+    refreshedMember: Awaited<ReturnType<MembersService["refreshMember"]>>,
     progress: JobProgress,
-  ): 'refreshed' | 'queued' | 'missed' {
+  ): "refreshed" | "queued" | "missed" {
     if (!refreshedMember) {
       progress.skippedIds.push(memberId);
-      return 'missed';
+      return "missed";
     }
 
     if (refreshedMember.refreshQueued) {
       progress.skippedIds.push(memberId);
-      return 'queued';
+      return "queued";
     }
 
     progress.refreshedIds.push(memberId);
-    return 'refreshed';
+    return "refreshed";
   }
 
   private getRefreshOutcomeMessage(
     memberId: string,
     jobId: number,
-    outcome: 'refreshed' | 'queued' | 'missed',
+    outcome: "refreshed" | "queued" | "missed",
   ): string {
     switch (outcome) {
-      case 'queued':
+      case "queued":
         return `Skipped member ${memberId} in job ${jobId} because refresh is queued`;
-      case 'missed':
+      case "missed":
         return `Skipped member ${memberId} in job ${jobId} because no member data was returned`;
       default:
         return `Successfully refreshed member ${memberId} in job ${jobId}`;
@@ -200,7 +200,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
       if (!job) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `Job ${jobId} not found when emitting update`,
         });
         return;
@@ -221,12 +221,12 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       );
 
       this.logger.log({
-        level: 'debug',
+        level: "debug",
         message: `Emitted job update for job ${jobId}`,
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to emit job update for job ${jobId}`,
         stack: (error as Error).stack,
       });
@@ -244,7 +244,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
       if (!job) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `Job ${jobId} not found when emitting detailed update`,
         });
         return;
@@ -268,12 +268,12 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       );
 
       this.logger.log({
-        level: 'debug',
+        level: "debug",
         message: `Emitted detailed job update for job ${jobId}`,
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to emit detailed job update for job ${jobId}`,
         stack: (error as Error).stack,
       });

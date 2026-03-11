@@ -1,38 +1,38 @@
 import {
   MessageHandlerErrorBehavior,
   RabbitSubscribe,
-} from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger } from '@nestjs/common';
-import type { AddMemberRoleDto } from 'src/gateway/dto/add-member-role.dto';
-import type { AddMemberDto } from 'src/gateway/dto/add-member.dto';
-import type { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
-import type { DeleteMemberRoleDto } from 'src/gateway/dto/delete-member-role.dto';
-import type { DeleteMemberDto } from 'src/gateway/dto/delete-member.dto';
-import type { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
-import type { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
+} from "@golevelup/nestjs-rabbitmq";
+import { Injectable, Logger } from "@nestjs/common";
+import type { AddMemberRoleDto } from "src/gateway/dto/add-member-role.dto";
+import type { AddMemberDto } from "src/gateway/dto/add-member.dto";
+import type { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
+import type { DeleteMemberRoleDto } from "src/gateway/dto/delete-member-role.dto";
+import type { DeleteMemberDto } from "src/gateway/dto/delete-member.dto";
+import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
+import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
-} from 'src/gateway/dto/reservation-event.dto';
-import type { SendMessageDto } from 'src/gateway/dto/send-message.dto';
-import type { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
-import type { SendPartyGatheringDto } from 'src/gateway/dto/send-party-gathering.dto';
-import type { VolunteerNotificationDto } from 'src/gateway/dto/volunteer-notification.dto';
+} from "src/gateway/dto/reservation-event.dto";
+import type { SendMessageDto } from "src/gateway/dto/send-message.dto";
+import type { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
+import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
+import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
 import type {
   EventMapStatusUpdatePayload,
   EventHeroKilledPayload,
   EventRankingUpdatePayload,
   EventRespawnWindowPayload,
-} from 'src/gateway/types/margo-event.types';
-import { Queue } from 'src/gateway/enums/queue.enum';
-import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
-import { GatewayService } from 'src/gateway/gateway.service';
+} from "src/gateway/types/margo-event.types";
+import { Queue } from "src/gateway/enums/queue.enum";
+import { RoutingKey } from "src/gateway/enums/routing-key.enum";
+import { GatewayService } from "src/gateway/gateway.service";
 import {
   DEFAULT_EXCHANGE_NAME,
   DEAD_LETTER_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from 'src/config/rabbitmq.config';
-import { RetryService } from 'src/gateway/retry.service';
+} from "src/config/rabbitmq.config";
+import { RetryService } from "src/gateway/retry.service";
 
 interface AmqpMessage {
   properties: {
@@ -407,7 +407,7 @@ export class GatewayQueueHandler {
     },
   })
   handleTimerUpdateDLQ(data: CreateTimerDto, amqpMsg: AmqpMessage) {
-    this.logger.error('Message sent to DLQ - Timer Update:', {
+    this.logger.error("Message sent to DLQ - Timer Update:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -425,7 +425,7 @@ export class GatewayQueueHandler {
     },
   })
   handleTimerDeleteDLQ(data: DeleteTimerDto, amqpMsg: AmqpMessage) {
-    this.logger.error('Message sent to DLQ - Timer Delete:', {
+    this.logger.error("Message sent to DLQ - Timer Delete:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -446,7 +446,7 @@ export class GatewayQueueHandler {
     data: ReservationCreateEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error('Message sent to DLQ - Reservation Create:', {
+    this.logger.error("Message sent to DLQ - Reservation Create:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -467,7 +467,7 @@ export class GatewayQueueHandler {
     data: ReservationDeleteEventDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error('Message sent to DLQ - Reservation Delete:', {
+    this.logger.error("Message sent to DLQ - Reservation Delete:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -485,7 +485,7 @@ export class GatewayQueueHandler {
     },
   })
   handleSendMessageDLQ(data: SendMessageDto, amqpMsg: AmqpMessage) {
-    this.logger.error('Message sent to DLQ - Send Message:', {
+    this.logger.error("Message sent to DLQ - Send Message:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -503,7 +503,7 @@ export class GatewayQueueHandler {
     },
   })
   handleAddMemberDLQ(data: AddMemberDto, amqpMsg: AmqpMessage) {
-    this.logger.error('Message sent to DLQ - Add Member Cache Invalidation:', {
+    this.logger.error("Message sent to DLQ - Add Member Cache Invalidation:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -522,7 +522,7 @@ export class GatewayQueueHandler {
   })
   handleUpdateMemberDLQ(data: AddMemberDto, amqpMsg: AmqpMessage) {
     this.logger.error(
-      'Message sent to DLQ - Update Member Cache Invalidation:',
+      "Message sent to DLQ - Update Member Cache Invalidation:",
       {
         data,
         retryCount: this.retryService.getRetryCount(
@@ -543,7 +543,7 @@ export class GatewayQueueHandler {
   })
   handleDeleteMemberDLQ(data: DeleteMemberDto, amqpMsg: AmqpMessage) {
     this.logger.error(
-      'Message sent to DLQ - Delete Member Cache Invalidation:',
+      "Message sent to DLQ - Delete Member Cache Invalidation:",
       {
         data,
         retryCount: this.retryService.getRetryCount(
@@ -564,7 +564,7 @@ export class GatewayQueueHandler {
   })
   handleAddMemberRoleDLQ(data: AddMemberRoleDto, amqpMsg: AmqpMessage) {
     this.logger.error(
-      'Message sent to DLQ - Add Member Role Cache Invalidation:',
+      "Message sent to DLQ - Add Member Role Cache Invalidation:",
       {
         data,
         retryCount: this.retryService.getRetryCount(
@@ -585,7 +585,7 @@ export class GatewayQueueHandler {
   })
   handleDeleteMemberRoleDLQ(data: DeleteMemberRoleDto, amqpMsg: AmqpMessage) {
     this.logger.error(
-      'Message sent to DLQ - Delete Member Role Cache Invalidation:',
+      "Message sent to DLQ - Delete Member Role Cache Invalidation:",
       {
         data,
         retryCount: this.retryService.getRetryCount(
@@ -605,7 +605,7 @@ export class GatewayQueueHandler {
     },
   })
   handleSendNotificationDLQ(data: SendNotificationDto, amqpMsg: AmqpMessage) {
-    this.logger.error('Message sent to DLQ - Send Notification:', {
+    this.logger.error("Message sent to DLQ - Send Notification:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -657,7 +657,7 @@ export class GatewayQueueHandler {
     data: VolunteerNotificationDto,
     amqpMsg: AmqpMessage,
   ) {
-    this.logger.error('Message sent to DLQ - Volunteer Notification:', {
+    this.logger.error("Message sent to DLQ - Volunteer Notification:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -705,11 +705,8 @@ export class GatewayQueueHandler {
       durable: true,
     },
   })
-  handlePartyGatheringDLQ(
-    data: SendPartyGatheringDto,
-    amqpMsg: AmqpMessage,
-  ) {
-    this.logger.error('Message sent to DLQ - Party Gathering:', {
+  handlePartyGatheringDLQ(data: SendPartyGatheringDto, amqpMsg: AmqpMessage) {
+    this.logger.error("Message sent to DLQ - Party Gathering:", {
       data,
       retryCount: this.retryService.getRetryCount(
         amqpMsg.properties.headers || {},
@@ -743,7 +740,11 @@ export class GatewayQueueHandler {
       durable: true,
     },
   })
-  async handleUpdateMessage(data: { guildId: string; messageId: string; message: string }) {
+  async handleUpdateMessage(data: {
+    guildId: string;
+    messageId: string;
+    message: string;
+  }) {
     await this.gatewayService.handleChatMessageUpdate(data);
   }
 

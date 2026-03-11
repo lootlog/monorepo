@@ -1,19 +1,19 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { getQueueToken } from "@nestjs/bullmq";
 import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
-} from '@nestjs/common';
-import { EventRespawnService } from './event-respawn.service';
-import { EventEmitterService } from './event-emitter.service';
-import { EventKillService } from './event-kill.service';
-import { EventTrackingService } from './event-tracking.service';
-import { EventSummaryService } from './event-summary.service';
-import { PrismaService } from 'src/db/prisma.service';
-import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
+} from "@nestjs/common";
+import { EventRespawnService } from "./event-respawn.service";
+import { EventEmitterService } from "./event-emitter.service";
+import { EventKillService } from "./event-kill.service";
+import { EventTrackingService } from "./event-tracking.service";
+import { EventSummaryService } from "./event-summary.service";
+import { PrismaService } from "src/db/prisma.service";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
 
-describe('EventRespawnService', () => {
+describe("EventRespawnService", () => {
   let service: EventRespawnService;
 
   const mockPrismaService = {
@@ -83,31 +83,31 @@ describe('EventRespawnService', () => {
     service = module.get<EventRespawnService>(EventRespawnService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
   // ==========================================================================
   // closeRespawnWindow
   // ==========================================================================
-  describe('closeRespawnWindow', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
-    const heroId = 'hero-1';
+  describe("closeRespawnWindow", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
+    const heroId = "hero-1";
 
     const mockHero = {
       id: heroId,
       npcId: 123,
-      npcName: 'Test Hero',
-      npcIcon: 'icon.png',
+      npcName: "Test Hero",
+      npcIcon: "icon.png",
       event: {
         id: eventId,
-        world: 'tempest',
+        world: "tempest",
       },
       maps: [
         {
-          id: 'map-1',
-          mapName: 'Map 1',
+          id: "map-1",
+          mapName: "Map 1",
           assignedMembers: [{ id: 1 }],
         },
       ],
@@ -115,7 +115,7 @@ describe('EventRespawnService', () => {
 
     const mockTimer = {
       guildId,
-      world: 'tempest',
+      world: "tempest",
       npcId: 123,
       minSpawnTime: new Date(),
       maxSpawnTime: new Date(),
@@ -123,7 +123,7 @@ describe('EventRespawnService', () => {
       windowOpenedAt: new Date(),
     };
 
-    it('should close respawn window and record kill on manual close', async () => {
+    it("should close respawn window and record kill on manual close", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
       mockPrismaService.eventMap.update.mockResolvedValue({});
@@ -149,7 +149,7 @@ describe('EventRespawnService', () => {
       );
     });
 
-    it('should await kill recording (not fire-and-forget)', async () => {
+    it("should await kill recording (not fire-and-forget)", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
       mockPrismaService.eventMap.update.mockResolvedValue({});
@@ -158,7 +158,7 @@ describe('EventRespawnService', () => {
 
       // Simulate kill recording failure
       mockKillService.recordHeroKill.mockRejectedValue(
-        new Error('Database error'),
+        new Error("Database error"),
       );
 
       await expect(
@@ -168,7 +168,7 @@ describe('EventRespawnService', () => {
       ).rejects.toThrow(InternalServerErrorException);
     });
 
-    it('should auto-close without recording kill points', async () => {
+    it("should auto-close without recording kill points", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
       mockPrismaService.eventMap.update.mockResolvedValue({});
@@ -202,7 +202,7 @@ describe('EventRespawnService', () => {
       );
     });
 
-    it('should emit map status update for maps with assigned members', async () => {
+    it("should emit map status update for maps with assigned members", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
       mockPrismaService.eventMap.update.mockResolvedValue({});
@@ -217,11 +217,11 @@ describe('EventRespawnService', () => {
       expect(mockEventEmitter.emitMapStatusUpdate).toHaveBeenCalledWith(
         guildId,
         eventId,
-        'map-1',
+        "map-1",
       );
     });
 
-    it('should skip kill recording if no timer exists', async () => {
+    it("should skip kill recording if no timer exists", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(null); // No timer
       mockPrismaService.timer.delete.mockResolvedValue({});
@@ -233,9 +233,9 @@ describe('EventRespawnService', () => {
       expect(mockKillService.recordHeroKill).not.toHaveBeenCalled();
     });
 
-    it('should cancel scheduled auto-close job', async () => {
+    it("should cancel scheduled auto-close job", async () => {
       const mockJob = {
-        id: 'job-1',
+        id: "job-1",
         data: { heroId },
         remove: jest.fn().mockResolvedValue(undefined),
       };
@@ -251,7 +251,7 @@ describe('EventRespawnService', () => {
       expect(mockJob.remove).toHaveBeenCalled();
     });
 
-    it('should throw NotFoundException when hero not found', async () => {
+    it("should throw NotFoundException when hero not found", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       await expect(
@@ -259,7 +259,7 @@ describe('EventRespawnService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should create new window when createNewWindow is true', async () => {
+    it("should create new window when createNewWindow is true", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
       mockPrismaService.eventMap.update.mockResolvedValue({});
@@ -289,7 +289,7 @@ describe('EventRespawnService', () => {
       expect(mockPrismaService.timer.upsert).toHaveBeenCalled();
     });
 
-    it('should use synthetic npcId when hero has no real npcId', async () => {
+    it("should use synthetic npcId when hero has no real npcId", async () => {
       const heroWithoutNpcId = {
         ...mockHero,
         npcId: null,
@@ -321,32 +321,32 @@ describe('EventRespawnService', () => {
   // ==========================================================================
   // openRespawnWindow
   // ==========================================================================
-  describe('openRespawnWindow', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
-    const heroId = 'hero-1';
+  describe("openRespawnWindow", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
+    const heroId = "hero-1";
     const minSpawnTime = new Date(Date.now() + 60000);
     const maxSpawnTime = new Date(Date.now() + 120000);
 
     const mockHero = {
       id: heroId,
       npcId: 123,
-      npcName: 'Test Hero',
-      npcIcon: 'icon.png',
+      npcName: "Test Hero",
+      npcIcon: "icon.png",
       event: {
         id: eventId,
-        world: 'tempest',
+        world: "tempest",
       },
     };
 
     const mockMember = { id: 1 };
 
-    it('should create timer and schedule auto-close', async () => {
+    it("should create timer and schedule auto-close", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.timer.upsert.mockResolvedValue({
         guildId,
-        world: 'tempest',
+        world: "tempest",
         npcId: 123,
         minSpawnTime,
         maxSpawnTime,
@@ -363,7 +363,7 @@ describe('EventRespawnService', () => {
       expect(result.minSpawnTime).toEqual(minSpawnTime);
       expect(result.maxSpawnTime).toEqual(maxSpawnTime);
       expect(mockQueue.add).toHaveBeenCalledWith(
-        'auto-close-respawn-window',
+        "auto-close-respawn-window",
         expect.objectContaining({
           guildId,
           eventId,
@@ -375,17 +375,17 @@ describe('EventRespawnService', () => {
       );
     });
 
-    it('should open coverage gaps for hero maps', async () => {
+    it("should open coverage gaps for hero maps", async () => {
       const heroMaps = [
-        { id: 'map-1', mapName: 'Map 1', assignedMembers: [] },
-        { id: 'map-2', mapName: 'Map 2', assignedMembers: [{ id: 1 }] },
+        { id: "map-1", mapName: "Map 1", assignedMembers: [] },
+        { id: "map-2", mapName: "Map 2", assignedMembers: [{ id: 1 }] },
       ];
 
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.timer.upsert.mockResolvedValue({
         guildId,
-        world: 'tempest',
+        world: "tempest",
         npcId: 123,
         minSpawnTime,
         maxSpawnTime,
@@ -401,19 +401,19 @@ describe('EventRespawnService', () => {
 
       // map-1 has no assigned members -> UNASSIGNED gap
       expect(mockTrackingService.openUnassignedGap).toHaveBeenCalledWith(
-        'map-1',
+        "map-1",
         heroId,
         expect.any(Date),
       );
       // map-2 has assigned members -> UNCOVERED gap
       expect(mockTrackingService.openUncoveredGap).toHaveBeenCalledWith(
-        'map-2',
+        "map-2",
         heroId,
         expect.any(Date),
       );
     });
 
-    it('should throw NotFoundException when hero not found', async () => {
+    it("should throw NotFoundException when hero not found", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       await expect(
@@ -424,7 +424,7 @@ describe('EventRespawnService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException when no members in guild', async () => {
+    it("should throw BadRequestException when no members in guild", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.member.findFirst.mockResolvedValue(null);
 
@@ -436,12 +436,12 @@ describe('EventRespawnService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should emit respawn window opened event', async () => {
+    it("should emit respawn window opened event", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.timer.upsert.mockResolvedValue({
         guildId,
-        world: 'tempest',
+        world: "tempest",
         npcId: 123,
         minSpawnTime,
         maxSpawnTime,
@@ -463,7 +463,7 @@ describe('EventRespawnService', () => {
       expect(mockEventEmitter.emitTimerUpdate).toHaveBeenCalled();
     });
 
-    it('should not schedule auto-close if maxSpawnTime + buffer is in the past', async () => {
+    it("should not schedule auto-close if maxSpawnTime + buffer is in the past", async () => {
       // AUTO_CLOSE_BUFFER_MS is 5 minutes (300000ms), so we need maxSpawnTime
       // to be more than 5 minutes in the past for the job to be skipped
       const pastMaxSpawnTime = new Date(Date.now() - 6 * 60 * 1000); // 6 minutes ago
@@ -472,7 +472,7 @@ describe('EventRespawnService', () => {
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.timer.upsert.mockResolvedValue({
         guildId,
-        world: 'tempest',
+        world: "tempest",
         npcId: 123,
         minSpawnTime,
         maxSpawnTime: pastMaxSpawnTime,
@@ -488,10 +488,10 @@ describe('EventRespawnService', () => {
       expect(mockQueue.add).not.toHaveBeenCalled();
     });
 
-    it('should pass exact windowOpenedAt to gap creation for all maps', async () => {
+    it("should pass exact windowOpenedAt to gap creation for all maps", async () => {
       const heroMaps = [
-        { id: 'map-1', mapName: 'Unassigned Map', assignedMembers: [] },
-        { id: 'map-2', mapName: 'Assigned Map', assignedMembers: [{ id: 1 }] },
+        { id: "map-1", mapName: "Unassigned Map", assignedMembers: [] },
+        { id: "map-2", mapName: "Assigned Map", assignedMembers: [{ id: 1 }] },
       ];
 
       let capturedWindowOpenedAt: Date | undefined;
@@ -501,7 +501,7 @@ describe('EventRespawnService', () => {
         capturedWindowOpenedAt = args.create.windowOpenedAt;
         return Promise.resolve({
           guildId,
-          world: 'tempest',
+          world: "tempest",
           npcId: 123,
           minSpawnTime,
           maxSpawnTime,
@@ -519,29 +519,29 @@ describe('EventRespawnService', () => {
 
       // Both gaps should receive the exact same windowOpenedAt timestamp
       expect(mockTrackingService.openUnassignedGap).toHaveBeenCalledWith(
-        'map-1',
+        "map-1",
         heroId,
         capturedWindowOpenedAt,
       );
       expect(mockTrackingService.openUncoveredGap).toHaveBeenCalledWith(
-        'map-2',
+        "map-2",
         heroId,
         capturedWindowOpenedAt,
       );
     });
 
-    it('should use same timestamp for all gap creations', async () => {
+    it("should use same timestamp for all gap creations", async () => {
       const heroMaps = [
-        { id: 'map-1', assignedMembers: [] },
-        { id: 'map-2', assignedMembers: [] },
-        { id: 'map-3', assignedMembers: [] },
+        { id: "map-1", assignedMembers: [] },
+        { id: "map-2", assignedMembers: [] },
+        { id: "map-3", assignedMembers: [] },
       ];
 
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.member.findFirst.mockResolvedValue(mockMember);
       mockPrismaService.timer.upsert.mockResolvedValue({
         guildId,
-        world: 'tempest',
+        world: "tempest",
         npcId: 123,
         minSpawnTime,
         maxSpawnTime,
@@ -570,18 +570,18 @@ describe('EventRespawnService', () => {
   // ==========================================================================
   // getHeroRespawnConfig
   // ==========================================================================
-  describe('getHeroRespawnConfig', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
-    const heroId = 'hero-1';
+  describe("getHeroRespawnConfig", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
+    const heroId = "hero-1";
 
     const mockHero = {
       id: heroId,
       npcId: 123,
-      event: { world: 'tempest' },
+      event: { world: "tempest" },
     };
 
-    it('should return OPEN status when within spawn window', async () => {
+    it("should return OPEN status when within spawn window", async () => {
       const now = new Date();
       const timer = {
         minSpawnTime: new Date(now.getTime() - 60000),
@@ -597,11 +597,11 @@ describe('EventRespawnService', () => {
         heroId,
       );
 
-      expect(result.windowStatus).toBe('OPEN');
+      expect(result.windowStatus).toBe("OPEN");
       expect(result.hasTimer).toBe(true);
     });
 
-    it('should return WAITING status when before spawn window', async () => {
+    it("should return WAITING status when before spawn window", async () => {
       const now = new Date();
       const timer = {
         minSpawnTime: new Date(now.getTime() + 60000),
@@ -617,11 +617,11 @@ describe('EventRespawnService', () => {
         heroId,
       );
 
-      expect(result.windowStatus).toBe('WAITING');
+      expect(result.windowStatus).toBe("WAITING");
       expect(result.hasTimer).toBe(false);
     });
 
-    it('should return NONE status when no timer exists', async () => {
+    it("should return NONE status when no timer exists", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
       mockPrismaService.timer.findUnique.mockResolvedValue(null);
 
@@ -631,13 +631,13 @@ describe('EventRespawnService', () => {
         heroId,
       );
 
-      expect(result.windowStatus).toBe('NONE');
+      expect(result.windowStatus).toBe("NONE");
       expect(result.hasTimer).toBe(false);
       expect(result.minSpawnTime).toBeNull();
       expect(result.maxSpawnTime).toBeNull();
     });
 
-    it('should return NONE status when timer expired', async () => {
+    it("should return NONE status when timer expired", async () => {
       const now = new Date();
       const timer = {
         minSpawnTime: new Date(now.getTime() - 120000),
@@ -653,10 +653,10 @@ describe('EventRespawnService', () => {
         heroId,
       );
 
-      expect(result.windowStatus).toBe('NONE');
+      expect(result.windowStatus).toBe("NONE");
     });
 
-    it('should throw NotFoundException when hero not found', async () => {
+    it("should throw NotFoundException when hero not found", async () => {
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(null);
 
       await expect(

@@ -6,12 +6,7 @@
       "project": ["packages/**/*.ts", "apps/**/*.ts"]
     },
     "apps/*": {
-      "entry": [
-        "src/index.ts",
-        "src/main.ts",
-        "src/app.tsx",
-        "src/App.tsx"
-      ]
+      "entry": ["src/index.ts", "src/main.ts", "src/app.tsx", "src/App.tsx"]
     },
     "packages/*": {
       "entry": ["src/index.ts", "index.ts"]
@@ -31,7 +26,7 @@
     "@changesets/cli",
     "husky",
     "lint-staged",
-    "prettier",
+    "oxfmt",
     "turbo",
     "tsx"
   ]

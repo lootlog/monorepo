@@ -1,22 +1,22 @@
 import {
   MessageHandlerErrorBehavior,
   RabbitSubscribe,
-} from '@golevelup/nestjs-rabbitmq';
-import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import type { CreateRoleDto } from 'src/roles/dto/create-role.dto';
-import type { DeleteRoleDto } from 'src/roles/dto/delete-role.dto';
-import type { UpdateRoleDto } from 'src/roles/dto/update-role.dto';
-import { Queue } from 'src/enum/queue.enum';
-import { RolesService } from 'src/roles/roles.service';
-import { RoutingKey } from 'src/enum/routing-key.enum';
+} from "@golevelup/nestjs-rabbitmq";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import type { CreateRoleDto } from "src/roles/dto/create-role.dto";
+import type { DeleteRoleDto } from "src/roles/dto/delete-role.dto";
+import type { UpdateRoleDto } from "src/roles/dto/update-role.dto";
+import { Queue } from "src/enum/queue.enum";
+import { RolesService } from "src/roles/roles.service";
+import { RoutingKey } from "src/enum/routing-key.enum";
 import {
   DEFAULT_EXCHANGE_NAME,
   DEAD_LETTER_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from 'src/config/rabbitmq.config';
-import { RetryService } from 'src/rabbitmq/retry.service';
+} from "src/config/rabbitmq.config";
+import { RetryService } from "src/rabbitmq/retry.service";
 
 interface AmqpMessage {
   properties: {
@@ -59,8 +59,8 @@ export class RolesEventsHandler {
 
     await this.rolesService.createOrUpdateRole(data);
     this.logger.log({
-      level: 'info',
-      message: 'Role created successfully',
+      level: "info",
+      message: "Role created successfully",
       roleId: data.id,
       guildId: data.guildId,
     });
@@ -93,8 +93,8 @@ export class RolesEventsHandler {
 
     await this.rolesService.createOrUpdateRole(data);
     this.logger.log({
-      level: 'info',
-      message: 'Role updated successfully',
+      level: "info",
+      message: "Role updated successfully",
       roleId: data.id,
       guildId: data.guildId,
     });
@@ -127,8 +127,8 @@ export class RolesEventsHandler {
 
     await this.rolesService.deleteRole(data);
     this.logger.log({
-      level: 'info',
-      message: 'Role deleted successfully',
+      level: "info",
+      message: "Role deleted successfully",
       roleId: data.id,
       guildId: data.guildId,
     });
@@ -145,8 +145,8 @@ export class RolesEventsHandler {
   })
   handleRoleCreateDLQ(data: CreateRoleDto, amqpMsg: AmqpMessage) {
     this.logger.log({
-      level: 'error',
-      message: 'Message sent to DLQ - Create Role',
+      level: "error",
+      message: "Message sent to DLQ - Create Role",
       roleId: data.id,
       guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
@@ -166,8 +166,8 @@ export class RolesEventsHandler {
   })
   handleRoleUpdateDLQ(data: UpdateRoleDto, amqpMsg: AmqpMessage) {
     this.logger.log({
-      level: 'error',
-      message: 'Message sent to DLQ - Update Role',
+      level: "error",
+      message: "Message sent to DLQ - Update Role",
       roleId: data.id,
       guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(
@@ -187,8 +187,8 @@ export class RolesEventsHandler {
   })
   handleRoleDeleteDLQ(data: DeleteRoleDto, amqpMsg: AmqpMessage) {
     this.logger.log({
-      level: 'error',
-      message: 'Message sent to DLQ - Delete Role',
+      level: "error",
+      message: "Message sent to DLQ - Delete Role",
       roleId: data.id,
       guildId: data.guildId,
       retryCount: this.retryService.getRetryCount(

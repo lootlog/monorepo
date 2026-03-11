@@ -2,23 +2,23 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import type { EventKillPoint, Prisma } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import { EventEmitterService } from './event-emitter.service';
+} from "@nestjs/common";
+import type { EventKillPoint, Prisma } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import { EventEmitterService } from "./event-emitter.service";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from '../constants/scoring-rules.constant';
+} from "../constants/scoring-rules.constant";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from '../utils/scoring-rules.util';
+} from "../utils/scoring-rules.util";
 import {
   evaluateEventScoring,
   type EventScoringAppliedBonus,
-} from '../utils/scoring-engine.util';
+} from "../utils/scoring-engine.util";
 
 export type CalculateMemberPointsParams = {
   scoringMode?: EventScoringMode;
@@ -57,7 +57,7 @@ export class EventPointsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     return this.prisma.eventRanking.findMany({
@@ -81,7 +81,7 @@ export class EventPointsService {
         },
       },
       orderBy: {
-        totalPoints: 'desc',
+        totalPoints: "desc",
       },
     });
   }
@@ -91,7 +91,7 @@ export class EventPointsService {
   ): CalculatedMemberPoints {
     const scoringMode = normalizeEventScoringMode(params.scoringMode);
     const scoringRules =
-      scoringMode === 'ADVANCED'
+      scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(
             params.scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
           )
@@ -263,7 +263,10 @@ export class EventPointsService {
 
     const elapsedWindowMs = Math.min(
       fullWindowMs,
-      Math.max(0, params.killTime.getTime() - params.respawnStartTime.getTime()),
+      Math.max(
+        0,
+        params.killTime.getTime() - params.respawnStartTime.getTime(),
+      ),
     );
 
     return Math.round((elapsedWindowMs / fullWindowMs) * 100);
@@ -352,7 +355,7 @@ export class EventPointsService {
       (event as { scoringMode?: unknown }).scoringMode,
     );
     const scoringRules =
-      scoringMode === 'ADVANCED'
+      scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
         : null;
 
@@ -447,7 +450,7 @@ export class EventPointsService {
               assignedAt: true,
               unassignedAt: true,
             },
-            orderBy: { assignedAt: 'asc' },
+            orderBy: { assignedAt: "asc" },
           })
         : [];
 
@@ -491,28 +494,25 @@ export class EventPointsService {
           respawnStartTime,
         });
 
-        const {
-          totalPoints,
-          basePoints,
-          appliedBonuses,
-        } = this.calculateMemberPoints({
-          scoringMode,
-          scoringRules,
-          eligible: true,
-          trackingDurationPercentage,
-          trackingDurationSeconds,
-          assignedMembersCount,
-          killTime: killPoint.kill.killedAt,
-          respawnStartTime,
-          maxRespawnTime: killPoint.kill.maxSpawnTimeAtKill,
-          memberLeaveTime: memberState.memberPresentAtKill
-            ? null
-            : memberState.memberLeaveTime,
-          memberPresentAtKill: memberState.memberPresentAtKill,
-          timeOnMapSeconds: killPoint.timeOnMapSeconds,
-          afkPercentage: killPoint.afkPercentage,
-          wasPresent: killPoint.wasPresent,
-        });
+        const { totalPoints, basePoints, appliedBonuses } =
+          this.calculateMemberPoints({
+            scoringMode,
+            scoringRules,
+            eligible: true,
+            trackingDurationPercentage,
+            trackingDurationSeconds,
+            assignedMembersCount,
+            killTime: killPoint.kill.killedAt,
+            respawnStartTime,
+            maxRespawnTime: killPoint.kill.maxSpawnTimeAtKill,
+            memberLeaveTime: memberState.memberPresentAtKill
+              ? null
+              : memberState.memberLeaveTime,
+            memberPresentAtKill: memberState.memberPresentAtKill,
+            timeOnMapSeconds: killPoint.timeOnMapSeconds,
+            afkPercentage: killPoint.afkPercentage,
+            wasPresent: killPoint.wasPresent,
+          });
 
         await tx.eventKillPoint.update({
           where: { id: killPoint.id },
@@ -683,7 +683,7 @@ export class EventPointsService {
         timeOnMapSeconds: 0,
         afkPercentage: 0,
         wasPresent: false,
-        mapName: '',
+        mapName: "",
       };
     }
 
@@ -701,7 +701,7 @@ export class EventPointsService {
           ],
         }),
       },
-      orderBy: { startedAt: 'asc' },
+      orderBy: { startedAt: "asc" },
     });
 
     if (logs.length === 0) {
@@ -709,14 +709,14 @@ export class EventPointsService {
         timeOnMapSeconds: 0,
         afkPercentage: 0,
         wasPresent: false,
-        mapName: maps[0]?.mapName || '',
+        mapName: maps[0]?.mapName || "",
       };
     }
 
     const now = new Date();
     let totalTimeMs = 0;
     let afkTimeMs = 0;
-    let lastMapName = '';
+    let lastMapName = "";
 
     for (const log of logs) {
       const effectiveStart =
@@ -776,7 +776,7 @@ export class EventPointsService {
           ],
         }),
       },
-      orderBy: { startedAt: 'asc' },
+      orderBy: { startedAt: "asc" },
     });
 
     const now = new Date();
@@ -842,7 +842,7 @@ export class EventPointsService {
           ],
         }),
       },
-      orderBy: { startedAt: 'asc' },
+      orderBy: { startedAt: "asc" },
     });
 
     const now = new Date();
@@ -997,7 +997,7 @@ export class EventPointsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const now = new Date();
@@ -1034,7 +1034,7 @@ export class EventPointsService {
           },
         },
         orderBy: {
-          confirmationDeadlineAt: 'asc',
+          confirmationDeadlineAt: "asc",
         },
       }),
       this.prisma.eventKillPoint.findMany({
@@ -1069,7 +1069,7 @@ export class EventPointsService {
           },
         },
         orderBy: {
-          confirmationDeadlineAt: 'desc',
+          confirmationDeadlineAt: "desc",
         },
       }),
     ]);
@@ -1159,7 +1159,7 @@ export class EventPointsService {
     });
 
     if (memberKillPoints.length === 0) {
-      throw new NotFoundException('Kill point not found');
+      throw new NotFoundException("Kill point not found");
     }
 
     const now = new Date();
@@ -1180,7 +1180,7 @@ export class EventPointsService {
     });
 
     if (hasExpiredConfirmation) {
-      throw new BadRequestException('Confirmation window has expired');
+      throw new BadRequestException("Confirmation window has expired");
     }
 
     const pointsToConfirmIds = unconfirmedPoints
@@ -1251,7 +1251,7 @@ export class EventPointsService {
     });
 
     if (!killPoint) {
-      throw new NotFoundException('Kill point not found');
+      throw new NotFoundException("Kill point not found");
     }
 
     const oldPoints = killPoint.points;
@@ -1295,7 +1295,7 @@ export class EventPointsService {
             rankingId: ranking.id,
             previousPoints: ranking.totalPoints,
             newPoints: ranking.totalPoints + delta,
-            editType: 'KILL_POINT',
+            editType: "KILL_POINT",
             editedByUserId,
           },
         });
@@ -1323,7 +1323,7 @@ export class EventPointsService {
     });
 
     if (!ranking) {
-      throw new NotFoundException('Ranking not found');
+      throw new NotFoundException("Ranking not found");
     }
 
     const previousPoints = ranking.totalPoints;
@@ -1333,7 +1333,7 @@ export class EventPointsService {
         rankingId,
         previousPoints,
         newPoints: newTotalPoints,
-        editType: 'RANKING',
+        editType: "RANKING",
         editedByUserId,
       },
     });
@@ -1362,12 +1362,12 @@ export class EventPointsService {
     });
 
     if (!ranking) {
-      throw new NotFoundException('Ranking not found');
+      throw new NotFoundException("Ranking not found");
     }
 
     return this.prisma.eventPointsEditHistory.findMany({
       where: { rankingId },
-      orderBy: { editedAt: 'desc' },
+      orderBy: { editedAt: "desc" },
     });
   }
 

@@ -1,17 +1,17 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory, Reflector } from "@nestjs/core";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
-} from '@nestjs/platform-fastify';
-import { ConfigService } from '@nestjs/config';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+} from "@nestjs/platform-fastify";
+import { ConfigService } from "@nestjs/config";
+import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 
-import { AppModule } from './app.module';
-import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ServiceConfig } from 'src/config/service.config';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { SwaggerConfig } from 'src/config/swagger.config';
+import { AppModule } from "./app.module";
+import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { ServiceConfig } from "src/config/service.config";
+import { ConfigKey } from "src/config/config-key.enum";
+import { SwaggerConfig } from "src/config/swagger.config";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -54,7 +54,7 @@ async function bootstrap() {
   SwaggerModule.setup(path, app, document);
 
   await app.startAllMicroservices();
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port, "0.0.0.0");
 }
 
 bootstrap();

@@ -1,5 +1,5 @@
-import { Permission } from '@lootlog/types';
-import type { UserGuildData, GuildRole } from 'src/guilds/types/guild.types';
+import { Permission } from "@lootlog/types";
+import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
 
 export function getGuildIdsWithHeroesPermissions(guilds: UserGuildData[]) {
   return guilds

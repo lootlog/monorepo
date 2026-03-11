@@ -89,7 +89,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 
 - **GitHub Actions** - CI/CD pipelines
 - **Dependabot** - Automated dependency updates
-- **ESLint + Prettier** - Code quality and formatting
+- **Oxlint + Oxfmt** - Code quality and formatting
 - **Jest + Vitest** - Testing frameworks
 
 ## Quick Start
@@ -208,11 +208,14 @@ The project uses three separate PostgreSQL databases:
 
 ```
 apps/
+├── activity/               - NestJS activity tracking service
+├── admin/                  - Admin panel
 ├── api/                    - Main NestJS backend (guilds, loots, timers)
 ├── auth/                   - Hono authentication service (Better-Auth)
 ├── battlelog-service/      - NestJS battle statistics service
 ├── gateway/                - Socket.IO gateway for real-time events
 ├── discord-bot/            - Discord bot (NestJS + necord)
+├── notifications/          - Notifications service
 ├── search/                 - Hono search service (Meilisearch)
 ├── web/                    - React 19 dashboard (Vite)
 ├── game-client/            - React 19 in-game companion
@@ -223,7 +226,9 @@ packages/
 ├── types/                  - Shared TypeScript types
 ├── api-helpers/            - JWT/JWKS authentication utilities
 ├── cli/                    - Environment configuration CLI
-├── eslint-config/          - Shared ESLint configuration
+├── instrumentation/        - Shared observability helpers
+├── nest-shared/            - Shared NestJS decorators and guards
+├── socket-parser/          - Shared socket parsing logic
 └── typescript-config/      - Shared TypeScript configuration
 ```
 
@@ -256,7 +261,8 @@ packages/
 pnpm dev                    # Start all services with hot reload
 pnpm build                  # Build all services
 pnpm lint                   # Lint all code
-pnpm format                 # Format code with Prettier
+pnpm format                 # Format code with Oxfmt
+pnpm format:check           # Check formatting without writing files
 pnpm test                   # Run all tests
 ```
 

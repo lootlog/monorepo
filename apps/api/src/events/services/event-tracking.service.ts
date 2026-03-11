@@ -4,15 +4,15 @@ import {
   Logger,
   NotFoundException,
   OnModuleInit,
-} from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import Redlock, { ExecutionError } from 'redlock';
-import { CoverageGapType } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { EventEmitterService } from './event-emitter.service';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
+} from "@nestjs/common";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import Redlock, { ExecutionError } from "redlock";
+import { CoverageGapType } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import { RedisService } from "src/lib/redis/redis.service";
+import { EventEmitterService } from "./event-emitter.service";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {
@@ -76,7 +76,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (!map) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     const cap = map.heroNpc.event.mapAssignmentCap;
@@ -93,7 +93,7 @@ export class EventTrackingService implements OnModuleInit {
     );
     if (isAlreadyAssigned) {
       this.logger.debug({
-        message: 'Member already assigned to map, skipping',
+        message: "Member already assigned to map, skipping",
         mapId,
         memberId,
       });
@@ -176,7 +176,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (!map) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     const updated = await this.prisma.eventMap.update({
@@ -251,7 +251,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     this.logger.debug({
-      message: 'Opened UNASSIGNED gap',
+      message: "Opened UNASSIGNED gap",
       mapId,
       heroNpcId,
     });
@@ -285,7 +285,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     this.logger.debug({
-      message: 'Closed UNASSIGNED gap',
+      message: "Closed UNASSIGNED gap",
       mapId,
       durationSeconds,
     });
@@ -318,7 +318,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     this.logger.debug({
-      message: 'Opened UNCOVERED gap',
+      message: "Opened UNCOVERED gap",
       mapId,
       heroNpcId,
     });
@@ -352,7 +352,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     this.logger.debug({
-      message: 'Closed UNCOVERED gap',
+      message: "Closed UNCOVERED gap",
       mapId,
       durationSeconds,
     });
@@ -388,7 +388,7 @@ export class EventTrackingService implements OnModuleInit {
     );
 
     this.logger.debug({
-      message: 'Closed all gaps for hero',
+      message: "Closed all gaps for hero",
       heroNpcId,
       closedCount: openGaps.length,
     });
@@ -406,12 +406,12 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (!map) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     return this.prisma.eventMapCoverageGap.findMany({
       where: { mapId },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
     });
   }
 
@@ -429,12 +429,12 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     return this.prisma.eventMapCoverageGap.findMany({
       where: { heroNpcId },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
       include: {
         map: {
           select: {
@@ -458,7 +458,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (!map) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     return this.prisma.eventMapCoverageGap.findFirst({
@@ -483,7 +483,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     return this.prisma.eventMapCoverageGap.findMany({
@@ -504,7 +504,7 @@ export class EventTrackingService implements OnModuleInit {
     const member = await this.getMemberByDiscordId(discordId, guildId);
     if (!member) {
       this.logger.debug({
-        message: 'Skipping presence log - member not found',
+        message: "Skipping presence log - member not found",
         discordId,
         guildId,
         mapName,
@@ -548,7 +548,7 @@ export class EventTrackingService implements OnModuleInit {
         });
 
         this.logger.debug({
-          message: 'Created presence log',
+          message: "Created presence log",
           mapId: map.id,
           memberId: member.id,
           isAfk,
@@ -567,7 +567,7 @@ export class EventTrackingService implements OnModuleInit {
 
         if (result.count > 0) {
           this.logger.debug({
-            message: 'Closed presence log - player left map',
+            message: "Closed presence log - player left map",
             mapId: map.id,
             memberId: member.id,
           });
@@ -598,7 +598,7 @@ export class EventTrackingService implements OnModuleInit {
     } catch (error) {
       if (error instanceof ExecutionError) {
         this.logger.warn({
-          message: 'Failed to acquire presence lock, skipping update',
+          message: "Failed to acquire presence lock, skipping update",
           guildId,
           mapName,
           discordId,
@@ -701,7 +701,7 @@ export class EventTrackingService implements OnModuleInit {
           });
 
           this.logger.debug({
-            message: 'Created presence log',
+            message: "Created presence log",
             mapId: map.id,
             memberId: member.id,
             isAfk,
@@ -724,7 +724,7 @@ export class EventTrackingService implements OnModuleInit {
 
           if (result.count > 0) {
             this.logger.debug({
-              message: 'Closed presence log - player left map',
+              message: "Closed presence log - player left map",
               mapId: map.id,
               memberId: member.id,
             });
@@ -784,7 +784,7 @@ export class EventTrackingService implements OnModuleInit {
         mapId: true,
         memberId: true,
       },
-      distinct: ['mapId', 'memberId'],
+      distinct: ["mapId", "memberId"],
     });
 
     const membersByMap = new Map<string, Set<number>>();
@@ -808,7 +808,7 @@ export class EventTrackingService implements OnModuleInit {
       select: {
         memberId: true,
       },
-      distinct: ['memberId'],
+      distinct: ["memberId"],
     });
 
     return activeLogs.map((log) => log.memberId);
@@ -848,7 +848,7 @@ export class EventTrackingService implements OnModuleInit {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const mapIds = hero.maps.map((m) => m.id);
@@ -880,7 +880,7 @@ export class EventTrackingService implements OnModuleInit {
           },
         },
       },
-      orderBy: { startedAt: 'asc' },
+      orderBy: { startedAt: "asc" },
     });
 
     const now = new Date();

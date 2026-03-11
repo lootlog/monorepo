@@ -31,7 +31,10 @@ export const EventEditRulebookPage = () => {
   };
 
   const { data: event, isLoading, error } = useEventOverview(routeParams);
-  const { updateEvent } = useEventMutations(routeParams.guildId, routeParams.eventId);
+  const { updateEvent } = useEventMutations(
+    routeParams.guildId,
+    routeParams.eventId,
+  );
 
   const form = useForm<EventRulebookFormData>({
     defaultValues: {
@@ -84,7 +87,9 @@ export const EventEditRulebookPage = () => {
       <Card className="max-w-4xl mx-auto p-4 space-y-5">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg font-semibold">{t("events.editSections.rulebook")}</h1>
+            <h1 className="text-lg font-semibold">
+              {t("events.editSections.rulebook")}
+            </h1>
             <p className="text-sm text-muted-foreground">{event.name}</p>
           </div>
           <div className="flex items-center gap-2">

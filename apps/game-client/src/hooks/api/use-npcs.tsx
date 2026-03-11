@@ -46,7 +46,7 @@ export const useNpcs = ({ search }: UseGuildNpcsOptions) => {
         `${API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       ),
     enabled: !!token && !!guildId,
     select: (response) => response.data,

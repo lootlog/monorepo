@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
-import type { CreateMapTemplateDto } from './dto/create-map-template.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
+import type { CreateMapTemplateDto } from "./dto/create-map-template.dto";
 
 @Injectable()
 export class MapTemplatesService {
@@ -9,7 +9,7 @@ export class MapTemplatesService {
   async getTemplates(guildId: string) {
     return this.prisma.mapTemplate.findMany({
       where: { guildId },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
   }
 
@@ -30,7 +30,7 @@ export class MapTemplatesService {
     });
 
     if (!template) {
-      throw new NotFoundException('Template not found');
+      throw new NotFoundException("Template not found");
     }
 
     await this.prisma.mapTemplate.delete({

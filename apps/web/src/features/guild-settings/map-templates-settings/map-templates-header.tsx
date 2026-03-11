@@ -6,9 +6,7 @@ type MapTemplatesHeaderProps = {
   onAddClick: () => void;
 };
 
-export const MapTemplatesHeader = ({
-  onAddClick,
-}: MapTemplatesHeaderProps) => {
+export const MapTemplatesHeader = ({ onAddClick }: MapTemplatesHeaderProps) => {
   const { t } = useTranslation();
 
   return (

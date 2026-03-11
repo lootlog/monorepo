@@ -1,9 +1,9 @@
-import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger } from '@nestjs/common';
-import { Queue } from 'src/enum/queue.enum';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { EventsService } from './events.service';
+import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
+import { Injectable, Logger } from "@nestjs/common";
+import { Queue } from "src/enum/queue.enum";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { EventsService } from "./events.service";
 
 interface PlayerPresenceChangePayload {
   guildId: string;
@@ -40,7 +40,7 @@ export class EventsQueueHandler {
       );
     } catch (error) {
       this.logger.error({
-        message: 'Failed to handle player presence change',
+        message: "Failed to handle player presence change",
         error: error instanceof Error ? error.message : error,
         guildId,
         mapName,

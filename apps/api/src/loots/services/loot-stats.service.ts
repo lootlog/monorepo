@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { ItemRarity, NpcType } from 'generated/client';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
+import { RedisService } from "src/lib/redis/redis.service";
+import { ItemRarity, NpcType } from "generated/client";
 import type {
   Period,
   LootStatsResponse,
@@ -11,7 +11,7 @@ import type {
   TopNpc,
   TopContributor,
   TopItem,
-} from '../dto/loot-stats.dto';
+} from "../dto/loot-stats.dto";
 
 const CACHE_TTL_SECONDS = 900; // 15 minutes
 
@@ -24,7 +24,7 @@ export class LootStatsService {
 
   async getLootStats(
     guildId: string,
-    period: Period = '7d',
+    period: Period = "7d",
     world?: string,
     npcTypes?: string[],
     excludeColossus?: boolean,
@@ -117,25 +117,25 @@ export class LootStatsService {
     npcTypes?: string[],
     excludeColossus?: boolean,
   ): string {
-    const parts = ['loot-stats', guildId, period];
+    const parts = ["loot-stats", guildId, period];
     if (world) parts.push(world);
-    if (npcTypes?.length) parts.push(npcTypes.sort().join(','));
-    if (excludeColossus) parts.push('no-colossus');
-    return parts.join(':');
+    if (npcTypes?.length) parts.push(npcTypes.sort().join(","));
+    if (excludeColossus) parts.push("no-colossus");
+    return parts.join(":");
   }
 
   private getDateFromPeriod(period: Period): Date | null {
-    if (period === 'all') return null;
+    if (period === "all") return null;
 
     const now = new Date();
-    const periodMap: Record<Exclude<Period, 'all'>, number> = {
-      '24h': 1,
-      '3d': 3,
-      '7d': 7,
-      '14d': 14,
-      '30d': 30,
-      '90d': 90,
-      '180d': 180,
+    const periodMap: Record<Exclude<Period, "all">, number> = {
+      "24h": 1,
+      "3d": 3,
+      "7d": 7,
+      "14d": 14,
+      "30d": 30,
+      "90d": 90,
+      "180d": 180,
     };
 
     const days = periodMap[period];
@@ -150,14 +150,14 @@ export class LootStatsService {
     excludeColossus?: boolean,
   ): Promise<LootStatsOverview> {
     const needsNpcFilter = npcTypes?.length || excludeColossus;
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : '';
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : '';
+    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
+    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
     const npcTypeCondition = npcTypes?.length
       ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : '';
+      : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
-      : '';
+      : "";
 
     const params: (string | Date | string[])[] = [guildId];
     if (dateFrom) params.push(dateFrom);
@@ -237,14 +237,14 @@ export class LootStatsService {
     excludeColossus?: boolean,
   ): Promise<Partial<Record<ItemRarity, RarityStats>>> {
     const needsNpcFilter = npcTypes?.length || excludeColossus;
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : '';
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : '';
+    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
+    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
     const npcTypeCondition = npcTypes?.length
       ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : '';
+      : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
-      : '';
+      : "";
 
     const params: (string | Date | string[])[] = [guildId];
     if (dateFrom) params.push(dateFrom);
@@ -323,14 +323,14 @@ export class LootStatsService {
   ): Promise<TimelinePoint[]> {
     const needsNpcFilter = npcTypes?.length || excludeColossus;
     const truncUnit = this.getTimelineTruncUnit(period);
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : '';
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : '';
+    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
+    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
     const npcTypeCondition = npcTypes?.length
       ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : '';
+      : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
-      : '';
+      : "";
 
     const params: (string | Date | string[])[] = [guildId];
     if (dateFrom) params.push(dateFrom);
@@ -415,19 +415,19 @@ export class LootStatsService {
 
   private getTimelineTruncUnit(period: Period): string {
     switch (period) {
-      case '24h':
-      case '3d':
-        return 'hour';
-      case '7d':
-      case '14d':
-      case '30d':
-        return 'day';
-      case '90d':
-      case '180d':
-      case 'all':
-        return 'week';
+      case "24h":
+      case "3d":
+        return "hour";
+      case "7d":
+      case "14d":
+      case "30d":
+        return "day";
+      case "90d":
+      case "180d":
+      case "all":
+        return "week";
       default:
-        return 'day';
+        return "day";
     }
   }
 
@@ -439,14 +439,14 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopNpc[]> {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : '';
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : '';
+    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
+    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
     const npcTypeCondition = npcTypes?.length
       ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : '';
+      : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
-      : '';
+      : "";
 
     const params: (string | Date | string[] | number)[] = [guildId];
     if (dateFrom) params.push(dateFrom);
@@ -545,14 +545,14 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopContributor[]> {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : '';
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : '';
+    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
+    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
     const npcTypeCondition = npcTypes?.length
       ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : '';
+      : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
-      : '';
+      : "";
 
     const params: (string | Date | string[] | number)[] = [guildId];
     if (dateFrom) params.push(dateFrom);
@@ -661,14 +661,14 @@ export class LootStatsService {
     excludeColossus?: boolean,
     limit = 10,
   ): Promise<TopItem[]> {
-    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : '';
-    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : '';
+    const dateCondition = dateFrom ? `AND l."createdAt" >= $2` : "";
+    const worldCondition = world ? `AND l.world = $${dateFrom ? 3 : 2}` : "";
     const npcTypeCondition = npcTypes?.length
       ? `AND ns.type = ANY($${(dateFrom ? 3 : 2) + (world ? 1 : 0)}::text[])`
-      : '';
+      : "";
     const excludeColossusCondition = excludeColossus
       ? `AND ns.type != 'COLOSSUS'`
-      : '';
+      : "";
 
     const params: (string | Date | string[] | number)[] = [guildId];
     if (dateFrom) params.push(dateFrom);

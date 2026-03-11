@@ -1,4 +1,4 @@
-import { Injectable, type PipeTransform } from '@nestjs/common';
+import { Injectable, type PipeTransform } from "@nestjs/common";
 
 @Injectable()
 export class ArrayValidationPipe implements PipeTransform {
@@ -7,7 +7,7 @@ export class ArrayValidationPipe implements PipeTransform {
       return [];
     }
 
-    const values = value.split(',');
+    const values = value.split(",");
     if (values.length === 0) {
       return [];
     }

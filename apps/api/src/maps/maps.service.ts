@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { RedisService } from 'src/lib/redis/redis.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { RedisService } from "src/lib/redis/redis.service";
 
 export interface GameMap {
   id: number;
   name: string;
 }
 
-const CACHE_KEY = 'maps:all';
+const CACHE_KEY = "maps:all";
 const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 
 @Injectable()
@@ -23,14 +23,14 @@ export class MapsService {
     // Try to get from cache first
     const cached = await this.redisService.get(CACHE_KEY);
     if (cached) {
-      this.logger.debug('Returning maps from cache');
+      this.logger.debug("Returning maps from cache");
       return JSON.parse(cached);
     }
 
     // Fetch from external API
-    const apiUrl = this.configService.get<string>('MAPS_API_URL');
+    const apiUrl = this.configService.get<string>("MAPS_API_URL");
     if (!apiUrl) {
-      this.logger.error('MAPS_API_URL is not configured');
+      this.logger.error("MAPS_API_URL is not configured");
       return [];
     }
 
@@ -54,7 +54,7 @@ export class MapsService {
 
       return maps;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = error instanceof Error ? error.message : "Unknown error";
       this.logger.error(`Failed to fetch maps: ${message}`);
       return [];
     }

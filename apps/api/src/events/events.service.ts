@@ -1,60 +1,60 @@
-import { InjectQueue } from '@nestjs/bullmq';
+import { InjectQueue } from "@nestjs/bullmq";
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import type { Queue } from 'bullmq';
-import { PrismaService } from 'src/db/prisma.service';
-import { RESPAWN_WINDOW_QUEUE } from './constants/respawn-queue.constant';
-import { EVENT_HERO_KILL_QUEUE } from './constants/event-hero-kill-queue.constant';
-import type { AutoCloseRespawnWindowJobData } from './respawn-window.processor';
-import { CreateEventDto } from './dto/create-event.dto';
-import { CreateHeroDto } from './dto/create-hero.dto';
-import { CreateMapDto } from './dto/create-map.dto';
-import { CreateLocationDto } from './dto/create-location.dto';
-import { UpdateLocationDto } from './dto/update-location.dto';
-import { ReorderLocationsDto } from './dto/reorder-locations.dto';
-import { UpdateHeroDto } from './dto/update-hero.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
+} from "@nestjs/common";
+import type { Queue } from "bullmq";
+import { PrismaService } from "src/db/prisma.service";
+import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
+import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
+import type { AutoCloseRespawnWindowJobData } from "./respawn-window.processor";
+import { CreateEventDto } from "./dto/create-event.dto";
+import { CreateHeroDto } from "./dto/create-hero.dto";
+import { CreateMapDto } from "./dto/create-map.dto";
+import { CreateLocationDto } from "./dto/create-location.dto";
+import { UpdateLocationDto } from "./dto/update-location.dto";
+import { ReorderLocationsDto } from "./dto/reorder-locations.dto";
+import { UpdateHeroDto } from "./dto/update-hero.dto";
+import { UpdateEventDto } from "./dto/update-event.dto";
 import {
   Event,
   EventHeroNpc,
   EventKillPoint,
   Permission,
   type Role,
-} from 'generated/client';
+} from "generated/client";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
-} from './constants/scoring-rules.constant';
-import { filterHeroesByLevel } from 'src/shared/utils/can-view-event-hero';
-import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
+} from "./constants/scoring-rules.constant";
+import { filterHeroesByLevel } from "src/shared/utils/can-view-event-hero";
+import { TIMER_TYPES } from "src/timers/constants/timer-limits";
 import type {
   CheckEventHeroKillParams,
   EventHeroKillJobData,
   KillTimerData,
-} from './interfaces';
+} from "./interfaces";
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
   MapStatus,
-} from './interfaces/respawn-window.interface';
+} from "./interfaces/respawn-window.interface";
 import {
   EVENT_HERO_KILL_JOB_NAME,
   buildEventHeroKillJobId,
   createEventHeroKillJobData,
   getEventHeroKillWindowKey,
-} from './utils/event-hero-kill-job';
+} from "./utils/event-hero-kill-job";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from './utils/scoring-rules.util';
+} from "./utils/scoring-rules.util";
 
-import { EventPointsService } from './services/event-points.service';
-import { EventTrackingService } from './services/event-tracking.service';
-import { EventKillService } from './services/event-kill.service';
-import { EventRespawnService } from './services/event-respawn.service';
+import { EventPointsService } from "./services/event-points.service";
+import { EventTrackingService } from "./services/event-tracking.service";
+import { EventKillService } from "./services/event-kill.service";
+import { EventRespawnService } from "./services/event-respawn.service";
 
 interface TimerNpcData {
   id: number;
@@ -73,7 +73,7 @@ const memberSelectWithTopRole = {
       color: true,
     },
     orderBy: {
-      position: 'desc' as const,
+      position: "desc" as const,
     },
     take: 1,
   },
@@ -110,7 +110,7 @@ export class EventsService {
     const normalizedWorld = world.trim().toLowerCase();
     const normalizedScoringMode = normalizeEventScoringMode(scoringMode);
     const normalizedScoringRules =
-      normalizedScoringMode === 'ADVANCED'
+      normalizedScoringMode === "ADVANCED"
         ? normalizeEventScoringRules(
             scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
           )
@@ -122,14 +122,14 @@ export class EventsService {
         : null;
 
     if (!normalizedWorld) {
-      throw new BadRequestException('World is required');
+      throw new BadRequestException("World is required");
     }
 
     const startDate = startsAt ? new Date(startsAt) : new Date();
     const endDate = endsAt ? new Date(endsAt) : null;
 
     if (endDate && endDate <= startDate) {
-      throw new BadRequestException('End date must be after start date');
+      throw new BadRequestException("End date must be after start date");
     }
 
     const now = new Date();
@@ -167,7 +167,7 @@ export class EventsService {
         heroNpcs: {
           include: {
             maps: {
-              orderBy: { mapId: 'asc' },
+              orderBy: { mapId: "asc" },
               include: {
                 assignedMembers: {
                   select: memberSelectWithTopRole,
@@ -211,7 +211,7 @@ export class EventsService {
           },
         },
       },
-      orderBy: [{ active: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ active: "desc" }, { createdAt: "desc" }],
     });
   }
 
@@ -255,7 +255,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     return event;
@@ -277,13 +277,13 @@ export class EventsService {
             npcIcon: true,
             npcLvl: true,
             locations: {
-              orderBy: { order: 'asc' },
+              orderBy: { order: "asc" },
               select: {
                 id: true,
                 name: true,
                 order: true,
                 maps: {
-                  orderBy: { mapId: 'asc' },
+                  orderBy: { mapId: "asc" },
                   select: {
                     id: true,
                     mapId: true,
@@ -298,7 +298,7 @@ export class EventsService {
             },
             maps: {
               where: { locationId: null },
-              orderBy: { mapId: 'asc' },
+              orderBy: { mapId: "asc" },
               select: {
                 id: true,
                 mapId: true,
@@ -315,7 +315,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     return event;
@@ -327,7 +327,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const {
@@ -349,10 +349,10 @@ export class EventsService {
     const targetScoringMode: EventScoringMode = normalizeEventScoringMode(
       scoringMode ?? existingScoringMode,
     );
-    let nextScoringRules: Event['scoringRules'] | undefined;
+    let nextScoringRules: Event["scoringRules"] | undefined;
     if (scoringMode !== undefined || scoringRules !== undefined) {
       nextScoringRules =
-        targetScoringMode === 'ADVANCED'
+        targetScoringMode === "ADVANCED"
           ? normalizeEventScoringRules(
               scoringRules ??
                 event.scoringRules ??
@@ -378,7 +378,7 @@ export class EventsService {
         : event.endsAt;
 
     if (newEndDate && newStartDate && newEndDate <= newStartDate) {
-      throw new BadRequestException('End date must be after start date');
+      throw new BadRequestException("End date must be after start date");
     }
 
     const now = new Date();
@@ -421,7 +421,7 @@ export class EventsService {
           }),
           ...(rulebookMarkdown !== undefined && {
             rulebookMarkdown:
-              typeof rulebookMarkdown === 'string' &&
+              typeof rulebookMarkdown === "string" &&
               rulebookMarkdown.trim().length > 0
                 ? rulebookMarkdown.trim()
                 : null,
@@ -445,7 +445,7 @@ export class EventsService {
           heroNpcs: {
             include: {
               maps: {
-                orderBy: { mapId: 'asc' },
+                orderBy: { mapId: "asc" },
                 include: {
                   assignedMembers: {
                     select: memberSelectWithTopRole,
@@ -468,7 +468,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     await this.pointsService.recalculateEventPoints(
@@ -486,12 +486,12 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const jobs = await Promise.all([
-      this.respawnWindowQueue.getJobs(['waiting']),
-      this.respawnWindowQueue.getJobs(['delayed']),
+      this.respawnWindowQueue.getJobs(["waiting"]),
+      this.respawnWindowQueue.getJobs(["delayed"]),
     ]);
 
     const eventJobs = jobs.flat().filter((job) => job.data.eventId === eventId);
@@ -549,7 +549,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     let npcId = data.npcId;
@@ -582,7 +582,7 @@ export class EventsService {
       },
       include: {
         maps: {
-          orderBy: { mapId: 'asc' },
+          orderBy: { mapId: "asc" },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,
@@ -638,7 +638,7 @@ export class EventsService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     return this.prisma.eventHeroNpc.update({
@@ -659,7 +659,7 @@ export class EventsService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     await this.prisma.eventHeroNpc.delete({
@@ -684,7 +684,7 @@ export class EventsService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const existingMap = await this.prisma.eventMap.findFirst({
@@ -695,7 +695,7 @@ export class EventsService {
     });
 
     if (existingMap) {
-      throw new BadRequestException('Map already exists for this hero');
+      throw new BadRequestException("Map already exists for this hero");
     }
 
     const map = await this.prisma.eventMap.create({
@@ -732,7 +732,7 @@ export class EventsService {
     });
 
     if (!map) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     await this.prisma.eventMap.delete({
@@ -757,7 +757,7 @@ export class EventsService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const existingLocation = await this.prisma.eventMapLocation.findFirst({
@@ -768,7 +768,7 @@ export class EventsService {
     });
 
     if (existingLocation) {
-      throw new BadRequestException('Location with this name already exists');
+      throw new BadRequestException("Location with this name already exists");
     }
 
     const maxOrderResult = await this.prisma.eventMapLocation.aggregate({
@@ -785,7 +785,7 @@ export class EventsService {
       },
       include: {
         maps: {
-          orderBy: { mapId: 'asc' },
+          orderBy: { mapId: "asc" },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,
@@ -815,7 +815,7 @@ export class EventsService {
     });
 
     if (!location) {
-      throw new NotFoundException('Location not found');
+      throw new NotFoundException("Location not found");
     }
 
     if (data.name && data.name !== location.name) {
@@ -828,7 +828,7 @@ export class EventsService {
       });
 
       if (existingLocation) {
-        throw new BadRequestException('Location with this name already exists');
+        throw new BadRequestException("Location with this name already exists");
       }
     }
 
@@ -839,7 +839,7 @@ export class EventsService {
       },
       include: {
         maps: {
-          orderBy: { mapId: 'asc' },
+          orderBy: { mapId: "asc" },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,
@@ -868,7 +868,7 @@ export class EventsService {
     });
 
     if (!location) {
-      throw new NotFoundException('Location not found');
+      throw new NotFoundException("Location not found");
     }
 
     await this.prisma.eventMapLocation.delete({
@@ -893,7 +893,7 @@ export class EventsService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const locations = await this.prisma.eventMapLocation.findMany({
@@ -905,7 +905,7 @@ export class EventsService {
 
     if (locations.length !== data.locationIds.length) {
       throw new BadRequestException(
-        'Some locations not found or do not belong to this hero',
+        "Some locations not found or do not belong to this hero",
       );
     }
 
@@ -940,7 +940,7 @@ export class EventsService {
     });
 
     if (!map) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     if (locationId) {
@@ -952,7 +952,7 @@ export class EventsService {
       });
 
       if (!location) {
-        throw new NotFoundException('Location not found');
+        throw new NotFoundException("Location not found");
       }
     }
 
@@ -978,15 +978,15 @@ export class EventsService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     return this.prisma.eventMapLocation.findMany({
       where: { heroNpcId: heroId },
-      orderBy: { order: 'asc' },
+      orderBy: { order: "asc" },
       include: {
         maps: {
-          orderBy: { mapId: 'asc' },
+          orderBy: { mapId: "asc" },
           include: {
             assignedMembers: {
               select: memberSelectWithTopRole,
@@ -1104,7 +1104,7 @@ export class EventsService {
       {
         jobId,
         attempts: 5,
-        backoff: { type: 'exponential', delay: 1000 },
+        backoff: { type: "exponential", delay: 1000 },
         removeOnComplete: true,
         removeOnFail: false,
       },
@@ -1162,7 +1162,7 @@ export class EventsService {
     assignedMembersCount: number,
   ): { points: number } {
     const result = this.pointsService.calculateMemberPoints({
-      scoringMode: 'SIMPLE',
+      scoringMode: "SIMPLE",
       scoringRules: null,
       eligible: true,
       trackingDurationPercentage: 100,
@@ -1392,7 +1392,7 @@ export class EventsService {
     heroId: string,
   ): Promise<{
     hasTimer: boolean;
-    windowStatus: 'OPEN' | 'WAITING' | 'NONE';
+    windowStatus: "OPEN" | "WAITING" | "NONE";
     minSpawnTime: Date | null;
     maxSpawnTime: Date | null;
   }> {
@@ -1419,7 +1419,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const heroes = await this.prisma.eventHeroNpc.findMany({
@@ -1430,9 +1430,9 @@ export class EventsService {
     const heroIds = new Set(heroes.map((h) => h.id));
 
     const [pendingJobs, delayedJobs, failedJobs] = await Promise.all([
-      this.respawnWindowQueue.getJobs(['waiting', 'active']),
-      this.respawnWindowQueue.getJobs(['delayed']),
-      this.respawnWindowQueue.getJobs(['failed']),
+      this.respawnWindowQueue.getJobs(["waiting", "active"]),
+      this.respawnWindowQueue.getJobs(["delayed"]),
+      this.respawnWindowQueue.getJobs(["failed"]),
     ]);
 
     const filterJobsForEvent = (jobs: typeof pendingJobs) =>
@@ -1446,14 +1446,14 @@ export class EventsService {
       pending: {
         count: eventPendingJobs.length,
         jobs: eventPendingJobs.map((job) => ({
-          jobId: job.id ?? 'unknown',
+          jobId: job.id ?? "unknown",
           heroId: job.data.heroId,
         })),
       },
       delayed: {
         count: eventDelayedJobs.length,
         jobs: eventDelayedJobs.map((job) => ({
-          jobId: job.id ?? 'unknown',
+          jobId: job.id ?? "unknown",
           heroId: job.data.heroId,
           scheduledFor: new Date(job.timestamp + (job.opts.delay ?? 0)),
         })),
@@ -1461,9 +1461,9 @@ export class EventsService {
       failed: {
         count: eventFailedJobs.length,
         jobs: eventFailedJobs.map((job) => ({
-          jobId: job.id ?? 'unknown',
+          jobId: job.id ?? "unknown",
           heroId: job.data.heroId,
-          failedReason: job.failedReason ?? 'Unknown',
+          failedReason: job.failedReason ?? "Unknown",
         })),
       },
     };
@@ -1491,7 +1491,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const [jobCounts, isPaused, workers] = await Promise.all([
@@ -1556,11 +1556,11 @@ export class EventsService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     if (!this.isHeroVisibleToUser(hero, roles, permissions)) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     return hero;
@@ -1587,11 +1587,11 @@ export class EventsService {
     });
 
     if (!map) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     if (!this.isHeroVisibleToUser(map.heroNpc, roles, permissions)) {
-      throw new NotFoundException('Map not found');
+      throw new NotFoundException("Map not found");
     }
 
     return map;

@@ -101,14 +101,10 @@ export const HeroManageDialog = ({
             </div>
             <div>
               <DialogTitle className="text-base">
-                {isEditing
-                  ? t("events.heroes.edit")
-                  : t("events.heroes.add")}
+                {isEditing ? t("events.heroes.edit") : t("events.heroes.add")}
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
-                {isEditing
-                  ? hero?.npcName
-                  : t("events.heroes.addDescription")}
+                {isEditing ? hero?.npcName : t("events.heroes.addDescription")}
               </DialogDescription>
             </div>
           </div>
@@ -153,16 +149,14 @@ export const HeroManageDialog = ({
                     i18nKey="events.heroes.nameHint"
                     defaults="Nazwa musi być <strong>dokładnie</strong> taka sama jak w grze."
                     components={{
-                      strong: <strong className="font-semibold text-foreground" />,
+                      strong: (
+                        <strong className="font-semibold text-foreground" />
+                      ),
                     }}
                   />
                 </p>
-                <p>
-                  {t("events.heroes.idHint")}
-                </p>
-                <p>
-                  {t("events.heroes.mapsHint")}
-                </p>
+                <p>{t("events.heroes.idHint")}</p>
+                <p>{t("events.heroes.mapsHint")}</p>
               </div>
             </div>
           )}

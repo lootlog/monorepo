@@ -2,22 +2,22 @@ import {
   MessageHandlerErrorBehavior,
   RabbitPayload,
   RabbitSubscribe,
-} from '@golevelup/nestjs-rabbitmq';
-import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { Queue } from 'src/enum/queue.enum';
+} from "@golevelup/nestjs-rabbitmq";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { Queue } from "src/enum/queue.enum";
 import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { RetryService } from 'src/shared/rabbitmq/retry.service';
-import { CreateActivityDto } from 'src/activities/dto/create-activity.dto';
-import { ActivitiesService } from 'src/activities/activities.service';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
+} from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { RetryService } from "src/shared/rabbitmq/retry.service";
+import { CreateActivityDto } from "src/activities/dto/create-activity.dto";
+import { ActivitiesService } from "src/activities/activities.service";
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
 
 interface AmqpMessage {
   properties: {
@@ -53,9 +53,9 @@ export class ActivitiesEventsService {
 
     if (validationErrors.length > 0) {
       this.logger.error({
-        level: 'error',
+        level: "error",
         message:
-          'Invalid activity payload - validation failed (permanent error, sending to DLQ)',
+          "Invalid activity payload - validation failed (permanent error, sending to DLQ)",
         rawPayload: data,
         validationErrors: validationErrors.map((err) => ({
           property: err.property,
@@ -71,8 +71,8 @@ export class ActivitiesEventsService {
         data,
         RoutingKey.ACTIVITY_LOG_CREATE_DLQ,
         {
-          'x-validation-error': 'Validation failed',
-          'x-error-type': 'permanent',
+          "x-validation-error": "Validation failed",
+          "x-error-type": "permanent",
         },
       );
 
@@ -96,8 +96,8 @@ export class ActivitiesEventsService {
       await this.activitiesService.create(dto);
     } catch (error) {
       this.logger.error({
-        level: 'error',
-        message: 'Failed to create activity',
+        level: "error",
+        message: "Failed to create activity",
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         userId: dto?.userId,
@@ -119,8 +119,8 @@ export class ActivitiesEventsService {
   })
   handleActivityCreateDlq(@RabbitPayload() message: unknown) {
     this.logger.log({
-      level: 'warn',
-      message: 'Activity CREATE DLQ message - manual intervention needed',
+      level: "warn",
+      message: "Activity CREATE DLQ message - manual intervention needed",
       rawPayload: message,
     });
   }

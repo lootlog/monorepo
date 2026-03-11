@@ -1,8 +1,8 @@
-import { IsNumber, Min } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, Min } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class UpdateKillPointDto {
-  @ApiProperty({ description: 'New points value for this kill point' })
+  @ApiProperty({ description: "New points value for this kill point" })
   @IsNumber({
     allowInfinity: false,
     allowNaN: false,
@@ -12,7 +12,7 @@ export class UpdateKillPointDto {
 }
 
 export class UpdateRankingPointsDto {
-  @ApiProperty({ description: 'New total points value for this ranking' })
+  @ApiProperty({ description: "New total points value for this ranking" })
   @IsNumber({
     allowInfinity: false,
     allowNaN: false,

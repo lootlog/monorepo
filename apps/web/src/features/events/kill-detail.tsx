@@ -272,7 +272,9 @@ export const KillDetail = () => {
                             <Clock className="w-4 h-4 text-orange-500" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold">{respawnDurationText}</p>
+                            <p className="text-lg font-bold">
+                              {respawnDurationText}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {t("events.killDetail.respawnTime")}
                             </p>
@@ -312,7 +314,9 @@ export const KillDetail = () => {
                             <Clock className="w-4 h-4 text-orange-500" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold">{windowDurationText}</p>
+                            <p className="text-lg font-bold">
+                              {windowDurationText}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {t("events.killDetail.respawnWindowTime")}
                             </p>
@@ -323,7 +327,8 @@ export const KillDetail = () => {
                                 })}
                               </p>
                             )}
-                            {typeof respawnComparedToMaxPercentage === "number" && (
+                            {typeof respawnComparedToMaxPercentage ===
+                              "number" && (
                               <p className="text-[11px] text-muted-foreground">
                                 {t("events.killDetail.respawnComparedToMax", {
                                   percentage: respawnComparedToMaxPercentage,
@@ -336,7 +341,9 @@ export const KillDetail = () => {
                       <TooltipContent>
                         <div className="space-y-1 text-sm">
                           <p className="font-medium">
-                            {t("events.killDetail.respawnWindowTimeDescription")}
+                            {t(
+                              "events.killDetail.respawnWindowTimeDescription",
+                            )}
                           </p>
                           <p>
                             {t("events.killDetail.respawnMinLabel")}:{" "}

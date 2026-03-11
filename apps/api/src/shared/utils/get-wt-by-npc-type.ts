@@ -1,11 +1,11 @@
 export enum NpcType {
-  ELITE = 'elite',
-  ELITE2 = 'elite2',
-  ELITE3 = 'elite3',
-  HERO = 'hero',
-  TITAN = 'titan',
-  COLOSSUS = 'colossus',
-  NPC = 'npc',
+  ELITE = "elite",
+  ELITE2 = "elite2",
+  ELITE3 = "elite3",
+  HERO = "hero",
+  TITAN = "titan",
+  COLOSSUS = "colossus",
+  NPC = "npc",
 }
 
 export const getNpcTypeByWt = (wt: number) => {

@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Platform } from 'src/gateway/enums/platform.enum';
-import { GAME_URL_REGEX } from 'src/gateway/constants/game-url-regex.constant';
-import type { Socket, SocketUser } from 'src/gateway/types/socket-user.type';
+import { Injectable, Logger } from "@nestjs/common";
+import { Platform } from "src/gateway/enums/platform.enum";
+import { GAME_URL_REGEX } from "src/gateway/constants/game-url-regex.constant";
+import type { Socket, SocketUser } from "src/gateway/types/socket-user.type";
 
 export interface ConnectionMetadata {
   discordId: string | null;
@@ -13,9 +13,9 @@ export interface ConnectionMetadata {
 export class ConnectionService {
   private readonly logger = new Logger(ConnectionService.name);
 
-  getConnectionMetadata(request: Socket['request']): ConnectionMetadata {
-    const discordId = (request.headers['x-auth-discord-id'] as string) || null;
-    const userId = (request.headers['x-auth-user-id'] as string) || null;
+  getConnectionMetadata(request: Socket["request"]): ConnectionMetadata {
+    const discordId = (request.headers["x-auth-discord-id"] as string) || null;
+    const userId = (request.headers["x-auth-user-id"] as string) || null;
     const platform = this.determineUserPlatform(request.headers.origin);
 
     return { discordId, userId, platform };
@@ -47,13 +47,13 @@ export class ConnectionService {
     platform: Platform,
   ): { valid: boolean; reason?: string } {
     if (!discordId) {
-      this.logger.warn('No discordId found in headers, disconnecting client');
-      return { valid: false, reason: 'No discordId' };
+      this.logger.warn("No discordId found in headers, disconnecting client");
+      return { valid: false, reason: "No discordId" };
     }
 
     if (platform === Platform.UNKNOWN) {
-      this.logger.warn('Unrecognized platform, disconnecting...');
-      return { valid: false, reason: 'Unknown platform' };
+      this.logger.warn("Unrecognized platform, disconnecting...");
+      return { valid: false, reason: "Unknown platform" };
     }
 
     return { valid: true };

@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from 'src/db/prisma.service';
-import { ConfigService } from '@nestjs/config';
-import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { PrismaService } from "src/db/prisma.service";
+import { ConfigService } from "@nestjs/config";
+import { TIMER_TYPES } from "src/timers/constants/timer-limits";
 
 const DEFAULT_RETENTION_DAYS = 7;
 
@@ -17,9 +17,9 @@ export class TimersCleanupService {
     private readonly configService: ConfigService,
   ) {
     this.enabled =
-      this.configService.get<string>('TIMER_CLEANUP_ENABLED') !== 'false';
+      this.configService.get<string>("TIMER_CLEANUP_ENABLED") !== "false";
     this.retentionDays = parseInt(
-      this.configService.get<string>('TIMER_RETENTION_DAYS') ??
+      this.configService.get<string>("TIMER_RETENTION_DAYS") ??
         String(DEFAULT_RETENTION_DAYS),
       10,
     );
@@ -35,7 +35,7 @@ export class TimersCleanupService {
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async cleanupExpiredTimers() {
     if (!this.enabled) {
-      this.logger.debug('Timer cleanup is disabled');
+      this.logger.debug("Timer cleanup is disabled");
       return;
     }
 
@@ -61,7 +61,7 @@ export class TimersCleanupService {
         `Deleted ${result} expired manual timers in ${duration}ms (game NPC timers preserved)`,
       );
     } catch (error) {
-      this.logger.error('Timer cleanup failed', error);
+      this.logger.error("Timer cleanup failed", error);
     }
   }
 

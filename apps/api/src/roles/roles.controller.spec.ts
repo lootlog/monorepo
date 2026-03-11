@@ -1,10 +1,10 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { RolesController } from './roles.controller';
-import { RolesService } from './roles.service';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { RolesController } from "./roles.controller";
+import { RolesService } from "./roles.service";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
-describe('RolesController', () => {
+describe("RolesController", () => {
   let controller: RolesController;
 
   const mockRolesService = {
@@ -31,7 +31,7 @@ describe('RolesController', () => {
     controller = module.get<RolesController>(RolesController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 });

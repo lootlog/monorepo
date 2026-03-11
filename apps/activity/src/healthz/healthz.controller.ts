@@ -1,6 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import {
   HealthCheckService,
   HttpHealthIndicator,
@@ -8,13 +8,13 @@ import {
   MemoryHealthIndicator,
   DiskHealthIndicator,
   HealthCheck,
-} from '@nestjs/terminus';
-import { PrismaService } from 'src/shared/db/prisma.service';
-import { ConfigKey } from 'src/config/config-key.enum';
-import type { ApiServiceConfig } from 'src/config/api-service.config';
+} from "@nestjs/terminus";
+import { PrismaService } from "src/shared/db/prisma.service";
+import { ConfigKey } from "src/config/config-key.enum";
+import type { ApiServiceConfig } from "src/config/api-service.config";
 
-@ApiTags('health')
-@Controller('healthz')
+@ApiTags("health")
+@Controller("healthz")
 export class HealthzController {
   constructor(
     private readonly health: HealthCheckService,
@@ -29,17 +29,17 @@ export class HealthzController {
   @Get()
   @HealthCheck()
   @ApiOperation({
-    summary: 'Health check',
+    summary: "Health check",
     description:
-      'Check the health status of the Activity service (database, API service, memory, disk)',
+      "Check the health status of the Activity service (database, API service, memory, disk)",
   })
   @ApiResponse({
     status: 200,
-    description: 'Service is healthy',
+    description: "Service is healthy",
   })
   @ApiResponse({
     status: 503,
-    description: 'Service is unhealthy',
+    description: "Service is unhealthy",
   })
   check() {
     const apiServiceConfig = this.configService.get<ApiServiceConfig>(
@@ -47,13 +47,13 @@ export class HealthzController {
     );
 
     return this.health.check([
-      () => this.prismaHealth.pingCheck('database', this.prisma),
+      () => this.prismaHealth.pingCheck("database", this.prisma),
       () =>
-        this.http.pingCheck('api-service', `${apiServiceConfig.url}/healthz`),
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-      () => this.memory.checkRSS('memory_rss', 400 * 1024 * 1024),
+        this.http.pingCheck("api-service", `${apiServiceConfig.url}/healthz`),
+      () => this.memory.checkHeap("memory_heap", 150 * 1024 * 1024),
+      () => this.memory.checkRSS("memory_rss", 400 * 1024 * 1024),
       () =>
-        this.disk.checkStorage('storage', { path: '/', thresholdPercent: 0.9 }),
+        this.disk.checkStorage("storage", { path: "/", thresholdPercent: 0.9 }),
     ]);
   }
 }

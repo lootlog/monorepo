@@ -4,7 +4,7 @@ import { NpcTpl } from "@/types/margonem/npc-tpl-manager";
 
 export const getNpcTplFromEvent = (
   event: GameEvent,
-  templateId: number
+  templateId: number,
 ): NpcTpl | undefined => {
   const templateBase = event.npc_tpls?.find((tpl) => tpl.id === templateId);
 

@@ -1,12 +1,12 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { MemberSyncInterceptor } from './member-sync.interceptor';
-import { PrismaService } from 'src/db/prisma.service';
-import { MembersService } from 'src/members/members.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { MEMBER_REFRESH_PRIORITY } from 'src/members/constants/member-refresh-queue.constant';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { MemberSyncInterceptor } from "./member-sync.interceptor";
+import { PrismaService } from "src/db/prisma.service";
+import { MembersService } from "src/members/members.service";
+import { RedisService } from "src/lib/redis/redis.service";
+import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
 
-describe('MemberSyncInterceptor', () => {
+describe("MemberSyncInterceptor", () => {
   let interceptor: MemberSyncInterceptor;
   let prismaService: {
     member: {
@@ -63,24 +63,24 @@ describe('MemberSyncInterceptor', () => {
     jest.clearAllMocks();
   });
 
-  describe('queueStaleMemberRefreshes', () => {
-    it('should use the threshold from MembersService', async () => {
-      const threshold = new Date('2026-03-10T10:00:00.000Z');
+  describe("queueStaleMemberRefreshes", () => {
+    it("should use the threshold from MembersService", async () => {
+      const threshold = new Date("2026-03-10T10:00:00.000Z");
       redisService.get.mockResolvedValue(null);
       membersService.getMemberSoftStaleThreshold.mockReturnValue(threshold);
       prismaService.member.findMany.mockResolvedValue([]);
 
       await (interceptor as any).queueStaleMemberRefreshes(
-        'discord-123',
-        'user-123',
-        [{ id: 'guild-123' }],
+        "discord-123",
+        "user-123",
+        [{ id: "guild-123" }],
       );
 
       expect(membersService.getMemberSoftStaleThreshold).toHaveBeenCalled();
       expect(prismaService.member.findMany).toHaveBeenCalledWith({
         where: {
-          userId: 'discord-123',
-          guildId: { in: ['guild-123'] },
+          userId: "discord-123",
+          guildId: { in: ["guild-123"] },
           globalUserId: { not: null },
           active: true,
           OR: [
@@ -96,13 +96,13 @@ describe('MemberSyncInterceptor', () => {
       });
     });
 
-    it('should skip querying and queueing when throttled', async () => {
-      redisService.get.mockResolvedValue('1');
+    it("should skip querying and queueing when throttled", async () => {
+      redisService.get.mockResolvedValue("1");
 
       await (interceptor as any).queueStaleMemberRefreshes(
-        'discord-123',
-        'user-123',
-        [{ id: 'guild-123' }],
+        "discord-123",
+        "user-123",
+        [{ id: "guild-123" }],
       );
 
       expect(prismaService.member.findMany).not.toHaveBeenCalled();
@@ -110,16 +110,16 @@ describe('MemberSyncInterceptor', () => {
       expect(membersService.queueMemberRefresh).not.toHaveBeenCalled();
     });
 
-    it('should queue stale members and set throttle', async () => {
+    it("should queue stale members and set throttle", async () => {
       redisService.get.mockResolvedValue(null);
       membersService.getMemberSoftStaleThreshold.mockReturnValue(
-        new Date('2026-03-10T10:00:00.000Z'),
+        new Date("2026-03-10T10:00:00.000Z"),
       );
       prismaService.member.findMany.mockResolvedValue([
         {
-          userId: 'discord-123',
-          guildId: 'guild-123',
-          globalUserId: 'user-123',
+          userId: "discord-123",
+          guildId: "guild-123",
+          globalUserId: "user-123",
         },
       ]);
       membersService.queueMemberRefresh.mockResolvedValue({
@@ -128,22 +128,22 @@ describe('MemberSyncInterceptor', () => {
       });
 
       await (interceptor as any).queueStaleMemberRefreshes(
-        'discord-123',
-        'user-123',
-        [{ id: 'guild-123' }],
+        "discord-123",
+        "user-123",
+        [{ id: "guild-123" }],
       );
 
       expect(redisService.set).toHaveBeenCalledWith(
-        'member:sync:throttle:discord-123',
-        '1',
+        "member:sync:throttle:discord-123",
+        "1",
         150,
       );
       expect(membersService.queueMemberRefresh).toHaveBeenCalledWith({
-        discordId: 'discord-123',
-        guildId: 'guild-123',
-        userId: 'user-123',
+        discordId: "discord-123",
+        guildId: "guild-123",
+        userId: "user-123",
         priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-        reason: 'guild-list-sync',
+        reason: "guild-list-sync",
       });
     });
   });

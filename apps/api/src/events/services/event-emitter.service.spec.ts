@@ -1,10 +1,10 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { EventEmitterService } from './event-emitter.service';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { EventEmitterService } from "./event-emitter.service";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
-describe('EventEmitterService', () => {
+describe("EventEmitterService", () => {
   let service: EventEmitterService;
   let amqpConnection: AmqpConnection;
 
@@ -29,16 +29,16 @@ describe('EventEmitterService', () => {
     amqpConnection = module.get<AmqpConnection>(AmqpConnection);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('emitMapStatusUpdate', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
-    const mapId = 'map-1';
+  describe("emitMapStatusUpdate", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
+    const mapId = "map-1";
 
-    it('should publish map status update to RabbitMQ', async () => {
+    it("should publish map status update to RabbitMQ", async () => {
       mockAmqpConnection.publish.mockResolvedValue(undefined);
 
       await service.emitMapStatusUpdate(guildId, eventId, mapId);
@@ -54,9 +54,9 @@ describe('EventEmitterService', () => {
       );
     });
 
-    it('should handle publish errors gracefully', async () => {
+    it("should handle publish errors gracefully", async () => {
       mockAmqpConnection.publish.mockRejectedValue(
-        new Error('Connection lost'),
+        new Error("Connection lost"),
       );
 
       // Should not throw
@@ -68,12 +68,12 @@ describe('EventEmitterService', () => {
     });
   });
 
-  describe('emitHeroKilled', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
-    const killId = 'kill-1';
+  describe("emitHeroKilled", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
+    const killId = "kill-1";
 
-    it('should publish hero killed event to RabbitMQ', async () => {
+    it("should publish hero killed event to RabbitMQ", async () => {
       mockAmqpConnection.publish.mockResolvedValue(undefined);
 
       await service.emitHeroKilled(guildId, eventId, killId);
@@ -89,9 +89,9 @@ describe('EventEmitterService', () => {
       );
     });
 
-    it('should handle publish errors gracefully', async () => {
+    it("should handle publish errors gracefully", async () => {
       mockAmqpConnection.publish.mockRejectedValue(
-        new Error('Connection lost'),
+        new Error("Connection lost"),
       );
 
       await expect(
@@ -100,12 +100,12 @@ describe('EventEmitterService', () => {
     });
   });
 
-  describe('emitRespawnWindowOpened', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
-    const heroId = 'hero-1';
+  describe("emitRespawnWindowOpened", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
+    const heroId = "hero-1";
 
-    it('should publish respawn window opened event', async () => {
+    it("should publish respawn window opened event", async () => {
       mockAmqpConnection.publish.mockResolvedValue(undefined);
 
       await service.emitRespawnWindowOpened(guildId, eventId, heroId);
@@ -117,9 +117,9 @@ describe('EventEmitterService', () => {
       );
     });
 
-    it('should handle publish errors gracefully', async () => {
+    it("should handle publish errors gracefully", async () => {
       mockAmqpConnection.publish.mockRejectedValue(
-        new Error('Connection lost'),
+        new Error("Connection lost"),
       );
 
       await expect(
@@ -128,12 +128,12 @@ describe('EventEmitterService', () => {
     });
   });
 
-  describe('emitRespawnWindowClosed', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
-    const heroId = 'hero-1';
+  describe("emitRespawnWindowClosed", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
+    const heroId = "hero-1";
 
-    it('should publish respawn window closed event', async () => {
+    it("should publish respawn window closed event", async () => {
       mockAmqpConnection.publish.mockResolvedValue(undefined);
 
       await service.emitRespawnWindowClosed(guildId, eventId, heroId);
@@ -145,9 +145,9 @@ describe('EventEmitterService', () => {
       );
     });
 
-    it('should handle publish errors gracefully', async () => {
+    it("should handle publish errors gracefully", async () => {
       mockAmqpConnection.publish.mockRejectedValue(
-        new Error('Connection lost'),
+        new Error("Connection lost"),
       );
 
       await expect(
@@ -156,16 +156,16 @@ describe('EventEmitterService', () => {
     });
   });
 
-  describe('emitTimerUpdate', () => {
+  describe("emitTimerUpdate", () => {
     const mockTimer = {
-      guildId: 'guild-1',
-      world: 'tempest',
+      guildId: "guild-1",
+      world: "tempest",
       npcId: 123,
       minSpawnTime: new Date(),
       maxSpawnTime: new Date(),
     };
 
-    it('should publish timer update', async () => {
+    it("should publish timer update", async () => {
       mockAmqpConnection.publish.mockResolvedValue(undefined);
 
       await service.emitTimerUpdate(mockTimer);
@@ -177,20 +177,20 @@ describe('EventEmitterService', () => {
       );
     });
 
-    it('should handle publish errors gracefully', async () => {
+    it("should handle publish errors gracefully", async () => {
       mockAmqpConnection.publish.mockRejectedValue(
-        new Error('Connection lost'),
+        new Error("Connection lost"),
       );
 
       await expect(service.emitTimerUpdate(mockTimer)).resolves.not.toThrow();
     });
   });
 
-  describe('emitRankingUpdate', () => {
-    const guildId = 'guild-1';
-    const eventId = 'event-1';
+  describe("emitRankingUpdate", () => {
+    const guildId = "guild-1";
+    const eventId = "event-1";
 
-    it('should publish ranking update event', async () => {
+    it("should publish ranking update event", async () => {
       mockAmqpConnection.publish.mockResolvedValue(undefined);
 
       await service.emitRankingUpdate(guildId, eventId);
@@ -205,9 +205,9 @@ describe('EventEmitterService', () => {
       );
     });
 
-    it('should handle publish errors gracefully', async () => {
+    it("should handle publish errors gracefully", async () => {
       mockAmqpConnection.publish.mockRejectedValue(
-        new Error('Connection lost'),
+        new Error("Connection lost"),
       );
 
       await expect(

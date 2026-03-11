@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { SortOrder } from '../dto/query-battles.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "src/shared/modules/prisma/prisma.service";
+import { SortOrder } from "../dto/query-battles.dto";
 import type {
   CursorPagination,
   PaginationOptions,
   PaginationResult,
-} from '../interfaces/pagination.interface';
+} from "../interfaces/pagination.interface";
 
 @Injectable()
 export class PaginationService {
@@ -75,7 +75,7 @@ export class PaginationService {
       return where;
     }
 
-    const operator = options.sortOrder === SortOrder.DESC ? 'lt' : 'gt';
+    const operator = options.sortOrder === SortOrder.DESC ? "lt" : "gt";
 
     return {
       ...where,
@@ -86,7 +86,7 @@ export class PaginationService {
   }
 
   private buildOrderBy(sortOrder: SortOrder): any {
-    const order = sortOrder === SortOrder.ASC ? 'asc' : 'desc';
+    const order = sortOrder === SortOrder.ASC ? "asc" : "desc";
     return { id: order };
   }
 
@@ -105,7 +105,7 @@ export class PaginationService {
 
       return await this.prisma.battle.count({ where });
     } catch (error) {
-      this.logger.warn('Failed to get estimated count, falling back', error);
+      this.logger.warn("Failed to get estimated count, falling back", error);
       return this.prisma.battle.count({ where });
     }
   }

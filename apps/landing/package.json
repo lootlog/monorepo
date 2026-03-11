@@ -1,8 +1,8 @@
 {
   "name": "@lootlog/landing",
   "version": "1.0.0",
-  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev -p 3003 --turbopack",
     "build": "next build",

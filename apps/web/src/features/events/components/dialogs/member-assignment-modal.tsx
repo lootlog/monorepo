@@ -158,9 +158,7 @@ export const MemberAssignmentModal = ({
                 ) : filteredMembers?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
                     <Search className="size-8 mb-2 opacity-30" />
-                    <p className="text-xs">
-                      {t("events.maps.noMembersFound")}
-                    </p>
+                    <p className="text-xs">{t("events.maps.noMembersFound")}</p>
                   </div>
                 ) : (
                   <div className="divide-y">
@@ -172,7 +170,9 @@ export const MemberAssignmentModal = ({
                       return (
                         <button
                           key={member.id}
-                          onClick={() => !isAssigned && !disabled && handleAssign(member.id)}
+                          onClick={() =>
+                            !isAssigned && !disabled && handleAssign(member.id)
+                          }
                           disabled={isAssigned || disabled}
                           className={cn(
                             "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
@@ -192,7 +192,9 @@ export const MemberAssignmentModal = ({
                               className="w-full h-full object-cover"
                             />
                           </div>
-                          <span className="flex-1 text-sm font-medium">{member.name}</span>
+                          <span className="flex-1 text-sm font-medium">
+                            {member.name}
+                          </span>
                           {isAssigned ? (
                             <span className="text-[10px] font-medium text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
                               {t("events.maps.alreadyAssigned")}

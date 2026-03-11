@@ -45,7 +45,10 @@ export const EventEditSettingsPage = () => {
   };
 
   const { data: event, isLoading, error } = useEventOverview(routeParams);
-  const { updateEvent } = useEventMutations(routeParams.guildId, routeParams.eventId);
+  const { updateEvent } = useEventMutations(
+    routeParams.guildId,
+    routeParams.eventId,
+  );
 
   const form = useForm<EventSettingsFormData>({
     defaultValues: {
@@ -130,7 +133,9 @@ export const EventEditSettingsPage = () => {
       <Card className="max-w-4xl mx-auto p-4 space-y-5">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg font-semibold">{t("events.editSections.settings")}</h1>
+            <h1 className="text-lg font-semibold">
+              {t("events.editSections.settings")}
+            </h1>
             <p className="text-sm text-muted-foreground">{event.name}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -164,7 +169,10 @@ export const EventEditSettingsPage = () => {
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("events.createDialog.nameLabel")}
             </Label>
-            <Input {...form.register("name", { required: true })} className="h-9 text-sm" />
+            <Input
+              {...form.register("name", { required: true })}
+              className="h-9 text-sm"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -172,36 +180,54 @@ export const EventEditSettingsPage = () => {
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.createDialog.startsAt", "Data rozpoczęcia")}
               </Label>
-              <Input type="datetime-local" {...form.register("startsAt")} className="h-9 text-sm" />
+              <Input
+                type="datetime-local"
+                {...form.register("startsAt")}
+                className="h-9 text-sm"
+              />
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {t("events.createDialog.endsAt", "Data zakończenia")}
               </Label>
-              <Input type="datetime-local" {...form.register("endsAt")} className="h-9 text-sm" />
+              <Input
+                type="datetime-local"
+                {...form.register("endsAt")}
+                className="h-9 text-sm"
+              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("events.settings.assignmentTimeout", "Czas na przypisanie (minuty)")}
+              {t(
+                "events.settings.assignmentTimeout",
+                "Czas na przypisanie (minuty)",
+              )}
             </Label>
             <Input
               type="number"
               min={0}
-              {...form.register("assignmentTimeoutMinutes", { valueAsNumber: true })}
+              {...form.register("assignmentTimeoutMinutes", {
+                valueAsNumber: true,
+              })}
               className="h-9 text-sm"
             />
           </div>
 
           <div className="space-y-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("events.settings.participationConfirmation", "Potwierdzenie udziału (minuty)")}
+              {t(
+                "events.settings.participationConfirmation",
+                "Potwierdzenie udziału (minuty)",
+              )}
             </Label>
             <Input
               type="number"
               min={0}
-              {...form.register("participationConfirmationMinutes", { valueAsNumber: true })}
+              {...form.register("participationConfirmationMinutes", {
+                valueAsNumber: true,
+              })}
               className="h-9 text-sm"
             />
           </div>

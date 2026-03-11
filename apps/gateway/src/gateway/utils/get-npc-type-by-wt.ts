@@ -1,4 +1,4 @@
-import { NpcType } from '../enums/npc-type.enum';
+import { NpcType } from "../enums/npc-type.enum";
 
 export const getNpcTypeByWt = (
   wt: number,

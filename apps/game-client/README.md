@@ -28,6 +28,7 @@ The Game Client is an overlay application that runs alongside the Margonem game,
 ## Architecture
 
 The client communicates with:
+
 - **Gateway Service** - WebSocket connections for real-time updates
 - **API Service** - REST endpoints for data fetching
 - **Auth Service** - User authentication
@@ -54,6 +55,7 @@ pnpm build:game-client   # Build for production
 ## Deployment
 
 The game client is designed to be:
+
 - Loaded as an overlay in the browser
 - Injected into the game via browser extension
 - Served as a standalone companion window
@@ -61,6 +63,7 @@ The game client is designed to be:
 ## Environment Variables
 
 See `.env.sample` for required configuration:
+
 - API URL
 - Gateway WebSocket URL
 - Auth service URL

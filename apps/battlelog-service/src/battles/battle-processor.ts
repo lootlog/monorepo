@@ -1,4 +1,4 @@
-import type { CreateBattleDto } from 'src/battles/dto/create-battle.dto';
+import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
 
 export type Warrior = {
   turns: number;
@@ -144,13 +144,13 @@ export class BattleProcessor {
   private readonly warriors = new Map<string, Warrior>();
   private readonly lastHp = new Map<string, number>();
   private readonly battleOutcome = {
-    winner: '',
-    loser: '',
+    winner: "",
+    loser: "",
     winningTeam: null as number | null,
     losingTeam: null as number | null,
     hasFlee: false,
   };
-  private battleType = '';
+  private battleType = "";
   private lastAttackerId: string | null = null;
   private remainingFollowUpAttacks = 0;
 
@@ -178,17 +178,17 @@ export class BattleProcessor {
     };
   }
 
-  public extractAndParseMoves(events: CreateBattleDto['events']): ParsedMove[] {
+  public extractAndParseMoves(events: CreateBattleDto["events"]): ParsedMove[] {
     const allMoves = events.flatMap((event) => event.f?.m || []);
 
     return allMoves.map((move) => {
-      const [attackerPart, defenderPart, ...actions] = move.split(';');
-      const [attackerId, attackerHp] = attackerPart.split('=');
-      const [defenderId, defenderHp] = defenderPart.split('=');
+      const [attackerPart, defenderPart, ...actions] = move.split(";");
+      const [attackerId, attackerHp] = attackerPart.split("=");
+      const [defenderId, defenderHp] = defenderPart.split("=");
 
       return {
-        attackerId: attackerId !== '0' ? attackerId : null,
-        defenderId: defenderId !== '0' ? defenderId : null,
+        attackerId: attackerId !== "0" ? attackerId : null,
+        defenderId: defenderId !== "0" ? defenderId : null,
         attackerHpPercentage: attackerHp
           ? Number.parseInt(attackerHp, 10)
           : null,
@@ -196,7 +196,7 @@ export class BattleProcessor {
           ? Number.parseInt(defenderHp, 10)
           : null,
         actions: actions.map((action) => {
-          const [actionType, param = ''] = action.split('=');
+          const [actionType, param = ""] = action.split("=");
           return { actionType, param };
         }),
       };
@@ -215,8 +215,8 @@ export class BattleProcessor {
         continue;
       }
 
-      const tspellAction = move.actions.find((a) => a.actionType === 'tspell');
-      const hasStepAction = move.actions.some((a) => a.actionType === 'step');
+      const tspellAction = move.actions.find((a) => a.actionType === "tspell");
+      const hasStepAction = move.actions.some((a) => a.actionType === "step");
 
       if (hasStepAction) {
         const attacker = this.warriors.get(move.attackerId!);
@@ -242,7 +242,7 @@ export class BattleProcessor {
         if (attacker) {
           attacker.turns++;
           attacker.spellsUsed++;
-          const spellName = tspellAction.param || 'unknown';
+          const spellName = tspellAction.param || "unknown";
           attacker.spellsUsedMap[spellName] =
             (attacker.spellsUsedMap[spellName] || 0) + 1;
         }
@@ -303,30 +303,30 @@ export class BattleProcessor {
       : null;
 
     for (const { actionType, param } of move.actions) {
-      if (actionType === 'winner') {
+      if (actionType === "winner") {
         this.battleOutcome.winner = param;
         continue;
       }
-      if (actionType === 'loser') {
+      if (actionType === "loser") {
         this.battleOutcome.loser = param;
         continue;
       }
-      if (actionType === '+ph') {
+      if (actionType === "+ph") {
         const warrior = this.warriors.get(battleMeta.characterId);
         if (warrior) warrior.ph = +param;
       }
 
       // Obsługa utraty tury (txt nie ma attackerId/defenderId)
-      if (actionType === 'txt') {
-        if (param.includes('utrata tury')) {
-          const warriorName = param.split(' - ')[0]?.trim();
+      if (actionType === "txt") {
+        if (param.includes("utrata tury")) {
+          const warriorName = param.split(" - ")[0]?.trim();
           const warrior = warriorName ? this.findWarrior(warriorName) : null;
           if (warrior) {
             warrior.turns++;
             warrior.turnsLost++;
           }
-        } else if (param.includes('poddał walkę')) {
-          const warriorName = param.split(' poddał walkę')[0]?.trim();
+        } else if (param.includes("poddał walkę")) {
+          const warriorName = param.split(" poddał walkę")[0]?.trim();
           const warrior = warriorName ? this.findWarrior(warriorName) : null;
           if (warrior) warrior.surrendered = true;
         }
@@ -336,17 +336,17 @@ export class BattleProcessor {
       if (!attacker) continue;
 
       const value = Number.parseInt(param, 10);
-      const [firstParam] = param.split(',');
+      const [firstParam] = param.split(",");
       const firstValue = firstParam ? Number.parseInt(firstParam, 10) : 0;
 
       const damageDealtMap: Record<string, keyof Warrior> = {
-        '+dmgd': 'distanceDamage',
-        '+dmg': 'meleeDamage',
-        '+dmgo': 'auxiliaryDamage',
-        '+dmgf': 'fireDamage',
-        '+dmgc': 'frostDamage',
-        '+dmgl': 'lightningDamage',
-        '+thirdatt': 'thirdAttDamage',
+        "+dmgd": "distanceDamage",
+        "+dmg": "meleeDamage",
+        "+dmgo": "auxiliaryDamage",
+        "+dmgf": "fireDamage",
+        "+dmgc": "frostDamage",
+        "+dmgl": "lightningDamage",
+        "+thirdatt": "thirdAttDamage",
       };
 
       if (damageDealtMap[actionType]) {
@@ -356,13 +356,13 @@ export class BattleProcessor {
       }
 
       const damageTakenMap: Record<string, keyof Warrior> = {
-        '-dmgd': 'distanceDamageTaken',
-        '-dmg': 'meleeDamageTaken',
-        '-dmgo': 'auxiliaryDamageTaken',
-        '-dmgf': 'fireDamageTaken',
-        '-dmgc': 'frostDamageTaken',
-        '-dmgl': 'lightningDamageTaken',
-        '-thirdatt': 'thirdAttDamageTaken',
+        "-dmgd": "distanceDamageTaken",
+        "-dmg": "meleeDamageTaken",
+        "-dmgo": "auxiliaryDamageTaken",
+        "-dmgf": "fireDamageTaken",
+        "-dmgc": "frostDamageTaken",
+        "-dmgl": "lightningDamageTaken",
+        "-thirdatt": "thirdAttDamageTaken",
       };
 
       if (damageTakenMap[actionType]) {
@@ -381,7 +381,7 @@ export class BattleProcessor {
       }
 
       switch (actionType) {
-        case '+oth_dmg':
+        case "+oth_dmg":
           if (hasSpell) {
             this.handleSpellTrueDamage(attacker, param, firstValue, defender);
           } else {
@@ -389,112 +389,112 @@ export class BattleProcessor {
           }
           break;
 
-        case '+rage':
+        case "+rage":
           attacker.rageDamageDealt += value;
           break;
 
-        case '+taken_dmg':
+        case "+taken_dmg":
           attacker.stigmaDamageDealt += value;
           if (defender) defender.stigmaDamageTaken += value;
           break;
 
-        case '+pierce':
+        case "+pierce":
           attacker.armorPierces++;
           break;
 
-        case '+crit':
+        case "+crit":
           attacker.criticalHits++;
           break;
 
-        case 'heal':
+        case "heal":
           attacker.passiveHealing += value;
           break;
 
-        case 'bandage':
+        case "bandage":
           attacker.activeHealing += value;
           break;
 
-        case '+acdmg':
+        case "+acdmg":
           attacker.reducedArmor += value;
           break;
 
-        case 'wound':
+        case "wound":
           attacker.woundDamageTaken += value;
           attacker.damageTaken += value;
           break;
 
-        case 'critwound':
+        case "critwound":
           attacker.critWoundDamageTaken += value;
           attacker.damageTaken += value;
           break;
 
-        case 'anguish':
+        case "anguish":
           attacker.legbonAnguishDamageTaken += value;
           attacker.damageTaken += value;
           break;
 
-        case 'poison':
+        case "poison":
           attacker.poisonDamageTaken += value;
           attacker.damageTaken += value;
           break;
 
-        case 'injure':
+        case "injure":
           attacker.injureDamageTaken += value;
           attacker.damageTaken += value;
           break;
 
-        case '+injure':
+        case "+injure":
           if (defender) defender.injures++;
           break;
 
-        case 'flee':
+        case "flee":
           attacker.fled = true;
           this.battleOutcome.hasFlee = true;
           break;
 
-        case '+fastarrow':
+        case "+fastarrow":
           attacker.fastArrows++;
           break;
 
-        case 'fire':
+        case "fire":
           attacker.firePassiveDamageTaken += value;
           attacker.damageTaken += value;
           break;
 
-        case 'light':
+        case "light":
           attacker.lightningPassiveDamageTaken += value;
           attacker.damageTaken += value;
           break;
 
-        case 'energy':
+        case "energy":
           attacker.regeneratedEnergy -= value;
           break;
 
-        case 'en-regen':
+        case "en-regen":
           attacker.regeneratedEnergy += value;
           break;
 
-        case '+legbon_curse':
+        case "+legbon_curse":
           attacker.legbonCurse++;
           break;
 
-        case '+legbon_holytouch':
+        case "+legbon_holytouch":
           attacker.legbonHolytouch++;
           break;
 
-        case 'legbon_holytouch_heal':
+        case "legbon_holytouch_heal":
           attacker.legbonHolytouchValue += value;
           break;
 
-        case '+legbon_verycrit':
+        case "+legbon_verycrit":
           attacker.legbonVerycrit++;
           break;
 
-        case '+legbon_anguish':
+        case "+legbon_anguish":
           attacker.legbonAnguish++;
           break;
 
-        case 'legbon_lastheal':
+        case "legbon_lastheal":
           if (defender) {
             defender.legbonLastheal++;
             defender.legbonLasthealValue += value;
@@ -508,62 +508,62 @@ export class BattleProcessor {
       if (!defender) continue;
 
       switch (actionType) {
-        case '-evade':
+        case "-evade":
           defender.evasions++;
           if (attacker) attacker.attacksEvaded++;
           break;
 
-        case '-contra':
+        case "-contra":
           defender.counters++;
           break;
 
-        case '-blok':
+        case "-blok":
           defender.blocks++;
           defender.blockedDamage += value;
           if (attacker) attacker.attacksBlocked++;
           break;
 
-        case '-endest':
+        case "-endest":
           defender.destroyedEnergy += value;
           break;
 
-        case '-manadest':
+        case "-manadest":
           defender.destroyedMana += value;
           break;
 
-        case 'en-regen':
+        case "en-regen":
           defender.regeneratedEnergy += value;
           break;
 
-        case 'mana':
+        case "mana":
           attacker.regeneratedMana -= value;
           break;
 
-        case '-legbon_cleanse':
+        case "-legbon_cleanse":
           defender.legbonCleanse++;
           break;
 
-        case '-legbon_glare':
+        case "-legbon_glare":
           defender.legbonGlare++;
           break;
 
-        case '-legbon_critred':
+        case "-legbon_critred":
           defender.legbonCritredValue = value;
           break;
 
-        case '-legbon_facade':
+        case "-legbon_facade":
           defender.legbonFacadeValue = value;
           break;
 
-        case '+legbon_puncture':
+        case "+legbon_puncture":
           attacker.legbonPunctureValue = value;
           break;
 
-        case '+resdmg':
+        case "+resdmg":
           attacker.magicResistanceDestroyed += value;
           break;
 
-        case '+actdmg':
+        case "+actdmg":
           attacker.reducedPoisonResistance += value;
           break;
       }
@@ -579,12 +579,12 @@ export class BattleProcessor {
     attacker.damageDealt += damage;
     attacker.trueDamageDealt += damage;
 
-    const parts = param.split(',');
+    const parts = param.split(",");
     if (parts.length >= 3) {
       const targetNameWithHp = parts[2].trim();
       const hpMatch = targetNameWithHp.match(/\((\d+)%\)$/);
       const targetHp = hpMatch ? Number.parseInt(hpMatch[1], 10) : null;
-      const targetName = targetNameWithHp.split('(')[0].trim();
+      const targetName = targetNameWithHp.split("(")[0].trim();
 
       const found = this.findWarrior(targetName, true);
       if (found) {
@@ -612,7 +612,7 @@ export class BattleProcessor {
     if (defender) defender.reflectedDamage += damage;
   }
 
-  private initializeBattleWarriors(events: CreateBattleDto['events']): void {
+  private initializeBattleWarriors(events: CreateBattleDto["events"]): void {
     for (const event of events) {
       if (!event.f?.w) continue;
       for (const [id, warriorData] of Object.entries(event.f.w)) {
@@ -717,9 +717,9 @@ export class BattleProcessor {
     };
   }
 
-  private calculateBattleDuration(events: CreateBattleDto['events']): number {
+  private calculateBattleDuration(events: CreateBattleDto["events"]): number {
     if (!events.length) {
-      throw new Error('No events found in battle data');
+      throw new Error("No events found in battle data");
     }
 
     const firstTimestamp = events[0]?.ev || 0;
@@ -730,9 +730,9 @@ export class BattleProcessor {
 
   private processOutcome(move: ParsedMove) {
     for (const { actionType, param } of move.actions) {
-      if (actionType === 'winner') {
+      if (actionType === "winner") {
         this.battleOutcome.winner = param;
-      } else if (actionType === 'loser') {
+      } else if (actionType === "loser") {
         this.battleOutcome.loser = param;
       }
     }
@@ -747,7 +747,7 @@ export class BattleProcessor {
   }
 
   private getMatchmakingInfo(
-    events: CreateBattleDto['events'],
+    events: CreateBattleDto["events"],
   ): MatchmakingInfo | undefined {
     for (const event of events) {
       if (event.match_summary) {
@@ -771,7 +771,7 @@ export class BattleProcessor {
   private determineOutcomeTeams() {
     const splitNames = (s: string): string[] =>
       s
-        .split(',')
+        .split(",")
         .map((n) => n.trim())
         .filter(Boolean);
 
@@ -821,7 +821,7 @@ export class BattleProcessor {
       const teams = Array.from(this.warriors.entries()).reduce(
         (acc, [id, w]) => {
           const hp = this.lastHp.get(id);
-          const hpValue = typeof hp === 'number' ? hp : 0;
+          const hpValue = typeof hp === "number" ? hp : 0;
           acc.hpSum[w.team] = (acc.hpSum[w.team] ?? 0) + hpValue;
           acc.alive[w.team] = (acc.alive[w.team] ?? 0) + (hpValue > 0 ? 1 : 0);
           acc.dmgDealt[w.team] = (acc.dmgDealt[w.team] ?? 0) + w.damageDealt;
@@ -898,8 +898,8 @@ export class BattleProcessor {
   private normalize(s: string): string {
     return s
       .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
   }
 
   private findWarrior(name: string): Warrior | null;

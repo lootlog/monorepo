@@ -2,12 +2,12 @@ import {
   Injectable,
   type OnModuleInit,
   type OnModuleDestroy,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
-import { ConfigKey } from 'src/config/config-key.enum';
-import type { RedisConfig } from 'src/config/redis.config';
-import { ServiceConfig } from 'src/config/service.config';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import Redis from "ioredis";
+import { ConfigKey } from "src/config/config-key.enum";
+import type { RedisConfig } from "src/config/redis.config";
+import { ServiceConfig } from "src/config/service.config";
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -33,7 +33,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const prefixedKey = `${this.prefix}:${key}`;
 
     if (ttlSeconds) {
-      await this.client.set(prefixedKey, value, 'EX', ttlSeconds);
+      await this.client.set(prefixedKey, value, "EX", ttlSeconds);
     } else {
       await this.client.set(prefixedKey, value);
     }
@@ -72,20 +72,20 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async scan(pattern: string): Promise<string[]> {
     const prefixedPattern = `${this.prefix}:${pattern}`;
     const keys: string[] = [];
-    let cursor = '0';
+    let cursor = "0";
 
     do {
       const [nextCursor, matchedKeys] = await this.client.scan(
         cursor,
-        'MATCH',
+        "MATCH",
         prefixedPattern,
-        'COUNT',
+        "COUNT",
         100,
       );
       cursor = nextCursor;
       keys.push(...matchedKeys);
-    } while (cursor !== '0');
+    } while (cursor !== "0");
 
-    return keys.map((key) => key.replace(`${this.prefix}:`, ''));
+    return keys.map((key) => key.replace(`${this.prefix}:`, ""));
   }
 }

@@ -1,9 +1,9 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { ServiceConfig } from 'src/config/service.config';
-import { RedisIoAdapter } from 'src/lib/redis/redis-io.adapter';
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { ConfigService } from "@nestjs/config";
+import { ConfigKey } from "src/config/config-key.enum";
+import { ServiceConfig } from "src/config/service.config";
+import { RedisIoAdapter } from "src/lib/redis/redis-io.adapter";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

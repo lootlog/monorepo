@@ -1,6 +1,6 @@
 export default async function globalTeardown() {
-  console.log('🛑 Stopping test containers...');
-  console.log('⏳ Waiting for all connections to close...');
+  console.log("🛑 Stopping test containers...");
+  console.log("⏳ Waiting for all connections to close...");
 
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -13,6 +13,6 @@ export default async function globalTeardown() {
       containers.rabbitmq.stop(),
     ]);
 
-    console.log('✅ Test containers stopped');
+    console.log("✅ Test containers stopped");
   }
 }

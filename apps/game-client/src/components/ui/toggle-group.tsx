@@ -25,7 +25,7 @@ function ToggleGroup({
       data-size={size}
       className={cn(
         "ll:group/toggle-group ll:flex ll:w-fit ll:items-center ll:rounded-md ll:data-[variant=outline]:shadow-xs",
-        className
+        className,
       )}
       {...props}
     >
@@ -55,7 +55,7 @@ function ToggleGroupItem({
           size: context.size || size,
         }),
         "ll:min-w-0 ll:flex-1 ll:shrink-0 ll:rounded-none ll:shadow-none ll:first:rounded-l-md ll:last:rounded-r-md ll:focus:z-10 ll:focus-visible:z-10 ll:data-[variant=outline]:border-l-0 ll:data-[variant=outline]:first:border-l",
-        className
+        className,
       )}
       {...props}
     >

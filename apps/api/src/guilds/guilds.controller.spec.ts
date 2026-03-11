@@ -1,12 +1,12 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { GuildsController } from './guilds.controller';
-import { GuildsService } from './guilds.service';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.interceptor';
-import type { CallHandler, ExecutionContext } from '@nestjs/common';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { GuildsController } from "./guilds.controller";
+import { GuildsService } from "./guilds.service";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
+import type { CallHandler, ExecutionContext } from "@nestjs/common";
 
-describe('GuildsController', () => {
+describe("GuildsController", () => {
   let controller: GuildsController;
 
   const mockGuildsService = {
@@ -43,7 +43,7 @@ describe('GuildsController', () => {
     controller = module.get<GuildsController>(GuildsController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 });

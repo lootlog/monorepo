@@ -32,7 +32,9 @@ ${chalk.bold("Global Options:")}
 
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${subcommand}\n`));
-    console.log(chalk.gray(`Run 'pnpm env --help' to see available commands.\n`));
+    console.log(
+      chalk.gray(`Run 'pnpm env --help' to see available commands.\n`),
+    );
     process.exit(1);
   }
 

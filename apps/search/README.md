@@ -26,6 +26,7 @@ The Search Service provides powerful full-text search capabilities across Lootlo
 ## Search Indices
 
 The service maintains indices for:
+
 - **Items** - Game items and equipment
 - **NPCs** - Monsters and bosses
 - **Locations** - Maps and areas
@@ -35,6 +36,7 @@ The service maintains indices for:
 ## Event-Driven Indexing
 
 Listens to RabbitMQ events:
+
 - `item.created` → Index new item
 - `item.updated` → Update item index
 - `loot.created` → Index new loot
@@ -62,6 +64,7 @@ pnpm dev                 # Start development server
 ## Environment Variables
 
 See `.env.sample` for required configuration:
+
 - Meilisearch connection
 - RabbitMQ connection
 - API keys

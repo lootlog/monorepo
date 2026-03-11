@@ -41,7 +41,11 @@ export function CharacterSelector({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size={size} className={cn("gap-2", className)}>
+        <Button
+          variant="outline"
+          size={size}
+          className={cn("gap-2", className)}
+        >
           <User className="h-4 w-4" />
           {selectedCharacter
             ? `${selectedCharacter.name} (${selectedCharacter.world})`

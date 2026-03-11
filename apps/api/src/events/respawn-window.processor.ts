@@ -1,10 +1,10 @@
-import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import type { Job } from 'bullmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { RESPAWN_WINDOW_QUEUE } from './constants/respawn-queue.constant';
-import { EventsService } from './events.service';
+import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
+import { Inject, Injectable, forwardRef } from "@nestjs/common";
+import type { Job } from "bullmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
+import { EventsService } from "./events.service";
 
 export interface AutoCloseRespawnWindowJobData {
   guildId: string;
@@ -29,7 +29,7 @@ export class RespawnWindowProcessor extends WorkerHost {
     const { guildId, eventId, heroId, npcId } = job.data;
 
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `Auto-closing respawn window for hero ${heroId} (npcId: ${npcId}) in event ${eventId}`,
     });
 
@@ -40,12 +40,12 @@ export class RespawnWindowProcessor extends WorkerHost {
       });
 
       this.logger.log({
-        level: 'info',
+        level: "info",
         message: `Successfully auto-closed respawn window for hero ${heroId}`,
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to auto-close respawn window for hero ${heroId}`,
         error: error instanceof Error ? error.message : error,
         stack: error instanceof Error ? error.stack : undefined,
@@ -54,11 +54,11 @@ export class RespawnWindowProcessor extends WorkerHost {
     }
   }
 
-  @OnWorkerEvent('failed')
+  @OnWorkerEvent("failed")
   onFailed(job: Job<AutoCloseRespawnWindowJobData>, error: Error): void {
     this.logger.log({
-      level: 'error',
-      message: 'Auto-close respawn window job failed',
+      level: "error",
+      message: "Auto-close respawn window job failed",
       jobId: job.id,
       heroId: job.data.heroId,
       eventId: job.data.eventId,

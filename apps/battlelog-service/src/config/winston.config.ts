@@ -1,16 +1,16 @@
-import * as winston from 'winston';
-import { registerAs } from '@nestjs/config';
-import type { WinstonModuleOptions } from 'nest-winston';
-import { WinstonTransport as AxiomTransport } from '@axiomhq/winston';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { RuntimeEnvironment } from 'src/types/runtime.types';
+import * as winston from "winston";
+import { registerAs } from "@nestjs/config";
+import type { WinstonModuleOptions } from "nest-winston";
+import { WinstonTransport as AxiomTransport } from "@axiomhq/winston";
+import { ConfigKey } from "src/config/config-key.enum";
+import { RuntimeEnvironment } from "src/types/runtime.types";
 
 export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
   const { ENV, HOSTNAME, AXIOM_DATASET, AXIOM_TOKEN } = process.env;
 
   const transports =
     ENV === RuntimeEnvironment.LOCAL
-      ? [new winston.transports.Console({ level: 'debug' })]
+      ? [new winston.transports.Console({ level: "debug" })]
       : [
           new AxiomTransport({
             dataset: AXIOM_DATASET,
@@ -19,7 +19,7 @@ export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
         ];
 
   return {
-    level: 'info',
+    level: "info",
     format: winston.format.json(),
     defaultMeta: { service: `${ENV}-api-service-${HOSTNAME}` },
     transports,
