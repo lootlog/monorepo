@@ -7,6 +7,6 @@ import { RedisModule } from 'src/lib/redis/redis.module';
 @Module({
   imports: [AuthModule, RedisModule],
   providers: [DiscordService, DiscordRateLimiterService],
-  exports: [DiscordService],
+  exports: [DiscordService, DiscordRateLimiterService],
 })
 export class DiscordModule {}

@@ -14,7 +14,7 @@ import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentation
 import { NestInstrumentation } from "@opentelemetry/instrumentation-nestjs-core";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
-import { Resource, envDetector } from "@opentelemetry/resources";
+import { envDetector, resourceFromAttributes } from "@opentelemetry/resources";
 import {
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
   SEMRESATTRS_SERVICE_NAME,
@@ -22,9 +22,10 @@ import {
 } from "@opentelemetry/semantic-conventions";
 import {
   PeriodicExportingMetricReader,
-  View,
-  Aggregation,
+  AggregationType,
   InstrumentType,
+  createAllowListAttributesProcessor,
+  type ViewOptions,
 } from "@opentelemetry/sdk-metrics";
 import {
   ParentBasedSampler,
@@ -117,7 +118,7 @@ class FilteringSpanProcessor implements SpanProcessor {
 }
 
 function normalizePath(path: string | undefined | null): string {
-  let normalized = (path ?? "/").split("?")[0] || "/";
+  const normalized = (path ?? "/").split("?")[0] || "/";
 
   // Preserve special routes
   if (normalized === "/guilds/@me") return normalized;
@@ -178,77 +179,99 @@ function normalizePath(path: string | undefined | null): string {
  * Create metric views to control cardinality.
  * This is CRITICAL for preventing Grafana Cloud cardinality breaches.
  */
-function createMetricViews(): View[] {
+function createMetricViews(): ViewOptions[] {
   return [
     // HTTP server metrics - limit to essential attributes only
-    new View({
+    {
       instrumentName: "http.server.duration",
-      attributeKeys: ["http.method", "http.route", "http.status_code"],
-      aggregation: Aggregation.Histogram(),
-    }),
-    new View({
-      instrumentName: "http.server.request.size",
-      attributeKeys: ["http.method", "http.route"],
-      aggregation: Aggregation.Histogram(),
-    }),
-    new View({
-      instrumentName: "http.server.response.size",
-      attributeKeys: ["http.method", "http.route"],
-      aggregation: Aggregation.Histogram(),
-    }),
-    new View({
-      instrumentName: "http.server.request.duration",
-      attributeKeys: [
-        "http.request.method",
-        "http.route",
-        "http.response.status_code",
+      attributesProcessors: [
+        createAllowListAttributesProcessor([
+          "http.method",
+          "http.route",
+          "http.status_code",
+        ]),
       ],
-      aggregation: Aggregation.Histogram(),
-    }),
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+      },
+    },
+    {
+      instrumentName: "http.server.request.size",
+      attributesProcessors: [
+        createAllowListAttributesProcessor(["http.method", "http.route"]),
+      ],
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+      },
+    },
+    {
+      instrumentName: "http.server.response.size",
+      attributesProcessors: [
+        createAllowListAttributesProcessor(["http.method", "http.route"]),
+      ],
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+      },
+    },
+    {
+      instrumentName: "http.server.request.duration",
+      attributesProcessors: [
+        createAllowListAttributesProcessor([
+          "http.request.method",
+          "http.route",
+          "http.response.status_code",
+        ]),
+      ],
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+      },
+    },
 
     // Process metrics - drop high-cardinality attributes
     // Only keep service-level attributes, drop per-process details
-    new View({
+    {
       instrumentName: "process.*",
-      attributeKeys: [], // Drop all extra attributes
-    }),
+      attributesProcessors: [createAllowListAttributesProcessor([])], // Drop all extra attributes
+    },
 
     // System metrics - aggregate across all CPUs/disks/network interfaces
-    new View({
+    {
       instrumentName: "system.cpu.*",
-      attributeKeys: ["state"], // Only keep state (user, system, idle), drop cpu number
-    }),
-    new View({
+      attributesProcessors: [createAllowListAttributesProcessor(["state"])], // Only keep state (user, system, idle), drop cpu number
+    },
+    {
       instrumentName: "system.memory.*",
-      attributeKeys: ["state"],
-    }),
-    new View({
+      attributesProcessors: [createAllowListAttributesProcessor(["state"])],
+    },
+    {
       instrumentName: "system.network.*",
-      attributeKeys: ["direction"], // Only keep direction, drop interface name
-    }),
-    new View({
+      attributesProcessors: [createAllowListAttributesProcessor(["direction"])], // Only keep direction, drop interface name
+    },
+    {
       instrumentName: "system.disk.*",
-      attributeKeys: ["direction"], // Only keep direction, drop device name
-    }),
-    new View({
+      attributesProcessors: [createAllowListAttributesProcessor(["direction"])], // Only keep direction, drop device name
+    },
+    {
       instrumentName: "system.filesystem.*",
-      attributeKeys: ["state"], // Drop mountpoint, device, type, mode
-    }),
+      attributesProcessors: [createAllowListAttributesProcessor(["state"])], // Drop mountpoint, device, type, mode
+    },
 
     // Catch-all for any remaining high-cardinality metrics - DROP them
     // This is aggressive but prevents cardinality explosion
-    new View({
+    {
       instrumentType: InstrumentType.HISTOGRAM,
       instrumentName: "*",
       // Keep only service-level attributes for unmatched histograms
-      attributeKeys: [
-        "http.method",
-        "http.route",
-        "http.status_code",
-        "rpc.method",
-        "rpc.service",
+      attributesProcessors: [
+        createAllowListAttributesProcessor([
+          "http.method",
+          "http.route",
+          "http.status_code",
+          "rpc.method",
+          "rpc.service",
+        ]),
       ],
-    }),
+    },
   ];
 }
 
@@ -348,7 +371,6 @@ export function initObservability(config: ObservabilityConfig): void {
     "@opentelemetry/instrumentation-mysql": { enabled: false },
     "@opentelemetry/instrumentation-mysql2": { enabled: false },
     "@opentelemetry/instrumentation-redis": { enabled: false },
-    "@opentelemetry/instrumentation-redis-4": { enabled: false },
     "@opentelemetry/instrumentation-ioredis": { enabled: false },
     "@opentelemetry/instrumentation-mongodb": { enabled: false },
     "@opentelemetry/instrumentation-grpc": { enabled: false },
@@ -379,7 +401,7 @@ export function initObservability(config: ObservabilityConfig): void {
   });
 
   sdkInstance = new NodeSDK({
-    resource: new Resource(resourceAttributes),
+    resource: resourceFromAttributes(resourceAttributes),
     resourceDetectors: detectors,
     sampler,
     spanProcessor: filteringProcessor,
