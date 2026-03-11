@@ -54,6 +54,7 @@ GEMINI.md
 .pnpm-store
 
 prompts
+prompts/**
 
 .agent/skills/context7/.env
 .agents/skills/context7/.env
