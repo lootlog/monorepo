@@ -9,5 +9,5 @@ SET
   "lastDiscordAttemptAt" = "updatedAt",
   "lastDiscordStatus" = CASE
     WHEN "active" THEN 'SUCCESS'
-    ELSE 'INACTIVE'
+    ELSE NULL
   END;
