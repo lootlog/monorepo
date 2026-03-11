@@ -77,4 +77,17 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async expire(key: string, ttlSeconds: number): Promise<number> {
     return this.client.expire(key, ttlSeconds);
   }
+
+  async eval<TResult = unknown>(
+    script: string,
+    keys: string[],
+    args: Array<string | number> = [],
+  ): Promise<TResult> {
+    return this.client.eval(
+      script,
+      keys.length,
+      ...keys,
+      ...args,
+    ) as Promise<TResult>;
+  }
 }

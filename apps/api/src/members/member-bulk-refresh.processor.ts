@@ -75,11 +75,11 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
           });
 
           progress.processedCount++;
-          if (refreshedMember?.refreshQueued) {
-            progress.skippedIds.push(memberId);
-          } else {
-            progress.refreshedIds.push(memberId);
-          }
+          const refreshOutcome = this.recordRefreshOutcome(
+            memberId,
+            refreshedMember,
+            progress,
+          );
 
           if (progress.processedCount % this.JOB_UPDATE_INTERVAL === 0) {
             await this.updateJobProgress(jobId, progress);
@@ -87,7 +87,11 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
           this.logger.log({
             level: 'debug',
-            message: `Successfully refreshed member ${memberId} in job ${jobId}`,
+            message: this.getRefreshOutcomeMessage(
+              memberId,
+              jobId,
+              refreshOutcome,
+            ),
           });
         } catch (error) {
           this.logger.log({
@@ -121,7 +125,7 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
 
       this.logger.log({
         level: 'info',
-        message: `Completed bulk refresh job ${jobId} for guild ${guildId}. Refreshed: ${progress.refreshedIds.length}, Failed: ${progress.failedIds.length}`,
+        message: `Completed bulk refresh job ${jobId} for guild ${guildId}. Refreshed: ${progress.refreshedIds.length}, Skipped: ${progress.skippedIds.length}, Failed: ${progress.failedIds.length}`,
       });
     } catch (error) {
       this.logger.log({
@@ -152,6 +156,40 @@ export class MemberBulkRefreshProcessor extends WorkerHost {
       data: { processedMembers: progress.processedCount },
     });
     await this.emitJobUpdate(jobId);
+  }
+
+  private recordRefreshOutcome(
+    memberId: string,
+    refreshedMember: Awaited<ReturnType<MembersService['refreshMember']>>,
+    progress: JobProgress,
+  ): 'refreshed' | 'queued' | 'missed' {
+    if (!refreshedMember) {
+      progress.skippedIds.push(memberId);
+      return 'missed';
+    }
+
+    if (refreshedMember.refreshQueued) {
+      progress.skippedIds.push(memberId);
+      return 'queued';
+    }
+
+    progress.refreshedIds.push(memberId);
+    return 'refreshed';
+  }
+
+  private getRefreshOutcomeMessage(
+    memberId: string,
+    jobId: number,
+    outcome: 'refreshed' | 'queued' | 'missed',
+  ): string {
+    switch (outcome) {
+      case 'queued':
+        return `Skipped member ${memberId} in job ${jobId} because refresh is queued`;
+      case 'missed':
+        return `Skipped member ${memberId} in job ${jobId} because no member data was returned`;
+      default:
+        return `Successfully refreshed member ${memberId} in job ${jobId}`;
+    }
   }
 
   private async emitJobUpdate(jobId: number): Promise<void> {
