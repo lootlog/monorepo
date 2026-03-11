@@ -15,34 +15,36 @@ const PERMISSION = {
   LOOTLOG_TIMERS_HEROES_READ: "LOOTLOG_TIMERS_HEROES_READ",
 } as const;
 
+type TimerPermission = (typeof PERMISSION)[keyof typeof PERMISSION];
+
+const isNpcLevelWithinRoleRange = (
+  role: RolePermissionData,
+  npcLevel: number,
+): boolean => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel;
+
+const getRequiredTimerPermission = (npcType: string): TimerPermission => {
+  if (npcType === "TITAN") {
+    return PERMISSION.LOOTLOG_TIMERS_TITANS_READ;
+  }
+
+  if (npcType === "HERO" || npcType === "EVENT_HERO") {
+    return PERMISSION.LOOTLOG_TIMERS_HEROES_READ;
+  }
+
+  return PERMISSION.LOOTLOG_TIMERS_READ;
+};
+
 export const canViewNpcTimer = (
   npc: NpcPermissionData | null,
   roles: RolePermissionData[],
 ): boolean => {
   if (!npc) return false;
 
-  if (npc.type === "TITAN") {
-    return roles.some(
-      (role) =>
-        role.permissions.includes(PERMISSION.LOOTLOG_TIMERS_TITANS_READ) &&
-        role.lvlRangeFrom <= npc.lvl &&
-        role.lvlRangeTo >= npc.lvl,
-    );
-  }
-
-  if (npc.type === "HERO" || npc.type === "EVENT_HERO") {
-    return roles.some(
-      (role) =>
-        role.permissions.includes(PERMISSION.LOOTLOG_TIMERS_HEROES_READ) &&
-        role.lvlRangeFrom <= npc.lvl &&
-        role.lvlRangeTo >= npc.lvl,
-    );
-  }
+  const requiredTimerPermission = getRequiredTimerPermission(npc.type);
 
   return roles.some(
     (role) =>
-      role.lvlRangeFrom <= npc.lvl &&
-      role.lvlRangeTo >= npc.lvl &&
-      role.permissions.includes(PERMISSION.LOOTLOG_TIMERS_READ),
+      role.permissions.includes(requiredTimerPermission) &&
+      isNpcLevelWithinRoleRange(role, npc.lvl),
   );
 };

@@ -1,12 +1,12 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { Permission, NpcType, type Role } from "generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "src/lib/redis/redis.service";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
-import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
 import { getStableNpcId } from "src/shared/utils/get-stable-npc-id";
 import type { CreateKillDto } from "./dto/create-kill.dto";
 import type {
@@ -28,7 +28,7 @@ export class KillsService {
   ) {}
 
   async createKill(discordId: string, data: CreateKillDto) {
-    const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof);
+    const npcType = getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof);
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
 
     // 1. User deduplication (30s window) - same user killing same NPC

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
+    "@lootlog/types": "workspace:*",
     "amqplib": "^0.10.9",
     "node-html-parser": "^7.1.0",
     "random-words": "^2.0.1",

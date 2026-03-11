@@ -2,6 +2,7 @@ import { createSHA256Hash } from "@/helpers/create-sha-256-hash";
 import { mapBattleEventsToPayload } from "@/helpers/mappers/battlelog.mappers";
 import { useCreateBattle } from "@/hooks/api/use-create-battle";
 import { useCreateKill } from "@/hooks/api/use-create-kill";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { NpcType } from "@/hooks/api/use-npcs";
 import { addAccountIdsToWarriors } from "@/hooks/game-events/helpers/battle.helpers";
 import { Game } from "@/lib/game";
@@ -11,7 +12,6 @@ import {
   type BattleWarriorsWithAccountId,
 } from "@/store/game-store/battle.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 
 const TRACKABLE_NPC_TYPES = new Set([
   NpcType.ELITE2,
@@ -124,7 +124,12 @@ export const useBattleEventHandler = () => {
           const topNpc = sortedByWt[0];
 
           if (topNpc) {
-            const npcType = getNpcTypeByWt(topNpc.wt, topNpc.prof, topNpc.type);
+            const npcType = getNpcTypeByWt(
+              NpcType,
+              topNpc.wt,
+              topNpc.prof,
+              topNpc.type,
+            );
 
             if (TRACKABLE_NPC_TYPES.has(npcType)) {
               // Deduplicate kills by hashing the dead NPCs

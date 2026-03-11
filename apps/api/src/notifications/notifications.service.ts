@@ -5,9 +5,10 @@ import {
   Inject,
   Injectable,
 } from "@nestjs/common";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { Permission } from "generated/client";
+import { NpcType, Permission } from "generated/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { CreateNotificationDto } from "src/notifications/dto/create-notification.dto";
@@ -17,7 +18,6 @@ import { Error } from "src/notifications/enum/error.enum";
 import { omit } from "lodash";
 import { v4 as uuid } from "uuid";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { getNpcTypeByWt } from "src/shared/utils/get-npc-type-by-wt";
 import { RedisService } from "src/lib/redis/redis.service";
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
@@ -131,7 +131,12 @@ export class NotificationsService {
       });
       return { notificationId, guildIds };
     }
-    const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type);
+    const npcType = getNpcTypeByWt(
+      NpcType,
+      data.npc.wt,
+      data.npc.prof,
+      data.npc.type,
+    );
     guildIds.forEach((guildId) => {
       this.emitNotification({
         ...basePayload,

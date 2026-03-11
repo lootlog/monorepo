@@ -7,7 +7,7 @@ import {
   useNotificationsStore,
 } from "@/store/notifications.store";
 import { Separator } from "@radix-ui/react-select";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 
 export type SingleNotificationProps = {
@@ -55,7 +56,7 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const npcType =
     !isPartyGathering && notification.npc
-      ? getNpcTypeByWt(notification.npc.wt!)
+      ? getNpcTypeByWt(NpcType, notification.npc.wt!)
       : undefined;
 
   const key = (
