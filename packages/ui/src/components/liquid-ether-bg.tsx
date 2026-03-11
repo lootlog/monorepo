@@ -91,7 +91,8 @@ export default function LiquidEther({
     function makePaletteTexture(stops: string[]): THREE.DataTexture {
       let arr: string[];
       if (Array.isArray(stops) && stops.length > 0) {
-        arr = stops.length === 1 ? [stops[0]!, stops[0]!] : stops;
+        const firstStop = stops[0] ?? "#ffffff";
+        arr = stops.length === 1 ? [firstStop, firstStop] : stops;
       } else {
         arr = ["#ffffff", "#ffffff"];
       }
@@ -625,6 +626,7 @@ export default function LiquidEther({
         this.createBoundary();
       }
       createBoundary() {
+        if (!this.uniforms || !this.scene) return;
         const boundaryG = new THREE.BufferGeometry();
         const vertices_boundary = new Float32Array([
           -1, -1, 0, -1, 1, 0, -1, 1, 0, 1, 1, 0, 1, 1, 0, 1, -1, 0, 1, -1, 0,
@@ -637,10 +639,10 @@ export default function LiquidEther({
         const boundaryM = new THREE.RawShaderMaterial({
           vertexShader: line_vert,
           fragmentShader: advection_frag,
-          uniforms: this.uniforms!,
+          uniforms: this.uniforms,
         });
         this.line = new THREE.LineSegments(boundaryG, boundaryM);
-        this.scene!.add(this.line);
+        this.scene.add(this.line);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
@@ -689,7 +691,7 @@ export default function LiquidEther({
           },
         });
         this.mouse = new THREE.Mesh(mouseG, mouseM);
-        this.scene!.add(this.mouse);
+        this.scene?.add(this.mouse);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update(...args: any[]) {
@@ -1015,7 +1017,7 @@ export default function LiquidEther({
       resize() {
         this.calcSize();
         for (const key in this.fbos) {
-          this.fbos[key]!.setSize(this.fboSize.x, this.fboSize.y);
+          this.fbos[key]?.setSize(this.fboSize.x, this.fboSize.y);
         }
       }
       update() {
@@ -1066,7 +1068,9 @@ export default function LiquidEther({
             transparent: true,
             depthWrite: false,
             uniforms: {
-              velocity: { value: this.simulation.fbos.vel_0!.texture },
+              velocity: {
+                value: this.simulation.fbos.vel_0?.texture ?? null,
+              },
               boundarySpace: { value: new THREE.Vector2() },
               palette: { value: paletteTex },
               bgColor: { value: bgVec4 },

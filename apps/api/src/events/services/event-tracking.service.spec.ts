@@ -146,12 +146,7 @@ describe("EventTrackingService", () => {
       mockPrismaService.eventMap.findFirst.mockResolvedValue(mapWithMember);
       mockPrismaService.eventMap.findUnique.mockResolvedValue(mapWithMember);
 
-      const result = await service.assignMemberToMap(
-        guildId,
-        eventId,
-        mapId,
-        memberId,
-      );
+      await service.assignMemberToMap(guildId, eventId, mapId, memberId);
 
       expect(mockPrismaService.eventMap.update).not.toHaveBeenCalled();
       expect(
@@ -265,12 +260,7 @@ describe("EventTrackingService", () => {
       });
       mockPrismaService.eventMapCoverageGap.findFirst.mockResolvedValue(null);
 
-      const result = await service.unassignMemberFromMap(
-        guildId,
-        eventId,
-        mapId,
-        memberId,
-      );
+      await service.unassignMemberFromMap(guildId, eventId, mapId, memberId);
 
       expect(
         mockPrismaService.eventMapAssignmentHistory.updateMany,

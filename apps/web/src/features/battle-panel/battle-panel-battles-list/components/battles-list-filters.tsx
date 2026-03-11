@@ -70,7 +70,7 @@ export const BattlesListFilters = ({
         maxLevel: debouncedMaxLevel,
       });
     }
-  }, [debouncedMinLevel, debouncedMaxLevel]);
+  }, [debouncedMinLevel, debouncedMaxLevel, filters, onFiltersChange]);
 
   const handleCharacterChange = (value: string) => {
     const currentCharacters = filters.characterId || [];

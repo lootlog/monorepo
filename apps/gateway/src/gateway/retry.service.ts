@@ -64,7 +64,6 @@ export class RetryService {
     identifier: string,
     config: RetryConfig = {},
   ): Promise<boolean> {
-    const retryCount = this.getRetryCount(headers);
     const maxRetries = config.maxRetries || GatewayConfig.DEFAULT_MAX_RETRIES;
 
     if (!this.shouldRetry(headers, maxRetries)) {
