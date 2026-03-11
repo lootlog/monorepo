@@ -9,6 +9,7 @@ import { DiscordService } from 'src/discord/discord.service';
 import { UsersService } from 'src/users/users.service';
 import { RedisService } from 'src/lib/redis/redis.service';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { type Guild, Permission } from 'generated/client';
 
 describe('GuildsService', () => {
   let service: GuildsService;
@@ -42,9 +43,25 @@ describe('GuildsService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockTransactionClient = {
+    lootlogConfigNpc: {
+      deleteMany: jest.fn(),
+    },
+    lootlogConfig: {
+      deleteMany: jest.fn(),
+    },
+    guild: {
+      update: jest.fn(),
+    },
+  };
+
   const mockMembersService = {
     getGuildMemberById: jest.fn(),
     deleteMembersByGuildId: jest.fn(),
+    notifyMembersRemoved: jest.fn(),
+    isMemberSoftStale: jest.fn(),
+    refreshGuildMemberWithinBudget: jest.fn(),
+    queueMemberRefresh: jest.fn(),
   };
 
   const mockRolesService = {
@@ -120,9 +137,331 @@ describe('GuildsService', () => {
     }).compile();
 
     service = module.get<GuildsService>(GuildsService);
+    mockPrismaService.$transaction.mockImplementation(
+      async (
+        callback: (
+          tx: typeof mockTransactionClient,
+        ) => Promise<unknown> | unknown,
+      ) => callback(mockTransactionClient),
+    );
+    mockMembersService.isMemberSoftStale.mockReturnValue(true);
+    mockMembersService.refreshGuildMemberWithinBudget.mockResolvedValue({
+      member: null,
+      refreshQueued: false,
+      nextRefreshAt: null,
+    });
+    mockMembersService.queueMemberRefresh.mockResolvedValue({
+      queued: true,
+      nextRefreshAt: null,
+    });
+    mockMembersService.notifyMembersRemoved.mockResolvedValue(undefined);
+    mockPrismaService.member.findMany.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const createGuild = (overrides: Partial<Guild> = {}): Guild => ({
+    id: 'guild-123',
+    name: 'Guild',
+    vanityUrl: null,
+    icon: null,
+    ownerId: 'owner-123',
+    active: true,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    ...overrides,
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('getCandidateGuildsForUser', () => {
+    it('should map Discord owner/admin metadata onto refresh candidates', async () => {
+      const ownerGuild = createGuild({ id: 'guild-owner' });
+      const adminGuild = createGuild({ id: 'guild-admin' });
+      mockDiscordService.getUserGuilds.mockResolvedValue([
+        {
+          id: 'guild-owner',
+          permissions: '0',
+          owner: true,
+          owner_id: 'discord-123',
+        },
+        {
+          id: 'guild-admin',
+          permissions: '8',
+          owner: false,
+          owner_id: 'someone-else',
+        },
+      ]);
+      mockPrismaService.guild.findMany.mockResolvedValue([
+        ownerGuild,
+        adminGuild,
+      ]);
+
+      const result = await (service as any).getCandidateGuildsForUser(
+        'discord-123',
+        'user-123',
+      );
+
+      expect(result).toEqual([
+        {
+          guild: ownerGuild,
+          isDiscordOwner: true,
+          hasDiscordAdmin: false,
+        },
+        {
+          guild: adminGuild,
+          isDiscordOwner: false,
+          hasDiscordAdmin: true,
+        },
+      ]);
+    });
+
+    it('should fall back to metadata-free candidates when Discord guild lookup fails', async () => {
+      const guild = createGuild({ id: 'guild-fallback' });
+      mockDiscordService.getUserGuilds.mockRejectedValue(new Error('boom'));
+      mockPrismaService.guild.findMany.mockResolvedValue([guild]);
+
+      const result = await (service as any).getCandidateGuildsForUser(
+        'discord-123',
+        'user-123',
+      );
+
+      expect(result).toEqual([
+        {
+          guild,
+          isDiscordOwner: false,
+          hasDiscordAdmin: false,
+        },
+      ]);
+    });
+  });
+
+  describe('refreshGuildCandidatesWithinBudget', () => {
+    it('should prioritize repair cases before Discord admin guilds', async () => {
+      const guildCandidates = [
+        {
+          guild: createGuild({ id: 'guild-missing' }),
+          isDiscordOwner: false,
+          hasDiscordAdmin: false,
+        },
+        {
+          guild: createGuild({ id: 'guild-no-access' }),
+          isDiscordOwner: false,
+          hasDiscordAdmin: false,
+        },
+        {
+          guild: createGuild({ id: 'guild-admin' }),
+          isDiscordOwner: false,
+          hasDiscordAdmin: true,
+        },
+        {
+          guild: createGuild({ id: 'guild-ordinary' }),
+          isDiscordOwner: false,
+          hasDiscordAdmin: false,
+        },
+      ];
+      const members = [
+        {
+          guildId: 'guild-no-access',
+          active: true,
+          globalUserId: 'user-123',
+          lastDiscordSyncAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          roles: [],
+        },
+        {
+          guildId: 'guild-admin',
+          active: true,
+          globalUserId: 'user-123',
+          lastDiscordSyncAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          roles: [
+            {
+              id: 'role-admin',
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+        {
+          guildId: 'guild-ordinary',
+          active: true,
+          globalUserId: 'user-123',
+          lastDiscordSyncAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          roles: [
+            {
+              id: 'role-ordinary',
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+      ];
+      mockPrismaService.member.findMany.mockResolvedValue(members);
+
+      await (service as any).refreshGuildCandidatesWithinBudget({
+        discordId: 'discord-123',
+        userId: 'user-123',
+        guildCandidates,
+        members,
+        requiredPermissions: [Permission.LOOTLOG_ACCESS],
+        maxImmediateRefreshes: 3,
+      });
+
+      expect(
+        mockMembersService.refreshGuildMemberWithinBudget.mock.calls.map(
+          ([call]) => call.guildId,
+        ),
+      ).toEqual(['guild-missing', 'guild-no-access', 'guild-admin']);
+      expect(mockMembersService.queueMemberRefresh).toHaveBeenCalledWith({
+        discordId: 'discord-123',
+        guildId: 'guild-ordinary',
+        userId: 'user-123',
+        priority: expect.any(Number),
+        reason: 'guild-connect-background',
+      });
+    });
+
+    it('should prioritize Discord owner guilds ahead of ordinary stale guilds', async () => {
+      const guildCandidates = [
+        {
+          guild: createGuild({ id: 'guild-owner', ownerId: 'discord-123' }),
+          isDiscordOwner: true,
+          hasDiscordAdmin: false,
+        },
+        {
+          guild: createGuild({ id: 'guild-ordinary' }),
+          isDiscordOwner: false,
+          hasDiscordAdmin: false,
+        },
+      ];
+      const members = [
+        {
+          guildId: 'guild-owner',
+          active: true,
+          globalUserId: 'user-123',
+          lastDiscordSyncAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          roles: [
+            {
+              id: 'role-owner',
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+        {
+          guildId: 'guild-ordinary',
+          active: true,
+          globalUserId: 'user-123',
+          lastDiscordSyncAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+          roles: [
+            {
+              id: 'role-ordinary',
+              lvlRangeFrom: null,
+              lvlRangeTo: null,
+              permissions: [Permission.LOOTLOG_ACCESS],
+            },
+          ],
+        },
+      ];
+      mockPrismaService.member.findMany.mockResolvedValue(members);
+
+      await (service as any).refreshGuildCandidatesWithinBudget({
+        discordId: 'discord-123',
+        userId: 'user-123',
+        guildCandidates,
+        members,
+        requiredPermissions: [Permission.LOOTLOG_ACCESS],
+        maxImmediateRefreshes: 1,
+      });
+
+      expect(
+        mockMembersService.refreshGuildMemberWithinBudget,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        mockMembersService.refreshGuildMemberWithinBudget,
+      ).toHaveBeenCalledWith({
+        discordId: 'discord-123',
+        guildId: 'guild-owner',
+        userId: 'user-123',
+        priority: expect.any(Number),
+        reason: 'guild-connect',
+      });
+      expect(mockMembersService.queueMemberRefresh).toHaveBeenCalledWith({
+        discordId: 'discord-123',
+        guildId: 'guild-ordinary',
+        userId: 'user-123',
+        priority: expect.any(Number),
+        reason: 'guild-connect-background',
+      });
+    });
+  });
+
+  describe('deleteGuild', () => {
+    it('should notify affected members after deleting the guild', async () => {
+      const affectedMembers = [
+        {
+          discordId: 'discord-123',
+          guildId: 'guild-123',
+          globalUserId: 'user-123',
+        },
+        {
+          discordId: 'discord-456',
+          guildId: 'guild-123',
+          globalUserId: 'user-456',
+        },
+      ];
+      mockPrismaService.guild.findUnique.mockResolvedValue({
+        vanityUrl: 'guild-vanity',
+      });
+      mockMembersService.deleteMembersByGuildId.mockResolvedValue({
+        count: 2,
+        affectedMembers,
+      });
+      mockRolesService.deleteRolesByGuildId.mockResolvedValue(undefined);
+      mockTransactionClient.lootlogConfigNpc.deleteMany.mockResolvedValue({
+        count: 0,
+      });
+      mockTransactionClient.lootlogConfig.deleteMany.mockResolvedValue({
+        count: 0,
+      });
+      mockTransactionClient.guild.update.mockResolvedValue(
+        createGuild({ active: false }),
+      );
+
+      await service.deleteGuild({ guildId: 'guild-123' });
+
+      expect(mockMembersService.deleteMembersByGuildId).toHaveBeenCalledWith(
+        'guild-123',
+        { tx: mockTransactionClient },
+      );
+      expect(mockMembersService.notifyMembersRemoved).toHaveBeenCalledWith(
+        affectedMembers,
+      );
+    });
+
+    it('should not notify affected members when guild deletion fails', async () => {
+      const error = new Error('guild delete failed');
+      mockPrismaService.guild.findUnique.mockResolvedValue({
+        vanityUrl: null,
+      });
+      mockPrismaService.$transaction.mockRejectedValue(error);
+
+      await expect(
+        service.deleteGuild({ guildId: 'guild-123' }),
+      ).rejects.toThrow(error);
+
+      expect(mockMembersService.notifyMembersRemoved).not.toHaveBeenCalled();
+    });
   });
 });

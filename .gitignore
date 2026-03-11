@@ -38,6 +38,7 @@ npm-debug.log*
 
 **/api/generated
 **/battlelog-service/generated
+**/activity/prisma/generated
 
 .claude/settings.local.json
 analysis
@@ -49,3 +50,5 @@ example-data
 
 # Gemini
 GEMINI.md
+
+.pnpm-store

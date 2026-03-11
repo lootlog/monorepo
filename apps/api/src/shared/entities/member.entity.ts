@@ -58,6 +58,46 @@ export class MemberEntity {
   @Expose()
   globalUserId?: string;
 
+  @Expose()
+  @ApiProperty({
+    example: '2026-03-10T12:00:00.000Z',
+    description: 'When member data was last successfully synced from Discord',
+    required: false,
+  })
+  lastDiscordSyncAt?: Date | null;
+
+  @Expose()
+  @ApiProperty({
+    example: true,
+    description: 'Whether the returned member data is stale',
+    required: false,
+  })
+  isStale?: boolean;
+
+  @Expose()
+  @ApiProperty({
+    example: 'Using cached data due to Discord API rate limiting or errors',
+    description: 'Additional context when stale member data is returned',
+    required: false,
+  })
+  staleWarning?: string;
+
+  @Expose()
+  @ApiProperty({
+    example: true,
+    description: 'Whether a background refresh has been queued',
+    required: false,
+  })
+  refreshQueued?: boolean;
+
+  @Expose()
+  @ApiProperty({
+    example: '2026-03-10T12:05:00.000Z',
+    description: 'Earliest time when the queued refresh can run',
+    required: false,
+  })
+  nextRefreshAt?: Date | null;
+
   @Exclude()
   createdAt: Date;
 
