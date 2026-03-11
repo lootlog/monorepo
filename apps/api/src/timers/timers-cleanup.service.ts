@@ -39,8 +39,7 @@ export class TimersCleanupService {
       return;
     }
 
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
+    const cutoffDate = this.createCutoffDate(this.retentionDays);
 
     this.logger.log(
       `Starting manual timer cleanup (cutoff: ${cutoffDate}, retention: ${this.retentionDays} days)`,
@@ -49,16 +48,13 @@ export class TimersCleanupService {
     const startTime = Date.now();
 
     try {
-      const result = await this.prisma.$executeRaw<number>`
-        DELETE FROM "Timer"
-        WHERE "maxSpawnTime" < ${cutoffDate}
-          AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}
-      `;
+      const deletedTimersCount =
+        await this.deleteExpiredManualTimers(cutoffDate);
 
       const duration = Date.now() - startTime;
 
       this.logger.log(
-        `Deleted ${result} expired manual timers in ${duration}ms (game NPC timers preserved)`,
+        `Deleted ${deletedTimersCount} expired manual timers in ${duration}ms (game NPC timers preserved)`,
       );
     } catch (error) {
       this.logger.error("Timer cleanup failed", error);
@@ -75,23 +71,33 @@ export class TimersCleanupService {
   async cleanupExpiredTimersManual(
     retentionDays: number = this.retentionDays,
   ): Promise<number> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffDate = this.createCutoffDate(retentionDays);
 
     this.logger.log(
       `Manual cleanup of expired manual timers (cutoff: ${cutoffDate}, retention: ${retentionDays} days)`,
     );
 
-    const count = await this.prisma.$executeRaw<number>`
+    const deletedTimersCount = await this.deleteExpiredManualTimers(cutoffDate);
+
+    this.logger.log(
+      `Manual cleanup deleted ${deletedTimersCount} expired manual timers (game NPC timers preserved)`,
+    );
+
+    return deletedTimersCount;
+  }
+
+  private createCutoffDate(retentionDays: number): Date {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    return cutoffDate;
+  }
+
+  private deleteExpiredManualTimers(cutoffDate: Date): Promise<number> {
+    return this.prisma.$executeRaw<number>`
       DELETE FROM "Timer"
       WHERE "maxSpawnTime" < ${cutoffDate}
         AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}
     `;
-
-    this.logger.log(
-      `Manual cleanup deleted ${count} expired manual timers (game NPC timers preserved)`,
-    );
-
-    return count;
   }
 }

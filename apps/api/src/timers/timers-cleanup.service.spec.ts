@@ -124,5 +124,17 @@ describe("TimersCleanupService", () => {
       expect(result).toBe(8);
       expect(mockPrismaService.$executeRaw).toHaveBeenCalled();
     });
+
+    it("should propagate cleanup errors in manual mode", async () => {
+      mockConfigService.get.mockReturnValue(undefined);
+      const service = await createService();
+      mockPrismaService.$executeRaw.mockRejectedValue(
+        new Error("Database error"),
+      );
+
+      await expect(service.cleanupExpiredTimersManual(7)).rejects.toThrow(
+        "Database error",
+      );
+    });
   });
 });
