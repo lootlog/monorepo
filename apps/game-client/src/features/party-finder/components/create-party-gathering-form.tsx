@@ -10,12 +10,12 @@ import {
 import { useSession } from "@/hooks/auth/use-session";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
+import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Game } from "@/lib/game";
-import axios from "axios";
 
 const FormSchema = z
   .object({
@@ -141,22 +141,7 @@ export const CreatePartyGatheringForm = () => {
           reset();
         },
         onError: (error) => {
-          if (axios.isAxiosError(error)) {
-            const status = error.response?.status;
-            if (status === 403) {
-              window.message("Brak uprawnień do wysyłania ogłoszeń");
-            } else if (status === 429) {
-              window.message("Zbyt wiele prób. Spróbuj za chwilę.");
-            } else if (status === 400) {
-              window.message(
-                error.response?.data?.message || "Nieprawidłowe dane",
-              );
-            } else {
-              window.message("Nie udało się utworzyć ogłoszenia");
-            }
-          } else {
-            window.message("Nie udało się utworzyć ogłoszenia");
-          }
+          window.message(getCreatePartyGatheringErrorMessage(error));
         },
       },
     );

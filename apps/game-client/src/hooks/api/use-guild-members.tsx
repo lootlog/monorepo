@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@/hooks/api/use-user";
 import { useAuthenticatedApiClient } from "@/hooks/api/use-api-client";
-import { AxiosInstance } from "axios";
+import type { AxiosInstance } from "axios";
 
 export type GuildMember = {
   id: number;
@@ -17,6 +17,18 @@ export type GuildMember = {
   }[];
 };
 
+export const mapGuildMembersByUserId = (
+  members: GuildMember[],
+): Record<string, GuildMember> => {
+  const membersByUserId: Record<string, GuildMember> = {};
+
+  members.forEach((member) => {
+    membersByUserId[member.userId] = member;
+  });
+
+  return membersByUserId;
+};
+
 export const useGuildMembers = (guildId?: string) => {
   const { client } = useAuthenticatedApiClient();
 
@@ -26,14 +38,7 @@ export const useGuildMembers = (guildId?: string) => {
     enabled: !!guildId && guildId !== "all",
     gcTime: Infinity,
     staleTime: 5 * 60 * 1000,
-    select: (response) => {
-      const keyValue: Record<string, GuildMember> = {};
-      response.data.forEach((member) => {
-        keyValue[member.userId] = member;
-      });
-
-      return keyValue;
-    },
+    select: (response) => mapGuildMembersByUserId(response.data),
   });
 
   return query;
@@ -47,10 +52,5 @@ export const fetchGuildMembers = async (
     `/guilds/${guildId}/members`,
   );
 
-  const keyValue: Record<string, GuildMember> = {};
-  response.data.forEach((member) => {
-    keyValue[member.userId] = member;
-  });
-
-  return keyValue;
+  return mapGuildMembersByUserId(response.data);
 };
