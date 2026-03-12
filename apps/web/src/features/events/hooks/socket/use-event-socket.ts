@@ -1,120 +1,91 @@
-import { useEffect, useCallback } from "react";
-import { useGateway } from "@/hooks/utils/use-gateway";
-import { GatewayEvent } from "@/config/gateway";
+import { useEffect, useEffectEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-
-interface MapStatusUpdatePayload {
-  guildId: string;
-  eventId: string;
-  mapId: string;
-}
-
-interface HeroKilledPayload {
-  guildId: string;
-  eventId: string;
-  killId: string;
-}
-
-interface RankingUpdatePayload {
-  guildId: string;
-  eventId: string;
-}
-
-interface RespawnWindowPayload {
-  guildId: string;
-  eventId: string;
-  heroId: string;
-}
+import { GatewayEvent } from "@/config/gateway";
+import { useGateway } from "@/hooks/utils/use-gateway";
+import { invalidateKillQueries } from "../mutations/invalidate-kill-queries";
+import { invalidateMapQueries } from "../mutations/invalidate-map-queries";
+import { invalidateRespawnQueries } from "../mutations/invalidate-respawn-queries";
 
 interface UseEventSocketOptions {
   eventId?: string;
   guildId?: string;
-  heroId?: string;
 }
 
-export const useEventSocket = ({
-  eventId,
-  guildId,
-  heroId,
-}: UseEventSocketOptions) => {
-  const { socket, connected } = useGateway();
+type EventPayload = {
+  eventId: string;
+  guildId: string;
+};
+
+type EventMapStatusUpdatePayload = EventPayload & {
+  mapId: string;
+};
+
+type EventRespawnWindowPayload = EventPayload & {
+  heroId: string;
+};
+
+const isMatchingEventPayload = (
+  payload: EventPayload,
+  guildId?: string,
+  eventId?: string,
+) => {
+  return payload.guildId === guildId && payload.eventId === eventId;
+};
+
+export const useEventSocket = (options?: UseEventSocketOptions) => {
   const queryClient = useQueryClient();
+  const { connected, socket } = useGateway();
+  const { guildId, eventId } = options ?? {};
 
-  const handleMapStatusUpdate = useCallback(
-    (payload: MapStatusUpdatePayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        queryClient.invalidateQueries({
-          queryKey: ["event-maps", guildId, eventId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["map-active-gap", guildId, eventId, payload.mapId],
-        });
+  const handleMapStatusUpdate = useEffectEvent(
+    (payload: EventMapStatusUpdatePayload) => {
+      if (!isMatchingEventPayload(payload, guildId, eventId)) {
+        return;
       }
+
+      invalidateMapQueries(
+        queryClient,
+        payload.guildId,
+        payload.eventId,
+        payload.mapId,
+      );
     },
-    [eventId, guildId, queryClient],
   );
+  const handleHeroKilled = useEffectEvent((payload: EventPayload) => {
+    if (!isMatchingEventPayload(payload, guildId, eventId)) {
+      return;
+    }
 
-  const handleHeroKilled = useCallback(
-    (payload: HeroKilledPayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        queryClient.invalidateQueries({
-          queryKey: ["event-overview", guildId, eventId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["event-kill-history", guildId, eventId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["hero-kill-history", guildId, eventId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["event-member-kill-history", guildId, eventId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["recent-hero-kills", guildId, eventId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["event-hero-stats", guildId, eventId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["event-participation-confirmations", guildId, eventId],
-        });
-      }
-    },
-    [eventId, guildId, queryClient],
-  );
+    invalidateKillQueries(queryClient, payload.guildId, payload.eventId);
+  });
+  const handleRankingUpdate = useEffectEvent((payload: EventPayload) => {
+    if (!isMatchingEventPayload(payload, guildId, eventId)) {
+      return;
+    }
 
-  const handleRankingUpdate = useCallback(
-    (payload: RankingUpdatePayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        queryClient.invalidateQueries({
-          queryKey: ["event-ranking", guildId, eventId],
-        });
+    queryClient.invalidateQueries({
+      queryKey: ["event-ranking", payload.guildId, payload.eventId],
+    });
+  });
+  const handleRespawnWindowChange = useEffectEvent(
+    (payload: EventRespawnWindowPayload) => {
+      if (!isMatchingEventPayload(payload, guildId, eventId)) {
+        return;
       }
-    },
-    [eventId, guildId, queryClient],
-  );
 
-  const handleRespawnWindowChange = useCallback(
-    (payload: RespawnWindowPayload) => {
-      if (payload.guildId === guildId && payload.eventId === eventId) {
-        if (!heroId || payload.heroId === heroId) {
-          queryClient.invalidateQueries({
-            queryKey: ["hero-respawn-config", guildId, eventId, payload.heroId],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["event-hero-timers", guildId, eventId],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["event-maps", guildId, eventId],
-          });
-        }
-      }
+      invalidateRespawnQueries(
+        queryClient,
+        payload.guildId,
+        payload.eventId,
+        payload.heroId,
+      );
     },
-    [eventId, guildId, heroId, queryClient],
   );
 
   useEffect(() => {
-    if (!socket || !connected || !eventId || !guildId) return;
+    if (!guildId || !eventId) {
+      return;
+    }
 
     socket.on(GatewayEvent.EVENT_MAP_STATUS_UPDATE, handleMapStatusUpdate);
     socket.on(GatewayEvent.EVENT_HERO_KILLED, handleHeroKilled);
@@ -141,16 +112,7 @@ export const useEventSocket = ({
         handleRespawnWindowChange,
       );
     };
-  }, [
-    socket,
-    connected,
-    eventId,
-    guildId,
-    handleMapStatusUpdate,
-    handleHeroKilled,
-    handleRankingUpdate,
-    handleRespawnWindowChange,
-  ]);
+  }, [eventId, guildId, socket]);
 
   return { connected };
 };

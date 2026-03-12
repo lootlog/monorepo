@@ -39,7 +39,6 @@ import {
 import { toast } from "sonner";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
-import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { useHeroActiveGaps } from "./hooks/queries/use-hero-active-gaps";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
@@ -116,8 +115,6 @@ export const HeroDetail = () => {
     guildId: guild?.id,
     world: event?.world,
   });
-
-  useEventSocket({ eventId, guildId: guild?.id, heroId });
 
   const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
   const { data: rankings = [] } = useEventRanking({

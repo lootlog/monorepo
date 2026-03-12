@@ -48,7 +48,6 @@ import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
-import { useEventSocket } from "./hooks/socket/use-event-socket";
 import {
   normalizeScoringMode,
   normalizeScoringRules,
@@ -96,11 +95,6 @@ export const EventDetail = () => {
   const { data: rankings = [], error: rankingError } = useEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
-  });
-
-  useEventSocket({
-    eventId,
-    guildId,
   });
   const { deleteHero, updateEvent, deleteEvent } = useEventMutations(
     guildId ?? "",

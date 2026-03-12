@@ -11,7 +11,6 @@ import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
-import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 export const EventRankingPage = () => {
@@ -39,11 +38,6 @@ export const EventRankingPage = () => {
   } = useEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
-  });
-
-  useEventSocket({
-    eventId,
-    guildId,
   });
 
   if (isEventLoading || isRankingLoading) {

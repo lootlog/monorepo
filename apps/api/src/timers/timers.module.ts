@@ -1,4 +1,4 @@
-import { forwardRef, Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TimersService } from "./timers.service";
 import { TimersController } from "./timers.controller";
@@ -31,7 +31,7 @@ import { EventsModule } from "src/events/events.module";
     UserLootlogConfigModule,
     PrismaModule,
     RedisModule,
-    forwardRef(() => EventsModule),
+    EventsModule,
   ],
   providers: [TimersService, TimersCleanupService],
   controllers: [TimersController],
