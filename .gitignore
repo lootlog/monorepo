@@ -45,6 +45,7 @@ analysis
 improvements
 improvements/**
 .playwright-mcp
+.playwright-cli
 example-data/**
 example-data
 
