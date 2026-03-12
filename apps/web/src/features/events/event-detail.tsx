@@ -325,59 +325,60 @@ export const EventDetail = () => {
         </>
       )}
 
-      <div className="w-full shrink-0 border-b bg-background px-3 py-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-3">
-              <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
-                <Trophy className="size-4 text-primary" />
-              </div>
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/40 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="min-w-0 text-base font-semibold leading-tight break-words">
-                    {event.name}
-                  </h2>
-                  <Badge variant={eventStatusVariant} className="text-xs">
-                    {eventStatusLabel}
-                  </Badge>
-                </div>
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                    <Trophy className="size-4 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="min-w-0 text-base font-semibold leading-tight break-words">
+                        {event.name}
+                      </h2>
+                      <Badge variant={eventStatusVariant} className="text-xs">
+                        {eventStatusLabel}
+                      </Badge>
+                    </div>
 
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
-                  </Badge>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {event.world.charAt(0).toUpperCase() +
+                          event.world.slice(1)}
+                      </Badge>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="outline"
+                            className="cursor-help gap-1 text-xs"
+                          >
+                            <Clock className="w-3 h-3" />
+                            {event.assignmentTimeoutMinutes ?? 5} min
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t("events.header.assignmentTimeoutTooltip")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+
                       <Badge
                         variant="outline"
-                        className="cursor-help gap-1 text-xs"
+                        className="order-last flex w-full justify-start gap-1 px-2 py-1 text-xs whitespace-normal sm:order-none sm:w-auto sm:whitespace-nowrap"
                       >
-                        <Clock className="w-3 h-3" />
-                        {event.assignmentTimeoutMinutes ?? 5} min
+                        <CalendarDays className="mt-0.5 h-3 w-3 shrink-0 sm:mt-0" />
+                        <span>{eventDateRangeLabel}</span>
                       </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t("events.header.assignmentTimeoutTooltip")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Badge
-                    variant="outline"
-                    className="order-last flex w-full justify-start gap-1 px-2 py-1 text-xs whitespace-normal sm:order-none sm:w-auto sm:whitespace-nowrap"
-                  >
-                    <CalendarDays className="mt-0.5 h-3 w-3 shrink-0 sm:mt-0" />
-                    <span>{eventDateRangeLabel}</span>
-                  </Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </Card>
 
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="px-3 py-3 flex flex-col gap-4">
           {(mapsError || rankingError) && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {mapsError && <p>{t("events.maps.error")}</p>}

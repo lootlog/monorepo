@@ -82,46 +82,50 @@ export const Events = () => {
 
   return (
     <ScrollArea className="h-full bg-background/50">
-      <div className="flex flex-col gap-4">
-        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Trophy className="size-4 text-primary" />
+      <div className="flex flex-col gap-4 px-3 py-3">
+        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+                <Trophy className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold leading-tight">
+                  {t("events.title")}
+                </h2>
+                <p className="text-xs text-muted-foreground leading-tight">
+                  {t("events.description")}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-semibold leading-tight">
-                {t("events.title")}
-              </h2>
-              <p className="text-xs text-muted-foreground leading-tight">
-                {t("events.description")}
-              </p>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {t("events.create")}
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              {t("events.create")}
-            </Button>
-          </div>
-        </div>
+        </Card>
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : events?.length === 0 ? (
-          <div className="px-3">
-            <Card className="flex flex-col items-center justify-center py-12 gap-3 bg-card/40 backdrop-blur-sm">
-              <Trophy className="w-12 h-12 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">{t("events.noEvents")}</p>
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                {t("events.create")}
-              </Button>
-            </Card>
-          </div>
+          <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">
+            <Trophy className="w-12 h-12 text-muted-foreground opacity-50" />
+            <p className="text-muted-foreground">{t("events.noEvents")}</p>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t("events.create")}
+            </Button>
+          </Card>
         ) : (
-          <div className="flex flex-col gap-3 px-3">
+          <div className="flex flex-col gap-3">
             {events?.map((event: Event) => {
               const eventStatus = getEventStatusAtTimestamp(
                 event,
