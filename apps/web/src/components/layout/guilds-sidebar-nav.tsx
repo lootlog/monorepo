@@ -25,6 +25,7 @@ import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
 import { useEvents } from "@/features/events/hooks";
+import { isEventActiveAtTimestamp } from "@/features/events/utils";
 import { ActiveEventsBanner } from "./active-events-banner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@lootlog/ui/lib/utils";
@@ -50,8 +51,12 @@ export const GuildsSidebarNav: FC = () => {
     activeOnly: true,
     enabled: Boolean(canViewEvents),
   });
-  const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
-  const activeEventCount = activeEvents?.length ?? 0;
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+  const currentlyActiveEvents = (activeEvents ?? []).filter((event) =>
+    isEventActiveAtTimestamp(event, currentTimestamp),
+  );
+  const hasActiveEvents = currentlyActiveEvents.length > 0;
+  const activeEventCount = currentlyActiveEvents.length;
 
   const menuItems: MenuItem[] = [
     {
@@ -153,7 +158,6 @@ export const GuildsSidebarNav: FC = () => {
   const guild = guilds?.find(
     (g) => g.id === guildId || g.vanityUrl === guildId,
   );
-  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {

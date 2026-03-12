@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -50,6 +50,7 @@ import {
   normalizeScoringMode,
   normalizeScoringRules,
 } from "./utils/scoring-rules";
+import { getEventStatusAtTimestamp } from "./utils";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -60,6 +61,7 @@ export const EventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const navigate = useNavigate();
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   const {
     data: event,
@@ -109,6 +111,14 @@ export const EventDetail = () => {
     null,
   );
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const heroMapsById = new Map(
     (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
   );
@@ -144,6 +154,23 @@ export const EventDetail = () => {
   const canDeleteEvent =
     permissions?.includes(Permission.ADMIN) ||
     permissions?.includes(Permission.OWNER);
+  const eventStatus =
+    event !== undefined && event !== null
+      ? getEventStatusAtTimestamp(event, currentTimestamp)
+      : "ended";
+  const isEventActive = eventStatus === "active";
+  const eventStatusLabel =
+    eventStatus === "upcoming"
+      ? t("events.upcoming")
+      : eventStatus === "ended"
+        ? t("events.ended")
+        : t("events.active");
+  const eventStatusVariant =
+    eventStatus === "active"
+      ? "default"
+      : eventStatus === "upcoming"
+        ? "outline"
+        : "secondary";
 
   const handleEditHero = (hero: EventHeroNpc) => {
     setSelectedHero({
@@ -203,7 +230,7 @@ export const EventDetail = () => {
   };
 
   const openEventStatusDialog = () => {
-    if (event.active) {
+    if (isEventActive) {
       setEndDialogOpen(true);
       return;
     }
@@ -310,11 +337,8 @@ export const EventDetail = () => {
                   <h2 className="min-w-0 text-base font-semibold leading-tight break-words">
                     {event.name}
                   </h2>
-                  <Badge
-                    variant={event.active ? "default" : "secondary"}
-                    className="text-xs"
-                  >
-                    {event.active ? t("events.active") : t("events.inactive")}
+                  <Badge variant={eventStatusVariant} className="text-xs">
+                    {eventStatusLabel}
                   </Badge>
                 </div>
 
@@ -356,22 +380,8 @@ export const EventDetail = () => {
         <div className="px-3 py-3 flex flex-col gap-4">
           {(mapsError || rankingError) && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {mapsError && (
-                <p>
-                  {t(
-                    "events.maps.error",
-                    "Nie udało się pobrać map eventu. Część danych może być niepełna.",
-                  )}
-                </p>
-              )}
-              {rankingError && (
-                <p>
-                  {t(
-                    "events.ranking.error",
-                    "Nie udało się pobrać rankingu. Część danych może być niepełna.",
-                  )}
-                </p>
-              )}
+              {mapsError && <p>{t("events.maps.error")}</p>}
+              {rankingError && <p>{t("events.ranking.error")}</p>}
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -438,10 +448,9 @@ export const EventDetail = () => {
 
             <div className="space-y-4">
               <EventActionsCard
-                eventName={event.name}
                 canManage={canManage ?? false}
                 canDeleteEvent={canDeleteEvent ?? false}
-                isActive={event.active}
+                isActive={isEventActive}
                 isUpdatePending={updateEvent.isPending}
                 isDeletePending={deleteEvent.isPending}
                 onOpenRules={() => setRulesDialogOpen(true)}

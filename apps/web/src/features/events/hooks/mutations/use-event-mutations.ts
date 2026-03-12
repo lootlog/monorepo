@@ -10,7 +10,6 @@ export interface UpdateEventData {
   name?: string;
   startsAt?: string;
   endsAt?: string | null;
-  active?: boolean;
   assignmentTimeoutMinutes?: number;
   participationConfirmationMinutes?: number;
   mapAssignmentCap?: number;

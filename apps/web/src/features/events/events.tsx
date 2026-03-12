@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
@@ -28,14 +28,24 @@ import { useDeleteEvent } from "@/features/events/hooks/mutations/use-delete-eve
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
+import { getEventStatusAtTimestamp } from "./utils";
 
 export const Events = () => {
   const { t } = useTranslation();
   const { guildId } = useParams({ strict: false });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const { data: permissions } = useGuildPermissions();
   const deleteEvent = useDeleteEvent(guildId ?? "");
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const {
     data: events,
@@ -112,95 +122,115 @@ export const Events = () => {
           </div>
         ) : (
           <div className="flex flex-col gap-3 px-3">
-            {events?.map((event: Event) => (
-              <Link
-                key={event.id}
-                to="/$guildId/events/$eventId"
-                params={{ guildId: guildId ?? "", eventId: event.id }}
-              >
-                <Card
-                  className={`p-3 bg-card/40 backdrop-blur-sm hover:bg-card/60 transition-all cursor-pointer ${
-                    event.active
-                      ? "border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:border-yellow-500/70"
-                      : "border-border hover:border-primary/30"
-                  }`}
+            {events?.map((event: Event) => {
+              const eventStatus = getEventStatusAtTimestamp(
+                event,
+                currentTimestamp,
+              );
+              const isEventActive = eventStatus === "active";
+              const eventStatusLabel =
+                eventStatus === "upcoming"
+                  ? t("events.upcoming")
+                  : eventStatus === "ended"
+                    ? t("events.ended")
+                    : t("events.active");
+              const eventStatusVariant =
+                eventStatus === "active"
+                  ? "default"
+                  : eventStatus === "upcoming"
+                    ? "outline"
+                    : "secondary";
+
+              return (
+                <Link
+                  key={event.id}
+                  to="/$guildId/events/$eventId"
+                  params={{ guildId: guildId ?? "", eventId: event.id }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Trophy
-                          className={`w-4 h-4 ${event.active ? "text-yellow-500" : "text-muted-foreground"}`}
-                        />
-                        {event.active && (
-                          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-base">
-                          {event.name}
-                        </h3>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                          <div className="flex items-center gap-1">
-                            <Globe className="w-3 h-3" />
-                            <span>{event.world}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Swords className="w-3 h-3" />
-                            <span>
-                              {t("events.heroes.count", {
-                                count: event.heroNpcs?.length || 0,
-                              })}
+                  <Card
+                    className={`p-3 bg-card/40 backdrop-blur-sm hover:bg-card/60 transition-all cursor-pointer ${
+                      isEventActive
+                        ? "border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:border-yellow-500/70"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Trophy
+                            className={`w-4 h-4 ${isEventActive ? "text-yellow-500" : "text-muted-foreground"}`}
+                          />
+                          {isEventActive && (
+                            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
                             </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <CalendarDays className="w-3 h-3" />
-                            <span>
-                              {format(
-                                new Date(event.startsAt || event.createdAt),
-                                "d MMM yyyy",
-                                {
-                                  locale: pl,
-                                },
-                              )}
-                              {" – "}
-                              {event.endsAt
-                                ? format(new Date(event.endsAt), "d MMM yyyy", {
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-base">
+                            {event.name}
+                          </h3>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <Globe className="w-3 h-3" />
+                              <span>{event.world}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Swords className="w-3 h-3" />
+                              <span>
+                                {t("events.heroes.count", {
+                                  count: event.heroNpcs?.length || 0,
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3" />
+                              <span>
+                                {format(
+                                  new Date(event.startsAt || event.createdAt),
+                                  "d MMM yyyy",
+                                  {
                                     locale: pl,
-                                  })
-                                : t("events.ongoing")}
-                            </span>
+                                  },
+                                )}
+                                {" – "}
+                                {event.endsAt
+                                  ? format(
+                                      new Date(event.endsAt),
+                                      "d MMM yyyy",
+                                      {
+                                        locale: pl,
+                                      },
+                                    )
+                                  : t("events.ongoing")}
+                              </span>
+                            </div>
+                            <Badge variant={eventStatusVariant}>
+                              {eventStatusLabel}
+                            </Badge>
                           </div>
-                          <Badge
-                            variant={event.active ? "default" : "secondary"}
-                          >
-                            {event.active
-                              ? t("events.active")
-                              : t("events.inactive")}
-                          </Badge>
                         </div>
                       </div>
+                      {canDeleteEvent && (
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEventToDelete(event);
+                          }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                     </div>
-                    {canDeleteEvent && (
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setEventToDelete(event);
-                        }}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
 

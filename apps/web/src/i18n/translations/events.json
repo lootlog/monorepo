@@ -11,6 +11,7 @@
     "scoring": "Ustawienia punktów"
   },
   "delete": "Usuń Event",
+  "upcoming": "Nadchodzący",
   "active": "Aktywny",
   "inactive": "Nieaktywny",
   "ongoing": "W trakcie",
@@ -83,7 +84,7 @@
     "scoringTitle": "Zasady punktacji"
   },
   "actionsCard": {
-    "title": "Akcje eventu",
+    "title": "Akcje",
     "description": "Najważniejsze operacje dla eventu „{{name}}”."
   },
   "confirmation": {
@@ -185,7 +186,7 @@
     "alreadyAssigned": "Przypisany",
     "assignmentDisabled": "Zapisywanie jeszcze niedostępne",
     "assignmentDisabledWithTime": "Zapisywanie możliwe za {{time}}",
-    "unassignSelf": "Odpisz się",
+    "unassignSelf": "Wypisz się",
     "assignSelf": "Przypisz się",
     "gap": {
       "unassigned": "nieprzypisana",
@@ -300,7 +301,7 @@
     "pointsTooltip": {
       "basePoints": "Punkty bazowe",
       "trackingPercentage": "Czas obstawiania respawnu",
-      "bonusItem": "Bonus: {{name}}",
+      "bonusItem": "{{name}}",
       "bonusTotal": "Bonusy razem",
       "groupBonus": "Bonus małej grupy",
       "nightBonus": "Bonus nocnej warty",
