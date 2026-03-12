@@ -379,6 +379,20 @@ export const EventDetail = () => {
             </div>
           </Card>
 
+          <div className="lg:hidden">
+            <EventActionsCard
+              canManage={canManage ?? false}
+              canDeleteEvent={canDeleteEvent ?? false}
+              isActive={isEventActive}
+              isUpdatePending={updateEvent.isPending}
+              isDeletePending={deleteEvent.isPending}
+              onOpenRules={() => setRulesDialogOpen(true)}
+              onEdit={navigateToEventEdit}
+              onToggleStatus={openEventStatusDialog}
+              onDelete={() => setDeleteDialogOpen(true)}
+            />
+          </div>
+
           {(mapsError || rankingError) && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {mapsError && <p>{t("events.maps.error")}</p>}
@@ -448,17 +462,19 @@ export const EventDetail = () => {
             </div>
 
             <div className="space-y-4">
-              <EventActionsCard
-                canManage={canManage ?? false}
-                canDeleteEvent={canDeleteEvent ?? false}
-                isActive={isEventActive}
-                isUpdatePending={updateEvent.isPending}
-                isDeletePending={deleteEvent.isPending}
-                onOpenRules={() => setRulesDialogOpen(true)}
-                onEdit={navigateToEventEdit}
-                onToggleStatus={openEventStatusDialog}
-                onDelete={() => setDeleteDialogOpen(true)}
-              />
+              <div className="hidden lg:block">
+                <EventActionsCard
+                  canManage={canManage ?? false}
+                  canDeleteEvent={canDeleteEvent ?? false}
+                  isActive={isEventActive}
+                  isUpdatePending={updateEvent.isPending}
+                  isDeletePending={deleteEvent.isPending}
+                  onOpenRules={() => setRulesDialogOpen(true)}
+                  onEdit={navigateToEventEdit}
+                  onToggleStatus={openEventStatusDialog}
+                  onDelete={() => setDeleteDialogOpen(true)}
+                />
+              </div>
 
               <EventRankingPreview
                 rankings={rankings}

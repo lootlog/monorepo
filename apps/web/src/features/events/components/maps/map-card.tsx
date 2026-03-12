@@ -186,11 +186,11 @@ export const MapCard = ({
         windowStatus !== "OPEN" && "hover:border-primary",
       )}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
           <div
             className={cn(
-              "flex min-w-0 items-start justify-between gap-2",
+              "flex min-w-0 items-center justify-between gap-2",
               hasPlayersToShow && "cursor-pointer",
             )}
             onClick={
@@ -369,8 +369,7 @@ export const MapCard = ({
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "h-9 w-full justify-center gap-2 px-3 sm:h-7 sm:px-0",
-                      !isAssignmentEnabled ? "sm:w-auto sm:px-1.5" : "sm:w-7",
+                      "h-9 w-full justify-center gap-2 px-3 sm:h-7 sm:px-0 sm:w-7",
                     )}
                     onClick={() => onSelfAssignClick?.(map.id)}
                     disabled={!isAssignmentEnabled}

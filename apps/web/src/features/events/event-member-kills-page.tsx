@@ -3,7 +3,15 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { differenceInSeconds } from "date-fns";
-import { AlertCircle, Clock, Loader2, Skull, Swords } from "lucide-react";
+import {
+  AlertCircle,
+  BarChart3,
+  Clock,
+  Loader2,
+  Skull,
+  Swords,
+} from "lucide-react";
+import { cn } from "@lootlog/ui/lib/utils";
 import {
   Avatar,
   AvatarFallback,
@@ -439,7 +447,7 @@ const MemberSummarySidebar = ({
     <aside className="order-1 lg:order-2">
       <div className="space-y-4 lg:sticky lg:top-3">
         <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-3 lg:flex">
             <Avatar className="h-12 w-12 rounded-xl ring-1 ring-border/70">
               <AvatarImage src={avatarUrl} />
               <AvatarFallback className="rounded-xl text-sm">
@@ -751,6 +759,7 @@ const EventMemberKillsPageContent = ({
   const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
     initialHeroId,
   );
+  const [showStats, setShowStats] = useState(false);
 
   const {
     data: event,
@@ -828,15 +837,57 @@ const EventMemberKillsPageContent = ({
         eventId={eventId}
       />
 
+      <Card className="mx-3 mt-3 flex-row items-center justify-between gap-3 border-border bg-card/40 p-3 backdrop-blur-sm lg:hidden">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className="h-10 w-10 shrink-0 rounded-xl ring-1 ring-border/70">
+            <AvatarImage
+              src={
+                member
+                  ? getDiscordAvatarUrl(
+                      member.userId,
+                      member.avatar ?? null,
+                      96,
+                    )
+                  : undefined
+              }
+            />
+            <AvatarFallback className="rounded-xl text-sm">
+              {member?.name?.[0]?.toUpperCase() ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {t("events.kills.memberStatsTitle")}
+            </p>
+            <h2 className="truncate text-base font-semibold">
+              {member?.name ?? `#${memberId}`}
+            </h2>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => setShowStats((s) => !s)}
+        >
+          <BarChart3 className="h-4 w-4" />
+          {showStats
+            ? t("events.kills.hideStats")
+            : t("events.kills.showStats")}
+        </Button>
+      </Card>
+
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-3 py-3 lg:grid lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)] lg:grid-rows-[minmax(0,1fr)]">
-        <MemberSummarySidebar
-          member={member}
-          memberId={memberId}
-          eventName={event.name}
-          selectedHero={selectedHero}
-          contextStats={contextStats}
-          heroSummaries={heroSummaries}
-        />
+        <div className={cn("contents", !showStats && "hidden lg:contents")}>
+          <MemberSummarySidebar
+            member={member}
+            memberId={memberId}
+            eventName={event.name}
+            selectedHero={selectedHero}
+            contextStats={contextStats}
+            heroSummaries={heroSummaries}
+          />
+        </div>
 
         <MemberKillsListSection
           guildId={guildId ?? ""}
