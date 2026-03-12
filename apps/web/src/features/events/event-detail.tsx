@@ -22,12 +22,9 @@ import {
   Trophy,
   AlertCircle,
   Swords,
-  Pencil,
   Plus,
   Clock,
   CalendarDays,
-  Trash2,
-  BookText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -48,6 +45,7 @@ import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
+import { EventActionsCard } from "./components/shared/event-actions-card";
 import {
   normalizeScoringMode,
   normalizeScoringRules,
@@ -127,6 +125,15 @@ export const EventDetail = () => {
     scoringMode === "ADVANCED"
       ? normalizeScoringRules(event?.scoringRules)
       : null;
+  const eventDateRangeLabel = event
+    ? `${format(new Date(event.startsAt || event.createdAt), "d MMM yyyy", {
+        locale: pl,
+      })} - ${
+        event.endsAt
+          ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
+          : t("events.ongoing")
+      }`
+    : "";
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -184,6 +191,25 @@ export const EventDetail = () => {
       </div>
     );
   }
+
+  const navigateToEventEdit = () => {
+    navigate({
+      to: "/$guildId/events/$eventId/edit",
+      params: {
+        guildId: guildId ?? "",
+        eventId: eventId ?? "",
+      },
+    });
+  };
+
+  const openEventStatusDialog = () => {
+    if (event.active) {
+      setEndDialogOpen(true);
+      return;
+    }
+
+    setResumeDialogOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
@@ -272,120 +298,57 @@ export const EventDetail = () => {
         </>
       )}
 
-      <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Trophy className="size-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-semibold leading-tight">
-              {event.name}
-            </h2>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <Badge
-                variant={event.active ? "default" : "secondary"}
-                className="text-xs"
-              >
-                {event.active ? t("events.active") : t("events.inactive")}
-              </Badge>
+      <div className="w-full shrink-0 border-b bg-background px-3 py-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                <Trophy className="size-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="min-w-0 text-base font-semibold leading-tight break-words">
+                    {event.name}
+                  </h2>
+                  <Badge
+                    variant={event.active ? "default" : "secondary"}
+                    className="text-xs"
+                  >
+                    {event.active ? t("events.active") : t("events.inactive")}
+                  </Badge>
+                </div>
 
-              <Badge variant="outline" className="text-xs">
-                {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
-              </Badge>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
+                  </Badge>
 
-              <Badge variant="outline" className="text-xs gap-1">
-                <CalendarDays className="w-3 h-3" />
-                {format(
-                  new Date(event.startsAt || event.createdAt),
-                  "d MMM yyyy",
-                  { locale: pl },
-                )}
-                {" – "}
-                {event.endsAt
-                  ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
-                  : t("events.ongoing")}
-              </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className="cursor-help gap-1 text-xs"
+                      >
+                        <Clock className="w-3 h-3" />
+                        {event.assignmentTimeoutMinutes ?? 5} min
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("events.header.assignmentTimeoutTooltip")}</p>
+                    </TooltipContent>
+                  </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
                   <Badge
                     variant="outline"
-                    className="text-xs gap-1 cursor-help"
+                    className="order-last flex w-full justify-start gap-1 px-2 py-1 text-xs whitespace-normal sm:order-none sm:w-auto sm:whitespace-nowrap"
                   >
-                    <Clock className="w-3 h-3" />
-                    {event.assignmentTimeoutMinutes ?? 5} min
+                    <CalendarDays className="mt-0.5 h-3 w-3 shrink-0 sm:mt-0" />
+                    <span>{eventDateRangeLabel}</span>
                   </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {t(
-                      "events.header.assignmentTimeoutTooltip",
-                      "Czas przed respawnem, kiedy można się przypisać do mapy",
-                    )}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setRulesDialogOpen(true)}
-          >
-            <BookText className="w-4 h-4 mr-2" />
-            {t("events.rulesDialog.trigger", "Zasady eventu")}
-          </Button>
-          {canManage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                navigate({
-                  to: "/$guildId/events/$eventId/edit",
-                  params: {
-                    guildId: guildId ?? "",
-                    eventId: eventId ?? "",
-                  },
-                })
-              }
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              {t("events.editButton")}
-            </Button>
-          )}
-          {canManage &&
-            (event.active ? (
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={updateEvent.isPending}
-                onClick={() => setEndDialogOpen(true)}
-              >
-                {t("events.end")}
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                disabled={updateEvent.isPending}
-                onClick={() => setResumeDialogOpen(true)}
-              >
-                {t("events.resume")}
-              </Button>
-            ))}
-          {canDeleteEvent && (
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={deleteEvent.isPending}
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {t("events.delete")}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -414,7 +377,7 @@ export const EventDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2 h-fit">
-                <div className="flex items-center justify-between mb-3">
+                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <Swords className="w-4 h-4 text-yellow-500" />
                     {t("events.heroes.title")}
@@ -423,6 +386,7 @@ export const EventDetail = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full justify-center sm:w-auto"
                       onClick={() => {
                         setSelectedHero(null);
                         setHeroDialogOpen(true);
@@ -473,6 +437,19 @@ export const EventDetail = () => {
             </div>
 
             <div className="space-y-4">
+              <EventActionsCard
+                eventName={event.name}
+                canManage={canManage ?? false}
+                canDeleteEvent={canDeleteEvent ?? false}
+                isActive={event.active}
+                isUpdatePending={updateEvent.isPending}
+                isDeletePending={deleteEvent.isPending}
+                onOpenRules={() => setRulesDialogOpen(true)}
+                onEdit={navigateToEventEdit}
+                onToggleStatus={openEventStatusDialog}
+                onDelete={() => setDeleteDialogOpen(true)}
+              />
+
               <EventRankingPreview
                 rankings={rankings}
                 heroNpcs={heroes}

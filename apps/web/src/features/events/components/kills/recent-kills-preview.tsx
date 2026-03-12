@@ -4,10 +4,11 @@ import { Link } from "@tanstack/react-router";
 import { Skull, ChevronRight, Frown } from "lucide-react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
+import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { useRecentHeroKills } from "../../hooks/queries/use-recent-hero-kills";
 import { KillHistoryCard } from "./kill-history-card";
 import type { EventHeroNpc } from "../../hooks/queries/use-events";
+import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 
 interface RecentKillsPreviewProps {
   guildId: string;
@@ -72,7 +73,7 @@ export const RecentKillsPreview = ({
           onValueChange={setSelectedHeroId}
           className="mb-3"
         >
-          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <EventScrollableTabsList>
             {heroNpcs.map((hero) => (
               <TabsTrigger
                 key={hero.id}
@@ -82,7 +83,7 @@ export const RecentKillsPreview = ({
                 {hero.npcName}
               </TabsTrigger>
             ))}
-          </TabsList>
+          </EventScrollableTabsList>
         </Tabs>
       )}
 

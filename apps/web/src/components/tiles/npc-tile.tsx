@@ -22,6 +22,14 @@ export const NpcTile: FC<NpcTileProps> = ({
   const { t } = useTranslation();
   const sharedTooltip = useSharedTooltip();
   const tileClassName = cn("relative w-fit", className);
+  const isAbsoluteIconUrl =
+    typeof icon === "string" &&
+    (icon.startsWith("http://") ||
+      icon.startsWith("https://") ||
+      icon.startsWith("//"));
+  const npcIconSource = isAbsoluteIconUrl
+    ? icon
+    : `${MARGONEM_CDN_NPCS_URL}${icon ?? ""}`;
   const tooltipContent = (
     <p className="text-foreground">
       {name}
@@ -39,7 +47,7 @@ export const NpcTile: FC<NpcTileProps> = ({
       {/* eslint-disable-next-line eslint-plugin-next/no-img-element */}
       <img
         className="relative cursor-pointer rounded-lg max-h-10 max-w-8"
-        src={`${MARGONEM_CDN_NPCS_URL}${icon}`}
+        src={npcIconSource}
         alt={name}
       />
     </>

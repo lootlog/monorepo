@@ -82,6 +82,10 @@
     "noRulebook": "Brak opisanego regulaminu dla tego eventu.",
     "scoringTitle": "Zasady punktacji"
   },
+  "actionsCard": {
+    "title": "Akcje eventu",
+    "description": "Najważniejsze operacje dla eventu „{{name}}”."
+  },
   "confirmation": {
     "title": "Potwierdź udział",
     "description": "Potwierdź udział w obstawianiu, aby naliczyć punkty za te bicia.",
@@ -124,12 +128,18 @@
     "backToHero": "Powrót do herosa",
     "close": "Zamknij"
   },
+  "sidebarBanner": {
+    "activeEvent": "Aktywny event",
+    "showMore": "+{{count}} więcej",
+    "collapse": "Zwiń"
+  },
   "maps": {
     "title": "Mapy",
     "mapCount_one": "{{count}} mapa",
     "mapCount_few": "{{count}} mapy",
     "mapCount_many": "{{count}} map",
     "manage": "Zarządzaj mapami",
+    "manageShort": "Zarządzaj",
     "assign": "Przypisz członka",
     "unassign": "Usuń przypisanie",
     "selfAssign": "Weź tę mapę",
@@ -204,12 +214,16 @@
     "add": "Dodaj herosa",
     "addButton": "Dodaj",
     "edit": "Edytuj herosa",
+    "manageMaps": "Mapy",
     "addDescription": "Dodaj nowego herosa do eventu",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
     "added": "Dodano herosa",
     "updated": "Zaktualizowano herosa",
     "deleted": "Usunięto herosa",
+    "deleteTitle": "Usunąć herosa?",
+    "deleteDescription": "Czy na pewno chcesz usunąć herosa {{name}}? Spowoduje to również usunięcie wszystkich powiązanych map.",
+    "deleteAction": "Usuń",
     "deleteError": "Błąd podczas usuwania",
     "empty": "Brak herosów"
   },
