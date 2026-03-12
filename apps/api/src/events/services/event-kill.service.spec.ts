@@ -45,6 +45,7 @@ describe("EventKillService", () => {
       findMany: jest.fn(),
     },
     eventRespawnWindowSummary: {
+      findMany: jest.fn(),
       findUnique: jest.fn(),
     },
     timer: {
@@ -98,6 +99,10 @@ describe("EventKillService", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
+    mockPrismaService.eventRespawnWindowSummary.findUnique.mockResolvedValue(
+      null,
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -2089,8 +2094,20 @@ describe("EventKillService", () => {
     it("should return paginated kill history", async () => {
       const mockHero = { id: heroId };
       const mockKills = [
-        { id: "kill-1", killedAt: new Date(), points: [] },
-        { id: "kill-2", killedAt: new Date(), points: [] },
+        {
+          id: "kill-1",
+          heroNpcId: heroId,
+          killedAt: new Date(),
+          minSpawnTimeAtKill: new Date(),
+          points: [],
+        },
+        {
+          id: "kill-2",
+          heroNpcId: heroId,
+          killedAt: new Date(),
+          minSpawnTimeAtKill: new Date(),
+          points: [],
+        },
       ];
 
       mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
@@ -2178,6 +2195,80 @@ describe("EventKillService", () => {
             mapName: "Map 1",
           }),
         ]),
+      );
+    });
+
+    it("should use summary windowOpenedAt when building mapData", async () => {
+      const mockHero = { id: heroId };
+      const killedAt = new Date("2026-03-02T11:45:19.661Z");
+      const minSpawnTimeAtKill = new Date("2026-03-02T10:39:27.459Z");
+      const windowOpenedAt = new Date("2026-03-02T09:30:00.000Z");
+      const mockKills = [
+        {
+          id: "kill-1",
+          heroNpcId: heroId,
+          killedAt,
+          minSpawnTimeAtKill,
+          maxSpawnTimeAtKill: new Date("2026-03-02T13:19:27.459Z"),
+          isManualClose: false,
+          heroNpc: {
+            id: heroId,
+            npcId: 1,
+            npcName: "Hero",
+            npcIcon: null,
+            npcLvl: 300,
+          },
+          points: [
+            {
+              id: "point-1",
+              memberId: 1,
+              points: 1,
+              mapPresenceData: null,
+              member: {
+                id: 1,
+                name: "User 1",
+                avatar: null,
+                userId: "user-1",
+              },
+            },
+          ],
+        },
+      ];
+
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.eventHeroKill.findMany.mockResolvedValue(mockKills);
+      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([
+        {
+          killId: "kill-1",
+          windowOpenedAt,
+        },
+      ]);
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: "map-1", mapName: "Map 1", heroNpcId: heroId },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
+        {
+          heroNpcId: heroId,
+          mapId: "map-1",
+          memberId: 1,
+          assignedAt: new Date("2026-03-02T09:45:19.661Z"),
+          unassignedAt: null,
+        },
+      ]);
+
+      await service.getHeroKillHistory(guildId, eventId, heroId, 20);
+
+      expect(
+        mockPrismaService.eventMapAssignmentHistory.findMany,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: windowOpenedAt } },
+            ],
+          }),
+        }),
       );
     });
 
@@ -2509,6 +2600,84 @@ describe("EventKillService", () => {
       expect(result.kill.points[0]?.mapData[0]?.assignmentDurationSeconds).toBe(
         7200,
       );
+    });
+
+    it("should use summary windowOpenedAt for detail overlap and fallback presence", async () => {
+      const killedAt = new Date("2026-02-20T05:27:46.133Z");
+      const minSpawnTimeAtKill = new Date("2026-02-20T03:27:46.133Z");
+      const windowOpenedAt = new Date("2026-02-20T02:30:00.000Z");
+      const maxSpawnTimeAtKill = new Date("2026-02-20T06:07:46.133Z");
+      const mockKill = {
+        id: killId,
+        killedAt,
+        minSpawnTimeAtKill,
+        maxSpawnTimeAtKill,
+        points: [
+          {
+            id: "point-1",
+            memberId: 1,
+            points: 1,
+            trackingDurationSeconds: 9000,
+            trackingDurationPercentage: 125,
+            mapPresenceData: null,
+            member: { name: "User 1" },
+          },
+        ],
+        heroNpc: {
+          id: heroId,
+          npcName: "Test Hero",
+          event: {
+            basePointsPerKill: 100,
+            scoringMode: "ADVANCED",
+            scoringRules: null,
+          },
+        },
+      };
+
+      mockPrismaService.eventHeroKill.findFirst.mockResolvedValue(mockKill);
+      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([
+        {
+          killId,
+          windowOpenedAt,
+        },
+      ]);
+      mockPrismaService.eventMap.findMany.mockResolvedValue([
+        { id: "map-1", mapName: "Test Map" },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue([
+        {
+          mapId: "map-1",
+          memberId: 1,
+          assignedAt: new Date("2026-02-20T02:45:00.000Z"),
+          unassignedAt: null,
+        },
+      ]);
+      mockPointsService.getMembersPresenceStatsPerMap.mockResolvedValue([
+        {
+          memberId: 1,
+          mapId: "map-1",
+          presenceTimeSeconds: 0,
+          afkTimeSeconds: 0,
+        },
+      ]);
+
+      await service.getKillDetail(guildId, eventId, heroId, killId);
+
+      expect(
+        mockPrismaService.eventMapAssignmentHistory.findMany,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: windowOpenedAt } },
+            ],
+          }),
+        }),
+      );
+      expect(
+        mockPointsService.getMembersPresenceStatsPerMap,
+      ).toHaveBeenCalledWith(["map-1"], [1], windowOpenedAt);
     });
 
     it("should throw NotFoundException when kill not found", async () => {

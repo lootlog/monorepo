@@ -15,6 +15,7 @@ import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "../utils/scoring-rules.util";
+import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
 import {
   evaluateEventScoring,
   type EventScoringAppliedBonus,
@@ -423,13 +424,42 @@ export class EventPointsService {
     const allMemberIds = Array.from(
       new Set(killPoints.map((point) => point.memberId)),
     );
-    const earliestRespawnStart = new Date(
-      Math.min(
-        ...killPoints.map((point) => point.kill.minSpawnTimeAtKill.getTime()),
-      ),
-    );
     const latestKillTime = new Date(
       Math.max(...killPoints.map((point) => point.kill.killedAt.getTime())),
+    );
+    const windowSummaries =
+      killPoints.length > 0
+        ? await this.prisma.eventRespawnWindowSummary.findMany({
+            where: {
+              killId: {
+                in: Array.from(
+                  new Set(killPoints.map((point) => point.kill.id)),
+                ),
+              },
+            },
+            select: {
+              killId: true,
+              windowOpenedAt: true,
+            },
+          })
+        : [];
+    const windowOpenedAtByKillId = new Map(
+      windowSummaries.flatMap((summary) =>
+        summary.killId
+          ? [[summary.killId, summary.windowOpenedAt] as const]
+          : [],
+      ),
+    );
+    const earliestOverlapWindowStart = new Date(
+      Math.min(
+        ...killPoints.map((point) =>
+          resolveEventWindowStart({
+            killedAt: point.kill.killedAt,
+            minSpawnTimeAtKill: point.kill.minSpawnTimeAtKill,
+            windowOpenedAt: windowOpenedAtByKillId.get(point.kill.id),
+          }).getTime(),
+        ),
+      ),
     );
 
     const assignmentHistory =
@@ -441,7 +471,7 @@ export class EventPointsService {
               assignedAt: { lte: latestKillTime },
               OR: [
                 { unassignedAt: null },
-                { unassignedAt: { gte: earliestRespawnStart } },
+                { unassignedAt: { gte: earliestOverlapWindowStart } },
               ],
             },
             select: {
@@ -474,15 +504,15 @@ export class EventPointsService {
       for (const killPoint of killPoints) {
         const assignedMembersCount =
           assignedMembersCountByKillId.get(killPoint.killId) ?? 1;
-        const respawnStartTime =
-          killPoint.kill.minSpawnTimeAtKill > killPoint.kill.killedAt
-            ? killPoint.kill.killedAt
-            : killPoint.kill.minSpawnTimeAtKill;
+        const trackingWindowStartTime = resolveEventWindowStart({
+          killedAt: killPoint.kill.killedAt,
+          minSpawnTimeAtKill: killPoint.kill.minSpawnTimeAtKill,
+        });
         const trackingMetrics = this.calculateTrackingMetricsForKill({
           assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
           heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
           killTime: killPoint.kill.killedAt,
-          respawnStartTime,
+          respawnStartTime: trackingWindowStartTime,
         });
         const trackingDurationSeconds = trackingMetrics.trackingDurationSeconds;
         const trackingDurationPercentage =
@@ -491,7 +521,7 @@ export class EventPointsService {
           assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
           heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
           killTime: killPoint.kill.killedAt,
-          respawnStartTime,
+          respawnStartTime: trackingWindowStartTime,
         });
 
         const { totalPoints, basePoints, appliedBonuses } =
@@ -503,7 +533,7 @@ export class EventPointsService {
             trackingDurationSeconds,
             assignedMembersCount,
             killTime: killPoint.kill.killedAt,
-            respawnStartTime,
+            respawnStartTime: trackingWindowStartTime,
             maxRespawnTime: killPoint.kill.maxSpawnTimeAtKill,
             memberLeaveTime: memberState.memberPresentAtKill
               ? null

@@ -175,8 +175,10 @@ export class EventRespawnService {
       }
     }
 
-    for (const map of hero.maps) {
-      await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
+    if (isAutoClose || !timer) {
+      for (const map of hero.maps) {
+        await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
+      }
     }
 
     if (timer) {
