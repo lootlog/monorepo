@@ -6,6 +6,9 @@ export function invalidateKillQueries(
   eventId: string,
 ) {
   queryClient.invalidateQueries({
+    queryKey: ["event-overview", guildId, eventId],
+  });
+  queryClient.invalidateQueries({
     queryKey: ["kill-detail", guildId, eventId],
     exact: false,
   });
@@ -20,6 +23,12 @@ export function invalidateKillQueries(
   });
   queryClient.invalidateQueries({
     queryKey: ["recent-hero-kills", guildId, eventId],
+  });
+  queryClient.invalidateQueries({
+    queryKey: ["event-hero-stats", guildId, eventId],
+  });
+  queryClient.invalidateQueries({
+    queryKey: ["event-participation-confirmations", guildId, eventId],
   });
   queryClient.invalidateQueries({
     queryKey: ["event-ranking", guildId, eventId],

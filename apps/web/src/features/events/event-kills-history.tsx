@@ -8,7 +8,6 @@ import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState } from "react";
-import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 export const EventKillsHistory = () => {
@@ -54,12 +53,6 @@ const EventKillsHistoryContent = ({
     eventId: eventId ?? "",
     heroId: selectedHeroId,
     limit: 20,
-  });
-
-  useEventSocket({
-    eventId,
-    guildId,
-    heroId: selectedHeroId,
   });
 
   const heroes = event?.heroNpcs ?? [];

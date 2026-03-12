@@ -3,7 +3,6 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  forwardRef,
   Inject,
   Injectable,
   type OnModuleInit,
@@ -75,7 +74,6 @@ export class TimersService implements OnModuleInit {
     private readonly amqpConnection: AmqpConnection,
     private readonly guildsService: GuildsService,
     private readonly redis: RedisService,
-    @Inject(forwardRef(() => EventsService))
     private readonly eventsService: EventsService,
   ) {}
 

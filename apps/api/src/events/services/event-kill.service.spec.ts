@@ -76,7 +76,63 @@ describe("EventKillService", () => {
     calculateMemberPoints: jest.fn(),
     getMemberPresenceStats: jest.fn(),
     getMemberPresenceStatsPerMap: jest.fn(),
-    getMembersPresenceStatsPerMap: jest.fn(),
+    getMembersPresenceStats: jest.fn(
+      async (
+        heroNpcId: string,
+        memberIds: number[],
+        since?: Date,
+      ): Promise<
+        Array<{
+          memberId: number;
+          timeOnMapSeconds: number;
+          afkPercentage: number;
+          wasPresent: boolean;
+          mapName?: string;
+        }>
+      > =>
+        Promise.all(
+          memberIds.map(async (memberId) => ({
+            memberId,
+            ...(await mockPointsService.getMemberPresenceStats(
+              heroNpcId,
+              memberId,
+              since,
+            )),
+          })),
+        ),
+    ),
+    getMembersPresenceStatsPerMap: jest.fn(
+      async (
+        mapIds: string[],
+        memberIds: number[],
+        since?: Date,
+      ): Promise<
+        Array<{
+          memberId: number;
+          mapId: string;
+          presenceTimeSeconds: number;
+          afkTimeSeconds: number;
+        }>
+      > => {
+        const statsByMember = await Promise.all(
+          memberIds.map(async (memberId) => {
+            const memberStats =
+              await mockPointsService.getMemberPresenceStatsPerMap(
+                mapIds,
+                memberId,
+                since,
+              );
+
+            return memberStats.map((entry) => ({
+              memberId,
+              ...entry,
+            }));
+          }),
+        );
+
+        return statsByMember.flat();
+      },
+    ),
     updateRankingAfterKill: jest.fn(),
   };
 
@@ -697,9 +753,9 @@ describe("EventKillService", () => {
           }),
         }),
       );
-      expect(mockPointsService.getMemberPresenceStats).toHaveBeenCalledWith(
+      expect(mockPointsService.getMembersPresenceStats).toHaveBeenCalledWith(
         mockEventHero.id,
-        1,
+        [1, 2],
         windowOpenedAt,
       );
       expect(mockPointsService.updateRankingAfterKill).toHaveBeenCalled();

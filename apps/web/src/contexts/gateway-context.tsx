@@ -1,4 +1,9 @@
-import React, { createContext, useCallback, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 import type { Socket } from "socket.io-client";
 import { GatewayEvent } from "@/config/gateway";
 import { socket } from "@/lib/gateway-client";
@@ -9,6 +14,10 @@ export type GatewayProviderValue = {
   connected: boolean;
   joined: boolean;
   socket: Socket;
+};
+
+type GatewayJoinPayload = {
+  status: "error" | "success";
 };
 
 type Props = {
@@ -23,57 +32,50 @@ GatewayContext.displayName = "GatewayContext";
 export const GatewayProvider: React.FC<Props> = ({ children }) => {
   const { user } = useUser();
   const { data: guilds } = useGuilds();
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(socket.connected);
   const [joined, setJoined] = useState(false);
 
-  const setupBaseListeners = useCallback(() => {
-    socket.on(GatewayEvent.CONNECT, () => {
-      setConnected(true);
-    });
+  const handleConnect = useEffectEvent(() => {
+    setConnected(true);
+  });
+  const handleDisconnect = useEffectEvent(() => {
+    setConnected(false);
+    setJoined(false);
+  });
+  const handleJoin = useEffectEvent((data: GatewayJoinPayload) => {
+    if (data.status === "error") {
+      return;
+    }
 
-    socket.on(GatewayEvent.DISCONNECT, () => {
-      setConnected(false);
-      setJoined(false);
-    });
-
-    socket.on(GatewayEvent.JOIN, (data) => {
-      if (data.status === "error") {
-        return;
-      }
-
-      setJoined(true);
-    });
-
-    return () => {
-      socket.off(GatewayEvent.CONNECT);
-      socket.off(GatewayEvent.DISCONNECT);
-      socket.off(GatewayEvent.JOIN);
-    };
-  }, []);
-
-  const emitJoin = useCallback(() => {
+    setJoined(true);
+  });
+  const emitJoin = useEffectEvent(() => {
     if (connected && user && guilds) {
       socket.emit(GatewayEvent.JOIN, {});
     }
-  }, [connected, user, guilds]);
+  });
 
   useEffect(() => {
-    const cleanup = setupBaseListeners();
+    socket.on(GatewayEvent.CONNECT, handleConnect);
+    socket.on(GatewayEvent.DISCONNECT, handleDisconnect);
+    socket.on(GatewayEvent.JOIN, handleJoin);
 
     if (!socket.connected) {
       socket.connect();
     }
 
     return () => {
-      cleanup();
+      socket.off(GatewayEvent.CONNECT, handleConnect);
+      socket.off(GatewayEvent.DISCONNECT, handleDisconnect);
+      socket.off(GatewayEvent.JOIN, handleJoin);
     };
-  }, [setupBaseListeners]);
+  }, []);
 
   useEffect(() => {
     if (connected && user && guilds && !joined) {
       emitJoin();
     }
-  }, [connected, user, guilds, joined, emitJoin]);
+  }, [connected, user, guilds, joined]);
 
   const value: GatewayProviderValue = {
     connected,

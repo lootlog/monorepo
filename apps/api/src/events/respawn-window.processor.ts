@@ -1,5 +1,5 @@
 import { OnWorkerEvent, Processor, WorkerHost } from "@nestjs/bullmq";
-import { Inject, Injectable, forwardRef } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import type { Job } from "bullmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
@@ -19,7 +19,6 @@ export interface AutoCloseRespawnWindowJobData {
 export class RespawnWindowProcessor extends WorkerHost {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    @Inject(forwardRef(() => EventsService))
     private readonly eventsService: EventsService,
   ) {
     super();

@@ -19,7 +19,6 @@ import {
   type EventMemberKill,
   useEventMemberKillHistory,
 } from "./hooks/queries/use-event-member-kill-history";
-import { useEventSocket } from "./hooks/socket/use-event-socket";
 import {
   formatDateTime,
   formatDurationHuman,
@@ -347,12 +346,6 @@ const EventMemberKillsPageContent = ({
   const { data: rankings = [] } = useEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
-  });
-
-  useEventSocket({
-    guildId,
-    eventId,
-    heroId: selectedHeroId,
   });
 
   const heroes = event?.heroNpcs ?? [];

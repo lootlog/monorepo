@@ -49,6 +49,20 @@ export type CalculatedMemberPoints = {
   appliedBonuses: EventScoringAppliedBonus[];
 };
 
+export type MemberPresenceStats = {
+  memberId: number;
+  timeOnMapSeconds: number;
+  afkPercentage: number;
+  wasPresent: boolean;
+  mapName: string;
+};
+
+type PresenceLogAggregation = {
+  totalTimeMs: number;
+  afkTimeMs: number;
+  mapName: string;
+};
+
 @Injectable()
 export class EventPointsService {
   constructor(
@@ -224,6 +238,20 @@ export class EventPointsService {
     );
 
     return Math.round((elapsedWindowMs / fullWindowMs) * 100);
+  }
+
+  private getPresenceLogSinceFilter(since?: Date) {
+    if (!since) {
+      return {};
+    }
+
+    return {
+      OR: [
+        { startedAt: { gte: since } },
+        { endedAt: { gte: since } },
+        { endedAt: null, startedAt: { lte: since } },
+      ],
+    };
   }
 
   private calculateTrackingMetricsForKill(params: {
@@ -650,86 +678,111 @@ export class EventPointsService {
     heroNpcId: string,
     memberId: number,
     since?: Date,
-  ): Promise<{
-    timeOnMapSeconds: number;
-    afkPercentage: number;
-    wasPresent: boolean;
-    mapName: string;
-  }> {
+  ): Promise<Omit<MemberPresenceStats, "memberId">> {
+    const [stats] = await this.getMembersPresenceStats(
+      heroNpcId,
+      [memberId],
+      since,
+    );
+
+    return (
+      stats ?? {
+        timeOnMapSeconds: 0,
+        afkPercentage: 0,
+        wasPresent: false,
+        mapName: "",
+      }
+    );
+  }
+
+  async getMembersPresenceStats(
+    heroNpcId: string,
+    memberIds: number[],
+    since?: Date,
+  ): Promise<MemberPresenceStats[]> {
+    if (memberIds.length === 0) {
+      return [];
+    }
+
     const maps = await this.prisma.eventMap.findMany({
       where: { heroNpcId },
       select: { id: true, mapName: true },
     });
 
     if (maps.length === 0) {
-      return {
+      return memberIds.map((memberId) => ({
+        memberId,
         timeOnMapSeconds: 0,
         afkPercentage: 0,
         wasPresent: false,
         mapName: "",
-      };
+      }));
     }
 
     const mapIds = maps.map((m) => m.id);
+    const mapNamesById = new Map(maps.map((map) => [map.id, map.mapName]));
 
     const logs = await this.prisma.eventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
-        memberId,
-        ...(since && {
-          OR: [
-            { startedAt: { gte: since } },
-            { endedAt: { gte: since } },
-            { endedAt: null, startedAt: { lte: since } },
-          ],
-        }),
+        memberId: { in: memberIds },
+        ...this.getPresenceLogSinceFilter(since),
       },
-      orderBy: { startedAt: "asc" },
+      orderBy: [{ memberId: "asc" }, { startedAt: "asc" }],
     });
 
-    if (logs.length === 0) {
-      return {
-        timeOnMapSeconds: 0,
-        afkPercentage: 0,
-        wasPresent: false,
-        mapName: maps[0]?.mapName || "",
-      };
-    }
-
     const now = new Date();
-    let totalTimeMs = 0;
-    let afkTimeMs = 0;
-    let lastMapName = "";
+    const aggregatedStatsByMemberId = new Map<number, PresenceLogAggregation>(
+      memberIds.map((memberId) => [
+        memberId,
+        {
+          totalTimeMs: 0,
+          afkTimeMs: 0,
+          mapName: "",
+        },
+      ]),
+    );
 
     for (const log of logs) {
+      const currentStats = aggregatedStatsByMemberId.get(log.memberId);
+      if (!currentStats) {
+        continue;
+      }
+
       const effectiveStart =
         since && log.startedAt < since ? since : log.startedAt;
       const endTime = log.endedAt || now;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
       if (duration > 0) {
-        totalTimeMs += duration;
+        currentStats.totalTimeMs += duration;
 
         if (log.isAfk) {
-          afkTimeMs += duration;
+          currentStats.afkTimeMs += duration;
         }
 
-        const mapEntry = maps.find((m) => m.id === log.mapId);
-        if (mapEntry) {
-          lastMapName = mapEntry.mapName;
+        const mapName = mapNamesById.get(log.mapId);
+        if (mapName) {
+          currentStats.mapName = mapName;
         }
       }
     }
 
-    const timeOnMapSeconds = Math.round(totalTimeMs / 1000);
-    const afkPercentage = totalTimeMs > 0 ? (afkTimeMs / totalTimeMs) * 100 : 0;
+    return memberIds.map((memberId) => {
+      const aggregatedStats = aggregatedStatsByMemberId.get(memberId);
+      const totalTimeMs = aggregatedStats?.totalTimeMs ?? 0;
+      const afkTimeMs = aggregatedStats?.afkTimeMs ?? 0;
+      const afkPercentage =
+        totalTimeMs > 0 ? (afkTimeMs / totalTimeMs) * 100 : 0;
 
-    return {
-      timeOnMapSeconds,
-      afkPercentage: Math.round(afkPercentage * 100) / 100,
-      wasPresent: totalTimeMs > 0,
-      mapName: lastMapName,
-    };
+      return {
+        memberId,
+        timeOnMapSeconds: Math.round(totalTimeMs / 1000),
+        afkPercentage: Math.round(afkPercentage * 100) / 100,
+        wasPresent: totalTimeMs > 0,
+        mapName: aggregatedStats?.mapName || maps[0]?.mapName || "",
+      };
+    });
   }
 
   async getMemberPresenceStatsPerMap(
@@ -751,13 +804,7 @@ export class EventPointsService {
       where: {
         mapId: { in: mapIds },
         memberId,
-        ...(since && {
-          OR: [
-            { startedAt: { gte: since } },
-            { endedAt: { gte: since } },
-            { endedAt: null, startedAt: { lte: since } },
-          ],
-        }),
+        ...this.getPresenceLogSinceFilter(since),
       },
       orderBy: { startedAt: "asc" },
     });
@@ -817,13 +864,7 @@ export class EventPointsService {
       where: {
         mapId: { in: mapIds },
         memberId: { in: memberIds },
-        ...(since && {
-          OR: [
-            { startedAt: { gte: since } },
-            { endedAt: { gte: since } },
-            { endedAt: null, startedAt: { lte: since } },
-          ],
-        }),
+        ...this.getPresenceLogSinceFilter(since),
       },
       orderBy: { startedAt: "asc" },
     });
