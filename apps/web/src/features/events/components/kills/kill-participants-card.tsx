@@ -18,23 +18,13 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
-import {
-  Users,
-  ChevronDown,
-  Frown,
-  MapPin,
-  Pencil,
-  Check,
-  X,
-  Info,
-} from "lucide-react";
+import { Users, ChevronDown, Frown, MapPin, Pencil, Info } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
-import { parseEditablePoints } from "../../utils/parse-editable-points";
+import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 import {
   formatDurationHuman,
   aggregateMapData,
@@ -57,12 +47,24 @@ interface ParticipantRowProps {
   guildId?: string;
   eventId?: string;
   canEdit?: boolean;
-  onEditPoints?: (killPointId: string, newPoints: number) => Promise<void>;
+  onEditPoints?: (
+    killPointId: string,
+    pointsDelta: number,
+    comment?: string,
+  ) => Promise<void>;
   isEditPending?: boolean;
 }
 
 const formatPoints = (points: number): string => {
   return Number.isInteger(points) ? String(points) : points.toFixed(2);
+};
+
+const formatSignedPoints = (points: number): string => {
+  if (points > 0) {
+    return `+${formatPoints(points)}`;
+  }
+
+  return formatPoints(points);
 };
 
 const ParticipantRow = ({
@@ -77,8 +79,7 @@ const ParticipantRow = ({
   isEditPending,
 }: ParticipantRowProps) => {
   const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(String(participant.points));
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const avatarUrl = getDiscordAvatarUrl(
     participant.member.userId,
@@ -99,10 +100,11 @@ const ParticipantRow = ({
     0,
   );
   const bonusBreakdown = normalizeBonusBreakdown(participant.bonusBreakdown);
+  const manualAdjustmentPoints = participant.manualAdjustmentPoints ?? 0;
+  const autoTotalPoints = participant.points - manualAdjustmentPoints;
   const fallbackBonusPoints =
-    Math.round(
-      Math.max(0, participant.points - participant.basePoints) * 10000,
-    ) / 10000;
+    Math.round(Math.max(0, autoTotalPoints - participant.basePoints) * 10000) /
+    10000;
   const bonusPoints =
     bonusBreakdown.length > 0
       ? Math.round(
@@ -110,7 +112,7 @@ const ParticipantRow = ({
         ) / 10000
       : fallbackBonusPoints;
   const uncappedTotal = participant.basePoints + bonusPoints;
-  const capReduction = Math.max(0, uncappedTotal - participant.points);
+  const capReduction = Math.max(0, uncappedTotal - autoTotalPoints);
   const trackingDurationPercentage =
     typeof participant.trackingDurationPercentage === "number"
       ? `${Math.round(participant.trackingDurationPercentage)}%`
@@ -119,43 +121,23 @@ const ParticipantRow = ({
     if (bonus.ruleName) {
       return bonus.ruleName;
     }
-    return t("events.kills.pointsTooltip.unnamedBonus", "Nienazwany bonus");
+    return t("events.kills.pointsTooltip.unnamedBonus");
   };
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditValue(String(participant.points));
-    setIsEditing(true);
+    setIsEditDialogOpen(true);
   };
 
-  const handleCancelEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(false);
-    setEditValue(String(participant.points));
-  };
-
-  const handleConfirmEdit = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newPoints = parseEditablePoints(editValue);
-    if (newPoints === null) {
-      return;
-    }
+  const handleDialogSubmit = async ({
+    pointsDelta,
+    comment,
+  }: {
+    pointsDelta: number;
+    comment?: string;
+  }) => {
     if (onEditPoints) {
-      await onEditPoints(participant.id, newPoints);
-    }
-    setIsEditing(false);
-  };
-
-  const handleInputClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleConfirmEdit(e as unknown as React.MouseEvent);
-    } else if (e.key === "Escape") {
-      setIsEditing(false);
-      setEditValue(String(participant.points));
+      await onEditPoints(participant.id, pointsDelta, comment);
     }
   };
 
@@ -234,150 +216,115 @@ const ParticipantRow = ({
               </span>
             )}
 
-            {isEditing ? (
-              <div
-                className="flex items-center gap-1 shrink-0"
-                onClick={handleInputClick}
-              >
-                <Input
-                  type="number"
-                  min={0}
-                  step="any"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-20 h-8 text-sm"
-                  autoFocus
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={handleConfirmEdit}
-                  disabled={isEditPending}
-                >
-                  <Check className="h-4 w-4 text-green-500" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={handleCancelEdit}
-                  disabled={isEditPending}
-                >
-                  <X className="h-4 w-4 text-red-500" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 shrink-0">
-                <span className="text-lg font-bold text-primary">
-                  {formatPoints(participant.points)}
-                </span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between gap-4">
-                        <span>
-                          {t("events.kills.pointsTooltip.basePoints")}:
-                        </span>
-                        <span className="font-medium">
-                          {formatPoints(participant.basePoints)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span>
-                          {t("events.kills.pointsTooltip.trackingPercentage")}:
-                        </span>
-                        <span className="font-medium">
-                          {trackingDurationPercentage}
-                        </span>
-                      </div>
-                      {bonusBreakdown.length > 0 ? (
-                        <>
-                          {bonusBreakdown.map((bonus) => (
-                            <div
-                              key={`${bonus.ruleId}:${bonus.points}:${bonus.ruleName ?? ""}`}
-                              className="flex justify-between gap-4"
-                            >
-                              <span>
-                                {t("events.kills.pointsTooltip.bonusItem", {
-                                  name: getBonusName(bonus),
-                                })}
-                                :
-                              </span>
-                              <span className="font-medium">
-                                +{formatPoints(bonus.points)}
-                              </span>
-                            </div>
-                          ))}
-                          <div className="flex justify-between gap-4">
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-lg font-bold text-primary">
+                {formatPoints(participant.points)}
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between gap-4">
+                      <span>{t("events.kills.pointsTooltip.basePoints")}:</span>
+                      <span className="font-medium">
+                        {formatPoints(participant.basePoints)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span>
+                        {t("events.kills.pointsTooltip.trackingPercentage")}:
+                      </span>
+                      <span className="font-medium">
+                        {trackingDurationPercentage}
+                      </span>
+                    </div>
+                    {bonusBreakdown.length > 0 ? (
+                      <>
+                        {bonusBreakdown.map((bonus) => (
+                          <div
+                            key={`${bonus.ruleId}:${bonus.points}:${bonus.ruleName ?? ""}`}
+                            className="flex justify-between gap-4"
+                          >
                             <span>
-                              {t(
-                                "events.kills.pointsTooltip.bonusTotal",
-                                "Bonusy razem",
-                              )}
+                              {t("events.kills.pointsTooltip.bonusItem", {
+                                name: getBonusName(bonus),
+                              })}
                               :
                             </span>
                             <span className="font-medium">
-                              +{formatPoints(bonusPoints)}
+                              +{formatPoints(bonus.points)}
                             </span>
                           </div>
-                        </>
-                      ) : (
+                        ))}
                         <div className="flex justify-between gap-4">
                           <span>
-                            {t(
-                              "events.kills.pointsTooltip.bonusTotal",
-                              "Bonusy razem",
-                            )}
-                            :
+                            {t("events.kills.pointsTooltip.bonusTotal")}:
                           </span>
                           <span className="font-medium">
                             +{formatPoints(bonusPoints)}
                           </span>
                         </div>
-                      )}
-                      {capReduction > 0 && (
-                        <div className="flex justify-between gap-4">
-                          <span>
-                            {t("events.kills.pointsTooltip.capReduction")}:
-                          </span>
-                          <span className="font-medium">
-                            -{formatPoints(capReduction)}
-                          </span>
-                        </div>
-                      )}
-                      <div className="border-t border-border/50 pt-1 mt-1 flex justify-between gap-4">
-                        <span>{t("events.kills.pointsTooltip.total")}:</span>
+                      </>
+                    ) : (
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.bonusTotal")}:
+                        </span>
                         <span className="font-medium">
-                          {formatPoints(participant.points)}
+                          +{formatPoints(bonusPoints)}
                         </span>
                       </div>
+                    )}
+                    {manualAdjustmentPoints !== 0 && (
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.manualAdjustment")}:
+                        </span>
+                        <span className="font-medium">
+                          {formatSignedPoints(manualAdjustmentPoints)}
+                        </span>
+                      </div>
+                    )}
+                    {capReduction > 0 && (
+                      <div className="flex justify-between gap-4">
+                        <span>
+                          {t("events.kills.pointsTooltip.capReduction")}:
+                        </span>
+                        <span className="font-medium">
+                          -{formatPoints(capReduction)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="mt-1 flex justify-between gap-4 border-t border-border/50 pt-1">
+                      <span>{t("events.kills.pointsTooltip.total")}:</span>
+                      <span className="font-medium">
+                        {formatPoints(participant.points)}
+                      </span>
                     </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+              {canEdit && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={handleEditClick}
+                      disabled={isEditPending}
+                    >
+                      <Pencil className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t("events.points.edit")}</p>
                   </TooltipContent>
                 </Tooltip>
-                {canEdit && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6"
-                        onClick={handleEditClick}
-                      >
-                        <Pencil className="h-3 w-3 text-muted-foreground" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t("events.points.edit")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            )}
+              )}
+            </div>
 
             <ChevronDown
               className={cn(
@@ -420,6 +367,19 @@ const ParticipantRow = ({
           </div>
         </CollapsibleContent>
       </div>
+      <ManualPointsEditDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        title={t("events.points.killDialogTitle", {
+          memberName: participant.member.name,
+        })}
+        description={t("events.points.killDialogDescription", {
+          memberName: participant.member.name,
+        })}
+        currentPoints={participant.points}
+        isPending={isEditPending}
+        onSubmit={handleDialogSubmit}
+      />
     </Collapsible>
   );
 };
@@ -450,17 +410,23 @@ export const KillParticipantsCard = ({
     });
   };
 
-  const handleEditPoints = async (killPointId: string, newPoints: number) => {
+  const handleEditPoints = async (
+    killPointId: string,
+    pointsDelta: number,
+    comment?: string,
+  ) => {
     if (!killId) return;
     try {
       await updateKillPoint.mutateAsync({
         killId,
         killPointId,
-        points: newPoints,
+        pointsDelta,
+        comment,
       });
       toast.success(t("events.points.editSuccess"));
-    } catch {
+    } catch (error) {
       toast.error(t("events.points.editError"));
+      throw error;
     }
   };
 

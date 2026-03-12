@@ -7,9 +7,9 @@ import {
 
 describe("Update points DTO validation", () => {
   describe("UpdateRankingPointsDto", () => {
-    it("accepts decimal values", async () => {
+    it("accepts decimal delta values", async () => {
       const dto = plainToInstance(UpdateRankingPointsDto, {
-        totalPoints: 1.75,
+        pointsDelta: 1.75,
       });
       const errors = await validate(dto);
 
@@ -18,25 +18,25 @@ describe("Update points DTO validation", () => {
 
     it("accepts decimal values with more than two decimal places", async () => {
       const dto = plainToInstance(UpdateRankingPointsDto, {
-        totalPoints: 1.234,
+        pointsDelta: 1.234,
       });
       const errors = await validate(dto);
 
       expect(errors).toHaveLength(0);
     });
 
-    it("rejects negative values", async () => {
+    it("accepts negative delta values", async () => {
       const dto = plainToInstance(UpdateRankingPointsDto, {
-        totalPoints: -0.25,
+        pointsDelta: -0.25,
       });
       const errors = await validate(dto);
 
-      expect(errors.length).toBeGreaterThan(0);
+      expect(errors).toHaveLength(0);
     });
 
     it("rejects infinity values", async () => {
       const dto = plainToInstance(UpdateRankingPointsDto, {
-        totalPoints: Number.POSITIVE_INFINITY,
+        pointsDelta: Number.POSITIVE_INFINITY,
       });
       const errors = await validate(dto);
 
@@ -46,24 +46,24 @@ describe("Update points DTO validation", () => {
 
   describe("UpdateKillPointDto", () => {
     it("accepts decimal values", async () => {
-      const dto = plainToInstance(UpdateKillPointDto, { points: 0.25 });
+      const dto = plainToInstance(UpdateKillPointDto, { pointsDelta: 0.25 });
       const errors = await validate(dto);
 
       expect(errors).toHaveLength(0);
     });
 
     it("accepts decimal values with more than two decimal places", async () => {
-      const dto = plainToInstance(UpdateKillPointDto, { points: 0.125 });
+      const dto = plainToInstance(UpdateKillPointDto, { pointsDelta: 0.125 });
       const errors = await validate(dto);
 
       expect(errors).toHaveLength(0);
     });
 
-    it("rejects negative values", async () => {
-      const dto = plainToInstance(UpdateKillPointDto, { points: -0.25 });
+    it("accepts negative delta values", async () => {
+      const dto = plainToInstance(UpdateKillPointDto, { pointsDelta: -0.25 });
       const errors = await validate(dto);
 
-      expect(errors.length).toBeGreaterThan(0);
+      expect(errors).toHaveLength(0);
     });
   });
 });

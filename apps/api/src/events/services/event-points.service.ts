@@ -63,6 +63,15 @@ type PresenceLogAggregation = {
   mapName: string;
 };
 
+type ExistingRankingSnapshot = {
+  id: string;
+  memberId: number;
+  heroNpcName: string;
+  totalPoints: number;
+  manualAdjustmentPoints: number;
+  pointsModified: boolean;
+};
+
 @Injectable()
 export class EventPointsService {
   constructor(
@@ -173,6 +182,80 @@ export class EventPointsService {
 
     return (
       params.confirmedAt.getTime() <= params.confirmationDeadlineAt.getTime()
+    );
+  }
+
+  private createRankingKey(params: {
+    memberId: number;
+    heroNpcName: string;
+  }): string {
+    return `${params.memberId}:${params.heroNpcName}`;
+  }
+
+  private roundPointsValue(value: number): number {
+    return Math.round(value * 10000) / 10000;
+  }
+
+  private normalizePointsEditComment(comment?: string | null): string | null {
+    if (typeof comment !== "string") {
+      return null;
+    }
+
+    const trimmedComment = comment.trim();
+    return trimmedComment.length > 0 ? trimmedComment : null;
+  }
+
+  private resolveManualAdjustmentPoints(params: {
+    existingRanking?: ExistingRankingSnapshot;
+    computedTotalPoints: number;
+  }): number {
+    const { existingRanking, computedTotalPoints } = params;
+    if (!existingRanking) {
+      return 0;
+    }
+
+    if (existingRanking.manualAdjustmentPoints !== 0) {
+      return this.roundPointsValue(existingRanking.manualAdjustmentPoints);
+    }
+
+    if (!existingRanking.pointsModified) {
+      return 0;
+    }
+
+    return this.roundPointsValue(
+      existingRanking.totalPoints - computedTotalPoints,
+    );
+  }
+
+  private async hasManualKillAdjustmentForRanking(params: {
+    eventId: string;
+    memberId: number;
+    heroNpcName: string;
+  }): Promise<boolean> {
+    const matchingKillPoints = await this.prisma.eventKillPoint.findMany({
+      where: {
+        memberId: params.memberId,
+        manualAdjustmentPoints: {
+          not: 0,
+        },
+        kill: {
+          heroNpc: {
+            eventId: params.eventId,
+            npcName: params.heroNpcName,
+          },
+        },
+      },
+      select: {
+        confirmationDeadlineAt: true,
+        confirmedAt: true,
+      },
+    });
+
+    return matchingKillPoints.some((killPoint) =>
+      this.isKillPointCountedInRanking({
+        confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
+        confirmedAt: killPoint.confirmedAt,
+      }),
     );
   }
 
@@ -340,6 +423,26 @@ export class EventPointsService {
       scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
         : null;
+    const existingRankings = await this.prisma.eventRanking.findMany({
+      where: { eventId },
+      select: {
+        id: true,
+        memberId: true,
+        heroNpcName: true,
+        totalPoints: true,
+        manualAdjustmentPoints: true,
+        pointsModified: true,
+      },
+    });
+    const existingRankingsByKey = new Map(
+      existingRankings.map((ranking) => [
+        this.createRankingKey({
+          memberId: ranking.memberId,
+          heroNpcName: ranking.heroNpcName,
+        }),
+        ranking,
+      ]),
+    );
 
     const killPoints = await this.prisma.eventKillPoint.findMany({
       where: {
@@ -523,6 +626,9 @@ export class EventPointsService {
           afkPercentage: killPoint.afkPercentage,
           wasPresent: killPoint.wasPresent,
         });
+      const effectivePoints = this.roundPointsValue(
+        totalPoints + killPoint.manualAdjustmentPoints,
+      );
 
       return {
         killPointId: killPoint.id,
@@ -531,11 +637,12 @@ export class EventPointsService {
         confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
         confirmedAt: killPoint.confirmedAt,
         afkPercentage: killPoint.afkPercentage,
-        points: totalPoints,
+        points: effectivePoints,
         trackingDurationSeconds,
+        hasManualPointsAdjustment: killPoint.manualAdjustmentPoints !== 0,
         updateData: {
           basePoints,
-          points: totalPoints,
+          points: effectivePoints,
           trackingDurationSeconds,
           trackingDurationPercentage: trackingDurationPercentage ?? null,
           bonusBreakdown: appliedBonuses as Prisma.InputJsonValue,
@@ -554,6 +661,7 @@ export class EventPointsService {
         afkSum: number;
       }
     >();
+    const manualAdjustmentRankingKeys = new Set<string>();
 
     for (const recalculatedKillPoint of recalculatedKillPoints) {
       if (
@@ -565,7 +673,10 @@ export class EventPointsService {
         continue;
       }
 
-      const key = `${recalculatedKillPoint.memberId}-${recalculatedKillPoint.heroNpcName}`;
+      const key = this.createRankingKey({
+        memberId: recalculatedKillPoint.memberId,
+        heroNpcName: recalculatedKillPoint.heroNpcName,
+      });
       const existing = rankingMap.get(key);
       const rankingTrackingDurationSeconds =
         this.getTrackingDurationSecondsForRanking({
@@ -573,8 +684,14 @@ export class EventPointsService {
             recalculatedKillPoint.trackingDurationSeconds,
         });
 
+      if (recalculatedKillPoint.hasManualPointsAdjustment) {
+        manualAdjustmentRankingKeys.add(key);
+      }
+
       if (existing) {
-        existing.totalPoints += recalculatedKillPoint.points;
+        existing.totalPoints = this.roundPointsValue(
+          existing.totalPoints + recalculatedKillPoint.points,
+        );
         existing.totalKills += 1;
         existing.totalTimeSeconds += rankingTrackingDurationSeconds;
         existing.afkSum += recalculatedKillPoint.afkPercentage;
@@ -589,17 +706,7 @@ export class EventPointsService {
         });
       }
     }
-
-    const rankingRows = Array.from(rankingMap.values()).map((ranking) => ({
-      eventId,
-      memberId: ranking.memberId,
-      heroNpcName: ranking.heroNpcName,
-      totalPoints: ranking.totalPoints,
-      totalKills: ranking.totalKills,
-      totalTimeSeconds: ranking.totalTimeSeconds,
-      avgAfkPercentage:
-        Math.round((ranking.afkSum / ranking.totalKills) * 100) / 100,
-    }));
+    const processedRankingKeys = new Set<string>();
 
     const transactionOperations: Prisma.PrismaPromise<unknown>[] =
       recalculatedKillPoints.map((recalculatedKillPoint) =>
@@ -609,16 +716,89 @@ export class EventPointsService {
         }),
       );
 
-    transactionOperations.push(
-      this.prisma.eventRanking.deleteMany({
-        where: { eventId },
-      }),
-    );
+    for (const ranking of rankingMap.values()) {
+      const rankingKey = this.createRankingKey({
+        memberId: ranking.memberId,
+        heroNpcName: ranking.heroNpcName,
+      });
+      const existingRanking = existingRankingsByKey.get(rankingKey);
+      const manualAdjustmentPoints = this.resolveManualAdjustmentPoints({
+        existingRanking,
+        computedTotalPoints: ranking.totalPoints,
+      });
+      const persistedRankingData = {
+        totalPoints: this.roundPointsValue(
+          ranking.totalPoints + manualAdjustmentPoints,
+        ),
+        manualAdjustmentPoints,
+        totalKills: ranking.totalKills,
+        totalTimeSeconds: ranking.totalTimeSeconds,
+        avgAfkPercentage:
+          Math.round((ranking.afkSum / ranking.totalKills) * 100) / 100,
+        pointsModified:
+          manualAdjustmentPoints !== 0 ||
+          manualAdjustmentRankingKeys.has(rankingKey),
+      };
 
-    if (rankingRows.length > 0) {
+      processedRankingKeys.add(rankingKey);
+
+      if (existingRanking) {
+        transactionOperations.push(
+          this.prisma.eventRanking.update({
+            where: { id: existingRanking.id },
+            data: persistedRankingData,
+          }),
+        );
+        continue;
+      }
+
       transactionOperations.push(
-        this.prisma.eventRanking.createMany({
-          data: rankingRows,
+        this.prisma.eventRanking.create({
+          data: {
+            eventId,
+            memberId: ranking.memberId,
+            heroNpcName: ranking.heroNpcName,
+            ...persistedRankingData,
+          },
+        }),
+      );
+    }
+
+    for (const existingRanking of existingRankings) {
+      const rankingKey = this.createRankingKey({
+        memberId: existingRanking.memberId,
+        heroNpcName: existingRanking.heroNpcName,
+      });
+
+      if (processedRankingKeys.has(rankingKey)) {
+        continue;
+      }
+
+      const manualAdjustmentPoints = this.resolveManualAdjustmentPoints({
+        existingRanking,
+        computedTotalPoints: 0,
+      });
+
+      if (manualAdjustmentPoints !== 0) {
+        transactionOperations.push(
+          this.prisma.eventRanking.update({
+            where: { id: existingRanking.id },
+            data: {
+              totalPoints: manualAdjustmentPoints,
+              manualAdjustmentPoints,
+              totalKills: 0,
+              totalTimeSeconds: 0,
+              avgAfkPercentage: 0,
+              pointsModified: true,
+            },
+          }),
+        );
+        continue;
+      }
+
+      transactionOperations.push(
+        this.prisma.eventRanking.delete({
+          where: { id: existingRanking.id },
         }),
       );
     }
@@ -972,6 +1152,8 @@ export class EventPointsService {
             totalKills: { increment: 1 },
             totalTimeSeconds: { increment: trackingDurationSeconds },
             avgAfkPercentage: Math.round(newAvgAfk * 100) / 100,
+            pointsModified:
+              existing.pointsModified || killPoint.manualAdjustmentPoints !== 0,
           },
         });
       } else {
@@ -984,6 +1166,7 @@ export class EventPointsService {
             totalKills: 1,
             totalTimeSeconds: trackingDurationSeconds,
             avgAfkPercentage: killPoint.afkPercentage,
+            pointsModified: killPoint.manualAdjustmentPoints !== 0,
           },
         });
       }
@@ -1256,7 +1439,8 @@ export class EventPointsService {
     eventId: string,
     killId: string,
     killPointId: string,
-    newPoints: number,
+    pointsDelta: number,
+    comment: string | undefined,
     editedByUserId: string,
   ) {
     const killPoint = await this.prisma.eventKillPoint.findFirst({
@@ -1283,25 +1467,33 @@ export class EventPointsService {
       throw new NotFoundException("Kill point not found");
     }
 
-    const oldPoints = killPoint.points;
-    const delta = newPoints - oldPoints;
+    const normalizedPointsDelta = this.roundPointsValue(pointsDelta);
+    const normalizedComment = this.normalizePointsEditComment(comment);
+    if (normalizedPointsDelta === 0) {
+      return killPoint;
+    }
+
+    const updatedKillPoints = this.roundPointsValue(
+      killPoint.points + normalizedPointsDelta,
+    );
+    const updatedKillAdjustment = this.roundPointsValue(
+      killPoint.manualAdjustmentPoints + normalizedPointsDelta,
+    );
 
     const updated = await this.prisma.eventKillPoint.update({
       where: { id: killPointId },
       data: {
-        points: newPoints,
-        basePoints: newPoints,
-        bonusBreakdown: [] as Prisma.InputJsonValue,
+        points: updatedKillPoints,
+        manualAdjustmentPoints: updatedKillAdjustment,
       },
     });
 
-    if (
-      delta !== 0 &&
-      this.isKillPointCountedInRanking({
-        confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
-        confirmedAt: killPoint.confirmedAt,
-      })
-    ) {
+    const isCountedInRanking = this.isKillPointCountedInRanking({
+      confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
+      confirmedAt: killPoint.confirmedAt,
+    });
+
+    if (isCountedInRanking) {
       const ranking = await this.prisma.eventRanking.findFirst({
         where: {
           eventId,
@@ -1311,10 +1503,14 @@ export class EventPointsService {
       });
 
       if (ranking) {
+        const updatedRankingTotalPoints = this.roundPointsValue(
+          ranking.totalPoints + normalizedPointsDelta,
+        );
+
         await this.prisma.eventRanking.update({
           where: { id: ranking.id },
           data: {
-            totalPoints: { increment: delta },
+            totalPoints: { increment: normalizedPointsDelta },
             pointsModified: true,
           },
         });
@@ -1323,9 +1519,10 @@ export class EventPointsService {
           data: {
             rankingId: ranking.id,
             previousPoints: ranking.totalPoints,
-            newPoints: ranking.totalPoints + delta,
+            newPoints: updatedRankingTotalPoints,
             editType: "KILL_POINT",
             editedByUserId,
+            comment: normalizedComment,
           },
         });
       }
@@ -1340,7 +1537,8 @@ export class EventPointsService {
     guildId: string,
     eventId: string,
     rankingId: string,
-    newTotalPoints: number,
+    pointsDelta: number,
+    comment: string | undefined,
     editedByUserId: string,
   ) {
     const ranking = await this.prisma.eventRanking.findFirst({
@@ -1355,21 +1553,44 @@ export class EventPointsService {
       throw new NotFoundException("Ranking not found");
     }
 
+    const normalizedPointsDelta = this.roundPointsValue(pointsDelta);
+    const normalizedComment = this.normalizePointsEditComment(comment);
+    if (normalizedPointsDelta === 0) {
+      return ranking;
+    }
+
     const previousPoints = ranking.totalPoints;
+    const normalizedNewTotalPoints = this.roundPointsValue(
+      ranking.totalPoints + normalizedPointsDelta,
+    );
+    const manualAdjustmentPoints = this.roundPointsValue(
+      ranking.manualAdjustmentPoints + normalizedPointsDelta,
+    );
+    const hasManualKillAdjustment =
+      await this.hasManualKillAdjustmentForRanking({
+        eventId,
+        memberId: ranking.memberId,
+        heroNpcName: ranking.heroNpcName,
+      });
 
     await this.prisma.eventPointsEditHistory.create({
       data: {
         rankingId,
         previousPoints,
-        newPoints: newTotalPoints,
+        newPoints: normalizedNewTotalPoints,
         editType: "RANKING",
         editedByUserId,
+        comment: normalizedComment,
       },
     });
 
     const updated = await this.prisma.eventRanking.update({
       where: { id: rankingId },
-      data: { totalPoints: newTotalPoints, pointsModified: true },
+      data: {
+        totalPoints: normalizedNewTotalPoints,
+        manualAdjustmentPoints,
+        pointsModified: hasManualKillAdjustment || manualAdjustmentPoints !== 0,
+      },
     });
 
     await this.eventEmitter.emitRankingUpdate(guildId, eventId);
@@ -1394,10 +1615,44 @@ export class EventPointsService {
       throw new NotFoundException("Ranking not found");
     }
 
-    return this.prisma.eventPointsEditHistory.findMany({
+    const historyEntries = await this.prisma.eventPointsEditHistory.findMany({
       where: { rankingId },
       orderBy: { editedAt: "desc" },
     });
+
+    const editedByUserIds = Array.from(
+      new Set(historyEntries.map((entry) => entry.editedByUserId)),
+    );
+    const editors =
+      editedByUserIds.length === 0
+        ? []
+        : await this.prisma.member.findMany({
+            where: {
+              guildId,
+              globalUserId: {
+                in: editedByUserIds,
+              },
+            },
+            select: {
+              globalUserId: true,
+              name: true,
+            },
+          });
+    const editorNameByUserId = new Map(
+      editors.flatMap((editor) =>
+        editor.globalUserId
+          ? [[editor.globalUserId, editor.name] as const]
+          : [],
+      ),
+    );
+
+    return historyEntries.map((entry) => ({
+      ...entry,
+      deltaPoints: this.roundPointsValue(
+        entry.newPoints - entry.previousPoints,
+      ),
+      editedByName: editorNameByUserId.get(entry.editedByUserId) ?? null,
+    }));
   }
 
   private async emitRankingUpdateByEventId(eventId: string): Promise<void> {
