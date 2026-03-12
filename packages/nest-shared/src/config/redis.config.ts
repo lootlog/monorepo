@@ -1,5 +1,6 @@
 import { registerAs } from "@nestjs/config";
-import { ConfigKey } from "src/config/config-key.enum";
+
+export const REDIS_CONFIG_KEY = "redis";
 
 export interface RedisConfig {
   host: string;
@@ -8,7 +9,7 @@ export interface RedisConfig {
   username: string;
 }
 
-export default registerAs(ConfigKey.REDIS, (): RedisConfig => {
+export default registerAs(REDIS_CONFIG_KEY, (): RedisConfig => {
   const { REDIS_HOST, REDIS_PASSWORD, REDIS_PORT, REDIS_USERNAME } =
     process.env;
 

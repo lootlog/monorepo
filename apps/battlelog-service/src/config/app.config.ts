@@ -1,7 +1,7 @@
 import { ConfigModuleOptions } from "@nestjs/config";
 import * as Joi from "joi";
 import r2Config from "src/config/r2.config";
-import redisConfig from "src/config/redis.config";
+import { redisConfig } from "@lootlog/nest-shared";
 import serviceConfig from "src/config/service.config";
 import winstonConfig from "src/config/winston.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";

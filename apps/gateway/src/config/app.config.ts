@@ -2,7 +2,7 @@ import { ConfigModuleOptions } from "@nestjs/config";
 import * as Joi from "joi";
 import apiConfig from "src/config/api.config";
 import rabbitmqConfig from "src/config/rabbitmq.config";
-import redisConfig from "src/config/redis.config";
+import { redisConfig } from "@lootlog/nest-shared";
 import serviceConfig from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/common.types";
 

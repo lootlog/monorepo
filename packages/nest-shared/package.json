@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@nestjs/common": "^11.1.16",
+    "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.16",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
@@ -28,6 +29,7 @@
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.0.0"

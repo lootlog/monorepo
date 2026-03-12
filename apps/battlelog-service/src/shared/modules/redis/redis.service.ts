@@ -6,7 +6,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import Redis from "ioredis";
 import { ConfigKey } from "src/config/config-key.enum";
-import type { RedisConfig } from "src/config/redis.config";
+import type { RedisConfig } from "@lootlog/nest-shared";
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {

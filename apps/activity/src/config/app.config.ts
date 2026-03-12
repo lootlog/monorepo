@@ -3,7 +3,7 @@ import type { ConfigModuleOptions } from "@nestjs/config";
 import * as Joi from "joi";
 import apiServiceConfig from "src/config/api-service.config";
 import rabbitmqConfig from "src/config/rabbitmq.config";
-import redisConfig from "src/config/redis.config";
+import { redisConfig } from "@lootlog/nest-shared";
 import serviceConfig from "src/config/service.config";
 import swaggerConfig from "src/config/swagger.config";
 import winstonConfig from "src/config/winston.config";
