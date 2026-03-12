@@ -3,9 +3,12 @@ import { getQueueToken } from "@nestjs/bullmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
 import { EventsService } from "./events.service";
+import { EventAccessService } from "./services/event-access.service";
+import { EventCatalogService } from "./services/event-catalog.service";
 import { EventPointsService } from "./services/event-points.service";
 import { EventTrackingService } from "./services/event-tracking.service";
 import { EventKillService } from "./services/event-kill.service";
+import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
@@ -33,6 +36,8 @@ describe("EventsService", () => {
     eventMap: {
       create: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
       delete: jest.fn(),
     },
     eventMapLocation: {
@@ -119,6 +124,9 @@ describe("EventsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EventsService,
+        EventAccessService,
+        EventCatalogService,
+        EventQueueDiagnosticsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: EventPointsService, useValue: mockPointsService },
         { provide: EventTrackingService, useValue: mockTrackingService },

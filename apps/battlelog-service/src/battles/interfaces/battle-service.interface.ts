@@ -3,7 +3,7 @@ import type { QueryBattlesDto } from "../dto/query-battles.dto";
 import type { UpdateBattleDto } from "../dto/update-battle.dto";
 import type { CreateBattleDto } from "../dto/create-battle.dto";
 import type { PaginationResult } from "./pagination.interface";
-import type { BattleAnalysis, ParsedMove } from "../battle-processor";
+import type { BattleAnalysis, ParsedMove } from "@lootlog/battle-processor";
 
 // Complete battle with all relations
 export interface BattleWithRelations extends Battle {

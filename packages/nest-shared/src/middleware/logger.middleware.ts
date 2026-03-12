@@ -3,6 +3,12 @@ import type { FastifyRequest, FastifyReply } from "fastify";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 
+type FastifyRawRequestLike = FastifyRequest["raw"] & {
+  method?: string;
+  originalUrl?: string;
+  url?: string;
+};
+
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   constructor(
@@ -10,16 +16,15 @@ export class LoggerMiddleware implements NestMiddleware {
   ) {}
 
   use(req: FastifyRequest["raw"], res: FastifyReply["raw"], next: () => void) {
-    // @ts-expect-error - FastifyRequest['raw'] doesn't have method and originalUrl in types
-    const { method, originalUrl } = req;
-    const requestStartTime = new Date().getTime();
+    const rawRequest = req as FastifyRawRequestLike;
+    const method = rawRequest.method ?? "UNKNOWN";
+    const requestUrl = rawRequest.originalUrl ?? rawRequest.url ?? "/";
+    const requestStartTime = Date.now();
 
     res.on("finish", () => {
       const { statusCode } = res;
-
-      const responseTime = new Date().getTime();
-      const duration = responseTime - requestStartTime;
-      const message = `${method} ${originalUrl} ${statusCode} ${duration}ms`;
+      const duration = Date.now() - requestStartTime;
+      const message = `${method} ${requestUrl} ${statusCode} ${duration}ms`;
 
       this.logger.log({
         message,

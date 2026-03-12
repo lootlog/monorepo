@@ -20,6 +20,10 @@ import {
   evaluateEventScoring,
   type EventScoringAppliedBonus,
 } from "../utils/scoring-engine.util";
+import {
+  calculateTrackingDurationSeconds,
+  clipIntervalToWindow,
+} from "../utils/tracking-window.util";
 
 export type CalculateMemberPointsParams = {
   scoringMode?: EventScoringMode;
@@ -158,57 +162,6 @@ export class EventPointsService {
     );
   }
 
-  private clipIntervalToWindow(params: {
-    start: Date;
-    end: Date;
-    windowStart: Date;
-    windowEnd: Date;
-  }): { start: Date; end: Date } | null {
-    const clippedStart =
-      params.start > params.windowStart ? params.start : params.windowStart;
-    const clippedEnd =
-      params.end < params.windowEnd ? params.end : params.windowEnd;
-
-    if (clippedEnd < clippedStart) {
-      return null;
-    }
-
-    return { start: clippedStart, end: clippedEnd };
-  }
-
-  private calculateTrackingDurationSeconds(
-    intervals: Array<{ start: Date; end: Date }>,
-  ): number {
-    if (intervals.length === 0) {
-      return 0;
-    }
-
-    const sortedIntervals = [...intervals].sort(
-      (a, b) => a.start.getTime() - b.start.getTime(),
-    );
-
-    let totalMs = 0;
-    let currentStartMs = sortedIntervals[0].start.getTime();
-    let currentEndMs = sortedIntervals[0].end.getTime();
-
-    for (let i = 1; i < sortedIntervals.length; i++) {
-      const nextStartMs = sortedIntervals[i].start.getTime();
-      const nextEndMs = sortedIntervals[i].end.getTime();
-
-      if (nextStartMs <= currentEndMs) {
-        currentEndMs = Math.max(currentEndMs, nextEndMs);
-        continue;
-      }
-
-      totalMs += currentEndMs - currentStartMs;
-      currentStartMs = nextStartMs;
-      currentEndMs = nextEndMs;
-    }
-
-    totalMs += currentEndMs - currentStartMs;
-    return Math.round(totalMs / 1000);
-  }
-
   private calculateTrackingDurationPercentage(params: {
     trackingDurationSeconds: number | null | undefined;
     killedAt: Date;
@@ -298,7 +251,7 @@ export class EventPointsService {
         continue;
       }
 
-      const clippedInterval = this.clipIntervalToWindow({
+      const clippedInterval = clipIntervalToWindow({
         start: assignment.assignedAt,
         end: assignment.unassignedAt ?? params.killTime,
         windowStart: params.respawnStartTime,
@@ -315,7 +268,7 @@ export class EventPointsService {
     }
 
     const trackingDurationSeconds =
-      this.calculateTrackingDurationSeconds(trackingIntervals);
+      calculateTrackingDurationSeconds(trackingIntervals);
     const trackingDurationPercentage = this.calculateTrackingDurationPercentage(
       {
         trackingDurationSeconds,

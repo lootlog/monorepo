@@ -1,0 +1,22 @@
+{
+  "name": "@lootlog/battle-processor",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "pkgroll"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "pkgroll": "^2.27.0"
+  }
+}
