@@ -15,6 +15,10 @@ import type {
 } from "./dto/get-kill-stats.dto";
 import type { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
 import type { GetMemberKillsDto } from "./dto/get-member-kills.dto";
+import {
+  buildGuildKillDedupKey,
+  buildUserKillDedupKey,
+} from "./utils/kill-dedup-key";
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 
@@ -32,7 +36,10 @@ export class KillsService {
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
 
     // 1. User deduplication (30s window) - same user killing same NPC
-    const userDedupKey = `kill:dedup:user:${discordId}:${data.world}:${npcId}`;
+    const userDedupKey = buildUserKillDedupKey(discordId, {
+      world: data.world,
+      npcId,
+    });
     const isNewUserKill = await this.redis.setNX(
       userDedupKey,
       "1",
@@ -148,7 +155,10 @@ export class KillsService {
           });
 
           // 4b. Guild unique kill deduplication (30s window)
-          const guildDedupKey = `kill:dedup:guild:${guildId}:${data.world}:${npcId}`;
+          const guildDedupKey = buildGuildKillDedupKey(guildId, {
+            world: data.world,
+            npcId,
+          });
           const isFirstGuildKill = await this.redis.setNX(
             guildDedupKey,
             "1",

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useGuildId } from "@/hooks/context/use-guild-id";
+import { invalidateRespawnQueries } from "./invalidate-respawn-queries";
 
 interface CloseRespawnWindowParams {
   eventId: string;
@@ -47,23 +48,12 @@ export const useCloseRespawnWindow = () => {
       return response.data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          "hero-respawn-config",
-          guildId,
-          variables.eventId,
-          variables.heroId,
-        ],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-hero-timers", guildId, variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-maps", guildId, variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["map-active-gap", guildId, variables.eventId],
-      });
+      invalidateRespawnQueries(
+        queryClient,
+        guildId,
+        variables.eventId,
+        variables.heroId,
+      );
     },
   });
 };
@@ -90,23 +80,12 @@ export const useOpenRespawnWindow = () => {
       return response.data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          "hero-respawn-config",
-          guildId,
-          variables.eventId,
-          variables.heroId,
-        ],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-hero-timers", guildId, variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-maps", guildId, variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["map-active-gap", guildId, variables.eventId],
-      });
+      invalidateRespawnQueries(
+        queryClient,
+        guildId,
+        variables.eventId,
+        variables.heroId,
+      );
     },
   });
 };

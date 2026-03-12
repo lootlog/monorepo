@@ -1,5 +1,6 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateKillQueries } from "./invalidate-kill-queries";
 import type {
   EventScoringMode,
   EventScoringRules,
@@ -68,24 +69,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
-      queryClient.invalidateQueries({
-        queryKey: ["event-ranking", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-kill-history", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["hero-kill-history", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-member-kill-history", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["recent-hero-kills", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["kill-detail", guildId, eventId],
-      });
+      invalidateKillQueries(queryClient, guildId, eventId);
     },
   });
 
