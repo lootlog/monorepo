@@ -5,7 +5,7 @@ import type { INestApplication } from "@nestjs/common";
 import type { ServerOptions } from "socket.io";
 import { ConfigService } from "@nestjs/config";
 import { ConfigKey } from "src/config/config-key.enum";
-import type { RedisConfig } from "src/config/redis.config";
+import type { RedisConfig } from "@lootlog/nest-shared";
 import { msgpackParser } from "@lootlog/socket-parser";
 
 export class RedisIoAdapter extends IoAdapter {

@@ -28,7 +28,7 @@ import { EventsModule } from "src/events/events.module";
 import { MapsModule } from "src/maps/maps.module";
 import { MapTemplatesModule } from "src/map-templates/map-templates.module";
 import { KillsModule } from "src/kills/kills.module";
-import type { RedisConfig } from "src/config/redis.config";
+import type { RedisConfig } from "@lootlog/nest-shared";
 
 @Module({
   imports: [
