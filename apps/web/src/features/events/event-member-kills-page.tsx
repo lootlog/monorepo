@@ -258,8 +258,10 @@ const MemberKillCard = ({
   const point = kill.memberPoint;
   const basePoints = point?.basePoints ?? 0;
   const bonusBreakdown = normalizeBonusBreakdown(point?.bonusBreakdown);
+  const manualAdjustmentPoints = point?.manualAdjustmentPoints ?? 0;
+  const autoTotalPoints = (point?.points ?? 0) - manualAdjustmentPoints;
   const fallbackBonusPoints =
-    Math.round(Math.max(0, (point?.points ?? 0) - basePoints) * 10000) / 10000;
+    Math.round(Math.max(0, autoTotalPoints - basePoints) * 10000) / 10000;
   const bonusPoints =
     bonusBreakdown.length > 0
       ? Math.round(
@@ -268,7 +270,7 @@ const MemberKillCard = ({
       : fallbackBonusPoints;
   const totalPoints = point?.points ?? 0;
   const uncappedTotal = basePoints + bonusPoints;
-  const capReduction = Math.max(0, uncappedTotal - totalPoints);
+  const capReduction = Math.max(0, uncappedTotal - autoTotalPoints);
   const trackingDurationPercentage =
     typeof point?.trackingDurationPercentage === "number"
       ? `${Math.round(point.trackingDurationPercentage)}%`
@@ -325,6 +327,18 @@ const MemberKillCard = ({
           {
             label: t("events.kills.pointsTooltip.capReduction"),
             value: `-${formatPoints(capReduction)}`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+    ...(manualAdjustmentPoints !== 0
+      ? [
+          {
+            label: t("events.kills.pointsTooltip.manualAdjustment"),
+            value:
+              manualAdjustmentPoints > 0
+                ? `+${formatPoints(manualAdjustmentPoints)}`
+                : formatPoints(manualAdjustmentPoints),
             tone: "warning" as const,
           },
         ]

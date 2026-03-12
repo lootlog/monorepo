@@ -451,7 +451,8 @@ export class EventsService {
     eventId: string,
     killId: string,
     killPointId: string,
-    newPoints: number,
+    pointsDelta: number,
+    comment: string | undefined,
     editedByUserId: string,
   ) {
     return this.pointsService.updateKillPoint(
@@ -459,7 +460,8 @@ export class EventsService {
       eventId,
       killId,
       killPointId,
-      newPoints,
+      pointsDelta,
+      comment,
       editedByUserId,
     );
   }
@@ -468,14 +470,16 @@ export class EventsService {
     guildId: string,
     eventId: string,
     rankingId: string,
-    newTotalPoints: number,
+    pointsDelta: number,
+    comment: string | undefined,
     editedByUserId: string,
   ) {
     return this.pointsService.updateRankingPoints(
       guildId,
       eventId,
       rankingId,
-      newTotalPoints,
+      pointsDelta,
+      comment,
       editedByUserId,
     );
   }

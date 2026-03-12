@@ -114,7 +114,8 @@
     "time": "Czas",
     "afk": "AFK %",
     "noRanking": "Brak danych w rankingu",
-    "viewAll": "Zobacz pełny ranking"
+    "viewAll": "Zobacz pełny ranking",
+    "memberFallback": "Gracz #{{memberId}}"
   },
   "templates": {
     "title": "Szablony Map",
@@ -307,6 +308,7 @@
       "trackingPercentage": "Czas obstawiania respawnu",
       "bonusItem": "{{name}}",
       "bonusTotal": "Bonusy razem",
+      "manualAdjustment": "Ręczna korekta",
       "groupBonus": "Bonus małej grupy",
       "nightBonus": "Bonus nocnej warty",
       "pvpBonus": "Bonus żółtej mapy/PvP",
@@ -566,7 +568,21 @@
     "history": "Historia edycji",
     "historyTypeRanking": "Ranking",
     "historyTypeKill": "Kill",
-    "noHistory": "Brak historii edycji"
+    "historyEditedBy": "Edytował: {{editorName}}",
+    "historyEditorUnknown": "Nieznany użytkownik",
+    "noHistory": "Brak historii edycji",
+    "deltaLabel": "Korekta punktów",
+    "deltaPlaceholder": "np. +0.5 lub -1",
+    "currentValueLabel": "Obecnie",
+    "deltaPreviewLabel": "Zmiana",
+    "resultValueLabel": "Po zmianie",
+    "previewUnavailable": "—",
+    "commentLabel": "Komentarz",
+    "commentPlaceholder": "Opcjonalny powód lub opis zmiany punktów",
+    "killDialogTitle": "Edytuj punkty gracza {{memberName}}",
+    "killDialogDescription": "Dodaj lub odejmij punkty za to bicie i opcjonalnie dodaj komentarz dla {{memberName}}.",
+    "rankingDialogTitle": "Edytuj ranking gracza {{memberName}}",
+    "rankingDialogDescription": "Dodaj lub odejmij punkty od sumy dla {{heroNpcName}} i opcjonalnie dodaj komentarz."
   },
   "locations": {
     "title": "Lokacje",

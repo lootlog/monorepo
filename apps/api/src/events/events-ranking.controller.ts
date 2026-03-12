@@ -139,7 +139,7 @@ export class EventsRankingController {
   @ApiOperation({
     summary: "Update ranking points",
     description:
-      "Manually update total points for a ranking entry (OWNER/ADMIN only)",
+      "Apply a signed manual points delta to a ranking entry (OWNER/ADMIN only)",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
@@ -160,7 +160,8 @@ export class EventsRankingController {
       guildData.id,
       eventId,
       rankingId,
-      data.totalPoints,
+      data.pointsDelta,
+      data.comment,
       userId,
     );
   }
@@ -512,7 +513,7 @@ export class EventsRankingController {
   @ApiOperation({
     summary: "Update kill point",
     description:
-      "Manually update points for a specific kill participant (OWNER/ADMIN only). Automatically recalculates ranking.",
+      "Apply a signed manual points delta for a specific kill participant (OWNER/ADMIN only). Automatically recalculates ranking.",
   })
   @ApiParam({ name: "guildId", description: "Guild ID" })
   @ApiParam({ name: "eventId", description: "Event ID" })
@@ -536,7 +537,8 @@ export class EventsRankingController {
       eventId,
       killId,
       killPointId,
-      data.points,
+      data.pointsDelta,
+      data.comment,
       userId,
     );
   }

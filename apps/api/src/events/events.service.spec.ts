@@ -1141,6 +1141,7 @@ describe("EventsService", () => {
         "kill-1",
         "point-1",
         50,
+        "manual note",
         "user-1",
       );
       expect(mockPointsService.updateKillPoint).toHaveBeenCalledWith(
@@ -1149,6 +1150,26 @@ describe("EventsService", () => {
         "kill-1",
         "point-1",
         50,
+        "manual note",
+        "user-1",
+      );
+    });
+
+    it("should delegate updateRankingPoints", async () => {
+      await service.updateRankingPoints(
+        "guild-1",
+        "event-1",
+        "ranking-1",
+        42,
+        "ranking note",
+        "user-1",
+      );
+      expect(mockPointsService.updateRankingPoints).toHaveBeenCalledWith(
+        "guild-1",
+        "event-1",
+        "ranking-1",
+        42,
+        "ranking note",
         "user-1",
       );
     });

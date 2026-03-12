@@ -6,8 +6,11 @@ export interface PointsEditHistoryEntry {
   rankingId: string;
   previousPoints: number;
   newPoints: number;
+  deltaPoints: number;
   editType: "KILL_POINT" | "RANKING";
   editedByUserId: string;
+  editedByName: string | null;
+  comment: string | null;
   editedAt: string;
 }
 

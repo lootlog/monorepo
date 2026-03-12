@@ -1,22 +1,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import {
-  Trophy,
-  Pencil,
-  Check,
-  X,
-  PenLine,
-  History,
-  ArrowRight,
-} from "lucide-react";
+import { Trophy, Pencil, PenLine, History, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import type { EventRanking } from "../../hooks/queries/use-events";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Button } from "@lootlog/ui/components/button";
-import { Input } from "@lootlog/ui/components/input";
 import {
   Tooltip,
   TooltipContent,
@@ -30,7 +21,7 @@ import {
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
 import { useRankingEditHistory } from "../../hooks/queries/use-ranking-edit-history";
-import { parseEditablePoints } from "../../utils/parse-editable-points";
+import { ManualPointsEditDialog } from "../dialogs/manual-points-edit-dialog";
 
 interface EventRankingTableProps {
   rankings: EventRanking[];
@@ -43,11 +34,27 @@ interface RankingRowProps {
   ranking: EventRanking;
   position: number;
   canEdit?: boolean;
-  onEditPoints?: (rankingId: string, newPoints: number) => Promise<void>;
+  onEditPoints?: (
+    rankingId: string,
+    pointsDelta: number,
+    comment?: string,
+  ) => Promise<void>;
   isEditPending?: boolean;
   guildId?: string;
   eventId?: string;
 }
+
+const formatPoints = (points: number): string => {
+  return Number.isInteger(points) ? String(points) : points.toFixed(2);
+};
+
+const formatSignedPoints = (points: number): string => {
+  if (points > 0) {
+    return `+${formatPoints(points)}`;
+  }
+
+  return formatPoints(points);
+};
 
 const RankingRow = ({
   ranking,
@@ -59,8 +66,7 @@ const RankingRow = ({
   eventId,
 }: RankingRowProps) => {
   const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(String(ranking.totalPoints));
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const { data: editHistory, isLoading: historyLoading } =
@@ -72,34 +78,25 @@ const RankingRow = ({
     });
 
   const isTop3 = position <= 3;
-  const memberLabel = ranking.member?.name || `Gracz #${ranking.memberId}`;
+  const memberLabel =
+    ranking.member?.name ||
+    t("events.ranking.memberFallback", {
+      memberId: ranking.memberId,
+    });
 
   const handleEditClick = () => {
-    setEditValue(String(ranking.totalPoints));
-    setIsEditing(true);
+    setIsEditDialogOpen(true);
   };
 
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditValue(String(ranking.totalPoints));
-  };
-
-  const handleConfirmEdit = async () => {
-    const newPoints = parseEditablePoints(editValue);
-    if (newPoints === null) {
-      return;
-    }
+  const handleDialogSubmit = async ({
+    pointsDelta,
+    comment,
+  }: {
+    pointsDelta: number;
+    comment?: string;
+  }) => {
     if (onEditPoints) {
-      await onEditPoints(ranking.id, newPoints);
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleConfirmEdit();
-    } else if (e.key === "Escape") {
-      handleCancelEdit();
+      await onEditPoints(ranking.id, pointsDelta, comment);
     }
   };
 
@@ -144,139 +141,135 @@ const RankingRow = ({
       </div>
 
       <div className="text-right shrink-0 flex items-center gap-1">
-        {isEditing ? (
-          <>
-            <Input
-              type="number"
-              min={0}
-              step="any"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-20 h-8 text-sm"
-              autoFocus
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={handleConfirmEdit}
-              disabled={isEditPending}
-            >
-              <Check className="h-4 w-4 text-green-500" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={handleCancelEdit}
-              disabled={isEditPending}
-            >
-              <X className="h-4 w-4 text-red-500" />
-            </Button>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-1">
-              {ranking.pointsModified && canEdit && (
-                <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
-                  <PopoverTrigger asChild>
-                    <Button size="icon" variant="ghost" className="h-6 w-6">
-                      <PenLine className="h-3 w-3 text-amber-500" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80 p-0" align="end">
-                    <div className="p-3 border-b">
-                      <div className="flex items-center gap-2">
-                        <History className="h-4 w-4 text-muted-foreground" />
-                        <h4 className="font-medium text-sm">
-                          {t("events.points.history")}
-                        </h4>
-                      </div>
+        <div className="flex items-center gap-1">
+          {ranking.pointsModified && canEdit && (
+            <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
+              <PopoverTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-6 w-6">
+                  <PenLine className="h-3 w-3 text-amber-500" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 overflow-hidden p-0" align="end">
+                <div className="max-h-[70vh] overflow-hidden">
+                  <div className="border-b p-3">
+                    <div className="flex items-center gap-2">
+                      <History className="h-4 w-4 text-muted-foreground" />
+                      <h4 className="text-sm font-medium">
+                        {t("events.points.history")}
+                      </h4>
                     </div>
-                    <ScrollArea className="max-h-60">
-                      {historyLoading ? (
-                        <div className="p-4 text-center text-sm text-muted-foreground">
-                          {t("events.kills.loading")}
-                        </div>
-                      ) : editHistory && editHistory.length > 0 ? (
-                        <div className="p-2 space-y-2">
-                          {editHistory.map((entry) => (
-                            <div
-                              key={entry.id}
-                              className="p-2 rounded-md bg-muted/50 text-sm"
-                            >
-                              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                <span className="text-xs">
-                                  {format(
-                                    new Date(entry.editedAt),
-                                    "d MMM yyyy, HH:mm",
-                                    { locale: pl },
-                                  )}
-                                </span>
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
-                                  {entry.editType === "RANKING"
-                                    ? t("events.points.historyTypeRanking")
-                                    : t("events.points.historyTypeKill")}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 font-medium">
-                                <span className="text-red-500">
-                                  {entry.previousPoints}
-                                </span>
-                                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-green-500">
-                                  {entry.newPoints}
-                                </span>
-                              </div>
+                  </div>
+                  <ScrollArea className="h-60">
+                    {historyLoading ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        {t("events.kills.loading")}
+                      </div>
+                    ) : editHistory && editHistory.length > 0 ? (
+                      <div className="space-y-2 p-2">
+                        {editHistory.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="rounded-md bg-muted/50 p-2 text-sm"
+                          >
+                            <div className="mb-1 flex items-center gap-2 text-muted-foreground">
+                              <span className="text-xs">
+                                {format(
+                                  new Date(entry.editedAt),
+                                  "d MMM yyyy, HH:mm",
+                                  { locale: pl },
+                                )}
+                              </span>
+                              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                                {entry.editType === "RANKING"
+                                  ? t("events.points.historyTypeRanking")
+                                  : t("events.points.historyTypeKill")}
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-4 text-center text-sm text-muted-foreground">
-                          {t("events.points.noHistory")}
-                        </div>
-                      )}
-                    </ScrollArea>
-                  </PopoverContent>
-                </Popover>
-              )}
-              {ranking.pointsModified && !canEdit && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <PenLine className="h-3 w-3 text-amber-500" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("events.points.modified")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              <p className="font-bold text-primary">
-                {t("events.ranking.pointCount", {
-                  count: ranking.totalPoints,
-                })}
-              </p>
-            </div>
-            {canEdit && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={handleEditClick}
-                  >
-                    <Pencil className="h-3 w-3 text-muted-foreground" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("events.points.edit")}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </>
+                            <p className="text-xs text-muted-foreground">
+                              {t("events.points.historyEditedBy", {
+                                editorName:
+                                  entry.editedByName ??
+                                  t("events.points.historyEditorUnknown"),
+                              })}
+                            </p>
+                            <div className="flex items-center gap-2 font-medium">
+                              <span className="text-red-500">
+                                {formatPoints(entry.previousPoints)}
+                              </span>
+                              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-green-500">
+                                {formatPoints(entry.newPoints)}
+                              </span>
+                              <span className="rounded bg-background/80 px-1.5 py-0.5 text-xs text-primary">
+                                {formatSignedPoints(entry.deltaPoints)}
+                              </span>
+                            </div>
+                            {entry.comment && (
+                              <p className="mt-2 whitespace-pre-wrap break-words rounded-md bg-background/70 px-2 py-1.5 text-xs text-muted-foreground">
+                                {entry.comment}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        {t("events.points.noHistory")}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          {ranking.pointsModified && !canEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PenLine className="h-3 w-3 text-amber-500" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t("events.points.modified")}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <p className="font-bold text-primary">
+            {t("events.ranking.pointCount", {
+              count: ranking.totalPoints,
+            })}
+          </p>
+        </div>
+        {canEdit && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={handleEditClick}
+                disabled={isEditPending}
+              >
+                <Pencil className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t("events.points.edit")}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
+      <ManualPointsEditDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        title={t("events.points.rankingDialogTitle", {
+          memberName: memberLabel,
+        })}
+        description={t("events.points.rankingDialogDescription", {
+          heroNpcName: ranking.heroNpcName,
+        })}
+        currentPoints={ranking.totalPoints}
+        isPending={isEditPending}
+        onSubmit={handleDialogSubmit}
+      />
     </div>
   );
 };
@@ -291,15 +284,21 @@ export const EventRankingTable = ({
 
   const { updateRankingPoints } = useUpdatePoints(guildId ?? "", eventId ?? "");
 
-  const handleEditPoints = async (rankingId: string, newPoints: number) => {
+  const handleEditPoints = async (
+    rankingId: string,
+    pointsDelta: number,
+    comment?: string,
+  ) => {
     try {
       await updateRankingPoints.mutateAsync({
         rankingId,
-        totalPoints: newPoints,
+        pointsDelta,
+        comment,
       });
       toast.success(t("events.points.editSuccess"));
-    } catch {
+    } catch (error) {
       toast.error(t("events.points.editError"));
+      throw error;
     }
   };
 

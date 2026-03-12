@@ -1,22 +1,42 @@
-import { IsNumber, Min } from "class-validator";
+import { IsNumber, IsOptional, IsString, MaxLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class UpdateKillPointDto {
-  @ApiProperty({ description: "New points value for this kill point" })
+  @ApiProperty({
+    description: "Signed manual delta to apply to this kill point",
+  })
   @IsNumber({
     allowInfinity: false,
     allowNaN: false,
   })
-  @Min(0)
-  points: number;
+  pointsDelta: number;
+
+  @ApiProperty({
+    description: "Optional comment describing the manual points edit",
+    required: false,
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  comment?: string;
 }
 
 export class UpdateRankingPointsDto {
-  @ApiProperty({ description: "New total points value for this ranking" })
+  @ApiProperty({ description: "Signed manual delta to apply to this ranking" })
   @IsNumber({
     allowInfinity: false,
     allowNaN: false,
   })
-  @Min(0)
-  totalPoints: number;
+  pointsDelta: number;
+
+  @ApiProperty({
+    description: "Optional comment describing the manual ranking edit",
+    required: false,
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  comment?: string;
 }
