@@ -339,6 +339,7 @@
     }
   },
   "killDetail": {
+    "title": "Szczegóły bicia",
     "notFound": "Nie znaleziono bicia",
     "totalPoints": "Suma punktów",
     "participantCount": "Uczestników",

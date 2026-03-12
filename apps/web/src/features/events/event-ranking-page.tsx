@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useParams, Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
+import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Permission } from "@lootlog/types";
 import { useEventOverview } from "./hooks/queries/use-event-overview";
@@ -12,6 +12,7 @@ import { Trophy, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
+import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
 
 export const EventRankingPage = () => {
   const { t } = useTranslation();
@@ -56,7 +57,7 @@ export const EventRankingPage = () => {
           {t("events.error", "Nie znaleziono eventu")}
         </p>
         <Link to="/$guildId/events" params={{ guildId: guildId ?? "" }}>
-          <Button variant="outline">Powrót do listy</Button>
+          <Button variant="outline">{t("events.backToList")}</Button>
         </Link>
       </div>
     );
@@ -87,60 +88,58 @@ export const EventRankingPage = () => {
         guildId={guildId}
         eventId={eventId}
       />
-      <div className="flex flex-col gap-3">
-        <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
+      <div className="flex flex-col gap-4 px-3 py-3">
+        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-lg bg-primary/10">
+            <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
               <Trophy className="size-4 text-primary" />
             </div>
-            <div>
-              <h2 className="text-sm font-semibold leading-tight">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 {t("events.ranking.title")}
-              </h2>
-              <p className="text-xs text-muted-foreground leading-tight">
-                {event.name}
+              </p>
+              <h2 className="truncate text-base font-semibold">{event.name}</h2>
+              <p className="text-xs text-muted-foreground">
+                {effectiveSelectedHeroName ??
+                  t("events.kills.allHeroes", "Wszyscy herosi")}
               </p>
             </div>
           </div>
-        </div>
+        </Card>
 
-        <div className="px-3 flex flex-col gap-4">
-          {heroes.length > 0 && (
+        {heroes.length > 0 && (
+          <Card className="gap-2 border-border bg-card/40 p-2.5 backdrop-blur-sm">
             <Tabs
               value={effectiveSelectedHeroName ?? heroes[0]?.npcName}
               onValueChange={setSelectedHeroName}
             >
-              <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+              <EventScrollableTabsList>
                 {heroes.map((hero) => (
-                  <TabsTrigger
-                    key={hero.id}
-                    value={hero.npcName}
-                    className="flex-shrink-0"
-                  >
+                  <TabsTrigger key={hero.id} value={hero.npcName}>
                     {hero.npcName}
                   </TabsTrigger>
                 ))}
-              </TabsList>
+              </EventScrollableTabsList>
             </Tabs>
-          )}
-
-          <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
-            {rankingError && (
-              <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {t(
-                  "events.ranking.error",
-                  "Nie udało się pobrać rankingu. Dane mogą być niepełne.",
-                )}
-              </div>
-            )}
-            <EventRankingTable
-              rankings={filteredRankings}
-              guildId={guildId}
-              eventId={eventId}
-              canEdit={canEditPoints}
-            />
           </Card>
-        </div>
+        )}
+
+        <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+          {rankingError && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {t(
+                "events.ranking.error",
+                "Nie udało się pobrać rankingu. Dane mogą być niepełne.",
+              )}
+            </div>
+          )}
+          <EventRankingTable
+            rankings={filteredRankings}
+            guildId={guildId}
+            eventId={eventId}
+            canEdit={canEditPoints}
+          />
+        </Card>
       </div>
     </ScrollArea>
   );

@@ -335,72 +335,76 @@ export const HeroDetail = () => {
         guildId={guildId}
         eventId={eventId}
       />
-      <div className="w-full shrink-0 border-b bg-background px-3 py-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            {hero.npcIcon ? (
-              <NpcTile
-                npc={{
-                  id: hero.npcId ?? undefined,
-                  name: hero.npcName,
-                  icon: hero.npcIcon,
-                }}
-              />
-            ) : (
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <Swords className="size-4 text-yellow-500" />
-              </div>
-            )}
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold leading-tight break-words">
-                {hero.npcName}
-              </h2>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <HeroTimerCountdown timer={heroTimer} />
-                {windowStatus !== "NONE" && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs",
-                      getWindowStatusConfig(windowStatus, t).className,
-                    )}
-                  >
-                    {getWindowStatusConfig(windowStatus, t).label}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-          {canManage && (
-            <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-              {heroTimer ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-center sm:w-auto"
-                  onClick={() => setCloseWindowOpen(true)}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  {t("events.respawn.closeWindow")}
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-center sm:w-auto"
-                  onClick={() => setOpenWindowOpen(true)}
-                >
-                  <Timer className="w-4 h-4 mr-2" />
-                  {t("events.respawn.openWindow")}
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                {hero.npcIcon ? (
+                  <NpcTile
+                    npc={{
+                      id: hero.npcId ?? undefined,
+                      name: hero.npcName,
+                      icon: hero.npcIcon,
+                    }}
+                  />
+                ) : (
+                  <div className="rounded-xl bg-yellow-500/10 p-2 shadow-inner shadow-yellow-500/10">
+                    <Swords className="size-4 text-yellow-500" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    {event.name}
+                  </p>
+                  <h2 className="text-base font-semibold leading-tight break-words">
+                    {hero.npcName}
+                  </h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <HeroTimerCountdown timer={heroTimer} />
+                    {windowStatus !== "NONE" && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs",
+                          getWindowStatusConfig(windowStatus, t).className,
+                        )}
+                      >
+                        {getWindowStatusConfig(windowStatus, t).label}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {canManage && (
+                <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
+                  {heroTimer ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-center sm:w-auto"
+                      onClick={() => setCloseWindowOpen(true)}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      {t("events.respawn.closeWindow")}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-center sm:w-auto"
+                      onClick={() => setOpenWindowOpen(true)}
+                    >
+                      <Timer className="w-4 h-4 mr-2" />
+                      {t("events.respawn.openWindow")}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               {uniqueMembers.length > 0 && (
