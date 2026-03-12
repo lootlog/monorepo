@@ -1,8 +1,12 @@
 import { useGuildId } from "@/hooks/context/use-guild-id";
-import React, { createContext, useState, useCallback, useRef } from "react";
+import React, { createContext, useState, useCallback } from "react";
 
 type Props = {
   children: React.ReactNode;
+};
+
+type GuildContextProviderContentProps = Props & {
+  guildId: string | undefined;
 };
 
 export type GuildContextProviderValue = {
@@ -32,47 +36,42 @@ const saveWorld = (guildId: string | undefined, world: string) => {
   }
 };
 
-export const GuildContextProvider: React.FC<Props> = ({ children }) => {
-  const guildId = useGuildId();
-
-  // Initialize state from localStorage once
+const GuildContextProviderContent: React.FC<
+  GuildContextProviderContentProps
+> = ({ children, guildId }) => {
   const [world, setWorldState] = useState<string>(() =>
     getStoredWorld(guildId),
   );
 
-  // Track guildId changes to reload world
-  const lastGuildIdRef = useRef(guildId);
-  if (lastGuildIdRef.current !== guildId) {
-    lastGuildIdRef.current = guildId;
-    const storedWorld = getStoredWorld(guildId);
-    if (storedWorld !== world) {
-      setWorldState(storedWorld);
-    }
-  }
-
-  // Stable reference for setWorld callback
-  const guildIdRef = useRef(guildId);
-  guildIdRef.current = guildId;
-
-  const setWorld = useCallback((newWorld: string) => {
-    setWorldState(newWorld);
-    saveWorld(guildIdRef.current, newWorld);
-  }, []);
-
-  // Memoize context value to prevent unnecessary re-renders
-  const valueRef = useRef<GuildContextProviderValue>({ world, setWorld });
-  if (valueRef.current.world !== world) {
-    valueRef.current = { world, setWorld };
-  }
+  const setWorld = useCallback(
+    (newWorld: string) => {
+      setWorldState(newWorld);
+      saveWorld(guildId, newWorld);
+    },
+    [guildId],
+  );
 
   return (
-    <GuildContext.Provider value={valueRef.current}>
+    <GuildContext.Provider value={{ world, setWorld }}>
       {children}
     </GuildContext.Provider>
   );
 };
 
-export const GuildContext = createContext<GuildContextProviderValue>(
-  {} as GuildContextProviderValue,
+export const GuildContextProvider: React.FC<Props> = ({ children }) => {
+  const guildId = useGuildId();
+
+  return (
+    <GuildContextProviderContent
+      key={guildId ?? "global-guild"}
+      guildId={guildId}
+    >
+      {children}
+    </GuildContextProviderContent>
+  );
+};
+
+export const GuildContext = createContext<GuildContextProviderValue | null>(
+  null,
 );
 GuildContext.displayName = "GuildContext";

@@ -9,7 +9,7 @@ import type {
 } from "../../hooks/queries/use-events";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 interface EventRankingPreviewProps {
   rankings: EventRanking[];
@@ -27,46 +27,32 @@ export const EventRankingPreview = ({
   limit = 5,
 }: EventRankingPreviewProps) => {
   const { t } = useTranslation();
+  const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
 
+  const heroNamesWithRankings = new Set(
+    rankings.map((ranking) => ranking.heroNpcName),
+  );
   const firstHeroWithRankings = heroNpcs.find((hero) =>
-    rankings.some((r) => r.heroNpcName === hero.npcName),
+    heroNamesWithRankings.has(hero.npcName),
   );
   const defaultHeroName =
     firstHeroWithRankings?.npcName ?? heroNpcs[0]?.npcName ?? null;
-
-  const [selectedHeroName, setSelectedHeroName] = useState<string | null>(
-    defaultHeroName,
-  );
-
-  useEffect(() => {
-    if (!defaultHeroName) return;
-    if (!selectedHeroName) {
-      setSelectedHeroName(defaultHeroName);
-      return;
-    }
-    const selectedHeroStillExists = heroNpcs.some(
-      (hero) => hero.npcName === selectedHeroName,
-    );
-    if (!selectedHeroStillExists) {
-      setSelectedHeroName(defaultHeroName);
-    }
-  }, [defaultHeroName, heroNpcs, selectedHeroName]);
-
-  const filteredRankings = useMemo(
-    () =>
-      selectedHeroName
-        ? rankings.filter((r) => r.heroNpcName === selectedHeroName)
-        : rankings,
-    [rankings, selectedHeroName],
-  );
-
-  const sortedRankings = useMemo(
-    () =>
-      [...filteredRankings]
-        .sort((a, b) => b.totalPoints - a.totalPoints)
-        .slice(0, limit),
-    [filteredRankings, limit],
-  );
+  const effectiveSelectedHeroName =
+    selectedHeroName &&
+    heroNpcs.some((hero) => hero.npcName === selectedHeroName)
+      ? selectedHeroName
+      : defaultHeroName;
+  const filteredRankings = effectiveSelectedHeroName
+    ? rankings.filter(
+        (ranking) => ranking.heroNpcName === effectiveSelectedHeroName,
+      )
+    : rankings;
+  const sortedRankings = [...filteredRankings]
+    .sort(
+      (leftRanking, rightRanking) =>
+        rightRanking.totalPoints - leftRanking.totalPoints,
+    )
+    .slice(0, limit);
 
   if (heroNpcs.length === 0) {
     return null;
@@ -81,7 +67,7 @@ export const EventRankingPreview = ({
 
       {heroNpcs.length > 1 && (
         <Tabs
-          value={selectedHeroName ?? heroNpcs[0]?.npcName}
+          value={effectiveSelectedHeroName ?? heroNpcs[0]?.npcName}
           onValueChange={setSelectedHeroName}
           className="mb-3"
         >
@@ -100,7 +86,7 @@ export const EventRankingPreview = ({
       )}
 
       <div
-        key={selectedHeroName}
+        key={effectiveSelectedHeroName}
         className="min-h-[180px] flex flex-col animate-in fade-in-0 duration-200"
       >
         {sortedRankings.length === 0 ? (

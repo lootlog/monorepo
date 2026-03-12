@@ -3,7 +3,7 @@ import { ActivityLogsFiltersSidebar } from "./components/activity-logs-filters-s
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { AnimatePresence, motion } from "framer-motion";
 import { ActivityLogsFiltersHeader } from "./components/activity-logs-filters-header";
-import { useEffect, useRef, useState, type FC } from "react";
+import { useState, type FC } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -25,7 +25,6 @@ export const ActivityLogs: FC = () => {
     true,
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const skipFirstAnimationRef = useRef(isFiltersOpen);
   const isMobile = useIsMobile();
 
   const { data: worldSuggestions = [] } = useActivityWorldSuggestions({
@@ -40,21 +39,6 @@ export const ActivityLogs: FC = () => {
 
     setIsFiltersOpen((prev) => !prev);
   };
-
-  useEffect(() => {
-    if (skipFirstAnimationRef.current) {
-      skipFirstAnimationRef.current = false;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isMobile) {
-      setIsFiltersOpen(false);
-      return;
-    }
-
-    setIsMobileFiltersOpen(false);
-  }, [isMobile, setIsFiltersOpen]);
 
   const worldOptions = worldSuggestions.map((world) => ({
     value: world,
@@ -104,14 +88,10 @@ export const ActivityLogs: FC = () => {
           </div>
 
           {!isMobile && (
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {isFiltersOpen && (
                 <motion.div
-                  initial={
-                    skipFirstAnimationRef.current
-                      ? { width: 320, opacity: 1 }
-                      : { width: 0, opacity: 0 }
-                  }
+                  initial={{ width: 0, opacity: 0 }}
                   animate={{ width: 320, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}

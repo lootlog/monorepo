@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Reorder } from "framer-motion";
 import { Settings2, RotateCcw } from "lucide-react";
 import {
@@ -51,13 +51,7 @@ export const StatsCustomizationModal = ({
   const [localCategoryOrder, setLocalCategoryOrder] = useState(
     config.categoryOrder,
   );
-  const isDraggingRef = useRef(false);
-
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      setLocalCategoryOrder(config.categoryOrder);
-    }
-  }, [config.categoryOrder]);
+  const [isDragging, setIsDragging] = useState(false);
 
   const allAvailableStats = Array.from(
     new Map(
@@ -68,6 +62,13 @@ export const StatsCustomizationModal = ({
   const handleCategoryReorder = (newOrder: string[]) => {
     setLocalCategoryOrder(newOrder);
   };
+
+  const configOrderKey = config.categoryOrder.join(":");
+  const localOrderKey = localCategoryOrder.join(":");
+  const displayedCategoryOrder =
+    isDragging || localOrderKey !== configOrderKey
+      ? localCategoryOrder
+      : config.categoryOrder;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -91,11 +92,11 @@ export const StatsCustomizationModal = ({
 
             <Reorder.Group
               axis="y"
-              values={localCategoryOrder}
+              values={displayedCategoryOrder}
               onReorder={handleCategoryReorder}
               className="space-y-2"
             >
-              {localCategoryOrder.map((categoryId) => {
+              {displayedCategoryOrder.map((categoryId) => {
                 const customization = config.categories[categoryId];
 
                 if (!customization) {
@@ -107,10 +108,10 @@ export const StatsCustomizationModal = ({
                     key={categoryId}
                     value={categoryId}
                     onDragStart={() => {
-                      isDraggingRef.current = true;
+                      setIsDragging(true);
                     }}
                     onDragEnd={() => {
-                      isDraggingRef.current = false;
+                      setIsDragging(false);
                       onUpdateCategoryOrder(localCategoryOrder);
                     }}
                   >

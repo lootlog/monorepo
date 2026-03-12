@@ -30,6 +30,7 @@
     "dev": "turbo dev --concurrency 12",
     "start": "turbo start",
     "lint": "turbo lint",
+    "doctor": "turbo run doctor",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "test": "turbo test",

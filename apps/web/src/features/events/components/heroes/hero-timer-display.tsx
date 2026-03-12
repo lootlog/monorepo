@@ -17,17 +17,27 @@ interface HeroTimerDisplayProps {
   t: TFunction;
 }
 
+const getHeroTimerTimeLeft = (timer: EventTimer) =>
+  Math.max(0, new Date(timer.maxSpawnTime).getTime() - Date.now());
+
 export const HeroTimerDisplay = ({ timer, t }: HeroTimerDisplayProps) => {
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  if (!timer) {
+    return (
+      <span className="text-xs text-muted-foreground flex items-center gap-1">
+        <Clock className="w-3 h-3" />
+        {t("events.heroes.noTimer")}
+      </span>
+    );
+  }
+
+  return <HeroTimerDisplayContent key={timer.maxSpawnTime} timer={timer} />;
+};
+
+const HeroTimerDisplayContent = ({ timer }: { timer: EventTimer }) => {
+  const [timeLeft, setTimeLeft] = useState(() => getHeroTimerTimeLeft(timer));
 
   useEffect(() => {
-    if (!timer) {
-      setTimeLeft(null);
-      return;
-    }
-
     const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-    setTimeLeft(maxSpawnTime - Date.now());
 
     const interval = setInterval(() => {
       const time = maxSpawnTime - Date.now();
@@ -40,16 +50,7 @@ export const HeroTimerDisplay = ({ timer, t }: HeroTimerDisplayProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timer]);
-
-  if (!timer || timeLeft === null) {
-    return (
-      <span className="text-xs text-muted-foreground flex items-center gap-1">
-        <Clock className="w-3 h-3" />
-        {t("events.heroes.noTimer")}
-      </span>
-    );
-  }
+  }, [timer.maxSpawnTime]);
 
   const isClose = timeLeft < 60000;
 

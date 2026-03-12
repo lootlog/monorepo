@@ -1,7 +1,6 @@
 import { Swords, Trophy, Award, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { Label } from "@lootlog/ui/components/label";
-import { useState, useEffect } from "react";
 import { useBattleCharacters } from "@/hooks/api/battle-log/use-battle-characters";
 import { useBattleAnalytics } from "@/hooks/api/battle-log/use-battle-analytics";
 import { Spinner } from "@lootlog/ui/components/spinner";
@@ -66,21 +65,14 @@ export function StatsOverview() {
     state.getFilters(state.currentCharacterId),
   );
 
-  const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>(
-    (filters.period === "all" ? "30d" : filters.period) || "30d",
-  );
+  const selectedPeriod: DashboardPeriod =
+    (filters.period === "all" ? "30d" : filters.period) || "30d";
 
   const minLevel = filters.minLevel ?? 1;
   const maxLevel = filters.maxLevel ?? 500;
 
   const { data: characters = [], isLoading: isLoadingCharacters } =
     useBattleCharacters();
-
-  useEffect(() => {
-    setSelectedPeriod(
-      (filters.period === "all" ? "30d" : filters.period) || "30d",
-    );
-  }, [currentCharacterId, filters.period]);
 
   const { data: analytics, isLoading: isLoadingAnalytics } = useBattleAnalytics(
     {
@@ -94,7 +86,6 @@ export function StatsOverview() {
   const handlePeriodChange = (period: Period) => {
     const dashboardPeriod =
       period === "all" ? "30d" : (period as DashboardPeriod);
-    setSelectedPeriod(dashboardPeriod);
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore
       .getState()

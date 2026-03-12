@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
 
 type SelectorPanelContextValue<T> = {
@@ -29,7 +23,7 @@ export function SelectorPanelProvider<T>({
   onSelectionChange,
 }: SelectorPanelProviderProps<T>) {
   const [selectedItem, setSelectedItemState] = useState<T | null>(null);
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isMobileDrawerOpenState, setIsMobileDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const setSelectedItem = (item: T | null) => {
@@ -43,12 +37,7 @@ export function SelectorPanelProvider<T>({
       setIsMobileDrawerOpen(true);
     }
   };
-
-  useEffect(() => {
-    if (!isMobile) {
-      setIsMobileDrawerOpen(false);
-    }
-  }, [isMobile]);
+  const isMobileDrawerOpen = isMobile && isMobileDrawerOpenState;
 
   const value: SelectorPanelContextValue<T> = {
     selectedItem,

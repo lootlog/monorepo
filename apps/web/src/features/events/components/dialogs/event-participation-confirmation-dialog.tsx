@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Clock, Loader2, ShieldCheck } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -27,25 +27,36 @@ export const EventParticipationConfirmationDialog = ({
   guildId,
   eventId,
 }: EventParticipationConfirmationDialogProps) => {
+  if (!guildId || !eventId) {
+    return null;
+  }
+
+  return (
+    <EventParticipationConfirmationDialogContent
+      key={`${guildId}:${eventId}`}
+      guildId={guildId}
+      eventId={eventId}
+    />
+  );
+};
+
+const EventParticipationConfirmationDialogContent = ({
+  guildId,
+  eventId,
+}: Required<EventParticipationConfirmationDialogProps>) => {
   const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
   const [confirmingKillId, setConfirmingKillId] = useState<string | null>(null);
 
-  const isEnabled = Boolean(guildId && eventId);
-
   const { data, isLoading } = useEventParticipationConfirmations({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
-    enabled: isEnabled,
+    guildId,
+    eventId,
+    enabled: true,
   });
   const confirmParticipation = useEventParticipationConfirmation({
-    guildId: guildId ?? "",
-    eventId: eventId ?? "",
+    guildId,
+    eventId,
   });
-
-  useEffect(() => {
-    setDismissed(false);
-  }, [eventId]);
 
   const sortedItems = [...(data?.items ?? [])].sort(
     (a, b) =>
@@ -58,9 +69,7 @@ export const EventParticipationConfirmationDialog = ({
       new Date(a.confirmationDeadlineAt).getTime(),
   );
   const open =
-    isEnabled &&
-    !dismissed &&
-    (sortedItems.length > 0 || sortedExpiredItems.length > 0);
+    !dismissed && (sortedItems.length > 0 || sortedExpiredItems.length > 0);
 
   const handleConfirm = async (killId: string) => {
     try {

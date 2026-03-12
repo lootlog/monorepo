@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { differenceInSeconds } from "date-fns";
@@ -286,7 +286,6 @@ const MemberKillCard = ({
 };
 
 export const EventMemberKillsPage = () => {
-  const { t } = useTranslation();
   const {
     guildId,
     eventId,
@@ -295,13 +294,33 @@ export const EventMemberKillsPage = () => {
   } = useParams({
     strict: false,
   });
-  const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
-    urlHeroId,
-  );
 
-  useEffect(() => {
-    setSelectedHeroId(urlHeroId);
-  }, [urlHeroId]);
+  return (
+    <EventMemberKillsPageContent
+      key={urlHeroId ?? "all"}
+      guildId={guildId}
+      eventId={eventId}
+      memberId={memberId}
+      initialHeroId={urlHeroId}
+    />
+  );
+};
+
+const EventMemberKillsPageContent = ({
+  guildId,
+  eventId,
+  memberId,
+  initialHeroId,
+}: {
+  guildId?: string;
+  eventId?: string;
+  memberId?: string;
+  initialHeroId?: string;
+}) => {
+  const { t } = useTranslation();
+  const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
+    initialHeroId,
+  );
 
   const {
     data: event,

@@ -9,6 +9,7 @@ import {
   Filter,
   Swords,
 } from "lucide-react";
+import { useId } from "react";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Button } from "@lootlog/ui/components/button";
@@ -98,6 +99,11 @@ export const BattlesListFiltersMobile = ({
   onMatchmakingToggle,
   onWorldChange,
 }: BattlesListFiltersMobileProps) => {
+  const worldListId = useId();
+  const resultListId = useId();
+  const characterListId = useId();
+  const typeListId = useId();
+
   return (
     <Drawer shouldScaleBackground={false}>
       <DrawerTrigger asChild>
@@ -138,6 +144,7 @@ export const BattlesListFiltersMobile = ({
                 <Button
                   variant="outline"
                   role="combobox"
+                  aria-controls={worldListId}
                   aria-expanded={worldOpen}
                   className="w-full justify-between"
                 >
@@ -160,7 +167,7 @@ export const BattlesListFiltersMobile = ({
               >
                 <Command>
                   <CommandInput placeholder="Szukaj świata..." />
-                  <CommandList>
+                  <CommandList id={worldListId}>
                     <CommandEmpty>Brak światów</CommandEmpty>
                     <CommandGroup>
                       {worlds.map((world) => (
@@ -198,6 +205,7 @@ export const BattlesListFiltersMobile = ({
                 <Button
                   variant="outline"
                   role="combobox"
+                  aria-controls={resultListId}
                   aria-expanded={resultOpen}
                   className="w-full justify-between"
                 >
@@ -214,7 +222,7 @@ export const BattlesListFiltersMobile = ({
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
-                  <CommandList>
+                  <CommandList id={resultListId}>
                     <CommandEmpty>Brak opcji</CommandEmpty>
                     <CommandGroup>
                       {battleResults.map((result) => (
@@ -252,6 +260,7 @@ export const BattlesListFiltersMobile = ({
                 <Button
                   variant="outline"
                   role="combobox"
+                  aria-controls={characterListId}
                   aria-expanded={characterOpen}
                   className="w-full justify-between"
                 >
@@ -269,7 +278,7 @@ export const BattlesListFiltersMobile = ({
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
                   <CommandInput placeholder="Szukaj postaci..." />
-                  <CommandList>
+                  <CommandList id={characterListId}>
                     <CommandEmpty>Brak postaci</CommandEmpty>
                     <CommandGroup>
                       {characters.map((char) => (
@@ -313,6 +322,7 @@ export const BattlesListFiltersMobile = ({
                 <Button
                   variant="outline"
                   role="combobox"
+                  aria-controls={typeListId}
                   aria-expanded={typeOpen}
                   className="w-full justify-between"
                 >
@@ -329,7 +339,7 @@ export const BattlesListFiltersMobile = ({
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                 <Command>
-                  <CommandList>
+                  <CommandList id={typeListId}>
                     <CommandEmpty>Brak opcji</CommandEmpty>
                     <CommandGroup>
                       {battleTypes.map((type) => (

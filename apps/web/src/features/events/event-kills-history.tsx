@@ -7,20 +7,36 @@ import { AlertCircle, Skull, Loader2, Swords } from "lucide-react";
 import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 
 export const EventKillsHistory = () => {
-  const { t } = useTranslation();
   const { guildId, eventId, heroId: urlHeroId } = useParams({ strict: false });
-  const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
-    urlHeroId,
-  );
 
-  useEffect(() => {
-    setSelectedHeroId(urlHeroId);
-  }, [urlHeroId]);
+  return (
+    <EventKillsHistoryContent
+      key={urlHeroId ?? "all"}
+      guildId={guildId}
+      eventId={eventId}
+      initialHeroId={urlHeroId}
+    />
+  );
+};
+
+const EventKillsHistoryContent = ({
+  guildId,
+  eventId,
+  initialHeroId,
+}: {
+  guildId?: string;
+  eventId?: string;
+  initialHeroId?: string;
+}) => {
+  const { t } = useTranslation();
+  const [selectedHeroId, setSelectedHeroId] = useState<string | undefined>(
+    initialHeroId,
+  );
 
   const { data: event, isLoading: eventLoading } = useEventOverview({
     guildId: guildId ?? "",

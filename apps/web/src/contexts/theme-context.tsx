@@ -50,40 +50,35 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const { data: preferences, isLoading } = useUserPreferences();
   const updatePreferences = useUpdateUserPreferences();
 
-  const [theme, setThemeState] = useState<Theme>(() => {
+  const [localTheme, setLocalTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
     return savedTheme || "default";
   });
-  const [colorMode, setColorModeState] = useState<ColorMode>(() => {
+  const [localColorMode, setLocalColorMode] = useState<ColorMode>(() => {
     const savedColorMode = localStorage.getItem(
       COLOR_MODE_STORAGE_KEY,
     ) as ColorMode;
     return savedColorMode || "dark";
   });
-  const [isUserInitiated, setIsUserInitiated] = useState(false);
+  const [hasThemeOverride, setHasThemeOverride] = useState(false);
+  const [hasColorModeOverride, setHasColorModeOverride] = useState(false);
+
+  const theme =
+    !isLoading && preferences?.theme && !hasThemeOverride
+      ? (preferences.theme as Theme)
+      : localTheme;
+  const colorMode =
+    !isLoading && preferences?.colorMode && !hasColorModeOverride
+      ? (preferences.colorMode as ColorMode)
+      : localColorMode;
 
   useEffect(() => {
-    if (!isLoading && preferences?.theme && !isUserInitiated) {
-      const localTheme = localStorage.getItem(THEME_STORAGE_KEY);
-      if (localTheme !== preferences.theme) {
-        setThemeState(preferences.theme as Theme);
-        localStorage.setItem(THEME_STORAGE_KEY, preferences.theme);
-      }
-    }
-    if (isUserInitiated) {
-      setIsUserInitiated(false);
-    }
-  }, [preferences?.theme, isLoading, isUserInitiated]);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
-    if (!isLoading && preferences?.colorMode && !isUserInitiated) {
-      const localColorMode = localStorage.getItem(COLOR_MODE_STORAGE_KEY);
-      if (localColorMode !== preferences.colorMode) {
-        setColorModeState(preferences.colorMode as ColorMode);
-        localStorage.setItem(COLOR_MODE_STORAGE_KEY, preferences.colorMode);
-      }
-    }
-  }, [preferences?.colorMode, isLoading, isUserInitiated]);
+    localStorage.setItem(COLOR_MODE_STORAGE_KEY, colorMode);
+  }, [colorMode]);
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -114,16 +109,14 @@ export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   }, [theme, colorMode]);
 
   const setTheme = (newTheme: Theme) => {
-    setIsUserInitiated(true);
-    setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    setHasThemeOverride(true);
+    setLocalTheme(newTheme);
     updatePreferences.mutate({ theme: newTheme });
   };
 
   const setColorMode = (newMode: ColorMode) => {
-    setIsUserInitiated(true);
-    setColorModeState(newMode);
-    localStorage.setItem(COLOR_MODE_STORAGE_KEY, newMode);
+    setHasColorModeOverride(true);
+    setLocalColorMode(newMode);
     updatePreferences.mutate({ colorMode: newMode });
   };
 

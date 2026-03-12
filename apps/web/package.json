@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "doctor": "npx -y react-doctor@latest .",
     "lint": "oxlint .",
     "preview": "vite preview"
   },

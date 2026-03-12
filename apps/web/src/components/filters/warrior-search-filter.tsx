@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Search, ChevronsUpDown, Check } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import {
@@ -37,6 +37,7 @@ export const WarriorSearchFilter = ({
 }: WarriorSearchFilterProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const resultsListId = useId();
 
   const { data: searchResults = [], isFetching } =
     useSearchWarriors(searchQuery);
@@ -47,6 +48,7 @@ export const WarriorSearchFilter = ({
         <Button
           variant="outline"
           role="combobox"
+          aria-controls={resultsListId}
           aria-expanded={open}
           className={cn("flex-1 min-w-[200px] justify-between h-10", className)}
         >
@@ -68,7 +70,7 @@ export const WarriorSearchFilter = ({
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
-          <CommandList>
+          <CommandList id={resultsListId}>
             <CommandEmpty>
               {isFetching
                 ? "Wyszukiwanie..."

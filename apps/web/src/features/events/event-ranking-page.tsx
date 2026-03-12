@@ -9,7 +9,7 @@ import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
@@ -46,17 +46,6 @@ export const EventRankingPage = () => {
     guildId,
   });
 
-  useEffect(() => {
-    if (event && !selectedHeroName) {
-      const firstHeroWithRankings = event.heroNpcs?.find((hero) =>
-        rankings.some((r) => r.heroNpcName === hero.npcName),
-      );
-      const defaultHeroName =
-        firstHeroWithRankings?.npcName ?? event.heroNpcs?.[0]?.npcName ?? null;
-      setSelectedHeroName(defaultHeroName);
-    }
-  }, [event, rankings, selectedHeroName]);
-
   if (isEventLoading || isRankingLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -80,9 +69,22 @@ export const EventRankingPage = () => {
   }
 
   const heroes = event.heroNpcs || [];
+  const heroNamesWithRankings = new Set(
+    rankings.map((ranking) => ranking.heroNpcName),
+  );
+  const defaultHeroName =
+    heroes.find((hero) => heroNamesWithRankings.has(hero.npcName))?.npcName ??
+    heroes[0]?.npcName ??
+    null;
+  const effectiveSelectedHeroName =
+    selectedHeroName && heroes.some((hero) => hero.npcName === selectedHeroName)
+      ? selectedHeroName
+      : defaultHeroName;
 
-  const filteredRankings = selectedHeroName
-    ? rankings.filter((r) => r.heroNpcName === selectedHeroName)
+  const filteredRankings = effectiveSelectedHeroName
+    ? rankings.filter(
+        (ranking) => ranking.heroNpcName === effectiveSelectedHeroName,
+      )
     : rankings;
 
   return (
@@ -111,7 +113,7 @@ export const EventRankingPage = () => {
         <div className="px-3 flex flex-col gap-4">
           {heroes.length > 0 && (
             <Tabs
-              value={selectedHeroName ?? heroes[0]?.npcName}
+              value={effectiveSelectedHeroName ?? heroes[0]?.npcName}
               onValueChange={setSelectedHeroName}
             >
               <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
