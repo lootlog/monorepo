@@ -33,6 +33,7 @@ import {
 import { ConfigKey } from "src/config/config-key.enum";
 import { ServiceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
@@ -58,12 +59,6 @@ export class DiscordService implements OnModuleInit {
 
   private readonly restTimeout = 5000;
 
-  private readonly requiredScopes = [
-    "guilds.members.read",
-    "guilds",
-    "identify",
-    "email",
-  ];
   private isLocal: boolean;
 
   constructor(
@@ -98,8 +93,8 @@ export class DiscordService implements OnModuleInit {
     try {
       const token = await this.authService.getIdpToken(userId);
 
-      if (!this.requiredScopes.every((scope) => token.scopes.includes(scope))) {
-        throw new InvalidScopesError(this.requiredScopes, token.scopes);
+      if (!DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope))) {
+        throw new InvalidScopesError(DISCORD_AUTH_SCOPES, token.scopes);
       }
 
       const rest = new REST({

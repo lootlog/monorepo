@@ -1,4 +1,4 @@
-export const REQUIRED_SCOPES = [
+export const DISCORD_AUTH_SCOPES = [
   "guilds.members.read",
   "guilds",
   "identify",

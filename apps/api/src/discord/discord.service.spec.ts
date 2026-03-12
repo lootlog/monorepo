@@ -19,6 +19,7 @@ import {
 import { ConfigKey } from "src/config/config-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 describe("DiscordService", () => {
   let service: DiscordService;
@@ -76,7 +77,7 @@ describe("DiscordService", () => {
   const mockToken = {
     accessToken: "mock-token",
     expiresIn: 3600,
-    scopes: ["guilds.members.read", "guilds", "identify", "email"],
+    scopes: DISCORD_AUTH_SCOPES,
   };
 
   const createJsonResponse = (data: unknown) => ({

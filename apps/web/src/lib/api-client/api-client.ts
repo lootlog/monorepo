@@ -8,7 +8,7 @@ import {
 } from "@/config/api";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { REQUIRED_SCOPES } from "@/constants/required-scopes";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 type ApiName = "default" | "battlelog" | "search" | "auth" | "activity";
 
@@ -35,7 +35,7 @@ const handleReauthentication = async (): Promise<void> => {
       await authClient.signIn.social({
         provider: "discord",
         callbackURL: window.location.href,
-        scopes: REQUIRED_SCOPES,
+        scopes: DISCORD_AUTH_SCOPES,
       });
     } catch (error) {
       console.error("Reauthentication failed:", error);
