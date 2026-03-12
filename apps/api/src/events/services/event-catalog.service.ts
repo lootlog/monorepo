@@ -23,6 +23,11 @@ import { UpdateLocationDto } from "../dto/update-location.dto";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
 import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
 import {
+  attachComputedEventActive,
+  buildActiveEventWhere,
+  compareEventsByActivityAndStart,
+} from "../utils/event-activity.util";
+import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "../utils/scoring-rules.util";
@@ -97,13 +102,11 @@ export class EventCatalogService {
     }
 
     const now = new Date();
-    const active = startDate <= now && (!endDate || endDate > now);
 
-    return this.prisma.event.create({
+    const createdEvent = await this.prisma.event.create({
       data: {
         ...eventData,
         world: normalizedWorld,
-        active,
         guildId,
         startsAt: startDate,
         endsAt: endDate,
@@ -142,23 +145,25 @@ export class EventCatalogService {
         },
       },
     });
+
+    return attachComputedEventActive(createdEvent, now);
   }
 
   async getEvents(guildId: string, world?: string, activeOnly = true) {
     const normalizedWorld = world?.trim().toLowerCase();
+    const referenceTime = new Date();
 
-    return this.prisma.event.findMany({
+    const events = await this.prisma.event.findMany({
       where: {
         guildId,
         ...(normalizedWorld && { world: normalizedWorld }),
-        ...(activeOnly && { active: true }),
+        ...(activeOnly ? buildActiveEventWhere(referenceTime) : {}),
       },
       select: {
         id: true,
         guildId: true,
         name: true,
         world: true,
-        active: true,
         startsAt: true,
         endsAt: true,
         createdAt: true,
@@ -173,8 +178,12 @@ export class EventCatalogService {
           },
         },
       },
-      orderBy: [{ active: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ createdAt: "desc" }],
     });
+
+    return events
+      .map((event) => attachComputedEventActive(event, referenceTime))
+      .sort(compareEventsByActivityAndStart);
   }
 
   async getEvent(guildId: string, eventId: string) {
@@ -192,7 +201,6 @@ export class EventCatalogService {
         guildId: true,
         name: true,
         world: true,
-        active: true,
         startsAt: true,
         endsAt: true,
         createdAt: true,
@@ -220,7 +228,7 @@ export class EventCatalogService {
       throw new NotFoundException("Event not found");
     }
 
-    return event;
+    return attachComputedEventActive(event, new Date());
   }
 
   async getEventMaps(guildId: string, eventId: string) {
@@ -296,7 +304,6 @@ export class EventCatalogService {
       heroNpcs,
       startsAt,
       endsAt,
-      active,
       assignmentTimeoutMinutes,
       participationConfirmationMinutes,
       basePointsPerKill,
@@ -327,98 +334,91 @@ export class EventCatalogService {
       startsAt !== undefined
         ? startsAt
           ? new Date(startsAt)
-          : event.startsAt
-        : event.startsAt;
-
-    const isExplicitDeactivation = active === false && event.active;
-    const newEndDate = isExplicitDeactivation
-      ? new Date()
-      : endsAt !== undefined
-        ? endsAt
-          ? new Date(endsAt)
           : null
-        : event.endsAt;
+        : event.startsAt;
+    const newEndDate =
+      endsAt !== undefined ? (endsAt ? new Date(endsAt) : null) : event.endsAt;
 
     if (newEndDate && newStartDate && newEndDate <= newStartDate) {
       throw new BadRequestException("End date must be after start date");
     }
 
-    const now = new Date();
-    const newActive = isExplicitDeactivation
-      ? false
-      : newStartDate &&
-        newStartDate <= now &&
-        (!newEndDate || newEndDate > now);
+    const referenceTime = new Date();
 
-    return this.prisma.$transaction(async (transactionClient) => {
-      if (heroNpcs) {
-        await transactionClient.eventHeroNpc.deleteMany({ where: { eventId } });
-      }
+    const updatedEvent = await this.prisma.$transaction(
+      async (transactionClient) => {
+        if (heroNpcs) {
+          await transactionClient.eventHeroNpc.deleteMany({
+            where: { eventId },
+          });
+        }
 
-      return transactionClient.event.update({
-        where: { id: eventId },
-        data: {
-          ...updateData,
-          active: newActive,
-          ...(startsAt !== undefined && {
-            startsAt: startsAt ? new Date(startsAt) : null,
-          }),
-          ...((endsAt !== undefined || isExplicitDeactivation) && {
-            endsAt: newEndDate,
-          }),
-          ...(assignmentTimeoutMinutes !== undefined && {
-            assignmentTimeoutMinutes,
-          }),
-          ...(participationConfirmationMinutes !== undefined && {
-            participationConfirmationMinutes,
-          }),
-          ...(basePointsPerKill !== undefined && {
-            basePointsPerKill,
-          }),
-          ...(scoringMode !== undefined && {
-            scoringMode: targetScoringMode,
-          }),
-          ...(nextScoringRules !== undefined && {
-            scoringRules: nextScoringRules,
-          }),
-          ...(rulebookMarkdown !== undefined && {
-            rulebookMarkdown:
-              typeof rulebookMarkdown === "string" &&
-              rulebookMarkdown.trim().length > 0
-                ? rulebookMarkdown.trim()
-                : null,
-          }),
-          ...(heroNpcs && {
+        return transactionClient.event.update({
+          where: { id: eventId },
+          data: {
+            ...updateData,
+            ...(startsAt !== undefined && {
+              startsAt: newStartDate,
+            }),
+            ...(endsAt !== undefined && {
+              endsAt: newEndDate,
+            }),
+            ...(assignmentTimeoutMinutes !== undefined && {
+              assignmentTimeoutMinutes,
+            }),
+            ...(participationConfirmationMinutes !== undefined && {
+              participationConfirmationMinutes,
+            }),
+            ...(basePointsPerKill !== undefined && {
+              basePointsPerKill,
+            }),
+            ...(scoringMode !== undefined && {
+              scoringMode: targetScoringMode,
+            }),
+            ...(nextScoringRules !== undefined && {
+              scoringRules: nextScoringRules,
+            }),
+            ...(rulebookMarkdown !== undefined && {
+              rulebookMarkdown:
+                typeof rulebookMarkdown === "string" &&
+                rulebookMarkdown.trim().length > 0
+                  ? rulebookMarkdown.trim()
+                  : null,
+            }),
+            ...(heroNpcs && {
+              heroNpcs: {
+                create: heroNpcs.map((npc) => ({
+                  npcId: npc.npcId,
+                  npcName: npc.npcName,
+                  maps: {
+                    create: npc.maps.map((map) => ({
+                      mapId: map.mapId,
+                      mapName: map.mapName,
+                    })),
+                  },
+                })),
+              },
+            }),
+          },
+          include: {
             heroNpcs: {
-              create: heroNpcs.map((npc) => ({
-                npcId: npc.npcId,
-                npcName: npc.npcName,
+              include: {
                 maps: {
-                  create: npc.maps.map((map) => ({
-                    mapId: map.mapId,
-                    mapName: map.mapName,
-                  })),
-                },
-              })),
-            },
-          }),
-        },
-        include: {
-          heroNpcs: {
-            include: {
-              maps: {
-                orderBy: { mapId: "asc" },
-                include: {
-                  assignedMembers: {
-                    select: memberSelectWithTopRole,
+                  orderBy: { mapId: "asc" },
+                  include: {
+                    assignedMembers: {
+                      select: memberSelectWithTopRole,
+                    },
                   },
                 },
               },
             },
           },
-        },
-      });
-    });
+        });
+      },
+    );
+
+    return attachComputedEventActive(updatedEvent, referenceTime);
   }
 
   async recalculateEventPointsForEvent(guildId: string, eventId: string) {
@@ -468,8 +468,13 @@ export class EventCatalogService {
   }
 
   async createHero(guildId: string, eventId: string, data: CreateHeroDto) {
+    const referenceTime = new Date();
     const event = await this.prisma.event.findFirst({
-      where: { id: eventId, guildId, active: true },
+      where: {
+        id: eventId,
+        guildId,
+        ...buildActiveEventWhere(referenceTime),
+      },
     });
 
     if (!event) {

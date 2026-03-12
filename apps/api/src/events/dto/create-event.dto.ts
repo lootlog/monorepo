@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsBoolean,
   IsArray,
   ValidateNested,
   IsInt,
@@ -54,14 +53,6 @@ export class CreateEventDto {
   @ApiProperty({ description: "World name" })
   @IsString()
   world: string;
-
-  @ApiPropertyOptional({
-    description: "Whether the event is active",
-    default: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  active?: boolean;
 
   @ApiPropertyOptional({ description: "Event start time" })
   @IsOptional()

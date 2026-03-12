@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import {
   Collapsible,
@@ -34,7 +35,11 @@ import { getDiscordAvatarUrl } from "@/utils/get-avatar-url";
 import type { KillDetailParticipant } from "../../hooks/queries/use-kill-detail";
 import { useUpdatePoints } from "../../hooks/mutations/use-update-points";
 import { parseEditablePoints } from "../../utils/parse-editable-points";
-import { formatDurationHuman, aggregateMapData } from "../../utils";
+import {
+  formatDurationHuman,
+  aggregateMapData,
+  normalizeBonusBreakdown,
+} from "../../utils";
 
 interface KillParticipantsCardProps {
   participants: KillDetailParticipant[];
@@ -49,6 +54,8 @@ interface ParticipantRowProps {
   rank: number;
   isExpanded: boolean;
   onToggle: () => void;
+  guildId?: string;
+  eventId?: string;
   canEdit?: boolean;
   onEditPoints?: (killPointId: string, newPoints: number) => Promise<void>;
   isEditPending?: boolean;
@@ -58,43 +65,13 @@ const formatPoints = (points: number): string => {
   return Number.isInteger(points) ? String(points) : points.toFixed(2);
 };
 
-const normalizeBonusBreakdown = (
-  bonusBreakdown: KillDetailParticipant["bonusBreakdown"],
-) => {
-  if (!Array.isArray(bonusBreakdown)) {
-    return [];
-  }
-
-  return bonusBreakdown
-    .map((entry) => {
-      const points =
-        typeof entry?.points === "number" && Number.isFinite(entry.points)
-          ? Math.max(0, Math.round(entry.points * 100) / 100)
-          : null;
-      if (points === null || points <= 0) {
-        return null;
-      }
-
-      return {
-        ruleId:
-          typeof entry.ruleId === "string" && entry.ruleId.length > 0
-            ? entry.ruleId
-            : "rule",
-        ruleName:
-          typeof entry.ruleName === "string" && entry.ruleName.trim().length > 0
-            ? entry.ruleName.trim()
-            : null,
-        points,
-      };
-    })
-    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
-};
-
 const ParticipantRow = ({
   participant,
   rank,
   isExpanded,
   onToggle,
+  guildId,
+  eventId,
   canEdit,
   onEditPoints,
   isEditPending,
@@ -182,6 +159,15 @@ const ParticipantRow = ({
     }
   };
 
+  const shouldLinkToMemberKills = Boolean(guildId && eventId);
+  const memberLinkParams = shouldLinkToMemberKills
+    ? {
+        guildId: guildId ?? "",
+        eventId: eventId ?? "",
+        memberId: String(participant.member.id),
+      }
+    : null;
+
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <div className="rounded-lg transition-colors overflow-hidden bg-muted/30">
@@ -208,10 +194,30 @@ const ParticipantRow = ({
               </AvatarFallback>
             </Avatar>
 
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="font-medium truncate" style={nameStyle}>
-                {participant.member.name}
-              </span>
+            <div className="flex min-w-0 flex-1 flex-col">
+              {memberLinkParams ? (
+                <Link
+                  to="/$guildId/events/$eventId/members/$memberId"
+                  params={memberLinkParams}
+                  className="w-fit max-w-full rounded-sm font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                  style={nameStyle}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                  onKeyDown={(event) => {
+                    event.stopPropagation();
+                  }}
+                >
+                  <span className="block truncate">
+                    {participant.member.name}
+                  </span>
+                </Link>
+              ) : (
+                <span className="truncate font-medium" style={nameStyle}>
+                  {participant.member.name}
+                </span>
+              )}
+
               {participant.trackingDurationSeconds !== null && (
                 <span className="text-xs text-muted-foreground">
                   {formatDurationHuman(participant.trackingDurationSeconds)}
@@ -479,6 +485,8 @@ export const KillParticipantsCard = ({
               rank={idx + 1}
               isExpanded={expandedIds.has(p.id)}
               onToggle={() => toggleExpand(p.id)}
+              guildId={guildId}
+              eventId={eventId}
               canEdit={canEdit}
               onEditPoints={handleEditPoints}
               isEditPending={updateKillPoint.isPending}

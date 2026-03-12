@@ -502,7 +502,6 @@ model Event {
   guildId   String
   name      String
   world     String
-  active    Boolean   @default(true)
   startsAt  DateTime?
   endsAt    DateTime?
   createdAt DateTime  @default(now())
@@ -520,7 +519,7 @@ model Event {
   heroNpcs EventHeroNpc[]
   rankings EventRanking[]
 
-  @@index([guildId, active])
+  @@index([guildId, startsAt, endsAt])
   @@index([world])
 }
 

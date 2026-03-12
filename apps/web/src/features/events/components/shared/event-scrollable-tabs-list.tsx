@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, WheelEvent } from "react";
 import { TabsList } from "@lootlog/ui/components/tabs";
 import { cn } from "@lootlog/ui/lib/utils";
 
@@ -10,15 +10,46 @@ interface EventScrollableTabsListProps {
 export const EventScrollableTabsList = ({
   children,
   className,
-}: EventScrollableTabsListProps) => (
-  <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-    <TabsList
-      className={cn(
-        "h-auto min-w-max justify-start gap-1 bg-muted/50 p-1",
-        className,
-      )}
+}: EventScrollableTabsListProps) => {
+  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
+    if (event.ctrlKey) {
+      return;
+    }
+
+    const scrollContainer = event.currentTarget;
+    const hasHorizontalOverflow =
+      scrollContainer.scrollWidth > scrollContainer.clientWidth;
+
+    if (!hasHorizontalOverflow) {
+      return;
+    }
+
+    const horizontalDelta =
+      Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+
+    if (horizontalDelta === 0) {
+      return;
+    }
+
+    scrollContainer.scrollLeft += horizontalDelta;
+    event.preventDefault();
+  };
+
+  return (
+    <div
+      className="w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      onWheel={handleWheel}
     >
-      {children}
-    </TabsList>
-  </div>
-);
+      <TabsList
+        className={cn(
+          "grid h-auto min-w-full w-max grid-flow-col auto-cols-[minmax(max-content,1fr)] gap-1 bg-muted/50 p-1",
+          className,
+        )}
+      >
+        {children}
+      </TabsList>
+    </div>
+  );
+};

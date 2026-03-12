@@ -164,7 +164,14 @@ describe("EventsService", () => {
     };
 
     it("should create event with hero npcs", async () => {
-      const createdEvent = { id: "event-1", ...createDto, guildId };
+      const createdEvent = {
+        id: "event-1",
+        ...createDto,
+        guildId,
+        startsAt: new Date(Date.now() - 60_000),
+        endsAt: null,
+        createdAt: new Date(Date.now() - 60_000),
+      };
       mockPrismaService.event.create.mockResolvedValue(createdEvent);
 
       const result = await service.createEvent(guildId, createDto);
@@ -185,7 +192,10 @@ describe("EventsService", () => {
         }),
         include: expect.any(Object),
       });
-      expect(result).toEqual(createdEvent);
+      expect(result).toEqual({
+        ...createdEvent,
+        active: true,
+      });
     });
 
     it("should request created hero maps sorted by mapId", async () => {
@@ -269,17 +279,41 @@ describe("EventsService", () => {
     const guildId = "guild-1";
 
     it("should return active events by default", async () => {
-      const events = [{ id: "event-1", active: true }];
+      const now = Date.now();
+      const events = [
+        {
+          id: "event-1",
+          startsAt: new Date(now - 60_000),
+          endsAt: new Date(now + 60_000),
+          createdAt: new Date(now - 120_000),
+          heroNpcs: [],
+        },
+      ];
       mockPrismaService.event.findMany.mockResolvedValue(events);
 
       const result = await service.getEvents(guildId);
 
       expect(mockPrismaService.event.findMany).toHaveBeenCalledWith({
-        where: { guildId, active: true },
+        where: {
+          guildId,
+          AND: [
+            {
+              OR: [{ startsAt: null }, { startsAt: { lte: expect.any(Date) } }],
+            },
+            {
+              OR: [{ endsAt: null }, { endsAt: { gt: expect.any(Date) } }],
+            },
+          ],
+        },
         select: expect.any(Object),
-        orderBy: [{ active: "desc" }, { createdAt: "desc" }],
+        orderBy: [{ createdAt: "desc" }],
       });
-      expect(result).toEqual(events);
+      expect(result).toEqual([
+        expect.objectContaining({
+          id: "event-1",
+          active: true,
+        }),
+      ]);
     });
 
     it("should filter by world when provided", async () => {
@@ -288,7 +322,18 @@ describe("EventsService", () => {
       await service.getEvents(guildId, "tempest");
 
       expect(mockPrismaService.event.findMany).toHaveBeenCalledWith({
-        where: { guildId, world: "tempest", active: true },
+        where: {
+          guildId,
+          world: "tempest",
+          AND: [
+            {
+              OR: [{ startsAt: null }, { startsAt: { lte: expect.any(Date) } }],
+            },
+            {
+              OR: [{ endsAt: null }, { endsAt: { gt: expect.any(Date) } }],
+            },
+          ],
+        },
         select: expect.any(Object),
         orderBy: expect.any(Array),
       });
@@ -312,12 +357,21 @@ describe("EventsService", () => {
     const eventId = "event-1";
 
     it("should return event when found", async () => {
-      const event = { id: eventId, guildId, active: true };
+      const event = {
+        id: eventId,
+        guildId,
+        startsAt: new Date(Date.now() - 60_000),
+        endsAt: new Date(Date.now() + 60_000),
+        createdAt: new Date(Date.now() - 120_000),
+      };
       mockPrismaService.event.findFirst.mockResolvedValue(event);
 
       const result = await service.getEvent(guildId, eventId);
 
-      expect(result).toEqual(event);
+      expect(result).toEqual({
+        ...event,
+        active: true,
+      });
     });
 
     it("should throw NotFoundException when event not found", async () => {
@@ -334,12 +388,21 @@ describe("EventsService", () => {
     const eventId = "event-1";
 
     it("should return event overview when found", async () => {
-      const event = { id: eventId, guildId, active: true };
+      const event = {
+        id: eventId,
+        guildId,
+        startsAt: new Date(Date.now() - 60_000),
+        endsAt: new Date(Date.now() + 60_000),
+        createdAt: new Date(Date.now() - 120_000),
+      };
       mockPrismaService.event.findFirst.mockResolvedValue(event);
 
       const result = await service.getEventOverview(guildId, eventId);
 
-      expect(result).toEqual(event);
+      expect(result).toEqual({
+        ...event,
+        active: true,
+      });
     });
 
     it("should throw NotFoundException when overview event not found", async () => {
@@ -397,7 +460,9 @@ describe("EventsService", () => {
     const existingEvent = {
       id: eventId,
       guildId,
-      active: true,
+      startsAt: new Date(Date.now() - 60_000),
+      endsAt: null,
+      createdAt: new Date(Date.now() - 120_000),
       basePointsPerKill: 100,
     };
 
@@ -439,23 +504,22 @@ describe("EventsService", () => {
       });
     });
 
-    it("should set endsAt when deactivating event", async () => {
-      mockPrismaService.event.findFirst.mockResolvedValue({
-        ...existingEvent,
-        endsAt: null,
-      });
+    it("should set endsAt when provided", async () => {
+      const newEndsAt = new Date(Date.now() + 60_000);
+      mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
       mockPrismaService.$transaction.mockImplementation(async (callback) =>
         callback(mockPrismaService),
       );
       mockPrismaService.event.update.mockResolvedValue({});
 
-      await service.updateEvent(guildId, eventId, { active: false });
+      await service.updateEvent(guildId, eventId, {
+        endsAt: newEndsAt.toISOString(),
+      });
 
       expect(mockPrismaService.event.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            active: false,
-            endsAt: expect.any(Date),
+            endsAt: newEndsAt,
           }),
         }),
       );

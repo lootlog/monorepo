@@ -38,6 +38,7 @@ import {
   getTrackingWindowDurationSeconds,
   getTrackingWindowStartTime,
 } from "../utils/tracking-window.util";
+import { buildActiveEventWhere } from "../utils/event-activity.util";
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
@@ -606,13 +607,7 @@ export class EventKillService {
         event: {
           guildId,
           world,
-          active: true,
-          OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-          AND: [
-            {
-              OR: [{ endsAt: null }, { endsAt: { gte: now } }],
-            },
-          ],
+          ...buildActiveEventWhere(now),
         },
       },
       include: {
@@ -627,13 +622,7 @@ export class EventKillService {
         event: {
           guildId,
           world,
-          active: true,
-          OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-          AND: [
-            {
-              OR: [{ endsAt: null }, { endsAt: { gte: now } }],
-            },
-          ],
+          ...buildActiveEventWhere(now),
         },
       },
       include: {

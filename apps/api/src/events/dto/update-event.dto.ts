@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsBoolean,
   IsArray,
   ValidateNested,
   IsDateString,
@@ -22,11 +21,6 @@ export class UpdateEventDto {
   @IsOptional()
   @IsString()
   name?: string;
-
-  @ApiPropertyOptional({ description: "Event active status" })
-  @IsOptional()
-  @IsBoolean()
-  active?: boolean;
 
   @ApiPropertyOptional({ description: "Event start time" })
   @IsOptional()

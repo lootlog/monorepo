@@ -73,7 +73,7 @@ export class EventsCatalogController {
   })
   @ApiQuery({
     name: "activeOnly",
-    description: "Only return active events",
+    description: "Only return events active at request time",
     required: false,
   })
   @ApiResponse({

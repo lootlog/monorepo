@@ -13,6 +13,11 @@ export {
 } from "./aggregate-map-data";
 
 export {
+  normalizeBonusBreakdown,
+  type NormalizedBonusBreakdownItem,
+} from "./normalize-bonus-breakdown";
+
+export {
   calculateTimelineSegments,
   type TimelineSegment,
   type TimelineGap,
@@ -24,3 +29,6 @@ export {
   formatDateTime,
   formatDateTimeFull,
 } from "./format-date";
+
+export { isEventActiveAtTimestamp } from "./event-activity";
+export { getEventStatusAtTimestamp, type EventStatus } from "./event-activity";

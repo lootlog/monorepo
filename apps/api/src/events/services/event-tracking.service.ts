@@ -13,6 +13,7 @@ import { RedisService } from "src/lib/redis/redis.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
+import { buildActiveEventWhere } from "../utils/event-activity.util";
 
 @Injectable()
 export class EventTrackingService implements OnModuleInit {
@@ -512,19 +513,20 @@ export class EventTrackingService implements OnModuleInit {
       return;
     }
 
+    const referenceTime = new Date();
     const eventMaps = await this.prisma.eventMap.findMany({
       where: {
         mapName,
         heroNpc: {
           event: {
             guildId,
-            active: true,
+            ...buildActiveEventWhere(referenceTime),
           },
         },
       },
     });
 
-    const now = new Date();
+    const now = referenceTime;
 
     for (const map of eventMaps) {
       if (hasPlayer) {
@@ -617,6 +619,7 @@ export class EventTrackingService implements OnModuleInit {
     isAfk: boolean,
   ): Promise<void> {
     const member = await this.getMemberByDiscordId(discordId, guildId);
+    const referenceTime = new Date();
 
     const eventMaps = await this.prisma.eventMap.findMany({
       where: {
@@ -624,7 +627,7 @@ export class EventTrackingService implements OnModuleInit {
         heroNpc: {
           event: {
             guildId,
-            active: true,
+            ...buildActiveEventWhere(referenceTime),
           },
         },
       },
@@ -640,7 +643,7 @@ export class EventTrackingService implements OnModuleInit {
       },
     });
 
-    const now = new Date();
+    const now = referenceTime;
 
     const timerKeys = eventMaps.map((map) => ({
       guildId,
