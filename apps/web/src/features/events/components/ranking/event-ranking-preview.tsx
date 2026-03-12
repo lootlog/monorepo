@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
+import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import type {
   EventRanking,
   EventHeroNpc,
@@ -10,6 +10,7 @@ import type {
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
 import { useState } from "react";
+import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 
 interface EventRankingPreviewProps {
   rankings: EventRanking[];
@@ -71,7 +72,7 @@ export const EventRankingPreview = ({
           onValueChange={setSelectedHeroName}
           className="mb-3"
         >
-          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <EventScrollableTabsList>
             {heroNpcs.map((hero) => (
               <TabsTrigger
                 key={hero.id}
@@ -81,7 +82,7 @@ export const EventRankingPreview = ({
                 {hero.npcName}
               </TabsTrigger>
             ))}
-          </TabsList>
+          </EventScrollableTabsList>
         </Tabs>
       )}
 

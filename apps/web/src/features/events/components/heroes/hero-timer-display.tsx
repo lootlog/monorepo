@@ -15,25 +15,50 @@ import type { TFunction } from "i18next";
 interface HeroTimerDisplayProps {
   timer: EventTimer | undefined;
   t: TFunction;
+  className?: string;
 }
 
 const getHeroTimerTimeLeft = (timer: EventTimer) =>
   Math.max(0, new Date(timer.maxSpawnTime).getTime() - Date.now());
 
-export const HeroTimerDisplay = ({ timer, t }: HeroTimerDisplayProps) => {
+export const HeroTimerDisplay = ({
+  timer,
+  t,
+  className,
+}: HeroTimerDisplayProps) => {
   if (!timer) {
     return (
-      <span className="text-xs text-muted-foreground flex items-center gap-1">
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap",
+          className,
+        )}
+      >
         <Clock className="w-3 h-3" />
         {t("events.heroes.noTimer")}
       </span>
     );
   }
 
-  return <HeroTimerDisplayContent key={timer.maxSpawnTime} timer={timer} />;
+  return (
+    <HeroTimerDisplayContent
+      key={timer.maxSpawnTime}
+      timer={timer}
+      label={t("events.respawn.maxSpawnTime")}
+      className={className}
+    />
+  );
 };
 
-const HeroTimerDisplayContent = ({ timer }: { timer: EventTimer }) => {
+const HeroTimerDisplayContent = ({
+  timer,
+  label,
+  className,
+}: {
+  timer: EventTimer;
+  label: string;
+  className?: string;
+}) => {
   const [timeLeft, setTimeLeft] = useState(() => getHeroTimerTimeLeft(timer));
 
   useEffect(() => {
@@ -59,8 +84,9 @@ const HeroTimerDisplayContent = ({ timer }: { timer: EventTimer }) => {
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "text-xs flex items-center gap-1 font-medium",
+            "inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap",
             isClose ? "text-orange-400" : "text-green-400",
+            className,
           )}
         >
           <Clock className="w-3 h-3" />
@@ -69,7 +95,7 @@ const HeroTimerDisplayContent = ({ timer }: { timer: EventTimer }) => {
       </TooltipTrigger>
       <TooltipContent>
         <p className="text-sm">
-          Max spawn:{" "}
+          {label}:{" "}
           {format(new Date(timer.maxSpawnTime), "HH:mm:ss", { locale: pl })}
         </p>
       </TooltipContent>

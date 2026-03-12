@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
+import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import {
   Package,
   Frown,
@@ -19,6 +19,7 @@ import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { cn } from "@/utils/cn";
 import { ItemRarity, type Loot } from "@/hooks/api/loots/use-loots";
+import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 
 interface EventHeroLootsProps {
   guildId: string;
@@ -57,7 +58,7 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
+      <div className="flex flex-col gap-2 border-t border-border/30 pt-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
@@ -68,7 +69,7 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
             {date}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground sm:self-auto">
           <span className="flex items-center gap-1">
             <Users className="h-3 w-3" />
             {loot.players.length}
@@ -135,7 +136,7 @@ export const EventHeroLoots = ({
           onValueChange={setSelectedHeroName}
           className="mb-3"
         >
-          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <EventScrollableTabsList>
             {heroNpcs.map((hero) => (
               <TabsTrigger
                 key={hero.id}
@@ -145,7 +146,7 @@ export const EventHeroLoots = ({
                 {hero.npcName}
               </TabsTrigger>
             ))}
-          </TabsList>
+          </EventScrollableTabsList>
         </Tabs>
       )}
 

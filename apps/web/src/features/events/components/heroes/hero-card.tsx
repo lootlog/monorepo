@@ -70,8 +70,8 @@ export const HeroCard = ({
         className="block"
       >
         <Card className="bg-card/40 backdrop-blur-sm border-border hover:bg-card/60 hover:border-primary/30 transition-colors cursor-pointer group-hover:border-primary/30 gap-0 py-2 pl-2 pr-2">
-          <div className="p-2 flex items-center gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex flex-col gap-3 p-2 sm:flex-row sm:items-center sm:gap-2">
+            <div className="flex min-w-0 flex-1 items-start gap-2">
               {hero.npcIcon ? (
                 <NpcTile
                   npc={{
@@ -84,8 +84,10 @@ export const HeroCard = ({
                 <Swords className="w-5 h-5 text-yellow-500" />
               )}
               <div className="min-w-0">
-                <p className="font-medium text-sm">{hero.npcName}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium break-words">
+                  {hero.npcName}
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
                   ID: {hero.npcId} •{" "}
                   {t("events.maps.mapCount", {
                     count: totalMapsCount,
@@ -94,55 +96,64 @@ export const HeroCard = ({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <HeroWindowStatusBadge
-                eventId={eventId}
-                heroNpcId={hero.npcId}
-                heroName={hero.npcName}
-              />
-              <HeroTimerDisplay timer={timer} t={t} />
+
+            <div className="flex items-center justify-between gap-2 sm:justify-end">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <HeroWindowStatusBadge
+                  eventId={eventId}
+                  heroNpcId={hero.npcId}
+                  heroName={hero.npcName}
+                  className="shrink-0"
+                />
+                <HeroTimerDisplay timer={timer} t={t} className="shrink-0" />
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1">
+                {canManage && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      asChild
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenuItem onClick={() => onEditHero(hero)}>
+                        <Pencil className="mr-2 w-4 h-4" />
+                        {t("events.heroes.edit")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onManageMaps(hero)}>
+                        <MapIcon className="mr-2 w-4 h-4" />
+                        {t("events.heroes.manageMaps")}
+                      </DropdownMenuItem>
+                      <ConfirmDeleteDialog
+                        onConfirm={() => onDeleteHero(hero.id)}
+                        title={t("events.heroes.deleteTitle")}
+                        description={t("events.heroes.deleteDescription", {
+                          name: hero.npcName,
+                        })}
+                        trigger={
+                          <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm text-destructive outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:text-destructive data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                            <Trash2 className="mr-2 w-4 h-4" />
+                            {t("events.heroes.deleteAction")}
+                          </div>
+                        }
+                      />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground" />
+              </div>
             </div>
-            {canManage && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  asChild
-                  onClick={(e) => e.preventDefault()}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <DropdownMenuItem onClick={() => onEditHero(hero)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Edytuj
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onManageMaps(hero)}>
-                    <MapIcon className="w-4 h-4 mr-2" />
-                    Mapy
-                  </DropdownMenuItem>
-                  <ConfirmDeleteDialog
-                    onConfirm={() => onDeleteHero(hero.id)}
-                    title="Usunąć herosa?"
-                    description={`Czy na pewno chcesz usunąć herosa ${hero.npcName}? Spowoduje to również usunięcie wszystkich powiązanych map.`}
-                    trigger={
-                      <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-destructive focus:text-destructive">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Usuń
-                      </div>
-                    }
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
           </div>
         </Card>
       </Link>
