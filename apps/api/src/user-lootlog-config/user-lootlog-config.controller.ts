@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Put, UseGuards } from "@nestjs/common";
+import { DiscordId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -7,7 +8,6 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";

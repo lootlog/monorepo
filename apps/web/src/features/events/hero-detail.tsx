@@ -275,7 +275,7 @@ export const HeroDetail = () => {
   const selectedMap = allMaps.find((m) => m.id === selectedMapId);
 
   const handleClearAllAssignments = async () => {
-    if (allMaps.length === 0) return;
+    if (!eventId || allMaps.length === 0) return;
 
     try {
       await Promise.all(

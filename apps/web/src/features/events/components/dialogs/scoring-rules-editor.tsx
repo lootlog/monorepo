@@ -27,9 +27,9 @@ type ScoringRulesFormValues = {
   scoringRules: EventScoringRules;
 };
 
-interface ScoringRulesEditorProps {
-  control: Control<ScoringRulesFormValues>;
-  register: UseFormRegister<ScoringRulesFormValues>;
+interface ScoringRulesEditorProps<TFieldValues extends ScoringRulesFormValues> {
+  control: Control<TFieldValues>;
+  register: UseFormRegister<TFieldValues>;
   t: TFunction;
 }
 
@@ -327,13 +327,19 @@ const RuleActionEditor = ({
   );
 };
 
-export const ScoringRulesEditor = ({
+export const ScoringRulesEditor = <
+  TFieldValues extends ScoringRulesFormValues,
+>({
   control,
   register,
   t,
-}: ScoringRulesEditorProps) => {
+}: ScoringRulesEditorProps<TFieldValues>) => {
+  const scopedControl = control as unknown as Control<ScoringRulesFormValues>;
+  const scopedRegister =
+    register as unknown as UseFormRegister<ScoringRulesFormValues>;
+
   const { fields, append, remove } = useFieldArray({
-    control,
+    control: scopedControl,
     name: "scoringRules.rules",
   });
 
@@ -348,7 +354,7 @@ export const ScoringRulesEditor = ({
             type="number"
             min={0}
             step={0.01}
-            {...register("scoringRules.hardCapPoints", {
+            {...scopedRegister("scoringRules.hardCapPoints", {
               valueAsNumber: true,
             })}
             className="h-9 text-sm"
@@ -366,7 +372,7 @@ export const ScoringRulesEditor = ({
             min={0}
             max={100}
             step={1}
-            {...register("scoringRules.minTrackingPercentForBonuses", {
+            {...scopedRegister("scoringRules.minTrackingPercentForBonuses", {
               valueAsNumber: true,
             })}
             className="h-9 text-sm"
@@ -377,7 +383,7 @@ export const ScoringRulesEditor = ({
             {t("events.scoring.timezoneLabel", "Strefa czasowa")}
           </Label>
           <Input
-            {...register("scoringRules.timezone")}
+            {...scopedRegister("scoringRules.timezone")}
             className="h-9 text-sm"
             placeholder="Europe/Warsaw"
           />
@@ -395,7 +401,7 @@ export const ScoringRulesEditor = ({
           >
             <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
               <Input
-                {...register(`scoringRules.rules.${ruleIndex}.name`)}
+                {...scopedRegister(`scoringRules.rules.${ruleIndex}.name`)}
                 placeholder={t(
                   "events.scoring.ruleName",
                   "Nazwa reguły / bonusu",
@@ -403,7 +409,7 @@ export const ScoringRulesEditor = ({
                 className="h-9 text-sm"
               />
               <Input
-                {...register(`scoringRules.rules.${ruleIndex}.id`)}
+                {...scopedRegister(`scoringRules.rules.${ruleIndex}.id`)}
                 placeholder="rule-id"
                 className="h-9 text-sm"
               />
@@ -428,7 +434,7 @@ export const ScoringRulesEditor = ({
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
               <input
                 type="checkbox"
-                {...register(`scoringRules.rules.${ruleIndex}.enabled`)}
+                {...scopedRegister(`scoringRules.rules.${ruleIndex}.enabled`)}
               />
               {t("events.scoring.ruleEnabled", "Reguła aktywna")}
             </label>
@@ -438,8 +444,8 @@ export const ScoringRulesEditor = ({
                 {t("events.scoring.ifLabel", "JEŻELI")}
               </Label>
               <RuleConditionsEditor
-                control={control}
-                register={register}
+                control={scopedControl}
+                register={scopedRegister}
                 ruleIndex={ruleIndex}
                 t={t}
               />
@@ -450,8 +456,8 @@ export const ScoringRulesEditor = ({
                 {t("events.scoring.thenLabel", "WTEDY")}
               </Label>
               <RuleActionEditor
-                control={control}
-                register={register}
+                control={scopedControl}
+                register={scopedRegister}
                 ruleIndex={ruleIndex}
                 t={t}
               />
@@ -473,7 +479,7 @@ export const ScoringRulesEditor = ({
 
       <input
         type="hidden"
-        {...register("scoringRules.version", { value: 1 })}
+        {...scopedRegister("scoringRules.version", { value: 1 })}
       />
     </div>
   );

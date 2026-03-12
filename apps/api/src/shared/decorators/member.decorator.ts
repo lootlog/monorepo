@@ -1,18 +1,7 @@
-import {
-  createParamDecorator,
-  UnauthorizedException,
-  type ExecutionContext,
-} from "@nestjs/common";
+import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared";
+import { UnauthorizedException } from "@nestjs/common";
 
-export const GuildMember = createParamDecorator(function (
-  data: unknown,
-  ctx: ExecutionContext,
-) {
-  const request = ctx.switchToHttp().getRequest();
-
-  if (!request.member) {
-    throw new UnauthorizedException();
-  }
-
-  return request.member;
+export const GuildMember = createRequiredRequestValueDecorator({
+  createException: () => new UnauthorizedException(),
+  getValue: (request) => request.member,
 });

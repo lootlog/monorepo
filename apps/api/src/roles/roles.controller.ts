@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
+import { DiscordId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -10,7 +11,6 @@ import { plainToInstance } from "class-transformer";
 import { type Guild, Permission } from "generated/client";
 import { UpdateRolePermissionsDto } from "src/roles/dto/update-role-permissions.dto";
 import { RolesService } from "src/roles/roles.service";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";

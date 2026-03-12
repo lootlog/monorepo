@@ -1,18 +1,8 @@
-import {
-  createParamDecorator,
-  UnauthorizedException,
-  type ExecutionContext,
-} from "@nestjs/common";
+import { UnauthorizedException } from "@nestjs/common";
 
-export const DiscordId = createParamDecorator(function (
-  data: unknown,
-  ctx: ExecutionContext,
-) {
-  const request = ctx.switchToHttp().getRequest();
+import { createRequiredRequestValueDecorator } from "./create-required-request-value.decorator";
 
-  if (!request.discordId) {
-    throw new UnauthorizedException();
-  }
-
-  return request.discordId;
+export const DiscordId = createRequiredRequestValueDecorator({
+  createException: () => new UnauthorizedException(),
+  getValue: (request) => request.discordId,
 });

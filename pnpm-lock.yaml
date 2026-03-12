@@ -231,6 +231,9 @@ importers:
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
+      '@lootlog/nest-shared':
+        specifier: workspace:*
+        version: link:../../packages/nest-shared
       '@lootlog/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -422,6 +425,9 @@ importers:
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
+      '@lootlog/nest-shared':
+        specifier: workspace:*
+        version: link:../../packages/nest-shared
       '@nestjs/common':
         specifier: ^11.1.16
         version: 11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)

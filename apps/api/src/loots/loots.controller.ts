@@ -18,6 +18,7 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
+import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { plainToInstance } from "class-transformer";
 import { type Guild, Permission, type Role } from "generated/client";
 import { CreateCommentDto } from "src/loots/dto/create-comment-dto";
@@ -25,8 +26,6 @@ import { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
 import { LootsService } from "src/loots/loots.service";
 import { LootStatsService } from "src/loots/services/loot-stats.service";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
-import { UserId } from "src/shared/decorators/user-id.decorator";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";

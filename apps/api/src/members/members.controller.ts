@@ -7,6 +7,7 @@ import {
   UseGuards,
   Query,
 } from "@nestjs/common";
+import { DiscordId, UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -22,8 +23,6 @@ import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { type Guild, Permission } from "generated/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
-import { UserId } from "src/shared/decorators/user-id.decorator";
 import { MemberEntity } from "src/shared/entities/member.entity";
 import { MemberRefreshJobEntity } from "src/shared/entities/member-refresh-job.entity";
 
