@@ -35,6 +35,7 @@ import {
   type ReadableSpan,
   type Span,
 } from "@opentelemetry/sdk-trace-base";
+import { parseOtlpHeaders } from "./parse-otlp-headers.js";
 
 export interface ObservabilityConfig {
   serviceName: string;
@@ -382,7 +383,7 @@ export function initObservability(config: ObservabilityConfig): void {
 
   const traceExporter = new OTLPTraceExporter({
     url: `${otlpEndpoint}/v1/traces`,
-    headers: parseHeaders(otlpHeaders),
+    headers: parseOtlpHeaders(otlpHeaders),
   });
 
   const batchProcessor = new BatchSpanProcessor(traceExporter, {
@@ -397,7 +398,7 @@ export function initObservability(config: ObservabilityConfig): void {
 
   const metricExporter = new OTLPMetricExporter({
     url: `${otlpEndpoint}/v1/metrics`,
-    headers: parseHeaders(otlpHeaders),
+    headers: parseOtlpHeaders(otlpHeaders),
   });
 
   sdkInstance = new NodeSDK({
@@ -460,14 +461,4 @@ export async function shutdownObservability(): Promise<void> {
     sdkInstance = null;
     console.log(`[${currentServiceName}] Observability terminated`);
   }
-}
-
-function parseHeaders(headersString: string): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const paramsString = headersString.replace(/,/g, "&");
-  const params = new URLSearchParams(paramsString);
-  params.forEach((value, key) => {
-    headers[key] = value;
-  });
-  return headers;
 }
