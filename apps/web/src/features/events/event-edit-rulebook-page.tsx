@@ -3,10 +3,12 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { AlertCircle, BookOpenText, Loader2, Pencil } from "lucide-react";
+import { AlertCircle, BookOpenText, Loader2 } from "lucide-react";
+import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
+import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
@@ -49,12 +51,20 @@ export const EventEditRulebookPage = () => {
   }, [event, form]);
 
   const onSubmit = async (data: EventRulebookFormData) => {
+    const normalizedRulebookMarkdown =
+      data.rulebookMarkdown.trim().length > 0
+        ? data.rulebookMarkdown.trim()
+        : "";
+
     try {
       await updateEvent.mutateAsync({
         rulebookMarkdown:
-          data.rulebookMarkdown.trim().length > 0
-            ? data.rulebookMarkdown.trim()
+          normalizedRulebookMarkdown.length > 0
+            ? normalizedRulebookMarkdown
             : null,
+      });
+      form.reset({
+        rulebookMarkdown: normalizedRulebookMarkdown,
       });
       toast.success(t("events.scoring.saveSuccess"));
     } catch {
@@ -83,58 +93,47 @@ export const EventEditRulebookPage = () => {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-4">
-      <Card className="max-w-4xl mx-auto p-4 space-y-5">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-lg font-semibold">
-              {t("events.editSections.rulebook")}
-            </h1>
-            <p className="text-sm text-muted-foreground">{event.name}</p>
+    <ScrollArea className="h-full bg-background/50">
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="rounded-xl bg-amber-500/10 p-2 shadow-inner shadow-amber-500/10">
+              <BookOpenText className="size-4 text-amber-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {t("events.editSections.rulebook")}
+              </p>
+              <h2 className="truncate text-base font-semibold">{event.name}</h2>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/$guildId/events/$eventId" params={routeParams}>
-              <Button variant="outline" size="sm">
-                {t("events.createDialog.cancel")}
-              </Button>
-            </Link>
-            <Button
-              size="sm"
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={updateEvent.isPending}
-            >
-              {updateEvent.isPending ? (
-                <>
-                  <Loader2 className="size-3.5 mr-1.5 animate-spin" />
-                  {t("events.scoring.saving")}
-                </>
-              ) : (
-                <>
-                  <Pencil className="size-3.5 mr-1.5" />
-                  {t("events.scoring.save")}
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        </Card>
 
-        <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-              <BookOpenText className="size-3" />
-              {t("events.rulebook.label", "Regulamin eventu")}
-            </Label>
-            <Textarea
-              {...form.register("rulebookMarkdown")}
-              placeholder={t(
-                "events.rulebook.placeholder",
-                "Wpisz regulamin eventu, zasady uczestnictwa i dodatkowe informacje.",
-              )}
-              className="min-h-[220px] text-sm"
-            />
-          </div>
+        <form
+          className="space-y-3 pb-24"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <BookOpenText className="size-3" />
+                {t("events.rulebook.label")}
+              </Label>
+              <Textarea
+                {...form.register("rulebookMarkdown")}
+                placeholder={t("events.rulebook.placeholder")}
+                className="min-h-[360px] text-sm"
+              />
+            </div>
+          </Card>
+
+          <UnsavedChangesBar
+            isDirty={form.formState.isDirty}
+            isSubmitting={form.formState.isSubmitting}
+            onReset={() => form.reset()}
+          />
         </form>
-      </Card>
-    </div>
+      </div>
+    </ScrollArea>
   );
 };

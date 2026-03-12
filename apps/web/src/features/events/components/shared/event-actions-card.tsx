@@ -44,7 +44,7 @@ export const EventActionsCard = ({
         </h3>
       </div>
 
-      <div className="mt-3 flex flex-row gap-2">
+      <div className="mt-3 flex flex-row flex-wrap gap-2">
         <Button
           size="sm"
           variant="outline"

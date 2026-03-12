@@ -312,6 +312,8 @@
     },
     "loadMore": "Załaduj więcej",
     "loading": "Ładowanie...",
+    "showStats": "Pokaż statystyki",
+    "hideStats": "Ukryj statystyki",
     "endOfList": "To wszystkie bicia",
     "manualClose": "Ręczne zamknięcie okna",
     "manualCloseDescription": "Okno zostało ręcznie zamknięte - heros mógł nie zostać zabity"
