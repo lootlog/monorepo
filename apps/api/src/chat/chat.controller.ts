@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { DiscordId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -19,7 +20,6 @@ import { ChatService } from "src/chat/chat.service";
 import { SendMessageDto } from "src/chat/dto/send-message.dto";
 import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
 import { type Guild, Permission } from "generated/client";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { Permissions } from "src/shared/permissions/permissions.decorator";

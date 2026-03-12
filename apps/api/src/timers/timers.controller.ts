@@ -17,10 +17,9 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
+import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { plainToInstance } from "class-transformer";
 import { type Guild, Permission, type Role } from "generated/client";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
-import { UserId } from "src/shared/decorators/user-id.decorator";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";

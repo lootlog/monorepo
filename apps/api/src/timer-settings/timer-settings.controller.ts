@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
 } from "@nestjs/common";
+import { UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -15,7 +16,6 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
-import { UserId } from "src/shared/decorators/user-id.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { TimerSettingsService } from "./timer-settings.service";
 import { UpdateTimerSettingsDto } from "./dto/update-timer-settings.dto";

@@ -19,8 +19,8 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
+import { UserId } from "@lootlog/nest-shared";
 import { Permission, type Role } from "generated/client";
-import { UserId } from "src/shared/decorators/user-id.decorator";
 import { GuildMember } from "src/shared/decorators/member.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";

@@ -7,6 +7,7 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
+import { DiscordId } from "@lootlog/nest-shared";
 import type { FastifyReply } from "fastify";
 import {
   ApiTags,
@@ -18,7 +19,6 @@ import { CreateNotificationDto } from "src/notifications/dto/create-notification
 import { CreatePartyGatheringDto } from "src/notifications/dto/create-party-gathering.dto";
 import { CreateVolunteerDto } from "src/notifications/dto/create-volunteer.dto";
 import { NotificationsService } from "src/notifications/notifications.service";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 
 @ApiTags("notifications")

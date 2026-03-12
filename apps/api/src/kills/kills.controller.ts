@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { DiscordId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -16,7 +17,6 @@ import {
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
 import { Guild, Permission, type Role } from "generated/client";
-import { DiscordId } from "src/shared/decorators/discord-id.decorator";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
