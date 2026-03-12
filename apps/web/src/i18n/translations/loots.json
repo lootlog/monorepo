@@ -35,5 +35,56 @@
       "noData": "Brak danych o przedmiotach"
     },
     "noData": "Brak danych o lootach w wybranym okresie"
+  },
+  "filtersPanel": {
+    "playersLabel": "Gracze",
+    "playersPlaceholder": "Wybierz graczy",
+    "npcsLabel": "Potwory",
+    "npcsPlaceholder": "Wybierz potwory",
+    "raritiesLabel": "Rzadkość przedmiotu",
+    "raritiesPlaceholder": "Wybierz rzadkość",
+    "npcTypesLabel": "Typ potwora",
+    "npcTypesPlaceholder": "Wybierz typ potwora",
+    "common": {
+      "minLevel": "Min poziom",
+      "maxLevel": "Max poziom",
+      "levelValue": "Lvl {{level}}"
+    },
+    "saveDialog": {
+      "title": "Zapisz szybki filtr",
+      "description": "Nadaj nazwę swojemu szybkiemu filtrowi, aby łatwo go znaleźć później.",
+      "nameLabel": "Nazwa filtru",
+      "namePlaceholder": "np. Moje ulubione filtry",
+      "cancel": "Anuluj",
+      "save": "Zapisz"
+    },
+    "npcSection": {
+      "title": "Filtry potworów",
+      "npcTypesLabel": "Typy potworów",
+      "npcsLabel": "Potwory",
+      "npcsPlaceholder": "Wybierz potwory"
+    },
+    "itemSection": {
+      "title": "Filtry przedmiotów",
+      "raritiesLabel": "Rzadkość",
+      "itemsLabel": "Przedmioty",
+      "itemsPlaceholder": "Wybierz przedmioty",
+      "filteredItemLabel": "Filtrowany przedmiot (ID)"
+    },
+    "playerSection": {
+      "title": "Filtry graczy",
+      "playersLabel": "Gracze",
+      "playersPlaceholder": "Wybierz graczy"
+    },
+    "quickFilters": {
+      "title": "Szybkie filtry",
+      "saveButton": "Zapisz",
+      "clearButton": "Wyczyść filtry",
+      "legendaryLabel": "Legendarny",
+      "titanLabel": "Tytan",
+      "heroLabel": "Heros",
+      "itemCategory": "Przedmiot",
+      "npcCategory": "Potwór"
+    }
   }
 }

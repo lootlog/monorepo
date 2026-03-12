@@ -6,7 +6,10 @@ import {
   type RabbitMQConfig,
 } from "@golevelup/nestjs-rabbitmq";
 import { EventsService } from "./events.service";
-import { EventsController } from "./events.controller";
+import { EventsAssignmentController } from "./events-assignment.controller";
+import { EventsCatalogController } from "./events-catalog.controller";
+import { EventsMonitoringController } from "./events-monitoring.controller";
+import { EventsRankingController } from "./events-ranking.controller";
 import { EventsQueueHandler } from "./events-queue.handler";
 import { RespawnWindowProcessor } from "./respawn-window.processor";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
@@ -19,9 +22,12 @@ import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
 
 import { EventEmitterService } from "./services/event-emitter.service";
+import { EventAccessService } from "./services/event-access.service";
+import { EventCatalogService } from "./services/event-catalog.service";
 import { EventPointsService } from "./services/event-points.service";
 import { EventTrackingService } from "./services/event-tracking.service";
 import { EventKillService } from "./services/event-kill.service";
+import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventSummaryService } from "./services/event-summary.service";
 
@@ -44,8 +50,11 @@ import { EventSummaryService } from "./services/event-summary.service";
   providers: [
     EventsService,
 
+    EventAccessService,
+    EventCatalogService,
     EventEmitterService,
     EventPointsService,
+    EventQueueDiagnosticsService,
     EventTrackingService,
     EventKillService,
     EventRespawnService,
@@ -55,7 +64,12 @@ import { EventSummaryService } from "./services/event-summary.service";
     RespawnWindowProcessor,
     EventHeroKillProcessor,
   ],
-  controllers: [EventsController],
+  controllers: [
+    EventsCatalogController,
+    EventsAssignmentController,
+    EventsRankingController,
+    EventsMonitoringController,
+  ],
   exports: [EventsService],
 })
 export class EventsModule {}

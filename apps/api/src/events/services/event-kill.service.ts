@@ -32,6 +32,12 @@ import {
   normalizeEventScoringRules,
 } from "../utils/scoring-rules.util";
 import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
+import {
+  calculateTrackingDurationSeconds,
+  clipIntervalToWindow,
+  getTrackingWindowDurationSeconds,
+  getTrackingWindowStartTime,
+} from "../utils/tracking-window.util";
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
@@ -604,7 +610,7 @@ export class EventKillService {
           unassignedAt: history.unassignedAt ?? null,
         });
 
-        const clippedTrackingInterval = this.clipIntervalToWindow({
+        const clippedTrackingInterval = clipIntervalToWindow({
           start: history.assignedAt,
           end: history.unassignedAt ?? killedAt,
           windowStart: trackingWindowStartTime,
@@ -666,7 +672,7 @@ export class EventKillService {
 
         const trackingIntervals = memberTrackingIntervals.get(memberId) ?? [];
         const trackingDurationSeconds =
-          this.calculateTrackingDurationSeconds(trackingIntervals);
+          calculateTrackingDurationSeconds(trackingIntervals);
 
         const trackingDurationPercentage =
           trackingDurationSeconds !== null && trackingWindowDurationSeconds > 0
@@ -1182,15 +1188,18 @@ export class EventKillService {
     ]);
     const overlapWindowStartTime =
       windowStartByKillId.get(kill.id) ??
-      this.getTrackingWindowStartTime(kill.killedAt, kill.minSpawnTimeAtKill);
+      getTrackingWindowStartTime({
+        killedAt: kill.killedAt,
+        minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+      });
 
     const mapIdToName = new Map(heroMaps.map((m) => [m.id, m.mapName]));
     const mapIds = heroMaps.map((m) => m.id);
     const memberIds = [...new Set(kill.points.map((point) => point.memberId))];
-    const trackingWindowStartTime = this.getTrackingWindowStartTime(
-      kill.killedAt,
-      kill.minSpawnTimeAtKill,
-    );
+    const trackingWindowStartTime = getTrackingWindowStartTime({
+      killedAt: kill.killedAt,
+      minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+    });
     const normalizedPoints = kill.points.map((point) =>
       this.normalizeKillPointTracking(
         point,
@@ -1301,7 +1310,7 @@ export class EventKillService {
       }
 
       const mapData = pointAssignments.map((assignment) => {
-        const clippedAssignmentInterval = this.clipIntervalToWindow({
+        const clippedAssignmentInterval = clipIntervalToWindow({
           start: assignment.assignedAt,
           end: assignment.unassignedAt ?? kill.killedAt,
           windowStart: trackingWindowStartTime,
@@ -1336,10 +1345,10 @@ export class EventKillService {
 
     const respawnDurationSeconds = Math.max(
       0,
-      this.getTrackingWindowDurationSeconds(
-        kill.killedAt,
-        kill.minSpawnTimeAtKill,
-      ),
+      getTrackingWindowDurationSeconds({
+        killedAt: kill.killedAt,
+        minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+      }),
     );
     const windowDurationSeconds = Math.max(
       0,
@@ -1408,10 +1417,10 @@ export class EventKillService {
         ...kills.map((kill) =>
           (
             windowStartByKillId.get(kill.id) ??
-            this.getTrackingWindowStartTime(
-              kill.killedAt,
-              kill.minSpawnTimeAtKill,
-            )
+            getTrackingWindowStartTime({
+              killedAt: kill.killedAt,
+              minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+            })
           ).getTime(),
         ),
       ),
@@ -1472,7 +1481,10 @@ export class EventKillService {
     for (const kill of kills) {
       const overlapWindowStartTime =
         windowStartByKillId.get(kill.id) ??
-        this.getTrackingWindowStartTime(kill.killedAt, kill.minSpawnTimeAtKill);
+        getTrackingWindowStartTime({
+          killedAt: kill.killedAt,
+          minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+        });
 
       for (const point of kill.points) {
         const pointAssignments =
@@ -1482,7 +1494,7 @@ export class EventKillService {
 
         const mapData = pointAssignments
           .map((assignment) => {
-            const clippedAssignmentInterval = this.clipIntervalToWindow({
+            const clippedAssignmentInterval = clipIntervalToWindow({
               start: assignment.assignedAt,
               end: assignment.unassignedAt ?? kill.killedAt,
               windowStart: overlapWindowStartTime,
@@ -1701,81 +1713,6 @@ export class EventKillService {
     return results;
   }
 
-  private calculateTrackingDurationSeconds(
-    intervals: Array<{ start: Date; end: Date }>,
-  ): number {
-    if (intervals.length === 0) {
-      return 0;
-    }
-
-    const sortedIntervals = [...intervals].sort(
-      (a, b) => a.start.getTime() - b.start.getTime(),
-    );
-
-    let totalMs = 0;
-    let currentStartMs = sortedIntervals[0].start.getTime();
-    let currentEndMs = sortedIntervals[0].end.getTime();
-
-    for (let i = 1; i < sortedIntervals.length; i++) {
-      const nextStartMs = sortedIntervals[i].start.getTime();
-      const nextEndMs = sortedIntervals[i].end.getTime();
-
-      if (nextStartMs <= currentEndMs) {
-        currentEndMs = Math.max(currentEndMs, nextEndMs);
-        continue;
-      }
-
-      totalMs += currentEndMs - currentStartMs;
-      currentStartMs = nextStartMs;
-      currentEndMs = nextEndMs;
-    }
-
-    totalMs += currentEndMs - currentStartMs;
-    return Math.round(totalMs / 1000);
-  }
-
-  private clipIntervalToWindow(params: {
-    start: Date;
-    end: Date;
-    windowStart: Date;
-    windowEnd: Date;
-  }): { start: Date; end: Date } | null {
-    const clippedStart =
-      params.start > params.windowStart ? params.start : params.windowStart;
-    const clippedEnd =
-      params.end < params.windowEnd ? params.end : params.windowEnd;
-
-    if (clippedEnd < clippedStart) {
-      return null;
-    }
-
-    return { start: clippedStart, end: clippedEnd };
-  }
-
-  private getTrackingWindowStartTime(
-    killedAt: Date,
-    minSpawnTimeAtKill: Date,
-  ): Date {
-    return minSpawnTimeAtKill > killedAt ? killedAt : minSpawnTimeAtKill;
-  }
-
-  private getTrackingWindowDurationSeconds(
-    killedAt: Date,
-    minSpawnTimeAtKill: Date,
-  ): number {
-    const trackingWindowStartTime = this.getTrackingWindowStartTime(
-      killedAt,
-      minSpawnTimeAtKill,
-    );
-
-    return Math.max(
-      0,
-      Math.floor(
-        (killedAt.getTime() - trackingWindowStartTime.getTime()) / 1000,
-      ),
-    );
-  }
-
   private getSpawnWindowDurationSeconds(
     minSpawnTimeAtKill: Date,
     maxSpawnTimeAtKill: Date,
@@ -1794,10 +1731,10 @@ export class EventKillService {
       trackingDurationPercentage: number | null;
     },
   >(point: T, killedAt: Date, minSpawnTimeAtKill: Date): T {
-    const windowDurationSeconds = this.getTrackingWindowDurationSeconds(
+    const windowDurationSeconds = getTrackingWindowDurationSeconds({
       killedAt,
       minSpawnTimeAtKill,
-    );
+    });
     const rawTrackingDurationSeconds = point.trackingDurationSeconds;
 
     if (

@@ -21,7 +21,7 @@ import {
   type Warrior,
   type BattleAnalysis,
   type ParsedMove,
-} from "./battle-processor";
+} from "@lootlog/battle-processor";
 import type {
   BattleWithRelations,
   CreateBattleParams,

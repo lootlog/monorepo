@@ -1,4 +1,4 @@
-import { BattleProcessor } from "./battle-processor";
+import { BattleProcessor } from "@lootlog/battle-processor";
 import type { CreateBattleDto } from "./dto/create-battle.dto";
 
 describe("BattleProcessor", () => {

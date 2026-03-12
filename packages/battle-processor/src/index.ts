@@ -1,11 +1,38 @@
-type BattlePayload = {
+export type BattleWarriorSnapshot = {
+  originalId: number;
+  name: string;
+  lvl: number;
+  prof: string;
+  icon: string;
+  team: number;
+};
+
+export type BattleEvent = {
+  ev?: number;
+  f?: {
+    m?: string[];
+    w?: Record<string, BattleWarriorSnapshot>;
+  };
+  match_summary?: {
+    difficulty_rank: number;
+    result: number;
+    rating_delta: number;
+    opponent_lvl: number;
+    opponent_oplvl: number;
+    opponent_rating: number;
+    rating: number;
+    status: number;
+  };
+};
+
+export type BattlePayload = {
   accountId: string;
   characterId: string;
   world: string;
-  events: any[];
+  events: BattleEvent[];
 };
 
-type Warrior = {
+export type Warrior = {
   turns: number;
   turnsLost: number;
   steps: number;
@@ -90,7 +117,7 @@ type Warrior = {
   ph: number;
 };
 
-type ParsedMove = {
+export type ParsedMove = {
   attackerId: string | null;
   defenderId: string | null;
   attackerHpPercentage: number | null;
@@ -98,14 +125,14 @@ type ParsedMove = {
   actions: { actionType: string; param: string }[];
 };
 
-type StatisticEntry = {
+export type StatisticEntry = {
   warriorId: string;
   name: string;
   value: number;
   formattedValue?: string;
 };
 
-type BattleStatistics = {
+export type BattleStatistics = {
   topDamageDealer: StatisticEntry | null;
   topTank: StatisticEntry | null;
   bestEfficiency: StatisticEntry | null;
@@ -118,7 +145,18 @@ type BattleStatistics = {
   untouchable: StatisticEntry | null;
 };
 
-type BattleAnalysis = {
+export type MatchmakingInfo = {
+  difficultyRank: number;
+  result: number;
+  ratingDelta: number;
+  opponentLvl: number;
+  opponentOplvl: number;
+  opponentRating: number;
+  rating: number;
+  status: number;
+};
+
+export type BattleAnalysis = {
   duration: number;
   warriors: Warrior[];
   parsedMoves: ParsedMove[];
@@ -131,6 +169,7 @@ type BattleAnalysis = {
   };
   type: string;
   statistics: BattleStatistics;
+  matchmaking?: MatchmakingInfo;
 };
 
 export class BattleProcessor {
@@ -151,6 +190,7 @@ export class BattleProcessor {
     const duration = this.calculateBattleDuration(battleData.events);
     this.initializeBattleWarriors(battleData.events);
     this.determineBattleType();
+    const matchmakingInfo = this.getMatchmakingInfo(battleData.events);
 
     const moves = this.extractAndParseMoves(battleData.events);
     this.calculateBattleStats(moves, { characterId: battleData.characterId });
@@ -166,10 +206,11 @@ export class BattleProcessor {
       outcome: this.battleOutcome,
       type: this.battleType,
       statistics,
+      matchmaking: matchmakingInfo,
     };
   }
 
-  public extractAndParseMoves(events: any[]): ParsedMove[] {
+  public extractAndParseMoves(events: BattlePayload["events"]): ParsedMove[] {
     const allMoves = events.flatMap((event) => event.f?.m || []);
 
     return allMoves.map((move) => {
@@ -307,6 +348,7 @@ export class BattleProcessor {
         if (warrior) warrior.ph = +param;
       }
 
+      // Obsługa utraty tury (txt nie ma attackerId/defenderId)
       if (actionType === "txt") {
         if (param.includes("utrata tury")) {
           const warriorName = param.split(" - ")[0]?.trim();
@@ -602,25 +644,18 @@ export class BattleProcessor {
     if (defender) defender.reflectedDamage += damage;
   }
 
-  private initializeBattleWarriors(events: any[]): void {
+  private initializeBattleWarriors(events: BattlePayload["events"]): void {
     for (const event of events) {
       if (!event.f?.w) continue;
       for (const [id, warriorData] of Object.entries(event.f.w)) {
         if (!this.warriors.has(id)) {
-          this.warriors.set(id, this.createWarrior(warriorData as any));
+          this.warriors.set(id, this.createWarrior(warriorData));
         }
       }
     }
   }
 
-  private createWarrior(data: {
-    originalId: number;
-    name: string;
-    lvl: number;
-    prof: string;
-    icon: string;
-    team: number;
-  }): Warrior {
+  private createWarrior(data: BattleWarriorSnapshot): Warrior {
     return {
       turns: 0,
       turnsLost: 0,
@@ -707,7 +742,7 @@ export class BattleProcessor {
     };
   }
 
-  private calculateBattleDuration(events: any[]): number {
+  private calculateBattleDuration(events: BattlePayload["events"]): number {
     if (!events.length) {
       throw new Error("No events found in battle data");
     }
@@ -734,6 +769,28 @@ export class BattleProcessor {
     const team2Count = warriors.filter((w) => w.team === 2).length;
 
     this.battleType = `${team1Count}v${team2Count}`;
+  }
+
+  private getMatchmakingInfo(
+    events: BattlePayload["events"],
+  ): MatchmakingInfo | undefined {
+    for (const event of events) {
+      if (event.match_summary) {
+        const summary = event.match_summary;
+        return {
+          difficultyRank: summary.difficulty_rank,
+          result: summary.result,
+          ratingDelta: summary.rating_delta,
+          opponentLvl: summary.opponent_lvl,
+          opponentOplvl: summary.opponent_oplvl,
+          opponentRating: summary.opponent_rating,
+          rating: summary.rating,
+          status: summary.status,
+        };
+      }
+    }
+
+    return undefined;
   }
 
   private determineOutcomeTeams() {
@@ -828,6 +885,7 @@ export class BattleProcessor {
           winningTeam = taken1 < taken2 ? t1 : t2;
           losingTeam = winningTeam === t1 ? t2 : t1;
         } else {
+          // Deterministic default
           winningTeam = t1;
           losingTeam = t2;
         }

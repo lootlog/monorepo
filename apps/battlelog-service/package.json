@@ -26,6 +26,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1004.0",
     "@axiomhq/winston": "^1.4.0",
+    "@lootlog/battle-processor": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@nestjs/common": "^11.1.16",
@@ -70,6 +71,7 @@
       "ts"
     ],
     "moduleNameMapper": {
+      "^@lootlog/battle-processor$": "<rootDir>/../../../packages/battle-processor/src/index.ts",
       "^generated/client$": "<rootDir>/../generated/client",
       "^src/(.*)$": "<rootDir>/$1"
     },

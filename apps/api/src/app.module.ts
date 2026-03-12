@@ -2,6 +2,8 @@ import { Module, type MiddlewareConsumer } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { WinstonModule, type WinstonModuleOptions } from "nest-winston";
 import { BullModule } from "@nestjs/bullmq";
+import type { RedisConfig } from "@lootlog/nest-shared";
+import { LoggerMiddleware } from "@lootlog/nest-shared";
 import { APP_CONFIG } from "src/config/app.config";
 import { UsersModule } from "./users/users.module";
 import { TimersModule } from "./timers/timers.module";
@@ -21,14 +23,12 @@ import { RedisModule } from "src/lib/redis/redis.module";
 import { NotificationsModule } from "src/notifications/notifications.module";
 import { DiscordModule } from "./discord/discord.module";
 import { AuthModule } from "./auth/auth.module";
-import { LoggerMiddleware } from "src/shared/middleware/logger.middleware";
 import { ReservationsModule } from "./reservations/reservations.module";
 import { SoundSettingsModule } from "src/sound-settings/sound-settings.module";
 import { EventsModule } from "src/events/events.module";
 import { MapsModule } from "src/maps/maps.module";
 import { MapTemplatesModule } from "src/map-templates/map-templates.module";
 import { KillsModule } from "src/kills/kills.module";
-import type { RedisConfig } from "@lootlog/nest-shared";
 
 @Module({
   imports: [

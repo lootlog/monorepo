@@ -29,5 +29,7 @@
     "oxfmt",
     "turbo",
     "tsx"
-  ]
+  ],
+  "vite": false,
+  "vitest": false
 }
