@@ -31,6 +31,7 @@ import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
 } from "../utils/scoring-rules.util";
+import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
 
 const EVENT_KILL_LOCK_TTL_SECONDS = 30;
 const EVENT_KILL_DEDUP_TTL_SECONDS = 120;
@@ -900,8 +901,12 @@ export class EventKillService {
 
     const hasMore = kills.length > limit;
     const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const mapDataByKillMember =
-      await this.buildKillPointMapDataByKillMember(paginatedKills);
+    const windowStartByKillId =
+      await this.getEffectiveWindowStartByKillId(paginatedKills);
+    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
+      paginatedKills,
+      windowStartByKillId,
+    );
     const data = paginatedKills.map((kill) => ({
       ...kill,
       points: kill.points.map((point) => ({
@@ -970,8 +975,12 @@ export class EventKillService {
 
     const hasMore = kills.length > limit;
     const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const mapDataByKillMember =
-      await this.buildKillPointMapDataByKillMember(paginatedKills);
+    const windowStartByKillId =
+      await this.getEffectiveWindowStartByKillId(paginatedKills);
+    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
+      paginatedKills,
+      windowStartByKillId,
+    );
     const data = paginatedKills.map((kill) => ({
       ...kill,
       points: kill.points.map((point) => ({
@@ -1067,8 +1076,12 @@ export class EventKillService {
 
     const hasMore = kills.length > limit;
     const paginatedKills = hasMore ? kills.slice(0, limit) : kills;
-    const mapDataByKillMember =
-      await this.buildKillPointMapDataByKillMember(paginatedKills);
+    const windowStartByKillId =
+      await this.getEffectiveWindowStartByKillId(paginatedKills);
+    const mapDataByKillMember = await this.buildKillPointMapDataByKillMember(
+      paginatedKills,
+      windowStartByKillId,
+    );
     const data = paginatedKills.map(({ points, ...kill }) => {
       const latestPoint = points[0] ?? null;
       const normalizedMemberPoint = latestPoint
@@ -1164,6 +1177,12 @@ export class EventKillService {
       where: { heroNpcId: heroId },
       select: { id: true, mapName: true },
     });
+    const windowStartByKillId = await this.getEffectiveWindowStartByKillId([
+      kill,
+    ]);
+    const overlapWindowStartTime =
+      windowStartByKillId.get(kill.id) ??
+      this.getTrackingWindowStartTime(kill.killedAt, kill.minSpawnTimeAtKill);
 
     const mapIdToName = new Map(heroMaps.map((m) => [m.id, m.mapName]));
     const mapIds = heroMaps.map((m) => m.id);
@@ -1187,7 +1206,7 @@ export class EventKillService {
         assignedAt: { lte: kill.killedAt },
         OR: [
           { unassignedAt: null },
-          { unassignedAt: { gte: kill.minSpawnTimeAtKill } },
+          { unassignedAt: { gte: overlapWindowStartTime } },
         ],
       },
       select: {
@@ -1235,7 +1254,7 @@ export class EventKillService {
       await this.pointsService.getMembersPresenceStatsPerMap(
         mapIds,
         fallbackMemberIds,
-        kill.minSpawnTimeAtKill,
+        overlapWindowStartTime,
       );
     const fallbackPresenceByMemberMap = new Map<
       string,
@@ -1362,6 +1381,7 @@ export class EventKillService {
         mapPresenceData?: Prisma.JsonValue | null;
       }>;
     }>,
+    windowStartByKillId: Map<string, Date>,
   ): Promise<Map<string, KillPointMapDataEntry[]>> {
     const mapDataByKillMember = new Map<string, KillPointMapDataEntry[]>();
 
@@ -1386,9 +1406,12 @@ export class EventKillService {
     const minTrackingWindowStart = new Date(
       Math.min(
         ...kills.map((kill) =>
-          this.getTrackingWindowStartTime(
-            kill.killedAt,
-            kill.minSpawnTimeAtKill,
+          (
+            windowStartByKillId.get(kill.id) ??
+            this.getTrackingWindowStartTime(
+              kill.killedAt,
+              kill.minSpawnTimeAtKill,
+            )
           ).getTime(),
         ),
       ),
@@ -1447,10 +1470,9 @@ export class EventKillService {
     }
 
     for (const kill of kills) {
-      const trackingWindowStartTime = this.getTrackingWindowStartTime(
-        kill.killedAt,
-        kill.minSpawnTimeAtKill,
-      );
+      const overlapWindowStartTime =
+        windowStartByKillId.get(kill.id) ??
+        this.getTrackingWindowStartTime(kill.killedAt, kill.minSpawnTimeAtKill);
 
       for (const point of kill.points) {
         const pointAssignments =
@@ -1463,7 +1485,7 @@ export class EventKillService {
             const clippedAssignmentInterval = this.clipIntervalToWindow({
               start: assignment.assignedAt,
               end: assignment.unassignedAt ?? kill.killedAt,
-              windowStart: trackingWindowStartTime,
+              windowStart: overlapWindowStartTime,
               windowEnd: kill.killedAt,
             });
             if (!clippedAssignmentInterval) {
@@ -1494,6 +1516,53 @@ export class EventKillService {
     }
 
     return mapDataByKillMember;
+  }
+
+  private async getEffectiveWindowStartByKillId(
+    kills: Array<{
+      id: string;
+      killedAt: Date;
+      minSpawnTimeAtKill: Date;
+    }>,
+  ): Promise<Map<string, Date>> {
+    const windowStartByKillId = new Map<string, Date>();
+
+    if (kills.length === 0) {
+      return windowStartByKillId;
+    }
+
+    const windowSummaries =
+      await this.prisma.eventRespawnWindowSummary.findMany({
+        where: {
+          killId: {
+            in: kills.map((kill) => kill.id),
+          },
+        },
+        select: {
+          killId: true,
+          windowOpenedAt: true,
+        },
+      });
+    const windowOpenedAtByKillId = new Map(
+      windowSummaries.flatMap((summary) =>
+        summary.killId
+          ? [[summary.killId, summary.windowOpenedAt] as const]
+          : [],
+      ),
+    );
+
+    for (const kill of kills) {
+      windowStartByKillId.set(
+        kill.id,
+        resolveEventWindowStart({
+          killedAt: kill.killedAt,
+          minSpawnTimeAtKill: kill.minSpawnTimeAtKill,
+          windowOpenedAt: windowOpenedAtByKillId.get(kill.id),
+        }),
+      );
+    }
+
+    return windowStartByKillId;
   }
 
   private getPresenceByMapId(

@@ -30,6 +30,9 @@ describe("EventPointsService", () => {
     eventMapAssignmentHistory: {
       findMany: jest.fn(),
     },
+    eventRespawnWindowSummary: {
+      findMany: jest.fn(),
+    },
     eventPresenceLog: {
       findMany: jest.fn(),
     },
@@ -46,6 +49,7 @@ describe("EventPointsService", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -300,6 +304,79 @@ describe("EventPointsService", () => {
   });
 
   describe("recalculateEventPoints", () => {
+    it("uses summary windowOpenedAt when rebuilding assignment overlap for recalculation", async () => {
+      const eventId = "event-1";
+      const killId = "kill-1";
+      const killTime = new Date("2026-01-15T05:00:00.000Z");
+      const minSpawn = new Date("2026-01-15T03:00:00.000Z");
+      const windowOpenedAt = new Date("2026-01-15T02:00:00.000Z");
+
+      mockPrismaService.eventKillPoint.findMany.mockResolvedValueOnce([
+        {
+          id: "kp-1",
+          killId,
+          memberId: 123,
+          trackingDurationSeconds: 4032,
+          timeOnMapSeconds: 900,
+          afkPercentage: 0,
+          wasPresent: true,
+          kill: {
+            id: killId,
+            killedAt: killTime,
+            minSpawnTimeAtKill: minSpawn,
+            maxSpawnTimeAtKill: new Date("2026-01-15T06:00:00.000Z"),
+            heroNpc: {
+              id: "hero-1",
+              maps: [{ id: "map-1" }],
+            },
+          },
+        },
+      ]);
+      mockPrismaService.eventRespawnWindowSummary.findMany.mockResolvedValue([
+        {
+          killId,
+          windowOpenedAt,
+        },
+      ]);
+      mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
+        [],
+      );
+      const transactionMock = {
+        eventKillPoint: {
+          update: jest.fn().mockResolvedValue({}),
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+        eventRanking: {
+          deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+          create: jest.fn().mockResolvedValue({}),
+        },
+      };
+      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+        callback(transactionMock),
+      );
+      mockPrismaService.event.findUnique.mockResolvedValue({
+        id: eventId,
+        guildId: "guild-1",
+        scoringMode: "ADVANCED",
+        scoringRules: null,
+      });
+
+      await service.recalculateEventPoints(eventId, 1);
+
+      expect(
+        mockPrismaService.eventMapAssignmentHistory.findMany,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { unassignedAt: null },
+              { unassignedAt: { gte: windowOpenedAt } },
+            ],
+          }),
+        }),
+      );
+    });
+
     it("recalculates kill points with bonus breakdown and updates ranking", async () => {
       const eventId = "event-1";
       const killId = "kill-1";

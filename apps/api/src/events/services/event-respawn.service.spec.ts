@@ -212,8 +212,28 @@ describe("EventRespawnService", () => {
 
       await service.closeRespawnWindow(guildId, eventId, heroId, {});
 
-      // recordHeroKill handles assignment clearing internally
-      // closeRespawnWindow emits map status updates for UI
+      expect(mockEventEmitter.emitMapStatusUpdate).not.toHaveBeenCalled();
+    });
+
+    it("should emit map status update when auto-closing a window", async () => {
+      mockPrismaService.eventHeroNpc.findFirst.mockResolvedValue(mockHero);
+      mockPrismaService.timer.findUnique.mockResolvedValue(mockTimer);
+      mockPrismaService.eventMap.update.mockResolvedValue({});
+      mockPrismaService.eventMapAssignmentHistory.updateMany.mockResolvedValue({
+        count: 1,
+      });
+      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+        callback(mockPrismaService),
+      );
+      mockPrismaService.timer.delete.mockResolvedValue({});
+      mockQueue.getJobs.mockResolvedValue([]);
+      mockTrackingService.closeAllGapsForHero.mockResolvedValue(undefined);
+      mockSummaryService.createWindowSummary.mockResolvedValue(undefined);
+
+      await service.closeRespawnWindow(guildId, eventId, heroId, {
+        isAutoClose: true,
+      });
+
       expect(mockEventEmitter.emitMapStatusUpdate).toHaveBeenCalledWith(
         guildId,
         eventId,
