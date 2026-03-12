@@ -85,6 +85,7 @@
   },
   "actionsCard": {
     "title": "Akcje",
+    "subtitle": "Zarządzanie",
     "description": "Najważniejsze operacje dla eventu „{{name}}”."
   },
   "confirmation": {
@@ -99,6 +100,7 @@
     "error": "Nie udało się potwierdzić udziału (limit czasu mógł minąć)"
   },
   "ranking": {
+    "subtitle": "Statystyki",
     "title": "Ranking Eventowy",
     "points": "Punkty",
     "kills": "Bicia",
@@ -229,6 +231,7 @@
     "empty": "Brak herosów"
   },
   "loots": {
+    "subtitle": "Kolekcja",
     "title": "Ostatnie łupy",
     "noLoots": "Brak łupów z herosów eventowych",
     "showAll": "Pokaż wszystkie łupy"
@@ -242,6 +245,7 @@
   },
   "kills": {
     "title": "Historia bić",
+    "recentSubtitle": "Aktywność",
     "recentTitle": "Ostatnie bicia",
     "allKillsTitle": "Historia bić eventu",
     "memberHistoryTitle": "Bicia gracza",
@@ -348,6 +352,7 @@
     "lootCount": "Dopasowanych łupów",
     "detectedBy": "Wykryto przez",
     "participants": "Uczestnicy",
+    "participantsSubtitle": "Szczegóły bicia",
     "matchingLoots": "Dopasowane łupy",
     "noLoots": "Brak łupów pasujących do tego bicia",
     "respawnTime": "Czas respawnu",
@@ -360,8 +365,9 @@
     "respawnMaxLabel": "Max. respawn",
     "killTimeLabel": "Moment zabicia",
     "multipliers": {
+      "subtitle": "Punktacja",
       "title": "Zasady punktacji",
-      "simpleMode": "Tryb prosty: 1 punkt za eligible gracza.",
+      "simpleMode": "Tryb prosty: 1 punkt per bicie.",
       "baseSection": "Podstawa",
       "bonusesSection": "Bonusy",
       "leaveGrace": "Dla progu 75%: punkt 1.0 tylko jeśli kill był do {{minutes}} min od zejścia",
@@ -373,6 +379,7 @@
       "minTrackingForBonuses": "Min. pokrycie dla bonusów: {{percentage}}%"
     },
     "mapCoverage": {
+      "subtitle": "Pokrycie",
       "title": "Pokrycie map",
       "covered": "Pokryte",
       "uncovered": "Nieobstawione",
@@ -380,6 +387,14 @@
       "assignedMembers": "Przypisani członkowie",
       "gapDetails": "Szczegóły przerw",
       "fullCoverage": "Pełne pokrycie - brak przerw"
+    },
+    "coverageGaps": {
+      "subtitle": "Analiza",
+      "title": "Okresy nieobstawienia",
+      "unassigned": "Brak przypisania",
+      "uncovered": "Brak obecności",
+      "details": "Szczegóły",
+      "more": "więcej"
     }
   },
   "settings": {
@@ -412,9 +427,9 @@
     "mode": "Tryb punktacji",
     "chooseMode": "Krok 1/2: wybierz tryb punktacji",
     "configureEvent": "Krok 2/2: skonfiguruj event",
-    "modeHint": "Tryb prosty daje 1 pkt za eligible gracza. Tryb zaawansowany pozwala budować reguły z klocków.",
+    "modeHint": "Tryb prosty daje 1 pkt za każdego przypisanego kiedykolwiek do mapy gracza. Tryb zaawansowany pozwala budować reguły z klocków.",
     "modeSimpleTitle": "Tryb prosty",
-    "modeSimpleDescription": "Każdy eligible gracz otrzymuje 1 pkt.",
+    "modeSimpleDescription": "Każdy przypisany kiedykolwiek do mapy gracz otrzymuje 1 pkt.",
     "modeAdvancedTitle": "Tryb zaawansowany",
     "modeAdvancedDescription": "Reguły JEŻELI/WTEDY z akcjami punktowymi budowanymi z klocków.",
     "rules": "Reguły JEŻELI + akcja",
@@ -475,7 +490,7 @@
       "cap": "Maksymalnie {{points}} pkt za kill",
       "minTrackingForBonuses": "Min. pokrycie dla bonusów: {{percentage}}%",
       "timezone": "Strefa: {{timezone}}",
-      "simple": "Tryb prosty: każdy eligible gracz otrzymuje 1 pkt."
+      "simple": "Tryb prosty: każdy kiedykolwiek przypisany do mapy gracz otrzymuje 1 pkt."
     },
     "rule": {
       "base75": "Podstawa: >= 75% czasu respu = 1.0 pkt",

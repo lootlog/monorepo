@@ -111,11 +111,20 @@ export const EventHeroLoots = ({
 
   if (isLoading) {
     return (
-      <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
-        <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-          <Package className="w-4 h-4" />
-          {t("events.loots.title")}
-        </h2>
+      <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+            <Package className="size-4 text-primary" />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {t("events.loots.subtitle")}
+            </p>
+            <h2 className="text-base font-semibold">
+              {t("events.loots.title")}
+            </h2>
+          </div>
+        </div>
         <div className="flex items-center justify-center h-32">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
         </div>
@@ -124,11 +133,18 @@ export const EventHeroLoots = ({
   }
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-      <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-        <Package className="w-4 h-4" />
-        {t("events.loots.title")}
-      </h2>
+    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+          <Package className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("events.loots.subtitle")}
+          </p>
+          <h2 className="text-base font-semibold">{t("events.loots.title")}</h2>
+        </div>
+      </div>
 
       {showHeroTabs && heroNpcs && heroNpcs.length > 1 && (
         <Tabs

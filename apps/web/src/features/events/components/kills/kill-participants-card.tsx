@@ -465,11 +465,20 @@ export const KillParticipantsCard = ({
   };
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-      <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-        <Users className="w-4 h-4" />
-        {t("events.killDetail.participants")}
-      </h3>
+    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+          <Users className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("events.killDetail.participantsSubtitle")}
+          </p>
+          <h3 className="text-base font-semibold">
+            {t("events.killDetail.participants")}
+          </h3>
+        </div>
+      </div>
 
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">

@@ -16,6 +16,7 @@ describe("EventPointsService", () => {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
+      createMany: jest.fn(),
       update: jest.fn(),
       deleteMany: jest.fn(),
     },
@@ -341,18 +342,11 @@ describe("EventPointsService", () => {
       mockPrismaService.eventMapAssignmentHistory.findMany.mockResolvedValue(
         [],
       );
-      const transactionMock = {
-        eventKillPoint: {
-          update: jest.fn().mockResolvedValue({}),
-          findMany: jest.fn().mockResolvedValue([]),
-        },
-        eventRanking: {
-          deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-          create: jest.fn().mockResolvedValue({}),
-        },
-      };
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
-        callback(transactionMock),
+      mockPrismaService.eventKillPoint.update.mockResolvedValue({});
+      mockPrismaService.eventRanking.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrismaService.eventRanking.createMany.mockResolvedValue({ count: 0 });
+      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+        Promise.all(operations),
       );
       mockPrismaService.event.findUnique.mockResolvedValue({
         id: eventId,
@@ -397,6 +391,7 @@ describe("EventPointsService", () => {
             minSpawnTimeAtKill: minSpawn,
             heroNpc: {
               id: "hero-1",
+              npcName: "Test Hero",
               maps: [{ id: "map-1" }],
             },
           },
@@ -412,32 +407,11 @@ describe("EventPointsService", () => {
         },
       ]);
 
-      const txMock = {
-        eventKillPoint: {
-          update: jest.fn().mockResolvedValue({}),
-          findMany: jest.fn().mockResolvedValue([
-            {
-              memberId: 123,
-              points: 1.5,
-              trackingDurationSeconds: 4032,
-              timeOnMapSeconds: 900,
-              afkPercentage: 0,
-              kill: {
-                heroNpc: {
-                  npcName: "Test Hero",
-                },
-              },
-            },
-          ]),
-        },
-        eventRanking: {
-          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-          create: jest.fn().mockResolvedValue({}),
-        },
-      };
-
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
-        callback(txMock),
+      mockPrismaService.eventKillPoint.update.mockResolvedValue({});
+      mockPrismaService.eventRanking.deleteMany.mockResolvedValue({ count: 1 });
+      mockPrismaService.eventRanking.createMany.mockResolvedValue({ count: 1 });
+      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+        Promise.all(operations),
       );
 
       mockPrismaService.event.findUnique.mockResolvedValue({
@@ -449,7 +423,7 @@ describe("EventPointsService", () => {
 
       await service.recalculateEventPoints(eventId, 1);
 
-      expect(txMock.eventKillPoint.update).toHaveBeenCalledWith(
+      expect(mockPrismaService.eventKillPoint.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "kp-1" },
           data: expect.objectContaining({
@@ -471,19 +445,27 @@ describe("EventPointsService", () => {
         }),
       );
 
-      expect(txMock.eventRanking.create).toHaveBeenCalledWith(
+      expect(mockPrismaService.eventRanking.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            eventId,
-            memberId: 123,
-            heroNpcName: "Test Hero",
-            totalPoints: 1.5,
-            totalKills: 1,
-            totalTimeSeconds: 4032,
-          }),
+          data: expect.arrayContaining([
+            expect.objectContaining({
+              eventId,
+              memberId: 123,
+              heroNpcName: "Test Hero",
+              totalPoints: 1.5,
+              totalKills: 1,
+              totalTimeSeconds: 4032,
+            }),
+          ]),
         }),
       );
 
+      expect(mockPrismaService.eventKillPoint.findMany).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(
+        Array.isArray(mockPrismaService.$transaction.mock.calls[0]?.[0]),
+      ).toBe(true);
       expect(mockEventEmitter.emitRankingUpdate).toHaveBeenCalledWith(
         "guild-1",
         eventId,
@@ -510,6 +492,7 @@ describe("EventPointsService", () => {
             minSpawnTimeAtKill: minSpawn,
             heroNpc: {
               id: "hero-1",
+              npcName: "Test Hero",
               maps: [{ id: "map-1" }],
             },
           },
@@ -525,32 +508,11 @@ describe("EventPointsService", () => {
         },
       ]);
 
-      const txMock = {
-        eventKillPoint: {
-          update: jest.fn().mockResolvedValue({}),
-          findMany: jest.fn().mockResolvedValue([
-            {
-              memberId: 123,
-              points: 2,
-              trackingDurationSeconds: 7200,
-              timeOnMapSeconds: 900,
-              afkPercentage: 0,
-              kill: {
-                heroNpc: {
-                  npcName: "Test Hero",
-                },
-              },
-            },
-          ]),
-        },
-        eventRanking: {
-          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-          create: jest.fn().mockResolvedValue({}),
-        },
-      };
-
-      mockPrismaService.$transaction.mockImplementation(async (callback) =>
-        callback(txMock),
+      mockPrismaService.eventKillPoint.update.mockResolvedValue({});
+      mockPrismaService.eventRanking.deleteMany.mockResolvedValue({ count: 1 });
+      mockPrismaService.eventRanking.createMany.mockResolvedValue({ count: 1 });
+      mockPrismaService.$transaction.mockImplementation(async (operations) =>
+        Promise.all(operations),
       );
 
       mockPrismaService.event.findUnique.mockResolvedValue({
@@ -562,7 +524,7 @@ describe("EventPointsService", () => {
 
       await service.recalculateEventPoints(eventId, 1);
 
-      expect(txMock.eventKillPoint.update).toHaveBeenCalledWith(
+      expect(mockPrismaService.eventKillPoint.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "kp-2" },
           data: expect.objectContaining({
@@ -572,11 +534,13 @@ describe("EventPointsService", () => {
         }),
       );
 
-      expect(txMock.eventRanking.create).toHaveBeenCalledWith(
+      expect(mockPrismaService.eventRanking.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
-            totalTimeSeconds: 7200,
-          }),
+          data: expect.arrayContaining([
+            expect.objectContaining({
+              totalTimeSeconds: 7200,
+            }),
+          ]),
         }),
       );
     });
