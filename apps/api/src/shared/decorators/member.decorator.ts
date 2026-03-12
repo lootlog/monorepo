@@ -1,7 +1,5 @@
-import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared";
-import { UnauthorizedException } from "@nestjs/common";
+import { createRequiredUnauthorizedRequestValueDecorator } from "@lootlog/nest-shared";
 
-export const GuildMember = createRequiredRequestValueDecorator({
-  createException: () => new UnauthorizedException(),
-  getValue: (request) => request.member,
-});
+export const GuildMember = createRequiredUnauthorizedRequestValueDecorator(
+  (request) => request.member,
+);
