@@ -12,6 +12,7 @@ import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics
 import { EventRespawnService } from "./services/event-respawn.service";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
+import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
 import { EVENT_HERO_KILL_JOB_NAME } from "./utils/event-hero-kill-job";
 
 describe("EventsService", () => {
@@ -221,6 +222,33 @@ describe("EventsService", () => {
           name: "Test Event",
           world: "tempest",
           guildId,
+        }),
+        include: expect.any(Object),
+      });
+    });
+
+    it("should persist advanced scoring rules on create", async () => {
+      const createDtoWithAdvancedScoring = {
+        name: "Advanced Event",
+        world: "tempest",
+        scoringMode: "ADVANCED" as const,
+        scoringRules: DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+      };
+      mockPrismaService.event.create.mockResolvedValue({
+        id: "event-advanced",
+        ...createDtoWithAdvancedScoring,
+        guildId,
+        startsAt: new Date(Date.now() - 60_000),
+        endsAt: null,
+        createdAt: new Date(Date.now() - 60_000),
+      });
+
+      await service.createEvent(guildId, createDtoWithAdvancedScoring);
+
+      expect(mockPrismaService.event.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          scoringMode: "ADVANCED",
+          scoringRules: DEFAULT_ADVANCED_EVENT_SCORING_RULES,
         }),
         include: expect.any(Object),
       });
@@ -464,6 +492,8 @@ describe("EventsService", () => {
       endsAt: null,
       createdAt: new Date(Date.now() - 120_000),
       basePointsPerKill: 100,
+      scoringMode: "SIMPLE",
+      scoringRules: null,
     };
 
     it("should throw NotFoundException when event not found", async () => {
@@ -520,6 +550,32 @@ describe("EventsService", () => {
         expect.objectContaining({
           data: expect.objectContaining({
             endsAt: newEndsAt,
+          }),
+        }),
+      );
+    });
+
+    it("should persist advanced scoring rules on update", async () => {
+      mockPrismaService.event.findFirst.mockResolvedValue(existingEvent);
+      mockPrismaService.$transaction.mockImplementation(async (callback) =>
+        callback(mockPrismaService),
+      );
+      mockPrismaService.event.update.mockResolvedValue({
+        ...existingEvent,
+        scoringMode: "ADVANCED",
+        scoringRules: DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+      });
+
+      await service.updateEvent(guildId, eventId, {
+        scoringMode: "ADVANCED",
+        scoringRules: DEFAULT_ADVANCED_EVENT_SCORING_RULES,
+      });
+
+      expect(mockPrismaService.event.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            scoringMode: "ADVANCED",
+            scoringRules: DEFAULT_ADVANCED_EVENT_SCORING_RULES,
           }),
         }),
       );

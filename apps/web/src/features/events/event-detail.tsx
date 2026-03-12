@@ -25,6 +25,7 @@ import {
   Plus,
   Clock,
   CalendarDays,
+  BookText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -376,6 +377,16 @@ export const EventDetail = () => {
                   </div>
                 </div>
               </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => setRulesDialogOpen(true)}
+              >
+                <BookText className="size-3.5" />
+                {t("events.rulesDialog.trigger")}
+              </Button>
             </div>
           </Card>
 
@@ -386,7 +397,6 @@ export const EventDetail = () => {
               isActive={isEventActive}
               isUpdatePending={updateEvent.isPending}
               isDeletePending={deleteEvent.isPending}
-              onOpenRules={() => setRulesDialogOpen(true)}
               onEdit={navigateToEventEdit}
               onToggleStatus={openEventStatusDialog}
               onDelete={() => setDeleteDialogOpen(true)}
@@ -469,7 +479,6 @@ export const EventDetail = () => {
                   isActive={isEventActive}
                   isUpdatePending={updateEvent.isPending}
                   isDeletePending={deleteEvent.isPending}
-                  onOpenRules={() => setRulesDialogOpen(true)}
                   onEdit={navigateToEventEdit}
                   onToggleStatus={openEventStatusDialog}
                   onDelete={() => setDeleteDialogOpen(true)}

@@ -1,12 +1,21 @@
 import { Button } from "@lootlog/ui/components/button";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@lootlog/ui/components/select";
 import { Plus, Trash2 } from "lucide-react";
 import {
+  Controller,
   useFieldArray,
   useWatch,
   type Control,
   type UseFormRegister,
+  type UseFormSetValue,
 } from "react-hook-form";
 import type { TFunction } from "i18next";
 import {
@@ -15,6 +24,7 @@ import {
   EVENT_SCORING_CONDITION_TYPES,
   EVENT_SCORING_NUMERIC_FACTORS,
   EVENT_SCORING_NUMERIC_OPERATORS,
+  type EventScoringCondition,
 } from "../../types/scoring-rules";
 import {
   getScoringActionTypeLabel,
@@ -22,6 +32,10 @@ import {
   getScoringFactorLabel,
 } from "../../utils/scoring-rule-labels";
 import type { EventScoringRules } from "../../types/scoring-rules";
+import {
+  createDefaultScoringAction,
+  createDefaultScoringCondition,
+} from "../../utils/scoring-condition-defaults";
 
 type ScoringRulesFormValues = {
   scoringRules: EventScoringRules;
@@ -30,38 +44,33 @@ type ScoringRulesFormValues = {
 interface ScoringRulesEditorProps<TFieldValues extends ScoringRulesFormValues> {
   control: Control<TFieldValues>;
   register: UseFormRegister<TFieldValues>;
+  setValue: UseFormSetValue<TFieldValues>;
   t: TFunction;
 }
 
 const makeRuleId = () =>
   `rule-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-const defaultCondition = () => ({
-  type: "NUMERIC" as const,
-  factor: "trackingDurationPercentage" as const,
-  operator: ">=" as const,
-  value: 0,
-});
+const defaultCondition = () => createDefaultScoringCondition();
 
 const defaultRule = () => ({
   id: makeRuleId(),
   name: "",
   enabled: true,
   conditions: [defaultCondition()],
-  action: {
-    type: "ADD_BONUS" as const,
-    points: 0,
-  },
+  action: createDefaultScoringAction(),
 });
 
 const RuleConditionsEditor = ({
   control,
   register,
+  setValue,
   ruleIndex,
   t,
 }: {
   control: Control<ScoringRulesFormValues>;
   register: UseFormRegister<ScoringRulesFormValues>;
+  setValue: UseFormSetValue<ScoringRulesFormValues>;
   ruleIndex: number;
   t: TFunction;
 }) => {
@@ -77,6 +86,7 @@ const RuleConditionsEditor = ({
           key={field.id}
           control={control}
           register={register}
+          setValue={setValue}
           ruleIndex={ruleIndex}
           conditionIndex={conditionIndex}
           t={t}
@@ -100,6 +110,7 @@ const RuleConditionsEditor = ({
 const RuleConditionRow = ({
   control,
   register,
+  setValue,
   ruleIndex,
   conditionIndex,
   canRemove,
@@ -108,6 +119,7 @@ const RuleConditionRow = ({
 }: {
   control: Control<ScoringRulesFormValues>;
   register: UseFormRegister<ScoringRulesFormValues>;
+  setValue: UseFormSetValue<ScoringRulesFormValues>;
   ruleIndex: number;
   conditionIndex: number;
   canRemove: boolean;
@@ -118,22 +130,47 @@ const RuleConditionRow = ({
     control,
     name: `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.type`,
   });
+  const conditionPath =
+    `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}` as const;
 
   return (
     <div className="rounded-md border p-2 space-y-2">
       <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-        <select
-          {...register(
-            `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.type`,
+        <Controller
+          control={control}
+          name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.type`}
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={(nextConditionType) => {
+                setValue(
+                  conditionPath,
+                  createDefaultScoringCondition(
+                    nextConditionType as EventScoringCondition["type"],
+                  ),
+                  {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  },
+                );
+              }}
+            >
+              <SelectTrigger size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EVENT_SCORING_CONDITION_TYPES.map((conditionTypeOption) => (
+                  <SelectItem
+                    key={conditionTypeOption}
+                    value={conditionTypeOption}
+                  >
+                    {getScoringConditionTypeLabel(conditionTypeOption, t)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
-          className="h-9 rounded-md border bg-background px-2 text-sm"
-        >
-          {EVENT_SCORING_CONDITION_TYPES.map((conditionTypeOption) => (
-            <option key={conditionTypeOption} value={conditionTypeOption}>
-              {getScoringConditionTypeLabel(conditionTypeOption, t)}
-            </option>
-          ))}
-        </select>
+        />
         <Button
           type="button"
           variant="outline"
@@ -148,30 +185,42 @@ const RuleConditionRow = ({
 
       {conditionType === "NUMERIC" && (
         <div className="grid grid-cols-3 gap-2">
-          <select
-            {...register(
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`,
+          <Controller
+            control={control}
+            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_SCORING_NUMERIC_FACTORS.map((factor) => (
+                    <SelectItem key={factor} value={factor}>
+                      {getScoringFactorLabel(factor, t)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {EVENT_SCORING_NUMERIC_FACTORS.map((factor) => (
-              <option key={factor} value={factor}>
-                {getScoringFactorLabel(factor, t)}
-              </option>
-            ))}
-          </select>
-          <select
-            {...register(
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`,
+          />
+          <Controller
+            control={control}
+            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => (
+                    <SelectItem key={operator} value={operator}>
+                      {operator}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => (
-              <option key={operator} value={operator}>
-                {operator}
-              </option>
-            ))}
-          </select>
+          />
           <Input
             type="number"
             step={0.01}
@@ -185,34 +234,46 @@ const RuleConditionRow = ({
 
       {conditionType === "BOOLEAN" && (
         <div className="grid grid-cols-2 gap-2">
-          <select
-            {...register(
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`,
+          <Controller
+            control={control}
+            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.factor`}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_SCORING_BOOLEAN_FACTORS.map((factor) => (
+                    <SelectItem key={factor} value={factor}>
+                      {getScoringFactorLabel(factor, t)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {EVENT_SCORING_BOOLEAN_FACTORS.map((factor) => (
-              <option key={factor} value={factor}>
-                {getScoringFactorLabel(factor, t)}
-              </option>
-            ))}
-          </select>
-          <select
-            {...register(
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`,
-              {
-                setValueAs: (value) => value === "true",
-              },
+          />
+          <Controller
+            control={control}
+            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.value`}
+            render={({ field }) => (
+              <Select
+                value={String(field.value)}
+                onValueChange={(v) => field.onChange(v === "true")}
+              >
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">
+                    {t("events.scoring.booleanValue.true", "tak")}
+                  </SelectItem>
+                  <SelectItem value="false">
+                    {t("events.scoring.booleanValue.false", "nie")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             )}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="true">
-              {t("events.scoring.booleanValue.true", "tak")}
-            </option>
-            <option value="false">
-              {t("events.scoring.booleanValue.false", "nie")}
-            </option>
-          </select>
+          />
         </div>
       )}
 
@@ -247,18 +308,24 @@ const RuleConditionRow = ({
               `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.to`,
             )}
           />
-          <select
-            {...register(
-              `scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`,
+          <Controller
+            control={control}
+            name={`scoringRules.rules.${ruleIndex}.conditions.${conditionIndex}.operator`}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => (
+                    <SelectItem key={operator} value={operator}>
+                      {operator}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {EVENT_SCORING_NUMERIC_OPERATORS.map((operator) => (
-              <option key={operator} value={operator}>
-                {operator}
-              </option>
-            ))}
-          </select>
+          />
           <Input
             type="number"
             min={0}
@@ -300,16 +367,24 @@ const RuleActionEditor = ({
 
   return (
     <div className="space-y-2">
-      <select
-        {...register(`scoringRules.rules.${ruleIndex}.action.type`)}
-        className="h-9 rounded-md border bg-background px-2 text-sm w-full"
-      >
-        {EVENT_SCORING_ACTION_TYPES.map((actionTypeOption) => (
-          <option key={actionTypeOption} value={actionTypeOption}>
-            {getScoringActionTypeLabel(actionTypeOption, t)}
-          </option>
-        ))}
-      </select>
+      <Controller
+        control={control}
+        name={`scoringRules.rules.${ruleIndex}.action.type`}
+        render={({ field }) => (
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger size="sm" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {EVENT_SCORING_ACTION_TYPES.map((actionTypeOption) => (
+                <SelectItem key={actionTypeOption} value={actionTypeOption}>
+                  {getScoringActionTypeLabel(actionTypeOption, t)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      />
 
       {(actionType === "SET_BASE" || actionType === "ADD_BONUS") && (
         <div>
@@ -332,11 +407,14 @@ export const ScoringRulesEditor = <
 >({
   control,
   register,
+  setValue,
   t,
 }: ScoringRulesEditorProps<TFieldValues>) => {
   const scopedControl = control as unknown as Control<ScoringRulesFormValues>;
   const scopedRegister =
     register as unknown as UseFormRegister<ScoringRulesFormValues>;
+  const scopedSetValue =
+    setValue as unknown as UseFormSetValue<ScoringRulesFormValues>;
 
   const { fields, append, remove } = useFieldArray({
     control: scopedControl,
@@ -446,6 +524,7 @@ export const ScoringRulesEditor = <
               <RuleConditionsEditor
                 control={scopedControl}
                 register={scopedRegister}
+                setValue={scopedSetValue}
                 ruleIndex={ruleIndex}
                 t={t}
               />

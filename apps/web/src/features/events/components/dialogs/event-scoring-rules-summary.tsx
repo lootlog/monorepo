@@ -24,12 +24,7 @@ export const EventScoringRulesSummary = ({
   if (scoringMode === "SIMPLE") {
     return (
       <div className="space-y-2 text-sm text-muted-foreground">
-        <p>
-          {t(
-            "events.scoring.summary.simple",
-            "Tryb prosty: każdy eligible gracz otrzymuje 1 pkt.",
-          )}
-        </p>
+        <p>{t("events.scoring.summary.simple")}</p>
       </div>
     );
   }

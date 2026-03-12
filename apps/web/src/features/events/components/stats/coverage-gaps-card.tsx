@@ -33,11 +33,20 @@ export const CoverageGapsCard = ({ gaps, t }: CoverageGapsCardProps) => {
   }
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
-      <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-        <Clock className="w-4 h-4" />
-        {t("events.killDetail.coverageGaps.title", "Okresy nieobstawienia")}
-      </h3>
+    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+          <Clock className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("events.killDetail.coverageGaps.subtitle", "Analiza")}
+          </p>
+          <h3 className="text-base font-semibold">
+            {t("events.killDetail.coverageGaps.title", "Okresy nieobstawienia")}
+          </h3>
+        </div>
+      </div>
 
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
