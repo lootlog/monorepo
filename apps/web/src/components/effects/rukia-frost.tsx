@@ -1,3 +1,4 @@
+import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
@@ -590,38 +591,30 @@ const FloatingSnowflakes = () => {
 // Frozen wrapper for circular elements (like avatars)
 export const FrozenCircle = ({
   children,
-  isHovered,
   isActive,
   size = 48,
 }: {
   children: ReactNode;
-  isHovered: boolean;
   isActive: boolean;
   size?: number;
 }) => {
-  const isFrozen = isHovered || isActive;
-
   return (
     <div className="relative">
       {/* Ice ring */}
-      <motion.div
-        className="absolute inset-0 rounded-xl pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{
-          opacity: isFrozen ? 1 : 0,
-          boxShadow: isFrozen
-            ? "inset 0 0 10px 2px rgba(200, 230, 255, 0.5), 0 0 15px 3px rgba(180, 220, 255, 0.4)"
-            : "none",
-        }}
-        transition={{ duration: 0.3 }}
+      <div
+        className={cn(
+          "absolute inset-0 rounded-xl pointer-events-none opacity-0 transition-[opacity,box-shadow] duration-300 group-hover:opacity-100 group-hover:shadow-[inset_0_0_10px_2px_rgba(200,230,255,0.5),0_0_15px_3px_rgba(180,220,255,0.4)]",
+          isActive &&
+            "opacity-100 shadow-[inset_0_0_10px_2px_rgba(200,230,255,0.5),0_0_15px_3px_rgba(180,220,255,0.4)]",
+        )}
       />
 
       {/* Frost overlay */}
-      <motion.div
-        className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isFrozen ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
+      <div
+        className={cn(
+          "absolute inset-0 rounded-xl pointer-events-none overflow-hidden opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+          isActive && "opacity-100",
+        )}
       >
         <div
           className="absolute inset-0"
@@ -630,7 +623,7 @@ export const FrozenCircle = ({
               "radial-gradient(circle, rgba(220, 240, 255, 0.3) 0%, rgba(200, 230, 255, 0.15) 50%, transparent 70%)",
           }}
         />
-      </motion.div>
+      </div>
 
       {/* Ice crystals around */}
       {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
@@ -639,22 +632,17 @@ export const FrozenCircle = ({
         const x = 50 + Math.cos(rad) * (radius / (size / 100));
         const y = 50 + Math.sin(rad) * (radius / (size / 100));
         return (
-          <motion.div
+          <div
             key={angle}
-            className="absolute pointer-events-none"
+            className={cn(
+              "absolute pointer-events-none opacity-0 scale-75 transition-[opacity,transform] duration-300 group-hover:opacity-80 group-hover:scale-100",
+              isActive && "opacity-80 scale-100",
+            )}
             style={{
               left: `${x}%`,
               top: `${y}%`,
               transform: `translate(-50%, -50%) rotate(${angle}deg)`,
-            }}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{
-              opacity: isFrozen ? 0.8 : 0,
-              scale: isFrozen ? 1 : 0,
-            }}
-            transition={{
-              duration: 0.3,
-              delay: isFrozen ? i * 0.05 : 0,
+              transitionDelay: `${i * 40}ms`,
             }}
           >
             <svg width="8" height="8" viewBox="0 0 8 8">
@@ -666,7 +654,7 @@ export const FrozenCircle = ({
                 }}
               />
             </svg>
-          </motion.div>
+          </div>
         );
       })}
 

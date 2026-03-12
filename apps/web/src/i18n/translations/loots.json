@@ -91,6 +91,14 @@
     "noWorldSelected": "Brak wybranego świata, wybierz go z listy na górze.",
     "empty": "Nie znaleziono żadnych lootów.",
     "loadingMore": "Ładowanie kolejnych lootów...",
-    "end": "To już wszystkie looty"
+    "end": "To już wszystkie looty",
+    "unassignedItems": "Przedmioty bez podziału",
+    "obtainedBy": "Zdobyto przez:"
+  },
+  "details": {
+    "copySuccess": "ID skopiowane",
+    "copyError": "Nie udało się skopiować ID. Spróbuj ponownie.",
+    "showLess": "Pokaż mniej",
+    "showMore": "Pokaż więcej ({{count}})"
   }
 }

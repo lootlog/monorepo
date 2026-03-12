@@ -2,6 +2,7 @@
   "search": "Szukaj...",
   "noResults": "Brak wyników",
   "cancel": "Anuluj",
+  "levelShort": "Lvl {{level}}",
   "stats": {
     "kills": "Statystyki killi",
     "loots": "Statystyki lootów"

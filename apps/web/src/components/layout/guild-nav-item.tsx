@@ -12,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
-import { memo, useState, type FC } from "react";
+import type { FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { FrozenCircle } from "@/components/effects/rukia-frost";
 
@@ -29,7 +29,6 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
   const isActive = guildId === guild.id || guildId === guild.vanityUrl;
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
     if (isDragging) {
@@ -59,20 +58,16 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
-          className="w-full flex items-center justify-center mb-1"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
+        <div className="w-full flex items-center justify-center mb-1">
           <Link
             to={`/${guild.vanityUrl ?? guild.id}` as string}
             draggable={false}
-            className="block"
+            className="group block"
             onClick={handleClick}
             style={{ pointerEvents: isDragging ? "none" : "auto" }}
           >
             {isRukiaTheme ? (
-              <FrozenCircle isHovered={isHovered} isActive={isActive} size={48}>
+              <FrozenCircle isActive={isActive} size={48}>
                 {avatarContent}
               </FrozenCircle>
             ) : (
@@ -88,4 +83,4 @@ const GuildNavItemComponent: FC<GuildNavItemProps> = ({
   );
 };
 
-export const GuildNavItem = memo(GuildNavItemComponent);
+export const GuildNavItem = GuildNavItemComponent;
