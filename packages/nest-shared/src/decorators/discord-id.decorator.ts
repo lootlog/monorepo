@@ -1,8 +1,5 @@
-import { UnauthorizedException } from "@nestjs/common";
+import { createRequiredUnauthorizedRequestValueDecorator } from "./create-required-unauthorized-request-value.decorator";
 
-import { createRequiredRequestValueDecorator } from "./create-required-request-value.decorator";
-
-export const DiscordId = createRequiredRequestValueDecorator({
-  createException: () => new UnauthorizedException(),
-  getValue: (request) => request.discordId,
-});
+export const DiscordId = createRequiredUnauthorizedRequestValueDecorator(
+  (request) => request.discordId,
+);
