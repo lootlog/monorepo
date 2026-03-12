@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { Crown, Medal, Search, Trophy, Users } from "lucide-react";
@@ -115,20 +115,20 @@ export const MemberStatsPage: React.FC = () => {
     setCursor(0);
   };
 
+  const handleMinLvlChange = (value: string) => {
+    setMinLvl(value);
+    setCursor(0);
+  };
+
+  const handleMaxLvlChange = (value: string) => {
+    setMaxLvl(value);
+    setCursor(0);
+  };
+
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setCursor(0);
   };
-
-  // Reset cursor when debounced filter values change
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setCursor(0);
-  }, [debouncedMinLvl, debouncedMaxLvl]);
 
   const handleNextPage = () => {
     if (data?.pagination?.hasNext) {
@@ -251,8 +251,8 @@ export const MemberStatsPage: React.FC = () => {
               maxLvl={settings.maxLvl}
               onWorldChange={handleWorldChange}
               onNpcTypeChange={handleNpcTypeChange}
-              onMinLvlChange={setMinLvl}
-              onMaxLvlChange={setMaxLvl}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
             />
           </div>
 
@@ -270,8 +270,8 @@ export const MemberStatsPage: React.FC = () => {
             <LevelFilters
               minLvl={settings.minLvl}
               maxLvl={settings.maxLvl}
-              onMinLvlChange={setMinLvl}
-              onMaxLvlChange={setMaxLvl}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
               inputClassName="w-[100px]"
             />
             <WorldSwitcher

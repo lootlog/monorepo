@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { GripVertical, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
@@ -29,12 +29,33 @@ export const CategoryItem = ({
   onRemoveStat,
   onRemoveCategory,
 }: CategoryItemProps) => {
+  return (
+    <CategoryItemContent
+      key={`${category.id}:${category.name}`}
+      category={category}
+      allAvailableStats={allAvailableStats}
+      onToggleVisibility={onToggleVisibility}
+      onUpdateName={onUpdateName}
+      onUpdateStatOrder={onUpdateStatOrder}
+      onAddStat={onAddStat}
+      onRemoveStat={onRemoveStat}
+      onRemoveCategory={onRemoveCategory}
+    />
+  );
+};
+
+const CategoryItemContent = ({
+  category,
+  allAvailableStats,
+  onToggleVisibility,
+  onUpdateName,
+  onUpdateStatOrder,
+  onAddStat,
+  onRemoveStat,
+  onRemoveCategory,
+}: CategoryItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localName, setLocalName] = useState(category.name);
-
-  useEffect(() => {
-    setLocalName(category.name);
-  }, [category.name]);
 
   const handleNameBlur = () => {
     if (localName.trim() !== category.name) {

@@ -16,6 +16,7 @@
     "./postcss.config.mjs": "./postcss.config.mjs"
   },
   "scripts": {
+    "doctor": "npx -y react-doctor@latest .",
     "lint": "oxlint ."
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Search } from "lucide-react";
@@ -102,20 +102,20 @@ export const StatsNpcsList: React.FC = () => {
     setCursor(0);
   };
 
+  const handleMinLvlChange = (value: string) => {
+    setMinLvl(value);
+    setCursor(0);
+  };
+
+  const handleMaxLvlChange = (value: string) => {
+    setMaxLvl(value);
+    setCursor(0);
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setCursor(0);
   };
-
-  // Reset cursor when debounced filter values change
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setCursor(0);
-  }, [debouncedMinLvl, debouncedMaxLvl]);
 
   return (
     <div className="h-full flex flex-col">
@@ -146,8 +146,8 @@ export const StatsNpcsList: React.FC = () => {
               maxLvl={settings.maxLvl}
               onWorldChange={handleWorldChange}
               onNpcTypeChange={handleNpcTypeChange}
-              onMinLvlChange={setMinLvl}
-              onMaxLvlChange={setMaxLvl}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
             />
           </div>
 
@@ -165,8 +165,8 @@ export const StatsNpcsList: React.FC = () => {
             <LevelFilters
               minLvl={settings.minLvl}
               maxLvl={settings.maxLvl}
-              onMinLvlChange={setMinLvl}
-              onMaxLvlChange={setMaxLvl}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
             />
             <WorldSwitcher
               value={settings.world}

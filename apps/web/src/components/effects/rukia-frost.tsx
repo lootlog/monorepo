@@ -306,9 +306,9 @@ const FrostMist = () => {
 };
 
 // Ice sparkles that appear and fade randomly
-const IceSparkles = () => {
-  const sparkles = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
+const generateIceSparkles = () =>
+  Array.from({ length: 20 }, (_, index) => ({
+    id: index,
     x: Math.random() * 100,
     y: Math.random() * 100,
     size: 2 + Math.random() * 3,
@@ -316,9 +316,12 @@ const IceSparkles = () => {
     delay: Math.random() * 10,
   }));
 
+const iceSparkleConfigs = generateIceSparkles();
+
+const IceSparkles = () => {
   return (
     <>
-      {sparkles.map((sparkle) => (
+      {iceSparkleConfigs.map((sparkle) => (
         <motion.div
           key={sparkle.id}
           className="absolute pointer-events-none rounded-full"
@@ -416,6 +419,7 @@ const FallingSnowflake = ({
   delay,
   windStrength,
   rotationSpeed,
+  rotateDirection,
   opacity,
   type,
 }: {
@@ -425,11 +429,10 @@ const FallingSnowflake = ({
   delay: number;
   windStrength: number;
   rotationSpeed: number;
+  rotateDirection: number;
   opacity: number;
   type: "simple" | "detailed" | "dot";
 }) => {
-  const rotateDirection = Math.random() > 0.5 ? 360 : -360;
-
   return (
     <motion.div
       className="absolute pointer-events-none"
@@ -555,6 +558,7 @@ const generateSnowflakes = () => {
       delay: Math.random() * 20,
       windStrength: 0.5 + Math.random() * 1.5,
       rotationSpeed: 15 + Math.random() * 25,
+      rotateDirection: Math.random() > 0.5 ? 360 : -360,
       opacity: isTiny
         ? 0.15 + Math.random() * 0.15
         : isLarge

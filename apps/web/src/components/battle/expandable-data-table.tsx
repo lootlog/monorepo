@@ -71,33 +71,31 @@ export function ExpandableDataTable<TData, TValue>({
 
                   return (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <div
-                          className={cn(
-                            "flex items-center gap-2",
-                            canSort &&
-                              "cursor-pointer select-none hover:bg-gray-400/10 p-2 -m-2 rounded",
-                          )}
-                          onClick={
-                            canSort
-                              ? header.column.getToggleSortingHandler()
-                              : undefined
-                          }
+                      {header.isPlaceholder ? null : canSort ? (
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-2 cursor-pointer select-none hover:bg-gray-400/10 p-2 -m-2 rounded text-left"
+                          onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
-                          {canSort && (
-                            <span className="ml-auto">
-                              {sortDirection === "asc" ? (
-                                <ArrowUp className="h-4 w-4" />
-                              ) : sortDirection === "desc" ? (
-                                <ArrowDown className="h-4 w-4" />
-                              ) : (
-                                <ArrowUpDown className="h-4 w-4 opacity-50" />
-                              )}
-                            </span>
+                          <span className="ml-auto">
+                            {sortDirection === "asc" ? (
+                              <ArrowUp className="h-4 w-4" />
+                            ) : sortDirection === "desc" ? (
+                              <ArrowDown className="h-4 w-4" />
+                            ) : (
+                              <ArrowUpDown className="h-4 w-4 opacity-50" />
+                            )}
+                          </span>
+                        </button>
+                      ) : (
+                        <div className={cn("flex items-center gap-2")}>
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
                           )}
                         </div>
                       )}

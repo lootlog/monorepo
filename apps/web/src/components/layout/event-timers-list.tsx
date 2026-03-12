@@ -122,6 +122,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   onNavigate,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   const { data: timers } = useEventHeroTimers({
     guildId,
@@ -129,12 +130,19 @@ export const EventTimersList: FC<EventTimersListProps> = ({
     world: event.world,
   });
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (!timers || timers.length === 0) return null;
 
   // Filter out expired timers and sort by closest spawn time
-  const now = Date.now();
   const activeTimers = timers
-    .filter((t) => new Date(t.maxSpawnTime).getTime() > now)
+    .filter((t) => new Date(t.maxSpawnTime).getTime() > currentTimestamp)
     .sort(
       (a, b) =>
         new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime(),
