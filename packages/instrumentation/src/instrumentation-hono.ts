@@ -23,6 +23,7 @@ import {
   TraceIdRatioBasedSampler,
   BatchSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
+import { parseOtlpHeaders } from "./parse-otlp-headers.js";
 
 export interface HonoObservabilityConfig {
   serviceName: string;
@@ -85,12 +86,12 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
 
   const traceExporter = new OTLPTraceExporter({
     url: `${otlpEndpoint}/v1/traces`,
-    headers: parseHeaders(otlpHeaders),
+    headers: parseOtlpHeaders(otlpHeaders),
   });
 
   const metricExporter = new OTLPMetricExporter({
     url: `${otlpEndpoint}/v1/metrics`,
-    headers: parseHeaders(otlpHeaders),
+    headers: parseOtlpHeaders(otlpHeaders),
   });
 
   // For Hono, we don't use auto-instrumentations
@@ -147,14 +148,4 @@ export async function shutdownHonoObservability(): Promise<void> {
   if (!sdkInstance) return;
   await sdkInstance.shutdown();
   sdkInstance = null;
-}
-
-function parseHeaders(headersString: string): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const paramsString = headersString.replace(/,/g, "&");
-  const params = new URLSearchParams(paramsString);
-  params.forEach((value, key) => {
-    headers[key] = value;
-  });
-  return headers;
 }
