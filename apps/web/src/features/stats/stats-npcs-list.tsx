@@ -34,7 +34,7 @@ import { useGuildTopNpcs, type TopNpc } from "./hooks/use-guild-top-npcs";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
-import { StatsNpcsListFiltersMobile } from "./components/stats-npcs-list-filters-mobile";
+import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
 import type { NpcType } from "./hooks/use-guild-kill-stats";
 
 const ITEMS_PER_PAGE = 20;
@@ -139,7 +139,7 @@ export const StatsNpcsList: React.FC = () => {
                 className="pl-8 w-full"
               />
             </div>
-            <StatsNpcsListFiltersMobile
+            <NpcStatsFiltersMobile
               world={settings.world}
               npcType={settings.npcType}
               minLvl={settings.minLvl}

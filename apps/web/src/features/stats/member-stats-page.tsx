@@ -44,7 +44,7 @@ import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import { useMemberColor } from "@/hooks/discord/use-member-color";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
-import { MemberStatsFiltersMobile } from "./components/member-stats-filters-mobile";
+import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
 import type { NpcType } from "./hooks/use-guild-kill-stats";
 
 const ITEMS_PER_PAGE = 20;
@@ -244,7 +244,7 @@ export const MemberStatsPage: React.FC = () => {
                 className="pl-9 w-full"
               />
             </div>
-            <MemberStatsFiltersMobile
+            <NpcStatsFiltersMobile
               world={settings.world}
               npcType={settings.npcType}
               minLvl={settings.minLvl}
