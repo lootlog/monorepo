@@ -2,6 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { getQueueToken } from "@nestjs/bullmq";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
+import { RedisService } from "src/lib/redis/redis.service";
 import { EventsService } from "./events.service";
 import { EventAccessService } from "./services/event-access.service";
 import { EventCatalogService } from "./services/event-catalog.service";
@@ -10,6 +11,7 @@ import { EventTrackingService } from "./services/event-tracking.service";
 import { EventKillService } from "./services/event-kill.service";
 import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
 import { EventRespawnService } from "./services/event-respawn.service";
+import { EventWrappedService } from "./services/event-wrapped.service";
 import { RESPAWN_WINDOW_QUEUE } from "./constants/respawn-queue.constant";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
@@ -100,6 +102,10 @@ describe("EventsService", () => {
     getHeroRespawnConfig: jest.fn(),
   };
 
+  const mockWrappedService = {
+    getWrapped: jest.fn(),
+  };
+
   const mockQueue = {
     getJobs: jest.fn(),
     getJobCounts: jest.fn(),
@@ -111,6 +117,10 @@ describe("EventsService", () => {
   const mockEventHeroKillQueue = {
     add: jest.fn(),
     name: "event-hero-kill",
+  };
+
+  const mockRedisService = {
+    del: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -129,10 +139,12 @@ describe("EventsService", () => {
         EventCatalogService,
         EventQueueDiagnosticsService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: RedisService, useValue: mockRedisService },
         { provide: EventPointsService, useValue: mockPointsService },
         { provide: EventTrackingService, useValue: mockTrackingService },
         { provide: EventKillService, useValue: mockKillService },
         { provide: EventRespawnService, useValue: mockRespawnService },
+        { provide: EventWrappedService, useValue: mockWrappedService },
         { provide: getQueueToken(RESPAWN_WINDOW_QUEUE), useValue: mockQueue },
         {
           provide: getQueueToken(EVENT_HERO_KILL_QUEUE),

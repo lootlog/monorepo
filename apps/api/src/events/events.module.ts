@@ -17,6 +17,7 @@ import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constan
 import { EventHeroKillProcessor } from "./event-hero-kill.processor";
 import { MembersModule } from "src/members/members.module";
 import { GuildsModule } from "src/guilds/guilds.module";
+import { LootsModule } from "src/loots/loots.module";
 import { ConfigKey } from "src/config/config-key.enum";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
@@ -30,11 +31,13 @@ import { EventKillService } from "./services/event-kill.service";
 import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventSummaryService } from "./services/event-summary.service";
+import { EventWrappedService } from "./services/event-wrapped.service";
 
 @Module({
   imports: [
     MembersModule,
     GuildsModule,
+    LootsModule,
     RabbitMQModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
@@ -59,6 +62,7 @@ import { EventSummaryService } from "./services/event-summary.service";
     EventKillService,
     EventRespawnService,
     EventSummaryService,
+    EventWrappedService,
 
     EventsQueueHandler,
     RespawnWindowProcessor,

@@ -6,8 +6,10 @@ import {
   EventHeroNpc,
   EventKillPoint,
   Permission,
+  type Guild,
   type Role,
 } from "generated/client";
+import type { EventWrappedResponseDto } from "./dto/event-wrapped.dto";
 import { EVENT_HERO_KILL_QUEUE } from "./constants/event-hero-kill-queue.constant";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "./constants/scoring-rules.constant";
 import { CreateEventDto } from "./dto/create-event.dto";
@@ -41,6 +43,7 @@ import { EventPointsService } from "./services/event-points.service";
 import { EventQueueDiagnosticsService } from "./services/event-queue-diagnostics.service";
 import { EventRespawnService } from "./services/event-respawn.service";
 import { EventTrackingService } from "./services/event-tracking.service";
+import { EventWrappedService } from "./services/event-wrapped.service";
 
 export type { MapStatus, CloseRespawnWindowOptions, OpenRespawnWindowOptions };
 export type { CheckEventHeroKillParams, KillTimerData };
@@ -55,6 +58,7 @@ export class EventsService {
     private readonly trackingService: EventTrackingService,
     private readonly killService: EventKillService,
     private readonly respawnService: EventRespawnService,
+    private readonly wrappedService: EventWrappedService,
     @InjectQueue(EVENT_HERO_KILL_QUEUE)
     private readonly eventHeroKillQueue: Queue<EventHeroKillJobData>,
   ) {}
@@ -77,6 +81,15 @@ export class EventsService {
 
   async getEventMaps(guildId: string, eventId: string) {
     return this.catalogService.getEventMaps(guildId, eventId);
+  }
+
+  async getWrapped(
+    guild: Guild,
+    eventId: string,
+    permissions: Permission[],
+    roles: Role[],
+  ): Promise<EventWrappedResponseDto> {
+    return this.wrappedService.getWrapped(guild, eventId, permissions, roles);
   }
 
   async updateEvent(guildId: string, eventId: string, data: UpdateEventDto) {

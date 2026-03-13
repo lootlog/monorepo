@@ -43,6 +43,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
   const queryClient = useQueryClient();
   const queryKeyOverview = ["event-overview", guildId, eventId];
   const queryKeyMaps = ["event-maps", guildId, eventId];
+  const queryKeyWrapped = ["event-wrapped", guildId, eventId];
 
   const updateEvent = useMutation({
     mutationFn: async (data: UpdateEventData) => {
@@ -55,6 +56,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
@@ -68,6 +70,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       invalidateKillQueries(queryClient, guildId, eventId);
     },
   });
@@ -83,6 +86,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
     },
   });
 
@@ -97,6 +101,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
@@ -118,6 +123,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
@@ -132,6 +138,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyOverview });
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
       queryClient.invalidateQueries({ queryKey: ["events", guildId] });
     },
   });
@@ -152,6 +159,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
     },
   });
 
@@ -170,6 +178,7 @@ export const useEventMutations = (guildId: string, eventId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeyMaps });
+      queryClient.invalidateQueries({ queryKey: queryKeyWrapped });
     },
   });
 

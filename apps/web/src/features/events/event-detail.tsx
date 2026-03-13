@@ -26,6 +26,7 @@ import {
   Clock,
   CalendarDays,
   BookText,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -34,6 +35,7 @@ import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { EndEventDialog } from "./components/dialogs/end-event-dialog";
 import { ResumeEventDialog } from "./components/dialogs/resume-event-dialog";
 import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
+import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
@@ -108,6 +110,7 @@ export const EventDetail = () => {
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
     null,
   );
@@ -323,6 +326,13 @@ export const EventDetail = () => {
             scoringMode={scoringMode}
             scoringRules={scoringRules}
           />
+          <EventSummaryDialog
+            open={summaryDialogOpen}
+            onOpenChange={setSummaryDialogOpen}
+            guildId={guildId ?? ""}
+            eventId={eventId ?? ""}
+            eventName={event.name}
+          />
         </>
       )}
 
@@ -378,15 +388,26 @@ export const EventDetail = () => {
                 </div>
               </div>
 
-              <Button
-                size="sm"
-                variant="outline"
-                className="shrink-0"
-                onClick={() => setRulesDialogOpen(true)}
-              >
-                <BookText className="size-3.5" />
-                {t("events.rulesDialog.trigger")}
-              </Button>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setSummaryDialogOpen(true)}
+                >
+                  <Sparkles className="size-3.5" />
+                  {t("events.summaryDialog.trigger")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setRulesDialogOpen(true)}
+                >
+                  <BookText className="size-3.5" />
+                  {t("events.rulesDialog.trigger")}
+                </Button>
+              </div>
             </div>
           </Card>
 
