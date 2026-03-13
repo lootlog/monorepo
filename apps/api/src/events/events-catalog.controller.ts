@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { Permission, type Role } from "generated/client";
+import { Permission, type Guild, type Role } from "generated/client";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { EventsService } from "./events.service";
@@ -158,6 +158,35 @@ export class EventsCatalogController {
       event,
       roles,
       permissions,
+    );
+  }
+
+  @Permissions(Permission.LOOTLOG_EVENTS_READ)
+  @UseGuards(PermissionsGuard)
+  @Get("/guilds/:guildId/events/:eventId/wrapped")
+  @ApiOperation({
+    summary: "Get event wrapped summary",
+    description:
+      "Get cached event wrapped summary with loot, coverage and member highlights",
+  })
+  @ApiParam({ name: "guildId", description: "Guild ID" })
+  @ApiParam({ name: "eventId", description: "Event ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Event wrapped summary",
+  })
+  @ApiResponse({ status: 404, description: "Event not found" })
+  async getWrapped(
+    @GuildData() guildData: Guild,
+    @Param("eventId") eventId: string,
+    @MemberRoles() roles: Role[] = [],
+    @MemberPermissions() permissions: Permission[] = [],
+  ) {
+    return this.eventsService.getWrapped(
+      guildData,
+      eventId,
+      permissions,
+      roles,
     );
   }
 

@@ -7,9 +7,11 @@ import {
 import type { Queue } from "bullmq";
 import type { Event } from "generated/client";
 import { PrismaService } from "src/db/prisma.service";
+import { RedisService } from "src/lib/redis/redis.service";
 import { EventPointsService } from "src/events/services/event-points.service";
 import { EventTrackingService } from "src/events/services/event-tracking.service";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";
+import { getEventWrappedCacheKey } from "src/shared/constants/cache.constant";
 import { DEFAULT_ADVANCED_EVENT_SCORING_RULES } from "../constants/scoring-rules.constant";
 import type { EventScoringMode } from "../constants/scoring-rules.constant";
 import { CreateEventDto } from "../dto/create-event.dto";
@@ -59,6 +61,7 @@ const memberSelectWithTopRole = {
 export class EventCatalogService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
     private readonly pointsService: EventPointsService,
     private readonly trackingService: EventTrackingService,
     @InjectQueue(RESPAWN_WINDOW_QUEUE)
@@ -418,6 +421,8 @@ export class EventCatalogService {
       },
     );
 
+    await this.redis.del(getEventWrappedCacheKey(guildId, eventId));
+
     return attachComputedEventActive(updatedEvent, referenceTime);
   }
 
@@ -435,6 +440,8 @@ export class EventCatalogService {
       event.id,
       event.basePointsPerKill,
     );
+
+    await this.redis.del(getEventWrappedCacheKey(guildId, eventId));
 
     return { success: true };
   }
@@ -463,6 +470,8 @@ export class EventCatalogService {
     await this.prisma.event.delete({
       where: { id: eventId },
     });
+
+    await this.redis.del(getEventWrappedCacheKey(guildId, eventId));
 
     return { success: true };
   }

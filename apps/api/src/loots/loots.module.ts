@@ -37,5 +37,6 @@ import { LootStatsService } from "./services/loot-stats.service";
     LootCommentService,
     LootStatsService,
   ],
+  exports: [LootsService],
 })
 export class LootsModule {}
