@@ -146,7 +146,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ env.INFRA_REPOSITORY }}
-          ref: ${{ inputs.environment == 'prod' && 'main' || 'develop' }}
+          ref: main
           token: ${{ secrets.INFRA_REPO_PUSH_TOKEN }}
           path: ${{ env.INFRA_REPO_PATH }}
           fetch-depth: 0
@@ -172,7 +172,7 @@ jobs:
 
           git commit -m "ci: update ${{ inputs.service }} image to ${{ env.IMAGE_TAG }}"
 
-          BRANCH="${{ inputs.environment == 'prod' && 'main' || 'develop' }}"
+          BRANCH="main"
 
           for i in {1..5}; do
             echo "Push attempt $i/5"
