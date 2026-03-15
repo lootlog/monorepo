@@ -828,6 +828,18 @@ export class GuildsService {
   }
 
   async createGuild(data: CreateGuildDto) {
+    this.logger.log({
+      level: "info",
+      message: `createGuild called`,
+      input: JSON.stringify({
+        guildId: data.guildId,
+        name: data.name,
+        icon: data.icon,
+        ownerId: data.ownerId,
+        rolesCount: data.roles?.length,
+      }),
+    });
+
     let guild;
 
     try {
@@ -847,19 +859,59 @@ export class GuildsService {
           active: true,
         },
       });
+
+      this.logger.log({
+        level: "info",
+        message: `Guild upsert result`,
+        guildId: data.guildId,
+        result: JSON.stringify(guild),
+      });
     } catch (error) {
       this.logger.log({
         level: "error",
-        message: "Failed to create/update guild",
+        message: `Failed to upsert guild ${data.guildId}`,
         error: error instanceof Error ? error.stack : error,
       });
       throw error;
     }
 
-    await Promise.all([
-      this.rolesService.bulkCreateRoles(data.guildId, data.roles),
-      this.lootlogConfigService.createLootlogConfig(data.guildId),
-    ]);
+    const existingGuild = await this.prisma.guild.findUnique({
+      where: { id: data.guildId },
+    });
+
+    this.logger.log({
+      level: "info",
+      message: `Post-upsert verification for guild ${data.guildId}`,
+      found: !!existingGuild,
+      active: existingGuild?.active,
+      result: JSON.stringify(existingGuild),
+    });
+
+    try {
+      const [rolesResult, lootlogResult] = await Promise.all([
+        this.rolesService.bulkCreateRoles(data.guildId, data.roles),
+        this.lootlogConfigService.createLootlogConfig(data.guildId),
+      ]);
+
+      this.logger.log({
+        level: "info",
+        message: `Roles and lootlog config created for guild ${data.guildId}`,
+        rolesResult: JSON.stringify(rolesResult),
+        lootlogResult: JSON.stringify(lootlogResult),
+      });
+    } catch (error) {
+      this.logger.log({
+        level: "error",
+        message: `Failed to create roles or lootlog config for guild ${data.guildId}`,
+        error: error instanceof Error ? error.stack : error,
+      });
+      throw error;
+    }
+
+    this.logger.log({
+      level: "info",
+      message: `createGuild completed for ${data.guildId}`,
+    });
 
     return guild;
   }
