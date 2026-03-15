@@ -89,6 +89,9 @@ LABEL org.opencontainers.image.title="Lootlog API Service"
 LABEL org.opencontainers.image.description="Main API service for guilds, loots, timers, and NPCs"
 LABEL org.opencontainers.image.vendor="Lootlog"
 
+ARG GITHUB_SHA
+ENV COMMIT_SHA=${GITHUB_SHA}
+
 COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/api /prod/api
 WORKDIR /prod/api
 
