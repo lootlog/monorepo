@@ -18,7 +18,7 @@
     "@lootlog/instrumentation": "workspace:*",
     "amqplib": "^0.10.9",
     "dotenv": "^17.3.1",
-    "hono": "^4.12.5",
+    "hono": "^4.12.7",
     "meilisearch": "^0.53.0",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
