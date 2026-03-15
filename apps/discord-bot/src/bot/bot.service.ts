@@ -12,9 +12,20 @@ export class BotService {
   constructor(private readonly amqpConnection: AmqpConnection) {}
 
   public async handleGuildCreate(guild: Guild) {
-    this.logger.log(`Bot is added to the new guild`, guild.name);
+    this.logger.log(
+      `handleGuildCreate called for guild ${guild.id} (${guild.name}), owner: ${guild.ownerId}`,
+    );
 
-    const roles = await guild.roles.fetch();
+    let roles;
+    try {
+      roles = await guild.roles.fetch();
+      this.logger.log(`Fetched ${roles.size} roles for guild ${guild.id}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch roles for guild ${guild.id}: ${error instanceof Error ? error.message : error}`,
+      );
+      throw error;
+    }
 
     const payload = {
       guildId: guild.id,
@@ -35,11 +46,25 @@ export class BotService {
       }),
     };
 
-    this.amqpConnection.publish(
-      DEFAULT_EXCHANGE_NAME,
-      RoutingKey.GUILDS_CREATE,
-      payload,
+    this.logger.log(
+      `Publishing to RabbitMQ: exchange=${DEFAULT_EXCHANGE_NAME}, routingKey=${RoutingKey.GUILDS_CREATE}, guildId=${payload.guildId}, rolesCount=${payload.roles.length}`,
     );
+
+    try {
+      await this.amqpConnection.publish(
+        DEFAULT_EXCHANGE_NAME,
+        RoutingKey.GUILDS_CREATE,
+        payload,
+      );
+      this.logger.log(
+        `Successfully published GUILDS_CREATE for guild ${guild.id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish GUILDS_CREATE for guild ${guild.id}: ${error instanceof Error ? error.message : error}`,
+      );
+      throw error;
+    }
   }
 
   public async handleGuildUpdate(oldGuild: Guild, newGuild: Guild) {
