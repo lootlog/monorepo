@@ -81,7 +81,7 @@ When contributing to Lootlog, please follow these security guidelines:
 ### Environment Variables
 
 - Never commit `.env` files to the repository
-- Use `.env.sample` to document required environment variables
+- Use `.env.example` to document required environment variables
 - Use strong random values for secrets and encryption keys
 - Use `pnpm env:generate` to create secure defaults
 

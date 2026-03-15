@@ -4,12 +4,13 @@ import apiConfig from "src/config/api.config";
 import rabbitmqConfig from "src/config/rabbitmq.config";
 import { redisConfig } from "@lootlog/nest-shared";
 import serviceConfig from "src/config/service.config";
-import { RuntimeEnvironment } from "src/types/common.types";
+import winstonConfig from "src/config/winston.config";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 export const APP_CONFIG: ConfigModuleOptions = {
   envFilePath: `.env`,
   isGlobal: true,
-  load: [serviceConfig, rabbitmqConfig, redisConfig, apiConfig],
+  load: [serviceConfig, rabbitmqConfig, redisConfig, apiConfig, winstonConfig],
   cache: true,
   validationSchema: Joi.object({
     ENV: Joi.string()
@@ -33,6 +34,8 @@ export const APP_CONFIG: ConfigModuleOptions = {
     OTEL_NODE_RESOURCE_DETECTORS: Joi.string().default("env,host,os,process"),
     OTEL_TRACES_EXPORTER: Joi.string().default("otlp"),
     SERVICE_NAMESPACE: Joi.string().default("local"),
+    AXIOM_DATASET: Joi.string(),
+    AXIOM_TOKEN: Joi.string(),
   }),
   validationOptions: {
     allowUnknown: true,

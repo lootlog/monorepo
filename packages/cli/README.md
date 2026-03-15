@@ -10,7 +10,7 @@ Monorepo CLI utilities for local Lootlog development.
 
 ## Command Groups
 
-- `env` generates `.env` files from discovered `.env.sample` templates.
+- `env` generates `.env` files from discovered `.env.example` templates.
 - `events` publishes test events to RabbitMQ for local workflows.
 - `seed` scrapes source data, generates fixtures, and seeds development databases.
 

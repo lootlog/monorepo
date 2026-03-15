@@ -367,6 +367,9 @@ importers:
 
   apps/auth:
     dependencies:
+      '@axiomhq/winston':
+        specifier: ^1.4.0
+        version: 1.4.0
       '@hono/node-server':
         specifier: ^1.19.11
         version: 1.19.11(hono@4.12.5)
@@ -394,6 +397,9 @@ importers:
       pg:
         specifier: ^8.20.0
         version: 8.20.0
+      winston:
+        specifier: ^3.19.0
+        version: 3.19.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -431,6 +437,9 @@ importers:
       '@lootlog/nest-shared':
         specifier: workspace:*
         version: link:../../packages/nest-shared
+      '@lootlog/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@nestjs/common':
         specifier: ^11.1.16
         version: 11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -519,12 +528,21 @@ importers:
 
   apps/discord-bot:
     dependencies:
+      '@axiomhq/winston':
+        specifier: ^1.4.0
+        version: 1.4.0
       '@golevelup/nestjs-rabbitmq':
         specifier: ^6.1.0
         version: 6.1.0(@nestjs/common@11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@lootlog/instrumentation':
         specifier: workspace:*
         version: link:../../packages/instrumentation
+      '@lootlog/nest-shared':
+        specifier: workspace:*
+        version: link:../../packages/nest-shared
+      '@lootlog/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@nestjs/common':
         specifier: ^11.1.16
         version: 11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -552,12 +570,18 @@ importers:
       necord:
         specifier: ^6.12.4
         version: 6.12.4(@nestjs/common@11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(discord-api-types@0.38.31)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      nest-winston:
+        specifier: ^1.10.2
+        version: 1.10.2(@nestjs/common@11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.19.0)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
+      winston:
+        specifier: ^3.19.0
+        version: 3.19.0
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.16
@@ -791,6 +815,9 @@ importers:
 
   apps/gateway:
     dependencies:
+      '@axiomhq/winston':
+        specifier: ^1.4.0
+        version: 1.4.0
       '@golevelup/nestjs-rabbitmq':
         specifier: ^6.1.0
         version: 6.1.0(@nestjs/common@11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -863,6 +890,9 @@ importers:
       lodash:
         specifier: ^4.17.23
         version: 4.17.23
+      nest-winston:
+        specifier: ^1.10.2
+        version: 1.10.2(@nestjs/common@11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.19.0)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -872,6 +902,9 @@ importers:
       socket.io:
         specifier: ^4.8.3
         version: 4.8.3
+      winston:
+        specifier: ^3.19.0
+        version: 3.19.0
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.16
@@ -964,6 +997,9 @@ importers:
 
   apps/search:
     dependencies:
+      '@axiomhq/winston':
+        specifier: ^1.4.0
+        version: 1.4.0
       '@hono/node-server':
         specifier: ^1.19.11
         version: 1.19.11(hono@4.12.5)
@@ -988,6 +1024,9 @@ importers:
       meilisearch:
         specifier: ^0.53.0
         version: 0.53.0
+      winston:
+        specifier: ^3.19.0
+        version: 3.19.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -1290,6 +1329,12 @@ importers:
 
   packages/nest-shared:
     dependencies:
+      '@axiomhq/winston':
+        specifier: ^1.4.0
+        version: 1.4.0
+      '@lootlog/types':
+        specifier: workspace:*
+        version: link:../types
       fastify:
         specifier: ^5.8.2
         version: 5.8.2

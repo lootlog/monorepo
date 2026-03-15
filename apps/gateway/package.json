@@ -19,6 +19,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@axiomhq/winston": "^1.4.0",
     "@golevelup/nestjs-rabbitmq": "^6.1.0",
     "@lootlog/api-helpers": "workspace:*",
     "@lootlog/instrumentation": "workspace:*",
@@ -43,9 +44,11 @@
     "ioredis": "^5.10.0",
     "joi": "^18.0.2",
     "lodash": "^4.17.23",
+    "nest-winston": "^1.10.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",

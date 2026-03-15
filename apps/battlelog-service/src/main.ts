@@ -8,12 +8,16 @@ import {
 } from "@nestjs/platform-fastify";
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
+    { bufferLogs: true },
   );
+
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   const configService = app.get<ConfigService>(ConfigService);
 
   const { port } = configService.get<ServiceConfig>("service", {

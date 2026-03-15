@@ -4,7 +4,7 @@ import r2Config from "src/config/r2.config";
 import { redisConfig } from "@lootlog/nest-shared";
 import serviceConfig from "src/config/service.config";
 import winstonConfig from "src/config/winston.config";
-import { RuntimeEnvironment } from "src/types/runtime.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 export const APP_CONFIG: ConfigModuleOptions = {
   envFilePath: `.env`,
