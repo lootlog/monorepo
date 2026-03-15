@@ -4,4 +4,5 @@ export enum ConfigKey {
   AUTH = "auth",
   REDIS = "redis",
   API = "api",
+  WINSTON = "winston",
 }

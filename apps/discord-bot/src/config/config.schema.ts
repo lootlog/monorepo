@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { RuntimeEnvironment } from "src/types/common.types";
+import { RuntimeEnvironment } from "@lootlog/types";
 
 export const configSchema = Joi.object({
   PORT: Joi.string().required(),
@@ -20,4 +20,6 @@ export const configSchema = Joi.object({
   OTEL_NODE_RESOURCE_DETECTORS: Joi.string().default("env,host,os,process"),
   OTEL_TRACES_EXPORTER: Joi.string().default("otlp"),
   SERVICE_NAMESPACE: Joi.string().default("local"),
+  AXIOM_DATASET: Joi.string(),
+  AXIOM_TOKEN: Joi.string(),
 });

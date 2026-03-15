@@ -19,6 +19,9 @@ const configSchema = z.object({
   COOKIE_PREFIX: z.string(),
   ADMIN_ACCOUNT_IDS: z.string().transform((val) => val.split(",")),
   AUTH_SECRET: z.string(),
+  AXIOM_DATASET: z.string().optional(),
+  AXIOM_TOKEN: z.string().optional(),
+  COMMIT_SHA: z.string().optional(),
 });
 
 const {

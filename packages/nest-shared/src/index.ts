@@ -14,3 +14,7 @@ export {
   REDIS_CONFIG_KEY,
   type RedisConfig,
 } from "./config/redis.config";
+export {
+  createWinstonConfig,
+  type WinstonConfigOptions,
+} from "./config/winston.config";

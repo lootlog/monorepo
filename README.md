@@ -179,7 +179,7 @@ You'll need to manually configure:
 - Discord webhook URLs
 - External API keys
 
-All `.env.sample` files are included as templates.
+All `.env.example` files are included as templates.
 
 ### Database Configuration
 

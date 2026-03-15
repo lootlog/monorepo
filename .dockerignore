@@ -26,9 +26,9 @@ generated
 
 # Environment files (CRITICAL - Security)
 .env*
-!.env.sample
+!.env.example
 **/.env*
-!**/.env.sample
+!**/.env.example
 
 # Tests
 **/__tests__

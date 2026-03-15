@@ -15,6 +15,8 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@axiomhq/winston": "^1.4.0",
+    "@lootlog/types": "workspace:*",
     "fastify": "^5.8.2",
     "nest-winston": "^1.10.2",
     "winston": "^3.19.0"

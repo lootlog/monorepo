@@ -16,7 +16,7 @@ ${chalk.bold("Usage:")}
   pnpm env <command> [options]
 
 ${chalk.bold("Commands:")}
-  generate    Generate .env files from .env.sample templates
+  generate    Generate .env files from .env.example templates
 
 ${chalk.bold("Examples:")}
   pnpm env generate              # Generate all .env files

@@ -148,7 +148,7 @@ Related to #
 
 ### Environment Variables
 
-- [ ] I have updated `.env.sample` files (if new env vars added)
+- [ ] I have updated `.env.example` files (if new env vars added)
 - [ ] I have documented all new environment variables
 - [ ] I have updated the CLI env generator (if needed)
 

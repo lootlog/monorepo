@@ -17,7 +17,7 @@ import { Hono } from "hono";
 import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { auth } from "./lib/auth.js";
-import { logger } from "hono/logger";
+import { logger as winstonLogger } from "./config/winston.config.js";
 import { healthzController } from "./healthz/healthz.controller.js";
 import { sessionMiddleware } from "./lib/middleware/session.middleware.js";
 import { authController } from "./auth/auth.controller.js";
@@ -36,7 +36,14 @@ app.use(
     serviceVersion: "1.0.0",
   }),
 );
-app.use("*", logger());
+app.use("*", async (c, next) => {
+  const start = Date.now();
+  await next();
+  const duration = Date.now() - start;
+  winstonLogger.info(
+    `${c.req.method} ${c.req.path} ${c.res.status} ${duration}ms`,
+  );
+});
 app.use("*", sessionMiddleware);
 
 app.route("/healthz", healthzController);
@@ -49,7 +56,7 @@ app.on(["POST", "GET"], "/idp/**", (c) => {
 
 const port = APP_CONFIG.port;
 
-console.log(`Server is running on ${APP_CONFIG.appUrl}`);
+winstonLogger.info(`Server is running on ${APP_CONFIG.appUrl}`);
 
 serve({
   fetch: app.fetch,
