@@ -6,11 +6,12 @@ import { ConfigKey } from "src/config/config-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 
 export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
-  const { ENV, HOSTNAME, AXIOM_DATASET, AXIOM_TOKEN } = process.env;
+  const { ENV, HOSTNAME, AXIOM_DATASET, AXIOM_TOKEN, COMMIT_SHA } = process.env;
 
-  const isLocal = ENV === RuntimeEnvironment.LOCAL;
+  const useConsole =
+    ENV === RuntimeEnvironment.LOCAL || ENV === RuntimeEnvironment.DEV;
 
-  const localFormat = winston.format.combine(
+  const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.colorize({ all: true }),
     winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
@@ -24,7 +25,7 @@ export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
 
   const prodFormat = winston.format.json();
 
-  const transports = isLocal
+  const transports = useConsole
     ? [new winston.transports.Console({ level: "debug" })]
     : [
         new AxiomTransport({
@@ -35,11 +36,14 @@ export default registerAs(ConfigKey.WINSTON, (): WinstonModuleOptions => {
 
   return {
     level: "info",
-    format: isLocal ? localFormat : prodFormat,
-    ...(isLocal
+    format: useConsole ? consoleFormat : prodFormat,
+    ...(useConsole
       ? {}
       : {
-          defaultMeta: { service: `${ENV}-api-service-${HOSTNAME ?? "api"}` },
+          defaultMeta: {
+            service: `${ENV}-api-service-${HOSTNAME ?? "api"}`,
+            commit: COMMIT_SHA?.slice(0, 7) ?? "unknown",
+          },
         }),
     transports,
   };
