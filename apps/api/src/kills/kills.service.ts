@@ -4,7 +4,7 @@ import type { Logger } from "winston";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { Permission, NpcType, type Role } from "generated/client";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { getStableNpcId } from "src/shared/utils/get-stable-npc-id";

@@ -25,8 +25,9 @@ import { LootMappingService } from "./services/loot-mapping.service";
 import { LootValidationService } from "./services/loot-validation.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import Redlock, { ExecutionError } from "redlock";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 
 @Injectable()
 export class LootsService implements OnModuleInit {
@@ -47,15 +48,11 @@ export class LootsService implements OnModuleInit {
     private readonly lootCommentService: LootCommentService,
     private readonly redisService: RedisService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly redlockService: RedlockService,
   ) {}
 
   async onModuleInit() {
-    const client = await this.redisService.getClient();
-    this.redlock = new Redlock([client], {
-      driftFactor: 0.01,
-      retryCount: 3,
-      retryDelay: 100,
-      retryJitter: 50,
+    this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 5000,
     });
   }

@@ -9,7 +9,8 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import Redlock, { ExecutionError } from "redlock";
 import { CoverageGapType } from "generated/client";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -26,16 +27,11 @@ export class EventTrackingService implements OnModuleInit {
     private readonly eventEmitter: EventEmitterService,
     private readonly amqpConnection: AmqpConnection,
     private readonly redis: RedisService,
+    private readonly redlockService: RedlockService,
   ) {}
 
   async onModuleInit() {
-    const client = await this.redis.getClient();
-    this.redlock = new Redlock([client], {
-      driftFactor: 0.01,
-      retryCount: 3,
-      retryDelay: 100,
-      retryJitter: 50,
-    });
+    this.redlock = this.redlockService.createInstance();
   }
 
   private getPresenceLockKey(

@@ -29,7 +29,7 @@ import { ConfigKey } from "src/config/config-key.enum";
 import { ServiceConfig } from "src/config/service.config";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { DiscordService } from "src/discord/discord.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,

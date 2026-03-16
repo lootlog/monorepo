@@ -1354,6 +1354,9 @@ importers:
       '@nestjs/core':
         specifier: ^11.1.16
         version: 11.1.16(@nestjs/common@11.1.16(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.16)(@nestjs/platform-express@11.1.16)(@nestjs/websockets@11.1.16)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      ioredis:
+        specifier: ^5.6.1
+        version: 5.10.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2

@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { GatewayService } from "./gateway.service";
 import { Gateway } from "./gateway";
-import { RedisService } from "../lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { GuildsService } from "../guilds/guilds.service";
 import { CreateTimerDto } from "./dto/create-timer.dto";
 import type { DeleteTimerDto } from "./dto/delete-timer.dto";

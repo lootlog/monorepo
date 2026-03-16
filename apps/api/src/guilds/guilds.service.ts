@@ -26,7 +26,7 @@ import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service"
 import { RESTRICTED_VANITY_URLS } from "src/guilds/constants/restricted-vanity-urls";
 import { UsersService } from "src/users/users.service";
 import { DiscordService } from "src/discord/discord.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService, isDiscordAdministrator } from "@lootlog/nest-shared";
 import {
   getPermissionsCachePattern,
   getPermissionsCacheKey,
@@ -35,8 +35,6 @@ import {
   PERMISSIONS_CACHE_TTL_SECONDS,
 } from "src/shared/constants/cache.constant";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
-
-const DISCORD_ADMINISTRATOR_PERMISSION = 0x8n;
 
 interface GuildRefreshCandidate {
   guild: Guild;
@@ -146,7 +144,9 @@ export class GuildsService {
       }
 
       return discordGuilds
-        .filter((guild) => Number.parseInt(guild.permissions, 10) & 0x8)
+        .filter((guild) =>
+          isDiscordAdministrator(Number.parseInt(guild.permissions, 10)),
+        )
         .map((guild) => {
           return {
             id: guild.id,
@@ -767,10 +767,8 @@ export class GuildsService {
 
   private hasDiscordAdministratorAccess(discordGuild: APIGuild): boolean {
     try {
-      return (
-        (BigInt(discordGuild.permissions) &
-          DISCORD_ADMINISTRATOR_PERMISSION) ===
-        DISCORD_ADMINISTRATOR_PERMISSION
+      return isDiscordAdministrator(
+        Number.parseInt(discordGuild.permissions, 10),
       );
     } catch {
       return false;

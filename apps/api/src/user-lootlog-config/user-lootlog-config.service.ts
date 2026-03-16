@@ -3,7 +3,7 @@ import { Permission } from "generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateOrUpdateLootlogCharacterConfigDto } from "src/user-lootlog-config/dto/create-user-account-config.dto";
 import { GuildsService } from "src/guilds/guilds.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 const USER_LOOTLOG_CONFIG_CACHE_TTL_SECONDS = 3600;
 const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";

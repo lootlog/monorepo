@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
 import { BattleAnalyticsService } from "./battle-analytics.service";
 import { PrismaService } from "src/shared/modules/prisma/prisma.service";
-import { RedisService } from "src/shared/modules/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 describe("BattleAnalyticsService", () => {
   let service: BattleAnalyticsService;
@@ -1397,7 +1397,7 @@ describe("BattleAnalyticsService", () => {
         del: jest.fn().mockResolvedValue(2),
       };
 
-      redisService.getClient.mockResolvedValue(mockRedisClient as any);
+      redisService.getClient.mockReturnValue(mockRedisClient as any);
 
       await service.invalidateAnalyticsCache(mockUserId);
 
@@ -1416,7 +1416,7 @@ describe("BattleAnalyticsService", () => {
         del: jest.fn(),
       };
 
-      redisService.getClient.mockResolvedValue(mockRedisClient as any);
+      redisService.getClient.mockReturnValue(mockRedisClient as any);
 
       await service.invalidateAnalyticsCache(mockUserId);
 
@@ -1429,7 +1429,7 @@ describe("BattleAnalyticsService", () => {
         keys: jest.fn().mockRejectedValue(new Error("Redis error")),
       };
 
-      redisService.getClient.mockResolvedValue(mockRedisClient as any);
+      redisService.getClient.mockReturnValue(mockRedisClient as any);
 
       await expect(
         service.invalidateAnalyticsCache(mockUserId),

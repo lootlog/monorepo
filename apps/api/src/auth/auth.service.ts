@@ -12,7 +12,7 @@ import {
 } from "src/auth/errors";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { AuthConfig } from "src/config/auth.config";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import {
   getAuthTokenCacheKey,
   AUTH_TOKEN_CACHE_TTL_SECONDS,

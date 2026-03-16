@@ -13,7 +13,7 @@ import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notific
 import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
 import { Gateway } from "src/gateway/gateway";
 import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { UserGuildData } from "src/guilds/types/guild.types";
 import type {

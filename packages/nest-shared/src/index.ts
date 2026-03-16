@@ -18,3 +18,7 @@ export {
   createWinstonConfig,
   type WinstonConfigOptions,
 } from "./config/winston.config";
+export { RedisService } from "./redis/redis.service";
+export { RedisModule } from "./redis/redis.module";
+export type { RedisModuleOptions } from "./redis/redis.service";
+export { isDiscordAdministrator } from "./utils/discord";

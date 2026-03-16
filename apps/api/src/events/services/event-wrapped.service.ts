@@ -8,7 +8,7 @@ import {
 import type { LootQueryResult } from "src/loots/dto/loot-query-result.dto";
 import { LootsService } from "src/loots/loots.service";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import {
   EVENT_WRAPPED_CACHE_TTL_SECONDS,
   getEventWrappedCacheKey,

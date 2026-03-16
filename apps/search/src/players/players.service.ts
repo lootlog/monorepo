@@ -1,5 +1,6 @@
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { meilisearchClient } from "../lib/meilisearch.js";
+import { logger } from "../config/winston.config.js";
 import type { GetPlayersDto } from "./dto/get-players.dto.js";
 import { PLAYERS_INDEX } from "./constants/meilisearch.js";
 import type { IndexPlayersDto } from "./dto/index-players.dto.js";
@@ -39,7 +40,7 @@ export class PlayersService {
 
       return data.hits;
     } catch (error) {
-      console.log(error);
+      logger.error("Players search error", { error });
       return [];
     }
   }
@@ -52,10 +53,9 @@ export class PlayersService {
     );
 
     if (validPlayers.length === 0) {
-      console.warn(
-        "No valid players to index (missing required fields):",
-        JSON.stringify(data.players, null, 2),
-      );
+      logger.warn("No valid players to index (missing required fields)", {
+        players: data.players,
+      });
       return;
     }
 
@@ -63,9 +63,9 @@ export class PlayersService {
       const invalidPlayers = data.players.filter(
         (player) => !player.world || !player.id || !player.name,
       );
-      console.warn(
-        `Skipped ${invalidPlayers.length} players due to missing required fields:`,
-        JSON.stringify(invalidPlayers, null, 2),
+      logger.warn(
+        `Skipped ${invalidPlayers.length} players due to missing required fields`,
+        { invalidPlayers },
       );
     }
 
@@ -77,7 +77,7 @@ export class PlayersService {
     try {
       return index.addDocuments(playersWithUid, { primaryKey: "uid" });
     } catch (error) {
-      console.error("Error indexing players:", error);
+      logger.error("Error indexing players", { error });
       return;
     }
   }

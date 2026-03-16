@@ -18,7 +18,7 @@ import { Error } from "src/notifications/enum/error.enum";
 import { omit } from "lodash";
 import { v4 as uuid } from "uuid";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 const NOTIFICATION_TTL_SECONDS = 1800; // 30 minutes
 

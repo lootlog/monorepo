@@ -3,7 +3,7 @@ import { AuthService } from "./auth.service";
 import { HttpService } from "@nestjs/axios";
 import { ConfigService } from "@nestjs/config";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 describe("AuthService", () => {
   let service: AuthService;

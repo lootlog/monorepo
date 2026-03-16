@@ -7,9 +7,10 @@ import { BadRequestException, ConflictException } from "@nestjs/common";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS } from "src/timers/constants/timer-limits";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { EventsService } from "src/events/events.service";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
 
 describe("TimersService", () => {
@@ -98,6 +99,10 @@ describe("TimersService", () => {
         {
           provide: EventsService,
           useValue: mockEventsService,
+        },
+        {
+          provide: RedlockService,
+          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
         },
       ],
     }).compile();

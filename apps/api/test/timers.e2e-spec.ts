@@ -9,7 +9,7 @@ import {
 } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
 import { Permission } from "generated/client";
-import { RedisService } from "../src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 describe("Timers E2E Tests (Whitelist)", () => {
   let app: INestApplication;
@@ -42,9 +42,9 @@ describe("Timers E2E Tests (Whitelist)", () => {
 
   beforeEach(async () => {
     await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings" CASCADE`;
-    const keys = await (await redis.getClient()).keys("timer:*");
+    const keys = await redis.getClient().keys("timer:*");
     if (keys.length > 0) {
-      await (await redis.getClient()).del(...keys);
+      await redis.getClient().del(...keys);
     }
   });
 
@@ -459,9 +459,9 @@ describe("Timers E2E Tests (Whitelist)", () => {
         .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
-      const cacheKeysBefore = await (
-        await redis.getClient()
-      ).keys(`timer:list:${guild1.id}:*`);
+      const cacheKeysBefore = await redis
+        .getClient()
+        .keys(`timer:list:${guild1.id}:*`);
       expect(cacheKeysBefore.length).toBeGreaterThan(0);
 
       const writeRole = await prisma.role.update({
@@ -493,9 +493,9 @@ describe("Timers E2E Tests (Whitelist)", () => {
         .send(timerPayload)
         .expect(201);
 
-      const cacheKeysAfter = await (
-        await redis.getClient()
-      ).keys(`timer:list:${guild1.id}:*`);
+      const cacheKeysAfter = await redis
+        .getClient()
+        .keys(`timer:list:${guild1.id}:*`);
       expect(cacheKeysAfter.length).toBe(0);
     });
 
@@ -592,9 +592,9 @@ describe("Timers E2E Tests (Whitelist)", () => {
 
       expect(response1.body).toHaveLength(1);
 
-      const cacheKeys = await (
-        await redis.getClient()
-      ).keys(`timer:list:${guild1.id}:*`);
+      const cacheKeys = await redis
+        .getClient()
+        .keys(`timer:list:${guild1.id}:*`);
       expect(cacheKeys.length).toBeGreaterThan(0);
 
       const response2 = await request(app.getHttpServer())

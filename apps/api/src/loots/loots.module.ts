@@ -10,6 +10,7 @@ import { LootlogConfigModule } from "src/lootlog-config/lootlog-config.module";
 import { UserLootlogConfigModule } from "src/user-lootlog-config/user-lootlog-config.module";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
+import { RedlockModule } from "src/lib/redlock/redlock.module";
 import { LootMappingService } from "./services/loot-mapping.service";
 import { LootValidationService } from "./services/loot-validation.service";
 import { LootQueryService } from "./services/loot-query.service";
@@ -27,6 +28,7 @@ import { LootStatsService } from "./services/loot-stats.service";
     UserLootlogConfigModule,
     PrismaModule,
     RedisModule,
+    RedlockModule,
   ],
   controllers: [LootsController],
   providers: [

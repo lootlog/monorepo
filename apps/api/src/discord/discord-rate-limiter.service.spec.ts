@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 describe("DiscordRateLimiterService", () => {
   let service: DiscordRateLimiterService;
@@ -30,7 +30,7 @@ describe("DiscordRateLimiterService", () => {
       get: jest.fn(),
       set: jest.fn(),
       del: jest.fn(),
-      getClient: jest.fn().mockResolvedValue({
+      getClient: jest.fn().mockReturnValue({
         keys: jest.fn().mockResolvedValue([]),
       }),
     };
@@ -229,7 +229,7 @@ describe("DiscordRateLimiterService", () => {
             "discord:ratelimit:user:user-123:guild-member",
           ]),
       };
-      redisService.getClient.mockResolvedValue(mockClient as any);
+      redisService.getClient.mockReturnValue(mockClient as any);
 
       await service.clearRateLimitForUser(userId);
 
@@ -249,7 +249,7 @@ describe("DiscordRateLimiterService", () => {
       const mockClient = {
         keys: jest.fn().mockResolvedValue([]),
       };
-      redisService.getClient.mockResolvedValue(mockClient as any);
+      redisService.getClient.mockReturnValue(mockClient as any);
 
       await service.clearRateLimitForUser(userId);
 
