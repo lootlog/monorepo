@@ -28,9 +28,6 @@ export class RetryService {
     private readonly amqp: AmqpConnection,
   ) {}
 
-  /**
-   * Sprawdza czy należy wykonać retry czy wysłać do DLQ
-   */
   shouldRetry(
     headers: Record<string, unknown>,
     maxRetries: number = 3,
@@ -39,11 +36,7 @@ export class RetryService {
     return retryCount < maxRetries;
   }
 
-  /**
-   * Pobiera aktualną liczbę prób na podstawie x-death headers
-   */
   getRetryCount(headers: Record<string, unknown>): number {
-    // Sprawdź najpierw x-retry-count (jeśli jest ustawiony manualnie)
     if (
       headers["x-retry-count"] &&
       typeof headers["x-retry-count"] === "number"
@@ -51,7 +44,6 @@ export class RetryService {
       return headers["x-retry-count"];
     }
 
-    // Jeśli nie ma x-retry-count, użyj x-death count
     const xDeath = headers["x-death"];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
       const count = xDeath[0]?.count;
@@ -61,9 +53,6 @@ export class RetryService {
     return 0;
   }
 
-  /**
-   * Wysyła wiadomość do DLQ
-   */
   async sendToDlq(
     message: unknown,
     dlqRoutingKey: string,
@@ -86,9 +75,6 @@ export class RetryService {
     });
   }
 
-  /**
-   * Konfiguruje queue options dla retry z TTL
-   */
   getRetryQueueOptions(mainRoutingKey: string, retryDelayMs: number = 30000) {
     const mainExchange = DEFAULT_EXCHANGE_NAME;
 
@@ -100,9 +86,6 @@ export class RetryService {
     };
   }
 
-  /**
-   * Konfiguruje główną queue z retry
-   */
   getMainQueueOptions(retryRoutingKey: string, config: RetryConfig = {}) {
     return {
       durable: true,
@@ -111,11 +94,6 @@ export class RetryService {
     };
   }
 
-  /**
-   * Główna metoda do obsługi retry logic w handlerach
-   * Sprawdza czy robić retry czy wysłać do DLQ
-   * Zwraca true jeśli handler ma kontynuować, false jeśli wiadomość została wysłana do DLQ
-   */
   async handleRetryLogic(
     data: unknown,
     headers: Record<string, unknown>,
@@ -142,9 +120,6 @@ export class RetryService {
     return true;
   }
 
-  /**
-   * Obsługuje logikę retry w retry queue
-   */
   handleRetryQueue(
     _data: unknown,
     amqpMsg: AmqpMessage,
@@ -172,9 +147,6 @@ export class RetryService {
       message: `[RETRY QUEUE] TTL: ${retryDelayMs}ms`,
     });
 
-    // NIE modyfikuj headers - pozwól RabbitMQ wysłać oryginalną wiadomość
-    // Retry count będzie automatycznie zwiększony przez x-death mechanism
-
     this.logger.log({
       level: "info",
       message: `[RETRY QUEUE] Message will expire in ${retryDelayMs}ms and return to main queue`,
@@ -183,7 +155,5 @@ export class RetryService {
       level: "info",
       message: `[RETRY QUEUE] Next attempt will be #${currentRetryCount + 1}`,
     });
-
-    // Handler kończy się tutaj - wiadomość wygaśnie i wróci do głównej queue
   }
 }
