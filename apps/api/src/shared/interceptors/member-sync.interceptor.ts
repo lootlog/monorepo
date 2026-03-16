@@ -10,7 +10,7 @@ import type { Logger } from "winston";
 import type { Observable } from "rxjs";
 import { tap } from "rxjs/operators";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { MembersService } from "src/members/members.service";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
 

@@ -2,6 +2,7 @@
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { Injectable, Logger } from "@nestjs/common";
 import type { Guild, Role } from "discord.js";
+import { isDiscordAdministrator } from "@lootlog/nest-shared";
 import { RoutingKey } from "src/bot/enums/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 
@@ -33,8 +34,9 @@ export class BotService {
       icon: guild.iconURL(),
       ownerId: guild.ownerId,
       roles: roles.map((role) => {
-        const isAdministrativeUser =
-          (Number(role.permissions.bitfield) & 0x8) === 0x8;
+        const isAdministrativeUser = isDiscordAdministrator(
+          Number(role.permissions.bitfield),
+        );
 
         return {
           id: role.id,
@@ -103,8 +105,9 @@ export class BotService {
   async handleGuildRoleCreate(role: Role) {
     this.logger.log(`Role ${role.name} has been created.`);
 
-    const isAdministrativeRole =
-      (Number(role.permissions.bitfield) & 0x8) === 0x8;
+    const isAdministrativeRole = isDiscordAdministrator(
+      Number(role.permissions.bitfield),
+    );
 
     const payload = {
       guildId: role.guild.id,
@@ -125,8 +128,9 @@ export class BotService {
   async handleGuildRoleUpdate(oldRole: Role, newRole: Role) {
     this.logger.log(`Role ${oldRole.name} has been updated to ${newRole.name}`);
 
-    const isAdministrativeRole =
-      (Number(newRole.permissions.bitfield) & 0x8) === 0x8;
+    const isAdministrativeRole = isDiscordAdministrator(
+      Number(newRole.permissions.bitfield),
+    );
 
     const payload = {
       guildId: newRole.guild.id,

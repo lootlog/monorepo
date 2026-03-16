@@ -7,7 +7,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { R2Config } from "src/config/r2.config";
-import { RedisService } from "../redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { gzipSync, gunzipSync } from "zlib";
 
 @Injectable()
@@ -156,7 +156,7 @@ export class R2Service {
       const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
       const timestamp = Date.now();
 
-      const redis = await this.redisService.getClient();
+      const redis = this.redisService.getClient();
       const pipeline = redis.pipeline();
 
       pipeline.set(cacheKey, data, "EX", this.CACHE_TTL);
@@ -173,7 +173,7 @@ export class R2Service {
   private async updateLRU(battleId: string): Promise<void> {
     try {
       const timestamp = Date.now();
-      const redis = await this.redisService.getClient();
+      const redis = this.redisService.getClient();
       await redis.zadd(this.LRU_KEY, timestamp, battleId);
     } catch (error) {
       this.logger.warn(`Failed to update LRU for battle ${battleId}:`, error);
@@ -182,7 +182,7 @@ export class R2Service {
 
   private async enforceLRULimit(): Promise<void> {
     try {
-      const redis = await this.redisService.getClient();
+      const redis = this.redisService.getClient();
       const count = await redis.zcard(this.LRU_KEY);
 
       if (count > this.MAX_CACHE_SIZE) {
@@ -213,7 +213,7 @@ export class R2Service {
   private async deleteCachedData(battleId: string): Promise<void> {
     try {
       const cacheKey = `${this.CACHE_PREFIX}:${battleId}`;
-      const redis = await this.redisService.getClient();
+      const redis = this.redisService.getClient();
       const pipeline = redis.pipeline();
 
       pipeline.del(cacheKey);

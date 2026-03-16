@@ -21,6 +21,7 @@ import { LootsModule } from "src/loots/loots.module";
 import { ConfigKey } from "src/config/config-key.enum";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
+import { RedlockModule } from "src/lib/redlock/redlock.module";
 
 import { EventEmitterService } from "./services/event-emitter.service";
 import { EventAccessService } from "./services/event-access.service";
@@ -49,6 +50,7 @@ import { EventWrappedService } from "./services/event-wrapped.service";
     ),
     PrismaModule,
     RedisModule,
+    RedlockModule,
   ],
   providers: [
     EventsService,

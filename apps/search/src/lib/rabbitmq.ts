@@ -1,5 +1,6 @@
 import amqplib from "amqplib";
 import { APP_CONFIG } from "../config/app.config.js";
+import { logger } from "../config/winston.config.js";
 import { parseAmqpConnectionString } from "./utils/parse-amqplib-connection-string.js";
 
 let channel: amqplib.Channel | null = null;
@@ -20,7 +21,7 @@ export async function setupAMQP() {
       durable: true,
     });
   } catch (error) {
-    console.error("AMQP Error:", error);
+    logger.error("AMQP Error", { error });
   }
 }
 

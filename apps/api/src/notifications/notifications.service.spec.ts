@@ -4,7 +4,7 @@ import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { NotificationsService } from "./notifications.service";
 import { GuildsService } from "src/guilds/guilds.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { RoutingKey } from "src/enum/routing-key.enum";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 

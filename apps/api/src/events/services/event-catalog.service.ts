@@ -7,7 +7,7 @@ import {
 import type { Queue } from "bullmq";
 import type { Event } from "generated/client";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { EventPointsService } from "src/events/services/event-points.service";
 import { EventTrackingService } from "src/events/services/event-tracking.service";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";

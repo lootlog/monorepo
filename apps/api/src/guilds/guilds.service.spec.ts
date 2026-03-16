@@ -7,7 +7,7 @@ import { RolesService } from "src/roles/roles.service";
 import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
 import { DiscordService } from "src/discord/discord.service";
 import { UsersService } from "src/users/users.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import { type Guild, Permission } from "generated/client";
 

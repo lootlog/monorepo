@@ -13,7 +13,7 @@ import type {
   PlayerVsPlayerPaginatedResponseDto,
 } from "src/battles/dto/battle-statistics-response.dto";
 import { PrismaService } from "src/shared/modules/prisma/prisma.service";
-import { RedisService } from "src/shared/modules/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 @Injectable()
 export class BattleAnalyticsService {
@@ -883,7 +883,7 @@ export class BattleAnalyticsService {
         `statistics:*:${userId}:*`,
       ];
 
-      const redis = await this.redisService.getClient();
+      const redis = this.redisService.getClient();
 
       for (const pattern of patterns) {
         const keys = await redis.keys(pattern);

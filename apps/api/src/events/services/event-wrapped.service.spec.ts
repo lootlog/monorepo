@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Guild } from "generated/client";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { LootsService } from "src/loots/loots.service";
 import { EventWrappedService } from "./event-wrapped.service";
 

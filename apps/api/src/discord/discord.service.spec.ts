@@ -9,8 +9,9 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { RateLimitError } from "@discordjs/rest";
 import { DiscordService } from "./discord.service";
 import { AuthService } from "src/auth/auth.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import {
   TokenExpiredError,
   AuthServiceUnavailableError,
@@ -118,7 +119,7 @@ describe("DiscordService", () => {
       get: jest.fn(),
       set: jest.fn(),
       del: jest.fn(),
-      getClient: jest.fn().mockResolvedValue({}),
+      getClient: jest.fn().mockReturnValue({}),
     };
 
     const mockRateLimiter = {
@@ -144,6 +145,10 @@ describe("DiscordService", () => {
         { provide: RedisService, useValue: mockRedisService },
         { provide: DiscordRateLimiterService, useValue: mockRateLimiter },
         { provide: ConfigService, useValue: mockConfigService },
+        {
+          provide: RedlockService,
+          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+        },
       ],
     }).compile();
 

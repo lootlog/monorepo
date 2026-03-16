@@ -14,7 +14,7 @@ import { PrismaService } from "src/db/prisma.service";
 import { DiscordService } from "src/discord/discord.service";
 import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
 import { GuildsService } from "src/guilds/guilds.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { ErrorKey } from "./enum/error-key.enum";
 import { RuntimeEnvironment } from "src/types/runtime.types";
 import { ConfigKey } from "src/config/config-key.enum";

@@ -32,12 +32,13 @@ import { canViewNpcTimer } from "@lootlog/api-helpers/permissions";
 import type { CreateTimerFromGameClientDto } from "src/timers/dto/create-timer-from-game-client.dto";
 import { validateAndCalculateSpawnTimes } from "src/timers/utils/validate-spawn-times";
 import { TIMER_LIMITS, TIMER_TYPES } from "src/timers/constants/timer-limits";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import Redlock, { ExecutionError } from "redlock";
 import { EventsService } from "src/events/events.service";
 import { getSyntheticNpcId } from "src/events/utils/get-synthetic-npc-id";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 
 function parseNpc(npc: unknown): { lvl: number; type: NpcType } | null {
   if (!npc) return null;
@@ -75,15 +76,11 @@ export class TimersService implements OnModuleInit {
     private readonly guildsService: GuildsService,
     private readonly redis: RedisService,
     private readonly eventsService: EventsService,
+    private readonly redlockService: RedlockService,
   ) {}
 
   async onModuleInit() {
-    const client = await this.redis.getClient();
-    this.redlock = new Redlock([client], {
-      driftFactor: 0.01,
-      retryCount: 3,
-      retryDelay: 100,
-      retryJitter: 50,
+    this.redlock = this.redlockService.createInstance({
       automaticExtensionThreshold: 5000,
     });
   }

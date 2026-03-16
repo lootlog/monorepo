@@ -3,7 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { MemberSyncInterceptor } from "./member-sync.interceptor";
 import { PrismaService } from "src/db/prisma.service";
 import { MembersService } from "src/members/members.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { MEMBER_REFRESH_PRIORITY } from "src/members/constants/member-refresh-queue.constant";
 
 describe("MemberSyncInterceptor", () => {

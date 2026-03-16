@@ -10,7 +10,7 @@ import { CreateReservationDto } from "./dto/create-reservation.dto";
 import { Permission } from "generated/client";
 import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 import { RoutingKey } from "src/enum/routing-key.enum";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";

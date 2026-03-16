@@ -2,7 +2,7 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/db/prisma.service";
-import { RedisService } from "../src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
 import { createTestingModuleWithMocks } from "./test-module-helpers";
 import { Permission } from "generated/client";
@@ -44,7 +44,7 @@ describe("User Lootlog Config E2E Tests", () => {
 
   beforeEach(async () => {
     await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "UserCharactersLootlogSettings" CASCADE`;
-    const redisClient = await redis.getClient();
+    const redisClient = redis.getClient();
     await redisClient.flushall();
   });
 

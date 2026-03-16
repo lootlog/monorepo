@@ -21,9 +21,10 @@ import {
   type APIGuild,
   type APIGuildMember,
 } from "discord-api-types/v10";
-import { RedisService } from "src/lib/redis/redis.service";
-import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
 import Redlock from "redlock";
+import { RedisService } from "@lootlog/nest-shared";
+import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import {
   TokenExpiredError,
   AuthServiceUnavailableError,
@@ -51,12 +52,6 @@ export class DiscordService implements OnModuleInit {
   private readonly notFoundCacheTtlProd = 300;
   private readonly staleCacheTtl = 300;
 
-  private readonly redlockDriftFactor = 0.01;
-  private readonly redlockRetryCount = 3;
-  private readonly redlockRetryDelay = 100;
-  private readonly redlockRetryJitter = 50;
-  private readonly redlockExtensionThreshold = 3000;
-
   private readonly restTimeout = 5000;
 
   private isLocal: boolean;
@@ -67,6 +62,7 @@ export class DiscordService implements OnModuleInit {
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly configService: ConfigService,
+    private readonly redlockService: RedlockService,
   ) {
     const serviceConfig = this.configService.get<ServiceConfig>(
       ConfigKey.SERVICE,
@@ -75,13 +71,8 @@ export class DiscordService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const client = await this.redisService.getClient();
-    this.redlock = new Redlock([client], {
-      driftFactor: this.redlockDriftFactor,
-      retryCount: this.redlockRetryCount,
-      retryDelay: this.redlockRetryDelay,
-      retryJitter: this.redlockRetryJitter,
-      automaticExtensionThreshold: this.redlockExtensionThreshold,
+    this.redlock = this.redlockService.createInstance({
+      automaticExtensionThreshold: 3000,
     });
   }
 

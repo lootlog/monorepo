@@ -13,7 +13,8 @@ import { LootMappingService } from "./services/loot-mapping.service";
 import { LootValidationService } from "./services/loot-validation.service";
 import { LootQueryService } from "./services/loot-query.service";
 import { LootCommentService } from "./services/loot-comment.service";
-import { RedisService } from "../lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import type { CreateLootDto } from "./dto/create-loot.dto";
 import type { UpdateLootDto } from "./dto/update-loot.dto";
 import type { CreateCommentDto } from "./dto/create-comment-dto";
@@ -189,7 +190,7 @@ describe("LootsService", () => {
     const mockRedisClient = {} as Record<string, never>;
 
     const mockRedisService = {
-      getClient: jest.fn().mockResolvedValue(mockRedisClient),
+      getClient: jest.fn().mockReturnValue(mockRedisClient),
       get: jest.fn().mockResolvedValue(null),
       del: jest.fn().mockResolvedValue(1),
       set: jest.fn().mockResolvedValue("OK"),
@@ -220,6 +221,12 @@ describe("LootsService", () => {
         },
         { provide: RedisService, useValue: mockRedisService },
         { provide: WINSTON_MODULE_PROVIDER, useValue: mockLogger },
+        {
+          provide: RedlockService,
+          useValue: {
+            createInstance: jest.fn().mockReturnValue({ acquire: jest.fn() }),
+          },
+        },
       ],
     }).compile();
 

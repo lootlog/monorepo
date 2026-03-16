@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
 
 interface UserRateLimitData {
   bucket?: string | null;
@@ -208,7 +208,7 @@ export class DiscordRateLimiterService {
       await this.redis.del(key);
     } else {
       const pattern = `${this.RATE_LIMIT_KEY_PREFIX}${userId}:*`;
-      const client = await this.redis.getClient();
+      const client = this.redis.getClient();
       const keys = await client.keys(pattern);
       if (keys.length > 0) {
         await Promise.all(keys.map((key) => this.redis.del(key)));

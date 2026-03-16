@@ -15,6 +15,7 @@ import { ConfigKey } from "src/config/config-key.enum";
 import { UserLootlogConfigModule } from "src/user-lootlog-config/user-lootlog-config.module";
 import { PrismaModule } from "src/db/prisma.module";
 import { RedisModule } from "src/lib/redis/redis.module";
+import { RedlockModule } from "src/lib/redlock/redlock.module";
 import { EventsModule } from "src/events/events.module";
 
 @Module({
@@ -31,6 +32,7 @@ import { EventsModule } from "src/events/events.module";
     UserLootlogConfigModule,
     PrismaModule,
     RedisModule,
+    RedlockModule,
     EventsModule,
   ],
   providers: [TimersService, TimersCleanupService],

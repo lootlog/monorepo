@@ -4,7 +4,8 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { EventTrackingService } from "./event-tracking.service";
 import { EventEmitterService } from "./event-emitter.service";
 import { PrismaService } from "src/db/prisma.service";
-import { RedisService } from "src/lib/redis/redis.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import { CoverageGapType } from "generated/client";
 
 describe("EventTrackingService", () => {
@@ -61,7 +62,7 @@ describe("EventTrackingService", () => {
   };
 
   const mockRedisService = {
-    getClient: jest.fn().mockResolvedValue(mockRedisClient),
+    getClient: jest.fn().mockReturnValue(mockRedisClient),
     get: jest.fn(),
     set: jest.fn(),
   };
@@ -81,6 +82,10 @@ describe("EventTrackingService", () => {
         { provide: EventEmitterService, useValue: mockEventEmitter },
         { provide: AmqpConnection, useValue: mockAmqpConnection },
         { provide: RedisService, useValue: mockRedisService },
+        {
+          provide: RedlockService,
+          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+        },
       ],
     }).compile();
 
