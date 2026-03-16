@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { Prisma } from "../../../generated/client";
+import { and, eq, gt, inArray, isNotNull, type SQL } from "drizzle-orm";
+import { exists } from "drizzle-orm";
 import type { QueryBattleAnalyticsDto } from "src/battles/dto/query-battle-analytics.dto";
 import type { QueryBattleStatisticsDto } from "src/battles/dto/query-battle-statistics.dto";
 import type {
@@ -12,7 +13,8 @@ import type {
   RatingDeltaByOpponentDto,
   PlayerVsPlayerPaginatedResponseDto,
 } from "src/battles/dto/battle-statistics-response.dto";
-import { PrismaService } from "src/shared/modules/prisma/prisma.service";
+import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { battles, battleWarriors } from "src/shared/modules/drizzle/schema";
 import { RedisService } from "@lootlog/nest-shared";
 
 @Injectable()
@@ -22,9 +24,22 @@ export class BattleAnalyticsService {
   private readonly ANALYTICS_CACHE_TTL = 5 * 60;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly drizzle: DrizzleService,
     private readonly redisService: RedisService,
   ) {}
+
+  private rawWhere(condition: SQL | undefined) {
+    return condition ? { RAW: () => condition } : undefined;
+  }
+
+  private warriorExists(...conditions: (SQL | undefined)[]) {
+    return exists(
+      this.drizzle.db
+        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
+        .from(battleWarriors)
+        .where(and(eq(battleWarriors.battleId, battles.id), ...conditions)),
+    );
+  }
 
   async getBattleAnalytics(
     query: QueryBattleAnalyticsDto,
@@ -49,13 +64,14 @@ export class BattleAnalyticsService {
     let characterIds: string[] = [];
 
     if (query.characterId) {
-      const userCharacter = await this.prisma.userCharacter.findFirst({
-        where: {
-          userId,
-          characterId: query.characterId,
-          ...(query.world && { world: query.world }),
-        },
-      });
+      const userCharacter =
+        await this.drizzle.db.query.userCharacters.findFirst({
+          where: {
+            userId,
+            characterId: query.characterId,
+            ...(query.world && { world: query.world }),
+          },
+        });
 
       if (!userCharacter) {
         throw new NotFoundException(
@@ -65,15 +81,15 @@ export class BattleAnalyticsService {
 
       characterIds = [query.characterId];
     } else {
-      const userCharacters = await this.prisma.userCharacter.findMany({
+      const userChars = await this.drizzle.db.query.userCharacters.findMany({
         where: {
           userId,
           ...(query.world && { world: query.world }),
         },
-        select: { characterId: true },
+        columns: { characterId: true },
       });
 
-      characterIds = userCharacters.map((c) => c.characterId);
+      characterIds = userChars.map((c) => c.characterId);
     }
 
     if (characterIds.length === 0) {
@@ -88,32 +104,23 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(query.matchmaking !== undefined && {
-        matchmaking: query.matchmaking,
-      }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-          ...(query.ph && { ph: { gt: 0 } }),
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
+      world: query.world,
+      startDate,
+      matchmaking: query.matchmaking,
+      characterIds,
+      phFilter: query.ph,
     });
 
-    let filteredBattles = battles;
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+    });
+
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -187,33 +194,24 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
+      world: query.world,
+      startDate,
+      matchmaking: query.matchmaking,
+      characterIds,
+      phFilter: query.ph,
       hasFlee: false,
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(query.matchmaking !== undefined && {
-        matchmaking: query.matchmaking,
-      }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-          ...(query.ph && { ph: { gt: 0 } }),
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
     });
 
-    let filteredBattles = battles;
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+    });
+
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -301,36 +299,25 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
+      world: query.world,
+      startDate,
+      matchmaking: query.matchmaking,
+      characterIds,
+      phFilter: query.ph,
       hasFlee: false,
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(query.matchmaking !== undefined && {
-        matchmaking: query.matchmaking,
-      }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-          ...(query.ph && { ph: { gt: 0 } }),
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
     });
 
-    let filteredBattles = battles;
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -555,36 +542,25 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
+      world: query.world,
+      startDate,
+      matchmaking: query.matchmaking,
+      characterIds,
+      phFilter: query.ph,
       hasFlee: false,
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(query.matchmaking !== undefined && {
-        matchmaking: query.matchmaking,
-      }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-          ...(query.ph && { ph: { gt: 0 } }),
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
     });
 
-    let filteredBattles = battles;
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -687,36 +663,25 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
+      world: query.world,
+      startDate,
+      matchmaking: query.matchmaking,
+      characterIds,
+      phFilter: query.ph,
       hasFlee: false,
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(query.matchmaking !== undefined && {
-        matchmaking: query.matchmaking,
-      }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-          ...(query.ph && { ph: { gt: 0 } }),
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        duration: "asc",
-      },
     });
 
-    let filteredBattles = battles;
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+      orderBy: { duration: "asc" },
+    });
+
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -813,35 +778,31 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
-      userId,
-      type: "1v1",
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(query.matchmaking !== undefined && {
-        matchmaking: query.matchmaking,
-      }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-          ph: { gt: 0 },
-        },
-      },
-    };
+    const conditions: (SQL | undefined)[] = [
+      eq(battles.userId, userId),
+      eq(battles.type, "1v1"),
+      ...(query.world ? [eq(battles.world, query.world)] : []),
+      ...(startDate ? [gt(battles.createdAt, startDate)] : []),
+      ...(query.matchmaking !== undefined
+        ? [eq(battles.matchmaking, query.matchmaking)]
+        : []),
+      this.warriorExists(
+        inArray(battleWarriors.originalId, characterIds),
+        gt(battleWarriors.ph, 0),
+      ),
+    ];
 
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
+    const where = and(...conditions);
+
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+      orderBy: { createdAt: "asc" },
     });
 
-    let filteredBattles = battles;
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -904,13 +865,14 @@ export class BattleAnalyticsService {
     query: { characterId?: string; world?: string },
   ): Promise<string[]> {
     if (query.characterId) {
-      const userCharacter = await this.prisma.userCharacter.findFirst({
-        where: {
-          userId,
-          characterId: query.characterId,
-          ...(query.world && { world: query.world }),
-        },
-      });
+      const userCharacter =
+        await this.drizzle.db.query.userCharacters.findFirst({
+          where: {
+            userId,
+            characterId: query.characterId,
+            ...(query.world && { world: query.world }),
+          },
+        });
 
       if (!userCharacter) {
         throw new NotFoundException(
@@ -921,15 +883,15 @@ export class BattleAnalyticsService {
       return [query.characterId];
     }
 
-    const userCharacters = await this.prisma.userCharacter.findMany({
+    const userChars = await this.drizzle.db.query.userCharacters.findMany({
       where: {
         userId,
         ...(query.world && { world: query.world }),
       },
-      select: { characterId: true },
+      columns: { characterId: true },
     });
 
-    return userCharacters.map((c) => c.characterId);
+    return userChars.map((c) => c.characterId);
   }
 
   private getDateFilter(period?: string): Date | undefined {
@@ -948,6 +910,42 @@ export class BattleAnalyticsService {
 
     const days = periodMap[period];
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  }
+
+  private buildAnalyticsWhere(params: {
+    userId: string;
+    world?: string;
+    startDate?: Date;
+    matchmaking?: boolean;
+    characterIds: string[];
+    phFilter?: boolean;
+    hasFlee?: boolean;
+    ratingNotNull?: boolean;
+    ratingDeltaNotNull?: boolean;
+  }): SQL | undefined {
+    const conditions: (SQL | undefined)[] = [
+      eq(battles.userId, params.userId),
+      eq(battles.type, "1v1"),
+      ...(params.world ? [eq(battles.world, params.world)] : []),
+      ...(params.startDate ? [gt(battles.createdAt, params.startDate)] : []),
+      ...(params.matchmaking !== undefined
+        ? [eq(battles.matchmaking, params.matchmaking)]
+        : []),
+      ...(params.hasFlee !== undefined
+        ? [eq(battles.hasFlee, params.hasFlee)]
+        : []),
+      ...(params.ratingNotNull ? [isNotNull(battles.rating)] : []),
+      ...(params.ratingDeltaNotNull ? [isNotNull(battles.ratingDelta)] : []),
+    ];
+
+    const warriorConditions: (SQL | undefined)[] = [
+      inArray(battleWarriors.originalId, params.characterIds),
+      ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
+    ];
+
+    conditions.push(this.warriorExists(...warriorConditions));
+
+    return and(...conditions);
   }
 
   async getRatingGrowthTimeSeries(
@@ -970,34 +968,25 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
+      world: query.world,
+      startDate,
       matchmaking: true,
-      rating: { not: null },
-      ratingDelta: { not: null },
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
+      characterIds,
+      ratingNotNull: true,
+      ratingDeltaNotNull: true,
     });
 
-    let filteredBattles = battles;
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -1045,34 +1034,25 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
+      world: query.world,
+      startDate,
       matchmaking: true,
-      ratingDelta: { not: null },
+      characterIds,
       hasFlee: false,
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      ratingDeltaNotNull: true,
     });
 
-    let filteredBattles = battles;
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    let filteredBattles = fetchedBattles;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      filteredBattles = battles.filter((battle) =>
+      filteredBattles = fetchedBattles.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -1200,39 +1180,30 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where: Prisma.BattleWhereInput = {
+    const where = this.buildAnalyticsWhere({
       userId,
-      type: "1v1",
+      world: query.world,
+      startDate,
       matchmaking: true,
-      ...(query.world && { world: query.world }),
-      ...(startDate && { createdAt: { gte: startDate } }),
-      warriors: {
-        some: {
-          originalId: { in: characterIds },
-        },
-      },
-    };
-
-    const battles = await this.prisma.battle.findMany({
-      where,
-      include: {
-        warriors: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      characterIds,
     });
 
-    const filteredBattles = battles.filter((battle) => {
+    const fetchedBattles = await this.drizzle.db.query.battles.findMany({
+      where: this.rawWhere(where),
+      with: { warriors: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const filteredByOpponent = fetchedBattles.filter((battle) => {
       const hasOpponent = battle.warriors.some(
         (w) => w.originalId === query.opponentId,
       );
       return hasOpponent;
     });
 
-    let levelFilteredBattles = filteredBattles;
+    let levelFilteredBattles = filteredByOpponent;
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      levelFilteredBattles = filteredBattles.filter((battle) =>
+      levelFilteredBattles = filteredByOpponent.filter((battle) =>
         this.isOpponentLevelInRange(
           battle,
           characterIds,
@@ -1263,7 +1234,7 @@ export class BattleAnalyticsService {
     const endIndex = startIndex + size;
     const paginatedBattles = levelFilteredBattles.slice(startIndex, endIndex);
 
-    const result = paginatedBattles.map((battle) => {
+    const resultBattles = paginatedBattles.map((battle) => {
       const userWarrior = battle.warriors.find((w) =>
         characterIds.includes(w.originalId),
       );
@@ -1309,7 +1280,7 @@ export class BattleAnalyticsService {
     const queryTime = Date.now() - startTime;
 
     return {
-      battles: result,
+      battles: resultBattles,
       pagination: {
         size,
         hasNext,
