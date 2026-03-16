@@ -6,7 +6,6 @@
   "license": "MIT",
   "author": "",
   "scripts": {
-    "prebuild": "pnpm battlelog:generate",
     "build": "nest build",
     "format": "oxfmt src test",
     "start": "node --import ./dist/instrumentation.js dist/main.js",
@@ -19,9 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "battlelog:migrate:dev": "prisma migrate dev",
-    "battlelog:generate": "prisma generate",
-    "battlelog:studio": "prisma studio"
+    "battlelog:migrate:dev": "drizzle-kit push",
+    "battlelog:generate": "drizzle-kit generate",
+    "battlelog:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1004.0",
@@ -36,14 +35,16 @@
     "@nestjs/platform-express": "^11.1.16",
     "@nestjs/platform-fastify": "^11.1.16",
     "@nestjs/swagger": "^11.2.6",
-    "@prisma/client": "6.18.0",
+    "@paralleldrive/cuid2": "^2.2.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "dotenv": "^17.3.1",
+    "drizzle-orm": "1.0.0-beta.17-67b1795",
     "fastify": "^5.8.2",
     "ioredis": "^5.10.0",
     "joi": "^18.0.2",
     "nest-winston": "^1.10.2",
+    "pg": "^8.16.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "winston": "^3.19.0"
@@ -53,9 +54,10 @@
     "@nestjs/testing": "^11.1.16",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.12.0",
+    "@types/pg": "^8.15.4",
     "@types/supertest": "^6.0.3",
+    "drizzle-kit": "1.0.0-beta.17-67b1795",
     "jest": "^30.2.0",
-    "prisma": "^6.19.2",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
@@ -73,7 +75,6 @@
     ],
     "moduleNameMapper": {
       "^@lootlog/battle-processor$": "<rootDir>/../../../packages/battle-processor/src/index.ts",
-      "^generated/client$": "<rootDir>/../generated/client",
       "^src/(.*)$": "<rootDir>/$1"
     },
     "rootDir": "src",

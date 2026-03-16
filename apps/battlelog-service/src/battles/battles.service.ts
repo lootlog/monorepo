@@ -4,7 +4,20 @@ import {
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
-import { Prisma } from "../../generated/client";
+import {
+  and,
+  eq,
+  exists,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  lte,
+  not,
+  notInArray,
+  or,
+  type SQL,
+} from "drizzle-orm";
 import type { CreateBattleDto } from "src/battles/dto/create-battle.dto";
 import {
   SortOrder,
@@ -14,7 +27,12 @@ import type { UpdateBattleDto } from "src/battles/dto/update-battle.dto";
 import type { PaginationOptions } from "src/battles/interfaces/pagination.interface";
 import { BattleAnalyticsService } from "src/battles/services/battle-analytics.service";
 import { PaginationService } from "src/battles/services/pagination.service";
-import { PrismaService } from "src/shared/modules/prisma/prisma.service";
+import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import {
+  battles,
+  battleWarriors,
+  userCharacters,
+} from "src/shared/modules/drizzle/schema";
 import { R2Service } from "src/shared/modules/r2/r2.service";
 import {
   BattleProcessor,
@@ -37,11 +55,20 @@ export class BattlesService implements IBattlesService {
   private readonly logger = new Logger(BattlesService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly drizzle: DrizzleService,
     private readonly r2Service: R2Service,
     private readonly paginationService: PaginationService,
     private readonly battleAnalyticsService: BattleAnalyticsService,
   ) {}
+
+  private warriorExists(...conditions: (SQL | undefined)[]) {
+    return exists(
+      this.drizzle.db
+        .select({ one: eq(battleWarriors.id, battleWarriors.id) })
+        .from(battleWarriors)
+        .where(and(eq(battleWarriors.battleId, battles.id), ...conditions)),
+    );
+  }
 
   async createBattle(params: CreateBattleParams): Promise<CreateBattleResult> {
     const { data, userId } = params;
@@ -74,8 +101,8 @@ export class BattlesService implements IBattlesService {
 
   async getPublicBattles(query: QueryBattlesDto): Promise<GetAllBattlesResult> {
     try {
-      const where = await this.buildFilterConditions(query);
-      where.public = true;
+      const filterConditions = await this.buildFilterConditions(query);
+      const where = and(eq(battles.public, true), filterConditions);
 
       const paginationOptions = this.buildPaginationOptions(query);
       const result = await this.paginationService.paginateBattles(
@@ -103,8 +130,11 @@ export class BattlesService implements IBattlesService {
     requestingUserId: string,
   ): Promise<GetAllBattlesResult> {
     try {
-      const where = await this.buildFilterConditions(query, requestingUserId);
-      where.userId = requestingUserId;
+      const filterConditions = await this.buildFilterConditions(
+        query,
+        requestingUserId,
+      );
+      const where = and(eq(battles.userId, requestingUserId), filterConditions);
 
       const paginationOptions = this.buildPaginationOptions(query);
       const result = await this.paginationService.paginateBattles(
@@ -136,10 +166,10 @@ export class BattlesService implements IBattlesService {
     }>;
   }> {
     try {
-      const userCharacters = await this.prisma.userCharacter.findMany({
+      const results = await this.drizzle.db.query.userCharacters.findMany({
         where: { userId },
         orderBy: { lastSeenAt: "desc" },
-        select: {
+        columns: {
           characterId: true,
           name: true,
           world: true,
@@ -147,7 +177,7 @@ export class BattlesService implements IBattlesService {
         },
       });
 
-      const characters = userCharacters.map((char) => ({
+      const characters = results.map((char) => ({
         id: char.characterId,
         name: char.name,
         world: char.world,
@@ -165,14 +195,15 @@ export class BattlesService implements IBattlesService {
 
   async getUserWorlds(userId: string): Promise<{ worlds: string[] }> {
     try {
-      const userCharacters = await this.prisma.userCharacter.findMany({
-        where: { userId },
-        select: { world: true },
-        distinct: ["world"],
-        orderBy: { world: "asc" },
-      });
+      const results = await this.drizzle.db
+        .selectDistinctOn([userCharacters.world], {
+          world: userCharacters.world,
+        })
+        .from(userCharacters)
+        .where(eq(userCharacters.userId, userId))
+        .orderBy(userCharacters.world);
 
-      const worlds = userCharacters.map((char) => char.world);
+      const worlds = results.map((char) => char.world);
 
       return { worlds };
     } catch (error) {
@@ -207,91 +238,97 @@ export class BattlesService implements IBattlesService {
     battleId: string,
     requestingUserId?: string,
   ): Promise<BattleWithRelations> {
-    try {
-      if (requestingUserId) {
-        await this.checkBattleAccess(battleId, requestingUserId);
-      }
-
-      return await this.prisma.battle.findUniqueOrThrow({
-        where: { id: battleId },
-        include: { warriors: true },
-      });
-    } catch (error) {
-      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
-      throw error;
+    if (requestingUserId) {
+      await this.checkBattleAccess(battleId, requestingUserId);
     }
+
+    const battle = await this.drizzle.db.query.battles.findFirst({
+      where: { id: battleId },
+      with: { warriors: true },
+    });
+
+    if (!battle) {
+      throw new NotFoundException(`Battle with ID ${battleId} not found`);
+    }
+
+    return battle;
   }
 
   async updateBattle(
     battleId: string,
     updateData: UpdateBattleDto,
   ): Promise<BattleWithRelations> {
-    try {
-      const battle = await this.prisma.battle.update({
-        where: { id: battleId },
-        data: {
-          public: updateData.public,
-          updatedAt: new Date(),
-        },
-        include: { warriors: true },
-      });
+    const updated = await this.drizzle.db
+      .update(battles)
+      .set({
+        public: updateData.public,
+        updatedAt: new Date(),
+      })
+      .where(eq(battles.id, battleId))
+      .returning();
 
-      return battle;
-    } catch (error) {
-      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
-      throw error;
+    if (updated.length === 0) {
+      throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
+
+    const battle = await this.drizzle.db.query.battles.findFirst({
+      where: { id: battleId },
+      with: { warriors: true },
+    });
+
+    return battle!;
   }
 
   async deleteBattle(battleId: string): Promise<DeleteBattleResult> {
-    try {
-      await this.prisma.battle.delete({ where: { id: battleId } });
+    const deleted = await this.drizzle.db
+      .delete(battles)
+      .where(eq(battles.id, battleId))
+      .returning({ id: battles.id });
 
-      try {
-        await this.r2Service.deleteBattleData(battleId);
-      } catch (error) {
-        this.logger.warn(
-          `Failed to delete R2 data for battle ${battleId}`,
-          error,
-        );
-      }
-
-      return { message: "Battle deleted successfully" };
-    } catch (error) {
-      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
-      throw error;
+    if (deleted.length === 0) {
+      throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
+
+    try {
+      await this.r2Service.deleteBattleData(battleId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to delete R2 data for battle ${battleId}`,
+        error,
+      );
+    }
+
+    return { message: "Battle deleted successfully" };
   }
 
   async getPublicBattle(battleId: string): Promise<BattleWithRelations> {
-    try {
-      return await this.prisma.battle.findUniqueOrThrow({
-        where: { id: battleId, public: true },
-        include: { warriors: true },
-      });
-    } catch (error) {
-      this.handlePrismaError(
-        error,
+    const battle = await this.drizzle.db.query.battles.findFirst({
+      where: { id: battleId, public: true },
+      with: { warriors: true },
+    });
+
+    if (!battle) {
+      throw new NotFoundException(
         `Public battle with ID ${battleId} not found`,
       );
-      throw error;
     }
+
+    return battle;
   }
 
   async getPublicBattleRaw(battleId: string): Promise<RawBattleData> {
-    try {
-      const battle = await this.prisma.battle.findUniqueOrThrow({
-        where: { id: battleId, public: true },
-        select: { id: true },
-      });
-      return await this.r2Service.getBattleData(battle.id);
-    } catch (error) {
-      this.handlePrismaError(
-        error,
+    const battle = await this.drizzle.db.query.battles.findFirst({
+      where: { id: battleId, public: true },
+      columns: { id: true },
+    });
+
+    if (!battle) {
+      throw new NotFoundException(
         `Public battle with ID ${battleId} not found`,
       );
-      throw error;
     }
+
+    return await this.r2Service.getBattleData(battle.id);
   }
 
   analyzeBattle(dto: CreateBattleDto): BattleAnalysis {
@@ -311,127 +348,127 @@ export class BattlesService implements IBattlesService {
   private async buildFilterConditions(
     query: QueryBattlesDto,
     userId?: string,
-  ): Promise<Prisma.BattleWhereInput> {
-    const where: Prisma.BattleWhereInput = {};
-    const andConditions: Prisma.BattleWhereInput[] = [];
+  ): Promise<SQL | undefined> {
+    const conditions: (SQL | undefined)[] = [];
 
-    if (query.world) where.world = query.world;
-    if (query.userId) where.userId = query.userId;
-    if (typeof query.public === "boolean") where.public = query.public;
+    if (query.world) conditions.push(eq(battles.world, query.world));
+    if (query.userId) conditions.push(eq(battles.userId, query.userId));
+    if (typeof query.public === "boolean")
+      conditions.push(eq(battles.public, query.public));
 
     let characterIds = query.characterId || [];
     if (query.result?.length && !characterIds.length && userId) {
-      const userCharacters = await this.prisma.userCharacter.findMany({
+      const userChars = await this.drizzle.db.query.userCharacters.findMany({
         where: { userId },
-        select: { characterId: true },
+        columns: { characterId: true },
       });
-      characterIds = userCharacters.map((c) => c.characterId);
+      characterIds = userChars.map((c) => c.characterId);
     }
 
     if (characterIds.length) {
-      where.characterId =
-        characterIds.length === 1 ? characterIds[0] : { in: characterIds };
+      conditions.push(
+        characterIds.length === 1
+          ? eq(battles.characterId, characterIds[0])
+          : inArray(battles.characterId, characterIds),
+      );
     }
 
     if (query.type?.length) {
       const hasSolo = query.type.includes("solo");
       const hasGroup = query.type.includes("group");
       if (hasSolo && !hasGroup) {
-        where.type = "1v1";
+        conditions.push(eq(battles.type, "1v1"));
       } else if (hasGroup && !hasSolo) {
-        where.type = { not: "1v1" };
+        conditions.push(not(eq(battles.type, "1v1")));
       }
     }
 
     if (query.result?.length && characterIds.length) {
-      const resultConditions: Prisma.BattleWhereInput[] = [];
+      const resultConditions: (SQL | undefined)[] = [];
 
       if (query.result.includes("won")) {
-        characterIds.forEach((charId) => {
-          [1, 2].forEach((team) => {
-            resultConditions.push({
-              AND: [
-                { warriors: { some: { originalId: charId, team } } },
-                { winningTeam: team },
-                { hasFlee: false },
-              ],
-            });
-          });
-        });
+        for (const charId of characterIds) {
+          for (const team of [1, 2]) {
+            resultConditions.push(
+              and(
+                this.warriorExists(
+                  eq(battleWarriors.originalId, charId),
+                  eq(battleWarriors.team, team),
+                ),
+                eq(battles.winningTeam, team),
+                eq(battles.hasFlee, false),
+              ),
+            );
+          }
+        }
       }
 
       if (query.result.includes("lost")) {
-        characterIds.forEach((charId) => {
-          [1, 2].forEach((team) => {
-            resultConditions.push({
-              AND: [
-                { warriors: { some: { originalId: charId, team } } },
-                { losingTeam: team },
-                { hasFlee: false },
-              ],
-            });
-          });
-        });
+        for (const charId of characterIds) {
+          for (const team of [1, 2]) {
+            resultConditions.push(
+              and(
+                this.warriorExists(
+                  eq(battleWarriors.originalId, charId),
+                  eq(battleWarriors.team, team),
+                ),
+                eq(battles.losingTeam, team),
+                eq(battles.hasFlee, false),
+              ),
+            );
+          }
+        }
       }
 
       if (query.result.includes("flee")) {
-        resultConditions.push({ hasFlee: true });
+        resultConditions.push(eq(battles.hasFlee, true));
       }
 
       if (resultConditions.length) {
-        andConditions.push({ OR: resultConditions });
+        conditions.push(or(...resultConditions));
       }
     }
 
     if (query.ph === true) {
-      const phFilter: any = { ph: { gt: 0 } };
+      const phConditions: (SQL | undefined)[] = [gt(battleWarriors.ph, 0)];
       if (characterIds.length) {
-        phFilter.originalId = { in: characterIds };
+        phConditions.push(inArray(battleWarriors.originalId, characterIds));
       }
-      andConditions.push({ warriors: { some: phFilter } });
+      conditions.push(this.warriorExists(...phConditions));
     }
 
     if (query.matchmaking === true) {
-      where.matchmaking = true;
+      conditions.push(eq(battles.matchmaking, true));
     }
 
     if (query.search) {
-      andConditions.push({
-        warriors: {
-          some: {
-            name: { contains: query.search, mode: "insensitive" },
-          },
-        },
-      });
+      conditions.push(
+        this.warriorExists(ilike(battleWarriors.name, `%${query.search}%`)),
+      );
     }
 
     if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      const levelFilter: Prisma.BattleWarriorWhereInput = {};
+      const levelConditions: (SQL | undefined)[] = [];
 
       if (query.minLevel !== undefined && query.maxLevel !== undefined) {
-        levelFilter.lvl = { gte: query.minLevel, lte: query.maxLevel };
+        levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
+        levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
       } else if (query.minLevel !== undefined) {
-        levelFilter.lvl = { gte: query.minLevel };
+        levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
       } else if (query.maxLevel !== undefined) {
-        levelFilter.lvl = { lte: query.maxLevel };
+        levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
       }
 
       if (characterIds.length) {
-        levelFilter.originalId = {
-          notIn: characterIds,
-        };
+        levelConditions.push(
+          notInArray(battleWarriors.originalId, characterIds),
+        );
       }
 
-      andConditions.push({
-        warriors: { some: levelFilter },
-      });
+      conditions.push(this.warriorExists(...levelConditions));
     }
 
-    if (andConditions.length) {
-      where.AND = andConditions;
-    }
-
-    return where;
+    return conditions.length ? and(...conditions) : undefined;
   }
 
   private buildPaginationOptions(query: QueryBattlesDto): PaginationOptions {
@@ -447,28 +484,17 @@ export class BattlesService implements IBattlesService {
     battleId: string,
     requestingUserId: string,
   ): Promise<void> {
-    try {
-      const battle = await this.prisma.battle.findUniqueOrThrow({
-        where: { id: battleId },
-        select: { userId: true, public: true },
-      });
+    const battle = await this.drizzle.db.query.battles.findFirst({
+      where: { id: battleId },
+      columns: { userId: true, public: true },
+    });
 
-      if (!battle.public && battle.userId !== requestingUserId) {
-        throw new ForbiddenException("Access denied: Battle is private");
-      }
-    } catch (error) {
-      this.handlePrismaError(error, `Battle with ID ${battleId} not found`);
-      throw error;
+    if (!battle) {
+      throw new NotFoundException(`Battle with ID ${battleId} not found`);
     }
-  }
 
-  private handlePrismaError(error: unknown, message: string): void {
-    if (
-      (error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025") ||
-      (error instanceof Error && error.name === "NotFoundError")
-    ) {
-      throw new NotFoundException(message);
+    if (!battle.public && battle.userId !== requestingUserId) {
+      throw new ForbiddenException("Access denied: Battle is private");
     }
   }
 
@@ -480,11 +506,17 @@ export class BattlesService implements IBattlesService {
     icon: string,
   ): Promise<void> {
     try {
-      await this.prisma.userCharacter.upsert({
-        where: { userId_characterId_world: { userId, characterId, world } },
-        update: { name, icon, lastSeenAt: new Date() },
-        create: { userId, characterId, name, world, icon },
-      });
+      await this.drizzle.db
+        .insert(userCharacters)
+        .values({ userId, characterId, name, world, icon })
+        .onConflictDoUpdate({
+          target: [
+            userCharacters.userId,
+            userCharacters.characterId,
+            userCharacters.world,
+          ],
+          set: { name, icon, lastSeenAt: new Date() },
+        });
     } catch (error) {
       this.logger.warn(
         `Failed to upsert character ${characterId} for user ${userId}`,
@@ -512,128 +544,129 @@ export class BattlesService implements IBattlesService {
         );
       }
 
-      const battleData = {
-        userId,
-        accountId: data.accountId,
-        characterId: data.characterId,
-        world: data.world,
-        duration: analysis.duration,
-        type: analysis.type,
-        winner: analysis.outcome.winner,
-        loser: analysis.outcome.loser,
-        winningTeam: analysis.outcome.winningTeam!,
-        losingTeam: analysis.outcome.losingTeam!,
-        hasFlee: analysis.outcome.hasFlee,
-        matchmaking: !!analysis.matchmaking,
-        statistics: analysis.statistics as unknown as Prisma.InputJsonValue,
-        ...(analysis.matchmaking && {
-          difficultyRank: analysis.matchmaking.difficultyRank,
-          result: analysis.matchmaking.result,
-          ratingDelta: analysis.matchmaking.ratingDelta,
-          opponentLvl: analysis.matchmaking.opponentLvl,
-          opponentOplvl: analysis.matchmaking.opponentOplvl,
-          opponentRating: analysis.matchmaking.opponentRating,
-          rating: analysis.matchmaking.rating,
-          status: analysis.matchmaking.status,
-        }),
-        warriors: {
-          create: analysis.warriors.map(
-            (
-              warrior: Warrior,
-            ): Prisma.BattleWarriorCreateWithoutBattleInput => ({
-              originalId: warrior.originalId,
-              name: warrior.name,
-              lvl: warrior.lvl,
-              prof: warrior.prof,
-              icon: warrior.icon,
-              team: warrior.team,
-              isDead: warrior.isDead,
-              surrendered: warrior.surrendered,
-              fled: warrior.fled,
-              maxHp: warrior.maxHp,
-              turns: warrior.turns,
-              turnsLost: warrior.turnsLost,
-              steps: warrior.steps,
-              normalAttacks: warrior.normalAttacks,
-              spellsUsed: warrior.spellsUsed,
-              spellsUsedMap: warrior.spellsUsedMap,
-              damageDealt: warrior.damageDealt,
-              distanceDamage: warrior.distanceDamage,
-              meleeDamage: warrior.meleeDamage,
-              auxiliaryDamage: warrior.auxiliaryDamage,
-              fireDamage: warrior.fireDamage,
-              frostDamage: warrior.frostDamage,
-              lightningDamage: warrior.lightningDamage,
-              thirdAttDamage: warrior.thirdAttDamage,
-              damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
-              damageDealtAfterDefensivePercentage:
-                warrior.damageDealtAfterDefensivePercentage,
-              damageTaken: warrior.damageTaken,
-              distanceDamageTaken: warrior.distanceDamageTaken,
-              meleeDamageTaken: warrior.meleeDamageTaken,
-              auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
-              fireDamageTaken: warrior.fireDamageTaken,
-              frostDamageTaken: warrior.frostDamageTaken,
-              lightningDamageTaken: warrior.lightningDamageTaken,
-              thirdAttDamageTaken: warrior.thirdAttDamageTaken,
-              flatDamageTaken: warrior.flatDamageTaken,
-              rageDamageDealt: warrior.rageDamageDealt,
-              trueDamageDealt: warrior.trueDamageDealt,
-              trueDamageTaken: warrior.trueDamageTaken,
-              stigmaDamageDealt: warrior.stigmaDamageDealt,
-              stigmaDamageTaken: warrior.stigmaDamageTaken,
-              passiveHealing: warrior.passiveHealing,
-              activeHealing: warrior.activeHealing,
-              armorPierces: warrior.armorPierces,
-              criticalHits: warrior.criticalHits,
-              reducedArmor: warrior.reducedArmor,
-              reducedPoisonResistance: warrior.reducedPoisonResistance,
-              magicResistanceDestroyed: warrior.magicResistanceDestroyed,
-              evasions: warrior.evasions,
-              attacksEvaded: warrior.attacksEvaded,
-              counters: warrior.counters,
-              fastArrows: warrior.fastArrows,
-              blocks: warrior.blocks,
-              attacksBlocked: warrior.attacksBlocked,
-              blockedDamage: warrior.blockedDamage,
-              woundDamageTaken: warrior.woundDamageTaken,
-              poisonDamageTaken: warrior.poisonDamageTaken,
-              injureDamageTaken: warrior.injureDamageTaken,
-              injures: warrior.injures,
-              critWoundDamageTaken: warrior.critWoundDamageTaken,
-              firePassiveDamageTaken: warrior.firePassiveDamageTaken,
-              lightningPassiveDamageTaken: warrior.lightningPassiveDamageTaken,
-              destroyedEnergy: warrior.destroyedEnergy,
-              destroyedMana: warrior.destroyedMana,
-              regeneratedEnergy: warrior.regeneratedEnergy,
-              regeneratedMana: warrior.regeneratedMana,
-              reflectedDamage: warrior.reflectedDamage,
-              reflectedDamageTaken: warrior.reflectedDamageTaken,
-              legbonCurse: warrior.legbonCurse,
-              legbonCleanse: warrior.legbonCleanse,
-              legbonLastheal: warrior.legbonLastheal,
-              legbonLasthealValue: warrior.legbonLasthealValue,
-              legbonGlare: warrior.legbonGlare,
-              legbonHolytouch: warrior.legbonHolytouch,
-              legbonHolytouchValue: warrior.legbonHolytouchValue,
-              legbonCritredValue: warrior.legbonCritredValue,
-              legbonVerycrit: warrior.legbonVerycrit,
-              legbonAnguish: warrior.legbonAnguish,
-              legbonFacadeValue: warrior.legbonFacadeValue,
-              legbonPunctureValue: warrior.legbonPunctureValue,
-              legbons: warrior.legbons,
-              legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
-              ph: warrior.ph,
+      const battle = await this.drizzle.db.transaction(async (tx) => {
+        const [insertedBattle] = await tx
+          .insert(battles)
+          .values({
+            userId,
+            accountId: data.accountId,
+            characterId: data.characterId,
+            world: data.world,
+            duration: analysis.duration,
+            type: analysis.type,
+            winner: analysis.outcome.winner,
+            loser: analysis.outcome.loser,
+            winningTeam: analysis.outcome.winningTeam!,
+            losingTeam: analysis.outcome.losingTeam!,
+            hasFlee: analysis.outcome.hasFlee,
+            matchmaking: !!analysis.matchmaking,
+            statistics: analysis.statistics,
+            ...(analysis.matchmaking && {
+              difficultyRank: analysis.matchmaking.difficultyRank,
+              result: analysis.matchmaking.result,
+              ratingDelta: analysis.matchmaking.ratingDelta,
+              opponentLvl: analysis.matchmaking.opponentLvl,
+              opponentOplvl: analysis.matchmaking.opponentOplvl,
+              opponentRating: analysis.matchmaking.opponentRating,
+              rating: analysis.matchmaking.rating,
+              status: analysis.matchmaking.status,
             }),
-          ),
-        },
-      };
+          })
+          .returning();
 
-      const battle = await this.prisma.battle.create({
-        data: battleData,
-        include: {
-          warriors: true,
-        },
+        const warriorValues = analysis.warriors.map((warrior: Warrior) => ({
+          battleId: insertedBattle.id,
+          originalId: warrior.originalId,
+          name: warrior.name,
+          lvl: warrior.lvl,
+          prof: warrior.prof,
+          icon: warrior.icon,
+          team: warrior.team,
+          isDead: warrior.isDead,
+          surrendered: warrior.surrendered,
+          fled: warrior.fled,
+          maxHp: warrior.maxHp,
+          turns: warrior.turns,
+          turnsLost: warrior.turnsLost,
+          steps: warrior.steps,
+          normalAttacks: warrior.normalAttacks,
+          spellsUsed: warrior.spellsUsed,
+          spellsUsedMap: warrior.spellsUsedMap,
+          damageDealt: warrior.damageDealt,
+          distanceDamage: warrior.distanceDamage,
+          meleeDamage: warrior.meleeDamage,
+          auxiliaryDamage: warrior.auxiliaryDamage,
+          fireDamage: warrior.fireDamage,
+          frostDamage: warrior.frostDamage,
+          lightningDamage: warrior.lightningDamage,
+          thirdAttDamage: warrior.thirdAttDamage,
+          damageDealtAfterDefensive: warrior.damageDealtAfterDefensive,
+          damageDealtAfterDefensivePercentage:
+            warrior.damageDealtAfterDefensivePercentage,
+          damageTaken: warrior.damageTaken,
+          distanceDamageTaken: warrior.distanceDamageTaken,
+          meleeDamageTaken: warrior.meleeDamageTaken,
+          auxiliaryDamageTaken: warrior.auxiliaryDamageTaken,
+          fireDamageTaken: warrior.fireDamageTaken,
+          frostDamageTaken: warrior.frostDamageTaken,
+          lightningDamageTaken: warrior.lightningDamageTaken,
+          thirdAttDamageTaken: warrior.thirdAttDamageTaken,
+          flatDamageTaken: warrior.flatDamageTaken,
+          rageDamageDealt: warrior.rageDamageDealt,
+          trueDamageDealt: warrior.trueDamageDealt,
+          trueDamageTaken: warrior.trueDamageTaken,
+          stigmaDamageDealt: warrior.stigmaDamageDealt,
+          stigmaDamageTaken: warrior.stigmaDamageTaken,
+          passiveHealing: warrior.passiveHealing,
+          activeHealing: warrior.activeHealing,
+          armorPierces: warrior.armorPierces,
+          criticalHits: warrior.criticalHits,
+          reducedArmor: warrior.reducedArmor,
+          reducedPoisonResistance: warrior.reducedPoisonResistance,
+          magicResistanceDestroyed: warrior.magicResistanceDestroyed,
+          evasions: warrior.evasions,
+          attacksEvaded: warrior.attacksEvaded,
+          counters: warrior.counters,
+          fastArrows: warrior.fastArrows,
+          blocks: warrior.blocks,
+          attacksBlocked: warrior.attacksBlocked,
+          blockedDamage: warrior.blockedDamage,
+          woundDamageTaken: warrior.woundDamageTaken,
+          poisonDamageTaken: warrior.poisonDamageTaken,
+          injureDamageTaken: warrior.injureDamageTaken,
+          injures: warrior.injures,
+          critWoundDamageTaken: warrior.critWoundDamageTaken,
+          firePassiveDamageTaken: warrior.firePassiveDamageTaken,
+          lightningPassiveDamageTaken: warrior.lightningPassiveDamageTaken,
+          destroyedEnergy: warrior.destroyedEnergy,
+          destroyedMana: warrior.destroyedMana,
+          regeneratedEnergy: warrior.regeneratedEnergy,
+          regeneratedMana: warrior.regeneratedMana,
+          reflectedDamage: warrior.reflectedDamage,
+          reflectedDamageTaken: warrior.reflectedDamageTaken,
+          legbonCurse: warrior.legbonCurse,
+          legbonCleanse: warrior.legbonCleanse,
+          legbonLastheal: warrior.legbonLastheal,
+          legbonLasthealValue: warrior.legbonLasthealValue,
+          legbonGlare: warrior.legbonGlare,
+          legbonHolytouch: warrior.legbonHolytouch,
+          legbonHolytouchValue: warrior.legbonHolytouchValue,
+          legbonCritredValue: warrior.legbonCritredValue,
+          legbonVerycrit: warrior.legbonVerycrit,
+          legbonAnguish: warrior.legbonAnguish,
+          legbonFacadeValue: warrior.legbonFacadeValue,
+          legbonPunctureValue: warrior.legbonPunctureValue,
+          legbons: warrior.legbons,
+          legbonAnguishDamageTaken: warrior.legbonAnguishDamageTaken,
+          ph: warrior.ph,
+        }));
+
+        const insertedWarriors = await tx
+          .insert(battleWarriors)
+          .values(warriorValues)
+          .returning();
+
+        return { ...insertedBattle, warriors: insertedWarriors };
       });
 
       return battle;
@@ -681,30 +714,25 @@ export class BattlesService implements IBattlesService {
         return { warriors: [] };
       }
 
-      const warriors = await this.prisma.battleWarrior.findMany({
-        where: {
-          battle: {
-            userId,
-          },
-          name: {
-            contains: query.trim(),
-            mode: "insensitive",
-          },
-        },
-        select: {
-          name: true,
-          icon: true,
-          prof: true,
-          lvl: true,
-        },
-        distinct: ["name"],
-        take: 10,
-        orderBy: {
-          name: "asc",
-        },
-      });
+      const results = await this.drizzle.db
+        .selectDistinctOn([battleWarriors.name], {
+          name: battleWarriors.name,
+          icon: battleWarriors.icon,
+          prof: battleWarriors.prof,
+          lvl: battleWarriors.lvl,
+        })
+        .from(battleWarriors)
+        .innerJoin(battles, eq(battleWarriors.battleId, battles.id))
+        .where(
+          and(
+            eq(battles.userId, userId),
+            ilike(battleWarriors.name, `%${query.trim()}%`),
+          ),
+        )
+        .orderBy(battleWarriors.name)
+        .limit(10);
 
-      return { warriors };
+      return { warriors: results };
     } catch (error) {
       this.logger.error("Failed to search warriors:", error);
       throw error;

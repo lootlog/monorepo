@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE "battle_warriors" ADD COLUMN     "normalAttacks" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "spellsUsed" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "steps" INTEGER NOT NULL DEFAULT 0;
