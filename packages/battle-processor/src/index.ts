@@ -348,7 +348,7 @@ export class BattleProcessor {
         if (warrior) warrior.ph = +param;
       }
 
-      // Obsługa utraty tury (txt nie ma attackerId/defenderId)
+      // Handle turn loss (txt has no attackerId/defenderId)
       if (actionType === "txt") {
         if (param.includes("utrata tury")) {
           const warriorName = param.split(" - ")[0]?.trim();
