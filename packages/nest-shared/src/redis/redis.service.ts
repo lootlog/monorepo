@@ -140,6 +140,30 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.client.hdel(this.prefixKey(key), field);
   }
 
+  async rpush(key: string, ...values: string[]): Promise<number> {
+    return this.client.rpush(this.prefixKey(key), ...values);
+  }
+
+  async ltrim(key: string, start: number, stop: number): Promise<"OK"> {
+    return this.client.ltrim(this.prefixKey(key), start, stop);
+  }
+
+  async lrange(key: string, start: number, stop: number): Promise<string[]> {
+    return this.client.lrange(this.prefixKey(key), start, stop);
+  }
+
+  async lset(key: string, index: number, value: string): Promise<"OK"> {
+    return this.client.lset(this.prefixKey(key), index, value);
+  }
+
+  async lrem(key: string, count: number, value: string): Promise<number> {
+    return this.client.lrem(this.prefixKey(key), count, value);
+  }
+
+  async llen(key: string): Promise<number> {
+    return this.client.llen(this.prefixKey(key));
+  }
+
   async scan(pattern: string): Promise<string[]> {
     const prefixedPattern = this.prefixKey(pattern);
     const keys: string[] = [];
