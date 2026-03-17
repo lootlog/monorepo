@@ -1,4 +1,4 @@
-import type { Battle, BattleWarrior } from "../../../generated/client";
+import type { Battle, BattleWarrior } from "src/shared/modules/drizzle/schema";
 import type { QueryBattlesDto } from "../dto/query-battles.dto";
 import type { UpdateBattleDto } from "../dto/update-battle.dto";
 import type { CreateBattleDto } from "../dto/create-battle.dto";
