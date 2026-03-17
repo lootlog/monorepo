@@ -12,7 +12,7 @@ CREATE TABLE "battle_warriors" (
 	"steps" integer DEFAULT 0 NOT NULL,
 	"normalAttacks" integer DEFAULT 0 NOT NULL,
 	"spellsUsed" integer DEFAULT 0 NOT NULL,
-	"spellsUsedMap" jsonb DEFAULT '"{}"' NOT NULL,
+	"spellsUsedMap" jsonb DEFAULT '{}' NOT NULL,
 	"isDead" boolean DEFAULT false NOT NULL,
 	"surrendered" boolean DEFAULT false NOT NULL,
 	"fled" boolean DEFAULT false NOT NULL,

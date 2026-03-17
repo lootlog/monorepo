@@ -40,6 +40,8 @@
     "api:migrate:dev": "turbo run api:migrate:dev",
     "api:generate": "turbo run api:generate",
     "api:studio": "turbo run api:studio",
+    "battlelog:migrate": "turbo run battlelog:migrate",
+    "battlelog:migrate:init": "turbo run battlelog:migrate:init",
     "battlelog:migrate:dev": "turbo run battlelog:migrate:dev",
     "battlelog:generate": "turbo run battlelog:generate",
     "battlelog:studio": "turbo run battlelog:studio",

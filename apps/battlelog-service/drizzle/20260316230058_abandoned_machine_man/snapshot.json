@@ -196,7 +196,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "'\"{}\"'",
+      "default": "'{}'",
       "generated": null,
       "identity": null,
       "name": "spellsUsedMap",
