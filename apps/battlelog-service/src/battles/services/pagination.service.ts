@@ -9,6 +9,8 @@ import type {
   PaginationResult,
 } from "../interfaces/pagination.interface";
 
+export type WhereBuilder = (table: typeof battles) => SQL | undefined;
+
 @Injectable()
 export class PaginationService {
   private readonly logger = new Logger(PaginationService.name);
@@ -16,17 +18,21 @@ export class PaginationService {
   constructor(private readonly drizzle: DrizzleService) {}
 
   async paginateBattles(
-    where: SQL | undefined,
+    whereBuilder: WhereBuilder,
     options: PaginationOptions,
   ): Promise<PaginationResult<any>> {
     const startTime = Date.now();
     const { size = 20, cursor, includeTotal } = options;
 
-    const cursorWhere = this.buildCursorWhere(where, cursor, options);
     const order = options.sortOrder === SortOrder.ASC ? "asc" : "desc";
 
     const results = await this.drizzle.db.query.battles.findMany({
-      where: cursorWhere ? { RAW: () => cursorWhere } : undefined,
+      where: {
+        RAW: (table: typeof battles) => {
+          const base = whereBuilder(table);
+          return this.buildCursorWhere(table, base, cursor, options);
+        },
+      },
       limit: size + 1,
       with: { warriors: true },
       orderBy: { id: order },
@@ -44,7 +50,7 @@ export class PaginationService {
     let total: number | undefined;
     const countStartTime = Date.now();
     if (includeTotal) {
-      total = await this.getEstimatedCount(where);
+      total = await this.getEstimatedCount(whereBuilder(battles));
     }
     const countTime = Date.now() - countStartTime;
 
@@ -71,6 +77,7 @@ export class PaginationService {
   }
 
   private buildCursorWhere(
+    table: typeof battles,
     where: SQL | undefined,
     cursor: string | undefined,
     options: PaginationOptions,
@@ -81,8 +88,8 @@ export class PaginationService {
 
     const cursorCondition =
       options.sortOrder === SortOrder.DESC
-        ? lt(battles.id, cursor)
-        : gt(battles.id, cursor);
+        ? lt(table.id, cursor)
+        : gt(table.id, cursor);
 
     return where ? and(where, cursorCondition) : cursorCondition;
   }

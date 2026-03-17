@@ -62,12 +62,15 @@ export class BattlesService implements IBattlesService {
     private readonly battleAnalyticsService: BattleAnalyticsService,
   ) {}
 
-  private warriorExists(...conditions: (SQL | undefined)[]) {
+  private warriorExists(
+    battlesRef: typeof battles,
+    ...conditions: (SQL | undefined)[]
+  ) {
     return exists(
       this.drizzle.db
         .select({ one: eq(battleWarriors.id, battleWarriors.id) })
         .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battles.id), ...conditions)),
+        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
     );
   }
 
@@ -102,12 +105,11 @@ export class BattlesService implements IBattlesService {
 
   async getPublicBattles(query: QueryBattlesDto): Promise<GetAllBattlesResult> {
     try {
-      const filterConditions = await this.buildFilterConditions(query);
-      const where = and(eq(battles.public, true), filterConditions);
+      const filterBuilder = await this.buildFilterConditions(query);
 
       const paginationOptions = this.buildPaginationOptions(query);
       const result = await this.paginationService.paginateBattles(
-        where,
+        (table) => and(eq(table.public, true), filterBuilder(table)),
         paginationOptions,
       );
 
@@ -132,15 +134,15 @@ export class BattlesService implements IBattlesService {
   ): Promise<GetAllBattlesResult> {
     try {
       const { userId: _userId, ...filteredQuery } = query;
-      const filterConditions = await this.buildFilterConditions(
+      const filterBuilder = await this.buildFilterConditions(
         filteredQuery,
         requestingUserId,
       );
-      const where = and(eq(battles.userId, requestingUserId), filterConditions);
 
       const paginationOptions = this.buildPaginationOptions(query);
       const result = await this.paginationService.paginateBattles(
-        where,
+        (table) =>
+          and(eq(table.userId, requestingUserId), filterBuilder(table)),
         paginationOptions,
       );
 
@@ -354,14 +356,7 @@ export class BattlesService implements IBattlesService {
   private async buildFilterConditions(
     query: QueryBattlesDto,
     userId?: string,
-  ): Promise<SQL | undefined> {
-    const conditions: (SQL | undefined)[] = [];
-
-    if (query.world) conditions.push(eq(battles.world, query.world));
-    if (query.userId) conditions.push(eq(battles.userId, query.userId));
-    if (typeof query.public === "boolean")
-      conditions.push(eq(battles.public, query.public));
-
+  ): Promise<(battlesRef: typeof battles) => SQL | undefined> {
     let characterIds = query.characterId || [];
     if (query.result?.length && !characterIds.length && userId) {
       const userChars = await this.drizzle.db.query.userCharacters.findMany({
@@ -371,110 +366,124 @@ export class BattlesService implements IBattlesService {
       characterIds = userChars.map((c) => c.characterId);
     }
 
-    if (characterIds.length) {
-      conditions.push(
-        characterIds.length === 1
-          ? eq(battles.characterId, characterIds[0])
-          : inArray(battles.characterId, characterIds),
-      );
-    }
+    return (battlesRef: typeof battles) => {
+      const conditions: (SQL | undefined)[] = [];
 
-    if (query.type?.length) {
-      const hasSolo = query.type.includes("solo");
-      const hasGroup = query.type.includes("group");
-      if (hasSolo && !hasGroup) {
-        conditions.push(eq(battles.type, "1v1"));
-      } else if (hasGroup && !hasSolo) {
-        conditions.push(not(eq(battles.type, "1v1")));
-      }
-    }
-
-    if (query.result?.length && characterIds.length) {
-      const resultConditions: (SQL | undefined)[] = [];
-
-      if (query.result.includes("won")) {
-        for (const charId of characterIds) {
-          for (const team of [1, 2]) {
-            resultConditions.push(
-              and(
-                this.warriorExists(
-                  eq(battleWarriors.originalId, charId),
-                  eq(battleWarriors.team, team),
-                ),
-                eq(battles.winningTeam, team),
-                eq(battles.hasFlee, false),
-              ),
-            );
-          }
-        }
-      }
-
-      if (query.result.includes("lost")) {
-        for (const charId of characterIds) {
-          for (const team of [1, 2]) {
-            resultConditions.push(
-              and(
-                this.warriorExists(
-                  eq(battleWarriors.originalId, charId),
-                  eq(battleWarriors.team, team),
-                ),
-                eq(battles.losingTeam, team),
-                eq(battles.hasFlee, false),
-              ),
-            );
-          }
-        }
-      }
-
-      if (query.result.includes("flee")) {
-        resultConditions.push(eq(battles.hasFlee, true));
-      }
-
-      if (resultConditions.length) {
-        conditions.push(or(...resultConditions));
-      }
-    }
-
-    if (query.ph === true) {
-      const phConditions: (SQL | undefined)[] = [gt(battleWarriors.ph, 0)];
-      if (characterIds.length) {
-        phConditions.push(inArray(battleWarriors.originalId, characterIds));
-      }
-      conditions.push(this.warriorExists(...phConditions));
-    }
-
-    if (query.matchmaking === true) {
-      conditions.push(eq(battles.matchmaking, true));
-    }
-
-    if (query.search) {
-      conditions.push(
-        this.warriorExists(ilike(battleWarriors.name, `%${query.search}%`)),
-      );
-    }
-
-    if (query.minLevel !== undefined || query.maxLevel !== undefined) {
-      const levelConditions: (SQL | undefined)[] = [];
-
-      if (query.minLevel !== undefined && query.maxLevel !== undefined) {
-        levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
-        levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
-      } else if (query.minLevel !== undefined) {
-        levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
-      } else if (query.maxLevel !== undefined) {
-        levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
-      }
+      if (query.world) conditions.push(eq(battlesRef.world, query.world));
+      if (query.userId) conditions.push(eq(battlesRef.userId, query.userId));
+      if (typeof query.public === "boolean")
+        conditions.push(eq(battlesRef.public, query.public));
 
       if (characterIds.length) {
-        levelConditions.push(
-          notInArray(battleWarriors.originalId, characterIds),
+        conditions.push(
+          characterIds.length === 1
+            ? eq(battlesRef.characterId, characterIds[0])
+            : inArray(battlesRef.characterId, characterIds),
         );
       }
 
-      conditions.push(this.warriorExists(...levelConditions));
-    }
+      if (query.type?.length) {
+        const hasSolo = query.type.includes("solo");
+        const hasGroup = query.type.includes("group");
+        if (hasSolo && !hasGroup) {
+          conditions.push(eq(battlesRef.type, "1v1"));
+        } else if (hasGroup && !hasSolo) {
+          conditions.push(not(eq(battlesRef.type, "1v1")));
+        }
+      }
 
-    return conditions.length ? and(...conditions) : undefined;
+      if (query.result?.length && characterIds.length) {
+        const resultConditions: (SQL | undefined)[] = [];
+
+        if (query.result.includes("won")) {
+          for (const charId of characterIds) {
+            for (const team of [1, 2]) {
+              resultConditions.push(
+                and(
+                  this.warriorExists(
+                    battlesRef,
+                    eq(battleWarriors.originalId, charId),
+                    eq(battleWarriors.team, team),
+                  ),
+                  eq(battlesRef.winningTeam, team),
+                  eq(battlesRef.hasFlee, false),
+                ),
+              );
+            }
+          }
+        }
+
+        if (query.result.includes("lost")) {
+          for (const charId of characterIds) {
+            for (const team of [1, 2]) {
+              resultConditions.push(
+                and(
+                  this.warriorExists(
+                    battlesRef,
+                    eq(battleWarriors.originalId, charId),
+                    eq(battleWarriors.team, team),
+                  ),
+                  eq(battlesRef.losingTeam, team),
+                  eq(battlesRef.hasFlee, false),
+                ),
+              );
+            }
+          }
+        }
+
+        if (query.result.includes("flee")) {
+          resultConditions.push(eq(battlesRef.hasFlee, true));
+        }
+
+        if (resultConditions.length) {
+          conditions.push(or(...resultConditions));
+        }
+      }
+
+      if (query.ph === true) {
+        const phConditions: (SQL | undefined)[] = [gt(battleWarriors.ph, 0)];
+        if (characterIds.length) {
+          phConditions.push(inArray(battleWarriors.originalId, characterIds));
+        }
+        conditions.push(this.warriorExists(battlesRef, ...phConditions));
+      }
+
+      if (query.matchmaking === true) {
+        conditions.push(eq(battlesRef.matchmaking, true));
+      }
+
+      if (query.search) {
+        conditions.push(
+          this.warriorExists(
+            battlesRef,
+            ilike(battleWarriors.name, `%${query.search}%`),
+          ),
+        );
+      }
+
+      if (query.minLevel !== undefined || query.maxLevel !== undefined) {
+        const levelConditions: (SQL | undefined)[] = [];
+
+        if (query.minLevel !== undefined && query.maxLevel !== undefined) {
+          levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
+          levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
+        } else if (query.minLevel !== undefined) {
+          levelConditions.push(gte(battleWarriors.lvl, query.minLevel));
+        } else if (query.maxLevel !== undefined) {
+          levelConditions.push(lte(battleWarriors.lvl, query.maxLevel));
+        }
+
+        if (characterIds.length) {
+          levelConditions.push(
+            notInArray(battleWarriors.originalId, characterIds),
+          );
+        }
+
+        conditions.push(this.warriorExists(battlesRef, ...levelConditions));
+      }
+
+      return conditions.length ? and(...conditions) : undefined;
+    };
   }
 
   private buildPaginationOptions(query: QueryBattlesDto): PaginationOptions {

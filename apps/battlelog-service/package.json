@@ -21,7 +21,7 @@
     "battlelog:push": "drizzle-kit push",
     "battlelog:generate": "drizzle-kit generate",
     "battlelog:migrate": "drizzle-kit migrate",
-    "battlelog:migrate:init": "drizzle-kit migrate --init",
+    "battlelog:migrate:init": "tsx --env-file=.env scripts/migrate-init.ts",
     "battlelog:migrate:dev": "drizzle-kit push --force",
     "battlelog:pull": "drizzle-kit pull",
     "battlelog:studio": "drizzle-kit studio"

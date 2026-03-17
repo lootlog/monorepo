@@ -28,16 +28,15 @@ export class BattleAnalyticsService {
     private readonly redisService: RedisService,
   ) {}
 
-  private rawWhere(condition: SQL | undefined) {
-    return condition ? { RAW: () => condition } : undefined;
-  }
-
-  private warriorExists(...conditions: (SQL | undefined)[]) {
+  private warriorExists(
+    battlesRef: typeof battles,
+    ...conditions: (SQL | undefined)[]
+  ) {
     return exists(
       this.drizzle.db
         .select({ one: eq(battleWarriors.id, battleWarriors.id) })
         .from(battleWarriors)
-        .where(and(eq(battleWarriors.battleId, battles.id), ...conditions)),
+        .where(and(eq(battleWarriors.battleId, battlesRef.id), ...conditions)),
     );
   }
 
@@ -104,17 +103,20 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
+    const analyticsParams = {
       userId,
       world: query.world,
       startDate,
       matchmaking: query.matchmaking,
       characterIds,
       phFilter: query.ph,
-    });
+    };
 
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, analyticsParams),
+      },
       with: { warriors: true },
     });
 
@@ -194,18 +196,19 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
-      userId,
-      world: query.world,
-      startDate,
-      matchmaking: query.matchmaking,
-      characterIds,
-      phFilter: query.ph,
-      hasFlee: false,
-    });
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, {
+            userId,
+            world: query.world,
+            startDate,
+            matchmaking: query.matchmaking,
+            characterIds,
+            phFilter: query.ph,
+            hasFlee: false,
+          }),
+      },
       with: { warriors: true },
     });
 
@@ -299,18 +302,19 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
-      userId,
-      world: query.world,
-      startDate,
-      matchmaking: query.matchmaking,
-      characterIds,
-      phFilter: query.ph,
-      hasFlee: false,
-    });
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, {
+            userId,
+            world: query.world,
+            startDate,
+            matchmaking: query.matchmaking,
+            characterIds,
+            phFilter: query.ph,
+            hasFlee: false,
+          }),
+      },
       with: { warriors: true },
       orderBy: { createdAt: "desc" },
     });
@@ -542,18 +546,19 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
-      userId,
-      world: query.world,
-      startDate,
-      matchmaking: query.matchmaking,
-      characterIds,
-      phFilter: query.ph,
-      hasFlee: false,
-    });
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, {
+            userId,
+            world: query.world,
+            startDate,
+            matchmaking: query.matchmaking,
+            characterIds,
+            phFilter: query.ph,
+            hasFlee: false,
+          }),
+      },
       with: { warriors: true },
       orderBy: { createdAt: "desc" },
     });
@@ -663,18 +668,19 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
-      userId,
-      world: query.world,
-      startDate,
-      matchmaking: query.matchmaking,
-      characterIds,
-      phFilter: query.ph,
-      hasFlee: false,
-    });
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, {
+            userId,
+            world: query.world,
+            startDate,
+            matchmaking: query.matchmaking,
+            characterIds,
+            phFilter: query.ph,
+            hasFlee: false,
+          }),
+      },
       with: { warriors: true },
       orderBy: { duration: "asc" },
     });
@@ -778,24 +784,26 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const conditions: (SQL | undefined)[] = [
-      eq(battles.userId, userId),
-      eq(battles.type, "1v1"),
-      ...(query.world ? [eq(battles.world, query.world)] : []),
-      ...(startDate ? [gt(battles.createdAt, startDate)] : []),
-      ...(query.matchmaking !== undefined
-        ? [eq(battles.matchmaking, query.matchmaking)]
-        : []),
-      this.warriorExists(
-        inArray(battleWarriors.originalId, characterIds),
-        gt(battleWarriors.ph, 0),
-      ),
-    ];
-
-    const where = and(...conditions);
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) => {
+          const conditions: (SQL | undefined)[] = [
+            eq(table.userId, userId),
+            eq(table.type, "1v1"),
+            ...(query.world ? [eq(table.world, query.world)] : []),
+            ...(startDate ? [gt(table.createdAt, startDate)] : []),
+            ...(query.matchmaking !== undefined
+              ? [eq(table.matchmaking, query.matchmaking)]
+              : []),
+            this.warriorExists(
+              table,
+              inArray(battleWarriors.originalId, characterIds),
+              gt(battleWarriors.ph, 0),
+            ),
+          ];
+          return and(...conditions);
+        },
+      },
       with: { warriors: true },
       orderBy: { createdAt: "asc" },
     });
@@ -912,30 +920,33 @@ export class BattleAnalyticsService {
     return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   }
 
-  private buildAnalyticsWhere(params: {
-    userId: string;
-    world?: string;
-    startDate?: Date;
-    matchmaking?: boolean;
-    characterIds: string[];
-    phFilter?: boolean;
-    hasFlee?: boolean;
-    ratingNotNull?: boolean;
-    ratingDeltaNotNull?: boolean;
-  }): SQL | undefined {
+  private buildAnalyticsWhere(
+    battlesRef: typeof battles,
+    params: {
+      userId: string;
+      world?: string;
+      startDate?: Date;
+      matchmaking?: boolean;
+      characterIds: string[];
+      phFilter?: boolean;
+      hasFlee?: boolean;
+      ratingNotNull?: boolean;
+      ratingDeltaNotNull?: boolean;
+    },
+  ): SQL | undefined {
     const conditions: (SQL | undefined)[] = [
-      eq(battles.userId, params.userId),
-      eq(battles.type, "1v1"),
-      ...(params.world ? [eq(battles.world, params.world)] : []),
-      ...(params.startDate ? [gt(battles.createdAt, params.startDate)] : []),
+      eq(battlesRef.userId, params.userId),
+      eq(battlesRef.type, "1v1"),
+      ...(params.world ? [eq(battlesRef.world, params.world)] : []),
+      ...(params.startDate ? [gt(battlesRef.createdAt, params.startDate)] : []),
       ...(params.matchmaking !== undefined
-        ? [eq(battles.matchmaking, params.matchmaking)]
+        ? [eq(battlesRef.matchmaking, params.matchmaking)]
         : []),
       ...(params.hasFlee !== undefined
-        ? [eq(battles.hasFlee, params.hasFlee)]
+        ? [eq(battlesRef.hasFlee, params.hasFlee)]
         : []),
-      ...(params.ratingNotNull ? [isNotNull(battles.rating)] : []),
-      ...(params.ratingDeltaNotNull ? [isNotNull(battles.ratingDelta)] : []),
+      ...(params.ratingNotNull ? [isNotNull(battlesRef.rating)] : []),
+      ...(params.ratingDeltaNotNull ? [isNotNull(battlesRef.ratingDelta)] : []),
     ];
 
     const warriorConditions: (SQL | undefined)[] = [
@@ -943,7 +954,7 @@ export class BattleAnalyticsService {
       ...(params.phFilter ? [gt(battleWarriors.ph, 0)] : []),
     ];
 
-    conditions.push(this.warriorExists(...warriorConditions));
+    conditions.push(this.warriorExists(battlesRef, ...warriorConditions));
 
     return and(...conditions);
   }
@@ -968,18 +979,19 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
-      userId,
-      world: query.world,
-      startDate,
-      matchmaking: true,
-      characterIds,
-      ratingNotNull: true,
-      ratingDeltaNotNull: true,
-    });
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, {
+            userId,
+            world: query.world,
+            startDate,
+            matchmaking: true,
+            characterIds,
+            ratingNotNull: true,
+            ratingDeltaNotNull: true,
+          }),
+      },
       with: { warriors: true },
       orderBy: { createdAt: "asc" },
     });
@@ -1034,18 +1046,19 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
-      userId,
-      world: query.world,
-      startDate,
-      matchmaking: true,
-      characterIds,
-      hasFlee: false,
-      ratingDeltaNotNull: true,
-    });
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, {
+            userId,
+            world: query.world,
+            startDate,
+            matchmaking: true,
+            characterIds,
+            hasFlee: false,
+            ratingDeltaNotNull: true,
+          }),
+      },
       with: { warriors: true },
       orderBy: { createdAt: "desc" },
     });
@@ -1180,16 +1193,17 @@ export class BattleAnalyticsService {
 
     const startDate = this.getDateFilter(query.period);
 
-    const where = this.buildAnalyticsWhere({
-      userId,
-      world: query.world,
-      startDate,
-      matchmaking: true,
-      characterIds,
-    });
-
     const fetchedBattles = await this.drizzle.db.query.battles.findMany({
-      where: this.rawWhere(where),
+      where: {
+        RAW: (table: typeof battles) =>
+          this.buildAnalyticsWhere(table, {
+            userId,
+            world: query.world,
+            startDate,
+            matchmaking: true,
+            characterIds,
+          }),
+      },
       with: { warriors: true },
       orderBy: { createdAt: "desc" },
     });
