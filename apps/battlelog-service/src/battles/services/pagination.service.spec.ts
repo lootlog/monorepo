@@ -65,7 +65,7 @@ describe("PaginationService", () => {
     it("should return paginated results without cursor", async () => {
       drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
 
-      const result = await service.paginateBattles(undefined, {
+      const result = await service.paginateBattles(() => undefined, {
         size: 2,
         sortOrder: SortOrder.DESC,
         includeTotal: false,
@@ -86,7 +86,7 @@ describe("PaginationService", () => {
         battlesWithExtra,
       );
 
-      const result = await service.paginateBattles(undefined, {
+      const result = await service.paginateBattles(() => undefined, {
         size: 2,
         sortOrder: SortOrder.DESC,
         includeTotal: false,
@@ -104,7 +104,7 @@ describe("PaginationService", () => {
     it("should work without includeTotal", async () => {
       drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
 
-      const result = await service.paginateBattles(undefined, {
+      const result = await service.paginateBattles(() => undefined, {
         size: 2,
         sortOrder: SortOrder.DESC,
         includeTotal: false,
@@ -119,7 +119,7 @@ describe("PaginationService", () => {
     it("should track query time", async () => {
       drizzleService.db.query.battles.findMany.mockResolvedValue(mockBattles);
 
-      const result = await service.paginateBattles(undefined, {
+      const result = await service.paginateBattles(() => undefined, {
         size: 10,
         sortOrder: SortOrder.DESC,
         includeTotal: false,
@@ -135,7 +135,7 @@ describe("PaginationService", () => {
         rows: [{ estimated_count: "100" }],
       });
 
-      const result = await service.paginateBattles(undefined, {
+      const result = await service.paginateBattles(() => undefined, {
         size: 10,
         sortOrder: SortOrder.DESC,
         includeTotal: true,
