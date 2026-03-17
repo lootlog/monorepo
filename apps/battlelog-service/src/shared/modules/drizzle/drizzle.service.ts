@@ -23,6 +23,12 @@ export class DrizzleService implements OnModuleInit, OnModuleDestroy {
     this.pool = new pg.Pool({
       connectionString: process.env.POSTGRESQL_CONNECTION_URI,
     });
+    this.pool.on("error", (error) => {
+      this.winstonLogger.error(
+        "Unexpected idle PostgreSQL client error",
+        error.stack,
+      );
+    });
     this.db = drizzle({ client: this.pool, relations });
   }
 

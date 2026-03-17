@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import {
   and,
+  desc,
   eq,
   exists,
   gt,
@@ -130,8 +131,9 @@ export class BattlesService implements IBattlesService {
     requestingUserId: string,
   ): Promise<GetAllBattlesResult> {
     try {
+      const { userId: _userId, ...filteredQuery } = query;
       const filterConditions = await this.buildFilterConditions(
-        query,
+        filteredQuery,
         requestingUserId,
       );
       const where = and(eq(battles.userId, requestingUserId), filterConditions);
@@ -276,7 +278,11 @@ export class BattlesService implements IBattlesService {
       with: { warriors: true },
     });
 
-    return battle!;
+    if (!battle) {
+      throw new NotFoundException(`Battle with ID ${battleId} not found`);
+    }
+
+    return battle;
   }
 
   async deleteBattle(battleId: string): Promise<DeleteBattleResult> {
@@ -729,7 +735,7 @@ export class BattlesService implements IBattlesService {
             ilike(battleWarriors.name, `%${query.trim()}%`),
           ),
         )
-        .orderBy(battleWarriors.name)
+        .orderBy(battleWarriors.name, desc(battleWarriors.id))
         .limit(10);
 
       return { warriors: results };

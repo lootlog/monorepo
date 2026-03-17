@@ -132,9 +132,14 @@
         "tsconfig.json"
       ]
     },
+    "battlelog:migrate": {
+      "cache": false
+    },
+    "battlelog:migrate:init": {
+      "cache": false
+    },
     "battlelog:migrate:dev": {
-      "cache": false,
-      "interactive": true
+      "cache": false
     },
     "battlelog:generate": {
       "cache": false

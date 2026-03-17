@@ -114,7 +114,7 @@ export const battleWarriors = pgTable(
     steps: integer("steps").default(0).notNull(),
     normalAttacks: integer("normalAttacks").default(0).notNull(),
     spellsUsed: integer("spellsUsed").default(0).notNull(),
-    spellsUsedMap: jsonb("spellsUsedMap").default("{}").notNull(),
+    spellsUsedMap: jsonb("spellsUsedMap").default({}).notNull(),
 
     isDead: boolean("isDead").default(false).notNull(),
     surrendered: boolean("surrendered").default(false).notNull(),
