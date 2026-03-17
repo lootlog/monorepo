@@ -69,17 +69,17 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
-    "@vitejs/plugin-react-swc": "^4.2.3",
-    "@vitest/ui": "^4.0.18",
+    "@vitejs/plugin-react-swc": "^4.3.0",
+    "@vitest/ui": "^4.1.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "happy-dom": "^20.8.3",
+    "happy-dom": "^20.8.4",
     "rollup-plugin-visualizer": "^6.0.11",
-    "terser": "^5.46.0",
+    "terser": "^5.46.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-babel": "^1.5.1",
     "vite-plugin-monkey": "^7.1.9",
-    "vitest": "4.0.18"
+    "vitest": "4.1.0"
   }
 }
