@@ -97,12 +97,7 @@
       "interactive": true
     },
     "test": {
-      "dependsOn": [
-        "^build",
-        "api:generate",
-        "battlelog:generate",
-        "activity:generate"
-      ],
+      "dependsOn": ["^build", "api:generate", "activity:generate"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -115,12 +110,7 @@
       ]
     },
     "test:e2e": {
-      "dependsOn": [
-        "^build",
-        "api:generate",
-        "battlelog:generate",
-        "activity:generate"
-      ],
+      "dependsOn": ["^build", "api:generate", "activity:generate"],
       "cache": false,
       "outputs": [],
       "inputs": [
