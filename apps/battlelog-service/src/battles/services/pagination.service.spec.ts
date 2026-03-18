@@ -97,7 +97,7 @@ describe("PaginationService", () => {
         size: 2,
         hasNext: true,
         hasPrev: false,
-        nextCursor: "2",
+        nextCursor: `${new Date("2024-01-02").toISOString()}_2`,
       });
     });
 
