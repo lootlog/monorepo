@@ -59,7 +59,21 @@ export class ChatService {
 
   private async getRawMessages(guildId: string): Promise<any[]> {
     const key = this.getChatMessagesKey(guildId);
-    const elements = await this.redisService.lrange(key, 0, -1);
+    let elements: string[];
+
+    try {
+      elements = await this.redisService.lrange(key, 0, -1);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("WRONGTYPE")) {
+        this.logger.log({
+          level: "warn",
+          message: `Corrupted Redis key type for guild ${guildId}, deleting key`,
+        });
+        await this.redisService.del(key);
+        return [];
+      }
+      throw error;
+    }
 
     if (elements.length === 0) {
       return [];
