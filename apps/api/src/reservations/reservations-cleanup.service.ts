@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from 'src/db/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "src/db/prisma.service";
 
 const DEFAULT_RETENTION_DAYS = 30;
 
@@ -16,10 +16,10 @@ export class ReservationsCleanupService {
     private readonly configService: ConfigService,
   ) {
     this.enabled =
-      this.configService.get<string>('RESERVATIONS_CLEANUP_ENABLED') !==
-      'false';
+      this.configService.get<string>("RESERVATIONS_CLEANUP_ENABLED") !==
+      "false";
     this.retentionDays = Number.parseInt(
-      this.configService.get<string>('RESERVATIONS_RETENTION_DAYS') ??
+      this.configService.get<string>("RESERVATIONS_RETENTION_DAYS") ??
         String(DEFAULT_RETENTION_DAYS),
       10,
     );
@@ -34,7 +34,7 @@ export class ReservationsCleanupService {
   @Cron(CronExpression.EVERY_DAY_AT_4AM)
   async cleanupExpiredReservations() {
     if (!this.enabled) {
-      this.logger.debug('Reservation cleanup is disabled');
+      this.logger.debug("Reservation cleanup is disabled");
       return;
     }
 
@@ -58,7 +58,7 @@ export class ReservationsCleanupService {
 
       this.logger.log(`Deleted ${count} expired reservations in ${duration}ms`);
     } catch (error) {
-      this.logger.error('Reservation cleanup failed', error);
+      this.logger.error("Reservation cleanup failed", error);
     }
   }
 

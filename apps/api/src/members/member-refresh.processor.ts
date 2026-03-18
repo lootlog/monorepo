@@ -1,14 +1,14 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Inject, Injectable } from '@nestjs/common';
-import type { Job } from 'bullmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { MEMBER_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Inject, Injectable } from "@nestjs/common";
+import type { Job } from "bullmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 import {
   MemberRefreshJobData,
   MemberRefreshSchedulerService,
-} from './member-refresh-scheduler.service';
-import { MembersService } from './members.service';
+} from "./member-refresh-scheduler.service";
+import { MembersService } from "./members.service";
 
 @Injectable()
 @Processor(MEMBER_REFRESH_QUEUE, {
@@ -31,7 +31,7 @@ export class MemberRefreshProcessor extends WorkerHost {
     );
 
     if (!acquiredLock) {
-      throw new Error('MEMBER_REFRESH_LOCKED');
+      throw new Error("MEMBER_REFRESH_LOCKED");
     }
 
     try {
@@ -55,8 +55,8 @@ export class MemberRefreshProcessor extends WorkerHost {
       });
 
       this.logger.log({
-        level: 'debug',
-        message: 'Processed queued member refresh job',
+        level: "debug",
+        message: "Processed queued member refresh job",
         jobId: job.id,
         guildId: job.data.guildId,
         userId: job.data.userId,

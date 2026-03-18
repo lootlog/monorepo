@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-10.20.0-orange)](https://pnpm.io/)
+[![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io/)
 
 [Features](#features) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Documentation](#documentation) • [Contributing](CONTRIBUTING.md)
 
@@ -89,7 +89,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 
 - **GitHub Actions** - CI/CD pipelines
 - **Dependabot** - Automated dependency updates
-- **ESLint + Prettier** - Code quality and formatting
+- **Oxlint + Oxfmt** - Code quality and formatting
 - **Jest + Vitest** - Testing frameworks
 
 ## Quick Start
@@ -97,7 +97,7 @@ Lootlog is a comprehensive platform for **Margonem** clans that provides:
 ### Prerequisites
 
 - **Node.js** >= 20
-- **pnpm** >= 10.20.0
+- **pnpm** >= 10.32.1
 - **Docker** and **Docker Compose**
 - **Git**
 
@@ -179,7 +179,7 @@ You'll need to manually configure:
 - Discord webhook URLs
 - External API keys
 
-All `.env.sample` files are included as templates.
+All `.env.example` files are included as templates.
 
 ### Database Configuration
 
@@ -208,11 +208,14 @@ The project uses three separate PostgreSQL databases:
 
 ```
 apps/
+├── activity/               - NestJS activity tracking service
+├── admin/                  - Admin panel
 ├── api/                    - Main NestJS backend (guilds, loots, timers)
 ├── auth/                   - Hono authentication service (Better-Auth)
 ├── battlelog-service/      - NestJS battle statistics service
 ├── gateway/                - Socket.IO gateway for real-time events
 ├── discord-bot/            - Discord bot (NestJS + necord)
+├── notifications/          - Notifications service
 ├── search/                 - Hono search service (Meilisearch)
 ├── web/                    - React 19 dashboard (Vite)
 ├── game-client/            - React 19 in-game companion
@@ -223,7 +226,9 @@ packages/
 ├── types/                  - Shared TypeScript types
 ├── api-helpers/            - JWT/JWKS authentication utilities
 ├── cli/                    - Environment configuration CLI
-├── eslint-config/          - Shared ESLint configuration
+├── instrumentation/        - Shared observability helpers
+├── nest-shared/            - Shared NestJS decorators and guards
+├── socket-parser/          - Shared socket parsing logic
 └── typescript-config/      - Shared TypeScript configuration
 ```
 
@@ -256,7 +261,8 @@ packages/
 pnpm dev                    # Start all services with hot reload
 pnpm build                  # Build all services
 pnpm lint                   # Lint all code
-pnpm format                 # Format code with Prettier
+pnpm format                 # Format code with Oxfmt
+pnpm format:check           # Check formatting without writing files
 pnpm test                   # Run all tests
 ```
 

@@ -36,7 +36,12 @@ const OVERVIEW_CONFIG = {
   },
 };
 
-const OVERVIEW_KEYS = ["totalLoots", "totalItems", "legendaryItems", "heroicItems"] as const;
+const OVERVIEW_KEYS = [
+  "totalLoots",
+  "totalItems",
+  "legendaryItems",
+  "heroicItems",
+] as const;
 
 type LootOverviewCardsProps = {
   data?: LootStatsOverview;

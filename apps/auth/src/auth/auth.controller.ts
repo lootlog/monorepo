@@ -75,7 +75,10 @@ authController.get("/@me/scopes", async (c) => {
 
   const expiresAt = token.expiresAt ? new Date(token.expiresAt) : null;
   if (expiresAt && expiresAt < new Date()) {
-    return c.json({ error: "IDP token has expired. Please reconnect your account." }, 401);
+    return c.json(
+      { error: "IDP token has expired. Please reconnect your account." },
+      401,
+    );
   }
 
   return c.json(token.scopes || []);
@@ -115,7 +118,9 @@ authController.post("/idp-token", async (c) => {
 
   return c.json({
     accessToken: token.accessToken,
-    expiresIn: expiresAt ? Math.floor((expiresAt.getTime() - Date.now()) / 1000) : 0,
+    expiresIn: expiresAt
+      ? Math.floor((expiresAt.getTime() - Date.now()) / 1000)
+      : 0,
     scopes: token.scopes || [],
   });
 });

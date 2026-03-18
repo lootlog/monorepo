@@ -1,35 +1,45 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { SortOrder } from '../dto/query-battles.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { and, count, gt, lt, sql, type SQL } from "drizzle-orm";
+import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { battles } from "src/shared/modules/drizzle/schema";
+import { SortOrder } from "../dto/query-battles.dto";
 import type {
   CursorPagination,
   PaginationOptions,
   PaginationResult,
-} from '../interfaces/pagination.interface';
+} from "../interfaces/pagination.interface";
+
+export type WhereBuilder = (table: typeof battles) => SQL | undefined;
 
 @Injectable()
 export class PaginationService {
   private readonly logger = new Logger(PaginationService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly drizzle: DrizzleService) {}
 
   async paginateBattles(
-    where: any,
+    whereBuilder: WhereBuilder,
     options: PaginationOptions,
   ): Promise<PaginationResult<any>> {
     const startTime = Date.now();
     const { size = 20, cursor, includeTotal } = options;
 
-    const cursorWhere = this.buildCursorWhere(where, cursor, options);
-    const battles = await this.prisma.battle.findMany({
-      where: cursorWhere,
-      take: size + 1,
-      include: { warriors: true },
-      orderBy: this.buildOrderBy(options.sortOrder),
+    const order = options.sortOrder === SortOrder.ASC ? "asc" : "desc";
+
+    const results = await this.drizzle.db.query.battles.findMany({
+      where: {
+        RAW: (table: typeof battles) => {
+          const base = whereBuilder(table);
+          return this.buildCursorWhere(table, base, cursor, options);
+        },
+      },
+      limit: size + 1,
+      with: { warriors: true },
+      orderBy: { id: order },
     });
 
-    const hasNext = battles.length > size;
-    const items = hasNext ? battles.slice(0, size) : battles;
+    const hasNext = results.length > size;
+    const items = hasNext ? results.slice(0, size) : results;
 
     let nextCursor: string | undefined;
     if (hasNext && items.length > 0) {
@@ -40,7 +50,7 @@ export class PaginationService {
     let total: number | undefined;
     const countStartTime = Date.now();
     if (includeTotal) {
-      total = await this.getEstimatedCount(where);
+      total = await this.getEstimatedCount(whereBuilder(battles));
     }
     const countTime = Date.now() - countStartTime;
 
@@ -67,46 +77,47 @@ export class PaginationService {
   }
 
   private buildCursorWhere(
-    where: any,
+    table: typeof battles,
+    where: SQL | undefined,
     cursor: string | undefined,
     options: PaginationOptions,
-  ): any {
+  ): SQL | undefined {
     if (!cursor) {
       return where;
     }
 
-    const operator = options.sortOrder === SortOrder.DESC ? 'lt' : 'gt';
+    const cursorCondition =
+      options.sortOrder === SortOrder.DESC
+        ? lt(table.id, cursor)
+        : gt(table.id, cursor);
 
-    return {
-      ...where,
-      id: {
-        [operator]: cursor,
-      },
-    };
+    return where ? and(where, cursorCondition) : cursorCondition;
   }
 
-  private buildOrderBy(sortOrder: SortOrder): any {
-    const order = sortOrder === SortOrder.ASC ? 'asc' : 'desc';
-    return { id: order };
-  }
-
-  private async getEstimatedCount(where: any): Promise<number> {
+  private async getEstimatedCount(where: SQL | undefined): Promise<number> {
     try {
-      if (Object.keys(where).length === 0) {
-        const result = await this.prisma.$queryRaw<
-          [{ estimated_count: bigint }]
-        >`
+      if (!where) {
+        const result = await this.drizzle.db.execute(sql`
           SELECT reltuples::BIGINT AS estimated_count
           FROM pg_class
-          WHERE relname = 'battles';
-        `;
-        return Number(result[0]?.estimated_count || 0);
+          WHERE relname = 'battles'
+        `);
+        const row = result.rows[0] as { estimated_count: string } | undefined;
+        return Number(row?.estimated_count || 0);
       }
 
-      return await this.prisma.battle.count({ where });
+      const result = await this.drizzle.db
+        .select({ count: count() })
+        .from(battles)
+        .where(where);
+      return result[0]?.count ?? 0;
     } catch (error) {
-      this.logger.warn('Failed to get estimated count, falling back', error);
-      return this.prisma.battle.count({ where });
+      this.logger.warn("Failed to get estimated count, falling back", error);
+      const result = await this.drizzle.db
+        .select({ count: count() })
+        .from(battles)
+        .where(where);
+      return result[0]?.count ?? 0;
     }
   }
 }

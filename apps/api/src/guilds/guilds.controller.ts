@@ -6,7 +6,8 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
+} from "@nestjs/common";
+import { DiscordId, UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -14,45 +15,43 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
-} from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
-import { type Guild, Permission } from 'generated/client';
-import { UpdateGuildConfigDto } from 'src/guilds/dto/update-guild-config.dto';
-import { UserGuildPermissionsDto } from 'src/guilds/dto/user-guild-permissions.dto';
-import { GuildsService } from 'src/guilds/guilds.service';
-import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
-import { GuildData } from 'src/shared/decorators/guild-data.decorator';
-import { MemberPermissions } from 'src/shared/decorators/member-permissions.decorator';
-import { UserId } from 'src/shared/decorators/user-id.decorator';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { Permissions } from 'src/shared/permissions/permissions.decorator';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
-import { MemberSyncInterceptor } from 'src/shared/interceptors/member-sync.interceptor';
-import { GuildEntity } from 'src/shared/entities/guild.entity';
+} from "@nestjs/swagger";
+import { plainToInstance } from "class-transformer";
+import { type Guild, Permission } from "generated/client";
+import { UpdateGuildConfigDto } from "src/guilds/dto/update-guild-config.dto";
+import { UserGuildPermissionsDto } from "src/guilds/dto/user-guild-permissions.dto";
+import { GuildsService } from "src/guilds/guilds.service";
+import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { Permissions } from "src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
+import { MemberSyncInterceptor } from "src/shared/interceptors/member-sync.interceptor";
+import { GuildEntity } from "src/shared/entities/guild.entity";
 
-@ApiTags('guilds')
+@ApiTags("guilds")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
-@Controller('guilds')
+@Controller("guilds")
 export class GuildsController {
   constructor(private readonly guildsService: GuildsService) {}
 
   @UseInterceptors(MemberSyncInterceptor)
-  @Get('/@me')
+  @Get("/@me")
   @ApiOperation({
-    summary: 'Get user guilds',
-    description: 'Retrieve all guilds for the authenticated user',
+    summary: "Get user guilds",
+    description: "Retrieve all guilds for the authenticated user",
   })
-  @ApiResponse({ status: 200, description: 'List of user guilds' })
+  @ApiResponse({ status: 200, description: "List of user guilds" })
   @ApiQuery({
-    name: 'source',
+    name: "source",
     required: false,
-    description: 'Source of the request',
+    description: "Source of the request",
   })
   async getUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
-    @Query('source') source: string,
+    @Query("source") source: string,
   ) {
     const guilds = await this.guildsService.getUserGuilds(
       discordId,
@@ -62,15 +61,15 @@ export class GuildsController {
     return plainToInstance(GuildEntity, guilds);
   }
 
-  @Get('/@me/permissions')
+  @Get("/@me/permissions")
   @ApiOperation({
-    summary: 'Get user guilds with permissions',
+    summary: "Get user guilds with permissions",
     description:
-      'Retrieve all guilds with permissions and roles for the authenticated user',
+      "Retrieve all guilds with permissions and roles for the authenticated user",
   })
   @ApiResponse({
     status: 200,
-    description: 'List of user guilds with permissions',
+    description: "List of user guilds with permissions",
     type: [UserGuildPermissionsDto],
   })
   async getUserGuildsWithPermissions(
@@ -79,7 +78,7 @@ export class GuildsController {
     return this.guildsService.getUserGuildsWithPermissions(discordId);
   }
 
-  @Get('/@me/manageable')
+  @Get("/@me/manageable")
   async getManageableUserGuilds(
     @DiscordId() discordId: string,
     @UserId() userId: string,
@@ -89,13 +88,13 @@ export class GuildsController {
 
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
-  @Get(':guildId')
+  @Get(":guildId")
   @ApiOperation({
-    summary: 'Get guild by ID',
-    description: 'Retrieve guild information by guild ID',
+    summary: "Get guild by ID",
+    description: "Retrieve guild information by guild ID",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID' })
-  @ApiResponse({ status: 200, description: 'Guild information' })
+  @ApiParam({ name: "guildId", description: "Guild ID" })
+  @ApiResponse({ status: 200, description: "Guild information" })
   async getGuildById(@GuildData() guild: Guild) {
     const guildData = await this.guildsService.getGuildById(guild.id);
     return plainToInstance(GuildEntity, guildData);
@@ -103,7 +102,7 @@ export class GuildsController {
 
   @Permissions(Permission.OWNER, Permission.ADMIN)
   @UseGuards(PermissionsGuard)
-  @Patch(':guildId/config')
+  @Patch(":guildId/config")
   async updateGuildConfig(
     @GuildData() guild: Guild,
     @Body() data: UpdateGuildConfigDto,
@@ -117,7 +116,7 @@ export class GuildsController {
 
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
-  @Get(':guildId/config')
+  @Get(":guildId/config")
   async getGuildConfig(@GuildData() guild: Guild) {
     const guildData = await this.guildsService.getGuildById(guild.id);
     return plainToInstance(GuildEntity, guildData);
@@ -125,14 +124,14 @@ export class GuildsController {
 
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
-  @Get(':guildId/worlds')
+  @Get(":guildId/worlds")
   async getWorldsByGuildId(@GuildData() guild: Guild) {
     return this.guildsService.getWorldsByGuildId(guild.id);
   }
 
   @Permissions(Permission.LOOTLOG_ACCESS)
   @UseGuards(PermissionsGuard)
-  @Get(':guildId/permissions')
+  @Get(":guildId/permissions")
   async getGuildPermissions(@MemberPermissions() permissions: Permission[]) {
     return permissions;
   }

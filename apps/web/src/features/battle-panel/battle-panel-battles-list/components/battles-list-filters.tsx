@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useState, useRef } from "react";
 import { useUserWorlds } from "@/hooks/api/battle-log/use-user-worlds";
 import { BattlesListFiltersMobile } from "./battles-list-filters-mobile";
 import { BattlesListFiltersDesktop } from "./battles-list-filters-desktop";
@@ -37,40 +36,9 @@ export const BattlesListFilters = ({
 
   const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
 
-  const [localMinLevel, setLocalMinLevel] = useState<number | undefined>(
-    filters.minLevel,
-  );
-  const [localMaxLevel, setLocalMaxLevel] = useState<number | undefined>(
-    filters.maxLevel,
-  );
-
-  const debouncedMinLevel = useDebounce(localMinLevel, 500);
-  const debouncedMaxLevel = useDebounce(localMaxLevel, 500);
-
   const lastStateChangeRef = useRef<Record<string, number>>({});
 
   const { data: worlds = [] } = useUserWorlds();
-
-  useEffect(() => {
-    setLocalMinLevel(filters.minLevel);
-  }, [filters.minLevel]);
-
-  useEffect(() => {
-    setLocalMaxLevel(filters.maxLevel);
-  }, [filters.maxLevel]);
-
-  useEffect(() => {
-    if (
-      debouncedMinLevel !== filters.minLevel ||
-      debouncedMaxLevel !== filters.maxLevel
-    ) {
-      onFiltersChange({
-        ...filters,
-        minLevel: debouncedMinLevel,
-        maxLevel: debouncedMaxLevel,
-      });
-    }
-  }, [debouncedMinLevel, debouncedMaxLevel]);
 
   const handleCharacterChange = (value: string) => {
     const currentCharacters = filters.characterId || [];
@@ -152,11 +120,17 @@ export const BattlesListFilters = ({
   };
 
   const handleMinLevelChange = (value: number | undefined) => {
-    setLocalMinLevel(value);
+    onFiltersChange({
+      ...filters,
+      minLevel: value,
+    });
   };
 
   const handleMaxLevelChange = (value: number | undefined) => {
-    setLocalMaxLevel(value);
+    onFiltersChange({
+      ...filters,
+      maxLevel: value,
+    });
   };
 
   const activeFiltersCount =
@@ -237,11 +211,7 @@ export const BattlesListFilters = ({
 
       <div className="hidden md:block">
         <BattlesListFiltersDesktop
-          filters={{
-            ...filters,
-            minLevel: localMinLevel,
-            maxLevel: localMaxLevel,
-          }}
+          filters={filters}
           characterOpen={characterOpenDesktop}
           selectedWarriors={selectedWarriors}
           worlds={worlds}

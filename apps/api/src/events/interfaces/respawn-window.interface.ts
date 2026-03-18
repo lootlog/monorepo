@@ -1,8 +1,8 @@
 export type MapStatus =
-  | 'ASSIGNED_PRESENT'
-  | 'ASSIGNED_ABSENT'
-  | 'UNASSIGNED'
-  | 'WRONG_PLAYER';
+  | "ASSIGNED_PRESENT"
+  | "ASSIGNED_ABSENT"
+  | "UNASSIGNED"
+  | "WRONG_PLAYER";
 
 export interface CloseRespawnWindowOptions {
   createNewWindow?: boolean;
@@ -18,7 +18,7 @@ export interface OpenRespawnWindowOptions {
 
 export interface HeroRespawnConfig {
   hasTimer: boolean;
-  windowStatus: 'OPEN' | 'WAITING' | 'NONE';
+  windowStatus: "OPEN" | "WAITING" | "NONE";
   minSpawnTime: Date | null;
   maxSpawnTime: Date | null;
 }

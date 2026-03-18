@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Search } from "lucide-react";
@@ -34,7 +34,7 @@ import { useGuildTopNpcs, type TopNpc } from "./hooks/use-guild-top-npcs";
 import { useStatsSettings } from "./hooks/use-stats-settings";
 import { TRACKABLE_NPC_TYPES } from "./constants";
 import { LevelFilters } from "./components/level-filters";
-import { StatsNpcsListFiltersMobile } from "./components/stats-npcs-list-filters-mobile";
+import { NpcStatsFiltersMobile } from "./components/npc-stats-filters-mobile";
 import type { NpcType } from "./hooks/use-guild-kill-stats";
 
 const ITEMS_PER_PAGE = 20;
@@ -102,20 +102,20 @@ export const StatsNpcsList: React.FC = () => {
     setCursor(0);
   };
 
+  const handleMinLvlChange = (value: string) => {
+    setMinLvl(value);
+    setCursor(0);
+  };
+
+  const handleMaxLvlChange = (value: string) => {
+    setMaxLvl(value);
+    setCursor(0);
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setCursor(0);
   };
-
-  // Reset cursor when debounced filter values change
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setCursor(0);
-  }, [debouncedMinLvl, debouncedMaxLvl]);
 
   return (
     <div className="h-full flex flex-col">
@@ -139,15 +139,15 @@ export const StatsNpcsList: React.FC = () => {
                 className="pl-8 w-full"
               />
             </div>
-            <StatsNpcsListFiltersMobile
+            <NpcStatsFiltersMobile
               world={settings.world}
               npcType={settings.npcType}
               minLvl={settings.minLvl}
               maxLvl={settings.maxLvl}
               onWorldChange={handleWorldChange}
               onNpcTypeChange={handleNpcTypeChange}
-              onMinLvlChange={setMinLvl}
-              onMaxLvlChange={setMaxLvl}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
             />
           </div>
 
@@ -165,8 +165,8 @@ export const StatsNpcsList: React.FC = () => {
             <LevelFilters
               minLvl={settings.minLvl}
               maxLvl={settings.maxLvl}
-              onMinLvlChange={setMinLvl}
-              onMaxLvlChange={setMaxLvl}
+              onMinLvlChange={handleMinLvlChange}
+              onMaxLvlChange={handleMaxLvlChange}
             />
             <WorldSwitcher
               value={settings.world}

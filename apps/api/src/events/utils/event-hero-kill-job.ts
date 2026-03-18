@@ -1,16 +1,48 @@
 import type {
   EventHeroKillJobData,
   SerializedKillTimerData,
-} from '../interfaces/check-event-hero-kill-params.interface';
-import type { KillTimerData } from '../interfaces/kill-timer-data.interface';
+} from "../interfaces/check-event-hero-kill-params.interface";
+import type { KillTimerData } from "../interfaces/kill-timer-data.interface";
 
-export const EVENT_HERO_KILL_JOB_NAME = 'process-event-hero-kill';
-const MANUAL_CLOSE_SUFFIX = 'manual';
-const TIMER_UPDATE_SUFFIX = 'timer';
-const JOB_ID_SEPARATOR = '-';
+export const EVENT_HERO_KILL_JOB_NAME = "process-event-hero-kill";
+const MANUAL_CLOSE_SUFFIX = "manual";
+const TIMER_UPDATE_SUFFIX = "timer";
+const JOB_ID_SEPARATOR = "-";
+
+interface EventHeroKillKeyData {
+  guildId: string;
+  world: string;
+  npcId: number;
+  windowKey: string;
+  isManualClose: boolean;
+}
 
 function sanitizeJobIdPart(value: string | number): string {
-  return String(value).replaceAll(':', '_');
+  return String(value).replaceAll(":", "_");
+}
+
+function getEventHeroKillMode(isManualClose: boolean): string {
+  return isManualClose ? MANUAL_CLOSE_SUFFIX : TIMER_UPDATE_SUFFIX;
+}
+
+function buildEventHeroKillDedupKeyValue(
+  data: EventHeroKillKeyData,
+  heroId?: string,
+): string {
+  const dedupKeySegments = [
+    "event",
+    "hero",
+    "kill",
+    "dedup",
+    data.guildId,
+    data.world,
+    data.npcId,
+    ...(heroId ? [heroId] : []),
+    data.windowKey,
+    getEventHeroKillMode(data.isManualClose),
+  ];
+
+  return dedupKeySegments.join(":");
 }
 
 function toRequiredDate(value: string, field: string): Date {
@@ -49,18 +81,18 @@ export function deserializeKillTimerData(
   timerData: SerializedKillTimerData,
 ): KillTimerData {
   return {
-    minSpawnTime: toRequiredDate(timerData.minSpawnTime, 'minSpawnTime'),
-    maxSpawnTime: toRequiredDate(timerData.maxSpawnTime, 'maxSpawnTime'),
+    minSpawnTime: toRequiredDate(timerData.minSpawnTime, "minSpawnTime"),
+    maxSpawnTime: toRequiredDate(timerData.maxSpawnTime, "maxSpawnTime"),
     memberId: timerData.memberId,
     previousMinSpawnTime: toOptionalDate(
       timerData.previousMinSpawnTime,
-      'previousMinSpawnTime',
+      "previousMinSpawnTime",
     ),
     previousMaxSpawnTime: toOptionalDate(
       timerData.previousMaxSpawnTime,
-      'previousMaxSpawnTime',
+      "previousMaxSpawnTime",
     ),
-    windowOpenedAt: toOptionalDate(timerData.windowOpenedAt, 'windowOpenedAt'),
+    windowOpenedAt: toOptionalDate(timerData.windowOpenedAt, "windowOpenedAt"),
   };
 }
 
@@ -79,41 +111,29 @@ export function buildEventHeroKillJobId(data: {
   windowKey: string;
   isManualClose: boolean;
 }): string {
-  const mode = data.isManualClose ? MANUAL_CLOSE_SUFFIX : TIMER_UPDATE_SUFFIX;
   const parts = [
-    'event',
-    'hero',
-    'kill',
+    "event",
+    "hero",
+    "kill",
     data.guildId,
     data.world,
     data.npcId,
     data.windowKey,
-    mode,
+    getEventHeroKillMode(data.isManualClose),
   ];
   return parts.map(sanitizeJobIdPart).join(JOB_ID_SEPARATOR);
 }
 
-export function buildEventHeroKillDedupKey(data: {
-  guildId: string;
-  world: string;
-  npcId: number;
-  windowKey: string;
-  isManualClose: boolean;
-}): string {
-  const mode = data.isManualClose ? MANUAL_CLOSE_SUFFIX : TIMER_UPDATE_SUFFIX;
-  return `event:hero:kill:dedup:${data.guildId}:${data.world}:${data.npcId}:${data.windowKey}:${mode}`;
+export function buildEventHeroKillDedupKey(data: EventHeroKillKeyData): string {
+  return buildEventHeroKillDedupKeyValue(data);
 }
 
-export function buildEventHeroKillHeroDedupKey(data: {
-  guildId: string;
-  world: string;
-  npcId: number;
-  heroId: string;
-  windowKey: string;
-  isManualClose: boolean;
-}): string {
-  const mode = data.isManualClose ? MANUAL_CLOSE_SUFFIX : TIMER_UPDATE_SUFFIX;
-  return `event:hero:kill:dedup:${data.guildId}:${data.world}:${data.npcId}:${data.heroId}:${data.windowKey}:${mode}`;
+export function buildEventHeroKillHeroDedupKey(
+  data: EventHeroKillKeyData & {
+    heroId: string;
+  },
+): string {
+  return buildEventHeroKillDedupKeyValue(data, data.heroId);
 }
 
 export function createEventHeroKillJobData(

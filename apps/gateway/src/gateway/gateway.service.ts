@@ -1,27 +1,27 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CreateTimerDto } from 'src/gateway/dto/create-timer.dto';
-import type { DeleteTimerDto } from 'src/gateway/dto/delete-timer.dto';
-import type { RefreshJobUpdateDto } from 'src/gateway/dto/refresh-job-update.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { CreateTimerDto } from "src/gateway/dto/create-timer.dto";
+import type { DeleteTimerDto } from "src/gateway/dto/delete-timer.dto";
+import type { RefreshJobUpdateDto } from "src/gateway/dto/refresh-job-update.dto";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
-} from 'src/gateway/dto/reservation-event.dto';
-import { SendMessageDto } from 'src/gateway/dto/send-message.dto';
-import { SendNotificationDto } from 'src/gateway/dto/send-notification.dto';
-import type { SendPartyGatheringDto } from 'src/gateway/dto/send-party-gathering.dto';
-import type { VolunteerNotificationDto } from 'src/gateway/dto/volunteer-notification.dto';
-import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
-import { Gateway } from 'src/gateway/gateway';
-import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { GuildsService } from 'src/guilds/guilds.service';
-import type { UserGuildData } from 'src/guilds/types/guild.types';
+} from "src/gateway/dto/reservation-event.dto";
+import { SendMessageDto } from "src/gateway/dto/send-message.dto";
+import { SendNotificationDto } from "src/gateway/dto/send-notification.dto";
+import type { SendPartyGatheringDto } from "src/gateway/dto/send-party-gathering.dto";
+import type { VolunteerNotificationDto } from "src/gateway/dto/volunteer-notification.dto";
+import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
+import { Gateway } from "src/gateway/gateway";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
+import { RedisService } from "@lootlog/nest-shared";
+import { GuildsService } from "src/guilds/guilds.service";
+import type { UserGuildData } from "src/guilds/types/guild.types";
 import type {
   EventHeroKilledPayload,
   EventRankingUpdatePayload,
   EventRespawnWindowPayload,
   EventMapStatusUpdatePayload,
-} from 'src/gateway/types/margo-event.types';
+} from "src/gateway/types/margo-event.types";
 import {
   buildRoomName,
   getNpcTier,
@@ -29,7 +29,7 @@ import {
   calculateUserRooms,
   type FeatureName,
   type TierName,
-} from 'src/gateway/utils/room-utils';
+} from "src/gateway/utils/room-utils";
 
 @Injectable()
 export class GatewayService {
@@ -93,7 +93,7 @@ export class GatewayService {
     const tier = getNpcTier(data.npc);
     this.emitToFeatureRoom({
       guildId: data.guildId,
-      feature: 'timers',
+      feature: "timers",
       tier,
       event: GatewayEvent.TIMERS_CREATE,
       data,
@@ -103,22 +103,22 @@ export class GatewayService {
 
   handleGuildsTimerDelete(data: DeleteTimerDto) {
     const rooms = [
-      buildRoomName(data.guildId, 'timers', 'base'),
-      buildRoomName(data.guildId, 'timers', 'titans'),
-      buildRoomName(data.guildId, 'timers', 'heroes'),
+      buildRoomName(data.guildId, "timers", "base"),
+      buildRoomName(data.guildId, "timers", "titans"),
+      buildRoomName(data.guildId, "timers", "heroes"),
     ];
     this.gateway.server.to(rooms).emit(GatewayEvent.TIMERS_DELETE, data);
   }
 
   handleGuildsReservationCreate(data: ReservationCreateEventDto) {
-    const eventsRoom = buildRoomName(data.guildId, 'events');
+    const eventsRoom = buildRoomName(data.guildId, "events");
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.RESERVATIONS_CREATE, data);
   }
 
   handleGuildsReservationDelete(data: ReservationDeleteEventDto) {
-    const eventsRoom = buildRoomName(data.guildId, 'events');
+    const eventsRoom = buildRoomName(data.guildId, "events");
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.RESERVATIONS_DELETE, data);
@@ -129,7 +129,7 @@ export class GatewayService {
     const tier = getNpcTier(data.npc);
     this.emitToFeatureRoom({
       guildId: data.guildId,
-      feature: 'chat',
+      feature: "chat",
       tier,
       event: GatewayEvent.CHAT_MESSAGE,
       data,
@@ -141,7 +141,7 @@ export class GatewayService {
     const tier = getNpcTier(data.npc);
     this.emitToFeatureRoom({
       guildId: data.guildId,
-      feature: 'notifications',
+      feature: "notifications",
       tier,
       event: GatewayEvent.NOTIFICATIONS_SEND,
       data,
@@ -155,7 +155,7 @@ export class GatewayService {
 
   handleMembersRefreshJobUpdate(data: RefreshJobUpdateDto) {
     // Emit directly to admin room - only owner/admin are in this room
-    const adminRoom = buildRoomName(data.guildId, 'admin');
+    const adminRoom = buildRoomName(data.guildId, "admin");
     this.gateway.server
       .to(adminRoom)
       .emit(GatewayEvent.MEMBERS_REFRESH_JOB_UPDATE, data);
@@ -223,7 +223,7 @@ export class GatewayService {
   }
 
   handleEventMapStatusUpdate(data: EventMapStatusUpdatePayload) {
-    const eventsRoom = buildRoomName(data.guildId, 'events');
+    const eventsRoom = buildRoomName(data.guildId, "events");
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_MAP_STATUS_UPDATE, data);
@@ -234,28 +234,28 @@ export class GatewayService {
   }
 
   handleEventHeroKilled(data: EventHeroKilledPayload) {
-    const eventsRoom = buildRoomName(data.guildId, 'events');
+    const eventsRoom = buildRoomName(data.guildId, "events");
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_HERO_KILLED, data);
   }
 
   handleEventRankingUpdate(data: EventRankingUpdatePayload) {
-    const eventsRoom = buildRoomName(data.guildId, 'events');
+    const eventsRoom = buildRoomName(data.guildId, "events");
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_RANKING_UPDATE, data);
   }
 
   handleEventRespawnWindowOpened(data: EventRespawnWindowPayload) {
-    const eventsRoom = buildRoomName(data.guildId, 'events');
+    const eventsRoom = buildRoomName(data.guildId, "events");
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_OPENED, data);
   }
 
   handleEventRespawnWindowClosed(data: EventRespawnWindowPayload) {
-    const eventsRoom = buildRoomName(data.guildId, 'events');
+    const eventsRoom = buildRoomName(data.guildId, "events");
     this.gateway.server
       .to(eventsRoom)
       .emit(GatewayEvent.EVENT_RESPAWN_WINDOW_CLOSED, data);
@@ -281,9 +281,9 @@ export class GatewayService {
 
   handlePartyGatheringSend(data: SendPartyGatheringDto) {
     const rooms = [
-      buildRoomName(data.guildId, 'notifications', 'base'),
-      buildRoomName(data.guildId, 'notifications', 'titans'),
-      buildRoomName(data.guildId, 'notifications', 'heroes'),
+      buildRoomName(data.guildId, "notifications", "base"),
+      buildRoomName(data.guildId, "notifications", "titans"),
+      buildRoomName(data.guildId, "notifications", "heroes"),
     ];
     this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_SEND, data);
   }
@@ -293,9 +293,9 @@ export class GatewayService {
     notificationId: string;
   }) {
     const rooms = [
-      buildRoomName(data.guildId, 'notifications', 'base'),
-      buildRoomName(data.guildId, 'notifications', 'titans'),
-      buildRoomName(data.guildId, 'notifications', 'heroes'),
+      buildRoomName(data.guildId, "notifications", "base"),
+      buildRoomName(data.guildId, "notifications", "titans"),
+      buildRoomName(data.guildId, "notifications", "heroes"),
     ];
     this.gateway.server.to(rooms).emit(GatewayEvent.PARTY_GATHERING_CANCEL, {
       notificationId: data.notificationId,
@@ -308,9 +308,9 @@ export class GatewayService {
     message: string;
   }) {
     const rooms = [
-      buildRoomName(data.guildId, 'chat', 'base'),
-      buildRoomName(data.guildId, 'chat', 'titans'),
-      buildRoomName(data.guildId, 'chat', 'heroes'),
+      buildRoomName(data.guildId, "chat", "base"),
+      buildRoomName(data.guildId, "chat", "titans"),
+      buildRoomName(data.guildId, "chat", "heroes"),
     ];
     this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_UPDATE, {
       messageId: data.messageId,
@@ -321,9 +321,9 @@ export class GatewayService {
 
   handleChatMessageDelete(data: { guildId: string; messageId: string }) {
     const rooms = [
-      buildRoomName(data.guildId, 'chat', 'base'),
-      buildRoomName(data.guildId, 'chat', 'titans'),
-      buildRoomName(data.guildId, 'chat', 'heroes'),
+      buildRoomName(data.guildId, "chat", "base"),
+      buildRoomName(data.guildId, "chat", "titans"),
+      buildRoomName(data.guildId, "chat", "heroes"),
     ];
     this.gateway.server.to(rooms).emit(GatewayEvent.CHAT_MESSAGE_DELETE, {
       messageId: data.messageId,

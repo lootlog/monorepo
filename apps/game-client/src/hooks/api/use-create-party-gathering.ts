@@ -23,22 +23,27 @@ export const useCreatePartyGathering = () => {
       const hero = Game.hero;
       const world = Game.getWorldName();
 
-      return client.post<CreatePartyGatheringResponse>("/notifications/party-gathering", {
-        guildIds: options.guildIds,
-        world,
-        character: {
-          lvl: hero.lvl,
-          nick: hero.nick,
-          accountId: String(hero.account),
-          characterId: String(hero.id),
-          prof: hero.prof,
-          icon: hero.img,
-          clan: hero.clan ? { id: hero.clan.id, name: hero.clan.name } : undefined,
+      return client.post<CreatePartyGatheringResponse>(
+        "/notifications/party-gathering",
+        {
+          guildIds: options.guildIds,
+          world,
+          character: {
+            lvl: hero.lvl,
+            nick: hero.nick,
+            accountId: String(hero.account),
+            characterId: String(hero.id),
+            prof: hero.prof,
+            icon: hero.img,
+            clan: hero.clan
+              ? { id: hero.clan.id, name: hero.clan.name }
+              : undefined,
+          },
+          description: options.description,
+          minLvl: options.minLvl,
+          maxLvl: options.maxLvl,
         },
-        description: options.description,
-        minLvl: options.minLvl,
-        maxLvl: options.maxLvl,
-      });
+      );
     },
   });
 };

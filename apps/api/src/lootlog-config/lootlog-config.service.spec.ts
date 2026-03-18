@@ -1,8 +1,8 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { LootlogConfigService } from './lootlog-config.service';
-import { PrismaService } from 'src/db/prisma.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { LootlogConfigService } from "./lootlog-config.service";
+import { PrismaService } from "src/db/prisma.service";
 
-describe('LootlogConfigService', () => {
+describe("LootlogConfigService", () => {
   let service: LootlogConfigService;
 
   const mockPrismaService = {
@@ -32,7 +32,7 @@ describe('LootlogConfigService', () => {
     service = module.get<LootlogConfigService>(LootlogConfigService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

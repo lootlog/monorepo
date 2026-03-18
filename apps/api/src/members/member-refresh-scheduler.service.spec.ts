@@ -1,15 +1,15 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { DiscordRateLimiterService } from 'src/discord/discord-rate-limiter.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { MEMBER_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { getQueueToken } from "@nestjs/bullmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 import {
   type MemberRefreshJobData,
   MemberRefreshSchedulerService,
-} from './member-refresh-scheduler.service';
+} from "./member-refresh-scheduler.service";
 
-describe('MemberRefreshSchedulerService', () => {
+describe("MemberRefreshSchedulerService", () => {
   let service: MemberRefreshSchedulerService;
   let queue: {
     getJob: jest.Mock;
@@ -31,11 +31,11 @@ describe('MemberRefreshSchedulerService', () => {
   };
 
   const refreshData: MemberRefreshJobData = {
-    discordId: 'discord-123',
-    guildId: 'guild-123',
-    userId: 'user-123',
+    discordId: "discord-123",
+    guildId: "guild-123",
+    userId: "user-123",
     priority: 4,
-    reason: 'test-refresh',
+    reason: "test-refresh",
   };
 
   beforeEach(async () => {
@@ -96,28 +96,28 @@ describe('MemberRefreshSchedulerService', () => {
 
   const createJobMock = (
     state:
-      | 'active'
-      | 'completed'
-      | 'delayed'
-      | 'failed'
-      | 'prioritized'
-      | 'unknown'
-      | 'waiting'
-      | 'waiting-children',
+      | "active"
+      | "completed"
+      | "delayed"
+      | "failed"
+      | "prioritized"
+      | "unknown"
+      | "waiting"
+      | "waiting-children",
     overrides: Partial<{
       data: MemberRefreshJobData;
       priority: number;
       promoteError: unknown;
       removeError: unknown;
       stateAfterPromoteError:
-        | 'active'
-        | 'completed'
-        | 'delayed'
-        | 'failed'
-        | 'prioritized'
-        | 'unknown'
-        | 'waiting'
-        | 'waiting-children';
+        | "active"
+        | "completed"
+        | "delayed"
+        | "failed"
+        | "prioritized"
+        | "unknown"
+        | "waiting"
+        | "waiting-children";
     }> = {},
   ) => {
     const getState = jest.fn().mockResolvedValue(state);
@@ -146,8 +146,8 @@ describe('MemberRefreshSchedulerService', () => {
     };
   };
 
-  describe('enqueueRefresh', () => {
-    it('should add a new refresh job when no existing job is present', async () => {
+  describe("enqueueRefresh", () => {
+    it("should add a new refresh job when no existing job is present", async () => {
       queue.getJob.mockResolvedValue(null);
       queue.add.mockResolvedValue({});
 
@@ -158,18 +158,18 @@ describe('MemberRefreshSchedulerService', () => {
         nextRefreshAt: null,
       });
       expect(queue.add).toHaveBeenCalledWith(
-        'member-refresh',
+        "member-refresh",
         refreshData,
         expect.objectContaining({
-          jobId: 'member-refresh:user-123:guild-123',
+          jobId: "member-refresh:user-123:guild-123",
           delay: 0,
           priority: refreshData.priority,
         }),
       );
     });
 
-    it('should update a waiting job without calling promote', async () => {
-      const existingJob = createJobMock('waiting', { priority: 8 });
+    it("should update a waiting job without calling promote", async () => {
+      const existingJob = createJobMock("waiting", { priority: 8 });
       queue.getJob.mockResolvedValue(existingJob);
 
       await service.enqueueRefresh({ ...refreshData, priority: 2 });
@@ -183,8 +183,8 @@ describe('MemberRefreshSchedulerService', () => {
       expect(queue.add).not.toHaveBeenCalled();
     });
 
-    it('should promote an existing delayed job when it should run immediately', async () => {
-      const existingJob = createJobMock('delayed');
+    it("should promote an existing delayed job when it should run immediately", async () => {
+      const existingJob = createJobMock("delayed");
       queue.getJob.mockResolvedValue(existingJob);
 
       await service.enqueueRefresh(refreshData);
@@ -193,10 +193,10 @@ describe('MemberRefreshSchedulerService', () => {
       expect(queue.add).not.toHaveBeenCalled();
     });
 
-    it('should treat promote -3 as benign when the job already left delayed state', async () => {
-      const existingJob = createJobMock('delayed', {
+    it("should treat promote -3 as benign when the job already left delayed state", async () => {
+      const existingJob = createJobMock("delayed", {
         promoteError: { code: -3 },
-        stateAfterPromoteError: 'waiting',
+        stateAfterPromoteError: "waiting",
       });
       queue.getJob.mockResolvedValue(existingJob);
 
@@ -207,24 +207,24 @@ describe('MemberRefreshSchedulerService', () => {
 
       expect(existingJob.promote).toHaveBeenCalledTimes(1);
       expect(logger.log).toHaveBeenCalledWith({
-        level: 'debug',
+        level: "debug",
         message:
-          'Skipped promoting member refresh job because it already left delayed state',
+          "Skipped promoting member refresh job because it already left delayed state",
         jobId: existingJob.id,
-        state: 'waiting',
+        state: "waiting",
       });
       expect(logger.log).not.toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Failed to promote member refresh job',
+          message: "Failed to promote member refresh job",
         }),
       );
     });
 
-    it.each(['completed', 'failed', 'unknown'] as const)(
-      'should replace an existing %s job instead of reusing it',
+    it.each(["completed", "failed", "unknown"] as const)(
+      "should replace an existing %s job instead of reusing it",
       async (state) => {
         const existingJob =
-          state === 'unknown'
+          state === "unknown"
             ? createJobMock(state, { removeError: { code: -1 } })
             : createJobMock(state);
         queue.getJob.mockResolvedValue(existingJob);
@@ -234,60 +234,60 @@ describe('MemberRefreshSchedulerService', () => {
 
         expect(existingJob.remove).toHaveBeenCalledTimes(1);
         expect(queue.add).toHaveBeenCalledWith(
-          'member-refresh',
+          "member-refresh",
           refreshData,
           expect.objectContaining({
-            jobId: 'member-refresh:user-123:guild-123',
+            jobId: "member-refresh:user-123:guild-123",
           }),
         );
       },
     );
   });
 
-  describe('lock helpers', () => {
-    it('should delegate refresh lock helpers to Redis', async () => {
-      redisService.get.mockResolvedValue('owner-1');
+  describe("lock helpers", () => {
+    it("should delegate refresh lock helpers to Redis", async () => {
+      redisService.get.mockResolvedValue("owner-1");
       redisService.setNX.mockResolvedValue(true);
       redisService.eval.mockResolvedValue(1);
 
-      await expect(service.isUserRefreshLocked('user-123')).resolves.toBe(true);
+      await expect(service.isUserRefreshLocked("user-123")).resolves.toBe(true);
       await expect(
-        service.acquireUserRefreshLock('user-123', 'owner-1'),
+        service.acquireUserRefreshLock("user-123", "owner-1"),
       ).resolves.toBe(true);
       await expect(
-        service.extendUserRefreshLock('user-123', 'owner-1', 45),
+        service.extendUserRefreshLock("user-123", "owner-1", 45),
       ).resolves.toBeUndefined();
       await expect(
-        service.releaseUserRefreshLock('user-123', 'owner-1'),
+        service.releaseUserRefreshLock("user-123", "owner-1"),
       ).resolves.toBeUndefined();
 
       expect(redisService.get).toHaveBeenCalledWith(
-        'member:refresh:lock:user-123',
+        "member:refresh:lock:user-123",
       );
       expect(redisService.setNX).toHaveBeenCalledWith(
-        'member:refresh:lock:user-123',
-        'owner-1',
+        "member:refresh:lock:user-123",
+        "owner-1",
         30,
       );
       expect(redisService.eval).toHaveBeenNthCalledWith(
         1,
         expect.stringContaining('redis.call("EXPIRE", KEYS[1], ARGV[2])'),
-        ['member:refresh:lock:user-123'],
-        ['owner-1', 45],
+        ["member:refresh:lock:user-123"],
+        ["owner-1", 45],
       );
       expect(redisService.eval).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining('redis.call("DEL", KEYS[1])'),
-        ['member:refresh:lock:user-123'],
-        ['owner-1'],
+        ["member:refresh:lock:user-123"],
+        ["owner-1"],
       );
     });
 
-    it('should expose the next refresh time from the rate limiter', async () => {
-      const nextRefreshAt = new Date('2026-03-10T05:55:00.000Z');
+    it("should expose the next refresh time from the rate limiter", async () => {
+      const nextRefreshAt = new Date("2026-03-10T05:55:00.000Z");
       rateLimiter.getNextAvailableAtForUser.mockResolvedValue(nextRefreshAt);
 
-      await expect(service.getNextRefreshAt('user-123')).resolves.toEqual(
+      await expect(service.getNextRefreshAt("user-123")).resolves.toEqual(
         nextRefreshAt,
       );
     });

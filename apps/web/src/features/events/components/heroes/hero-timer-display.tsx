@@ -15,19 +15,54 @@ import type { TFunction } from "i18next";
 interface HeroTimerDisplayProps {
   timer: EventTimer | undefined;
   t: TFunction;
+  className?: string;
 }
 
-export const HeroTimerDisplay = ({ timer, t }: HeroTimerDisplayProps) => {
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+const getHeroTimerTimeLeft = (timer: EventTimer) =>
+  Math.max(0, new Date(timer.maxSpawnTime).getTime() - Date.now());
+
+export const HeroTimerDisplay = ({
+  timer,
+  t,
+  className,
+}: HeroTimerDisplayProps) => {
+  if (!timer) {
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap",
+          className,
+        )}
+      >
+        <Clock className="w-3 h-3" />
+        {t("events.heroes.noTimer")}
+      </span>
+    );
+  }
+
+  return (
+    <HeroTimerDisplayContent
+      key={timer.maxSpawnTime}
+      timer={timer}
+      label={t("events.respawn.maxSpawnTime")}
+      className={className}
+    />
+  );
+};
+
+const HeroTimerDisplayContent = ({
+  timer,
+  label,
+  className,
+}: {
+  timer: EventTimer;
+  label: string;
+  className?: string;
+}) => {
+  const [timeLeft, setTimeLeft] = useState(() => getHeroTimerTimeLeft(timer));
 
   useEffect(() => {
-    if (!timer) {
-      setTimeLeft(null);
-      return;
-    }
-
     const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-    setTimeLeft(maxSpawnTime - Date.now());
 
     const interval = setInterval(() => {
       const time = maxSpawnTime - Date.now();
@@ -40,16 +75,7 @@ export const HeroTimerDisplay = ({ timer, t }: HeroTimerDisplayProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timer]);
-
-  if (!timer || timeLeft === null) {
-    return (
-      <span className="text-xs text-muted-foreground flex items-center gap-1">
-        <Clock className="w-3 h-3" />
-        {t("events.heroes.noTimer")}
-      </span>
-    );
-  }
+  }, [timer.maxSpawnTime]);
 
   const isClose = timeLeft < 60000;
 
@@ -58,8 +84,9 @@ export const HeroTimerDisplay = ({ timer, t }: HeroTimerDisplayProps) => {
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "text-xs flex items-center gap-1 font-medium",
+            "inline-flex items-center gap-1 text-[11px] font-medium whitespace-nowrap",
             isClose ? "text-orange-400" : "text-green-400",
+            className,
           )}
         >
           <Clock className="w-3 h-3" />
@@ -68,7 +95,7 @@ export const HeroTimerDisplay = ({ timer, t }: HeroTimerDisplayProps) => {
       </TooltipTrigger>
       <TooltipContent>
         <p className="text-sm">
-          Max spawn:{" "}
+          {label}:{" "}
           {format(new Date(timer.maxSpawnTime), "HH:mm:ss", { locale: pl })}
         </p>
       </TooltipContent>

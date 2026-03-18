@@ -21,12 +21,28 @@ const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
-const toNumber = (
-  value: unknown,
-  fallback: number,
-  min = 0,
-  max?: number,
-) => {
+const isActionType = (value: string): value is EventScoringAction["type"] =>
+  EVENT_SCORING_ACTION_TYPES.some((actionType) => actionType === value);
+
+const isConditionType = (
+  value: string,
+): value is EventScoringCondition["type"] =>
+  EVENT_SCORING_CONDITION_TYPES.some(
+    (conditionType) => conditionType === value,
+  );
+
+const isNumericFactor = (value: string): value is EventScoringNumericFactor =>
+  EVENT_SCORING_NUMERIC_FACTORS.some((factor) => factor === value);
+
+const isNumericOperator = (
+  value: string,
+): value is EventScoringNumericOperator =>
+  EVENT_SCORING_NUMERIC_OPERATORS.some((operator) => operator === value);
+
+const isBooleanFactor = (value: string): value is EventScoringBooleanFactor =>
+  EVENT_SCORING_BOOLEAN_FACTORS.some((factor) => factor === value);
+
+const toNumber = (value: unknown, fallback: number, min = 0, max?: number) => {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return fallback;
   }
@@ -48,7 +64,7 @@ const parseAction = (value: unknown): EventScoringAction | null => {
   if (!isRecord(value) || typeof value.type !== "string") {
     return null;
   }
-  if (!EVENT_SCORING_ACTION_TYPES.includes(value.type as any)) {
+  if (!isActionType(value.type)) {
     return null;
   }
 
@@ -56,7 +72,7 @@ const parseAction = (value: unknown): EventScoringAction | null => {
     return { type: "ZERO_BASE" };
   }
 
-  const points = toNumber(value.points, NaN, 0);
+  const points = toNumber(value.points, Number.NaN, 0);
   if (!Number.isFinite(points)) {
     return null;
   }
@@ -79,29 +95,29 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
     return null;
   }
 
-  if (!EVENT_SCORING_CONDITION_TYPES.includes(value.type as any)) {
+  if (!isConditionType(value.type)) {
     return null;
   }
 
   if (value.type === "NUMERIC") {
     if (
       typeof value.factor !== "string" ||
-      !EVENT_SCORING_NUMERIC_FACTORS.includes(value.factor as any) ||
+      !isNumericFactor(value.factor) ||
       typeof value.operator !== "string" ||
-      !EVENT_SCORING_NUMERIC_OPERATORS.includes(value.operator as any)
+      !isNumericOperator(value.operator)
     ) {
       return null;
     }
 
-    const parsedValue = toNumber(value.value, NaN);
+    const parsedValue = toNumber(value.value, Number.NaN);
     if (!Number.isFinite(parsedValue)) {
       return null;
     }
 
     return {
       type: "NUMERIC",
-      factor: value.factor as EventScoringNumericFactor,
-      operator: value.operator as EventScoringNumericOperator,
+      factor: value.factor,
+      operator: value.operator,
       value: Math.round(parsedValue * 100) / 100,
     };
   }
@@ -109,7 +125,7 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
   if (value.type === "BOOLEAN") {
     if (
       typeof value.factor !== "string" ||
-      !EVENT_SCORING_BOOLEAN_FACTORS.includes(value.factor as any) ||
+      !isBooleanFactor(value.factor) ||
       typeof value.value !== "boolean"
     ) {
       return null;
@@ -117,7 +133,7 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
 
     return {
       type: "BOOLEAN",
-      factor: value.factor as EventScoringBooleanFactor,
+      factor: value.factor,
       value: value.value,
     };
   }
@@ -132,12 +148,12 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
 
   if (
     typeof value.operator !== "string" ||
-    !EVENT_SCORING_NUMERIC_OPERATORS.includes(value.operator as any)
+    !isNumericOperator(value.operator)
   ) {
     return null;
   }
 
-  const parsedValue = toNumber(value.value, NaN, 0, 100);
+  const parsedValue = toNumber(value.value, Number.NaN, 0, 100);
   if (!Number.isFinite(parsedValue)) {
     return null;
   }
@@ -146,14 +162,12 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
     type: "RESPAWN_WINDOW_COVERAGE",
     from: toClock(value.from, "00:00"),
     to: toClock(value.to, "23:59"),
-    operator: value.operator as EventScoringNumericOperator,
+    operator: value.operator,
     value: Math.round(parsedValue * 100) / 100,
   };
 };
 
-export const normalizeScoringMode = (
-  value: unknown,
-): EventScoringMode => {
+export const normalizeScoringMode = (value: unknown): EventScoringMode => {
   if (typeof value !== "string") {
     return "SIMPLE";
   }

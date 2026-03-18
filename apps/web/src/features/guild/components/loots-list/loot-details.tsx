@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 import { ItemTile } from "@/components/tiles";
+import { useTranslation } from "react-i18next";
 
 export type LootDetailsProps = {
   loot: Loot;
@@ -19,15 +20,16 @@ export type LootDetailsProps = {
 
 export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   const handleCopyId = (id: string) => {
     navigator.clipboard
       .writeText(id)
       .then(() => {
-        toast.success("ID skopiowane");
+        toast.success(t("loots.details.copySuccess"));
       })
       .catch(() => {
-        toast.error("Nie udało się skopiować ID. Spróbuj ponownie.");
+        toast.error(t("loots.details.copyError"));
       });
   };
 
@@ -56,7 +58,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
               </span>
               {owner && (
                 <span className="text-xs text-muted-foreground">
-                  Zdobyto przez: {owner}
+                  {t("loots.list.obtainedBy")} {owner}
                 </span>
               )}
               <div className="w-full flex mt-2 gap-1">
@@ -102,7 +104,7 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
                     </span>
                     {owner && (
                       <span className="text-xs text-muted-foreground">
-                        Zdobyto przez: {owner}
+                        {t("loots.list.obtainedBy")} {owner}
                       </span>
                     )}
                     <div className="w-full flex mt-2 gap-1">
@@ -132,7 +134,9 @@ export const LootDetails: FC<LootDetailsProps> = ({ loot, ownerMap }) => {
               variant="ghost"
               className="w-full mt-2 text-muted-foreground hover:text-foreground"
             >
-              {open ? "Pokaż mniej" : `Pokaż więcej (${hiddenItems.length})`}
+              {open
+                ? t("loots.details.showLess")
+                : t("loots.details.showMore", { count: hiddenItems.length })}
             </Button>
           </CollapsibleTrigger>
         </Collapsible>

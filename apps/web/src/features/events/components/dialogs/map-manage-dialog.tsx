@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Reorder } from "framer-motion";
@@ -98,20 +98,14 @@ export const MapManageDialog = ({
   const [localLocations, setLocalLocations] = useState<LocationData[]>(
     hero.locations ?? [],
   );
-  const isDraggingRef = useRef(false);
-
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      setLocalLocations(hero.locations ?? []);
-    }
-  }, [hero.locations]);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleReorder = (newOrder: LocationData[]) => {
     setLocalLocations(newOrder);
   };
 
   const handleDragEnd = () => {
-    isDraggingRef.current = false;
+    setIsDragging(false);
     const locationIds = localLocations.map((loc) => loc.id);
     reorderLocations.mutate(
       { locationIds },
@@ -124,9 +118,30 @@ export const MapManageDialog = ({
     );
   };
 
-  const allMapsFromLocations = hero.locations?.flatMap((loc) => loc.maps) ?? [];
-  const allMaps = [...allMapsFromLocations, ...hero.maps];
-  const addedMapIds = new Set(allMaps.map((m) => m.mapId));
+  const heroLocations = hero.locations ?? [];
+  const heroLocationsKey = heroLocations
+    .map((location) => location.id)
+    .join(":");
+  const localLocationsKey = localLocations
+    .map((location) => location.id)
+    .join(":");
+  const displayedLocations =
+    isDragging || localLocationsKey !== heroLocationsKey
+      ? localLocations
+      : heroLocations;
+
+  const allMapsFromLocations = useMemo(
+    () => hero.locations?.flatMap((location) => location.maps) ?? [],
+    [hero.locations],
+  );
+  const allMaps = useMemo(
+    () => [...allMapsFromLocations, ...hero.maps],
+    [allMapsFromLocations, hero.maps],
+  );
+  const addedMapIds = useMemo(
+    () => new Set(allMaps.map((map) => map.mapId)),
+    [allMaps],
+  );
 
   const filteredGameMaps = useMemo(() => {
     if (!gameMaps) return [];
@@ -325,14 +340,14 @@ export const MapManageDialog = ({
                 </Button>
               </div>
 
-              {localLocations.length > 0 && (
+              {displayedLocations.length > 0 && (
                 <Reorder.Group
                   axis="y"
-                  values={localLocations}
+                  values={displayedLocations}
                   onReorder={handleReorder}
                   className="space-y-1.5"
                 >
-                  {localLocations.map((location) => (
+                  {displayedLocations.map((location) => (
                     <LocationItem
                       key={location.id}
                       location={location}
@@ -342,7 +357,7 @@ export const MapManageDialog = ({
                       handleDeleteLocation={handleDeleteLocation}
                       isDeleting={deleteLocation.isPending}
                       onDragStart={() => {
-                        isDraggingRef.current = true;
+                        setIsDragging(true);
                       }}
                       onDragEnd={handleDragEnd}
                     />

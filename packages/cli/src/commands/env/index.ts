@@ -16,7 +16,7 @@ ${chalk.bold("Usage:")}
   pnpm env <command> [options]
 
 ${chalk.bold("Commands:")}
-  generate    Generate .env files from .env.sample templates
+  generate    Generate .env files from .env.example templates
 
 ${chalk.bold("Examples:")}
   pnpm env generate              # Generate all .env files
@@ -32,7 +32,9 @@ ${chalk.bold("Global Options:")}
 
   if (!commandHandler) {
     console.error(chalk.red(`\n❌ Unknown command: ${subcommand}\n`));
-    console.log(chalk.gray(`Run 'pnpm env --help' to see available commands.\n`));
+    console.log(
+      chalk.gray(`Run 'pnpm env --help' to see available commands.\n`),
+    );
     process.exit(1);
   }
 

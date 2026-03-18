@@ -58,7 +58,7 @@ const RolesSettingsContent = () => {
 
   return (
     <SelectorPanel<GuildRole>
-      header={<RolesSettingsHeader />}
+      header=<RolesSettingsHeader />
       searchBar={
         <div className="px-3 py-2 border-b shrink-0 bg-background">
           <SearchInput

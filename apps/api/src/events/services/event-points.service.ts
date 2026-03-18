@@ -2,23 +2,28 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import type { EventKillPoint, Prisma } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import { EventEmitterService } from './event-emitter.service';
+} from "@nestjs/common";
+import type { EventKillPoint, Prisma } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import { EventEmitterService } from "./event-emitter.service";
 import {
   DEFAULT_ADVANCED_EVENT_SCORING_RULES,
   type EventScoringMode,
   type EventScoringRules,
-} from '../constants/scoring-rules.constant';
+} from "../constants/scoring-rules.constant";
 import {
   normalizeEventScoringMode,
   normalizeEventScoringRules,
-} from '../utils/scoring-rules.util';
+} from "../utils/scoring-rules.util";
+import { resolveEventWindowStart } from "../utils/resolve-event-window-start.util";
 import {
   evaluateEventScoring,
   type EventScoringAppliedBonus,
-} from '../utils/scoring-engine.util';
+} from "../utils/scoring-engine.util";
+import {
+  calculateTrackingDurationSeconds,
+  clipIntervalToWindow,
+} from "../utils/tracking-window.util";
 
 export type CalculateMemberPointsParams = {
   scoringMode?: EventScoringMode;
@@ -44,6 +49,29 @@ export type CalculatedMemberPoints = {
   appliedBonuses: EventScoringAppliedBonus[];
 };
 
+export type MemberPresenceStats = {
+  memberId: number;
+  timeOnMapSeconds: number;
+  afkPercentage: number;
+  wasPresent: boolean;
+  mapName: string;
+};
+
+type PresenceLogAggregation = {
+  totalTimeMs: number;
+  afkTimeMs: number;
+  mapName: string;
+};
+
+type ExistingRankingSnapshot = {
+  id: string;
+  memberId: number;
+  heroNpcName: string;
+  totalPoints: number;
+  manualAdjustmentPoints: number;
+  pointsModified: boolean;
+};
+
 @Injectable()
 export class EventPointsService {
   constructor(
@@ -57,7 +85,7 @@ export class EventPointsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     return this.prisma.eventRanking.findMany({
@@ -81,7 +109,7 @@ export class EventPointsService {
         },
       },
       orderBy: {
-        totalPoints: 'desc',
+        totalPoints: "desc",
       },
     });
   }
@@ -91,7 +119,7 @@ export class EventPointsService {
   ): CalculatedMemberPoints {
     const scoringMode = normalizeEventScoringMode(params.scoringMode);
     const scoringRules =
-      scoringMode === 'ADVANCED'
+      scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(
             params.scoringRules ?? DEFAULT_ADVANCED_EVENT_SCORING_RULES,
           )
@@ -157,55 +185,78 @@ export class EventPointsService {
     );
   }
 
-  private clipIntervalToWindow(params: {
-    start: Date;
-    end: Date;
-    windowStart: Date;
-    windowEnd: Date;
-  }): { start: Date; end: Date } | null {
-    const clippedStart =
-      params.start > params.windowStart ? params.start : params.windowStart;
-    const clippedEnd =
-      params.end < params.windowEnd ? params.end : params.windowEnd;
+  private createRankingKey(params: {
+    memberId: number;
+    heroNpcName: string;
+  }): string {
+    return `${params.memberId}:${params.heroNpcName}`;
+  }
 
-    if (clippedEnd < clippedStart) {
+  private roundPointsValue(value: number): number {
+    return Math.round(value * 10000) / 10000;
+  }
+
+  private normalizePointsEditComment(comment?: string | null): string | null {
+    if (typeof comment !== "string") {
       return null;
     }
 
-    return { start: clippedStart, end: clippedEnd };
+    const trimmedComment = comment.trim();
+    return trimmedComment.length > 0 ? trimmedComment : null;
   }
 
-  private calculateTrackingDurationSeconds(
-    intervals: Array<{ start: Date; end: Date }>,
-  ): number {
-    if (intervals.length === 0) {
+  private resolveManualAdjustmentPoints(params: {
+    existingRanking?: ExistingRankingSnapshot;
+    computedTotalPoints: number;
+  }): number {
+    const { existingRanking, computedTotalPoints } = params;
+    if (!existingRanking) {
       return 0;
     }
 
-    const sortedIntervals = [...intervals].sort(
-      (a, b) => a.start.getTime() - b.start.getTime(),
-    );
-
-    let totalMs = 0;
-    let currentStartMs = sortedIntervals[0].start.getTime();
-    let currentEndMs = sortedIntervals[0].end.getTime();
-
-    for (let i = 1; i < sortedIntervals.length; i++) {
-      const nextStartMs = sortedIntervals[i].start.getTime();
-      const nextEndMs = sortedIntervals[i].end.getTime();
-
-      if (nextStartMs <= currentEndMs) {
-        currentEndMs = Math.max(currentEndMs, nextEndMs);
-        continue;
-      }
-
-      totalMs += currentEndMs - currentStartMs;
-      currentStartMs = nextStartMs;
-      currentEndMs = nextEndMs;
+    if (existingRanking.manualAdjustmentPoints !== 0) {
+      return this.roundPointsValue(existingRanking.manualAdjustmentPoints);
     }
 
-    totalMs += currentEndMs - currentStartMs;
-    return Math.round(totalMs / 1000);
+    if (!existingRanking.pointsModified) {
+      return 0;
+    }
+
+    return this.roundPointsValue(
+      existingRanking.totalPoints - computedTotalPoints,
+    );
+  }
+
+  private async hasManualKillAdjustmentForRanking(params: {
+    eventId: string;
+    memberId: number;
+    heroNpcName: string;
+  }): Promise<boolean> {
+    const matchingKillPoints = await this.prisma.eventKillPoint.findMany({
+      where: {
+        memberId: params.memberId,
+        manualAdjustmentPoints: {
+          not: 0,
+        },
+        kill: {
+          heroNpc: {
+            eventId: params.eventId,
+            npcName: params.heroNpcName,
+          },
+        },
+      },
+      select: {
+        confirmationDeadlineAt: true,
+        confirmedAt: true,
+      },
+    });
+
+    return matchingKillPoints.some((killPoint) =>
+      this.isKillPointCountedInRanking({
+        confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
+        confirmedAt: killPoint.confirmedAt,
+      }),
+    );
   }
 
   private calculateTrackingDurationPercentage(params: {
@@ -263,10 +314,27 @@ export class EventPointsService {
 
     const elapsedWindowMs = Math.min(
       fullWindowMs,
-      Math.max(0, params.killTime.getTime() - params.respawnStartTime.getTime()),
+      Math.max(
+        0,
+        params.killTime.getTime() - params.respawnStartTime.getTime(),
+      ),
     );
 
     return Math.round((elapsedWindowMs / fullWindowMs) * 100);
+  }
+
+  private getPresenceLogSinceFilter(since?: Date) {
+    if (!since) {
+      return {};
+    }
+
+    return {
+      OR: [
+        { startedAt: { gte: since } },
+        { endedAt: { gte: since } },
+        { endedAt: null, startedAt: { lte: since } },
+      ],
+    };
   }
 
   private calculateTrackingMetricsForKill(params: {
@@ -294,7 +362,7 @@ export class EventPointsService {
         continue;
       }
 
-      const clippedInterval = this.clipIntervalToWindow({
+      const clippedInterval = clipIntervalToWindow({
         start: assignment.assignedAt,
         end: assignment.unassignedAt ?? params.killTime,
         windowStart: params.respawnStartTime,
@@ -311,7 +379,7 @@ export class EventPointsService {
     }
 
     const trackingDurationSeconds =
-      this.calculateTrackingDurationSeconds(trackingIntervals);
+      calculateTrackingDurationSeconds(trackingIntervals);
     const trackingDurationPercentage = this.calculateTrackingDurationPercentage(
       {
         trackingDurationSeconds,
@@ -352,9 +420,29 @@ export class EventPointsService {
       (event as { scoringMode?: unknown }).scoringMode,
     );
     const scoringRules =
-      scoringMode === 'ADVANCED'
+      scoringMode === "ADVANCED"
         ? normalizeEventScoringRules(event.scoringRules)
         : null;
+    const existingRankings = await this.prisma.eventRanking.findMany({
+      where: { eventId },
+      select: {
+        id: true,
+        memberId: true,
+        heroNpcName: true,
+        totalPoints: true,
+        manualAdjustmentPoints: true,
+        pointsModified: true,
+      },
+    });
+    const existingRankingsByKey = new Map(
+      existingRankings.map((ranking) => [
+        this.createRankingKey({
+          memberId: ranking.memberId,
+          heroNpcName: ranking.heroNpcName,
+        }),
+        ranking,
+      ]),
+    );
 
     const killPoints = await this.prisma.eventKillPoint.findMany({
       where: {
@@ -420,13 +508,42 @@ export class EventPointsService {
     const allMemberIds = Array.from(
       new Set(killPoints.map((point) => point.memberId)),
     );
-    const earliestRespawnStart = new Date(
-      Math.min(
-        ...killPoints.map((point) => point.kill.minSpawnTimeAtKill.getTime()),
-      ),
-    );
     const latestKillTime = new Date(
       Math.max(...killPoints.map((point) => point.kill.killedAt.getTime())),
+    );
+    const windowSummaries =
+      killPoints.length > 0
+        ? await this.prisma.eventRespawnWindowSummary.findMany({
+            where: {
+              killId: {
+                in: Array.from(
+                  new Set(killPoints.map((point) => point.kill.id)),
+                ),
+              },
+            },
+            select: {
+              killId: true,
+              windowOpenedAt: true,
+            },
+          })
+        : [];
+    const windowOpenedAtByKillId = new Map(
+      windowSummaries.flatMap((summary) =>
+        summary.killId
+          ? [[summary.killId, summary.windowOpenedAt] as const]
+          : [],
+      ),
+    );
+    const earliestOverlapWindowStart = new Date(
+      Math.min(
+        ...killPoints.map((point) =>
+          resolveEventWindowStart({
+            killedAt: point.kill.killedAt,
+            minSpawnTimeAtKill: point.kill.minSpawnTimeAtKill,
+            windowOpenedAt: windowOpenedAtByKillId.get(point.kill.id),
+          }).getTime(),
+        ),
+      ),
     );
 
     const assignmentHistory =
@@ -438,7 +555,7 @@ export class EventPointsService {
               assignedAt: { lte: latestKillTime },
               OR: [
                 { unassignedAt: null },
-                { unassignedAt: { gte: earliestRespawnStart } },
+                { unassignedAt: { gte: earliestOverlapWindowStart } },
               ],
             },
             select: {
@@ -447,7 +564,7 @@ export class EventPointsService {
               assignedAt: true,
               unassignedAt: true,
             },
-            orderBy: { assignedAt: 'asc' },
+            orderBy: { assignedAt: "asc" },
           })
         : [];
 
@@ -467,35 +584,31 @@ export class EventPointsService {
       assignmentsByMember.get(assignment.memberId)?.push(assignment);
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      for (const killPoint of killPoints) {
-        const assignedMembersCount =
-          assignedMembersCountByKillId.get(killPoint.killId) ?? 1;
-        const respawnStartTime =
-          killPoint.kill.minSpawnTimeAtKill > killPoint.kill.killedAt
-            ? killPoint.kill.killedAt
-            : killPoint.kill.minSpawnTimeAtKill;
-        const trackingMetrics = this.calculateTrackingMetricsForKill({
-          assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
-          heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
-          killTime: killPoint.kill.killedAt,
-          respawnStartTime,
-        });
-        const trackingDurationSeconds = trackingMetrics.trackingDurationSeconds;
-        const trackingDurationPercentage =
-          trackingMetrics.trackingDurationPercentage;
-        const memberState = this.getMemberKillState({
-          assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
-          heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
-          killTime: killPoint.kill.killedAt,
-          respawnStartTime,
-        });
+    const recalculatedKillPoints = killPoints.map((killPoint) => {
+      const assignedMembersCount =
+        assignedMembersCountByKillId.get(killPoint.killId) ?? 1;
+      const trackingWindowStartTime = resolveEventWindowStart({
+        killedAt: killPoint.kill.killedAt,
+        minSpawnTimeAtKill: killPoint.kill.minSpawnTimeAtKill,
+      });
+      const trackingMetrics = this.calculateTrackingMetricsForKill({
+        assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
+        heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
+        killTime: killPoint.kill.killedAt,
+        respawnStartTime: trackingWindowStartTime,
+      });
+      const trackingDurationSeconds = trackingMetrics.trackingDurationSeconds;
+      const trackingDurationPercentage =
+        trackingMetrics.trackingDurationPercentage;
+      const memberState = this.getMemberKillState({
+        assignments: assignmentsByMember.get(killPoint.memberId) ?? [],
+        heroMapIds: heroMapIdsByKillId.get(killPoint.killId) ?? new Set(),
+        killTime: killPoint.kill.killedAt,
+        respawnStartTime: trackingWindowStartTime,
+      });
 
-        const {
-          totalPoints,
-          basePoints,
-          appliedBonuses,
-        } = this.calculateMemberPoints({
+      const { totalPoints, basePoints, appliedBonuses } =
+        this.calculateMemberPoints({
           scoringMode,
           scoringRules,
           eligible: true,
@@ -503,7 +616,7 @@ export class EventPointsService {
           trackingDurationSeconds,
           assignedMembersCount,
           killTime: killPoint.kill.killedAt,
-          respawnStartTime,
+          respawnStartTime: trackingWindowStartTime,
           maxRespawnTime: killPoint.kill.maxSpawnTimeAtKill,
           memberLeaveTime: memberState.memberPresentAtKill
             ? null
@@ -513,101 +626,184 @@ export class EventPointsService {
           afkPercentage: killPoint.afkPercentage,
           wasPresent: killPoint.wasPresent,
         });
+      const effectivePoints = this.roundPointsValue(
+        totalPoints + killPoint.manualAdjustmentPoints,
+      );
 
-        await tx.eventKillPoint.update({
-          where: { id: killPoint.id },
-          data: {
-            basePoints,
-            points: totalPoints,
-            trackingDurationSeconds,
-            trackingDurationPercentage: trackingDurationPercentage ?? null,
-            bonusBreakdown: appliedBonuses as Prisma.InputJsonValue,
-          },
+      return {
+        killPointId: killPoint.id,
+        memberId: killPoint.memberId,
+        heroNpcName: killPoint.kill.heroNpc.npcName,
+        confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
+        confirmedAt: killPoint.confirmedAt,
+        afkPercentage: killPoint.afkPercentage,
+        points: effectivePoints,
+        trackingDurationSeconds,
+        hasManualPointsAdjustment: killPoint.manualAdjustmentPoints !== 0,
+        updateData: {
+          basePoints,
+          points: effectivePoints,
+          trackingDurationSeconds,
+          trackingDurationPercentage: trackingDurationPercentage ?? null,
+          bonusBreakdown: appliedBonuses as Prisma.InputJsonValue,
+        },
+      };
+    });
+
+    const rankingMap = new Map<
+      string,
+      {
+        memberId: number;
+        heroNpcName: string;
+        totalPoints: number;
+        totalKills: number;
+        totalTimeSeconds: number;
+        afkSum: number;
+      }
+    >();
+    const manualAdjustmentRankingKeys = new Set<string>();
+
+    for (const recalculatedKillPoint of recalculatedKillPoints) {
+      if (
+        !this.isKillPointCountedInRanking({
+          confirmationDeadlineAt: recalculatedKillPoint.confirmationDeadlineAt,
+          confirmedAt: recalculatedKillPoint.confirmedAt,
+        })
+      ) {
+        continue;
+      }
+
+      const key = this.createRankingKey({
+        memberId: recalculatedKillPoint.memberId,
+        heroNpcName: recalculatedKillPoint.heroNpcName,
+      });
+      const existing = rankingMap.get(key);
+      const rankingTrackingDurationSeconds =
+        this.getTrackingDurationSecondsForRanking({
+          trackingDurationSeconds:
+            recalculatedKillPoint.trackingDurationSeconds,
+        });
+
+      if (recalculatedKillPoint.hasManualPointsAdjustment) {
+        manualAdjustmentRankingKeys.add(key);
+      }
+
+      if (existing) {
+        existing.totalPoints = this.roundPointsValue(
+          existing.totalPoints + recalculatedKillPoint.points,
+        );
+        existing.totalKills += 1;
+        existing.totalTimeSeconds += rankingTrackingDurationSeconds;
+        existing.afkSum += recalculatedKillPoint.afkPercentage;
+      } else {
+        rankingMap.set(key, {
+          memberId: recalculatedKillPoint.memberId,
+          heroNpcName: recalculatedKillPoint.heroNpcName,
+          totalPoints: recalculatedKillPoint.points,
+          totalKills: 1,
+          totalTimeSeconds: rankingTrackingDurationSeconds,
+          afkSum: recalculatedKillPoint.afkPercentage,
         });
       }
+    }
+    const processedRankingKeys = new Set<string>();
 
-      await tx.eventRanking.deleteMany({
-        where: { eventId },
+    const transactionOperations: Prisma.PrismaPromise<unknown>[] =
+      recalculatedKillPoints.map((recalculatedKillPoint) =>
+        this.prisma.eventKillPoint.update({
+          where: { id: recalculatedKillPoint.killPointId },
+          data: recalculatedKillPoint.updateData,
+        }),
+      );
+
+    for (const ranking of rankingMap.values()) {
+      const rankingKey = this.createRankingKey({
+        memberId: ranking.memberId,
+        heroNpcName: ranking.heroNpcName,
       });
-
-      const updatedKillPoints = await tx.eventKillPoint.findMany({
-        where: {
-          kill: {
-            heroNpc: {
-              eventId,
-            },
-          },
-        },
-        include: {
-          kill: {
-            include: {
-              heroNpc: true,
-            },
-          },
-        },
+      const existingRanking = existingRankingsByKey.get(rankingKey);
+      const manualAdjustmentPoints = this.resolveManualAdjustmentPoints({
+        existingRanking,
+        computedTotalPoints: ranking.totalPoints,
       });
+      const persistedRankingData = {
+        totalPoints: this.roundPointsValue(
+          ranking.totalPoints + manualAdjustmentPoints,
+        ),
+        manualAdjustmentPoints,
+        totalKills: ranking.totalKills,
+        totalTimeSeconds: ranking.totalTimeSeconds,
+        avgAfkPercentage:
+          Math.round((ranking.afkSum / ranking.totalKills) * 100) / 100,
+        pointsModified:
+          manualAdjustmentPoints !== 0 ||
+          manualAdjustmentRankingKeys.has(rankingKey),
+      };
 
-      const rankingMap = new Map<
-        string,
-        {
-          memberId: number;
-          heroNpcName: string;
-          totalPoints: number;
-          totalKills: number;
-          totalTimeSeconds: number;
-          afkSum: number;
-        }
-      >();
+      processedRankingKeys.add(rankingKey);
 
-      for (const kp of updatedKillPoints) {
-        if (
-          !this.isKillPointCountedInRanking({
-            confirmationDeadlineAt: kp.confirmationDeadlineAt,
-            confirmedAt: kp.confirmedAt,
-          })
-        ) {
-          continue;
-        }
-
-        const key = `${kp.memberId}-${kp.kill.heroNpc.npcName}`;
-        const existing = rankingMap.get(key);
-        const trackingDurationSeconds =
-          this.getTrackingDurationSecondsForRanking({
-            trackingDurationSeconds: kp.trackingDurationSeconds,
-          });
-
-        if (existing) {
-          existing.totalPoints += kp.points;
-          existing.totalKills += 1;
-          existing.totalTimeSeconds += trackingDurationSeconds;
-          existing.afkSum += kp.afkPercentage;
-        } else {
-          rankingMap.set(key, {
-            memberId: kp.memberId,
-            heroNpcName: kp.kill.heroNpc.npcName,
-            totalPoints: kp.points,
-            totalKills: 1,
-            totalTimeSeconds: trackingDurationSeconds,
-            afkSum: kp.afkPercentage,
-          });
-        }
+      if (existingRanking) {
+        transactionOperations.push(
+          this.prisma.eventRanking.update({
+            where: { id: existingRanking.id },
+            data: persistedRankingData,
+          }),
+        );
+        continue;
       }
 
-      for (const ranking of rankingMap.values()) {
-        await tx.eventRanking.create({
+      transactionOperations.push(
+        this.prisma.eventRanking.create({
           data: {
             eventId,
             memberId: ranking.memberId,
             heroNpcName: ranking.heroNpcName,
-            totalPoints: ranking.totalPoints,
-            totalKills: ranking.totalKills,
-            totalTimeSeconds: ranking.totalTimeSeconds,
-            avgAfkPercentage:
-              Math.round((ranking.afkSum / ranking.totalKills) * 100) / 100,
+            ...persistedRankingData,
           },
-        });
+        }),
+      );
+    }
+
+    for (const existingRanking of existingRankings) {
+      const rankingKey = this.createRankingKey({
+        memberId: existingRanking.memberId,
+        heroNpcName: existingRanking.heroNpcName,
+      });
+
+      if (processedRankingKeys.has(rankingKey)) {
+        continue;
       }
-    });
+
+      const manualAdjustmentPoints = this.resolveManualAdjustmentPoints({
+        existingRanking,
+        computedTotalPoints: 0,
+      });
+
+      if (manualAdjustmentPoints !== 0) {
+        transactionOperations.push(
+          this.prisma.eventRanking.update({
+            where: { id: existingRanking.id },
+            data: {
+              totalPoints: manualAdjustmentPoints,
+              manualAdjustmentPoints,
+              totalKills: 0,
+              totalTimeSeconds: 0,
+              avgAfkPercentage: 0,
+              pointsModified: true,
+            },
+          }),
+        );
+        continue;
+      }
+
+      transactionOperations.push(
+        this.prisma.eventRanking.delete({
+          where: { id: existingRanking.id },
+        }),
+      );
+    }
+
+    await this.prisma.$transaction(transactionOperations);
 
     await this.emitRankingUpdateByEventId(eventId);
   }
@@ -667,86 +863,111 @@ export class EventPointsService {
     heroNpcId: string,
     memberId: number,
     since?: Date,
-  ): Promise<{
-    timeOnMapSeconds: number;
-    afkPercentage: number;
-    wasPresent: boolean;
-    mapName: string;
-  }> {
+  ): Promise<Omit<MemberPresenceStats, "memberId">> {
+    const [stats] = await this.getMembersPresenceStats(
+      heroNpcId,
+      [memberId],
+      since,
+    );
+
+    return (
+      stats ?? {
+        timeOnMapSeconds: 0,
+        afkPercentage: 0,
+        wasPresent: false,
+        mapName: "",
+      }
+    );
+  }
+
+  async getMembersPresenceStats(
+    heroNpcId: string,
+    memberIds: number[],
+    since?: Date,
+  ): Promise<MemberPresenceStats[]> {
+    if (memberIds.length === 0) {
+      return [];
+    }
+
     const maps = await this.prisma.eventMap.findMany({
       where: { heroNpcId },
       select: { id: true, mapName: true },
     });
 
     if (maps.length === 0) {
-      return {
+      return memberIds.map((memberId) => ({
+        memberId,
         timeOnMapSeconds: 0,
         afkPercentage: 0,
         wasPresent: false,
-        mapName: '',
-      };
+        mapName: "",
+      }));
     }
 
     const mapIds = maps.map((m) => m.id);
+    const mapNamesById = new Map(maps.map((map) => [map.id, map.mapName]));
 
     const logs = await this.prisma.eventPresenceLog.findMany({
       where: {
         mapId: { in: mapIds },
-        memberId,
-        ...(since && {
-          OR: [
-            { startedAt: { gte: since } },
-            { endedAt: { gte: since } },
-            { endedAt: null, startedAt: { lte: since } },
-          ],
-        }),
+        memberId: { in: memberIds },
+        ...this.getPresenceLogSinceFilter(since),
       },
-      orderBy: { startedAt: 'asc' },
+      orderBy: [{ memberId: "asc" }, { startedAt: "asc" }],
     });
 
-    if (logs.length === 0) {
-      return {
-        timeOnMapSeconds: 0,
-        afkPercentage: 0,
-        wasPresent: false,
-        mapName: maps[0]?.mapName || '',
-      };
-    }
-
     const now = new Date();
-    let totalTimeMs = 0;
-    let afkTimeMs = 0;
-    let lastMapName = '';
+    const aggregatedStatsByMemberId = new Map<number, PresenceLogAggregation>(
+      memberIds.map((memberId) => [
+        memberId,
+        {
+          totalTimeMs: 0,
+          afkTimeMs: 0,
+          mapName: "",
+        },
+      ]),
+    );
 
     for (const log of logs) {
+      const currentStats = aggregatedStatsByMemberId.get(log.memberId);
+      if (!currentStats) {
+        continue;
+      }
+
       const effectiveStart =
         since && log.startedAt < since ? since : log.startedAt;
       const endTime = log.endedAt || now;
       const duration = endTime.getTime() - effectiveStart.getTime();
 
       if (duration > 0) {
-        totalTimeMs += duration;
+        currentStats.totalTimeMs += duration;
 
         if (log.isAfk) {
-          afkTimeMs += duration;
+          currentStats.afkTimeMs += duration;
         }
 
-        const mapEntry = maps.find((m) => m.id === log.mapId);
-        if (mapEntry) {
-          lastMapName = mapEntry.mapName;
+        const mapName = mapNamesById.get(log.mapId);
+        if (mapName) {
+          currentStats.mapName = mapName;
         }
       }
     }
 
-    const timeOnMapSeconds = Math.round(totalTimeMs / 1000);
-    const afkPercentage = totalTimeMs > 0 ? (afkTimeMs / totalTimeMs) * 100 : 0;
+    return memberIds.map((memberId) => {
+      const aggregatedStats = aggregatedStatsByMemberId.get(memberId);
+      const totalTimeMs = aggregatedStats?.totalTimeMs ?? 0;
+      const afkTimeMs = aggregatedStats?.afkTimeMs ?? 0;
+      const afkPercentage =
+        totalTimeMs > 0 ? (afkTimeMs / totalTimeMs) * 100 : 0;
 
-    return {
-      timeOnMapSeconds,
-      afkPercentage: Math.round(afkPercentage * 100) / 100,
-      wasPresent: totalTimeMs > 0,
-      mapName: lastMapName,
-    };
+      return {
+        memberId,
+        timeOnMapSeconds: Math.round(totalTimeMs / 1000),
+        afkPercentage: Math.round(afkPercentage * 100) / 100,
+        wasPresent: totalTimeMs > 0,
+        mapName: aggregatedStats?.mapName || maps[0]?.mapName || "",
+      };
+    });
   }
 
   async getMemberPresenceStatsPerMap(
@@ -768,15 +989,9 @@ export class EventPointsService {
       where: {
         mapId: { in: mapIds },
         memberId,
-        ...(since && {
-          OR: [
-            { startedAt: { gte: since } },
-            { endedAt: { gte: since } },
-            { endedAt: null, startedAt: { lte: since } },
-          ],
-        }),
+        ...this.getPresenceLogSinceFilter(since),
       },
-      orderBy: { startedAt: 'asc' },
+      orderBy: { startedAt: "asc" },
     });
 
     const now = new Date();
@@ -834,15 +1049,9 @@ export class EventPointsService {
       where: {
         mapId: { in: mapIds },
         memberId: { in: memberIds },
-        ...(since && {
-          OR: [
-            { startedAt: { gte: since } },
-            { endedAt: { gte: since } },
-            { endedAt: null, startedAt: { lte: since } },
-          ],
-        }),
+        ...this.getPresenceLogSinceFilter(since),
       },
-      orderBy: { startedAt: 'asc' },
+      orderBy: { startedAt: "asc" },
     });
 
     const now = new Date();
@@ -943,6 +1152,8 @@ export class EventPointsService {
             totalKills: { increment: 1 },
             totalTimeSeconds: { increment: trackingDurationSeconds },
             avgAfkPercentage: Math.round(newAvgAfk * 100) / 100,
+            pointsModified:
+              existing.pointsModified || killPoint.manualAdjustmentPoints !== 0,
           },
         });
       } else {
@@ -955,6 +1166,7 @@ export class EventPointsService {
             totalKills: 1,
             totalTimeSeconds: trackingDurationSeconds,
             avgAfkPercentage: killPoint.afkPercentage,
+            pointsModified: killPoint.manualAdjustmentPoints !== 0,
           },
         });
       }
@@ -997,7 +1209,7 @@ export class EventPointsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException("Event not found");
     }
 
     const now = new Date();
@@ -1034,7 +1246,7 @@ export class EventPointsService {
           },
         },
         orderBy: {
-          confirmationDeadlineAt: 'asc',
+          confirmationDeadlineAt: "asc",
         },
       }),
       this.prisma.eventKillPoint.findMany({
@@ -1069,7 +1281,7 @@ export class EventPointsService {
           },
         },
         orderBy: {
-          confirmationDeadlineAt: 'desc',
+          confirmationDeadlineAt: "desc",
         },
       }),
     ]);
@@ -1159,7 +1371,7 @@ export class EventPointsService {
     });
 
     if (memberKillPoints.length === 0) {
-      throw new NotFoundException('Kill point not found');
+      throw new NotFoundException("Kill point not found");
     }
 
     const now = new Date();
@@ -1180,7 +1392,7 @@ export class EventPointsService {
     });
 
     if (hasExpiredConfirmation) {
-      throw new BadRequestException('Confirmation window has expired');
+      throw new BadRequestException("Confirmation window has expired");
     }
 
     const pointsToConfirmIds = unconfirmedPoints
@@ -1227,7 +1439,8 @@ export class EventPointsService {
     eventId: string,
     killId: string,
     killPointId: string,
-    newPoints: number,
+    pointsDelta: number,
+    comment: string | undefined,
     editedByUserId: string,
   ) {
     const killPoint = await this.prisma.eventKillPoint.findFirst({
@@ -1251,28 +1464,36 @@ export class EventPointsService {
     });
 
     if (!killPoint) {
-      throw new NotFoundException('Kill point not found');
+      throw new NotFoundException("Kill point not found");
     }
 
-    const oldPoints = killPoint.points;
-    const delta = newPoints - oldPoints;
+    const normalizedPointsDelta = this.roundPointsValue(pointsDelta);
+    const normalizedComment = this.normalizePointsEditComment(comment);
+    if (normalizedPointsDelta === 0) {
+      return killPoint;
+    }
+
+    const updatedKillPoints = this.roundPointsValue(
+      killPoint.points + normalizedPointsDelta,
+    );
+    const updatedKillAdjustment = this.roundPointsValue(
+      killPoint.manualAdjustmentPoints + normalizedPointsDelta,
+    );
 
     const updated = await this.prisma.eventKillPoint.update({
       where: { id: killPointId },
       data: {
-        points: newPoints,
-        basePoints: newPoints,
-        bonusBreakdown: [] as Prisma.InputJsonValue,
+        points: updatedKillPoints,
+        manualAdjustmentPoints: updatedKillAdjustment,
       },
     });
 
-    if (
-      delta !== 0 &&
-      this.isKillPointCountedInRanking({
-        confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
-        confirmedAt: killPoint.confirmedAt,
-      })
-    ) {
+    const isCountedInRanking = this.isKillPointCountedInRanking({
+      confirmationDeadlineAt: killPoint.confirmationDeadlineAt,
+      confirmedAt: killPoint.confirmedAt,
+    });
+
+    if (isCountedInRanking) {
       const ranking = await this.prisma.eventRanking.findFirst({
         where: {
           eventId,
@@ -1282,10 +1503,14 @@ export class EventPointsService {
       });
 
       if (ranking) {
+        const updatedRankingTotalPoints = this.roundPointsValue(
+          ranking.totalPoints + normalizedPointsDelta,
+        );
+
         await this.prisma.eventRanking.update({
           where: { id: ranking.id },
           data: {
-            totalPoints: { increment: delta },
+            totalPoints: { increment: normalizedPointsDelta },
             pointsModified: true,
           },
         });
@@ -1294,9 +1519,10 @@ export class EventPointsService {
           data: {
             rankingId: ranking.id,
             previousPoints: ranking.totalPoints,
-            newPoints: ranking.totalPoints + delta,
-            editType: 'KILL_POINT',
+            newPoints: updatedRankingTotalPoints,
+            editType: "KILL_POINT",
             editedByUserId,
+            comment: normalizedComment,
           },
         });
       }
@@ -1311,7 +1537,8 @@ export class EventPointsService {
     guildId: string,
     eventId: string,
     rankingId: string,
-    newTotalPoints: number,
+    pointsDelta: number,
+    comment: string | undefined,
     editedByUserId: string,
   ) {
     const ranking = await this.prisma.eventRanking.findFirst({
@@ -1323,24 +1550,47 @@ export class EventPointsService {
     });
 
     if (!ranking) {
-      throw new NotFoundException('Ranking not found');
+      throw new NotFoundException("Ranking not found");
+    }
+
+    const normalizedPointsDelta = this.roundPointsValue(pointsDelta);
+    const normalizedComment = this.normalizePointsEditComment(comment);
+    if (normalizedPointsDelta === 0) {
+      return ranking;
     }
 
     const previousPoints = ranking.totalPoints;
+    const normalizedNewTotalPoints = this.roundPointsValue(
+      ranking.totalPoints + normalizedPointsDelta,
+    );
+    const manualAdjustmentPoints = this.roundPointsValue(
+      ranking.manualAdjustmentPoints + normalizedPointsDelta,
+    );
+    const hasManualKillAdjustment =
+      await this.hasManualKillAdjustmentForRanking({
+        eventId,
+        memberId: ranking.memberId,
+        heroNpcName: ranking.heroNpcName,
+      });
 
     await this.prisma.eventPointsEditHistory.create({
       data: {
         rankingId,
         previousPoints,
-        newPoints: newTotalPoints,
-        editType: 'RANKING',
+        newPoints: normalizedNewTotalPoints,
+        editType: "RANKING",
         editedByUserId,
+        comment: normalizedComment,
       },
     });
 
     const updated = await this.prisma.eventRanking.update({
       where: { id: rankingId },
-      data: { totalPoints: newTotalPoints, pointsModified: true },
+      data: {
+        totalPoints: normalizedNewTotalPoints,
+        manualAdjustmentPoints,
+        pointsModified: hasManualKillAdjustment || manualAdjustmentPoints !== 0,
+      },
     });
 
     await this.eventEmitter.emitRankingUpdate(guildId, eventId);
@@ -1362,13 +1612,47 @@ export class EventPointsService {
     });
 
     if (!ranking) {
-      throw new NotFoundException('Ranking not found');
+      throw new NotFoundException("Ranking not found");
     }
 
-    return this.prisma.eventPointsEditHistory.findMany({
+    const historyEntries = await this.prisma.eventPointsEditHistory.findMany({
       where: { rankingId },
-      orderBy: { editedAt: 'desc' },
+      orderBy: { editedAt: "desc" },
     });
+
+    const editedByUserIds = Array.from(
+      new Set(historyEntries.map((entry) => entry.editedByUserId)),
+    );
+    const editors =
+      editedByUserIds.length === 0
+        ? []
+        : await this.prisma.member.findMany({
+            where: {
+              guildId,
+              globalUserId: {
+                in: editedByUserIds,
+              },
+            },
+            select: {
+              globalUserId: true,
+              name: true,
+            },
+          });
+    const editorNameByUserId = new Map(
+      editors.flatMap((editor) =>
+        editor.globalUserId
+          ? [[editor.globalUserId, editor.name] as const]
+          : [],
+      ),
+    );
+
+    return historyEntries.map((entry) => ({
+      ...entry,
+      deltaPoints: this.roundPointsValue(
+        entry.newPoints - entry.previousPoints,
+      ),
+      editedByName: editorNameByUserId.get(entry.editedByUserId) ?? null,
+    }));
   }
 
   private async emitRankingUpdateByEventId(eventId: string): Promise<void> {

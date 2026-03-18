@@ -2,11 +2,15 @@
   "search": "Szukaj...",
   "noResults": "Brak wyników",
   "cancel": "Anuluj",
+  "reset": "Resetuj",
+  "levelShort": "Lvl {{level}}",
   "stats": {
     "kills": "Statystyki killi",
     "loots": "Statystyki lootów"
   },
   "save": "Zapisz",
+  "saving": "Zapisywanie...",
+  "unsavedChanges": "Masz niezapisane zmiany",
   "breadcrumbs": {
     "guild": "Gildia",
     "timers": "Timery",
@@ -27,5 +31,11 @@
     "roles": "Role",
     "roleFallback": "Rola #{{id}}",
     "members": "Członkowie"
+  },
+  "activityLogs": {
+    "loadError": "Nie udało się załadować aktywności.",
+    "empty": "Nie znaleziono żadnych aktywności.",
+    "loadingMore": "Ładowanie kolejnych aktywności...",
+    "end": "To już wszystkie aktywności"
   }
 }

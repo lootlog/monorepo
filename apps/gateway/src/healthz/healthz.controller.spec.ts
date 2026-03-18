@@ -1,13 +1,13 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { HealthzController } from './healthz.controller';
-import { HealthzService } from './healthz.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { HealthzController } from "./healthz.controller";
+import { HealthzService } from "./healthz.service";
 
-describe('HealthzController', () => {
+describe("HealthzController", () => {
   let controller: HealthzController;
   let service: HealthzService;
 
   const mockHealthzService = {
-    healthCheck: jest.fn().mockReturnValue({ status: 'ok' }),
+    healthCheck: jest.fn().mockReturnValue({ status: "ok" }),
   };
 
   beforeEach(async () => {
@@ -25,14 +25,14 @@ describe('HealthzController', () => {
     service = module.get<HealthzService>(HealthzService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 
-  it('should return health check status', () => {
+  it("should return health check status", () => {
     const result = controller.healthCheck();
 
     expect(service.healthCheck).toHaveBeenCalled();
-    expect(result).toEqual({ status: 'ok' });
+    expect(result).toEqual({ status: "ok" });
   });
 });

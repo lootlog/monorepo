@@ -33,7 +33,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Pull Requests
 
 - Fill in the pull request template
-- Follow the code style guidelines (ESLint, Prettier)
+- Follow the code style guidelines (Oxlint, Oxfmt)
 - Include tests when adding new features
 - Update documentation when necessary
 - End all files with a newline
@@ -43,14 +43,14 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Prerequisites
 
 - Node.js >= 20
-- pnpm >= 10.20.0
+- pnpm >= 10.32.1
 - Docker & Docker Compose
 
 ### Initial Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/lootlog.git
+git clone https://github.com/lootlog/lootlog.git
 cd lootlog
 
 # Install dependencies
@@ -77,11 +77,14 @@ This is a Turborepo monorepo with the following structure:
 
 ```
 apps/
+  activity/             - NestJS activity tracking service
+  admin/                - Admin panel
   api/                  - Main NestJS backend
   auth/                 - Hono authentication service
   battlelog-service/    - NestJS battle statistics service
   gateway/              - Socket.IO gateway
   discord-bot/          - Discord bot
+  notifications/        - Notifications service
   search/               - Hono search service (Meilisearch)
   web/                  - React 19 dashboard
   game-client/          - React 19 in-game companion
@@ -92,7 +95,9 @@ packages/
   types/                - Shared TypeScript types
   api-helpers/          - JWT/JWKS utilities
   cli/                  - Environment configuration CLI
-  eslint-config/        - Shared ESLint configuration
+  instrumentation/      - Shared observability helpers
+  nest-shared/          - Shared NestJS decorators and guards
+  socket-parser/        - Shared socket parsing logic
   typescript-config/    - Shared TypeScript configuration
 ```
 
@@ -103,7 +108,8 @@ packages/
 pnpm dev                    # Start all services
 pnpm build                  # Build all services
 pnpm lint                   # Lint all code
-pnpm format                 # Format code with Prettier
+pnpm format                 # Format code with Oxfmt
+pnpm format:check           # Check formatting without writing files
 pnpm test                   # Run all tests
 
 # Database operations
@@ -119,9 +125,10 @@ pnpm test                   # Run API tests
 
 ### Code Style Guidelines
 
-- We use ESLint and Prettier for code formatting
+- We use Oxlint and Oxfmt for code quality and formatting
 - Run `pnpm lint` before committing
 - Run `pnpm format` to auto-format code
+- Run `pnpm format:check` when you want a CI-style formatting check
 - Use descriptive variable names
 - Add comments only when necessary
 - Avoid magic numbers and strings - create constants

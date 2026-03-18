@@ -1,17 +1,17 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/db/prisma.service';
+import { INestApplication, ValidationPipe } from "@nestjs/common";
+import request from "supertest";
+import { AppModule } from "../src/app.module";
+import { PrismaService } from "../src/db/prisma.service";
 import {
   createTestTimerPayload,
   TEST_GUILDS,
   TEST_USERS,
-} from './test-helpers';
-import { createTestingModuleWithMocks } from './test-module-helpers';
-import { Permission } from 'generated/client';
-import { RedisService } from '../src/lib/redis/redis.service';
+} from "./test-helpers";
+import { createTestingModuleWithMocks } from "./test-module-helpers";
+import { Permission } from "generated/client";
+import { RedisService } from "@lootlog/nest-shared";
 
-describe('Timers E2E Tests (Whitelist)', () => {
+describe("Timers E2E Tests (Whitelist)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let redis: RedisService;
@@ -42,23 +42,23 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
   beforeEach(async () => {
     await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "Timer", "UserCharactersLootlogSettings" CASCADE`;
-    const keys = await (await redis.getClient()).keys('timer:*');
+    const keys = await redis.getClient().keys("timer:*");
     if (keys.length > 0) {
-      await (await redis.getClient()).del(...keys);
+      await redis.getClient().del(...keys);
     }
   });
 
-  describe('POST /guilds/:guildId/timers', () => {
-    it('should create timer for specific guild', async () => {
+  describe("POST /guilds/:guildId/timers", () => {
+    it("should create timer for specific guild", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_WRITE],
         },
       });
@@ -67,7 +67,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -79,13 +79,13 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(timerPayload)
         .expect(201);
 
       expect(response.body.guildId).toBe(guild1.id);
-      expect(response.body.world).toBe('test-world');
+      expect(response.body.world).toBe("test-world");
       expect(response.body.npcId).toBe(1);
 
       const timers = await prisma.timer.findMany();
@@ -93,16 +93,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
       expect(timers[0].guildId).toBe(guild1.id);
     });
 
-    it('should support custom spawn times', async () => {
+    it("should support custom spawn times", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_WRITE],
         },
       });
@@ -111,7 +111,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -128,8 +128,8 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(timerPayload)
         .expect(201);
 
@@ -142,16 +142,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
       expect(Math.abs(maxTime - expectedMaxTime)).toBeLessThan(1000);
     });
 
-    it('should reject invalid custom spawn times', async () => {
+    it("should reject invalid custom spawn times", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_WRITE],
         },
       });
@@ -160,7 +160,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -177,22 +177,22 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(timerPayload)
         .expect(400);
     });
 
-    it('should handle concurrent requests with locking', async () => {
+    it("should handle concurrent requests with locking", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_WRITE],
         },
       });
@@ -201,7 +201,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -216,8 +216,8 @@ describe('Timers E2E Tests (Whitelist)', () => {
         .map(() =>
           request(app.getHttpServer())
             .post(`/guilds/${guild1.id}/timers`)
-            .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-            .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+            .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+            .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
             .send(timerPayload),
         );
 
@@ -238,16 +238,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
       expect(allSameTimer).toBe(true);
     });
 
-    it('should prevent race condition on 10 simultaneous requests', async () => {
+    it("should prevent race condition on 10 simultaneous requests", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_WRITE],
         },
       });
@@ -256,7 +256,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -274,8 +274,8 @@ describe('Timers E2E Tests (Whitelist)', () => {
           .map(() =>
             request(app.getHttpServer())
               .post(`/guilds/${guild1.id}/timers`)
-              .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-              .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+              .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+              .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
               .send(timerPayload),
           ),
       );
@@ -310,16 +310,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
       `);
     });
 
-    it('should handle rapid sequential updates without data corruption', async () => {
+    it("should handle rapid sequential updates without data corruption", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_WRITE],
         },
       });
@@ -328,7 +328,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -340,7 +340,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'test-world',
+          world: "test-world",
           npcId: 999,
           createdById: member.id,
           minSpawnTime: now,
@@ -349,10 +349,10 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 10,
           npc: {
             id: 999,
-            name: 'Test Boss',
-            location: 'Test Lair',
+            name: "Test Boss",
+            location: "Test Lair",
             wt: 20,
-            prof: 'w',
+            prof: "w",
           },
         },
       });
@@ -360,9 +360,9 @@ describe('Timers E2E Tests (Whitelist)', () => {
       for (let i = 0; i < 5; i++) {
         await request(app.getHttpServer())
           .patch(`/guilds/${guild1.id}/timers/999/reset`)
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-          .send({ world: 'test-world' })
+          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+          .send({ world: "test-world" })
           .expect(200);
 
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -371,7 +371,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const timers = await prisma.timer.findMany({
         where: {
           guildId: guild1.id,
-          world: 'test-world',
+          world: "test-world",
           npcId: 999,
         },
       });
@@ -379,16 +379,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
       expect(timers).toHaveLength(1);
     });
 
-    it('should deduplicate rapid requests', async () => {
+    it("should deduplicate rapid requests", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_WRITE],
         },
       });
@@ -397,7 +397,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -409,15 +409,15 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response1 = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(timerPayload)
         .expect(201);
 
       const response2 = await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(timerPayload)
         .expect(201);
 
@@ -427,16 +427,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
       expect(timers).toHaveLength(1);
     });
 
-    it('should invalidate cache after timer creation', async () => {
+    it("should invalidate cache after timer creation", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -445,7 +445,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -455,13 +455,13 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
-      const cacheKeysBefore = await (
-        await redis.getClient()
-      ).keys(`timer:list:${guild1.id}:*`);
+      const cacheKeysBefore = await redis
+        .getClient()
+        .keys(`timer:list:${guild1.id}:*`);
       expect(cacheKeysBefore.length).toBeGreaterThan(0);
 
       const writeRole = await prisma.role.update({
@@ -488,27 +488,27 @@ describe('Timers E2E Tests (Whitelist)', () => {
       const timerPayload = createTestTimerPayload();
       await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(timerPayload)
         .expect(201);
 
-      const cacheKeysAfter = await (
-        await redis.getClient()
-      ).keys(`timer:list:${guild1.id}:*`);
+      const cacheKeysAfter = await redis
+        .getClient()
+        .keys(`timer:list:${guild1.id}:*`);
       expect(cacheKeysAfter.length).toBe(0);
     });
 
-    it('should return 403 when user lacks LOOTLOG_WRITE permission', async () => {
+    it("should return 403 when user lacks LOOTLOG_WRITE permission", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -517,7 +517,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITHOUT_ACCESS.id,
           roles: {
             connect: { id: role.id },
@@ -529,24 +529,24 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .post(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
         .send(timerPayload)
         .expect(403);
     });
   });
 
-  describe('GET /guilds/:guildId/timers (with cache)', () => {
-    it('should cache timer list', async () => {
+  describe("GET /guilds/:guildId/timers (with cache)", () => {
+    it("should cache timer list", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -555,7 +555,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -567,7 +567,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'test-world',
+          world: "test-world",
           npcId: 1,
           createdById: member.id,
           minSpawnTime: new Date(),
@@ -576,48 +576,48 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 10,
           npc: {
             id: 1,
-            name: 'Boss',
-            location: 'Lair',
+            name: "Boss",
+            location: "Lair",
             wt: 20,
-            prof: 'w',
+            prof: "w",
           },
         },
       });
 
       const response1 = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response1.body).toHaveLength(1);
 
-      const cacheKeys = await (
-        await redis.getClient()
-      ).keys(`timer:list:${guild1.id}:*`);
+      const cacheKeys = await redis
+        .getClient()
+        .keys(`timer:list:${guild1.id}:*`);
       expect(cacheKeys.length).toBeGreaterThan(0);
 
       const response2 = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response2.body).toHaveLength(1);
     });
   });
 
-  describe('GET /guilds/:guildId/timers/npcs/search', () => {
-    it('should search NPCs with timer data', async () => {
+  describe("GET /guilds/:guildId/timers/npcs/search", () => {
+    it("should search NPCs with timer data", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -626,7 +626,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -638,7 +638,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'test-world',
+          world: "test-world",
           npcId: 123,
           createdById: member.id,
           minSpawnTime: new Date(),
@@ -647,13 +647,13 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 10,
           npc: {
             id: 123,
-            name: 'Smok Lodowy',
-            location: 'Lodowa Pustynia',
+            name: "Smok Lodowy",
+            location: "Lodowa Pustynia",
             wt: 450,
             lvl: 230,
-            type: 'ELITE2',
-            prof: 'Warrior',
-            icon: 'smok.png',
+            type: "ELITE2",
+            prof: "Warrior",
+            icon: "smok.png",
           },
         },
       });
@@ -661,7 +661,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'test-world',
+          world: "test-world",
           npcId: 124,
           createdById: member.id,
           minSpawnTime: new Date(),
@@ -670,40 +670,40 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 15,
           npc: {
             id: 124,
-            name: 'Smok Ciemnosci',
-            location: 'Ciemna Pieczara',
+            name: "Smok Ciemnosci",
+            location: "Ciemna Pieczara",
             wt: 550,
             lvl: 280,
-            type: 'ELITE3',
-            prof: 'Mage',
-            icon: 'smok2.png',
+            type: "ELITE3",
+            prof: "Mage",
+            icon: "smok2.png",
           },
         },
       });
 
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'Smok', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ search: "Smok", world: "test-world" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body).toHaveLength(2);
-      expect(response.body[0].name).toContain('Smok');
+      expect(response.body[0].name).toContain("Smok");
       expect(response.body[0].latestRespBaseSeconds).toBeDefined();
       expect(response.body[0].latestRespawnRandomness).toBeDefined();
     });
 
-    it('should return only NPCs from specified world', async () => {
+    it("should return only NPCs from specified world", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -712,7 +712,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -724,7 +724,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'world-1',
+          world: "world-1",
           npcId: 123,
           createdById: member.id,
           minSpawnTime: new Date(),
@@ -733,13 +733,13 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 10,
           npc: {
             id: 123,
-            name: 'Boss',
-            location: 'Lair',
+            name: "Boss",
+            location: "Lair",
             wt: 450,
             lvl: 230,
-            type: 'ELITE2',
-            prof: 'w',
-            icon: 'boss.png',
+            type: "ELITE2",
+            prof: "w",
+            icon: "boss.png",
           },
         },
       });
@@ -747,7 +747,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'world-2',
+          world: "world-2",
           npcId: 124,
           createdById: member.id,
           minSpawnTime: new Date(),
@@ -756,38 +756,38 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 15,
           npc: {
             id: 124,
-            name: 'Boss',
-            location: 'Cave',
+            name: "Boss",
+            location: "Cave",
             wt: 550,
             lvl: 280,
-            type: 'ELITE3',
-            prof: 'm',
-            icon: 'boss2.png',
+            type: "ELITE3",
+            prof: "m",
+            icon: "boss2.png",
           },
         },
       });
 
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'Boss', world: 'world-1' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ search: "Boss", world: "world-1" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body).toHaveLength(1);
       expect(response.body[0].npcId).toBe(123);
     });
 
-    it('should respect limit parameter', async () => {
+    it("should respect limit parameter", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -796,7 +796,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -809,7 +809,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         await prisma.timer.create({
           data: {
             guildId: guild1.id,
-            world: 'test-world',
+            world: "test-world",
             npcId: 100 + i,
             createdById: member.id,
             minSpawnTime: new Date(),
@@ -819,12 +819,12 @@ describe('Timers E2E Tests (Whitelist)', () => {
             npc: {
               id: 100 + i,
               name: `Test NPC ${i}`,
-              location: 'Test Location',
+              location: "Test Location",
               wt: 450,
               lvl: 200,
-              type: 'ELITE',
-              prof: 'w',
-              icon: 'npc.png',
+              type: "ELITE",
+              prof: "w",
+              icon: "npc.png",
             },
           },
         });
@@ -832,24 +832,24 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'Test', world: 'test-world', limit: 2 })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ search: "Test", world: "test-world", limit: 2 })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body).toHaveLength(2);
     });
 
-    it('should return empty array when no NPCs match search', async () => {
+    it("should return empty array when no NPCs match search", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -858,7 +858,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -868,24 +868,24 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'NonExistentNPC', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ search: "NonExistentNPC", world: "test-world" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body).toHaveLength(0);
     });
 
-    it('should return latest timer data when NPC has multiple timers', async () => {
+    it("should return latest timer data when NPC has multiple timers", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -894,7 +894,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -906,7 +906,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'test-world',
+          world: "test-world",
           npcId: 999,
           createdById: member.id,
           minSpawnTime: new Date(),
@@ -915,16 +915,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 10,
           npc: {
             id: 999,
-            name: 'Test Boss',
-            location: 'Lair',
+            name: "Test Boss",
+            location: "Lair",
             wt: 450,
             lvl: 200,
-            type: 'ELITE',
-            prof: 'w',
-            icon: 'boss.png',
+            type: "ELITE",
+            prof: "w",
+            icon: "boss.png",
           },
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date("2024-01-01"),
         },
       });
 
@@ -934,7 +934,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         where: {
           timerId: {
             guildId: guild1.id,
-            world: 'test-world',
+            world: "test-world",
             npcId: 999,
           },
         },
@@ -947,9 +947,9 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'Test Boss', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ search: "Test Boss", world: "test-world" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body).toHaveLength(1);
@@ -957,16 +957,16 @@ describe('Timers E2E Tests (Whitelist)', () => {
       expect(response.body[0].latestRespawnRandomness).toBe(20);
     });
 
-    it('should return 403 when user lacks LOOTLOG_READ permission', async () => {
+    it("should return 403 when user lacks LOOTLOG_READ permission", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [],
         },
       });
@@ -975,7 +975,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITHOUT_ACCESS.id,
           roles: {
             connect: { id: role.id },
@@ -985,22 +985,22 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'Boss', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
+        .query({ search: "Boss", world: "test-world" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITHOUT_ACCESS.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITHOUT_ACCESS.id)
         .expect(403);
     });
 
-    it('should return 400 when missing required query parameters', async () => {
+    it("should return 400 when missing required query parameters", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -1009,7 +1009,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -1019,29 +1019,29 @@ describe('Timers E2E Tests (Whitelist)', () => {
 
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'Boss' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ search: "Boss" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(400);
 
       await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ world: "test-world" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(400);
     });
 
-    it('should perform case-insensitive search', async () => {
+    it("should perform case-insensitive search", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild1.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_READ],
         },
       });
@@ -1050,7 +1050,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: {
             connect: { id: role.id },
@@ -1062,7 +1062,7 @@ describe('Timers E2E Tests (Whitelist)', () => {
       await prisma.timer.create({
         data: {
           guildId: guild1.id,
-          world: 'test-world',
+          world: "test-world",
           npcId: 123,
           createdById: member.id,
           minSpawnTime: new Date(),
@@ -1071,26 +1071,26 @@ describe('Timers E2E Tests (Whitelist)', () => {
           latestRespawnRandomness: 10,
           npc: {
             id: 123,
-            name: 'Dragon King',
-            location: 'Castle',
+            name: "Dragon King",
+            location: "Castle",
             wt: 450,
             lvl: 230,
-            type: 'ELITE2',
-            prof: 'w',
-            icon: 'dragon.png',
+            type: "ELITE2",
+            prof: "w",
+            icon: "dragon.png",
           },
         },
       });
 
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild1.id}/timers/npcs/search`)
-        .query({ search: 'dragon', world: 'test-world' })
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .query({ search: "dragon", world: "test-world" })
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body).toHaveLength(1);
-      expect(response.body[0].name).toBe('Dragon King');
+      expect(response.body[0].name).toBe("Dragon King");
     });
   });
 });

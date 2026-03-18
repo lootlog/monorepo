@@ -1,6 +1,9 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleNotification } from "@/features/notifications/components/single-notification";
-import type { NotificationWithServers, PartyGatheringNotification } from "@/store/notifications.store";
+import type {
+  NotificationWithServers,
+  PartyGatheringNotification,
+} from "@/store/notifications.store";
 import type { FC } from "react";
 
 export type NotificationsListProps = {

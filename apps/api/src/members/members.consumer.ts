@@ -1,27 +1,19 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import type { Queue as BullQueue } from 'bullmq';
-import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { PrismaService } from 'src/db/prisma.service';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { Queue } from 'src/enum/queue.enum';
-import { MEMBER_BULK_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
-import { MemberRefreshSchedulerService } from './member-refresh-scheduler.service';
-import { MEMBER_REFRESH_PRIORITY } from './constants/member-refresh-queue.constant';
+import { Inject, Injectable } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import type { Queue as BullQueue } from "bullmq";
+import { RabbitSubscribe, AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { PrismaService } from "src/db/prisma.service";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { Queue } from "src/enum/queue.enum";
+import { MEMBER_BULK_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 
 interface BulkRefreshPayload {
   jobId: number;
   guildId: string;
   memberIds: string[];
-}
-
-interface MemberRefreshPayload {
-  discordId: string;
-  guildId: string;
-  userId: string;
 }
 
 @Injectable()
@@ -30,7 +22,6 @@ export class MembersConsumer {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @InjectQueue(MEMBER_BULK_REFRESH_QUEUE)
     private readonly bulkRefreshQueue: BullQueue,
-    private readonly memberRefreshScheduler: MemberRefreshSchedulerService,
     private readonly prisma: PrismaService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
@@ -44,13 +35,13 @@ export class MembersConsumer {
     const { jobId, guildId, memberIds } = payload;
 
     this.logger.log({
-      level: 'info',
+      level: "info",
       message: `Queueing bulk refresh job ${jobId} for guild ${guildId} with ${memberIds.length} members to BullMQ`,
     });
 
     try {
       await this.bulkRefreshQueue.add(
-        'bulk-refresh',
+        "bulk-refresh",
         {
           jobId,
           guildId,
@@ -59,19 +50,19 @@ export class MembersConsumer {
         {
           attempts: 3,
           backoff: {
-            type: 'exponential',
+            type: "exponential",
             delay: 2000,
           },
         },
       );
 
       this.logger.log({
-        level: 'info',
+        level: "info",
         message: `Successfully queued bulk refresh job ${jobId} to BullMQ`,
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to queue bulk refresh job ${jobId} to BullMQ`,
         stack: (error as Error).stack,
       });
@@ -79,47 +70,12 @@ export class MembersConsumer {
       await this.prisma.memberRefreshJob.update({
         where: { id: jobId },
         data: {
-          status: 'FAILED',
+          status: "FAILED",
           completedAt: new Date(),
         },
       });
 
       await this.emitJobUpdate(jobId);
-    }
-  }
-
-  @RabbitSubscribe({
-    exchange: DEFAULT_EXCHANGE_NAME,
-    routingKey: RoutingKey.GUILDS_MEMBERS_REFRESH,
-    queue: Queue.GUILDS_MEMBERS_REFRESH,
-  })
-  async handleMemberRefresh(payload: MemberRefreshPayload) {
-    const { discordId, guildId, userId } = payload;
-
-    this.logger.log({
-      level: 'debug',
-      message: `Processing background refresh for member ${discordId} in guild ${guildId}`,
-    });
-
-    try {
-      await this.memberRefreshScheduler.enqueueRefresh({
-        discordId,
-        guildId,
-        userId,
-        priority: MEMBER_REFRESH_PRIORITY.BACKGROUND,
-        reason: 'legacy-rabbit-refresh',
-      });
-
-      this.logger.log({
-        level: 'debug',
-        message: `Queued refresh for member ${discordId} in guild ${guildId}`,
-      });
-    } catch (error) {
-      this.logger.log({
-        level: 'error',
-        message: `Failed to refresh member ${discordId} in guild ${guildId}`,
-        stack: (error as Error).stack,
-      });
     }
   }
 
@@ -131,7 +87,7 @@ export class MembersConsumer {
 
       if (!job) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `Job ${jobId} not found when emitting update`,
         });
         return;
@@ -152,12 +108,12 @@ export class MembersConsumer {
       );
 
       this.logger.log({
-        level: 'debug',
+        level: "debug",
         message: `Emitted job update for job ${jobId}`,
       });
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to emit job update for job ${jobId}`,
         stack: (error as Error).stack,
       });

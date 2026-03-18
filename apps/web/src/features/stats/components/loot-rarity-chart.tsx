@@ -58,7 +58,9 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
       name: rarity,
       value: count,
       percentage:
-        filteredTotal > 0 ? Math.round((count / filteredTotal) * 100 * 10) / 10 : 0,
+        filteredTotal > 0
+          ? Math.round((count / filteredTotal) * 100 * 10) / 10
+          : 0,
       fill: RARITY_COLORS[rarity],
     };
   });
@@ -108,28 +110,29 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
         <ChartContainer config={chartConfig} className="mx-auto h-[250px]">
           <PieChart>
             <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  hideLabel
-                  formatter={(value, name, item) => (
-                    <div className="flex w-full items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-2.5 w-2.5 rounded-[2px]"
-                          style={{ backgroundColor: String(item.payload?.fill ?? "") }}
-                        />
-                        <span className="text-muted-foreground">
-                          {chartConfig[name as "LEGENDARY" | "HEROIC"]?.label ?? String(name)}
-                        </span>
-                      </div>
-                      <span className="font-mono font-medium tabular-nums">
-                        {Number(value).toLocaleString()} (
-                        {String(item.payload?.percentage ?? 0)}%)
+              content=<ChartTooltipContent
+                hideLabel
+                formatter={(value, name, item) => (
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-2.5 w-2.5 rounded-[2px]"
+                        style={{
+                          backgroundColor: String(item.payload?.fill ?? ""),
+                        }}
+                      />
+                      <span className="text-muted-foreground">
+                        {chartConfig[name as "LEGENDARY" | "HEROIC"]?.label ??
+                          String(name)}
                       </span>
                     </div>
-                  )}
-                />
-              }
+                    <span className="font-mono font-medium tabular-nums">
+                      {Number(value).toLocaleString()} (
+                      {String(item.payload?.percentage ?? 0)}%)
+                    </span>
+                  </div>
+                )}
+              />
             />
             <Pie
               data={chartData}
@@ -147,7 +150,7 @@ export const LootRarityChart: React.FC<LootRarityChartProps> = ({
               ))}
             </Pie>
             <ChartLegend
-              content={<ChartLegendContent nameKey="name" />}
+              content=<ChartLegendContent nameKey="name" />
               className="flex-wrap"
             />
           </PieChart>

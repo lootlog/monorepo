@@ -1,7 +1,7 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
-import type { CreateCommentDto } from 'src/loots/dto/create-comment-dto';
-import { ErrorKey } from '../enum/error-key.enum';
+import { ForbiddenException, Injectable } from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
+import type { CreateCommentDto } from "src/loots/dto/create-comment-dto";
+import { ErrorKey } from "../enum/error-key.enum";
 
 @Injectable()
 export class LootCommentService {
@@ -20,7 +20,7 @@ export class LootCommentService {
         lootId,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       include: {
         member: {
@@ -33,7 +33,7 @@ export class LootCommentService {
                 color: true,
               },
               orderBy: {
-                position: 'desc',
+                position: "desc",
               },
             },
           },

@@ -1,26 +1,28 @@
-import { Test, type TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from "@nestjs/testing";
 import {
   UnauthorizedException,
   NotFoundException,
   ServiceUnavailableException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { RateLimitError } from '@discordjs/rest';
-import { DiscordService } from './discord.service';
-import { AuthService } from 'src/auth/auth.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { DiscordRateLimiterService } from './discord-rate-limiter.service';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { RateLimitError } from "@discordjs/rest";
+import { DiscordService } from "./discord.service";
+import { AuthService } from "src/auth/auth.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import {
   TokenExpiredError,
   AuthServiceUnavailableError,
   InvalidScopesError,
-} from 'src/auth/errors';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { RuntimeEnvironment } from 'src/types/runtime.types';
-import type { APIGuild, APIGuildMember } from 'discord-api-types/v10';
+} from "src/auth/errors";
+import { ConfigKey } from "src/config/config-key.enum";
+import { RuntimeEnvironment } from "src/types/runtime.types";
+import type { APIGuild, APIGuildMember } from "discord-api-types/v10";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
-describe('DiscordService', () => {
+describe("DiscordService", () => {
   let service: DiscordService;
   let authService: {
     getIdpToken: jest.Mock;
@@ -48,41 +50,41 @@ describe('DiscordService', () => {
 
   const mockGuilds: APIGuild[] = [
     {
-      id: 'guild-123',
-      name: 'Test Guild',
-      icon: 'icon.png',
+      id: "guild-123",
+      name: "Test Guild",
+      icon: "icon.png",
       owner: false,
-      permissions: '0',
+      permissions: "0",
       features: [],
     } as APIGuild,
   ];
 
   const mockGuildMember: APIGuildMember = {
     user: {
-      id: 'discord-123',
-      username: 'testuser',
-      discriminator: '0001',
-      avatar: 'avatar.png',
-      global_name: 'Test User',
+      id: "discord-123",
+      username: "testuser",
+      discriminator: "0001",
+      avatar: "avatar.png",
+      global_name: "Test User",
     },
     nick: null,
     avatar: null,
     roles: [],
-    joined_at: '2021-01-01T00:00:00.000Z',
+    joined_at: "2021-01-01T00:00:00.000Z",
     deaf: false,
     mute: false,
   } as APIGuildMember;
 
   const mockToken = {
-    accessToken: 'mock-token',
+    accessToken: "mock-token",
     expiresIn: 3600,
-    scopes: ['guilds.members.read', 'guilds', 'identify', 'email'],
+    scopes: DISCORD_AUTH_SCOPES,
   };
 
   const createJsonResponse = (data: unknown) => ({
     headers: {
       get: jest.fn((header: string) =>
-        header.toLowerCase() === 'content-type' ? 'application/json' : null,
+        header.toLowerCase() === "content-type" ? "application/json" : null,
       ),
     },
     json: jest.fn().mockResolvedValue(data),
@@ -90,7 +92,7 @@ describe('DiscordService', () => {
     bodyUsed: false,
     ok: true,
     status: 200,
-    statusText: 'OK',
+    statusText: "OK",
     text: jest.fn(),
     body: null,
   });
@@ -117,7 +119,7 @@ describe('DiscordService', () => {
       get: jest.fn(),
       set: jest.fn(),
       del: jest.fn(),
-      getClient: jest.fn().mockResolvedValue({}),
+      getClient: jest.fn().mockReturnValue({}),
     };
 
     const mockRateLimiter = {
@@ -143,6 +145,10 @@ describe('DiscordService', () => {
         { provide: RedisService, useValue: mockRedisService },
         { provide: DiscordRateLimiterService, useValue: mockRateLimiter },
         { provide: ConfigService, useValue: mockConfigService },
+        {
+          provide: RedlockService,
+          useValue: { createInstance: jest.fn().mockReturnValue(mockRedlock) },
+        },
       ],
     }).compile();
 
@@ -151,27 +157,27 @@ describe('DiscordService', () => {
     redisService = module.get(RedisService);
     rateLimiter = module.get(DiscordRateLimiterService);
 
-    service['redlock'] = mockRedlock as any;
+    service["redlock"] = mockRedlock as any;
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('constructor and initialization', () => {
-    it('should be defined', () => {
+  describe("constructor and initialization", () => {
+    it("should be defined", () => {
       expect(service).toBeDefined();
     });
 
-    it('should set environment from config', () => {
-      expect(service['isLocal']).toBe(true);
+    it("should set environment from config", () => {
+      expect(service["isLocal"]).toBe(true);
     });
   });
 
-  describe('getRestClient', () => {
-    const userId = 'user-123';
+  describe("getRestClient", () => {
+    const userId = "user-123";
 
-    it('should create REST client with valid token', async () => {
+    it("should create REST client with valid token", async () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const rest = await service.getRestClient(userId);
@@ -180,7 +186,7 @@ describe('DiscordService', () => {
       expect(authService.getIdpToken).toHaveBeenCalledWith(userId);
     });
 
-    it('should throw UnauthorizedException when token is expired', async () => {
+    it("should throw UnauthorizedException when token is expired", async () => {
       authService.getIdpToken.mockRejectedValue(new TokenExpiredError());
 
       await expect(service.getRestClient(userId)).rejects.toThrow(
@@ -188,9 +194,9 @@ describe('DiscordService', () => {
       );
     });
 
-    it('should throw UnauthorizedException when scopes are invalid', async () => {
+    it("should throw UnauthorizedException when scopes are invalid", async () => {
       authService.getIdpToken.mockRejectedValue(
-        new InvalidScopesError(['required'], ['actual']),
+        new InvalidScopesError(["required"], ["actual"]),
       );
 
       await expect(service.getRestClient(userId)).rejects.toThrow(
@@ -198,7 +204,7 @@ describe('DiscordService', () => {
       );
     });
 
-    it('should throw ServiceUnavailableException when auth service is unavailable', async () => {
+    it("should throw ServiceUnavailableException when auth service is unavailable", async () => {
       authService.getIdpToken.mockRejectedValue(
         new AuthServiceUnavailableError(),
       );
@@ -208,10 +214,10 @@ describe('DiscordService', () => {
       );
     });
 
-    it('should validate required scopes', async () => {
+    it("should validate required scopes", async () => {
       const invalidToken = {
-        accessToken: 'mock-token',
-        scopes: ['guilds'],
+        accessToken: "mock-token",
+        scopes: ["guilds"],
       };
       authService.getIdpToken.mockResolvedValue(invalidToken as any);
 
@@ -221,22 +227,22 @@ describe('DiscordService', () => {
     });
   });
 
-  describe('getUserGuilds', () => {
-    const userId = 'user-123';
+  describe("getUserGuilds", () => {
+    const userId = "user-123";
 
-    it('should return cached guilds when available', async () => {
+    it("should return cached guilds when available", async () => {
       redisService.get.mockResolvedValue(JSON.stringify(mockGuilds));
 
       const result = await service.getUserGuilds(userId);
 
       expect(result).toEqual(mockGuilds);
       expect(redisService.get).toHaveBeenCalledWith(
-        'user:user-123:discord-guilds:data',
+        "user:user-123:discord-guilds:data",
       );
       expect(mockRedlock.acquire).not.toHaveBeenCalled();
     });
 
-    it('should fetch from Discord API when cache is empty', async () => {
+    it("should fetch from Discord API when cache is empty", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
@@ -245,29 +251,29 @@ describe('DiscordService', () => {
           .fn()
           .mockResolvedValue(createJsonResponse(mockGuilds)),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       const result = await service.getUserGuilds(userId);
 
       expect(result).toEqual(mockGuilds);
       expect(rateLimiter.checkRateLimitForUser).toHaveBeenCalledWith(
         userId,
-        'guilds',
+        "guilds",
       );
       expect(mockRest.queueRequest).toHaveBeenCalled();
       expect(redisService.set).toHaveBeenCalledWith(
-        'user:user-123:discord-guilds:data',
+        "user:user-123:discord-guilds:data",
         JSON.stringify(mockGuilds),
         10,
       );
       expect(redisService.set).toHaveBeenCalledWith(
-        'user:user-123:discord-guilds:stale',
+        "user:user-123:discord-guilds:stale",
         JSON.stringify(mockGuilds),
         300,
       );
     });
 
-    it('should use redlock to prevent concurrent requests', async () => {
+    it("should use redlock to prevent concurrent requests", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
@@ -276,36 +282,36 @@ describe('DiscordService', () => {
           .fn()
           .mockResolvedValue(createJsonResponse(mockGuilds)),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       await service.getUserGuilds(userId);
 
       expect(mockRedlock.acquire).toHaveBeenCalledWith(
-        ['user:user-123:discord-guilds:lock'],
+        ["user:user-123:discord-guilds:lock"],
         6000,
       );
     });
 
-    it('should return empty array when no guilds found', async () => {
+    it("should return empty array when no guilds found", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const mockRest = {
         queueRequest: jest.fn().mockResolvedValue(createJsonResponse([])),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       const result = await service.getUserGuilds(userId);
 
       expect(result).toEqual([]);
       expect(mockLogger.log).toHaveBeenCalledWith({
-        level: 'warn',
-        message: expect.stringContaining('No guilds found'),
+        level: "warn",
+        message: expect.stringContaining("No guilds found"),
       });
     });
 
-    it('should return stale data when rate limited proactively', async () => {
-      const staleGuilds = [{ id: 'stale-guild' }];
+    it("should return stale data when rate limited proactively", async () => {
+      const staleGuilds = [{ id: "stale-guild" }];
       redisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
@@ -317,17 +323,17 @@ describe('DiscordService', () => {
 
       expect(result).toEqual(staleGuilds);
       expect(redisService.get).toHaveBeenCalledWith(
-        'user:user-123:discord-guilds:stale',
+        "user:user-123:discord-guilds:stale",
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
-        level: 'info',
+        level: "info",
         message: expect.stringContaining(
-          'Returning stale guilds data due to rate limit',
+          "Returning stale guilds data due to rate limit",
         ),
       });
     });
 
-    it('should return empty array when rate limited and no stale data', async () => {
+    it("should return empty array when rate limited and no stale data", async () => {
       redisService.get.mockResolvedValue(null);
       rateLimiter.checkRateLimitForUser.mockResolvedValue(true);
 
@@ -335,15 +341,15 @@ describe('DiscordService', () => {
 
       expect(result).toEqual([]);
       expect(mockLogger.log).toHaveBeenCalledWith({
-        level: 'warn',
+        level: "warn",
         message: expect.stringContaining(
-          'Rate limited and no stale data available',
+          "Rate limited and no stale data available",
         ),
       });
     });
 
-    it('should return stale data on rate limit error', async () => {
-      const staleGuilds = [{ id: 'stale-guild' }];
+    it("should return stale data on rate limit error", async () => {
+      const staleGuilds = [{ id: "stale-guild" }];
       redisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
@@ -351,62 +357,62 @@ describe('DiscordService', () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const rateLimitError = new RateLimitError({
-        url: 'test',
-        method: 'GET',
-        hash: 'test',
+        url: "test",
+        method: "GET",
+        hash: "test",
         limit: 5,
         global: false,
         retryAfter: 5000,
         sublimitTimeout: 0,
-        scope: 'user',
-        majorParameter: 'test',
-        route: '/test',
+        scope: "user",
+        majorParameter: "test",
+        route: "/test",
         timeToReset: 5000,
       });
 
       const mockRest = {
         queueRequest: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       const result = await service.getUserGuilds(userId);
 
       expect(result).toEqual(staleGuilds);
       expect(rateLimiter.setRateLimitForUser).toHaveBeenCalledWith(
         userId,
-        'guilds',
+        "guilds",
         5000,
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
-        level: 'info',
+        level: "info",
         message: expect.stringContaining(
-          'Returning stale guilds data after rate limit error',
+          "Returning stale guilds data after rate limit error",
         ),
       });
     });
 
-    it('should throw rate limit error when no stale data available', async () => {
+    it("should throw rate limit error when no stale data available", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const rateLimitError = new RateLimitError({
-        url: 'test',
-        method: 'GET',
-        hash: 'test',
+        url: "test",
+        method: "GET",
+        hash: "test",
         limit: 5,
         global: false,
         retryAfter: 5000,
         sublimitTimeout: 0,
-        scope: 'user',
-        majorParameter: 'test',
-        route: '/test',
+        scope: "user",
+        majorParameter: "test",
+        route: "/test",
         timeToReset: 5000,
       });
 
       const mockRest = {
         queueRequest: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       await expect(service.getUserGuilds(userId)).rejects.toThrow(
         RateLimitError,
@@ -414,12 +420,12 @@ describe('DiscordService', () => {
 
       expect(rateLimiter.setRateLimitForUser).toHaveBeenCalledWith(
         userId,
-        'guilds',
+        "guilds",
         5000,
       );
     });
 
-    it('should cache empty array on UnauthorizedException', async () => {
+    it("should cache empty array on UnauthorizedException", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockRejectedValue(new TokenExpiredError());
 
@@ -428,29 +434,29 @@ describe('DiscordService', () => {
       );
 
       expect(redisService.set).toHaveBeenCalledWith(
-        'user:user-123:discord-guilds:data',
+        "user:user-123:discord-guilds:data",
         JSON.stringify([]),
         5,
       );
     });
   });
 
-  describe('getGuildMember', () => {
-    const options = { guildId: 'guild-123', userId: 'user-123' };
+  describe("getGuildMember", () => {
+    const options = { guildId: "guild-123", userId: "user-123" };
 
-    it('should return cached member when available', async () => {
+    it("should return cached member when available", async () => {
       redisService.get.mockResolvedValue(JSON.stringify(mockGuildMember));
 
       const result = await service.getGuildMember(options);
 
       expect(result).toEqual(mockGuildMember);
       expect(redisService.get).toHaveBeenCalledWith(
-        'guild:guild-123:member:user-123:data',
+        "guild:guild-123:member:user-123:data",
       );
       expect(mockRedlock.acquire).not.toHaveBeenCalled();
     });
 
-    it('should return null when cached null value exists', async () => {
+    it("should return null when cached null value exists", async () => {
       redisService.get.mockResolvedValue(JSON.stringify(null));
 
       const result = await service.getGuildMember(options);
@@ -458,7 +464,7 @@ describe('DiscordService', () => {
       expect(result).toBeNull();
     });
 
-    it('should fetch from Discord API when cache is empty', async () => {
+    it("should fetch from Discord API when cache is empty", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
@@ -467,50 +473,50 @@ describe('DiscordService', () => {
           .fn()
           .mockResolvedValue(createJsonResponse(mockGuildMember)),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       const result = await service.getGuildMember(options);
 
       expect(result).toEqual(mockGuildMember);
       expect(rateLimiter.checkRateLimitForUser).toHaveBeenCalledWith(
         options.userId,
-        'guild-member',
+        "guild-member",
       );
       expect(redisService.set).toHaveBeenCalledWith(
-        'guild:guild-123:member:user-123:data',
+        "guild:guild-123:member:user-123:data",
         JSON.stringify(mockGuildMember),
         10,
       );
       expect(redisService.set).toHaveBeenCalledWith(
-        'guild:guild-123:member:user-123:stale',
+        "guild:guild-123:member:user-123:stale",
         JSON.stringify(mockGuildMember),
         300,
       );
     });
 
-    it('should throw NotFoundException when member not found (404)', async () => {
+    it("should throw NotFoundException when member not found (404)", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
-      const notFoundError = { status: 404, message: 'Not Found' };
+      const notFoundError = { status: 404, message: "Not Found" };
       const mockRest = {
         queueRequest: jest.fn().mockRejectedValue(notFoundError),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         NotFoundException,
       );
 
       expect(redisService.set).toHaveBeenCalledWith(
-        'guild:guild-123:member:user-123:data',
+        "guild:guild-123:member:user-123:data",
         JSON.stringify(null),
         30,
       );
     });
 
-    it('should return stale data when rate limited proactively', async () => {
-      const staleMember = { user: { id: 'stale' } };
+    it("should return stale data when rate limited proactively", async () => {
+      const staleMember = { user: { id: "stale" } };
       redisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
@@ -522,17 +528,17 @@ describe('DiscordService', () => {
 
       expect(result).toEqual(staleMember);
       expect(redisService.get).toHaveBeenCalledWith(
-        'guild:guild-123:member:user-123:stale',
+        "guild:guild-123:member:user-123:stale",
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
-        level: 'info',
+        level: "info",
         message: expect.stringContaining(
-          'Returning stale member data due to rate limit',
+          "Returning stale member data due to rate limit",
         ),
       });
     });
 
-    it('should return null when rate limited and no stale data', async () => {
+    it("should return null when rate limited and no stale data", async () => {
       redisService.get.mockResolvedValue(null);
       rateLimiter.checkRateLimitForUser.mockResolvedValue(true);
 
@@ -540,15 +546,15 @@ describe('DiscordService', () => {
 
       expect(result).toBeNull();
       expect(mockLogger.log).toHaveBeenCalledWith({
-        level: 'warn',
+        level: "warn",
         message: expect.stringContaining(
-          'Rate limited and no stale data available',
+          "Rate limited and no stale data available",
         ),
       });
     });
 
-    it('should return stale data on rate limit error', async () => {
-      const staleMember = { user: { id: 'stale' } };
+    it("should return stale data on rate limit error", async () => {
+      const staleMember = { user: { id: "stale" } };
       redisService.get
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
@@ -556,62 +562,62 @@ describe('DiscordService', () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const rateLimitError = new RateLimitError({
-        url: 'test',
-        method: 'GET',
-        hash: 'test',
+        url: "test",
+        method: "GET",
+        hash: "test",
         limit: 5,
         global: false,
         retryAfter: 5000,
         sublimitTimeout: 0,
-        scope: 'user',
-        majorParameter: 'test',
-        route: '/test',
+        scope: "user",
+        majorParameter: "test",
+        route: "/test",
         timeToReset: 5000,
       });
 
       const mockRest = {
         queueRequest: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       const result = await service.getGuildMember(options);
 
       expect(result).toEqual(staleMember);
       expect(rateLimiter.setRateLimitForUser).toHaveBeenCalledWith(
         options.userId,
-        'guild-member',
+        "guild-member",
         5000,
       );
       expect(mockLogger.log).toHaveBeenCalledWith({
-        level: 'info',
+        level: "info",
         message: expect.stringContaining(
-          'Returning stale member data after rate limit error',
+          "Returning stale member data after rate limit error",
         ),
       });
     });
 
-    it('should throw rate limit error when no stale data available', async () => {
+    it("should throw rate limit error when no stale data available", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
       const rateLimitError = new RateLimitError({
-        url: 'test',
-        method: 'GET',
-        hash: 'test',
+        url: "test",
+        method: "GET",
+        hash: "test",
         limit: 5,
         global: false,
         retryAfter: 5000,
         sublimitTimeout: 0,
-        scope: 'user',
-        majorParameter: 'test',
-        route: '/test',
+        scope: "user",
+        majorParameter: "test",
+        route: "/test",
         timeToReset: 5000,
       });
 
       const mockRest = {
         queueRequest: jest.fn().mockRejectedValue(rateLimitError),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       await expect(service.getGuildMember(options)).rejects.toThrow(
         RateLimitError,
@@ -619,12 +625,12 @@ describe('DiscordService', () => {
 
       expect(rateLimiter.setRateLimitForUser).toHaveBeenCalledWith(
         options.userId,
-        'guild-member',
+        "guild-member",
         5000,
       );
     });
 
-    it('should cache null on UnauthorizedException', async () => {
+    it("should cache null on UnauthorizedException", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockRejectedValue(new TokenExpiredError());
 
@@ -633,13 +639,13 @@ describe('DiscordService', () => {
       );
 
       expect(redisService.set).toHaveBeenCalledWith(
-        'guild:guild-123:member:user-123:data',
+        "guild:guild-123:member:user-123:data",
         JSON.stringify(null),
         5,
       );
     });
 
-    it('should use redlock to prevent concurrent requests', async () => {
+    it("should use redlock to prevent concurrent requests", async () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockResolvedValue(mockToken);
 
@@ -648,23 +654,23 @@ describe('DiscordService', () => {
           .fn()
           .mockResolvedValue(createJsonResponse(mockGuildMember)),
       };
-      jest.spyOn(service, 'getRestClient').mockResolvedValue(mockRest as any);
+      jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
       await service.getGuildMember(options);
 
       expect(mockRedlock.acquire).toHaveBeenCalledWith(
-        ['guild:guild-123:member:user-123:lock'],
+        ["guild:guild-123:member:user-123:lock"],
         6000,
       );
     });
   });
 
-  describe('clearUserGuildIdsCache', () => {
-    it('should delete cache for user guilds', async () => {
-      await service.clearUserGuildIdsCache('user-123');
+  describe("clearUserGuildIdsCache", () => {
+    it("should delete cache for user guilds", async () => {
+      await service.clearUserGuildIdsCache("user-123");
 
       expect(redisService.del).toHaveBeenCalledWith(
-        'user:user-123:discord-guilds:data',
+        "user:user-123:discord-guilds:data",
       );
     });
   });

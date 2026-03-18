@@ -1,20 +1,20 @@
 import {
   MessageHandlerErrorBehavior,
   RabbitSubscribe,
-} from '@golevelup/nestjs-rabbitmq';
-import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import type { CreateGuildDto } from 'src/guilds/dto/create-guild.dto';
-import { Queue } from 'src/enum/queue.enum';
-import { GuildsService } from 'src/guilds/guilds.service';
+} from "@golevelup/nestjs-rabbitmq";
+import { Inject, Injectable } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
+import { Queue } from "src/enum/queue.enum";
+import { GuildsService } from "src/guilds/guilds.service";
 import {
   DEAD_LETTER_EXCHANGE_NAME,
   DEFAULT_EXCHANGE_NAME,
   RETRY_EXCHANGE_NAME,
-} from 'src/config/rabbitmq.config';
-import { RetryService } from 'src/rabbitmq/retry.service';
-import { RoutingKey } from 'src/enum/routing-key.enum';
+} from "src/config/rabbitmq.config";
+import { RetryService } from "src/rabbitmq/retry.service";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
 interface AmqpMessage {
   properties: {
@@ -44,7 +44,6 @@ export class GuildsEventsHandler {
   async handleGuildsCreate(data: CreateGuildDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
-    // RetryService obsługuje całą logikę retry/DLQ
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -53,14 +52,13 @@ export class GuildsEventsHandler {
     );
 
     if (!shouldContinue) {
-      return; // Wiadomość została wysłana do DLQ
+      return;
     }
 
-    // Główna logika biznesowa
     await this.guildsService.createGuild(data);
     this.logger.log({
-      level: 'info',
-      message: 'Guild created successfully',
+      level: "info",
+      message: "Guild created successfully",
       guildId: data.guildId,
     });
   }
@@ -75,8 +73,8 @@ export class GuildsEventsHandler {
   })
   handleGuildCreateDlq(message: CreateGuildDto) {
     this.logger.log({
-      level: 'warn',
-      message: 'Guild CREATE DLQ message - manual intervention needed',
+      level: "warn",
+      message: "Guild CREATE DLQ message - manual intervention needed",
       guildId: message.guildId,
       data: message,
     });
@@ -92,8 +90,8 @@ export class GuildsEventsHandler {
   })
   handleGuildUpdateDlq(message: CreateGuildDto) {
     this.logger.log({
-      level: 'warn',
-      message: 'Guild UPDATE DLQ message - manual intervention needed',
+      level: "warn",
+      message: "Guild UPDATE DLQ message - manual intervention needed",
       guildId: message.guildId,
       data: message,
     });
@@ -109,8 +107,8 @@ export class GuildsEventsHandler {
   })
   handleGuildDeleteDlq(message: CreateGuildDto) {
     this.logger.log({
-      level: 'warn',
-      message: 'Guild DELETE DLQ message - manual intervention needed',
+      level: "warn",
+      message: "Guild DELETE DLQ message - manual intervention needed",
       guildId: message.guildId,
       data: message,
     });
@@ -130,7 +128,6 @@ export class GuildsEventsHandler {
   async handleGuildsUpdate(data: CreateGuildDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
-    // RetryService obsługuje całą logikę retry/DLQ
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -139,14 +136,13 @@ export class GuildsEventsHandler {
     );
 
     if (!shouldContinue) {
-      return; // Wiadomość została wysłana do DLQ
+      return;
     }
 
-    // Główna logika biznesowa
     await this.guildsService.updateGuild(data);
     this.logger.log({
-      level: 'info',
-      message: 'Guild updated successfully',
+      level: "info",
+      message: "Guild updated successfully",
       guildId: data.guildId,
     });
   }
@@ -165,7 +161,6 @@ export class GuildsEventsHandler {
   async handleGuildsDelete(data: CreateGuildDto, amqpMsg: AmqpMessage) {
     const headers = amqpMsg.properties.headers || {};
 
-    // RetryService obsługuje całą logikę retry/DLQ
     const shouldContinue = await this.retryService.handleRetryLogic(
       data,
       headers,
@@ -174,14 +169,13 @@ export class GuildsEventsHandler {
     );
 
     if (!shouldContinue) {
-      return; // Wiadomość została wysłana do DLQ
+      return;
     }
 
-    // Główna logika biznesowa
     await this.guildsService.deleteGuild(data);
     this.logger.log({
-      level: 'info',
-      message: 'Guild deleted successfully',
+      level: "info",
+      message: "Guild deleted successfully",
       guildId: data.guildId,
     });
   }

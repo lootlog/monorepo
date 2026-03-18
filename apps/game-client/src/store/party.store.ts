@@ -21,6 +21,5 @@ export const usePartyStore = create<PartyState>((set, get) => ({
   members: [],
   setMembers: (members) => set({ members }),
   clearParty: () => set({ members: [] }),
-  isMember: (characterId) =>
-    get().members.some((m) => m.id === characterId),
+  isMember: (characterId) => get().members.some((m) => m.id === characterId),
 }));

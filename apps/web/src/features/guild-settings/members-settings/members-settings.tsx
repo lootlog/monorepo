@@ -2,6 +2,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { useState, useMemo, useRef } from "react";
 import { cn } from "@/utils/cn";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
+import { Label } from "@lootlog/ui/components/label";
 import { useGuildMembers } from "@/hooks/api/members/use-guild-members";
 import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 import { MembersPanelContent } from "@/features/guild-settings/members-settings/components/members-panel";
@@ -46,6 +47,7 @@ const MembersSettingsHeader = () => (
 
 const MembersSettingsContent = () => {
   const [showInactive, setShowInactive] = useState(false);
+  const showInactiveCheckboxId = "show-inactive-members";
   const { data: members } = useGuildMembers(showInactive);
   const [searchValue, setSearchValue] = useState("");
   const { data: guild } = useGuild({});
@@ -143,13 +145,17 @@ const MembersSettingsContent = () => {
             className="h-9"
             wrapperClassName="flex-1"
           />
-          <label className="flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap">
+          <Label
+            htmlFor={showInactiveCheckboxId}
+            className="flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap"
+          >
             <Checkbox
+              id={showInactiveCheckboxId}
               checked={showInactive}
               onCheckedChange={(checked) => setShowInactive(checked === true)}
             />
             Nieaktywni
-          </label>
+          </Label>
         </div>
 
         <div className="flex-1 flex min-h-0 overflow-hidden bg-background/50">

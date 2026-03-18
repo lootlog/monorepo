@@ -3,7 +3,7 @@ import { LootsFiltersSidebar } from "@/features/guild/components/loots-filters/l
 import { useLootsFilters } from "@/hooks/use-loots-filters";
 import { AnimatePresence, motion } from "framer-motion";
 import { LootFiltersHeader } from "@/features/guild/components/loots-filters/loot-filters-header";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -23,7 +23,6 @@ export const Guild: React.FC = () => {
     true,
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const skipFirstAnimationRef = useRef(isFiltersOpen);
   const isMobile = useIsMobile();
 
   const handleOpenSidebar = () => {
@@ -34,21 +33,6 @@ export const Guild: React.FC = () => {
 
     setIsFiltersOpen((prev) => !prev);
   };
-
-  useEffect(() => {
-    if (skipFirstAnimationRef.current) {
-      skipFirstAnimationRef.current = false;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isMobile) {
-      setIsFiltersOpen(false);
-      return;
-    }
-
-    setIsMobileFiltersOpen(false);
-  }, [isMobile, setIsFiltersOpen]);
 
   const filtersOpenForHeader = isMobile ? isMobileFiltersOpen : isFiltersOpen;
 
@@ -84,14 +68,10 @@ export const Guild: React.FC = () => {
           </div>
 
           {!isMobile && (
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {isFiltersOpen && (
                 <motion.div
-                  initial={
-                    skipFirstAnimationRef.current
-                      ? { width: 320, opacity: 1 }
-                      : { width: 0, opacity: 0 }
-                  }
+                  initial={{ width: 0, opacity: 0 }}
                   animate={{ width: 320, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}

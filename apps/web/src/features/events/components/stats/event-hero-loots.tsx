@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
-import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
+import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import {
   Package,
   Frown,
@@ -19,6 +19,7 @@ import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
 import { cn } from "@/utils/cn";
 import { ItemRarity, type Loot } from "@/hooks/api/loots/use-loots";
+import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 
 interface EventHeroLootsProps {
   guildId: string;
@@ -57,7 +58,7 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/30">
+      <div className="flex flex-col gap-2 border-t border-border/30 pt-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
@@ -68,7 +69,7 @@ const LootItemsRow = ({ loot }: { loot: Loot }) => {
             {date}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground sm:self-auto">
           <span className="flex items-center gap-1">
             <Users className="h-3 w-3" />
             {loot.players.length}
@@ -110,11 +111,20 @@ export const EventHeroLoots = ({
 
   if (isLoading) {
     return (
-      <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
-        <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-          <Package className="w-4 h-4" />
-          {t("events.loots.title")}
-        </h2>
+      <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+            <Package className="size-4 text-primary" />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {t("events.loots.subtitle")}
+            </p>
+            <h2 className="text-base font-semibold">
+              {t("events.loots.title")}
+            </h2>
+          </div>
+        </div>
         <div className="flex items-center justify-center h-32">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
         </div>
@@ -123,11 +133,18 @@ export const EventHeroLoots = ({
   }
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-      <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-        <Package className="w-4 h-4" />
-        {t("events.loots.title")}
-      </h2>
+    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+          <Package className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("events.loots.subtitle")}
+          </p>
+          <h2 className="text-base font-semibold">{t("events.loots.title")}</h2>
+        </div>
+      </div>
 
       {showHeroTabs && heroNpcs && heroNpcs.length > 1 && (
         <Tabs
@@ -135,7 +152,7 @@ export const EventHeroLoots = ({
           onValueChange={setSelectedHeroName}
           className="mb-3"
         >
-          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <EventScrollableTabsList>
             {heroNpcs.map((hero) => (
               <TabsTrigger
                 key={hero.id}
@@ -145,7 +162,7 @@ export const EventHeroLoots = ({
                 {hero.npcName}
               </TabsTrigger>
             ))}
-          </TabsList>
+          </EventScrollableTabsList>
         </Tabs>
       )}
 
@@ -156,7 +173,10 @@ export const EventHeroLoots = ({
         </div>
       ) : (
         <>
-          <div key={activeHeroName} className="space-y-2 animate-in fade-in-0 duration-200">
+          <div
+            key={activeHeroName}
+            className="space-y-2 animate-in fade-in-0 duration-200"
+          >
             {loots.map((loot) => (
               <LootItemsRow key={loot.id} loot={loot} />
             ))}
@@ -164,7 +184,9 @@ export const EventHeroLoots = ({
           <Link
             to="/$guildId"
             params={{ guildId }}
-            search={{ npcs: activeHeroName ? activeHeroName : heroNpcNames.join(",") }}
+            search={{
+              npcs: activeHeroName ? activeHeroName : heroNpcNames.join(","),
+            }}
             className="block mt-3"
           >
             <Button variant="outline" className="w-full" size="sm">

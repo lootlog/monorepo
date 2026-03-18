@@ -7,7 +7,7 @@ export interface WidgetManager {
     clName: string,
     storeData: {},
     additionalBarHide: boolean,
-    wigdetsWithoutFreeSlot: []
+    wigdetsWithoutFreeSlot: [],
   ) => void;
 }
 

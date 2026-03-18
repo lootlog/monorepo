@@ -1,9 +1,11 @@
-import type { GuildMember } from 'discord.js';
-import { MemberType } from 'src/bot/enums/member-type.enum';
+import type { GuildMember } from "discord.js";
+import { isDiscordAdministrator } from "@lootlog/nest-shared";
+import { MemberType } from "src/bot/enums/member-type.enum";
 
 export const getMemberType = (member: GuildMember) => {
-  const isAdministrativeUser =
-    (Number(member.permissions.bitfield) & 0x8) === 0x8;
+  const isAdministrativeUser = isDiscordAdministrator(
+    Number(member.permissions.bitfield),
+  );
   const isBot = member.user.bot;
 
   if (isBot) return MemberType.BOT;

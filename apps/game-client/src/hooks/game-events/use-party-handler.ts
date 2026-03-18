@@ -3,7 +3,16 @@ import type { GameEvent } from "@/types/margonem/game-events/game-event";
 import { type PartyMember, usePartyStore } from "@/store/party.store";
 
 function parsePartyMembersFromEvent(
-  members: Record<string, { id: number; nick: string; icon: string; commander?: number; account: number }>,
+  members: Record<
+    string,
+    {
+      id: number;
+      nick: string;
+      icon: string;
+      commander?: number;
+      account: number;
+    }
+  >,
 ): PartyMember[] {
   return Object.values(members).map((m) => ({
     id: m.id,
@@ -17,15 +26,18 @@ function parsePartyMembersFromEvent(
 }
 
 function parsePartyMembersFromGame(
-  membersMap: Map<number, {
-    id: number;
-    nick: string;
-    icon: string;
-    leader: boolean;
-    hp: [number, number];
-    profession: string | null;
-    accountId: number;
-  }>,
+  membersMap: Map<
+    number,
+    {
+      id: number;
+      nick: string;
+      icon: string;
+      leader: boolean;
+      hp: [number, number];
+      profession: string | null;
+      accountId: number;
+    }
+  >,
 ): PartyMember[] {
   return Array.from(membersMap.values()).map((m) => ({
     id: m.id,

@@ -56,7 +56,7 @@ export const KillHistoryCard = ({
   if (compact) {
     const content = (
       <div className="p-3 rounded-lg border border-border hover:border-primary bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0">
             {kill.heroNpc.npcIcon ? (
               <NpcTile
@@ -81,7 +81,7 @@ export const KillHistoryCard = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-sm shrink-0">
+          <div className="flex items-center gap-3 text-sm shrink-0 sm:self-auto">
             {kill.isManualClose && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -143,7 +143,7 @@ export const KillHistoryCard = ({
   if (minimal) {
     const content = (
       <div className="p-3 rounded-lg border border-border bg-card/30 hover:bg-card/50 transition-colors cursor-pointer">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0">
             {kill.heroNpc.npcIcon ? (
               <NpcTile
@@ -167,7 +167,7 @@ export const KillHistoryCard = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm shrink-0">
+          <div className="flex items-center justify-between gap-3 text-sm shrink-0 sm:justify-end">
             {kill.isManualClose && (
               <Tooltip>
                 <TooltipTrigger asChild>

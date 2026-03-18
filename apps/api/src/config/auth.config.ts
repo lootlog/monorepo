@@ -1,10 +1,10 @@
-import { registerAs } from '@nestjs/config';
+import { registerAs } from "@nestjs/config";
 
 export interface AuthConfig {
   serviceUrl: string;
 }
 
-export default registerAs('auth', (): AuthConfig => {
+export default registerAs("auth", (): AuthConfig => {
   const { AUTH_SERVICE_URL } = process.env;
 
   return {

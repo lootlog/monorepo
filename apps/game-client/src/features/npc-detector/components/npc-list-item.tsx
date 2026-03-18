@@ -6,7 +6,7 @@ import {
   type GameNpcWithLocation,
   useNpcDetectorStore,
 } from "@/store/npc-detector.store";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { Separator } from "@radix-ui/react-select";
 import { XIcon } from "lucide-react";
 import {
@@ -56,7 +56,7 @@ export const NpcListItem = ({ npc, idx }: NpcListItemProps) => {
   } = useCreateNotification();
   const [isGatheringPartyPending, setIsGatheringPartyPending] = useState(false);
 
-  const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+  const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
   const settingsByNpcType = settings[characterId][npcType as DetectorNpcType];
   const key = npcType;
 

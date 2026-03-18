@@ -40,7 +40,12 @@ export const useBattleRaw = (options: UseBattleRawOptions) => {
     : `/battles/${options.battleId}/raw`;
 
   const query = useQuery({
-    queryKey: ["battles", "raw", options.battleId, options.isPublic ? "public" : "private"],
+    queryKey: [
+      "battles",
+      "raw",
+      options.battleId,
+      options.isPublic ? "public" : "private",
+    ],
     queryFn: () => client.get<GetBattleRawResponse>(endpoint),
     enabled: !!options.battleId,
     select: (response) => response.data,

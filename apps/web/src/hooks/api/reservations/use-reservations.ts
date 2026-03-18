@@ -3,6 +3,16 @@ import { useGuildId } from "@/hooks/context/use-guild-id";
 import { apiClient } from "@/lib/api-client/api-client";
 import { reservationSlug } from "@/features/reservations/reservation-slug";
 
+export interface ApiReservation {
+  id: number;
+  reservationId: string;
+  createdDate: string;
+  fromDate: string;
+  toDate: string;
+  createdBy: string;
+  comment?: string | null;
+}
+
 export interface Reservation {
   id: number;
   reservationId: string;
@@ -13,73 +23,105 @@ export interface Reservation {
   comment?: string | null;
 }
 
+type ReservationBucket = {
+  reservations: Reservation[];
+  reservationIds: Set<number>;
+};
+
+const normalizeReservation = (reservation: ApiReservation): Reservation => ({
+  ...reservation,
+  fromDate: new Date(reservation.fromDate),
+  toDate: new Date(reservation.toDate),
+  createdDate: new Date(reservation.createdDate),
+  comment: reservation.comment ?? null,
+});
+
+const getReservationAliases = (rawKey: string) => {
+  const slugKey = reservationSlug(rawKey);
+  const lowercaseKey = rawKey.toLowerCase();
+  const primaryKey = slugKey || lowercaseKey || rawKey;
+
+  return [
+    ...new Set([primaryKey, rawKey, lowercaseKey, slugKey].filter(Boolean)),
+  ];
+};
+
+const getOrCreateReservationBucket = (
+  buckets: Map<string, ReservationBucket>,
+  key: string,
+): ReservationBucket => {
+  const existingBucket = buckets.get(key);
+  if (existingBucket) {
+    return existingBucket;
+  }
+
+  const newBucket = { reservations: [], reservationIds: new Set<number>() };
+  buckets.set(key, newBucket);
+  return newBucket;
+};
+
+const addReservationIfMissing = (
+  bucket: ReservationBucket,
+  reservation: Reservation,
+) => {
+  if (bucket.reservationIds.has(reservation.id)) {
+    return;
+  }
+
+  bucket.reservationIds.add(reservation.id);
+  bucket.reservations.push(reservation);
+};
+
+const sortReservationsByStartDate = (
+  leftReservation: Reservation,
+  rightReservation: Reservation,
+) => leftReservation.fromDate.getTime() - rightReservation.fromDate.getTime();
+
+export const mapReservationsByAlias = (
+  reservationsByKey: Record<string, ApiReservation[]> | undefined,
+): Record<string, Reservation[]> => {
+  const reservationBuckets = new Map<string, ReservationBucket>();
+  const reservationsByAlias: Record<string, Reservation[]> =
+    Object.create(null);
+
+  for (const [rawKey, reservations] of Object.entries(
+    reservationsByKey ?? {},
+  )) {
+    const aliases = getReservationAliases(rawKey);
+    const primaryKey = aliases[0] ?? rawKey;
+    const reservationBucket = getOrCreateReservationBucket(
+      reservationBuckets,
+      primaryKey,
+    );
+
+    for (const reservation of reservations ?? []) {
+      addReservationIfMissing(
+        reservationBucket,
+        normalizeReservation(reservation),
+      );
+    }
+
+    for (const alias of aliases) {
+      reservationsByAlias[alias] = reservationBucket.reservations;
+    }
+  }
+
+  for (const bucket of reservationBuckets.values()) {
+    bucket.reservations.sort(sortReservationsByStartDate);
+  }
+
+  return reservationsByAlias;
+};
+
 export const reservationsQueryOptions = (guildId: string) =>
   queryOptions({
     queryKey: ["reservations", guildId],
     queryFn: async () => {
-      const response = await apiClient.get<Record<string, Reservation[]>>(
+      const response = await apiClient.get<Record<string, ApiReservation[]>>(
         `/guilds/${guildId}/reservations`,
       );
-      const data = response.data ?? {};
 
-      const aggregated = new Map<
-        string,
-        { list: Reservation[]; ids: Set<number> }
-      >();
-      const aliases = new Map<string, Reservation[]>();
-
-      const registerAlias = (alias: string, list: Reservation[]) => {
-        aliases.set(alias, list);
-      };
-
-      Object.entries(data).forEach(([rawKey, reservations]) => {
-        const normalizedList = (reservations ?? []).map((reservation) => ({
-          ...reservation,
-          id: reservation.id,
-          fromDate: new Date(reservation.fromDate),
-          toDate: new Date(reservation.toDate),
-          createdDate: new Date(reservation.createdDate),
-          comment: reservation.comment ?? null,
-        }));
-
-        const slugKey = reservationSlug(rawKey);
-        const lowerKey = rawKey.toLowerCase();
-        const bucketKey = slugKey || lowerKey || rawKey;
-
-        let bucket = aggregated.get(bucketKey);
-        if (!bucket) {
-          bucket = { list: [], ids: new Set<number>() };
-          aggregated.set(bucketKey, bucket);
-        }
-
-        const { list, ids } = bucket;
-
-        normalizedList.forEach((reservation) => {
-          if (ids.has(reservation.id)) {
-            return;
-          }
-          ids.add(reservation.id);
-          list.push(reservation);
-        });
-
-        registerAlias(bucketKey, list);
-        registerAlias(rawKey, list);
-        registerAlias(lowerKey, list);
-        if (slugKey) {
-          registerAlias(slugKey, list);
-        }
-      });
-
-      for (const { list } of aggregated.values()) {
-        list.sort((a, b) => a.fromDate.getTime() - b.fromDate.getTime());
-      }
-
-      const mappedEntries: Record<string, Reservation[]> = Object.create(null);
-      aliases.forEach((list, alias) => {
-        mappedEntries[alias] = list;
-      });
-
-      return mappedEntries;
+      return mapReservationsByAlias(response.data);
     },
     enabled: !!guildId,
     staleTime: 0,

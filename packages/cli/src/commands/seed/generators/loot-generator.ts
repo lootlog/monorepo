@@ -2,9 +2,9 @@ import { v7 as uuidv7 } from "uuid";
 import crypto from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getNpcTypeByWt, NpcTypeEnum } from "@lootlog/types";
 import { SCRAPER_CONFIG, SEED_CONFIG } from "../config.js";
 import type { GeneratedPlayer } from "./players-generator.js";
-import { getNpcTypeByWt, type NpcType } from "../utils/get-npc-type-by-wt.js";
 import {
   getProfByShortname,
   type Profession,
@@ -46,7 +46,7 @@ export interface GeneratedLoot {
     icon: string;
     name: string;
     prof: Profession;
-    type: NpcType;
+    type: NpcTypeEnum;
     location: string;
     margonemType: number;
   }>;
@@ -227,7 +227,7 @@ export class LootGenerator {
           icon: npc.icon,
           name: npc.name,
           prof: getProfByShortname(npc.prof),
-          type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
+          type: getNpcTypeByWt(NpcTypeEnum, npc.wt, npc.prof, npc.type),
           location,
           margonemType: npc.type,
         },

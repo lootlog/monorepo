@@ -1,7 +1,8 @@
 import { useState, type FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import type { Event } from "@/features/events/hooks";
 import { EventTimersList } from "./event-timers-list";
 
@@ -16,11 +17,13 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
   guildId,
   onNavigate,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (events.length === 0) return null;
 
-  const featuredEvent = events[0]!;
+  const featuredEvent = events[0];
+  if (!featuredEvent) return null;
   const hasMoreEvents = events.length > 1;
   const otherEvents = events.slice(1);
 
@@ -32,7 +35,6 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
         transition={{ duration: 0.3 }}
         className="rounded-lg overflow-hidden bg-gradient-to-r from-yellow-500/20 via-amber-500/15 to-orange-500/20 border border-yellow-500/30 relative"
       >
-        {/* Animated shimmer effect */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/20 to-transparent"
           animate={{
@@ -47,7 +49,6 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
           style={{ width: "100%" }}
         />
 
-        {/* Featured Event Header */}
         <div className="relative">
           <Link
             to="/$guildId/events/$eventId"
@@ -78,7 +79,7 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                  Aktywny event
+                  {t("events.sidebarBanner.activeEvent")}
                 </p>
                 <p className="text-sm font-semibold truncate">
                   {featuredEvent.name}
@@ -88,7 +89,6 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
             </motion.div>
           </Link>
 
-          {/* Timers for featured event */}
           <EventTimersList
             event={featuredEvent}
             guildId={guildId}
@@ -96,15 +96,19 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
           />
         </div>
 
-        {/* Expand button for more events */}
         {hasMoreEvents && (
           <>
             <motion.button
-              onClick={() => setIsExpanded(!isExpanded)}
+              type="button"
+              onClick={() => setIsExpanded((currentValue) => !currentValue)}
               className="w-full px-3 py-1.5 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-yellow-500/10 transition-colors border-t border-yellow-500/20"
               whileHover={{ backgroundColor: "rgba(234, 179, 8, 0.1)" }}
             >
-              <span>+{otherEvents.length} więcej</span>
+              <span>
+                {t("events.sidebarBanner.showMore", {
+                  count: otherEvents.length,
+                })}
+              </span>
               <motion.div
                 animate={{ rotate: isExpanded ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -113,7 +117,6 @@ export const ActiveEventsBanner: FC<ActiveEventsBannerProps> = ({
               </motion.div>
             </motion.button>
 
-            {/* Expanded list */}
             <AnimatePresence>
               {isExpanded && (
                 <motion.div

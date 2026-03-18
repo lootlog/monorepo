@@ -1,11 +1,11 @@
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
 import {
   IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsString,
   ValidateNested,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateUserLootlogConfigDto {
   @IsNotEmpty()

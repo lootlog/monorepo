@@ -1,5 +1,5 @@
 export const CACHE_KEYS = {
-  USER_GUILDS: 'user-guilds',
+  USER_GUILDS: "user-guilds",
 } as const;
 
 export const CACHE_TTL = {

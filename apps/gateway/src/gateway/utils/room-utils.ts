@@ -1,18 +1,18 @@
-import { Permission } from '@lootlog/types';
-import type { UserGuildData, GuildRole } from 'src/guilds/types/guild.types';
-import { isAdministrativeUserFromRoles } from 'src/guilds/utils/is-administrative-user';
-import { Platform } from 'src/gateway/enums/platform.enum';
+import { Permission } from "@lootlog/types";
+import type { UserGuildData, GuildRole } from "src/guilds/types/guild.types";
+import { isAdministrativeUserFromRoles } from "src/guilds/utils/is-administrative-user";
+import { Platform } from "src/gateway/enums/platform.enum";
 
-export type FeatureName = 'chat' | 'timers' | 'notifications';
-export type TierName = 'base' | 'titans' | 'heroes';
+export type FeatureName = "chat" | "timers" | "notifications";
+export type TierName = "base" | "titans" | "heroes";
 
 // NPC type string values from database
-const NPC_TYPE_TITAN = 'TITAN';
-const NPC_TYPE_HERO = 'HERO';
-const NPC_TYPE_EVENT_HERO = 'EVENT_HERO';
+const NPC_TYPE_TITAN = "TITAN";
+const NPC_TYPE_HERO = "HERO";
+const NPC_TYPE_EVENT_HERO = "EVENT_HERO";
 
 // Features excluded for web app (they don't need chat/notifications)
-const WEB_EXCLUDED_FEATURES: FeatureName[] = ['chat', 'notifications'];
+const WEB_EXCLUDED_FEATURES: FeatureName[] = ["chat", "notifications"];
 
 export const FEATURE_ROOMS = {
   chat: {
@@ -33,20 +33,20 @@ export const FEATURE_ROOMS = {
 } as const;
 
 const ALL_FEATURE_ROOMS: Array<{ feature: FeatureName; tier: TierName }> = [
-  { feature: 'chat', tier: 'base' },
-  { feature: 'chat', tier: 'titans' },
-  { feature: 'chat', tier: 'heroes' },
-  { feature: 'timers', tier: 'base' },
-  { feature: 'timers', tier: 'titans' },
-  { feature: 'timers', tier: 'heroes' },
-  { feature: 'notifications', tier: 'base' },
-  { feature: 'notifications', tier: 'titans' },
-  { feature: 'notifications', tier: 'heroes' },
+  { feature: "chat", tier: "base" },
+  { feature: "chat", tier: "titans" },
+  { feature: "chat", tier: "heroes" },
+  { feature: "timers", tier: "base" },
+  { feature: "timers", tier: "titans" },
+  { feature: "timers", tier: "heroes" },
+  { feature: "notifications", tier: "base" },
+  { feature: "notifications", tier: "titans" },
+  { feature: "notifications", tier: "heroes" },
 ];
 
 export function buildRoomName(
   guildId: string,
-  feature: FeatureName | 'admin' | 'presence' | 'events',
+  feature: FeatureName | "admin" | "presence" | "events",
   tier?: TierName,
 ): string {
   return tier ? `${guildId}:${feature}:${tier}` : `${guildId}:${feature}`;
@@ -55,7 +55,7 @@ export function buildRoomName(
 export function parseRoomName(
   room: string,
 ): { guildId: string; feature: string; tier?: string } | null {
-  const parts = room.split(':');
+  const parts = room.split(":");
   if (parts.length < 2) return null;
   return {
     guildId: parts[0],
@@ -92,12 +92,12 @@ export function calculateUserRooms(
     const isOwner = guild.ownerId === discordId;
 
     // Everyone gets presence and events rooms
-    guildRooms.push(buildRoomName(guild.id, 'presence'));
-    guildRooms.push(buildRoomName(guild.id, 'events'));
+    guildRooms.push(buildRoomName(guild.id, "presence"));
+    guildRooms.push(buildRoomName(guild.id, "events"));
 
     // Owner/Admin get all feature rooms + admin room
     if (isOwner || isAdministrativeUserFromRoles(roles)) {
-      guildRooms.push(buildRoomName(guild.id, 'admin'));
+      guildRooms.push(buildRoomName(guild.id, "admin"));
 
       for (const { feature, tier } of applicableFeatures) {
         guildRooms.push(buildRoomName(guild.id, feature, tier));
@@ -124,17 +124,14 @@ function hasPermission(roles: GuildRole[], permission: Permission): boolean {
 }
 
 export function getNpcTier(npc?: { type?: string }): TierName {
-  if (!npc?.type) return 'base';
-  if (npc.type === NPC_TYPE_TITAN) return 'titans';
+  if (!npc?.type) return "base";
+  if (npc.type === NPC_TYPE_TITAN) return "titans";
   if (npc.type === NPC_TYPE_HERO || npc.type === NPC_TYPE_EVENT_HERO)
-    return 'heroes';
-  return 'base';
+    return "heroes";
+  return "base";
 }
 
-export function checkLevelRange(
-  roles: GuildRole[],
-  npcLevel: number,
-): boolean {
+export function checkLevelRange(roles: GuildRole[], npcLevel: number): boolean {
   return roles.some(
     (role) => role.lvlRangeFrom <= npcLevel && role.lvlRangeTo >= npcLevel,
   );

@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common';
-import { ItemsService } from './items.service';
+import { Module } from "@nestjs/common";
+import { ItemsService } from "./items.service";
 import {
   RabbitMQModule,
   type RabbitMQConfig,
-} from '@golevelup/nestjs-rabbitmq';
-import { ConfigService } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
+} from "@golevelup/nestjs-rabbitmq";
+import { ConfigService } from "@nestjs/config";
+import { ConfigKey } from "src/config/config-key.enum";
 
 @Module({
   imports: [

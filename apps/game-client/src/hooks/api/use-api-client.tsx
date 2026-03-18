@@ -8,7 +8,7 @@ const API_URL_MAP = {
 };
 
 export const useAuthenticatedApiClient = (
-  api: keyof typeof API_URL_MAP = "default"
+  api: keyof typeof API_URL_MAP = "default",
 ) => {
   const client = axios.create({
     baseURL: API_URL_MAP[api],

@@ -1,16 +1,16 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { ConfigService } from "@nestjs/config";
 import {
   HealthCheckService,
   HttpHealthIndicator,
   PrismaHealthIndicator,
   MemoryHealthIndicator,
   DiskHealthIndicator,
-} from '@nestjs/terminus';
-import { HealthzController } from './healthz.controller';
-import { PrismaService } from 'src/shared/db/prisma.service';
+} from "@nestjs/terminus";
+import { HealthzController } from "./healthz.controller";
+import { PrismaService } from "src/shared/db/prisma.service";
 
-describe('HealthzController', () => {
+describe("HealthzController", () => {
   let controller: HealthzController;
 
   const mockHealthCheckService = {
@@ -37,7 +37,7 @@ describe('HealthzController', () => {
   const mockPrismaService = {};
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue({ url: 'http://localhost:3000' }),
+    get: jest.fn().mockReturnValue({ url: "http://localhost:3000" }),
   };
 
   beforeEach(async () => {
@@ -78,14 +78,14 @@ describe('HealthzController', () => {
     controller = module.get<HealthzController>(HealthzController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 
-  describe('check', () => {
-    it('should execute health checks', async () => {
+  describe("check", () => {
+    it("should execute health checks", async () => {
       mockHealthCheckService.check.mockResolvedValue({
-        status: 'ok',
+        status: "ok",
         info: {},
         error: {},
         details: {},

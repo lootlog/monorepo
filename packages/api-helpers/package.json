@@ -3,8 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "permissions": [
+        "./dist/permissions.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -15,13 +22,6 @@
       "types": "./dist/permissions.d.ts",
       "import": "./dist/permissions.mjs",
       "require": "./dist/permissions.js"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "permissions": [
-        "./dist/permissions.d.ts"
-      ]
     }
   },
   "scripts": {

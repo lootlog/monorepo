@@ -1,4 +1,5 @@
 import { APP_CONFIG } from "../config/app.config.js";
+import { logger } from "../config/winston.config.js";
 import { channel } from "../lib/rabbitmq.js";
 import { Queue } from "./enum/queue.enum.js";
 import { RoutingKey } from "./enum/routing-key.enum.js";
@@ -13,7 +14,7 @@ export const setupNpcsHandlers = async () => {
   await channel.bindQueue(
     Queue.SEARCH_NPCS_INDEX,
     APP_CONFIG.rabbitmq.exchange,
-    RoutingKey.SEARCH_NPCS_INDEX
+    RoutingKey.SEARCH_NPCS_INDEX,
   );
 
   channel
@@ -28,9 +29,9 @@ export const setupNpcsHandlers = async () => {
           channel?.ack(msg);
         }
       },
-      { noAck: false }
+      { noAck: false },
     )
     .catch((error) => {
-      console.error("Error consuming message:", error);
+      logger.error("Error consuming message", { error });
     });
 };

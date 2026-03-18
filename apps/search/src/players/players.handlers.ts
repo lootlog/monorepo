@@ -1,4 +1,5 @@
 import { APP_CONFIG } from "../config/app.config.js";
+import { logger } from "../config/winston.config.js";
 import { channel } from "../lib/rabbitmq.js";
 import { Queue } from "./enum/queue.enum.js";
 import { RoutingKey } from "./enum/routing-key.enum.js";
@@ -13,7 +14,7 @@ export const setupPlayersHandlers = async () => {
   await channel.bindQueue(
     Queue.SEARCH_PLAYERS_INDEX,
     APP_CONFIG.rabbitmq.exchange,
-    RoutingKey.SEARCH_PLAYERS_INDEX
+    RoutingKey.SEARCH_PLAYERS_INDEX,
   );
 
   channel
@@ -28,9 +29,9 @@ export const setupPlayersHandlers = async () => {
           channel?.ack(msg);
         }
       },
-      { noAck: false }
+      { noAck: false },
     )
     .catch((error) => {
-      console.error("Błąd podczas konsumowania wiadomości:", error);
+      logger.error("Error consuming message", { error });
     });
 };

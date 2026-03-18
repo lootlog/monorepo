@@ -1,10 +1,10 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { LootlogConfigController } from './lootlog-config.controller';
-import { LootlogConfigService } from './lootlog-config.service';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { LootlogConfigController } from "./lootlog-config.controller";
+import { LootlogConfigService } from "./lootlog-config.service";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
-describe('LootlogConfigController', () => {
+describe("LootlogConfigController", () => {
   let controller: LootlogConfigController;
 
   const mockLootlogConfigService = {
@@ -31,7 +31,7 @@ describe('LootlogConfigController', () => {
     controller = module.get<LootlogConfigController>(LootlogConfigController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 });

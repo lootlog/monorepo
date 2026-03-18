@@ -1,6 +1,6 @@
-import { REQUIRED_SCOPES } from "@/constants/required-scopes";
 import { useAuthScopes } from "@/hooks/api/use-auth-scopes";
 import { authClient } from "@/lib/auth-client";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 import { Button } from "@lootlog/ui/components/button";
 import {
   Dialog,
@@ -16,7 +16,7 @@ type Props = {
 export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
   const { data: scopes, isFetched, isError } = useAuthScopes();
 
-  const hasRequiredScopes = REQUIRED_SCOPES.every((scope) =>
+  const hasRequiredScopes = DISCORD_AUTH_SCOPES.every((scope) =>
     scopes?.includes(scope),
   );
 
@@ -24,7 +24,7 @@ export const AuthenticationGuard: React.FC<Props> = ({ children }) => {
     await authClient.signIn.social({
       provider: "discord",
       callbackURL: window.location.href,
-      scopes: REQUIRED_SCOPES,
+      scopes: DISCORD_AUTH_SCOPES,
     });
   };
 

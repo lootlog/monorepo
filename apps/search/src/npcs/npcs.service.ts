@@ -1,5 +1,6 @@
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { meilisearchClient } from "../lib/meilisearch.js";
+import { logger } from "../config/winston.config.js";
 import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
 import { NPCS_INDEX } from "./constants/meilisearch.js";
 import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
@@ -42,7 +43,7 @@ export class NpcsService {
       );
       return uniqueHits;
     } catch (error) {
-      console.log(error);
+      logger.error("NPC search error", { error });
       return [];
     }
   }
@@ -55,10 +56,9 @@ export class NpcsService {
     );
 
     if (validNpcs.length === 0) {
-      console.warn(
-        "No valid npcs to index (missing required fields):",
-        JSON.stringify(data.npcs, null, 2),
-      );
+      logger.warn("No valid npcs to index (missing required fields)", {
+        npcs: data.npcs,
+      });
       return;
     }
 
@@ -66,9 +66,9 @@ export class NpcsService {
       const invalidNpcs = data.npcs.filter(
         (npc) => !npc.world || !npc.id || !npc.name,
       );
-      console.warn(
-        `Skipped ${invalidNpcs.length} npcs due to missing required fields:`,
-        JSON.stringify(invalidNpcs, null, 2),
+      logger.warn(
+        `Skipped ${invalidNpcs.length} npcs due to missing required fields`,
+        { invalidNpcs },
       );
     }
 
@@ -80,7 +80,7 @@ export class NpcsService {
     try {
       return index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
-      console.error("Error indexing npcs:", error);
+      logger.error("Error indexing npcs", { error });
       return;
     }
   }

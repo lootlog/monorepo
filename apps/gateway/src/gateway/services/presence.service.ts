@@ -1,20 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import type { Server } from 'socket.io';
-import { omit, groupBy } from 'lodash';
-import { GatewayEvent } from 'src/gateway/enums/gateway-event.enum';
-import { UserPresenceStatus } from 'src/gateway/enums/user-presence-status.enum';
-import { Platform } from 'src/gateway/enums/platform.enum';
-import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { getGuildIds } from 'src/gateway/utils/get-guild-ids';
-import { buildRoomName, parseRoomName } from 'src/gateway/utils/room-utils';
+import { Injectable, Logger } from "@nestjs/common";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { Server } from "socket.io";
+import { omit, groupBy } from "lodash";
+import { GatewayEvent } from "src/gateway/enums/gateway-event.enum";
+import { UserPresenceStatus } from "src/gateway/enums/user-presence-status.enum";
+import { Platform } from "src/gateway/enums/platform.enum";
+import { RoutingKey } from "src/gateway/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { getGuildIds } from "src/gateway/utils/get-guild-ids";
+import { buildRoomName, parseRoomName } from "src/gateway/utils/room-utils";
 import type {
   Socket,
   SocketUser,
   PlayerPresence,
-} from 'src/gateway/types/socket-user.type';
-import type { EventPresenceUpdateDto } from 'src/gateway/dto/event-presence-update.dto';
+} from "src/gateway/types/socket-user.type";
+import type { EventPresenceUpdateDto } from "src/gateway/dto/event-presence-update.dto";
 
 @Injectable()
 export class PresenceService {
@@ -27,11 +27,11 @@ export class PresenceService {
     user: Partial<SocketUser>,
     event: GatewayEvent,
   ): void {
-    const preparedUser = omit(user, ['sessionId', 'guilds', 'userId']);
+    const preparedUser = omit(user, ["sessionId", "guilds", "userId"]);
 
     client.rooms.forEach((room) => {
       const parsed = parseRoomName(room);
-      if (!parsed || parsed.feature !== 'presence') return;
+      if (!parsed || parsed.feature !== "presence") return;
 
       client.to(room).emit(event, {
         ...preparedUser,
@@ -62,7 +62,7 @@ export class PresenceService {
 
     const guildIds = getGuildIds(client.data.guilds);
     for (const guildId of guildIds) {
-      const presenceRoom = buildRoomName(guildId, 'presence');
+      const presenceRoom = buildRoomName(guildId, "presence");
       server.to(presenceRoom).emit(GatewayEvent.PRESENCE_UPDATE, {
         guildId,
         discordId: client.data.discordId,
@@ -116,7 +116,7 @@ export class PresenceService {
     client.data.playerPresence = playerPresence;
 
     for (const guildId of guildIds) {
-      const presenceRoom = buildRoomName(guildId, 'presence');
+      const presenceRoom = buildRoomName(guildId, "presence");
       server.to(presenceRoom).emit(GatewayEvent.PRESENCE_UPDATE, {
         guildId,
         discordId,
@@ -156,7 +156,7 @@ export class PresenceService {
     guildId: string,
     world?: string,
   ): Promise<Record<string, PlayerPresence[]>> {
-    const presenceRoom = buildRoomName(guildId, 'presence');
+    const presenceRoom = buildRoomName(guildId, "presence");
 
     if (!client.rooms.has(presenceRoom)) {
       this.logger.warn(
@@ -190,7 +190,7 @@ export class PresenceService {
     guildId: string,
     world: string,
   ): Promise<Record<string, unknown[]>> {
-    const presenceRoom = buildRoomName(guildId, 'presence');
+    const presenceRoom = buildRoomName(guildId, "presence");
 
     if (!client.rooms.has(presenceRoom)) {
       return {};
@@ -209,10 +209,10 @@ export class PresenceService {
     }
 
     const users = filteredSockets
-      .map((s) => omit(s.data, ['sessionId', 'userId', 'guilds']))
+      .map((s) => omit(s.data, ["sessionId", "userId", "guilds"]))
       .sort((a, b) => b.player.lvl - a.player.lvl);
 
-    return groupBy(users, 'discordId');
+    return groupBy(users, "discordId");
   }
 
   async checkPresenceForMap(
@@ -220,7 +220,7 @@ export class PresenceService {
     guildId: string,
     mapName: string,
   ): Promise<void> {
-    const presenceRoom = buildRoomName(guildId, 'presence');
+    const presenceRoom = buildRoomName(guildId, "presence");
     const socketsInRoom = await server.in(presenceRoom).fetchSockets();
 
     for (const socket of socketsInRoom) {
@@ -264,7 +264,7 @@ export class PresenceService {
     client.data.playerPresence = playerPresence;
 
     for (const guildId of guildIds) {
-      const presenceRoom = buildRoomName(guildId, 'presence');
+      const presenceRoom = buildRoomName(guildId, "presence");
       server.to(presenceRoom).emit(GatewayEvent.PRESENCE_UPDATE, {
         guildId,
         discordId,

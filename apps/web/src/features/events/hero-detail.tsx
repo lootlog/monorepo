@@ -39,7 +39,6 @@ import {
 import { toast } from "sonner";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
 import { useEventPresence } from "./hooks/socket/use-event-presence";
-import { useEventSocket } from "./hooks/socket/use-event-socket";
 import { useHeroActiveGaps } from "./hooks/queries/use-hero-active-gaps";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { EventHeroLoots } from "./components/stats/event-hero-loots";
@@ -116,8 +115,6 @@ export const HeroDetail = () => {
     guildId: guild?.id,
     world: event?.world,
   });
-
-  useEventSocket({ eventId, guildId: guild?.id, heroId });
 
   const { activeGapsMap } = useHeroActiveGaps(eventId ?? "", heroId ?? "");
   const { data: rankings = [] } = useEventRanking({
@@ -210,9 +207,11 @@ export const HeroDetail = () => {
   );
 
   const handleSelfAssignClick = async (mapId: string) => {
+    if (!eventId) return;
+
     try {
       await selfAssignMember.mutateAsync({
-        eventId: eventId!,
+        eventId,
         mapId,
       });
       toast.success(t("events.maps.assignSuccess"));
@@ -222,9 +221,11 @@ export const HeroDetail = () => {
   };
 
   const handleSelfUnassignClick = async (mapId: string) => {
+    if (!eventId) return;
+
     try {
       await selfUnassignMember.mutateAsync({
-        eventId: eventId!,
+        eventId,
         mapId,
       });
       toast.success(t("events.maps.unassignSuccess"));
@@ -248,7 +249,7 @@ export const HeroDetail = () => {
         memberId,
       });
       toast.success(t("events.maps.assignSuccess"));
-    } catch (error) {
+    } catch {
       toast.error(t("events.maps.assignError"));
     }
   };
@@ -263,7 +264,7 @@ export const HeroDetail = () => {
         memberId,
       });
       toast.success(t("events.maps.unassignSuccess"));
-    } catch (error) {
+    } catch {
       toast.error(t("events.maps.unassignError"));
     }
   };
@@ -271,19 +272,19 @@ export const HeroDetail = () => {
   const selectedMap = allMaps.find((m) => m.id === selectedMapId);
 
   const handleClearAllAssignments = async () => {
-    if (allMaps.length === 0) return;
+    if (!eventId || allMaps.length === 0) return;
 
     try {
       await Promise.all(
         allMaps.map((map) =>
           unassignMember.mutateAsync({
-            eventId: eventId!,
+            eventId,
             mapId: map.id,
           }),
         ),
       );
       toast.success(t("events.maps.clearAllSuccess"));
-    } catch (error) {
+    } catch {
       toast.error(t("events.maps.clearAllError"));
     }
   };
@@ -303,7 +304,7 @@ export const HeroDetail = () => {
       });
       toast.success(t("events.respawn.closeSuccess"));
       setCloseWindowOpen(false);
-    } catch (_error) {
+    } catch {
       toast.error(t("events.respawn.closeError"));
     }
   };
@@ -323,7 +324,7 @@ export const HeroDetail = () => {
       });
       toast.success(t("events.respawn.openSuccess"));
       setOpenWindowOpen(false);
-    } catch (_error) {
+    } catch {
       toast.error(t("events.respawn.openError"));
     }
   };
@@ -334,68 +335,76 @@ export const HeroDetail = () => {
         guildId={guildId}
         eventId={eventId}
       />
-      <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {hero.npcIcon ? (
-            <NpcTile
-              npc={{
-                id: hero.npcId ?? undefined,
-                name: hero.npcName,
-                icon: hero.npcIcon,
-              }}
-            />
-          ) : (
-            <div className="p-2 rounded-lg bg-yellow-500/10">
-              <Swords className="size-4 text-yellow-500" />
-            </div>
-          )}
-          <div>
-            <h2 className="text-sm font-semibold leading-tight">
-              {hero.npcName}
-            </h2>
-            <div className="flex items-center gap-2 mt-1">
-              <HeroTimerCountdown timer={heroTimer} />
-              {windowStatus !== "NONE" && (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-xs",
-                    getWindowStatusConfig(windowStatus, t).className,
-                  )}
-                >
-                  {getWindowStatusConfig(windowStatus, t).label}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-        {canManage && (
-          <div className="flex items-center gap-2">
-            {heroTimer ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCloseWindowOpen(true)}
-              >
-                <X className="w-4 h-4 mr-2" />
-                {t("events.respawn.closeWindow")}
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setOpenWindowOpen(true)}
-              >
-                <Timer className="w-4 h-4 mr-2" />
-                {t("events.respawn.openWindow")}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                {hero.npcIcon ? (
+                  <NpcTile
+                    npc={{
+                      id: hero.npcId ?? undefined,
+                      name: hero.npcName,
+                      icon: hero.npcIcon,
+                    }}
+                  />
+                ) : (
+                  <div className="rounded-xl bg-yellow-500/10 p-2 shadow-inner shadow-yellow-500/10">
+                    <Swords className="size-4 text-yellow-500" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    {event.name}
+                  </p>
+                  <h2 className="text-base font-semibold leading-tight break-words">
+                    {hero.npcName}
+                  </h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <HeroTimerCountdown timer={heroTimer} />
+                    {windowStatus !== "NONE" && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs",
+                          getWindowStatusConfig(windowStatus, t).className,
+                        )}
+                      >
+                        {getWindowStatusConfig(windowStatus, t).label}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {canManage && (
+                <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
+                  {heroTimer ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-center sm:w-auto"
+                      onClick={() => setCloseWindowOpen(true)}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      {t("events.respawn.closeWindow")}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-center sm:w-auto"
+                      onClick={() => setOpenWindowOpen(true)}
+                    >
+                      <Timer className="w-4 h-4 mr-2" />
+                      {t("events.respawn.openWindow")}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               {uniqueMembers.length > 0 && (
@@ -416,7 +425,7 @@ export const HeroDetail = () => {
               )}
 
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-                <div className="flex items-center justify-between mb-3">
+                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
                     {t("events.maps.title")}
@@ -441,10 +450,11 @@ export const HeroDetail = () => {
                     </span>
                   </h2>
                   {canManage && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-full justify-center sm:w-auto"
                         onClick={handleClearAllAssignments}
                         disabled={uniqueMembers.length === 0}
                       >
@@ -454,6 +464,7 @@ export const HeroDetail = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-full justify-center sm:w-auto"
                         onClick={() => setMapManageOpen(true)}
                       >
                         <Plus className="w-4 h-4 mr-2" />

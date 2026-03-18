@@ -1,11 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import type { Job, Queue as BullQueue } from 'bullmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { DiscordRateLimiterService } from 'src/discord/discord-rate-limiter.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { MEMBER_REFRESH_QUEUE } from './constants/member-refresh-queue.constant';
+import { Inject, Injectable } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import type { Job, Queue as BullQueue } from "bullmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { MEMBER_REFRESH_QUEUE } from "./constants/member-refresh-queue.constant";
 
 export interface MemberRefreshJobData {
   discordId: string;
@@ -21,19 +21,19 @@ export interface MemberRefreshScheduleResult {
 }
 
 type MemberRefreshJobState =
-  | 'active'
-  | 'completed'
-  | 'delayed'
-  | 'failed'
-  | 'paused'
-  | 'prioritized'
-  | 'unknown'
-  | 'waiting'
-  | 'waiting-children';
+  | "active"
+  | "completed"
+  | "delayed"
+  | "failed"
+  | "paused"
+  | "prioritized"
+  | "unknown"
+  | "waiting"
+  | "waiting-children";
 
 @Injectable()
 export class MemberRefreshSchedulerService {
-  private readonly MEMBER_ENDPOINT = 'guild-member';
+  private readonly MEMBER_ENDPOINT = "guild-member";
   private readonly USER_LOCK_TTL_SECONDS = 30;
   private readonly EXTEND_USER_REFRESH_LOCK_SCRIPT = `
 if redis.call("GET", KEYS[1]) == ARGV[1] then
@@ -157,15 +157,15 @@ return 0
         await job.changePriority({ priority: nextData.priority });
       } catch (error) {
         this.logger.log({
-          level: 'debug',
-          message: 'Failed to reprioritize member refresh job',
+          level: "debug",
+          message: "Failed to reprioritize member refresh job",
           jobId: job.id,
           error,
         });
       }
     }
 
-    if (state === 'delayed' && delay === 0) {
+    if (state === "delayed" && delay === 0) {
       await this.promoteDelayedJob(job);
     }
   }
@@ -175,13 +175,13 @@ return 0
     data: MemberRefreshJobData,
     delay: number,
   ): Promise<void> {
-    await this.memberRefreshQueue.add('member-refresh', data, {
+    await this.memberRefreshQueue.add("member-refresh", data, {
       jobId,
       delay,
       priority: data.priority,
       attempts: 10,
       backoff: {
-        type: 'fixed',
+        type: "fixed",
         delay: 1000,
       },
       removeOnComplete: {
@@ -195,8 +195,8 @@ return 0
     });
 
     this.logger.log({
-      level: 'debug',
-      message: 'Queued member refresh job',
+      level: "debug",
+      message: "Queued member refresh job",
       jobId,
       guildId: data.guildId,
       userId: data.userId,
@@ -227,8 +227,8 @@ return 0
       }
 
       this.logger.log({
-        level: 'debug',
-        message: 'Failed to remove stale member refresh job before requeue',
+        level: "debug",
+        message: "Failed to remove stale member refresh job before requeue",
         jobId: job.id,
         error,
       });
@@ -245,11 +245,11 @@ return 0
       if (this.isJobNotInStateError(error)) {
         const currentState = await this.getExistingJobState(job);
 
-        if (currentState !== 'delayed') {
+        if (currentState !== "delayed") {
           this.logger.log({
-            level: 'debug',
+            level: "debug",
             message:
-              'Skipped promoting member refresh job because it already left delayed state',
+              "Skipped promoting member refresh job because it already left delayed state",
             jobId: job.id,
             state: currentState,
           });
@@ -258,8 +258,8 @@ return 0
       }
 
       this.logger.log({
-        level: 'debug',
-        message: 'Failed to promote member refresh job',
+        level: "debug",
+        message: "Failed to promote member refresh job",
         jobId: job.id,
         error,
       });
@@ -273,7 +273,7 @@ return 0
   }
 
   private shouldReplaceExistingJob(state: MemberRefreshJobState): boolean {
-    return state === 'completed' || state === 'failed' || state === 'unknown';
+    return state === "completed" || state === "failed" || state === "unknown";
   }
 
   private isJobNotInStateError(
@@ -281,8 +281,8 @@ return 0
   ): error is Error & { code: number } {
     return Boolean(
       error &&
-      typeof error === 'object' &&
-      'code' in error &&
+      typeof error === "object" &&
+      "code" in error &&
       (error as { code?: unknown }).code === -3,
     );
   }
@@ -290,8 +290,8 @@ return 0
   private isMissingJobError(error: unknown): error is Error & { code: number } {
     return Boolean(
       error &&
-      typeof error === 'object' &&
-      'code' in error &&
+      typeof error === "object" &&
+      "code" in error &&
       (error as { code?: unknown }).code === -1,
     );
   }

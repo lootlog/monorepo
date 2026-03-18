@@ -25,7 +25,7 @@ export const UserNavItem = () => {
           <Avatar
             className={cn(
               "size-12 border-solid border-4 transition-all border-transparent  rounded-lg",
-              { "border-primary": isActive }
+              { "border-primary": isActive },
             )}
           >
             <AvatarImage

@@ -1,4 +1,4 @@
-import { Npc } from '../types/npc.type';
+import { Npc } from "../types/npc.type";
 
 export class SendMessageDto {
   id: string;
@@ -13,10 +13,10 @@ export class SendMessageDto {
 }
 
 export enum MessageType {
-  NORMAL = 'NORMAL',
-  NOTIFICATION = 'NOTIFICATION',
-  NPC = 'NPC',
-  PARTY_GATHERING = 'PARTY_GATHERING',
+  NORMAL = "NORMAL",
+  NOTIFICATION = "NOTIFICATION",
+  NPC = "NPC",
+  PARTY_GATHERING = "PARTY_GATHERING",
 }
 
 export type PartyGatheringData = {

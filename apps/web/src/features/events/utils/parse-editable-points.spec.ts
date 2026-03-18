@@ -16,8 +16,12 @@ describe("parseEditablePoints", () => {
     expect(parseEditablePoints("0.125")).toBe(0.125);
   });
 
+  it("accepts signed delta values", () => {
+    expect(parseEditablePoints("-0.25")).toBe(-0.25);
+    expect(parseEditablePoints("+1.5")).toBe(1.5);
+  });
+
   it("rejects invalid values", () => {
-    expect(parseEditablePoints("-0.25")).toBeNull();
     expect(parseEditablePoints("NaN")).toBeNull();
     expect(parseEditablePoints("abc")).toBeNull();
     expect(parseEditablePoints("2abc")).toBeNull();

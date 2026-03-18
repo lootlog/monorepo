@@ -1,5 +1,5 @@
 import { Skeleton } from "@lootlog/ui/components/skeleton";
-import { groupBy } from "lodash";
+import groupBy from "lodash/groupBy";
 import { useState } from "react";
 import { SingleTimer } from "@/features/guild/components/timers/single-timer";
 import { useTimers } from "@/hooks/api/game-data/use-timers";

@@ -3,11 +3,11 @@ import { SpecialE2 } from "@/constants/special-e2";
 import { useCreateTimer } from "@/hooks/api/use-create-timer";
 import type { LootlogCharacterConfigResponse } from "@/hooks/api/use-lootlog-character-config";
 import { NpcType } from "@/hooks/api/use-npcs";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { Game } from "@/lib/game";
 import { useNotificationsStore } from "@/store/notifications.store";
 import { useNpcDetectorStore } from "@/store/npc-detector.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const useNpcsDeleteHandlers = () => {
@@ -34,7 +34,7 @@ export const useNpcsDeleteHandlers = () => {
 
       const map = Game.map.id;
       const elite2Name = SpecialE2[map as keyof typeof SpecialE2] || data.nick;
-      const npcType = getNpcTypeByWt(data.wt, data.prof, data.type);
+      const npcType = getNpcTypeByWt(NpcType, data.wt, data.prof, data.type);
       const npcName = npcType === NpcType.ELITE2 ? elite2Name : data.nick;
 
       const charactersConfigResponse = queryClient.getQueryData<{

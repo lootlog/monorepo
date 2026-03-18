@@ -1,8 +1,8 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { HealthzController } from './healthz.controller';
-import { HealthzService } from './healthz.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { HealthzController } from "./healthz.controller";
+import { HealthzService } from "./healthz.service";
 
-describe('HealthzController', () => {
+describe("HealthzController", () => {
   let controller: HealthzController;
 
   const mockHealthzService = {
@@ -23,7 +23,7 @@ describe('HealthzController', () => {
     controller = module.get<HealthzController>(HealthzController);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 });

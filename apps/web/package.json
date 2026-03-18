@@ -1,18 +1,19 @@
 {
   "name": "@lootlog/web",
-  "private": true,
   "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "oxlint .",
-    "preview": "vite preview"
-  },
+  "private": true,
   "files": [
     "dist",
     "nginx.conf"
   ],
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "doctor": "npx -y react-doctor@latest .",
+    "lint": "oxlint .",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@lootlog/socket-parser": "workspace:*",

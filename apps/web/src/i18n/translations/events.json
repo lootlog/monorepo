@@ -11,6 +11,7 @@
     "scoring": "Ustawienia punktów"
   },
   "delete": "Usuń Event",
+  "upcoming": "Nadchodzący",
   "active": "Aktywny",
   "inactive": "Nieaktywny",
   "ongoing": "W trakcie",
@@ -82,6 +83,147 @@
     "noRulebook": "Brak opisanego regulaminu dla tego eventu.",
     "scoringTitle": "Zasady punktacji"
   },
+  "summaryDialog": {
+    "trigger": "Wrapped eventu",
+    "title": "Wrapped eventu",
+    "loadingTitle": "Składam historię eventu",
+    "loadingDescription": "Łączę bicia, punkty, coverage i dropy w jedną opowieść.",
+    "errorTitle": "Nie udało się zbudować wrapped",
+    "errorDescription": "Spróbuj ponownie za chwilę. Jeśli problem wraca, sprawdź czy event ma już dane rankingowe i lootowe.",
+    "stepCounter": "Krok {{current}} z {{total}}",
+    "dotAriaLabel": "Przejdź do kroku {{step}}",
+    "previous": "Wstecz",
+    "next": "Dalej",
+    "finish": "Finał",
+    "footerHint": "Historia eventu w sześciu kadrach",
+    "steps": {
+      "intro": {
+        "label": "Otwarcie",
+        "title": "Szybkie wejście",
+        "description": "Najkrótsza wersja historii eventu.",
+        "lead": "Najpierw szybki zwiad po eventowych stołach: ile było respów, kto bił, ile wpadło punktów i gdzie sypnęło łupem."
+      },
+      "scale": {
+        "label": "Skala",
+        "title": "Tempo eventu",
+        "description": "Jak długo trzymała warta, kiedy był największy ruch i jaki był przelicznik całej obstawy."
+      },
+      "loot": {
+        "label": "Dropy",
+        "title": "Łup w liczbach",
+        "description": "Najcenniejsze rarity i herosi, którzy nosili ten ciężar."
+      },
+      "leaders": {
+        "label": "Liderzy",
+        "title": "Twarze eventu",
+        "description": "Kto był katem herosów, kto kasował punkty i kto najdłużej siedział na warcie."
+      },
+      "coverage": {
+        "label": "Obsada",
+        "title": "Herosy, które niosły event",
+        "description": "Herosi z największym ciężarem, lootem i presją na rotacji."
+      },
+      "finale": {
+        "label": "Finał",
+        "title": "Kto zostaje w pamięci",
+        "description": "Końcowe spotlighty i najgłośniejszy akcent eventu."
+      }
+    },
+    "labels": {
+      "eventWrapped": "EVENT WRAPPED",
+      "heroesCount": "{{count}} herosów",
+      "mapsCount": "{{count}} map",
+      "spawns": "Spawny",
+      "kills": "Bicia",
+      "participants": "Uczestnicy",
+      "points": "Punkty",
+      "trackedTime": "Czas obstawy",
+      "afkTime": "AFK",
+      "busiestHour": "Peak hour",
+      "avgMapsPerSpawn": "Mapy / spawn",
+      "killsPerSpawn": "Bicia / resp",
+      "lootsPerSpawn": "Dropy / resp",
+      "legendaryPerHero": "Legi / heros",
+      "averageWatch": "Średnia warta",
+      "pointsPerKill": "Pkt / bicie",
+      "lootsPerHero": "Dropy / heros",
+      "killsPerPlayer": "Bicia / gracz",
+      "coverage": "Coverage",
+      "dominantHero": "Najmocniejszy heros",
+      "lootTotals": "Pełny loot pool",
+      "heroLoots": "Loot per heros",
+      "richestHero": "Najbogatszy heros",
+      "totalLoots": "Łączny loot",
+      "topHunter": "Najwięcej bić",
+      "topScorer": "Najwięcej punktów",
+      "longestDuty": "Najdłuższa obstawa",
+      "topAfk": "Najwięcej AFK",
+      "mostFlexible": "Najbardziej elastyczny",
+      "topEfficiency": "Najlepsza wydajność",
+      "uncovered": "Uncovered",
+      "unassigned": "Unassigned",
+      "windowTime": "Czas okien",
+      "bestCoverage": "Najmocniejszy coverage",
+      "roughestCoverage": "Najtrudniejszy coverage",
+      "headlineHero": "Hero numer jeden",
+      "finalHeadline": "Nagłówek końcowy",
+      "heroSpotlight": "Hero spotlight",
+      "legendary": "Legendarne",
+      "heroic": "Heroiczne",
+      "unique": "Unikatowe",
+      "legendaryShort": "leg",
+      "heroicShort": "hero",
+      "uniqueShort": "unik"
+    },
+    "captions": {
+      "spawnCount": "Zamknięte okna i zanotowane bicia",
+      "killPace": "Łączna liczba bić w obrębie eventu",
+      "rosterSize": "Osoby, które realnie nabiły ranking albo trzymały mapy",
+      "totalPointPool": "Cała pula punktów wyciągnięta z tego eventu",
+      "totalLootPool": "Wszystkie odnotowane dropy z eventowych stołów",
+      "legendaryPressure": "Liczba legend, które realnie poleciały podczas eventu",
+      "killsPerSpawn": "Średnio tyle bić przypadało na jedno zamknięte okno respu",
+      "lootsPerSpawn": "Średnia liczba dropów na jedno okno respu",
+      "legendaryPerHero": "Średnia liczba legend przypięta do jednego herosa w evencie",
+      "pointsPool": "Suma punktów rozdzielonych przez cały event",
+      "trackedTime": "Łączny czas, który ranking widzi jako aktywną obecność",
+      "busiestHour": "{{count}} bić w najgęstszej godzinie",
+      "avgMapsPerSpawn": "Średnia liczba map, które ktoś realnie trzymał w oknie spawnu",
+      "coverage": "Coverage liczony na poziomie map-sekund z zamkniętych okien respawnu",
+      "dominantHero": "{{kills}} bić i {{points}} pkt sprawiły, że ten heros praktycznie cały czas wracał do rozmów.",
+      "afkTime": "Czas oznaczony jako AFK w danych rankingowych",
+      "averageWatch": "Tyle średnio trwała aktywna warta jednego gracza",
+      "pointsPerKill": "Średni przelicznik punktów za jedno bicie w całym evencie",
+      "lootsPerHero": "Średni loot przypadający na jednego herosa z rozpiski",
+      "killsPerPlayer": "Średnia liczba bić przypadających na jednego gracza z rankingu",
+      "pointsPerKillLeaders": "To jest bazowy przelicznik eventu, zanim spojrzymy na indywidualnych kozaków",
+      "averageWatchLeaders": "Średni czas warty daje tło do tego, kto naprawdę przesiedział event",
+      "flexHeroCount": "Obejmował {{count}} herosów",
+      "flexAvgMapsPerRespawn": "Średnio {{count}} map na resp",
+      "efficiencyContext": "Na bazie {{count}} bić",
+      "topHunterOnHero": "Najwięcej bić na {{hero}} robił {{hunter}}.",
+      "richestHeroPool": "Z tego herosa wpadło łącznie {{count}} dropów, więc to tutaj najczęściej robiło się głośno.",
+      "heroMapSpread": "{{count}} map było przypiętych do tego herosa.",
+      "coverageWindows": "{{count}} zamkniętych okien respawnu",
+      "uncovered": "Czas, gdy mapa miała przypisanie, ale nie miała obserwatora",
+      "unassigned": "Czas bez żadnego przypisania do mapy",
+      "windowTime": "Suma czasu wszystkich okien respawnu",
+      "finalHeadline": "{{kills}} bić, {{participants}} osób i wystarczająco dużo danych, żeby to już miało własny charakter.",
+      "richestHero": "Najwięcej legendarnych przedmiotów zebrał {{hero}}: {{count}}.",
+      "noRichestHero": "W tym evencie nie udało się jeszcze wyciągnąć wyraźnego lootowego bohatera."
+    },
+    "units": {
+      "kills": "bić",
+      "points": "pkt",
+      "maps": "map",
+      "pointsPerKill": "pkt / bicie"
+    }
+  },
+  "actionsCard": {
+    "title": "Akcje",
+    "subtitle": "Zarządzanie",
+    "description": "Najważniejsze operacje dla eventu „{{name}}”."
+  },
   "confirmation": {
     "title": "Potwierdź udział",
     "description": "Potwierdź udział w obstawianiu, aby naliczyć punkty za te bicia.",
@@ -94,6 +236,7 @@
     "error": "Nie udało się potwierdzić udziału (limit czasu mógł minąć)"
   },
   "ranking": {
+    "subtitle": "Statystyki",
     "title": "Ranking Eventowy",
     "points": "Punkty",
     "kills": "Bicia",
@@ -107,7 +250,8 @@
     "time": "Czas",
     "afk": "AFK %",
     "noRanking": "Brak danych w rankingu",
-    "viewAll": "Zobacz pełny ranking"
+    "viewAll": "Zobacz pełny ranking",
+    "memberFallback": "Gracz #{{memberId}}"
   },
   "templates": {
     "title": "Szablony Map",
@@ -124,12 +268,18 @@
     "backToHero": "Powrót do herosa",
     "close": "Zamknij"
   },
+  "sidebarBanner": {
+    "activeEvent": "Aktywny event",
+    "showMore": "+{{count}} więcej",
+    "collapse": "Zwiń"
+  },
   "maps": {
     "title": "Mapy",
     "mapCount_one": "{{count}} mapa",
     "mapCount_few": "{{count}} mapy",
     "mapCount_many": "{{count}} map",
     "manage": "Zarządzaj mapami",
+    "manageShort": "Zarządzaj",
     "assign": "Przypisz członka",
     "unassign": "Usuń przypisanie",
     "selfAssign": "Weź tę mapę",
@@ -175,7 +325,7 @@
     "alreadyAssigned": "Przypisany",
     "assignmentDisabled": "Zapisywanie jeszcze niedostępne",
     "assignmentDisabledWithTime": "Zapisywanie możliwe za {{time}}",
-    "unassignSelf": "Odpisz się",
+    "unassignSelf": "Wypisz się",
     "assignSelf": "Przypisz się",
     "gap": {
       "unassigned": "nieprzypisana",
@@ -204,16 +354,21 @@
     "add": "Dodaj herosa",
     "addButton": "Dodaj",
     "edit": "Edytuj herosa",
+    "manageMaps": "Mapy",
     "addDescription": "Dodaj nowego herosa do eventu",
     "mapsHint": "Mapy dla herosa dodasz po jego utworzeniu.",
     "idHint": "Jeśli nie znasz ID lub jest niedostępne - zostanie ustawione automatycznie po pierwszym zbiciu herosa (wymaga poprawnej nazwy).",
     "added": "Dodano herosa",
     "updated": "Zaktualizowano herosa",
     "deleted": "Usunięto herosa",
+    "deleteTitle": "Usunąć herosa?",
+    "deleteDescription": "Czy na pewno chcesz usunąć herosa {{name}}? Spowoduje to również usunięcie wszystkich powiązanych map.",
+    "deleteAction": "Usuń",
     "deleteError": "Błąd podczas usuwania",
     "empty": "Brak herosów"
   },
   "loots": {
+    "subtitle": "Kolekcja",
     "title": "Ostatnie łupy",
     "noLoots": "Brak łupów z herosów eventowych",
     "showAll": "Pokaż wszystkie łupy"
@@ -227,6 +382,7 @@
   },
   "kills": {
     "title": "Historia bić",
+    "recentSubtitle": "Aktywność",
     "recentTitle": "Ostatnie bicia",
     "allKillsTitle": "Historia bić eventu",
     "memberHistoryTitle": "Bicia gracza",
@@ -286,8 +442,9 @@
     "pointsTooltip": {
       "basePoints": "Punkty bazowe",
       "trackingPercentage": "Czas obstawiania respawnu",
-      "bonusItem": "Bonus: {{name}}",
+      "bonusItem": "{{name}}",
       "bonusTotal": "Bonusy razem",
+      "manualAdjustment": "Ręczna korekta",
       "groupBonus": "Bonus małej grupy",
       "nightBonus": "Bonus nocnej warty",
       "pvpBonus": "Bonus żółtej mapy/PvP",
@@ -297,6 +454,8 @@
     },
     "loadMore": "Załaduj więcej",
     "loading": "Ładowanie...",
+    "showStats": "Pokaż statystyki",
+    "hideStats": "Ukryj statystyki",
     "endOfList": "To wszystkie bicia",
     "manualClose": "Ręczne zamknięcie okna",
     "manualCloseDescription": "Okno zostało ręcznie zamknięte - heros mógł nie zostać zabity"
@@ -324,12 +483,14 @@
     }
   },
   "killDetail": {
+    "title": "Szczegóły bicia",
     "notFound": "Nie znaleziono bicia",
     "totalPoints": "Suma punktów",
     "participantCount": "Uczestników",
     "lootCount": "Dopasowanych łupów",
     "detectedBy": "Wykryto przez",
     "participants": "Uczestnicy",
+    "participantsSubtitle": "Szczegóły bicia",
     "matchingLoots": "Dopasowane łupy",
     "noLoots": "Brak łupów pasujących do tego bicia",
     "respawnTime": "Czas respawnu",
@@ -342,8 +503,9 @@
     "respawnMaxLabel": "Max. respawn",
     "killTimeLabel": "Moment zabicia",
     "multipliers": {
+      "subtitle": "Punktacja",
       "title": "Zasady punktacji",
-      "simpleMode": "Tryb prosty: 1 punkt za eligible gracza.",
+      "simpleMode": "Tryb prosty: 1 punkt per bicie.",
       "baseSection": "Podstawa",
       "bonusesSection": "Bonusy",
       "leaveGrace": "Dla progu 75%: punkt 1.0 tylko jeśli kill był do {{minutes}} min od zejścia",
@@ -355,6 +517,7 @@
       "minTrackingForBonuses": "Min. pokrycie dla bonusów: {{percentage}}%"
     },
     "mapCoverage": {
+      "subtitle": "Pokrycie",
       "title": "Pokrycie map",
       "covered": "Pokryte",
       "uncovered": "Nieobstawione",
@@ -362,6 +525,14 @@
       "assignedMembers": "Przypisani członkowie",
       "gapDetails": "Szczegóły przerw",
       "fullCoverage": "Pełne pokrycie - brak przerw"
+    },
+    "coverageGaps": {
+      "subtitle": "Analiza",
+      "title": "Okresy nieobstawienia",
+      "unassigned": "Brak przypisania",
+      "uncovered": "Brak obecności",
+      "details": "Szczegóły",
+      "more": "więcej"
     }
   },
   "settings": {
@@ -394,9 +565,9 @@
     "mode": "Tryb punktacji",
     "chooseMode": "Krok 1/2: wybierz tryb punktacji",
     "configureEvent": "Krok 2/2: skonfiguruj event",
-    "modeHint": "Tryb prosty daje 1 pkt za eligible gracza. Tryb zaawansowany pozwala budować reguły z klocków.",
+    "modeHint": "Tryb prosty daje 1 pkt za każdego przypisanego kiedykolwiek do mapy gracza. Tryb zaawansowany pozwala budować reguły z klocków.",
     "modeSimpleTitle": "Tryb prosty",
-    "modeSimpleDescription": "Każdy eligible gracz otrzymuje 1 pkt.",
+    "modeSimpleDescription": "Każdy przypisany kiedykolwiek do mapy gracz otrzymuje 1 pkt.",
     "modeAdvancedTitle": "Tryb zaawansowany",
     "modeAdvancedDescription": "Reguły JEŻELI/WTEDY z akcjami punktowymi budowanymi z klocków.",
     "rules": "Reguły JEŻELI + akcja",
@@ -457,7 +628,7 @@
       "cap": "Maksymalnie {{points}} pkt za kill",
       "minTrackingForBonuses": "Min. pokrycie dla bonusów: {{percentage}}%",
       "timezone": "Strefa: {{timezone}}",
-      "simple": "Tryb prosty: każdy eligible gracz otrzymuje 1 pkt."
+      "simple": "Tryb prosty: każdy kiedykolwiek przypisany do mapy gracz otrzymuje 1 pkt."
     },
     "rule": {
       "base75": "Podstawa: >= 75% czasu respu = 1.0 pkt",
@@ -533,7 +704,21 @@
     "history": "Historia edycji",
     "historyTypeRanking": "Ranking",
     "historyTypeKill": "Kill",
-    "noHistory": "Brak historii edycji"
+    "historyEditedBy": "Edytował: {{editorName}}",
+    "historyEditorUnknown": "Nieznany użytkownik",
+    "noHistory": "Brak historii edycji",
+    "deltaLabel": "Korekta punktów",
+    "deltaPlaceholder": "np. +0.5 lub -1",
+    "currentValueLabel": "Obecnie",
+    "deltaPreviewLabel": "Zmiana",
+    "resultValueLabel": "Po zmianie",
+    "previewUnavailable": "—",
+    "commentLabel": "Komentarz",
+    "commentPlaceholder": "Opcjonalny powód lub opis zmiany punktów",
+    "killDialogTitle": "Edytuj punkty gracza {{memberName}}",
+    "killDialogDescription": "Dodaj lub odejmij punkty za to bicie i opcjonalnie dodaj komentarz dla {{memberName}}.",
+    "rankingDialogTitle": "Edytuj ranking gracza {{memberName}}",
+    "rankingDialogDescription": "Dodaj lub odejmij punkty od sumy dla {{heroNpcName}} i opcjonalnie dodaj komentarz."
   },
   "locations": {
     "title": "Lokacje",

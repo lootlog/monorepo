@@ -1,9 +1,9 @@
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from './../src/app.module';
-import { createTestingModuleWithMocks } from './test-module-helpers';
+import { INestApplication } from "@nestjs/common";
+import request from "supertest";
+import { AppModule } from "./../src/app.module";
+import { createTestingModuleWithMocks } from "./test-module-helpers";
 
-describe('HealthzController (e2e)', () => {
+describe("HealthzController (e2e)", () => {
   let app: INestApplication;
 
   beforeEach(async () => {
@@ -23,7 +23,7 @@ describe('HealthzController (e2e)', () => {
     }
   });
 
-  it('/healthz (GET)', () => {
-    return request(app.getHttpServer()).get('/healthz').expect(200);
+  it("/healthz (GET)", () => {
+    return request(app.getHttpServer()).get("/healthz").expect(200);
   });
 });

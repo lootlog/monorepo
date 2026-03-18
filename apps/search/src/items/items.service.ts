@@ -1,5 +1,6 @@
 import type { Meilisearch, SearchParams } from "meilisearch";
 import { meilisearchClient } from "../lib/meilisearch.js";
+import { logger } from "../config/winston.config.js";
 import type { GetItemsDto } from "./dto/get-items.dto.js";
 import { ITEMS_INDEX } from "./constants/meilisearch.js";
 import type { IndexItemsDto } from "./dto/index-items.dto.js";
@@ -31,7 +32,7 @@ export class ItemsService {
       const data = await index.search(searchTerm, query);
       return data.hits;
     } catch (error) {
-      console.error("Items search error:", error);
+      logger.error("Items search error", { error });
       return [];
     }
   }
@@ -44,12 +45,12 @@ export class ItemsService {
     );
 
     if (validItems.length === 0) {
-      console.warn("No valid items to index (missing required fields)");
+      logger.warn("No valid items to index (missing required fields)");
       return;
     }
 
     if (validItems.length !== data.items.length) {
-      console.warn(
+      logger.warn(
         `Skipped ${data.items.length - validItems.length} items due to missing required fields`,
       );
     }
@@ -62,7 +63,7 @@ export class ItemsService {
     try {
       return index.addDocuments(itemsWithUid, { primaryKey: "uid" });
     } catch (error) {
-      console.error("Error indexing items:", error);
+      logger.error("Error indexing items", { error });
       return;
     }
   }

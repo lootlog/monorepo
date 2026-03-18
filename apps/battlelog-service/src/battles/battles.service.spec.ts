@@ -1,31 +1,56 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { BattlesService } from './battles.service';
-import { PrismaService } from 'src/shared/modules/prisma/prisma.service';
-import { R2Service } from 'src/shared/modules/r2/r2.service';
-import { PaginationService } from './services/pagination.service';
-import { BattleAnalyticsService } from './services/battle-analytics.service';
-import { RedisService } from 'src/shared/modules/redis/redis.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { BattlesService } from "./battles.service";
+import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
+import { R2Service } from "src/shared/modules/r2/r2.service";
+import { PaginationService } from "./services/pagination.service";
+import { BattleAnalyticsService } from "./services/battle-analytics.service";
+import { RedisService } from "@lootlog/nest-shared";
 
-describe('BattlesService', () => {
+describe("BattlesService", () => {
   let service: BattlesService;
 
   beforeEach(async () => {
-    const mockPrismaService = {
-      battle: {
-        findMany: jest.fn(),
-        count: jest.fn(),
-        findUniqueOrThrow: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        delete: jest.fn(),
-      },
-      userCharacter: {
-        findMany: jest.fn(),
-        findFirst: jest.fn(),
-        upsert: jest.fn(),
-      },
-      battleWarrior: {
-        findMany: jest.fn(),
+    const mockDrizzleService = {
+      db: {
+        query: {
+          battles: { findMany: jest.fn(), findFirst: jest.fn() },
+          battleWarriors: { findMany: jest.fn() },
+          userCharacters: { findMany: jest.fn(), findFirst: jest.fn() },
+        },
+        insert: jest.fn().mockReturnValue({
+          values: jest.fn().mockReturnValue({
+            onConflictDoUpdate: jest.fn().mockReturnValue({
+              returning: jest.fn(),
+            }),
+            returning: jest.fn(),
+          }),
+        }),
+        update: jest.fn().mockReturnValue({
+          set: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              returning: jest.fn(),
+            }),
+          }),
+        }),
+        delete: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn(),
+          }),
+        }),
+        select: jest.fn().mockReturnValue({
+          from: jest.fn().mockReturnValue({
+            where: jest.fn(),
+          }),
+        }),
+        selectDistinctOn: jest.fn().mockReturnValue({
+          from: jest.fn().mockReturnValue({
+            where: jest.fn().mockReturnValue({
+              orderBy: jest.fn(),
+            }),
+          }),
+        }),
+        execute: jest.fn(),
+        transaction: jest.fn(),
       },
     };
 
@@ -59,8 +84,8 @@ describe('BattlesService', () => {
       providers: [
         BattlesService,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: DrizzleService,
+          useValue: mockDrizzleService,
         },
         {
           provide: R2Service,
@@ -84,7 +109,7 @@ describe('BattlesService', () => {
     service = module.get<BattlesService>(BattlesService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

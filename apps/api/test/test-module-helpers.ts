@@ -1,6 +1,6 @@
-import { TestingModule, Test } from '@nestjs/testing';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import type { ModuleMetadata } from '@nestjs/common';
+import { TestingModule, Test } from "@nestjs/testing";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import type { ModuleMetadata } from "@nestjs/common";
 
 export function createMockAmqpConnection() {
   return {
@@ -20,9 +20,9 @@ export async function createTestingModuleWithMocks(
 ): Promise<TestingModule> {
   const mockAmqpConnection = createMockAmqpConnection();
 
-  console.info('Test config RABBITMQ_URI:', process.env.RABBITMQ_URI);
-  console.info('Test config REDIS_HOST:', process.env.REDIS_HOST);
-  console.info('Test config REDIS_PORT:', process.env.REDIS_PORT);
+  console.info("Test config RABBITMQ_URI:", process.env.RABBITMQ_URI);
+  console.info("Test config REDIS_HOST:", process.env.REDIS_HOST);
+  console.info("Test config REDIS_PORT:", process.env.REDIS_PORT);
 
   return Test.createTestingModule(metadata)
     .overrideProvider(AmqpConnection)

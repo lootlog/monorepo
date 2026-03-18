@@ -1,67 +1,36 @@
-# Search Service
+# @lootlog/search
 
-Fast full-text search service built with Hono and Meilisearch.
+Hono service for Meilisearch-backed search endpoints.
 
 ## Overview
 
-The Search Service provides powerful full-text search capabilities across Lootlog data. It indexes items, NPCs, locations, and other game content, making them quickly searchable through a REST API.
+- Exposes search routes for `players`, `npcs`, `items`, and aggregated `all` results.
+- Connects to RabbitMQ during startup and registers queue handlers that keep Meilisearch indexes in sync.
+- Reuses shared auth metadata middleware from `@lootlog/api-helpers` and shared observability bootstrap from `@lootlog/instrumentation`.
 
-## Features
+## Routes
 
-- **Full-Text Search** - Fast and accurate search results
-- **Meilisearch Integration** - Powered by Meilisearch engine
-- **Automatic Indexing** - Listens to RabbitMQ events for real-time updates
-- **Multi-Index Support** - Separate indices for different data types
-- **Faceted Search** - Filter by categories, types, levels
-- **Typo Tolerance** - Handles misspellings automatically
-- **Instant Results** - Sub-millisecond search responses
-
-## Tech Stack
-
-- **Hono** - Lightweight web framework
-- **Meilisearch** - Fast search engine (port 7700)
-- **RabbitMQ** - Event-driven indexing
-- **TypeScript** - Type-safe development
-
-## Search Indices
-
-The service maintains indices for:
-- **Items** - Game items and equipment
-- **NPCs** - Monsters and bosses
-- **Locations** - Maps and areas
-- **Loots** - Clan loot records
-- **Warriors** - Player statistics
-
-## Event-Driven Indexing
-
-Listens to RabbitMQ events:
-- `item.created` → Index new item
-- `item.updated` → Update item index
-- `loot.created` → Index new loot
-- `npc.created` → Index new NPC
-
-## API Endpoints
-
-- `GET /api/search/items?q=sword` - Search items
-- `GET /api/search/npcs?q=dragon` - Search NPCs
-- `GET /api/search/locations?q=cave` - Search locations
-- `GET /api/search/loots?q=epic` - Search loots
-- `POST /api/search/reindex` - Trigger full reindex
+- `/players`
+- `/npcs`
+- `/items`
+- `/all`
+- `/healthz`
 
 ## Development
 
-```bash
-# From monorepo root
-cd apps/search
-pnpm dev                 # Start development server
+Run commands from the monorepo root:
 
-# Service runs on http://localhost:3035
-# Meilisearch UI: http://localhost:7700
+```bash
+pnpm --filter @lootlog/search dev
 ```
 
-## Environment Variables
+## Key Scripts
 
-See `.env.sample` for required configuration:
-- Meilisearch connection
-- RabbitMQ connection
-- API keys
+- `pnpm --filter @lootlog/search build`
+- `pnpm --filter @lootlog/search start`
+- `pnpm --filter @lootlog/search seed`
+
+## Notes
+
+- Service bootstrap lives in `src/index.ts`.
+- Seed helpers for local Meilisearch data live under `src/scripts/`.

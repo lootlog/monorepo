@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
 import {
   IsNotEmpty,
   IsNumber,
@@ -6,8 +6,8 @@ import {
   IsString,
   Min,
   ValidateNested,
-} from 'class-validator';
-import { NpcDto } from 'src/loots/dto/create-loot.dto';
+} from "class-validator";
+import { NpcDto } from "src/loots/dto/create-loot.dto";
 
 export class CreateTimerDto {
   @IsNumber()

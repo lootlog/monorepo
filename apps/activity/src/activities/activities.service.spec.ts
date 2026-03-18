@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ActivitiesService } from './activities.service';
-import { PrismaService } from 'src/shared/db/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { ActivitiesService } from "./activities.service";
+import { PrismaService } from "src/shared/db/prisma.service";
 
-describe('ActivitiesService', () => {
+describe("ActivitiesService", () => {
   let service: ActivitiesService;
   const prismaServiceMock = {} as unknown as PrismaService;
 
@@ -17,7 +17,7 @@ describe('ActivitiesService', () => {
     service = module.get<ActivitiesService>(ActivitiesService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 });

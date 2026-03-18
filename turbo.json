@@ -61,6 +61,10 @@
         "tsconfig.json"
       ]
     },
+    "doctor": {
+      "cache": false,
+      "outputs": []
+    },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
@@ -93,12 +97,7 @@
       "interactive": true
     },
     "test": {
-      "dependsOn": [
-        "^build",
-        "api:generate",
-        "battlelog:generate",
-        "activity:generate"
-      ],
+      "dependsOn": ["^build", "api:generate", "activity:generate"],
       "outputs": [],
       "inputs": [
         "src/**/*.ts",
@@ -111,12 +110,7 @@
       ]
     },
     "test:e2e": {
-      "dependsOn": [
-        "^build",
-        "api:generate",
-        "battlelog:generate",
-        "activity:generate"
-      ],
+      "dependsOn": ["^build", "api:generate", "activity:generate"],
       "cache": false,
       "outputs": [],
       "inputs": [
@@ -128,9 +122,14 @@
         "tsconfig.json"
       ]
     },
+    "battlelog:migrate": {
+      "cache": false
+    },
+    "battlelog:migrate:init": {
+      "cache": false
+    },
     "battlelog:migrate:dev": {
-      "cache": false,
-      "interactive": true
+      "cache": false
     },
     "battlelog:generate": {
       "cache": false

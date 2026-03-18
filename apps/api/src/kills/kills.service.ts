@@ -1,20 +1,24 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { Permission, NpcType, type Role } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
-import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
-import { getStableNpcId } from 'src/shared/utils/get-stable-npc-id';
-import type { CreateKillDto } from './dto/create-kill.dto';
+import { Injectable, Inject } from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { getNpcTypeByWt } from "@lootlog/types";
+import { Permission, NpcType, type Role } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import { getStableNpcId } from "src/shared/utils/get-stable-npc-id";
+import type { CreateKillDto } from "./dto/create-kill.dto";
 import type {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
-} from './dto/get-kill-stats.dto';
-import type { GetUserNpcKillsDto } from './dto/get-user-npc-kills.dto';
-import type { GetMemberKillsDto } from './dto/get-member-kills.dto';
+} from "./dto/get-kill-stats.dto";
+import type { GetUserNpcKillsDto } from "./dto/get-user-npc-kills.dto";
+import type { GetMemberKillsDto } from "./dto/get-member-kills.dto";
+import {
+  buildGuildKillDedupKey,
+  buildUserKillDedupKey,
+} from "./utils/kill-dedup-key";
 
 const KILL_DEDUP_TTL_SECONDS = 30;
 
@@ -28,14 +32,17 @@ export class KillsService {
   ) {}
 
   async createKill(discordId: string, data: CreateKillDto) {
-    const npcType = getNpcTypeByWt(data.npc.wt, data.npc.prof);
+    const npcType = getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof);
     const npcId = getStableNpcId(data.npc.id, data.npc.name, npcType);
 
     // 1. User deduplication (30s window) - same user killing same NPC
-    const userDedupKey = `kill:dedup:user:${discordId}:${data.world}:${npcId}`;
+    const userDedupKey = buildUserKillDedupKey(discordId, {
+      world: data.world,
+      npcId,
+    });
     const isNewUserKill = await this.redis.setNX(
       userDedupKey,
-      '1',
+      "1",
       KILL_DEDUP_TTL_SECONDS,
     );
 
@@ -75,8 +82,8 @@ export class KillsService {
       });
     } catch (error) {
       this.logger.error({
-        level: 'error',
-        message: 'Failed to upsert user kill stats',
+        level: "error",
+        message: "Failed to upsert user kill stats",
         error: error instanceof Error ? error.message : error,
       });
     }
@@ -107,7 +114,7 @@ export class KillsService {
 
         if (!member) {
           this.logger.log({
-            level: 'debug',
+            level: "debug",
             message: `Member not found for guildId ${guildId}, skipping kill stats`,
           });
           return null;
@@ -148,10 +155,13 @@ export class KillsService {
           });
 
           // 4b. Guild unique kill deduplication (30s window)
-          const guildDedupKey = `kill:dedup:guild:${guildId}:${data.world}:${npcId}`;
+          const guildDedupKey = buildGuildKillDedupKey(guildId, {
+            world: data.world,
+            npcId,
+          });
           const isFirstGuildKill = await this.redis.setNX(
             guildDedupKey,
-            '1',
+            "1",
             KILL_DEDUP_TTL_SECONDS,
           );
 
@@ -190,7 +200,7 @@ export class KillsService {
           return { guildId, isFirstGuildKill };
         } catch (error) {
           this.logger.error({
-            level: 'error',
+            level: "error",
             message: `Failed to upsert kill stats for guildId ${guildId}`,
             error: error instanceof Error ? error.message : error,
           });
@@ -471,7 +481,7 @@ export class KillsService {
       ...(query.world && { world: query.world }),
       ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
       ...(query.search && {
-        npcName: { contains: query.search, mode: 'insensitive' as const },
+        npcName: { contains: query.search, mode: "insensitive" as const },
       }),
       ...((query.minLvl !== undefined || query.maxLvl !== undefined) && {
         npcLvl: {
@@ -523,11 +533,11 @@ export class KillsService {
       }
     }
 
-    const sortBy = query.sortBy ?? 'kills';
-    const sortAsc = query.sortOrder === 'asc';
+    const sortBy = query.sortBy ?? "kills";
+    const sortAsc = query.sortOrder === "asc";
 
     const allNpcs = Array.from(npcMap.values()).sort((a, b) => {
-      if (sortBy === 'level') {
+      if (sortBy === "level") {
         return sortAsc ? a.npcLvl - b.npcLvl : b.npcLvl - a.npcLvl;
       }
       return sortAsc
@@ -588,7 +598,7 @@ export class KillsService {
         ...(npcType && { npcType }),
         ...(world && { world }),
         ...(search && {
-          npcName: { contains: search, mode: 'insensitive' as const },
+          npcName: { contains: search, mode: "insensitive" as const },
         }),
         ...npcLvlCondition,
         ...visibilityCondition,
@@ -885,7 +895,7 @@ export class KillsService {
         ...(npcTypes && npcTypes.length > 0 && { npcType: { in: npcTypes } }),
         ...(query.world && { world: query.world }),
         ...(query.search && {
-          npcName: { contains: query.search, mode: 'insensitive' as const },
+          npcName: { contains: query.search, mode: "insensitive" as const },
         }),
         ...npcLvlCondition,
         ...visibilityCondition,

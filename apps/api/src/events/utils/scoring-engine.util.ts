@@ -3,11 +3,11 @@ import type {
   EventScoringMode,
   EventScoringNumericOperator,
   EventScoringRules,
-} from '../constants/scoring-rules.constant';
+} from "../constants/scoring-rules.constant";
 import {
   calculateLocalWindowOverlapMs,
   isLocalTimeInRange,
-} from './scoring-time.util';
+} from "./scoring-time.util";
 
 export type EventScoringContext = {
   eligible: boolean;
@@ -43,17 +43,17 @@ function compareNumeric(
   right: number,
 ): boolean {
   switch (operator) {
-    case '>':
+    case ">":
       return left > right;
-    case '>=':
+    case ">=":
       return left >= right;
-    case '<':
+    case "<":
       return left < right;
-    case '<=':
+    case "<=":
       return left <= right;
-    case '==':
+    case "==":
       return left === right;
-    case '!=':
+    case "!=":
       return left !== right;
     default:
       return false;
@@ -69,31 +69,31 @@ function evaluateCondition(params: {
 }): boolean {
   const { condition, rules, context, minutesSinceLeaveToKill } = params;
 
-  if (condition.type === 'NUMERIC') {
+  if (condition.type === "NUMERIC") {
     let left: number | null = null;
     switch (condition.factor) {
-      case 'trackingDurationPercentage':
+      case "trackingDurationPercentage":
         left = context.trackingDurationPercentage ?? null;
         break;
-      case 'trackingDurationSeconds':
+      case "trackingDurationSeconds":
         left = context.trackingDurationSeconds ?? null;
         break;
-      case 'assignedMembersCount':
+      case "assignedMembersCount":
         left = context.assignedMembersCount;
         break;
-      case 'minutesSinceLeaveToKill':
+      case "minutesSinceLeaveToKill":
         left = minutesSinceLeaveToKill;
         break;
-      case 'timeOnMapSeconds':
+      case "timeOnMapSeconds":
         left = context.timeOnMapSeconds;
         break;
-      case 'afkPercentage':
+      case "afkPercentage":
         left = context.afkPercentage;
         break;
-      case 'respawnDurationSeconds':
+      case "respawnDurationSeconds":
         left = params.respawnDurationSeconds;
         break;
-      case 'respawnProgressPercentage':
+      case "respawnProgressPercentage":
         left = context.respawnProgressPercentage ?? null;
         break;
       default:
@@ -107,20 +107,20 @@ function evaluateCondition(params: {
     return compareNumeric(left, condition.operator, condition.value);
   }
 
-  if (condition.type === 'BOOLEAN') {
+  if (condition.type === "BOOLEAN") {
     switch (condition.factor) {
-      case 'eligible':
+      case "eligible":
         return context.eligible === condition.value;
-      case 'memberPresentAtKill':
+      case "memberPresentAtKill":
         return context.memberPresentAtKill === condition.value;
-      case 'wasPresent':
+      case "wasPresent":
         return context.wasPresent === condition.value;
       default:
         return false;
     }
   }
 
-  if (condition.type === 'KILL_TIME_IN_WINDOW') {
+  if (condition.type === "KILL_TIME_IN_WINDOW") {
     return isLocalTimeInRange({
       date: context.killTime,
       timeZone: rules.timezone,
@@ -157,7 +157,7 @@ export function evaluateEventScoring(params: {
 }): EventScoringResult {
   const { mode, rules, context } = params;
 
-  if (mode === 'SIMPLE') {
+  if (mode === "SIMPLE") {
     const basePoints = context.eligible ? 1 : 0;
     return {
       totalPoints: basePoints,
@@ -177,7 +177,7 @@ export function evaluateEventScoring(params: {
         60_000
       : null;
   const minTrackingPercentForBonuses =
-    typeof rules.minTrackingPercentForBonuses === 'number' &&
+    typeof rules.minTrackingPercentForBonuses === "number" &&
     Number.isFinite(rules.minTrackingPercentForBonuses)
       ? Math.min(100, Math.max(0, rules.minTrackingPercentForBonuses))
       : 50;
@@ -208,12 +208,12 @@ export function evaluateEventScoring(params: {
     }
 
     switch (rule.action.type) {
-      case 'SET_BASE':
+      case "SET_BASE":
         basePoints = rule.action.points;
         break;
-      case 'ADD_BONUS':
+      case "ADD_BONUS":
         if (
-          typeof context.trackingDurationPercentage !== 'number' ||
+          typeof context.trackingDurationPercentage !== "number" ||
           !Number.isFinite(context.trackingDurationPercentage) ||
           context.trackingDurationPercentage < minTrackingPercentForBonuses
         ) {
@@ -226,7 +226,7 @@ export function evaluateEventScoring(params: {
           points: rule.action.points,
         });
         break;
-      case 'ZERO_BASE':
+      case "ZERO_BASE":
         basePoints = 0;
         break;
       default:

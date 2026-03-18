@@ -3,17 +3,17 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { PrismaService } from 'src/db/prisma.service';
-import { CreateReservationDto } from './dto/create-reservation.dto';
-import { Permission } from 'generated/client';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
+} from "@nestjs/common";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { PrismaService } from "src/db/prisma.service";
+import { CreateReservationDto } from "./dto/create-reservation.dto";
+import { Permission } from "generated/client";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { RedisService } from "@lootlog/nest-shared";
+import { ConfigService } from "@nestjs/config";
+import { HttpService } from "@nestjs/axios";
+import { lastValueFrom } from "rxjs";
 
 type ReservationRecord = {
   id: number;
@@ -142,27 +142,27 @@ export class ReservationsService {
     const incomingTo = new Date(data.toDate).getTime();
 
     if (Number.isNaN(incomingFrom) || Number.isNaN(incomingTo)) {
-      throw new BadRequestException('Nieprawidłowy zakres czasowy rezerwacji.');
+      throw new BadRequestException("Nieprawidłowy zakres czasowy rezerwacji.");
     }
 
     const now = Date.now();
     const maxPastOffsetMs = 60 * 60 * 1000; // 1 hour
     if (incomingFrom < now - maxPastOffsetMs) {
       throw new BadRequestException(
-        'Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.',
+        "Godzina rozpoczęcia rezerwacji nie może być starsza niż 1 godzina od aktualnego czasu.",
       );
     }
 
     if (incomingFrom >= incomingTo) {
       throw new BadRequestException(
-        'Data zakończenia musi być późniejsza niż rozpoczęcia.',
+        "Data zakończenia musi być późniejsza niż rozpoczęcia.",
       );
     }
 
     const minimumDurationMs = 30 * 60 * 1000;
     if (incomingTo - incomingFrom < minimumDurationMs) {
       throw new BadRequestException(
-        'Rezerwacja musi trwać co najmniej 30 minut.',
+        "Rezerwacja musi trwać co najmniej 30 minut.",
       );
     }
 
@@ -189,7 +189,7 @@ export class ReservationsService {
 
     if (overlappingReservation) {
       throw new BadRequestException(
-        'Istnieje już inna rezerwacja w podanym przedziale czasowym.',
+        "Istnieje już inna rezerwacja w podanym przedziale czasowym.",
       );
     }
 
@@ -234,7 +234,7 @@ export class ReservationsService {
     }
 
     const externalUrl = this.configService.getOrThrow<string>(
-      'RESERVATIONS_CARDS_URL',
+      "RESERVATIONS_CARDS_URL",
     );
 
     const response = await lastValueFrom(
@@ -244,11 +244,11 @@ export class ReservationsService {
     const rawPayload = response.data;
 
     let decodedPayload: unknown;
-    if (typeof rawPayload === 'string') {
+    if (typeof rawPayload === "string") {
       try {
         decodedPayload = JSON.parse(rawPayload);
       } catch {
-        throw new Error('Nie udało się zdekodować danych kart rezerwacji.');
+        throw new Error("Nie udało się zdekodować danych kart rezerwacji.");
       }
     } else {
       decodedPayload = rawPayload;
@@ -265,13 +265,13 @@ export class ReservationsService {
       undefined;
 
     if (!data) {
-      throw new Error('Brak danych kart rezerwacji z zewnętrznego serwisu.');
+      throw new Error("Brak danych kart rezerwacji z zewnętrznego serwisu.");
     }
 
     const normalized = this.normalizeReservationsCards(data);
 
     if (Object.keys(normalized).length === 0) {
-      throw new Error('Brak kart rezerwacji po przetworzeniu odpowiedzi.');
+      throw new Error("Brak kart rezerwacji po przetworzeniu odpowiedzi.");
     }
 
     await this.redis.set(cacheKey, JSON.stringify(normalized), 60 * 60);
@@ -293,7 +293,7 @@ export class ReservationsService {
         guildId,
         toDate: { gte: monthAgoDate },
       },
-      orderBy: [{ reservationId: 'asc' }, { fromDate: 'asc' }],
+      orderBy: [{ reservationId: "asc" }, { fromDate: "asc" }],
     })) as ReservationRecord[];
 
     return reservations.reduce<Record<string, ReservationRecord[]>>(
@@ -347,7 +347,7 @@ export class ReservationsService {
     });
 
     if (!reservation) {
-      throw new NotFoundException('Nie znaleziono rezerwacji.');
+      throw new NotFoundException("Nie znaleziono rezerwacji.");
     }
 
     const permissionsSet = new Set(permissions);
@@ -357,7 +357,7 @@ export class ReservationsService {
       permissionsSet.has(Permission.ADMIN);
 
     if (!canModerate && reservation.createdBy !== actorDiscordId) {
-      throw new ForbiddenException('Nie możesz usunąć tej rezerwacji.');
+      throw new ForbiddenException("Nie możesz usunąć tej rezerwacji.");
     }
 
     await this.prisma.reservation.delete({

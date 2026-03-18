@@ -1,6 +1,6 @@
-import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Prisma, PrismaClient } from '../../../prisma/generated/client';
+import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Prisma, PrismaClient } from "../../../prisma/generated/client";
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -16,7 +16,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       adapter: pool,
     });
 
-    this.$on('query', (event: Prisma.QueryEvent) => {
+    this.$on("query", (event: Prisma.QueryEvent) => {
       const { duration, query, params, target } = event;
 
       if (duration >= this.SLOW_QUERY_THRESHOLD_MS) {

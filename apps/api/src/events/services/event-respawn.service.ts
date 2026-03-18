@@ -1,32 +1,32 @@
-import { InjectQueue } from '@nestjs/bullmq';
+import { InjectQueue } from "@nestjs/bullmq";
 import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
   NotFoundException,
-} from '@nestjs/common';
-import type { Queue } from 'bullmq';
-import { Prisma } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
-import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
-import { RESPAWN_WINDOW_QUEUE } from '../constants/respawn-queue.constant';
-import type { AutoCloseRespawnWindowJobData } from '../respawn-window.processor';
+} from "@nestjs/common";
+import type { Queue } from "bullmq";
+import { Prisma } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
+import { TIMER_TYPES } from "src/timers/constants/timer-limits";
+import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";
+import type { AutoCloseRespawnWindowJobData } from "../respawn-window.processor";
 import type {
   CloseRespawnWindowOptions,
   OpenRespawnWindowOptions,
-} from '../interfaces/respawn-window.interface';
-import { EventEmitterService } from './event-emitter.service';
-import { EventKillService } from './event-kill.service';
-import { EventTrackingService } from './event-tracking.service';
-import { EventSummaryService } from './event-summary.service';
-import { getSyntheticNpcId } from '../utils/get-synthetic-npc-id';
+} from "../interfaces/respawn-window.interface";
+import { EventEmitterService } from "./event-emitter.service";
+import { EventKillService } from "./event-kill.service";
+import { EventTrackingService } from "./event-tracking.service";
+import { EventSummaryService } from "./event-summary.service";
+import { getSyntheticNpcId } from "../utils/get-synthetic-npc-id";
 import {
   buildRespawnAutoCloseJobId,
   getRespawnAutoCloseDelay,
   RESPAWN_AUTO_CLOSE_JOB_NAME,
   AUTO_CLOSE_BUFFER_MS,
-} from '../utils/respawn-auto-close-job';
+} from "../utils/respawn-auto-close-job";
 
 const DEFAULT_RESP_RANDOMNESS = 20;
 
@@ -68,15 +68,15 @@ export class EventRespawnService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
 
     this.logger.log({
       message: isAutoClose
-        ? 'Auto-closing respawn window'
-        : 'Manually closing respawn window',
+        ? "Auto-closing respawn window"
+        : "Manually closing respawn window",
       heroId,
       eventId,
       guildId,
@@ -135,14 +135,14 @@ export class EventRespawnService {
         );
       } catch (err) {
         this.logger.error({
-          message: 'Failed to close auto respawn window without scoring',
+          message: "Failed to close auto respawn window without scoring",
           heroId,
           eventId,
           guildId,
           error: err instanceof Error ? err.message : err,
         });
         throw new InternalServerErrorException(
-          'Window auto-closed but cleanup failed. Please contact support.',
+          "Window auto-closed but cleanup failed. Please contact support.",
         );
       }
     } else if (timer) {
@@ -163,20 +163,22 @@ export class EventRespawnService {
         );
       } catch (err) {
         this.logger.error({
-          message: 'Failed to record hero kill on manual window close',
+          message: "Failed to record hero kill on manual window close",
           heroId,
           eventId,
           guildId,
           error: err instanceof Error ? err.message : err,
         });
         throw new InternalServerErrorException(
-          'Window closed but failed to record points. Please contact support.',
+          "Window closed but failed to record points. Please contact support.",
         );
       }
     }
 
-    for (const map of hero.maps) {
-      await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
+    if (isAutoClose || !timer) {
+      for (const map of hero.maps) {
+        await this.eventEmitter.emitMapStatusUpdate(guildId, eventId, map.id);
+      }
     }
 
     if (timer) {
@@ -194,7 +196,7 @@ export class EventRespawnService {
         if (
           !(
             error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === 'P2025'
+            error.code === "P2025"
           )
         ) {
           throw error;
@@ -226,7 +228,7 @@ export class EventRespawnService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
@@ -234,7 +236,7 @@ export class EventRespawnService {
     const { minSpawnTime, maxSpawnTime } = options;
 
     this.logger.log({
-      message: 'Opening respawn window',
+      message: "Opening respawn window",
       heroId,
       eventId,
       guildId,
@@ -248,22 +250,22 @@ export class EventRespawnService {
     });
 
     if (!firstMember) {
-      throw new BadRequestException('No members found in guild');
+      throw new BadRequestException("No members found in guild");
     }
 
     const isUsingSyntheticId = hero.npcId === null;
     const npcData = {
       id: effectiveNpcId,
       name: hero.npcName,
-      prof: '',
-      location: '',
-      wt: '',
+      prof: "",
+      location: "",
+      wt: "",
       lvl: 0,
-      type: 'hero',
-      icon: hero.npcIcon || '',
+      type: "hero",
+      icon: hero.npcIcon || "",
       margonemType: isUsingSyntheticId
         ? String(TIMER_TYPES.CUSTOM_MANUAL)
-        : '0',
+        : "0",
     };
 
     const windowOpenedAt = new Date();
@@ -340,7 +342,7 @@ export class EventRespawnService {
     }
 
     this.logger.log({
-      message: 'Opened coverage gaps for hero maps',
+      message: "Opened coverage gaps for hero maps",
       heroId,
       mapsCount: heroMaps.length,
       unassignedCount,
@@ -364,7 +366,7 @@ export class EventRespawnService {
     heroId: string,
   ): Promise<{
     hasTimer: boolean;
-    windowStatus: 'OPEN' | 'WAITING' | 'NONE';
+    windowStatus: "OPEN" | "WAITING" | "NONE";
     minSpawnTime: Date | null;
     maxSpawnTime: Date | null;
   }> {
@@ -374,7 +376,7 @@ export class EventRespawnService {
     });
 
     if (!hero) {
-      throw new NotFoundException('Hero not found');
+      throw new NotFoundException("Hero not found");
     }
 
     const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
@@ -391,7 +393,7 @@ export class EventRespawnService {
       },
     });
 
-    let windowStatus: 'OPEN' | 'WAITING' | 'NONE' = 'NONE';
+    let windowStatus: "OPEN" | "WAITING" | "NONE" = "NONE";
     let hasActiveTimer = false;
 
     if (timer) {
@@ -399,10 +401,10 @@ export class EventRespawnService {
       const maxTime = new Date(timer.maxSpawnTime);
 
       if (now >= minTime && now < maxTime) {
-        windowStatus = 'OPEN';
+        windowStatus = "OPEN";
         hasActiveTimer = true;
       } else if (now < minTime) {
-        windowStatus = 'WAITING';
+        windowStatus = "WAITING";
       }
     }
 
@@ -426,7 +428,7 @@ export class EventRespawnService {
 
     if (delay <= 0) {
       this.logger.warn({
-        message: 'maxSpawnTime is in the past, skipping auto-close scheduling',
+        message: "maxSpawnTime is in the past, skipping auto-close scheduling",
         heroId,
         maxSpawnTime,
       });
@@ -447,7 +449,7 @@ export class EventRespawnService {
     );
 
     this.logger.log({
-      message: 'Scheduled auto-close job',
+      message: "Scheduled auto-close job",
       heroId,
       jobId,
       delay,
@@ -457,13 +459,13 @@ export class EventRespawnService {
   }
 
   private async cancelScheduledAutoClose(heroId: string): Promise<void> {
-    const delayedJobs = await this.respawnWindowQueue.getJobs(['delayed']);
+    const delayedJobs = await this.respawnWindowQueue.getJobs(["delayed"]);
 
     for (const job of delayedJobs) {
       if (job.data.heroId === heroId) {
         await job.remove();
         this.logger.log({
-          message: 'Cancelled scheduled auto-close job',
+          message: "Cancelled scheduled auto-close job",
           heroId,
           jobId: job.id,
         });

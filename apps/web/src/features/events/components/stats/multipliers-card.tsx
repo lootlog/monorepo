@@ -22,19 +22,25 @@ export const MultipliersCard = ({
   const andLabel = t("events.scoring.andLabel", "i");
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-      <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-        <Calculator className="w-4 h-4" />
-        {t("events.killDetail.multipliers.title", "Zasady punktacji")}
-      </h3>
+    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+          <Calculator className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("events.killDetail.multipliers.subtitle", "Punktacja")}
+          </p>
+          <h3 className="text-base font-semibold">
+            {t("events.killDetail.multipliers.title", "Zasady punktacji")}
+          </h3>
+        </div>
+      </div>
 
       <div className="space-y-3 text-sm">
         {eventConfig.scoringMode === "SIMPLE" ? (
           <div className="text-muted-foreground">
-            {t(
-              "events.killDetail.multipliers.simpleMode",
-              "Tryb prosty: 1 punkt za eligible gracza.",
-            )}
+            {t("events.killDetail.multipliers.simpleMode")}
           </div>
         ) : (
           <div className="space-y-2 text-muted-foreground">
@@ -67,7 +73,9 @@ export const MultipliersCard = ({
                     {t("events.scoring.ifLabel", "JEŻELI")}{" "}
                     {rule.conditions.length > 0
                       ? rule.conditions
-                          .map((condition) => formatScoringCondition(condition, t))
+                          .map((condition) =>
+                            formatScoringCondition(condition, t),
+                          )
                           .join(` ${andLabel} `)
                       : t("events.scoring.always", "zawsze")}{" "}
                     {t("events.scoring.thenLabel", "WTEDY")}{" "}
@@ -84,7 +92,11 @@ export const MultipliersCard = ({
             {t(
               "events.killDetail.multipliers.cap",
               "Maksymalnie {{points}} pkt za jednego herosa",
-              { points: (eventConfig.scoringRules?.hardCapPoints ?? 2).toFixed(2) },
+              {
+                points: (eventConfig.scoringRules?.hardCapPoints ?? 2).toFixed(
+                  2,
+                ),
+              },
             )}
           </p>
           <p>

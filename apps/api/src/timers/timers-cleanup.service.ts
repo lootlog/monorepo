@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from 'src/db/prisma.service';
-import { ConfigService } from '@nestjs/config';
-import { TIMER_TYPES } from 'src/timers/constants/timer-limits';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { PrismaService } from "src/db/prisma.service";
+import { ConfigService } from "@nestjs/config";
+import { TIMER_TYPES } from "src/timers/constants/timer-limits";
 
 const DEFAULT_RETENTION_DAYS = 7;
 
@@ -17,9 +17,9 @@ export class TimersCleanupService {
     private readonly configService: ConfigService,
   ) {
     this.enabled =
-      this.configService.get<string>('TIMER_CLEANUP_ENABLED') !== 'false';
+      this.configService.get<string>("TIMER_CLEANUP_ENABLED") !== "false";
     this.retentionDays = parseInt(
-      this.configService.get<string>('TIMER_RETENTION_DAYS') ??
+      this.configService.get<string>("TIMER_RETENTION_DAYS") ??
         String(DEFAULT_RETENTION_DAYS),
       10,
     );
@@ -35,12 +35,11 @@ export class TimersCleanupService {
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async cleanupExpiredTimers() {
     if (!this.enabled) {
-      this.logger.debug('Timer cleanup is disabled');
+      this.logger.debug("Timer cleanup is disabled");
       return;
     }
 
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
+    const cutoffDate = this.createCutoffDate(this.retentionDays);
 
     this.logger.log(
       `Starting manual timer cleanup (cutoff: ${cutoffDate}, retention: ${this.retentionDays} days)`,
@@ -49,19 +48,16 @@ export class TimersCleanupService {
     const startTime = Date.now();
 
     try {
-      const result = await this.prisma.$executeRaw<number>`
-        DELETE FROM "Timer"
-        WHERE "maxSpawnTime" < ${cutoffDate}
-          AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}
-      `;
+      const deletedTimersCount =
+        await this.deleteExpiredManualTimers(cutoffDate);
 
       const duration = Date.now() - startTime;
 
       this.logger.log(
-        `Deleted ${result} expired manual timers in ${duration}ms (game NPC timers preserved)`,
+        `Deleted ${deletedTimersCount} expired manual timers in ${duration}ms (game NPC timers preserved)`,
       );
     } catch (error) {
-      this.logger.error('Timer cleanup failed', error);
+      this.logger.error("Timer cleanup failed", error);
     }
   }
 
@@ -75,23 +71,33 @@ export class TimersCleanupService {
   async cleanupExpiredTimersManual(
     retentionDays: number = this.retentionDays,
   ): Promise<number> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+    const cutoffDate = this.createCutoffDate(retentionDays);
 
     this.logger.log(
       `Manual cleanup of expired manual timers (cutoff: ${cutoffDate}, retention: ${retentionDays} days)`,
     );
 
-    const count = await this.prisma.$executeRaw<number>`
+    const deletedTimersCount = await this.deleteExpiredManualTimers(cutoffDate);
+
+    this.logger.log(
+      `Manual cleanup deleted ${deletedTimersCount} expired manual timers (game NPC timers preserved)`,
+    );
+
+    return deletedTimersCount;
+  }
+
+  private createCutoffDate(retentionDays: number): Date {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    return cutoffDate;
+  }
+
+  private deleteExpiredManualTimers(cutoffDate: Date): Promise<number> {
+    return this.prisma.$executeRaw<number>`
       DELETE FROM "Timer"
       WHERE "maxSpawnTime" < ${cutoffDate}
         AND ("npc"->>'margonemType')::int = ${TIMER_TYPES.CUSTOM_MANUAL}
     `;
-
-    this.logger.log(
-      `Manual cleanup deleted ${count} expired manual timers (game NPC timers preserved)`,
-    );
-
-    return count;
   }
 }

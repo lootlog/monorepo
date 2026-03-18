@@ -7,28 +7,28 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+} from "@nestjs/common";
+import { DiscordId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiParam,
-} from '@nestjs/swagger';
-import { ChatService } from 'src/chat/chat.service';
-import { SendMessageDto } from 'src/chat/dto/send-message.dto';
-import { UpdateMessageDto } from 'src/chat/dto/update-message.dto';
-import { type Guild, Permission } from 'generated/client';
-import { DiscordId } from 'src/shared/decorators/discord-id.decorator';
-import { GuildData } from 'src/shared/decorators/guild-data.decorator';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { Permissions } from 'src/shared/permissions/permissions.decorator';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+} from "@nestjs/swagger";
+import { ChatService } from "src/chat/chat.service";
+import { SendMessageDto } from "src/chat/dto/send-message.dto";
+import { UpdateMessageDto } from "src/chat/dto/update-message.dto";
+import { type Guild, Permission } from "generated/client";
+import { GuildData } from "src/shared/decorators/guild-data.decorator";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { Permissions } from "src/shared/permissions/permissions.decorator";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
-@ApiTags('chat')
+@ApiTags("chat")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
-@Controller('guilds/:guildId/chat-messages')
+@Controller("guilds/:guildId/chat-messages")
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
@@ -36,17 +36,17 @@ export class ChatController {
   @UseGuards(PermissionsGuard)
   @Get()
   @ApiOperation({
-    summary: 'Get chat messages',
-    description: 'Retrieve chat messages for a guild',
+    summary: "Get chat messages",
+    description: "Retrieve chat messages for a guild",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiResponse({
     status: 200,
-    description: 'List of chat messages',
+    description: "List of chat messages",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: "Forbidden - insufficient permissions",
   })
   async getChatMessages(
     @DiscordId() discordId: string,
@@ -59,17 +59,17 @@ export class ChatController {
   @UseGuards(PermissionsGuard)
   @Post()
   @ApiOperation({
-    summary: 'Send chat message',
-    description: 'Send a new chat message to a guild',
+    summary: "Send chat message",
+    description: "Send a new chat message to a guild",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiResponse({
     status: 201,
-    description: 'Message sent successfully',
+    description: "Message sent successfully",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions',
+    description: "Forbidden - insufficient permissions",
   })
   async sendChatMessage(
     @Body() data: SendMessageDto,
@@ -81,29 +81,29 @@ export class ChatController {
 
   @Permissions(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
-  @Patch(':messageId')
+  @Patch(":messageId")
   @ApiOperation({
-    summary: 'Update chat message',
-    description: 'Update the content of a chat message',
+    summary: "Update chat message",
+    description: "Update the content of a chat message",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({
-    name: 'messageId',
-    description: 'Message ID',
-    example: 'msg_123',
+    name: "messageId",
+    description: "Message ID",
+    example: "msg_123",
   })
   @ApiResponse({
     status: 200,
-    description: 'Message updated successfully',
+    description: "Message updated successfully",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions or not message owner',
+    description: "Forbidden - insufficient permissions or not message owner",
   })
   async updateChatMessage(
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
-    @Param('messageId') messageId: string,
+    @Param("messageId") messageId: string,
     @Body() dto: UpdateMessageDto,
   ) {
     return this.chatService.updateMessage(
@@ -116,29 +116,29 @@ export class ChatController {
 
   @Permissions(Permission.LOOTLOG_CHAT_WRITE)
   @UseGuards(PermissionsGuard)
-  @Delete(':messageId')
+  @Delete(":messageId")
   @ApiOperation({
-    summary: 'Delete chat message',
-    description: 'Delete a chat message from a guild',
+    summary: "Delete chat message",
+    description: "Delete a chat message from a guild",
   })
-  @ApiParam({ name: 'guildId', description: 'Guild ID', example: 'guild_123' })
+  @ApiParam({ name: "guildId", description: "Guild ID", example: "guild_123" })
   @ApiParam({
-    name: 'messageId',
-    description: 'Message ID',
-    example: 'msg_123',
+    name: "messageId",
+    description: "Message ID",
+    example: "msg_123",
   })
   @ApiResponse({
     status: 200,
-    description: 'Message deleted successfully',
+    description: "Message deleted successfully",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - insufficient permissions or not message owner',
+    description: "Forbidden - insufficient permissions or not message owner",
   })
   async deleteChatMessage(
     @GuildData() guild: Guild,
     @DiscordId() discordId: string,
-    @Param('messageId') messageId: string,
+    @Param("messageId") messageId: string,
   ) {
     return this.chatService.deleteMessage(discordId, guild.id, messageId);
   }

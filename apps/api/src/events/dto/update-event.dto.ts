@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsBoolean,
   IsArray,
   ValidateNested,
   IsDateString,
@@ -10,36 +9,31 @@ import {
   IsNumber,
   MaxLength,
   IsIn,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { HeroNpcDto } from './create-event.dto';
-import { EventScoringRulesDto } from './event-scoring-rules.dto';
-import { EVENT_SCORING_MODES } from '../constants/scoring-rules.constant';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { HeroNpcDto } from "./create-event.dto";
+import { EventScoringRulesDto } from "./event-scoring-rules.dto";
+import { EVENT_SCORING_MODES } from "../constants/scoring-rules.constant";
 
 export class UpdateEventDto {
-  @ApiPropertyOptional({ description: 'Event name' })
+  @ApiPropertyOptional({ description: "Event name" })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ description: 'Event active status' })
-  @IsOptional()
-  @IsBoolean()
-  active?: boolean;
-
-  @ApiPropertyOptional({ description: 'Event start time' })
+  @ApiPropertyOptional({ description: "Event start time" })
   @IsOptional()
   @IsDateString()
   startsAt?: string;
 
-  @ApiPropertyOptional({ description: 'Event end time' })
+  @ApiPropertyOptional({ description: "Event end time" })
   @IsOptional()
   @IsDateString()
   endsAt?: string;
 
   @ApiPropertyOptional({
-    description: 'Hero NPCs to track with their spawn maps',
+    description: "Hero NPCs to track with their spawn maps",
     type: [HeroNpcDto],
   })
   @IsOptional()
@@ -49,7 +43,7 @@ export class UpdateEventDto {
   heroNpcs?: HeroNpcDto[];
 
   @ApiPropertyOptional({
-    description: 'Legacy base points value kept for compatibility',
+    description: "Legacy base points value kept for compatibility",
   })
   @IsOptional()
   @IsNumber()
@@ -57,7 +51,7 @@ export class UpdateEventDto {
   basePointsPerKill?: number;
 
   @ApiPropertyOptional({
-    description: 'Minutes before minSpawnTime when assignments are allowed',
+    description: "Minutes before minSpawnTime when assignments are allowed",
   })
   @IsOptional()
   @IsInt()
@@ -66,7 +60,7 @@ export class UpdateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Minutes from kill time to confirm participation (0 disables confirmations)',
+      "Minutes from kill time to confirm participation (0 disables confirmations)",
   })
   @IsOptional()
   @IsInt()
@@ -75,7 +69,7 @@ export class UpdateEventDto {
 
   @ApiPropertyOptional({
     description:
-      'Maximum number of members that can assign to a single map (null or 0 = no limit)',
+      "Maximum number of members that can assign to a single map (null or 0 = no limit)",
   })
   @IsOptional()
   @IsInt()
@@ -83,7 +77,7 @@ export class UpdateEventDto {
   mapAssignmentCap?: number;
 
   @ApiPropertyOptional({
-    description: 'Optional event rulebook displayed to participants',
+    description: "Optional event rulebook displayed to participants",
   })
   @IsOptional()
   @IsString()
@@ -91,7 +85,7 @@ export class UpdateEventDto {
   rulebookMarkdown?: string;
 
   @ApiPropertyOptional({
-    description: 'Scoring rules configuration for this event',
+    description: "Scoring rules configuration for this event",
     type: EventScoringRulesDto,
   })
   @IsOptional()
@@ -100,11 +94,11 @@ export class UpdateEventDto {
   scoringRules?: EventScoringRulesDto;
 
   @ApiPropertyOptional({
-    description: 'Scoring mode used for this event',
+    description: "Scoring mode used for this event",
     enum: EVENT_SCORING_MODES,
   })
   @IsOptional()
   @IsString()
   @IsIn(EVENT_SCORING_MODES)
-  scoringMode?: 'SIMPLE' | 'ADVANCED';
+  scoringMode?: "SIMPLE" | "ADVANCED";
 }

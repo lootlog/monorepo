@@ -1,14 +1,14 @@
 {
   "name": "@lootlog/activity",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
   "private": true,
+  "description": "",
   "license": "UNLICENSED",
+  "author": "",
   "scripts": {
     "prebuild": "pnpm activity:generate",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "oxfmt src test",
     "dev": "APP_VERSION=$(node -p \"require('./package.json').version\") nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start": "APP_VERSION=$(node -p \"require('./package.json').version\") node dist/src/main",
@@ -64,7 +64,6 @@
     "@types/supertest": "^6.0.3",
     "globals": "^16.5.0",
     "jest": "^30.2.0",
-    "prettier": "^3.8.1",
     "prisma": "^7.4.2",
     "source-map-support": "^0.5.21",
     "supertest": "^7.2.2",
@@ -75,24 +74,24 @@
     "typescript": "^5.9.3"
   },
   "jest": {
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
     "moduleFileExtensions": [
       "js",
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "^prisma/generated/client$": "<rootDir>/../prisma/generated/client",
+      "^src/(.*)$": "<rootDir>/$1"
+    },
     "rootDir": "src",
+    "testEnvironment": "node",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1",
-      "^prisma/generated/client$": "<rootDir>/../prisma/generated/client"
     }
   }
 }

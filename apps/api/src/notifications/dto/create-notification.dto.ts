@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
@@ -8,8 +8,8 @@ import {
   IsString,
   MaxLength,
   ValidateNested,
-} from 'class-validator';
-import { NpcDto } from 'src/loots/dto/create-loot.dto';
+} from "class-validator";
+import { NpcDto } from "src/loots/dto/create-loot.dto";
 
 export class CreateNotificationDto {
   @IsString()

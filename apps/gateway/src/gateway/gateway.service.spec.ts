@@ -1,34 +1,34 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { GatewayService } from './gateway.service';
-import { Gateway } from './gateway';
-import { RedisService } from '../lib/redis/redis.service';
-import { GuildsService } from '../guilds/guilds.service';
-import { CreateTimerDto } from './dto/create-timer.dto';
-import type { DeleteTimerDto } from './dto/delete-timer.dto';
-import { MessageType, SendMessageDto } from './dto/send-message.dto';
-import { SendNotificationDto } from './dto/send-notification.dto';
-import type { RefreshJobUpdateDto } from './dto/refresh-job-update.dto';
-import { NpcType } from './enums/npc-type.enum';
-import { GatewayEvent } from './enums/gateway-event.enum';
-import { Permission } from '@lootlog/types';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { GatewayService } from "./gateway.service";
+import { Gateway } from "./gateway";
+import { RedisService } from "@lootlog/nest-shared";
+import { GuildsService } from "../guilds/guilds.service";
+import { CreateTimerDto } from "./dto/create-timer.dto";
+import type { DeleteTimerDto } from "./dto/delete-timer.dto";
+import { MessageType, SendMessageDto } from "./dto/send-message.dto";
+import { SendNotificationDto } from "./dto/send-notification.dto";
+import type { RefreshJobUpdateDto } from "./dto/refresh-job-update.dto";
+import { NpcType } from "./enums/npc-type.enum";
+import { GatewayEvent } from "./enums/gateway-event.enum";
+import { Permission } from "@lootlog/types";
 import type {
   ReservationCreateEventDto,
   ReservationDeleteEventDto,
-} from './dto/reservation-event.dto';
+} from "./dto/reservation-event.dto";
 
-describe('GatewayService', () => {
+describe("GatewayService", () => {
   let service: GatewayService;
 
   const mockSocket = {
-    id: 'socket-123',
+    id: "socket-123",
     data: {
-      discordId: 'discord-123',
+      discordId: "discord-123",
       guilds: [],
     },
     emit: jest.fn(),
     leave: jest.fn(),
     join: jest.fn(),
-    rooms: new Set(['room-1']),
+    rooms: new Set(["room-1"]),
   };
 
   const mockServer = {
@@ -85,21 +85,21 @@ describe('GatewayService', () => {
     return new Promise((resolve) => setImmediate(resolve));
   }
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('handleGuildsTimerUpdate', () => {
+  describe("handleGuildsTimerUpdate", () => {
     const npcData = {
       id: 1,
-      name: 'Test NPC',
+      name: "Test NPC",
       lvl: 100,
-      prof: 'warrior',
+      prof: "warrior",
       type: NpcType.TITAN,
-      margonemType: '1',
-      location: 'test-location',
-      wt: '1000',
-      icon: 'icon.png',
+      margonemType: "1",
+      location: "test-location",
+      wt: "1000",
+      icon: "icon.png",
       createdAt: new Date(),
       updatedAt: new Date(),
       lootId: null,
@@ -108,21 +108,21 @@ describe('GatewayService', () => {
     };
 
     const timerDto = new CreateTimerDto();
-    timerDto.guildId = 'guild-123';
-    timerDto.world = 'test-world';
+    timerDto.guildId = "guild-123";
+    timerDto.world = "test-world";
     timerDto.minSpawnTime = 1000;
     timerDto.maxSpawnTime = 2000;
     timerDto.npc = npcData;
-    timerDto.location = 'test-location';
+    timerDto.location = "test-location";
 
-    it('should emit timer update to eligible sockets with TITAN permissions', async () => {
+    it("should emit timer update to eligible sockets with TITAN permissions", async () => {
       const mockSocketWithPermissions = {
         ...mockSocket,
         data: {
-          discordId: 'discord-123',
+          discordId: "discord-123",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'different-user' },
+              guild: { id: "guild-123", ownerId: "different-user" },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
@@ -142,7 +142,7 @@ describe('GatewayService', () => {
 
       // Wait for async promise chain to complete
       // Feature room for titan timers
-      expect(mockServer.in).toHaveBeenCalledWith('guild-123:timers:titans');
+      expect(mockServer.in).toHaveBeenCalledWith("guild-123:timers:titans");
       expect(mockServer.fetchSockets).toHaveBeenCalled();
       expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
         GatewayEvent.TIMERS_CREATE,
@@ -150,7 +150,7 @@ describe('GatewayService', () => {
       );
     });
 
-    it('should not emit to sockets without TITAN permissions (socket not in room)', async () => {
+    it("should not emit to sockets without TITAN permissions (socket not in room)", async () => {
       // Socket without TITAN permission would not be in the 'guild-123:timers:titans' room
       // so fetchSockets from that room returns empty
       mockServer.fetchSockets.mockResolvedValue([]);
@@ -158,19 +158,19 @@ describe('GatewayService', () => {
       await service.handleGuildsTimerUpdate(timerDto);
 
       // Feature room for titan timers
-      expect(mockServer.in).toHaveBeenCalledWith('guild-123:timers:titans');
+      expect(mockServer.in).toHaveBeenCalledWith("guild-123:timers:titans");
       expect(mockServer.fetchSockets).toHaveBeenCalled();
       // No sockets to emit to since none are in the room
     });
 
-    it('should emit to administrative users regardless of specific permissions', async () => {
+    it("should emit to administrative users regardless of specific permissions", async () => {
       const mockAdminSocket = {
         ...mockSocket,
         data: {
-          discordId: 'discord-admin',
+          discordId: "discord-admin",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'different-user' },
+              guild: { id: "guild-123", ownerId: "different-user" },
               roles: [
                 {
                   permissions: [Permission.ADMIN],
@@ -195,14 +195,14 @@ describe('GatewayService', () => {
       );
     });
 
-    it('should not emit to sockets without matching level range', async () => {
+    it("should not emit to sockets without matching level range", async () => {
       const mockSocketWrongLevel = {
         ...mockSocket,
         data: {
-          discordId: 'discord-123',
+          discordId: "discord-123",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'different-user' },
+              guild: { id: "guild-123", ownerId: "different-user" },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
@@ -224,14 +224,14 @@ describe('GatewayService', () => {
       expect(mockSocketWrongLevel.emit).not.toHaveBeenCalled();
     });
 
-    it('should not emit to sockets without matching guild', async () => {
+    it("should not emit to sockets without matching guild", async () => {
       const mockSocketWrongGuild = {
         ...mockSocket,
         data: {
-          discordId: 'discord-123',
+          discordId: "discord-123",
           guilds: [
             {
-              guild: { id: 'guild-456', ownerId: 'different-user' },
+              guild: { id: "guild-456", ownerId: "different-user" },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_TIMERS_TITANS_READ],
@@ -254,20 +254,20 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('handleGuildsTimerDelete', () => {
-    it('should emit timer delete event to all timer rooms', async () => {
+  describe("handleGuildsTimerDelete", () => {
+    it("should emit timer delete event to all timer rooms", async () => {
       const deleteDto: DeleteTimerDto = {
-        guildId: 'guild-123',
-        world: 'world-1',
+        guildId: "guild-123",
+        world: "world-1",
         npcId: 1,
       };
 
       await service.handleGuildsTimerDelete(deleteDto);
 
       expect(mockServer.to).toHaveBeenCalledWith([
-        'guild-123:timers:base',
-        'guild-123:timers:titans',
-        'guild-123:timers:heroes',
+        "guild-123:timers:base",
+        "guild-123:timers:titans",
+        "guild-123:timers:heroes",
       ]);
       expect(mockServer.emit).toHaveBeenCalledWith(
         GatewayEvent.TIMERS_DELETE,
@@ -276,23 +276,23 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('handleGuildsReservationCreate', () => {
-    it('should emit reservation create event to events room', () => {
+  describe("handleGuildsReservationCreate", () => {
+    it("should emit reservation create event to events room", () => {
       const payload: ReservationCreateEventDto = {
-        guildId: 'guild-123',
+        guildId: "guild-123",
         reservation: {
           id: 42,
-          reservationId: 'raid',
+          reservationId: "raid",
           createdDate: new Date().toISOString(),
           fromDate: new Date().toISOString(),
           toDate: new Date(Date.now() + 3_600_000).toISOString(),
-          createdBy: 'discord-123',
+          createdBy: "discord-123",
         },
       };
 
       service.handleGuildsReservationCreate(payload);
 
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123:events');
+      expect(mockServer.to).toHaveBeenCalledWith("guild-123:events");
       expect(mockServer.emit).toHaveBeenCalledWith(
         GatewayEvent.RESERVATIONS_CREATE,
         payload,
@@ -300,23 +300,23 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('handleGuildsReservationDelete', () => {
-    it('should emit reservation delete event to events room', () => {
+  describe("handleGuildsReservationDelete", () => {
+    it("should emit reservation delete event to events room", () => {
       const payload: ReservationDeleteEventDto = {
-        guildId: 'guild-123',
+        guildId: "guild-123",
         reservation: {
           id: 43,
-          reservationId: 'raid',
+          reservationId: "raid",
           createdDate: new Date().toISOString(),
           fromDate: new Date().toISOString(),
           toDate: new Date(Date.now() + 3_600_000).toISOString(),
-          createdBy: 'discord-123',
+          createdBy: "discord-123",
         },
       };
 
       service.handleGuildsReservationDelete(payload);
 
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123:events');
+      expect(mockServer.to).toHaveBeenCalledWith("guild-123:events");
       expect(mockServer.emit).toHaveBeenCalledWith(
         GatewayEvent.RESERVATIONS_DELETE,
         payload,
@@ -324,25 +324,25 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('handleGuildMessageSend', () => {
-    it('should emit chat message to eligible sockets', async () => {
+  describe("handleGuildMessageSend", () => {
+    it("should emit chat message to eligible sockets", async () => {
       const messageDto = new SendMessageDto();
-      messageDto.id = 'message-123';
-      messageDto.guildId = 'guild-123';
-      messageDto.message = 'Test message';
-      messageDto.senderId = 'sender-123';
+      messageDto.id = "message-123";
+      messageDto.guildId = "guild-123";
+      messageDto.message = "Test message";
+      messageDto.senderId = "sender-123";
       messageDto.timestamp = new Date().toISOString();
       messageDto.type = MessageType.NORMAL;
       messageDto.npc = {
         id: 1,
-        name: 'Hero NPC',
+        name: "Hero NPC",
         lvl: 200,
-        prof: 'mage',
+        prof: "mage",
         type: NpcType.HERO,
-        margonemType: '2',
-        location: 'hero-location',
-        wt: '2000',
-        icon: 'hero.png',
+        margonemType: "2",
+        location: "hero-location",
+        wt: "2000",
+        icon: "hero.png",
         createdAt: new Date(),
         updatedAt: new Date(),
         lootId: null,
@@ -350,21 +350,21 @@ describe('GatewayService', () => {
         y: 15,
       };
       messageDto.characterData = {
-        nick: 'SenderNick',
+        nick: "SenderNick",
         id: 123,
         acc: 456,
         lvl: 50,
-        prof: 'warrior',
-        icon: 'icon.png',
+        prof: "warrior",
+        icon: "icon.png",
       };
 
       const mockSocketWithPermissions = {
         ...mockSocket,
         data: {
-          discordId: 'discord-123',
+          discordId: "discord-123",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'different-user' },
+              guild: { id: "guild-123", ownerId: "different-user" },
               roles: [
                 {
                   // HEROES permission allows user to be in guild-123:chat:heroes room
@@ -387,7 +387,7 @@ describe('GatewayService', () => {
       await flushPromises();
 
       // Feature room for hero-tier chat (npc.type = HERO)
-      expect(mockServer.in).toHaveBeenCalledWith('guild-123:chat:heroes');
+      expect(mockServer.in).toHaveBeenCalledWith("guild-123:chat:heroes");
       expect(mockSocketWithPermissions.emit).toHaveBeenCalledWith(
         GatewayEvent.CHAT_MESSAGE,
         messageDto,
@@ -395,18 +395,18 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('handleGuildNotificationSend', () => {
-    it('should emit notification to eligible sockets', async () => {
+  describe("handleGuildNotificationSend", () => {
+    it("should emit notification to eligible sockets", async () => {
       const npcData = {
         id: 1,
-        name: 'Hero NPC',
+        name: "Hero NPC",
         lvl: 200,
-        prof: 'mage',
+        prof: "mage",
         type: NpcType.HERO,
-        margonemType: '2',
-        location: 'hero-location',
-        wt: '2000',
-        icon: 'hero.png',
+        margonemType: "2",
+        location: "hero-location",
+        wt: "2000",
+        icon: "hero.png",
         createdAt: new Date(),
         updatedAt: new Date(),
         lootId: null,
@@ -415,16 +415,16 @@ describe('GatewayService', () => {
       };
 
       const notificationDto = new SendNotificationDto();
-      notificationDto.guildId = 'guild-123';
+      notificationDto.guildId = "guild-123";
       notificationDto.npc = npcData;
 
       const mockSocketWithHeroPerms = {
         ...mockSocket,
         data: {
-          discordId: 'discord-123',
+          discordId: "discord-123",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'different-user' },
+              guild: { id: "guild-123", ownerId: "different-user" },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_NOTIFICATIONS_HEROES_READ],
@@ -451,9 +451,9 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('invalidatePlayerCache', () => {
-    it('should delete player cache from Redis', async () => {
-      const discordId = 'discord-123';
+  describe("invalidatePlayerCache", () => {
+    it("should delete player cache from Redis", async () => {
+      const discordId = "discord-123";
 
       await service.invalidatePlayerCache(discordId);
 
@@ -461,12 +461,12 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('handleMembersRefreshJobUpdate', () => {
-    it('should emit refresh job update to OWNER/ADMIN users only', async () => {
+  describe("handleMembersRefreshJobUpdate", () => {
+    it("should emit refresh job update to OWNER/ADMIN users only", async () => {
       const refreshDto: RefreshJobUpdateDto = {
         jobId: 1,
-        guildId: 'guild-123',
-        status: 'PROCESSING',
+        guildId: "guild-123",
+        status: "PROCESSING",
         totalMembers: 100,
         processedMembers: 50,
         failedMembers: 0,
@@ -475,10 +475,10 @@ describe('GatewayService', () => {
       const mockOwnerSocket = {
         ...mockSocket,
         data: {
-          discordId: 'discord-owner',
+          discordId: "discord-owner",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'discord-owner' },
+              guild: { id: "guild-123", ownerId: "discord-owner" },
               roles: [
                 {
                   permissions: [Permission.OWNER],
@@ -495,10 +495,10 @@ describe('GatewayService', () => {
       const mockRegularSocket = {
         ...mockSocket,
         data: {
-          discordId: 'discord-regular',
+          discordId: "discord-regular",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'discord-owner' },
+              guild: { id: "guild-123", ownerId: "discord-owner" },
               roles: [
                 {
                   permissions: [Permission.LOOTLOG_LOOTS_READ],
@@ -520,14 +520,14 @@ describe('GatewayService', () => {
       await service.handleMembersRefreshJobUpdate(refreshDto);
 
       // Admin room broadcast
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123:admin');
+      expect(mockServer.to).toHaveBeenCalledWith("guild-123:admin");
     });
 
-    it('should emit to ADMIN users', async () => {
+    it("should emit to ADMIN users", async () => {
       const refreshDto: RefreshJobUpdateDto = {
         jobId: 1,
-        guildId: 'guild-123',
-        status: 'PROCESSING',
+        guildId: "guild-123",
+        status: "PROCESSING",
         totalMembers: 100,
         processedMembers: 75,
         failedMembers: 0,
@@ -536,10 +536,10 @@ describe('GatewayService', () => {
       const mockAdminSocket = {
         ...mockSocket,
         data: {
-          discordId: 'discord-admin',
+          discordId: "discord-admin",
           guilds: [
             {
-              guild: { id: 'guild-123', ownerId: 'different-user' },
+              guild: { id: "guild-123", ownerId: "different-user" },
               roles: [
                 {
                   permissions: [Permission.ADMIN],
@@ -557,14 +557,14 @@ describe('GatewayService', () => {
 
       await service.handleMembersRefreshJobUpdate(refreshDto);
 
-      expect(mockServer.to).toHaveBeenCalledWith('guild-123:admin');
+      expect(mockServer.to).toHaveBeenCalledWith("guild-123:admin");
     });
   });
 
-  describe('invalidateUserGuildsCache', () => {
-    it('should call guildsService to invalidate user guilds cache', async () => {
-      const discordId = 'discord-123';
-      const userId = 'user-123';
+  describe("invalidateUserGuildsCache", () => {
+    it("should call guildsService to invalidate user guilds cache", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
 
       await service.invalidateUserGuildsCache(discordId, userId);
 
@@ -575,28 +575,32 @@ describe('GatewayService', () => {
     });
   });
 
-  describe('rebalanceUserSocketRooms', () => {
-    it('should rebalance user socket rooms based on updated guilds', async () => {
-      const discordId = 'discord-123';
-      const userId = 'user-123';
+  describe("rebalanceUserSocketRooms", () => {
+    it("should rebalance user socket rooms based on updated guilds", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
 
       const updatedGuilds = [
         {
-          guild: { id: 'guild-1', ownerId: 'discord-123' },
+          guild: { id: "guild-1", ownerId: "discord-123" },
           roles: [],
         },
         {
-          guild: { id: 'guild-2', ownerId: 'discord-123' },
+          guild: { id: "guild-2", ownerId: "discord-123" },
           roles: [],
         },
       ];
 
       const mockUserSocket = {
-        id: 'socket-123',
+        id: "socket-123",
         data: {
-          discordId: 'discord-123',
+          discordId: "discord-123",
         },
-        rooms: new Set(['socket-123', 'guild-1:presence', 'old-guild:presence']),
+        rooms: new Set([
+          "socket-123",
+          "guild-1:presence",
+          "old-guild:presence",
+        ]),
         leave: jest.fn(),
         join: jest.fn(),
         emit: jest.fn(),
@@ -611,8 +615,8 @@ describe('GatewayService', () => {
         discordId,
         userId,
       });
-      expect(mockUserSocket.leave).toHaveBeenCalledWith('old-guild:presence');
-      expect(mockUserSocket.join).toHaveBeenCalledWith('guild-2:presence');
+      expect(mockUserSocket.leave).toHaveBeenCalledWith("old-guild:presence");
+      expect(mockUserSocket.join).toHaveBeenCalledWith("guild-2:presence");
       expect(mockUserSocket.emit).toHaveBeenCalledWith(
         GatewayEvent.PERMISSIONS_UPDATED,
         expect.objectContaining({
@@ -622,9 +626,9 @@ describe('GatewayService', () => {
       );
     });
 
-    it('should handle case when user has no active sockets', async () => {
-      const discordId = 'discord-123';
-      const userId = 'user-123';
+    it("should handle case when user has no active sockets", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
 
       mockGuildsService.getUserGuilds.mockResolvedValue([]);
       mockServer.fetchSockets.mockResolvedValue([]);
@@ -634,11 +638,11 @@ describe('GatewayService', () => {
       expect(mockGuildsService.getUserGuilds).toHaveBeenCalled();
     });
 
-    it('should handle errors gracefully', async () => {
-      const discordId = 'discord-123';
-      const userId = 'user-123';
+    it("should handle errors gracefully", async () => {
+      const discordId = "discord-123";
+      const userId = "user-123";
 
-      const errorMessage = 'Database connection failed';
+      const errorMessage = "Database connection failed";
       mockGuildsService.getUserGuilds.mockRejectedValue(
         new Error(errorMessage),
       );
@@ -648,34 +652,34 @@ describe('GatewayService', () => {
       ).resolves.not.toThrow();
     });
 
-    it('should only rebalance sockets for specific user', async () => {
-      const discordId = 'discord-target';
-      const userId = 'user-target';
+    it("should only rebalance sockets for specific user", async () => {
+      const discordId = "discord-target";
+      const userId = "user-target";
 
       const updatedGuilds = [
         {
-          guild: { id: 'guild-1' },
+          guild: { id: "guild-1" },
           roles: [],
         },
       ];
 
       const mockTargetSocket = {
-        id: 'socket-target',
+        id: "socket-target",
         data: {
-          discordId: 'discord-target',
+          discordId: "discord-target",
         },
-        rooms: new Set(['socket-target']),
+        rooms: new Set(["socket-target"]),
         leave: jest.fn(),
         join: jest.fn(),
         emit: jest.fn(),
       };
 
       const mockOtherSocket = {
-        id: 'socket-other',
+        id: "socket-other",
         data: {
-          discordId: 'discord-other',
+          discordId: "discord-other",
         },
-        rooms: new Set(['socket-other']),
+        rooms: new Set(["socket-other"]),
         leave: jest.fn(),
         join: jest.fn(),
         emit: jest.fn(),

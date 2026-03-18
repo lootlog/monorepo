@@ -85,7 +85,11 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
         )}
         <Avatar className="h-14 w-14 border-2 border-background shadow-lg">
           <AvatarImage
-            src={getDiscordAvatarUrl(contributor.userId, contributor.avatar, 80)}
+            src={getDiscordAvatarUrl(
+              contributor.userId,
+              contributor.avatar,
+              80,
+            )}
           />
           <AvatarFallback>{contributor.name[0]}</AvatarFallback>
         </Avatar>
@@ -99,7 +103,8 @@ const PodiumSlot: React.FC<PodiumSlotProps> = ({
       </span>
 
       <span className="text-xs text-muted-foreground">
-        {contributor.count.toLocaleString()} {t("loots.stats.topContributors.submissions")}
+        {contributor.count.toLocaleString()}{" "}
+        {t("loots.stats.topContributors.submissions")}
       </span>
 
       <div

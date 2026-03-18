@@ -1,4 +1,4 @@
-FROM node:25-alpine3.22 AS base
+FROM node:25.8.1-alpine3.22 AS base
 
 RUN apk add --no-cache dumb-init
 
@@ -7,7 +7,7 @@ RUN addgroup -g 1001 -S nodejs && \
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN npm install -g pnpm@10.20.0
+RUN npm install -g pnpm@10.32.1
 
 FROM base AS build
 WORKDIR /usr/src/app
@@ -88,6 +88,9 @@ FROM base AS api
 LABEL org.opencontainers.image.title="Lootlog API Service"
 LABEL org.opencontainers.image.description="Main API service for guilds, loots, timers, and NPCs"
 LABEL org.opencontainers.image.vendor="Lootlog"
+
+ARG GITHUB_SHA
+ENV COMMIT_SHA=${GITHUB_SHA}
 
 COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/api /prod/api
 WORKDIR /prod/api

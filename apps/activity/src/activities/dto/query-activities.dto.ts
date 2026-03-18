@@ -7,9 +7,9 @@ import {
   IsNumber,
   Min,
   Max,
-} from 'class-validator';
-import { Type, Transform } from 'class-transformer';
-import { ActivityType, ActivitySource } from '../../../prisma/generated/client';
+} from "class-validator";
+import { Type, Transform } from "class-transformer";
+import { ActivityType, ActivitySource } from "../../../prisma/generated/client";
 
 export class QueryActivitiesDto {
   @IsString()

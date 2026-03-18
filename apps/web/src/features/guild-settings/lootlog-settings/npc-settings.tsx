@@ -49,7 +49,7 @@ const NpcSettingsContent = () => {
 
   return (
     <SelectorPanel<LootlogConfigNpc>
-      header={<NpcSettingsHeader />}
+      header=<NpcSettingsHeader />
       searchBar={
         <div className="px-3 py-2 border-b shrink-0 bg-background">
           <SearchInput

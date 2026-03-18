@@ -1,9 +1,22 @@
 {
   "name": "@lootlog/ui",
   "version": "1.0.0",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "exports": {
+    "./globals.css": "./src/styles/globals.css",
+    "./components.json": "./components.json",
+    "./lib/*": "./src/lib/*.ts",
+    "./components/*": "./src/components/*.tsx",
+    "./components/battle": "./src/components/battle/index.ts",
+    "./types/*": "./src/types/*.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./i18n/battle-i18n": "./src/i18n/battle-i18n.ts",
+    "./i18n/translations/battle.json": "./src/i18n/translations/battle.json",
+    "./postcss.config.mjs": "./postcss.config.mjs"
+  },
   "scripts": {
+    "doctor": "npx -y react-doctor@latest .",
     "lint": "oxlint ."
   },
   "dependencies": {
@@ -56,17 +69,5 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.180.0"
-  },
-  "exports": {
-    "./globals.css": "./src/styles/globals.css",
-    "./components.json": "./components.json",
-    "./lib/*": "./src/lib/*.ts",
-    "./components/*": "./src/components/*.tsx",
-    "./components/battle": "./src/components/battle/index.ts",
-    "./types/*": "./src/types/*.ts",
-    "./hooks/*": "./src/hooks/*.ts",
-    "./i18n/battle-i18n": "./src/i18n/battle-i18n.ts",
-    "./i18n/translations/battle.json": "./src/i18n/translations/battle.json",
-    "./postcss.config.mjs": "./postcss.config.mjs"
   }
 }

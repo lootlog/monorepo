@@ -4,8 +4,9 @@ import {
   type NotificationWithServers,
   type PartyGatheringNotification,
 } from "@/store/notifications.store";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { getNpcTypeByWt } from "@lootlog/types";
 import type { Notification } from "@/features/notifications/hooks/use-notifications";
+import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 
 export interface UseVisibleNotificationsOptions {
@@ -24,7 +25,7 @@ const getKey = (n: Notification | PartyGatheringNotification) => {
     return "party-gathering" as const;
   const notification = n as Notification;
   if (!notification.npc || !notification.npc.wt) return "message" as const;
-  return getNpcTypeByWt(notification.npc.wt);
+  return getNpcTypeByWt(NpcType, notification.npc.wt);
 };
 
 export const useVisibleNotifications = ({

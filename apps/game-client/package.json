@@ -1,11 +1,12 @@
 {
   "name": "@lootlog/game-client",
-  "private": true,
   "version": "1.0.1",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && node ./src/scripts/copy-entrypoint.mjs",
+    "doctor": "npx -y react-doctor@latest .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -7,39 +7,39 @@ import {
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { PrismaService } from 'src/db/prisma.service';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { PrismaService } from "src/db/prisma.service";
 import {
   getAdminBulkRefreshRateLimit,
   getMemberCacheSoftTtl,
   getMemberCacheTtl,
   getRefreshPermissionsTtl,
-} from 'src/members/constants/member-cache.constant';
-import type { APIGuildMember } from 'discord-api-types/v10';
-import { ErrorKey } from 'src/members/enum/error-key.enum';
-import { GuildsService } from 'src/guilds/guilds.service';
-import type { Member, Prisma, Role } from 'generated/client';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { ServiceConfig } from 'src/config/service.config';
-import { RuntimeEnvironment } from 'src/types/runtime.types';
-import { DiscordService } from 'src/discord/discord.service';
-import { RedisService } from 'src/lib/redis/redis.service';
+} from "src/members/constants/member-cache.constant";
+import type { APIGuildMember } from "discord-api-types/v10";
+import { ErrorKey } from "src/members/enum/error-key.enum";
+import { GuildsService } from "src/guilds/guilds.service";
+import type { Member, Prisma, Role } from "generated/client";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { ConfigKey } from "src/config/config-key.enum";
+import { ServiceConfig } from "src/config/service.config";
+import { RuntimeEnvironment } from "src/types/runtime.types";
+import { DiscordService } from "src/discord/discord.service";
+import { RedisService } from "@lootlog/nest-shared";
 import {
   getPermissionsCacheKey,
   getUserLootlogConfigCachePattern,
-} from 'src/shared/constants/cache.constant';
-import { DiscordRateLimiterService } from 'src/discord/discord-rate-limiter.service';
-import { MEMBER_REFRESH_PRIORITY } from './constants/member-refresh-queue.constant';
+} from "src/shared/constants/cache.constant";
+import { DiscordRateLimiterService } from "src/discord/discord-rate-limiter.service";
+import { MEMBER_REFRESH_PRIORITY } from "./constants/member-refresh-queue.constant";
 import {
   type MemberRefreshScheduleResult,
   MemberRefreshSchedulerService,
-} from './member-refresh-scheduler.service';
+} from "./member-refresh-scheduler.service";
 
 type MemberWithRoles = Member & {
   roles: Role[];
@@ -73,7 +73,7 @@ type DeleteMembersByGuildIdResult = {
 @Injectable()
 export class MembersService {
   private readonly env: RuntimeEnvironment;
-  private readonly MEMBER_RATE_LIMIT_ENDPOINT = 'guild-member';
+  private readonly MEMBER_RATE_LIMIT_ENDPOINT = "guild-member";
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -143,7 +143,7 @@ export class MembersService {
       priority: refresh
         ? MEMBER_REFRESH_PRIORITY.MANUAL
         : MEMBER_REFRESH_PRIORITY.BACKGROUND,
-      reason: refresh ? 'manual-refresh' : 'member-read',
+      reason: refresh ? "manual-refresh" : "member-read",
       throwOnUnexpectedError: refresh,
     });
 
@@ -155,8 +155,8 @@ export class MembersService {
       return this.decorateMember(storedMember, {
         isStale: true,
         staleWarning: refreshAttempt.refreshQueued
-          ? 'Using cached data while a Discord refresh is queued'
-          : 'Using cached data due to Discord API rate limiting or errors',
+          ? "Using cached data while a Discord refresh is queued"
+          : "Using cached data due to Discord API rate limiting or errors",
         refreshQueued: refreshAttempt.refreshQueued,
         nextRefreshAt: refreshAttempt.nextRefreshAt,
       });
@@ -309,13 +309,13 @@ export class MembersService {
         await this.markMemberSyncAttempt({
           discordId,
           guildId,
-          status: nextRefreshAt ? 'RATE_LIMITED' : 'ERROR',
+          status: nextRefreshAt ? "RATE_LIMITED" : "ERROR",
         });
 
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message:
-            'Discord API returned null while refreshing member, keeping cached state',
+            "Discord API returned null while refreshing member, keeping cached state",
           guildId,
           userId: discordId,
           nextRefreshAt,
@@ -334,7 +334,7 @@ export class MembersService {
         await this.markMemberSyncAttempt({
           discordId,
           guildId,
-          status: 'NOT_FOUND',
+          status: "NOT_FOUND",
           deactivate: true,
         });
         return null;
@@ -345,9 +345,9 @@ export class MembersService {
         error.getStatus() === HttpStatus.UNAUTHORIZED
       ) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message:
-            'User authentication failed (token expired/invalid), deactivating member',
+            "User authentication failed (token expired/invalid), deactivating member",
           guildId,
           userId: discordId,
         });
@@ -355,7 +355,7 @@ export class MembersService {
         await this.markMemberSyncAttempt({
           discordId,
           guildId,
-          status: 'UNAUTHORIZED',
+          status: "UNAUTHORIZED",
           deactivate: true,
         });
         return null;
@@ -363,8 +363,8 @@ export class MembersService {
 
       if (error instanceof ServiceUnavailableException) {
         this.logger.log({
-          level: 'warn',
-          message: 'Auth service unavailable, keeping cached member state',
+          level: "warn",
+          message: "Auth service unavailable, keeping cached member state",
           guildId,
           userId,
         });
@@ -372,14 +372,14 @@ export class MembersService {
         await this.markMemberSyncAttempt({
           discordId,
           guildId,
-          status: 'AUTH_SERVICE_UNAVAILABLE',
+          status: "AUTH_SERVICE_UNAVAILABLE",
         });
         return null;
       }
 
       this.logger.log({
-        level: 'error',
-        message: 'Failed to fetch member from Discord',
+        level: "error",
+        message: "Failed to fetch member from Discord",
         guildId,
         userId: discordId,
         stack: (error as Error).stack,
@@ -388,7 +388,7 @@ export class MembersService {
       await this.markMemberSyncAttempt({
         discordId,
         guildId,
-        status: 'ERROR',
+        status: "ERROR",
       });
 
       if (throwOnUnexpectedError) {
@@ -412,7 +412,7 @@ export class MembersService {
 
     if (!member || !member.globalUserId) {
       throw new NotFoundException(
-        'Member not found or global user ID is missing',
+        "Member not found or global user ID is missing",
       );
     }
 
@@ -438,15 +438,15 @@ export class MembersService {
       },
       include: {
         roles: {
-          orderBy: { position: 'desc' },
+          orderBy: { position: "desc" },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
   }
 
   isMemberSoftStale(
-    member: Pick<Member, 'lastDiscordSyncAt' | 'updatedAt'> | null | undefined,
+    member: Pick<Member, "lastDiscordSyncAt" | "updatedAt"> | null | undefined,
   ): boolean {
     if (!member) {
       return true;
@@ -506,7 +506,7 @@ export class MembersService {
           globalUserId,
           lastDiscordAttemptAt: syncTimestamp,
           lastDiscordSyncAt: syncTimestamp,
-          lastDiscordStatus: 'SUCCESS',
+          lastDiscordStatus: "SUCCESS",
           roles: { set: existingRoleIds.map((roleId) => ({ id: roleId })) },
         },
         create: {
@@ -519,7 +519,7 @@ export class MembersService {
           banner,
           lastDiscordAttemptAt: syncTimestamp,
           lastDiscordSyncAt: syncTimestamp,
-          lastDiscordStatus: 'SUCCESS',
+          lastDiscordStatus: "SUCCESS",
           roles: { connect: existingRoleIds.map((roleId) => ({ id: roleId })) },
         },
         include: { roles: true },
@@ -543,7 +543,7 @@ export class MembersService {
       return member;
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to create/update member ${id}`,
         stack: (error as Error).stack,
       });
@@ -563,7 +563,7 @@ export class MembersService {
     });
 
     if (!member) {
-      throw new NotFoundException('Member not found');
+      throw new NotFoundException("Member not found");
     }
 
     if (!member.active) {
@@ -575,7 +575,7 @@ export class MembersService {
       data: {
         active: false,
         lastDiscordAttemptAt: new Date(),
-        lastDiscordStatus: 'MANUALLY_DEACTIVATED',
+        lastDiscordStatus: "MANUALLY_DEACTIVATED",
         roles: { set: [] },
       },
     });
@@ -618,12 +618,12 @@ export class MembersService {
         data: {
           active: false,
           lastDiscordAttemptAt: new Date(),
-          lastDiscordStatus: 'GUILD_DEACTIVATED',
+          lastDiscordStatus: "GUILD_DEACTIVATED",
         },
       });
 
       this.logger.log({
-        level: 'info',
+        level: "info",
         message: `Deactivated ${result.count} members from guild ${guildId}`,
       });
       return {
@@ -636,7 +636,7 @@ export class MembersService {
       };
     } catch (error) {
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to deactivate members for guild ${guildId}`,
         stack: (error as Error).stack,
       });
@@ -665,7 +665,7 @@ export class MembersService {
           gte: new Date(Date.now() - rateLimit),
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     if (recentJob) {
@@ -681,7 +681,7 @@ export class MembersService {
       data: {
         guildId,
         requestedBy,
-        status: 'PENDING',
+        status: "PENDING",
         totalMembers: members.length,
       },
     });
@@ -702,7 +702,7 @@ export class MembersService {
   async getLatestRefreshJob(guildId: string) {
     return this.prisma.memberRefreshJob.findFirst({
       where: { guildId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -748,13 +748,13 @@ export class MembersService {
   }
 
   private getLastDiscordSyncAt(
-    member: Pick<Member, 'lastDiscordSyncAt' | 'updatedAt'>,
+    member: Pick<Member, "lastDiscordSyncAt" | "updatedAt">,
   ): Date | null {
     return member.lastDiscordSyncAt ?? member.updatedAt ?? null;
   }
 
   private isMemberFresh(
-    member: Pick<Member, 'active' | 'lastDiscordSyncAt' | 'updatedAt'>,
+    member: Pick<Member, "active" | "lastDiscordSyncAt" | "updatedAt">,
     cacheExpiry: Date,
   ): boolean {
     const lastSyncAt = this.getLastDiscordSyncAt(member);

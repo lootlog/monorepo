@@ -1,22 +1,22 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { plainToInstance } from 'class-transformer';
-import { KillsController } from './kills.controller';
-import { KillsService } from './kills.service';
-import { CreateKillDto } from './dto/create-kill.dto';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { plainToInstance } from "class-transformer";
+import { KillsController } from "./kills.controller";
+import { KillsService } from "./kills.service";
+import { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
-} from './dto/get-kill-stats.dto';
+} from "./dto/get-kill-stats.dto";
 import {
   CreateKillResponseEntity,
   GuildKillStatsEntity,
   UserKillStatsEntity,
-} from './entities/kill-stats.entity';
-import { Permission, NpcType, type Role } from 'generated/client';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { PermissionsGuard } from 'src/shared/permissions/permissions.guard';
+} from "./entities/kill-stats.entity";
+import { Permission, NpcType, type Role } from "generated/client";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 
-describe('KillsController', () => {
+describe("KillsController", () => {
   let controller: KillsController;
   let service: {
     createKill: jest.Mock;
@@ -25,30 +25,30 @@ describe('KillsController', () => {
   };
 
   const mockRole: Role = {
-    id: 'role1',
-    name: 'Test Role',
+    id: "role1",
+    name: "Test Role",
     color: 16711680,
     position: 1,
     permissions: [Permission.LOOTLOG_LOOTS_READ],
     lvlRangeFrom: 1,
     lvlRangeTo: 500,
-    guildId: 'guild1',
+    guildId: "guild1",
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   const mockCreateKillDto: CreateKillDto = {
-    world: 'pandora',
+    world: "pandora",
     npc: {
       id: -12345,
-      name: 'Test Boss',
+      name: "Test Boss",
       lvl: 300,
-      prof: 'w',
+      prof: "w",
       wt: 85,
-      icon: 'boss.gif',
+      icon: "boss.gif",
     },
-    characterId: '67890',
-    accountId: '11111',
+    characterId: "67890",
+    accountId: "11111",
   };
 
   beforeEach(async () => {
@@ -76,16 +76,16 @@ describe('KillsController', () => {
     jest.clearAllMocks();
   });
 
-  describe('constructor', () => {
-    it('should be defined', () => {
+  describe("constructor", () => {
+    it("should be defined", () => {
       expect(controller).toBeDefined();
     });
   });
 
-  describe('createKill', () => {
-    const discordId = 'discord123';
+  describe("createKill", () => {
+    const discordId = "discord123";
 
-    it('should create a kill and return the result', async () => {
+    it("should create a kill and return the result", async () => {
       const mockResult = { updated: 2 };
       service.createKill.mockResolvedValue(mockResult);
 
@@ -100,7 +100,7 @@ describe('KillsController', () => {
       );
     });
 
-    it('should return updated: 0 when no guilds are configured', async () => {
+    it("should return updated: 0 when no guilds are configured", async () => {
       const mockResult = { updated: 0 };
       service.createKill.mockResolvedValue(mockResult);
 
@@ -111,22 +111,22 @@ describe('KillsController', () => {
       );
     });
 
-    it('should handle service errors', async () => {
-      service.createKill.mockRejectedValue(new Error('Database error'));
+    it("should handle service errors", async () => {
+      service.createKill.mockRejectedValue(new Error("Database error"));
 
       await expect(
         controller.createKill(mockCreateKillDto, discordId),
-      ).rejects.toThrow('Database error');
+      ).rejects.toThrow("Database error");
     });
   });
 
-  describe('getGuildKillStats', () => {
-    const guildId = 'guild123';
+  describe("getGuildKillStats", () => {
+    const guildId = "guild123";
     const mockGuildData = { id: guildId } as any;
     const permissions = [Permission.LOOTLOG_LOOTS_READ];
     const roles = [mockRole];
 
-    it('should fetch guild kill stats', async () => {
+    it("should fetch guild kill stats", async () => {
       const mockStats = {
         overview: {
           guildUniqueKills: 100,
@@ -145,9 +145,9 @@ describe('KillsController', () => {
         memberRanking: [
           {
             memberId: 1,
-            memberName: 'Player1',
+            memberName: "Player1",
             memberAvatar: null,
-            memberUserId: 'user1',
+            memberUserId: "user1",
             totalParticipations: 90,
             participationsByType: {
               [NpcType.HERO]: 50,
@@ -157,9 +157,9 @@ describe('KillsController', () => {
           },
           {
             memberId: 2,
-            memberName: 'Player2',
+            memberName: "Player2",
             memberAvatar: null,
-            memberUserId: 'user2',
+            memberUserId: "user2",
             totalParticipations: 60,
             participationsByType: {
               [NpcType.HERO]: 30,
@@ -188,7 +188,7 @@ describe('KillsController', () => {
       expect(result).toEqual(plainToInstance(GuildKillStatsEntity, mockStats));
     });
 
-    it('should handle empty results', async () => {
+    it("should handle empty results", async () => {
       const mockStats = {
         overview: {
           guildUniqueKills: 0,
@@ -211,7 +211,7 @@ describe('KillsController', () => {
       expect(result).toEqual(plainToInstance(GuildKillStatsEntity, mockStats));
     });
 
-    it('should pass query filters to service', async () => {
+    it("should pass query filters to service", async () => {
       const mockStats = {
         overview: {
           guildUniqueKills: 10,
@@ -244,10 +244,10 @@ describe('KillsController', () => {
     });
   });
 
-  describe('getUserKillStats', () => {
-    const discordId = 'discord123';
+  describe("getUserKillStats", () => {
+    const discordId = "discord123";
 
-    it('should fetch user kill stats', async () => {
+    it("should fetch user kill stats", async () => {
       const mockStats = {
         overview: {
           totalKills: 200,
@@ -261,11 +261,11 @@ describe('KillsController', () => {
         topNpcs: [
           {
             npcId: 999,
-            npcName: 'Popular Boss',
+            npcName: "Popular Boss",
             npcType: NpcType.HERO,
             npcLvl: 300,
             npcProf: null,
-            npcIcon: 'boss.gif',
+            npcIcon: "boss.gif",
             totalKills: 25,
           },
         ],
@@ -279,7 +279,7 @@ describe('KillsController', () => {
       expect(result).toEqual(plainToInstance(UserKillStatsEntity, mockStats));
     });
 
-    it('should handle empty user stats', async () => {
+    it("should handle empty user stats", async () => {
       const mockStats = {
         overview: {
           totalKills: 0,
@@ -296,7 +296,7 @@ describe('KillsController', () => {
       expect(result).toEqual(plainToInstance(UserKillStatsEntity, mockStats));
     });
 
-    it('should pass query filters to service', async () => {
+    it("should pass query filters to service", async () => {
       const mockStats = {
         overview: { totalKills: 0, killsByType: {}, killsByWorld: {} },
         topNpcs: [],
@@ -304,7 +304,7 @@ describe('KillsController', () => {
       service.getUserKillStats.mockResolvedValue(mockStats);
 
       const query = new GetUserKillStatsDto();
-      query.world = 'pandora';
+      query.world = "pandora";
       query.npcTypes = [NpcType.HERO, NpcType.TITAN];
 
       await controller.getUserKillStats(discordId, query);

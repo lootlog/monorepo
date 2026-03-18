@@ -4,7 +4,7 @@ import { GuildGenerator } from "./generators/guild-generator.js";
 import { LootGenerator } from "./generators/loot-generator.js";
 import { generatePlayers } from "./generators/players-generator.js";
 import { BattlesGenerator } from "./generators/battles-generator.js";
-import { BattleProcessor } from "./processors/battle-processor.js";
+import { BattleProcessor } from "@lootlog/battle-processor";
 import { SEED_CONFIG } from "./config.js";
 import path from "path";
 import { fileURLToPath } from "url";

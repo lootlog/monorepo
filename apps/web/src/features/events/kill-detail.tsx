@@ -170,36 +170,40 @@ export const KillDetail = () => {
         guildId={guildId}
         eventId={eventId}
       />
-      <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {kill.heroNpc.npcIcon ? (
-            <NpcTile
-              npc={{
-                id: kill.heroNpc.npcId ?? 0,
-                name: kill.heroNpc.npcName,
-                icon: kill.heroNpc.npcIcon,
-              }}
-            />
-          ) : (
-            <div className="p-2 rounded-lg bg-red-500/10">
-              <Skull className="size-4 text-red-500" />
-            </div>
-          )}
-          <div>
-            <h2 className="text-sm font-semibold leading-tight">
-              {kill.heroNpc.npcName}
-            </h2>
-            <p className="text-xs text-muted-foreground leading-tight">
-              {format(new Date(kill.killedAt), "d MMMM yyyy, HH:mm:ss", {
-                locale: pl,
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
 
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/40 p-3 backdrop-blur-sm">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {kill.heroNpc.npcIcon ? (
+                <NpcTile
+                  npc={{
+                    id: kill.heroNpc.npcId ?? 0,
+                    name: kill.heroNpc.npcName,
+                    icon: kill.heroNpc.npcIcon,
+                  }}
+                />
+              ) : (
+                <div className="rounded-xl bg-red-500/10 p-2 shadow-inner shadow-red-500/10">
+                  <Skull className="size-4 text-red-500" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {t("events.killDetail.title")}
+                </p>
+                <h2 className="truncate text-base font-semibold leading-tight">
+                  {kill.heroNpc.npcName}
+                </h2>
+                <p className="text-xs text-muted-foreground leading-tight">
+                  {format(new Date(kill.killedAt), "d MMMM yyyy, HH:mm:ss", {
+                    locale: pl,
+                  })}
+                </p>
+              </div>
+            </div>
+          </Card>
+
           {kill.isManualClose && (
             <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
               <Hand className="w-5 h-5 text-yellow-600 shrink-0" />
@@ -272,7 +276,9 @@ export const KillDetail = () => {
                             <Clock className="w-4 h-4 text-orange-500" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold">{respawnDurationText}</p>
+                            <p className="text-lg font-bold">
+                              {respawnDurationText}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {t("events.killDetail.respawnTime")}
                             </p>
@@ -312,7 +318,9 @@ export const KillDetail = () => {
                             <Clock className="w-4 h-4 text-orange-500" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold">{windowDurationText}</p>
+                            <p className="text-lg font-bold">
+                              {windowDurationText}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {t("events.killDetail.respawnWindowTime")}
                             </p>
@@ -323,7 +331,8 @@ export const KillDetail = () => {
                                 })}
                               </p>
                             )}
-                            {typeof respawnComparedToMaxPercentage === "number" && (
+                            {typeof respawnComparedToMaxPercentage ===
+                              "number" && (
                               <p className="text-[11px] text-muted-foreground">
                                 {t("events.killDetail.respawnComparedToMax", {
                                   percentage: respawnComparedToMaxPercentage,
@@ -336,7 +345,9 @@ export const KillDetail = () => {
                       <TooltipContent>
                         <div className="space-y-1 text-sm">
                           <p className="font-medium">
-                            {t("events.killDetail.respawnWindowTimeDescription")}
+                            {t(
+                              "events.killDetail.respawnWindowTimeDescription",
+                            )}
                           </p>
                           <p>
                             {t("events.killDetail.respawnMinLabel")}:{" "}

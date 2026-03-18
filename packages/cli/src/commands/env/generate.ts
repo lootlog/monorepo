@@ -125,7 +125,7 @@ ${chalk.bold("Examples:")}
   pnpm env generate --force              # Overwrite all files
 
 ${chalk.bold("Note:")}
-  The CLI automatically discovers all .env.sample files in the monorepo.
+  The CLI automatically discovers all .env.example files in the monorepo.
   Shared values (database credentials, RabbitMQ, Redis) are generated once
   and reused across all services.
     `);
@@ -141,7 +141,7 @@ ${chalk.bold("Note:")}
   console.log(chalk.gray(`Skip existing: ${options.skipExisting}`));
   console.log(chalk.gray(`Force overwrite: ${options.force}\n`));
 
-  console.log(chalk.gray("Discovering .env.sample files...\n"));
+  console.log(chalk.gray("Discovering .env.example files...\n"));
   const envFiles = await discoverEnvFiles(ROOT_PATH);
 
   console.log(chalk.gray(`Found ${envFiles.length} environment files:\n`));

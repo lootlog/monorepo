@@ -1,20 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { createHash } from 'node:crypto';
-import type { CreateLootDto } from 'src/loots/dto/create-loot.dto';
-import { Prisma, Profession, type ItemRarity } from 'generated/client';
-import { getProfByShortname } from 'src/shared/utils/get-prof-by-shortname';
-import { getItemTypeByCl } from 'src/shared/utils/get-item-type-by-cl';
-import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
+import { Injectable } from "@nestjs/common";
+import { createHash } from "node:crypto";
+import { getNpcTypeByWt } from "@lootlog/types";
+import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
+import { NpcType, Prisma, Profession, type ItemRarity } from "generated/client";
+import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
+import { getItemTypeByCl } from "src/shared/utils/get-item-type-by-cl";
 import {
   LOOT_SHARE_ITEM_REGEX,
   LOOT_SHARE_MSG_REGEX,
-} from 'src/loots/constants/loot-share-msg-regex';
+} from "src/loots/constants/loot-share-msg-regex";
 
 const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
-  'created',
-  'gold',
-  'amount',
-  'opis',
+  "created",
+  "gold",
+  "amount",
+  "opis",
 ]);
 
 interface ParsedPlayer {
@@ -43,36 +43,36 @@ interface ParsedLootItem {
 
 @Injectable()
 export class LootMappingService {
-  createUniqueLootId(loots: CreateLootDto['loots'], world: string): string {
+  createUniqueLootId(loots: CreateLootDto["loots"], world: string): string {
     const string =
       [...loots]
         .sort((a, b) => a.hid.localeCompare(b.hid))
         .map((loot) => loot.hid)
-        .join('') + world;
-    return createHash('sha256').update(string).digest('hex');
+        .join("") + world;
+    return createHash("sha256").update(string).digest("hex");
   }
 
   generateStatsHash(stat: string): string {
     const sortedStats = stat
-      .split(';')
+      .split(";")
       .filter((statEntry) => {
-        const [key] = statEntry.split('=');
+        const [key] = statEntry.split("=");
         return Boolean(key) && !SNAPSHOT_HASH_IGNORED_KEYS.has(key);
       })
       .sort()
-      .join(';');
-    return createHash('sha256').update(sortedStats).digest('hex');
+      .join(";");
+    return createHash("sha256").update(sortedStats).digest("hex");
   }
 
   generatePlayerSnapshotHash(name: string, prof: string, icon: string): string {
     const string = `${name}${prof}${icon}`;
-    return createHash('sha256').update(string).digest('hex');
+    return createHash("sha256").update(string).digest("hex");
   }
 
   parseItemStats(stats: string): Record<string, string> {
-    return stats.split(';').reduce(
+    return stats.split(";").reduce(
       (acc, stat) => {
-        const [key, value] = stat.split('=');
+        const [key, value] = stat.split("=");
         if (key && value) acc[key] = value;
         return acc;
       },
@@ -80,14 +80,14 @@ export class LootMappingService {
     );
   }
 
-  getItemStats({ stat, cl }: CreateLootDto['loots'][0]) {
+  getItemStats({ stat, cl }: CreateLootDto["loots"][0]) {
     const parsedStats = this.parseItemStats(stat);
-    const lvl = parsedStats['lvl'] ? Number(parsedStats['lvl']) : 0;
-    const rarity = parsedStats['rarity']?.toUpperCase() as ItemRarity;
-    const requiredProf = parsedStats['reqp'] as string;
+    const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
+    const rarity = parsedStats["rarity"]?.toUpperCase() as ItemRarity;
+    const requiredProf = parsedStats["reqp"] as string;
     const requiredProfArray = requiredProf
       ? requiredProf
-          .split('')
+          .split("")
           .map((id) => getProfByShortname(id))
           .filter(Boolean)
       : Object.values(Profession);
@@ -96,15 +96,15 @@ export class LootMappingService {
   }
 
   parseJsonField(field: unknown): unknown {
-    return typeof field === 'string' ? JSON.parse(field) : field;
+    return typeof field === "string" ? JSON.parse(field) : field;
   }
 
   private normalizeCharacterAndAccount(
     id: string | number,
     accountId: string | number,
   ): { characterId: number; accountId: number } {
-    const accountStr = String(accountId ?? '');
-    const idStr = String(id ?? '');
+    const accountStr = String(accountId ?? "");
+    const idStr = String(id ?? "");
 
     if (accountStr && idStr.endsWith(accountStr)) {
       const characterPart = idStr.slice(0, idStr.length - accountStr.length);
@@ -117,7 +117,7 @@ export class LootMappingService {
     return { characterId: Number(idStr), accountId: Number(accountStr) };
   }
 
-  processNpcs(npcs: CreateLootDto['npcs']) {
+  processNpcs(npcs: CreateLootDto["npcs"]) {
     const sorted = [...npcs].sort((a, b) => b.wt - a.wt);
     return {
       highest: sorted[0],
@@ -130,17 +130,17 @@ export class LootMappingService {
         icon: npc.icon,
         wt: npc.wt,
         location: npc.location,
-        type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
+        type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
         margonemType: npc.type,
       })),
     };
   }
 
-  sortNpcsByWt(npcs: CreateLootDto['npcs']) {
+  sortNpcsByWt(npcs: CreateLootDto["npcs"]) {
     return [...npcs].sort((a, b) => b.wt - a.wt);
   }
 
-  mapItems(items: CreateLootDto['loots']) {
+  mapItems(items: CreateLootDto["loots"]) {
     return items.map((item) => {
       const { lvl, rarity, prof, type } = this.getItemStats(item);
 
@@ -161,8 +161,8 @@ export class LootMappingService {
   }
 
   mapLootShare(
-    items: CreateLootDto['loots'],
-    players: CreateLootDto['players'],
+    items: CreateLootDto["loots"],
+    players: CreateLootDto["players"],
   ) {
     return items.reduce((acc, item) => {
       if (item.own) {
@@ -177,7 +177,7 @@ export class LootMappingService {
     }, {});
   }
 
-  mapNpcs(npcs: CreateLootDto['npcs']) {
+  mapNpcs(npcs: CreateLootDto["npcs"]) {
     return npcs.map((npc) => ({
       id: npc.id,
       name: npc.name,
@@ -186,12 +186,12 @@ export class LootMappingService {
       icon: npc.icon,
       wt: npc.wt,
       location: npc.location,
-      type: getNpcTypeByWt(npc.wt, npc.prof, npc.type),
+      type: getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type),
       margonemType: npc.type,
     }));
   }
 
-  mapPlayers(players: CreateLootDto['players']) {
+  mapPlayers(players: CreateLootDto["players"]) {
     return players.map((player) => {
       const { characterId, accountId } = this.normalizeCharacterAndAccount(
         player.id,
@@ -260,7 +260,7 @@ export class LootMappingService {
     );
   }
 
-  mapLootItemsToConnectOrCreate(items: CreateLootDto['loots']) {
+  mapLootItemsToConnectOrCreate(items: CreateLootDto["loots"]) {
     return items.map((item) => {
       const { lvl, rarity, type } = this.getItemStats(item);
       const statsHash = this.generateStatsHash(item.stat);
@@ -293,7 +293,7 @@ export class LootMappingService {
   }
 
   mapLootPlayersToConnectOrCreate(
-    players: CreateLootDto['players'],
+    players: CreateLootDto["players"],
     world: string,
   ): Prisma.LootPlayerCreateWithoutLootInput[] {
     return players.map((player) => {
@@ -336,9 +336,9 @@ export class LootMappingService {
     });
   }
 
-  mapLootNpcsToConnectOrCreate(npcs: CreateLootDto['npcs']) {
+  mapLootNpcsToConnectOrCreate(npcs: CreateLootDto["npcs"]) {
     return npcs.map((npc) => {
-      const type = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+      const type = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
 
       return {
         npcSnapshot: {

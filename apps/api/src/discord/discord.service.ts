@@ -3,7 +3,7 @@ import {
   RateLimitError,
   RequestMethod,
   parseResponse,
-} from '@discordjs/rest';
+} from "@discordjs/rest";
 import {
   Injectable,
   Inject,
@@ -11,28 +11,30 @@ import {
   NotFoundException,
   ServiceUnavailableException,
   type OnModuleInit,
-} from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import { ConfigService } from '@nestjs/config';
-import { AuthService } from 'src/auth/auth.service';
+} from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import { ConfigService } from "@nestjs/config";
+import { AuthService } from "src/auth/auth.service";
 import {
   Routes,
   type APIGuild,
   type APIGuildMember,
-} from 'discord-api-types/v10';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { DiscordRateLimiterService } from './discord-rate-limiter.service';
-import Redlock from 'redlock';
+} from "discord-api-types/v10";
+import Redlock from "redlock";
+import { RedisService } from "@lootlog/nest-shared";
+import { DiscordRateLimiterService } from "./discord-rate-limiter.service";
+import { RedlockService } from "src/lib/redlock/redlock.service";
 import {
   TokenExpiredError,
   AuthServiceUnavailableError,
   InvalidScopesError,
   AccountNotFoundError,
-} from 'src/auth/errors';
-import { ConfigKey } from 'src/config/config-key.enum';
-import { ServiceConfig } from 'src/config/service.config';
-import { RuntimeEnvironment } from 'src/types/runtime.types';
+} from "src/auth/errors";
+import { ConfigKey } from "src/config/config-key.enum";
+import { ServiceConfig } from "src/config/service.config";
+import { RuntimeEnvironment } from "src/types/runtime.types";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
@@ -50,20 +52,8 @@ export class DiscordService implements OnModuleInit {
   private readonly notFoundCacheTtlProd = 300;
   private readonly staleCacheTtl = 300;
 
-  private readonly redlockDriftFactor = 0.01;
-  private readonly redlockRetryCount = 3;
-  private readonly redlockRetryDelay = 100;
-  private readonly redlockRetryJitter = 50;
-  private readonly redlockExtensionThreshold = 3000;
-
   private readonly restTimeout = 5000;
 
-  private readonly requiredScopes = [
-    'guilds.members.read',
-    'guilds',
-    'identify',
-    'email',
-  ];
   private isLocal: boolean;
 
   constructor(
@@ -72,6 +62,7 @@ export class DiscordService implements OnModuleInit {
     private readonly redisService: RedisService,
     private readonly rateLimiter: DiscordRateLimiterService,
     private readonly configService: ConfigService,
+    private readonly redlockService: RedlockService,
   ) {
     const serviceConfig = this.configService.get<ServiceConfig>(
       ConfigKey.SERVICE,
@@ -80,13 +71,8 @@ export class DiscordService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const client = await this.redisService.getClient();
-    this.redlock = new Redlock([client], {
-      driftFactor: this.redlockDriftFactor,
-      retryCount: this.redlockRetryCount,
-      retryDelay: this.redlockRetryDelay,
-      retryJitter: this.redlockRetryJitter,
-      automaticExtensionThreshold: this.redlockExtensionThreshold,
+    this.redlock = this.redlockService.createInstance({
+      automaticExtensionThreshold: 3000,
     });
   }
 
@@ -98,36 +84,36 @@ export class DiscordService implements OnModuleInit {
     try {
       const token = await this.authService.getIdpToken(userId);
 
-      if (!this.requiredScopes.every((scope) => token.scopes.includes(scope))) {
-        throw new InvalidScopesError(this.requiredScopes, token.scopes);
+      if (!DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope))) {
+        throw new InvalidScopesError(DISCORD_AUTH_SCOPES, token.scopes);
       }
 
       const rest = new REST({
-        version: '10',
-        authPrefix: 'Bearer',
+        version: "10",
+        authPrefix: "Bearer",
         timeout: this.restTimeout,
-        rejectOnRateLimit: ['/users'],
+        rejectOnRateLimit: ["/users"],
       }).setToken(token.accessToken);
 
       return rest;
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new UnauthorizedException({
-          message: 'TOKEN_EXPIRED',
+          message: "TOKEN_EXPIRED",
           requiresReauth: true,
         });
       }
 
       if (error instanceof AccountNotFoundError) {
         throw new UnauthorizedException({
-          message: 'ACCOUNT_NOT_FOUND',
+          message: "ACCOUNT_NOT_FOUND",
           requiresReauth: true,
         });
       }
 
       if (error instanceof InvalidScopesError) {
         throw new UnauthorizedException({
-          message: 'INVALID_SCOPES',
+          message: "INVALID_SCOPES",
           required: error.required,
           actual: error.actual,
         });
@@ -135,7 +121,7 @@ export class DiscordService implements OnModuleInit {
 
       if (error instanceof AuthServiceUnavailableError) {
         throw new ServiceUnavailableException({
-          message: 'AUTH_SERVICE_UNAVAILABLE',
+          message: "AUTH_SERVICE_UNAVAILABLE",
           retryAfter: 60,
         });
       }
@@ -170,21 +156,21 @@ export class DiscordService implements OnModuleInit {
 
       const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
         userId,
-        'guilds',
+        "guilds",
       );
 
       if (isRateLimited) {
         const staleData = await this.redisService.get(staleCacheKey);
         if (staleData) {
           this.logger.log({
-            level: 'info',
+            level: "info",
             message: `Returning stale guilds data due to rate limit for user ${userId}`,
           });
           return JSON.parse(staleData) as APIGuild[];
         }
 
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `Rate limited and no stale data available for user ${userId}`,
         });
         return [];
@@ -201,7 +187,7 @@ export class DiscordService implements OnModuleInit {
         });
         await this.rateLimiter.updateRateLimitFromHeaders(
           userId,
-          'guilds',
+          "guilds",
           response.headers,
         );
         guilds = (await parseResponse(response)) as APIGuild[];
@@ -209,14 +195,14 @@ export class DiscordService implements OnModuleInit {
         if (error instanceof RateLimitError) {
           await this.rateLimiter.setRateLimitForUser(
             userId,
-            'guilds',
+            "guilds",
             error.retryAfter,
           );
 
           const staleData = await this.redisService.get(staleCacheKey);
           if (staleData) {
             this.logger.log({
-              level: 'info',
+              level: "info",
               message: `Returning stale guilds data after rate limit error for user ${userId}`,
             });
             return JSON.parse(staleData) as APIGuild[];
@@ -229,7 +215,7 @@ export class DiscordService implements OnModuleInit {
 
       if (!guilds || guilds.length === 0) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `No guilds found for user: ${userId}`,
         });
         return [];
@@ -247,13 +233,13 @@ export class DiscordService implements OnModuleInit {
       return guilds;
     } catch (error: unknown) {
       if (
-        typeof error === 'object' &&
+        typeof error === "object" &&
         error !== null &&
-        'name' in error &&
-        error.name === 'ExecutionError'
+        "name" in error &&
+        error.name === "ExecutionError"
       ) {
         this.logger.log({
-          level: 'error',
+          level: "error",
           message: `Lock acquisition failed for getUserGuilds`,
           userId,
         });
@@ -266,7 +252,7 @@ export class DiscordService implements OnModuleInit {
 
       if (error instanceof UnauthorizedException) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `User authentication failed for userId: ${userId}`,
           error,
         });
@@ -279,7 +265,7 @@ export class DiscordService implements OnModuleInit {
       }
 
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to fetch user guilds for userId: ${userId}`,
         error,
       });
@@ -326,7 +312,7 @@ export class DiscordService implements OnModuleInit {
 
       const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
         userId,
-        'guild-member',
+        "guild-member",
       );
 
       if (isRateLimited) {
@@ -334,14 +320,14 @@ export class DiscordService implements OnModuleInit {
         if (staleData) {
           const parsed = JSON.parse(staleData);
           this.logger.log({
-            level: 'info',
+            level: "info",
             message: `Returning stale member data due to rate limit for guild ${guildId}, user ${userId}`,
           });
           return parsed === null ? null : (parsed as APIGuildMember);
         }
 
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `Rate limited and no stale data available for guild ${guildId}, user ${userId}`,
         });
         return null;
@@ -358,20 +344,20 @@ export class DiscordService implements OnModuleInit {
         });
         await this.rateLimiter.updateRateLimitFromHeaders(
           userId,
-          'guild-member',
+          "guild-member",
           response.headers,
         );
         member = (await parseResponse(response)) as APIGuildMember;
         this.logger.log({
-          level: 'info',
-          message: 'Discord API returned member data',
+          level: "info",
+          message: "Discord API returned member data",
           path,
         });
       } catch (error: unknown) {
         if (
-          typeof error === 'object' &&
+          typeof error === "object" &&
           error !== null &&
-          'status' in error &&
+          "status" in error &&
           error.status === 404
         ) {
           throw error;
@@ -380,7 +366,7 @@ export class DiscordService implements OnModuleInit {
         if (error instanceof RateLimitError) {
           await this.rateLimiter.setRateLimitForUser(
             userId,
-            'guild-member',
+            "guild-member",
             error.retryAfter,
           );
 
@@ -388,7 +374,7 @@ export class DiscordService implements OnModuleInit {
           if (staleData) {
             const parsed = JSON.parse(staleData);
             this.logger.log({
-              level: 'info',
+              level: "info",
               message: `Returning stale member data after rate limit error for guild ${guildId}, user ${userId}`,
             });
             return parsed === null ? null : (parsed as APIGuildMember);
@@ -411,13 +397,13 @@ export class DiscordService implements OnModuleInit {
       return member;
     } catch (error: unknown) {
       if (
-        typeof error === 'object' &&
+        typeof error === "object" &&
         error !== null &&
-        'name' in error &&
-        error.name === 'ExecutionError'
+        "name" in error &&
+        error.name === "ExecutionError"
       ) {
         this.logger.log({
-          level: 'error',
+          level: "error",
           message: `Lock acquisition failed for getGuildMember`,
           guildId,
           userId,
@@ -430,13 +416,13 @@ export class DiscordService implements OnModuleInit {
       }
 
       if (
-        typeof error === 'object' &&
+        typeof error === "object" &&
         error !== null &&
-        'status' in error &&
+        "status" in error &&
         error.status === 404
       ) {
         this.logger.log({
-          level: 'debug',
+          level: "debug",
           message: `Guild member not found for guildId: ${guildId}, userId: ${userId}`,
         });
         await this.redisService.set(
@@ -452,7 +438,7 @@ export class DiscordService implements OnModuleInit {
 
       if (error instanceof UnauthorizedException) {
         this.logger.log({
-          level: 'warn',
+          level: "warn",
           message: `User authentication failed for guildId: ${guildId}, userId: ${userId}`,
           error,
         });
@@ -465,7 +451,7 @@ export class DiscordService implements OnModuleInit {
       }
 
       this.logger.log({
-        level: 'error',
+        level: "error",
         message: `Failed to fetch guild member for guildId: ${guildId}, userId: ${userId}`,
         error,
       });

@@ -27,6 +27,7 @@ import {
   normalizeScoringMode,
   normalizeScoringRules,
 } from "../../utils/scoring-rules";
+import { getApiErrorMessage } from "../../utils/get-api-error-message";
 import { ScoringRulesEditor } from "./scoring-rules-editor";
 
 interface EventCreateDialogProps {
@@ -87,14 +88,20 @@ export const EventCreateDialog = ({
   const onSubmit = (data: FormData) => {
     if (data.endsAt && data.startsAt && data.endsAt <= data.startsAt) {
       toast.error(
-        t("events.createDialog.endDateMustBeAfterStart", "Data końca musi być po dacie startu"),
+        t(
+          "events.createDialog.endDateMustBeAfterStart",
+          "Data końca musi być po dacie startu",
+        ),
       );
       return;
     }
 
     if (!data.name.trim() || !data.world.trim()) {
       toast.error(
-        t("events.createDialog.nameWorldRequired", "Nazwa eventu i świat są wymagane"),
+        t(
+          "events.createDialog.nameWorldRequired",
+          "Nazwa eventu i świat są wymagane",
+        ),
       );
       return;
     }
@@ -127,8 +134,10 @@ export const EventCreateDialog = ({
           handleClose(false);
           navigate({ to: `/${guildId}/events/${eventData.id}` });
         },
-        onError: () => {
-          toast.error(t("events.createDialog.error"));
+        onError: (error) => {
+          toast.error(
+            getApiErrorMessage(error) ?? t("events.createDialog.error"),
+          );
         },
       },
     );
@@ -148,8 +157,14 @@ export const EventCreateDialog = ({
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
                 {step === 1
-                  ? t("events.scoring.chooseMode", "Krok 1/2: wybierz tryb punktacji")
-                  : t("events.scoring.configureEvent", "Krok 2/2: skonfiguruj event")}
+                  ? t(
+                      "events.scoring.chooseMode",
+                      "Krok 1/2: wybierz tryb punktacji",
+                    )
+                  : t(
+                      "events.scoring.configureEvent",
+                      "Krok 2/2: skonfiguruj event",
+                    )}
               </DialogDescription>
             </div>
           </div>
@@ -158,10 +173,7 @@ export const EventCreateDialog = ({
         {step === 1 ? (
           <div className="p-5 space-y-4 overflow-y-auto">
             <p className="text-sm text-muted-foreground">
-              {t(
-                "events.scoring.modeHint",
-                "Tryb prosty daje 1 pkt za eligible gracza. Tryb zaawansowany pozwala budować reguły z klocków.",
-              )}
+              {t("events.scoring.modeHint")}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <button
@@ -177,10 +189,7 @@ export const EventCreateDialog = ({
                   {t("events.scoring.modeSimpleTitle", "Tryb prosty")}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t(
-                    "events.scoring.modeSimpleDescription",
-                    "Każdy eligible gracz otrzymuje 1 pkt.",
-                  )}
+                  {t("events.scoring.modeSimpleDescription")}
                 </p>
               </button>
               <button
@@ -297,6 +306,7 @@ export const EventCreateDialog = ({
                 <ScoringRulesEditor
                   control={form.control}
                   register={form.register}
+                  setValue={form.setValue}
                   t={t}
                 />
               </div>

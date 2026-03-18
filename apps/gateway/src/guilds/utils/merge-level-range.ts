@@ -1,5 +1,5 @@
-import { Permission } from '@lootlog/types';
-import type { Role } from 'src/guilds/types/role.type';
+import { Permission } from "@lootlog/types";
+import type { Role } from "src/guilds/types/role.type";
 
 export function mergeLevelRanges(
   roles: Role[],

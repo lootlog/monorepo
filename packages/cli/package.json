@@ -2,17 +2,19 @@
   "name": "@lootlog/cli",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "module": "ESNext",
-  "exports": "./dist/index.mjs",
   "bin": {
     "lootlog": "./dist/index.mjs"
   },
+  "type": "module",
+  "module": "ESNext",
+  "exports": "./dist/index.mjs",
   "scripts": {
     "env:generate": "tsx src/commands/env/generate.ts"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
+    "@lootlog/battle-processor": "workspace:*",
+    "@lootlog/types": "workspace:*",
     "amqplib": "^0.10.9",
     "node-html-parser": "^7.1.0",
     "random-words": "^2.0.1",

@@ -95,7 +95,10 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1">
-        <ChartContainer config={chartConfig} className="h-full min-h-[280px] w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="h-full min-h-[280px] w-full"
+        >
           <BarChart
             data={chartData}
             layout="vertical"
@@ -113,18 +116,16 @@ export const LootTopNpcsChart: React.FC<LootTopNpcsChartProps> = ({
             />
             <XAxis type="number" hide />
             <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(_, payload) => {
-                    const item = payload[0]?.payload as
-                      | Record<string, unknown>
-                      | undefined;
-                    return String(item?.fullName ?? "");
-                  }}
-                />
-              }
+              content=<ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const item = payload[0]?.payload as
+                    | Record<string, unknown>
+                    | undefined;
+                  return String(item?.fullName ?? "");
+                }}
+              />
             />
-            <ChartLegend content={<ChartLegendContent />} />
+            <ChartLegend content=<ChartLegendContent /> />
             <Bar
               dataKey="LEGENDARY"
               stackId="a"

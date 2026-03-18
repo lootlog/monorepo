@@ -1,19 +1,19 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { RedisService } from 'src/lib/redis/redis.service';
+import { HttpService } from "@nestjs/axios";
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { RedisService } from "@lootlog/nest-shared";
 import type {
   UserGuildData,
   GetUserGuildsOptions,
   CachedGuildData,
-} from 'src/guilds/types/guild.types';
+} from "src/guilds/types/guild.types";
 import {
   getUserGuildsCacheKey,
   CACHE_TTL,
-} from 'src/guilds/utils/cache-keys.util';
-import { ConfigKey } from 'src/config/config-key.enum';
-import type { ApiConfig } from 'src/config/api.config';
-import { firstValueFrom } from 'rxjs';
+} from "src/guilds/utils/cache-keys.util";
+import { ConfigKey } from "src/config/config-key.enum";
+import type { ApiConfig } from "src/config/api.config";
+import { firstValueFrom } from "rxjs";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 2000, 4000];
