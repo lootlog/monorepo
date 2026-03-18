@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@rolldown/plugin-babel": "^0.2.2",
-    "@tanstack/router-plugin": "^1.166.3",
+    "@tanstack/router-plugin": "^1.166.13",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/lodash": "^4.17.24",
     "@types/node": "^24.12.0",
