@@ -523,14 +523,21 @@ export class BattlesService implements IBattlesService {
     try {
       await this.drizzle.db
         .insert(userCharacters)
-        .values({ userId, characterId, name, world, icon })
+        .values({
+          userId,
+          characterId,
+          name,
+          world,
+          icon,
+          updatedAt: new Date(),
+        })
         .onConflictDoUpdate({
           target: [
             userCharacters.userId,
             userCharacters.characterId,
             userCharacters.world,
           ],
-          set: { name, icon, lastSeenAt: new Date() },
+          set: { name, icon, lastSeenAt: new Date(), updatedAt: new Date() },
         });
     } catch (error) {
       this.logger.warn(
@@ -564,6 +571,7 @@ export class BattlesService implements IBattlesService {
           .insert(battles)
           .values({
             userId,
+            updatedAt: new Date(),
             accountId: data.accountId,
             characterId: data.characterId,
             world: data.world,
