@@ -6,6 +6,7 @@
   "ignorePatterns": [
     ".agents/**",
     ".claude/**",
+    "**/.claude/**",
     ".next/**",
     ".source/**",
     ".turbo/**",
