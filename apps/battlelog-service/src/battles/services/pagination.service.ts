@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { and, count, gt, lt, sql, type SQL } from "drizzle-orm";
+import { and, count, gt, lt, or, eq, sql, type SQL } from "drizzle-orm";
 import { DrizzleService } from "src/shared/modules/drizzle/drizzle.service";
 import { battles } from "src/shared/modules/drizzle/schema";
 import { SortOrder } from "../dto/query-battles.dto";
@@ -11,11 +11,34 @@ import type {
 
 export type WhereBuilder = (table: typeof battles) => SQL | undefined;
 
+interface DecodedCursor {
+  createdAt: Date;
+  id: string;
+}
+
 @Injectable()
 export class PaginationService {
   private readonly logger = new Logger(PaginationService.name);
 
   constructor(private readonly drizzle: DrizzleService) {}
+
+  private encodeCursor(createdAt: Date, id: string): string {
+    return `${createdAt.toISOString()}_${id}`;
+  }
+
+  private decodeCursor(cursor: string): DecodedCursor | null {
+    const separatorIndex = cursor.indexOf("_");
+    if (separatorIndex === -1) {
+      return null;
+    }
+    const timestamp = cursor.substring(0, separatorIndex);
+    const id = cursor.substring(separatorIndex + 1);
+    const createdAt = new Date(timestamp);
+    if (isNaN(createdAt.getTime())) {
+      return null;
+    }
+    return { createdAt, id };
+  }
 
   async paginateBattles(
     whereBuilder: WhereBuilder,
@@ -35,7 +58,7 @@ export class PaginationService {
       },
       limit: size + 1,
       with: { warriors: true },
-      orderBy: { id: order },
+      orderBy: { createdAt: order, id: order },
     });
 
     const hasNext = results.length > size;
@@ -44,7 +67,7 @@ export class PaginationService {
     let nextCursor: string | undefined;
     if (hasNext && items.length > 0) {
       const lastItem = items[items.length - 1];
-      nextCursor = lastItem.id;
+      nextCursor = this.encodeCursor(lastItem.createdAt, lastItem.id);
     }
 
     let total: number | undefined;
@@ -86,10 +109,18 @@ export class PaginationService {
       return where;
     }
 
-    const cursorCondition =
-      options.sortOrder === SortOrder.DESC
-        ? lt(table.id, cursor)
-        : gt(table.id, cursor);
+    const decoded = this.decodeCursor(cursor);
+    if (!decoded) {
+      this.logger.warn(`Invalid cursor format: ${cursor}`);
+      return where;
+    }
+
+    const { createdAt, id } = decoded;
+    const cmp = options.sortOrder === SortOrder.DESC ? lt : gt;
+    const cursorCondition = or(
+      cmp(table.createdAt, createdAt),
+      and(eq(table.createdAt, createdAt), cmp(table.id, id)),
+    )!;
 
     return where ? and(where, cursorCondition) : cursorCondition;
   }
