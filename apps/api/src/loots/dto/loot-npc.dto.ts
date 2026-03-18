@@ -1,4 +1,4 @@
-import { NpcType, Profession } from 'generated/client';
+import { NpcType, Profession } from "generated/client";
 
 export type LootNpcDto = {
   id: number;

@@ -20,15 +20,16 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
-import { REFRESH_PERMISSIONS_TTL } from "@/constants/refresh-permissions-ttl";
 import { SidebarNav, type MenuItem } from "./sidebar-nav";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
 import { useEvents } from "@/features/events/hooks";
+import { isEventActiveAtTimestamp } from "@/features/events/utils";
 import { ActiveEventsBanner } from "./active-events-banner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { cn } from "@lootlog/ui/lib/utils";
+import { getPermissionRefreshInfo } from "@/utils/get-permission-refresh-info";
 
 export const GuildsSidebarNav: FC = () => {
   const guildId = useGuildId();
@@ -50,8 +51,12 @@ export const GuildsSidebarNav: FC = () => {
     activeOnly: true,
     enabled: Boolean(canViewEvents),
   });
-  const hasActiveEvents = (activeEvents?.length ?? 0) > 0;
-  const activeEventCount = activeEvents?.length ?? 0;
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
+  const currentlyActiveEvents = (activeEvents ?? []).filter((event) =>
+    isEventActiveAtTimestamp(event, currentTimestamp),
+  );
+  const hasActiveEvents = currentlyActiveEvents.length > 0;
+  const activeEventCount = currentlyActiveEvents.length;
 
   const menuItems: MenuItem[] = [
     {
@@ -153,38 +158,18 @@ export const GuildsSidebarNav: FC = () => {
   const guild = guilds?.find(
     (g) => g.id === guildId || g.vanityUrl === guildId,
   );
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(Date.now());
+      setCurrentTimestamp(Date.now());
     }, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  const canTriggerRefresh =
-    member?.updatedAt &&
-    new Date(member.updatedAt).getTime() <
-      currentTime - REFRESH_PERMISSIONS_TTL;
-
-  const getCanTriggerRefreshText = () => {
-    if (canTriggerRefresh) {
-      return "Odśwież swoje uprawnienia";
-    }
-
-    if (member?.updatedAt) {
-      const nextRefreshTime =
-        new Date(member.updatedAt).getTime() + REFRESH_PERMISSIONS_TTL;
-      const timeUntilRefresh = Math.ceil(
-        (nextRefreshTime - currentTime) / (1000 * 60),
-      );
-      return `Spróbuj ponownie za ${timeUntilRefresh} min`;
-    }
-
-    return "Uprawnienia są aktualne";
-  };
-
-  const canTriggerRefreshText = getCanTriggerRefreshText();
+  const { canTriggerRefresh, canTriggerRefreshText } = getPermissionRefreshInfo(
+    member?.updatedAt,
+    currentTimestamp,
+  );
 
   const header = (
     <>

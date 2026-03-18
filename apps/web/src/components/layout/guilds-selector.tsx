@@ -13,7 +13,7 @@ import { useUpdateUserPreferences } from "@/hooks/api/user/use-update-user-prefe
 export const GuildsSelector: FC = () => {
   const { data: guilds } = useGuilds();
   const { user } = useUser();
-  const [guildsState, setGuildsState] = useState<typeof guilds>([]);
+  const [localGuilds, setLocalGuilds] = useState<typeof guilds>();
   const [isDragging, setIsDragging] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
   const { mutate: updateUserPreferences } = useUpdateUserPreferences();
@@ -41,22 +41,22 @@ export const GuildsSelector: FC = () => {
   }, [guilds, user?.preferences?.guildsOrder]);
 
   useEffect(() => {
-    setGuildsState(orderedGuilds);
-  }, [orderedGuilds]);
-
-  useEffect(() => {
     if (!isDragging && pendingOrder) {
-      updateUserPreferences({
-        guildsOrder: pendingOrder,
-      });
-      setPendingOrder(null);
+      const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
+      const pendingOrderKey = pendingOrder.join(":");
+
+      if (orderedGuildsKey !== pendingOrderKey) {
+        updateUserPreferences({
+          guildsOrder: pendingOrder,
+        });
+      }
     }
-  }, [isDragging, pendingOrder, updateUserPreferences]);
+  }, [isDragging, orderedGuilds, pendingOrder, updateUserPreferences]);
 
   const handleReorder = useCallback((newGuilds: typeof guilds) => {
     if (!newGuilds) return;
 
-    setGuildsState(newGuilds);
+    setLocalGuilds(newGuilds);
 
     const orderIds = newGuilds.map((guild) => guild.id);
     setPendingOrder(orderIds);
@@ -70,7 +70,12 @@ export const GuildsSelector: FC = () => {
     setIsDragging(false);
   }, []);
 
-  const guildList = guildsState || [];
+  const orderedGuildsKey = orderedGuilds.map((guild) => guild.id).join(":");
+  const pendingOrderKey = pendingOrder?.join(":");
+  const guildList =
+    isDragging || (pendingOrderKey && pendingOrderKey !== orderedGuildsKey)
+      ? (localGuilds ?? orderedGuilds)
+      : orderedGuilds;
 
   return (
     <div className="flex flex-col gap-2 w-16 border-r border-solid pt-2 h-full">

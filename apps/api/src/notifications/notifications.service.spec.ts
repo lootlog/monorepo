@@ -1,18 +1,18 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { NotificationsService } from './notifications.service';
-import { GuildsService } from 'src/guilds/guilds.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { ForbiddenException } from "@nestjs/common";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { NotificationsService } from "./notifications.service";
+import { GuildsService } from "src/guilds/guilds.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
 
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid',
+jest.mock("uuid", () => ({
+  v4: () => "mock-uuid",
 }));
 
-describe('NotificationsService', () => {
+describe("NotificationsService", () => {
   let service: NotificationsService;
 
   const mockLogger = { log: jest.fn() };
@@ -46,14 +46,14 @@ describe('NotificationsService', () => {
     jest.clearAllMocks();
   });
 
-  describe('cancelPartyGathering', () => {
-    const discordId = '123456';
-    const notificationId = 'notif-abc';
+  describe("cancelPartyGathering", () => {
+    const discordId = "123456";
+    const notificationId = "notif-abc";
 
-    it('should cancel successfully when metadata exists and user is owner', async () => {
+    it("should cancel successfully when metadata exists and user is owner", async () => {
       const metadata = {
         discordId,
-        guildIds: ['guild-1', 'guild-2'],
+        guildIds: ["guild-1", "guild-2"],
         createdAt: new Date().toISOString(),
       };
       mockRedisService.get.mockResolvedValue(JSON.stringify(metadata));
@@ -64,8 +64,8 @@ describe('NotificationsService', () => {
       );
 
       expect(result).toEqual({
-        status: 'success',
-        guildIds: ['guild-1', 'guild-2'],
+        status: "success",
+        guildIds: ["guild-1", "guild-2"],
       });
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `notification:${notificationId}`,
@@ -77,16 +77,16 @@ describe('NotificationsService', () => {
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,
         RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-        { guildId: 'guild-1', notificationId },
+        { guildId: "guild-1", notificationId },
       );
       expect(mockAmqpConnection.publish).toHaveBeenCalledWith(
         DEFAULT_EXCHANGE_NAME,
         RoutingKey.GUILDS_PARTY_GATHERING_CANCEL,
-        { guildId: 'guild-2', notificationId },
+        { guildId: "guild-2", notificationId },
       );
     });
 
-    it('should return expired status when metadata is missing', async () => {
+    it("should return expired status when metadata is missing", async () => {
       mockRedisService.get.mockResolvedValue(null);
 
       const result = await service.cancelPartyGathering(
@@ -94,7 +94,7 @@ describe('NotificationsService', () => {
         notificationId,
       );
 
-      expect(result).toEqual({ status: 'expired' });
+      expect(result).toEqual({ status: "expired" });
       expect(mockRedisService.del).toHaveBeenCalledWith(
         `notification:${notificationId}`,
       );
@@ -104,10 +104,10 @@ describe('NotificationsService', () => {
       expect(mockAmqpConnection.publish).not.toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenException when user is not the owner', async () => {
+    it("should throw ForbiddenException when user is not the owner", async () => {
       const metadata = {
-        discordId: 'other-user',
-        guildIds: ['guild-1'],
+        discordId: "other-user",
+        guildIds: ["guild-1"],
         createdAt: new Date().toISOString(),
       };
       mockRedisService.get.mockResolvedValue(JSON.stringify(metadata));

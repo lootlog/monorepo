@@ -1,19 +1,36 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@lootlog/ui/components/button";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 export type UnsavedChangesBarProps = {
   isDirty: boolean;
   isSubmitting: boolean;
   onReset: () => void;
   onSubmit?: () => void;
+  unsavedChangesLabel?: string;
+  resetLabel?: string;
+  saveLabel?: string;
+  savingLabel?: string;
 };
 
 export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
   isDirty,
   isSubmitting,
   onReset,
+  unsavedChangesLabel,
+  resetLabel,
+  saveLabel,
+  savingLabel,
 }) => {
+  const { t } = useTranslation();
+
+  const effectiveUnsavedChangesLabel =
+    unsavedChangesLabel ?? t("common.unsavedChanges");
+  const effectiveResetLabel = resetLabel ?? t("common.reset");
+  const effectiveSaveLabel = saveLabel ?? t("common.save");
+  const effectiveSavingLabel = savingLabel ?? t("common.saving");
+
   return (
     <AnimatePresence>
       {isDirty && (
@@ -32,11 +49,13 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
           <div className="pointer-events-auto w-full max-w-2xl rounded-xl border bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 p-3 shadow-lg flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
-              <p className="text-sm font-medium">Masz niezapisane zmiany</p>
+              <p className="text-sm font-medium">
+                {effectiveUnsavedChangesLabel}
+              </p>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="ghost" size="sm" onClick={onReset}>
-                Resetuj
+                {effectiveResetLabel}
               </Button>
               <Button
                 type="submit"
@@ -44,7 +63,7 @@ export const UnsavedChangesBar: FC<UnsavedChangesBarProps> = ({
                 size="sm"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Zapisywanie..." : "Zapisz"}
+                {isSubmitting ? effectiveSavingLabel : effectiveSaveLabel}
               </Button>
             </div>
           </div>

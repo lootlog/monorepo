@@ -64,7 +64,9 @@ export const LootTopItems: React.FC<LootTopItemsProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t("loots.stats.topItems.title")}</CardTitle>
+        <CardTitle className="text-base">
+          {t("loots.stats.topItems.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">

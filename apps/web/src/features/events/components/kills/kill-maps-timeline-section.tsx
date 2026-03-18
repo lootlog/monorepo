@@ -33,7 +33,7 @@ export const KillMapsTimelineSection = ({
 
   if (isLoading) {
     return (
-      <Card className="p-3 bg-card/40 backdrop-blur-sm border-border">
+      <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
         <div className="flex items-center justify-center py-6">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
         </div>
@@ -53,11 +53,20 @@ export const KillMapsTimelineSection = ({
   });
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-      <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-        <Map className="w-4 h-4" />
-        {t("events.killDetail.mapCoverage.title")}
-      </h3>
+    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+          <Map className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("events.killDetail.mapCoverage.subtitle", "Pokrycie")}
+          </p>
+          <h3 className="text-base font-semibold">
+            {t("events.killDetail.mapCoverage.title")}
+          </h3>
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-3 text-xs">
         <div className="flex items-center gap-1.5">

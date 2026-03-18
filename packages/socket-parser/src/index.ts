@@ -1,4 +1,4 @@
-import { encode, decode, ExtensionCodec } from '@msgpack/msgpack';
+import { encode, decode, ExtensionCodec } from "@msgpack/msgpack";
 
 const PacketType = {
   CONNECT: 0,
@@ -79,7 +79,10 @@ class MsgpackDecoder {
   }
 
   add(obj: Uint8Array | ArrayLike<number>) {
-    const input = obj instanceof Uint8Array ? obj : new Uint8Array(obj as ArrayLike<number>);
+    const input =
+      obj instanceof Uint8Array
+        ? obj
+        : new Uint8Array(obj as ArrayLike<number>);
     const decoded = decode(input, { extensionCodec }) as Packet;
 
     // Convert null data to undefined (msgpack encodes undefined as null by default)
@@ -88,26 +91,27 @@ class MsgpackDecoder {
     }
 
     this.checkPacket(decoded);
-    this.emit('decoded', decoded);
+    this.emit("decoded", decoded);
   }
 
   private checkPacket(decoded: Packet) {
     const isTypeValid =
-      typeof decoded.type === 'number' &&
+      typeof decoded.type === "number" &&
       decoded.type >= PacketType.CONNECT &&
       decoded.type <= PacketType.BINARY_ACK;
 
     if (!isTypeValid) {
-      throw new Error('invalid packet type');
+      throw new Error("invalid packet type");
     }
 
-    if (typeof decoded.nsp !== 'string') {
-      throw new Error('invalid namespace');
+    if (typeof decoded.nsp !== "string") {
+      throw new Error("invalid namespace");
     }
 
-    const isAckValid = decoded.id === undefined || typeof decoded.id === 'number';
+    const isAckValid =
+      decoded.id === undefined || typeof decoded.id === "number";
     if (!isAckValid) {
-      throw new Error('invalid packet id');
+      throw new Error("invalid packet id");
     }
   }
 
@@ -122,4 +126,4 @@ export const msgpackParser = {
   Decoder: MsgpackDecoder,
 };
 
-export { encode, decode } from '@msgpack/msgpack';
+export { encode, decode } from "@msgpack/msgpack";

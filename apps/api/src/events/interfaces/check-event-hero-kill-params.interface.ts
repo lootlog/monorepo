@@ -1,4 +1,4 @@
-import type { KillTimerData } from './kill-timer-data.interface';
+import type { KillTimerData } from "./kill-timer-data.interface";
 
 export interface CheckEventHeroKillParams {
   guildId: string;
@@ -21,7 +21,7 @@ export interface SerializedKillTimerData {
 
 export interface EventHeroKillJobData extends Omit<
   CheckEventHeroKillParams,
-  'timerData'
+  "timerData"
 > {
   timerData: SerializedKillTimerData;
   isManualClose: boolean;

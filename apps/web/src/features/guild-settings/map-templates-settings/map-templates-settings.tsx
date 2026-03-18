@@ -11,10 +11,7 @@ import { FileText, MapPin, Trash2, Pencil, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { ConfirmDeleteDialog } from "@lootlog/ui/components/confirm-delete-dialog";
-import {
-  useMapTemplates,
-  type MapTemplate,
-} from "./hooks/use-map-templates";
+import { useMapTemplates, type MapTemplate } from "./hooks/use-map-templates";
 import { useDeleteMapTemplate } from "./hooks/use-map-template-mutations";
 import { MapTemplatesHeader } from "./map-templates-header";
 import { MapTemplateCreateDialog } from "./map-template-create-dialog";

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { APP_CONFIG } from "../config/app.config.js";
+import { logger } from "../config/winston.config.js";
 import { channel } from "../lib/rabbitmq.js";
 import { Queue } from "./enum/queue.enum.js";
 import { RoutingKey } from "./enum/routing-key.enum.js";
@@ -41,7 +42,7 @@ export const setupItemsHandlers = async () => {
             const validationResult = indexItemsPayloadSchema.safeParse(parsed);
 
             if (!validationResult.success) {
-              console.error("Validation error in items index handler:", {
+              logger.error("Validation error in items index handler", {
                 error: validationResult.error.format(),
                 messageContent: messageContent.slice(0, 500),
               });
@@ -52,7 +53,7 @@ export const setupItemsHandlers = async () => {
             await itemsService.indexItems({ items: validationResult.data });
             channel?.ack(msg);
           } catch (error) {
-            console.error("Error processing items index message:", {
+            logger.error("Error processing items index message", {
               error: error instanceof Error ? error.message : error,
               stack: error instanceof Error ? error.stack : undefined,
             });
@@ -63,6 +64,6 @@ export const setupItemsHandlers = async () => {
       { noAck: false },
     )
     .catch((error) => {
-      console.error("Error consuming message:", error);
+      logger.error("Error consuming message", { error });
     });
 };

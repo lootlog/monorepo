@@ -1,10 +1,19 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { RedisService } from './redis.service';
+import { Module } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import {
+  RedisModule as SharedRedisModule,
+  type RedisConfig,
+} from "@lootlog/nest-shared";
+import { ConfigKey } from "src/config/config-key.enum";
 
 @Module({
-  imports: [ConfigModule],
-  providers: [RedisService],
-  exports: [RedisService],
+  imports: [
+    SharedRedisModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        configService.get<RedisConfig>(ConfigKey.REDIS)!,
+    }),
+  ],
+  exports: [SharedRedisModule],
 })
 export class RedisModule {}

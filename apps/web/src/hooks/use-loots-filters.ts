@@ -23,9 +23,6 @@ export const useLootsFilters = () => {
       players: parseAsArrayOf(parseAsString).withDefault([]),
       playerLevelMin: parseAsString.withDefault(""),
       playerLevelMax: parseAsString.withDefault(""),
-
-      // Legacy - to be removed from URL
-      location: parseAsString.withDefault(""),
     },
     {
       history: "push",
@@ -66,7 +63,6 @@ export const useLootsFilters = () => {
       players: null,
       playerLevelMin: null,
       playerLevelMax: null,
-      location: null,
     });
   };
 

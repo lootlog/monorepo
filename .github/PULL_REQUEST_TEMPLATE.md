@@ -120,7 +120,7 @@ Related to #
 
 - [ ] My code follows the project's code style guidelines
 - [ ] I have run `pnpm lint` and fixed all issues
-- [ ] I have run `pnpm format` to format my code
+- [ ] I have run `pnpm format` to format my code with Oxfmt
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] My changes generate no new warnings or errors
@@ -148,7 +148,7 @@ Related to #
 
 ### Environment Variables
 
-- [ ] I have updated `.env.sample` files (if new env vars added)
+- [ ] I have updated `.env.example` files (if new env vars added)
 - [ ] I have documented all new environment variables
 - [ ] I have updated the CLI env generator (if needed)
 
@@ -167,11 +167,10 @@ Related to #
 <!-- Highlight specific areas you'd like reviewers to pay attention to -->
 
 -
--
+- ***
 
----
+  **By submitting this pull request, I confirm that:**
 
-**By submitting this pull request, I confirm that:**
 - [ ] I have read and understood the [Contributing Guidelines](../CONTRIBUTING.md)
 - [ ] I agree to follow the [Code of Conduct](../CODE_OF_CONDUCT.md)
 - [ ] My contribution is my own original work and I have the right to submit it under the project's license

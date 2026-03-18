@@ -1,46 +1,46 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/db/prisma.service';
-import { RedisService } from '../src/lib/redis/redis.service';
-import { TEST_GUILDS, TEST_USERS } from './test-helpers';
-import { createTestingModuleWithMocks } from './test-module-helpers';
-import { Permission, NpcType } from 'generated/client';
+import { INestApplication, ValidationPipe } from "@nestjs/common";
+import request from "supertest";
+import { AppModule } from "../src/app.module";
+import { PrismaService } from "../src/db/prisma.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { TEST_GUILDS, TEST_USERS } from "./test-helpers";
+import { createTestingModuleWithMocks } from "./test-module-helpers";
+import { Permission, NpcType } from "generated/client";
 
 const TEST_USERS_EXTENDED = {
   ...TEST_USERS,
   MEMBER_2: {
-    id: 'user-789',
-    email: 'test3@example.com',
-    discordId: 'discord-789',
-    role: 'USER',
+    id: "user-789",
+    email: "test3@example.com",
+    discordId: "discord-789",
+    role: "USER",
   },
   MEMBER_3: {
-    id: 'user-101',
-    email: 'test4@example.com',
-    discordId: 'discord-101',
-    role: 'USER',
+    id: "user-101",
+    email: "test4@example.com",
+    discordId: "discord-101",
+    role: "USER",
   },
 } as const;
 
 function createTestKillPayload(overrides = {}) {
   return {
-    world: 'pandora',
+    world: "pandora",
     npc: {
       id: -12345,
-      name: 'Test Boss',
+      name: "Test Boss",
       lvl: 300,
-      prof: 'w',
+      prof: "w",
       wt: 85, // HERO type
-      icon: 'boss.gif',
+      icon: "boss.gif",
     },
-    characterId: '67890',
-    accountId: '11111',
+    characterId: "67890",
+    accountId: "11111",
     ...overrides,
   };
 }
 
-describe('Kills E2E Tests (Deduplication)', () => {
+describe("Kills E2E Tests (Deduplication)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let redis: RedisService;
@@ -74,11 +74,11 @@ describe('Kills E2E Tests (Deduplication)', () => {
     await prisma.$executeRaw`TRUNCATE TABLE "Guild", "Role", "Member", "UserKillStats", "NpcKillStats", "GuildKillSummary", "UserCharactersLootlogSettings" CASCADE`;
 
     // Clear Redis deduplication keys
-    await redis.deleteByPattern('kill:dedup:*');
+    await redis.deleteByPattern("kill:dedup:*");
   });
 
-  describe('POST /kills - User Deduplication', () => {
-    it('should deduplicate multiple requests from same user for same NPC within 30s window', async () => {
+  describe("POST /kills - User Deduplication", () => {
+    it("should deduplicate multiple requests from same user for same NPC within 30s window", async () => {
       // Setup: Create guild and member
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
@@ -88,7 +88,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -96,8 +96,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild.id],
           addTimersWhitelistGuildIds: [],
         },
@@ -107,9 +107,9 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Send first request - should succeed
       const response1 = await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(killPayload)
         .expect(201);
 
@@ -118,9 +118,9 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Send second request immediately - should be deduplicated
       const response2 = await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(killPayload)
         .expect(201);
 
@@ -149,7 +149,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
       expect(guildSummary[0].uniqueKills).toBe(1);
     });
 
-    it('should handle 10 concurrent requests from same user - only first counted', async () => {
+    it("should handle 10 concurrent requests from same user - only first counted", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -158,7 +158,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -166,8 +166,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild.id],
           addTimersWhitelistGuildIds: [],
         },
@@ -180,9 +180,9 @@ describe('Kills E2E Tests (Deduplication)', () => {
         .fill(null)
         .map(() =>
           request(app.getHttpServer())
-            .post('/kills')
-            .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-            .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+            .post("/kills")
+            .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+            .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
             .send(killPayload),
         );
 
@@ -219,7 +219,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
       expect(guildSummary[0].uniqueKills).toBe(1);
     });
 
-    it('should allow same user to kill different NPCs', async () => {
+    it("should allow same user to kill different NPCs", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -228,7 +228,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -236,8 +236,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild.id],
           addTimersWhitelistGuildIds: [],
         },
@@ -245,9 +245,9 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Kill NPC 1
       const response1 = await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(
           createTestKillPayload({
             npc: { ...createTestKillPayload().npc, id: -1001 },
@@ -259,9 +259,9 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Kill NPC 2 - different NPC, should not be deduplicated
       const response2 = await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(
           createTestKillPayload({
             npc: { ...createTestKillPayload().npc, id: -1002 },
@@ -284,8 +284,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
     });
   });
 
-  describe('POST /kills - Guild Deduplication (Multiple Members)', () => {
-    it('should count participations for all members but only 1 unique guild kill', async () => {
+  describe("POST /kills - Guild Deduplication (Multiple Members)", () => {
+    it("should count participations for all members but only 1 unique guild kill", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -295,7 +295,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Member 1',
+          name: "Member 1",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -304,7 +304,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
           guildId: guild.id,
-          name: 'Member 2',
+          name: "Member 2",
           globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
         },
       });
@@ -313,7 +313,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
           guildId: guild.id,
-          name: 'Member 3',
+          name: "Member 3",
           globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
         },
       });
@@ -323,8 +323,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: '11111',
-            characterId: '1',
+            accountId: "11111",
+            characterId: "1",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -332,8 +332,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
-            accountId: '22222',
-            characterId: '2',
+            accountId: "22222",
+            characterId: "2",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -341,8 +341,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
-            accountId: '33333',
-            characterId: '3',
+            accountId: "33333",
+            characterId: "3",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -354,20 +354,20 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // All 3 members kill the same NPC "simultaneously"
       const responses = await Promise.all([
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-          .send({ ...killPayload, accountId: '11111', characterId: '1' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+          .send({ ...killPayload, accountId: "11111", characterId: "1" }),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_2.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_2.id)
-          .send({ ...killPayload, accountId: '22222', characterId: '2' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS_EXTENDED.MEMBER_2.discordId)
+          .set("x-auth-user-id", TEST_USERS_EXTENDED.MEMBER_2.id)
+          .send({ ...killPayload, accountId: "22222", characterId: "2" }),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_3.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_3.id)
-          .send({ ...killPayload, accountId: '33333', characterId: '3' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS_EXTENDED.MEMBER_3.discordId)
+          .set("x-auth-user-id", TEST_USERS_EXTENDED.MEMBER_3.id)
+          .send({ ...killPayload, accountId: "33333", characterId: "3" }),
       ]);
 
       // All should succeed
@@ -404,7 +404,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
       expect(guildSummary[0].uniqueKills).toBe(1);
     });
 
-    it('should handle 10 concurrent requests from different users - all get participation, 1 unique kill', async () => {
+    it("should handle 10 concurrent requests from different users - all get participation, 1 unique kill", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -449,9 +449,9 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // All 10 users send kill requests concurrently
       const requests = userIds.map((user) =>
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', user.discordId)
-          .set('x-auth-user-id', user.id)
+          .post("/kills")
+          .set("x-auth-discord-id", user.discordId)
+          .set("x-auth-user-id", user.id)
           .send({
             ...killPayload,
             accountId: user.accountId,
@@ -482,8 +482,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
     });
   });
 
-  describe('POST /kills - Multi-character spam from same user', () => {
-    it('should deduplicate kills from same user with different characters', async () => {
+  describe("POST /kills - Multi-character spam from same user", () => {
+    it("should deduplicate kills from same user with different characters", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -492,7 +492,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -502,8 +502,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: '11111',
-            characterId: 'char1',
+            accountId: "11111",
+            characterId: "char1",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -511,8 +511,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: '11111',
-            characterId: 'char2',
+            accountId: "11111",
+            characterId: "char2",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -520,8 +520,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: '11111',
-            characterId: 'char3',
+            accountId: "11111",
+            characterId: "char3",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -533,20 +533,20 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Same user sends kills from 3 different characters
       const responses = await Promise.all([
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-          .send({ ...basePayload, characterId: 'char1' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+          .send({ ...basePayload, characterId: "char1" }),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-          .send({ ...basePayload, characterId: 'char2' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+          .send({ ...basePayload, characterId: "char2" }),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-          .send({ ...basePayload, characterId: 'char3' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+          .send({ ...basePayload, characterId: "char3" }),
       ]);
 
       // All return 201
@@ -582,8 +582,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
     });
   });
 
-  describe('POST /kills - Multiple Guilds', () => {
-    it('should record participations in all configured guilds', async () => {
+  describe("POST /kills - Multiple Guilds", () => {
+    it("should record participations in all configured guilds", async () => {
       const guild1 = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -597,7 +597,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild1.id,
-          name: 'Member in Guild 1',
+          name: "Member in Guild 1",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -606,7 +606,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild2.id,
-          name: 'Member in Guild 2',
+          name: "Member in Guild 2",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -615,17 +615,17 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild1.id, guild2.id],
           addTimersWhitelistGuildIds: [],
         },
       });
 
       const response = await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .send(createTestKillPayload())
         .expect(201);
 
@@ -651,17 +651,17 @@ describe('Kills E2E Tests (Deduplication)', () => {
     });
   });
 
-  describe('GET /guilds/:guildId/stats/kills - Verify Stats', () => {
-    it('should return correct stats after concurrent kills from multiple members', async () => {
+  describe("GET /guilds/:guildId/stats/kills - Verify Stats", () => {
+    it("should return correct stats after concurrent kills from multiple members", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_LOOTS_READ],
         },
       });
@@ -672,7 +672,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             guildId: guild.id,
-            name: 'Member 1',
+            name: "Member 1",
             globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
             roles: { connect: { id: role.id } },
           },
@@ -681,7 +681,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             guildId: guild.id,
-            name: 'Member 2',
+            name: "Member 2",
             globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
           },
         }),
@@ -689,7 +689,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             guildId: guild.id,
-            name: 'Member 3',
+            name: "Member 3",
             globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
           },
         }),
@@ -700,8 +700,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: '11111',
-            characterId: '1',
+            accountId: "11111",
+            characterId: "1",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -709,8 +709,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
-            accountId: '22222',
-            characterId: '2',
+            accountId: "22222",
+            characterId: "2",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -718,8 +718,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
-            accountId: '33333',
-            characterId: '3',
+            accountId: "33333",
+            characterId: "3",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -730,27 +730,27 @@ describe('Kills E2E Tests (Deduplication)', () => {
       const killPayload = createTestKillPayload();
       await Promise.all([
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-          .send({ ...killPayload, accountId: '11111', characterId: '1' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+          .send({ ...killPayload, accountId: "11111", characterId: "1" }),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_2.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_2.id)
-          .send({ ...killPayload, accountId: '22222', characterId: '2' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS_EXTENDED.MEMBER_2.discordId)
+          .set("x-auth-user-id", TEST_USERS_EXTENDED.MEMBER_2.id)
+          .send({ ...killPayload, accountId: "22222", characterId: "2" }),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_3.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_3.id)
-          .send({ ...killPayload, accountId: '33333', characterId: '3' }),
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS_EXTENDED.MEMBER_3.discordId)
+          .set("x-auth-user-id", TEST_USERS_EXTENDED.MEMBER_3.id)
+          .send({ ...killPayload, accountId: "33333", characterId: "3" }),
       ]);
 
       // Now check stats
       const statsResponse = await request(app.getHttpServer())
         .get(`/guilds/${guild.id}/stats/kills`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       // 1 unique guild kill
@@ -771,29 +771,29 @@ describe('Kills E2E Tests (Deduplication)', () => {
     });
   });
 
-  describe('POST /kills - COLOSSUS Stable ID Aggregation', () => {
+  describe("POST /kills - COLOSSUS Stable ID Aggregation", () => {
     function createColossusKillPayload(
       spawnId: number,
-      name = 'Wielki Kolos',
+      name = "Wielki Kolos",
       overrides = {},
     ) {
       return {
-        world: 'pandora',
+        world: "pandora",
         npc: {
           id: spawnId,
           name,
           lvl: 350,
-          prof: 'w',
+          prof: "w",
           wt: 95, // COLOSSUS type (wt > 89)
-          icon: 'colossus.gif',
+          icon: "colossus.gif",
         },
-        characterId: '67890',
-        accountId: '11111',
+        characterId: "67890",
+        accountId: "11111",
         ...overrides,
       };
     }
 
-    it('should aggregate kills for same COLOSSUS name with different spawn IDs', async () => {
+    it("should aggregate kills for same COLOSSUS name with different spawn IDs", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -802,7 +802,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -810,8 +810,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild.id],
           addTimersWhitelistGuildIds: [],
         },
@@ -819,23 +819,23 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Kill COLOSSUS with spawn ID 111111
       const response1 = await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(createColossusKillPayload(111111, 'Wielki Kolos'))
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, "Wielki Kolos"))
         .expect(201);
 
       expect(response1.body.updated).toBe(1);
 
       // Clear dedup window to allow second kill
-      await redis.deleteByPattern('kill:dedup:*');
+      await redis.deleteByPattern("kill:dedup:*");
 
       // Kill same COLOSSUS with different spawn ID 222222
       const response2 = await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(createColossusKillPayload(222222, 'Wielki Kolos'))
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(222222, "Wielki Kolos"))
         .expect(201);
 
       expect(response2.body.updated).toBe(1);
@@ -866,7 +866,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
       expect(guildSummary[0].npcId).toBeLessThan(0);
     });
 
-    it('should create separate records for different COLOSSUS names', async () => {
+    it("should create separate records for different COLOSSUS names", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -875,7 +875,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
         },
       });
@@ -883,8 +883,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild.id],
           addTimersWhitelistGuildIds: [],
         },
@@ -892,26 +892,26 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Kill 'Kolos Ognia'
       await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(createColossusKillPayload(111111, 'Kolos Ognia'))
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, "Kolos Ognia"))
         .expect(201);
 
-      await redis.deleteByPattern('kill:dedup:*');
+      await redis.deleteByPattern("kill:dedup:*");
 
       // Kill 'Kolos Lodu'
       await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(createColossusKillPayload(222222, 'Kolos Lodu'))
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(222222, "Kolos Lodu"))
         .expect(201);
 
       // Verify 2 separate records with different stable IDs
       const userKills = await prisma.userKillStats.findMany({
         where: { userId: TEST_USERS.MEMBER_WITH_WRITE.discordId },
-        orderBy: { npcName: 'asc' },
+        orderBy: { npcName: "asc" },
       });
       expect(userKills).toHaveLength(2);
       expect(userKills[0].npcId).not.toBe(userKills[1].npcId);
@@ -921,16 +921,16 @@ describe('Kills E2E Tests (Deduplication)', () => {
       expect(userKills[1].npcType).toBe(NpcType.COLOSSUS);
     });
 
-    it('should return negative npcId in top-npcs stats response', async () => {
+    it("should return negative npcId in top-npcs stats response", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_LOOTS_READ],
         },
       });
@@ -939,7 +939,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: { connect: { id: role.id } },
         },
@@ -948,8 +948,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild.id],
           addTimersWhitelistGuildIds: [],
         },
@@ -957,35 +957,35 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Create COLOSSUS kill
       await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(createColossusKillPayload(111111, 'Wielki Kolos'))
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, "Wielki Kolos"))
         .expect(201);
 
       // Query top NPCs filtered by COLOSSUS type
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild.id}/stats/kills/top-npcs?npcType=COLOSSUS`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body.topNpcs).toHaveLength(1);
       expect(response.body.topNpcs[0].npcId).toBeLessThan(0);
-      expect(response.body.topNpcs[0].npcType).toBe('COLOSSUS');
-      expect(response.body.topNpcs[0].npcName).toBe('Wielki Kolos');
+      expect(response.body.topNpcs[0].npcType).toBe("COLOSSUS");
+      expect(response.body.topNpcs[0].npcName).toBe("Wielki Kolos");
     });
 
-    it('should accept negative npcId in getNpcKillers endpoint', async () => {
+    it("should accept negative npcId in getNpcKillers endpoint", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
 
       const role = await prisma.role.create({
         data: {
-          id: 'role-1',
+          id: "role-1",
           guildId: guild.id,
-          name: 'Member',
+          name: "Member",
           permissions: [Permission.LOOTLOG_LOOTS_READ],
         },
       });
@@ -994,7 +994,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
           guildId: guild.id,
-          name: 'Test Member',
+          name: "Test Member",
           globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           roles: { connect: { id: role.id } },
         },
@@ -1003,8 +1003,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
       await prisma.userCharactersLootlogSettings.create({
         data: {
           userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-          accountId: '11111',
-          characterId: '67890',
+          accountId: "11111",
+          characterId: "67890",
           collectLootWhitelistGuildIds: [guild.id],
           addTimersWhitelistGuildIds: [],
         },
@@ -1012,10 +1012,10 @@ describe('Kills E2E Tests (Deduplication)', () => {
 
       // Create COLOSSUS kill
       await request(app.getHttpServer())
-        .post('/kills')
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
-        .send(createColossusKillPayload(111111, 'Wielki Kolos'))
+        .post("/kills")
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
+        .send(createColossusKillPayload(111111, "Wielki Kolos"))
         .expect(201);
 
       // Get the stable negative ID from the database
@@ -1029,18 +1029,18 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Query killers endpoint with negative npcId
       const response = await request(app.getHttpServer())
         .get(`/guilds/${guild.id}/stats/kills/npcs/${negativeNpcId}/killers`)
-        .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-        .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+        .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+        .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
         .expect(200);
 
       expect(response.body.npc).toBeDefined();
       expect(response.body.npc.npcId).toBe(negativeNpcId);
-      expect(response.body.npc.npcType).toBe('COLOSSUS');
+      expect(response.body.npc.npcType).toBe("COLOSSUS");
       expect(response.body.killers).toHaveLength(1);
-      expect(response.body.killers[0].memberName).toBe('Test Member');
+      expect(response.body.killers[0].memberName).toBe("Test Member");
     });
 
-    it('should handle concurrent kills of same COLOSSUS from different spawn IDs', async () => {
+    it("should handle concurrent kills of same COLOSSUS from different spawn IDs", async () => {
       const guild = await prisma.guild.create({
         data: TEST_GUILDS.GUILD_1,
       });
@@ -1051,7 +1051,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
             guildId: guild.id,
-            name: 'Member 1',
+            name: "Member 1",
             globalUserId: TEST_USERS.MEMBER_WITH_WRITE.id,
           },
         }),
@@ -1059,7 +1059,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
             guildId: guild.id,
-            name: 'Member 2',
+            name: "Member 2",
             globalUserId: TEST_USERS_EXTENDED.MEMBER_2.id,
           },
         }),
@@ -1067,7 +1067,7 @@ describe('Kills E2E Tests (Deduplication)', () => {
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
             guildId: guild.id,
-            name: 'Member 3',
+            name: "Member 3",
             globalUserId: TEST_USERS_EXTENDED.MEMBER_3.id,
           },
         }),
@@ -1078,8 +1078,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS.MEMBER_WITH_WRITE.discordId,
-            accountId: '11111',
-            characterId: '1',
+            accountId: "11111",
+            characterId: "1",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -1087,8 +1087,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_2.discordId,
-            accountId: '22222',
-            characterId: '2',
+            accountId: "22222",
+            characterId: "2",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -1096,8 +1096,8 @@ describe('Kills E2E Tests (Deduplication)', () => {
         prisma.userCharactersLootlogSettings.create({
           data: {
             userId: TEST_USERS_EXTENDED.MEMBER_3.discordId,
-            accountId: '33333',
-            characterId: '3',
+            accountId: "33333",
+            characterId: "3",
             collectLootWhitelistGuildIds: [guild.id],
             addTimersWhitelistGuildIds: [],
           },
@@ -1108,33 +1108,33 @@ describe('Kills E2E Tests (Deduplication)', () => {
       // Each member reports with a DIFFERENT spawn ID (as would happen in-game)
       const responses = await Promise.all([
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS.MEMBER_WITH_WRITE.discordId)
-          .set('x-auth-user-id', TEST_USERS.MEMBER_WITH_WRITE.id)
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS.MEMBER_WITH_WRITE.discordId)
+          .set("x-auth-user-id", TEST_USERS.MEMBER_WITH_WRITE.id)
           .send(
-            createColossusKillPayload(111111, 'Wielki Kolos', {
-              accountId: '11111',
-              characterId: '1',
+            createColossusKillPayload(111111, "Wielki Kolos", {
+              accountId: "11111",
+              characterId: "1",
             }),
           ),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_2.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_2.id)
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS_EXTENDED.MEMBER_2.discordId)
+          .set("x-auth-user-id", TEST_USERS_EXTENDED.MEMBER_2.id)
           .send(
-            createColossusKillPayload(222222, 'Wielki Kolos', {
-              accountId: '22222',
-              characterId: '2',
+            createColossusKillPayload(222222, "Wielki Kolos", {
+              accountId: "22222",
+              characterId: "2",
             }),
           ),
         request(app.getHttpServer())
-          .post('/kills')
-          .set('x-auth-discord-id', TEST_USERS_EXTENDED.MEMBER_3.discordId)
-          .set('x-auth-user-id', TEST_USERS_EXTENDED.MEMBER_3.id)
+          .post("/kills")
+          .set("x-auth-discord-id", TEST_USERS_EXTENDED.MEMBER_3.discordId)
+          .set("x-auth-user-id", TEST_USERS_EXTENDED.MEMBER_3.id)
           .send(
-            createColossusKillPayload(333333, 'Wielki Kolos', {
-              accountId: '33333',
-              characterId: '3',
+            createColossusKillPayload(333333, "Wielki Kolos", {
+              accountId: "33333",
+              characterId: "3",
             }),
           ),
       ]);

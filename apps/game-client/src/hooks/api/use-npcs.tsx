@@ -1,19 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { NpcTypeEnum as NpcType } from "@lootlog/types";
 import axios from "axios";
 import { useAuthToken } from "../auth/use-auth-token";
 import { API_URL } from "@/config/api";
 
-export enum NpcType {
-  COMMON = "COMMON",
-  ELITE = "ELITE",
-  ELITE2 = "ELITE2",
-  ELITE3 = "ELITE3",
-  HERO = "HERO",
-  EVENT_HERO = "EVENT_HERO",
-  TITAN = "TITAN",
-  COLOSSUS = "COLOSSUS",
-  NPC = "NPC",
-}
+export { NpcType };
 
 export type Npc = {
   id: number;
@@ -46,7 +37,7 @@ export const useNpcs = ({ search }: UseGuildNpcsOptions) => {
         `${API_URL}/npcs?${new URLSearchParams(queryParams).toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       ),
     enabled: !!token && !!guildId,
     select: (response) => response.data,

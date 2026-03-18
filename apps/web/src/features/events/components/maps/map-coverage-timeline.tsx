@@ -58,8 +58,7 @@ export const MapCoverageTimeline = ({
                     : "Nieprzypisane"}
               </span>
               <span className="text-muted-foreground">
-                {formatTime(segment.startTime)} -{" "}
-                {formatTime(segment.endTime)}
+                {formatTime(segment.startTime)} - {formatTime(segment.endTime)}
               </span>
               <span>
                 {formatDurationFromMs(

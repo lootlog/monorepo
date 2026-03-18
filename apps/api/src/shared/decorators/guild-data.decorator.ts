@@ -1,19 +1,8 @@
-import {
-  createParamDecorator,
-  ForbiddenException,
-  type ExecutionContext,
-} from '@nestjs/common';
-import type { Guild } from 'generated/client';
+import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared";
+import { ForbiddenException } from "@nestjs/common";
+import type { Guild } from "generated/client";
 
-export const GuildData = createParamDecorator(function (
-  data: unknown,
-  ctx: ExecutionContext,
-) {
-  const request = ctx.switchToHttp().getRequest();
-
-  if (!request.guild) {
-    throw new ForbiddenException();
-  }
-
-  return request.guild as Guild;
+export const GuildData = createRequiredRequestValueDecorator<Guild>({
+  createException: () => new ForbiddenException(),
+  getValue: (request) => request.guild as Guild | undefined,
 });

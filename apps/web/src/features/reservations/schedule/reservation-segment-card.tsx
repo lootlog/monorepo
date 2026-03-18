@@ -103,15 +103,13 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
       {isShortReservation ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={`flex h-full items-center gap-2 w-full p-1`}>
-              <Avatar className={`pointer-events-none size-5 shrink-0`}>
+            <div className="flex h-full items-center gap-2 w-full p-1">
+              <Avatar className="pointer-events-none size-5 shrink-0">
                 <AvatarImage src={avatarUrl} alt={memberName} />
                 <AvatarFallback>{fallbackInitial}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0 flex-1">
-                <span
-                  className={`font-semibold leading-tight truncate text-[10px]`}
-                >
+                <span className="font-semibold leading-tight truncate text-[10px]">
                   {memberName}
                 </span>
                 {!isVeryShortReservation && (
@@ -168,15 +166,11 @@ export const ReservationSegmentCard: React.FC<ReservationSegmentCardProps> = ({
           </div>
 
           <div className="flex flex-col items-center justify-center gap-1 text-center min-h-0 flex-1 my-0.5">
-            <Avatar
-              className={`pointer-events-none size-7 shrink-0 shadow-sm border border-border/20`}
-            >
+            <Avatar className="pointer-events-none size-7 shrink-0 shadow-sm border border-border/20">
               <AvatarImage src={avatarUrl} alt={memberName} />
               <AvatarFallback>{fallbackInitial}</AvatarFallback>
             </Avatar>
-            <span
-              className={`font-semibold leading-tight line-clamp-2 text-wrap break-words w-full text-[10px]`}
-            >
+            <span className="font-semibold leading-tight line-clamp-2 text-wrap break-words w-full text-[10px]">
               {memberName}
             </span>
           </div>

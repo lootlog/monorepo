@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Reorder } from "framer-motion";
 import { GripVertical, X } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
@@ -17,13 +17,7 @@ export const CategoryStatsSection = ({
   onRemoveStat,
 }: CategoryStatsSectionProps) => {
   const [localOrder, setLocalOrder] = useState(statOrder);
-  const isDraggingRef = useRef(false);
-
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      setLocalOrder(statOrder);
-    }
-  }, [statOrder]);
+  const [isDragging, setIsDragging] = useState(false);
 
   const getStatLabel = (statKey: string) => {
     const stat = allAvailableStats.find((s) => s.key === statKey);
@@ -33,6 +27,11 @@ export const CategoryStatsSection = ({
   const handleReorder = (newOrder: string[]) => {
     setLocalOrder(newOrder);
   };
+
+  const propOrderKey = statOrder.join(":");
+  const localOrderKey = localOrder.join(":");
+  const displayedOrder =
+    isDragging || localOrderKey !== propOrderKey ? localOrder : statOrder;
 
   if (statOrder.length === 0) {
     return (
@@ -45,20 +44,20 @@ export const CategoryStatsSection = ({
   return (
     <Reorder.Group
       axis="y"
-      values={localOrder}
+      values={displayedOrder}
       onReorder={handleReorder}
       className="space-y-1"
     >
-      {localOrder.map((statKey) => (
+      {displayedOrder.map((statKey) => (
         <Reorder.Item
           key={statKey}
           value={statKey}
           className="flex items-center gap-2 bg-background border rounded px-2 py-1.5 text-sm"
           onDragStart={() => {
-            isDraggingRef.current = true;
+            setIsDragging(true);
           }}
           onDragEnd={() => {
-            isDraggingRef.current = false;
+            setIsDragging(false);
             onUpdateStatOrder(localOrder);
           }}
         >

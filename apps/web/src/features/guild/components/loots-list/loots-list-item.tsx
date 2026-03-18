@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { ItemRarity, type Loot, type Item } from "@/hooks/api/loots/use-loots";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { timestampToDate } from "@/utils/date/parse-timestamp-to-date";
@@ -17,6 +16,8 @@ import { cn } from "@lootlog/ui/lib/utils";
 import { ItemTile } from "@/components/tiles";
 import { useTheme } from "@/hooks/context/use-theme";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
+import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   loot: Loot;
@@ -26,66 +27,80 @@ type PlayerColorMap = Record<string, { color: string; idx: number }>;
 type ItemOwnerMap = Record<string, string | undefined>;
 type ItemsByPlayer = Record<string, Item[]>;
 
-const useLootData = (loot: Loot) => {
-  return useMemo(() => {
-    const playerColorMap = loot.players.reduce<PlayerColorMap>(
-      (acc, player, idx) => {
-        const color =
-          LOOT_SHARE_COLOR_PALETTE[idx % LOOT_SHARE_COLOR_PALETTE.length] ?? "";
-        acc[player.id] = { color, idx };
-        return acc;
-      },
-      {},
-    );
-
-    const itemOwnerMap: ItemOwnerMap = {};
-    Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
-      itemIds.forEach((itemId) => {
-        itemOwnerMap[itemId] = playerId;
-      });
-    });
-
-    const itemsByPlayer = loot.players.reduce<ItemsByPlayer>((acc, player) => {
-      acc[player.id] = [];
+const buildLootData = (loot: Loot) => {
+  const playerColorMap = loot.players.reduce<PlayerColorMap>(
+    (acc, player, idx) => {
+      const color =
+        LOOT_SHARE_COLOR_PALETTE[idx % LOOT_SHARE_COLOR_PALETTE.length] ?? "";
+      acc[player.id] = { color, idx };
       return acc;
-    }, {});
+    },
+    {},
+  );
 
-    const unassignedItems: Item[] = [];
-    const singlePlayerId =
-      loot.players.length === 1 ? loot.players[0]?.id : undefined;
-
-    loot.items.forEach((item) => {
-      const ownerId = itemOwnerMap[item.hid];
-      if (ownerId && itemsByPlayer[ownerId]) {
-        itemsByPlayer[ownerId].push(item);
-      } else if (singlePlayerId && itemsByPlayer[singlePlayerId]) {
-        itemsByPlayer[singlePlayerId].push(item);
-      } else {
-        unassignedItems.push(item);
-      }
+  const itemOwnerMap: ItemOwnerMap = {};
+  Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
+    itemIds.forEach((itemId) => {
+      itemOwnerMap[itemId] = playerId;
     });
+  });
 
-    const hasLegendaryItem = loot.items.some(
-      (item) => item.rarity === ItemRarity.LEGENDARY,
-    );
+  const itemsByPlayer = loot.players.reduce<ItemsByPlayer>((acc, player) => {
+    acc[player.id] = [];
+    return acc;
+  }, {});
 
-    const sortedPlayers = [...loot.players].sort((a, b) => {
-      const aItems = itemsByPlayer[a.id]?.length || 0;
-      const bItems = itemsByPlayer[b.id]?.length || 0;
-      if (aItems > 0 && bItems === 0) return -1;
-      if (aItems === 0 && bItems > 0) return 1;
-      return 0;
-    });
+  const unassignedItems: Item[] = [];
+  const singlePlayerId =
+    loot.players.length === 1 ? loot.players[0]?.id : undefined;
 
-    return {
-      playerColorMap,
-      itemOwnerMap,
-      itemsByPlayer,
-      unassignedItems,
-      hasLegendaryItem,
-      sortedPlayers,
+  loot.items.forEach((item) => {
+    const ownerId = itemOwnerMap[item.hid];
+    if (ownerId && itemsByPlayer[ownerId]) {
+      itemsByPlayer[ownerId].push(item);
+    } else if (singlePlayerId && itemsByPlayer[singlePlayerId]) {
+      itemsByPlayer[singlePlayerId].push(item);
+    } else {
+      unassignedItems.push(item);
+    }
+  });
+
+  const hasLegendaryItem = loot.items.some(
+    (item) => item.rarity === ItemRarity.LEGENDARY,
+  );
+
+  const sortedPlayers = [...loot.players].sort((a, b) => {
+    const aItems = itemsByPlayer[a.id]?.length || 0;
+    const bItems = itemsByPlayer[b.id]?.length || 0;
+    if (aItems > 0 && bItems === 0) return -1;
+    if (aItems === 0 && bItems > 0) return 1;
+    return 0;
+  });
+
+  return {
+    playerColorMap,
+    itemOwnerMap,
+    itemsByPlayer,
+    unassignedItems,
+    hasLegendaryItem,
+    sortedPlayers,
+  };
+};
+
+const useLootData = (loot: Loot) => {
+  const lootDataRef = useRef<{
+    loot: Loot;
+    data: ReturnType<typeof buildLootData>;
+  } | null>(null);
+
+  if (!lootDataRef.current || lootDataRef.current.loot !== loot) {
+    lootDataRef.current = {
+      loot,
+      data: buildLootData(loot),
     };
-  }, [loot]);
+  }
+
+  return lootDataRef.current.data;
 };
 
 const LootHeader = ({
@@ -126,12 +141,14 @@ const PlayerWithItems = ({
 );
 
 const UnassignedItems = ({ items }: { items: Item[] }) => {
+  const { t } = useTranslation();
+
   if (items.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-1 border-l border-border/30 pl-4">
       <span className="text-xs text-muted-foreground whitespace-nowrap">
-        Przedmioty bez podziału
+        {t("loots.list.unassignedItems")}
       </span>
       <div className="flex flex-row flex-wrap gap-1">
         {items.map((item, itemIdx) => (

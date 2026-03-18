@@ -30,7 +30,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
             "ll:!cursor-not-allowed": props.disabled,
             "ll:!text-gray-500": props.disabled,
           },
-          labelClassName
+          labelClassName,
         )}
         style={labelStyle}
       >

@@ -1,7 +1,7 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger } from '@nestjs/common';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { Injectable, Logger } from "@nestjs/common";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
 
 @Injectable()
 export class EventEmitterService {
@@ -25,7 +25,7 @@ export class EventEmitterService {
         },
       );
     } catch (error) {
-      this.logger.error('Failed to emit map status update', error);
+      this.logger.error("Failed to emit map status update", error);
     }
   }
 
@@ -45,7 +45,7 @@ export class EventEmitterService {
         },
       );
     } catch (error) {
-      this.logger.error('Failed to emit hero killed event', error);
+      this.logger.error("Failed to emit hero killed event", error);
     }
   }
 
@@ -60,7 +60,7 @@ export class EventEmitterService {
         },
       );
     } catch (error) {
-      this.logger.error('Failed to emit ranking update event', error);
+      this.logger.error("Failed to emit ranking update event", error);
     }
   }
 
@@ -76,7 +76,7 @@ export class EventEmitterService {
         { guildId, eventId, heroId },
       );
     } catch (error) {
-      this.logger.error('Failed to emit respawn window opened event', error);
+      this.logger.error("Failed to emit respawn window opened event", error);
     }
   }
 
@@ -92,7 +92,7 @@ export class EventEmitterService {
         { guildId, eventId, heroId },
       );
     } catch (error) {
-      this.logger.error('Failed to emit respawn window closed event', error);
+      this.logger.error("Failed to emit respawn window closed event", error);
     }
   }
 
@@ -104,7 +104,7 @@ export class EventEmitterService {
         timer,
       );
     } catch (error) {
-      this.logger.error('Failed to emit timer update', error);
+      this.logger.error("Failed to emit timer update", error);
     }
   }
 }

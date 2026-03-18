@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { ActivityType } from 'src/gateway/enums/activity-type.enum';
-import { ActivitySource } from 'src/gateway/enums/activity-source.enum';
-import { Platform } from 'src/gateway/enums/platform.enum';
-import { RoutingKey } from 'src/gateway/enums/routing-key.enum';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import type { Socket } from 'src/gateway/types/socket-user.type';
-import type { UserGuildData } from 'src/guilds/types/guild.types';
+import { Injectable, Logger } from "@nestjs/common";
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { ActivityType } from "src/gateway/enums/activity-type.enum";
+import { ActivitySource } from "src/gateway/enums/activity-source.enum";
+import { Platform } from "src/gateway/enums/platform.enum";
+import { RoutingKey } from "src/gateway/enums/routing-key.enum";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import type { Socket } from "src/gateway/types/socket-user.type";
+import type { UserGuildData } from "src/guilds/types/guild.types";
 
 @Injectable()
 export class ActivityService {
@@ -38,7 +38,7 @@ export class ActivityService {
         source,
         player,
         sessionId,
-        userAgent: client.request.headers['user-agent'],
+        userAgent: client.request.headers["user-agent"],
         timestamp,
       });
 
@@ -73,7 +73,7 @@ export class ActivityService {
     guildId: string;
     discordId: string;
     source: ActivitySource;
-    player: NonNullable<Socket['data']['player']>;
+    player: NonNullable<Socket["data"]["player"]>;
     sessionId: string;
     userAgent: string | undefined;
     timestamp: number;
@@ -94,7 +94,7 @@ export class ActivityService {
           ? {
               accountId: Number(player.accountId),
               characterId: Number(player.characterId),
-              clanName: player.clanName ?? '',
+              clanName: player.clanName ?? "",
               name: player.name,
               clanId: player.clanId ?? 0,
               icon: player.icon,

@@ -12,28 +12,12 @@ import {
 import { Clock, AlertCircle } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
 import type { KillParticipant } from "../../hooks/queries/use-hero-kill-history";
-import { formatMapNamesFromMapData } from "../../utils";
+import { formatDurationHuman, formatMapNamesFromMapData } from "../../utils";
 
 interface KillParticipantsListProps {
   participants: KillParticipant[];
   compact?: boolean;
 }
-
-const formatDuration = (seconds: number): string => {
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes < 60) {
-    return remainingSeconds > 0
-      ? `${minutes}m ${remainingSeconds}s`
-      : `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-};
 
 export const KillParticipantsList = ({
   participants,
@@ -132,7 +116,9 @@ export const KillParticipantsList = ({
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    <span>{formatDuration(participant.timeOnMapSeconds)}</span>
+                    <span>
+                      {formatDurationHuman(participant.timeOnMapSeconds)}
+                    </span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>

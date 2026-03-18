@@ -59,19 +59,15 @@ export function HeadToHeadFullPage() {
     (state) => state.getFilters(state.currentCharacterId).matchmaking,
   );
 
-  const [period, setPeriod] = useState<Period>(filterPeriod || "30d");
   const [selectedWarriors, setSelectedWarriors] = useState<Warrior[]>([]);
   const [sorting, setSorting] = useState<SortingState>([
     { id: "totalBattles", desc: true },
   ]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const period = filterPeriod || "30d";
 
   const sortBy = (sorting[0]?.id || "totalBattles") as SortBy;
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
-
-  useEffect(() => {
-    setPeriod(filterPeriod || "30d");
-  }, [currentCharacterId, filterPeriod]);
 
   useEffect(() => {
     setCursor(undefined);
@@ -116,7 +112,6 @@ export function HeadToHeadFullPage() {
   };
 
   const handlePeriodChange = (value: Period) => {
-    setPeriod(value);
     const currentId = useBattleFiltersStore.getState().currentCharacterId;
     useBattleFiltersStore
       .getState()

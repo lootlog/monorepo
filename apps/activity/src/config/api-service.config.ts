@@ -1,5 +1,5 @@
-import { registerAs } from '@nestjs/config';
-import { ConfigKey } from 'src/config/config-key.enum';
+import { registerAs } from "@nestjs/config";
+import { ConfigKey } from "src/config/config-key.enum";
 
 export interface ApiServiceConfig {
   url: string;

@@ -5,6 +5,7 @@ import { PostgresDialect } from "kysely";
 import { APP_CONFIG } from "../config/app.config.js";
 import pg from "pg";
 import { admin, bearer, jwt } from "better-auth/plugins";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 const { user, password, port, host, database } = APP_CONFIG.postgres;
 const { clientId, clientSecret } = APP_CONFIG.discord;
@@ -26,7 +27,7 @@ const dialect = new PostgresDialect({
   pool: new pg.Pool(poolConfig),
 });
 
-export const auth: any = betterAuth({
+export const auth = betterAuth({
   appName: "@lootlog/auth",
   basePath: "/idp",
   database: {
@@ -95,7 +96,7 @@ export const auth: any = betterAuth({
       clientId,
       clientSecret,
       redirectURI: `${APP_CONFIG.appUrl}/idp/callback/discord`,
-      scopes: ["guilds.members.read", "guilds", "identify", "email"],
+      scopes: DISCORD_AUTH_SCOPES,
       mapProfileToUser: (profile) => {
         return {
           firstName: profile.given_name,

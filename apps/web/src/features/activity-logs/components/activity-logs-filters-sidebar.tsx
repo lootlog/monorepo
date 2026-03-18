@@ -11,7 +11,7 @@ import {
 } from "@lootlog/ui/components/accordion";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { useEffect, useState, type FC } from "react";
+import { type FC } from "react";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ActorNameSelector } from "./actor-name-selector";
 import { DateTimePicker } from "@lootlog/ui/components/date-time-picker";
@@ -45,23 +45,16 @@ export const ActivityLogsFiltersSidebar: FC<
   const { filters, setFilters, clearFilters, hasActiveFilters } =
     useActivityLogsFilters();
   const { data: guild } = useGuild();
-  const [nameSearch, setNameSearch] = useState(filters.name ?? "");
-  const [clanNameSearch, setClanNameSearch] = useState(filters.clanName ?? "");
   const { data: nameSuggestions = [] } = useActivityActorNameSuggestions({
     guildId: guild?.id,
-    search: nameSearch,
+    search: filters.name ?? "",
     debounceMs: 300,
   });
   const { data: clanNameSuggestions = [] } = useActivityClanNameSuggestions({
     guildId: guild?.id,
-    search: clanNameSearch,
+    search: filters.clanName ?? "",
     debounceMs: 300,
   });
-
-  useEffect(() => {
-    setNameSearch(filters.name ?? "");
-    setClanNameSearch(filters.clanName ?? "");
-  }, [filters.name, filters.clanName]);
 
   const startDateValue = filters.startDate
     ? new Date(filters.startDate)
@@ -144,12 +137,9 @@ export const ActivityLogsFiltersSidebar: FC<
                     <ActorNameSelector
                       value={filters.name ?? ""}
                       suggestions={nameSuggestions}
-                      searchValue={nameSearch}
-                      onSearchChange={(value) => setNameSearch(value)}
-                      onValueChange={(value) => {
-                        setNameSearch(value);
-                        updateFilters({ name: value });
-                      }}
+                      searchValue={filters.name ?? ""}
+                      onSearchChange={(value) => updateFilters({ name: value })}
+                      onValueChange={(value) => updateFilters({ name: value })}
                       placeholder="Szukaj po nazwie..."
                       className="w-full"
                     />
@@ -162,12 +152,13 @@ export const ActivityLogsFiltersSidebar: FC<
                     <ActorNameSelector
                       value={filters.clanName ?? ""}
                       suggestions={clanNameSuggestions}
-                      searchValue={clanNameSearch}
-                      onSearchChange={(value) => setClanNameSearch(value)}
-                      onValueChange={(value) => {
-                        setClanNameSearch(value);
-                        updateFilters({ clanName: value });
-                      }}
+                      searchValue={filters.clanName ?? ""}
+                      onSearchChange={(value) =>
+                        updateFilters({ clanName: value })
+                      }
+                      onValueChange={(value) =>
+                        updateFilters({ clanName: value })
+                      }
                       placeholder="Szukaj po klanie..."
                       className="w-full"
                     />

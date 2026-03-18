@@ -1,17 +1,17 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { KillsService } from './kills.service';
-import { PrismaService } from 'src/db/prisma.service';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { UserLootlogConfigService } from 'src/user-lootlog-config/user-lootlog-config.service';
-import { Permission, NpcType, type Role } from 'generated/client';
-import type { CreateKillDto } from './dto/create-kill.dto';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { KillsService } from "./kills.service";
+import { PrismaService } from "src/db/prisma.service";
+import { RedisService } from "@lootlog/nest-shared";
+import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
+import { Permission, NpcType, type Role } from "generated/client";
+import type { CreateKillDto } from "./dto/create-kill.dto";
 import {
   GetGuildKillStatsDto,
   GetUserKillStatsDto,
-} from './dto/get-kill-stats.dto';
+} from "./dto/get-kill-stats.dto";
 
-describe('KillsService', () => {
+describe("KillsService", () => {
   let service: KillsService;
   let prismaService: {
     userKillStats: {
@@ -43,28 +43,28 @@ describe('KillsService', () => {
   };
 
   const mockCreateKillDto: CreateKillDto = {
-    world: 'pandora',
+    world: "pandora",
     npc: {
       id: -12345,
-      name: 'Test Boss',
+      name: "Test Boss",
       lvl: 300,
-      prof: 'w',
+      prof: "w",
       wt: 85,
-      icon: 'boss.gif',
+      icon: "boss.gif",
     },
-    characterId: '67890',
-    accountId: '11111',
+    characterId: "67890",
+    accountId: "11111",
   };
 
   const createMockRole = (overrides: Partial<Role> = {}): Role => ({
-    id: 'role1',
-    name: 'Test Role',
+    id: "role1",
+    name: "Test Role",
     color: 16711680,
     position: 1,
     permissions: [Permission.LOOTLOG_LOOTS_READ],
     lvlRangeFrom: 0,
     lvlRangeTo: 500,
-    guildId: 'guild1',
+    guildId: "guild1",
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -127,16 +127,16 @@ describe('KillsService', () => {
     jest.clearAllMocks();
   });
 
-  describe('constructor', () => {
-    it('should be defined', () => {
+  describe("constructor", () => {
+    it("should be defined", () => {
       expect(service).toBeDefined();
     });
   });
 
-  describe('createKill', () => {
-    const discordId = 'discord123';
+  describe("createKill", () => {
+    const discordId = "discord123";
 
-    it('should always save to UserKillStats when not deduplicated', async () => {
+    it("should always save to UserKillStats when not deduplicated", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
         null,
       );
@@ -147,15 +147,15 @@ describe('KillsService', () => {
         where: {
           userId_world_npcId: {
             userId: discordId,
-            world: 'pandora',
+            world: "pandora",
             npcId: 12345,
           },
         },
         create: expect.objectContaining({
           userId: discordId,
-          world: 'pandora',
+          world: "pandora",
           npcId: 12345,
-          npcName: 'Test Boss',
+          npcName: "Test Boss",
           npcType: NpcType.HERO,
           totalKills: 1,
         }),
@@ -165,7 +165,7 @@ describe('KillsService', () => {
       });
     });
 
-    it('should return deduplicated: true when user already reported this kill', async () => {
+    it("should return deduplicated: true when user already reported this kill", async () => {
       redisService.setNX.mockResolvedValue(false);
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
         null,
@@ -177,7 +177,7 @@ describe('KillsService', () => {
       expect(prismaService.userKillStats.upsert).not.toHaveBeenCalled();
     });
 
-    it('should return updated: 0 when no guilds are configured', async () => {
+    it("should return updated: 0 when no guilds are configured", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
         null,
       );
@@ -188,9 +188,9 @@ describe('KillsService', () => {
       expect(prismaService.npcKillStats.upsert).not.toHaveBeenCalled();
     });
 
-    it('should save to NpcKillStats and GuildKillSummary for each configured guild', async () => {
+    it("should save to NpcKillStats and GuildKillSummary for each configured guild", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ['guild1', 'guild2'],
+        collectLootWhitelistGuildIds: ["guild1", "guild2"],
         addTimersWhitelistGuildIds: [],
       });
       prismaService.member.findUnique
@@ -207,9 +207,9 @@ describe('KillsService', () => {
       expect(result).toEqual({ updated: 2 });
     });
 
-    it('should skip guilds where member is not found', async () => {
+    it("should skip guilds where member is not found", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ['guild1', 'guild2'],
+        collectLootWhitelistGuildIds: ["guild1", "guild2"],
         addTimersWhitelistGuildIds: [],
       });
       prismaService.member.findUnique
@@ -224,10 +224,10 @@ describe('KillsService', () => {
       expect(result).toEqual({ updated: 1 });
     });
 
-    it('should deduplicate guilds from loot and timer whitelists', async () => {
+    it("should deduplicate guilds from loot and timer whitelists", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ['guild1', 'guild2'],
-        addTimersWhitelistGuildIds: ['guild1', 'guild3'],
+        collectLootWhitelistGuildIds: ["guild1", "guild2"],
+        addTimersWhitelistGuildIds: ["guild1", "guild3"],
       });
       prismaService.member.findUnique.mockResolvedValue({ id: 1 });
       prismaService.npcKillStats.upsert.mockResolvedValue({});
@@ -238,9 +238,9 @@ describe('KillsService', () => {
       expect(prismaService.member.findUnique).toHaveBeenCalledTimes(3);
     });
 
-    it('should handle UserKillStats upsert errors gracefully', async () => {
+    it("should handle UserKillStats upsert errors gracefully", async () => {
       prismaService.userKillStats.upsert.mockRejectedValue(
-        new Error('DB error'),
+        new Error("DB error"),
       );
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
         null,
@@ -252,14 +252,14 @@ describe('KillsService', () => {
       expect(result).toEqual({ updated: 0 });
     });
 
-    it('should handle NpcKillStats upsert errors gracefully', async () => {
+    it("should handle NpcKillStats upsert errors gracefully", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ['guild1'],
+        collectLootWhitelistGuildIds: ["guild1"],
         addTimersWhitelistGuildIds: [],
       });
       prismaService.member.findUnique.mockResolvedValue({ id: 1 });
       prismaService.npcKillStats.upsert.mockRejectedValue(
-        new Error('DB error'),
+        new Error("DB error"),
       );
 
       const result = await service.createKill(discordId, mockCreateKillDto);
@@ -268,7 +268,7 @@ describe('KillsService', () => {
       expect(result).toEqual({ updated: 0 });
     });
 
-    it('should convert negative NPC ID to positive', async () => {
+    it("should convert negative NPC ID to positive", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
         null,
       );
@@ -286,9 +286,9 @@ describe('KillsService', () => {
       );
     });
 
-    it('should not increment GuildKillSummary if guild already reported this kill', async () => {
+    it("should not increment GuildKillSummary if guild already reported this kill", async () => {
       userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue({
-        collectLootWhitelistGuildIds: ['guild1'],
+        collectLootWhitelistGuildIds: ["guild1"],
         addTimersWhitelistGuildIds: [],
       });
       prismaService.member.findUnique.mockResolvedValue({ id: 1 });
@@ -304,22 +304,22 @@ describe('KillsService', () => {
       expect(prismaService.guildKillSummary.upsert).not.toHaveBeenCalled();
     });
 
-    describe('COLOSSUS stable ID handling', () => {
+    describe("COLOSSUS stable ID handling", () => {
       const colossusKillDto: CreateKillDto = {
-        world: 'pandora',
+        world: "pandora",
         npc: {
           id: 999999,
-          name: 'Wielki Kolos',
+          name: "Wielki Kolos",
           lvl: 350,
-          prof: 'w',
+          prof: "w",
           wt: 95, // COLOSSUS type (wt > 89)
-          icon: 'colossus.gif',
+          icon: "colossus.gif",
         },
-        characterId: '67890',
-        accountId: '11111',
+        characterId: "67890",
+        accountId: "11111",
       };
 
-      it('should use a stable negative ID for COLOSSUS NPCs', async () => {
+      it("should use a stable negative ID for COLOSSUS NPCs", async () => {
         userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
           null,
         );
@@ -332,7 +332,7 @@ describe('KillsService', () => {
         expect(upsertCall.create.npcType).toBe(NpcType.COLOSSUS);
       });
 
-      it('should use the same stable ID for COLOSSUS with same name but different spawn IDs', async () => {
+      it("should use the same stable ID for COLOSSUS with same name but different spawn IDs", async () => {
         userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
           null,
         );
@@ -361,7 +361,7 @@ describe('KillsService', () => {
         expect(firstNpcId).toBe(secondNpcId);
       });
 
-      it('should use different stable IDs for different COLOSSUS names', async () => {
+      it("should use different stable IDs for different COLOSSUS names", async () => {
         userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
           null,
         );
@@ -377,7 +377,7 @@ describe('KillsService', () => {
           ...colossusKillDto,
           npc: {
             ...colossusKillDto.npc,
-            name: 'Inny Kolos', // Different name
+            name: "Inny Kolos", // Different name
           },
         };
 
@@ -388,7 +388,7 @@ describe('KillsService', () => {
         expect(firstNpcId).not.toBe(secondNpcId);
       });
 
-      it('should use stable ID for Redis dedup key with COLOSSUS', async () => {
+      it("should use stable ID for Redis dedup key with COLOSSUS", async () => {
         userLootlogConfigService.getLootlogCharacterConfig.mockResolvedValue(
           null,
         );
@@ -399,14 +399,14 @@ describe('KillsService', () => {
         const dedupKey = setNXCall[0] as string;
 
         // The dedup key should contain the stable (negative) ID, not the spawn ID
-        expect(dedupKey).toContain(':' + String(dedupKey.split(':').pop()));
-        expect(dedupKey).not.toContain(':999999');
+        expect(dedupKey).toContain(":" + String(dedupKey.split(":").pop()));
+        expect(dedupKey).not.toContain(":999999");
       });
     });
   });
 
-  describe('getGuildKillStats', () => {
-    const guildId = 'guild123';
+  describe("getGuildKillStats", () => {
+    const guildId = "guild123";
 
     const mockMemberStats = [
       {
@@ -414,21 +414,21 @@ describe('KillsService', () => {
         npcType: NpcType.HERO,
         npcLvl: 300,
         memberKills: 50,
-        member: { id: 1, name: 'Player1', avatar: null, userId: 'user1' },
+        member: { id: 1, name: "Player1", avatar: null, userId: "user1" },
       },
       {
         memberId: 1,
         npcType: NpcType.TITAN,
         npcLvl: 400,
         memberKills: 20,
-        member: { id: 1, name: 'Player1', avatar: null, userId: 'user1' },
+        member: { id: 1, name: "Player1", avatar: null, userId: "user1" },
       },
       {
         memberId: 2,
         npcType: NpcType.HERO,
         npcLvl: 250,
         memberKills: 30,
-        member: { id: 2, name: 'Player2', avatar: null, userId: 'user2' },
+        member: { id: 2, name: "Player2", avatar: null, userId: "user2" },
       },
     ];
 
@@ -437,7 +437,7 @@ describe('KillsService', () => {
       { npcType: NpcType.TITAN, uniqueKills: 15 },
     ];
 
-    it('should return aggregated kill stats', async () => {
+    it("should return aggregated kill stats", async () => {
       prismaService.npcKillStats.findMany.mockResolvedValue(mockMemberStats);
       prismaService.guildKillSummary.findMany.mockResolvedValue(
         mockGuildSummary,
@@ -457,11 +457,11 @@ describe('KillsService', () => {
         [NpcType.TITAN]: 20,
       });
       expect(result.memberRanking).toHaveLength(2);
-      expect(result.memberRanking[0].memberName).toBe('Player1');
+      expect(result.memberRanking[0].memberName).toBe("Player1");
       expect(result.memberRanking[0].totalParticipations).toBe(70);
     });
 
-    it('should filter by NPC type when provided', async () => {
+    it("should filter by NPC type when provided", async () => {
       prismaService.npcKillStats.findMany.mockResolvedValue([]);
       prismaService.guildKillSummary.findMany.mockResolvedValue([]);
       const query = new GetGuildKillStatsDto();
@@ -478,7 +478,7 @@ describe('KillsService', () => {
       );
     });
 
-    it('should filter by level range when provided', async () => {
+    it("should filter by level range when provided", async () => {
       prismaService.npcKillStats.findMany.mockResolvedValue([]);
       prismaService.guildKillSummary.findMany.mockResolvedValue([]);
       const query = new GetGuildKillStatsDto();
@@ -496,8 +496,8 @@ describe('KillsService', () => {
       );
     });
 
-    describe('permission filtering', () => {
-      it('should not apply visibility filter for administrative users', async () => {
+    describe("permission filtering", () => {
+      it("should not apply visibility filter for administrative users", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
@@ -514,7 +514,7 @@ describe('KillsService', () => {
         );
       });
 
-      it('should not apply visibility filter when no roles provided', async () => {
+      it("should not apply visibility filter when no roles provided", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
@@ -530,7 +530,7 @@ describe('KillsService', () => {
         );
       });
 
-      it('should filter out TITANs when role lacks TITANS_READ permission', async () => {
+      it("should filter out TITANs when role lacks TITANS_READ permission", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
@@ -555,7 +555,7 @@ describe('KillsService', () => {
         );
       });
 
-      it('should allow TITANs when role has TITANS_READ permission', async () => {
+      it("should allow TITANs when role has TITANS_READ permission", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
@@ -576,7 +576,7 @@ describe('KillsService', () => {
         expect(hasTitanFilter).toBe(false);
       });
 
-      it('should filter out HEROes when role lacks HEROES_READ permission', async () => {
+      it("should filter out HEROes when role lacks HEROES_READ permission", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
@@ -601,7 +601,7 @@ describe('KillsService', () => {
         );
       });
 
-      it('should allow HEROes when role has HEROES_READ permission', async () => {
+      it("should allow HEROes when role has HEROES_READ permission", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
@@ -624,7 +624,7 @@ describe('KillsService', () => {
         expect(hasHeroFilter).toBe(false);
       });
 
-      it('should apply level range filter from role', async () => {
+      it("should apply level range filter from role", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
@@ -651,18 +651,18 @@ describe('KillsService', () => {
         );
       });
 
-      it('should combine visibility from multiple roles with OR', async () => {
+      it("should combine visibility from multiple roles with OR", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role1 = createMockRole({
-          id: 'role1',
+          id: "role1",
           permissions: [Permission.LOOTLOG_LOOTS_READ],
           lvlRangeFrom: 0,
           lvlRangeTo: 200,
         });
         const role2 = createMockRole({
-          id: 'role2',
+          id: "role2",
           permissions: [
             Permission.LOOTLOG_LOOTS_READ,
             Permission.LOOTLOG_LOOTS_TITANS_READ,
@@ -677,16 +677,16 @@ describe('KillsService', () => {
         expect(call.where.OR).toHaveLength(2);
       });
 
-      it('should skip roles without LOOTLOG_LOOTS_READ permission', async () => {
+      it("should skip roles without LOOTLOG_LOOTS_READ permission", async () => {
         prismaService.npcKillStats.findMany.mockResolvedValue([]);
         prismaService.guildKillSummary.findMany.mockResolvedValue([]);
         const query = new GetGuildKillStatsDto();
         const role1 = createMockRole({
-          id: 'role1',
+          id: "role1",
           permissions: [Permission.LOOTLOG_TIMERS_READ],
         });
         const role2 = createMockRole({
-          id: 'role2',
+          id: "role2",
           permissions: [Permission.LOOTLOG_LOOTS_READ],
         });
 
@@ -698,43 +698,43 @@ describe('KillsService', () => {
     });
   });
 
-  describe('getUserKillStats', () => {
-    const discordId = 'discord123';
+  describe("getUserKillStats", () => {
+    const discordId = "discord123";
 
     const mockUserStats = [
       {
-        world: 'pandora',
+        world: "pandora",
         npcId: 999,
-        npcName: 'Boss1',
+        npcName: "Boss1",
         npcType: NpcType.HERO,
         npcLvl: 300,
-        npcProf: 'w',
-        npcIcon: 'boss.gif',
+        npcProf: "w",
+        npcIcon: "boss.gif",
         totalKills: 50,
       },
       {
-        world: 'tempest',
+        world: "tempest",
         npcId: 888,
-        npcName: 'Boss2',
+        npcName: "Boss2",
         npcType: NpcType.TITAN,
         npcLvl: 400,
         npcProf: null,
-        npcIcon: 'titan.gif',
+        npcIcon: "titan.gif",
         totalKills: 20,
       },
       {
-        world: 'pandora',
+        world: "pandora",
         npcId: 888,
-        npcName: 'Boss2',
+        npcName: "Boss2",
         npcType: NpcType.TITAN,
         npcLvl: 400,
         npcProf: null,
-        npcIcon: 'titan.gif',
+        npcIcon: "titan.gif",
         totalKills: 30,
       },
     ];
 
-    it('should return aggregated user stats', async () => {
+    it("should return aggregated user stats", async () => {
       prismaService.userKillStats.findMany.mockResolvedValue(mockUserStats);
       const query = new GetUserKillStatsDto();
 
@@ -751,7 +751,7 @@ describe('KillsService', () => {
       });
     });
 
-    it('should return top NPCs sorted by kill count with world-npc combination', async () => {
+    it("should return top NPCs sorted by kill count with world-npc combination", async () => {
       prismaService.userKillStats.findMany.mockResolvedValue(mockUserStats);
       const query = new GetUserKillStatsDto();
 
@@ -759,27 +759,27 @@ describe('KillsService', () => {
 
       // Stats are grouped by world:npcId, so same npc on different worlds are separate entries
       expect(result.topNpcs).toHaveLength(3);
-      expect(result.topNpcs[0].npcName).toBe('Boss1');
+      expect(result.topNpcs[0].npcName).toBe("Boss1");
       expect(result.topNpcs[0].totalKills).toBe(50);
     });
 
-    it('should filter by world when provided', async () => {
+    it("should filter by world when provided", async () => {
       prismaService.userKillStats.findMany.mockResolvedValue([]);
       const query = new GetUserKillStatsDto();
-      query.world = 'pandora';
+      query.world = "pandora";
 
       await service.getUserKillStats(discordId, query);
 
       expect(prismaService.userKillStats.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            world: 'pandora',
+            world: "pandora",
           }),
         }),
       );
     });
 
-    it('should filter by NPC types when provided', async () => {
+    it("should filter by NPC types when provided", async () => {
       prismaService.userKillStats.findMany.mockResolvedValue([]);
       const query = new GetUserKillStatsDto();
       query.npcTypes = [NpcType.HERO, NpcType.TITAN];
@@ -795,7 +795,7 @@ describe('KillsService', () => {
       );
     });
 
-    it('should handle empty stats', async () => {
+    it("should handle empty stats", async () => {
       prismaService.userKillStats.findMany.mockResolvedValue([]);
       const query = new GetUserKillStatsDto();
 
@@ -807,15 +807,15 @@ describe('KillsService', () => {
       expect(result.topNpcs).toEqual([]);
     });
 
-    it('should limit topNpcs to specified limit', async () => {
+    it("should limit topNpcs to specified limit", async () => {
       const manyNpcs = Array.from({ length: 15 }, (_, i) => ({
-        world: 'pandora',
+        world: "pandora",
         npcId: 1000 + i,
         npcName: `Boss${i}`,
         npcType: NpcType.HERO,
         npcLvl: 300,
         npcProf: null,
-        npcIcon: 'boss.gif',
+        npcIcon: "boss.gif",
         totalKills: 100 - i,
       }));
       prismaService.userKillStats.findMany.mockResolvedValue(manyNpcs);

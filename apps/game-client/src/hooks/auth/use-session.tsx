@@ -1,6 +1,6 @@
-import { REQUIRED_SCOPES } from "@/constants/required-auth-scopes";
 import { useAuthScopes } from "@/hooks/auth/use-auth-scopes";
 import { authClient } from "@/lib/auth-client";
+import { DISCORD_AUTH_SCOPES } from "@lootlog/types";
 
 let messageSent = false;
 let scopeMessageSent = false;
@@ -9,8 +9,8 @@ export const useSession = () => {
   const session = authClient.useSession();
   const { data: scopes, isPending } = useAuthScopes();
 
-  const hasRequiredScopes = REQUIRED_SCOPES.every((scope) =>
-    scopes?.includes(scope)
+  const hasRequiredScopes = DISCORD_AUTH_SCOPES.every((scope) =>
+    scopes?.includes(scope),
   );
 
   if (!session.data && !session.isPending && !messageSent) {
@@ -21,7 +21,7 @@ export const useSession = () => {
   if (!hasRequiredScopes && !isPending && !scopeMessageSent) {
     scopeMessageSent = true;
     window.message(
-      "Brak wymaganych uprawnień, zaloguj się ponownie, aby załadować dodatek"
+      "Brak wymaganych uprawnień, zaloguj się ponownie, aby załadować dodatek",
     );
   }
 

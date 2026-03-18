@@ -1,20 +1,8 @@
-import {
-  createParamDecorator,
-  BadRequestException,
-  type ExecutionContext,
-} from "@nestjs/common";
+import { BadRequestException } from "@nestjs/common";
 
-export const GuildId = createParamDecorator(function (
-  data: unknown,
-  ctx: ExecutionContext,
-) {
-  const request = ctx.switchToHttp().getRequest();
+import { createRequiredRequestValueDecorator } from "./create-required-request-value.decorator";
 
-  const guildId = request.params?.guildId;
-
-  if (!guildId) {
-    throw new BadRequestException("Guild ID is required");
-  }
-
-  return guildId;
+export const GuildId = createRequiredRequestValueDecorator({
+  createException: () => new BadRequestException("Guild ID is required"),
+  getValue: (request) => request.params?.guildId,
 });

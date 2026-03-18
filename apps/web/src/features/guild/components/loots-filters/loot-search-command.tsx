@@ -101,7 +101,6 @@ export const LootSearchCommand = ({
       players: null,
       playerLevelMin: null,
       playerLevelMax: null,
-      location: null,
     });
     onOpenChange(false);
     setSearchQuery("");

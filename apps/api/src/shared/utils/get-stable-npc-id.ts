@@ -1,4 +1,4 @@
-import { NpcType } from 'generated/client';
+import { NpcType } from "generated/client";
 
 /**
  * For COLOSSUS type monsters, generates a stable ID from the name
@@ -15,7 +15,7 @@ export const getStableNpcId = (
     // Use a simple string hash that produces a stable negative number
     // (negative to avoid collision with real NPC IDs)
     // Normalize and bound the name length to avoid unbounded iteration
-    const safeName = String(npcName ?? '');
+    const safeName = String(npcName ?? "");
     const MAX_NPC_NAME_LENGTH = 256;
     const length = Math.min(safeName.length, MAX_NPC_NAME_LENGTH);
 

@@ -1,59 +1,36 @@
-# Auth Service
+# @lootlog/auth
 
-Authentication service built with Hono and Better-Auth.
+Hono-based authentication service for Lootlog.
 
 ## Overview
 
-The Auth service handles user authentication and authorization for the entire Lootlog platform. It provides Discord OAuth integration, session management, and JWT token generation.
+- Wraps Better Auth for session handling, JWT issuance, JWKS exposure, and provider integrations.
+- Supports Discord OAuth and email/password auth as configured in `src/lib/auth.ts`.
+- Exposes service-specific routes under `/auth/*` and delegates Better Auth handlers under `/idp/*`.
 
-## Features
+## Routes
 
-- **Discord OAuth** - Login with Discord account
-- **Email/Password Authentication** - Traditional login option
-- **JWT Tokens** - Secure token-based authentication
-- **JWKS Endpoint** - Public keys for JWT verification by other services
-- **Session Management** - User session handling with Redis
-- **Better-Auth Integration** - Modern authentication library
-
-## Tech Stack
-
-- **Hono** - Fast web framework
-- **Better-Auth** - Authentication library
-- **Kysely** - Type-safe SQL query builder
-- **PostgreSQL** - User database (port 5432)
-- **Redis** - Session storage
-
-## Database
-
-Uses the `lootlog-users-db` PostgreSQL database for:
-- User accounts
-- Discord profiles
-- Sessions
-- OAuth tokens
-
-## API Endpoints
-
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/discord` - Discord OAuth flow
-- `GET /api/auth/.well-known/jwks.json` - JWKS public keys
-- `POST /api/auth/logout` - User logout
+- `/auth/verify` verifies the current session or bearer token and forwards user metadata through headers.
+- `/auth/@me/scopes` returns Discord access scopes for the current user.
+- `/auth/idp-token` returns a provider token for a specific user.
+- `/idp/*` is handled directly by Better Auth.
 
 ## Development
 
-```bash
-# From monorepo root
-pnpm auth:migrate:dev    # Run database migrations
-cd apps/auth
-pnpm dev                 # Start development server
+Run commands from the monorepo root:
 
-# Service runs on http://localhost:3031
+```bash
+pnpm --filter @lootlog/auth auth:migrate:dev
+pnpm --filter @lootlog/auth dev
 ```
 
-## Environment Variables
+## Key Scripts
 
-See `.env.sample` for required configuration:
-- Database connection
-- Discord OAuth credentials
-- JWT secrets
-- Redis connection
+- `pnpm --filter @lootlog/auth build`
+- `pnpm --filter @lootlog/auth start`
+- `pnpm --filter @lootlog/auth auth:migrate:prod`
+
+## Notes
+
+- Database access is configured with Kysely and PostgreSQL in `src/lib/auth.ts`.
+- Observability is initialized at process startup in `src/index.ts`.

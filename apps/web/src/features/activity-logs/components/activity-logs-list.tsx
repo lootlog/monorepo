@@ -8,13 +8,19 @@ import {
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { ActivityLogsListItem } from "./activity-logs-list-item";
 import { AlertCircle, Frown, Loader2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
+import {
+  useResetScrollTop,
+  useVirtualInfiniteScroll,
+} from "@/hooks/utils/use-virtual-infinite-scroll";
+import { useTranslation } from "react-i18next";
 
 const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
 export const ActivityLogsList = () => {
+  const { t } = useTranslation();
   const { data: guild } = useGuild();
   const { filters } = useActivityLogsFilters();
   const scrollElementRef = useRef<HTMLDivElement>(null);
@@ -55,30 +61,22 @@ export const ActivityLogsList = () => {
   });
 
   const virtualItems = virtualizer.getVirtualItems();
+  const activityLogsResetKey = JSON.stringify({
+    filters,
+    guildId: guild?.id ?? "",
+  });
 
-  useEffect(() => {
-    const [lastItem] = [...virtualItems].reverse();
-
-    if (!lastItem) return;
-
-    if (
-      lastItem.index >= totalCount - 1 &&
-      hasNextPage &&
-      !isFetchingNextPage
-    ) {
-      fetchNextPage();
-    }
-  }, [
-    hasNextPage,
+  useVirtualInfiniteScroll({
     fetchNextPage,
-    totalCount,
+    hasNextPage,
     isFetchingNextPage,
+    itemCount: totalCount,
     virtualItems,
-  ]);
-
-  useEffect(() => {
-    scrollElementRef.current?.scrollTo(0, 0);
-  }, [guild?.id, filters]);
+  });
+  useResetScrollTop({
+    resetKey: activityLogsResetKey,
+    scrollElementRef,
+  });
 
   const hasActivities = allActivities.length > 0;
 
@@ -87,7 +85,7 @@ export const ActivityLogsList = () => {
       <div className="flex flex-col justify-center gap-4 items-center flex-1 text-muted-foreground">
         <AlertCircle size="48" className="text-destructive/70" />
         <span className="font-semibold text-foreground">
-          Nie udało się załadować aktywności.
+          {t("common.activityLogs.loadError")}
         </span>
       </div>
     );
@@ -117,7 +115,7 @@ export const ActivityLogsList = () => {
       <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
         <Frown size="72" className="text-muted-foreground/50" />
         <span className="font-semibold text-foreground">
-          Nie znaleziono żadnych aktywności.
+          {t("common.activityLogs.empty")}
         </span>
       </div>
     );
@@ -161,13 +159,13 @@ export const ActivityLogsList = () => {
                   <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     <span className="text-sm text-muted-foreground font-medium">
-                      Ładowanie kolejnych aktywności...
+                      {t("common.activityLogs.loadingMore")}
                     </span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                     <span className="text-xs text-muted-foreground">
-                      To już wszystkie aktywności
+                      {t("common.activityLogs.end")}
                     </span>
                   </div>
                 )

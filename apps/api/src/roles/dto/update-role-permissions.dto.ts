@@ -1,11 +1,11 @@
-import { Permission } from 'generated/client';
-import { IsEnum, IsNumber } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { Permission } from "generated/client";
+import { IsEnum, IsNumber } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class UpdateRolePermissionsDto {
   @ApiProperty({
-    description: 'Array of permissions to assign to the role',
-    example: ['LOOTLOG_READ', 'LOOTLOG_WRITE'],
+    description: "Array of permissions to assign to the role",
+    example: ["LOOTLOG_READ", "LOOTLOG_WRITE"],
     enum: Permission,
     isArray: true,
   })
@@ -13,7 +13,7 @@ export class UpdateRolePermissionsDto {
   permissions: Permission[];
 
   @ApiProperty({
-    description: 'Minimum level requirement for role members',
+    description: "Minimum level requirement for role members",
     example: 0,
     minimum: 0,
   })
@@ -21,7 +21,7 @@ export class UpdateRolePermissionsDto {
   lvlRangeFrom: number;
 
   @ApiProperty({
-    description: 'Maximum level requirement for role members',
+    description: "Maximum level requirement for role members",
     example: 500,
     minimum: 0,
   })

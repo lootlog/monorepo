@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@lootlog/ui/components/card";
 import { Button } from "@lootlog/ui/components/button";
 import { Badge } from "@lootlog/ui/components/badge";
@@ -22,12 +22,11 @@ import {
   Trophy,
   AlertCircle,
   Swords,
-  Pencil,
   Plus,
   Clock,
   CalendarDays,
-  Trash2,
   BookText,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -36,6 +35,7 @@ import { MapManageDialog } from "./components/dialogs/map-manage-dialog";
 import { EndEventDialog } from "./components/dialogs/end-event-dialog";
 import { ResumeEventDialog } from "./components/dialogs/resume-event-dialog";
 import { EventRulesDialog } from "./components/dialogs/event-rules-dialog";
+import { EventSummaryDialog } from "./components/dialogs/event-summary-dialog";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { useEventMutations } from "./hooks/mutations/use-event-mutations";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
@@ -48,11 +48,12 @@ import { EventHeroLoots } from "./components/stats/event-hero-loots";
 import { RecentKillsPreview } from "./components/kills/recent-kills-preview";
 import { HeroCard } from "./components/heroes/hero-card";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
-import { useEventSocket } from "./hooks/socket/use-event-socket";
+import { EventActionsCard } from "./components/shared/event-actions-card";
 import {
   normalizeScoringMode,
   normalizeScoringRules,
 } from "./utils/scoring-rules";
+import { getEventStatusAtTimestamp } from "./utils";
 
 type EventDetailHero = EventHeroNpc & {
   locations: EventMapLocation[];
@@ -63,6 +64,7 @@ export const EventDetail = () => {
   const { t } = useTranslation();
   const { guildId, eventId } = useParams({ strict: false });
   const navigate = useNavigate();
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   const {
     data: event,
@@ -97,11 +99,6 @@ export const EventDetail = () => {
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
-
-  useEventSocket({
-    eventId,
-    guildId,
-  });
   const { deleteHero, updateEvent, deleteEvent } = useEventMutations(
     guildId ?? "",
     eventId ?? "",
@@ -113,9 +110,18 @@ export const EventDetail = () => {
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [selectedHero, setSelectedHero] = useState<EventDetailHero | null>(
     null,
   );
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const heroMapsById = new Map(
     (eventMaps?.heroNpcs ?? []).map((hero) => [hero.id, hero]),
@@ -130,7 +136,18 @@ export const EventDetail = () => {
   });
   const scoringMode = normalizeScoringMode(event?.scoringMode);
   const scoringRules =
-    scoringMode === "ADVANCED" ? normalizeScoringRules(event?.scoringRules) : null;
+    scoringMode === "ADVANCED"
+      ? normalizeScoringRules(event?.scoringRules)
+      : null;
+  const eventDateRangeLabel = event
+    ? `${format(new Date(event.startsAt || event.createdAt), "d MMM yyyy", {
+        locale: pl,
+      })} - ${
+        event.endsAt
+          ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
+          : t("events.ongoing")
+      }`
+    : "";
 
   const canManage =
     permissions?.includes(Permission.LOOTLOG_MANAGE) ||
@@ -141,6 +158,23 @@ export const EventDetail = () => {
   const canDeleteEvent =
     permissions?.includes(Permission.ADMIN) ||
     permissions?.includes(Permission.OWNER);
+  const eventStatus =
+    event !== undefined && event !== null
+      ? getEventStatusAtTimestamp(event, currentTimestamp)
+      : "ended";
+  const isEventActive = eventStatus === "active";
+  const eventStatusLabel =
+    eventStatus === "upcoming"
+      ? t("events.upcoming")
+      : eventStatus === "ended"
+        ? t("events.ended")
+        : t("events.active");
+  const eventStatusVariant =
+    eventStatus === "active"
+      ? "default"
+      : eventStatus === "upcoming"
+        ? "outline"
+        : "secondary";
 
   const handleEditHero = (hero: EventHeroNpc) => {
     setSelectedHero({
@@ -164,7 +198,7 @@ export const EventDetail = () => {
     try {
       await deleteHero.mutateAsync(heroId);
       toast.success(t("events.heroes.deleted"));
-    } catch (_) {
+    } catch {
       toast.error(t("events.heroes.deleteError"));
     }
   };
@@ -188,6 +222,25 @@ export const EventDetail = () => {
       </div>
     );
   }
+
+  const navigateToEventEdit = () => {
+    navigate({
+      to: "/$guildId/events/$eventId/edit",
+      params: {
+        guildId: guildId ?? "",
+        eventId: eventId ?? "",
+      },
+    });
+  };
+
+  const openEventStatusDialog = () => {
+    if (isEventActive) {
+      setEndDialogOpen(true);
+      return;
+    }
+
+    setResumeDialogOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background/50">
@@ -223,7 +276,7 @@ export const EventDetail = () => {
                   endsAt: new Date().toISOString(),
                 });
                 toast.success(t("events.endSuccess"));
-              } catch (_) {
+              } catch {
                 toast.error(t("events.statusError"));
               }
             }}
@@ -239,7 +292,7 @@ export const EventDetail = () => {
                   endsAt: null,
                 });
                 toast.success(t("events.resumeSuccess"));
-              } catch (_) {
+              } catch {
                 toast.error(t("events.statusError"));
               }
             }}
@@ -273,152 +326,114 @@ export const EventDetail = () => {
             scoringMode={scoringMode}
             scoringRules={scoringRules}
           />
+          <EventSummaryDialog
+            open={summaryDialogOpen}
+            onOpenChange={setSummaryDialogOpen}
+            guildId={guildId ?? ""}
+            eventId={eventId ?? ""}
+            eventName={event.name}
+          />
         </>
       )}
 
-      <div className="bg-background w-full flex items-center border-b px-3 shrink-0 py-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Trophy className="size-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-semibold leading-tight">
-              {event.name}
-            </h2>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <Badge
-                variant={event.active ? "default" : "secondary"}
-                className="text-xs"
-              >
-                {event.active ? t("events.active") : t("events.inactive")}
-              </Badge>
-
-              <Badge variant="outline" className="text-xs">
-                {event.world.charAt(0).toUpperCase() + event.world.slice(1)}
-              </Badge>
-
-              <Badge variant="outline" className="text-xs gap-1">
-                <CalendarDays className="w-3 h-3" />
-                {format(
-                  new Date(event.startsAt || event.createdAt),
-                  "d MMM yyyy",
-                  { locale: pl },
-                )}
-                {" – "}
-                {event.endsAt
-                  ? format(new Date(event.endsAt), "d MMM yyyy", { locale: pl })
-                  : t("events.ongoing")}
-              </Badge>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="outline"
-                    className="text-xs gap-1 cursor-help"
-                  >
-                    <Clock className="w-3 h-3" />
-                    {event.assignmentTimeoutMinutes ?? 5} min
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {t(
-                      "events.header.assignmentTimeoutTooltip",
-                      "Czas przed respawnem, kiedy można się przypisać do mapy",
-                    )}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setRulesDialogOpen(true)}
-          >
-            <BookText className="w-4 h-4 mr-2" />
-            {t("events.rulesDialog.trigger", "Zasady eventu")}
-          </Button>
-          {canManage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                navigate({
-                  to: "/$guildId/events/$eventId/edit",
-                  params: {
-                    guildId: guildId ?? "",
-                    eventId: eventId ?? "",
-                  },
-                })
-              }
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              {t("events.editButton")}
-            </Button>
-          )}
-          {canManage &&
-            (event.active ? (
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={updateEvent.isPending}
-                onClick={() => setEndDialogOpen(true)}
-              >
-                {t("events.end")}
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                disabled={updateEvent.isPending}
-                onClick={() => setResumeDialogOpen(true)}
-              >
-                {t("events.resume")}
-              </Button>
-            ))}
-          {canDeleteEvent && (
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={deleteEvent.isPending}
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {t("events.delete")}
-            </Button>
-          )}
-        </div>
-      </div>
-
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-3 py-3 flex flex-col gap-4">
+          <Card className="gap-4 border-border bg-card/40 p-4 backdrop-blur-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-primary/10 p-2.5 shadow-inner shadow-primary/10">
+                    <Trophy className="size-4 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="min-w-0 text-base font-semibold leading-tight break-words">
+                        {event.name}
+                      </h2>
+                      <Badge variant={eventStatusVariant} className="text-xs">
+                        {eventStatusLabel}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {event.world.charAt(0).toUpperCase() +
+                          event.world.slice(1)}
+                      </Badge>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="outline"
+                            className="cursor-help gap-1 text-xs"
+                          >
+                            <Clock className="w-3 h-3" />
+                            {event.assignmentTimeoutMinutes ?? 5} min
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t("events.header.assignmentTimeoutTooltip")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Badge
+                        variant="outline"
+                        className="order-last flex w-full justify-start gap-1 px-2 py-1 text-xs whitespace-normal sm:order-none sm:w-auto sm:whitespace-nowrap"
+                      >
+                        <CalendarDays className="mt-0.5 h-3 w-3 shrink-0 sm:mt-0" />
+                        <span>{eventDateRangeLabel}</span>
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setSummaryDialogOpen(true)}
+                >
+                  <Sparkles className="size-3.5" />
+                  {t("events.summaryDialog.trigger")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setRulesDialogOpen(true)}
+                >
+                  <BookText className="size-3.5" />
+                  {t("events.rulesDialog.trigger")}
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <div className="lg:hidden">
+            <EventActionsCard
+              canManage={canManage ?? false}
+              canDeleteEvent={canDeleteEvent ?? false}
+              isActive={isEventActive}
+              isUpdatePending={updateEvent.isPending}
+              isDeletePending={deleteEvent.isPending}
+              onEdit={navigateToEventEdit}
+              onToggleStatus={openEventStatusDialog}
+              onDelete={() => setDeleteDialogOpen(true)}
+            />
+          </div>
+
           {(mapsError || rankingError) && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {mapsError && (
-                <p>
-                  {t(
-                    "events.maps.error",
-                    "Nie udało się pobrać map eventu. Część danych może być niepełna.",
-                  )}
-                </p>
-              )}
-              {rankingError && (
-                <p>
-                  {t(
-                    "events.ranking.error",
-                    "Nie udało się pobrać rankingu. Część danych może być niepełna.",
-                  )}
-                </p>
-              )}
+              {mapsError && <p>{t("events.maps.error")}</p>}
+              {rankingError && <p>{t("events.ranking.error")}</p>}
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
               <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2 h-fit">
-                <div className="flex items-center justify-between mb-3">
+                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     <Swords className="w-4 h-4 text-yellow-500" />
                     {t("events.heroes.title")}
@@ -427,6 +442,7 @@ export const EventDetail = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full justify-center sm:w-auto"
                       onClick={() => {
                         setSelectedHero(null);
                         setHeroDialogOpen(true);
@@ -477,6 +493,19 @@ export const EventDetail = () => {
             </div>
 
             <div className="space-y-4">
+              <div className="hidden lg:block">
+                <EventActionsCard
+                  canManage={canManage ?? false}
+                  canDeleteEvent={canDeleteEvent ?? false}
+                  isActive={isEventActive}
+                  isUpdatePending={updateEvent.isPending}
+                  isDeletePending={deleteEvent.isPending}
+                  onEdit={navigateToEventEdit}
+                  onToggleStatus={openEventStatusDialog}
+                  onDelete={() => setDeleteDialogOpen(true)}
+                />
+              </div>
+
               <EventRankingPreview
                 rankings={rankings}
                 heroNpcs={heroes}

@@ -8,6 +8,9 @@ const configSchema = z.object({
   MEILISEARCH_HOST: z.string(),
   MEILISEARCH_API_KEY: z.string(),
   RABBITMQ_URI: z.string(),
+  AXIOM_DATASET: z.string().optional(),
+  AXIOM_TOKEN: z.string().optional(),
+  COMMIT_SHA: z.string().optional(),
 });
 
 const { PORT, MEILISEARCH_API_KEY, MEILISEARCH_HOST, ENV, RABBITMQ_URI } =

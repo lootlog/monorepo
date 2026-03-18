@@ -1,9 +1,9 @@
-import { registerAs, type ConfigService } from '@nestjs/config';
-import { ServiceConfig } from './service.config';
-import type { NecordModuleOptions } from 'necord';
-import { IntentsBitField } from 'discord.js';
-import { ConfigKey } from './config-key.enum';
-import { RuntimeEnvironment } from 'src/types/common.types';
+import { registerAs, type ConfigService } from "@nestjs/config";
+import { ServiceConfig } from "./service.config";
+import type { NecordModuleOptions } from "necord";
+import { IntentsBitField } from "discord.js";
+import { ConfigKey } from "./config-key.enum";
+import { RuntimeEnvironment } from "src/types/common.types";
 
 export interface DiscordConfig {
   discordBotToken: string;

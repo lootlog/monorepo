@@ -502,7 +502,6 @@ model Event {
   guildId   String
   name      String
   world     String
-  active    Boolean   @default(true)
   startsAt  DateTime?
   endsAt    DateTime?
   createdAt DateTime  @default(now())
@@ -520,7 +519,7 @@ model Event {
   heroNpcs EventHeroNpc[]
   rankings EventRanking[]
 
-  @@index([guildId, active])
+  @@index([guildId, startsAt, endsAt])
   @@index([world])
 }
 
@@ -664,6 +663,7 @@ model EventKillPoint {
   memberId                Int
   basePoints              Float
   points                  Float
+  manualAdjustmentPoints  Float    @default(0)
   trackingDurationSeconds     Int?
   trackingDurationPercentage  Float?
   confirmationDeadlineAt      DateTime?
@@ -684,16 +684,17 @@ model EventKillPoint {
 }
 
 model EventRanking {
-  id               String   @id @default(cuid())
-  eventId          String
-  memberId         Int
-  heroNpcName      String
-  totalPoints      Float    @default(0)
-  totalKills       Int      @default(0)
-  totalTimeSeconds Int      @default(0)
-  avgAfkPercentage Float    @default(0)
-  pointsModified   Boolean  @default(false)
-  updatedAt        DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  eventId                String
+  memberId               Int
+  heroNpcName            String
+  totalPoints            Float    @default(0)
+  manualAdjustmentPoints Float @default(0)
+  totalKills             Int      @default(0)
+  totalTimeSeconds       Int      @default(0)
+  avgAfkPercentage       Float    @default(0)
+  pointsModified         Boolean  @default(false)
+  updatedAt              DateTime @updatedAt
 
   event       Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   member      Member                    @relation(fields: [memberId], references: [id])
@@ -715,6 +716,7 @@ model EventPointsEditHistory {
   newPoints      Float
   editType       PointsEditType
   editedByUserId String
+  comment        String?
   editedAt       DateTime       @default(now())
 
   ranking EventRanking @relation(fields: [rankingId], references: [id], onDelete: Cascade)

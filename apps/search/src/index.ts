@@ -17,7 +17,7 @@ import { Hono } from "hono";
 import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
-import { logger } from "hono/logger";
+import { logger as winstonLogger } from "./config/winston.config.js";
 import { userMetadataFromHeaders } from "@lootlog/api-helpers";
 import { setupAMQP } from "./lib/rabbitmq.js";
 import { setupPlayersHandlers } from "./players/players.handlers.js";
@@ -43,7 +43,14 @@ app.use(
     serviceVersion: "1.0.0",
   }),
 );
-app.use("*", logger());
+app.use("*", async (c, next) => {
+  const start = Date.now();
+  await next();
+  const duration = Date.now() - start;
+  winstonLogger.info(
+    `${c.req.method} ${c.req.path} ${c.res.status} ${duration}ms`,
+  );
+});
 app.use("*", userMetadataFromHeaders);
 
 app.get("/healthz", (c) => {
@@ -63,7 +70,7 @@ app.route("/all", all);
 
 const port = APP_CONFIG.port;
 
-console.log(`Server is running on http://localhost:${port}`);
+winstonLogger.info(`Server is running on http://localhost:${port}`);
 
 serve({
   fetch: app.fetch,

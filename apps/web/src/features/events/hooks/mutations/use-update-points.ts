@@ -1,15 +1,18 @@
 import { useApiClient } from "@/hooks/api/use-api-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invalidateKillQueries } from "./invalidate-kill-queries";
 
 interface UpdateKillPointParams {
   killId: string;
   killPointId: string;
-  points: number;
+  pointsDelta: number;
+  comment?: string;
 }
 
 interface UpdateRankingPointsParams {
   rankingId: string;
-  totalPoints: number;
+  pointsDelta: number;
+  comment?: string;
 }
 
 export const useUpdatePoints = (guildId: string, eventId: string) => {
@@ -20,33 +23,22 @@ export const useUpdatePoints = (guildId: string, eventId: string) => {
     mutationFn: async ({
       killId,
       killPointId,
-      points,
+      pointsDelta,
+      comment,
     }: UpdateKillPointParams) => {
       const response = await client.patch(
         `/guilds/${guildId}/events/${eventId}/kills/${killId}/points/${killPointId}`,
-        { points },
+        { pointsDelta, comment },
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["kill-detail", guildId, eventId],
-        exact: false,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-kill-history", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["hero-kill-history", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["event-member-kill-history", guildId, eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["recent-hero-kills", guildId, eventId],
-      });
+      invalidateKillQueries(queryClient, guildId, eventId);
       queryClient.invalidateQueries({
         queryKey: ["event-ranking", guildId, eventId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["ranking-edit-history", guildId, eventId],
       });
     },
   });
@@ -54,11 +46,12 @@ export const useUpdatePoints = (guildId: string, eventId: string) => {
   const updateRankingPoints = useMutation({
     mutationFn: async ({
       rankingId,
-      totalPoints,
+      pointsDelta,
+      comment,
     }: UpdateRankingPointsParams) => {
       const response = await client.patch(
         `/guilds/${guildId}/events/${eventId}/ranking/${rankingId}`,
-        { totalPoints },
+        { pointsDelta, comment },
       );
       return response.data;
     },

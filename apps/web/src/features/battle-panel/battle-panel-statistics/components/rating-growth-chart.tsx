@@ -68,18 +68,16 @@ export function RatingGrowthChart({ data, isLoading }: RatingGrowthChartProps) {
                 <YAxis tickLine={false} axisLine={false} tickMargin={4} />
                 <ChartTooltip
                   cursor={false}
-                  content={
-                    <ChartTooltipContent
-                      indicator="line"
-                      labelFormatter={(value) => `Data: ${value}`}
-                      formatter={(value, _name, props) => {
-                        const ratingDelta =
-                          (props.payload?.ratingDelta as number) ?? 0;
-                        const sign = ratingDelta >= 0 ? "+" : "";
-                        return [`Rating: ${value} (${sign}${ratingDelta})`, ""];
-                      }}
-                    />
-                  }
+                  content=<ChartTooltipContent
+                    indicator="line"
+                    labelFormatter={(value) => `Data: ${value}`}
+                    formatter={(value, _name, props) => {
+                      const ratingDelta =
+                        (props.payload?.ratingDelta as number) ?? 0;
+                      const sign = ratingDelta >= 0 ? "+" : "";
+                      return [`Rating: ${value} (${sign}${ratingDelta})`, ""];
+                    }}
+                  />
                 />
                 <Line
                   dataKey="rating"

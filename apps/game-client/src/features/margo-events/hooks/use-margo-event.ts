@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useGlobalStore } from "@/store/global.store";
+import { isEventActiveAtTimestamp } from "../utils/event-activity";
 
 interface Event {
   id: string;
@@ -52,6 +53,7 @@ export const useEvent = ({ guildId, world }: UseEventOptions) => {
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
 
   const fetchEvents = useCallback(async () => {
@@ -75,11 +77,6 @@ export const useEvent = ({ guildId, world }: UseEventOptions) => {
 
       const data = await response.json();
       setEvents(data);
-
-      // Set first active event as the active one
-      if (data.length > 0) {
-        setActiveEvent(data[0]);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -96,6 +93,34 @@ export const useEvent = ({ guildId, world }: UseEventOptions) => {
       fetchEvents();
     }
   }, [gameInitialized, guildId, fetchEvents]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTimestamp(Date.now());
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const currentlyActiveEvents = events.filter((event) =>
+      isEventActiveAtTimestamp(event, currentTimestamp),
+    );
+
+    if (currentlyActiveEvents.length === 0) {
+      if (activeEvent !== null) {
+        setActiveEvent(null);
+      }
+      return;
+    }
+
+    if (
+      activeEvent === null ||
+      !currentlyActiveEvents.some((event) => event.id === activeEvent.id)
+    ) {
+      setActiveEvent(currentlyActiveEvents[0]);
+    }
+  }, [activeEvent, currentTimestamp, events]);
 
   return {
     events,

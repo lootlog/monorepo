@@ -16,27 +16,48 @@ interface HeroTimerCountdownProps {
   timer: EventTimer | undefined;
 }
 
+const getHeroTimerCountdown = (timer: EventTimer) => {
+  const now = Date.now();
+  const minSpawnTime = new Date(timer.minSpawnTime).getTime();
+  const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
+
+  if (now < minSpawnTime) {
+    return minSpawnTime - now;
+  }
+
+  if (now < maxSpawnTime) {
+    return maxSpawnTime - now;
+  }
+
+  return 0;
+};
+
 export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
   const { t } = useTranslation();
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  if (!timer) {
+    return (
+      <span className="text-xs text-muted-foreground flex items-center gap-1">
+        <Clock className="w-3 h-3" />
+        {t("events.heroes.noTimer", "Brak timera")}
+      </span>
+    );
+  }
+
+  return (
+    <HeroTimerCountdownContent
+      key={`${timer.minSpawnTime}:${timer.maxSpawnTime}`}
+      timer={timer}
+    />
+  );
+};
+
+const HeroTimerCountdownContent = ({ timer }: { timer: EventTimer }) => {
+  const { t } = useTranslation();
+  const [timeLeft, setTimeLeft] = useState(() => getHeroTimerCountdown(timer));
 
   useEffect(() => {
-    if (!timer) {
-      setTimeLeft(null);
-      return;
-    }
-
     const minSpawnTime = new Date(timer.minSpawnTime).getTime();
     const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-    const now = Date.now();
-
-    if (now < minSpawnTime) {
-      setTimeLeft(minSpawnTime - now);
-    } else if (now < maxSpawnTime) {
-      setTimeLeft(maxSpawnTime - now);
-    } else {
-      setTimeLeft(0);
-    }
 
     const interval = setInterval(() => {
       const currentTime = Date.now();
@@ -51,16 +72,7 @@ export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timer]);
-
-  if (!timer || timeLeft === null) {
-    return (
-      <span className="text-xs text-muted-foreground flex items-center gap-1">
-        <Clock className="w-3 h-3" />
-        {t("events.heroes.noTimer", "Brak timera")}
-      </span>
-    );
-  }
+  }, [timer.maxSpawnTime, timer.minSpawnTime]);
 
   if (timeLeft <= 0) {
     return (
@@ -71,9 +83,9 @@ export const HeroTimerCountdown = ({ timer }: HeroTimerCountdownProps) => {
     );
   }
 
-  const now = Date.now();
   const minSpawnTime = new Date(timer.minSpawnTime).getTime();
-  const isInSpawnWindow = now >= minSpawnTime;
+  const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
+  const isInSpawnWindow = timeLeft <= maxSpawnTime - minSpawnTime;
   const isClose = timeLeft < 60000;
 
   return (

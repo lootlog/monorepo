@@ -18,47 +18,63 @@ const getTimerKey = (timer: Timer): string => {
   return `npc_${timer.npcId}`;
 };
 
+const getTimerMembers = (timer: Timer): GuildMember[] => {
+  return timer.member ? [timer.member] : [];
+};
+
+const getMergedGuildEntry = (timer: Timer) => {
+  return { guildId: timer.guildId, npcId: timer.npcId };
+};
+
+const createMergedTimer = (timer: Timer): TimerWithTimeLeft => {
+  return {
+    ...timer,
+    members: getTimerMembers(timer),
+    minTimeLeft: 0,
+    maxTimeLeft: 0,
+    mergedGuildIds: [getMergedGuildEntry(timer)],
+  };
+};
+
+const mergeTimerCollections = (
+  existingTimer: TimerWithTimeLeft,
+  timer: Timer,
+) => {
+  return {
+    members: [...(existingTimer.members ?? []), ...getTimerMembers(timer)],
+    mergedGuildIds: [
+      ...(existingTimer.mergedGuildIds ?? []),
+      getMergedGuildEntry(timer),
+    ],
+  };
+};
+
 export const mergeTimers = (timers: Timer[]): TimerWithTimeLeft[] => {
   const map = new Map<string, TimerWithTimeLeft>();
 
   for (const timer of timers) {
     const key = getTimerKey(timer);
-    const existing = map.get(key);
+    const existingTimer = map.get(key);
 
-    if (!existing) {
-      map.set(key, {
-        ...timer,
-        members: timer.member ? [timer.member] : [],
-        minTimeLeft: 0,
-        maxTimeLeft: 0,
-        mergedGuildIds: [{ guildId: timer.guildId, npcId: timer.npcId }],
-      });
-    } else {
-      if (new Date(timer.maxSpawnTime) > new Date(existing.maxSpawnTime)) {
-        map.set(key, {
-          ...timer,
-          members: [
-            ...(existing.members || []),
-            ...(timer.member ? [timer.member] : []),
-          ],
-          minTimeLeft: 0,
-          maxTimeLeft: 0,
-          mergedGuildIds: [
-            ...(existing.mergedGuildIds || []),
-            { guildId: timer.guildId, npcId: timer.npcId },
-          ],
-        });
-      } else {
-        existing.members = [
-          ...(existing.members || []),
-          ...(timer.member ? [timer.member] : []),
-        ];
-        existing.mergedGuildIds = [
-          ...(existing.mergedGuildIds || []),
-          { guildId: timer.guildId, npcId: timer.npcId },
-        ];
-      }
+    if (!existingTimer) {
+      map.set(key, createMergedTimer(timer));
+      continue;
     }
+
+    const mergedCollections = mergeTimerCollections(existingTimer, timer);
+
+    if (new Date(timer.maxSpawnTime) > new Date(existingTimer.maxSpawnTime)) {
+      map.set(key, {
+        ...createMergedTimer(timer),
+        ...mergedCollections,
+      });
+      continue;
+    }
+
+    map.set(key, {
+      ...existingTimer,
+      ...mergedCollections,
+    });
   }
 
   return Array.from(map.values());

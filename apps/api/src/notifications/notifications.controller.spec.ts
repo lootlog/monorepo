@@ -1,14 +1,13 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { NotificationsController } from './notifications.controller';
-import { NotificationsService } from './notifications.service';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { NotificationsController } from "./notifications.controller";
+import { NotificationsService } from "./notifications.service";
 
-jest.mock('uuid', () => ({
-  v4: () => 'mock-uuid',
+jest.mock("uuid", () => ({
+  v4: () => "mock-uuid",
 }));
 
-describe('NotificationsController', () => {
+describe("NotificationsController", () => {
   let controller: NotificationsController;
-  let service: NotificationsService;
 
   const mockNotificationsService = {
     cancelPartyGathering: jest.fn(),
@@ -26,18 +25,17 @@ describe('NotificationsController', () => {
     }).compile();
 
     controller = module.get<NotificationsController>(NotificationsController);
-    service = module.get<NotificationsService>(NotificationsService);
     jest.clearAllMocks();
   });
 
-  describe('cancelPartyGathering', () => {
-    const discordId = '123456';
-    const notificationId = 'notif-abc';
+  describe("cancelPartyGathering", () => {
+    const discordId = "123456";
+    const notificationId = "notif-abc";
 
-    it('should return 200 with guildIds on success', async () => {
+    it("should return 200 with guildIds on success", async () => {
       mockNotificationsService.cancelPartyGathering.mockResolvedValue({
-        status: 'success',
-        guildIds: ['guild-1'],
+        status: "success",
+        guildIds: ["guild-1"],
       });
 
       const mockReply = {
@@ -54,13 +52,13 @@ describe('NotificationsController', () => {
       expect(mockReply.status).toHaveBeenCalledWith(200);
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
-        guildIds: ['guild-1'],
+        guildIds: ["guild-1"],
       });
     });
 
-    it('should return 204 with empty body for expired notification', async () => {
+    it("should return 204 with empty body for expired notification", async () => {
       mockNotificationsService.cancelPartyGathering.mockResolvedValue({
-        status: 'expired',
+        status: "expired",
       });
 
       const mockReply = {

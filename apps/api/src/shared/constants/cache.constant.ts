@@ -1,11 +1,13 @@
 export const PERMISSIONS_CACHE_TTL_SECONDS = 900;
 export const AUTH_TOKEN_CACHE_TTL_SECONDS = 300;
 export const GUILD_CACHE_TTL_SECONDS = 3600;
+export const EVENT_WRAPPED_CACHE_TTL_SECONDS = 3600;
 
-export const PERMISSIONS_CACHE_KEY_PREFIX = 'perms';
-export const AUTH_TOKEN_CACHE_KEY_PREFIX = 'auth:idp-token';
-export const GUILD_CACHE_KEY_PREFIX = 'guild';
-export const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = 'user-lootlog-config';
+export const PERMISSIONS_CACHE_KEY_PREFIX = "perms";
+export const AUTH_TOKEN_CACHE_KEY_PREFIX = "auth:idp-token";
+export const GUILD_CACHE_KEY_PREFIX = "guild";
+export const USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX = "user-lootlog-config";
+export const EVENT_WRAPPED_CACHE_KEY_PREFIX = "event-wrapped";
 
 export function getPermissionsCacheKey(
   userId: string,
@@ -28,4 +30,15 @@ export function getGuildCacheKey(idOrVanityUrl: string): string {
 
 export function getUserLootlogConfigCachePattern(discordId: string): string {
   return `${USER_LOOTLOG_CONFIG_CACHE_KEY_PREFIX}:${discordId}:*`;
+}
+
+export function getEventWrappedCacheKey(
+  guildId: string,
+  eventId: string,
+): string {
+  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:${eventId}`;
+}
+
+export function getEventWrappedCachePattern(guildId: string): string {
+  return `${EVENT_WRAPPED_CACHE_KEY_PREFIX}:${guildId}:*`;
 }

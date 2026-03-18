@@ -1,5 +1,5 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 import {
   IsEnum,
   IsIn,
@@ -8,13 +8,13 @@ import {
   IsString,
   Max,
   Min,
-} from 'class-validator';
-import { NpcType } from 'generated/client';
+} from "class-validator";
+import { NpcType } from "generated/client";
 
 export class GetUserNpcKillsDto {
   @ApiPropertyOptional({
-    example: 'HERO,TITAN',
-    description: 'Comma-separated NPC types to filter by',
+    example: "HERO,TITAN",
+    description: "Comma-separated NPC types to filter by",
     enum: NpcType,
     isArray: true,
   })
@@ -23,7 +23,7 @@ export class GetUserNpcKillsDto {
     if (!value) return undefined;
     if (Array.isArray(value)) return value;
     return value
-      .split(',')
+      .split(",")
       .map((v: string) => v.trim())
       .filter((v: string) => v.length > 0);
   })
@@ -31,16 +31,16 @@ export class GetUserNpcKillsDto {
   npcTypes?: NpcType[];
 
   @ApiPropertyOptional({
-    example: 'pandora',
-    description: 'Filter by world',
+    example: "pandora",
+    description: "Filter by world",
   })
   @IsOptional()
   @IsString()
   world?: string;
 
   @ApiPropertyOptional({
-    example: 'Smok',
-    description: 'Search NPC by name (case-insensitive)',
+    example: "Smok",
+    description: "Search NPC by name (case-insensitive)",
   })
   @IsOptional()
   @IsString()
@@ -48,7 +48,7 @@ export class GetUserNpcKillsDto {
 
   @ApiPropertyOptional({
     example: 0,
-    description: 'Offset for pagination',
+    description: "Offset for pagination",
   })
   @IsOptional()
   @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
@@ -58,7 +58,7 @@ export class GetUserNpcKillsDto {
 
   @ApiPropertyOptional({
     example: 20,
-    description: 'Limit number of results (default: 20, max: 100)',
+    description: "Limit number of results (default: 20, max: 100)",
   })
   @IsOptional()
   @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
@@ -68,24 +68,24 @@ export class GetUserNpcKillsDto {
   limit?: number;
 
   @ApiPropertyOptional({
-    example: 'desc',
-    description: 'Sort order (asc or desc, default: desc)',
+    example: "desc",
+    description: "Sort order (asc or desc, default: desc)",
   })
   @IsOptional()
-  @IsIn(['asc', 'desc'])
-  sortOrder?: 'asc' | 'desc';
+  @IsIn(["asc", "desc"])
+  sortOrder?: "asc" | "desc";
 
   @ApiPropertyOptional({
-    example: 'kills',
-    description: 'Sort by field (kills or level, default: kills)',
+    example: "kills",
+    description: "Sort by field (kills or level, default: kills)",
   })
   @IsOptional()
-  @IsIn(['kills', 'level'])
-  sortBy?: 'kills' | 'level';
+  @IsIn(["kills", "level"])
+  sortBy?: "kills" | "level";
 
   @ApiPropertyOptional({
     example: 100,
-    description: 'Minimum NPC level',
+    description: "Minimum NPC level",
   })
   @IsOptional()
   @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))
@@ -95,7 +95,7 @@ export class GetUserNpcKillsDto {
 
   @ApiPropertyOptional({
     example: 300,
-    description: 'Maximum NPC level',
+    description: "Maximum NPC level",
   })
   @IsOptional()
   @Transform(({ value }) => (value ? Number.parseInt(value, 10) : undefined))

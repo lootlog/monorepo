@@ -2,14 +2,15 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Trophy, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
-import { Tabs, TabsList, TabsTrigger } from "@lootlog/ui/components/tabs";
+import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
 import type {
   EventRanking,
   EventHeroNpc,
 } from "../../hooks/queries/use-events";
 import { cn } from "@lootlog/ui/lib/utils";
 import { Card } from "@lootlog/ui/components/card";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
+import { EventScrollableTabsList } from "../shared/event-scrollable-tabs-list";
 
 interface EventRankingPreviewProps {
   rankings: EventRanking[];
@@ -27,65 +28,60 @@ export const EventRankingPreview = ({
   limit = 5,
 }: EventRankingPreviewProps) => {
   const { t } = useTranslation();
+  const [selectedHeroName, setSelectedHeroName] = useState<string | null>(null);
 
+  const heroNamesWithRankings = new Set(
+    rankings.map((ranking) => ranking.heroNpcName),
+  );
   const firstHeroWithRankings = heroNpcs.find((hero) =>
-    rankings.some((r) => r.heroNpcName === hero.npcName),
+    heroNamesWithRankings.has(hero.npcName),
   );
   const defaultHeroName =
     firstHeroWithRankings?.npcName ?? heroNpcs[0]?.npcName ?? null;
-
-  const [selectedHeroName, setSelectedHeroName] = useState<string | null>(
-    defaultHeroName,
-  );
-
-  useEffect(() => {
-    if (!defaultHeroName) return;
-    if (!selectedHeroName) {
-      setSelectedHeroName(defaultHeroName);
-      return;
-    }
-    const selectedHeroStillExists = heroNpcs.some(
-      (hero) => hero.npcName === selectedHeroName,
-    );
-    if (!selectedHeroStillExists) {
-      setSelectedHeroName(defaultHeroName);
-    }
-  }, [defaultHeroName, heroNpcs, selectedHeroName]);
-
-  const filteredRankings = useMemo(
-    () =>
-      selectedHeroName
-        ? rankings.filter((r) => r.heroNpcName === selectedHeroName)
-        : rankings,
-    [rankings, selectedHeroName],
-  );
-
-  const sortedRankings = useMemo(
-    () =>
-      [...filteredRankings]
-        .sort((a, b) => b.totalPoints - a.totalPoints)
-        .slice(0, limit),
-    [filteredRankings, limit],
-  );
+  const effectiveSelectedHeroName =
+    selectedHeroName &&
+    heroNpcs.some((hero) => hero.npcName === selectedHeroName)
+      ? selectedHeroName
+      : defaultHeroName;
+  const filteredRankings = effectiveSelectedHeroName
+    ? rankings.filter(
+        (ranking) => ranking.heroNpcName === effectiveSelectedHeroName,
+      )
+    : rankings;
+  const sortedRankings = [...filteredRankings]
+    .sort(
+      (leftRanking, rightRanking) =>
+        rightRanking.totalPoints - leftRanking.totalPoints,
+    )
+    .slice(0, limit);
 
   if (heroNpcs.length === 0) {
     return null;
   }
 
   return (
-    <Card className="p-3 bg-card/40 backdrop-blur-sm border-border gap-2">
-      <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-        <Trophy className="w-4 h-4" />
-        {t("events.ranking.title")}
-      </h2>
+    <Card className="gap-3 border-border bg-card/40 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-primary/10 p-2 shadow-inner shadow-primary/10">
+          <Trophy className="size-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("events.ranking.subtitle")}
+          </p>
+          <h2 className="text-base font-semibold">
+            {t("events.ranking.title")}
+          </h2>
+        </div>
+      </div>
 
       {heroNpcs.length > 1 && (
         <Tabs
-          value={selectedHeroName ?? heroNpcs[0]?.npcName}
+          value={effectiveSelectedHeroName ?? heroNpcs[0]?.npcName}
           onValueChange={setSelectedHeroName}
           className="mb-3"
         >
-          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <EventScrollableTabsList>
             {heroNpcs.map((hero) => (
               <TabsTrigger
                 key={hero.id}
@@ -95,12 +91,12 @@ export const EventRankingPreview = ({
                 {hero.npcName}
               </TabsTrigger>
             ))}
-          </TabsList>
+          </EventScrollableTabsList>
         </Tabs>
       )}
 
       <div
-        key={selectedHeroName}
+        key={effectiveSelectedHeroName}
         className="min-h-[180px] flex flex-col animate-in fade-in-0 duration-200"
       >
         {sortedRankings.length === 0 ? (

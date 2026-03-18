@@ -12,11 +12,7 @@ export const MemberBadge = ({ member }: MemberBadgeProps) => {
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-transparent hover:border-border transition-colors">
-      <img
-        src={avatarUrl}
-        alt={member.name}
-        className="w-5 h-5 rounded-full"
-      />
+      <img src={avatarUrl} alt={member.name} className="w-5 h-5 rounded-full" />
       <span className="text-sm font-medium" style={{ color }}>
         {member.name}
       </span>

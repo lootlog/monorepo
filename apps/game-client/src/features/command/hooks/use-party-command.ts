@@ -8,7 +8,7 @@ import { useSession } from "@/hooks/auth/use-session";
 import { Game } from "@/lib/game";
 import { usePartyFinderStore } from "@/store/party-finder.store";
 import { useWindowsStore } from "@/store/windows.store";
-import axios from "axios";
+import { getCreatePartyGatheringErrorMessage } from "@/features/party-finder/get-create-party-gathering-error-message";
 
 export const usePartyCommand = () => {
   const { mutate: createPartyGathering } = useCreatePartyGathering();
@@ -90,22 +90,7 @@ export const usePartyCommand = () => {
           setOpen("party-finder", true);
         },
         onError: (error) => {
-          if (axios.isAxiosError(error)) {
-            const status = error.response?.status;
-            if (status === 403) {
-              window.message("Brak uprawnień do wysyłania ogłoszeń");
-            } else if (status === 429) {
-              window.message("Zbyt wiele prób. Spróbuj za chwilę.");
-            } else if (status === 400) {
-              window.message(
-                error.response?.data?.message || "Nieprawidłowe dane",
-              );
-            } else {
-              window.message("Nie udało się utworzyć ogłoszenia");
-            }
-          } else {
-            window.message("Nie udało się utworzyć ogłoszenia");
-          }
+          window.message(getCreatePartyGatheringErrorMessage(error));
         },
       },
     );

@@ -170,46 +170,88 @@ export const MapCard = ({
   const effectiveStyle = windowStatus === "OPEN" ? style : WINDOW_CLOSED_STYLE;
 
   const hasPlayersToShow = playersOnMap.length > 0;
+  const manageActionLabel = t("events.maps.manageShort");
+  const assignActionLabel =
+    !isAssignmentEnabled && countdownTime
+      ? countdownTime
+      : t("events.maps.assignSelf");
+  const actionsGridClassName = canManage ? "grid-cols-2" : "grid-cols-1";
 
   return (
     <div
       className={cn(
-        "p-2 rounded-lg border transition-colors",
+        "rounded-lg border p-3 transition-colors",
         effectiveStyle.bg,
         effectiveStyle.border,
         windowStatus !== "OPEN" && "hover:border-primary",
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div
-          className={cn(
-            "flex-1 min-w-0 flex items-center gap-2",
-            hasPlayersToShow && "cursor-pointer",
-          )}
-          onClick={
-            hasPlayersToShow ? () => setIsExpanded(!isExpanded) : undefined
-          }
-        >
-          <div className="flex items-center gap-1.5 min-w-0">
-            {hasPlayersToShow && (
-              <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "flex min-w-0 items-center justify-between gap-2",
+              hasPlayersToShow && "cursor-pointer",
             )}
-            <span className="text-sm truncate">{map.mapName}</span>
-            <span className="text-xs text-muted-foreground/60 font-mono shrink-0">
-              #{map.mapId}
-            </span>
-            {hasPlayersToShow && (
-              <ChevronDown
-                className={cn(
-                  "w-3 h-3 text-muted-foreground transition-transform shrink-0",
-                  isExpanded && "rotate-180",
-                )}
-              />
+            onClick={
+              hasPlayersToShow ? () => setIsExpanded(!isExpanded) : undefined
+            }
+          >
+            <div className="min-w-0 flex items-center gap-1.5">
+              {hasPlayersToShow && (
+                <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              )}
+              <span className="truncate text-sm font-medium">
+                {map.mapName}
+              </span>
+              <span className="shrink-0 font-mono text-xs text-muted-foreground/60">
+                #{map.mapId}
+              </span>
+              {hasPlayersToShow && (
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 shrink-0 text-muted-foreground transition-transform",
+                    isExpanded && "rotate-180",
+                  )}
+                />
+              )}
+            </div>
+
+            {windowStatus === "OPEN" && gapType && formattedDuration && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex shrink-0 cursor-help items-center gap-1">
+                    <Clock
+                      className={cn(
+                        "h-3 w-3",
+                        gapType === "UNASSIGNED"
+                          ? "text-destructive"
+                          : "text-yellow-500",
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "text-xs font-mono",
+                        gapType === "UNASSIGNED"
+                          ? "text-destructive"
+                          : "text-yellow-500",
+                      )}
+                    >
+                      {formattedDuration}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {gapType === "UNASSIGNED"
+                    ? t("events.maps.gap.unassignedTooltip")
+                    : t("events.maps.gap.uncoveredTooltip")}
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
 
           {memberCount > 0 && (
-            <div className="flex items-center gap-1.5 min-w-0">
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
               <div className="flex -space-x-1.5 shrink-0">
                 {displayedAssignedMembers.map((member) => {
                   const memberPlayers = presenceData?.get(member.userId) || [];
@@ -223,7 +265,7 @@ export const MapCard = ({
                     <div
                       key={member.id}
                       className={cn(
-                        "w-5 h-5 rounded-full bg-muted border-2 flex items-center justify-center overflow-hidden",
+                        "flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border-2 bg-muted",
                         windowStatus === "OPEN" && isOnMap && !isAfk
                           ? "border-green-500"
                           : windowStatus === "OPEN" && isAfk
@@ -239,22 +281,23 @@ export const MapCard = ({
                           32,
                         )}
                         alt={member.name}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   );
                 })}
                 {memberCount > 3 && (
-                  <div className="w-5 h-5 rounded-full bg-primary/20 border border-background flex items-center justify-center text-[10px] font-medium text-primary">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full border border-background bg-primary/20 text-[10px] font-medium text-primary">
                     +{memberCount - 3}
                   </div>
                 )}
               </div>
+
               {memberCount === 1 && assignedMembers[0] ? (
                 <MemberName member={assignedMembers[0]} className="text-xs" />
               ) : memberCount > 1 ? (
                 <span
-                  className="text-xs text-muted-foreground min-w-0 truncate"
+                  className="min-w-0 truncate text-xs text-muted-foreground"
                   title={assignedMembers
                     .map((member) => member.name)
                     .join(", ")}
@@ -267,53 +310,29 @@ export const MapCard = ({
               ) : null}
             </div>
           )}
-
-          {windowStatus === "OPEN" && gapType && formattedDuration && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 cursor-help shrink-0">
-                  <Clock
-                    className={cn(
-                      "w-3 h-3",
-                      gapType === "UNASSIGNED"
-                        ? "text-destructive"
-                        : "text-yellow-500",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "text-xs font-mono",
-                      gapType === "UNASSIGNED"
-                        ? "text-destructive"
-                        : "text-yellow-500",
-                    )}
-                  >
-                    {formattedDuration}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                {gapType === "UNASSIGNED"
-                  ? t("events.maps.gap.unassignedTooltip")
-                  : t("events.maps.gap.uncoveredTooltip")}
-              </TooltipContent>
-            </Tooltip>
-          )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div
+          className={cn(
+            "grid w-full shrink-0 gap-2 sm:flex sm:w-auto sm:items-center sm:gap-1",
+            actionsGridClassName,
+          )}
+        >
           {canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="inline-flex">
+                <span className="inline-flex w-full sm:w-auto">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="h-7 w-7 p-0"
+                    className="h-9 w-full justify-center gap-2 px-3 sm:h-7 sm:w-7 sm:px-0"
                     onClick={() => onManageClick?.(map.id)}
                     disabled={!isAssignmentEnabled}
                   >
-                    <Users className="w-3.5 h-3.5" />
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="text-xs sm:hidden">
+                      {manageActionLabel}
+                    </span>
                   </Button>
                 </span>
               </TooltipTrigger>
@@ -324,39 +343,41 @@ export const MapCard = ({
                         time: countdownTime,
                       })
                     : t("events.maps.assignmentDisabled")
-                  : t("events.maps.manage", "Zarządzaj")}
+                  : manageActionLabel}
               </TooltipContent>
             </Tooltip>
           )}
 
           {isAssignedToMe ? (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="h-9 w-full justify-center gap-2 px-3 text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-7 sm:w-7 sm:px-0"
               onClick={() => onSelfUnassignClick?.(map.id)}
               title={t("events.maps.unassignSelf")}
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="h-3.5 w-3.5" />
+              <span className="text-xs sm:hidden">
+                {t("events.maps.unassignSelf")}
+              </span>
             </Button>
           ) : (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="inline-flex">
+                <span className="inline-flex w-full sm:w-auto">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     className={cn(
-                      "h-7 p-0 gap-1",
-                      !isAssignmentEnabled ? "w-auto px-1.5" : "w-7",
+                      "h-9 w-full justify-center gap-2 px-3 sm:h-7 sm:px-0 sm:w-7",
                     )}
                     onClick={() => onSelfAssignClick?.(map.id)}
                     disabled={!isAssignmentEnabled}
                   >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    {!isAssignmentEnabled && countdownTime && (
-                      <span className="text-xs font-mono">{countdownTime}</span>
-                    )}
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span className="text-xs sm:hidden">
+                      {assignActionLabel}
+                    </span>
                   </Button>
                 </span>
               </TooltipTrigger>

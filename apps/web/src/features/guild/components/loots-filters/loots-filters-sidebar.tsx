@@ -23,67 +23,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Bookmark } from "lucide-react";
 import { useState, type FC } from "react";
 import { FilterCombobox } from "./filter-combobox";
-import { NpcType, useNpcs } from "@/hooks/api/game-data/use-npcs";
+import { useNpcs } from "@/hooks/api/game-data/use-npcs";
 import { useGuildPlayers } from "@/hooks/api/game-data/use-guild-players";
 import { useItems } from "@/hooks/api/game-data/use-items";
 import { useItemByHid } from "@/hooks/api/game-data/use-item-by-hid";
-import { ItemRarity } from "@/hooks/api/loots/use-loots";
+import { useLootFilterOptions } from "./use-loot-filter-options";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import { cn } from "@lootlog/ui/lib/utils";
 import { ItemImage } from "@/components/tiles";
 import { useGuildContext } from "@/hooks/context/use-guild-context";
 import { formatItemHid } from "@/lib/utils/hid-detection";
 import { useLootsFilters } from "@/hooks/use-loots-filters";
+import { useTranslation } from "react-i18next";
 
 const DEFAULT_DEBOUNCE_MS = 500;
 const CUSTOM_FILTERS_STORAGE_KEY = "loots-custom-quick-filters";
-
-const raritiesData = [
-  { value: ItemRarity.LEGENDARY, label: "Legendarny" },
-  { value: ItemRarity.HEROIC, label: "Heroiczny" },
-  { value: ItemRarity.UNIQUE, label: "Unikatowy" },
-];
-
-const npcTypesData = [
-  { value: NpcType.COLOSSUS, label: "Kolos" },
-  { value: NpcType.TITAN, label: "Tytan" },
-  { value: NpcType.HERO, label: "Heros" },
-  { value: NpcType.EVENT_HERO, label: "Heros Eventowy" },
-  { value: NpcType.ELITE3, label: "Elita III" },
-  { value: NpcType.ELITE2, label: "Elita II" },
-  { value: NpcType.ELITE, label: "Elita" },
-  { value: NpcType.NPC, label: "NPC" },
-];
-
-const defaultQuickFilters = [
-  {
-    id: "default-legendary",
-    label: "Legendarny",
-    category: "Przedmiot",
-    filters: {
-      rarities: [ItemRarity.LEGENDARY],
-    },
-    isDefault: true,
-  },
-  {
-    id: "default-titan",
-    label: "Tytan",
-    category: "Potwór",
-    filters: {
-      npcTypes: [NpcType.TITAN],
-    },
-    isDefault: true,
-  },
-  {
-    id: "default-heros",
-    label: "Heros",
-    category: "Potwór",
-    filters: {
-      npcTypes: [NpcType.HERO],
-    },
-    isDefault: true,
-  },
-];
 
 type SavedFilter = {
   id: string;
@@ -111,6 +65,9 @@ type LootsFiltersSidebarProps = {
 export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
   className,
 }) => {
+  const { t } = useTranslation();
+  const { defaultQuickFilters, npcTypeOptions, rarityOptions } =
+    useLootFilterOptions();
   const { world } = useGuildContext();
   const { filters, setFilters, hasActiveFilters, clearFilters } =
     useLootsFilters();
@@ -194,7 +151,6 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
           mergedFilters.players.length > 0 ? mergedFilters.players : null,
         playerLevelMin: mergedFilters.playerLevelMin || null,
         playerLevelMax: mergedFilters.playerLevelMax || null,
-        location: null,
       };
     });
   };
@@ -267,21 +223,22 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Zapisz szybki filtr</DialogTitle>
+            <DialogTitle>
+              {t("loots.filtersPanel.saveDialog.title")}
+            </DialogTitle>
             <DialogDescription>
-              Nadaj nazwę swojemu szybkiemu filtrowi, aby łatwo go znaleźć
-              później.
+              {t("loots.filtersPanel.saveDialog.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="p-4">
             <Label htmlFor="filterName" className="text-sm font-medium">
-              Nazwa filtru
+              {t("loots.filtersPanel.saveDialog.nameLabel")}
             </Label>
             <Input
               id="filterName"
               value={newFilterName}
               onChange={(e) => setNewFilterName(e.target.value)}
-              placeholder="np. Moje ulubione filtry"
+              placeholder={t("loots.filtersPanel.saveDialog.namePlaceholder")}
               className="mt-2"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -292,11 +249,11 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
           </div>
           <DialogFooter className="p-4 pt-0">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Anuluj
+              {t("loots.filtersPanel.saveDialog.cancel")}
             </Button>
             <Button onClick={handleSaveFilter} disabled={!newFilterName.trim()}>
               <Bookmark className="h-4 w-4 mr-2" />
-              Zapisz
+              {t("loots.filtersPanel.saveDialog.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -314,7 +271,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-semibold">
-                    Szybkie filtry
+                    {t("loots.filtersPanel.quickFilters.title")}
                   </Label>
                   {canSaveCurrentFilter && (
                     <Button
@@ -324,7 +281,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                       className="h-7 px-2 text-xs"
                     >
                       <Plus className="h-3 w-3 mr-1" />
-                      Zapisz
+                      {t("loots.filtersPanel.quickFilters.saveButton")}
                     </Button>
                   )}
                 </div>
@@ -367,14 +324,16 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                 className="space-y-4"
               >
                 <AccordionItem value="npc" className="space-y-3">
-                  <AccordionTrigger>Filtry potworów</AccordionTrigger>
+                  <AccordionTrigger>
+                    {t("loots.filtersPanel.npcSection.title")}
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Typy potworów
+                        {t("loots.filtersPanel.npcSection.npcTypesLabel")}
                       </Label>
                       <div className="grid grid-cols-2 gap-2">
-                        {npcTypesData.map((npcType) => (
+                        {npcTypeOptions.map((npcType) => (
                           <div
                             key={npcType.value}
                             className="flex items-center gap-2"
@@ -407,11 +366,13 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Potwory
+                        {t("loots.filtersPanel.npcSection.npcsLabel")}
                       </Label>
                       <FilterCombobox
                         name="npcs"
-                        placeholder="Wybierz potwory"
+                        placeholder={t(
+                          "loots.filtersPanel.npcSection.npcsPlaceholder",
+                        )}
                         options={npcsOptions}
                         defaultValue={filters.npcs}
                         onSelect={(_, values) =>
@@ -427,7 +388,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
-                          Min poziom
+                          {t("loots.filtersPanel.common.minLevel")}
                         </Label>
                         <Input
                           type="number"
@@ -443,7 +404,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                       </div>
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
-                          Max poziom
+                          {t("loots.filtersPanel.common.maxLevel")}
                         </Label>
                         <Input
                           type="number"
@@ -464,14 +425,16 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                 <Separator />
 
                 <AccordionItem value="item" className="space-y-3">
-                  <AccordionTrigger>Filtry przedmiotów</AccordionTrigger>
+                  <AccordionTrigger>
+                    {t("loots.filtersPanel.itemSection.title")}
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Rzadkość
+                        {t("loots.filtersPanel.itemSection.raritiesLabel")}
                       </Label>
                       <div className="flex flex-col gap-2">
-                        {raritiesData.map((rarity) => (
+                        {rarityOptions.map((rarity) => (
                           <div
                             key={rarity.value}
                             className="flex items-center gap-2"
@@ -502,11 +465,13 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
 
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Przedmioty
+                        {t("loots.filtersPanel.itemSection.itemsLabel")}
                       </Label>
                       <FilterCombobox
                         name="itemNames"
-                        placeholder="Wybierz przedmioty"
+                        placeholder={t(
+                          "loots.filtersPanel.itemSection.itemsPlaceholder",
+                        )}
                         options={itemsOptions}
                         defaultValue={filters.itemNames}
                         onSelect={(_, values) =>
@@ -522,7 +487,9 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     {hidItem && filters.hid && (
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
-                          Filtrowany przedmiot (ID)
+                          {t(
+                            "loots.filtersPanel.itemSection.filteredItemLabel",
+                          )}
                         </Label>
                         <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                           <ItemImage
@@ -534,7 +501,9 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                               {hidItem.name}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Lvl {hidItem.lvl}
+                              {t("loots.filtersPanel.common.levelValue", {
+                                level: hidItem.lvl,
+                              })}
                             </p>
                           </div>
                           <Button
@@ -552,7 +521,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
-                          Min poziom
+                          {t("loots.filtersPanel.common.minLevel")}
                         </Label>
                         <Input
                           type="number"
@@ -568,7 +537,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                       </div>
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
-                          Max poziom
+                          {t("loots.filtersPanel.common.maxLevel")}
                         </Label>
                         <Input
                           type="number"
@@ -589,15 +558,19 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                 <Separator />
 
                 <AccordionItem value="player" className="space-y-3">
-                  <AccordionTrigger>Filtry graczy</AccordionTrigger>
+                  <AccordionTrigger>
+                    {t("loots.filtersPanel.playerSection.title")}
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <div>
                       <Label className="text-xs text-muted-foreground mb-2 block">
-                        Gracze
+                        {t("loots.filtersPanel.playerSection.playersLabel")}
                       </Label>
                       <FilterCombobox
                         name="players"
-                        placeholder="Wybierz graczy"
+                        placeholder={t(
+                          "loots.filtersPanel.playerSection.playersPlaceholder",
+                        )}
                         options={playersOptions}
                         defaultValue={filters.players}
                         onSelect={(_, values) =>
@@ -613,7 +586,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
-                          Min poziom
+                          {t("loots.filtersPanel.common.minLevel")}
                         </Label>
                         <Input
                           type="number"
@@ -628,7 +601,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                       </div>
                       <div>
                         <Label className="text-xs text-muted-foreground mb-2 block">
-                          Max poziom
+                          {t("loots.filtersPanel.common.maxLevel")}
                         </Label>
                         <Input
                           type="number"
@@ -665,7 +638,7 @@ export const LootsFiltersSidebar: FC<LootsFiltersSidebarProps> = ({
                   size="sm"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Wyczyść filtry
+                  {t("loots.filtersPanel.quickFilters.clearButton")}
                 </Button>
               </div>
             </motion.div>

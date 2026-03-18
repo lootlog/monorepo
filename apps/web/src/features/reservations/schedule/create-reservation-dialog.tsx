@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,20 @@ type CreateReservationDialogProps = {
 export const CreateReservationDialog: React.FC<
   CreateReservationDialogProps
 > = ({ open, onOpenChange, reservationKey, currentUserId }) => {
+  return (
+    <CreateReservationDialogContent
+      key={`${reservationKey}:${open ? "open" : "closed"}`}
+      open={open}
+      onOpenChange={onOpenChange}
+      reservationKey={reservationKey}
+      currentUserId={currentUserId}
+    />
+  );
+};
+
+const CreateReservationDialogContent: React.FC<
+  CreateReservationDialogProps
+> = ({ open, onOpenChange, reservationKey, currentUserId }) => {
   const isMobile = useIsMobile();
   const [fromDate, setFromDate] = useState<Date | undefined>();
   const [toDate, setToDate] = useState<Date | undefined>();
@@ -39,16 +53,6 @@ export const CreateReservationDialog: React.FC<
 
   const { mutateAsync: createReservation, isPending: isCreating } =
     useCreateReservation();
-
-  useEffect(() => {
-    if (!open) {
-      setComment("");
-      setFromDate(undefined);
-      setToDate(undefined);
-      setIsFromPickerOpen(false);
-      setIsToPickerOpen(false);
-    }
-  }, [open]);
 
   const handleCreateReservation = useCallback(async () => {
     if (!fromDate || !toDate) {

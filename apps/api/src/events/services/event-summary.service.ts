@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CoverageGapType, Prisma } from 'generated/client';
-import { PrismaService } from 'src/db/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { CoverageGapType, Prisma } from "generated/client";
+import { PrismaService } from "src/db/prisma.service";
 
 interface MemberStat {
   memberId: number;
@@ -50,7 +50,7 @@ export class EventSummaryService {
 
     if (maps.length === 0) {
       this.logger.debug({
-        message: 'No maps for hero, skipping summary creation',
+        message: "No maps for hero, skipping summary creation",
         heroNpcId,
       });
       return;
@@ -216,7 +216,7 @@ export class EventSummaryService {
 
       gapsTimeline.push({
         mapId: gap.mapId,
-        mapName: mapNameById.get(gap.mapId) || 'Unknown',
+        mapName: mapNameById.get(gap.mapId) || "Unknown",
         gapType: gap.gapType,
         startedAt: gapStart,
         endedAt: gapEnd,
@@ -227,10 +227,7 @@ export class EventSummaryService {
     const mapStats: MapStat[] = Array.from(mapStatsMap.values());
 
     const totalCoverageSeconds = Math.min(
-      memberStats.reduce(
-        (sum, m) => sum + (m.timeSeconds - m.afkSeconds),
-        0,
-      ),
+      memberStats.reduce((sum, m) => sum + (m.timeSeconds - m.afkSeconds), 0),
       totalWindowSeconds * maps.length,
     );
 
@@ -283,7 +280,7 @@ export class EventSummaryService {
       });
 
       this.logger.log({
-        message: 'Created respawn window summary',
+        message: "Created respawn window summary",
         heroNpcId,
         killId,
         totalWindowSeconds,
@@ -319,7 +316,7 @@ export class EventSummaryService {
         heroNpcId,
         ...(cursor && { id: { lt: cursor } }),
       },
-      orderBy: { windowClosedAt: 'desc' },
+      orderBy: { windowClosedAt: "desc" },
       take: limit + 1,
     });
 

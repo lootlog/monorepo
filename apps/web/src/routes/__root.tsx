@@ -2,6 +2,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { useReducedMotion } from "framer-motion";
 import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { persister } from "@/lib/query-client";
@@ -13,6 +14,7 @@ import "@/i18n/config";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <PersistQueryClientProvider
@@ -23,7 +25,7 @@ function RootComponent() {
         <NuqsAdapter>
           <GlobalContextProvider>
             <Outlet />
-            <RukiaFrostOverlay />
+            {!prefersReducedMotion && <RukiaFrostOverlay />}
             <ReactQueryDevtools initialIsOpen={false} />
           </GlobalContextProvider>
         </NuqsAdapter>

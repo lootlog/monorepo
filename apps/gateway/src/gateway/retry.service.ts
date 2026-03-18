@@ -1,6 +1,6 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger } from '@nestjs/common';
-import { GatewayConfig } from './constants/gateway-config.constant';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
+import { Injectable, Logger } from "@nestjs/common";
+import { GatewayConfig } from "./constants/gateway-config.constant";
 
 export interface RetryConfig {
   maxRetries?: number;
@@ -9,7 +9,7 @@ export interface RetryConfig {
   dlqExchange?: string;
 }
 
-const DEAD_LETTER_EXCHANGE_NAME = 'dlx';
+const DEAD_LETTER_EXCHANGE_NAME = "dlx";
 
 @Injectable()
 export class RetryService {
@@ -26,11 +26,11 @@ export class RetryService {
   }
 
   getRetryCount(headers: Record<string, unknown>): number {
-    if (headers['x-retry-count']) {
-      return headers['x-retry-count'] as number;
+    if (headers["x-retry-count"]) {
+      return headers["x-retry-count"] as number;
     }
 
-    const xDeath = headers['x-death'];
+    const xDeath = headers["x-death"];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
       return (xDeath[0].count as number) || 0;
     }
@@ -51,8 +51,8 @@ export class RetryService {
     await this.amqp.publish(dlqExchange, dlqRoutingKey, message, {
       headers: {
         ...headers,
-        'x-final-attempt': true,
-        'x-sent-to-dlq-at': new Date().toISOString(),
+        "x-final-attempt": true,
+        "x-sent-to-dlq-at": new Date().toISOString(),
       },
     });
   }
@@ -64,7 +64,6 @@ export class RetryService {
     identifier: string,
     config: RetryConfig = {},
   ): Promise<boolean> {
-    const retryCount = this.getRetryCount(headers);
     const maxRetries = config.maxRetries || GatewayConfig.DEFAULT_MAX_RETRIES;
 
     if (!this.shouldRetry(headers, maxRetries)) {

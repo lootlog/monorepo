@@ -1,12 +1,12 @@
-import { HttpService } from '@nestjs/axios';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { catchError, firstValueFrom, map } from 'rxjs';
-import { Permission, type UserGuildPermissionsDto } from '@lootlog/types';
-import { ApiServiceConfig } from 'src/config/api-service.config';
-import { ConfigKey } from 'src/config/config-key.enum';
-import type { Cache } from 'cache-manager';
+import { HttpService } from "@nestjs/axios";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { catchError, firstValueFrom, map } from "rxjs";
+import { Permission, type UserGuildPermissionsDto } from "@lootlog/types";
+import { ApiServiceConfig } from "src/config/api-service.config";
+import { ConfigKey } from "src/config/config-key.enum";
+import type { Cache } from "cache-manager";
 
 @Injectable()
 export class PermissionsService {
@@ -50,8 +50,8 @@ export class PermissionsService {
             map((res) => res.data),
             catchError((error) => {
               this.logger.log({
-                level: 'error',
-                message: 'Failed to fetch user permissions from API service',
+                level: "error",
+                message: "Failed to fetch user permissions from API service",
                 error: error.message,
                 stack: error.stack,
                 discordId,
@@ -71,9 +71,9 @@ export class PermissionsService {
       return permissions;
     } catch (error) {
       this.logger.log({
-        level: 'error',
-        message: 'Error fetching user permissions',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        level: "error",
+        message: "Error fetching user permissions",
+        error: error instanceof Error ? error.message : "Unknown error",
         discordId,
         userId,
       });

@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
 import {
   IsDate,
   IsNotEmpty,
@@ -7,7 +7,7 @@ import {
   IsString,
   MaxLength,
   Min,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateManualTimerDto {
   @IsString()

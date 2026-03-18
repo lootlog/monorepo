@@ -28,7 +28,7 @@ export const useCreateLootComment = () => {
         `/guilds/${guildId}/loots/${lootId}/comments`,
         {
           content,
-        }
+        },
       ),
     onSuccess: (comment) => {
       queryClient.invalidateQueries({

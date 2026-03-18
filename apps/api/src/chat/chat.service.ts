@@ -1,22 +1,22 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import {
   ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import type { Logger } from 'winston';
-import type { SendMessageDto } from 'src/chat/dto/send-message.dto';
-import { DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
-import { RoutingKey } from 'src/enum/routing-key.enum';
-import { RedisService } from 'src/lib/redis/redis.service';
-import { v6 } from 'uuid';
-import { isAdministrativeUser } from 'src/shared/permissions/is-administrative-user';
-import { GuildsService } from 'src/guilds/guilds.service';
-import { Permission, Role } from 'generated/client';
-import { canViewChatMessage } from 'src/shared/utils/can-view-chat-message';
-import { getNpcTypeByWt } from 'src/shared/utils/get-npc-type-by-wt';
+} from "@nestjs/common";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import type { Logger } from "winston";
+import type { SendMessageDto } from "src/chat/dto/send-message.dto";
+import { DEFAULT_EXCHANGE_NAME } from "src/config/rabbitmq.config";
+import { RoutingKey } from "src/enum/routing-key.enum";
+import { RedisService } from "@lootlog/nest-shared";
+import { v6 } from "uuid";
+import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
+import { GuildsService } from "src/guilds/guilds.service";
+import { NpcType, Permission, Role } from "generated/client";
+import { getNpcTypeByWt } from "@lootlog/types";
+import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
 
 const MAX_MESSAGES = 100;
 
@@ -29,10 +29,14 @@ export class ChatService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
+  private getChatMessagesKey(guildId: string): string {
+    return `guild:${guildId}:messages`;
+  }
+
   async sendMessage(discordId: string, guildId: string, data: SendMessageDto) {
-    const key = `guild:${guildId}:messages`;
+    const key = this.getChatMessagesKey(guildId);
     const npcType = data.npc
-      ? getNpcTypeByWt(data.npc.wt, data.npc.prof, data.npc.type)
+      ? getNpcTypeByWt(NpcType, data.npc.wt, data.npc.prof, data.npc.type)
       : undefined;
     const msg = {
       id: v6(),
@@ -45,44 +49,41 @@ export class ChatService {
       characterData: data.characterData,
       partyGathering: data.partyGathering,
     };
-    const messages = await this.getRawMessages(guildId);
-    if (Array.isArray(messages) && messages.length >= MAX_MESSAGES) {
-      messages.shift();
-    }
-    messages.push(msg);
 
-    await this.redisService.set(key, JSON.stringify(messages));
+    await this.redisService.rpush(key, JSON.stringify(msg));
+    await this.redisService.ltrim(key, -MAX_MESSAGES, -1);
     await this.emitMessage(msg);
 
     return msg;
   }
 
   private async getRawMessages(guildId: string): Promise<any[]> {
-    const key = `guild:${guildId}:messages`;
-    const messages = await this.redisService.get(key);
+    const key = this.getChatMessagesKey(guildId);
+    const elements = await this.redisService.lrange(key, 0, -1);
 
-    if (!messages) {
+    if (elements.length === 0) {
       return [];
     }
 
-    try {
-      return JSON.parse(messages);
-    } catch (error) {
-      this.logger.log({
-        level: 'error',
-        message: 'Failed to parse chat messages from Redis',
-        guildId,
-        error: error instanceof Error ? error.stack : error,
-      });
-      return [];
-    }
+    return elements.reduce<any[]>((acc, element) => {
+      try {
+        acc.push(JSON.parse(element));
+      } catch (error) {
+        this.logger.log({
+          level: "error",
+          message: "Failed to parse chat message from Redis",
+          guildId,
+          error: error instanceof Error ? error.stack : error,
+        });
+      }
+      return acc;
+    }, []);
   }
 
   async getMessages(discordId: string, guildId: string) {
-    const key = `guild:${guildId}:messages`;
-    const messages = await this.redisService.get(key);
+    const messages = await this.getRawMessages(guildId);
 
-    if (!messages) {
+    if (messages.length === 0) {
       return [];
     }
 
@@ -111,27 +112,11 @@ export class ChatService {
 
     const isAdministrative = isAdministrativeUser(permissions);
 
-    try {
-      const parsedMessages = JSON.parse(messages);
-
-      if (isAdministrative) {
-        return parsedMessages;
-      }
-
-      return this.filterMessagesByPermissions(
-        parsedMessages,
-        isAdministrative,
-        roles,
-      );
-    } catch (error) {
-      this.logger.log({
-        level: 'error',
-        message: 'Failed to parse chat messages from Redis',
-        guildId,
-        error: error instanceof Error ? error.stack : error,
-      });
-      return [];
+    if (isAdministrative) {
+      return messages;
     }
+
+    return this.filterMessagesByPermissions(messages, isAdministrative, roles);
   }
 
   private filterMessagesByPermissions(
@@ -147,7 +132,7 @@ export class ChatService {
   }
 
   async clearMessages(guildId: string) {
-    const key = `guild:${guildId}:messages`;
+    const key = this.getChatMessagesKey(guildId);
     await this.redisService.del(key);
 
     return;
@@ -169,26 +154,30 @@ export class ChatService {
     messageId: string,
     newMessage: string,
   ) {
-    const messages = await this.getRawMessages(guildId);
+    const key = this.getChatMessagesKey(guildId);
+    const elements = await this.redisService.lrange(key, 0, -1);
 
-    const messageIndex = messages.findIndex((m) => m.id === messageId);
+    const messageIndex = elements.findIndex((element) => {
+      const parsed = JSON.parse(element);
+      return parsed.id === messageId;
+    });
+
     if (messageIndex === -1) {
-      throw new NotFoundException('Message not found');
+      throw new NotFoundException("Message not found");
     }
 
-    const message = messages[messageIndex];
+    const message = JSON.parse(elements[messageIndex]);
     if (message.senderId !== discordId) {
-      throw new ForbiddenException('Not the owner of this message');
+      throw new ForbiddenException("Not the owner of this message");
     }
 
-    messages[messageIndex] = {
+    const updated = {
       ...message,
       message: newMessage,
       partyGathering: undefined,
     };
 
-    const key = `guild:${guildId}:messages`;
-    await this.redisService.set(key, JSON.stringify(messages));
+    await this.redisService.lset(key, messageIndex, JSON.stringify(updated));
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,
@@ -204,21 +193,24 @@ export class ChatService {
   }
 
   async deleteMessage(discordId: string, guildId: string, messageId: string) {
-    const messages = await this.getRawMessages(guildId);
+    const key = this.getChatMessagesKey(guildId);
+    const elements = await this.redisService.lrange(key, 0, -1);
 
-    const messageIndex = messages.findIndex((m) => m.id === messageId);
-    if (messageIndex === -1) {
-      throw new NotFoundException('Message not found');
+    const targetElement = elements.find((element) => {
+      const parsed = JSON.parse(element);
+      return parsed.id === messageId;
+    });
+
+    if (!targetElement) {
+      throw new NotFoundException("Message not found");
     }
 
-    const message = messages[messageIndex];
+    const message = JSON.parse(targetElement);
     if (message.senderId !== discordId) {
-      throw new ForbiddenException('Not the owner of this message');
+      throw new ForbiddenException("Not the owner of this message");
     }
 
-    const filteredMessages = messages.filter((m) => m.id !== messageId);
-    const key = `guild:${guildId}:messages`;
-    await this.redisService.set(key, JSON.stringify(filteredMessages));
+    await this.redisService.lrem(key, 1, targetElement);
 
     this.amqpConnection.publish(
       DEFAULT_EXCHANGE_NAME,

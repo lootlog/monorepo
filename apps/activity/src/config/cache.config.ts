@@ -1,12 +1,12 @@
-import { CacheModuleAsyncOptions } from '@nestjs/cache-manager';
-import { ConfigService } from '@nestjs/config';
-import { Keyv } from 'keyv';
-import KeyvRedis from '@keyv/redis';
-import { CacheableMemory } from 'cacheable';
-import { RuntimeEnvironment } from '@lootlog/types';
-import { ConfigKey } from './config-key.enum';
-import { RedisConfig } from './redis.config';
-import { ServiceConfig } from './service.config';
+import { CacheModuleAsyncOptions } from "@nestjs/cache-manager";
+import { ConfigService } from "@nestjs/config";
+import { Keyv } from "keyv";
+import KeyvRedis from "@keyv/redis";
+import { CacheableMemory } from "cacheable";
+import { RuntimeEnvironment } from "@lootlog/types";
+import type { RedisConfig } from "@lootlog/nest-shared";
+import { ConfigKey } from "./config-key.enum";
+import { ServiceConfig } from "./service.config";
 
 export const cacheConfig: CacheModuleAsyncOptions = {
   isGlobal: true,

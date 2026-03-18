@@ -1,4 +1,4 @@
-import { RuntimeEnvironment } from 'src/types/runtime.types';
+import { RuntimeEnvironment } from "src/types/runtime.types";
 
 export function getMemberCacheTtl(env: RuntimeEnvironment): number {
   return env === RuntimeEnvironment.LOCAL

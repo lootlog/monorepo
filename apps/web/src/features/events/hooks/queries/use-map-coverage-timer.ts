@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useGuildId } from "@/hooks/context/use-guild-id";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { type CoverageGapType } from "../utils/use-local-coverage-timer";
+import type { CoverageGapType } from "../utils/use-local-coverage-timer";
 import { formatDurationPadded } from "../../utils";
 
 export { type CoverageGapType };
@@ -82,7 +82,9 @@ export const useMapCoverageTimer = (
   return {
     ...state,
     isLoading,
-    formattedDuration: state.gapType ? formatDurationPadded(state.elapsedSeconds) : null,
+    formattedDuration: state.gapType
+      ? formatDurationPadded(state.elapsedSeconds)
+      : null,
   };
 };
 

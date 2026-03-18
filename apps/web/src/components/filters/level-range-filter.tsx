@@ -26,6 +26,33 @@ export function LevelRangeFilter({
   inputClassName,
   containerClassName,
 }: LevelRangeFilterProps) {
+  return (
+    <LevelRangeFilterFields
+      key={`${minLevel ?? ""}:${maxLevel ?? ""}`}
+      minLevel={minLevel}
+      maxLevel={maxLevel}
+      onMinLevelChange={onMinLevelChange}
+      onMaxLevelChange={onMaxLevelChange}
+      debounceMs={debounceMs}
+      minLevelPlaceholder={minLevelPlaceholder}
+      maxLevelPlaceholder={maxLevelPlaceholder}
+      inputClassName={inputClassName}
+      containerClassName={containerClassName}
+    />
+  );
+}
+
+function LevelRangeFilterFields({
+  minLevel,
+  maxLevel,
+  onMinLevelChange,
+  onMaxLevelChange,
+  debounceMs,
+  minLevelPlaceholder,
+  maxLevelPlaceholder,
+  inputClassName,
+  containerClassName,
+}: LevelRangeFilterProps) {
   const [localMinLevel, setLocalMinLevel] = useState<number | undefined>(
     minLevel,
   );
@@ -35,14 +62,6 @@ export function LevelRangeFilter({
 
   const debouncedMinLevel = useDebounce(localMinLevel, debounceMs);
   const debouncedMaxLevel = useDebounce(localMaxLevel, debounceMs);
-
-  useEffect(() => {
-    setLocalMinLevel(minLevel);
-  }, [minLevel]);
-
-  useEffect(() => {
-    setLocalMaxLevel(maxLevel);
-  }, [maxLevel]);
 
   useEffect(() => {
     onMinLevelChange(debouncedMinLevel);

@@ -3,15 +3,15 @@ import {
   UnauthorizedException,
   type CanActivate,
   type ExecutionContext,
-} from '@nestjs/common';
+} from "@nestjs/common";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    const discordId = request.headers['x-auth-discord-id'];
-    const userId = request.headers['x-auth-user-id'];
+    const discordId = request.headers["x-auth-discord-id"];
+    const userId = request.headers["x-auth-user-id"];
 
     if (!discordId || !userId) {
       throw new UnauthorizedException();

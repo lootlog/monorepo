@@ -6,8 +6,9 @@ import { getTextColor } from "@/utils/notifications-and-detector/background";
 import { format, isYesterday } from "date-fns";
 import type { FC } from "react";
 import type { GuildMember } from "@/hooks/api/use-guild-members";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { MessageType } from "@/hooks/api/use-send-chat-message";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { NpcType } from "@/hooks/api/use-npcs";
 import { NPCS_WITH_LOCATION } from "@/features/npc-detector/components/npc-list-item";
 import {
   ContextMenu,
@@ -44,7 +45,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({ all, message, member }) => {
     if (message.type === MessageType.NPC) {
       const npc = message.npc;
       if (!npc) return null;
-      const npcType = getNpcTypeByWt(npc.wt, npc.prof, npc.type);
+      const npcType = getNpcTypeByWt(NpcType, npc.wt, npc.prof, npc.type);
 
       const shortname = NPC_NAMES[npcType]?.shortname;
       const color = getTextColor(npcType, true);

@@ -1,135 +1,43 @@
-// src/observability-hono.ts
-// For Hono.js services, you need middleware-based instrumentation
+// For Hono.js services — middleware-based instrumentation
 // Standard HTTP auto-instrumentation doesn't fully support Hono
 
-import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
-import { resourceFromAttributes } from "@opentelemetry/resources";
 import {
-  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
-  SEMRESATTRS_SERVICE_NAME,
-  SEMRESATTRS_SERVICE_NAMESPACE,
-} from "@opentelemetry/semantic-conventions";
-import {
-  PeriodicExportingMetricReader,
-  AggregationType,
-  createAllowListAttributesProcessor,
-  type ViewOptions,
-} from "@opentelemetry/sdk-metrics";
-import {
-  ParentBasedSampler,
-  TraceIdRatioBasedSampler,
-  BatchSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
+  type BaseObservabilityConfig,
+  shouldSkipObservability,
+  createObservabilityComponents,
+  createHttpServerMetricViews,
+  shutdownSdk,
+} from "./observability-base.js";
 
-export interface HonoObservabilityConfig {
-  serviceName: string;
-  otlpEndpoint?: string;
-  otlpHeaders?: string;
-  serviceEnvironment?: string;
-  serviceNamespace?: string;
-  traceSampleRate?: number;
-  forceEnable?: boolean;
-  enableDebugLogging?: boolean;
-}
+export type HonoObservabilityConfig = BaseObservabilityConfig;
 
 let sdkInstance: NodeSDK | null = null;
+let currentServiceName = "";
 
 export function initHonoObservability(config: HonoObservabilityConfig): void {
-  const {
-    serviceName,
-    otlpEndpoint,
-    otlpHeaders,
-    serviceEnvironment,
-    serviceNamespace,
-    traceSampleRate = 0.1,
-    forceEnable = false,
-    enableDebugLogging = false,
-  } = config;
+  const { serviceName } = config;
 
-  if (enableDebugLogging) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-  }
+  if (shouldSkipObservability(config)) return;
 
-  if (!forceEnable && (serviceEnvironment === "local" || !serviceEnvironment)) {
-    console.log(
-      `[${serviceName}] Observability disabled for local environment.`,
-    );
-    return;
-  }
+  currentServiceName = serviceName;
 
-  if (!otlpEndpoint || !otlpHeaders) {
-    console.warn(
-      `[${serviceName}] Observability skipped: missing OTLP config.`,
-    );
-    return;
-  }
+  const { resource, sampler, spanProcessor, metricReader } =
+    createObservabilityComponents(config);
 
-  const resourceAttributes: Record<string, string> = {
-    [SEMRESATTRS_SERVICE_NAME]: serviceName,
-  };
-
-  if (serviceEnvironment) {
-    resourceAttributes[SEMRESATTRS_DEPLOYMENT_ENVIRONMENT] = serviceEnvironment;
-  }
-
-  if (serviceNamespace) {
-    resourceAttributes[SEMRESATTRS_SERVICE_NAMESPACE] = serviceNamespace;
-  }
-
-  const sampler = new ParentBasedSampler({
-    root: new TraceIdRatioBasedSampler(traceSampleRate),
-  });
-
-  const traceExporter = new OTLPTraceExporter({
-    url: `${otlpEndpoint}/v1/traces`,
-    headers: parseHeaders(otlpHeaders),
-  });
-
-  const metricExporter = new OTLPMetricExporter({
-    url: `${otlpEndpoint}/v1/metrics`,
-    headers: parseHeaders(otlpHeaders),
-  });
-
-  // For Hono, we don't use auto-instrumentations
-  // The @hono/otel middleware handles HTTP spans
   sdkInstance = new NodeSDK({
-    resource: resourceFromAttributes(resourceAttributes),
+    resource,
     sampler,
-    spanProcessor: new BatchSpanProcessor(traceExporter, {
-      maxQueueSize: 2048,
-      maxExportBatchSize: 512,
-      scheduledDelayMillis: 5000,
-    }),
-    metricReader: new PeriodicExportingMetricReader({
-      exporter: metricExporter,
-      exportIntervalMillis: 60000,
-    }),
-    views: [
-      {
-        instrumentName: "http.server.duration",
-        attributesProcessors: [
-          createAllowListAttributesProcessor([
-            "http.method",
-            "http.route",
-            "http.status_code",
-          ]),
-        ],
-        aggregation: {
-          type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
-        },
-      } satisfies ViewOptions,
-    ],
-    // NO auto-instrumentations - Hono middleware handles it
+    spanProcessor,
+    metricReader,
+    views: createHttpServerMetricViews(),
     instrumentations: [],
   });
 
   try {
     sdkInstance.start();
     console.log(
-      `[${serviceName}] Hono observability initialized (sampling: ${traceSampleRate * 100}%).`,
+      `[${serviceName}] Hono observability initialized (sampling: ${(config.traceSampleRate ?? 0.1) * 100}%).`,
     );
     console.log(
       `[${serviceName}] Remember to add httpInstrumentationMiddleware from @hono/otel!`,
@@ -144,17 +52,6 @@ export function initHonoObservability(config: HonoObservabilityConfig): void {
 }
 
 export async function shutdownHonoObservability(): Promise<void> {
-  if (!sdkInstance) return;
-  await sdkInstance.shutdown();
+  await shutdownSdk(sdkInstance, currentServiceName);
   sdkInstance = null;
-}
-
-function parseHeaders(headersString: string): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const paramsString = headersString.replace(/,/g, "&");
-  const params = new URLSearchParams(paramsString);
-  params.forEach((value, key) => {
-    headers[key] = value;
-  });
-  return headers;
 }

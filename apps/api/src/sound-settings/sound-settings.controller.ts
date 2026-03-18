@@ -1,32 +1,32 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
+import { UserId } from "@lootlog/nest-shared";
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
-} from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
-import { UserId } from 'src/shared/decorators/user-id.decorator';
-import { AuthGuard } from 'src/shared/guards/auth.guard';
-import { UpdateSoundSettingsDto } from './dto/update-sound-settings.dto';
-import { SoundSettingsService } from 'src/sound-settings/sound-settings.service';
-import { SoundSettingsEntity } from 'src/sound-settings/entities/sound-settings.entity';
+} from "@nestjs/swagger";
+import { plainToInstance } from "class-transformer";
+import { AuthGuard } from "src/shared/guards/auth.guard";
+import { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
+import { SoundSettingsService } from "src/sound-settings/sound-settings.service";
+import { SoundSettingsEntity } from "src/sound-settings/entities/sound-settings.entity";
 
-@ApiTags('sound-settings')
+@ApiTags("sound-settings")
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
-@Controller('sound-settings')
+@Controller("sound-settings")
 export class SoundSettingsController {
   constructor(private readonly soundSettingsService: SoundSettingsService) {}
 
   @Get()
   @ApiOperation({
-    summary: 'Get sound settings',
-    description: 'Retrieve user sound settings',
+    summary: "Get sound settings",
+    description: "Retrieve user sound settings",
   })
   @ApiResponse({
     status: 200,
-    description: 'User sound settings',
+    description: "User sound settings",
     type: SoundSettingsEntity,
   })
   async getSettings(@UserId() userId: string) {
@@ -36,12 +36,12 @@ export class SoundSettingsController {
 
   @Patch()
   @ApiOperation({
-    summary: 'Update sound settings',
-    description: 'Update user sound settings',
+    summary: "Update sound settings",
+    description: "Update user sound settings",
   })
   @ApiResponse({
     status: 200,
-    description: 'Updated sound settings',
+    description: "Updated sound settings",
     type: SoundSettingsEntity,
   })
   async updateSettings(

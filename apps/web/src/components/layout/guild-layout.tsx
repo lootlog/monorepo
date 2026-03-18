@@ -5,7 +5,7 @@ import {
 } from "@lootlog/ui/components/sidebar";
 import { Toaster } from "@lootlog/ui/components/sonner";
 import { GuildContextProvider } from "@/contexts/guild.context";
-import type { FC } from "react";
+import { type FC, useEffect, useRef } from "react";
 import {
   Outlet,
   useLocation,
@@ -16,7 +16,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@lootlog/ui/components/button";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
-import { useEventOverview } from "@/features/events/hooks";
+import { useEventOverview, useEventRanking } from "@/features/events/hooks";
 import { useNpcKillers } from "@/features/stats/hooks/use-npc-killers";
 import { useMemberKills } from "@/features/stats/hooks/use-member-kills";
 import { ROUTES } from "@/config/routes";
@@ -27,9 +27,14 @@ export const GuildLayout: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams({ strict: false });
+  const mobileBreadcrumbsRef = useRef<HTMLDivElement>(null);
   const { data: guild } = useGuild({ retry: false });
   const { guildId, eventId } = params;
   const { data: event } = useEventOverview({
+    guildId: guildId ?? "",
+    eventId: eventId ?? "",
+  });
+  const { data: eventRankings = [] } = useEventRanking({
     guildId: guildId ?? "",
     eventId: eventId ?? "",
   });
@@ -264,6 +269,10 @@ export const GuildLayout: FC = () => {
 
     if (path.startsWith(guildEvents) && eventId) {
       const guildEventDetail = `${guildEvents}/${eventId}`;
+      const guildEventRanking = `${guildEventDetail}/ranking`;
+      const selectedMemberRanking = eventRankings.find(
+        (ranking) => String(ranking.memberId) === params.memberId,
+      );
 
       // Kill history: /events/$eventId/kills
       if (path === `${guildEventDetail}/kills`) {
@@ -282,6 +291,40 @@ export const GuildLayout: FC = () => {
           ],
           showBack: true,
           backPath: guildEventDetail,
+        };
+      }
+
+      // Event member kills: /events/$eventId/members/$memberId
+      if (
+        params.memberId &&
+        path === `${guildEventDetail}/members/${params.memberId}`
+      ) {
+        return {
+          breadcrumbs: [
+            {
+              label: guild?.name || t("common.breadcrumbs.guild"),
+              path: guildBase,
+            },
+            { label: t("common.breadcrumbs.events"), path: guildEvents },
+            {
+              label: event?.name || t("common.breadcrumbs.event"),
+              path: guildEventDetail,
+            },
+            {
+              label: t("common.breadcrumbs.ranking"),
+              path: guildEventRanking,
+            },
+            {
+              label:
+                selectedMemberRanking?.member?.name ||
+                t("common.breadcrumbs.memberFallback", {
+                  id: params.memberId,
+                }),
+              path: null,
+            },
+          ],
+          showBack: true,
+          backPath: guildEventRanking,
         };
       }
 
@@ -365,7 +408,7 @@ export const GuildLayout: FC = () => {
       }
 
       // Event ranking: /events/$eventId/ranking
-      if (path === `${guildEventDetail}/ranking`) {
+      if (path === guildEventRanking) {
         return {
           breadcrumbs: [
             {
@@ -461,6 +504,35 @@ export const GuildLayout: FC = () => {
   };
 
   const navInfo = getNavigationInfo();
+  const breadcrumbScrollKey = navInfo.breadcrumbs
+    .map((crumb) => `${crumb.label}:${crumb.path ?? ""}`)
+    .join("|");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      const scrollContainer = mobileBreadcrumbsRef.current;
+      if (!scrollContainer) {
+        return;
+      }
+
+      scrollContainer.scrollTo({
+        left: scrollContainer.scrollWidth,
+        behavior: "auto",
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [breadcrumbScrollKey, location.pathname]);
 
   return (
     <GuildContextProvider>
@@ -487,33 +559,40 @@ export const GuildLayout: FC = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 text-sm flex-1 min-w-0 justify-center overflow-hidden">
-                    {navInfo.breadcrumbs.map((crumb, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-1 min-w-0 shrink-0 last:shrink"
-                      >
-                        {crumb.path ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate({ to: crumb.path as string })
-                            }
-                            className="text-sm h-auto p-1 font-semibold hover:bg-accent/50 whitespace-nowrap"
+                  <div className="flex flex-1 min-w-0 items-center text-sm md:justify-center">
+                    <div
+                      ref={mobileBreadcrumbsRef}
+                      className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:overflow-hidden"
+                    >
+                      <div className="inline-flex min-w-max items-center gap-1 pr-1 md:flex md:min-w-0 md:w-full md:justify-center md:pr-0">
+                        {navInfo.breadcrumbs.map((crumb, index) => (
+                          <div
+                            key={index}
+                            className="flex shrink-0 items-center gap-1 md:min-w-0 md:last:shrink"
                           >
-                            {crumb.label}
-                          </Button>
-                        ) : (
-                          <span className="font-semibold px-1 truncate">
-                            {crumb.label}
-                          </span>
-                        )}
-                        {index < navInfo.breadcrumbs.length - 1 && (
-                          <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                        )}
+                            {crumb.path ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  navigate({ to: crumb.path as string })
+                                }
+                                className="h-auto p-1 text-sm font-semibold whitespace-nowrap hover:bg-accent/50"
+                              >
+                                {crumb.label}
+                              </Button>
+                            ) : (
+                              <span className="px-1 font-semibold whitespace-nowrap md:max-w-full md:truncate">
+                                {crumb.label}
+                              </span>
+                            )}
+                            {index < navInfo.breadcrumbs.length - 1 && (
+                              <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                   <div className="w-8" />
                 </div>

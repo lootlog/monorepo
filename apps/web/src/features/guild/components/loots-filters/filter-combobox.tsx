@@ -1,5 +1,5 @@
 import { MultiSelect } from "@/components/ui/multi-select";
-import { useEffect, useState, type FC } from "react";
+import { useState, type FC } from "react";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrozenButton } from "@/components/effects/rukia-frost";
 
@@ -30,19 +30,12 @@ export const FilterCombobox: FC<FilterComboboxProps> = ({
   searchValue,
   onSearchChange,
 }) => {
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(
-    defaultValue ?? [],
-  );
   const [isHovered, setIsHovered] = useState(false);
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
-
-  useEffect(() => {
-    setSelectedOptions(defaultValue ?? []);
-  }, [defaultValue]);
+  const selectedOptions = defaultValue ?? [];
 
   const handleSelect = (options: string[]) => {
-    setSelectedOptions(options);
     onSelect?.(name, options);
   };
 

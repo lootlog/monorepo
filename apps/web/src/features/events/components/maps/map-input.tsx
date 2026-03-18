@@ -33,13 +33,13 @@ export const MapInput = ({
         .filter((map) => map.name.toLowerCase().includes(value.toLowerCase()))
         .slice(0, 10)
     : [];
+  const activeHighlightedIndex =
+    highlightedIndex >= 0 && highlightedIndex < filteredMaps.length
+      ? highlightedIndex
+      : -1;
 
   const showDropdown =
     isFocused && value.trim().length > 0 && filteredMaps.length > 0;
-
-  useEffect(() => {
-    setHighlightedIndex(-1);
-  }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -48,6 +48,7 @@ export const MapInput = ({
         !containerRef.current.contains(event.target as Node)
       ) {
         setIsFocused(false);
+        setHighlightedIndex(-1);
       }
     };
 
@@ -60,22 +61,24 @@ export const MapInput = ({
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          prev < filteredMaps.length - 1 ? prev + 1 : prev,
+          prev < filteredMaps.length - 1 ? prev + 1 : filteredMaps.length - 1,
         );
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-      } else if (e.key === "Enter" && highlightedIndex >= 0) {
+      } else if (e.key === "Enter" && activeHighlightedIndex >= 0) {
         e.preventDefault();
-        const selectedMap = filteredMaps[highlightedIndex];
+        const selectedMap = filteredMaps[activeHighlightedIndex];
         if (selectedMap) {
           onChange(selectedMap.name);
           onMapSelect?.(selectedMap);
         }
         setIsFocused(false);
+        setHighlightedIndex(-1);
         return;
       } else if (e.key === "Escape") {
         setIsFocused(false);
+        setHighlightedIndex(-1);
       }
     }
     onKeyDown?.(e);
@@ -85,6 +88,7 @@ export const MapInput = ({
     onChange(map.name);
     onMapSelect?.(map);
     setIsFocused(false);
+    setHighlightedIndex(-1);
     inputRef.current?.focus();
   };
 
@@ -94,7 +98,10 @@ export const MapInput = ({
         <Input
           ref={inputRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            setHighlightedIndex(-1);
+            onChange(e.target.value);
+          }}
           placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleKeyDown}
@@ -120,17 +127,19 @@ export const MapInput = ({
           >
             <ul className="max-h-48 overflow-y-auto py-1">
               {filteredMaps.map((map, index) => (
-                <li
-                  key={map.id}
-                  onClick={() => handleSelect(map)}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 cursor-pointer text-sm",
-                    "hover:bg-accent transition-colors",
-                    highlightedIndex === index && "bg-accent",
-                  )}
-                >
-                  <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>{map.name}</span>
+                <li key={map.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(map)}
+                    className={cn(
+                      "flex w-full items-center gap-2 px-3 py-2 text-left text-sm",
+                      "hover:bg-accent transition-colors",
+                      activeHighlightedIndex === index && "bg-accent",
+                    )}
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>{map.name}</span>
+                  </button>
                 </li>
               ))}
             </ul>

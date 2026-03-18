@@ -10,21 +10,21 @@ import {
   Validate,
   ValidatorConstraint,
   ValidatorConstraintInterface,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { ActivitySource, ActivityType } from '../../../prisma/generated/client';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ActivitySource, ActivityType } from "../../../prisma/generated/client";
 
 const GAME_SOURCE_REQUIRED_FIELDS: Array<keyof ActorSnapshotDto> = [
-  'accountId',
-  'characterId',
-  'clanName',
-  'clanId',
-  'icon',
-  'lvl',
-  'prof',
+  "accountId",
+  "characterId",
+  "clanName",
+  "clanId",
+  "icon",
+  "lvl",
+  "prof",
 ];
 
-@ValidatorConstraint({ name: 'actorSnapshotForGameSource', async: false })
+@ValidatorConstraint({ name: "actorSnapshotForGameSource", async: false })
 class ActorSnapshotForGameSourceConstraint implements ValidatorConstraintInterface {
   validate(
     actorSnapshot: ActorSnapshotDto | undefined,
@@ -51,7 +51,7 @@ class ActorSnapshotForGameSourceConstraint implements ValidatorConstraintInterfa
     const actorSnapshot = dto.actorSnapshot;
 
     if (!actorSnapshot) {
-      return 'actorSnapshot is required when source is GAME';
+      return "actorSnapshot is required when source is GAME";
     }
 
     const missingFields = GAME_SOURCE_REQUIRED_FIELDS.filter((field) => {
@@ -59,7 +59,7 @@ class ActorSnapshotForGameSourceConstraint implements ValidatorConstraintInterfa
       return value === null || value === undefined;
     });
 
-    return `actorSnapshot is missing required fields for GAME source: ${missingFields.join(', ')}`;
+    return `actorSnapshot is missing required fields for GAME source: ${missingFields.join(", ")}`;
   }
 }
 

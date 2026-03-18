@@ -8,10 +8,10 @@ import {
   MaxLength,
   Min,
   ValidateNested,
-} from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { NpcDto } from 'src/loots/dto/create-loot.dto';
-import { Type } from 'class-transformer';
+} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { NpcDto } from "src/loots/dto/create-loot.dto";
+import { Type } from "class-transformer";
 
 class PartyGatheringDataDto {
   @IsString()
@@ -72,16 +72,16 @@ class ChatCharacterDataDto {
 }
 
 export enum MessageType {
-  NORMAL = 'NORMAL',
-  NOTIFICATION = 'NOTIFICATION',
-  NPC = 'NPC',
-  PARTY_GATHERING = 'PARTY_GATHERING',
+  NORMAL = "NORMAL",
+  NOTIFICATION = "NOTIFICATION",
+  NPC = "NPC",
+  PARTY_GATHERING = "PARTY_GATHERING",
 }
 
 export class SendMessageDto {
   @ApiProperty({
-    description: 'Chat message content',
-    example: 'Hello, guild!',
+    description: "Chat message content",
+    example: "Hello, guild!",
     minLength: 1,
     maxLength: 128,
   })

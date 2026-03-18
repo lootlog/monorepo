@@ -5,7 +5,7 @@ export const useGuildContext = () => {
   const context = useContext(GuildContext);
   if (!context) {
     throw new Error(
-      "useGuildContext must be used within a GuildContextProvider"
+      "useGuildContext must be used within a GuildContextProvider",
     );
   }
   return context;

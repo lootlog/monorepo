@@ -25,7 +25,9 @@ export const useVolunteer = () => {
           characterId: String(hero.id),
           prof: hero.prof,
           icon: hero.img,
-          clan: hero.clan ? { id: hero.clan.id, name: hero.clan.name } : undefined,
+          clan: hero.clan
+            ? { id: hero.clan.id, name: hero.clan.name }
+            : undefined,
         },
       });
     },

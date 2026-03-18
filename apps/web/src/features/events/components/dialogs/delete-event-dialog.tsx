@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
@@ -31,15 +31,30 @@ export const DeleteEventDialog = ({
   isPending,
   requireEventNameConfirmation = false,
 }: DeleteEventDialogProps) => {
+  return (
+    <DeleteEventDialogContent
+      key={`${eventName}:${open ? "open" : "closed"}`}
+      open={open}
+      onOpenChange={onOpenChange}
+      eventName={eventName}
+      onConfirm={onConfirm}
+      isPending={isPending}
+      requireEventNameConfirmation={requireEventNameConfirmation}
+    />
+  );
+};
+
+const DeleteEventDialogContent = ({
+  open,
+  onOpenChange,
+  eventName,
+  onConfirm,
+  isPending,
+  requireEventNameConfirmation,
+}: DeleteEventDialogProps) => {
   const { t } = useTranslation();
   const [confirmationValue, setConfirmationValue] = useState("");
   const inputId = useId();
-
-  useEffect(() => {
-    if (!open) {
-      setConfirmationValue("");
-    }
-  }, [open, eventName]);
 
   const isConfirmationValid =
     !requireEventNameConfirmation ||

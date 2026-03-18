@@ -2,6 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { useSearch } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export const SignIn: React.FC = () => {
   const search = useSearch({ from: "/signin" });
@@ -16,8 +17,8 @@ export const SignIn: React.FC = () => {
           ? `${window.location.origin}${search.redirect}`
           : `${window.location.origin}/@me`,
       });
-    } catch (error) {
-      console.error("Logowanie nie powiodło się:", error);
+    } catch {
+      toast.error("Logowanie nie powiodło się");
       setIsLoading(false);
     }
   };

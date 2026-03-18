@@ -5,18 +5,19 @@ import {
   Profession,
   NpcType,
   ItemType,
-} from '../generated/client';
-import { createHash } from 'node:crypto';
+} from "../generated/client";
+import { createHash } from "node:crypto";
+import { getNpcTypeByWt } from "@lootlog/types";
 
 const prisma = new PrismaClient();
 
 // --- UTILS ---
 
 const SNAPSHOT_HASH_IGNORED_KEYS = new Set([
-  'created',
-  'gold',
-  'amount',
-  'opis',
+  "created",
+  "gold",
+  "amount",
+  "opis",
 ]);
 
 const SHOULD_CLEAR_LEGACY_FIELDS = false;
@@ -73,37 +74,18 @@ const getItemTypeByCl = (cl: number): ItemType | undefined => {
   return ITEM_TYPES[cl] ?? undefined;
 };
 
-const getNpcTypeByWt = (wt: number, prof?: string, type?: number): NpcType => {
-  if (type === 0 && wt > 29 && wt < 80) {
-    return NpcType.ELITE3;
-  }
-
-  if ((type === 5 || type === 0) && !prof) {
-    return NpcType.NPC;
-  }
-
-  if (wt > 99) return NpcType.TITAN;
-  else if (wt > 89) return NpcType.COLOSSUS;
-  else if (wt > 79) return NpcType.HERO;
-  else if (wt > 29) return NpcType.ELITE3;
-  else if (wt > 19) return NpcType.ELITE2;
-  else if (wt > 9) return NpcType.ELITE;
-
-  return NpcType.COMMON;
-};
-
 const generateStatsHash = (stat: string): string => {
   // Sort stats to ensure consistent hashing regardless of key order
   // Filter out 'created' timestamp as it makes identical items unique
   const sortedStats = stat
-    .split(';')
+    .split(";")
     .filter((statEntry) => {
-      const [key] = statEntry.split('=');
+      const [key] = statEntry.split("=");
       return Boolean(key) && !SNAPSHOT_HASH_IGNORED_KEYS.has(key);
     })
     .sort()
-    .join(';');
-  return createHash('sha256').update(sortedStats).digest('hex');
+    .join(";");
+  return createHash("sha256").update(sortedStats).digest("hex");
 };
 
 const generatePlayerSnapshotHash = (
@@ -112,13 +94,13 @@ const generatePlayerSnapshotHash = (
   icon: string,
 ): string => {
   const string = `${name}${prof}${icon}`;
-  return createHash('sha256').update(string).digest('hex');
+  return createHash("sha256").update(string).digest("hex");
 };
 
 const parseItemStats = (stats: string): Record<string, string> => {
-  return stats.split(';').reduce(
+  return stats.split(";").reduce(
     (acc, stat) => {
-      const [key, value] = stat.split('=');
+      const [key, value] = stat.split("=");
       if (key && value) acc[key] = value;
       return acc;
     },
@@ -128,9 +110,9 @@ const parseItemStats = (stats: string): Record<string, string> => {
 
 const getItemStats = (item: any) => {
   const parsedStats = parseItemStats(item.stat);
-  const lvl = parsedStats['lvl'] ? Number(parsedStats['lvl']) : 0;
-  const rarity = parsedStats['rarity']?.toUpperCase() as ItemRarity;
-  const _requiredProf = parsedStats['reqp'] as string;
+  const lvl = parsedStats["lvl"] ? Number(parsedStats["lvl"]) : 0;
+  const rarity = parsedStats["rarity"]?.toUpperCase() as ItemRarity;
+  const _requiredProf = parsedStats["reqp"] as string;
 
   // Check if 'type' field exists directly on item (legacy field)
   // If not, fallback to cl-based mapping
@@ -139,7 +121,7 @@ const getItemStats = (item: any) => {
   // Normalize type if it comes as string but matches enum keys
   if (
     type &&
-    typeof type === 'string' &&
+    typeof type === "string" &&
     Object.keys(ItemType).includes(type)
   ) {
     type = type as ItemType;
@@ -151,7 +133,7 @@ const getItemStats = (item: any) => {
 };
 
 const parseJsonField = (field: unknown): unknown => {
-  return typeof field === 'string' ? JSON.parse(field) : field;
+  return typeof field === "string" ? JSON.parse(field) : field;
 };
 
 const toOptionalInt = (value: unknown): number | null => {
@@ -163,8 +145,8 @@ const splitCharacterAndAccount = (
   id: string | number,
   accountId: string | number,
 ) => {
-  const accountStr = String(accountId ?? '');
-  const idStr = String(id ?? '');
+  const accountStr = String(accountId ?? "");
+  const idStr = String(id ?? "");
 
   if (accountStr && idStr.endsWith(accountStr)) {
     const characterPart = idStr.slice(0, idStr.length - accountStr.length);
@@ -182,7 +164,7 @@ const splitCharacterAndAccount = (
 const BATCH_SIZE = 1000;
 
 async function migrate(db = prisma) {
-  console.log('Starting Loot Migration...');
+  console.log("Starting Loot Migration...");
 
   const count = await db.loot.count({
     where: {
@@ -216,10 +198,10 @@ async function migrate(db = prisma) {
           lootNpcs: { none: {} },
         },
         take: BATCH_SIZE,
-        orderBy: { id: 'asc' },
+        orderBy: { id: "asc" },
       });
     } catch (error) {
-      console.error('Error fetching batch, retrying in 5s...', error);
+      console.error("Error fetching batch, retrying in 5s...", error);
       await new Promise((resolve) => setTimeout(resolve, 5000));
       continue;
     }
@@ -256,7 +238,7 @@ async function migrate(db = prisma) {
     }
   }
 
-  console.log('Migration finished.');
+  console.log("Migration finished.");
 }
 
 async function processBatch(db: PrismaClient, loots: Loot[]) {
@@ -394,6 +376,7 @@ async function processBatch(db: PrismaClient, loots: Loot[]) {
 
           if (!npcSnapshotsToCreate.has(key)) {
             const type = getNpcTypeByWt(
+              NpcType,
               wt ?? 0,
               npc.prof,
               margonemType ?? undefined,

@@ -1,6 +1,6 @@
-import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
-import { WsException } from '@nestjs/websockets';
-import type { Socket } from 'src/gateway/types/socket-user.type';
+import { createParamDecorator, type ExecutionContext } from "@nestjs/common";
+import { WsException } from "@nestjs/websockets";
+import type { Socket } from "src/gateway/types/socket-user.type";
 
 export const UserId = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
@@ -16,7 +16,7 @@ export const WsDiscordId = createParamDecorator(
 
     if (!client.data) {
       client.disconnect();
-      throw new WsException('Unauthorized');
+      throw new WsException("Unauthorized");
     }
 
     return client.data.discordId;
@@ -30,7 +30,7 @@ export const WsUserId = createParamDecorator(
 
     if (!client.data) {
       client.disconnect();
-      throw new WsException('Unauthorized');
+      throw new WsException("Unauthorized");
     }
 
     return client.data.userId;

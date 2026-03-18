@@ -1,9 +1,9 @@
-import { useState, useEffect, type FC } from "react";
+import { startTransition, useEffect, useState, type FC } from "react";
 import { Link } from "@tanstack/react-router";
 import { Clock, ChevronDown } from "lucide-react";
-import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import {
   Tooltip,
   TooltipContent,
@@ -24,9 +24,11 @@ interface TimerItemProps {
     npcId: number;
     minSpawnTime: string;
     maxSpawnTime: string;
+    maxSpawnTimestamp: number;
     npc: { name: string; icon?: string | null };
     heroId?: string;
   };
+  currentTimestamp: number;
   guildId: string;
   eventId: string;
   onNavigate?: () => void;
@@ -34,36 +36,33 @@ interface TimerItemProps {
 
 const TimerItem: FC<TimerItemProps> = ({
   timer,
+  currentTimestamp,
   guildId,
   eventId,
   onNavigate,
 }) => {
-  const [timeLeft, setTimeLeft] = useState<number>(() => {
-    const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
-    return Math.max(0, maxSpawnTime - Date.now());
-  });
+  const timeLeftMilliseconds = Math.max(
+    0,
+    timer.maxSpawnTimestamp - currentTimestamp,
+  );
 
-  useEffect(() => {
-    const maxSpawnTime = new Date(timer.maxSpawnTime).getTime();
+  if (timeLeftMilliseconds <= 0) return null;
 
-    const interval = setInterval(() => {
-      const time = maxSpawnTime - Date.now();
-      if (time <= 0) {
-        clearInterval(interval);
-        setTimeLeft(0);
-        return;
-      }
-      setTimeLeft(time);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timer.maxSpawnTime]);
-
-  if (timeLeft <= 0) return null;
-
-  const isClose = timeLeft < 60000;
-  const minTime = format(new Date(timer.minSpawnTime), "HH:mm:ss", { locale: pl });
-  const maxTime = format(new Date(timer.maxSpawnTime), "HH:mm:ss", { locale: pl });
+  const isCloseToRespawn = timeLeftMilliseconds < 60000;
+  const minimumSpawnTimeLabel = format(
+    new Date(timer.minSpawnTime),
+    "HH:mm:ss",
+    {
+      locale: pl,
+    },
+  );
+  const maximumSpawnTimeLabel = format(
+    new Date(timer.maxSpawnTime),
+    "HH:mm:ss",
+    {
+      locale: pl,
+    },
+  );
 
   return (
     <Tooltip>
@@ -76,16 +75,13 @@ const TimerItem: FC<TimerItemProps> = ({
             heroId: timer.heroId ?? "",
           }}
           onClick={onNavigate}
-          className="block"
+          className="group block"
         >
-          <motion.div
-            className="flex items-center gap-2 px-2 py-1 rounded hover:bg-yellow-500/10 transition-colors"
-            whileHover={{ x: 2 }}
-          >
+          <div className="flex items-center gap-2 px-2 py-1 rounded transition-[background-color,transform] duration-200 hover:translate-x-0.5 hover:bg-yellow-500/10">
             <Clock
               className={cn(
                 "h-3 w-3 shrink-0",
-                isClose ? "text-orange-400" : "text-green-400",
+                isCloseToRespawn ? "text-orange-400" : "text-green-400",
               )}
             />
             <span className="text-xs truncate flex-1 text-muted-foreground">
@@ -94,18 +90,18 @@ const TimerItem: FC<TimerItemProps> = ({
             <span
               className={cn(
                 "text-xs font-mono font-medium",
-                isClose ? "text-orange-400" : "text-green-400",
+                isCloseToRespawn ? "text-orange-400" : "text-green-400",
               )}
             >
-              {parseMsToTime(timeLeft)}
+              {parseMsToTime(timeLeftMilliseconds)}
             </span>
-          </motion.div>
+          </div>
         </Link>
       </TooltipTrigger>
       <TooltipContent side="right" className="text-xs">
         <p className="font-medium">{timer.npc.name}</p>
         <p className="text-muted-foreground">
-          {minTime} - {maxTime}
+          {minimumSpawnTimeLabel} - {maximumSpawnTimeLabel}
         </p>
       </TooltipContent>
     </Tooltip>
@@ -117,7 +113,9 @@ export const EventTimersList: FC<EventTimersListProps> = ({
   guildId,
   onNavigate,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
 
   const { data: timers } = useEventHeroTimers({
     guildId,
@@ -125,24 +123,47 @@ export const EventTimersList: FC<EventTimersListProps> = ({
     world: event.world,
   });
 
+  useEffect(() => {
+    if (!timers || timers.length === 0) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      startTransition(() => {
+        setCurrentTimestamp(Date.now());
+      });
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [timers]);
+
   if (!timers || timers.length === 0) return null;
 
-  // Filter out expired timers and sort by closest spawn time
-  const now = Date.now();
-  const activeTimers = timers
-    .filter((t) => new Date(t.maxSpawnTime).getTime() > now)
-    .sort(
-      (a, b) =>
-        new Date(a.maxSpawnTime).getTime() - new Date(b.maxSpawnTime).getTime(),
-    )
-    .map((timer) => {
-      // Find hero ID from event.heroNpcs by matching npcId
-      const hero = event.heroNpcs?.find((h) => h.npcId === timer.npcId);
-      return {
-        ...timer,
-        heroId: hero?.id,
-      };
+  const heroIdByNpcId = new Map(
+    event.heroNpcs?.map((heroNpc) => [heroNpc.npcId, heroNpc.id]) ?? [],
+  );
+  const activeTimers: Array<
+    (typeof timers)[number] & { heroId?: string; maxSpawnTimestamp: number }
+  > = [];
+
+  for (const timer of timers) {
+    const maxSpawnTimestamp = new Date(timer.maxSpawnTime).getTime();
+
+    if (maxSpawnTimestamp <= currentTimestamp) {
+      continue;
+    }
+
+    activeTimers.push({
+      ...timer,
+      heroId: heroIdByNpcId.get(timer.npcId),
+      maxSpawnTimestamp,
     });
+  }
+
+  activeTimers.sort(
+    (firstTimer, secondTimer) =>
+      firstTimer.maxSpawnTimestamp - secondTimer.maxSpawnTimestamp,
+  );
 
   if (activeTimers.length === 0) return null;
 
@@ -156,6 +177,7 @@ export const EventTimersList: FC<EventTimersListProps> = ({
           <TimerItem
             key={timer.npcId}
             timer={timer}
+            currentTimestamp={currentTimestamp}
             guildId={guildId}
             eventId={event.id}
             onNavigate={onNavigate}
@@ -164,22 +186,30 @@ export const EventTimersList: FC<EventTimersListProps> = ({
       </div>
 
       {hasMore && (
-        <motion.button
+        <button
+          type="button"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setIsExpanded(!isExpanded);
+            setIsExpanded((currentValue) => !currentValue);
           }}
           className="w-full px-2 py-1 flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-yellow-500/10 transition-colors"
         >
-          <span>{isExpanded ? "Zwiń" : `+${activeTimers.length - 3} więcej`}</span>
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
+          <span>
+            {isExpanded
+              ? t("events.sidebarBanner.collapse")
+              : t("events.sidebarBanner.showMore", {
+                  count: activeTimers.length - 3,
+                })}
+          </span>
+          <div
+            className={`flex items-center transition-transform duration-200 ${
+              isExpanded ? "rotate-180" : ""
+            }`}
           >
             <ChevronDown className="h-3 w-3" />
-          </motion.div>
-        </motion.button>
+          </div>
+        </button>
       )}
     </div>
   );

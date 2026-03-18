@@ -8,6 +8,7 @@ import {
   Globe,
   Swords,
 } from "lucide-react";
+import { useId } from "react";
 import { Label } from "@lootlog/ui/components/label";
 import { Checkbox } from "@lootlog/ui/components/checkbox";
 import { Button } from "@lootlog/ui/components/button";
@@ -79,6 +80,8 @@ export const BattlesListFiltersDesktop = ({
   onMinLevelChange,
   onMaxLevelChange,
 }: BattlesListFiltersDesktopProps) => {
+  const characterListId = useId();
+
   return (
     <div className="flex items-end gap-3 flex-wrap">
       <WarriorSearchFilter
@@ -119,6 +122,7 @@ export const BattlesListFiltersDesktop = ({
           <Button
             variant="outline"
             role="combobox"
+            aria-controls={characterListId}
             aria-expanded={characterOpen}
             className="w-[180px] justify-between h-10"
           >
@@ -136,7 +140,7 @@ export const BattlesListFiltersDesktop = ({
         <PopoverContent className="w-[180px] p-0">
           <Command>
             <CommandInput placeholder="Szukaj postaci..." />
-            <CommandList>
+            <CommandList id={characterListId}>
               <CommandEmpty>Brak postaci</CommandEmpty>
               <CommandGroup>
                 {characters.map((char) => (

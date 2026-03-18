@@ -26,6 +26,7 @@ export interface KillParticipant {
   memberId: number;
   points: number;
   basePoints: number;
+  manualAdjustmentPoints?: number;
   trackingDurationSeconds: number | null;
   trackingDurationPercentage: number | null;
   timeOnMapSeconds: number;

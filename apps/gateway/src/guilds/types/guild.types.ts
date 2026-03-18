@@ -1,4 +1,4 @@
-import { Permission } from '@lootlog/types';
+import { Permission } from "@lootlog/types";
 
 export interface GuildRole {
   id: string;

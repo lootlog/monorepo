@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useId, useState } from "react";
 import { Search, X, ChevronsUpDown, Check } from "lucide-react";
 import {
   Popover,
@@ -36,14 +36,9 @@ export function ActorNameSelector({
   className,
 }: ActorNameSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [inputValue, setInputValue] = useState(searchValue);
-
-  useEffect(() => {
-    setInputValue(searchValue);
-  }, [searchValue]);
+  const suggestionsListId = useId();
 
   const handleSelect = (selectedValue: string) => {
-    setInputValue(selectedValue);
     onValueChange(selectedValue);
     onSearchChange(selectedValue);
     setOpen(false);
@@ -52,16 +47,13 @@ export function ActorNameSelector({
   const handleClear = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setInputValue("");
     onSearchChange("");
     onValueChange("");
     setOpen(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    onSearchChange(newValue);
+    onSearchChange(e.target.value);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -69,9 +61,9 @@ export function ActorNameSelector({
   };
 
   const exactMatch = suggestions.some(
-    (s) => s.toLowerCase() === inputValue.trim().toLowerCase(),
+    (s) => s.toLowerCase() === searchValue.trim().toLowerCase(),
   );
-  const showCustomOption = inputValue.trim() && !exactMatch;
+  const showCustomOption = searchValue.trim() && !exactMatch;
 
   const displayValue = value || placeholder;
   const isTruncated = value.length > 30;
@@ -83,6 +75,7 @@ export function ActorNameSelector({
         <Button
           variant="outline"
           role="combobox"
+          aria-controls={suggestionsListId}
           aria-expanded={open}
           className={cn("justify-between gap-2", className)}
         >
@@ -94,13 +87,20 @@ export function ActorNameSelector({
           </div>
           <div className="flex items-center gap-1 shrink-0">
             {value && (
-              <div
+              <span
+                role="button"
+                tabIndex={0}
                 onMouseDown={handleClear}
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleClear(e as unknown as React.MouseEvent);
+                  }
+                }}
                 className="flex items-center justify-center"
               >
                 <X className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
-              </div>
+              </span>
             )}
             <ChevronsUpDown className="h-4 w-4 opacity-50" />
           </div>
@@ -110,13 +110,13 @@ export function ActorNameSelector({
         <Command shouldFilter={false}>
           <CommandInputRaw
             placeholder="Wpisz nazwę..."
-            value={inputValue}
+            value={searchValue}
             onChange={handleInputChange}
             className="h-9"
           />
-          <CommandList>
+          <CommandList id={suggestionsListId}>
             <CommandEmpty>
-              {inputValue.trim() ? "Brak sugestii" : "Wpisz aby wyszukać..."}
+              {searchValue.trim() ? "Brak sugestii" : "Wpisz aby wyszukać..."}
             </CommandEmpty>
             <CommandGroup>
               {suggestions.map((suggestion) => (
@@ -136,12 +136,12 @@ export function ActorNameSelector({
               ))}
               {showCustomOption && (
                 <CommandItem
-                  value={`use-custom-${inputValue}`}
-                  onSelect={() => handleSelect(inputValue.trim())}
+                  value={`use-custom-${searchValue}`}
+                  onSelect={() => handleSelect(searchValue.trim())}
                   className="text-primary"
                 >
                   <Check className="mr-2 h-4 w-4 opacity-0" />
-                  Użyj: {inputValue.trim()}
+                  Użyj: {searchValue.trim()}
                 </CommandItem>
               )}
             </CommandGroup>

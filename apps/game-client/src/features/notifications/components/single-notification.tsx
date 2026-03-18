@@ -2,16 +2,16 @@ import { type FC, Fragment, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 import {
+  type PartyGatheringNotification,
   type NotificationWithServers,
   useNotificationsStore,
 } from "@/store/notifications.store";
 import { Separator } from "@radix-ui/react-select";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
+import { getNpcTypeByWt } from "@lootlog/types";
 import { format } from "date-fns";
 import { SingleNotificationNpc } from "@/features/notifications/components/single-notification-npc";
 import { SingleNotificationMessage } from "@/features/notifications/components/single-notification-message";
 import { SingleNotificationPartyGathering } from "@/features/notifications/components/single-notification-party-gathering";
-import type { PartyGatheringNotification } from "@/store/notifications.store";
 import {
   getBackgroundColor,
   getGradient,
@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { useGuildMembers } from "@/hooks/api/use-guild-members";
 import { useMemberInvalidation } from "@/hooks/api/use-member-invalidation";
 import { useGuilds } from "@/hooks/api/use-guilds";
+import { NpcType } from "@/hooks/api/use-npcs";
 import { Game } from "@/lib/game";
 
 export type SingleNotificationProps = {
@@ -30,7 +31,7 @@ export type SingleNotificationProps = {
 };
 
 const isPartyGatheringNotification = (
-  notification: NotificationWithServers | PartyGatheringNotification
+  notification: NotificationWithServers | PartyGatheringNotification,
 ): notification is PartyGatheringNotification => {
   return "type" in notification && notification.type === "party-gathering";
 };
@@ -53,12 +54,13 @@ export const SingleNotification: FC<SingleNotificationProps> = ({
 
   const isPartyGathering = isPartyGatheringNotification(notification);
 
-  const npcType = !isPartyGathering && notification.npc
-    ? getNpcTypeByWt(notification.npc.wt!)
-    : undefined;
+  const npcType =
+    !isPartyGathering && notification.npc
+      ? getNpcTypeByWt(NpcType, notification.npc.wt!)
+      : undefined;
 
   const key = (
-    isPartyGathering ? "party-gathering" : (npcType ? npcType : "message")
+    isPartyGathering ? "party-gathering" : npcType ? npcType : "message"
   ) as keyof (typeof settings)[string];
 
   const settingsByNpcType = characterId

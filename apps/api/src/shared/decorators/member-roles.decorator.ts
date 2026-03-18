@@ -1,19 +1,8 @@
-import {
-  createParamDecorator,
-  ForbiddenException,
-  type ExecutionContext,
-} from '@nestjs/common';
-import type { Role } from 'generated/client';
+import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared";
+import { ForbiddenException } from "@nestjs/common";
+import type { Role } from "generated/client";
 
-export const MemberRoles = createParamDecorator(function (
-  data: unknown,
-  ctx: ExecutionContext,
-) {
-  const request = ctx.switchToHttp().getRequest();
-
-  if (!request.roles) {
-    throw new ForbiddenException();
-  }
-
-  return request.roles as Role[];
+export const MemberRoles = createRequiredRequestValueDecorator<Role[]>({
+  createException: () => new ForbiddenException(),
+  getValue: (request) => request.roles as Role[] | undefined,
 });

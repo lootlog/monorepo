@@ -1,4 +1,8 @@
-export type RefreshJobStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type RefreshJobStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "FAILED";
 
 export interface RefreshJobUpdate {
   jobId: number;

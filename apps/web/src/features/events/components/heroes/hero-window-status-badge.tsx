@@ -34,12 +34,14 @@ interface HeroWindowStatusBadgeProps {
   eventId: string;
   heroNpcId?: number | null;
   heroName?: string;
+  className?: string;
 }
 
 export const HeroWindowStatusBadge = ({
   eventId,
   heroNpcId,
   heroName,
+  className,
 }: HeroWindowStatusBadgeProps) => {
   const { t } = useTranslation();
   const respawnConfig = useHeroRespawnConfig({
@@ -55,7 +57,14 @@ export const HeroWindowStatusBadge = ({
   const config = getWindowStatusConfig(respawnConfig.windowStatus, t);
 
   return (
-    <Badge variant="outline" className={cn("text-xs", config.className)}>
+    <Badge
+      variant="outline"
+      className={cn(
+        "text-[11px] whitespace-nowrap",
+        config.className,
+        className,
+      )}
+    >
       {config.label}
     </Badge>
   );

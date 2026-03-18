@@ -1,5 +1,5 @@
-import { Permission } from '@lootlog/types';
-import type { GuildRole } from 'src/guilds/types/guild.types';
+import { Permission } from "@lootlog/types";
+import type { GuildRole } from "src/guilds/types/guild.types";
 
 export const isAdministrativeUser = (permissions: Permission[]) => {
   return (

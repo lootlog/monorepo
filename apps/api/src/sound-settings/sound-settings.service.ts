@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/db/prisma.service';
-import type { UpdateSoundSettingsDto } from './dto/update-sound-settings.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "src/db/prisma.service";
+import type { UpdateSoundSettingsDto } from "./dto/update-sound-settings.dto";
 
 @Injectable()
 export class SoundSettingsService {
@@ -47,15 +47,15 @@ export class SoundSettingsService {
 
   private getDefaultSettingsData() {
     const defaultNpcConfig = {
-      ELITE2: { volume: 0.5, soundUrl: '' },
-      HERO: { volume: 0.5, soundUrl: '' },
-      COLOSSUS: { volume: 0.5, soundUrl: '' },
-      TITAN: { volume: 0.5, soundUrl: '' },
+      ELITE2: { volume: 0.5, soundUrl: "" },
+      HERO: { volume: 0.5, soundUrl: "" },
+      COLOSSUS: { volume: 0.5, soundUrl: "" },
+      TITAN: { volume: 0.5, soundUrl: "" },
     };
 
     const defaultNotificationsConfig = {
       ...defaultNpcConfig,
-      message: { volume: 0.5, soundUrl: '' },
+      message: { volume: 0.5, soundUrl: "" },
     };
 
     return {

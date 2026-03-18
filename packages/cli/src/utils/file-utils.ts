@@ -8,7 +8,7 @@ export const discoverEnvFiles = async (
 ): Promise<EnvFile[]> => {
   const envFiles: EnvFile[] = [];
 
-  const rootSamplePath = path.join(rootPath, ".env.sample");
+  const rootSamplePath = path.join(rootPath, ".env.example");
   if (existsSync(rootSamplePath)) {
     envFiles.push({
       path: path.join(rootPath, ".env"),
@@ -17,7 +17,7 @@ export const discoverEnvFiles = async (
     });
   }
 
-  const appsSampleFiles = await glob(`${rootPath}/apps/**/.env.sample`);
+  const appsSampleFiles = await glob(`${rootPath}/apps/**/.env.example`);
 
   for (const samplePath of appsSampleFiles) {
     const appDir = path.dirname(samplePath);
@@ -77,8 +77,8 @@ export const parseEnvFile = (content: string): EnvVariable[] => {
       continue;
     }
 
-    const key = line.substring(0, equalIndex).trim();
-    const value = line.substring(equalIndex + 1).trim();
+    const key = line.slice(0, equalIndex).trim();
+    const value = line.slice(equalIndex + 1).trim();
 
     variables.push({
       key,

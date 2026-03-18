@@ -15,9 +15,10 @@ import {
 import { useWindowsStore } from "@/store/windows.store";
 import type { GameEvent } from "@/types/margonem/game-events/game-event";
 import type { GameNpc } from "@/types/margonem/npcs";
+import { getNpcTypeByWt } from "@lootlog/types";
+import { NpcType } from "@/hooks/api/use-npcs";
 import { getNpcIconFromEvent } from "@/utils/game/events/get-npc-icon-from-event";
 import { getNpcTplFromEvent } from "@/utils/game/events/get-npc-tpl-from-event";
-import { getNpcTypeByWt } from "@/utils/game/npcs/get-npc-type-by-wt";
 
 export const useNpcsHandlers = () => {
   const { addNpc } = useNpcDetectorStore();
@@ -36,6 +37,7 @@ export const useNpcsHandlers = () => {
         if (!tpl) return acc;
 
         const npcType = getNpcTypeByWt(
+          NpcType,
           tpl.wt,
           tpl.prof,
           tpl.type,
@@ -72,6 +74,7 @@ export const useNpcsHandlers = () => {
         if (!npc) return acc;
 
         const npcType = getNpcTypeByWt(
+          NpcType,
           npc.wt,
           npc.prof,
           npc.type,

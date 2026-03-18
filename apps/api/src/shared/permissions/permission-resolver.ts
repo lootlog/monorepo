@@ -1,4 +1,4 @@
-import { Permission } from 'generated/client';
+import { Permission } from "generated/client";
 
 /**
  * Utility class for resolving permissions with implicit grants.

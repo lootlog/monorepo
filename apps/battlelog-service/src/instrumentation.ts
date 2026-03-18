@@ -1,8 +1,8 @@
-import { initObservability } from '@lootlog/instrumentation';
-import 'dotenv/config';
+import { initObservability } from "@lootlog/instrumentation";
+import "dotenv/config";
 
 initObservability({
-  serviceName: process.env.SERVICE_NAME || 'battlelog-service',
+  serviceName: process.env.SERVICE_NAME || "battlelog-service",
   otlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
   otlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS,
   serviceEnvironment: process.env.ENV,
