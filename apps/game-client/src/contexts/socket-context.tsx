@@ -115,6 +115,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     socket.on(GatewayEvent.JOIN, handleJoin);
     socket.on(GatewayEvent.PERMISSIONS_UPDATED, handlePermissionsUpdated);
 
+    if (import.meta.env.DEV) {
+      socket.onAny((event, ...args) => {
+        console.debug(`[Gateway] Event: ${event}`, args);
+      });
+    }
+
     socket.connect();
 
     return () => {

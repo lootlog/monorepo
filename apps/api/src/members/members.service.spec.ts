@@ -199,12 +199,12 @@ describe("MembersService", () => {
   });
 
   describe("soft TTL helpers", () => {
-    it("should return a 1 minute soft stale threshold in local", () => {
+    it("should return a 5 minute soft stale threshold in local", () => {
       const referenceTime = new Date("2026-03-10T10:00:00.000Z");
 
       const result = service.getMemberSoftStaleThreshold(referenceTime);
 
-      expect(result).toEqual(new Date("2026-03-10T09:59:00.000Z"));
+      expect(result).toEqual(new Date("2026-03-10T09:55:00.000Z"));
     });
 
     it("should return a 15 minute soft stale threshold in prod", () => {
