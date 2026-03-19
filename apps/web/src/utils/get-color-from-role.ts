@@ -2,5 +2,5 @@ import type { GuildMember } from "@/hooks/api/members/use-guild-member";
 
 export const getColorFromRole = (roles: GuildMember["roles"]) => {
   const color = roles[0]?.color;
-  return color === 0 ? "FFF" : color?.toString(16);
+  return color === 0 ? "FFF" : color?.toString(16).padStart(6, "0");
 };
