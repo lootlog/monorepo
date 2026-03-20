@@ -4,12 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 
 export const useAuthToken = () => {
   const session = useSession();
-  const isAuthenticated = !!session.data;
   const sessionToken = session.data?.session.token;
 
-  const query = useQuery({
+  return useQuery({
     queryKey: ["auth-token"],
-    enabled: isAuthenticated && !!sessionToken,
+    enabled: Boolean(sessionToken),
     select: (data: { token: string }) => data.token,
     queryFn: async () => {
       const response = await fetch(`${AUTH_SERVICE_URL}/idp/token`, {
@@ -26,6 +25,4 @@ export const useAuthToken = () => {
     },
     refetchOnMount: true,
   });
-
-  return query;
 };
