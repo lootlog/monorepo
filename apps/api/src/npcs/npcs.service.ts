@@ -14,6 +14,5 @@ export class NpcsService {
       RoutingKey.SEARCH_NPCS_INDEX,
       npcs,
     );
-    return undefined;
   }
 }
