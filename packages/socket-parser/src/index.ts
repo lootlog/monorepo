@@ -44,7 +44,7 @@ class MsgpackDecoder {
   private listeners: Map<string, EventCallback[]> = new Map();
 
   on(event: string, callback: EventCallback) {
-    const callbacks = this.listeners.get(event) || [];
+    const callbacks = this.listeners.get(event) ?? [];
     callbacks.push(callback);
     this.listeners.set(event, callbacks);
   }
