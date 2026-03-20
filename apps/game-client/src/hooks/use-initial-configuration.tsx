@@ -30,15 +30,6 @@ export const useInitialConfiguration = () => {
 
     const currentSettings = notificationsSettings[characterId];
 
-    console.warn(
-      "[initNotificationsConfiguration] characterId:",
-      characterId,
-      "allGuildIds:",
-      allGuildIds,
-      "currentSettings:",
-      currentSettings,
-    );
-
     if (!currentSettings) {
       const recommendedNotificationsSettingsWithGuilds = Object.entries(
         recommendedNotificationsSettings,
@@ -49,11 +40,6 @@ export const useInitialConfiguration = () => {
         };
         return acc;
       }, {} as NotificationsSettings);
-
-      console.warn(
-        "[initNotificationsConfiguration] No existing settings, applying recommended:",
-        recommendedNotificationsSettingsWithGuilds,
-      );
 
       setNotificationsSettings(
         characterId,
@@ -67,11 +53,6 @@ export const useInitialConfiguration = () => {
     );
 
     if (missingKeys.length > 0) {
-      console.warn(
-        "[initNotificationsConfiguration] Patching missing keys:",
-        missingKeys,
-      );
-
       const patched = { ...currentSettings };
       for (const key of missingKeys) {
         patched[key as keyof NotificationsSettings] = {
@@ -82,10 +63,6 @@ export const useInitialConfiguration = () => {
         };
       }
       setNotificationsSettings(characterId, patched);
-    } else {
-      console.warn(
-        "[initNotificationsConfiguration] Settings up to date, no patching needed",
-      );
     }
   };
 
@@ -93,23 +70,8 @@ export const useInitialConfiguration = () => {
     const characterId = String(Game.hero.id);
     const currentSettings = detectorSettings[characterId];
 
-    console.warn(
-      "[initDetectorConfiguration] characterId:",
-      characterId,
-      "currentSettings:",
-      currentSettings,
-    );
-
     if (!currentSettings) {
-      console.warn(
-        "[initDetectorConfiguration] No existing settings, applying recommended:",
-        recommendedDetectorSettings,
-      );
       setDetectorSettings(characterId, recommendedDetectorSettings);
-    } else {
-      console.warn(
-        "[initDetectorConfiguration] Settings already exist, skipping",
-      );
     }
   };
 
@@ -117,9 +79,28 @@ export const useInitialConfiguration = () => {
     if (configInitialized.current) return;
 
     if (gameInitialized && guilds) {
-      initNotificationsConfiguration();
-      initDetectorConfiguration();
-      configInitialized.current = true;
+      if (Game.hero?.id) {
+        initNotificationsConfiguration();
+        initDetectorConfiguration();
+        configInitialized.current = true;
+        return;
+      }
+
+      const interval = setInterval(() => {
+        if (configInitialized.current) {
+          clearInterval(interval);
+          return;
+        }
+
+        if (Game.hero?.id) {
+          initNotificationsConfiguration();
+          initDetectorConfiguration();
+          configInitialized.current = true;
+          clearInterval(interval);
+        }
+      }, 100);
+
+      return () => clearInterval(interval);
     }
   }, [
     gameInitialized,
