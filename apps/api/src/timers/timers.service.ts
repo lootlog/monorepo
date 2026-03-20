@@ -23,7 +23,10 @@ import { ErrorKey } from "src/timers/enum/error-key.enum";
 import { GuildsService } from "src/guilds/guilds.service";
 import type { GetTimersDto } from "src/timers/dto/get-timers.dto";
 import type { ResetTimerDto } from "src/timers/dto/reset-timer.dto";
-import { DEFAULT_RESPAWN_RANDOMNESS } from "src/timers/constants/respawn";
+import {
+  DEFAULT_RESPAWN_RANDOMNESS,
+  SPAWN_TIME_THRESHOLD_SECONDS,
+} from "src/timers/constants/respawn";
 import type { CreateManualTimerDto } from "src/timers/dto/create-manual-timer.dto";
 import { generateUniqueIntId } from "src/shared/utils/generate-unique-int-id";
 import { RoutingKey } from "src/enum/routing-key.enum";
@@ -323,7 +326,12 @@ export class TimersService implements OnModuleInit {
       const respawnRandomness =
         data.respawnRandomness ?? DEFAULT_RESPAWN_RANDOMNESS;
 
-      if (previousTimer && previousTimer.minSpawnTime > now) {
+      const thresholdMs = SPAWN_TIME_THRESHOLD_SECONDS * 1000;
+      if (
+        previousTimer &&
+        !previousTimer.wasReset &&
+        previousTimer.minSpawnTime.getTime() > now.getTime() + thresholdMs
+      ) {
         const existingTimer = await this.prisma.timer.findUnique({
           where: {
             timerId: { guildId, world: data.world, npcId: data.npc.id },
