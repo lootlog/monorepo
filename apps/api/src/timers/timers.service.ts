@@ -67,6 +67,19 @@ interface NpcData {
   margonemType: string;
 }
 
+interface SearchNpcWithTimerDataResult {
+  npcId: number;
+  name: string;
+  lvl: number;
+  type: NpcType;
+  prof: string;
+  location: string;
+  wt: string | number;
+  icon: string;
+  latestRespBaseSeconds: number;
+  latestRespawnRandomness: number;
+}
+
 @Injectable()
 export class TimersService implements OnModuleInit {
   private redlock: Redlock;
@@ -722,7 +735,7 @@ export class TimersService implements OnModuleInit {
     world: string,
     search: string,
     limit = 10,
-  ) {
+  ): Promise<SearchNpcWithTimerDataResult[]> {
     const limitNum = Number(limit) || 10;
     const manualTimerType = String(TIMER_TYPES.CUSTOM_MANUAL);
     const timers = await this.prisma.$queryRaw<Timer[]>`
@@ -758,7 +771,11 @@ export class TimersService implements OnModuleInit {
           latestRespawnRandomness: timer.latestRespawnRandomness,
         };
       })
-      .filter(Boolean);
+      .filter(
+        (
+          timerData,
+        ): timerData is SearchNpcWithTimerDataResult => timerData !== null,
+      );
   }
 
   calculateRespawnTime(

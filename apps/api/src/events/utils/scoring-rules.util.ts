@@ -17,9 +17,11 @@ import {
 } from "../constants/scoring-rules.constant";
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const FULL_DAY_WINDOW_START = "00:00";
+const FULL_DAY_WINDOW_END = "23:59";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function toNumber(value: unknown, fallback: number, min = 0, max?: number) {
@@ -138,8 +140,8 @@ function parseCondition(value: unknown): EventScoringCondition | null {
   if (value.type === "KILL_TIME_IN_WINDOW") {
     return {
       type: "KILL_TIME_IN_WINDOW",
-      from: toClock(value.from, "00:00"),
-      to: toClock(value.to, "23:59"),
+      from: toClock(value.from, FULL_DAY_WINDOW_START),
+      to: toClock(value.to, FULL_DAY_WINDOW_END),
     };
   }
 
@@ -159,8 +161,8 @@ function parseCondition(value: unknown): EventScoringCondition | null {
 
   return {
     type: "RESPAWN_WINDOW_COVERAGE",
-    from: toClock(value.from, "00:00"),
-    to: toClock(value.to, "23:59"),
+    from: toClock(value.from, FULL_DAY_WINDOW_START),
+    to: toClock(value.to, FULL_DAY_WINDOW_END),
     operator: value.operator as EventScoringNumericOperator,
     value: Math.round(parsedValue * 100) / 100,
   };

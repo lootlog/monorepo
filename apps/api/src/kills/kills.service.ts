@@ -209,7 +209,7 @@ export class KillsService {
       }),
     );
 
-    const updated = results.filter(Boolean).length;
+    const updated = results.filter((result) => result !== null).length;
 
     return { updated };
   }
