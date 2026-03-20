@@ -32,26 +32,13 @@ import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { useSession } from "@/hooks/auth/use-session";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
-
-const formatDurationSeconds = (totalSeconds: number): string => {
-  if (totalSeconds < 60) {
-    return `${totalSeconds}s`;
-  }
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  if (minutes < 60) {
-    return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-};
+import { formatDurationHuman } from "./utils/format-duration";
 
 const formatRespawnWindow = (minSpawn: string, maxSpawn: string): string => {
   const minDate = new Date(minSpawn);
   const maxDate = new Date(maxSpawn);
   const diffSeconds = Math.max(0, differenceInSeconds(maxDate, minDate));
-  return formatDurationSeconds(diffSeconds);
+  return formatDurationHuman(diffSeconds);
 };
 
 export const KillDetail = () => {
@@ -137,11 +124,11 @@ export const KillDetail = () => {
   );
   const respawnDurationText =
     typeof kill.respawnDurationSeconds === "number"
-      ? formatDurationSeconds(kill.respawnDurationSeconds)
+      ? formatDurationHuman(kill.respawnDurationSeconds)
       : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.killedAt);
   const windowDurationText =
     typeof kill.windowDurationSeconds === "number"
-      ? formatDurationSeconds(kill.windowDurationSeconds)
+      ? formatDurationHuman(kill.windowDurationSeconds)
       : formatRespawnWindow(kill.minSpawnTimeAtKill, kill.maxSpawnTimeAtKill);
   const fasterThanMaxSeconds =
     typeof kill.windowDurationSeconds === "number" &&
@@ -161,7 +148,7 @@ export const KillDetail = () => {
       : null;
   const fasterThanMaxText =
     typeof fasterThanMaxSeconds === "number"
-      ? formatDurationSeconds(fasterThanMaxSeconds)
+      ? formatDurationHuman(fasterThanMaxSeconds)
       : null;
 
   return (
