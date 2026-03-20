@@ -50,7 +50,6 @@ interface NotificationsState {
   notifications: (NotificationWithServers | PartyGatheringNotification)[];
   settings: Record<string, NotificationsSettings>;
   setSettings: (characterId: string, settings: NotificationsSettings) => void;
-  setState: (settings: Record<string, NotificationsSettings>) => void;
   pushNotification: (
     notification: NotificationWithServers | PartyGatheringNotification,
   ) => void;
@@ -115,8 +114,6 @@ export const useNotificationsStore = create<NotificationsState>()(
     (set) => ({
       notifications: [],
       settings: {},
-      setState: (settings: Record<string, NotificationsSettings>) =>
-        set(() => ({ settings })),
       setSettings: (characterId: string, settings: NotificationsSettings) =>
         set((state) => ({
           settings: {

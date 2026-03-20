@@ -56,7 +56,7 @@ type FormData = z.infer<typeof FormSchema>;
 export const NotificationsSettingsTabForm: FC<
   NotificationsSettingsTabFormProps
 > = ({ characterId }) => {
-  const { settings, setSettings, setState } = useNotificationsStore();
+  const { settings, setSettings } = useNotificationsStore();
   const { data: characters } = useCharacterList();
   const { data: guilds } = useGuilds();
 
@@ -110,21 +110,18 @@ export const NotificationsSettingsTabForm: FC<
     e.preventDefault();
     const characterIds = characters?.map((c) => c.id.toString()) || [];
 
-    setState(
-      characterIds.reduce(
-        (acc, id) => {
-          acc[id] = Object.fromEntries(
-            mainFields.map((field) => [
-              field.key,
-              watchedData.settingsByNpcType[field.key] ??
-                recommendedSettings[field.key],
-            ]),
-          ) as NotificationsSettings;
-          return acc;
-        },
-        {} as Record<string, NotificationsSettings>,
-      ),
-    );
+    for (const id of characterIds) {
+      setSettings(
+        id,
+        Object.fromEntries(
+          mainFields.map((field) => [
+            field.key,
+            watchedData.settingsByNpcType[field.key] ??
+              recommendedSettings[field.key],
+          ]),
+        ) as NotificationsSettings,
+      );
+    }
   }
 
   const renderField = (field: (typeof mainFields)[number]) => {
