@@ -29,7 +29,9 @@ const getTopRoleColor = (guildMember?: GuildMember): string => {
     (a, b) => b.position - a.position,
   )[0];
   const roleColor = topRole?.color;
-  return roleColor === 0 ? "FFF" : (roleColor?.toString(16) ?? "FFF");
+  return roleColor === 0
+    ? "FFF"
+    : (roleColor?.toString(16).padStart(6, "0") ?? "FFF");
 };
 
 export const OnlinePlayersListEntry: FC<OnlinePlayersListEntryProps> = ({
