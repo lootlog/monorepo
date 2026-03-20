@@ -10,6 +10,7 @@ import type { Prisma } from "../../../prisma/generated/client";
 @Injectable()
 export class ActivitiesQueryService {
   private readonly logger = new Logger(ActivitiesQueryService.name);
+  private static readonly MAX_SUGGESTION_LIMIT = 50;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -105,7 +106,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit ?? 10, 1), 50);
+    const limitValue = this.getSuggestionLimit(limit, 10);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
@@ -128,25 +129,11 @@ export class ActivitiesQueryService {
       select: { name: true },
     });
 
-    const seen = new Set<string>();
-    const suggestions: string[] = [];
-
-    for (const snapshot of snapshots) {
-      const name = snapshot.name?.trim();
-      if (!name) continue;
-
-      const key = name.toLowerCase();
-      if (seen.has(key)) continue;
-
-      seen.add(key);
-      suggestions.push(name);
-
-      if (suggestions.length >= limitValue) {
-        break;
-      }
-    }
-
-    return suggestions;
+    return this.getUniqueSuggestions(
+      snapshots,
+      (snapshot) => snapshot.name,
+      limitValue,
+    );
   }
 
   async suggestWorlds(
@@ -154,7 +141,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 20,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit ?? 20, 1), 50);
+    const limitValue = this.getSuggestionLimit(limit, 20);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityWhereInput = {
@@ -193,7 +180,7 @@ export class ActivitiesQueryService {
     search?: string,
     limit = 10,
   ): Promise<string[]> {
-    const limitValue = Math.min(Math.max(limit ?? 10, 1), 50);
+    const limitValue = this.getSuggestionLimit(limit, 10);
     const trimmedSearch = search?.trim();
 
     const where: Prisma.ActivityActorSnapshotWhereInput = {
@@ -223,25 +210,11 @@ export class ActivitiesQueryService {
       select: { clanName: true },
     });
 
-    const seen = new Set<string>();
-    const suggestions: string[] = [];
-
-    for (const snapshot of snapshots) {
-      const clanName = snapshot.clanName?.trim();
-      if (!clanName) continue;
-
-      const key = clanName.toLowerCase();
-      if (seen.has(key)) continue;
-
-      seen.add(key);
-      suggestions.push(clanName);
-
-      if (suggestions.length >= limitValue) {
-        break;
-      }
-    }
-
-    return suggestions;
+    return this.getUniqueSuggestions(
+      snapshots,
+      (snapshot) => snapshot.clanName,
+      limitValue,
+    );
   }
 
   findByGuild(
@@ -278,5 +251,38 @@ export class ActivitiesQueryService {
       ...activity,
       details: activity.details as Record<string, unknown> | undefined,
     });
+  }
+
+  private getSuggestionLimit(limit: number, fallback: number): number {
+    return Math.min(
+      Math.max(limit ?? fallback, 1),
+      ActivitiesQueryService.MAX_SUGGESTION_LIMIT,
+    );
+  }
+
+  private getUniqueSuggestions<T>(
+    items: T[],
+    getValue: (item: T) => string | null | undefined,
+    limit: number,
+  ): string[] {
+    const seen = new Set<string>();
+    const suggestions: string[] = [];
+
+    for (const item of items) {
+      const value = getValue(item)?.trim();
+      if (!value) continue;
+
+      const key = value.toLowerCase();
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      suggestions.push(value);
+
+      if (suggestions.length >= limit) {
+        break;
+      }
+    }
+
+    return suggestions;
   }
 }
