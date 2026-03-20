@@ -28,7 +28,18 @@ export const useInitialConfiguration = () => {
     const characterId = String(Game.hero.id);
     const allGuildIds = guilds?.map((guild) => guild.id) || [];
 
-    if (!notificationsSettings[characterId]) {
+    const currentSettings = notificationsSettings[characterId];
+
+    console.warn(
+      "[initNotificationsConfiguration] characterId:",
+      characterId,
+      "allGuildIds:",
+      allGuildIds,
+      "currentSettings:",
+      currentSettings,
+    );
+
+    if (!currentSettings) {
       const recommendedNotificationsSettingsWithGuilds = Object.entries(
         recommendedNotificationsSettings,
       ).reduce((acc, [key, value]) => {
@@ -39,6 +50,11 @@ export const useInitialConfiguration = () => {
         return acc;
       }, {} as NotificationsSettings);
 
+      console.warn(
+        "[initNotificationsConfiguration] No existing settings, applying recommended:",
+        recommendedNotificationsSettingsWithGuilds,
+      );
+
       setNotificationsSettings(
         characterId,
         recommendedNotificationsSettingsWithGuilds,
@@ -46,13 +62,17 @@ export const useInitialConfiguration = () => {
       return;
     }
 
-    const existing = notificationsSettings[characterId];
     const missingKeys = Object.keys(recommendedNotificationsSettings).filter(
-      (key) => !(key in existing),
+      (key) => !(key in currentSettings),
     );
 
     if (missingKeys.length > 0) {
-      const patched = { ...existing };
+      console.warn(
+        "[initNotificationsConfiguration] Patching missing keys:",
+        missingKeys,
+      );
+
+      const patched = { ...currentSettings };
       for (const key of missingKeys) {
         patched[key as keyof NotificationsSettings] = {
           ...recommendedNotificationsSettings[
@@ -62,14 +82,34 @@ export const useInitialConfiguration = () => {
         };
       }
       setNotificationsSettings(characterId, patched);
+    } else {
+      console.warn(
+        "[initNotificationsConfiguration] Settings up to date, no patching needed",
+      );
     }
   };
 
   const initDetectorConfiguration = () => {
     const characterId = String(Game.hero.id);
+    const currentSettings = detectorSettings[characterId];
 
-    if (!detectorSettings[characterId]) {
+    console.warn(
+      "[initDetectorConfiguration] characterId:",
+      characterId,
+      "currentSettings:",
+      currentSettings,
+    );
+
+    if (!currentSettings) {
+      console.warn(
+        "[initDetectorConfiguration] No existing settings, applying recommended:",
+        recommendedDetectorSettings,
+      );
       setDetectorSettings(characterId, recommendedDetectorSettings);
+    } else {
+      console.warn(
+        "[initDetectorConfiguration] Settings already exist, skipping",
+      );
     }
   };
 
