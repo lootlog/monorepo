@@ -28,7 +28,9 @@ export const useInitialConfiguration = () => {
     const characterId = String(Game.hero.id);
     const allGuildIds = guilds?.map((guild) => guild.id) || [];
 
-    if (!notificationsSettings[characterId]) {
+    const currentSettings = notificationsSettings[characterId];
+
+    if (!currentSettings) {
       const recommendedNotificationsSettingsWithGuilds = Object.entries(
         recommendedNotificationsSettings,
       ).reduce((acc, [key, value]) => {
@@ -46,13 +48,12 @@ export const useInitialConfiguration = () => {
       return;
     }
 
-    const existing = notificationsSettings[characterId];
     const missingKeys = Object.keys(recommendedNotificationsSettings).filter(
-      (key) => !(key in existing),
+      (key) => !(key in currentSettings),
     );
 
     if (missingKeys.length > 0) {
-      const patched = { ...existing };
+      const patched = { ...currentSettings };
       for (const key of missingKeys) {
         patched[key as keyof NotificationsSettings] = {
           ...recommendedNotificationsSettings[
@@ -67,8 +68,9 @@ export const useInitialConfiguration = () => {
 
   const initDetectorConfiguration = () => {
     const characterId = String(Game.hero.id);
+    const currentSettings = detectorSettings[characterId];
 
-    if (!detectorSettings[characterId]) {
+    if (!currentSettings) {
       setDetectorSettings(characterId, recommendedDetectorSettings);
     }
   };
@@ -77,9 +79,28 @@ export const useInitialConfiguration = () => {
     if (configInitialized.current) return;
 
     if (gameInitialized && guilds) {
-      initNotificationsConfiguration();
-      initDetectorConfiguration();
-      configInitialized.current = true;
+      if (Game.hero?.id) {
+        initNotificationsConfiguration();
+        initDetectorConfiguration();
+        configInitialized.current = true;
+        return;
+      }
+
+      const interval = setInterval(() => {
+        if (configInitialized.current) {
+          clearInterval(interval);
+          return;
+        }
+
+        if (Game.hero?.id) {
+          initNotificationsConfiguration();
+          initDetectorConfiguration();
+          configInitialized.current = true;
+          clearInterval(interval);
+        }
+      }, 100);
+
+      return () => clearInterval(interval);
     }
   }, [
     gameInitialized,
