@@ -57,6 +57,16 @@ ${chalk.bold("Development Guild Setup:")}
 
 const parseOptions = (args: string[]) => {
   const options: Record<string, any> = {};
+  const takeNextArg = (index: number): string | undefined => args[index + 1];
+  const parseIntegerOption = (index: number): number | undefined => {
+    const value = takeNextArg(index);
+    return value === undefined ? undefined : Number.parseInt(value, 10);
+  };
+  const setOption = (key: string, value: unknown) => {
+    if (value !== undefined) {
+      options[key] = value;
+    }
+  };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -64,49 +74,33 @@ const parseOptions = (args: string[]) => {
     if (arg === "--force" || arg === "-f") {
       options.force = true;
     } else if (arg === "--guilds") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.guilds = Number.parseInt(nextArg, 10);
-      }
+      setOption("guilds", parseIntegerOption(i));
+      i++;
     } else if (arg === "--loots") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.loots = Number.parseInt(nextArg, 10);
-      }
+      setOption("loots", parseIntegerOption(i));
+      i++;
     } else if (arg === "--battles") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.battles = Number.parseInt(nextArg, 10);
-      }
+      setOption("battles", parseIntegerOption(i));
+      i++;
     } else if (arg === "--players") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.players = Number.parseInt(nextArg, 10);
-      }
+      setOption("players", parseIntegerOption(i));
+      i++;
     } else if (arg === "--no-clean") {
       options.clean = false;
     } else if (arg === "--skip-scrape") {
       options.skipScrape = true;
     } else if (arg === "--items-output") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.itemsOutput = nextArg;
-      }
+      setOption("itemsOutput", takeNextArg(i));
+      i++;
     } else if (arg === "--npcs-output") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.npcsOutput = nextArg;
-      }
+      setOption("npcsOutput", takeNextArg(i));
+      i++;
     } else if (arg === "-o" || arg === "--output") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.output = nextArg;
-      }
+      setOption("output", takeNextArg(i));
+      i++;
     } else if (arg === "-c" || arg === "--count") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.count = Number.parseInt(nextArg, 10);
-      }
+      setOption("count", parseIntegerOption(i));
+      i++;
     }
   }
 
