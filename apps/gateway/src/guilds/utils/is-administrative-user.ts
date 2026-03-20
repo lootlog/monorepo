@@ -1,27 +1,42 @@
 import { Permission } from "@lootlog/types";
 import type { GuildRole } from "src/guilds/types/guild.types";
 
-export const isAdministrativeUser = (permissions: Permission[]) => {
-  return (
-    permissions.includes(Permission.ADMIN) ||
-    permissions.includes(Permission.LOOTLOG_MANAGE) ||
-    permissions.includes(Permission.OWNER)
+const ADMINISTRATIVE_PERMISSIONS = [
+  Permission.ADMIN,
+  Permission.LOOTLOG_MANAGE,
+  Permission.OWNER,
+] as const;
+
+const OWNER_OR_ADMIN_PERMISSIONS = [
+  Permission.ADMIN,
+  Permission.OWNER,
+] as const;
+
+const hasAnyPermission = (
+  permissions: Permission[],
+  requiredPermissions: readonly Permission[],
+) => {
+  return requiredPermissions.some((permission) =>
+    permissions.includes(permission),
   );
+};
+
+const getRolePermissions = (roles: GuildRole[]) => {
+  return roles.flatMap((role) => role.permissions);
+};
+
+export const isAdministrativeUser = (permissions: Permission[]) => {
+  return hasAnyPermission(permissions, ADMINISTRATIVE_PERMISSIONS);
 };
 
 export const isAdministrativeUserFromRoles = (roles: GuildRole[]) => {
-  const allPermissions = roles.flatMap((role) => role.permissions);
-  return isAdministrativeUser(allPermissions);
+  return isAdministrativeUser(getRolePermissions(roles));
 };
 
 export const isOwnerOrAdmin = (permissions: Permission[]) => {
-  return (
-    permissions.includes(Permission.ADMIN) ||
-    permissions.includes(Permission.OWNER)
-  );
+  return hasAnyPermission(permissions, OWNER_OR_ADMIN_PERMISSIONS);
 };
 
 export const isOwnerOrAdminFromRoles = (roles: GuildRole[]) => {
-  const allPermissions = roles.flatMap((role) => role.permissions);
-  return isOwnerOrAdmin(allPermissions);
+  return isOwnerOrAdmin(getRolePermissions(roles));
 };
