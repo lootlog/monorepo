@@ -371,6 +371,58 @@ describe("TimersService", () => {
       ).not.toHaveBeenCalled();
     });
 
+    it("should update timer when previous timer was reset even if minSpawnTime is in the future", async () => {
+      const futureMinSpawnTime = new Date(Date.now() + 10 * 60 * 1000);
+      const resetTimer = {
+        ...mockTimer,
+        minSpawnTime: futureMinSpawnTime,
+        maxSpawnTime: new Date(Date.now() + 20 * 60 * 1000),
+        wasReset: true,
+      };
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.findUnique.mockResolvedValue(resetTimer);
+      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+
+      const result = await service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        mockDto,
+      );
+
+      expect(result).toBeDefined();
+      expect(mockPrismaService.timer.upsert).toHaveBeenCalled();
+      expect(mockAmqpConnection.publish).toHaveBeenCalled();
+    });
+
+    it("should update timer when minSpawnTime is within the threshold window", async () => {
+      const nearMinSpawnTime = new Date(Date.now() + 10 * 1000); // 10s in future, within 15s threshold
+      const existingTimer = {
+        ...mockTimer,
+        minSpawnTime: nearMinSpawnTime,
+        maxSpawnTime: new Date(Date.now() + 20 * 60 * 1000),
+        wasReset: false,
+      };
+
+      mockRedisService.get.mockResolvedValue(null);
+      mockRedisService.set.mockResolvedValue(undefined);
+      mockPrismaService.timer.findUnique.mockResolvedValue(existingTimer);
+      mockPrismaService.timer.upsert.mockResolvedValue(mockTimer);
+
+      const result = await service.createTimerForGuild(
+        "discord123",
+        userId,
+        "guild1",
+        mockDto,
+      );
+
+      expect(result).toBeDefined();
+      expect(mockPrismaService.timer.upsert).toHaveBeenCalled();
+      expect(mockAmqpConnection.publish).toHaveBeenCalled();
+    });
+
     it("should migrate synthetic timer context to real npcId for event hero scoring window", async () => {
       const syntheticNpcId = getSyntheticNpcId("hero-1");
       const syntheticTimer = {

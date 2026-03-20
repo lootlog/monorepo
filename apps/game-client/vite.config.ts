@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import path from "node:path";
 import monkey from "vite-plugin-monkey";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
@@ -44,11 +45,8 @@ export default defineConfig({
     target: "es2020",
   },
   plugins: [
-    react({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
-    }),
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
     monkey({
       entry: "src/main.tsx",
