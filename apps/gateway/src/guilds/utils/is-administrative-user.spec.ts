@@ -7,6 +7,13 @@ import {
 import { Permission } from "@lootlog/types";
 import type { GuildRole } from "../types/guild.types";
 
+const createRole = (permissions: Permission[]): GuildRole => ({
+  id: "role-id",
+  permissions,
+  lvlRangeFrom: 1,
+  lvlRangeTo: 999,
+});
+
 describe("isAdministrativeUser", () => {
   it("should return true for OWNER permission", () => {
     const permissions = [Permission.OWNER];
@@ -62,13 +69,6 @@ describe("isAdministrativeUser", () => {
 });
 
 describe("isAdministrativeUserFromRoles", () => {
-  const createRole = (permissions: Permission[]): GuildRole => ({
-    id: "role-id",
-    permissions,
-    lvlRangeFrom: 1,
-    lvlRangeTo: 999,
-  });
-
   it("should return true when role has OWNER permission", () => {
     const roles = [createRole([Permission.OWNER])];
 
@@ -182,13 +182,6 @@ describe("isOwnerOrAdmin", () => {
 });
 
 describe("isOwnerOrAdminFromRoles", () => {
-  const createRole = (permissions: Permission[]): GuildRole => ({
-    id: "role-id",
-    permissions,
-    lvlRangeFrom: 1,
-    lvlRangeTo: 999,
-  });
-
   it("should return true when role has OWNER permission", () => {
     const roles = [createRole([Permission.OWNER])];
 
