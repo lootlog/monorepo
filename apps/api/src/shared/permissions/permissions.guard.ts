@@ -6,7 +6,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY } from "./permissions.decorator";
 import { GuildsService } from "src/guilds/guilds.service";
-import { Permission } from "prisma/generated/client";
+import type { Permission } from "prisma/generated/client";
 
 interface RequestWithPermissions {
   userId?: string;
@@ -46,7 +46,7 @@ export class PermissionsGuard implements CanActivate {
       return false;
     }
 
-    return await this.verifyPermissions({
+    return this.verifyPermissions({
       requiredPermissions,
       discordId,
       userId,
