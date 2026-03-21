@@ -1,8 +1,9 @@
 import { parse } from "node-html-parser";
 import { v7 as uuidv7 } from "uuid";
-import { writeFile, access } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
+import { fileExists } from "../utils/file-exists.js";
 
 interface ScrapedItem {
   hid: string;
@@ -80,15 +81,6 @@ async function getNumberOfPages(): Promise<number> {
   const numberOfPages = pages[pages.length - 1]?.textContent;
 
   return numberOfPages ? Number(numberOfPages) : 1;
-}
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export async function scrapeItems(
