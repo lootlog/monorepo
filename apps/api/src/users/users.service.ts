@@ -1,14 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/db/prisma.service";
-import { DiscordService } from "src/discord/discord.service";
 import type { UpdateUserPreferencesDto } from "src/users/dto/update-user-preferences.dto";
 
 @Injectable()
 export class UsersService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly discordService: DiscordService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getUserById() {}
 

@@ -57,15 +57,11 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      if (error instanceof AuthServiceUnavailableError) {
-        throw error;
-      }
-
-      if (error instanceof AccountNotFoundError) {
-        throw error;
-      }
-
-      if (error instanceof TokenExpiredError) {
+      if (
+        error instanceof AuthServiceUnavailableError ||
+        error instanceof AccountNotFoundError ||
+        error instanceof TokenExpiredError
+      ) {
         throw error;
       }
 
@@ -148,15 +144,11 @@ export class AuthService {
 
       return tokenResponse;
     } catch (error) {
-      if (error instanceof TokenExpiredError) {
-        throw error;
-      }
-
-      if (error instanceof AccountNotFoundError) {
-        throw error;
-      }
-
-      if (error instanceof AuthServiceUnavailableError) {
+      if (
+        error instanceof TokenExpiredError ||
+        error instanceof AccountNotFoundError ||
+        error instanceof AuthServiceUnavailableError
+      ) {
         throw error;
       }
 
