@@ -594,28 +594,20 @@ export class LootQueryService {
     npcLevelMin?: number | null,
     npcLevelMax?: number | null,
   ): Prisma.LootWhereInput | null {
-    const hasMin = npcLevelMin !== undefined && npcLevelMin !== null;
-    const hasMax = npcLevelMax !== undefined && npcLevelMax !== null;
+    const levelRange = this.buildNullableIntRangeFilter(
+      npcLevelMin,
+      npcLevelMax,
+    );
 
-    if (!hasMin && !hasMax) {
+    if (!levelRange) {
       return null;
-    }
-
-    const lvlCondition: Prisma.IntNullableFilter = {};
-
-    if (hasMin) {
-      lvlCondition.gte = npcLevelMin ?? undefined;
-    }
-
-    if (hasMax) {
-      lvlCondition.lte = npcLevelMax ?? undefined;
     }
 
     return {
       lootNpcs: {
         some: {
           npcSnapshot: {
-            lvl: lvlCondition,
+            lvl: levelRange,
           },
         },
       },
@@ -626,28 +618,20 @@ export class LootQueryService {
     itemLevelMin?: number | null,
     itemLevelMax?: number | null,
   ): Prisma.LootWhereInput | null {
-    const hasMin = itemLevelMin !== undefined && itemLevelMin !== null;
-    const hasMax = itemLevelMax !== undefined && itemLevelMax !== null;
+    const levelRange = this.buildNullableIntRangeFilter(
+      itemLevelMin,
+      itemLevelMax,
+    );
 
-    if (!hasMin && !hasMax) {
+    if (!levelRange) {
       return null;
-    }
-
-    const lvlCondition: Prisma.IntNullableFilter = {};
-
-    if (hasMin) {
-      lvlCondition.gte = itemLevelMin ?? undefined;
-    }
-
-    if (hasMax) {
-      lvlCondition.lte = itemLevelMax ?? undefined;
     }
 
     return {
       lootItems: {
         some: {
           itemSnapshot: {
-            lvl: lvlCondition,
+            lvl: levelRange,
           },
         },
       },
@@ -658,27 +642,19 @@ export class LootQueryService {
     playerLevelMin?: number | null,
     playerLevelMax?: number | null,
   ): Prisma.LootWhereInput | null {
-    const hasMin = playerLevelMin !== undefined && playerLevelMin !== null;
-    const hasMax = playerLevelMax !== undefined && playerLevelMax !== null;
+    const levelRange = this.buildNullableIntRangeFilter(
+      playerLevelMin,
+      playerLevelMax,
+    );
 
-    if (!hasMin && !hasMax) {
+    if (!levelRange) {
       return null;
-    }
-
-    const lvlCondition: Prisma.IntNullableFilter = {};
-
-    if (hasMin) {
-      lvlCondition.gte = playerLevelMin ?? undefined;
-    }
-
-    if (hasMax) {
-      lvlCondition.lte = playerLevelMax ?? undefined;
     }
 
     return {
       lootPlayers: {
         some: {
-          lvl: lvlCondition,
+          lvl: levelRange,
         },
       },
     };
@@ -702,25 +678,17 @@ export class LootQueryService {
     createdAtMin?: string,
     createdAtMax?: string,
   ): Prisma.LootWhereInput | null {
-    const hasMin = createdAtMin !== undefined && createdAtMin !== null;
-    const hasMax = createdAtMax !== undefined && createdAtMax !== null;
+    const createdAtRange = this.buildDateTimeRangeFilter(
+      createdAtMin,
+      createdAtMax,
+    );
 
-    if (!hasMin && !hasMax) {
+    if (!createdAtRange) {
       return null;
     }
 
-    const createdAtCondition: Prisma.DateTimeFilter = {};
-
-    if (hasMin) {
-      createdAtCondition.gte = new Date(createdAtMin);
-    }
-
-    if (hasMax) {
-      createdAtCondition.lte = new Date(createdAtMax);
-    }
-
     return {
-      createdAt: createdAtCondition,
+      createdAt: createdAtRange,
     };
   }
 
@@ -793,6 +761,48 @@ export class LootQueryService {
     return values.filter((value): value is T =>
       enumValues.includes(value as T),
     );
+  }
+
+  private buildNullableIntRangeFilter(
+    min?: number | null,
+    max?: number | null,
+  ): Prisma.IntNullableFilter | null {
+    if (min == null && max == null) {
+      return null;
+    }
+
+    const rangeFilter: Prisma.IntNullableFilter = {};
+
+    if (min != null) {
+      rangeFilter.gte = min;
+    }
+
+    if (max != null) {
+      rangeFilter.lte = max;
+    }
+
+    return rangeFilter;
+  }
+
+  private buildDateTimeRangeFilter(
+    min?: string,
+    max?: string,
+  ): Prisma.DateTimeFilter | null {
+    if (min == null && max == null) {
+      return null;
+    }
+
+    const rangeFilter: Prisma.DateTimeFilter = {};
+
+    if (min != null) {
+      rangeFilter.gte = new Date(min);
+    }
+
+    if (max != null) {
+      rangeFilter.lte = new Date(max);
+    }
+
+    return rangeFilter;
   }
 
   private mapItems(entries: LootItemWithSnapshot[]): LootItemDto[] {
