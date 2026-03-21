@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/shared/db/prisma.service";
 import type { QueryActivitiesDto } from "../dto/query-activities.dto";
 import {
@@ -9,8 +9,6 @@ import type { Prisma } from "../../../prisma/generated/client";
 
 @Injectable()
 export class ActivitiesQueryService {
-  private readonly logger = new Logger(ActivitiesQueryService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async findMany(
