@@ -11,7 +11,7 @@
     "format": "oxfmt src test",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start": "node --import ./dist/instrumentation.js dist/main.js",
+    "start": "node --import ./dist/src/instrumentation.js dist/src/main.js",
     "lint": "oxlint src",
     "test": "jest --runInBand",
     "test:watch": "jest --watch --runInBand",
