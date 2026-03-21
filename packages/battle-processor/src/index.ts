@@ -953,8 +953,7 @@ export class BattleProcessor {
     if (!warrior || damageReceived <= 0 || hpAfter === null) return;
 
     const hpBefore = this.lastHp.get(warriorId);
-    if (hpBefore === null || hpBefore === undefined || hpBefore === hpAfter)
-      return;
+    if (hpBefore === undefined || hpBefore === hpAfter) return;
 
     const hpDrop = hpBefore - hpAfter;
     if (hpDrop <= 0) return;
