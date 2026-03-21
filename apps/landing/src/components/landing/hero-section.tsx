@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Download, BookOpen, ChevronRight } from "lucide-react";
 import { Button } from "@lootlog/ui/components/button";
 import { ADDON_URL } from "@/src/config/addon";
@@ -67,11 +66,11 @@ export function HeroSection() {
           className="h-14 px-8 text-lg rounded-full border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 hover:scale-105"
           asChild
         >
-          <Link href="/docs">
+          <a href="https://developer.lootlog.pl">
             <BookOpen className="w-5 h-5 mr-2" />
             Dokumentacja
             <ChevronRight className="w-4 h-4 ml-1 opacity-50" />
-          </Link>
+          </a>
         </Button>
       </motion.div>
     </div>

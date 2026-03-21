@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@lootlog/ui/globals.css";
-import "fumadocs-ui/style.css";
 import type { JSX, ReactNode } from "react";
 
-import { RootProvider } from "fumadocs-ui/provider/next";
 import { CookieConsent } from "@/src/components/cookie-consent";
 
 const geistSans = Geist({
@@ -49,16 +47,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-white`}
       >
-        <RootProvider
-          theme={{
-            defaultTheme: "dark",
-            forcedTheme: "dark",
-            enableSystem: false,
-          }}
-        >
-          {children}
-          <CookieConsent />
-        </RootProvider>
+        {children}
+        <CookieConsent />
       </body>
     </html>
   );

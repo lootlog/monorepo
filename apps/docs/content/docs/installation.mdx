@@ -9,7 +9,7 @@ Instalacja Lootlog jest prosta i zajmuje tylko kilka minut.
 
 ### Krok 1: Pobierz dodatek
 
-Kliknij przycisk **"Zainstaluj dodatek"** na [stronie głównej](/) lub przejdź bezpośrednio pod [ten link](https://github.com/lootlog/monorepo).
+Kliknij przycisk **"Zainstaluj dodatek"** na [stronie głównej](https://lootlog.pl) lub przejdź bezpośrednio pod [ten link](https://github.com/lootlog/monorepo).
 
 ### Krok 2: Zainstaluj rozszerzenie
 

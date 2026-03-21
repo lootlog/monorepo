@@ -7,10 +7,10 @@ description: Witaj w dokumentacji Lootlog.pl - darmowego, otwartoźródłowego d
 
 Lootlog to zaawansowany, bezpłatny dodatek do gry Margonem, który automatycznie śledzi:
 
-- 📦 Zebrane łupy
-- ⏰ Timery respawnu potworów
-- 🎯 Lokalizacje NPC
-- 👥 Organizację klanu
+- Zebrane łupy
+- Timery respawnu potworów
+- Lokalizacje NPC
+- Organizację klanu
 
 ## Główne funkcje
 

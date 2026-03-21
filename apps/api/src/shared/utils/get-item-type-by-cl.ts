@@ -35,6 +35,6 @@ const ITEM_TYPES = {
   32: ItemType.TELEPORTS,
 };
 
-export const getItemTypeByCl = (cl: number): ItemType => {
+export const getItemTypeByCl = (cl: number): ItemType | undefined => {
   return ITEM_TYPES[cl];
 };
