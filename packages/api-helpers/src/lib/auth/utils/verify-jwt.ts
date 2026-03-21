@@ -22,17 +22,13 @@ export async function validateToken({
     throw new Error("No keyset provided");
   }
 
-  try {
-    const { payload } = await jwtVerify(token, keyset, {
-      issuer,
-      audience,
-    });
+  const { payload } = await jwtVerify(token, keyset, {
+    issuer,
+    audience,
+  });
 
-    return {
-      userId: payload.sub,
-      discordId: payload.discordId as string,
-    };
-  } catch (error) {
-    throw error;
-  }
+  return {
+    userId: payload.sub,
+    discordId: payload.discordId as string,
+  };
 }
