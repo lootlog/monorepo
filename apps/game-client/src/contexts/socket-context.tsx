@@ -98,10 +98,14 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     const handlePermissionsUpdated = (data: {
       guilds: { guild: { id: string } }[];
     }) => {
-      console.log("[Gateway] Rooms rebalanced:", data);
+      if (import.meta.env.DEV) {
+        console.log("[Gateway] Rooms rebalanced:", data);
+      }
 
       if (!data.guilds) {
-        console.error("[Gateway] No guilds data in permissions update");
+        if (import.meta.env.DEV) {
+          console.error("[Gateway] No guilds data in permissions update");
+        }
         setJoinedGuilds([]);
         setJoined(false);
         return;

@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { Prisma } from "generated/client";
+import { Prisma } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { TIMER_TYPES } from "src/timers/constants/timer-limits";
 import { RESPAWN_WINDOW_QUEUE } from "../constants/respawn-queue.constant";

@@ -1,4 +1,4 @@
-import { LootSource } from "generated/client";
+import { LootSource } from "prisma/generated/client";
 import { Type } from "class-transformer";
 import {
   ArrayMaxSize,

@@ -14,7 +14,7 @@ import { RedisService } from "@lootlog/nest-shared";
 import { v6 } from "uuid";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { GuildsService } from "src/guilds/guilds.service";
-import { NpcType, Permission, Role } from "generated/client";
+import { NpcType, Permission, Role } from "prisma/generated/client";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
 
@@ -121,8 +121,8 @@ export class ChatService {
       return [];
     }
 
-    const permissions = guild?.permissions ?? [];
-    const roles = guild?.roles ?? [];
+    const permissions = guild.permissions ?? [];
+    const roles = guild.roles ?? [];
 
     const isAdministrative = isAdministrativeUser(permissions);
 
@@ -130,19 +130,11 @@ export class ChatService {
       return messages;
     }
 
-    return this.filterMessagesByPermissions(messages, isAdministrative, roles);
+    return this.filterMessagesByPermissions(messages, roles);
   }
 
-  private filterMessagesByPermissions(
-    messages: any[],
-    administrativeUser: boolean,
-    roles: Role[],
-  ): any[] {
-    if (administrativeUser) return messages;
-    return messages.filter((xmessage) => {
-      const canView = canViewChatMessage(xmessage, roles);
-      return canView;
-    });
+  private filterMessagesByPermissions(messages: any[], roles: Role[]): any[] {
+    return messages.filter((message) => canViewChatMessage(message, roles));
   }
 
   async clearMessages(guildId: string) {

@@ -27,11 +27,7 @@ function checkCanRunHeavyEffects(): boolean {
   }
 
   // Check hardware concurrency - single/dual core devices may struggle
-  if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
-    return false;
-  }
-
-  return true;
+  return !navigator.hardwareConcurrency || navigator.hardwareConcurrency >= 4;
 }
 
 type ElectricBorderProps = {

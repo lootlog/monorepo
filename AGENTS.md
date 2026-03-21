@@ -15,6 +15,7 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 - Prefer `?.` for optional chaining.
 - Prefix unused variables with `_`.
 - Use `import type` for type-only imports.
+- Avoid nested (chained) ternary expressions — use early returns or `if`/`else if` instead.
 - See `.oxlintrc.md` for the full linting configuration.
 
 ## React

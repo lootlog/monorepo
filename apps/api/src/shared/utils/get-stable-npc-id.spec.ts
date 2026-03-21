@@ -1,4 +1,4 @@
-import { NpcType } from "generated/client";
+import { NpcType } from "prisma/generated/client";
 import { getStableNpcId } from "./get-stable-npc-id";
 
 describe("getStableNpcId", () => {

@@ -10,6 +10,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    "import.meta.env.VITE_AUTH_SERVICE_URL": '"http://localhost/api/auth"',
+    "import.meta.env.VITE_API_URL": '"http://localhost/api/lootlog"',
+    "import.meta.env.VITE_GATEWAY_URL": '"http://localhost"',
+    "import.meta.env.VITE_BATTLELOG_API_URL":
+      '"http://localhost/api/battlelog"',
+    "import.meta.env.VITE_LOOTLOG_APP_URL": '"http://localhost"',
+    "import.meta.env.VITE_GATEWAY_SOCKET_PATH": '"/gateway"',
+  },
   test: {
     globals: true,
     environment: "happy-dom",

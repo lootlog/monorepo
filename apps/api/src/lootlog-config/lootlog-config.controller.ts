@@ -6,7 +6,7 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { type Guild, Permission } from "generated/client";
+import { type Guild, Permission } from "prisma/generated/client";
 import { UpdateLootlogConfigNpcDto } from "src/lootlog-config/dto/update-lootlog-config-npc.dto";
 import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";

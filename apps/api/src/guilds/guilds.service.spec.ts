@@ -9,7 +9,7 @@ import { DiscordService } from "src/discord/discord.service";
 import { UsersService } from "src/users/users.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { type Guild, Permission } from "generated/client";
+import { type Guild, Permission } from "prisma/generated/client";
 
 describe("GuildsService", () => {
   let service: GuildsService;

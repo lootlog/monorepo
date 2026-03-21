@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Permission, type Prisma } from "generated/client";
+import { Permission, type Prisma } from "prisma/generated/client";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { PrismaService } from "src/db/prisma.service";

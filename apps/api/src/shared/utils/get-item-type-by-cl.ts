@@ -1,4 +1,4 @@
-import { ItemType } from "generated/client";
+import { ItemType } from "prisma/generated/client";
 
 const ITEM_TYPES = {
   1: ItemType.ONE_HAND_WEAPON,
@@ -35,6 +35,6 @@ const ITEM_TYPES = {
   32: ItemType.TELEPORTS,
 };
 
-export const getItemTypeByCl = (cl: number): ItemType => {
-  return ITEM_TYPES[cl] ?? undefined;
+export const getItemTypeByCl = (cl: number): ItemType | undefined => {
+  return ITEM_TYPES[cl];
 };
