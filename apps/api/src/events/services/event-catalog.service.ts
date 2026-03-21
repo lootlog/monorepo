@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import type { Event } from "generated/client";
+import type { Event } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { EventPointsService } from "src/events/services/event-points.service";

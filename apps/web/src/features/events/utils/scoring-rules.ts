@@ -17,9 +17,11 @@ import {
 } from "../types/scoring-rules";
 
 const CLOCK_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const DEFAULT_WINDOW_START = "00:00";
+const DEFAULT_WINDOW_END = "23:59";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  value !== null && typeof value === "object" && !Array.isArray(value);
 
 const isActionType = (value: string): value is EventScoringAction["type"] =>
   EVENT_SCORING_ACTION_TYPES.some((actionType) => actionType === value);
@@ -141,8 +143,8 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
   if (value.type === "KILL_TIME_IN_WINDOW") {
     return {
       type: "KILL_TIME_IN_WINDOW",
-      from: toClock(value.from, "00:00"),
-      to: toClock(value.to, "23:59"),
+      from: toClock(value.from, DEFAULT_WINDOW_START),
+      to: toClock(value.to, DEFAULT_WINDOW_END),
     };
   }
 
@@ -160,8 +162,8 @@ const parseCondition = (value: unknown): EventScoringCondition | null => {
 
   return {
     type: "RESPAWN_WINDOW_COVERAGE",
-    from: toClock(value.from, "00:00"),
-    to: toClock(value.to, "23:59"),
+    from: toClock(value.from, DEFAULT_WINDOW_START),
+    to: toClock(value.to, DEFAULT_WINDOW_END),
     operator: value.operator,
     value: Math.round(parsedValue * 100) / 100,
   };

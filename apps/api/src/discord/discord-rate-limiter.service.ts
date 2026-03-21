@@ -219,8 +219,4 @@ export class DiscordRateLimiterService {
   private getUserKey(userId: string, endpoint: string): string {
     return `${this.RATE_LIMIT_KEY_PREFIX}${userId}:${endpoint}`;
   }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 }

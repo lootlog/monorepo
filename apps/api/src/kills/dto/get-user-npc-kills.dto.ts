@@ -9,7 +9,7 @@ import {
   Max,
   Min,
 } from "class-validator";
-import { NpcType } from "generated/client";
+import { NpcType } from "prisma/generated/client";
 
 export class GetUserNpcKillsDto {
   @ApiPropertyOptional({

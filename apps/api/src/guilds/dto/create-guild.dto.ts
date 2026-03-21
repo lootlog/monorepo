@@ -1,4 +1,4 @@
-import type { MemberType } from "generated/client";
+import type { MemberType } from "prisma/generated/client";
 
 export class GuildMemberDto {
   id: string;

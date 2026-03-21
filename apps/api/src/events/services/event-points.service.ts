@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import type { EventKillPoint, Prisma } from "generated/client";
+import type { EventKillPoint, Prisma } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { EventEmitterService } from "./event-emitter.service";
 import {

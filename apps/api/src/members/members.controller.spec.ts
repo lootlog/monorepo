@@ -2,7 +2,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { plainToInstance } from "class-transformer";
 import { MembersController } from "./members.controller";
 import { MembersService } from "./members.service";
-import { type Guild, type Member, MemberType } from "generated/client";
+import { type Guild, type Member, MemberType } from "prisma/generated/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { MemberEntity } from "src/shared/entities/member.entity";

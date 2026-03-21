@@ -1,5 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import type { Guild } from "generated/client";
+import type { Guild } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { LootsService } from "src/loots/loots.service";

@@ -20,7 +20,7 @@ import {
 } from "@nestjs/swagger";
 import { DiscordId, UserId } from "@lootlog/nest-shared";
 import { plainToInstance } from "class-transformer";
-import { type Guild, Permission, type Role } from "generated/client";
+import { type Guild, Permission, type Role } from "prisma/generated/client";
 import { CreateCommentDto } from "src/loots/dto/create-comment-dto";
 import { CreateLootDto } from "src/loots/dto/create-loot.dto";
 import { UpdateLootDto } from "src/loots/dto/update-loot.dto";
