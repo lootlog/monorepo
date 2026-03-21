@@ -16,7 +16,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ ./apps/
 COPY packages/ ./packages/
 
-RUN find ./apps -name "*.ts" -delete && \
+RUN rm -rf ./apps/docs && \
+    find ./apps -name "*.ts" -delete && \
     find ./apps -name "*.tsx" -delete && \
     find ./apps -name "*.js" -delete && \
     find ./apps -name "*.jsx" -delete && \
