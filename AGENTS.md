@@ -34,3 +34,7 @@ This is a pnpm monorepo managed with Turborepo. It contains multiple apps (`apps
 ## Refactoring
 
 - When deduplicating code, do not preserve old files as re-export wrappers. Update all imports and delete the old files.
+
+## Additional Notes
+
+- Don't try to run the app, assume it's already running.

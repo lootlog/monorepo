@@ -1,0 +1,32 @@
+@import "fumadocs-ui/css/style.css";
+
+@source "../../../packages/ui/src";
+
+#nd-docs-layout {
+  --fd-layout-width: 100vw;
+}
+
+.dark {
+  --color-fd-background: oklch(0 0 0);
+  --color-fd-foreground: oklch(1 0 0);
+  --color-fd-muted: oklch(0.269 0 0);
+  --color-fd-muted-foreground: oklch(0.708 0 0);
+  --color-fd-popover: oklch(0.15 0 0);
+  --color-fd-popover-foreground: oklch(0.985 0 0);
+  --color-fd-card: oklch(0.1 0 0);
+  --color-fd-card-foreground: oklch(1 0 0);
+  --color-fd-border: oklch(0.275 0 0);
+  --color-fd-primary: oklch(0.65 0.2937 285.3753);
+  --color-fd-primary-foreground: oklch(1 0 0);
+  --color-fd-secondary: oklch(0.15 0.02 285);
+  --color-fd-secondary-foreground: oklch(0.985 0 0);
+  --color-fd-accent: oklch(0.2 0.02 285);
+  --color-fd-accent-foreground: oklch(0.985 0 0);
+  --color-fd-ring: oklch(0.65 0.2937 285.3753);
+}
+
+.dark #nd-sidebar {
+  --color-fd-muted: oklch(0.12 0 0);
+  --color-fd-secondary: oklch(0.14 0 0);
+  --color-fd-muted-foreground: oklch(0.6 0 0);
+}

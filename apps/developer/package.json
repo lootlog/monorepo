@@ -1,0 +1,29 @@
+{
+  "name": "@lootlog/developer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "BASE_PATH=/developer/ vite dev",
+    "build": "vite build",
+    "start": "node server.js",
+    "lint": "oxlint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lootlog/ui": "workspace:*",
+    "@tanstack/react-router": "^1.167.5",
+    "@tanstack/react-start": "^1.120.20",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@lootlog/typescript-config": "workspace:*",
+    "@tailwindcss/vite": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
+    "vite": "latest"
+  }
+}

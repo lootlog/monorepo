@@ -33,9 +33,12 @@ export function LandingHeader() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground ml-4">
-            <Link href="/docs" className="hover:text-primary transition-colors">
+            <a
+              href="https://developer.lootlog.pl"
+              className="hover:text-primary transition-colors"
+            >
               Dokumentacja
-            </Link>
+            </a>
             <a
               href="https://github.com/lootlog/monorepo"
               target="_blank"
