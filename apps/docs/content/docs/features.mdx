@@ -122,10 +122,7 @@ Dostęp do wszystkich funkcji przez przeglądarkę.
 - Konfigurować ustawienia
 - Analizować statystyki
 
-<Callout type="info">
-  **Panel webowy:** Dostępny pod adresem
-  [app.lootlog.pl](https://app.lootlog.pl)
-</Callout>
+> **Panel webowy** jest dostępny pod adresem [app.lootlog.pl](https://app.lootlog.pl)
 
 ## Eksport danych
 

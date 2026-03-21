@@ -1,33 +1,32 @@
 {
-  "name": "@lootlog/landing",
+  "name": "@lootlog/docs",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 3003 --turbopack",
+    "dev": "next dev -p 3005 --turbopack",
     "build": "next build",
-    "doctor": "npx -y react-doctor@latest .",
-    "export:landing": "next export",
     "start": "next start",
+    "postinstall": "fumadocs-mdx",
     "lint": "oxlint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@lootlog/ui": "workspace:*",
-    "@mdx-js/loader": "^3.1.1",
-    "@mdx-js/react": "^3.1.1",
-    "@next/mdx": "^16.2.1",
     "@types/mdx": "^2.0.13",
-    "better-auth": "^1.5.4",
-    "framer-motion": "^12.35.2",
-    "lucide-react": "^0.548.0",
+    "fumadocs-core": "^16.7.4",
+    "fumadocs-mdx": "^14.2.11",
+    "fumadocs-ui": "^16.7.4",
     "next": "^16.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3"
   }
 }
