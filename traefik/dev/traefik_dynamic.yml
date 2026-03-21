@@ -1,10 +1,20 @@
 http:
   routers:
     landing:
-      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`) || Path(`/terms-of-service`) || Path(`/privacy-policy`) || PathPrefix(`/docs`) || PathPrefix(`/screenshots/`)"
+      rule: "Path(`/`) || PathPrefix(`/_next/`) || PathPrefix(`/favicon.ico`) || PathPrefix(`/static/`) || Path(`/terms-of-service`) || Path(`/privacy-policy`) || PathPrefix(`/screenshots/`)"
       service: "landing"
       priority: 30
       middlewares:
+        - "apiCompress"
+      entryPoints:
+        - "web"
+
+    developer:
+      rule: "PathPrefix(`/developer`)"
+      service: "developer"
+      priority: 25
+      middlewares:
+        - "developerStripPrefix"
         - "apiCompress"
       entryPoints:
         - "web"
@@ -131,6 +141,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:3003"
+    developer:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3004"
     auth:
       loadBalancer:
         servers:
@@ -156,6 +170,10 @@ http:
         servers:
           - url: "http://host.docker.internal:4027"
   middlewares:
+    developerStripPrefix:
+      stripPrefix:
+        prefixes:
+          - "/developer"
     apiStripPrefix:
       stripPrefix:
         prefixes:

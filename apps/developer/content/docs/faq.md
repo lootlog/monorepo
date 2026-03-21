@@ -123,7 +123,7 @@ Upewnij się że:
 
 ### Jakie dane są zbierane?
 
-Szczegóły znajdziesz w [Polityce Prywatności](/privacy-policy). Zbieramy tylko niezbędne dane do działania dodatku.
+Szczegóły znajdziesz w [Polityce Prywatności](https://lootlog.pl/privacy-policy). Zbieramy tylko niezbędne dane do działania dodatku.
 
 ### Czy mogę usunąć moje dane?
 
@@ -131,7 +131,7 @@ Tak, w każdej chwili możesz usunąć swoje konto wraz ze wszystkimi danymi w u
 
 ### Czy dane są udostępniane?
 
-Nie, twoje dane nie są sprzedawane ani udostępniane osobom trzecim. Zobacz [Politykę Prywatności](/privacy-policy).
+Nie, twoje dane nie są sprzedawane ani udostępniane osobom trzecim. Zobacz [Politykę Prywatności](https://lootlog.pl/privacy-policy).
 
 ## Pomoc i wsparcie
 

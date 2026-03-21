@@ -31,7 +31,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client
+RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client --filter=!@lootlog/developer
 
 RUN find ./packages -name "src" -type d -exec rm -rf {} + 2>/dev/null || true && \
     find ./packages -name "*.ts" -not -path "*/dist/*" -delete && \
@@ -43,7 +43,8 @@ RUN pnpm deploy --filter=@lootlog/api --prod /prod/api && \
     pnpm deploy --filter=@lootlog/discord-bot --prod /prod/discord-bot && \
     pnpm deploy --filter=@lootlog/gateway --prod /prod/gateway && \
     pnpm deploy --filter=@lootlog/battlelog-service --prod /prod/battlelog-service && \
-    pnpm deploy --filter=@lootlog/activity --prod /prod/activity
+    pnpm deploy --filter=@lootlog/activity --prod /prod/activity && \
+    pnpm deploy --filter=@lootlog/developer --prod /prod/developer
 
 FROM base AS auth
 
@@ -170,3 +171,20 @@ EXPOSE 4000
 ENTRYPOINT ["dumb-init", "--"]
 
 CMD ["pnpm", "start"]
+
+FROM base AS developer
+
+LABEL org.opencontainers.image.title="Lootlog Developer Portal"
+LABEL org.opencontainers.image.description="Developer documentation portal with SSR"
+LABEL org.opencontainers.image.vendor="Lootlog"
+
+COPY --from=build --chown=nodejs:nodejs --chmod=755 /prod/developer /prod/developer
+WORKDIR /prod/developer
+
+USER nodejs
+
+EXPOSE 3000
+
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["node", "server.js"]
