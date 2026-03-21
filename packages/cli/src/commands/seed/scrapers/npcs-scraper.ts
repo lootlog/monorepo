@@ -1,5 +1,5 @@
 import { parse } from "node-html-parser";
-import { writeFile, access } from "node:fs/promises";
+import { writeFile, access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
 
@@ -62,7 +62,7 @@ function parseMeta(meta: string) {
   return {
     name,
     type,
-    location: locationText ?? undefined,
+    location: locationText,
     lvl,
   };
 }
@@ -141,8 +141,7 @@ export async function scrapeNpcs(
       console.log(`⏭️  NPCs file already exists at ${fullPath}`);
       console.log("💡 Use --force flag to re-scrape");
 
-      const fs = await import("node:fs/promises");
-      const existingData = await fs.readFile(fullPath, "utf-8");
+      const existingData = await readFile(fullPath, "utf-8");
       return JSON.parse(existingData);
     }
   }
