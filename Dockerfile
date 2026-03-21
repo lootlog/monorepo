@@ -20,18 +20,13 @@ RUN find ./apps -name "*.ts" -delete && \
     find ./apps -name "*.tsx" -delete && \
     find ./apps -name "*.js" -delete && \
     find ./apps -name "*.jsx" -delete && \
-    find ./apps -name "src" -type d -exec rm -rf {} + 2>/dev/null || true && \
-    find ./packages -name "*.ts" -delete && \
-    find ./packages -name "*.tsx" -delete && \
-    find ./packages -name "*.js" -delete && \
-    find ./packages -name "*.jsx" -delete && \
-    find ./packages -name "src" -type d -exec rm -rf {} + 2>/dev/null || true
+    find ./apps -name "src" -type d -exec rm -rf {} + 2>/dev/null || true
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 
 COPY . .
 
-RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client --filter=!@lootlog/developer
+RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client
 
 RUN find ./packages -name "src" -type d -exec rm -rf {} + 2>/dev/null || true && \
     find ./packages -name "*.ts" -not -path "*/dist/*" -delete && \
