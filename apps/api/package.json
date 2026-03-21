@@ -35,7 +35,7 @@
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.1.16",
     "@nestjs/config": "^4.0.3",
-    "@nestjs/core": "^11.1.16",
+    "@nestjs/core": "^11.1.17",
     "@nestjs/microservices": "^11.1.16",
     "@nestjs/platform-fastify": "^11.1.16",
     "@nestjs/schedule": "^6.1.1",
