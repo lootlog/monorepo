@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "@/hooks/api/use-api-client";
-import { stringify } from "qs";
+import { stringifyQueryParams } from "@/lib/stringify-query-params";
 
 export type NpcType =
   | "COMMON"
@@ -59,14 +59,7 @@ export const usePlayerKillStats = (filters: PlayerKillStatsFilters = {}) => {
     topNpcsLimit: filters.topNpcsLimit || undefined,
   };
 
-  const queryString = stringify(queryParams, {
-    filter: (_, value) => {
-      if (value === "" || value === undefined || value === null) {
-        return;
-      }
-      return value;
-    },
-  });
+  const queryString = stringifyQueryParams(queryParams);
 
   return useQuery({
     queryKey: ["player-kill-stats", queryString],
