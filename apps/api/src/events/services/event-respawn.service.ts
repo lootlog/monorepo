@@ -71,7 +71,7 @@ export class EventRespawnService {
       throw new NotFoundException("Hero not found");
     }
 
-    const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
+    const effectiveNpcId = this.getEffectiveNpcId(heroId, hero.npcId);
 
     this.logger.log({
       message: isAutoClose
@@ -231,7 +231,7 @@ export class EventRespawnService {
       throw new NotFoundException("Hero not found");
     }
 
-    const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
+    const effectiveNpcId = this.getEffectiveNpcId(heroId, hero.npcId);
 
     const { minSpawnTime, maxSpawnTime } = options;
 
@@ -379,7 +379,7 @@ export class EventRespawnService {
       throw new NotFoundException("Hero not found");
     }
 
-    const effectiveNpcId = hero.npcId ?? getSyntheticNpcId(heroId);
+    const effectiveNpcId = this.getEffectiveNpcId(heroId, hero.npcId);
 
     const now = new Date();
 
@@ -471,5 +471,9 @@ export class EventRespawnService {
         });
       }
     }
+  }
+
+  private getEffectiveNpcId(heroId: string, npcId: number | null): number {
+    return npcId ?? getSyntheticNpcId(heroId);
   }
 }

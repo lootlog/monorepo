@@ -121,6 +121,21 @@ const updateTimestamp = (
   };
 };
 
+const getGuildTimerIds = (
+  timersByGuild: Record<string, string[]>,
+  guildId: string,
+) => {
+  return timersByGuild[guildId] ?? [];
+};
+
+const addTimerId = (timerIds: string[], timerId: string) => {
+  return [...new Set([...timerIds, timerId])];
+};
+
+const removeTimerId = (timerIds: string[], timerId: string) => {
+  return timerIds.filter((id) => id !== timerId);
+};
+
 export const useTimersStore = create<TimersState>()(
   persist(
     (set, get) => {
@@ -208,8 +223,10 @@ export const useTimersStore = create<TimersState>()(
           });
         },
         hideTimer: (guildId: string, timerId: string) => {
-          const currentHidden = get().hiddenTimers[guildId] ?? [];
-          const updatedHidden = [...new Set([...currentHidden, timerId])];
+          const updatedHidden = addTimerId(
+            getGuildTimerIds(get().hiddenTimers, guildId),
+            timerId,
+          );
 
           setWithTimestamp({
             hiddenTimers: {
@@ -223,8 +240,10 @@ export const useTimersStore = create<TimersState>()(
           });
         },
         revealTimer: (guildId: string, timerId: string) => {
-          const currentHidden = get().hiddenTimers[guildId] ?? [];
-          const updatedHidden = currentHidden.filter((id) => id !== timerId);
+          const updatedHidden = removeTimerId(
+            getGuildTimerIds(get().hiddenTimers, guildId),
+            timerId,
+          );
 
           setWithTimestamp({
             hiddenTimers: {
@@ -238,8 +257,10 @@ export const useTimersStore = create<TimersState>()(
           });
         },
         pinTimer: (guildId: string, timerId: string) => {
-          const currentPinned = get().pinnedTimers[guildId] ?? [];
-          const updatedPinned = [...new Set([...currentPinned, timerId])];
+          const updatedPinned = addTimerId(
+            getGuildTimerIds(get().pinnedTimers, guildId),
+            timerId,
+          );
 
           setWithTimestamp({
             pinnedTimers: {
@@ -253,8 +274,10 @@ export const useTimersStore = create<TimersState>()(
           });
         },
         unpinTimer: (guildId: string, timerId: string) => {
-          const currentPinned = get().pinnedTimers[guildId] ?? [];
-          const updatedPinned = currentPinned.filter((id) => id !== timerId);
+          const updatedPinned = removeTimerId(
+            getGuildTimerIds(get().pinnedTimers, guildId),
+            timerId,
+          );
 
           setWithTimestamp({
             pinnedTimers: {
