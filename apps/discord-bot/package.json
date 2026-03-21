@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@axiomhq/winston": "^1.5.0",
-    "@golevelup/nestjs-rabbitmq": "^6.1.0",
+    "@golevelup/nestjs-rabbitmq": "^9.0.0",
     "@lootlog/instrumentation": "workspace:*",
     "@lootlog/nest-shared": "workspace:*",
     "@lootlog/types": "workspace:*",
