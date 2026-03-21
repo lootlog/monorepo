@@ -1,4 +1,5 @@
 const pad = (value: number) => String(value).padStart(2, "0");
+const isInvalidDate = (value: Date) => Number.isNaN(value.getTime());
 
 export const toDateTimeLocalValue = (
   value: string | Date | null | undefined,
@@ -8,7 +9,7 @@ export const toDateTimeLocalValue = (
   }
 
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  if (isInvalidDate(date)) {
     return "";
   }
 
@@ -25,7 +26,7 @@ export const fromDateTimeLocalValueToIso = (
   }
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  if (isInvalidDate(date)) {
     return undefined;
   }
 
