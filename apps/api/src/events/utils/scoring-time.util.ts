@@ -8,57 +8,61 @@ const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const timeFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const offsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
-function getDateFormatter(timeZone: string): Intl.DateTimeFormat {
-  const cached = dateFormatterCache.get(timeZone);
+function getCachedFormatter(
+  cache: Map<string, Intl.DateTimeFormat>,
+  timeZone: string,
+  createFormatter: (timeZone: string) => Intl.DateTimeFormat,
+): Intl.DateTimeFormat {
+  const cached = cache.get(timeZone);
   if (cached) {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  dateFormatterCache.set(timeZone, formatter);
+  const formatter = createFormatter(timeZone);
+  cache.set(timeZone, formatter);
   return formatter;
+}
+
+function getDateFormatter(timeZone: string): Intl.DateTimeFormat {
+  return getCachedFormatter(dateFormatterCache, timeZone, (cachedTimeZone) => {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: cachedTimeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  });
 }
 
 function getTimeFormatter(timeZone: string): Intl.DateTimeFormat {
-  const cached = timeFormatterCache.get(timeZone);
-  if (cached) {
-    return cached;
-  }
-
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
+  return getCachedFormatter(timeFormatterCache, timeZone, (cachedTimeZone) => {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: cachedTimeZone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   });
-  timeFormatterCache.set(timeZone, formatter);
-  return formatter;
 }
 
 function getOffsetFormatter(timeZone: string): Intl.DateTimeFormat {
-  const cached = offsetFormatterCache.get(timeZone);
-  if (cached) {
-    return cached;
-  }
-
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  return getCachedFormatter(
+    offsetFormatterCache,
     timeZone,
-    timeZoneName: "shortOffset",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-  offsetFormatterCache.set(timeZone, formatter);
-  return formatter;
+    (cachedTimeZone) => {
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: cachedTimeZone,
+        timeZoneName: "shortOffset",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    },
+  );
 }
 
 function getPartValue(

@@ -17,6 +17,9 @@ export const getMembersWithGuilds = (
   members: GuildMember[],
   guilds?: Guild[],
 ): { id: GuildMember["id"]; label: string }[] => {
+  const guildNamesById = new Map<Guild["id"], Guild["name"]>(
+    guilds?.map((guild) => [guild.id, guild.name] as const),
+  );
   const memberMap = new Map<
     GuildMember["id"],
     { id: GuildMember["id"]; label: string }
@@ -24,7 +27,7 @@ export const getMembersWithGuilds = (
 
   for (const member of members) {
     if (!memberMap.has(member.id)) {
-      const guildName = guilds?.find((g) => g.id === member.guildId)?.name;
+      const guildName = guildNamesById.get(member.guildId);
       memberMap.set(member.id, {
         id: member.id,
         label: guildName ? `${member.name} (${guildName})` : member.name,

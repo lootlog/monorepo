@@ -5,30 +5,28 @@ export type PermissionRefreshInfo = {
   canTriggerRefreshText: string;
 };
 
-const UP_TO_DATE_TEXT = "Uprawnienia są aktualne";
-const REFRESH_AVAILABLE_TEXT = "Odśwież swoje uprawnienia";
+const UP_TO_DATE_TEXT = "Uprawnienia s\u0105 aktualne";
+const REFRESH_AVAILABLE_TEXT = "Od\u015bwie\u017c swoje uprawnienia";
 const MINUTE_IN_MS = 1000 * 60;
-
-const createPermissionRefreshInfo = (
-  canTriggerRefresh: boolean,
-  canTriggerRefreshText: string,
-): PermissionRefreshInfo => ({
-  canTriggerRefresh,
-  canTriggerRefreshText,
-});
 
 export const getPermissionRefreshInfo = (
   updatedAt: string | null | undefined,
   currentTimestamp = Date.now(),
 ): PermissionRefreshInfo => {
   if (!updatedAt) {
-    return createPermissionRefreshInfo(false, UP_TO_DATE_TEXT);
+    return {
+      canTriggerRefresh: false,
+      canTriggerRefreshText: UP_TO_DATE_TEXT,
+    };
   }
 
   const updatedAtTimestamp = new Date(updatedAt).getTime();
 
   if (updatedAtTimestamp < currentTimestamp - REFRESH_PERMISSIONS_TTL) {
-    return createPermissionRefreshInfo(true, REFRESH_AVAILABLE_TEXT);
+    return {
+      canTriggerRefresh: true,
+      canTriggerRefreshText: REFRESH_AVAILABLE_TEXT,
+    };
   }
 
   const nextRefreshTimestamp = updatedAtTimestamp + REFRESH_PERMISSIONS_TTL;
@@ -37,11 +35,14 @@ export const getPermissionRefreshInfo = (
   );
 
   if (minutesUntilRefresh > 0) {
-    return createPermissionRefreshInfo(
-      false,
-      `Spróbuj ponownie za ${minutesUntilRefresh} min`,
-    );
+    return {
+      canTriggerRefresh: false,
+      canTriggerRefreshText: `Spr\u00f3buj ponownie za ${minutesUntilRefresh} min`,
+    };
   }
 
-  return createPermissionRefreshInfo(false, UP_TO_DATE_TEXT);
+  return {
+    canTriggerRefresh: false,
+    canTriggerRefreshText: UP_TO_DATE_TEXT,
+  };
 };
