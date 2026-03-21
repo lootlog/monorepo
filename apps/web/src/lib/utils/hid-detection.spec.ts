@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { formatItemHid, isItemHid, parseItemHid } from "@/lib/utils/hid-detection";
+import {
+  formatItemHid,
+  isItemHid,
+  parseItemHid,
+} from "@/lib/utils/hid-detection";
 
 describe("isItemHid", () => {
   it("accepts valid values with surrounding whitespace", () => {
