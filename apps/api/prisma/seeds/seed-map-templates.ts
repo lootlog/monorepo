@@ -1,6 +1,11 @@
-import { PrismaService } from "src/db/prisma.service";
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "prisma/generated/client";
 
-const prisma = new PrismaService();
+const adapter = new PrismaPg({
+  connectionString: process.env.POSTGRESQL_CONNECTION_URI!,
+});
+const prisma = new PrismaClient({ adapter });
 
 // Predefined map templates for common Margonem event scenarios
 const MAP_TEMPLATES = [

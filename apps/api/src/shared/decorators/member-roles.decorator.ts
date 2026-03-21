@@ -1,6 +1,6 @@
 import { createRequiredRequestValueDecorator } from "@lootlog/nest-shared";
 import { ForbiddenException } from "@nestjs/common";
-import type { Role } from "generated/client";
+import type { Role } from "prisma/generated/client";
 
 export const MemberRoles = createRequiredRequestValueDecorator<Role[]>({
   createException: () => new ForbiddenException(),

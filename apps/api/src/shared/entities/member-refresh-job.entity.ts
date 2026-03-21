@@ -1,6 +1,6 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { RefreshJobStatus } from "generated/client";
+import { RefreshJobStatus } from "prisma/generated/client";
 
 export class MemberRefreshJobEntity {
   @Expose()

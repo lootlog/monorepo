@@ -1,11 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/client"
+  provider = "prisma-client"
+  output   = "generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRESQL_CONNECTION_URI")
 }
 
 model Guild {

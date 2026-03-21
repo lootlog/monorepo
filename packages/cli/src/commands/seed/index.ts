@@ -7,6 +7,15 @@ import { writeFile, access } from "node:fs/promises";
 import path from "node:path";
 import { constants } from "node:fs";
 
+const hasReadableFile = async (filePath: string): Promise<boolean> => {
+  try {
+    await access(filePath, constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const displaySeedHelp = (): void => {
   console.log(`
 ${chalk.bold.blue("Seed Command")}
@@ -57,6 +66,16 @@ ${chalk.bold("Development Guild Setup:")}
 
 const parseOptions = (args: string[]) => {
   const options: Record<string, any> = {};
+  const takeNextArg = (index: number): string | undefined => args[index + 1];
+  const parseIntegerOption = (index: number): number | undefined => {
+    const value = takeNextArg(index);
+    return value === undefined ? undefined : Number.parseInt(value, 10);
+  };
+  const setOption = (key: string, value: unknown) => {
+    if (value !== undefined) {
+      options[key] = value;
+    }
+  };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -64,49 +83,33 @@ const parseOptions = (args: string[]) => {
     if (arg === "--force" || arg === "-f") {
       options.force = true;
     } else if (arg === "--guilds") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.guilds = Number.parseInt(nextArg, 10);
-      }
+      setOption("guilds", parseIntegerOption(i));
+      i++;
     } else if (arg === "--loots") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.loots = Number.parseInt(nextArg, 10);
-      }
+      setOption("loots", parseIntegerOption(i));
+      i++;
     } else if (arg === "--battles") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.battles = Number.parseInt(nextArg, 10);
-      }
+      setOption("battles", parseIntegerOption(i));
+      i++;
     } else if (arg === "--players") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.players = Number.parseInt(nextArg, 10);
-      }
+      setOption("players", parseIntegerOption(i));
+      i++;
     } else if (arg === "--no-clean") {
       options.clean = false;
     } else if (arg === "--skip-scrape") {
       options.skipScrape = true;
     } else if (arg === "--items-output") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.itemsOutput = nextArg;
-      }
+      setOption("itemsOutput", takeNextArg(i));
+      i++;
     } else if (arg === "--npcs-output") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.npcsOutput = nextArg;
-      }
+      setOption("npcsOutput", takeNextArg(i));
+      i++;
     } else if (arg === "-o" || arg === "--output") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.output = nextArg;
-      }
+      setOption("output", takeNextArg(i));
+      i++;
     } else if (arg === "-c" || arg === "--count") {
-      const nextArg = args[++i];
-      if (nextArg !== undefined) {
-        options.count = Number.parseInt(nextArg, 10);
-      }
+      setOption("count", parseIntegerOption(i));
+      i++;
     }
   }
 
@@ -162,13 +165,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           options.output || "./packages/cli/src/mocks/data/players.json";
         const outputPath = path.resolve(output);
 
-        let fileExists = false;
-        try {
-          await access(outputPath, constants.R_OK);
-          fileExists = true;
-        } catch {
-          fileExists = false;
-        }
+        const fileExists = await hasReadableFile(outputPath);
 
         if (fileExists && !options.force) {
           console.log(
@@ -233,13 +230,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           "./packages/cli/src/mocks/data/players.json",
         );
 
-        let playersFileExists = false;
-        try {
-          await access(playersPath, constants.R_OK);
-          playersFileExists = true;
-        } catch {
-          playersFileExists = false;
-        }
+        const playersFileExists = await hasReadableFile(playersPath);
 
         if (playersFileExists && !options.force) {
           console.log(

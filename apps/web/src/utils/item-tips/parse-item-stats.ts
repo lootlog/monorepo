@@ -3,13 +3,15 @@ export type ItemStat = {
   value: string | boolean;
 };
 
-export const parseItemStats = (stats: string): ItemStat[] => {
-  return stats.split(";").map((stat) => {
-    const [key, value] = stat.split("=");
+const parseItemStat = (stat: string): ItemStat => {
+  const [rawKey, rawValue] = stat.split("=");
 
-    return {
-      key: key ?? "undefined",
-      value: value ?? true,
-    };
-  });
+  return {
+    key: rawKey ?? "undefined",
+    value: rawValue ?? true,
+  };
+};
+
+export const parseItemStats = (stats: string): ItemStat[] => {
+  return stats.split(";").map(parseItemStat);
 };

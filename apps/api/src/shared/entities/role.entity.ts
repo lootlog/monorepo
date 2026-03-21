@@ -1,6 +1,6 @@
 import { Exclude, Expose } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { Permission } from "generated/client";
+import { Permission } from "prisma/generated/client";
 
 export class RoleEntity {
   @Expose()

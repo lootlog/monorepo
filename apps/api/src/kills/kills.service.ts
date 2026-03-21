@@ -2,7 +2,7 @@ import { Injectable, Inject } from "@nestjs/common";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { getNpcTypeByWt } from "@lootlog/types";
-import { Permission, NpcType, type Role } from "generated/client";
+import { Permission, NpcType, type Role } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";

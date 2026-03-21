@@ -1,4 +1,4 @@
-import { Permission, type Role } from "generated/client";
+import { Permission, type Role } from "prisma/generated/client";
 
 export interface EventHeroWithLevel {
   npcLvl: number | null;

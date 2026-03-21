@@ -16,7 +16,7 @@ export const useTimerDisplay = (
     generalConfig,
   } = useTimersStore();
 
-  const isPending = timer.isPending === true;
+  const isPending = timer.isPending ?? false;
   const isMinSpawnTime = minTimeLeft < 0;
   const hasPassedRedThreshold = maxTimeLeft < 0;
 
@@ -35,7 +35,7 @@ export const useTimerDisplay = (
 
   const npcDetails =
     displayConfig.showLevel && timer.npc.lvl > 0 && timer.npc.prof
-      ? ` (${timer.npc.lvl}${timer.npc.prof?.charAt(0).toLowerCase() ?? ""})`
+      ? ` (${timer.npc.lvl}${timer.npc.prof.charAt(0).toLowerCase()})`
       : "";
 
   const timeLeft = calculateTimeLeft(

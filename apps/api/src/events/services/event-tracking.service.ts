@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
 import Redlock, { ExecutionError } from "redlock";
-import { CoverageGapType } from "generated/client";
+import { CoverageGapType } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { RedisService } from "@lootlog/nest-shared";
 import { RedlockService } from "src/lib/redlock/redlock.service";

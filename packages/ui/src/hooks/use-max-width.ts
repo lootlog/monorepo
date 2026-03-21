@@ -1,9 +1,7 @@
 import * as React from "react";
 
 export function useMaxWidth(maxWidth: number) {
-  const [isBelowMaxWidth, setIsBelowMaxWidth] = React.useState<
-    boolean | undefined
-  >(undefined);
+  const [isBelowMaxWidth, setIsBelowMaxWidth] = React.useState(false);
 
   React.useEffect(() => {
     const mediaQueryList = window.matchMedia(`(max-width: ${maxWidth - 1}px)`);
@@ -19,5 +17,5 @@ export function useMaxWidth(maxWidth: number) {
     };
   }, [maxWidth]);
 
-  return Boolean(isBelowMaxWidth);
+  return isBelowMaxWidth;
 }

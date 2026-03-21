@@ -1,5 +1,5 @@
 import { Test, type TestingModule } from "@nestjs/testing";
-import { CoverageGapType } from "generated/client";
+import { CoverageGapType } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import { EventSummaryService } from "./event-summary.service";
 

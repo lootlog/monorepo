@@ -12,6 +12,9 @@ import {
 } from "@/store/npc-detector.store";
 import { useGuilds } from "@/hooks/api/use-guilds";
 
+const HERO_ID_POLL_INTERVAL_MS = 100;
+const HERO_ID_POLL_TIMEOUT_MS = 10_000;
+
 export const useInitialConfiguration = () => {
   const { data: guilds } = useGuilds();
   const gameInitialized = useGlobalStore((s) => s.gameState.gameInitialized);
@@ -86,8 +89,14 @@ export const useInitialConfiguration = () => {
         return;
       }
 
+      const pollingStartedAt = Date.now();
       const interval = setInterval(() => {
         if (configInitialized.current) {
+          clearInterval(interval);
+          return;
+        }
+
+        if (Date.now() - pollingStartedAt >= HERO_ID_POLL_TIMEOUT_MS) {
           clearInterval(interval);
           return;
         }
@@ -98,7 +107,7 @@ export const useInitialConfiguration = () => {
           configInitialized.current = true;
           clearInterval(interval);
         }
-      }, 100);
+      }, HERO_ID_POLL_INTERVAL_MS);
 
       return () => clearInterval(interval);
     }

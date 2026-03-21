@@ -25,7 +25,7 @@ import {
   NpcType,
   type Guild,
   LootSource,
-} from "generated/client";
+} from "prisma/generated/client";
 import { ErrorKey } from "./enum/error-key.enum";
 
 describe("LootsService", () => {
