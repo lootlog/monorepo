@@ -36,5 +36,5 @@ const ITEM_TYPES = {
 };
 
 export const getItemTypeByCl = (cl: number): ItemType => {
-  return ITEM_TYPES[cl] ?? undefined;
+  return ITEM_TYPES[cl];
 };
