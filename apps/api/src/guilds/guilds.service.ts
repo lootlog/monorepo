@@ -12,7 +12,7 @@ import type { APIGuild } from "discord-api-types/v10";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import type { Logger } from "winston";
 import { AmqpConnection } from "@golevelup/nestjs-rabbitmq";
-import { type Guild, Permission } from "generated/client";
+import { type Guild, Permission } from "prisma/generated/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateGuildDto } from "src/guilds/dto/create-guild.dto";
 import type { DeleteGuildDto } from "src/guilds/dto/delete-guild.dto";

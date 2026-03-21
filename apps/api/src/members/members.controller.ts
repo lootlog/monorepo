@@ -21,7 +21,7 @@ import { MembersService } from "./members.service";
 import { Permissions } from "src/shared/permissions/permissions.decorator";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 import { AuthGuard } from "src/shared/guards/auth.guard";
-import { type Guild, Permission } from "generated/client";
+import { type Guild, Permission } from "prisma/generated/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 import { MemberEntity } from "src/shared/entities/member.entity";
 import { MemberRefreshJobEntity } from "src/shared/entities/member-refresh-job.entity";

@@ -12,7 +12,7 @@ import {
   GuildKillStatsEntity,
   UserKillStatsEntity,
 } from "./entities/kill-stats.entity";
-import { Permission, NpcType, type Role } from "generated/client";
+import { Permission, NpcType, type Role } from "prisma/generated/client";
 import { AuthGuard } from "src/shared/guards/auth.guard";
 import { PermissionsGuard } from "src/shared/permissions/permissions.guard";
 

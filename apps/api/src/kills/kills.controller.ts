@@ -16,7 +16,7 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { plainToInstance } from "class-transformer";
-import { Guild, Permission, type Role } from "generated/client";
+import { Guild, Permission, type Role } from "prisma/generated/client";
 import { MemberPermissions } from "src/shared/decorators/member-permissions.decorator";
 import { MemberRoles } from "src/shared/decorators/member-roles.decorator";
 import { AuthGuard } from "src/shared/guards/auth.guard";
@@ -41,7 +41,7 @@ import {
 } from "./entities/kill-stats.entity";
 import { GetNpcKillersDto } from "./dto/get-npc-killers.dto";
 import { GetMemberKillsDto } from "./dto/get-member-kills.dto";
-import { NpcType } from "generated/client";
+import { NpcType } from "prisma/generated/client";
 import { GuildData } from "src/shared/decorators/guild-data.decorator";
 
 @ApiTags("kills")

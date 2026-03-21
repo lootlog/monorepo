@@ -1,4 +1,4 @@
-import { Role, NpcType, Permission } from "generated/client";
+import { Role, NpcType, Permission } from "prisma/generated/client";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { MessageType, SendMessageDto } from "src/chat/dto/send-message.dto";
 

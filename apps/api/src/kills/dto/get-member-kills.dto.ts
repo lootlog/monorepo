@@ -8,7 +8,7 @@ import {
   Max,
   Min,
 } from "class-validator";
-import { NpcType } from "generated/client";
+import { NpcType } from "prisma/generated/client";
 
 export class GetMemberKillsDto {
   @ApiPropertyOptional({ example: 100, description: "Minimum NPC level" })

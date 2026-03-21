@@ -2,7 +2,12 @@ import { Injectable } from "@nestjs/common";
 import { createHash } from "node:crypto";
 import { getNpcTypeByWt } from "@lootlog/types";
 import type { CreateLootDto } from "src/loots/dto/create-loot.dto";
-import { NpcType, Prisma, Profession, type ItemRarity } from "generated/client";
+import {
+  NpcType,
+  Prisma,
+  Profession,
+  type ItemRarity,
+} from "prisma/generated/client";
 import { getProfByShortname } from "src/shared/utils/get-prof-by-shortname";
 import { getItemTypeByCl } from "src/shared/utils/get-item-type-by-cl";
 import {

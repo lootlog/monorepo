@@ -16,7 +16,12 @@ import { NpcsService } from "src/npcs/npcs.service";
 import { ItemsService } from "src/items/items.service";
 import { PrismaService } from "src/db/prisma.service";
 import { LootlogConfigService } from "src/lootlog-config/lootlog-config.service";
-import { NpcType, Permission, type Guild, type Role } from "generated/client";
+import {
+  NpcType,
+  Permission,
+  type Guild,
+  type Role,
+} from "prisma/generated/client";
 import { GuildsService } from "src/guilds/guilds.service";
 import { UserLootlogConfigService } from "src/user-lootlog-config/user-lootlog-config.service";
 import type { UpdateLootDto } from "src/loots/dto/update-loot.dto";

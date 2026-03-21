@@ -6,7 +6,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY } from "./permissions.decorator";
 import { GuildsService } from "src/guilds/guilds.service";
-import { Permission } from "generated/client";
+import { Permission } from "prisma/generated/client";
 
 interface RequestWithPermissions {
   userId?: string;
