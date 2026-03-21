@@ -67,7 +67,7 @@ interface NpcData {
   margonemType: string;
 }
 
-interface SearchNpcWithTimerDataResult {
+export interface SearchNpcWithTimerDataResult {
   npcId: number;
   name: string;
   lvl: number;
@@ -772,9 +772,8 @@ export class TimersService implements OnModuleInit {
         };
       })
       .filter(
-        (
-          timerData,
-        ): timerData is SearchNpcWithTimerDataResult => timerData !== null,
+        (timerData): timerData is SearchNpcWithTimerDataResult =>
+          timerData !== null,
       );
   }
 
