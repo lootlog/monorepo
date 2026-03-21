@@ -68,7 +68,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^25.5.0",
     "@types/redlock": "^4.0.8",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "^7.2.0",
     "jest": "^30.3.0",
     "prisma": "7.5.0",
     "supertest": "^7.2.2",
