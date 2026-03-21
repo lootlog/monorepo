@@ -18,7 +18,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { UserId } from "@lootlog/nest-shared";
-import { Permission, type Role } from "generated/client";
+import { Permission, type Role } from "prisma/generated/client";
 import {
   UpdateKillPointDto,
   UpdateRankingPointsDto,

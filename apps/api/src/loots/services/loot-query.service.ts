@@ -8,7 +8,7 @@ import {
   NpcType,
   type Guild,
   type Role,
-} from "generated/client";
+} from "prisma/generated/client";
 import type { FetchLootsParamsDto } from "src/loots/dto/fetch-loots-params.dto";
 import type { LootItemDto } from "src/loots/dto/loot-item.dto";
 import type { LootNpcDto } from "src/loots/dto/loot-npc.dto";

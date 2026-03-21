@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Permission } from "generated/client";
+import { Permission } from "prisma/generated/client";
 
 class UserGuildPermissionsRole {
   @ApiProperty({ description: "Role ID" })

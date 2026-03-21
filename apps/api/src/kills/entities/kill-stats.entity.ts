@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Expose } from "class-transformer";
-import type { NpcType } from "generated/client";
+import type { NpcType } from "prisma/generated/client";
 
 export class KillsByTypeEntity {
   @Expose()

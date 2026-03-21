@@ -14,7 +14,7 @@ import { RedisService } from "@lootlog/nest-shared";
 import { v6 } from "uuid";
 import { isAdministrativeUser } from "src/shared/permissions/is-administrative-user";
 import { GuildsService } from "src/guilds/guilds.service";
-import { NpcType, Permission, Role } from "generated/client";
+import { NpcType, Permission, Role } from "prisma/generated/client";
 import { getNpcTypeByWt } from "@lootlog/types";
 import { canViewChatMessage } from "src/shared/utils/can-view-chat-message";
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common";
-import { PrismaClient, Prisma } from "generated/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient, Prisma } from "prisma/generated/client";
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -7,7 +8,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly SLOW_QUERY_THRESHOLD_MS = 100;
 
   constructor() {
+    const adapter = new PrismaPg({
+      connectionString: process.env.POSTGRESQL_CONNECTION_URI!,
+    });
+
     super({
+      adapter,
       log: [
         { emit: "event", level: "query" },
         { emit: "stdout", level: "info" },
@@ -26,8 +32,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           ${query}
           params: ${params}`,
         );
-      } else {
-        // this.logger.debug(`Query (${duration} ms) [${target}]`);
       }
     });
   }

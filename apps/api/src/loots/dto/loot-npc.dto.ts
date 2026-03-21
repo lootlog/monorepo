@@ -1,4 +1,4 @@
-import { NpcType, Profession } from "generated/client";
+import { NpcType, Profession } from "prisma/generated/client";
 
 export type LootNpcDto = {
   id: number;

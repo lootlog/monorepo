@@ -1,4 +1,4 @@
-import { Permission } from "generated/client";
+import { Permission } from "prisma/generated/client";
 import { IsEnum, IsNumber } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
