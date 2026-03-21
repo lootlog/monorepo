@@ -14,12 +14,11 @@ export class MapTemplatesService {
   }
 
   async createTemplate(guildId: string, data: CreateMapTemplateDto) {
-    console.log(data);
     return this.prisma.mapTemplate.create({
       data: {
         guildId,
         name: data.name,
-        maps: data.maps as unknown as any,
+        maps: data.maps as any,
       },
     });
   }
