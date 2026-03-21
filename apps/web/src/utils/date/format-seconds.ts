@@ -1,16 +1,14 @@
 import { intervalToDuration } from "date-fns";
 
 export function formatSeconds(totalSeconds: number): string {
-  const secs = Math.max(0, Math.floor(totalSeconds));
-  const {
-    hours = 0,
-    minutes = 0,
-    seconds = 0,
-  } = intervalToDuration({
+  const normalizedSeconds = Math.max(0, Math.floor(totalSeconds));
+  const duration = intervalToDuration({
     start: 0,
-    end: secs * 1000,
+    end: normalizedSeconds * 1000,
   });
 
-  const totalMinutes = (hours ?? 0) * 60 + (minutes ?? 0);
-  return `${totalMinutes}m ${seconds ?? 0}s`;
+  const totalMinutes = (duration.hours ?? 0) * 60 + (duration.minutes ?? 0);
+  const remainingSeconds = duration.seconds ?? 0;
+
+  return `${totalMinutes}m ${remainingSeconds}s`;
 }

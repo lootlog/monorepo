@@ -5,15 +5,20 @@ export type PermissionRefreshInfo = {
   canTriggerRefreshText: string;
 };
 
+const PERMISSIONS_CURRENT_TEXT = "Uprawnienia s\u0105 aktualne";
+const PERMISSIONS_REFRESH_TEXT = "Od\u015bwie\u017c swoje uprawnienia";
+
+const createCurrentPermissionRefreshInfo = (): PermissionRefreshInfo => ({
+  canTriggerRefresh: false,
+  canTriggerRefreshText: PERMISSIONS_CURRENT_TEXT,
+});
+
 export const getPermissionRefreshInfo = (
   updatedAt: string | null | undefined,
   currentTimestamp = Date.now(),
 ): PermissionRefreshInfo => {
   if (!updatedAt) {
-    return {
-      canTriggerRefresh: false,
-      canTriggerRefreshText: "Uprawnienia są aktualne",
-    };
+    return createCurrentPermissionRefreshInfo();
   }
 
   const updatedAtTimestamp = new Date(updatedAt).getTime();
@@ -23,7 +28,7 @@ export const getPermissionRefreshInfo = (
   if (canTriggerRefresh) {
     return {
       canTriggerRefresh: true,
-      canTriggerRefreshText: "Odśwież swoje uprawnienia",
+      canTriggerRefreshText: PERMISSIONS_REFRESH_TEXT,
     };
   }
 
@@ -35,12 +40,9 @@ export const getPermissionRefreshInfo = (
   if (minutesUntilRefresh > 0) {
     return {
       canTriggerRefresh: false,
-      canTriggerRefreshText: `Spróbuj ponownie za ${minutesUntilRefresh} min`,
+      canTriggerRefreshText: `Spr\u00f3buj ponownie za ${minutesUntilRefresh} min`,
     };
   }
 
-  return {
-    canTriggerRefresh: false,
-    canTriggerRefreshText: "Uprawnienia są aktualne",
-  };
+  return createCurrentPermissionRefreshInfo();
 };
