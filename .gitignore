@@ -28,6 +28,7 @@ out/
 build
 dist
 .content-collections
+.source
 
 
 # Debug
