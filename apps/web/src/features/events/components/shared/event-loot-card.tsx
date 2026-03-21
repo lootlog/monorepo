@@ -10,7 +10,7 @@ type ItemsByPlayer = Record<string, Item[]>;
 
 const useLootData = (loot: Loot) => {
   const itemOwnerMap: Record<string, string | undefined> = {};
-  Object.entries(loot.lootShare || {}).forEach(([playerId, itemIds]) => {
+  Object.entries(loot.lootShare ?? {}).forEach(([playerId, itemIds]) => {
     itemIds.forEach((itemId) => {
       itemOwnerMap[itemId] = playerId;
     });
@@ -41,8 +41,8 @@ const useLootData = (loot: Loot) => {
   );
 
   const sortedPlayers = [...loot.players].sort((a, b) => {
-    const aItems = itemsByPlayer[a.id]?.length || 0;
-    const bItems = itemsByPlayer[b.id]?.length || 0;
+    const aItems = itemsByPlayer[a.id]?.length ?? 0;
+    const bItems = itemsByPlayer[b.id]?.length ?? 0;
     if (aItems > 0 && bItems === 0) return -1;
     if (aItems === 0 && bItems > 0) return 1;
     return 0;
@@ -86,7 +86,7 @@ export const EventLootCard = ({ loot }: EventLootCardProps) => {
           <PlayerWithItems
             key={player.id}
             player={player}
-            items={itemsByPlayer[player.id] || []}
+            items={itemsByPlayer[player.id] ?? []}
           />
         ))}
         {sortedPlayers.length > 4 && (
