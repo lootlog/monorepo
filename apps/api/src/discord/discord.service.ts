@@ -296,7 +296,7 @@ export class DiscordService implements OnModuleInit {
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
-      return parsed === null ? null : (parsed as APIGuildMember);
+      return parsed as APIGuildMember | null;
     }
 
     let lock: Awaited<ReturnType<typeof this.redlock.acquire>> | null = null;
@@ -307,7 +307,7 @@ export class DiscordService implements OnModuleInit {
       const cachedAfterLock = await this.redisService.get(cacheKey);
       if (cachedAfterLock) {
         const parsed = JSON.parse(cachedAfterLock);
-        return parsed === null ? null : (parsed as APIGuildMember);
+        return parsed as APIGuildMember | null;
       }
 
       const isRateLimited = await this.rateLimiter.checkRateLimitForUser(
@@ -323,7 +323,7 @@ export class DiscordService implements OnModuleInit {
             level: "info",
             message: `Returning stale member data due to rate limit for guild ${guildId}, user ${userId}`,
           });
-          return parsed === null ? null : (parsed as APIGuildMember);
+          return parsed as APIGuildMember | null;
         }
 
         this.logger.log({
@@ -377,7 +377,7 @@ export class DiscordService implements OnModuleInit {
               level: "info",
               message: `Returning stale member data after rate limit error for guild ${guildId}, user ${userId}`,
             });
-            return parsed === null ? null : (parsed as APIGuildMember);
+            return parsed as APIGuildMember | null;
           }
 
           throw error;
