@@ -21,7 +21,7 @@
     "better-auth": "^1.5.5",
     "framer-motion": "^12.38.0",
     "fumadocs-core": "^16.7.2",
-    "fumadocs-mdx": "^13.0.8",
+    "fumadocs-mdx": "^14.2.11",
     "fumadocs-ui": "^16.7.2",
     "lucide-react": "^0.548.0",
     "next": "^16.2.1",
