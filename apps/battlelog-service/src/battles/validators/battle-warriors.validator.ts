@@ -49,12 +49,7 @@ export function ValidateWarriorsRecord(validationOptions?: ValidationOptions) {
             }
           }
 
-          // Reject battles with only one team
-          if (teams.size <= 1) {
-            return false;
-          }
-
-          return true;
+          return teams.size > 1;
         },
         defaultMessage(args: ValidationArguments) {
           return `${args.property} must be a valid Record of warriors`;

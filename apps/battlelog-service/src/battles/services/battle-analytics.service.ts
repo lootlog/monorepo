@@ -1332,10 +1332,6 @@ export class BattleAnalyticsService {
       return false;
     }
 
-    if (maxLevel !== undefined && opponentLevel > maxLevel) {
-      return false;
-    }
-
-    return true;
+    return maxLevel === undefined || opponentLevel <= maxLevel;
   }
 }
