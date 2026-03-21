@@ -12,16 +12,16 @@ const CDN_BASE_URL = "https://micc.garmory-cdn.cloud/obrazki/postacie";
 
 export const PublicBattle = () => {
   const { id: battleId } = useParams({ from: "/battles/$id" });
+  const publicBattleQueryOptions = { battleId, isPublic: true };
 
   const {
     data: battle,
     isLoading: isBattleLoading,
     error: battleError,
-  } = useBattle({ battleId: battleId ?? undefined, isPublic: true });
-  const { data: rawBattle, isLoading: isRawBattleLoading } = useBattleRaw({
-    battleId: battleId ?? undefined,
-    isPublic: true,
-  });
+  } = useBattle(publicBattleQueryOptions);
+  const { data: rawBattle, isLoading: isRawBattleLoading } = useBattleRaw(
+    publicBattleQueryOptions,
+  );
 
   const isLoading = isBattleLoading || isRawBattleLoading;
 

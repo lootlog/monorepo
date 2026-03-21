@@ -7,6 +7,15 @@ import { writeFile, access } from "node:fs/promises";
 import path from "node:path";
 import { constants } from "node:fs";
 
+const hasReadableFile = async (filePath: string): Promise<boolean> => {
+  try {
+    await access(filePath, constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const displaySeedHelp = (): void => {
   console.log(`
 ${chalk.bold.blue("Seed Command")}
@@ -156,13 +165,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           options.output || "./packages/cli/src/mocks/data/players.json";
         const outputPath = path.resolve(output);
 
-        let fileExists = false;
-        try {
-          await access(outputPath, constants.R_OK);
-          fileExists = true;
-        } catch {
-          fileExists = false;
-        }
+        const fileExists = await hasReadableFile(outputPath);
 
         if (fileExists && !options.force) {
           console.log(
@@ -227,13 +230,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           "./packages/cli/src/mocks/data/players.json",
         );
 
-        let playersFileExists = false;
-        try {
-          await access(playersPath, constants.R_OK);
-          playersFileExists = true;
-        } catch {
-          playersFileExists = false;
-        }
+        const playersFileExists = await hasReadableFile(playersPath);
 
         if (playersFileExists && !options.force) {
           console.log(

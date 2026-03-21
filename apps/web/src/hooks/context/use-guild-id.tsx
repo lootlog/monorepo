@@ -10,8 +10,7 @@ export const useGuildId = () => {
   const guildIdFromPath = "guildId" in params ? params.guildId : undefined;
   const guildIdFromSearchParams = search?.guild_id;
 
-  const guildId =
-    rawGuildId ?? guildIdFromSearchParams ?? guildIdFromPath ?? undefined;
+  const guildId = rawGuildId ?? guildIdFromSearchParams ?? guildIdFromPath;
 
   return guildId;
 };
