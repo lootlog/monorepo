@@ -64,14 +64,31 @@ ${chalk.bold("Development Guild Setup:")}
   `);
 };
 
-const parseOptions = (args: string[]) => {
-  const options: Record<string, any> = {};
+interface SeedOptions {
+  force?: boolean;
+  guilds?: number;
+  loots?: number;
+  battles?: number;
+  players?: number;
+  clean?: boolean;
+  skipScrape?: boolean;
+  itemsOutput?: string;
+  npcsOutput?: string;
+  output?: string;
+  count?: number;
+}
+
+const parseOptions = (args: string[]): SeedOptions => {
+  const options: SeedOptions = {};
   const takeNextArg = (index: number): string | undefined => args[index + 1];
   const parseIntegerOption = (index: number): number | undefined => {
     const value = takeNextArg(index);
     return value === undefined ? undefined : Number.parseInt(value, 10);
   };
-  const setOption = (key: string, value: unknown) => {
+  const setOption = <K extends keyof SeedOptions>(
+    key: K,
+    value: SeedOptions[K],
+  ) => {
     if (value !== undefined) {
       options[key] = value;
     }
@@ -264,8 +281,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
         );
         process.exit(1);
     }
-  } catch (error: any) {
-    console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red(`\n❌ Error: ${message}\n`));
     process.exit(1);
   }
 };
