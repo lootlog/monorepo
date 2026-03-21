@@ -85,7 +85,10 @@ const parseOptions = (args: string[]): SeedOptions => {
     const value = takeNextArg(index);
     return value === undefined ? undefined : Number.parseInt(value, 10);
   };
-  const setOption = <K extends keyof SeedOptions>(key: K, value: SeedOptions[K]) => {
+  const setOption = <K extends keyof SeedOptions>(
+    key: K,
+    value: SeedOptions[K],
+  ) => {
     if (value !== undefined) {
       options[key] = value;
     }
