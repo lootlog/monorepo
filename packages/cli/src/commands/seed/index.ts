@@ -173,9 +173,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           options.output || "./packages/cli/src/mocks/data/players.json";
         const outputPath = path.resolve(output);
 
-        const fileExists = await fileExists(outputPath);
+        const outputExists = await fileExists(outputPath);
 
-        if (fileExists && !options.force) {
+        if (outputExists && !options.force) {
           console.log(
             chalk.yellow(
               `⏭️  Players file already exists at ${outputPath}. Use --force to regenerate.`,
