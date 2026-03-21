@@ -5,7 +5,6 @@ import {
   createRootRoute,
 } from "@tanstack/react-router";
 import appCss from "~/styles/app.css?url";
-import { DocsLayout } from "~/components/docs-layout";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,7 +14,7 @@ export const Route = createRootRoute({
       { title: "Lootlog Developer Portal" },
       {
         name: "description",
-        content: "Dokumentacja i zasoby dla deweloperów Lootlog",
+        content: "Portal deweloperski Lootlog - wkrótce",
       },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
@@ -30,9 +29,7 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <DocsLayout>
-          <Outlet />
-        </DocsLayout>
+        <Outlet />
         <Scripts />
       </body>
     </html>

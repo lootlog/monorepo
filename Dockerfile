@@ -26,7 +26,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client
+RUN pnpm run build --filter=!@lootlog/landing --filter=!@lootlog/web --filter=!@lootlog/game-client --filter=!@lootlog/docs
 
 RUN find ./packages -name "src" -type d -exec rm -rf {} + 2>/dev/null || true && \
     find ./packages -name "*.ts" -not -path "*/dist/*" -delete && \

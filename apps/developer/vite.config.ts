@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
-import contentCollections from "@content-collections/vite";
 import path from "node:path";
 
 export default defineConfig({
@@ -12,5 +11,5 @@ export default defineConfig({
       "~": path.resolve(import.meta.dirname, "./src"),
     },
   },
-  plugins: [tanstackStart(), contentCollections(), tailwindcss()],
+  plugins: [tanstackStart(), tailwindcss()],
 });

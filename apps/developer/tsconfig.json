@@ -9,6 +9,6 @@
     },
     "noEmit": true
   },
-  "include": ["src", "content-collections.ts", "vite.config.ts"],
+  "include": ["src", "vite.config.ts"],
   "exclude": ["node_modules", ".output"]
 }
