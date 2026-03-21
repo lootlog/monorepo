@@ -60,10 +60,7 @@ Wykrywacz NPC pokazuje wszystkie potwory na bieżącej mapie.
 
 ## Porady
 
-<Callout type="tip">
-  **Wskazówka:** Użyj skrótów klawiszowych aby szybciej nawigować po interfejsie
-  Lootlog.
-</Callout>
+> **Wskazówka:** Użyj skrótów klawiszowych aby szybciej nawigować po interfejsie Lootlog.
 
 ### Najlepsze praktyki
 

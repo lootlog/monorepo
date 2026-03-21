@@ -31,10 +31,7 @@ Dostęp do eventów kontrolują dedykowane uprawnienia:
 | `LOOTLOG_EVENTS_WRITE`  | Samodzielne przypisywanie się do map                                   |
 | `LOOTLOG_EVENTS_MANAGE` | Tworzenie eventów, zarządzanie herosami i mapami, przypisywanie innych |
 
-<Callout type="info">
-  **Konfiguracja uprawnień:** Uprawnienia eventowe konfigurujesz w ustawieniach
-  klanu → Role → wybrana rola → sekcja "Eventy".
-</Callout>
+> **Konfiguracja uprawnień:** Uprawnienia eventowe konfigurujesz w ustawieniach klanu → Role → wybrana rola → sekcja "Eventy".
 
 ### Edycja punktów
 
@@ -54,10 +51,7 @@ Aby utworzyć nowy event, potrzebujesz uprawnienia `EVENTS_MANAGE`.
 - **Data rozpoczęcia** - kiedy event się zaczyna
 - **Data zakończenia** - kiedy event się kończy
 
-<Callout type="tip">
-  **Daty są opcjonalne.** Możesz utworzyć event bez dat i ustawić je później w
-  edycji.
-</Callout>
+> **Daty są opcjonalne.** Możesz utworzyć event bez dat i ustawić je później w edycji.
 
 Po utworzeniu eventu możesz dodawać do niego herosów.
 
@@ -73,11 +67,7 @@ Opcjonalnie:
 
 - **ID NPC** - identyfikator z gry (np. z URL potwora)
 
-<Callout type="info">
-  **Automatyczne wykrywanie ID:** Jeśli nie znasz ID herosa, zostaw pole puste.
-  System automatycznie wykryje ID po pierwszym zbiciu herosa (wymaga poprawnej
-  nazwy).
-</Callout>
+> **Automatyczne wykrywanie ID:** Jeśli nie znasz ID herosa, zostaw pole puste. System automatycznie wykryje ID po pierwszym zbiciu herosa (wymaga poprawnej nazwy).
 
 ### Dodawanie map
 
@@ -102,10 +92,7 @@ Punkty = Bazowe × Pora dnia × Tropiciele × Mapy
 
 Podstawowa liczba punktów za bicie. Możesz ją zmienić w ustawieniach herosa.
 
-<Callout type="info">
-  **Przeliczanie historii:** Zmiana punktów bazowych automatycznie przeliczy
-  punkty dla wszystkich historycznych bić.
-</Callout>
+> **Przeliczanie historii:** Zmiana punktów bazowych automatycznie przeliczy punkty dla wszystkich historycznych bić.
 
 ### Mnożnik pory dnia
 
@@ -194,10 +181,7 @@ Okno można zamknąć ręcznie lub zostanie zamknięte automatycznie:
 - **Automatycznie** - po przekroczeniu maksymalnego czasu respawnu
 - **Ręcznie** - moderator może zamknąć okno przyciskiem "Zamknij okno"
 
-<Callout type="tip">
-  **Po biciu herosa:** System automatycznie zamyka okno, czyści przypisania do
-  map i nalicza punkty uczestnikom.
-</Callout>
+> **Po biciu herosa:** System automatycznie zamyka okno, czyści przypisania do map i nalicza punkty uczestnikom.
 
 ## Rankingi
 

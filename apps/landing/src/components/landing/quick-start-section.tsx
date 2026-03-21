@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 interface StepNodeProps {
@@ -29,12 +28,12 @@ export function QuickStartSection() {
 
       <div className="relative">
         <div className="flex justify-end mb-4">
-          <Link
-            href="/docs"
+          <a
+            href="https://developer.lootlog.pl"
             className="text-sm text-primary hover:underline flex items-center gap-1"
           >
             Pełna instrukcja <ArrowRight className="w-3 h-3" />
-          </Link>
+          </a>
         </div>
 
         <div className="relative flex items-start justify-between">
