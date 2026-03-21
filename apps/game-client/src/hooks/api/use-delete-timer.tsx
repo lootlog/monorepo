@@ -14,12 +14,6 @@ export const useDeleteTimer = () => {
     mutationKey: ["delete-timer"],
     mutationFn: ({ guildId, npcId, world }: UseDeleteTimerOptions) =>
       client.delete(`/guilds/${guildId}/timers/${npcId}?world=${world}`),
-    onSuccess: () => {
-      console.log("onSuccess");
-    },
-    onError: () => {
-      console.log("onError");
-    },
   });
 
   return mutation;

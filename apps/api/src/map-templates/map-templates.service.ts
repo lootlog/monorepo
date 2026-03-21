@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import type { Prisma } from "@prisma/client";
 import { PrismaService } from "src/db/prisma.service";
 import type { CreateMapTemplateDto } from "./dto/create-map-template.dto";
 
@@ -14,12 +15,11 @@ export class MapTemplatesService {
   }
 
   async createTemplate(guildId: string, data: CreateMapTemplateDto) {
-    console.log(data);
     return this.prisma.mapTemplate.create({
       data: {
         guildId,
         name: data.name,
-        maps: data.maps as unknown as any,
+        maps: data.maps as unknown as Prisma.InputJsonValue,
       },
     });
   }

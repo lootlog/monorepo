@@ -14,12 +14,6 @@ export const useResetTimer = () => {
     mutationKey: ["reset-timer"],
     mutationFn: ({ guildId, npcId, ...rest }: UseResetTimerOptions) =>
       client.patch(`/guilds/${guildId}/timers/${npcId}/reset`, rest),
-    onSuccess: () => {
-      console.log("onSuccess");
-    },
-    onError: () => {
-      console.log("onError");
-    },
   });
 
   return mutation;
