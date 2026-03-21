@@ -14,7 +14,5 @@ export class PlayersService {
       RoutingKey.SEARCH_PLAYERS_INDEX,
       players,
     );
-
-    return undefined;
   }
 }
