@@ -4,13 +4,15 @@ import { MessageType, SendMessageDto } from "src/chat/dto/send-message.dto";
 
 type NpcData = NonNullable<SendMessageDto["npc"]>;
 
+const getNpcPermission = (npcType: NpcType): Permission => {
+  if (npcType === NpcType.TITAN) return Permission.LOOTLOG_CHAT_TITANS_READ;
+  if (npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO)
+    return Permission.LOOTLOG_CHAT_HEROES_READ;
+  return Permission.LOOTLOG_CHAT_READ;
+};
+
 const hasNpcPermission = (npc: NpcData, npcType: NpcType, roles: Role[]) => {
-  const permission =
-    npcType === NpcType.TITAN
-      ? Permission.LOOTLOG_CHAT_TITANS_READ
-      : npcType === NpcType.HERO || npcType === NpcType.EVENT_HERO
-        ? Permission.LOOTLOG_CHAT_HEROES_READ
-        : Permission.LOOTLOG_CHAT_READ;
+  const permission = getNpcPermission(npcType);
 
   return roles.some(
     (role) =>
