@@ -1,6 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { LandingHeader, LandingFooter } from "@/src/components/landing";
 
 interface PolicyLayoutProps {
@@ -9,6 +12,8 @@ interface PolicyLayoutProps {
 }
 
 export function PolicyLayout({ children, lastUpdated }: PolicyLayoutProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 selection:text-white flex flex-col">
       <LandingHeader />
@@ -20,11 +25,11 @@ export function PolicyLayout({ children, lastUpdated }: PolicyLayoutProps) {
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
-            Powrót do strony głównej
+            {t("landing.policyLayout.backToHome")}
           </Link>
           {lastUpdated && (
             <p className="text-sm text-muted-foreground mb-6">
-              Data ostatniej aktualizacji: {lastUpdated}
+              {t("landing.policyLayout.lastUpdated", { date: lastUpdated })}
             </p>
           )}
           <div className="rounded-lg border border-border bg-card p-8 space-y-6">

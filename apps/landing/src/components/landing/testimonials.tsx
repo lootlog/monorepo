@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 
 interface TestimonialCardProps {
@@ -25,7 +26,7 @@ function TestimonialCard({
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -5 }}
-      className="group flex flex-col p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
+      className="group flex flex-col p-6 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.02] backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/20"
     >
       <div className="flex items-center gap-4 mb-4">
         <div className="relative">
@@ -36,7 +37,7 @@ function TestimonialCard({
             width={48}
             height={48}
             unoptimized
-            className="relative h-12 w-12 rounded-full border-2 border-white/10 object-cover"
+            className="relative h-12 w-12 rounded-full border-2 border-primary/30 object-cover"
           />
         </div>
         <div>
@@ -54,28 +55,30 @@ function TestimonialCard({
 }
 
 export function Testimonials() {
+  const { t } = useTranslation();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <TestimonialCard
         index={0}
-        name="Kamil"
+        name={t("landing.testimonials.kamil.name")}
         avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=202020"
-        role="Lider Klanu"
-        desc="To gówno wytwarza jakąś magiczną barierę wokół mojego pokoju, nie mogę się oderwać od Margonem."
+        role={t("landing.testimonials.kamil.role")}
+        desc={t("landing.testimonials.kamil.quote")}
       />
       <TestimonialCard
         index={1}
-        name="Anna"
+        name={t("landing.testimonials.anna.name")}
         avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=202020"
-        role="Taktyk"
-        desc="Analiza walk pokazała, że mag wymaga nerfa, a łowca jest zbyt słaby."
+        role={t("landing.testimonials.anna.role")}
+        desc={t("landing.testimonials.anna.quote")}
       />
       <TestimonialCard
         index={2}
-        name="Marek"
+        name={t("landing.testimonials.marek.name")}
         avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Max&backgroundColor=202020"
-        role="PvP Gracz"
-        desc="Wszystko działa jak należy, ale fajnie by było, gdybyście dodali dźwięki powiadomień."
+        role={t("landing.testimonials.marek.role")}
+        desc={t("landing.testimonials.marek.quote")}
       />
     </div>
   );

@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { Button } from "@lootlog/ui/components/button";
+import { links } from "@/src/config/links";
 
 export const PageHeader: React.FC = () => {
+  const { t } = useTranslation();
   const session = useSession();
   const isAuthenticated = !!session.data;
   const isLoading = session.isPending;
@@ -24,7 +27,7 @@ export const PageHeader: React.FC = () => {
   return (
     <div className="flex flex-row items-center justify-between w-full h-16 text-white">
       <Link href="/" className="text-xl font-bold">
-        lootlog.pl
+        {t("landing.header.brand")}
       </Link>
       <div className="flex flex-row gap-4">
         {isLoading ? (
@@ -32,12 +35,12 @@ export const PageHeader: React.FC = () => {
             <Loader2 className="h-4 w-4 animate-spin" />
           </Button>
         ) : isAuthenticated ? (
-          <a href="/@me" className="pointer-events-auto">
-            <Button>Przejdź do lootloga</Button>
+          <a href={links.dashboard} className="pointer-events-auto">
+            <Button>{t("landing.heroAlt.goToLootlog")}</Button>
           </a>
         ) : (
           <Button className="pointer-events-auto" onClick={handleLoginAction}>
-            Zaloguj się
+            {t("landing.heroAlt.login")}
           </Button>
         )}
       </div>

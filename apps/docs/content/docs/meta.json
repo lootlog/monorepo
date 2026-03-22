@@ -4,8 +4,12 @@
     "index",
     "installation",
     "getting-started",
+    "web-panel",
     "features",
+    "battle-panel",
     "events",
+    "permissions",
+    "settings",
     "faq"
   ]
 }

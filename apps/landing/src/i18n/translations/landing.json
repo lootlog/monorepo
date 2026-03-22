@@ -1,0 +1,216 @@
+{
+  "header": {
+    "brand": "lootlog.pl",
+    "docs": "Dokumentacja",
+    "github": "GitHub",
+    "support": "Wesprzyj",
+    "goToLootlog": "Przejdź do Lootloga",
+    "lootlog": "Lootlog",
+    "login": "Zaloguj się"
+  },
+  "hero": {
+    "titleLine1": "Przejmij kontrolę nad",
+    "titleLine2": "Lootami i Timerami",
+    "subtitle": "Lootlog to Twoje centrum dowodzenia w Margonem.",
+    "subtitleLine2": "Synchronizowane timery, historia łupów i analiza walk.",
+    "installAddon": "Zainstaluj Dodatek",
+    "docs": "Dokumentacja"
+  },
+  "heroAlt": {
+    "subtitle": "Otwartoźródłowy, zaawansowany dodatek do gry Margonem, który automatycznie śledzi łupy i timery respawnu potworów, oraz ułatwia organizację w klanie.",
+    "installAddon": "Zainstaluj dodatek",
+    "docs": "Dokumentacja",
+    "goToLootlog": "Przejdź do lootloga",
+    "login": "Zaloguj się"
+  },
+  "features": {
+    "timers": {
+      "title": "Timery respawnu",
+      "description": "Śledzenie czasów respawnu potworów w czasie rzeczywistym."
+    },
+    "npcDetector": {
+      "title": "Wykrywacz NPC",
+      "description": "Automatyczne wykrywanie potworów na mapie z informacjami o typie i poziomie."
+    },
+    "panel": {
+      "title": "Panel Lootloga",
+      "description": "Wyświetlanie, wyszukiwanie i filtrowanie zebranych łupów."
+    },
+    "roles": {
+      "title": "Zarządzanie rolami",
+      "description": "Rozbudowane zarządzanie rolami i uprawnieniami w klanie."
+    },
+    "chat": {
+      "title": "Chat",
+      "description": "Szybka komunikacja z członkami klanu dzięki wbudowanemu chatowi."
+    },
+    "notifications": {
+      "title": "Powiadomienia",
+      "description": "Natychmiastowe powiadomienia o ważnych wydarzeniach w grze."
+    }
+  },
+  "bento": {
+    "title": "Narzędzia dla",
+    "titleHighlight": "Profesjonalistów",
+    "subtitle": "Zbudowane przez graczy, dla graczy. Każdy piksel ma znaczenie.",
+    "timers": {
+      "title": "Synchronizacja Timerów",
+      "description": "Wspólne odliczanie dla całego klanu."
+    },
+    "loot": {
+      "title": "Lootlog z Filtrami",
+      "description": "Zaawansowane filtrowanie łupów."
+    },
+    "notifications": {
+      "title": "Powiadomienia",
+      "description": "Bądź zawsze na bieżąco."
+    },
+    "battles": {
+      "title": "Analiza Walk",
+      "description": "Wykresy, statystyki, wnioski."
+    },
+    "chat": {
+      "title": "Czat Zintegrowany",
+      "description": "Komunikacja bez wychodzenia z gry."
+    },
+    "reservations": {
+      "title": "System Rezerwacji",
+      "description": "Koniec z kłótniami o respy."
+    },
+    "visual": {
+      "titan": "Tytan",
+      "hero": "Heros",
+      "e2": "E2",
+      "npc1": "Piekielny Kościej (85w)",
+      "npc2": "Święty Braciszek (123b)",
+      "legendary": "Legendarny",
+      "respawn": "Respawn",
+      "respawnMessage": "odrodził się na mapie!",
+      "auction": "Aukcja",
+      "auctionMessage": "Twoja oferta została przebita.",
+      "chatMessage1": "Ktoś na E2? Zaraz respi.",
+      "chatMessage2": "Już biegnę, trzymajcie!",
+      "occupied": "Zajęte",
+      "you": "Ty",
+      "free": "Wolne"
+    }
+  },
+  "faq": {
+    "q1": "Gdzie analizować walki?",
+    "a1": "Po zainstalowaniu dodatku, logi walki trafiają do Panelu Gracza, gdzie możesz je przeglądać.",
+    "q2": "Czy dostanę bana?",
+    "a2": "Nie. Lootlog to nakładka UI, która nie ingeruje w silnik gry ani nie wykonuje ruchów za postać.",
+    "q3": "Ile to kosztuje?",
+    "a3": "0 SŁ. Projekt jest darmowy i tworzony przez społeczność (Open Source).",
+    "q4": "Jak działają timery?",
+    "a4": "Timery synchronizują się automatycznie między graczami w klanie. Wystarczy, że jeden gracz zabije elitę, a reszta zobaczy odliczanie.",
+    "q5": "Czy mogę używać na wielu postaciach?",
+    "a5": "Tak! Dodatek działa na wszystkich postaciach i światach. Dane są przypisane do konta Discord.",
+    "q6": "Jak zgłosić błąd lub zaproponować funkcję?",
+    "a6": "Najlepiej przez naszego Discorda lub bezpośrednio na GitHubie w sekcji Issues. Chętnie przyjmujemy też pull requesty!"
+  },
+  "testimonials": {
+    "kamil": {
+      "name": "Kamil",
+      "role": "Lider Klanu",
+      "quote": "To gówno wytwarza jakąś magiczną barierę wokół mojego pokoju, nie mogę się oderwać od Margonem."
+    },
+    "anna": {
+      "name": "Anna",
+      "role": "Taktyk",
+      "quote": "Analiza walk pokazała, że mag wymaga nerfa, a łowca jest zbyt słaby."
+    },
+    "marek": {
+      "name": "Marek",
+      "role": "PvP Gracz",
+      "quote": "Wszystko działa jak należy, ale fajnie by było, gdybyście dodali dźwięki powiadomień."
+    }
+  },
+  "featuresPanel": {
+    "title": "Aktywne Moduły",
+    "activeCount": "5 aktywnych",
+    "battleAnalyzer": {
+      "title": "Analizator Walk",
+      "description": "Szczegółowe statystyki z każdej tury."
+    },
+    "autoLoot": {
+      "title": "Auto-Loot",
+      "description": "Baza dropów legendarnych i heroicznych."
+    },
+    "respawnTimer": {
+      "title": "Zegar Respów",
+      "description": "Synchronizowane timery E2 i Tytanów."
+    },
+    "clanVault": {
+      "title": "Skarbiec Klanowy",
+      "description": "Transparentny podział łupów w grupie."
+    },
+    "openSource": {
+      "title": "Open Source",
+      "description": "Kod dostępny na GitHub. Zero wirusów."
+    }
+  },
+  "valueProposition": {
+    "registry": {
+      "title": "Inteligentny Rejestr",
+      "description": "Skończ z notatnikiem. Lootlog skrupulatnie notuje każdego herosa, tytana i E2. Wszystkie dane o dropach i czasach respawnu trafiają prosto do bazy.",
+      "item1": "Wspólny rejestr klanowy",
+      "item2": "Timery bez Excela",
+      "item3": "Historia \"zająca\""
+    },
+    "battles": {
+      "title": "Analiza Walk",
+      "description": "Dlaczego padłeś na Tytanie? Nasz analizator rozbiera walkę na czynniki pierwsze. Zobaczysz buffy, uniki i błędy w rotacji.",
+      "healingEfficiency": "Efektywność leczenia",
+      "damageAbsorption": "Absorpcja obrażeń"
+    }
+  },
+  "quickStart": {
+    "title": "Szybki Start",
+    "fullGuide": "Pełna instrukcja",
+    "step1": {
+      "title": "Pobierz",
+      "description": "Wtyczka do przeglądarki",
+      "note": "(Wymaga Tampermonkey)"
+    },
+    "step2": {
+      "title": "Zaloguj się",
+      "description": "Autoryzacja Discordem"
+    },
+    "step3": {
+      "title": "Graj",
+      "description": "Logi zbierają się w tle"
+    },
+    "step4": {
+      "title": "Analizuj",
+      "description": "Dostęp do panelu lootloga"
+    }
+  },
+  "footer": {
+    "docs": "Dokumentacja",
+    "discord": "Discord",
+    "github": "GitHub",
+    "privacy": "Prywatność",
+    "terms": "Regulamin",
+    "support": "Wesprzyj",
+    "legalNotice": "Grafiki wykorzystane na stronie są własnością Garmory sp. z o.o.",
+    "copyright": "Lootlog © {{year}} • Open Source"
+  },
+  "cookieConsent": {
+    "title": "Ciasteczka? 🍪",
+    "description": "Używamy plików cookie, aby zapewnić Ci najlepsze doświadczenia.",
+    "accept": "Akceptuję",
+    "reject": "Odrzuć"
+  },
+  "policyLayout": {
+    "backToHome": "Powrót do strony głównej",
+    "lastUpdated": "Data ostatniej aktualizacji: {{date}}"
+  },
+  "page": {
+    "opinionsLabel": "Opinie",
+    "opinionsTitle": "Co mówią gracze?",
+    "opinionsSubtitle": "Dołącz do tysięcy zadowolonych użytkowników.",
+    "faqLabel": "FAQ",
+    "faqTitle": "Częste pytania"
+  }
+}
