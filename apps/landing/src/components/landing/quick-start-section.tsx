@@ -1,4 +1,8 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { links } from "@/src/config/links";
 
 interface StepNodeProps {
   number: string;
@@ -22,17 +26,22 @@ function StepNode({ number, title, description }: StepNodeProps) {
 }
 
 export function QuickStartSection() {
+  const { t } = useTranslation();
+
   return (
     <div>
-      <h3 className="font-bold text-xl tracking-tight mb-8">Szybki Start</h3>
+      <h3 className="font-bold text-xl tracking-tight mb-8">
+        {t("landing.quickStart.title")}
+      </h3>
 
       <div className="relative">
         <div className="flex justify-end mb-4">
           <a
-            href="https://docs.lootlog.pl"
+            href={links.docs}
             className="text-sm text-primary hover:underline flex items-center gap-1"
           >
-            Pełna instrukcja <ArrowRight className="w-3 h-3" />
+            {t("landing.quickStart.fullGuide")}{" "}
+            <ArrowRight className="w-3 h-3" />
           </a>
         </div>
 
@@ -41,31 +50,31 @@ export function QuickStartSection() {
 
           <StepNode
             number="1"
-            title="Pobierz"
+            title={t("landing.quickStart.step1.title")}
             description={
               <>
-                Wtyczka do przeglądarki
+                {t("landing.quickStart.step1.description")}
                 <br />
                 <span className="text-muted-foreground/70">
-                  (Wymaga Tampermonkey)
+                  {t("landing.quickStart.step1.note")}
                 </span>
               </>
             }
           />
           <StepNode
             number="2"
-            title="Zaloguj się"
-            description="Autoryzacja Discordem"
+            title={t("landing.quickStart.step2.title")}
+            description={t("landing.quickStart.step2.description")}
           />
           <StepNode
             number="3"
-            title="Graj"
-            description="Logi zbierają się w tle"
+            title={t("landing.quickStart.step3.title")}
+            description={t("landing.quickStart.step3.description")}
           />
           <StepNode
             number="4"
-            title="Analizuj"
-            description="Dostęp do panelu lootloga"
+            title={t("landing.quickStart.step4.title")}
+            description={t("landing.quickStart.step4.description")}
           />
         </div>
       </div>

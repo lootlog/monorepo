@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@lootlog/ui/components/button";
 import { Cookie } from "lucide-react";
 
 export function CookieConsent() {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -30,9 +32,11 @@ export function CookieConsent() {
           </div>
           <div className="space-y-4">
             <div>
-              <h3 className="font-bold text-foreground mb-1">Ciasteczka? 🍪</h3>
+              <h3 className="font-bold text-foreground mb-1">
+                {t("landing.cookieConsent.title")}
+              </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Używamy plików cookie, aby zapewnić Ci najlepsze doświadczenia.
+                {t("landing.cookieConsent.description")}
               </p>
             </div>
             <div className="flex gap-3">
@@ -41,7 +45,7 @@ export function CookieConsent() {
                 size="sm"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 shadow-[0_0_20px_-5px_hsl(var(--primary)/0.4)]"
               >
-                Akceptuję
+                {t("landing.cookieConsent.accept")}
               </Button>
               <Button
                 onClick={() => setIsVisible(false)}
@@ -49,7 +53,7 @@ export function CookieConsent() {
                 size="sm"
                 className="border-white/10 hover:bg-white/5 hover:text-foreground"
               >
-                Odrzuć
+                {t("landing.cookieConsent.reject")}
               </Button>
             </div>
           </div>

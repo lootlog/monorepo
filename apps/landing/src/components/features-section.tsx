@@ -1,96 +1,99 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import Bento, { type BentoCardProps } from "@lootlog/ui/components/bento";
 
-const cardData: BentoCardProps[] = [
-  {
-    color: "var(--background)",
-    title: "Timery respawnu",
-    description: "Śledzenie czasów respawnu potworów w czasie rzeczywistym.",
-    image: (
-      <Image
-        src="/screenshots/timers.png"
-        alt="Screenshot - Interfejs Timera Respawnu"
-        className="rounded-lg"
-        width={800}
-        height={600}
-      />
-    ),
-  },
-  {
-    color: "var(--background)",
-    title: "Wykrywacz NPC",
-    description:
-      "Automatyczne wykrywanie potworów na mapie z informacjami o typie i poziomie.",
-    image: (
-      <Image
-        src="/screenshots/detector.png"
-        alt="Screenshot - Interfejs Wykrywacza NPC"
-        className="rounded-lg"
-        width={800}
-        height={600}
-      />
-    ),
-  },
-  {
-    color: "var(--background)",
-    title: "Panel Lootloga",
-    description: "Wyświetlanie, wyszukiwanie i filtrowanie zebranych łupów.",
-    image: (
-      <Image
-        src="/screenshots/dashboard.png"
-        alt="Screenshot - Interfejs Panelu Lootloga"
-        className="rounded-lg"
-        width={800}
-        height={600}
-      />
-    ),
-  },
-  {
-    color: "var(--background)",
-    title: "Zarządzanie rolami",
-    description: "Rozbudowane zarządzanie rolami i uprawnieniami w klanie.",
-    image: (
-      <Image
-        src="/screenshots/roles.png"
-        alt="Screenshot - Interfejs Zarządzania Rolami"
-        className="rounded-lg"
-        width={800}
-        height={600}
-      />
-    ),
-  },
-  {
-    color: "var(--background)",
-    title: "Chat",
-    description:
-      "Szybka komunikacja z członkami klanu dzięki wbudowanemu chatowi.",
-    image: (
-      <Image
-        src="/screenshots/chat.png"
-        alt="Screenshot - Interfejs Chatu"
-        className="rounded-lg"
-        width={800}
-        height={600}
-      />
-    ),
-  },
-  {
-    color: "var(--background)",
-    title: "Powiadomienia",
-    description: "Natychmiastowe powiadomienia o ważnych wydarzeniach w grze.",
-    image: (
-      <Image
-        src="/screenshots/notifications.png"
-        alt="Screenshot - Interfejs Powiadomień"
-        className="w-full h-auto rounded-lg"
-        width={800}
-        height={600}
-      />
-    ),
-  },
-];
-
 export function FeaturesSection() {
+  const { t } = useTranslation();
+
+  const cardData: BentoCardProps[] = [
+    {
+      color: "var(--background)",
+      title: t("landing.features.timers.title"),
+      description: t("landing.features.timers.description"),
+      image: (
+        <Image
+          src="/screenshots/timers.png"
+          alt="Screenshot - Interfejs Timera Respawnu"
+          className="rounded-lg"
+          width={800}
+          height={600}
+        />
+      ),
+    },
+    {
+      color: "var(--background)",
+      title: t("landing.features.npcDetector.title"),
+      description: t("landing.features.npcDetector.description"),
+      image: (
+        <Image
+          src="/screenshots/detector.png"
+          alt="Screenshot - Interfejs Wykrywacza NPC"
+          className="rounded-lg"
+          width={800}
+          height={600}
+        />
+      ),
+    },
+    {
+      color: "var(--background)",
+      title: t("landing.features.panel.title"),
+      description: t("landing.features.panel.description"),
+      image: (
+        <Image
+          src="/screenshots/dashboard.png"
+          alt="Screenshot - Interfejs Panelu Lootloga"
+          className="rounded-lg"
+          width={800}
+          height={600}
+        />
+      ),
+    },
+    {
+      color: "var(--background)",
+      title: t("landing.features.roles.title"),
+      description: t("landing.features.roles.description"),
+      image: (
+        <Image
+          src="/screenshots/roles.png"
+          alt="Screenshot - Interfejs Zarządzania Rolami"
+          className="rounded-lg"
+          width={800}
+          height={600}
+        />
+      ),
+    },
+    {
+      color: "var(--background)",
+      title: t("landing.features.chat.title"),
+      description: t("landing.features.chat.description"),
+      image: (
+        <Image
+          src="/screenshots/chat.png"
+          alt="Screenshot - Interfejs Chatu"
+          className="rounded-lg"
+          width={800}
+          height={600}
+        />
+      ),
+    },
+    {
+      color: "var(--background)",
+      title: t("landing.features.notifications.title"),
+      description: t("landing.features.notifications.description"),
+      image: (
+        <Image
+          src="/screenshots/notifications.png"
+          alt="Screenshot - Interfejs Powiadomień"
+          className="w-full h-auto rounded-lg"
+          width={800}
+          height={600}
+        />
+      ),
+    },
+  ];
+
   return (
     <section className="pt-16 pb-16 flex flex-col items-center justify-center">
       <Bento
