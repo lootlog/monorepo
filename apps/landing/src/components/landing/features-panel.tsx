@@ -1,4 +1,7 @@
+"use client";
+
 import { BarChart3, Coins, Ghost, Shield, Code } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@lootlog/ui/components/badge";
 import {
   Card,
@@ -54,16 +57,20 @@ function FeaturePanelRow({
 }
 
 export function FeaturesPanel() {
+  const { t } = useTranslation();
+
   return (
     <Card className="p-0">
       <CardHeader className="flex-row items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
-        <CardTitle className="text-sm">Aktywne Moduły</CardTitle>
+        <CardTitle className="text-sm">
+          {t("landing.featuresPanel.title")}
+        </CardTitle>
         <CardAction>
           <Badge
             variant="outline"
             className="text-[10px] h-6 px-2 border-primary/30 text-primary"
           >
-            5 aktywnych
+            {t("landing.featuresPanel.activeCount")}
           </Badge>
         </CardAction>
       </CardHeader>
@@ -71,35 +78,35 @@ export function FeaturesPanel() {
         <div className="flex flex-col">
           <FeaturePanelRow
             icon={BarChart3}
-            title="Analizator Walk"
-            description="Szczegółowe statystyki z każdej tury."
+            title={t("landing.featuresPanel.battleAnalyzer.title")}
+            description={t("landing.featuresPanel.battleAnalyzer.description")}
             badge="HOT"
             delay={50}
           />
           <FeaturePanelRow
             icon={Coins}
-            title="Auto-Loot"
-            description="Baza dropów legendarnych i heroicznych."
+            title={t("landing.featuresPanel.autoLoot.title")}
+            description={t("landing.featuresPanel.autoLoot.description")}
             badge="CORE"
             delay={150}
           />
           <FeaturePanelRow
             icon={Ghost}
-            title="Zegar Respów"
-            description="Synchronizowane timery E2 i Tytanów."
+            title={t("landing.featuresPanel.respawnTimer.title")}
+            description={t("landing.featuresPanel.respawnTimer.description")}
             badge="KLAN"
             delay={250}
           />
           <FeaturePanelRow
             icon={Shield}
-            title="Skarbiec Klanowy"
-            description="Transparentny podział łupów w grupie."
+            title={t("landing.featuresPanel.clanVault.title")}
+            description={t("landing.featuresPanel.clanVault.description")}
             delay={350}
           />
           <FeaturePanelRow
             icon={Code}
-            title="Open Source"
-            description="Kod dostępny na GitHub. Zero wirusów."
+            title={t("landing.featuresPanel.openSource.title")}
+            description={t("landing.featuresPanel.openSource.description")}
             badge="DEV"
             delay={450}
           />
