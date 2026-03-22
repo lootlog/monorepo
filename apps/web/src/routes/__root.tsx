@@ -7,6 +7,7 @@ import { GlobalContextProvider } from "@/contexts/global-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { persister } from "@/lib/query-client";
 import type { RouterContext } from "@/App";
+import { CatSpinnerProvider } from "@/contexts/cat-spinner-provider";
 import { RukiaFrostOverlay } from "@/components/effects/rukia-frost-overlay";
 
 import "@lootlog/ui/globals.css";
@@ -22,13 +23,15 @@ function RootComponent() {
       persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
     >
       <ThemeProvider>
-        <NuqsAdapter>
-          <GlobalContextProvider>
-            <Outlet />
-            {!prefersReducedMotion && <RukiaFrostOverlay />}
-            <ReactQueryDevtools initialIsOpen={false} />
-          </GlobalContextProvider>
-        </NuqsAdapter>
+        <CatSpinnerProvider>
+          <NuqsAdapter>
+            <GlobalContextProvider>
+              <Outlet />
+              {!prefersReducedMotion && <RukiaFrostOverlay />}
+              <ReactQueryDevtools initialIsOpen={false} />
+            </GlobalContextProvider>
+          </NuqsAdapter>
+        </CatSpinnerProvider>
       </ThemeProvider>
     </PersistQueryClientProvider>
   );

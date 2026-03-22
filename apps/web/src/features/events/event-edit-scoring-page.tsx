@@ -3,13 +3,8 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UnsavedChangesBar } from "@/components/ui/unsaved-changes-bar";
-import {
-  AlertCircle,
-  Loader2,
-  RefreshCcw,
-  Settings,
-  Trophy,
-} from "lucide-react";
+import { AlertCircle, RefreshCcw, Settings, Trophy } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { Label } from "@lootlog/ui/components/label";
@@ -59,7 +54,7 @@ export const EventEditScoringPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="size-8 animate-spin text-primary" />
+        <Spinner className="size-8 text-primary" />
       </div>
     );
   }
@@ -170,7 +165,7 @@ const EventEditScoringForm = ({
             title={t("events.scoring.recalculateHint")}
           >
             {recalculatePoints.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" />
+              <Spinner className="size-3.5" />
             ) : (
               <RefreshCcw className="size-3.5" />
             )}

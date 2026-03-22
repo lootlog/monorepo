@@ -9,6 +9,7 @@ import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventRanking } from "./hooks/queries/use-event-ranking";
 import { EventRankingTable } from "./components/ranking/event-ranking-table";
 import { Trophy, AlertCircle } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useState } from "react";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
@@ -44,7 +45,7 @@ export const EventRankingPage = () => {
   if (isEventLoading || isRankingLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }

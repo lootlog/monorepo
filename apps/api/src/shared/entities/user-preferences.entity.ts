@@ -33,6 +33,10 @@ export class UserPreferencesEntity {
       "barcelona",
       "waguri",
       "rukia",
+      "cat-pink",
+      "cat-purple",
+      "cat-blue",
+      "cat-random",
     ],
   })
   theme: string;
