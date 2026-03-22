@@ -12,6 +12,13 @@ const authController = new Hono<{
 }>();
 
 authController.get("/verify", async (c) => {
+  if (
+    c.req.raw.headers.has("X-Auth-Discord-Id") ||
+    c.req.raw.headers.has("X-Auth-User-Id")
+  ) {
+    return c.body(null, 401);
+  }
+
   const user = c.get("user");
 
   if (user) {
