@@ -18,7 +18,5 @@ export const CatPawLottie: FC<CatPawLottieProps> = ({
     autoplay: true,
   });
 
-  return (
-    <div className={cn("cat-paw-spinner scale-[4]", className)}>{View}</div>
-  );
+  return <div className="cat-paw-spinner size-14">{View}</div>;
 };
