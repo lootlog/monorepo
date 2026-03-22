@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { Loader2, Heart, LogIn } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useSession } from "@/src/hooks/use-session";
 import { authClient } from "@/src/lib/auth-client";
 import { Button } from "@lootlog/ui/components/button";
+import { links } from "@/src/config/links";
 
 export function LandingHeader() {
+  const { t } = useTranslation();
   const session = useSession();
   const isAuthenticated = !!session.data;
   const isLoading = session.isPending;
@@ -29,23 +32,23 @@ export function LandingHeader() {
             href="/"
             className="flex items-center gap-2 font-bold text-xl tracking-tight text-white hover:text-primary transition-colors"
           >
-            lootlog.pl
+            {t("landing.header.brand")}
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground ml-4">
             <a
-              href="https://docs.lootlog.pl"
+              href={links.docs}
               className="hover:text-primary transition-colors"
             >
-              Dokumentacja
+              {t("landing.header.docs")}
             </a>
             <a
-              href="https://github.com/lootlog/monorepo"
+              href={links.github}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-primary transition-colors"
             >
-              GitHub
+              {t("landing.header.github")}
             </a>
           </nav>
         </div>
@@ -58,13 +61,15 @@ export function LandingHeader() {
             asChild
           >
             <a
-              href="https://buycoffee.to/lootlog"
+              href={links.support}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2"
             >
               <Heart className="h-4 w-4 shrink-0" />
-              <span className="sr-only md:not-sr-only">Wesprzyj</span>
+              <span className="sr-only md:not-sr-only">
+                {t("landing.header.support")}
+              </span>
             </a>
           </Button>
           {isLoading ? (
@@ -77,10 +82,10 @@ export function LandingHeader() {
               className="h-9 shadow-[0_0_15px_-5px_hsl(var(--primary))]"
               asChild
             >
-              <a href="/@me" className="flex items-center">
-                <span className="md:hidden">Lootlog</span>
+              <a href={links.dashboard} className="flex items-center">
+                <span className="md:hidden">{t("landing.header.lootlog")}</span>
                 <span className="sr-only md:not-sr-only">
-                  Przejdź do Lootloga
+                  {t("landing.header.goToLootlog")}
                 </span>
               </a>
             </Button>
@@ -91,7 +96,7 @@ export function LandingHeader() {
               onClick={handleLoginAction}
             >
               <LogIn className="w-4 h-4" />
-              Zaloguj się
+              {t("landing.header.login")}
             </Button>
           )}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 
 interface TestimonialCardProps {
@@ -54,28 +55,30 @@ function TestimonialCard({
 }
 
 export function Testimonials() {
+  const { t } = useTranslation();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <TestimonialCard
         index={0}
-        name="Kamil"
+        name={t("landing.testimonials.kamil.name")}
         avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=202020"
-        role="Lider Klanu"
-        desc="To gówno wytwarza jakąś magiczną barierę wokół mojego pokoju, nie mogę się oderwać od Margonem."
+        role={t("landing.testimonials.kamil.role")}
+        desc={t("landing.testimonials.kamil.quote")}
       />
       <TestimonialCard
         index={1}
-        name="Anna"
+        name={t("landing.testimonials.anna.name")}
         avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka&backgroundColor=202020"
-        role="Taktyk"
-        desc="Analiza walk pokazała, że mag wymaga nerfa, a łowca jest zbyt słaby."
+        role={t("landing.testimonials.anna.role")}
+        desc={t("landing.testimonials.anna.quote")}
       />
       <TestimonialCard
         index={2}
-        name="Marek"
+        name={t("landing.testimonials.marek.name")}
         avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Max&backgroundColor=202020"
-        role="PvP Gracz"
-        desc="Wszystko działa jak należy, ale fajnie by było, gdybyście dodali dźwięki powiadomień."
+        role={t("landing.testimonials.marek.role")}
+        desc={t("landing.testimonials.marek.quote")}
       />
     </div>
   );

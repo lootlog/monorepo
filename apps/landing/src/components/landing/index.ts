@@ -6,3 +6,4 @@ export { QuickStartSection } from "./quick-start-section";
 export { FeaturesPanel } from "./features-panel";
 export { FaqPanel } from "./faq-panel";
 export { Testimonials } from "./testimonials";
+export { HomeContent } from "./home-content";
