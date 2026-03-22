@@ -6,6 +6,7 @@ import { Card } from "@lootlog/ui/components/card";
 import { LootNpcs } from "@/features/guild/components/loots-list/loot-npcs";
 import {
   Calendar,
+  ExternalLink,
   MapPin,
   MessageSquare,
   Users,
@@ -13,6 +14,7 @@ import {
   Dot,
 } from "lucide-react";
 import { cn } from "@lootlog/ui/lib/utils";
+import { ItemStack } from "@/features/guild/components/loots-list/item-stack";
 import { ItemTile } from "@/components/tiles";
 import { useTheme } from "@/hooks/context/use-theme";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
@@ -106,20 +108,46 @@ const useLootData = (loot: Loot) => {
 const LootHeader = ({
   npcs,
   commentsCount,
+  onOpenDetails,
 }: {
   npcs: Loot["npcs"];
   commentsCount: number;
-}) => (
-  <div className="flex flex-row justify-between items-center gap-2 mb-1">
-    <div className="min-w-0">
-      <LootNpcs npcs={npcs} />
+  onOpenDetails: () => void;
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-row justify-between items-center gap-2 mb-1">
+      <div className="min-w-0">
+        <LootNpcs npcs={npcs} />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenDetails();
+          }}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50 hover:bg-secondary hover:text-foreground transition-colors duration-200"
+        >
+          <MessageSquare className="h-3 w-3" />
+          <span className="font-medium">{commentsCount}</span>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenDetails();
+          }}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50 hover:bg-secondary hover:text-foreground transition-colors duration-200"
+        >
+          <ExternalLink className="h-3 w-3" />
+          <span className="font-medium">{t("loots.list.details")}</span>
+        </button>
+      </div>
     </div>
-    <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md border border-border/50">
-      <MessageSquare className="h-3 w-3" />
-      <span className="font-medium">{commentsCount}</span>
-    </div>
-  </div>
-);
+  );
+};
 
 const PlayerWithItems = ({
   player,
@@ -130,13 +158,7 @@ const PlayerWithItems = ({
 }) => (
   <div className="flex flex-col items-center gap-0.5">
     <PlayerTile player={player} />
-    {items.length > 0 && (
-      <div className="flex flex-col gap-1">
-        {items.map((item, itemIdx) => (
-          <ItemTile key={`${item.hid}-${itemIdx}`} item={item} />
-        ))}
-      </div>
-    )}
+    <ItemStack items={items} />
   </div>
 );
 
@@ -237,16 +259,19 @@ export const LootsListItem = ({ loot }: Props) => {
       )}
     >
       <Card
-        onClick={() => openLootDetails(loot.id)}
         className={cn(
-          "group relative px-4 pt-2 pb-1 cursor-pointer h-full flex flex-col gap-0",
-          "bg-card/95 border-border",
+          "group relative px-4 pt-2 pb-1 h-full flex flex-col gap-0",
+          "bg-card/95 border-border overflow-visible",
           "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
           hasLegendaryItem &&
             "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:border-red-500/100",
         )}
       >
-        <LootHeader npcs={loot.npcs} commentsCount={loot.commentsCount} />
+        <LootHeader
+          npcs={loot.npcs}
+          commentsCount={loot.commentsCount}
+          onOpenDetails={() => openLootDetails(loot.id)}
+        />
         <LootContent
           sortedPlayers={sortedPlayers}
           itemsByPlayer={itemsByPlayer}

@@ -97,7 +97,9 @@
     "end": "To już wszystkie looty",
     "endCat": "Miau, to już wszystkie łupy! 😺",
     "unassignedItems": "Przedmioty bez podziału",
-    "obtainedBy": "Zdobyto przez:"
+    "obtainedBy": "Zdobyto przez:",
+    "stackCount": "+{{count}} więcej",
+    "details": "Szczegóły"
   },
   "details": {
     "copySuccess": "ID skopiowane",
