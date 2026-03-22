@@ -78,7 +78,6 @@ export class PlayersService {
       return index.addDocuments(playersWithUid, { primaryKey: "uid" });
     } catch (error) {
       logger.error("Error indexing players", { error });
-      return;
     }
   }
 }

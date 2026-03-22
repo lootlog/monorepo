@@ -81,7 +81,6 @@ export class NpcsService {
       return index.addDocuments(npcsWithUid, { primaryKey: "uid" });
     } catch (error) {
       logger.error("Error indexing npcs", { error });
-      return;
     }
   }
 }
