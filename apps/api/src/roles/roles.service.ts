@@ -24,6 +24,12 @@ export class RolesService {
     private readonly redisService: RedisService,
   ) {}
 
+  private getAdminPermissions(admin: boolean): Permission[] {
+    return admin
+      ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
+      : [];
+  }
+
   async getRolesByGuildId(guildId: string) {
     const roles = await this.prisma.role.findMany({
       where: { guildId },
@@ -40,20 +46,14 @@ export class RolesService {
     try {
       return this.prisma.role.createMany({
         skipDuplicates: true,
-        data: roles.map(({ id, name, color, admin, position }) => {
-          const permissions = admin
-            ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
-            : [];
-
-          return {
-            id,
-            guildId,
-            name,
-            color,
-            position,
-            permissions,
-          };
-        }),
+        data: roles.map(({ id, name, color, admin, position }) => ({
+          id,
+          guildId,
+          name,
+          color,
+          position,
+          permissions: this.getAdminPermissions(admin),
+        })),
       });
     } catch (error) {
       this.logger.log({
@@ -66,10 +66,7 @@ export class RolesService {
   }
 
   async createOrUpdateRole(data: CreateRoleDto) {
-    const { admin } = data;
-    const permissions = admin
-      ? Object.values(Permission).filter((p) => p !== Permission.OWNER)
-      : [];
+    const permissions = this.getAdminPermissions(data.admin);
 
     try {
       await this.prisma.role.upsert({
@@ -78,7 +75,7 @@ export class RolesService {
           name: data.name,
           color: data.color,
           position: data.position,
-          ...(admin && { permissions }),
+          permissions,
         },
         create: {
           id: data.id,
@@ -102,8 +99,6 @@ export class RolesService {
         error: error instanceof Error ? error.stack : error,
       });
     }
-
-    return;
   }
 
   async updateRolePermissions(
@@ -171,8 +166,6 @@ export class RolesService {
     await this.redisService.deleteByPattern(
       getPermissionsCachePattern(data.guildId),
     );
-
-    return;
   }
 
   async deleteRolesByGuildId(guildId: string) {
@@ -192,7 +185,5 @@ export class RolesService {
         error: error instanceof Error ? error.stack : error,
       });
     }
-
-    return;
   }
 }
