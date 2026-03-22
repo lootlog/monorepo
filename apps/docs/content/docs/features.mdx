@@ -5,131 +5,191 @@ description: Szczegółowy przegląd wszystkich funkcji Lootlog
 
 ## Śledzenie łupów
 
-Lootlog automatycznie rejestruje wszystkie przedmioty, które zdobywasz w grze Margonem.
+Lootlog automatycznie rejestruje każdy przedmiot zdobyty w grze Margonem. Dane zbierane są przez dodatek w przeglądarce i widoczne zarówno w grze, jak i w panelu webowym.
 
-### Automatyczne zbieranie
+### Jak to działa
 
-- **Bez wysiłku** - Nie musisz robić nic specjalnego
-- **Wszystkie przedmioty** - Każdy podniesiony przedmiot jest rejestrowany
-- **Historia** - Pełna historia zebranych łupów
+- Dodatek przechwytuje informacje o łupach w momencie ich zdobycia
+- Każdy łup jest zapisywany z informacją o: przedmiocie, potworze, graczu, dacie i lokalizacji
+- Łupy przypisywane są do klanu na podstawie konfiguracji postaci
 
-### Analiza łupów
+### Przeglądanie łupów
 
-- **Statystyki** - Zobacz ile przedmiotów zebrałeś
-- **Wartość** - Sprawdź łączną wartość twoich łupów
-- **Trendy** - Analizuj co zbierasz najczęściej
+W panelu webowym (sekcja klanu → Łupy) możesz:
+
+- **Wyszukiwać** przedmioty po nazwie
+- **Filtrować** po rzadkości (pospolite, unikatowe, heroiczne, ulepszone, legendarne)
+- **Filtrować** po typie potwora (zwykłe, elitarne, herosi, tytani, kolosy)
+- **Przeglądać szczegóły** — kliknij łup, aby zobaczyć pełne statystyki przedmiotu
+
+### Konfiguracja śledzenia
+
+W ustawieniach klanu (Konfiguracja NPC) możesz określić, jakie typy potworów i rzadkości przedmiotów mają być śledzone. Na poziomie postaci możesz też określić, do których klanów trafiają łupy z danej postaci.
 
 ## Timery respawnu
 
-System timerów pozwala śledzić czasy respawnu bossów i rzadkich potworów.
+System timerów pozwala śledzić czasy respawnu bossów i elitarnych potworów. Timery synchronizują się w czasie rzeczywistym między wszystkimi członkami klanu.
+
+### Kategorie timerów
+
+- **Tytani** — najsilniejsze potwory, najdłuższe czasy respawnu
+- **Herosi** — silne potwory z rzadkim łupem
+- **E2** — elitarne potwory drugiego poziomu
 
 ### Automatyczne timery
 
-Lootlog automatycznie:
+Gdy gracz z klanu pokona potwora, Lootlog automatycznie:
 
-- Wykrywa pokonanie potwora
-- Uruchamia timer respawnu
-- Wysyła powiadomienia
+1. Wykrywa zabójstwo
+2. Uruchamia timer z czasem minimalnym i maksymalnym respawnu
+3. Synchronizuje timer z wszystkimi członkami klanu
 
 ### Ręczne timery
 
-Możesz też ręcznie:
-
-- Dodać timer dla dowolnego potwora
-- Ustawić własny czas respawnu
-- Edytować lub usunąć timer
+Możesz ręcznie dodać timer, jeśli znasz czas respawnu — na przykład gdy potwór został pokonany przed zalogowaniem do Lootlog.
 
 ### Powiadomienia
 
-System powiadomień informuje o:
+System powiadamia o:
 
-- Zbliżającym się respawnie (5 min przed)
-- Respawnie potwora
-- Zajętych lokalizacjach
+- **Zbliżającym się respawnie** — 5 minut przed minimalnym czasem respawnu
+- **Respawnie potwora** — gdy potwór może się już pojawić
+
+Powiadomienia można skonfigurować w [ustawieniach](/docs/settings) (dźwięk, głośność).
+
+### Zarządzanie timerami
+
+W zależności od uprawnień możesz:
+
+- Przeglądać aktywne timery (`TIMERS_READ`)
+- Dodawać nowe timery (`TIMERS_WRITE`)
+- Resetować timery (`TIMERS_RESET`)
+- Usuwać timery (`TIMERS_DELETE`)
 
 ## Wykrywacz NPC
 
-Wykrywacz pokazuje wszystkie potwory na bieżącej mapie.
+Wykrywacz automatycznie skanuje bieżącą mapę w grze i pokazuje wszystkie potwory.
 
-### Funkcje wykrywacza
+### Informacje o potworach
 
-- **Automatyczne skanowanie** - Ciągłe wykrywanie potworów
-- **Szczegóły potwora** - Poziom, typ, lokalizacja
-- **Mapa** - Wizualizacja rozmieszczenia potworów
+Dla każdego wykrytego potwora zobaczysz:
+
+- Nazwę i poziom
+- Typ (zwykły, elitarny, heros, tytan, kolos)
+- Lokalizację na mapie
 
 ### Filtrowanie
 
 Możesz filtrować potwory według:
 
 - Poziomu
-- Typu
+- Typu (zwykłe, elitarne, herosi, tytani)
 - Rzadkości
 
-## Zarządzanie klanem
+## System rezerwacji
 
-Rozbudowany system zarządzania klanem i jego członkami.
+System rezerwacji pozwala członkom klanu rezerwować mapy spawnów NPC, aby unikać konfliktów — dwóch graczy nie będzie polować na tym samym spawnie.
 
-### Role i uprawnienia
+### Widok rezerwacji
 
-- **Role niestandardowe** - Twórz własne role
-- **Uprawnienia szczegółowe** - Precyzyjna kontrola dostępu
-- **Hierarchia** - Struktura ról i podról
+Rezerwacje wyświetlane są w formie siatki. Każda mapa może mieć jeden z trzech statusów:
 
-### Funkcje klanowe
+| Status | Znaczenie |
+| --- | --- |
+| **Wolna** | Nikt nie rezerwuje tej mapy |
+| **Zajęta** | Mapa jest zarezerwowana przez innego członka klanu |
+| **Ty** | Mapa jest zarezerwowana przez ciebie |
 
-- **Lista członków** - Przeglądaj wszystkich członków
-- **Aktywność** - Śledź aktywność członków
-- **Statystyki** - Statystyki klanu
+### Jak rezerwować
 
-## Integracja Discord
+1. Przejdź do sekcji klanu → Rezerwacje
+2. Znajdź wolną mapę
+3. Kliknij, aby zarezerwować
 
-Połącz Lootlog z Discordem dla dodatkowych funkcji.
+Rezerwacje wygasają automatycznie po określonym czasie.
 
-### Bot Discord
+### Uprawnienia
 
-Po dodaniu bota na serwer Discord możesz:
+- `RESERVATIONS_READ` — przeglądanie rezerwacji
+- `RESERVATIONS_WRITE` — tworzenie i zarządzanie rezerwacjami
 
-- Otrzymywać powiadomienia o timerach
-- Sprawdzać statusy timerów
-- Zarządzać ustawieniami
+## Statystyki killi
 
-### Powiadomienia
+Lootlog śledzi zabójstwa potworów na poziomie klanu i poszczególnych członków.
 
-Skonfiguruj powiadomienia dla:
+### Statystyki klanu
 
-- Timerów respawnu
-- Nowych łupów
-- Wydarzeń klanowych
+W sekcji klanu → Statystyki → Kille zobaczysz:
 
-## Chat
+- Łączną liczbę zabójstw według typu potwora
+- Ranking członków klanu według liczby killi
+- Historię zabójstw konkretnych potworów (bossów, herosów)
 
-Wbudowany system czatu dla członków klanu.
+### Statystyki potworów
+
+W widoku Potwory możesz przeglądać konkretne NPC — ile razy zostały pokonane, przez kogo i kiedy.
+
+### Profil członka
+
+Kliknij na członka klanu w rankingu, aby zobaczyć jego indywidualne statystyki: zabójstwa, łupy i aktywność.
+
+## Czat klanowy
+
+Wbudowany czat pozwala komunikować się z członkami klanu bez opuszczania gry.
 
 ### Funkcje czatu
 
-- **Czat klanowy** - Komunikuj się z członkami klanu
-- **Wiadomości prywatne** - Wysyłaj prywatne wiadomości
-- **Historia** - Przeglądaj historię rozmów
+- **Czat klanowy** — wspólny kanał dla całego klanu
+- **Historia wiadomości** — przeglądanie wcześniejszych rozmów
+- **Powiadomienia** — informacja o nowych wiadomościach
 
-## Panel webowy
+### Uprawnienia czatu
 
-Dostęp do wszystkich funkcji przez przeglądarkę.
+- `CHAT_READ` — przeglądanie wiadomości
+- `CHAT_WRITE` — wysyłanie wiadomości
+- `CHAT_TITANS_READ` / `CHAT_HEROES_READ` — dostęp do kanałów dotyczących tytanów i herosów
 
-### Co możesz zrobić
+## Logi aktywności
 
-- Przeglądać łupy i timery
-- Zarządzać klanem
-- Konfigurować ustawienia
-- Analizować statystyki
+System logów rejestruje wszystkie istotne działania w klanie — kto co zrobił i kiedy.
 
-> **Panel webowy** jest dostępny pod adresem [app.lootlog.pl](https://app.lootlog.pl)
+### Co jest logowane
 
-## Eksport danych
+- Dołączenie i odejście członków
+- Zmiany ról i uprawnień
+- Tworzenie i edycja eventów
+- Modyfikacje timerów i rezerwacji
+- Zmiany w konfiguracji klanu
 
-Eksportuj swoje dane do różnych formatów.
+### Przeglądanie logów
 
-### Dostępne formaty
+W sekcji klanu → Logi aktywności możesz:
 
-- **CSV** - Import do Excel/Sheets
-- **JSON** - Dla zaawansowanych użytkowników
-- **PDF** - Raporty do wydruku
+- Przeglądać chronologiczną listę działań
+- Filtrować po typie działania
+- Wyszukiwać konkretne zdarzenia
+
+Logi aktywności są przydatne szczególnie dla liderów klanów, którzy chcą monitorować, co dzieje się w organizacji.
+
+## Integracja z Discord
+
+Lootlog oferuje bota Discord, który rozszerza funkcjonalność na serwer Discord klanu.
+
+### Możliwości bota
+
+- Powiadomienia o timerach respawnu
+- Powiadomienia o ważnych wydarzeniach klanowych
+- Synchronizacja członków serwera Discord z klanem w Lootlog
+
+### Powiadomienia
+
+System powiadomień pozwala wysyłać alerty na kanały Discord. Możesz skonfigurować:
+
+- Które zdarzenia generują powiadomienia
+- Na który kanał trafiają powiadomienia
+
+### Uprawnienia powiadomień
+
+- `NOTIFICATIONS_READ` — przeglądanie powiadomień
+- `NOTIFICATIONS_SEND` — wysyłanie powiadomień
+- `NOTIFICATIONS_TITANS_READ` / `NOTIFICATIONS_HEROES_READ` — dostęp do powiadomień o tytanach i herosach
