@@ -59,7 +59,7 @@ export const APP_CONFIG = {
     user: POSTGRESQL_USER,
     password: POSTGRESQL_PASSWORD,
     database: POSTGRESQL_DATABASE,
-    sslCa: POSTGRESQL_SSL_CA || undefined,
+    sslCa: POSTGRESQL_SSL_CA,
   },
   discord: {
     clientId: DISCORD_CLIENT_ID,
