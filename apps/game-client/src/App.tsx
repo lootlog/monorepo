@@ -91,7 +91,16 @@ function App() {
     <ThemeProvider defaultTheme="dark-theme" storageKey="lootlog-theme">
       <QueryClientProvider client={queryClient}>
         <SocketProvider>
-          <ErrorBoundary fallback={<div>Error loading app</div>}>
+          <ErrorBoundary
+            fallback={<div>Error loading app</div>}
+            onError={(error, info) => {
+              console.error("[ErrorBoundary]", error);
+              console.error(
+                "[ErrorBoundary] Component stack:",
+                info.componentStack,
+              );
+            }}
+          >
             <AppContent />
           </ErrorBoundary>
         </SocketProvider>

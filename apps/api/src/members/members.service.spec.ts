@@ -266,6 +266,7 @@ describe("MembersService", () => {
       expect(discordService.getGuildMember).toHaveBeenCalledWith({
         guildId: options.guildId,
         userId: options.userId,
+        discordId: options.discordId,
       });
       expect(prismaService.member.upsert).toHaveBeenCalled();
       expect(result).toEqual(mockMember);
