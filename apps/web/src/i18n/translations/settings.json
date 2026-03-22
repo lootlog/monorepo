@@ -52,25 +52,58 @@
       "default": { "title": "Default", "description": "Domyślny" },
       "cyberpunk": { "title": "Cyberpunk", "description": "Neon" },
       "pastel": { "title": "Pastel", "description": "Miękkie kolory" },
-      "fantasy": { "title": "Dark Fantasy", "description": "Głębokie purpury i złoto" },
+      "fantasy": {
+        "title": "Dark Fantasy",
+        "description": "Głębokie purpury i złoto"
+      },
       "shonen": { "title": "Shonen", "description": "Jasne i energetyczne" },
-      "onepiece": { "title": "One Piece - Zoro", "description": "Łowca piratów" },
+      "onepiece": {
+        "title": "One Piece - Zoro",
+        "description": "Łowca piratów"
+      },
       "anime": { "title": "Anime Kawaii", "description": "Marin ❤️" },
-      "waguri": { "title": "Kaoruko Waguri", "description": "Słodka i stylowa" },
+      "waguri": {
+        "title": "Kaoruko Waguri",
+        "description": "Słodka i stylowa"
+      },
       "goth": { "title": "Gothic", "description": "Mroczny i elegancki" },
-      "halloween": { "title": "Halloween", "description": "Dynie, duchy i księżyc" },
-      "realmadrid": { "title": "Real Madrid", "description": "Calma y ganando" },
-      "realmadrid-3rd": { "title": "Real Madrid vs Juventus", "description": "La Duodécima" },
+      "halloween": {
+        "title": "Halloween",
+        "description": "Dynie, duchy i księżyc"
+      },
+      "realmadrid": {
+        "title": "Real Madrid",
+        "description": "Calma y ganando"
+      },
+      "realmadrid-3rd": {
+        "title": "Real Madrid vs Juventus",
+        "description": "La Duodécima"
+      },
       "barcelona": { "title": "FC Barcelona", "description": "Blaugrana" },
-      "rukia": { "title": "Rukia Kuchiki", "description": "Hakka no Togame - Absolute Zero" },
-      "cat-pink": { "title": "Różowy Kociak 🐱", "description": "Słodki i ciepły jak kociak w kwiatach" },
-      "cat-purple": { "title": "Fioletowy Mruczek 🐱", "description": "Mistyczny jak kotek pod gwiazdami" },
-      "cat-blue": { "title": "Niebieski Kocurek 🐱", "description": "Spokojny jak kotek na parapecie" },
-      "cat-random": { "title": "Losowy Kotek 🎲", "description": "Losuje wariant przy każdym odświeżeniu" }
+      "rukia": {
+        "title": "Rukia Kuchiki",
+        "description": "Hakka no Togame - Absolute Zero"
+      },
+      "cat-pink": {
+        "title": "Różowy Kociak 🐱",
+        "description": "Słodki i ciepły jak kociak w kwiatach"
+      },
+      "cat-purple": {
+        "title": "Fioletowy Mruczek 🐱",
+        "description": "Mistyczny jak kotek pod gwiazdami"
+      },
+      "cat-blue": {
+        "title": "Niebieski Kocurek 🐱",
+        "description": "Spokojny jak kotek na parapecie"
+      },
+      "cat-random": {
+        "title": "Losowy Kotek 🎲",
+        "description": "Losuje wariant przy każdym odświeżeniu"
+      }
     },
     "announcement": {
       "newTheme": "Nowy motyw!",
-      "catThemeDescription": "Wypróbuj kocie motywy — Różowy Kociak, Fioletowy Mruczek lub Niebieski Kocurek! 🐾",
+      "catThemeDescription": "Wypróbuj koci motyw — Różowy Kociak! 🐾",
       "tryIt": "Wypróbuj"
     }
   }

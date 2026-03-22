@@ -7,7 +7,8 @@ import {
 } from "@/hooks/api/activity-logs/use-activity-logs";
 import { useActivityLogsFilters } from "@/hooks/use-activity-logs-filters";
 import { ActivityLogsListItem } from "./activity-logs-list-item";
-import { AlertCircle, Frown, Loader2 } from "lucide-react";
+import { AlertCircle, Frown } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
@@ -157,7 +158,7 @@ export const ActivityLogsList = () => {
               {isLoaderRow ? (
                 hasNextPage ? (
                   <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <Spinner className="h-5 w-5 text-primary" />
                     <span className="text-sm text-muted-foreground font-medium">
                       {t("common.activityLogs.loadingMore")}
                     </span>

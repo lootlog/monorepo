@@ -26,7 +26,9 @@ const CAT_CLASSES = ["cat-pink", "cat-purple", "cat-blue"];
 function useCatTheme() {
   const [isCat, setIsCat] = React.useState(() => {
     if (typeof document === "undefined") return false;
-    return CAT_CLASSES.some((c) => document.documentElement.classList.contains(c));
+    return CAT_CLASSES.some((c) =>
+      document.documentElement.classList.contains(c),
+    );
   });
 
   React.useEffect(() => {
@@ -45,8 +47,7 @@ function CatPawOverlay() {
   const isCatTheme = useCatTheme();
   const id = React.useId();
 
-  if (!isCatTheme) return null;
-  const paws = React.useMemo(() => {
+  const paws = (() => {
     const rand = seededRandom(hashString(id));
     const count = 3 + Math.floor(rand() * 3);
     const placed: { x: number; y: number; r: number }[] = [];
@@ -93,7 +94,9 @@ function CatPawOverlay() {
     }
 
     return result;
-  }, [id]);
+  })();
+
+  if (!isCatTheme) return null;
 
   return (
     <div
@@ -123,16 +126,12 @@ function CatPawOverlay() {
   );
 }
 
-function Card({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+function Card({ className, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground relative flex flex-col gap-6 overflow-hidden rounded-xl border py-6 shadow-sm",
+        "bg-card/40 text-card-foreground relative flex flex-col gap-6 overflow-hidden rounded-xl border py-6 shadow-sm",
         className,
       )}
       {...props}

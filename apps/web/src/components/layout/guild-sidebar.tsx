@@ -14,7 +14,7 @@ import type { FC } from "react";
 export const GuildSidebar: FC = () => {
   return (
     <Sidebar>
-      <SidebarContent className="h-full bg-background">
+      <SidebarContent className="h-full bg-sidebar">
         <SidebarGroup className="p-0 h-full">
           <SidebarGroupContent className="h-full">
             <SidebarMenu className="flex flex-row h-full gap-0">

@@ -15,7 +15,8 @@ import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { PlayerTile } from "@/features/guild/components/loots-list/player-tile";
 import { LootDetailsActions } from "@/features/guild/components/loots-list/loot-details-actions";
 import { useIsMobile } from "@lootlog/ui/hooks/use-mobile";
-import { AlertCircle, Calendar, Loader2, MapPin } from "lucide-react";
+import { AlertCircle, Calendar, MapPin } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useTheme } from "@/hooks/context/use-theme";
 import { FrostOverlay } from "@/components/effects/rukia-frost";
 import { useSelectedLoot } from "@/hooks/use-selected-loot";
@@ -54,7 +55,7 @@ const computeLootMaps = (loot: Loot) => {
 
 const LoadingState: FC = () => (
   <div className="flex items-center justify-center h-64">
-    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    <Spinner className="h-8 w-8 text-muted-foreground" />
   </div>
 );
 

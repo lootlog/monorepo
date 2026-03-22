@@ -29,6 +29,7 @@ import { LootsListItem } from "@/features/guild/components/loots-list/loots-list
 import { KillMapsTimelineSection } from "./components/kills/kill-maps-timeline-section";
 import { NpcTile } from "@/components/tiles/npc-tile";
 import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useSession } from "@/hooks/auth/use-session";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { getAppliedRuleIdsForParticipant } from "./utils/scoring-applied-rules";
@@ -71,7 +72,7 @@ export const KillDetail = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }
@@ -386,7 +387,7 @@ export const KillDetail = () => {
 
                 {isLootsLoading ? (
                   <div className="flex items-center justify-center py-6">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                    <Spinner className="h-6 w-6" />
                   </div>
                 ) : loots.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">

@@ -22,12 +22,18 @@ export const ThemeAnnouncement = () => {
   };
 
   const handleSwitchTheme = () => {
-    setTheme("cat-random");
+    setTheme("cat-pink");
     setIsDismissed(true);
   };
 
   return (
-    <div className="w-full relative z-[100] bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 border-b border-pink-300/30 shadow-lg shrink-0">
+    <div
+      className="w-full relative z-[100] border-b shadow-lg shrink-0"
+      style={{
+        background:
+          "linear-gradient(to right, oklch(0.72 0.12 350), oklch(0.68 0.12 330), oklch(0.75 0.10 340))",
+      }}
+    >
       <div className="w-full px-4 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 shrink-0">
