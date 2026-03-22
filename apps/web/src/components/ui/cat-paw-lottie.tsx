@@ -1,17 +1,12 @@
 import type { FC } from "react";
 import { useLottie } from "lottie-react";
 
-import { cn } from "@lootlog/ui/lib/utils";
-
 interface CatPawLottieProps {
   animationData: object;
   className?: string;
 }
 
-export const CatPawLottie: FC<CatPawLottieProps> = ({
-  animationData,
-  className,
-}) => {
+export const CatPawLottie: FC<CatPawLottieProps> = ({ animationData }) => {
   const { View } = useLottie({
     animationData,
     loop: true,
