@@ -7,6 +7,7 @@ import {
 import {
   Injectable,
   Inject,
+  BadRequestException,
   UnauthorizedException,
   NotFoundException,
   ServiceUnavailableException,
@@ -30,6 +31,7 @@ import {
   AuthServiceUnavailableError,
   InvalidScopesError,
   AccountNotFoundError,
+  AuthBadRequestError,
 } from "src/auth/errors";
 import { ConfigKey } from "src/config/config-key.enum";
 import { ServiceConfig } from "src/config/service.config";
@@ -80,9 +82,9 @@ export class DiscordService implements OnModuleInit {
     return this.isLocal ? localTtl : prodTtl;
   }
 
-  async getRestClient(userId: string) {
+  async getRestClient(userId: string, discordId: string) {
     try {
-      const token = await this.authService.getIdpToken(userId);
+      const token = await this.authService.getIdpToken(userId, discordId);
 
       if (!DISCORD_AUTH_SCOPES.every((scope) => token.scopes.includes(scope))) {
         throw new InvalidScopesError(DISCORD_AUTH_SCOPES, token.scopes);
@@ -119,6 +121,12 @@ export class DiscordService implements OnModuleInit {
         });
       }
 
+      if (error instanceof AuthBadRequestError) {
+        throw new BadRequestException({
+          message: "AUTH_BAD_REQUEST",
+        });
+      }
+
       if (error instanceof AuthServiceUnavailableError) {
         throw new ServiceUnavailableException({
           message: "AUTH_SERVICE_UNAVAILABLE",
@@ -130,7 +138,7 @@ export class DiscordService implements OnModuleInit {
     }
   }
 
-  async getUserGuilds(userId: string): Promise<APIGuild[]> {
+  async getUserGuilds(userId: string, discordId: string): Promise<APIGuild[]> {
     const cacheTtl = this.getCacheTtl(
       this.guildsCacheTtlLocal,
       this.guildsCacheTtlProd,
@@ -176,7 +184,7 @@ export class DiscordService implements OnModuleInit {
         return [];
       }
 
-      const rest = await this.getRestClient(userId);
+      const rest = await this.getRestClient(userId, discordId);
       const path = Routes.userGuilds();
 
       let guilds: APIGuild[];
@@ -283,12 +291,13 @@ export class DiscordService implements OnModuleInit {
   async getGuildMember(options: {
     guildId: string;
     userId: string;
+    discordId: string;
   }): Promise<APIGuildMember | null> {
     const cacheTtl = this.getCacheTtl(
       this.memberCacheTtlLocal,
       this.memberCacheTtlProd,
     );
-    const { guildId, userId } = options;
+    const { guildId, userId, discordId } = options;
     const cacheKey = `guild:${guildId}:member:${userId}:data`;
     const staleCacheKey = `guild:${guildId}:member:${userId}:stale`;
     const lockKey = `guild:${guildId}:member:${userId}:lock`;
@@ -333,7 +342,7 @@ export class DiscordService implements OnModuleInit {
         return null;
       }
 
-      const rest = await this.getRestClient(userId);
+      const rest = await this.getRestClient(userId, discordId);
       const path = Routes.userGuildMember(guildId);
 
       let member: APIGuildMember;
