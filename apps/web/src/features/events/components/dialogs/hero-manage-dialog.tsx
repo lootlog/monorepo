@@ -11,7 +11,8 @@ import {
 } from "@lootlog/ui/components/dialog";
 import { Input } from "@lootlog/ui/components/input";
 import { Label } from "@lootlog/ui/components/label";
-import { Swords, Plus, Pencil, Loader2, Info } from "lucide-react";
+import { Swords, Plus, Pencil, Info } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useEventMutations } from "../../hooks/mutations/use-event-mutations";
 import { toast } from "sonner";
 
@@ -181,7 +182,7 @@ export const HeroManageDialog = ({
           >
             {isPending ? (
               <>
-                <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                <Spinner className="size-3.5 mr-1.5" />
                 {t("common.saving")}
               </>
             ) : isEditing ? (
