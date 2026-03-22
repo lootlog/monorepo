@@ -51,6 +51,7 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { cn } from "@lootlog/ui/lib/utils";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 const getWindowStatusConfig = (
   status: WindowStatus,
@@ -153,7 +154,7 @@ export const HeroDetail = () => {
   if (isLoading || isMapsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }

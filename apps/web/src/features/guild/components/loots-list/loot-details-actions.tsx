@@ -1,7 +1,7 @@
 import { useDeleteLoot } from "@/hooks/api/loots/use-delete-loot";
 import type { Loot } from "@/hooks/api/loots/use-loots";
 import { Button } from "@lootlog/ui/components/button";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import type { FC } from "react";
 
 export type LootDetailsActionsProps = {
@@ -22,7 +22,7 @@ export const LootDetailsActions: FC<LootDetailsActionsProps> = ({ loot }) => {
         className="h-8 w-16"
         onClick={handleLootDelete}
       >
-        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Usuń"}
+        {isPending ? <Spinner className="h-4 w-4" /> : "Usuń"}
       </Button>
     </div>
   );

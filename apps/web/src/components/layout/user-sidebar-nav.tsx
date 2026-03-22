@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useSession } from "@/hooks/auth/use-session";
 import { useTheme } from "@/hooks/context/use-theme";
 import { LayoutDashboard, Settings, Swords } from "lucide-react";
-import { SidebarNav, type MenuItem } from "./sidebar-nav";
+import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 
 const menuItems: MenuItem[] = [

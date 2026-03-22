@@ -122,9 +122,7 @@ export const AppearanceSettings: FC = () => {
   return (
     <div className="space-y-8 p-6 overflow-y-auto h-full">
       <div>
-        <h1 className="text-xl font-bold">
-          {t("settings.appearance.title")}
-        </h1>
+        <h1 className="text-xl font-bold">{t("settings.appearance.title")}</h1>
         <p className="text-muted-foreground">
           {t("settings.appearance.description")}
         </p>
@@ -139,7 +137,9 @@ export const AppearanceSettings: FC = () => {
               key={themeOption.name}
               name={themeOption.name}
               title={t(`settings.appearance.themes.${themeOption.name}.title`)}
-              description={t(`settings.appearance.themes.${themeOption.name}.description`)}
+              description={t(
+                `settings.appearance.themes.${themeOption.name}.description`,
+              )}
               colors={themeOption.colors}
               backgroundImage={themeOption.backgroundImage}
               isActive={theme === themeOption.name}

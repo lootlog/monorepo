@@ -14,7 +14,7 @@ import type { FC } from "react";
 export const UserSidebar: FC = () => {
   return (
     <Sidebar>
-      <SidebarContent className="bg-background h-full">
+      <SidebarContent className="bg-sidebar h-full">
         <SidebarGroup className="p-0 h-full">
           <SidebarGroupContent className="h-full">
             <SidebarMenu className="flex flex-row h-full gap-0">
@@ -24,7 +24,7 @@ export const UserSidebar: FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="bg-background p-0">
+      <SidebarFooter className="bg-sidebar p-0">
         <UserMenu />
       </SidebarFooter>
     </Sidebar>
