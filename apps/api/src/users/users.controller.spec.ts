@@ -7,7 +7,6 @@ describe("UserController", () => {
   let controller: UsersController;
 
   const mockUsersService = {
-    getUserById: jest.fn(),
     getUserPreferences: jest.fn(),
     updateUserPreferences: jest.fn(),
   };
