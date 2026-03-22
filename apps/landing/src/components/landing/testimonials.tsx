@@ -25,7 +25,7 @@ function TestimonialCard({
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -5 }}
-      className="group flex flex-col p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
+      className="group flex flex-col p-6 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.02] backdrop-blur-sm hover:bg-white/[0.07] transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/20"
     >
       <div className="flex items-center gap-4 mb-4">
         <div className="relative">
@@ -36,7 +36,7 @@ function TestimonialCard({
             width={48}
             height={48}
             unoptimized
-            className="relative h-12 w-12 rounded-full border-2 border-white/10 object-cover"
+            className="relative h-12 w-12 rounded-full border-2 border-primary/30 object-cover"
           />
         </div>
         <div>

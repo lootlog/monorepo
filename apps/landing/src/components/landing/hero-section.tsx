@@ -18,7 +18,7 @@ export function HeroSection() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] -z-10 pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-primary/20 via-purple-500/15 to-pink-500/10 rounded-full blur-[100px] -z-10 pointer-events-none"
       />
 
       <motion.h1
@@ -28,9 +28,13 @@ export function HeroSection() {
         className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-foreground leading-[1.1] mb-6"
       >
         Przejmij kontrolę nad <br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-pink-500 animate-gradient-x">
+        <motion.span
+          className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-pink-500 bg-[size:200%_auto]"
+          animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+        >
           Lootami i Timerami
-        </span>
+        </motion.span>
       </motion.h1>
 
       <motion.p
@@ -52,7 +56,7 @@ export function HeroSection() {
       >
         <Button
           size="lg"
-          className="h-14 px-8 text-lg rounded-full shadow-[0_0_40px_-10px_hsl(var(--primary)/0.5)] hover:shadow-[0_0_60px_-15px_hsl(var(--primary)/0.6)] transition-all duration-300 hover:scale-105"
+          className="h-14 px-8 text-lg shadow-[0_0_30px_-8px_hsl(var(--primary)/0.5)] hover:shadow-[0_0_50px_-10px_hsl(var(--primary)/0.7)] transition-all duration-300 hover:scale-[1.03]"
           asChild
         >
           <a href={ADDON_URL} target="_blank" rel="noopener noreferrer">
@@ -63,7 +67,7 @@ export function HeroSection() {
         <Button
           size="lg"
           variant="outline"
-          className="h-14 px-8 text-lg rounded-full border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 hover:scale-105"
+          className="h-14 px-8 text-lg border-white/10 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-sm transition-all duration-300 hover:scale-[1.03] hover:border-white/20"
           asChild
         >
           <a href="https://docs.lootlog.pl">
