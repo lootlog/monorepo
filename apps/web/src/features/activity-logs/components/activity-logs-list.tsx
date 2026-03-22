@@ -10,6 +10,8 @@ import { ActivityLogsListItem } from "./activity-logs-list-item";
 import { AlertCircle, Frown } from "lucide-react";
 import { Spinner } from "@lootlog/ui/components/spinner";
 import { useRef } from "react";
+import { useTheme } from "@/hooks/context/use-theme";
+import { CatEmptyStateIcon } from "@/components/ui/cat-empty-state-icon";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useGuild } from "@/hooks/api/guilds/use-guild";
 import {
@@ -22,6 +24,8 @@ const ACTIVITY_LOGS_PAGE_LIMIT = 20;
 
 export const ActivityLogsList = () => {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const isCatTheme = theme.startsWith("cat-");
   const { data: guild } = useGuild();
   const { filters } = useActivityLogsFilters();
   const scrollElementRef = useRef<HTMLDivElement>(null);
@@ -114,9 +118,17 @@ export const ActivityLogsList = () => {
   if (!hasActivities) {
     return (
       <div className="flex flex-col justify-center gap-8 items-center flex-1 text-muted-foreground">
-        <Frown size="72" className="text-muted-foreground/50" />
+        {isCatTheme ? (
+          <CatEmptyStateIcon className="w-[72px] h-[72px] text-muted-foreground/50" />
+        ) : (
+          <Frown size="72" className="text-muted-foreground/50" />
+        )}
         <span className="font-semibold text-foreground">
-          {t("common.activityLogs.empty")}
+          {t(
+            isCatTheme
+              ? "common.activityLogs.emptyCat"
+              : "common.activityLogs.empty",
+          )}
         </span>
       </div>
     );
@@ -160,13 +172,21 @@ export const ActivityLogsList = () => {
                   <div className="relative flex items-center justify-center gap-3 rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                     <Spinner className="h-5 w-5 text-primary" />
                     <span className="text-sm text-muted-foreground font-medium">
-                      {t("common.activityLogs.loadingMore")}
+                      {t(
+                        isCatTheme
+                          ? "common.activityLogs.loadingMoreCat"
+                          : "common.activityLogs.loadingMore",
+                      )}
                     </span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center rounded-xl border border-border/50 bg-card/30 backdrop-blur-md h-16">
                     <span className="text-xs text-muted-foreground">
-                      {t("common.activityLogs.end")}
+                      {t(
+                        isCatTheme
+                          ? "common.activityLogs.endCat"
+                          : "common.activityLogs.end",
+                      )}
                     </span>
                   </div>
                 )

@@ -1,0 +1,143 @@
+import * as React from "react";
+
+function seededRandom(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 11) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+export const PAW_SVG =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='21' rx='6.5' ry='5' fill='white'/%3E%3Ccircle cx='7' cy='11' r='3' fill='white'/%3E%3Ccircle cx='13' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='19' cy='7' r='2.8' fill='white'/%3E%3Ccircle cx='25' cy='11' r='3' fill='white'/%3E%3C/svg%3E";
+
+const CAT_CLASSES = ["cat-pink", "cat-purple", "cat-blue"];
+
+export function useCatTheme() {
+  const [isCat, setIsCat] = React.useState(() => {
+    if (typeof document === "undefined") return false;
+    return CAT_CLASSES.some((c) =>
+      document.documentElement.classList.contains(c),
+    );
+  });
+
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const check = () =>
+      setIsCat(CAT_CLASSES.some((c) => root.classList.contains(c)));
+    const observer = new MutationObserver(check);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  return isCat;
+}
+
+export function CatPawOverlay() {
+  const isCatTheme = useCatTheme();
+  const id = React.useId();
+
+  const paws = React.useMemo(() => {
+    const rand = seededRandom(hashString(id));
+
+    for (let i = 0; i < 20; i++) rand();
+
+    const result = [];
+
+    const startX = rand() * 100;
+    const startY = rand() * 100;
+
+    let walkAngle = rand() * Math.PI * 2;
+
+    const curveBias = (rand() - 0.5) * 0.6;
+
+    const baseSize = 35 + rand() * 15;
+    const baseOpacity = 0.03 + rand() * 0.03;
+    const steps = 12 + Math.floor(rand() * 8);
+
+    const strideForwardPx = baseSize * 0.75;
+    const strideLateralPx = baseSize * 0.6;
+    const pawRotationOutward = 12;
+
+    let bodyAccumulatedX = 0;
+    let bodyAccumulatedY = 0;
+
+    for (let i = 0; i < steps; i++) {
+      const isRightPaw = i % 2 === 0;
+
+      walkAngle += curveBias + (rand() - 0.5) * 0.15;
+
+      bodyAccumulatedX += Math.cos(walkAngle) * strideForwardPx;
+      bodyAccumulatedY += Math.sin(walkAngle) * strideForwardPx;
+
+      const perpendicularAngle = walkAngle + Math.PI / 2;
+      const sideOffset = isRightPaw ? strideLateralPx : -strideLateralPx;
+
+      const pawX = bodyAccumulatedX + Math.cos(perpendicularAngle) * sideOffset;
+      const pawY = bodyAccumulatedY + Math.sin(perpendicularAngle) * sideOffset;
+
+      const angleInDegrees = walkAngle * (180 / Math.PI) + 90;
+      const pawRotation =
+        angleInDegrees +
+        (isRightPaw ? pawRotationOutward : -pawRotationOutward);
+
+      const signX = pawX >= 0 ? "+" : "-";
+      const signY = pawY >= 0 ? "+" : "-";
+
+      result.push({
+        id: `paw-${i}`,
+        left: `calc(${startX}% ${signX} ${Math.abs(pawX)}px)`,
+        top: `calc(${startY}% ${signY} ${Math.abs(pawY)}px)`,
+        size: baseSize + (rand() * 4 - 2),
+        rotation: pawRotation,
+        opacity: baseOpacity,
+      });
+    }
+
+    return result;
+  }, [id]);
+
+  if (!isCatTheme) return null;
+
+  return (
+    <div
+      data-slot="cat-paw-overlay"
+      className="cat-paw-overlay"
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        pointerEvents: "none",
+        zIndex: 0,
+      }}
+    >
+      {paws.map((paw) => (
+        <div
+          key={paw.id}
+          style={{
+            position: "absolute",
+            left: paw.left,
+            top: paw.top,
+            width: paw.size,
+            height: paw.size,
+            transform: `translate(-50%, -50%) rotate(${paw.rotation}deg)`,
+            opacity: paw.opacity,
+            backgroundImage: `url("${PAW_SVG}")`,
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
