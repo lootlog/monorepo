@@ -2,10 +2,11 @@ import { Badge } from "@lootlog/ui/components/badge";
 import { Button } from "@lootlog/ui/components/button";
 import { Separator } from "@lootlog/ui/components/separator";
 import { cn } from "@lootlog/ui/lib/utils";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Fragment } from "react/jsx-runtime";
 import { motion } from "framer-motion";
+import { useLottie } from "lottie-react";
 import { useTheme } from "@/hooks/context/use-theme";
 
 export interface MenuItem {
@@ -467,6 +468,7 @@ export const SidebarNav = ({
   const { pathname } = useLocation();
   const { theme } = useTheme();
   const isRukiaTheme = theme === "rukia";
+  const isCatTheme = theme.startsWith("cat-");
 
   return (
     <div className="relative flex flex-col w-full gap-1 flex-1">
@@ -530,7 +532,31 @@ export const SidebarNav = ({
           );
         },
       )}
+      {isCatTheme && <SidebarCatAnimation />}
     </div>
+  );
+};
+
+const SidebarCatAnimation = () => {
+  const [animationData, setAnimationData] = useState<object | null>(null);
+
+  useEffect(() => {
+    fetch("/lottie/rolling-cat.json")
+      .then((res) => res.json())
+      .then(setAnimationData)
+      .catch(() => {});
+  }, []);
+
+  if (!animationData) return null;
+
+  return <CatLottiePlayer animationData={animationData} />;
+};
+
+const CatLottiePlayer = ({ animationData }: { animationData: object }) => {
+  const { View } = useLottie({ animationData, loop: true, autoplay: true });
+
+  return (
+    <div className="mt-auto px-2 pb-2 pointer-events-none">{View}</div>
   );
 };
 

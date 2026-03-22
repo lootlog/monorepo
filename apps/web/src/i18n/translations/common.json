@@ -32,6 +32,7 @@
     "roleFallback": "Rola #{{id}}",
     "members": "Członkowie"
   },
+  "greeting": "Cześć, {{name}}!",
   "activityLogs": {
     "loadError": "Nie udało się załadować aktywności.",
     "empty": "Nie znaleziono żadnych aktywności.",

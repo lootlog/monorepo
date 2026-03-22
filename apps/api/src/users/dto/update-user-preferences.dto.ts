@@ -41,6 +41,10 @@ export class UpdateUserPreferencesDto {
       "barcelona",
       "waguri",
       "rukia",
+      "cat-pink",
+      "cat-purple",
+      "cat-blue",
+      "cat-random",
     ],
   })
   @IsOptional()
@@ -60,6 +64,10 @@ export class UpdateUserPreferencesDto {
     "barcelona",
     "waguri",
     "rukia",
+    "cat-pink",
+    "cat-purple",
+    "cat-blue",
+    "cat-random",
   ])
   theme?: string;
 
