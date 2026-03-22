@@ -747,13 +747,13 @@ export class TimersService implements OnModuleInit {
 
         return {
           npcId: timer.npcId,
-          name: (timer.npc as { name?: string })?.name || "",
+          name: (timer.npc as { name?: string })?.name ?? "",
           lvl: npc.lvl,
           type: npc.type,
-          prof: (timer.npc as { prof?: string })?.prof || "",
-          location: (timer.npc as { location?: string })?.location || "",
-          wt: (timer.npc as { wt?: string | number })?.wt || 0,
-          icon: (timer.npc as { icon?: string })?.icon || "",
+          prof: (timer.npc as { prof?: string })?.prof ?? "",
+          location: (timer.npc as { location?: string })?.location ?? "",
+          wt: (timer.npc as { wt?: string | number })?.wt ?? 0,
+          icon: (timer.npc as { icon?: string })?.icon ?? "",
           latestRespBaseSeconds: timer.latestRespBaseSeconds,
           latestRespawnRandomness: timer.latestRespawnRandomness,
         };

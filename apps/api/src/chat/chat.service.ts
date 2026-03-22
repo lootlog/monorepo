@@ -140,8 +140,6 @@ export class ChatService {
   async clearMessages(guildId: string) {
     const key = this.getChatMessagesKey(guildId);
     await this.redisService.del(key);
-
-    return;
   }
 
   async emitMessage(msg: any) {
@@ -150,8 +148,6 @@ export class ChatService {
       RoutingKey.GUILDS_SEND_MESSAGE,
       msg,
     );
-
-    return undefined;
   }
 
   async updateMessage(
