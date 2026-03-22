@@ -29,7 +29,7 @@ export function QuickStartSection() {
       <div className="relative">
         <div className="flex justify-end mb-4">
           <a
-            href="https://developer.lootlog.pl"
+            href="https://docs.lootlog.pl"
             className="text-sm text-primary hover:underline flex items-center gap-1"
           >
             Pełna instrukcja <ArrowRight className="w-3 h-3" />

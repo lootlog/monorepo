@@ -66,7 +66,7 @@ export function HeroSection() {
           className="h-14 px-8 text-lg rounded-full border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 hover:scale-105"
           asChild
         >
-          <a href="https://developer.lootlog.pl">
+          <a href="https://docs.lootlog.pl">
             <BookOpen className="w-5 h-5 mr-2" />
             Dokumentacja
             <ChevronRight className="w-4 h-4 ml-1 opacity-50" />

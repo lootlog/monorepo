@@ -9,7 +9,7 @@ export function LandingFooter() {
         <div className="flex flex-col items-center gap-8 pt-6 pb-4">
           <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             <a
-              href="https://developer.lootlog.pl"
+              href="https://docs.lootlog.pl"
               className="hover:text-foreground transition-colors"
             >
               Dokumentacja
