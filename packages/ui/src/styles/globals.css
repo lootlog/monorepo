@@ -1379,6 +1379,177 @@ body {
   pointer-events: none;
 }
 
+/* ===== CAT THEME: Różowy Kociak ===== */
+.dark.cat-pink {
+  --background: oklch(0.13 0.01 350);
+  --foreground: oklch(0.92 0.01 350);
+  --card: oklch(0.16 0.015 350);
+  --card-foreground: oklch(0.92 0.01 350);
+  --popover: oklch(0.14 0.012 350);
+  --popover-foreground: oklch(0.92 0.01 350);
+  --primary: oklch(0.78 0.08 350);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.19 0.015 350);
+  --secondary-foreground: oklch(0.92 0.01 350);
+  --muted: oklch(0.21 0.012 350);
+  --muted-foreground: oklch(0.7 0.02 350);
+  --accent: oklch(0.72 0.07 340);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.27 0.018 350);
+  --input: oklch(0.29 0.02 350);
+  --ring: oklch(0.78 0.08 350);
+  --chart-1: oklch(0.78 0.08 350);
+  --chart-2: oklch(0.72 0.07 340);
+  --chart-3: oklch(0.82 0.06 350);
+  --chart-4: oklch(0.75 0.07 330);
+  --chart-5: oklch(0.6 0.05 350);
+  --sidebar: oklch(0.1 0.008 350);
+  --sidebar-foreground: oklch(0.92 0.01 350);
+  --sidebar-primary: oklch(0.78 0.08 350);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.21 0.012 350);
+  --sidebar-accent-foreground: oklch(0.92 0.01 350);
+  --sidebar-border: oklch(0.27 0.018 350);
+  --sidebar-ring: oklch(0.6 0.05 350);
+}
+
+/* ===== CAT THEME: Fioletowy Mruczek ===== */
+.dark.cat-purple {
+  --background: oklch(0.13 0.012 300);
+  --foreground: oklch(0.92 0.01 300);
+  --card: oklch(0.16 0.015 300);
+  --card-foreground: oklch(0.92 0.01 300);
+  --popover: oklch(0.14 0.012 300);
+  --popover-foreground: oklch(0.92 0.01 300);
+  --primary: oklch(0.75 0.08 300);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.19 0.015 300);
+  --secondary-foreground: oklch(0.92 0.01 300);
+  --muted: oklch(0.21 0.012 300);
+  --muted-foreground: oklch(0.7 0.02 300);
+  --accent: oklch(0.68 0.07 290);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.27 0.018 300);
+  --input: oklch(0.29 0.02 300);
+  --ring: oklch(0.75 0.08 300);
+  --chart-1: oklch(0.75 0.08 300);
+  --chart-2: oklch(0.68 0.07 290);
+  --chart-3: oklch(0.8 0.06 300);
+  --chart-4: oklch(0.72 0.07 280);
+  --chart-5: oklch(0.58 0.05 300);
+  --sidebar: oklch(0.1 0.008 300);
+  --sidebar-foreground: oklch(0.92 0.01 300);
+  --sidebar-primary: oklch(0.75 0.08 300);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.21 0.012 300);
+  --sidebar-accent-foreground: oklch(0.92 0.01 300);
+  --sidebar-border: oklch(0.27 0.018 300);
+  --sidebar-ring: oklch(0.58 0.05 300);
+}
+
+/* ===== CAT THEME: Niebieski Kocurek ===== */
+.dark.cat-blue {
+  --background: oklch(0.13 0.01 230);
+  --foreground: oklch(0.92 0.01 230);
+  --card: oklch(0.16 0.015 230);
+  --card-foreground: oklch(0.92 0.01 230);
+  --popover: oklch(0.14 0.012 230);
+  --popover-foreground: oklch(0.92 0.01 230);
+  --primary: oklch(0.78 0.07 230);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.19 0.015 230);
+  --secondary-foreground: oklch(0.92 0.01 230);
+  --muted: oklch(0.21 0.012 230);
+  --muted-foreground: oklch(0.7 0.02 230);
+  --accent: oklch(0.72 0.07 220);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.27 0.018 230);
+  --input: oklch(0.29 0.02 230);
+  --ring: oklch(0.78 0.07 230);
+  --chart-1: oklch(0.78 0.07 230);
+  --chart-2: oklch(0.72 0.07 220);
+  --chart-3: oklch(0.82 0.06 230);
+  --chart-4: oklch(0.75 0.06 210);
+  --chart-5: oklch(0.58 0.05 230);
+  --sidebar: oklch(0.1 0.008 230);
+  --sidebar-foreground: oklch(0.92 0.01 230);
+  --sidebar-primary: oklch(0.78 0.07 230);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.21 0.012 230);
+  --sidebar-accent-foreground: oklch(0.92 0.01 230);
+  --sidebar-border: oklch(0.27 0.018 230);
+  --sidebar-ring: oklch(0.58 0.05 230);
+}
+
+/* ===== CAT THEME: Wspólne dekoracje ===== */
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue) {
+  --radius: 0.75rem;
+}
+
+/* Cat paw overlay — hidden by default, shown in cat themes */
+.cat-paw-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark.cat-pink .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.08 350);
+}
+
+.dark.cat-purple .cat-paw-overlay {
+  display: block;
+  color: oklch(0.75 0.08 300);
+}
+
+.dark.cat-blue .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.07 230);
+}
+
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue) [data-slot="card"] [data-slot="card"] .cat-paw-overlay {
+  display: none;
+}
+
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue) [data-slot="sidebar-menu-button"] {
+  position: relative;
+}
+
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue) [data-slot="sidebar-menu-button"]:hover::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='22' rx='7' ry='5.5' fill='white'/%3E%3Ccircle cx='9' cy='12' r='3.2' fill='white'/%3E%3Ccircle cx='15' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='21' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='27' cy='12' r='3.2' fill='white'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  animation: catPawIn 0.2s ease forwards;
+}
+
+@keyframes catPawIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  to {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
