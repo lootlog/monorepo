@@ -7,7 +7,7 @@ export const stringifyQueryParams = (
 ) =>
   stringify(queryParams, {
     filter: (_, value) => {
-      if (value === "" || value === undefined || value === null) {
+      if (value === "" || value == null) {
         return;
       }
 

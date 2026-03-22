@@ -8,7 +8,7 @@ export const useMemberColor = (guildMember: { roles?: Role[] } | undefined) =>
     const topRole = guildMember.roles.reduce((prev: Role, curr: Role) =>
       (curr.position ?? 0) > (prev.position ?? 0) ? curr : prev,
     );
-    return topRole.color === 0 || !topRole.color
+    return !topRole.color
       ? "inherit"
       : `#${topRole.color.toString(16).padStart(6, "0")}`;
   }, [guildMember]);
