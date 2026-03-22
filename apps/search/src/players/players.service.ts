@@ -1,9 +1,13 @@
 import type { Meilisearch, SearchParams } from "meilisearch";
+import type { z } from "zod";
 import { meilisearchClient } from "../lib/meilisearch.js";
 import { logger } from "../config/winston.config.js";
 import type { GetPlayersDto } from "./dto/get-players.dto.js";
 import { PLAYERS_INDEX } from "./constants/meilisearch.js";
 import type { IndexPlayersDto } from "./dto/index-players.dto.js";
+import type { playerHitSchema } from "./dto/player-hit.schema.js";
+
+type PlayerHit = z.infer<typeof playerHitSchema>;
 
 export class PlayersService {
   meilisearch: Meilisearch;
@@ -15,7 +19,7 @@ export class PlayersService {
   }
 
   async getPlayers({ limit, search, world }: GetPlayersDto) {
-    const index = this.meilisearch.index(PLAYERS_INDEX);
+    const index = this.meilisearch.index<PlayerHit>(PLAYERS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : search;
 
@@ -36,7 +40,7 @@ export class PlayersService {
     };
 
     try {
-      const data = await index.search(searchTerm as string, query);
+      const data = await index.search(searchTerm, query);
 
       return data.hits;
     } catch (error) {

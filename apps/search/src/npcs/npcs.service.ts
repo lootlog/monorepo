@@ -1,9 +1,13 @@
 import type { Meilisearch, SearchParams } from "meilisearch";
+import type { z } from "zod";
 import { meilisearchClient } from "../lib/meilisearch.js";
 import { logger } from "../config/winston.config.js";
 import type { GetNpcsDto } from "./dto/get-npcs.dto.js";
 import { NPCS_INDEX } from "./constants/meilisearch.js";
 import type { IndexNpcsDto } from "./dto/index-npcs.dto.js";
+import type { npcHitSchema } from "./dto/npc-hit.schema.js";
+
+type NpcHit = z.infer<typeof npcHitSchema>;
 
 export class NpcsService {
   meilisearch: Meilisearch;
@@ -15,7 +19,7 @@ export class NpcsService {
   }
 
   async getNpcs({ limit, search, world }: GetNpcsDto) {
-    const index = this.meilisearch.index(NPCS_INDEX);
+    const index = this.meilisearch.index<NpcHit>(NPCS_INDEX);
     const hasMultipleSearchTerms = Array.isArray(search);
     const searchTerm = hasMultipleSearchTerms ? "" : search;
 
@@ -36,10 +40,10 @@ export class NpcsService {
     };
 
     try {
-      const data = await index.search(searchTerm as string, query);
+      const data = await index.search(searchTerm, query);
 
       const uniqueHits = Array.from(
-        new Map(data.hits.map((npc: any) => [npc.name, npc])).values(),
+        new Map(data.hits.map((npc) => [npc.name, npc])).values(),
       );
       return uniqueHits;
     } catch (error) {
