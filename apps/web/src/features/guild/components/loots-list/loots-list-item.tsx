@@ -219,9 +219,6 @@ const LootFooter = ({
   </div>
 );
 
-const LEGENDARY_GRADIENT =
-  "linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(0,0,0,0) 50%, rgba(239,68,68,0.05) 100%)";
-
 export const LootsListItem = ({ loot }: Props) => {
   const { openLootDetails } = useSelectedLoot();
   const date = timestampToDate(loot.createdAt);
@@ -235,7 +232,6 @@ export const LootsListItem = ({ loot }: Props) => {
     <div
       className={cn(
         "h-full",
-        // Simple CSS frost effect for Rukia theme - no JS hover tracking needed
         isRukiaTheme &&
           "rounded-xl hover:shadow-[inset_0_0_8px_1px_rgba(200,230,255,0.4),0_0_10px_2px_rgba(180,220,255,0.25)] transition-shadow duration-300",
       )}
@@ -244,17 +240,11 @@ export const LootsListItem = ({ loot }: Props) => {
         onClick={() => openLootDetails(loot.id)}
         className={cn(
           "group relative px-4 pt-2 pb-1 cursor-pointer h-full flex flex-col gap-0",
-          // Removed backdrop-blur-sm - very expensive during scrolling
-          // Use solid background instead for better performance
           "bg-card/95 border-border",
-          // Simplified hover transitions - only essential properties
           "hover:bg-card hover:border-primary/30 hover:shadow-md transition-[background-color,border-color,box-shadow] duration-200",
           hasLegendaryItem &&
-            "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)]",
+            "border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] hover:border-red-500/100",
         )}
-        style={
-          hasLegendaryItem ? { background: LEGENDARY_GRADIENT } : undefined
-        }
       >
         <LootHeader npcs={loot.npcs} commentsCount={loot.commentsCount} />
         <LootContent
