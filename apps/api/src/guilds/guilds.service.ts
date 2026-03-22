@@ -71,7 +71,10 @@ export class GuildsService {
       );
     } else {
       try {
-        const discordGuilds = await this.discordService.getUserGuilds(userId);
+        const discordGuilds = await this.discordService.getUserGuilds(
+          userId,
+          discordId,
+        );
 
         if (!discordGuilds || discordGuilds.length === 0) {
           this.logger.log({
@@ -133,7 +136,10 @@ export class GuildsService {
 
   async getManageableUserGuilds(discordId: string, userId: string) {
     try {
-      const discordGuilds = await this.discordService.getUserGuilds(userId);
+      const discordGuilds = await this.discordService.getUserGuilds(
+        userId,
+        discordId,
+      );
 
       if (!discordGuilds || discordGuilds.length === 0) {
         this.logger.log({
@@ -446,7 +452,10 @@ export class GuildsService {
     userId: string,
   ): Promise<GuildRefreshCandidate[]> {
     try {
-      const discordGuilds = await this.discordService.getUserGuilds(userId);
+      const discordGuilds = await this.discordService.getUserGuilds(
+        userId,
+        discordId,
+      );
 
       if (!discordGuilds || discordGuilds.length === 0) {
         return this.toGuildRefreshCandidates(

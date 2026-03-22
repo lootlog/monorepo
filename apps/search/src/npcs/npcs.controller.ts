@@ -1,21 +1,42 @@
-import { Hono } from "hono";
-import { parseSchema } from "../lib/utils/schema.js";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { getNpcsQuerySchema } from "./dto/get-npcs.dto.js";
+import { npcHitSchema } from "./dto/npc-hit.schema.js";
 import { NpcsService } from "./npcs.service.js";
 
-const npcs = new Hono<{
+const npcsService = new NpcsService();
+
+const getNpcsRoute = createRoute({
+  method: "get",
+  path: "/",
+  tags: ["NPCs"],
+  summary: "Search NPCs by name",
+  request: {
+    query: getNpcsQuerySchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(npcHitSchema),
+        },
+      },
+      description: "List of matching NPCs",
+    },
+  },
+});
+
+const npcs = new OpenAPIHono<{
   Variables: {
     userId: string | null;
     discordId: string | null;
   };
 }>();
-const npcsService = new NpcsService();
 
-npcs.get("/", async (c) => {
-  const { limit, search } = parseSchema(c.req.query(), getNpcsQuerySchema);
-  const res = await npcsService.getNpcs({ limit, search });
+npcs.openapi(getNpcsRoute, async (c) => {
+  const { limit, search, world } = c.req.valid("query");
+  const res = await npcsService.getNpcs({ limit, search, world });
 
-  return c.json(res);
+  return c.json(res, 200);
 });
 
 export { npcs };

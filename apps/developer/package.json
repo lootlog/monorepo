@@ -18,12 +18,12 @@
   },
   "devDependencies": {
     "@lootlog/typescript-config": "workspace:*",
-    "@tailwindcss/vite": "latest",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
-    "vite": "latest"
+    "vite": "^8.0.1"
   }
 }

@@ -895,5 +895,70 @@ describe("LootsService", () => {
       expect(result).toEqual([]);
       expect(prismaService.lootComment.groupBy).not.toHaveBeenCalled();
     });
+
+    it("should apply ranged loot filters to the Prisma query", async () => {
+      prismaService.loot.findMany.mockResolvedValue([]);
+
+      await service.fetchLootsByGuildId(mockGuild, [], [], {
+        ...params,
+        npcLevelMin: 10,
+        npcLevelMax: 20,
+        itemLevelMin: 30,
+        itemLevelMax: 40,
+        playerLevelMin: 50,
+        playerLevelMax: 60,
+        createdAtMin: "2024-01-01T00:00:00.000Z",
+        createdAtMax: "2024-01-31T23:59:59.999Z",
+      });
+
+      expect(prismaService.loot.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              {
+                lootNpcs: {
+                  some: {
+                    npcSnapshot: {
+                      lvl: {
+                        gte: 10,
+                        lte: 20,
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                lootItems: {
+                  some: {
+                    itemSnapshot: {
+                      lvl: {
+                        gte: 30,
+                        lte: 40,
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                lootPlayers: {
+                  some: {
+                    lvl: {
+                      gte: 50,
+                      lte: 60,
+                    },
+                  },
+                },
+              },
+              {
+                createdAt: {
+                  gte: new Date("2024-01-01T00:00:00.000Z"),
+                  lte: new Date("2024-01-31T23:59:59.999Z"),
+                },
+              },
+            ]),
+          }),
+        }),
+      );
+    });
   });
 });
