@@ -41,7 +41,7 @@ export function HeroSection() {
               className="bg-white/10 text-white backdrop-blur-sm pointer-events-auto hover:bg-white/20 border border-white/20"
               asChild
             >
-              <a href="https://developer.lootlog.pl">Dokumentacja</a>
+              <a href="https://docs.lootlog.pl">Dokumentacja</a>
             </Button>
           </div>
         </div>
