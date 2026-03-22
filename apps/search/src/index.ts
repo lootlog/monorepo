@@ -13,7 +13,8 @@ initHonoObservability({
 });
 
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { swaggerUI } from "@hono/swagger-ui";
 import { httpInstrumentationMiddleware } from "@hono/otel";
 import { APP_CONFIG } from "./config/app.config.js";
 import { players } from "./players/players.controller.js";
@@ -27,7 +28,7 @@ import { items } from "./items/items.controller.js";
 import { setupItemsHandlers } from "./items/items.handlers.js";
 import { all } from "./all/all.controller.js";
 
-const app = new Hono<{
+const app = new OpenAPIHono<{
   Variables: {
     userId: string | null;
     discordId: string | null;
@@ -67,6 +68,17 @@ app.route("/items", items);
 await setupItemsHandlers();
 
 app.route("/all", all);
+
+app.doc("/doc", {
+  openapi: "3.1.0",
+  info: {
+    title: "Search API",
+    version: "1.0.0",
+    description: "Meilisearch-powered search microservice",
+  },
+});
+
+app.get("/docs", swaggerUI({ url: "/doc" }));
 
 const port = APP_CONFIG.port;
 
