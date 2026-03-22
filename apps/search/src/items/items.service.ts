@@ -1,9 +1,13 @@
 import type { Meilisearch, SearchParams } from "meilisearch";
+import type { z } from "zod";
 import { meilisearchClient } from "../lib/meilisearch.js";
 import { logger } from "../config/winston.config.js";
 import type { GetItemsDto } from "./dto/get-items.dto.js";
 import { ITEMS_INDEX } from "./constants/meilisearch.js";
 import type { IndexItemsDto } from "./dto/index-items.dto.js";
+import type { itemHitSchema } from "./dto/item-hit.schema.js";
+
+type ItemHit = z.infer<typeof itemHitSchema>;
 
 export class ItemsService {
   meilisearch: Meilisearch;
@@ -16,7 +20,7 @@ export class ItemsService {
   }
 
   async getItems({ limit, search, world }: GetItemsDto) {
-    const index = this.meilisearch.index(ITEMS_INDEX);
+    const index = this.meilisearch.index<ItemHit>(ITEMS_INDEX);
     const searchTerm = search || "";
 
     const query: SearchParams = {

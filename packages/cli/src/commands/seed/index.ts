@@ -3,18 +3,9 @@ import { scrapeItems } from "./scrapers/items-scraper.js";
 import { scrapeNpcs } from "./scrapers/npcs-scraper.js";
 import { generatePlayers } from "./generators/players-generator.js";
 import { seed } from "./seed.js";
-import { writeFile, access } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { constants } from "node:fs";
-
-const hasReadableFile = async (filePath: string): Promise<boolean> => {
-  try {
-    await access(filePath, constants.R_OK);
-    return true;
-  } catch {
-    return false;
-  }
-};
+import { fileExists } from "./utils/file-exists.js";
 
 const displaySeedHelp = (): void => {
   console.log(`
@@ -182,9 +173,9 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           options.output || "./packages/cli/src/mocks/data/players.json";
         const outputPath = path.resolve(output);
 
-        const fileExists = await hasReadableFile(outputPath);
+        const outputExists = await fileExists(outputPath);
 
-        if (fileExists && !options.force) {
+        if (outputExists && !options.force) {
           console.log(
             chalk.yellow(
               `⏭️  Players file already exists at ${outputPath}. Use --force to regenerate.`,
@@ -247,7 +238,7 @@ export const seedCommand = async (args: string[]): Promise<void> => {
           "./packages/cli/src/mocks/data/players.json",
         );
 
-        const playersFileExists = await hasReadableFile(playersPath);
+        const playersFileExists = await fileExists(playersPath);
 
         if (playersFileExists && !options.force) {
           console.log(

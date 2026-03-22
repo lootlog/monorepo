@@ -9,6 +9,7 @@ import {
   TokenExpiredError,
   AuthServiceUnavailableError,
   AccountNotFoundError,
+  AuthBadRequestError,
 } from "src/auth/errors";
 import { ConfigKey } from "src/config/config-key.enum";
 import type { AuthConfig } from "src/config/auth.config";
@@ -34,12 +35,15 @@ export class AuthService {
     this.authServiceUrl = authConfig.serviceUrl;
   }
 
-  private async fetchIdpToken(userId: string): Promise<GetIdpTokenResponse> {
+  private async fetchIdpToken(
+    userId: string,
+    discordId: string,
+  ): Promise<GetIdpTokenResponse> {
     try {
       const url = `${this.authServiceUrl}/auth/idp-token`;
       const response$ = this.httpService.post<GetIdpTokenResponse>(
         url,
-        { userId },
+        { userId, discordId },
         { timeout: DEFAULT_REQUEST_TIMEOUT },
       );
 
@@ -60,7 +64,8 @@ export class AuthService {
       if (
         error instanceof AuthServiceUnavailableError ||
         error instanceof AccountNotFoundError ||
-        error instanceof TokenExpiredError
+        error instanceof TokenExpiredError ||
+        error instanceof AuthBadRequestError
       ) {
         throw error;
       }
@@ -81,6 +86,16 @@ export class AuthService {
         throw new TokenExpiredError();
       }
 
+      if (this.isClientError(error)) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        this.logger.log({
+          level: "error",
+          message: `Auth service returned client error for user ${userId}: ${errorMessage}`,
+        });
+        throw new AuthBadRequestError(errorMessage);
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       this.logger.log({
@@ -95,6 +110,7 @@ export class AuthService {
 
   async getIdpToken(
     userId: string,
+    discordId: string,
   ): Promise<Extract<GetIdpTokenResponse, { accessToken: string }>> {
     const cacheKey = getAuthTokenCacheKey(userId);
     const cached = await this.redisService.get(cacheKey);
@@ -104,7 +120,7 @@ export class AuthService {
     }
 
     try {
-      const response = await this.fetchIdpToken(userId);
+      const response = await this.fetchIdpToken(userId, discordId);
 
       if ("error" in response) {
         if (response.error === "ACCOUNT_NOT_FOUND") {
@@ -147,7 +163,8 @@ export class AuthService {
       if (
         error instanceof TokenExpiredError ||
         error instanceof AccountNotFoundError ||
-        error instanceof AuthServiceUnavailableError
+        error instanceof AuthServiceUnavailableError ||
+        error instanceof AuthBadRequestError
       ) {
         throw error;
       }
@@ -185,6 +202,25 @@ export class AuthService {
         const data = response.data as { error?: string };
         return data.error === "ACCOUNT_NOT_FOUND";
       }
+    }
+
+    return false;
+  }
+
+  private isClientError(error: unknown): boolean {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof error.response === "object" &&
+      error.response !== null
+    ) {
+      const response = error.response as { status?: number };
+      return (
+        response.status !== undefined &&
+        response.status >= 400 &&
+        response.status < 500
+      );
     }
 
     return false;

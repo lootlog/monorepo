@@ -59,7 +59,7 @@ export const useMemberKills = (
 
   const queryParams = {
     world: filters.world || undefined,
-    npcType: filters.npcTypes?.join(",") || undefined,
+    npcTypes: filters.npcTypes?.join(",") || undefined,
     search: filters.search || undefined,
     limit: filters.limit || undefined,
     cursor: filters.cursor || undefined,

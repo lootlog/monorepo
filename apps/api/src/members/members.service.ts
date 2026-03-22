@@ -298,6 +298,7 @@ export class MembersService {
       const discordMember = await this.discordService.getGuildMember({
         guildId,
         userId,
+        discordId,
       });
 
       if (!discordMember) {

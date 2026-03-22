@@ -176,20 +176,21 @@ describe("DiscordService", () => {
 
   describe("getRestClient", () => {
     const userId = "user-123";
+    const discordId = "discord-123";
 
     it("should create REST client with valid token", async () => {
       authService.getIdpToken.mockResolvedValue(mockToken);
 
-      const rest = await service.getRestClient(userId);
+      const rest = await service.getRestClient(userId, discordId);
 
       expect(rest).toBeDefined();
-      expect(authService.getIdpToken).toHaveBeenCalledWith(userId);
+      expect(authService.getIdpToken).toHaveBeenCalledWith(userId, discordId);
     });
 
     it("should throw UnauthorizedException when token is expired", async () => {
       authService.getIdpToken.mockRejectedValue(new TokenExpiredError());
 
-      await expect(service.getRestClient(userId)).rejects.toThrow(
+      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -199,7 +200,7 @@ describe("DiscordService", () => {
         new InvalidScopesError(["required"], ["actual"]),
       );
 
-      await expect(service.getRestClient(userId)).rejects.toThrow(
+      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -209,7 +210,7 @@ describe("DiscordService", () => {
         new AuthServiceUnavailableError(),
       );
 
-      await expect(service.getRestClient(userId)).rejects.toThrow(
+      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
         ServiceUnavailableException,
       );
     });
@@ -221,7 +222,7 @@ describe("DiscordService", () => {
       };
       authService.getIdpToken.mockResolvedValue(invalidToken as any);
 
-      await expect(service.getRestClient(userId)).rejects.toThrow(
+      await expect(service.getRestClient(userId, discordId)).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -229,11 +230,12 @@ describe("DiscordService", () => {
 
   describe("getUserGuilds", () => {
     const userId = "user-123";
+    const discordId = "discord-123";
 
     it("should return cached guilds when available", async () => {
       redisService.get.mockResolvedValue(JSON.stringify(mockGuilds));
 
-      const result = await service.getUserGuilds(userId);
+      const result = await service.getUserGuilds(userId, discordId);
 
       expect(result).toEqual(mockGuilds);
       expect(redisService.get).toHaveBeenCalledWith(
@@ -253,7 +255,7 @@ describe("DiscordService", () => {
       };
       jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
-      const result = await service.getUserGuilds(userId);
+      const result = await service.getUserGuilds(userId, discordId);
 
       expect(result).toEqual(mockGuilds);
       expect(rateLimiter.checkRateLimitForUser).toHaveBeenCalledWith(
@@ -284,7 +286,7 @@ describe("DiscordService", () => {
       };
       jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
-      await service.getUserGuilds(userId);
+      await service.getUserGuilds(userId, discordId);
 
       expect(mockRedlock.acquire).toHaveBeenCalledWith(
         ["user:user-123:discord-guilds:lock"],
@@ -301,7 +303,7 @@ describe("DiscordService", () => {
       };
       jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
-      const result = await service.getUserGuilds(userId);
+      const result = await service.getUserGuilds(userId, discordId);
 
       expect(result).toEqual([]);
       expect(mockLogger.log).toHaveBeenCalledWith({
@@ -319,7 +321,7 @@ describe("DiscordService", () => {
 
       rateLimiter.checkRateLimitForUser.mockResolvedValue(true);
 
-      const result = await service.getUserGuilds(userId);
+      const result = await service.getUserGuilds(userId, discordId);
 
       expect(result).toEqual(staleGuilds);
       expect(redisService.get).toHaveBeenCalledWith(
@@ -337,7 +339,7 @@ describe("DiscordService", () => {
       redisService.get.mockResolvedValue(null);
       rateLimiter.checkRateLimitForUser.mockResolvedValue(true);
 
-      const result = await service.getUserGuilds(userId);
+      const result = await service.getUserGuilds(userId, discordId);
 
       expect(result).toEqual([]);
       expect(mockLogger.log).toHaveBeenCalledWith({
@@ -375,7 +377,7 @@ describe("DiscordService", () => {
       };
       jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
-      const result = await service.getUserGuilds(userId);
+      const result = await service.getUserGuilds(userId, discordId);
 
       expect(result).toEqual(staleGuilds);
       expect(rateLimiter.setRateLimitForUser).toHaveBeenCalledWith(
@@ -414,7 +416,7 @@ describe("DiscordService", () => {
       };
       jest.spyOn(service, "getRestClient").mockResolvedValue(mockRest as any);
 
-      await expect(service.getUserGuilds(userId)).rejects.toThrow(
+      await expect(service.getUserGuilds(userId, discordId)).rejects.toThrow(
         RateLimitError,
       );
 
@@ -429,7 +431,7 @@ describe("DiscordService", () => {
       redisService.get.mockResolvedValue(null);
       authService.getIdpToken.mockRejectedValue(new TokenExpiredError());
 
-      await expect(service.getUserGuilds(userId)).rejects.toThrow(
+      await expect(service.getUserGuilds(userId, discordId)).rejects.toThrow(
         UnauthorizedException,
       );
 
@@ -442,7 +444,11 @@ describe("DiscordService", () => {
   });
 
   describe("getGuildMember", () => {
-    const options = { guildId: "guild-123", userId: "user-123" };
+    const options = {
+      guildId: "guild-123",
+      userId: "user-123",
+      discordId: "discord-123",
+    };
 
     it("should return cached member when available", async () => {
       redisService.get.mockResolvedValue(JSON.stringify(mockGuildMember));

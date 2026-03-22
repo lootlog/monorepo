@@ -63,7 +63,7 @@ export const EventRankingPage = () => {
     );
   }
 
-  const heroes = event.heroNpcs || [];
+  const heroes = event.heroNpcs ?? [];
   const heroNamesWithRankings = new Set(
     rankings.map((ranking) => ranking.heroNpcName),
   );

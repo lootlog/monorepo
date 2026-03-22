@@ -1,7 +1,8 @@
 import { parse } from "node-html-parser";
-import { writeFile, access, readFile } from "node:fs/promises";
+import { writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { SCRAPER_CONFIG } from "../config.js";
+import { fileExists } from "../utils/file-exists.js";
 
 interface ScrapedNpc {
   icon: string;
@@ -117,15 +118,6 @@ async function scrapeNpcsByType(npcType: string): Promise<ScrapedNpc[]> {
   } catch (error) {
     console.error(`Error scraping NPCs of type ${npcType}:`, error);
     return [];
-  }
-}
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
   }
 }
 
