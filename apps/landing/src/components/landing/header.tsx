@@ -22,12 +22,12 @@ export function LandingHeader() {
   };
 
   return (
-    <header className="w-full border-b border-border bg-card">
+    <header className="w-full border-b border-white/5 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
       <div className="flex h-16 items-center px-4 md:px-6 lg:px-8 justify-between">
         <div className="flex items-center gap-6">
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-xl tracking-tight text-white"
+            className="flex items-center gap-2 font-bold text-xl tracking-tight text-white hover:text-primary transition-colors"
           >
             lootlog.pl
           </Link>
@@ -51,45 +51,43 @@ export function LandingHeader() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
+            asChild
+          >
+            <a
+              href="https://buycoffee.to/lootlog"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2"
+            >
+              <Heart className="h-4 w-4 shrink-0" />
+              <span className="sr-only md:not-sr-only">Wesprzyj</span>
+            </a>
+          </Button>
           {isLoading ? (
-            <Button disabled size="sm" className="gap-2 rounded-full">
+            <Button disabled size="sm" className="gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
             </Button>
           ) : isAuthenticated ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 rounded-full border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400"
-                asChild
-              >
-                <a
-                  href="https://buycoffee.to/lootlog"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
-                >
-                  <Heart className="h-4 w-4 shrink-0" />
-                  <span className="sr-only md:not-sr-only">Wesprzyj</span>
-                </a>
-              </Button>
-              <Button
-                size="sm"
-                className="h-9 rounded-full shadow-[0_0_15px_-5px_hsl(var(--primary))]"
-                asChild
-              >
-                <a href="/@me" className="flex items-center">
-                  <span className="md:hidden">Lootlog</span>
-                  <span className="sr-only md:not-sr-only">
-                    Przejdź do Lootloga
-                  </span>
-                </a>
-              </Button>
-            </>
+            <Button
+              size="sm"
+              className="h-9 shadow-[0_0_15px_-5px_hsl(var(--primary))]"
+              asChild
+            >
+              <a href="/@me" className="flex items-center">
+                <span className="md:hidden">Lootlog</span>
+                <span className="sr-only md:not-sr-only">
+                  Przejdź do Lootloga
+                </span>
+              </a>
+            </Button>
           ) : (
             <Button
               size="sm"
-              className="gap-2 rounded-full shadow-[0_0_15px_-5px_hsl(var(--primary))]"
+              className="gap-2 shadow-[0_0_15px_-5px_hsl(var(--primary))]"
               onClick={handleLoginAction}
             >
               <LogIn className="w-4 h-4" />

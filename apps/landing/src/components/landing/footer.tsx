@@ -4,13 +4,13 @@ import { Button } from "@lootlog/ui/components/button";
 
 export function LandingFooter() {
   return (
-    <footer className="w-full border-t border-border bg-card">
+    <footer className="w-full border-t border-white/5 bg-background/80 backdrop-blur-xl">
       <div className="px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col items-center gap-8 pt-6 pb-4">
+        <div className="flex flex-col items-center gap-8 py-8">
           <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             <a
               href="https://docs.lootlog.pl"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Dokumentacja
             </a>
@@ -18,7 +18,7 @@ export function LandingFooter() {
               href="https://discord.gg/mPcczaeYMu"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Discord
             </a>
@@ -26,19 +26,19 @@ export function LandingFooter() {
               href="https://github.com/lootlog/monorepo"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
               GitHub
             </a>
             <Link
               href="/privacy-policy"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Prywatność
             </Link>
             <Link
               href="/terms-of-service"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Regulamin
             </Link>

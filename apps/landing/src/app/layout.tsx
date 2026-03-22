@@ -16,9 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lootlog.pl - Dodatek do gry Margonem",
+  metadataBase: new URL("https://lootlog.pl"),
+  title: {
+    default: "Lootlog.pl - Dodatek do gry Margonem",
+    template: "%s | Lootlog.pl",
+  },
   description:
-    "Zaawansowany dodatek do gry Margonem, który automatycznie śledzi łupy i timery respawnu potworów. Bezpłatny projekt hobbystyczny dla społeczności graczy.",
+    "Zaawansowany dodatek do gry Margonem, który automatycznie śledzi łupy i timery respawnu potworów. Synchronizowane timery, analiza walk i historia łupów. Darmowy i Open Source.",
   keywords: [
     "margonem",
     "dodatek",
@@ -28,14 +32,39 @@ export const metadata: Metadata = {
     "mmorpg",
     "gra",
     "discord",
+    "addon",
+    "margonem dodatek",
+    "loot tracker",
+    "timer synchronizacja",
+    "analiza walk",
   ],
   authors: [{ name: "Lootlog.pl Team" }],
+  creator: "Lootlog.pl Team",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
   openGraph: {
     title: "Lootlog.pl - Dodatek do gry Margonem",
     description:
-      "Zaawansowany dodatek do gry Margonem, który automatycznie śledzi łupy i timery respawnu potworów.",
+      "Synchronizowane timery, historia łupów i analiza walk. Darmowy dodatek Open Source dla graczy Margonem.",
     type: "website",
     locale: "pl_PL",
+    siteName: "Lootlog.pl",
+    url: "https://lootlog.pl",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lootlog.pl - Dodatek do gry Margonem",
+    description:
+      "Synchronizowane timery, historia łupów i analiza walk. Darmowy dodatek Open Source dla graczy Margonem.",
+  },
+  alternates: {
+    canonical: "https://lootlog.pl",
   },
 };
 

@@ -23,7 +23,7 @@ export function CookieConsent() {
 
   return (
     <div className="fixed bottom-6 left-6 z-50 animate-in fade-in slide-in-from-bottom-8 duration-700">
-      <div className="w-full max-w-md p-6 rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl shadow-black/50">
+      <div className="w-full max-w-md p-6 rounded-xl border border-white/[0.08] ring-1 ring-white/[0.04] bg-black/60 backdrop-blur-xl shadow-2xl shadow-black/50">
         <div className="flex items-start gap-4">
           <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0">
             <Cookie className="w-6 h-6" />
@@ -39,7 +39,7 @@ export function CookieConsent() {
               <Button
                 onClick={acceptCookies}
                 size="sm"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 shadow-[0_0_20px_-5px_hsl(var(--primary)/0.4)]"
               >
                 Akceptuję
               </Button>
