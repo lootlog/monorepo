@@ -75,7 +75,7 @@ export class RolesService {
           name: data.name,
           color: data.color,
           position: data.position,
-          ...(data.admin && { permissions }),
+          permissions,
         },
         create: {
           id: data.id,
