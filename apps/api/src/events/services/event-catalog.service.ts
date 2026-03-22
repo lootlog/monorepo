@@ -512,7 +512,7 @@ export class EventCatalogService {
         npcName: data.npcName,
         npcIcon,
         maps: {
-          create: (data.maps || []).map((map) => ({
+          create: (data.maps ?? []).map((map) => ({
             mapId: map.mapId,
             mapName: map.mapName,
           })),
