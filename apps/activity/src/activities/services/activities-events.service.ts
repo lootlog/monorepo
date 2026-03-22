@@ -79,7 +79,7 @@ export class ActivitiesEventsService {
       return;
     }
 
-    const headers = amqpMsg?.properties.headers ?? {};
+    const headers = amqpMsg.properties.headers ?? {};
 
     const shouldContinue = await this.retryService.handleRetryLogic(
       dto,
