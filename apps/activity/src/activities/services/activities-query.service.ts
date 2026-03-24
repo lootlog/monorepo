@@ -126,25 +126,10 @@ export class ActivitiesQueryService {
       select: { name: true },
     });
 
-    const seen = new Set<string>();
-    const suggestions: string[] = [];
-
-    for (const snapshot of snapshots) {
-      const name = snapshot.name?.trim();
-      if (!name) continue;
-
-      const key = name.toLowerCase();
-      if (seen.has(key)) continue;
-
-      seen.add(key);
-      suggestions.push(name);
-
-      if (suggestions.length >= limitValue) {
-        break;
-      }
-    }
-
-    return suggestions;
+    return this.deduplicateNames(
+      snapshots.map((s) => s.name),
+      limitValue,
+    );
   }
 
   async suggestWorlds(
@@ -155,23 +140,20 @@ export class ActivitiesQueryService {
     const limitValue = Math.min(Math.max(limit ?? 20, 1), 50);
     const trimmedSearch = search?.trim();
 
-    const where: Prisma.ActivityWhereInput = {
-      guildId,
-      world: {
-        not: null,
-        notIn: [""],
-      },
+    const worldFilter: Prisma.StringNullableFilter = {
+      not: null,
+      notIn: [""],
     };
 
     if (trimmedSearch) {
-      where.world = {
-        ...(typeof where.world === "object" && where.world !== null
-          ? where.world
-          : {}),
-        contains: trimmedSearch,
-        mode: "insensitive",
-      };
+      worldFilter.contains = trimmedSearch;
+      worldFilter.mode = "insensitive";
     }
+
+    const where: Prisma.ActivityWhereInput = {
+      guildId,
+      world: worldFilter,
+    };
 
     const worlds = await this.prisma.activity.findMany({
       where,
@@ -194,25 +176,22 @@ export class ActivitiesQueryService {
     const limitValue = Math.min(Math.max(limit ?? 10, 1), 50);
     const trimmedSearch = search?.trim();
 
+    const clanNameFilter: Prisma.StringNullableFilter = {
+      not: null,
+      notIn: [""],
+    };
+
+    if (trimmedSearch) {
+      clanNameFilter.contains = trimmedSearch;
+      clanNameFilter.mode = "insensitive";
+    }
+
     const where: Prisma.ActivityActorSnapshotWhereInput = {
       activities: {
         some: { guildId },
       },
-      clanName: {
-        not: null,
-        notIn: [""],
-      },
+      clanName: clanNameFilter,
     };
-
-    if (trimmedSearch) {
-      where.clanName = {
-        ...(typeof where.clanName === "object" && where.clanName !== null
-          ? where.clanName
-          : {}),
-        contains: trimmedSearch,
-        mode: "insensitive",
-      };
-    }
 
     const snapshots = await this.prisma.activityActorSnapshot.findMany({
       where,
@@ -221,25 +200,10 @@ export class ActivitiesQueryService {
       select: { clanName: true },
     });
 
-    const seen = new Set<string>();
-    const suggestions: string[] = [];
-
-    for (const snapshot of snapshots) {
-      const clanName = snapshot.clanName?.trim();
-      if (!clanName) continue;
-
-      const key = clanName.toLowerCase();
-      if (seen.has(key)) continue;
-
-      seen.add(key);
-      suggestions.push(clanName);
-
-      if (suggestions.length >= limitValue) {
-        break;
-      }
-    }
-
-    return suggestions;
+    return this.deduplicateNames(
+      snapshots.map((s) => s.clanName),
+      limitValue,
+    );
   }
 
   findByGuild(
@@ -255,6 +219,29 @@ export class ActivitiesQueryService {
     query: QueryActivitiesDto,
   ): Promise<PaginatedActivitiesEntity> {
     return this.findMany({ ...query, userId, guildId });
+  }
+
+  private deduplicateNames(
+    names: (string | null | undefined)[],
+    limit: number,
+  ): string[] {
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    for (const raw of names) {
+      const name = raw?.trim();
+      if (!name) continue;
+
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      result.push(name);
+
+      if (result.length >= limit) break;
+    }
+
+    return result;
   }
 
   async findOne(id: string, guildId: string): Promise<ActivityEntity> {
