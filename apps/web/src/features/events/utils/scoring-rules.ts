@@ -60,7 +60,7 @@ const toClock = (value: unknown, fallback: string) => {
 };
 
 const cloneDefaultRules = (): EventScoringRules =>
-  JSON.parse(JSON.stringify(DEFAULT_ADVANCED_EVENT_SCORING_RULES));
+  structuredClone(DEFAULT_ADVANCED_EVENT_SCORING_RULES);
 
 const parseAction = (value: unknown): EventScoringAction | null => {
   if (!isRecord(value) || typeof value.type !== "string") {

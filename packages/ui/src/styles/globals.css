@@ -1379,6 +1379,193 @@ body {
   pointer-events: none;
 }
 
+/* ===== CAT THEME: Różowy Kociak ===== */
+.dark.cat-pink {
+  --background: oklch(0.2 0.03 350);
+  --foreground: oklch(0.92 0.01 350);
+  --card: oklch(0.23 0.035 350);
+  --card-foreground: oklch(0.92 0.01 350);
+  --popover: oklch(0.26 0.04 350);
+  --popover-foreground: oklch(0.92 0.01 350);
+  --primary: oklch(0.78 0.08 350);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.3 0.045 350);
+  --secondary-foreground: oklch(0.92 0.01 350);
+  --muted: oklch(0.32 0.04 350);
+  --muted-foreground: oklch(0.7 0.02 350);
+  --accent: oklch(0.72 0.07 340);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.38 0.05 350);
+  --input: oklch(0.35 0.05 350);
+  --ring: oklch(0.78 0.08 350);
+  --chart-1: oklch(0.78 0.08 350);
+  --chart-2: oklch(0.72 0.07 340);
+  --chart-3: oklch(0.82 0.06 350);
+  --chart-4: oklch(0.75 0.07 330);
+  --chart-5: oklch(0.6 0.05 350);
+  --sidebar: oklch(0.22 0.035 350);
+  --sidebar-foreground: oklch(0.92 0.01 350);
+  --sidebar-primary: oklch(0.78 0.08 350);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.04 350);
+  --sidebar-accent-foreground: oklch(0.92 0.01 350);
+  --sidebar-border: oklch(0.38 0.05 350);
+  --sidebar-ring: oklch(0.6 0.05 350);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(80%) sepia(20%)
+    saturate(600%) hue-rotate(300deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Fioletowy Mruczek ===== */
+.dark.cat-purple {
+  --background: oklch(0.25 0.04 300);
+  --foreground: oklch(0.92 0.01 300);
+  --card: oklch(0.28 0.045 300);
+  --card-foreground: oklch(0.92 0.01 300);
+  --popover: oklch(0.26 0.04 300);
+  --popover-foreground: oklch(0.92 0.01 300);
+  --primary: oklch(0.75 0.08 300);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.3 0.045 300);
+  --secondary-foreground: oklch(0.92 0.01 300);
+  --muted: oklch(0.32 0.04 300);
+  --muted-foreground: oklch(0.7 0.02 300);
+  --accent: oklch(0.68 0.07 290);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.38 0.05 300);
+  --input: oklch(0.35 0.05 300);
+  --ring: oklch(0.75 0.08 300);
+  --chart-1: oklch(0.75 0.08 300);
+  --chart-2: oklch(0.68 0.07 290);
+  --chart-3: oklch(0.8 0.06 300);
+  --chart-4: oklch(0.72 0.07 280);
+  --chart-5: oklch(0.58 0.05 300);
+  --sidebar: oklch(0.22 0.035 300);
+  --sidebar-foreground: oklch(0.92 0.01 300);
+  --sidebar-primary: oklch(0.75 0.08 300);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.04 300);
+  --sidebar-accent-foreground: oklch(0.92 0.01 300);
+  --sidebar-border: oklch(0.38 0.05 300);
+  --sidebar-ring: oklch(0.58 0.05 300);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(78%) sepia(15%)
+    saturate(500%) hue-rotate(230deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Niebieski Kocurek ===== */
+.dark.cat-blue {
+  --background: oklch(0.25 0.04 230);
+  --foreground: oklch(0.92 0.01 230);
+  --card: oklch(0.28 0.045 230);
+  --card-foreground: oklch(0.92 0.01 230);
+  --popover: oklch(0.26 0.04 230);
+  --popover-foreground: oklch(0.92 0.01 230);
+  --primary: oklch(0.78 0.07 230);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.3 0.045 230);
+  --secondary-foreground: oklch(0.92 0.01 230);
+  --muted: oklch(0.32 0.04 230);
+  --muted-foreground: oklch(0.7 0.02 230);
+  --accent: oklch(0.72 0.07 220);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.38 0.05 230);
+  --input: oklch(0.35 0.05 230);
+  --ring: oklch(0.78 0.07 230);
+  --chart-1: oklch(0.78 0.07 230);
+  --chart-2: oklch(0.72 0.07 220);
+  --chart-3: oklch(0.82 0.06 230);
+  --chart-4: oklch(0.75 0.06 210);
+  --chart-5: oklch(0.58 0.05 230);
+  --sidebar: oklch(0.22 0.035 230);
+  --sidebar-foreground: oklch(0.92 0.01 230);
+  --sidebar-primary: oklch(0.78 0.07 230);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.04 230);
+  --sidebar-accent-foreground: oklch(0.92 0.01 230);
+  --sidebar-border: oklch(0.38 0.05 230);
+  --sidebar-ring: oklch(0.58 0.05 230);
+  --cat-spinner-filter: brightness(0) saturate(100%) invert(85%) sepia(18%)
+    saturate(400%) hue-rotate(165deg) brightness(102%) contrast(92%);
+}
+
+/* ===== CAT THEME: Wspólne dekoracje ===== */
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue) {
+  --radius: 0.75rem;
+}
+
+/* Cat paw spinner — tinted via theme filter */
+.cat-paw-spinner {
+  filter: var(--cat-spinner-filter);
+}
+
+/* Cat paw overlay — hidden by default, shown in cat themes */
+.cat-paw-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark.cat-pink .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.08 350);
+}
+
+.dark.cat-purple .cat-paw-overlay {
+  display: block;
+  color: oklch(0.75 0.08 300);
+}
+
+.dark.cat-blue .cat-paw-overlay {
+  display: block;
+  color: oklch(0.78 0.07 230);
+}
+
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue)
+  [data-slot="card"]
+  [data-slot="card"]
+  .cat-paw-overlay {
+  display: none;
+}
+
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue)
+  [data-slot="sidebar-menu-button"] {
+  position: relative;
+}
+
+:is(.dark.cat-pink, .dark.cat-purple, .dark.cat-blue)
+  [data-slot="sidebar-menu-button"]:hover::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='22' rx='7' ry='5.5' fill='white'/%3E%3Ccircle cx='9' cy='12' r='3.2' fill='white'/%3E%3Ccircle cx='15' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='21' cy='8' r='2.8' fill='white'/%3E%3Ccircle cx='27' cy='12' r='3.2' fill='white'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  animation: catPawIn 0.2s ease forwards;
+}
+
+@keyframes catPawIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  to {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;

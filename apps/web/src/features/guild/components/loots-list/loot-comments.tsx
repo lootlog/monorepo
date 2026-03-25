@@ -2,7 +2,7 @@ import { Button } from "@lootlog/ui/components/button";
 import { useState, type FC } from "react";
 import { Textarea } from "@lootlog/ui/components/textarea";
 import { LootSingleComment } from "@/features/guild/components/loots-list/loot-single-comment";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 import { useLootComments } from "@/hooks/api/loots/use-loot-comments";
 import { useCreateLootComment } from "@/hooks/api/loots/use-create-loot-comment";
 
@@ -49,11 +49,7 @@ export const LootComments: FC<LootCommentProps> = ({ lootId }) => {
                 value.length === 0 || value.length > MAX_LENGTH || isPending
               }
             >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Dodaj komentarz"
-              )}
+              {isPending ? <Spinner className="h-4 w-4" /> : "Dodaj komentarz"}
             </Button>
           </div>
         </form>

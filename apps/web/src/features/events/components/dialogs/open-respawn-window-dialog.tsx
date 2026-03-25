@@ -19,7 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@lootlog/ui/components/form";
-import { Loader2, Timer } from "lucide-react";
+import { Timer } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface OpenRespawnWindowDialogProps {
   open: boolean;
@@ -167,7 +168,7 @@ export const OpenRespawnWindowDialog = ({
                 disabled={isLoading}
                 className="flex-1"
               >
-                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {isLoading && <Spinner className="w-4 h-4 mr-2" />}
                 {t("events.respawn.openWindowButton")}
               </Button>
             </div>

@@ -29,6 +29,7 @@ import { useGuildPermissions } from "@/hooks/api/guilds/use-guild-permissions";
 import { EventCreateDialog } from "./components/dialogs/event-create-dialog";
 import { DeleteEventDialog } from "./components/dialogs/delete-event-dialog";
 import { getEventStatusAtTimestamp } from "./utils";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 export const Events = () => {
   const { t } = useTranslation();
@@ -113,7 +114,7 @@ export const Events = () => {
 
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <Spinner className="h-8 w-8" />
           </div>
         ) : events?.length === 0 ? (
           <Card className="flex flex-col items-center justify-center gap-3 bg-card/40 py-12 backdrop-blur-sm">

@@ -69,7 +69,7 @@ export const HeroCard = ({
         }}
         className="block"
       >
-        <Card className="bg-card/40 backdrop-blur-sm border-border hover:bg-card/60 hover:border-primary/30 transition-colors cursor-pointer group-hover:border-primary/30 gap-0 py-2 pl-2 pr-2">
+        <Card className="bg-card/40 border-border hover:bg-card/60 hover:border-primary/30 transition-colors cursor-pointer group-hover:border-primary/30 gap-0 py-2 pl-2 pr-2">
           <div className="flex flex-col gap-3 p-2 sm:flex-row sm:items-center sm:gap-2">
             <div className="flex min-w-0 flex-1 items-start gap-2">
               {hero.npcIcon ? (

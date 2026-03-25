@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@lootlog/ui/components/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 interface EndEventDialogProps {
   open: boolean;
@@ -54,7 +54,7 @@ export const EndEventDialog = ({
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isPending && <Spinner className="w-4 h-4 mr-2" />}
             {t("events.end")}
           </AlertDialogAction>
         </AlertDialogFooter>

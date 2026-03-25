@@ -53,7 +53,7 @@ export const LootFiltersHeader = ({
 
   return (
     <>
-      <div className="bg-background w-full flex items-center border-b h-14">
+      <div className="bg-sidebar w-full flex items-center border-b h-14">
         <div
           className="flex-1 min-w-0 px-3"
           onMouseEnter={() => setHoveredButton("search")}

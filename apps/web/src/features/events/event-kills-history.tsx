@@ -4,13 +4,14 @@ import { Button } from "@lootlog/ui/components/button";
 import { Card } from "@lootlog/ui/components/card";
 import { ScrollArea } from "@lootlog/ui/components/scroll-area";
 import { Tabs, TabsTrigger } from "@lootlog/ui/components/tabs";
-import { AlertCircle, Skull, Loader2, Swords } from "lucide-react";
+import { AlertCircle, Skull, Swords } from "lucide-react";
 import { useEventOverview } from "./hooks/queries/use-event-overview";
 import { useEventKillHistory } from "./hooks/queries/use-event-kill-history";
 import { KillHistoryCard } from "./components/kills/kill-history-card";
 import { useState } from "react";
 import { EventParticipationConfirmationDialog } from "./components/dialogs/event-participation-confirmation-dialog";
 import { EventScrollableTabsList } from "./components/shared/event-scrollable-tabs-list";
+import { Spinner } from "@lootlog/ui/components/spinner";
 
 export const EventKillsHistory = () => {
   const { guildId, eventId, heroId: urlHeroId } = useParams({ strict: false });
@@ -66,7 +67,7 @@ const EventKillsHistoryContent = ({
   if (eventLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }
@@ -140,7 +141,7 @@ const EventKillsHistoryContent = ({
         <Card className="flex min-h-0 flex-1 flex-col gap-2.5 border-border bg-card/40 p-2.5 backdrop-blur-sm">
           {killsLoading ? (
             <div className="flex flex-1 items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+              <Spinner className="h-6 w-6" />
             </div>
           ) : allKills.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground">
@@ -164,7 +165,7 @@ const EventKillsHistoryContent = ({
                 <div className="py-2 flex items-center justify-center">
                   {isFetchingNextPage ? (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <Spinner className="w-3 h-3" />
                       <span className="text-xs">
                         {t("events.kills.loading")}
                       </span>

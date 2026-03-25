@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
 } from "@lootlog/ui/components/tooltip";
 import { useGuildMember } from "@/hooks/api/members/use-guild-member";
-import { SidebarNav, type MenuItem } from "./sidebar-nav";
+import { SidebarNav, type MenuItem } from "./sidebar-nav/index";
 import { useMemberRefresh } from "@/hooks/api/members/use-member-refresh";
 import { ROUTE_SEGMENTS } from "@/config/routes";
 import { Permission } from "@lootlog/types";
