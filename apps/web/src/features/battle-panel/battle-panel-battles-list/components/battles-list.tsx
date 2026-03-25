@@ -165,7 +165,7 @@ export const BattlesList = ({
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 pb-3">
               {battlesResponse?.battles.map((battle) => (
                 <BattlesListEntry
                   key={battle.id}
@@ -182,7 +182,7 @@ export const BattlesList = ({
       </ScrollArea>
 
       {showPagination && (
-        <div className="sticky bottom-0 px-3 pb-3 pt-1">
+        <div className="sticky bottom-0">
           <Card className="flex items-center justify-center px-4 py-3 bg-card/60 backdrop-blur-sm border-border relative">
             <div className="absolute left-4 text-sm text-muted-foreground max-w-[30%]">
               {battlesResponse?.pagination?.total && (
