@@ -28,6 +28,20 @@ interface GapTimelineEntry {
   durationSeconds: number;
 }
 
+function clipToWindow(
+  start: Date,
+  end: Date | null,
+  windowOpenedAt: Date,
+  windowClosedAt: Date,
+): { clippedStart: Date; clippedEnd: Date } {
+  return {
+    clippedStart: new Date(Math.max(start.getTime(), windowOpenedAt.getTime())),
+    clippedEnd: new Date(
+      Math.min((end || windowClosedAt).getTime(), windowClosedAt.getTime()),
+    ),
+  };
+}
+
 @Injectable()
 export class EventSummaryService {
   private readonly logger = new Logger(EventSummaryService.name);
@@ -100,17 +114,17 @@ export class EventSummaryService {
     const memberStatsMap = new Map<number, MemberStat>();
 
     for (const log of presenceLogs) {
-      const logStart = new Date(
-        Math.max(log.startedAt.getTime(), windowOpenedAt.getTime()),
-      );
-      const logEnd = new Date(
-        Math.min(
-          (log.endedAt || windowClosedAt).getTime(),
-          windowClosedAt.getTime(),
-        ),
+      const { clippedStart, clippedEnd } = clipToWindow(
+        log.startedAt,
+        log.endedAt,
+        windowOpenedAt,
+        windowClosedAt,
       );
 
-      const durationMs = Math.max(0, logEnd.getTime() - logStart.getTime());
+      const durationMs = Math.max(
+        0,
+        clippedEnd.getTime() - clippedStart.getTime(),
+      );
       const durationSeconds = Math.round(durationMs / 1000);
 
       let stat = memberStatsMap.get(log.memberId);
@@ -162,19 +176,16 @@ export class EventSummaryService {
     for (const log of presenceLogs) {
       if (log.isAfk) continue;
 
-      const logStart = new Date(
-        Math.max(log.startedAt.getTime(), windowOpenedAt.getTime()),
-      );
-      const logEnd = new Date(
-        Math.min(
-          (log.endedAt || windowClosedAt).getTime(),
-          windowClosedAt.getTime(),
-        ),
+      const { clippedStart, clippedEnd } = clipToWindow(
+        log.startedAt,
+        log.endedAt,
+        windowOpenedAt,
+        windowClosedAt,
       );
 
       const durationSeconds = Math.max(
         0,
-        Math.round((logEnd.getTime() - logStart.getTime()) / 1000),
+        Math.round((clippedEnd.getTime() - clippedStart.getTime()) / 1000),
       );
 
       const stat = mapStatsMap.get(log.mapId);
@@ -188,19 +199,16 @@ export class EventSummaryService {
     const gapsTimeline: GapTimelineEntry[] = [];
 
     for (const gap of gaps) {
-      const gapStart = new Date(
-        Math.max(gap.startedAt.getTime(), windowOpenedAt.getTime()),
-      );
-      const gapEnd = new Date(
-        Math.min(
-          (gap.endedAt || windowClosedAt).getTime(),
-          windowClosedAt.getTime(),
-        ),
+      const { clippedStart, clippedEnd } = clipToWindow(
+        gap.startedAt,
+        gap.endedAt,
+        windowOpenedAt,
+        windowClosedAt,
       );
 
       const durationSeconds = Math.max(
         0,
-        Math.round((gapEnd.getTime() - gapStart.getTime()) / 1000),
+        Math.round((clippedEnd.getTime() - clippedStart.getTime()) / 1000),
       );
 
       if (gap.gapType === CoverageGapType.UNCOVERED) {
@@ -218,8 +226,8 @@ export class EventSummaryService {
         mapId: gap.mapId,
         mapName: mapNameById.get(gap.mapId) || "Unknown",
         gapType: gap.gapType,
-        startedAt: gapStart,
-        endedAt: gapEnd,
+        startedAt: clippedStart,
+        endedAt: clippedEnd,
         durationSeconds,
       });
     }
